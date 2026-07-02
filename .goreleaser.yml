@@ -7,7 +7,7 @@ version: 2
 builds:
   - id: promptarena
     binary: promptarena
-    main: ./tools/arena/cmd/promptarena
+    main: ./arena/cmd/promptarena
     env:
       - CGO_ENABLED=0
     goos:
@@ -27,7 +27,7 @@ builds:
 
   - id: packc
     binary: packc
-    main: ./tools/packc
+    main: ./packc
     env:
       - CGO_ENABLED=0
     goos:
@@ -97,27 +97,27 @@ changelog:
 release:
   github:
     owner: AltairaLabs
-    name: PromptKit
+    name: promptarena
   
   # Draft release (review before publishing)
   draft: true
   
   # Release name template
-  name_template: "PromptKit {{.Version}}"
+  name_template: "PromptArena {{.Version}}"
   
   # Release notes
   header: |
-    ## PromptKit {{.Version}}
+    ## PromptArena {{.Version}}
     
     ### Installation
     
     **CLI Tools:**
     ```bash
     # Arena
-    go install github.com/AltairaLabs/PromptKit/tools/arena/cmd/promptarena@{{.Version}}
+    go install github.com/AltairaLabs/promptarena/arena/cmd/promptarena@{{.Version}}
     
     # PackC
-    go install github.com/AltairaLabs/PromptKit/tools/packc@{{.Version}}
+    go install github.com/AltairaLabs/promptarena/packc@{{.Version}}
     ```
     
     **SDK Library:**
@@ -139,8 +139,8 @@ release:
     - `sdk/{{.Version}}` - Production SDK library
     
     **Tools:**
-    - `tools/arena/{{.Version}}` - Arena CLI (binaries above)
-    - `tools/packc/{{.Version}}` - PackC CLI (binaries above)
+    - `arena/{{.Version}}` - Arena CLI (binaries above)
+    - `packc/{{.Version}}` - PackC CLI (binaries above)
     
     ### Installation Methods
     
@@ -157,7 +157,7 @@ release:
     
     ---
     
-    **Full Changelog**: https://github.com/AltairaLabs/PromptKit/compare/{{.PreviousTag}}...{{.Tag}}
+    **Full Changelog**: https://github.com/AltairaLabs/promptarena/compare/{{.PreviousTag}}...{{.Tag}}
 
 # Homebrew casks (replaces deprecated brews)
 homebrew_casks:
@@ -166,7 +166,7 @@ homebrew_casks:
       owner: AltairaLabs
       name: homebrew-tap
       branch: main
-    homepage: https://github.com/AltairaLabs/PromptKit
+    homepage: https://github.com/AltairaLabs/promptarena
     description: "Prompt testing and evaluation toolkit for AI applications"
     license: "Apache-2.0"
     commit_author:

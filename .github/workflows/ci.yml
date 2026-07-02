@@ -46,3 +46,25 @@ jobs:
         with:
           version: latest
           only-new-issues: true
+
+  sonarcloud:
+    name: SonarCloud
+    runs-on: ubuntu-latest
+    # dependabot PRs cannot access secrets
+    if: github.actor != 'dependabot[bot]'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.0'
+      - name: Install ALSA dev headers (for voice CGO)
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev
+      - name: Test with coverage
+        run: go test ./... -coverprofile=coverage.out -count=1
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarqube-scan-action@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
