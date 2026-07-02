@@ -1,0 +1,70 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://promptarena.altairalabs.ai/versions.schema.json",
+  "title": "PromptArena Documentation Versions",
+  "description": "Schema for documentation version metadata",
+  "type": "object",
+  "required": ["current", "archived"],
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "Reference to this schema file"
+    },
+    "current": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/definitions/versionEntry" }
+      ],
+      "description": "The version currently deployed at root. Null for local dev."
+    },
+    "archived": {
+      "type": "array",
+      "description": "List of archived documentation versions, ordered newest first",
+      "items": { "$ref": "#/definitions/versionEntry" }
+    }
+  },
+  "definitions": {
+    "versionEntry": {
+      "type": "object",
+      "required": ["version", "fullVersion", "label", "path", "released", "status"],
+      "properties": {
+        "version": {
+          "type": "string",
+          "description": "Minor version identifier (e.g., '1.5')",
+          "pattern": "^[0-9]+\\.[0-9]+$"
+        },
+        "fullVersion": {
+          "type": "string",
+          "description": "Full semantic version (e.g., '1.5.6' or '1.6.0-beta.1')",
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(-[a-zA-Z0-9]+(\\.[0-9]+)?)?$"
+        },
+        "label": {
+          "type": "string",
+          "description": "Display label for the version selector",
+          "minLength": 1
+        },
+        "path": {
+          "type": "string",
+          "description": "URL path prefix ('/' for current, '/v1-5/' for archived)",
+          "pattern": "^/.*/$"
+        },
+        "released": {
+          "type": "string",
+          "description": "ISO 8601 date when this version was released",
+          "format": "date-time"
+        },
+        "status": {
+          "type": "string",
+          "description": "Release status of this version",
+          "enum": ["stable", "prerelease", "archived", "deprecated"]
+        },
+        "eol": {
+          "type": ["string", "null"],
+          "description": "ISO 8601 date when this version reaches end-of-life. Null if not deprecated."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

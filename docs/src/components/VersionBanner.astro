@@ -1,0 +1,134 @@
+---
+/**
+ * Version Banner Component
+ *
+ * Renders a warning banner on non-latest documentation.
+ *
+ * Archived versions are built at a `/vX-Y/` base path (see astro.config.mjs),
+ * so `Astro.url.pathname` starts with `/vX-Y/` for every archived page and
+ * with `/` for the current (root) build. We derive the version from that
+ * prefix and cross-reference `versions.json` to pick the banner variant.
+ *
+ * The current build shows a banner only when it is itself a prerelease.
+ */
+import versionsData from '../../versions.json';
+
+interface Props {
+  class?: string;
+}
+
+const { class: className } = Astro.props;
+
+const currentPath = Astro.url.pathname;
+// Archived builds are served under /vX-Y/ (hyphen — see update-versions.js).
+const pathMatch = currentPath.match(/^\/v(\d+)-(\d+)\//);
+const archivedVersion = pathMatch ? `${pathMatch[1]}.${pathMatch[2]}` : null;
+
+const latest = versionsData.current;
+const latestMinor = latest?.version ?? null;
+
+let bannerType: 'prerelease' | 'outdated' | 'deprecated' | null = null;
+let bannerMessage = '';
+
+if (archivedVersion) {
+  const entry = versionsData.archived.find((v) => v.version === archivedVersion);
+  if (entry && (entry.status === 'deprecated' || entry.eol)) {
+    bannerType = 'deprecated';
+    bannerMessage = `Documentation for v${archivedVersion} is no longer maintained. Please upgrade to the latest version.`;
+  } else {
+    bannerType = 'outdated';
+    bannerMessage = latestMinor
+      ? `You're viewing documentation for v${archivedVersion}. The latest version is v${latestMinor}.`
+      : `You're viewing documentation for v${archivedVersion}, which is not the latest version.`;
+  }
+} else if (latest?.status === 'prerelease') {
+  bannerType = 'prerelease';
+  bannerMessage = `This is pre-release documentation for v${latest.fullVersion}. Features may change before the stable release.`;
+}
+
+// Link back to the current version at the site root. A literal "/" is not
+// rewritten by Astro's `base`, so it always resolves to the latest docs.
+const latestUrl = '/';
+
+const bannerClasses = {
+  prerelease: 'banner-prerelease',
+  outdated: 'banner-outdated',
+  deprecated: 'banner-deprecated',
+};
+---
+
+{bannerType && (
+  <div class:list={['version-banner', bannerClasses[bannerType], className]}>
+    <div class="banner-content">
+      <span class="banner-icon" aria-hidden="true">
+        {bannerType === 'prerelease' && '🧪'}
+        {bannerType === 'outdated' && '📦'}
+        {bannerType === 'deprecated' && '⚠️'}
+      </span>
+      <span class="banner-message">{bannerMessage}</span>
+      {(bannerType === 'outdated' || bannerType === 'deprecated') && (
+        <a href={latestUrl} class="banner-link">
+          View latest →
+        </a>
+      )}
+    </div>
+  </div>
+)}
+
+<style>
+  .version-banner {
+    padding: 0.75rem 1rem;
+    font-size: var(--sl-text-sm);
+    line-height: 1.5;
+  }
+
+  .banner-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    max-width: var(--sl-content-width);
+    margin: 0 auto;
+  }
+
+  .banner-icon {
+    flex-shrink: 0;
+  }
+
+  .banner-message {
+    text-align: center;
+  }
+
+  .banner-link {
+    color: inherit;
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .banner-link:hover {
+    text-decoration-thickness: 2px;
+  }
+
+  /* Prerelease - blue/info */
+  .banner-prerelease {
+    background-color: var(--sl-color-blue-low);
+    color: var(--sl-color-blue-high);
+    border-bottom: 1px solid var(--sl-color-blue);
+  }
+
+  /* Outdated - yellow/warning */
+  .banner-outdated {
+    background-color: var(--sl-color-orange-low);
+    color: var(--sl-color-orange-high);
+    border-bottom: 1px solid var(--sl-color-orange);
+  }
+
+  /* Deprecated - red/error */
+  .banner-deprecated {
+    background-color: var(--sl-color-red-low);
+    color: var(--sl-color-red-high);
+    border-bottom: 1px solid var(--sl-color-red);
+  }
+</style>
