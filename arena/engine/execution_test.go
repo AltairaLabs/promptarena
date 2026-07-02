@@ -9,7 +9,7 @@ import (
 	"github.com/AltairaLabs/PromptKit/pkg/config"
 	"github.com/AltairaLabs/PromptKit/runtime/providers"
 	"github.com/AltairaLabs/PromptKit/runtime/providers/mock"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 )
 
 func TestEngine_ResolveRegions(t *testing.T) {

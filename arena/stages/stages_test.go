@@ -14,8 +14,8 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/pipeline/stage"
 	runtimeStatestore "github.com/AltairaLabs/PromptKit/runtime/statestore"
 	"github.com/AltairaLabs/PromptKit/runtime/types"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
-	"github.com/AltairaLabs/PromptKit/tools/arena/statestore"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/statestore"
 )
 
 // Helper to create a test element with a message

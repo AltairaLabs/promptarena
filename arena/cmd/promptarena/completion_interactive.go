@@ -8,8 +8,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
-	"github.com/AltairaLabs/PromptKit/tools/arena/templates"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/templates"
 )
 
 func init() {

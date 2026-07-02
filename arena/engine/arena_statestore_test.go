@@ -7,9 +7,9 @@ import (
 	"github.com/AltairaLabs/PromptKit/pkg/config"
 	"github.com/AltairaLabs/PromptKit/runtime/providers"
 	"github.com/AltairaLabs/PromptKit/runtime/tools"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
-	"github.com/AltairaLabs/PromptKit/tools/arena/statestore"
-	"github.com/AltairaLabs/PromptKit/tools/arena/turnexecutors"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/statestore"
+	"github.com/AltairaLabs/promptarena/arena/turnexecutors"
 )
 
 // TestArenaStateStore_CapturesTelemetry tests that ArenaStateStore captures turn metrics

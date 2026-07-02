@@ -35,8 +35,8 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/providers/base"
 	"github.com/AltairaLabs/PromptKit/runtime/tools"
 	"github.com/AltairaLabs/PromptKit/runtime/types"
-	arenastages "github.com/AltairaLabs/PromptKit/tools/arena/stages"
-	arenastatestore "github.com/AltairaLabs/PromptKit/tools/arena/statestore"
+	arenastages "github.com/AltairaLabs/promptarena/arena/stages"
+	arenastatestore "github.com/AltairaLabs/promptarena/arena/statestore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

@@ -6,8 +6,8 @@ import (
 	"time"
 
 	"github.com/AltairaLabs/PromptKit/runtime/types"
-	"github.com/AltairaLabs/PromptKit/tools/arena/assertions"
-	"github.com/AltairaLabs/PromptKit/tools/arena/engine"
+	"github.com/AltairaLabs/promptarena/arena/assertions"
+	"github.com/AltairaLabs/promptarena/arena/engine"
 )
 
 // TestAssertionMessageRendering tests that assertion messages are displayed in the HTML report

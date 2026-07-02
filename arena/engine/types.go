@@ -5,8 +5,8 @@ import (
 
 	"github.com/AltairaLabs/PromptKit/runtime/evals"
 	"github.com/AltairaLabs/PromptKit/runtime/types"
-	"github.com/AltairaLabs/PromptKit/tools/arena/assertions"
-	"github.com/AltairaLabs/PromptKit/tools/arena/statestore"
+	"github.com/AltairaLabs/promptarena/arena/assertions"
+	"github.com/AltairaLabs/promptarena/arena/statestore"
 )
 
 // RunPlan defines the test execution plan

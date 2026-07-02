@@ -15,7 +15,7 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/prompt/schema"
 	"github.com/AltairaLabs/PromptKit/runtime/tools"
 	"github.com/AltairaLabs/PromptKit/runtime/workflow"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 )
 
 // parseCompositionsFromConfig parses the compositions block from arena config.

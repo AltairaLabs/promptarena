@@ -6,8 +6,8 @@ import (
 	"testing"
 
 	runtimestore "github.com/AltairaLabs/PromptKit/runtime/statestore"
-	"github.com/AltairaLabs/PromptKit/tools/arena/assertions"
-	"github.com/AltairaLabs/PromptKit/tools/arena/statestore"
+	"github.com/AltairaLabs/promptarena/arena/assertions"
+	"github.com/AltairaLabs/promptarena/arena/statestore"
 )
 
 func TestGroupTrialRuns(t *testing.T) {

@@ -9,7 +9,7 @@ import (
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/generate"
+	"github.com/AltairaLabs/promptarena/arena/generate"
 )
 
 const (

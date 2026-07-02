@@ -10,9 +10,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/engine"
-	"github.com/AltairaLabs/PromptKit/tools/arena/render"
-	"github.com/AltairaLabs/PromptKit/tools/arena/results"
+	"github.com/AltairaLabs/promptarena/arena/engine"
+	"github.com/AltairaLabs/promptarena/arena/render"
+	"github.com/AltairaLabs/promptarena/arena/results"
 )
 
 // HTMLResultRepository implements ResultRepository for HTML report generation.

@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/engine"
+	"github.com/AltairaLabs/promptarena/arena/engine"
 )
 
 func TestLoadRunArtifacts(t *testing.T) {

@@ -10,9 +10,9 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/audio"
 	"github.com/AltairaLabs/PromptKit/runtime/providers/mock"
 	"github.com/AltairaLabs/PromptKit/runtime/types"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
-	"github.com/AltairaLabs/PromptKit/tools/arena/selfplay"
-	"github.com/AltairaLabs/PromptKit/tools/arena/statestore"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/selfplay"
+	"github.com/AltairaLabs/promptarena/arena/statestore"
 )
 
 // scriptedVAD is a deterministic audio.VADAnalyzer for the continuous

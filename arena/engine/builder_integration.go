@@ -38,12 +38,12 @@ import (
 	runtimestore "github.com/AltairaLabs/PromptKit/runtime/statestore"
 	"github.com/AltairaLabs/PromptKit/runtime/storage"
 	"github.com/AltairaLabs/PromptKit/runtime/tools"
-	"github.com/AltairaLabs/PromptKit/tools/arena/adapters"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
-	_ "github.com/AltairaLabs/PromptKit/tools/arena/mcpsource/docker/register" // register docker MCPSource
-	"github.com/AltairaLabs/PromptKit/tools/arena/selfplay"
-	"github.com/AltairaLabs/PromptKit/tools/arena/statestore"
-	"github.com/AltairaLabs/PromptKit/tools/arena/turnexecutors"
+	"github.com/AltairaLabs/promptarena/arena/adapters"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+	_ "github.com/AltairaLabs/promptarena/arena/mcpsource/docker/register" // register docker MCPSource
+	"github.com/AltairaLabs/promptarena/arena/selfplay"
+	"github.com/AltairaLabs/promptarena/arena/statestore"
+	"github.com/AltairaLabs/promptarena/arena/turnexecutors"
 )
 
 // BuildEngineComponents builds all engine components from a loaded Config object.

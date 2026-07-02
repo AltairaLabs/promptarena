@@ -7,7 +7,7 @@ import (
 
 	"github.com/AltairaLabs/PromptKit/runtime/evals"
 	"github.com/AltairaLabs/PromptKit/runtime/prompt"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 )
 
 // validateLoadedMedia prints media validation warnings for loaded prompt configs.

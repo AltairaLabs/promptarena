@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/templates"
+	"github.com/AltairaLabs/promptarena/arena/templates"
 )
 
 // Covers: templatesUpdateCmd error when a fetch fails, templatesRenderCmd missing version error,

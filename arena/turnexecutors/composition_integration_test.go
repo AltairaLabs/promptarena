@@ -12,7 +12,7 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/providers/mock"
 	"github.com/AltairaLabs/PromptKit/runtime/tools"
 	"github.com/AltairaLabs/PromptKit/runtime/types"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 )
 
 // echoExecutor is a trivial tools.Executor that echoes its args back as JSON.

@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/AltairaLabs/PromptKit/runtime/types"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 )
 
 // newTestHTTPMediaLoader creates an HTTPMediaLoader that allows private IPs (for localhost test servers).

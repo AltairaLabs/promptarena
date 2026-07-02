@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/AltairaLabs/PromptKit/runtime/evals"
-	"github.com/AltairaLabs/PromptKit/tools/arena/engine"
+	"github.com/AltairaLabs/promptarena/arena/engine"
 )
 
 // SummaryBuilder helps build ResultSummary from RunResult slices

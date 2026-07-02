@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/generate"
+	"github.com/AltairaLabs/promptarena/arena/generate"
 )
 
 // sessionRecordingFixture creates a minimal .recording.json file for testing.

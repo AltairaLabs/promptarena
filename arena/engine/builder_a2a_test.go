@@ -9,7 +9,7 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/a2a"
 	a2amock "github.com/AltairaLabs/PromptKit/runtime/a2a/mock"
 	"github.com/AltairaLabs/PromptKit/runtime/tools"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 )
 
 func TestResolveA2AAuth(t *testing.T) {

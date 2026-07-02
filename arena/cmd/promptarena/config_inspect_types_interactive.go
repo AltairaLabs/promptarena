@@ -1,6 +1,6 @@
 package main
 
-import "github.com/AltairaLabs/PromptKit/tools/arena/inspect"
+import "github.com/AltairaLabs/promptarena/arena/inspect"
 
 // Type aliases for backward compatibility with existing code and tests.
 // The canonical definitions now live in tools/arena/inspect.

@@ -6,7 +6,7 @@ import (
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/templates"
+	"github.com/AltairaLabs/promptarena/arena/templates"
 )
 
 var initCmd = &cobra.Command{

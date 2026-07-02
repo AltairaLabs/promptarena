@@ -5,8 +5,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/engine"
-	"github.com/AltairaLabs/PromptKit/tools/arena/tui/app"
+	"github.com/AltairaLabs/promptarena/arena/engine"
+	"github.com/AltairaLabs/promptarena/arena/tui/app"
 )
 
 // runChat is the cobra RunE handler for the `chat` command.

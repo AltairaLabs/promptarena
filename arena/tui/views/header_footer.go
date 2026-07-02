@@ -7,7 +7,7 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/tui/theme"
+	"github.com/AltairaLabs/promptarena/arena/tui/theme"
 )
 
 // KeyBinding represents a keyboard shortcut with description

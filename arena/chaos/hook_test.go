@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/AltairaLabs/PromptKit/runtime/hooks"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 )
 
 func TestHook_Name(t *testing.T) {

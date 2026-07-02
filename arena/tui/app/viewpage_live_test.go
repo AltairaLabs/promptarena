@@ -8,8 +8,8 @@ import (
 	"github.com/charmbracelet/x/exp/teatest"
 	"github.com/stretchr/testify/require"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/tui"
-	"github.com/AltairaLabs/PromptKit/tools/arena/tui/logging"
+	"github.com/AltairaLabs/promptarena/arena/tui"
+	"github.com/AltairaLabs/promptarena/arena/tui/logging"
 )
 
 // TestConversationViewPage_LiveAppendsAndMeter verifies a live page appends a

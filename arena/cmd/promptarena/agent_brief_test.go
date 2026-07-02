@@ -9,8 +9,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/agentkb"
-	"github.com/AltairaLabs/PromptKit/tools/arena/templates"
+	"github.com/AltairaLabs/promptarena/arena/agentkb"
+	"github.com/AltairaLabs/promptarena/arena/templates"
 )
 
 func TestWriteAgentBrief_WritesReferenceDocs(t *testing.T) {

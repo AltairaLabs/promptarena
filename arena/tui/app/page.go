@@ -11,8 +11,8 @@ import (
 
 	"github.com/AltairaLabs/PromptKit/pkg/config"
 	"github.com/AltairaLabs/PromptKit/runtime/statestore"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
-	"github.com/AltairaLabs/PromptKit/tools/arena/engine"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/engine"
 )
 
 // Page is the interface that every screen in the TUI hub must implement.

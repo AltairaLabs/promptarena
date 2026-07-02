@@ -47,12 +47,12 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/telemetry"
 	"github.com/AltairaLabs/PromptKit/runtime/tools"
 	"github.com/AltairaLabs/PromptKit/runtime/workflow"
-	"github.com/AltairaLabs/PromptKit/tools/arena/adapters"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
-	"github.com/AltairaLabs/PromptKit/tools/arena/artifacts"
-	arenaaudio "github.com/AltairaLabs/PromptKit/tools/arena/audio"
-	"github.com/AltairaLabs/PromptKit/tools/arena/mcpsource"
-	arenastore "github.com/AltairaLabs/PromptKit/tools/arena/statestore"
+	"github.com/AltairaLabs/promptarena/arena/adapters"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/artifacts"
+	arenaaudio "github.com/AltairaLabs/promptarena/arena/audio"
+	"github.com/AltairaLabs/promptarena/arena/mcpsource"
+	arenastore "github.com/AltairaLabs/promptarena/arena/statestore"
 )
 
 // Default directory names for output.

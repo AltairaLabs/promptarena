@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/AltairaLabs/PromptKit/runtime/types"
-	"github.com/AltairaLabs/PromptKit/tools/arena/assertions"
+	"github.com/AltairaLabs/promptarena/arena/assertions"
 )
 
 // SessionSourceAdapter provides session data for scenario generation.

@@ -8,10 +8,10 @@ import (
 
 	"github.com/AltairaLabs/PromptKit/runtime/events"
 	"github.com/AltairaLabs/PromptKit/runtime/logger"
-	arenaaudio "github.com/AltairaLabs/PromptKit/tools/arena/audio"
-	"github.com/AltairaLabs/PromptKit/tools/arena/engine"
-	"github.com/AltairaLabs/PromptKit/tools/arena/statestore"
-	"github.com/AltairaLabs/PromptKit/tools/arena/tui"
+	arenaaudio "github.com/AltairaLabs/promptarena/arena/audio"
+	"github.com/AltairaLabs/promptarena/arena/engine"
+	"github.com/AltairaLabs/promptarena/arena/statestore"
+	"github.com/AltairaLabs/promptarena/arena/tui"
 )
 
 // runResultGetter is the minimal slice of the arena state store RunPage needs

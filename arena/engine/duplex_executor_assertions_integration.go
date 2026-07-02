@@ -7,9 +7,9 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/evals"
 	"github.com/AltairaLabs/PromptKit/runtime/logger"
 	"github.com/AltairaLabs/PromptKit/runtime/types"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
-	arenaassertions "github.com/AltairaLabs/PromptKit/tools/arena/assertions"
-	arenastore "github.com/AltairaLabs/PromptKit/tools/arena/statestore"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+	arenaassertions "github.com/AltairaLabs/promptarena/arena/assertions"
+	arenastore "github.com/AltairaLabs/promptarena/arena/statestore"
 )
 
 // evaluateTurnAssertions evaluates assertions configured on a turn via EvalOrchestrator.

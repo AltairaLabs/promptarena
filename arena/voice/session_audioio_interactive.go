@@ -1,6 +1,6 @@
 package voice
 
-import "github.com/AltairaLabs/PromptKit/tools/arena/voice/portaudio"
+import "github.com/AltairaLabs/promptarena/arena/voice/portaudio"
 
 // NewAudioIO constructs an AudioIO backed by the PortAudio Session. The hardware
 // core lives in the sibling voice/portaudio package (kept out of runtime so

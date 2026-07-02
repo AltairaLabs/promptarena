@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/AltairaLabs/PromptKit/runtime/pipeline/stage"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 )
 
 // SelfPlayUserTurnContextStage adds scenario context for the NEXT user turn

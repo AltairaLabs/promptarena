@@ -9,15 +9,15 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/AltairaLabs/PromptKit/pkg/config"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
-	arenaaudio "github.com/AltairaLabs/PromptKit/tools/arena/audio"
-	"github.com/AltairaLabs/PromptKit/tools/arena/engine"
-	"github.com/AltairaLabs/PromptKit/tools/arena/results"
-	"github.com/AltairaLabs/PromptKit/tools/arena/results/html"
-	jsonrepo "github.com/AltairaLabs/PromptKit/tools/arena/results/json"
-	"github.com/AltairaLabs/PromptKit/tools/arena/results/junit"
-	"github.com/AltairaLabs/PromptKit/tools/arena/results/markdown"
-	"github.com/AltairaLabs/PromptKit/tools/arena/statestore"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+	arenaaudio "github.com/AltairaLabs/promptarena/arena/audio"
+	"github.com/AltairaLabs/promptarena/arena/engine"
+	"github.com/AltairaLabs/promptarena/arena/results"
+	"github.com/AltairaLabs/promptarena/arena/results/html"
+	jsonrepo "github.com/AltairaLabs/promptarena/arena/results/json"
+	"github.com/AltairaLabs/promptarena/arena/results/junit"
+	"github.com/AltairaLabs/promptarena/arena/results/markdown"
+	"github.com/AltairaLabs/promptarena/arena/statestore"
 )
 
 // Flag name constants to avoid duplication

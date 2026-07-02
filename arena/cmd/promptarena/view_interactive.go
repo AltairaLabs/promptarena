@@ -7,7 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/tui/app"
+	"github.com/AltairaLabs/promptarena/arena/tui/app"
 )
 
 // This file contains interactive TUI logic intentionally split for coverage control.

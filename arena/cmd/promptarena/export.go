@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/AltairaLabs/PromptKit/tools/packc/compiler"
+	"github.com/AltairaLabs/promptarena/packc/compiler"
 )
 
 var exportCmd = &cobra.Command{

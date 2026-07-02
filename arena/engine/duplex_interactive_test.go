@@ -16,9 +16,9 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/stt"
 	"github.com/AltairaLabs/PromptKit/runtime/tts"
 	"github.com/AltairaLabs/PromptKit/runtime/types"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
-	"github.com/AltairaLabs/PromptKit/tools/arena/selfplay"
-	"github.com/AltairaLabs/PromptKit/tools/arena/statestore"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/selfplay"
+	"github.com/AltairaLabs/promptarena/arena/statestore"
 )
 
 // TestDrainAudioOutput_InterruptFlushes verifies that drainAudioOutput delivers

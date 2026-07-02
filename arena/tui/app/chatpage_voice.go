@@ -10,10 +10,10 @@ import (
 
 	"github.com/AltairaLabs/PromptKit/pkg/config"
 	"github.com/AltairaLabs/PromptKit/runtime/events"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
-	"github.com/AltairaLabs/PromptKit/tools/arena/engine"
-	arenastore "github.com/AltairaLabs/PromptKit/tools/arena/statestore"
-	"github.com/AltairaLabs/PromptKit/tools/arena/voice"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/engine"
+	arenastore "github.com/AltairaLabs/promptarena/arena/statestore"
+	"github.com/AltairaLabs/promptarena/arena/voice"
 )
 
 // voiceLevelMsg carries normalized RMS audio levels emitted by the voice driver

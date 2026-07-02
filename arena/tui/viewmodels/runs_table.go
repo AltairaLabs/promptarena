@@ -7,7 +7,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/table"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/tui/theme"
+	"github.com/AltairaLabs/promptarena/arena/tui/theme"
 )
 
 // RunStatus represents the status of a run

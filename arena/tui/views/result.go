@@ -5,8 +5,8 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/statestore"
-	"github.com/AltairaLabs/PromptKit/tools/arena/tui/theme"
+	"github.com/AltairaLabs/promptarena/arena/statestore"
+	"github.com/AltairaLabs/promptarena/arena/tui/theme"
 )
 
 const (

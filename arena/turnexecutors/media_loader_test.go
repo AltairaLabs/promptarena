@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/AltairaLabs/PromptKit/runtime/types"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 )
 
 func TestConvertTurnPartsToMessageParts_EmptyParts(t *testing.T) {

@@ -8,7 +8,7 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/logger"
 	"github.com/AltairaLabs/PromptKit/runtime/pipeline/stage"
 	"github.com/AltairaLabs/PromptKit/runtime/types"
-	"github.com/AltairaLabs/PromptKit/tools/arena/assertions"
+	"github.com/AltairaLabs/promptarena/arena/assertions"
 )
 
 // TurnEvalRunner is an interface for running assertions as evals during turn execution.

@@ -6,8 +6,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/AltairaLabs/PromptKit/runtime/types"
-	"github.com/AltairaLabs/PromptKit/tools/arena/tui"
-	"github.com/AltairaLabs/PromptKit/tools/arena/tui/panels"
+	"github.com/AltairaLabs/promptarena/arena/tui"
+	"github.com/AltairaLabs/promptarena/arena/tui/panels"
 )
 
 // liveFeed applies streamed runtime events to a ConversationPanel during a

@@ -8,9 +8,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
-	"github.com/AltairaLabs/PromptKit/tools/arena/engine"
-	"github.com/AltairaLabs/PromptKit/tools/arena/results/markdown"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/engine"
+	"github.com/AltairaLabs/promptarena/arena/results/markdown"
 )
 
 // TestMarkdownConfigurationFromYAML demonstrates the complete workflow

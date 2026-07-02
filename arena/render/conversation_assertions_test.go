@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/assertions"
-	"github.com/AltairaLabs/PromptKit/tools/arena/engine"
+	"github.com/AltairaLabs/promptarena/arena/assertions"
+	"github.com/AltairaLabs/promptarena/arena/engine"
 )
 
 // TestConversationAssertionsRendering exercises the helper that

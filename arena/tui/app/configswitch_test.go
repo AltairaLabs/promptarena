@@ -8,7 +8,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/tui/pages"
+	"github.com/AltairaLabs/promptarena/arena/tui/pages"
 )
 
 // minimalArenaYAML is a minimal valid arena config file for test fixtures.

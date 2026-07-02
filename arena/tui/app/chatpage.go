@@ -12,11 +12,11 @@ import (
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/AltairaLabs/PromptKit/runtime/evals"
-	"github.com/AltairaLabs/PromptKit/tools/arena/engine"
-	"github.com/AltairaLabs/PromptKit/tools/arena/statestore"
-	"github.com/AltairaLabs/PromptKit/tools/arena/tui/logging"
-	"github.com/AltairaLabs/PromptKit/tools/arena/tui/panels"
-	"github.com/AltairaLabs/PromptKit/tools/arena/tui/views"
+	"github.com/AltairaLabs/promptarena/arena/engine"
+	"github.com/AltairaLabs/promptarena/arena/statestore"
+	"github.com/AltairaLabs/promptarena/arena/tui/logging"
+	"github.com/AltairaLabs/promptarena/arena/tui/panels"
+	"github.com/AltairaLabs/promptarena/arena/tui/views"
 )
 
 // chatSetupState tracks which step of the interactive setup flow ChatPage is in.

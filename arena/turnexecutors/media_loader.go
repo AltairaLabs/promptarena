@@ -15,7 +15,7 @@ import (
 
 	"github.com/AltairaLabs/PromptKit/runtime/storage"
 	"github.com/AltairaLabs/PromptKit/runtime/types"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 )
 
 const (

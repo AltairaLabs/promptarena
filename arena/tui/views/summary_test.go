@@ -8,7 +8,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/tui/viewmodels"
+	"github.com/AltairaLabs/promptarena/arena/tui/viewmodels"
 )
 
 func TestNewSummaryView(t *testing.T) {

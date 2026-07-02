@@ -6,8 +6,8 @@ import (
 
 	"github.com/AltairaLabs/PromptKit/runtime/statestore"
 	"github.com/AltairaLabs/PromptKit/runtime/types"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
-	"github.com/AltairaLabs/PromptKit/tools/arena/turnexecutors"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/turnexecutors"
 )
 
 // TestExecuteConversation_TenScriptedTurns tests that all 10 turns execute

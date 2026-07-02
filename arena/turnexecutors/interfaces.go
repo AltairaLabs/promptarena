@@ -27,9 +27,9 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/prompt"
 	"github.com/AltairaLabs/PromptKit/runtime/providers"
 	"github.com/AltairaLabs/PromptKit/runtime/types"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
-	"github.com/AltairaLabs/PromptKit/tools/arena/assertions"
-	arenaaudio "github.com/AltairaLabs/PromptKit/tools/arena/audio"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/assertions"
+	arenaaudio "github.com/AltairaLabs/promptarena/arena/audio"
 )
 
 // TurnExecutor executes one complete conversation turn (user message + AI response + tools)

@@ -11,8 +11,8 @@ import (
 	"github.com/AltairaLabs/PromptKit/pkg/config"
 	"github.com/AltairaLabs/PromptKit/runtime/evals"
 	_ "github.com/AltairaLabs/PromptKit/runtime/evals/handlers" // register built-in eval handlers
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
-	"github.com/AltairaLabs/PromptKit/tools/arena/assertions"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/assertions"
 )
 
 var validateCmd = &cobra.Command{

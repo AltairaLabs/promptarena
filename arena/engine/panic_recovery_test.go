@@ -7,7 +7,7 @@ import (
 	"github.com/AltairaLabs/PromptKit/pkg/config"
 	"github.com/AltairaLabs/PromptKit/runtime/hooks"
 	"github.com/AltairaLabs/PromptKit/runtime/providers"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 )
 
 // panicExecutor simulates a conversation executor that panics mid-run (e.g. a

@@ -5,8 +5,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/generate"
-	"github.com/AltairaLabs/PromptKit/tools/arena/generate/sources"
+	"github.com/AltairaLabs/promptarena/arena/generate"
+	"github.com/AltairaLabs/promptarena/arena/generate/sources"
 )
 
 // generateRegistry is the global registry for session source adapters.

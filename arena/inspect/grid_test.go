@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 )
 
 func TestComputeColumns(t *testing.T) {

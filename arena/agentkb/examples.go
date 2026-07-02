@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/templates"
+	"github.com/AltairaLabs/promptarena/arena/templates"
 )
 
 // ExampleLoader is the subset of templates.Loader that RenderExample needs.

@@ -21,11 +21,11 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/storage"
 	"github.com/AltairaLabs/PromptKit/runtime/tools"
 	"github.com/AltairaLabs/PromptKit/runtime/types"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
-	arenaaudio "github.com/AltairaLabs/PromptKit/tools/arena/audio"
-	"github.com/AltairaLabs/PromptKit/tools/arena/chaos"
-	"github.com/AltairaLabs/PromptKit/tools/arena/consent"
-	arenastages "github.com/AltairaLabs/PromptKit/tools/arena/stages"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+	arenaaudio "github.com/AltairaLabs/promptarena/arena/audio"
+	"github.com/AltairaLabs/promptarena/arena/chaos"
+	"github.com/AltairaLabs/promptarena/arena/consent"
+	arenastages "github.com/AltairaLabs/promptarena/arena/stages"
 )
 
 // PipelineExecutor executes conversations through the pipeline architecture.

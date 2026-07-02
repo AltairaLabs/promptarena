@@ -8,7 +8,7 @@ import (
 	"github.com/charmbracelet/x/exp/teatest"
 	"github.com/stretchr/testify/require"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/tui/logging"
+	"github.com/AltairaLabs/promptarena/arena/tui/logging"
 )
 
 // TestLogsOverlay_AppendAndCap verifies appended logs render newest-first-visible

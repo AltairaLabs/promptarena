@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/AltairaLabs/PromptKit/pkg/config"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 )
 
 // applyProviderOverrides rewrites each `from` provider in cfg.LoadedProviders

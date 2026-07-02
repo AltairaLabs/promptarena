@@ -8,7 +8,7 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/audio"
 	"github.com/AltairaLabs/PromptKit/runtime/pipeline/stage"
 	"github.com/AltairaLabs/PromptKit/runtime/providers"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 )
 
 // TestApplySelfPlayVADConfig_OnlyDisablesForSelfPlayScenarios is a

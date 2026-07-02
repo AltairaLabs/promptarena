@@ -9,7 +9,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/AltairaLabs/PromptKit/runtime/logger"
-	"github.com/AltairaLabs/PromptKit/tools/arena/tui/logging"
+	"github.com/AltairaLabs/promptarena/arena/tui/logging"
 )
 
 // Program is the slice of *tea.Program that Run depends on. It exists as a

@@ -16,10 +16,10 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/statestore"
 	"github.com/AltairaLabs/PromptKit/runtime/tools"
 	"github.com/AltairaLabs/PromptKit/runtime/types"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
-	arenaaudio "github.com/AltairaLabs/PromptKit/tools/arena/audio"
-	arenastages "github.com/AltairaLabs/PromptKit/tools/arena/stages"
-	arenastore "github.com/AltairaLabs/PromptKit/tools/arena/statestore"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+	arenaaudio "github.com/AltairaLabs/promptarena/arena/audio"
+	arenastages "github.com/AltairaLabs/promptarena/arena/stages"
+	arenastore "github.com/AltairaLabs/promptarena/arena/statestore"
 )
 
 // defaultPipelineIdleTimeout is the default duplex pipeline IdleTimeout when a

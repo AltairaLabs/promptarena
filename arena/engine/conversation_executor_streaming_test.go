@@ -12,9 +12,9 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/providers/base"
 	"github.com/AltairaLabs/PromptKit/runtime/statestore"
 	"github.com/AltairaLabs/PromptKit/runtime/types"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
-	"github.com/AltairaLabs/PromptKit/tools/arena/selfplay"
-	"github.com/AltairaLabs/PromptKit/tools/arena/turnexecutors"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/selfplay"
+	"github.com/AltairaLabs/promptarena/arena/turnexecutors"
 )
 
 // TestExecuteConversationStream_SingleTurn tests basic streaming functionality

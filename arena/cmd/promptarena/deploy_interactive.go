@@ -11,8 +11,8 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/AltairaLabs/PromptKit/runtime/deploy"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
-	"github.com/AltairaLabs/PromptKit/tools/packc/compiler"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/packc/compiler"
 )
 
 var deployCmd = &cobra.Command{

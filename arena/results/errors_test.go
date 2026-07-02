@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/results"
+	"github.com/AltairaLabs/promptarena/arena/results"
 )
 
 func TestCompositeError(t *testing.T) {

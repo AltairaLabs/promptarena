@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
-	arenaaudio "github.com/AltairaLabs/PromptKit/tools/arena/audio"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+	arenaaudio "github.com/AltairaLabs/promptarena/arena/audio"
 )
 
 func TestBuildAudioMonitor_NilWhenNotEnabled(t *testing.T) {

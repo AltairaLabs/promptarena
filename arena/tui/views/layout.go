@@ -3,7 +3,7 @@ package views
 import (
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/tui/theme"
+	"github.com/AltairaLabs/promptarena/arena/tui/theme"
 )
 
 // ChromeConfig contains configuration for rendering page chrome.

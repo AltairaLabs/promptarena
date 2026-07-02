@@ -6,8 +6,8 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/inspect"
-	"github.com/AltairaLabs/PromptKit/tools/arena/tui/views"
+	"github.com/AltairaLabs/promptarena/arena/inspect"
+	"github.com/AltairaLabs/promptarena/arena/tui/views"
 )
 
 // Shared footer key-hint labels.

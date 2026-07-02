@@ -8,7 +8,7 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/evals"
 	"github.com/AltairaLabs/PromptKit/runtime/pipeline/stage"
 	"github.com/AltairaLabs/PromptKit/runtime/types"
-	"github.com/AltairaLabs/PromptKit/tools/arena/assertions"
+	"github.com/AltairaLabs/promptarena/arena/assertions"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

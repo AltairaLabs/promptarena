@@ -12,8 +12,8 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/providers/mock"
 	runtimestore "github.com/AltairaLabs/PromptKit/runtime/statestore"
 	"github.com/AltairaLabs/PromptKit/runtime/types"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
-	"github.com/AltairaLabs/PromptKit/tools/arena/statestore"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/statestore"
 )
 
 // Helper to get keys from map

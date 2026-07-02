@@ -6,7 +6,7 @@ import (
 
 	"github.com/AltairaLabs/PromptKit/pkg/testutil"
 	"github.com/AltairaLabs/PromptKit/runtime/types"
-	"github.com/AltairaLabs/PromptKit/tools/arena/engine"
+	"github.com/AltairaLabs/promptarena/arena/engine"
 )
 
 func TestRenderToolResultMediaBadges(t *testing.T) {

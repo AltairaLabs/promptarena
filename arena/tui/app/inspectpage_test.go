@@ -7,8 +7,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/AltairaLabs/PromptKit/pkg/config"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
-	"github.com/AltairaLabs/PromptKit/tools/arena/inspect"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/inspect"
 )
 
 // TestInspectPage_TitleIsInspect verifies Title() returns "Inspect".

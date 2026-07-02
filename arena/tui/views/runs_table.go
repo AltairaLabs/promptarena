@@ -7,8 +7,8 @@ import (
 	"github.com/charmbracelet/bubbles/table"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/tui/theme"
-	"github.com/AltairaLabs/PromptKit/tools/arena/tui/viewmodels"
+	"github.com/AltairaLabs/promptarena/arena/tui/theme"
+	"github.com/AltairaLabs/promptarena/arena/tui/viewmodels"
 )
 
 const (

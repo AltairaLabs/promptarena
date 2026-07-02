@@ -13,8 +13,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/tui/layout"
-	"github.com/AltairaLabs/PromptKit/tools/arena/tui/views"
+	"github.com/AltairaLabs/promptarena/arena/tui/layout"
+	"github.com/AltairaLabs/promptarena/arena/tui/views"
 )
 
 const (

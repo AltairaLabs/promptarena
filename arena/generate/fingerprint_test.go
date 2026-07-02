@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/AltairaLabs/PromptKit/runtime/types"
-	"github.com/AltairaLabs/PromptKit/tools/arena/assertions"
+	"github.com/AltairaLabs/promptarena/arena/assertions"
 )
 
 func TestFingerprint_Stability(t *testing.T) {

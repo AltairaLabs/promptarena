@@ -6,8 +6,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/adapters"
-	"github.com/AltairaLabs/PromptKit/tools/arena/generate"
+	"github.com/AltairaLabs/promptarena/arena/adapters"
+	"github.com/AltairaLabs/promptarena/arena/generate"
 )
 
 // RecordingsAdapter bridges existing recording adapters to the SessionSourceAdapter interface.

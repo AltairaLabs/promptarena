@@ -7,7 +7,7 @@ import (
 
 	"github.com/AltairaLabs/PromptKit/runtime/providers/mock"
 	"github.com/AltairaLabs/PromptKit/runtime/types"
-	"github.com/AltairaLabs/PromptKit/tools/arena/engine"
+	"github.com/AltairaLabs/promptarena/arena/engine"
 )
 
 // File represents a mock response YAML document compatible with the mock provider.

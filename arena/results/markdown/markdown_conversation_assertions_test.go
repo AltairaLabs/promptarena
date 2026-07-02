@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/assertions"
-	"github.com/AltairaLabs/PromptKit/tools/arena/engine"
+	"github.com/AltairaLabs/promptarena/arena/assertions"
+	"github.com/AltairaLabs/promptarena/arena/engine"
 )
 
 func TestMarkdown_ConversationAssertionsSection(t *testing.T) {

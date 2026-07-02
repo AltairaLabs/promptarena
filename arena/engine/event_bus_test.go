@@ -10,7 +10,7 @@ import (
 
 	"github.com/AltairaLabs/PromptKit/runtime/events"
 	"github.com/AltairaLabs/PromptKit/runtime/pipeline/stage"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 )
 
 func TestConversationExecutorEmitsTurnEventsToBus(t *testing.T) {

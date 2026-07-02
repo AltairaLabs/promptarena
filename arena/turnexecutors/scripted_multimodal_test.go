@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/AltairaLabs/PromptKit/runtime/types"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 )
 
 func TestScriptedExecutor_BuildUserMessage_LegacyTextContent(t *testing.T) {

@@ -6,9 +6,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/AltairaLabs/PromptKit/runtime/types"
-	"github.com/AltairaLabs/PromptKit/tools/arena/statestore"
-	"github.com/AltairaLabs/PromptKit/tools/arena/tui"
-	"github.com/AltairaLabs/PromptKit/tools/arena/tui/panels"
+	"github.com/AltairaLabs/promptarena/arena/statestore"
+	"github.com/AltairaLabs/promptarena/arena/tui"
+	"github.com/AltairaLabs/promptarena/arena/tui/panels"
 )
 
 func seededPanel(t *testing.T, runID string, n int) *panels.ConversationPanel {

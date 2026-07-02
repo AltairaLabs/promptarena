@@ -9,9 +9,9 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/x/exp/teatest"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/statestore"
-	"github.com/AltairaLabs/PromptKit/tools/arena/tui/pages"
-	"github.com/AltairaLabs/PromptKit/tools/arena/tui/panels"
+	"github.com/AltairaLabs/promptarena/arena/statestore"
+	"github.com/AltairaLabs/promptarena/arena/tui/pages"
+	"github.com/AltairaLabs/promptarena/arena/tui/panels"
 )
 
 // goldenViewPageSizes is the size matrix used for ViewPage golden snapshots.

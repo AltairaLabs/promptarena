@@ -10,8 +10,8 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/pipeline"
 	"github.com/AltairaLabs/PromptKit/runtime/statestore"
 	"github.com/AltairaLabs/PromptKit/runtime/types"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
-	"github.com/AltairaLabs/PromptKit/tools/arena/selfplay"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/selfplay"
 )
 
 // Error path testing mocks - use testify/mock for error injection

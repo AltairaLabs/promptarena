@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/AltairaLabs/PromptKit/runtime/events"
-	arenaaudio "github.com/AltairaLabs/PromptKit/tools/arena/audio"
+	arenaaudio "github.com/AltairaLabs/promptarena/arena/audio"
 )
 
 // SSEEvent is the JSON structure sent to SSE clients.

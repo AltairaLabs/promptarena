@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/AltairaLabs/PromptKit/runtime/prompt"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 )
 
 // CompileResult contains the output of a successful compilation.

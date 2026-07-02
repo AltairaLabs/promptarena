@@ -3,7 +3,7 @@ package app
 import (
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/tui/theme"
+	"github.com/AltairaLabs/promptarena/arena/tui/theme"
 )
 
 // composerMode selects how a Composer presents the "send a turn" affordance.

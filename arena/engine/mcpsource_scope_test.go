@@ -10,7 +10,7 @@ import (
 	"github.com/AltairaLabs/PromptKit/pkg/config"
 	"github.com/AltairaLabs/PromptKit/runtime/mcp"
 	"github.com/AltairaLabs/PromptKit/runtime/prompt"
-	"github.com/AltairaLabs/PromptKit/tools/arena/mcpsource"
+	"github.com/AltairaLabs/promptarena/arena/mcpsource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

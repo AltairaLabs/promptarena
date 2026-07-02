@@ -9,7 +9,7 @@ import (
 	_ "github.com/AltairaLabs/PromptKit/runtime/classify/backends/all" // registers classify backend factories via init()
 	"github.com/AltairaLabs/PromptKit/runtime/credentials"
 	"github.com/AltairaLabs/PromptKit/runtime/providers/base"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 )
 
 // buildClassifyRegistry maps cfg.LoadedInferenceProviders (every

@@ -3,7 +3,7 @@ package panels
 import (
 	"github.com/charmbracelet/bubbles/viewport"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/tui/views"
+	"github.com/AltairaLabs/promptarena/arena/tui/views"
 )
 
 const (

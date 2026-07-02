@@ -8,7 +8,7 @@ import (
 
 	"github.com/AltairaLabs/PromptKit/runtime/evals"
 	_ "github.com/AltairaLabs/PromptKit/runtime/evals/handlers" // register built-in handlers
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 )
 
 func TestValidateAssertionTypes(t *testing.T) {

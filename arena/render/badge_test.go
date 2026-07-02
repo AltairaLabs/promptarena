@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/AltairaLabs/PromptKit/runtime/types"
-	"github.com/AltairaLabs/PromptKit/tools/arena/engine"
+	"github.com/AltairaLabs/promptarena/arena/engine"
 )
 
 // TestValidatorBadgeDisplay tests that validator badges show correct pass/fail icons

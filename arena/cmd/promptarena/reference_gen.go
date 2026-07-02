@@ -7,7 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/agentkb"
+	"github.com/AltairaLabs/promptarena/arena/agentkb"
 )
 
 // referenceDocs builds the bundled reference docs from their live sources:

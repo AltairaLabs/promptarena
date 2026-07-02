@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/AltairaLabs/PromptKit/runtime/mcp"
-	"github.com/AltairaLabs/PromptKit/tools/arena/agentkb"
+	"github.com/AltairaLabs/promptarena/arena/agentkb"
 )
 
 const (

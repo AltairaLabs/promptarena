@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/AltairaLabs/PromptKit/runtime/events"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 )
 
 func TestEnableSessionRecording(t *testing.T) {

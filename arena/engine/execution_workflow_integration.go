@@ -15,8 +15,8 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/skills"
 	"github.com/AltairaLabs/PromptKit/runtime/types"
 	"github.com/AltairaLabs/PromptKit/runtime/workflow"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
-	arenastore "github.com/AltairaLabs/PromptKit/tools/arena/statestore"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+	arenastore "github.com/AltairaLabs/promptarena/arena/statestore"
 )
 
 const roleSystem = "system"

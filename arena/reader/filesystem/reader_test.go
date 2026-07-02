@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/AltairaLabs/PromptKit/runtime/types"
-	readerpkg "github.com/AltairaLabs/PromptKit/tools/arena/reader"
-	"github.com/AltairaLabs/PromptKit/tools/arena/statestore"
+	readerpkg "github.com/AltairaLabs/promptarena/arena/reader"
+	"github.com/AltairaLabs/promptarena/arena/statestore"
 )
 
 func TestNewFilesystemResultReader(t *testing.T) {

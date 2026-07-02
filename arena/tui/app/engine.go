@@ -3,7 +3,7 @@ package app
 import (
 	"errors"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/engine"
+	"github.com/AltairaLabs/promptarena/arena/engine"
 )
 
 // EnsureEngine returns the cached engine from ctx, building it from ctx.Config

@@ -21,9 +21,9 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/streaming"
 	"github.com/AltairaLabs/PromptKit/runtime/tts"
 	"github.com/AltairaLabs/PromptKit/runtime/types"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
-	"github.com/AltairaLabs/PromptKit/tools/arena/selfplay"
-	"github.com/AltairaLabs/PromptKit/tools/arena/turnexecutors"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/selfplay"
+	"github.com/AltairaLabs/promptarena/arena/turnexecutors"
 )
 
 // turnPartTypeAudio is the TurnContentPart.Type value for audio parts.

@@ -16,7 +16,7 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/streaming"
 	"github.com/AltairaLabs/PromptKit/runtime/tools"
 	"github.com/AltairaLabs/PromptKit/runtime/types"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 )
 
 func TestDuplexConversationExecutor_RequiresDuplexConfig(t *testing.T) {

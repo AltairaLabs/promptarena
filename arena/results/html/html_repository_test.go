@@ -11,9 +11,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/AltairaLabs/PromptKit/runtime/types"
-	"github.com/AltairaLabs/PromptKit/tools/arena/engine"
-	"github.com/AltairaLabs/PromptKit/tools/arena/results"
-	"github.com/AltairaLabs/PromptKit/tools/arena/results/html"
+	"github.com/AltairaLabs/promptarena/arena/engine"
+	"github.com/AltairaLabs/promptarena/arena/results"
+	"github.com/AltairaLabs/promptarena/arena/results/html"
 )
 
 // Test helpers

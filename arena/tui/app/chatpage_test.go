@@ -12,7 +12,7 @@ import (
 	"github.com/charmbracelet/x/exp/teatest"
 
 	"github.com/AltairaLabs/PromptKit/runtime/evals"
-	"github.com/AltairaLabs/PromptKit/tools/arena/engine"
+	"github.com/AltairaLabs/promptarena/arena/engine"
 )
 
 // TestChatPage_Title verifies Title returns "Chat".

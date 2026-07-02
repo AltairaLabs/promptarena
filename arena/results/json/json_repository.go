@@ -12,8 +12,8 @@ import (
 	"path/filepath"
 
 	"github.com/AltairaLabs/PromptKit/runtime/logger"
-	"github.com/AltairaLabs/PromptKit/tools/arena/engine"
-	"github.com/AltairaLabs/PromptKit/tools/arena/results"
+	"github.com/AltairaLabs/promptarena/arena/engine"
+	"github.com/AltairaLabs/promptarena/arena/results"
 )
 
 const (

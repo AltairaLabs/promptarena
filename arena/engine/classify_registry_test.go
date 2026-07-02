@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"github.com/AltairaLabs/PromptKit/pkg/config"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 )
 
 func TestBuildClassifyRegistry_NoInferenceReturnsNil(t *testing.T) {

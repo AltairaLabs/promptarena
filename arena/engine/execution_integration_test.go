@@ -12,8 +12,8 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/providers"
 	runtimestore "github.com/AltairaLabs/PromptKit/runtime/statestore"
 	"github.com/AltairaLabs/PromptKit/runtime/tools"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
-	"github.com/AltairaLabs/PromptKit/tools/arena/statestore"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/statestore"
 )
 
 func TestEngine_ExecuteRun_InvalidStateStore(t *testing.T) {

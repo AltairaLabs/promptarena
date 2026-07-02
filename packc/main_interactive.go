@@ -10,8 +10,8 @@ import (
 	"github.com/spf13/pflag"
 
 	"github.com/AltairaLabs/PromptKit/runtime/prompt"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
-	"github.com/AltairaLabs/PromptKit/tools/packc/compiler"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/packc/compiler"
 )
 
 const (

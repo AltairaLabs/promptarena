@@ -16,12 +16,12 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"golang.org/x/term"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/statestore"
-	"github.com/AltairaLabs/PromptKit/tools/arena/tui/logging"
-	"github.com/AltairaLabs/PromptKit/tools/arena/tui/pages"
-	"github.com/AltairaLabs/PromptKit/tools/arena/tui/panels"
-	"github.com/AltairaLabs/PromptKit/tools/arena/tui/viewmodels"
-	"github.com/AltairaLabs/PromptKit/tools/arena/tui/views"
+	"github.com/AltairaLabs/promptarena/arena/statestore"
+	"github.com/AltairaLabs/promptarena/arena/tui/logging"
+	"github.com/AltairaLabs/promptarena/arena/tui/pages"
+	"github.com/AltairaLabs/promptarena/arena/tui/panels"
+	"github.com/AltairaLabs/promptarena/arena/tui/viewmodels"
+	"github.com/AltairaLabs/promptarena/arena/tui/views"
 )
 
 // Terminal size requirements

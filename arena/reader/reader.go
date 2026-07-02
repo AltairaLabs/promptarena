@@ -4,7 +4,7 @@ package reader
 import (
 	"time"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/statestore"
+	"github.com/AltairaLabs/promptarena/arena/statestore"
 )
 
 // ResultReader provides abstract access to test result retrieval

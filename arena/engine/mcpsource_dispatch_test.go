@@ -18,7 +18,7 @@ import (
 	"github.com/AltairaLabs/PromptKit/pkg/config"
 	"github.com/AltairaLabs/PromptKit/runtime/mcp"
 	"github.com/AltairaLabs/PromptKit/runtime/tools"
-	"github.com/AltairaLabs/PromptKit/tools/arena/mcpsource"
+	"github.com/AltairaLabs/promptarena/arena/mcpsource"
 )
 
 // fakeSSEMCPServer stands up an in-process SSE-MCP server speaking the

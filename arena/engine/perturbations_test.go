@@ -3,7 +3,7 @@ package engine
 import (
 	"testing"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 )
 
 func TestExpandPerturbations(t *testing.T) {

@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/AltairaLabs/PromptKit/runtime/evals"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 )
 
 // AssertionConfig is an alias for arenaconfig.AssertionConfig. The canonical type

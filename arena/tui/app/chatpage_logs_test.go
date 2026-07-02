@@ -6,7 +6,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/stretchr/testify/require"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/tui/logging"
+	"github.com/AltairaLabs/promptarena/arena/tui/logging"
 )
 
 // TestChatPage_LogsToggle verifies runtime logs are buffered and revealed in

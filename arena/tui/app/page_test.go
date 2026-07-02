@@ -6,7 +6,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/AltairaLabs/PromptKit/pkg/config"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 )
 
 // fakePage is a minimal Page implementation used to verify the contract.

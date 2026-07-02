@@ -6,7 +6,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/assertions"
+	"github.com/AltairaLabs/promptarena/arena/assertions"
 )
 
 const fingerprintLength = 16

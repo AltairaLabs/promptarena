@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/AltairaLabs/PromptKit/runtime/evals"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 )
 
 // fuzzyMatchThresholdDivisor controls how close a suggestion must be.

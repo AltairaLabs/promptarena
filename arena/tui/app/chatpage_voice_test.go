@@ -13,8 +13,8 @@ import (
 
 	runtimestore "github.com/AltairaLabs/PromptKit/runtime/statestore"
 	"github.com/AltairaLabs/PromptKit/runtime/types"
-	arenastore "github.com/AltairaLabs/PromptKit/tools/arena/statestore"
-	"github.com/AltairaLabs/PromptKit/tools/arena/voice"
+	arenastore "github.com/AltairaLabs/promptarena/arena/statestore"
+	"github.com/AltairaLabs/promptarena/arena/voice"
 )
 
 // fakeAudioIO is a stub AudioIO implementation for voice-mode tests. It uses

@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/agentkb"
+	"github.com/AltairaLabs/promptarena/arena/agentkb"
 )
 
 var explainListFlag bool

@@ -11,7 +11,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/AltairaLabs/PromptKit/runtime/logger"
-	"github.com/AltairaLabs/PromptKit/tools/arena/tui/app"
+	"github.com/AltairaLabs/promptarena/arena/tui/app"
 )
 
 var rootCmd = &cobra.Command{

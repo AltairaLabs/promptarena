@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
-	"github.com/AltairaLabs/PromptKit/tools/arena/inspect"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/inspect"
 )
 
 // collectInspectionData collects inspection data and optionally adds cache stats

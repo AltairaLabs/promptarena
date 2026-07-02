@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/generate"
+	"github.com/AltairaLabs/promptarena/arena/generate"
 )
 
 func newGenerateTestCmd() *cobra.Command {

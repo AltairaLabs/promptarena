@@ -2,7 +2,7 @@ package engine
 
 import (
 	"github.com/AltairaLabs/PromptKit/runtime/evals"
-	"github.com/AltairaLabs/PromptKit/tools/arena/statestore"
+	"github.com/AltairaLabs/promptarena/arena/statestore"
 )
 
 // AggregateTrialResults groups trial run results by scenario+provider+region,

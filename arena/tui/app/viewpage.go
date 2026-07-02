@@ -9,14 +9,14 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/reader/filesystem"
-	"github.com/AltairaLabs/PromptKit/tools/arena/statestore"
-	"github.com/AltairaLabs/PromptKit/tools/arena/tui"
-	"github.com/AltairaLabs/PromptKit/tools/arena/tui/logging"
-	"github.com/AltairaLabs/PromptKit/tools/arena/tui/pages"
-	"github.com/AltairaLabs/PromptKit/tools/arena/tui/panels"
-	"github.com/AltairaLabs/PromptKit/tools/arena/tui/theme"
-	"github.com/AltairaLabs/PromptKit/tools/arena/tui/views"
+	"github.com/AltairaLabs/promptarena/arena/reader/filesystem"
+	"github.com/AltairaLabs/promptarena/arena/statestore"
+	"github.com/AltairaLabs/promptarena/arena/tui"
+	"github.com/AltairaLabs/promptarena/arena/tui/logging"
+	"github.com/AltairaLabs/promptarena/arena/tui/pages"
+	"github.com/AltairaLabs/promptarena/arena/tui/panels"
+	"github.com/AltairaLabs/promptarena/arena/tui/theme"
+	"github.com/AltairaLabs/promptarena/arena/tui/views"
 )
 
 // ---------------------------------------------------------------------------

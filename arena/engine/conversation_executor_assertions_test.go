@@ -13,8 +13,8 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/prompt"
 	"github.com/AltairaLabs/PromptKit/runtime/providers/openai"
 	"github.com/AltairaLabs/PromptKit/runtime/statestore"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
-	"github.com/AltairaLabs/PromptKit/tools/arena/assertions"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/assertions"
 )
 
 // TestConversationExecutor_DebugOnUserTurnAssertions verifies that a debug message is logged

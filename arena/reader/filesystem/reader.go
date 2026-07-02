@@ -9,8 +9,8 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/reader"
-	"github.com/AltairaLabs/PromptKit/tools/arena/statestore"
+	"github.com/AltairaLabs/promptarena/arena/reader"
+	"github.com/AltairaLabs/promptarena/arena/statestore"
 )
 
 // FilesystemResultReader reads results from JSON files on the filesystem

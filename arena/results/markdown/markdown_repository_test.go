@@ -13,8 +13,8 @@ import (
 
 	"github.com/AltairaLabs/PromptKit/pkg/testutil"
 	"github.com/AltairaLabs/PromptKit/runtime/types"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
-	"github.com/AltairaLabs/PromptKit/tools/arena/engine"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/engine"
 )
 
 func TestNewMarkdownResultRepository(t *testing.T) {

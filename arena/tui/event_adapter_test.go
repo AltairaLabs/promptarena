@@ -10,7 +10,7 @@ import (
 
 	"github.com/AltairaLabs/PromptKit/runtime/events"
 	"github.com/AltairaLabs/PromptKit/runtime/types"
-	"github.com/AltairaLabs/PromptKit/tools/arena/tui/logging"
+	"github.com/AltairaLabs/promptarena/arena/tui/logging"
 )
 
 func TestEventAdapterHandlesRunLifecycle(t *testing.T) {

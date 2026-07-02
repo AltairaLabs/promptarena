@@ -1,19 +1,10 @@
-module github.com/AltairaLabs/PromptKit/tools/arena
+module github.com/AltairaLabs/promptarena
 
 go 1.26.0
 
-retract v1.4.0 // Published prematurely; use v1.4.1+
-
-replace github.com/AltairaLabs/PromptKit/runtime => ../../runtime
-
-replace github.com/AltairaLabs/PromptKit/pkg => ../../pkg
-
-replace github.com/AltairaLabs/PromptKit/tools/packc => ../../tools/packc
-
 require (
-	github.com/AltairaLabs/PromptKit/pkg v1.5.1
-	github.com/AltairaLabs/PromptKit/runtime v1.3.5
-	github.com/AltairaLabs/PromptKit/tools/packc v0.0.0-00010101000000-000000000000
+	github.com/AltairaLabs/PromptKit/pkg v1.5.4
+	github.com/AltairaLabs/PromptKit/runtime v1.5.4
 	github.com/charmbracelet/bubbles v1.0.0
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/glamour v0.10.0
@@ -38,9 +29,9 @@ require (
 require (
 	cloud.google.com/go/compute/metadata v0.9.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.22.0 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.13.1 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.14.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.12.0 // indirect
-	github.com/AzureAD/microsoft-authentication-library-for-go v1.6.0 // indirect
+	github.com/AzureAD/microsoft-authentication-library-for-go v1.7.2 // indirect
 	github.com/alecthomas/chroma/v2 v2.14.0 // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect
 	github.com/aws/aws-sdk-go-v2 v1.42.0 // indirect

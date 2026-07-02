@@ -6,7 +6,7 @@ import (
 
 	"github.com/manifoldco/promptui"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/templates"
+	"github.com/AltairaLabs/promptarena/arena/templates"
 )
 
 // This file contains interactive I/O logic intentionally split for coverage control.

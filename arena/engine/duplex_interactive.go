@@ -12,8 +12,8 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/providers"
 	"github.com/AltairaLabs/PromptKit/runtime/stt"
 	"github.com/AltairaLabs/PromptKit/runtime/tts"
-	"github.com/AltairaLabs/PromptKit/tools/arena/selfplay"
-	arenastages "github.com/AltairaLabs/PromptKit/tools/arena/stages"
+	"github.com/AltairaLabs/promptarena/arena/selfplay"
+	arenastages "github.com/AltairaLabs/promptarena/arena/stages"
 )
 
 // RunInteractiveVoice drives a live, mic-fed voice conversation through the

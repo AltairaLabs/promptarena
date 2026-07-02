@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	"github.com/AltairaLabs/PromptKit/runtime/types"
-	"github.com/AltairaLabs/PromptKit/tools/arena/statestore"
+	"github.com/AltairaLabs/promptarena/arena/statestore"
 )
 
 func TestNewConversationPage(t *testing.T) {

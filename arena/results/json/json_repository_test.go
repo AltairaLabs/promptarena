@@ -11,9 +11,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/AltairaLabs/PromptKit/runtime/types"
-	"github.com/AltairaLabs/PromptKit/tools/arena/engine"
-	"github.com/AltairaLabs/PromptKit/tools/arena/results"
-	jsonrepo "github.com/AltairaLabs/PromptKit/tools/arena/results/json"
+	"github.com/AltairaLabs/promptarena/arena/engine"
+	"github.com/AltairaLabs/promptarena/arena/results"
+	jsonrepo "github.com/AltairaLabs/promptarena/arena/results/json"
 )
 
 // Test helpers

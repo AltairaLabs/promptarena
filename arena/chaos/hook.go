@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/AltairaLabs/PromptKit/runtime/hooks"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 )
 
 type contextKey int

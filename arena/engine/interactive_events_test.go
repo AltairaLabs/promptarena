@@ -9,8 +9,8 @@ import (
 
 	"github.com/AltairaLabs/PromptKit/pkg/config"
 	"github.com/AltairaLabs/PromptKit/runtime/events"
-	"github.com/AltairaLabs/PromptKit/tools/arena/artifacts"
-	arenaaudio "github.com/AltairaLabs/PromptKit/tools/arena/audio"
+	"github.com/AltairaLabs/promptarena/arena/artifacts"
+	arenaaudio "github.com/AltairaLabs/promptarena/arena/audio"
 )
 
 // TestEngine_SimpleAccessors covers option setters and simple accessors on

@@ -7,8 +7,8 @@ import (
 	"path/filepath"
 
 	runtimestore "github.com/AltairaLabs/PromptKit/runtime/statestore"
-	"github.com/AltairaLabs/PromptKit/tools/arena/engine"
-	"github.com/AltairaLabs/PromptKit/tools/arena/statestore"
+	"github.com/AltairaLabs/promptarena/arena/engine"
+	"github.com/AltairaLabs/promptarena/arena/statestore"
 )
 
 // LoadResultsIntoStore scans outDir for run-result JSON files and loads

@@ -3,7 +3,7 @@ package results
 import (
 	"fmt"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/engine"
+	"github.com/AltairaLabs/promptarena/arena/engine"
 )
 
 // CompositeResultRepository writes to multiple repositories simultaneously.

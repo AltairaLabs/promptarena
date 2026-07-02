@@ -14,7 +14,7 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/mcp"
 	"github.com/AltairaLabs/PromptKit/runtime/prompt"
 	"github.com/AltairaLabs/PromptKit/runtime/tools"
-	"github.com/AltairaLabs/PromptKit/tools/arena/mcpsource"
+	"github.com/AltairaLabs/promptarena/arena/mcpsource"
 )
 
 // discoveryTimeout bounds the per-server tools/list call made after a

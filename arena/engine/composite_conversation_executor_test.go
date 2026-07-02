@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 )
 
 func TestCompositeConversationExecutor_RouteToDefault(t *testing.T) {

@@ -11,9 +11,9 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/pipeline/stage"
 	"github.com/AltairaLabs/PromptKit/runtime/providers"
 	"github.com/AltairaLabs/PromptKit/runtime/types"
-	"github.com/AltairaLabs/PromptKit/tools/arena/arenaconfig"
-	"github.com/AltairaLabs/PromptKit/tools/arena/assertions"
-	arenaaudio "github.com/AltairaLabs/PromptKit/tools/arena/audio"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/assertions"
+	arenaaudio "github.com/AltairaLabs/promptarena/arena/audio"
 )
 
 // ConversationExecutor orchestrates full conversation flows

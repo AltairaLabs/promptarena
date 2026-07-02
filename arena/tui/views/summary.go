@@ -6,7 +6,7 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/AltairaLabs/PromptKit/tools/arena/tui/viewmodels"
+	"github.com/AltairaLabs/promptarena/arena/tui/viewmodels"
 )
 
 // SummaryView renders the final execution summary

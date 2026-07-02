@@ -13,7 +13,7 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/pipeline"
 	runtimestore "github.com/AltairaLabs/PromptKit/runtime/statestore"
 	"github.com/AltairaLabs/PromptKit/runtime/types"
-	"github.com/AltairaLabs/PromptKit/tools/arena/assertions"
+	"github.com/AltairaLabs/promptarena/arena/assertions"
 )
 
 // ErrNotFound is re-exported from runtime statestore
