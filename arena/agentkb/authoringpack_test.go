@@ -24,6 +24,7 @@ func TestAuthoringPackYAML_EmbedsBrief(t *testing.T) {
 }
 
 func TestAuthoringPack_CommittedFileInSync(t *testing.T) {
+	t.Skip("requires monorepo examples/ + schema-gen source; re-enable after examples migrate to promptarena")
 	want := AuthoringPackYAML()
 	have, err := os.ReadFile(authoringPackPath)
 	if err != nil {
@@ -39,6 +40,7 @@ func TestAuthoringPack_CommittedFileInSync(t *testing.T) {
 const authoringSkillPath = "../../../examples/test-a-codegen-agent/skills/promptarena-authoring/SKILL.md"
 
 func TestAuthoringSkill_CommittedFileInSync(t *testing.T) {
+	t.Skip("requires monorepo examples/ + schema-gen source; re-enable after examples migrate to promptarena")
 	want, err := Skill()
 	if err != nil {
 		t.Fatalf("assemble skill: %v", err)

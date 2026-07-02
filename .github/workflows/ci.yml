@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.0'
+      - name: Install ALSA dev headers (for voice CGO)
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev
+      - name: Build
+        run: go build ./...
+      - name: Test
+        run: go test ./... -count=1
+
+  lint:
+    name: Lint (new code)
+    # Inherited baseline: lint only NEW code on PRs. The extracted arena/packc
+    # carry pre-existing findings grandfathered from PromptKit; hold new work to
+    # standard without blocking on the inherited debt.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.0'
+      - name: Install ALSA dev headers (for voice CGO)
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev
+      - uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+          only-new-issues: true
