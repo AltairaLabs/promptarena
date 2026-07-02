@@ -58,7 +58,12 @@ jobs:
 
       - name: Install dependencies
         working-directory: docs
-        run: npm ci
+        # `npm install`, not `npm ci`: the committed lock is generated on macOS
+        # and omits Linux-only native optional deps (rollup/esbuild) — npm's
+        # long-standing optional-dependency bug (npm/cli#4828). `npm install`
+        # honours the lock's pinned versions while still resolving the runner's
+        # own platform binaries.
+        run: npm install --no-audit --no-fund
 
       # --- Release only: work out whether the minor changed and, if so, build
       # the outgoing minor from its last tag at a /vX-Y/ base path. ---
@@ -95,7 +100,7 @@ jobs:
             echo "Tag $TAG predates the docs site — nothing to archive."
             exit 0
           fi
-          npm --prefix ../archive-src/docs ci
+          npm --prefix ../archive-src/docs install --no-audit --no-fund
           ( cd ../archive-src/docs && BASE_PATH="$BASE" npm run build )
           mv ../archive-src/docs/dist "archive-${{ steps.archive-check.outputs.archive_path }}"
           echo "Archived docs for $TAG at ${BASE}/"
