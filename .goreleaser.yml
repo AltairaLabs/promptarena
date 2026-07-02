@@ -160,11 +160,12 @@ release:
 
 # Homebrew casks (replaces deprecated brews)
 homebrew_casks:
-  - name: promptkit
+  - name: promptarena
     repository:
       owner: AltairaLabs
       name: homebrew-tap
       branch: main
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
     homepage: https://github.com/AltairaLabs/promptarena
     description: "Prompt testing and evaluation toolkit for AI applications"
     license: "Apache-2.0"
