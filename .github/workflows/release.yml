@@ -22,7 +22,7 @@ jobs:
           go-version: '1.26.0'
       - name: Install ALSA dev headers (for voice CGO)
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev
-      - uses: goreleaser/goreleaser-action@v6
+      - uses: goreleaser/goreleaser-action@v7
         with:
           version: latest
           args: release --clean
