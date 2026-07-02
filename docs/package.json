@@ -1,0 +1,25 @@
+{
+  "name": "promptarena-docs",
+  "type": "module",
+  "version": "0.0.1",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "check-links": "node check-links.js"
+  },
+  "dependencies": {
+    "@astrojs/mdx": "^6.0.3",
+    "@astrojs/sitemap": "^3.7.3",
+    "@astrojs/starlight": "~0.40.0",
+    "astro": "^6.4.6",
+    "astro-d2": "^0.11.0",
+    "mermaid": "^11.16.0",
+    "starlight-theme-galaxy": "^0.8.0"
+  },
+  "devDependencies": {
+    "linkinator": "^7.6.1",
+    "playwright": "^1.61.1"
+  }
+}

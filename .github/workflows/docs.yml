@@ -1,0 +1,174 @@
+name: Documentation
+
+# - PRs touching docs/: build + internal link check (no deploy).
+# - Push to main touching docs/: rebuild the current version and deploy,
+#   preserving any archived versions already live.
+# - Release tags (vX.Y.Z): archive the outgoing minor if the minor changed,
+#   then deploy the new current alongside all archives.
+# - workflow_dispatch: manual redeploy.
+on:
+  pull_request:
+    paths:
+      - 'docs/**'
+      - '.github/workflows/docs.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - '.github/workflows/docs.yml'
+    tags: ['v*.*.*']
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for manual deployment'
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: 'pages'
+  cancel-in-progress: false
+
+env:
+  SITE_URL: https://promptarena.altairalabs.ai
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          # Astro 6 requires Node >= 22.12.
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: docs/package-lock.json
+
+      - name: Install D2
+        run: curl -fsSL https://d2lang.com/install.sh | sh -s --
+
+      - name: Install dependencies
+        working-directory: docs
+        # The committed lock is generated on macOS and omits Linux-only native
+        # optional deps (rollup/esbuild) — npm's optional-dependency bug
+        # (npm/cli#4828). npm's own guidance is to drop the lock and reinstall
+        # so it resolves the runner's platform binaries; package.json pins keep
+        # the versions in range.
+        run: |
+          rm -f package-lock.json
+          npm install --no-audit --no-fund
+
+      # --- Release only: work out whether the minor changed and, if so, build
+      # the outgoing minor from its last tag at a /vX-Y/ base path. ---
+      - name: Determine archive
+        id: archive-check
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          NEW_VERSION="${GITHUB_REF_NAME#v}"
+          NEW_MINOR="$(echo "$NEW_VERSION" | cut -d. -f1-2)"
+          LIVE=$(curl -sf "${SITE_URL}/versions.json" || echo '{"current":null}')
+          CURRENT_MINOR=$(echo "$LIVE" | jq -r '.current.version // empty')
+          echo "Live current minor: ${CURRENT_MINOR:-none}; new minor: $NEW_MINOR"
+          if [ -n "$CURRENT_MINOR" ] && [ "$CURRENT_MINOR" != "$NEW_MINOR" ]; then
+            ARCHIVE_TAG=$(git tag -l "v${CURRENT_MINOR}.*" | sort -V | tail -1)
+            echo "needs_archive=true" >> "$GITHUB_OUTPUT"
+            echo "archive_minor=$CURRENT_MINOR" >> "$GITHUB_OUTPUT"
+            echo "archive_tag=$ARCHIVE_TAG" >> "$GITHUB_OUTPUT"
+            echo "archive_path=v${CURRENT_MINOR//./-}" >> "$GITHUB_OUTPUT"
+          else
+            echo "needs_archive=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build archived version
+        if: steps.archive-check.outputs.needs_archive == 'true'
+        run: |
+          TAG="${{ steps.archive-check.outputs.archive_tag }}"
+          BASE="/${{ steps.archive-check.outputs.archive_path }}"
+          if [ -z "$TAG" ]; then
+            echo "No tag found for outgoing minor — skipping archive build."
+            exit 0
+          fi
+          git worktree add ../archive-src "$TAG"
+          if [ ! -d ../archive-src/docs ]; then
+            echo "Tag $TAG predates the docs site — nothing to archive."
+            exit 0
+          fi
+          rm -f ../archive-src/docs/package-lock.json
+          npm --prefix ../archive-src/docs install --no-audit --no-fund
+          ( cd ../archive-src/docs && BASE_PATH="$BASE" npm run build )
+          mv ../archive-src/docs/dist "archive-${{ steps.archive-check.outputs.archive_path }}"
+          echo "Archived docs for $TAG at ${BASE}/"
+
+      - name: Download existing archives from live site
+        if: github.event_name != 'pull_request'
+        run: |
+          mkdir -p existing-archives
+          LIVE=$(curl -sf "${SITE_URL}/versions.json" || echo '{"archived":[]}')
+          for p in $(echo "$LIVE" | jq -r '.archived[].path // empty' | sed 's|^/||;s|/$||'); do
+            [ -z "$p" ] && continue
+            echo "Mirroring existing archive: $p"
+            mkdir -p "existing-archives/$p"
+            wget -q -r -np -nH --cut-dirs=1 -P "existing-archives/$p" "${SITE_URL}/$p/" || true
+          done
+
+      - name: Update versions.json (release only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        working-directory: docs
+        run: |
+          NEW_VERSION="${GITHUB_REF_NAME#v}"
+          IS_PRERELEASE=false
+          [[ "$NEW_VERSION" == *-* ]] && IS_PRERELEASE=true
+          node scripts/update-versions.js \
+            "$NEW_VERSION" "$IS_PRERELEASE" \
+            "${{ steps.archive-check.outputs.needs_archive }}" \
+            "${{ steps.archive-check.outputs.archive_minor }}" \
+            "${{ steps.archive-check.outputs.archive_path }}"
+
+      - name: Build current documentation
+        working-directory: docs
+        run: npm run build
+        env:
+          NODE_ENV: production
+
+      - name: Check for broken links
+        working-directory: docs
+        run: npm run check-links
+
+      - name: Merge archived docs into build
+        if: github.event_name != 'pull_request'
+        run: |
+          NEW_ARCHIVE="archive-${{ steps.archive-check.outputs.archive_path }}"
+          if [ -d "$NEW_ARCHIVE" ]; then
+            cp -r "$NEW_ARCHIVE" "docs/dist/${{ steps.archive-check.outputs.archive_path }}"
+          fi
+          if [ -d existing-archives ] && [ -n "$(ls -A existing-archives 2>/dev/null)" ]; then
+            cp -r existing-archives/* docs/dist/ 2>/dev/null || true
+          fi
+          ls -la docs/dist/
+
+      - name: Upload Pages artifact
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/dist
+
+  deploy:
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    needs: build
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

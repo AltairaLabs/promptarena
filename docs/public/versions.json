@@ -1,0 +1,12 @@
+{
+  "$schema": "https://promptarena.altairalabs.ai/versions.schema.json",
+  "current": {
+    "version": "1.5",
+    "fullVersion": "1.5.6",
+    "label": "Latest (v1.5)",
+    "path": "/",
+    "released": "2026-07-02T00:00:00Z",
+    "status": "stable"
+  },
+  "archived": []
+}
