@@ -79,42 +79,42 @@ describe('installer', () => {
     it('should generate correct URL for Darwin x86_64', () => {
       const url = getDownloadUrl('1.0.0', 'Darwin', 'x86_64');
       expect(url).toBe(
-        'https://github.com/AltairaLabs/PromptKit/releases/download/v1.0.0/PromptKit_1.0.0_Darwin_x86_64.tar.gz'
+        'https://github.com/AltairaLabs/PromptKit/releases/download/v1.0.0/promptarena_1.0.0_Darwin_x86_64.tar.gz'
       );
     });
 
     it('should generate correct URL for Darwin arm64', () => {
       const url = getDownloadUrl('1.0.0', 'Darwin', 'arm64');
       expect(url).toBe(
-        'https://github.com/AltairaLabs/PromptKit/releases/download/v1.0.0/PromptKit_1.0.0_Darwin_arm64.tar.gz'
+        'https://github.com/AltairaLabs/PromptKit/releases/download/v1.0.0/promptarena_1.0.0_Darwin_arm64.tar.gz'
       );
     });
 
     it('should generate correct URL for Linux x86_64', () => {
       const url = getDownloadUrl('2.1.0', 'Linux', 'x86_64');
       expect(url).toBe(
-        'https://github.com/AltairaLabs/PromptKit/releases/download/v2.1.0/PromptKit_2.1.0_Linux_x86_64.tar.gz'
+        'https://github.com/AltairaLabs/PromptKit/releases/download/v2.1.0/promptarena_2.1.0_Linux_x86_64.tar.gz'
       );
     });
 
     it('should generate correct URL for Windows (zip extension)', () => {
       const url = getDownloadUrl('1.0.0', 'Windows', 'x86_64');
       expect(url).toBe(
-        'https://github.com/AltairaLabs/PromptKit/releases/download/v1.0.0/PromptKit_1.0.0_Windows_x86_64.zip'
+        'https://github.com/AltairaLabs/PromptKit/releases/download/v1.0.0/promptarena_1.0.0_Windows_x86_64.zip'
       );
     });
 
     it('should use custom repository when provided', () => {
       const url = getDownloadUrl('1.0.0', 'Darwin', 'x86_64', 'MyOrg/MyRepo');
       expect(url).toBe(
-        'https://github.com/MyOrg/MyRepo/releases/download/v1.0.0/PromptKit_1.0.0_Darwin_x86_64.tar.gz'
+        'https://github.com/MyOrg/MyRepo/releases/download/v1.0.0/promptarena_1.0.0_Darwin_x86_64.tar.gz'
       );
     });
 
     it('should handle prerelease versions', () => {
       const url = getDownloadUrl('1.0.0-beta.1', 'Linux', 'arm64');
       expect(url).toBe(
-        'https://github.com/AltairaLabs/PromptKit/releases/download/v1.0.0-beta.1/PromptKit_1.0.0-beta.1_Linux_arm64.tar.gz'
+        'https://github.com/AltairaLabs/PromptKit/releases/download/v1.0.0-beta.1/promptarena_1.0.0-beta.1_Linux_arm64.tar.gz'
       );
     });
   });

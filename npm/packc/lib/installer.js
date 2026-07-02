@@ -33,7 +33,7 @@ export function getPlatformInfo(platform = process.platform, arch = process.arch
 
 export function getDownloadUrl(version, platform, arch, repo = 'AltairaLabs/promptarena') {
   const archiveExt = platform === 'Windows' ? 'zip' : 'tar.gz';
-  const archiveName = `PromptKit_${version}_${platform}_${arch}.${archiveExt}`;
+  const archiveName = `packc_${version}_${platform}_${arch}.${archiveExt}`;
   return `https://github.com/${repo}/releases/download/v${version}/${archiveName}`;
 }
 
