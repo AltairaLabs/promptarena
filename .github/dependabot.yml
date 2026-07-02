@@ -1,0 +1,67 @@
+# Dependabot configuration for PromptArena
+# Automatically creates PRs for dependency updates.
+# See: https://docs.github.com/en/code-security/dependabot
+
+version: 2
+updates:
+  # Go module (single module at repo root: arena + packc)
+  - package-ecosystem: "gomod"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "go"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+
+  # npm - promptarena package
+  - package-ecosystem: "npm"
+    directory: "/npm/promptarena"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "npm"
+      - "package"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+
+  # npm - packc package
+  - package-ecosystem: "npm"
+    directory: "/npm/packc"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "npm"
+      - "package"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+
+  # GitHub Actions workflows
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"

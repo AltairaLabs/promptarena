@@ -1,0 +1,31 @@
+# CODEOWNERS for PromptArena
+# Defines code ownership and auto-assigns reviewers for PRs.
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Tools
+/arena/                             @AltairaLabs/maintainers
+/packc/                             @AltairaLabs/maintainers
+
+# npm distribution wrappers
+/npm/                               @AltairaLabs/maintainers
+
+# Config schema snapshots
+/schemas/                           @AltairaLabs/maintainers
+
+# CI/CD and Infrastructure
+/.github/workflows/                 @AltairaLabs/maintainers
+/.github/CODEOWNERS                 @AltairaLabs/maintainers
+/.goreleaser.yml                    @AltairaLabs/maintainers
+/.golangci.yml                      @AltairaLabs/maintainers
+
+# Go module files
+go.mod                              @AltairaLabs/maintainers
+go.sum                              @AltairaLabs/maintainers
+
+# Docs & governance
+/*.md                               @AltairaLabs/maintainers
+/SECURITY.md                        @AltairaLabs/maintainers
+/CODE_OF_CONDUCT.md                 @AltairaLabs/maintainers
+/GOVERNANCE.md                      @AltairaLabs/maintainers
+/LICENSE                            @AltairaLabs/maintainers
+/CONTRIBUTING.md                    @AltairaLabs/maintainers
