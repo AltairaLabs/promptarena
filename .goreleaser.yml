@@ -43,11 +43,26 @@ builds:
       - -X main.version={{.Version}}
     mod_timestamp: '{{ .CommitTimestamp }}'
 
-# Archive configuration
+# Archive configuration — one archive per binary so each npm/brew consumer
+# finds its own {binary}_{version}_{os}_{arch}.tar.gz asset.
 archives:
-  - id: default
+  - id: promptarena
+    ids: [promptarena]
     name_template: >-
-      {{ .ProjectName }}_
+      promptarena_
+      {{- .Version }}_
+      {{- title .Os }}_
+      {{- if eq .Arch "amd64" }}x86_64
+      {{- else if eq .Arch "386" }}i386
+      {{- else }}{{ .Arch }}{{ end }}
+      {{- if .Arm }}v{{ .Arm }}{{ end }}
+    files:
+      - README.md
+      - LICENSE
+  - id: packc
+    ids: [packc]
+    name_template: >-
+      packc_
       {{- .Version }}_
       {{- title .Os }}_
       {{- if eq .Arch "amd64" }}x86_64
@@ -167,13 +182,26 @@ homebrew_casks:
       branch: main
       token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
     homepage: https://github.com/AltairaLabs/promptarena
-    description: "Prompt testing and evaluation toolkit for AI applications"
+    description: "PromptArena — prompt testing and evaluation CLI"
     license: "Apache-2.0"
     commit_author:
       name: goreleaserbot
       email: bot@goreleaser.com
     binaries:
       - promptarena
+  - name: packc
+    repository:
+      owner: AltairaLabs
+      name: homebrew-tap
+      branch: main
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    homepage: https://github.com/AltairaLabs/promptarena
+    description: "packc — PromptArena pack compiler"
+    license: "Apache-2.0"
+    commit_author:
+      name: goreleaserbot
+      email: bot@goreleaser.com
+    binaries:
       - packc
 
 # Docker images (disabled for now - will migrate to dockers_v2 after testing basic releases)
