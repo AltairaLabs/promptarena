@@ -176,6 +176,8 @@ release:
 # Homebrew casks (replaces deprecated brews)
 homebrew_casks:
   - name: promptarena
+    ids:
+      - promptarena
     repository:
       owner: AltairaLabs
       name: homebrew-tap
@@ -190,6 +192,8 @@ homebrew_casks:
     binaries:
       - promptarena
   - name: packc
+    ids:
+      - packc
     repository:
       owner: AltairaLabs
       name: homebrew-tap
