@@ -9,8 +9,35 @@ permissions:
   contents: read
 
 jobs:
+  # Detect whether anything outside docs/ changed. The Go pipeline is gated on
+  # this so docs-only changes (which have their own Documentation workflow)
+  # don't run — or fail — the Go build/lint. A *skipped* required job still
+  # satisfies branch protection, unlike a workflow filtered out by `paths`.
+  changes:
+    name: Detect code changes
+    runs-on: ubuntu-latest
+    outputs:
+      code: ${{ steps.filter.outputs.code }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            code:
+              - '**/*.go'
+              - 'go.mod'
+              - 'go.sum'
+              - '.golangci.yml'
+              - 'sonar-project.properties'
+              - 'npm/**'
+
   build-test:
     name: Build & Test
+    needs: changes
+    if: needs.changes.outputs.code == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -31,7 +58,8 @@ jobs:
     # Inherited baseline: lint only NEW code on PRs. The extracted arena/packc
     # carry pre-existing findings grandfathered from PromptKit; hold new work to
     # standard without blocking on the inherited debt.
-    if: github.event_name == 'pull_request'
+    needs: changes
+    if: needs.changes.outputs.code == 'true' && github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -49,9 +77,10 @@ jobs:
 
   sonarcloud:
     name: SonarCloud
-    runs-on: ubuntu-latest
+    needs: changes
     # dependabot PRs cannot access secrets
-    if: github.actor != 'dependabot[bot]'
+    if: needs.changes.outputs.code == 'true' && github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
