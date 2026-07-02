@@ -113,8 +113,8 @@ release:
     owner: AltairaLabs
     name: promptarena
   
-  # Draft release (review before publishing)
-  draft: true
+  # Publish on tag (the tag is the intent to ship)
+  draft: false
   
   # Release name template
   name_template: "PromptArena {{.Version}}"
