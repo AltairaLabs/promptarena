@@ -44,6 +44,10 @@ jobs:
               - '.golangci.yml'
               - 'sonar-project.properties'
               - 'npm/**'
+              # Changes to this workflow itself must re-run the Go pipeline it
+              # defines — otherwise a change to how build/test/coverage/scan run
+              # is never exercised before merge.
+              - '.github/workflows/ci.yml'
             actions:
               - '.github/actions/**'
             examples:
@@ -67,8 +71,18 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev
       - name: Build
         run: go build ./...
-      - name: Test
-        run: go test ./... -count=1
+      # Single source of truth for the test run: produce the coverage report
+      # here and hand it to the SonarCloud job as an artifact, so the full suite
+      # runs once per CI instead of twice. Flags match what Sonar expects
+      # (sonar.go.coverage.reportPaths=coverage.out).
+      - name: Test (with coverage)
+        run: go test ./... -coverprofile=coverage.out -count=1
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: go-coverage
+          path: coverage.out
+          retention-days: 1
       # The hosted JSON schemas (served from promptkit.altairalabs.ai) are
       # generated from arena/arenaconfig + PromptKit/pkg/config. Fail the build
       # if a config-type change didn't regenerate schemas/v1alpha1.
@@ -102,7 +116,10 @@ jobs:
 
   sonarcloud:
     name: SonarCloud
-    needs: changes
+    # Reuse the coverage report produced by build-test rather than re-running the
+    # whole suite: the SonarGo analyzer parses sources directly and only needs
+    # coverage.out, so no Go toolchain / build / test step is required here.
+    needs: [changes, build-test]
     # dependabot PRs cannot access secrets
     if: needs.changes.outputs.code == 'true' && github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
@@ -110,13 +127,10 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: actions/setup-go@v5
+      - name: Download coverage report
+        uses: actions/download-artifact@v4
         with:
-          go-version: '1.26.0'
-      - name: Install ALSA dev headers (for voice CGO)
-        run: sudo apt-get update && sudo apt-get install -y libasound2-dev
-      - name: Test with coverage
-        run: go test ./... -coverprofile=coverage.out -count=1
+          name: go-coverage
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v8
         env:
