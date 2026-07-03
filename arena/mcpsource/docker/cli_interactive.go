@@ -21,7 +21,7 @@ func (r *realCLI) Run(ctx context.Context, spec RunSpec) (string, error) {
 // has no stateful shutdown to preserve.
 func (r *realCLI) Stop(ctx context.Context, id string) error {
 	// #nosec G204 -- docker binary is fixed; id is a container ID we just produced.
-	return exec.CommandContext(ctx, "docker", "stop", "--time=3", id).Run()
+	return exec.CommandContext(ctx, "docker", "stop", "--time=3", id).Run() // NOSONAR S4036
 }
 
 // Exec runs `docker exec <id> <argv...>` and returns stdout.
@@ -34,7 +34,7 @@ func (r *realCLI) Exec(ctx context.Context, id string, argv []string) (string, e
 // returns its trimmed stdout.
 func execDockerOutput(ctx context.Context, argv []string) (string, error) {
 	// #nosec G204 -- docker binary is fixed; argv is built from RunSpec with typed fields.
-	out, err := exec.CommandContext(ctx, "docker", argv...).Output()
+	out, err := exec.CommandContext(ctx, "docker", argv...).Output() // NOSONAR S4036
 	if err != nil {
 		return "", fmt.Errorf("docker %s: %w", strings.Join(argv, " "), err)
 	}
