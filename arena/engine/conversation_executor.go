@@ -93,70 +93,87 @@ func (ce *DefaultConversationExecutor) executeWithoutStreaming(
 ) *ConversationResult {
 	// Execute each turn in the scenario
 	for turnIdx, scenarioTurn := range req.Scenario.Turns {
-		// Enrich context with turn information
-		turnCtx := logger.WithTurnID(ctx, fmt.Sprintf("turn-%d", turnIdx))
-		if req.ContextEnricher != nil {
-			turnCtx = req.ContextEnricher(turnCtx)
-		}
-
-		ce.notifyTurnStarted(emitter, turnIdx, scenarioTurn.Role, req.Scenario.ID)
-		ce.debugOnUserTurnAssertions(scenarioTurn, turnIdx)
-
-		// Issue #1374: capture the live workflow state at TURN START (the state
-		// whose prompt drives this turn) and the current assistant-message count,
-		// so after the turn succeeds we can stamp current_workflow_state onto the
-		// new assistant message — and only when one was actually produced.
-		var turnStartState map[string]interface{}
-		var preAssistantCount int
-		if req.CurrentWorkflowState != nil && req.StampWorkflowState != nil {
-			turnStartState = req.CurrentWorkflowState()
-			preAssistantCount = ce.countAssistantMessages(ctx, req)
-		}
-
-		err := ce.executeNonStreamingTurn(turnCtx, req, scenarioTurn)
-
-		if err != nil {
-			logger.Error("Turn execution failed",
-				"turn", turnIdx,
-				"role", scenarioTurn.Role,
-				"error", err)
-			ce.notifyTurnCompleted(emitter, turnIdx, scenarioTurn.Role, req.Scenario.ID, err)
-
-			// Load messages from StateStore (they were saved before validation failed)
-			result := ce.buildResultFromStateStore(ctx, req)
-			result.Failed = true
-			result.Error = err.Error()
+		if result := ce.runNonStreamingTurn(ctx, req, emitter, turnIdx, scenarioTurn); result != nil {
 			return result
 		}
-
-		// Commit deferred workflow transitions after the pipeline completes
-		if req.PostTurnHook != nil {
-			if hookErr := req.PostTurnHook(); hookErr != nil {
-				logger.Error("Post-turn hook failed", "turn", turnIdx, "error", hookErr)
-			}
-		}
-
-		// Issue #1374: stamp the turn-start workflow state onto the assistant
-		// message this turn produced. Order vs PostTurnHook is irrelevant —
-		// turnStartState was captured before the turn ran. Skip plain user turns
-		// that produced no new assistant message. Side-effect-only.
-		if req.StampWorkflowState != nil && ce.countAssistantMessages(ctx, req) > preAssistantCount {
-			req.StampWorkflowState(turnStartState)
-		}
-
-		ce.notifyTurnCompleted(emitter, turnIdx, scenarioTurn.Role, req.Scenario.ID, nil)
-		logger.Debug("Turn completed",
-			"turn", turnIdx,
-			"role", scenarioTurn.Role)
-
-		// Fire SessionHook.OnSessionUpdate for each completed turn.
-		// Reads messages from the state store so the event carries the
-		// current transcript, not just the turn's input.
-		ce.fireSessionUpdate(turnCtx, req, turnIdx)
 	}
 
 	// Load final conversation state from StateStore
 	return ce.buildResultFromStateStore(ctx, req)
+}
+
+// runNonStreamingTurn executes a single non-streaming turn and its surrounding
+// bookkeeping (workflow-state stamping, post-turn hook, session update events).
+// It returns a non-nil ConversationResult only when the turn failed and the
+// caller should stop the conversation early; nil means continue to the next turn.
+func (ce *DefaultConversationExecutor) runNonStreamingTurn(
+	ctx context.Context,
+	req *ConversationRequest,
+	emitter *events.Emitter,
+	turnIdx int,
+	scenarioTurn arenaconfig.TurnDefinition,
+) *ConversationResult {
+	// Enrich context with turn information
+	turnCtx := logger.WithTurnID(ctx, fmt.Sprintf("turn-%d", turnIdx))
+	if req.ContextEnricher != nil {
+		turnCtx = req.ContextEnricher(turnCtx)
+	}
+
+	ce.notifyTurnStarted(emitter, turnIdx, scenarioTurn.Role, req.Scenario.ID)
+	ce.debugOnUserTurnAssertions(scenarioTurn, turnIdx)
+
+	// Issue #1374: capture the live workflow state at TURN START (the state
+	// whose prompt drives this turn) and the current assistant-message count,
+	// so after the turn succeeds we can stamp current_workflow_state onto the
+	// new assistant message — and only when one was actually produced.
+	var turnStartState map[string]interface{}
+	var preAssistantCount int
+	if req.CurrentWorkflowState != nil && req.StampWorkflowState != nil {
+		turnStartState = req.CurrentWorkflowState()
+		preAssistantCount = ce.countAssistantMessages(ctx, req)
+	}
+
+	err := ce.executeNonStreamingTurn(turnCtx, req, scenarioTurn)
+
+	if err != nil {
+		logger.Error("Turn execution failed",
+			"turn", turnIdx,
+			"role", scenarioTurn.Role,
+			"error", err)
+		ce.notifyTurnCompleted(emitter, turnIdx, scenarioTurn.Role, req.Scenario.ID, err)
+
+		// Load messages from StateStore (they were saved before validation failed)
+		result := ce.buildResultFromStateStore(ctx, req)
+		result.Failed = true
+		result.Error = err.Error()
+		return result
+	}
+
+	// Commit deferred workflow transitions after the pipeline completes
+	if req.PostTurnHook != nil {
+		if hookErr := req.PostTurnHook(); hookErr != nil {
+			logger.Error("Post-turn hook failed", "turn", turnIdx, "error", hookErr)
+		}
+	}
+
+	// Issue #1374: stamp the turn-start workflow state onto the assistant
+	// message this turn produced. Order vs PostTurnHook is irrelevant —
+	// turnStartState was captured before the turn ran. Skip plain user turns
+	// that produced no new assistant message. Side-effect-only.
+	if req.StampWorkflowState != nil && ce.countAssistantMessages(ctx, req) > preAssistantCount {
+		req.StampWorkflowState(turnStartState)
+	}
+
+	ce.notifyTurnCompleted(emitter, turnIdx, scenarioTurn.Role, req.Scenario.ID, nil)
+	logger.Debug("Turn completed",
+		"turn", turnIdx,
+		"role", scenarioTurn.Role)
+
+	// Fire SessionHook.OnSessionUpdate for each completed turn.
+	// Reads messages from the state store so the event carries the
+	// current transcript, not just the turn's input.
+	ce.fireSessionUpdate(turnCtx, req, turnIdx)
+	return nil
 }
 
 // countAssistantMessages returns the number of assistant messages currently
@@ -321,7 +338,7 @@ func (ce *DefaultConversationExecutor) notifyTurnCompleted(
 }
 
 // buildTurnRequest creates a TurnRequest from the conversation request and scenario turn
-func (ce *DefaultConversationExecutor) buildTurnRequest( //nolint:gocognit // pre-existing complexity, unchanged by move
+func (ce *DefaultConversationExecutor) buildTurnRequest(
 	req ConversationRequest, scenarioTurn arenaconfig.TurnDefinition,
 ) turnexecutors.TurnRequest {
 	baseDir := ""
@@ -333,63 +350,11 @@ func (ce *DefaultConversationExecutor) buildTurnRequest( //nolint:gocognit // pr
 	if ce.promptRegistry != nil {
 		metadata["prompt_registry"] = ce.promptRegistry
 	}
-	// Determine temperature: use override > config default (if set) > provider default (via 0)
-	temperature := float64(req.Config.Defaults.Temperature)
-	if req.Temperature != nil {
-		temperature = *req.Temperature
-	} else if req.Config.Defaults.Temperature == 0 {
-		// Config has no temperature set, pass 0 to let provider use its default
-		temperature = 0
-	}
 
-	// Determine max_tokens: use override > config default (if set) > provider default (via 0)
-	maxTokens := req.Config.Defaults.MaxTokens
-	if req.MaxTokens != nil {
-		maxTokens = *req.MaxTokens
-	} else if req.Config.Defaults.MaxTokens == 0 {
-		// Config has no max_tokens set, pass 0 to let provider use its default
-		maxTokens = 0
-	}
-
-	// Build template vars: arena.yaml prompt-config vars (matched by task_type)
-	// overlaid with the scenario's own Variables block (scenario wins). Issue
-	// #1292: Scenario.Variables was previously ignored here. Copy into a fresh
-	// map so the shared LoadedPromptConfigs vars are never mutated.
-	var promptVars map[string]string
-	if req.Config != nil && req.Scenario != nil {
-		for _, promptConfigData := range req.Config.LoadedPromptConfigs {
-			if promptConfigData.TaskType == req.Scenario.TaskType {
-				promptVars = make(map[string]string, len(promptConfigData.Vars))
-				for k, v := range promptConfigData.Vars {
-					promptVars[k] = v
-				}
-				break
-			}
-		}
-	}
-	if scenarioVars := scenarioVariables(req.Scenario); len(scenarioVars) > 0 {
-		if promptVars == nil {
-			promptVars = make(map[string]string, len(scenarioVars))
-		}
-		for k, v := range scenarioVars {
-			promptVars[k] = v
-		}
-	}
-
-	// Resolve the active composition for the current workflow state (RFC 0010).
-	// Non-workflow turns and non-composition states leave this nil.
-	var activeComposition *composition.Composition
-	if req.ActiveCompositionResolver != nil {
-		activeComposition = req.ActiveCompositionResolver()
-	}
-
-	// RFC 0010 Task 5: reset the per-run composition recorder at the start of
-	// each turn so stale outputs from the previous turn do not bleed into the
-	// current turn's assertion context. Nil-safe: non-composition runs have no
-	// recorder set on the ConversationRequest.
-	if req.CompositionRecorder != nil {
-		req.CompositionRecorder.Reset()
-	}
+	temperature := resolveTurnTemperature(req)
+	maxTokens := resolveTurnMaxTokens(req)
+	promptVars := buildTurnPromptVars(req)
+	activeComposition := resolveActiveComposition(req)
 
 	return turnexecutors.TurnRequest{
 		Provider:            req.Provider,
@@ -419,6 +384,76 @@ func (ce *DefaultConversationExecutor) buildTurnRequest( //nolint:gocognit // pr
 		ActiveComposition:   activeComposition,
 		CompositionRecorder: req.CompositionRecorder,
 	}
+}
+
+// resolveTurnTemperature determines the temperature for a turn: a per-request
+// override wins, otherwise the config default (0 lets the provider decide).
+func resolveTurnTemperature(req ConversationRequest) float64 {
+	if req.Temperature != nil {
+		return *req.Temperature
+	}
+	return float64(req.Config.Defaults.Temperature)
+}
+
+// resolveTurnMaxTokens determines the max_tokens for a turn: a per-request
+// override wins, otherwise the config default (0 lets the provider decide).
+func resolveTurnMaxTokens(req ConversationRequest) int {
+	if req.MaxTokens != nil {
+		return *req.MaxTokens
+	}
+	return req.Config.Defaults.MaxTokens
+}
+
+// buildTurnPromptVars builds the template vars for a turn: arena.yaml
+// prompt-config vars (matched by task_type) overlaid with the scenario's own
+// Variables block (scenario wins). Issue #1292: Scenario.Variables was
+// previously ignored here. Values are copied into a fresh map so the shared
+// LoadedPromptConfigs vars are never mutated.
+func buildTurnPromptVars(req ConversationRequest) map[string]string {
+	promptVars := promptConfigVarsForTask(req)
+	if scenarioVars := scenarioVariables(req.Scenario); len(scenarioVars) > 0 {
+		if promptVars == nil {
+			promptVars = make(map[string]string, len(scenarioVars))
+		}
+		for k, v := range scenarioVars {
+			promptVars[k] = v
+		}
+	}
+	return promptVars
+}
+
+// promptConfigVarsForTask returns a fresh copy of the arena.yaml prompt-config
+// vars whose task_type matches the scenario, or nil when there is no match.
+func promptConfigVarsForTask(req ConversationRequest) map[string]string {
+	if req.Config == nil || req.Scenario == nil {
+		return nil
+	}
+	for _, promptConfigData := range req.Config.LoadedPromptConfigs {
+		if promptConfigData.TaskType != req.Scenario.TaskType {
+			continue
+		}
+		promptVars := make(map[string]string, len(promptConfigData.Vars))
+		for k, v := range promptConfigData.Vars {
+			promptVars[k] = v
+		}
+		return promptVars
+	}
+	return nil
+}
+
+// resolveActiveComposition resolves the active composition for the current
+// workflow state (RFC 0010) and resets the per-run composition recorder so
+// stale outputs from the previous turn do not bleed into this turn's assertion
+// context. Non-workflow / non-composition runs leave both nil-safe no-ops.
+func resolveActiveComposition(req ConversationRequest) *composition.Composition {
+	var activeComposition *composition.Composition
+	if req.ActiveCompositionResolver != nil {
+		activeComposition = req.ActiveCompositionResolver()
+	}
+	if req.CompositionRecorder != nil {
+		req.CompositionRecorder.Reset()
+	}
+	return activeComposition
 }
 
 // resolveEvalOrchestrator returns the per-run orchestrator from the request if set,
