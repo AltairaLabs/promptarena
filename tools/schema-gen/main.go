@@ -9,8 +9,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/AltairaLabs/PromptKit/pkg/config"
 	"github.com/AltairaLabs/promptarena/tools/schema-gen/generators"
+
+	"github.com/AltairaLabs/PromptKit/pkg/config"
 )
 
 const (

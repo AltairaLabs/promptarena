@@ -182,6 +182,7 @@ linters:
       - path: 'tools/schema-gen/'
         linters:
           - goconst  # schema builders assemble example JSON with intentionally repeated keys
+          - gosec    # G101 false positives on example "credential" field names
       - path: 'examples/'
         linters:
           - mnd
