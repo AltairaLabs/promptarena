@@ -64,3 +64,34 @@ func TestBuildTransitionMeta(t *testing.T) {
 		assert.Equal(t, true, ws["terminal"])
 	})
 }
+
+func TestBuildEntryStateMeta(t *testing.T) {
+	e := &Engine{
+		workflowSpec: &workflow.Spec{
+			States: map[string]*workflow.State{
+				"start": {Description: "the beginning", OnEvent: map[string]string{"go": "next"}},
+				"bare":  {},
+			},
+		},
+	}
+
+	t.Run("includes description and available events", func(t *testing.T) {
+		ws := e.buildEntryStateMeta("start")
+		assert.Equal(t, "start", ws["current_state"])
+		assert.Equal(t, "the beginning", ws["description"])
+		assert.Equal(t, map[string]string{"go": "next"}, ws["available_events"])
+	})
+
+	t.Run("bare state only carries current_state", func(t *testing.T) {
+		ws := e.buildEntryStateMeta("bare")
+		assert.Equal(t, "bare", ws["current_state"])
+		assert.NotContains(t, ws, "description")
+		assert.NotContains(t, ws, "available_events")
+	})
+
+	t.Run("unknown state only carries current_state", func(t *testing.T) {
+		ws := e.buildEntryStateMeta("missing")
+		assert.Equal(t, "missing", ws["current_state"])
+		assert.Len(t, ws, 1)
+	})
+}
