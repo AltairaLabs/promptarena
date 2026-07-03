@@ -51,6 +51,38 @@ updates:
       prefix: "chore(deps)"
       include: "scope"
 
+  # npm - promptarena GitHub Action
+  - package-ecosystem: "npm"
+    directory: "/.github/actions/promptarena-action"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "npm"
+      - "github-action"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+
+  # npm - packc GitHub Action
+  - package-ecosystem: "npm"
+    directory: "/.github/actions/packc-action"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "npm"
+      - "github-action"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+
   # GitHub Actions workflows
   - package-ecosystem: "github-actions"
     directory: "/"

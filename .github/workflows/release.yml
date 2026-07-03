@@ -52,3 +52,24 @@ jobs:
         run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  major-tag:
+    name: Update floating major tag (for @vN action refs)
+    needs: goreleaser
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # Consumers reference the composite actions as
+      # AltairaLabs/promptarena/.github/actions/<name>@v1. Move the floating
+      # major tag (v1) to this release so that ref keeps resolving. This tag is
+      # co-located with the latest vX.Y.Z release commit, so Go ignores it
+      # (not a complete semver version) and GoReleaser changelogs are unaffected.
+      - name: Move major tag to this release
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          MAJOR="${GITHUB_REF_NAME%%.*}"   # v1.5.6 -> v1
+          git tag -fa "$MAJOR" -m "Release $GITHUB_REF_NAME"
+          git push origin "$MAJOR" --force
