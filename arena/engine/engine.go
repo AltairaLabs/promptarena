@@ -768,7 +768,7 @@ func (e *Engine) closeEventStore() error {
 	return nil
 }
 
-// GetStateStore returns the engine's state store for accessing run results
+// ExecuteRuns executes all combinations in the plan and returns their run IDs.
 // Runs are executed concurrently up to the specified concurrency limit, with run IDs
 // collected in order matching the input plan.
 //
@@ -791,17 +791,11 @@ func (e *Engine) closeEventStore() error {
 // if execution setup fails. Individual run errors are stored in StateStore, not returned here.
 func (e *Engine) ExecuteRuns(ctx context.Context, plan *RunPlan, concurrency int) ([]string, error) {
 	runIDs := make([]string, len(plan.Combinations))
-	errors := make([]error, len(plan.Combinations))
+	errs := make([]error, len(plan.Combinations))
 
-	// workItem pairs a combination with its index in the results slice.
-	type workItem struct {
-		idx   int
-		combo RunCombination
-	}
-
-	work := make(chan workItem, len(plan.Combinations))
+	work := make(chan runWorkItem, len(plan.Combinations))
 	for i, combo := range plan.Combinations {
-		work <- workItem{idx: i, combo: combo}
+		work <- runWorkItem{idx: i, combo: combo}
 	}
 	close(work)
 
@@ -812,39 +806,13 @@ func (e *Engine) ExecuteRuns(ctx context.Context, plan *RunPlan, concurrency int
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			for item := range work {
-				// Check cancellation before starting work.
-				if ctx.Err() != nil {
-					mu.Lock()
-					runIDs[item.idx] = ""
-					errors[item.idx] = ctx.Err()
-					mu.Unlock()
-					continue
-				}
-
-				runID, err := e.executeRun(ctx, item.combo)
-
-				mu.Lock()
-				runIDs[item.idx] = runID
-				errors[item.idx] = err
-				mu.Unlock()
-
-				if runID != "" {
-					e.fireRunCompletedHooks(runID, err)
-				}
-			}
+			e.runWorker(ctx, work, runIDs, errs, &mu)
 		}()
 	}
 
 	wg.Wait()
 
-	// Check if any executions failed to save metadata
-	var executionErrors []error
-	for _, err := range errors {
-		if err != nil {
-			executionErrors = append(executionErrors, err)
-		}
-	}
+	executionErrors := collectExecutionErrors(errs)
 
 	// Aggregate trial results for scenarios with Trials > 1
 	if arenaStore, ok := e.stateStore.(*arenastore.ArenaStateStore); ok {
@@ -856,6 +824,57 @@ func (e *Engine) ExecuteRuns(ctx context.Context, plan *RunPlan, concurrency int
 	}
 
 	return runIDs, nil
+}
+
+// runWorkItem pairs a combination with its index in the results slice.
+type runWorkItem struct {
+	idx   int
+	combo RunCombination
+}
+
+// runWorker drains the work channel, executing each combination and recording
+// its run ID and error into the shared slices (guarded by mu). Combinations
+// dequeued after the context is canceled are recorded as canceled without
+// running. Run-completed hooks fire for every run that produced a run ID.
+func (e *Engine) runWorker(
+	ctx context.Context,
+	work <-chan runWorkItem,
+	runIDs []string,
+	errs []error,
+	mu *sync.Mutex,
+) {
+	for item := range work {
+		// Check cancellation before starting work.
+		if ctx.Err() != nil {
+			mu.Lock()
+			runIDs[item.idx] = ""
+			errs[item.idx] = ctx.Err()
+			mu.Unlock()
+			continue
+		}
+
+		runID, err := e.executeRun(ctx, item.combo)
+
+		mu.Lock()
+		runIDs[item.idx] = runID
+		errs[item.idx] = err
+		mu.Unlock()
+
+		if runID != "" {
+			e.fireRunCompletedHooks(runID, err)
+		}
+	}
+}
+
+// collectExecutionErrors returns the non-nil errors from a per-run error slice.
+func collectExecutionErrors(errs []error) []error {
+	var executionErrors []error
+	for _, err := range errs {
+		if err != nil {
+			executionErrors = append(executionErrors, err)
+		}
+	}
+	return executionErrors
 }
 
 // GetStateStore returns the engine's state store for accessing run results

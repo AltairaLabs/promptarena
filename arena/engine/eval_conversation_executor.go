@@ -276,18 +276,7 @@ func (e *EvalConversationExecutor) applyTurnAssertions(
 	if e.evalOrchestrator == nil {
 		logger.Warn("Turn assertions defined but eval runner not configured — marking all as failed",
 			"assertion_count", len(assertionConfigs))
-		results := make([]assertions.AssertionResult, len(assertionConfigs))
-		for i, ac := range assertionConfigs {
-			results[i] = assertions.AssertionResult{
-				Passed:  false,
-				Message: ac.Message,
-				Details: map[string]interface{}{"error": "eval runner not configured"},
-			}
-		}
-		if msg.Meta == nil {
-			msg.Meta = make(map[string]interface{})
-		}
-		msg.Meta["assertions"] = results
+		setMessageAssertions(msg, unconfiguredAssertionResults(assertionConfigs))
 		return
 	}
 
@@ -298,12 +287,34 @@ func (e *EvalConversationExecutor) applyTurnAssertions(
 		evals.TriggerEveryTurn,
 	)
 
-	// Convert eval results to assertion results for message metadata
+	setMessageAssertions(msg, turnAssertionResults(evalResults, assertionConfigs))
+}
+
+// unconfiguredAssertionResults marks every configured assertion as failed with
+// an "eval runner not configured" detail. Used when turn assertions are defined
+// but no eval orchestrator is available to run them.
+func unconfiguredAssertionResults(assertionConfigs []assertions.AssertionConfig) []assertions.AssertionResult {
+	results := make([]assertions.AssertionResult, len(assertionConfigs))
+	for i, ac := range assertionConfigs {
+		results[i] = assertions.AssertionResult{
+			Passed:  false,
+			Message: ac.Message,
+			Details: map[string]interface{}{"error": "eval runner not configured"},
+		}
+	}
+	return results
+}
+
+// turnAssertionResults converts eval results into assertion results for message
+// metadata. The assertion's configured message becomes the headline; the
+// handler's own explanation is preserved under details.explanation.
+func turnAssertionResults(
+	evalResults []evals.EvalResult,
+	assertionConfigs []assertions.AssertionConfig,
+) []assertions.AssertionResult {
 	convResults := assertions.ConvertEvalResults(evalResults)
 	results := make([]assertions.AssertionResult, len(convResults))
 	for i, cr := range convResults {
-		// Surface the assertion's configured message as the headline; keep the
-		// handler explanation under details.explanation.
 		dispMsg := cr.Message
 		details := cr.Details
 		if i < len(assertionConfigs) && assertionConfigs[i].Message != "" {
@@ -321,8 +332,12 @@ func (e *EvalConversationExecutor) applyTurnAssertions(
 			Message: dispMsg,
 		}
 	}
+	return results
+}
 
-	// Store in message metadata
+// setMessageAssertions stores assertion results in a message's metadata,
+// allocating the Meta map when needed.
+func setMessageAssertions(msg *types.Message, results []assertions.AssertionResult) {
 	if msg.Meta == nil {
 		msg.Meta = make(map[string]interface{})
 	}

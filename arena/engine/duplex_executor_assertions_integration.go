@@ -31,70 +31,57 @@ func (de *DuplexConversationExecutor) evaluateTurnAssertions(
 		return
 	}
 
-	// Find the latest assistant message
-	var lastAssistantMsg *types.Message
-	for i := len(messages) - 1; i >= 0; i-- {
-		if messages[i].Role == roleAssistant {
-			lastAssistantMsg = &messages[i]
-			break
-		}
-	}
-
+	lastAssistantMsg := lastAssistantMessage(messages)
 	if lastAssistantMsg == nil {
 		logger.Debug("No assistant message found for assertion evaluation", "turn", turnIdx)
 		return
 	}
 
-	// Convert turn assertions to assertion configs
-	assertionConfigs := make([]arenaassertions.AssertionConfig, len(turn.Assertions))
-	for i, a := range turn.Assertions {
+	if de.evalOrchestrator == nil {
+		return
+	}
+
+	assertionConfigs := turnAssertionConfigs(turn.Assertions)
+	evalResults := de.evalOrchestrator.RunAssertionsAsEvals(
+		ctx, assertionConfigs, messages,
+		len(messages)-1, req.ConversationID,
+		evals.TriggerEveryTurn,
+	)
+
+	results := turnAssertionResults(evalResults, assertionConfigs)
+
+	// Store results in the assistant message's metadata
+	de.storeAssertionResults(req, lastAssistantMsg, results)
+
+	logger.Debug("Turn assertions evaluated via eval path",
+		"turn", turnIdx,
+		"assertionCount", len(assertionConfigs),
+		"eval_result_count", len(evalResults))
+}
+
+// lastAssistantMessage returns a pointer to the most recent assistant message
+// in the slice, or nil when there is none.
+func lastAssistantMessage(messages []types.Message) *types.Message {
+	for i := len(messages) - 1; i >= 0; i-- {
+		if messages[i].Role == roleAssistant {
+			return &messages[i]
+		}
+	}
+	return nil
+}
+
+// turnAssertionConfigs converts a turn's assertion definitions into the
+// AssertionConfig form consumed by the eval orchestrator.
+func turnAssertionConfigs(defs []arenaconfig.AssertionConfig) []arenaassertions.AssertionConfig {
+	assertionConfigs := make([]arenaassertions.AssertionConfig, len(defs))
+	for i, a := range defs {
 		assertionConfigs[i] = arenaassertions.AssertionConfig{
 			Type:    a.Type,
 			Params:  a.Params,
 			Message: a.Message,
 		}
 	}
-
-	// Run turn assertions through EvalOrchestrator
-	if de.evalOrchestrator != nil {
-		evalResults := de.evalOrchestrator.RunAssertionsAsEvals(
-			ctx, assertionConfigs, messages,
-			len(messages)-1, req.ConversationID,
-			evals.TriggerEveryTurn,
-		)
-
-		// Convert eval results to assertion results for message metadata
-		convResults := arenaassertions.ConvertEvalResults(evalResults)
-		results := make([]arenaassertions.AssertionResult, len(convResults))
-		for i, cr := range convResults {
-			// Surface the assertion's configured message as the headline; keep the
-			// handler explanation under details.explanation.
-			dispMsg := cr.Message
-			details := cr.Details
-			if i < len(assertionConfigs) && assertionConfigs[i].Message != "" {
-				if details == nil {
-					details = map[string]interface{}{}
-				}
-				if cr.Message != "" {
-					details["explanation"] = cr.Message
-				}
-				dispMsg = assertionConfigs[i].Message
-			}
-			results[i] = arenaassertions.AssertionResult{
-				Passed:  cr.Passed,
-				Details: details,
-				Message: dispMsg,
-			}
-		}
-
-		// Store results in the assistant message's metadata
-		de.storeAssertionResults(req, lastAssistantMsg, results)
-
-		logger.Debug("Turn assertions evaluated via eval path",
-			"turn", turnIdx,
-			"assertionCount", len(assertionConfigs),
-			"eval_result_count", len(evalResults))
-	}
+	return assertionConfigs
 }
 
 // storeAssertionResults stores assertion results in the state store.
