@@ -16,6 +16,7 @@ import (
 	"github.com/AltairaLabs/PromptKit/pkg/config"
 	"github.com/AltairaLabs/PromptKit/runtime/events"
 	"github.com/AltairaLabs/PromptKit/runtime/logger"
+	"github.com/AltairaLabs/PromptKit/runtime/pipeline"
 	"github.com/AltairaLabs/PromptKit/runtime/pipeline/stage"
 	"github.com/AltairaLabs/PromptKit/runtime/providers/base"
 	"github.com/AltairaLabs/PromptKit/runtime/streaming"
@@ -639,21 +640,7 @@ func (de *DuplexConversationExecutor) processSelfPlayDuplexTurn(
 	if err != nil {
 		return fmt.Errorf("failed to get content generator for turn %d: %w", turnIdx, err)
 	}
-
-	// Wire the TTS provider's persona rubric into the text generator so
-	// the selfplay LLM sees the [shouts]/[sighs] vocabulary in its system
-	// prompt. The audio path through GetAudioContentGenerator does this
-	// for free; the duplex executor splits text generation and synthesis
-	// across two registry calls, so we have to mirror the wiring here or
-	// the rubric never reaches the LLM and the persona's `expressive: true`
-	// opt-in is silently a no-op.
-	if cg, ok := textGen.(*selfplay.ContentGenerator); ok {
-		if ttsService, terr := de.selfPlayRegistry.GetTTSRegistry().GetForProvider(ttsProvider); terr == nil {
-			if rp, ok := ttsService.(tts.PersonaRubricProvider); ok {
-				cg.WithProviderRubric(rp.PersonaRubric())
-			}
-		}
-	}
+	de.wireSelfplayRubric(textGen, ttsProvider)
 
 	// Collect conversation history from state store and trim it to what
 	// the selfplay LLM actually needs: spoken turns only. Without this
@@ -665,58 +652,97 @@ func (de *DuplexConversationExecutor) processSelfPlayDuplexTurn(
 	// context into the LLM's output ("stuff that isn't in the prompt").
 	history := selfplayHistoryView(de.getConversationHistory(ctx, req))
 
-	// Generate text. Pass the selfplay turn number so the mock provider gets the
-	// correct turn response.
-	opts := &selfplay.GeneratorOptions{
-		SelfplayTurnIndex: selfplayTurnNum,
-	}
-	textResult, err := textGen.NextUserTurn(ctx, history, req.Scenario.ID, opts)
+	generatedText, textResult, err := generateSelfplayText(
+		ctx, textGen, history, req.Scenario.ID, selfplayTurnNum, turnIdx)
 	if err != nil {
-		return fmt.Errorf("failed to generate text for turn %d: %w", turnIdx, err)
+		return err
+	}
+
+	turnMeta := de.buildSelfplayTurnMeta(turn, selfplayTurnNum, textResult)
+
+	return de.streamTextAsAudio(
+		ctx, generatedText, ttsProvider, turnMeta,
+		inputChan, outputChan,
+	)
+}
+
+// wireSelfplayRubric wires the TTS provider's persona rubric into the selfplay
+// text generator so the LLM sees the [shouts]/[sighs] vocabulary in its system
+// prompt. The audio path does this for free; the duplex executor splits text
+// generation and synthesis across two registry calls, so the wiring is mirrored
+// here — otherwise the rubric never reaches the LLM and a persona's
+// `expressive: true` opt-in is silently a no-op. No-op unless every layer opts in.
+func (de *DuplexConversationExecutor) wireSelfplayRubric(textGen selfplay.Generator, ttsProvider *config.Provider) {
+	cg, ok := textGen.(*selfplay.ContentGenerator)
+	if !ok {
+		return
+	}
+	ttsService, terr := de.selfPlayRegistry.GetTTSRegistry().GetForProvider(ttsProvider)
+	if terr != nil {
+		return
+	}
+	if rp, ok := ttsService.(tts.PersonaRubricProvider); ok {
+		cg.WithProviderRubric(rp.PersonaRubric())
+	}
+}
+
+// generateSelfplayText runs the selfplay text generator for one turn and
+// validates that it produced non-empty content. The selfplay turn number is
+// forwarded so the mock provider selects the correct canned response. Returns
+// the generated text and the raw execution result (for metadata extraction).
+func generateSelfplayText(
+	ctx context.Context,
+	textGen selfplay.Generator,
+	history []types.Message,
+	scenarioID string,
+	selfplayTurnNum, turnIdx int,
+) (string, *pipeline.ExecutionResult, error) {
+	opts := &selfplay.GeneratorOptions{SelfplayTurnIndex: selfplayTurnNum}
+	textResult, err := textGen.NextUserTurn(ctx, history, scenarioID, opts)
+	if err != nil {
+		return "", nil, fmt.Errorf("failed to generate text for turn %d: %w", turnIdx, err)
 	}
 	if textResult == nil || textResult.Response == nil {
-		return fmt.Errorf("self-play turn %d produced no text response", turnIdx)
+		return "", nil, fmt.Errorf("self-play turn %d produced no text response", turnIdx)
 	}
 	generatedText := textResult.Response.Content
 	if generatedText == "" {
-		return fmt.Errorf("self-play turn %d produced empty text", turnIdx)
+		return "", nil, fmt.Errorf("self-play turn %d produced empty text", turnIdx)
 	}
+	return generatedText, textResult, nil
+}
 
-	// Build selfplay-specific user-message metadata. The shared helper writes
-	// turn_id itself; everything else here is caller-supplied.
+// buildSelfplayTurnMeta assembles the user-message metadata for a selfplay
+// duplex turn: the selfplay flags, dev-panel keys (persona spec + resolved
+// prompt), a curated subset of the generation result's metadata, and the
+// persona LLM call's cost so the report accounts for the synthetic-user spend.
+func (de *DuplexConversationExecutor) buildSelfplayTurnMeta(
+	turn *arenaconfig.TurnDefinition,
+	selfplayTurnNum int,
+	textResult *pipeline.ExecutionResult,
+) map[string]any {
 	turnMeta := map[string]any{
 		"self_play":           true,
 		"persona":             turn.Persona,
 		"selfplay_turn_index": selfplayTurnNum,
 	}
 
-	// Surface the persona definition and the resolved system prompt on the
-	// user message so the arena dev panel can show "what drove this turn?"
-	// alongside the generated text. Two distinct keys keep concerns
-	// separated: _persona_yaml is the source-of-truth spec; _selfplay_prompt
-	// is the rubric-prefixed, variable-substituted string actually sent to
-	// the selfplay LLM. Underscore prefix matches the existing convention
-	// for dev-only metadata that downstream consumers should ignore.
+	// Surface the persona definition and the resolved system prompt so the arena
+	// dev panel can show "what drove this turn?" alongside the generated text.
 	stampSelfplayDevMeta(turnMeta, de.selfPlayRegistry, turn.Persona, textResult.Metadata)
 
-	// Copy only relevant metadata from the text generation result. Avoid copying
+	// Copy only relevant metadata from the generation result. Avoid copying
 	// pipeline internal fields like system_prompt, base_variables, etc.
 	if textResult.Metadata != nil {
-		relevantFields := []string{
-			"self_play_provider",
-			"validation_warning",
-			"warning_type",
-		}
-		for _, field := range relevantFields {
+		for _, field := range []string{"self_play_provider", "validation_warning", "warning_type"} {
 			if v, ok := textResult.Metadata[field]; ok {
 				turnMeta[field] = v
 			}
 		}
 	}
 
-	// Capture the persona LLM call's cost+tokens so the report can show
-	// what the synthetic user side cost. Without this the report only shows
-	// the agent-side cost, hiding ~50% of the run's spend on selfplay scenarios.
+	// Capture the persona LLM call's cost+tokens; without this the report hides
+	// ~50% of a selfplay run's spend (the synthetic user side).
 	if cost := textResult.CostInfo; cost.InputTokens > 0 || cost.OutputTokens > 0 || cost.TotalCost > 0 {
 		turnMeta["self_play_cost"] = map[string]any{
 			"input_tokens":    cost.InputTokens,
@@ -727,11 +753,7 @@ func (de *DuplexConversationExecutor) processSelfPlayDuplexTurn(
 			"total_cost_usd":  cost.TotalCost,
 		}
 	}
-
-	return de.streamTextAsAudio(
-		ctx, generatedText, ttsProvider, turnMeta,
-		inputChan, outputChan,
-	)
+	return turnMeta
 }
 
 // streamTextAsAudio synthesizes text → audio via a loaded TTS provider config
