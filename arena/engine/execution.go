@@ -14,12 +14,14 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/events"
 	"github.com/AltairaLabs/PromptKit/runtime/hooks"
 	"github.com/AltairaLabs/PromptKit/runtime/logger"
+	"github.com/AltairaLabs/PromptKit/runtime/providers"
 	runtimestore "github.com/AltairaLabs/PromptKit/runtime/statestore"
 	"github.com/AltairaLabs/PromptKit/runtime/telemetry"
 	"github.com/AltairaLabs/PromptKit/runtime/types"
 	"github.com/AltairaLabs/promptarena/arena/adapters"
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 	"github.com/AltairaLabs/promptarena/arena/artifacts"
+	arenaaudio "github.com/AltairaLabs/promptarena/arena/audio"
 	"github.com/AltairaLabs/promptarena/arena/statestore"
 )
 
@@ -447,7 +449,25 @@ func (e *Engine) executeRun(ctx context.Context, combo RunCombination) (runID st
 		return e.executeEvalRun(runCtx, combo, runID, startTime, arenaStore, runEmitter, saveError)
 	}
 
-	// Otherwise it's a scenario run
+	return e.executeScenarioRun(ctx, combo, runID, startTime, arenaStore, runEmitter, saveError)
+}
+
+// executeScenarioRun runs a single scenario-based combination. It is the
+// scenario branch of executeRun, split out to keep each function's cognitive
+// complexity manageable. The panic recovery for the run lives in executeRun;
+// this method owns the per-run lifecycle defers (timeout cancel, MCP cleanup,
+// session end, audio router close).
+//
+//nolint:gocognit // orchestration func; cohesive branches extracted into helpers
+func (e *Engine) executeScenarioRun(
+	ctx context.Context,
+	combo RunCombination,
+	runID string,
+	startTime time.Time,
+	arenaStore *statestore.ArenaStateStore,
+	runEmitter *events.Emitter,
+	saveError func(string) (string, error),
+) (string, error) {
 	// Get scenario
 	scenario, exists := e.scenarios[combo.ScenarioID]
 	if !exists {
@@ -499,24 +519,8 @@ func (e *Engine) executeRun(ctx context.Context, combo RunCombination) (runID st
 		return saveError(fmt.Sprintf("provider not found: %s", combo.ProviderID))
 	}
 
-	// Apply perturbation substitutions if this run has a perturbation variant
-	execScenario := scenario
-	if combo.PerturbationIndex >= 0 {
-		variants := ExpandPerturbations(scenario)
-		if combo.PerturbationIndex < len(variants) {
-			perturbed := *scenario
-			perturbed.Turns = ApplyPerturbation(scenario.Turns, variants[combo.PerturbationIndex])
-			execScenario = &perturbed
-		}
-	}
-
-	// Clone the eval orchestrator for this run so concurrent runs don't race
-	// on the shared runner's emitter. Workflow runs already get a clone via
-	// prepareWorkflowScenario; non-workflow runs need one too.
-	runOrch := workflowOrch
-	if runOrch == nil && e.evalOrchestrator != nil {
-		runOrch = e.evalOrchestrator.Clone()
-	}
+	execScenario := e.perturbedScenario(scenario, combo.PerturbationIndex)
+	runOrch := e.resolveRunOrchestrator(workflowOrch)
 
 	// Build a per-run AudioRouter when monitoring is enabled and the
 	// scenario is duplex. The engine doesn't own host playback — the router
@@ -558,6 +562,82 @@ func (e *Engine) executeRun(ctx context.Context, combo RunCombination) (runID st
 	defer endSession()
 
 	// Execute conversation
+	req := e.buildConversationRequest(combo, execScenario, provider, runOrch, audioRouter, runID, startTime)
+
+	convResult = e.conversationExecutor.ExecuteConversation(runCtx, req)
+
+	// Fire OnSessionEnd + ingest artifacts now, while the sandbox is alive and
+	// before eval/save. The deferred endSession registered above becomes a no-op
+	// once this runs; it only fires if we never reach here (panic / early return).
+	endSession()
+
+	if bail, msg := e.stampTimeoutError(runCtx, convResult, runTimeout); bail {
+		return saveError(msg)
+	}
+
+	// Enrich conversation messages with tool descriptor metadata for reports
+	e.enrichMessagesWithToolDescriptors(runCtx, arenaStore, runID)
+
+	// Enrich conversation messages with workflow state metadata for reports
+	if e.workflowTransExec != nil {
+		e.enrichMessagesWithWorkflowState(runCtx, arenaStore, runID)
+	}
+
+	// Calculate duration and cost
+	duration := time.Since(startTime)
+	cost := convResult.Cost.TotalCost
+
+	// Save run metadata to StateStore
+	if err := e.saveRunMetadata(runCtx, arenaStore, combo, convResult, runID, startTime, duration); err != nil {
+		return runID, fmt.Errorf("failed to save run metadata: %w", err)
+	}
+
+	e.notifyRunCompletion(runEmitter, convResult, runID, duration, cost)
+
+	return runID, nil
+}
+
+// perturbedScenario returns a copy of the scenario with perturbation
+// substitutions applied for the given variant index, or the original scenario
+// when no perturbation applies (index < 0 or out of range).
+func (e *Engine) perturbedScenario(scenario *arenaconfig.Scenario, perturbationIndex int) *arenaconfig.Scenario {
+	if perturbationIndex < 0 {
+		return scenario
+	}
+	variants := ExpandPerturbations(scenario)
+	if perturbationIndex >= len(variants) {
+		return scenario
+	}
+	perturbed := *scenario
+	perturbed.Turns = ApplyPerturbation(scenario.Turns, variants[perturbationIndex])
+	return &perturbed
+}
+
+// resolveRunOrchestrator returns the eval orchestrator to use for this run.
+// Workflow runs already receive a per-run clone via prepareWorkflowScenario;
+// non-workflow runs get a fresh clone here so concurrent runs don't race on
+// the shared runner's emitter.
+func (e *Engine) resolveRunOrchestrator(workflowOrch *EvalOrchestrator) *EvalOrchestrator {
+	if workflowOrch != nil {
+		return workflowOrch
+	}
+	if e.evalOrchestrator != nil {
+		return e.evalOrchestrator.Clone()
+	}
+	return nil
+}
+
+// buildConversationRequest assembles the ConversationRequest for a scenario run,
+// wiring workflow hooks and the state store configuration.
+func (e *Engine) buildConversationRequest(
+	combo RunCombination,
+	execScenario *arenaconfig.Scenario,
+	provider providers.Provider,
+	runOrch *EvalOrchestrator,
+	audioRouter *arenaaudio.AudioRouter,
+	runID string,
+	startTime time.Time,
+) ConversationRequest {
 	req := ConversationRequest{
 		Provider:         provider,
 		Scenario:         execScenario,
@@ -587,59 +667,43 @@ func (e *Engine) executeRun(ctx context.Context, combo RunCombination) (runID st
 	}
 	// Use RunID as ConversationID for Arena executions
 	req.ConversationID = runID
+	return req
+}
 
-	convResult = e.conversationExecutor.ExecuteConversation(runCtx, req)
-
-	// Fire OnSessionEnd + ingest artifacts now, while the sandbox is alive and
-	// before eval/save. The deferred endSession registered above becomes a no-op
-	// once this runs; it only fires if we never reach here (panic / early return).
-	endSession()
-
+// stampTimeoutError inspects the run context for a timeout and, if present,
+// stamps the timeout onto the conversation result so partial content survives
+// to the report. It returns bail=true (with an error message) only when there
+// is no partial content to preserve and the caller should synthesize an
+// error-only record instead.
+func (e *Engine) stampTimeoutError(
+	runCtx context.Context,
+	convResult *ConversationResult,
+	runTimeout time.Duration,
+) (bail bool, msg string) {
+	if runCtx.Err() == nil {
+		return false, ""
+	}
 	// Run timed out, but the executor may have produced a partial result
 	// (messages exchanged, conversation_assertions evaluated on what
 	// happened so far). Discarding it and synthesizing an error-only
 	// record loses signals that are useful even when the conversation
 	// didn't complete — e.g. an audio_emotion assertion on whichever
 	// turns DID happen, or tool-call counts up to the point of timeout.
-	// Stamp the timeout onto the result so the run is flagged as errored
-	// but the partial content survives to the report.
-	if runCtx.Err() != nil {
-		timeoutMsg := fmt.Sprintf("run timed out after %s", runTimeout)
-		if convResult == nil || convResult.Messages == nil {
-			// No partial content to preserve — fall back to synthetic error.
-			if convResult != nil && convResult.Error != "" {
-				timeoutMsg = fmt.Sprintf("%s: %s", timeoutMsg, convResult.Error)
-			}
-			return saveError(timeoutMsg)
+	timeoutMsg := fmt.Sprintf("run timed out after %s", runTimeout)
+	if convResult == nil || convResult.Messages == nil {
+		// No partial content to preserve — fall back to synthetic error.
+		if convResult != nil && convResult.Error != "" {
+			timeoutMsg = fmt.Sprintf("%s: %s", timeoutMsg, convResult.Error)
 		}
-		if convResult.Error != "" {
-			convResult.Error = fmt.Sprintf("%s: %s", timeoutMsg, convResult.Error)
-		} else {
-			convResult.Error = timeoutMsg
-		}
-		convResult.Failed = true
+		return true, timeoutMsg
 	}
-
-	// Enrich conversation messages with tool descriptor metadata for reports
-	e.enrichMessagesWithToolDescriptors(runCtx, arenaStore, runID)
-
-	// Enrich conversation messages with workflow state metadata for reports
-	if e.workflowTransExec != nil {
-		e.enrichMessagesWithWorkflowState(runCtx, arenaStore, runID)
+	if convResult.Error != "" {
+		convResult.Error = fmt.Sprintf("%s: %s", timeoutMsg, convResult.Error)
+	} else {
+		convResult.Error = timeoutMsg
 	}
-
-	// Calculate duration and cost
-	duration := time.Since(startTime)
-	cost := convResult.Cost.TotalCost
-
-	// Save run metadata to StateStore
-	if err := e.saveRunMetadata(runCtx, arenaStore, combo, convResult, runID, startTime, duration); err != nil {
-		return runID, fmt.Errorf("failed to save run metadata: %w", err)
-	}
-
-	e.notifyRunCompletion(runEmitter, convResult, runID, duration, cost)
-
-	return runID, nil
+	convResult.Failed = true
+	return false, ""
 }
 
 // enrichMessagesWithToolDescriptors adds _available_tools and _tool_descriptors
