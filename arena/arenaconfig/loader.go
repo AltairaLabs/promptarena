@@ -20,6 +20,11 @@ const (
 	extYML               = ".yml"
 
 	errSchemaValidationFailed = "schema validation failed for %s: %w"
+
+	// msgProviderExcludedFromMatrix is the warning headline logged when a
+	// provider is loaded into a typed map but is not eligible for the
+	// agent-under-test matrix (non-Predict roles).
+	msgProviderExcludedFromMatrix = "Provider loaded but excluded from matrix"
 )
 
 // mergeSpecs is a generic helper that merges inline specs into a loaded resource map.
@@ -200,88 +205,18 @@ func LoadConfig(filename string) (*Config, error) {
 	cfg.ProviderGroups = make(map[string]string)
 	cfg.ProviderCapabilities = make(map[string][]string)
 
-	// Load all resources (file refs first, then merge inline specs)
-	if err := cfg.loadProviders(filename); err != nil {
+	// Load all resources (file refs first, then merge inline specs). The steps
+	// are grouped into cohesive helpers to keep this orchestration readable.
+	if err := cfg.loadProviderResources(filename); err != nil {
 		return nil, err
 	}
-	if err := cfg.mergeProviderSpecs(); err != nil {
+	if err := cfg.loadPromptScenarioResources(filename); err != nil {
 		return nil, err
 	}
-	if err := cfg.loadTTSProviders(filename); err != nil {
+	if err := cfg.loadEvalToolSkillResources(filename); err != nil {
 		return nil, err
 	}
-	if err := cfg.loadSTTProviders(filename); err != nil {
-		return nil, err
-	}
-	if err := cfg.loadEmbeddingProviders(filename); err != nil {
-		return nil, err
-	}
-	if err := cfg.loadImageProviders(filename); err != nil {
-		return nil, err
-	}
-	// validateInferenceDefaults must run AFTER loadProviders so the role:
-	// inference entries are already in LoadedInferenceProviders.
-	if err := cfg.validateInferenceDefaults(); err != nil {
-		return nil, err
-	}
-	if err := cfg.validateVoiceBindings(); err != nil {
-		return nil, err
-	}
-	if err := cfg.loadPromptConfigs(filename); err != nil {
-		return nil, err
-	}
-	if err := cfg.mergePromptSpecs(); err != nil {
-		return nil, err
-	}
-	if err := cfg.loadScenarios(filename); err != nil {
-		return nil, err
-	}
-	if err := cfg.mergeScenarioSpecs(); err != nil {
-		return nil, err
-	}
-	// Validate that every scenario's voice (when set) resolves to an arena
-	// voice binding. Voice bindings were already validated above, so
-	// ResolveVoice will work correctly for valid scenario voices.
-	if err := cfg.validateScenarioVoices(); err != nil {
-		return nil, err
-	}
-	if err := cfg.loadEvals(filename); err != nil {
-		return nil, err
-	}
-	if err := cfg.mergeEvalSpecs(); err != nil {
-		return nil, err
-	}
-	if err := cfg.loadTools(filename); err != nil {
-		return nil, err
-	}
-	if err := cfg.mergeToolSpecs(); err != nil {
-		return nil, err
-	}
-	if err := cfg.loadSkills(filename); err != nil {
-		return nil, err
-	}
-
-	// Load self-play resources if enabled
-	if cfg.SelfPlay != nil && cfg.SelfPlay.IsEnabled() {
-		if err := cfg.loadSelfPlayResources(filename); err != nil {
-			return nil, err
-		}
-		// Validate that every persona's voice (when set) resolves to an arena
-		// voice binding. Voice bindings were already validated above, so
-		// ResolveVoice will work correctly for valid persona voices.
-		if err := cfg.validatePersonaVoices(); err != nil {
-			return nil, err
-		}
-	}
-
-	// Validate judge references against provider registry (mirrors self-play validation)
-	if err := cfg.validateJudgeReferences(); err != nil {
-		return nil, err
-	}
-	if err := cfg.buildJudgeTargets(); err != nil {
-		return nil, err
-	}
-	if err := cfg.mergeJudgeSpecs(); err != nil {
+	if err := cfg.loadSelfPlayAndJudgeResources(filename); err != nil {
 		return nil, err
 	}
 
@@ -299,6 +234,99 @@ func LoadConfig(filename string) (*Config, error) {
 	cfg.ValidationWarnings = validator.GetWarnings()
 
 	return cfg, nil
+}
+
+// loadProviderResources loads all provider kinds (unified + typed slots),
+// merges inline provider specs, and validates inference defaults and voice
+// bindings. validateInferenceDefaults must run after loadProviders so the
+// role: inference entries are already in LoadedInferenceProviders.
+func (c *Config) loadProviderResources(filename string) error {
+	if err := c.loadProviders(filename); err != nil {
+		return err
+	}
+	if err := c.mergeProviderSpecs(); err != nil {
+		return err
+	}
+	if err := c.loadTTSProviders(filename); err != nil {
+		return err
+	}
+	if err := c.loadSTTProviders(filename); err != nil {
+		return err
+	}
+	if err := c.loadEmbeddingProviders(filename); err != nil {
+		return err
+	}
+	if err := c.loadImageProviders(filename); err != nil {
+		return err
+	}
+	if err := c.validateInferenceDefaults(); err != nil {
+		return err
+	}
+	return c.validateVoiceBindings()
+}
+
+// loadPromptScenarioResources loads prompt configs and scenarios (file refs
+// then inline specs) and validates that every scenario voice resolves to an
+// arena voice binding. Voice bindings were already validated by
+// loadProviderResources, so ResolveVoice works for valid scenario voices.
+func (c *Config) loadPromptScenarioResources(filename string) error {
+	if err := c.loadPromptConfigs(filename); err != nil {
+		return err
+	}
+	if err := c.mergePromptSpecs(); err != nil {
+		return err
+	}
+	if err := c.loadScenarios(filename); err != nil {
+		return err
+	}
+	if err := c.mergeScenarioSpecs(); err != nil {
+		return err
+	}
+	return c.validateScenarioVoices()
+}
+
+// loadEvalToolSkillResources loads evals and tools (file refs then inline
+// specs) plus skill sources.
+func (c *Config) loadEvalToolSkillResources(filename string) error {
+	if err := c.loadEvals(filename); err != nil {
+		return err
+	}
+	if err := c.mergeEvalSpecs(); err != nil {
+		return err
+	}
+	if err := c.loadTools(filename); err != nil {
+		return err
+	}
+	if err := c.mergeToolSpecs(); err != nil {
+		return err
+	}
+	return c.loadSkills(filename)
+}
+
+// loadSelfPlayAndJudgeResources loads self-play resources (when enabled) and
+// resolves judge targets against the provider registry.
+func (c *Config) loadSelfPlayAndJudgeResources(filename string) error {
+	// Load self-play resources if enabled
+	if c.SelfPlay != nil && c.SelfPlay.IsEnabled() {
+		if err := c.loadSelfPlayResources(filename); err != nil {
+			return err
+		}
+		// Validate that every persona's voice (when set) resolves to an arena
+		// voice binding. Voice bindings were already validated above, so
+		// ResolveVoice will work correctly for valid persona voices.
+		if err := c.validatePersonaVoices(); err != nil {
+			return err
+		}
+	}
+
+	// Validate judge references against provider registry (mirrors self-play validation)
+	if err := c.validateJudgeReferences(); err != nil {
+		return err
+	}
+	if err := c.buildJudgeTargets(); err != nil {
+		return err
+	}
+	return c.mergeJudgeSpecs()
 }
 
 // LoadScenario loads and parses a scenario from a YAML file in K8s-style manifest format
@@ -435,36 +463,25 @@ func (c *Config) loadProviders(configPath string) error {
 		switch role {
 		case config.RoleLLM, config.RoleImage:
 			// Predict-compatible — eligible for the agent-under-test matrix.
-			c.LoadedProviders[provider.ID] = provider
-			group := ref.Group
-			if group == "" {
-				group = defaultProviderGroup
-			}
-			c.ProviderGroups[provider.ID] = group
-			if len(provider.Capabilities) > 0 {
-				c.ProviderCapabilities[provider.ID] = provider.Capabilities
-			}
-			if role == config.RoleImage {
-				c.LoadedImageProviders[provider.ID] = provider
-			}
+			c.routePredictProvider(ref, provider, role)
 		case config.RoleTTS:
 			c.LoadedTTSProviders[provider.ID] = provider
-			logger.Warn("Provider loaded but excluded from matrix",
+			logger.Warn(msgProviderExcludedFromMatrix,
 				"provider", provider.ID, "role", role,
 				"reason", "TTS uses Synthesize() interface, not Predict()")
 		case config.RoleSTT:
 			c.LoadedSTTProviders[provider.ID] = provider
-			logger.Warn("Provider loaded but excluded from matrix",
+			logger.Warn(msgProviderExcludedFromMatrix,
 				"provider", provider.ID, "role", role,
 				"reason", "STT uses Transcribe() interface, not Predict()")
 		case config.RoleEmbedding:
 			c.LoadedEmbeddingProviders[provider.ID] = provider
-			logger.Warn("Provider loaded but excluded from matrix",
+			logger.Warn(msgProviderExcludedFromMatrix,
 				"provider", provider.ID, "role", role,
 				"reason", "embedding providers use Embed() interface, not Predict()")
 		case config.RoleInference:
 			c.LoadedInferenceProviders[provider.ID] = provider
-			logger.Warn("Provider loaded but excluded from matrix",
+			logger.Warn(msgProviderExcludedFromMatrix,
 				"provider", provider.ID, "role", role,
 				"reason", "inference providers use runtime/classify task interfaces, not Predict()")
 		default:
@@ -472,6 +489,25 @@ func (c *Config) loadProviders(configPath string) error {
 		}
 	}
 	return nil
+}
+
+// routePredictProvider routes a Predict-compatible provider (role llm or image)
+// into the agent-under-test matrix and its typed maps. role must be RoleLLM or
+// RoleImage; the RoleImage branch additionally records the provider in
+// LoadedImageProviders.
+func (c *Config) routePredictProvider(ref ProviderRef, provider *config.Provider, role string) {
+	c.LoadedProviders[provider.ID] = provider
+	group := ref.Group
+	if group == "" {
+		group = defaultProviderGroup
+	}
+	c.ProviderGroups[provider.ID] = group
+	if len(provider.Capabilities) > 0 {
+		c.ProviderCapabilities[provider.ID] = provider.Capabilities
+	}
+	if role == config.RoleImage {
+		c.LoadedImageProviders[provider.ID] = provider
+	}
 }
 
 // loadTTSProviders loads all referenced TTS providers and validates that each
