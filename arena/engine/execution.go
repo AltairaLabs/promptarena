@@ -457,8 +457,6 @@ func (e *Engine) executeRun(ctx context.Context, combo RunCombination) (runID st
 // complexity manageable. The panic recovery for the run lives in executeRun;
 // this method owns the per-run lifecycle defers (timeout cancel, MCP cleanup,
 // session end, audio router close).
-//
-//nolint:gocognit // orchestration func; cohesive branches extracted into helpers
 func (e *Engine) executeScenarioRun(
 	ctx context.Context,
 	combo RunCombination,
