@@ -118,7 +118,8 @@ Compile and publish packs to OCI registries:
     password: ${{ secrets.GITHUB_TOKEN }}
 ```
 
-> Note: the action definitions are being migrated from PromptKit; until then reference `AltairaLabs/PromptKit/.github/actions/*@v1`.
+The action definitions live in [`.github/actions/`](.github/actions). Pin to a
+release tag (e.g. `@v1.5.7`) or the floating major tag (`@v1`).
 
 ## Repository Structure
 
