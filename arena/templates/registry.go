@@ -225,27 +225,6 @@ func validateChecksumBytes(content []byte, expected string) error {
 	return nil
 }
 
-// ValidateChecksum compares file sha256 to expected hex checksum (if provided).
-func ValidateChecksum(path, expected string) error {
-	if expected == "" {
-		return nil
-	}
-	f, err := os.Open(path) //nolint:gosec // path is user-provided index entry
-	if err != nil {
-		return fmt.Errorf("open for checksum: %w", err)
-	}
-	defer f.Close()
-	h := sha256.New()
-	if _, err := io.Copy(h, f); err != nil {
-		return fmt.Errorf("hash file: %w", err)
-	}
-	sum := hex.EncodeToString(h.Sum(nil))
-	if sum != expected {
-		return fmt.Errorf("checksum mismatch: got %s want %s", sum, expected)
-	}
-	return nil
-}
-
 // DefaultCacheDir returns the default cache directory, preferring the user cache dir.
 func DefaultCacheDir() string {
 	if defaultCacheDir != "" {

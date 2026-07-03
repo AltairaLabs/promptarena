@@ -85,10 +85,6 @@ func runValidationChecks(filePath, typeOption string, verbose, schemaOnly bool) 
 	return nil
 }
 
-func prepareValidation(filePath string) ([]byte, string, error) {
-	return prepareValidationWithType(filePath, validateType)
-}
-
 func prepareValidationWithType(filePath, typeOption string) ([]byte, string, error) {
 	// Check if file exists
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
@@ -112,10 +108,6 @@ func prepareValidationWithType(filePath, typeOption string) ([]byte, string, err
 	}
 
 	return data, configType, nil
-}
-
-func performSchemaValidation(data []byte, configType string, filePath string) error {
-	return performSchemaValidationWithVerbose(data, configType, filePath, validateVerbose)
 }
 
 func performSchemaValidationWithVerbose(data []byte, configType string, filePath string, verbose bool) error {

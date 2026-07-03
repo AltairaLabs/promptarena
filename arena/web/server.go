@@ -146,14 +146,6 @@ func (s *Server) Handler() http.Handler {
 	return s.mux
 }
 
-// WaitBackgroundRuns blocks until all goroutines spawned by handleStartRun
-// have finished, including the post-ExecuteRuns persistRunResults fallback.
-// Tests that exercise the run path call this before t.TempDir cleanup so the
-// background goroutine doesn't race with RemoveAll.
-func (s *Server) WaitBackgroundRuns() {
-	s.pending.Wait()
-}
-
 // handleSSE streams events to the client via Server-Sent Events.
 func (s *Server) handleSSE(w http.ResponseWriter, r *http.Request) {
 	flusher, ok := w.(http.Flusher)

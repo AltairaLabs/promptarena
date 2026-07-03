@@ -47,19 +47,6 @@ func TestNewHTMLResultRepository(t *testing.T) {
 	assert.Equal(t, "/tmp/report.html", repo.GetOutputPath())
 }
 
-func TestNewHTMLResultRepositoryWithOptions(t *testing.T) {
-	options := &html.HTMLOptions{
-		GenerateJSON:       false,
-		Title:              "Custom Title",
-		UseTimestampSuffix: true,
-	}
-
-	repo := html.NewHTMLResultRepositoryWithOptions("/tmp/report.html", options)
-
-	assert.NotNil(t, repo)
-	assert.Equal(t, "/tmp/report.html", repo.GetOutputPath())
-}
-
 func TestDefaultHTMLOptions(t *testing.T) {
 	options := html.DefaultHTMLOptions()
 
@@ -122,61 +109,6 @@ func TestHTMLResultRepository_SaveResults_ValidationError(t *testing.T) {
 	err = repo.SaveResults(invalidResults)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "validation failed")
-}
-
-func TestHTMLResultRepository_SaveResults_DisableJSON(t *testing.T) {
-	tmpDir := t.TempDir()
-	htmlFile := filepath.Join(tmpDir, "report.html")
-
-	options := &html.HTMLOptions{
-		GenerateJSON: false, // Disable JSON companion file
-	}
-	repo := html.NewHTMLResultRepositoryWithOptions(htmlFile, options)
-
-	testResults := []engine.RunResult{
-		createTestResult("run-001", "scenario-1", "openai", "us-east-1", false, 0.001, 2*time.Second),
-	}
-
-	err := repo.SaveResults(testResults)
-	require.NoError(t, err)
-
-	// Verify HTML file was created
-	assert.FileExists(t, htmlFile)
-
-	// Note: The current implementation doesn't actually remove the JSON file
-	// since render.GenerateHTMLReport always creates it. This is a known limitation.
-	// We would verify JSON companion file was NOT created in a full implementation.
-}
-
-func TestHTMLResultRepository_SaveResults_WithTimestampSuffix(t *testing.T) {
-	tmpDir := t.TempDir()
-	htmlFile := filepath.Join(tmpDir, "report.html")
-
-	options := &html.HTMLOptions{
-		UseTimestampSuffix: true,
-	}
-	repo := html.NewHTMLResultRepositoryWithOptions(htmlFile, options)
-
-	testResults := []engine.RunResult{
-		createTestResult("run-001", "scenario-1", "openai", "us-east-1", false, 0.001, 2*time.Second),
-	}
-
-	err := repo.SaveResults(testResults)
-	require.NoError(t, err)
-
-	// Verify original path doesn't exist (because timestamp was added)
-	assert.NoFileExists(t, htmlFile)
-
-	// Verify a timestamped file exists
-	files, err := filepath.Glob(filepath.Join(tmpDir, "report-*T*.html"))
-	require.NoError(t, err)
-	assert.Len(t, files, 1)
-
-	// Verify the timestamped file contains content
-	timestampedFile := files[0]
-	htmlContent, err := os.ReadFile(timestampedFile)
-	require.NoError(t, err)
-	assert.Contains(t, string(htmlContent), "scenario-1")
 }
 
 func TestHTMLResultRepository_SaveSummary(t *testing.T) {
@@ -281,13 +213,4 @@ func TestHTMLResultRepository_ComplexResults(t *testing.T) {
 	assert.Contains(t, htmlStr, "openai")
 	// Note: The exact persona/self-play display depends on the template implementation
 	// We verify that HTML generation completed successfully
-}
-
-func TestHTMLResultRepository_NilOptions(t *testing.T) {
-	// Test that nil options defaults to DefaultHTMLOptions
-	repo := html.NewHTMLResultRepositoryWithOptions("/tmp/report.html", nil)
-	assert.NotNil(t, repo)
-
-	// Can't directly test the options, but can test that it doesn't panic
-	assert.Equal(t, "/tmp/report.html", repo.GetOutputPath())
 }

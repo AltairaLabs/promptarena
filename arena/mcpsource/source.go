@@ -8,7 +8,6 @@ package mcpsource
 
 import (
 	"context"
-	"fmt"
 	"io"
 )
 
@@ -22,24 +21,6 @@ const (
 	ScopeScenario Scope = "scenario"
 	ScopeSession  Scope = "session"
 )
-
-// Valid reports whether s is one of the known scope values.
-func (s Scope) Valid() bool {
-	switch s {
-	case ScopeRun, ScopeScenario, ScopeSession:
-		return true
-	}
-	return false
-}
-
-// ParseScope converts a YAML string to a Scope, erroring on unknown values.
-func ParseScope(raw string) (Scope, error) {
-	s := Scope(raw)
-	if !s.Valid() {
-		return "", fmt.Errorf("mcpsource: unknown scope %q (want run|scenario|session)", raw)
-	}
-	return s, nil
-}
 
 // MCPConn carries the coordinates arena needs to construct an mcp.Client.
 // Fed into mcp.ServerConfig{URL, Headers} in the existing code path.

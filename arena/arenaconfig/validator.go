@@ -30,16 +30,6 @@ type ConfigValidator struct {
 	checks     []ValidationCheck // structured check results
 }
 
-// NewConfigValidator creates a new configuration validator
-func NewConfigValidator(cfg *Config) *ConfigValidator {
-	return &ConfigValidator{
-		config: cfg,
-		errors: make([]error, 0),
-		warns:  make([]string, 0),
-		checks: make([]ValidationCheck, 0),
-	}
-}
-
 // NewConfigValidatorWithPath creates a new configuration validator with a config file path
 // for resolving relative file references
 func NewConfigValidatorWithPath(cfg *Config, configPath string) *ConfigValidator {
@@ -321,19 +311,6 @@ func (v *ConfigValidator) validateCrossReferences() {
 }
 
 // Helper methods to build ID sets
-
-// getPromptConfigIDs is currently only used by tests (validator_test.go).
-//
-//nolint:unused // exercised by validator_test.go
-func (v *ConfigValidator) getPromptConfigIDs() map[string]bool {
-	ids := make(map[string]bool)
-	for _, pc := range v.config.PromptConfigs {
-		if pc.ID != "" {
-			ids[pc.ID] = true
-		}
-	}
-	return ids
-}
 
 // getPromptTaskTypes returns all task_types from loaded prompt configs
 func (v *ConfigValidator) getPromptTaskTypes() map[string]bool {

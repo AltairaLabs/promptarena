@@ -11,11 +11,6 @@ func Min(w, h int) Option {
 	}
 }
 
-// Weight sets the flex weight (share of leftover space).
-func Weight(w int) Option {
-	return func(n *Node) { n.Weight = w }
-}
-
 // Pane returns a leaf node. It is flex with weight 1 and visible by default.
 func Pane(id string, opts ...Option) *Node {
 	n := &Node{ID: id, Mode: ModeFlex, Weight: 1, Visible: true}

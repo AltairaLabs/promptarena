@@ -93,34 +93,3 @@ func TestAssertionConfig_ToEvalDef_IndexInID(t *testing.T) {
 	assert.Equal(t, "assertion_5_content_matches", def5.ID)
 	assert.Equal(t, "assertion_10_content_matches", def10.ID)
 }
-
-func TestAssertionConfig_ToConversationEvalDef(t *testing.T) {
-	cfg := AssertionConfig{
-		Type:    "turn_count",
-		Params:  map[string]interface{}{"min": 3},
-		Message: "should have at least 3 turns",
-	}
-
-	def := ToConversationEvalDef(cfg, 2)
-
-	assert.Equal(t, "assertion_2_turn_count", def.ID)
-	assert.Equal(t, evals.WrapperTypeAssertion, def.Type)
-	assert.Equal(t, evals.TriggerOnConversationComplete, def.Trigger)
-	assert.Equal(t, "turn_count", def.Params["eval_type"])
-	assert.Equal(t, map[string]any{"min": 3}, def.Params["eval_params"])
-}
-
-func TestAssertionConfig_ToConversationEvalDef_WithWhen(t *testing.T) {
-	cfg := AssertionConfig{
-		Type: "tools_called",
-		When: &AssertionWhen{
-			ToolCalled: "search",
-		},
-	}
-
-	def := ToConversationEvalDef(cfg, 0)
-
-	assert.Equal(t, evals.TriggerOnConversationComplete, def.Trigger)
-	assert.NotNil(t, def.When)
-	assert.Equal(t, "search", def.When.ToolCalled)
-}

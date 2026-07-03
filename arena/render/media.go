@@ -26,50 +26,6 @@ const (
 	mimeTypeAAC  = "audio/aac"
 )
 
-// renderMediaSummaryBadge creates a compact badge showing media counts.
-// Returns empty string if no media content (only text).
-func renderMediaSummaryBadge(summary *types.MediaSummary) string {
-	if summary == nil || summary.TotalParts <= summary.TextParts {
-		return "" // No media, only text
-	}
-
-	badges := []string{}
-
-	if summary.ImageParts > 0 {
-		badges = append(badges,
-			fmt.Sprintf(`<span class="media-badge image" title="%d image(s)">🖼️ %d</span>`,
-				summary.ImageParts, summary.ImageParts))
-	}
-
-	if summary.AudioParts > 0 {
-		badges = append(badges,
-			fmt.Sprintf(`<span class="media-badge audio" title="%d audio file(s)">🎵 %d</span>`,
-				summary.AudioParts, summary.AudioParts))
-	}
-
-	if summary.VideoParts > 0 {
-		badges = append(badges,
-			fmt.Sprintf(`<span class="media-badge video" title="%d video(s)">🎬 %d</span>`,
-				summary.VideoParts, summary.VideoParts))
-	}
-
-	if summary.DocumentParts > 0 {
-		badges = append(badges,
-			fmt.Sprintf(`<span class="media-badge document" title="%d document(s)">📄 %d</span>`,
-				summary.DocumentParts, summary.DocumentParts))
-	}
-
-	if len(badges) == 0 {
-		return ""
-	}
-
-	html := `<div class="media-summary-badge">`
-	html += strings.Join(badges, "")
-	html += divCloseTag
-
-	return html
-}
-
 // renderMediaItem creates detailed HTML for a single media item.
 // Displays type icon, source, metadata (MIME type, size), and load status.
 // For audio files, includes an HTML5 audio player if the file is playable.

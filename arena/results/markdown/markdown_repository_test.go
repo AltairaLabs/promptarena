@@ -17,28 +17,9 @@ import (
 	"github.com/AltairaLabs/promptarena/arena/engine"
 )
 
-func TestNewMarkdownResultRepository(t *testing.T) {
-	tmpDir := t.TempDir()
-	repo := NewMarkdownResultRepository(tmpDir)
-
-	assert.Equal(t, tmpDir, repo.outputDir)
-	assert.Equal(t, filepath.Join(tmpDir, "results.md"), repo.outputFile)
-	assert.True(t, repo.config.IncludeDetails)
-}
-
-func TestNewMarkdownResultRepositoryWithFile(t *testing.T) {
-	tmpDir := t.TempDir()
-	customFile := filepath.Join(tmpDir, "custom-results.md")
-	repo := NewMarkdownResultRepositoryWithFile(customFile)
-
-	assert.Equal(t, tmpDir, repo.outputDir)
-	assert.Equal(t, customFile, repo.outputFile)
-	assert.True(t, repo.config.IncludeDetails)
-}
-
 func TestSaveResults_EmptyResults(t *testing.T) {
 	tmpDir := t.TempDir()
-	repo := NewMarkdownResultRepository(tmpDir)
+	repo := NewMarkdownResultRepositoryWithConfig(tmpDir, nil)
 
 	err := repo.SaveResults([]engine.RunResult{})
 	require.NoError(t, err)
@@ -55,7 +36,7 @@ func TestSaveResults_EmptyResults(t *testing.T) {
 
 func TestSetIncludeDetails(t *testing.T) {
 	tmpDir := t.TempDir()
-	repo := NewMarkdownResultRepository(tmpDir)
+	repo := NewMarkdownResultRepositoryWithConfig(tmpDir, nil)
 
 	// Default is true
 	assert.True(t, repo.config.IncludeDetails)
@@ -71,7 +52,7 @@ func TestSetIncludeDetails(t *testing.T) {
 
 func TestUnsupportedOperations(t *testing.T) {
 	tmpDir := t.TempDir()
-	repo := NewMarkdownResultRepository(tmpDir)
+	repo := NewMarkdownResultRepositoryWithConfig(tmpDir, nil)
 
 	// Test LoadResults
 	results, err := repo.LoadResults()
@@ -208,7 +189,7 @@ func createResultWithViolations(runID, scenario, provider string) engine.RunResu
 
 func TestSaveResults_WithData(t *testing.T) {
 	tmpDir := t.TempDir()
-	repo := NewMarkdownResultRepository(tmpDir)
+	repo := NewMarkdownResultRepositoryWithConfig(tmpDir, nil)
 
 	testResults := createTestResults()
 	err := repo.SaveResults(testResults)
@@ -243,7 +224,7 @@ func TestSaveResults_WithData(t *testing.T) {
 }
 
 func TestCalculateSummary(t *testing.T) {
-	repo := NewMarkdownResultRepository(t.TempDir())
+	repo := NewMarkdownResultRepositoryWithConfig(t.TempDir(), nil)
 	testResults := createTestResults()
 
 	summary := repo.calculateSummary(testResults)
@@ -256,7 +237,7 @@ func TestCalculateSummary(t *testing.T) {
 }
 
 func TestHasFailedAssertions(t *testing.T) {
-	repo := NewMarkdownResultRepository(t.TempDir())
+	repo := NewMarkdownResultRepositoryWithConfig(t.TempDir(), nil)
 
 	// Test result with no assertions
 	noAssertions := createSuccessfulResult("test", "scenario", "provider")
@@ -279,7 +260,7 @@ func TestHasFailedAssertions(t *testing.T) {
 }
 
 func TestCountAssertions(t *testing.T) {
-	repo := NewMarkdownResultRepository(t.TempDir())
+	repo := NewMarkdownResultRepositoryWithConfig(t.TempDir(), nil)
 
 	// Test result with no assertions
 	noAssertions := createSuccessfulResult("test", "scenario", "provider")
@@ -291,7 +272,7 @@ func TestCountAssertions(t *testing.T) {
 }
 
 func TestWriteOverviewSection(t *testing.T) {
-	repo := NewMarkdownResultRepository(t.TempDir())
+	repo := NewMarkdownResultRepositoryWithConfig(t.TempDir(), nil)
 	var content strings.Builder
 
 	summary := testSummary{
@@ -315,7 +296,7 @@ func TestWriteOverviewSection(t *testing.T) {
 }
 
 func TestWriteResultsMatrix(t *testing.T) {
-	repo := NewMarkdownResultRepository(t.TempDir())
+	repo := NewMarkdownResultRepositoryWithConfig(t.TempDir(), nil)
 	var content strings.Builder
 
 	testResults := []engine.RunResult{createSuccessfulResult("test", "scenario", "provider")}
@@ -329,7 +310,7 @@ func TestWriteResultsMatrix(t *testing.T) {
 }
 
 func TestWriteFailedTestsSection(t *testing.T) {
-	repo := NewMarkdownResultRepository(t.TempDir())
+	repo := NewMarkdownResultRepositoryWithConfig(t.TempDir(), nil)
 	var content strings.Builder
 
 	testResults := []engine.RunResult{
@@ -348,7 +329,7 @@ func TestWriteFailedTestsSection(t *testing.T) {
 }
 
 func TestWriteCostSection(t *testing.T) {
-	repo := NewMarkdownResultRepository(t.TempDir())
+	repo := NewMarkdownResultRepositoryWithConfig(t.TempDir(), nil)
 	var content strings.Builder
 
 	testResults := createTestResults()
@@ -365,7 +346,7 @@ func TestWriteCostSection(t *testing.T) {
 }
 
 func TestAssertionFailureExtraction(t *testing.T) {
-	repo := NewMarkdownResultRepository(t.TempDir())
+	repo := NewMarkdownResultRepositoryWithConfig(t.TempDir(), nil)
 
 	result := createResultWithAssertions("test", "scenario", "provider")
 	failures := repo.collectAssertionFailures(&result)
@@ -377,7 +358,7 @@ func TestAssertionFailureExtraction(t *testing.T) {
 }
 
 func TestSaveSummary(t *testing.T) {
-	repo := NewMarkdownResultRepository(t.TempDir())
+	repo := NewMarkdownResultRepositoryWithConfig(t.TempDir(), nil)
 
 	// SaveSummary should not return error (it's a no-op for markdown)
 	err := repo.SaveSummary(nil)
@@ -586,7 +567,7 @@ spec:
 
 func TestSetOutputFile(t *testing.T) {
 	tmpDir := t.TempDir()
-	repo := NewMarkdownResultRepository(tmpDir)
+	repo := NewMarkdownResultRepositoryWithConfig(tmpDir, nil)
 
 	// Test setting output file
 	testFile := "custom-output.md"
@@ -598,7 +579,7 @@ func TestSetOutputFile(t *testing.T) {
 
 func TestMarkdownResultRepository_MediaOutputs(t *testing.T) {
 	tmpDir := t.TempDir()
-	repo := NewMarkdownResultRepository(tmpDir)
+	repo := NewMarkdownResultRepositoryWithConfig(tmpDir, nil)
 
 	// Create test result with MediaOutputs
 	results := []engine.RunResult{
@@ -677,7 +658,7 @@ func TestMarkdownResultRepository_MediaOutputs(t *testing.T) {
 
 func TestMarkdownResultRepository_NoMediaOutputs(t *testing.T) {
 	tmpDir := t.TempDir()
-	repo := NewMarkdownResultRepository(tmpDir)
+	repo := NewMarkdownResultRepositoryWithConfig(tmpDir, nil)
 
 	// Create test result without MediaOutputs
 	results := []engine.RunResult{
