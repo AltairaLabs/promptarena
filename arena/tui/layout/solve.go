@@ -104,41 +104,58 @@ func axisSizes(dir Direction, children []*Node, axisLen int) []int {
 		}
 	}
 
-	// Water-fill the flex pool: repeatedly clamp the first flex child whose
-	// weighted share is below its minimum, then redistribute the rest.
-	pool := axisLen - fixedTotal
 	settled := make([]bool, n)
+	waterFillFlex(dir, children, sizes, settled, axisLen-fixedTotal)
+	return sizes
+}
+
+// waterFillFlex distributes pool among the flex children in sizes. It repeatedly
+// clamps the first flex child whose weighted share falls below its minimum, then
+// redistributes the remaining pool among the still-unsettled flex children.
+func waterFillFlex(dir Direction, children []*Node, sizes []int, settled []bool, pool int) {
 	for {
-		remaining := pool
-		remainingWeight := 0
-		for i, c := range children {
-			if c.Mode != ModeFlex {
-				continue
-			}
-			if settled[i] {
-				remaining -= sizes[i]
-			} else {
-				remainingWeight += flexWeight(c)
-			}
+		remaining, remainingWeight := flexRemainder(children, sizes, settled, pool)
+		if clampFirstBelowMin(dir, children, sizes, settled, remaining, remainingWeight) {
+			continue
 		}
-		clamped := false
-		for i, c := range children {
-			if c.Mode != ModeFlex || settled[i] {
-				continue
-			}
-			if remaining*flexWeight(c)/remainingWeight < minAlong(dir, c) {
-				sizes[i] = minAlong(dir, c)
-				settled[i] = true
-				clamped = true
-				break
-			}
+		distributeFlex(children, sizes, settled, remaining, remainingWeight)
+		return
+	}
+}
+
+// flexRemainder returns the pool left for unsettled flex children (after
+// subtracting the sizes already assigned to settled ones) and the total weight
+// of the unsettled flex children.
+func flexRemainder(children []*Node, sizes []int, settled []bool, pool int) (remaining, remainingWeight int) {
+	remaining = pool
+	for i, c := range children {
+		if c.Mode != ModeFlex {
+			continue
 		}
-		if !clamped {
-			distributeFlex(children, sizes, settled, remaining, remainingWeight)
-			break
+		if settled[i] {
+			remaining -= sizes[i]
+		} else {
+			remainingWeight += flexWeight(c)
 		}
 	}
-	return sizes
+	return remaining, remainingWeight
+}
+
+// clampFirstBelowMin clamps the first unsettled flex child whose weighted share
+// of remaining would fall below its minimum, marking it settled. It returns true
+// if a child was clamped (so the caller re-runs the water-fill pass).
+func clampFirstBelowMin(dir Direction, children []*Node, sizes []int, settled []bool, remaining, remainingWeight int) bool {
+	for i, c := range children {
+		if c.Mode != ModeFlex || settled[i] {
+			continue
+		}
+		if remaining*flexWeight(c)/remainingWeight < minAlong(dir, c) {
+			sizes[i] = minAlong(dir, c)
+			settled[i] = true
+			return true
+		}
+	}
+	return false
 }
 
 // distributeFlex splits pool among the unsettled flex children by weight, with

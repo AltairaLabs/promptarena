@@ -57,13 +57,15 @@ const (
 const (
 	chatKeyNameEnter = "enter"
 	chatKeyLabelEsc  = "esc"
-	chatKeyLabelSel  = "select"
-	chatKeyLabelScrl = "↑/↓"
-	chatKeyLabelArrs = "←/→"
-	chatKeyLabelQuit = "quit"
-	chatKeyLabelTab  = "tab"
-	chatKeyLabelLogs = "logs"
-	chatKeyCtrlL     = "ctrl+l"
+	// chatKeyLabelEscCtrlC is the footer hint shown where both esc and ctrl+c quit.
+	chatKeyLabelEscCtrlC = chatKeyLabelEsc + "/ctrl+c"
+	chatKeyLabelSel      = "select"
+	chatKeyLabelScrl     = "↑/↓"
+	chatKeyLabelArrs     = "←/→"
+	chatKeyLabelQuit     = "quit"
+	chatKeyLabelTab      = "tab"
+	chatKeyLabelLogs     = "logs"
+	chatKeyCtrlL         = "ctrl+l"
 	// chatKeyLogsVoice toggles the log overlay in voice mode, where there is no
 	// text input to collide with — a plain key the terminal won't intercept
 	// (unlike ctrl+l, which iTerm2 and others grab).
@@ -306,64 +308,88 @@ func (p *ChatPage) SetSize(w, h int) {
 // NOTE: Esc/Ctrl+C are handled globally by App — do not handle them here.
 // NOTE: WindowSizeMsg is routed by App via SetSize — do not handle it here.
 func (p *ChatPage) Update(msg tea.Msg) (Page, tea.Cmd) {
-	// Buffer runtime logs and toggle the in-chat log overlay with ctrl+l
-	// (ctrl+l avoids colliding with text typed into the input). While visible,
-	// the overlay consumes scroll keys.
-	if lm, ok := msg.(logging.Msg); ok {
-		p.logs.Append(lm)
-		return p, nil
-	}
-	if km, ok := msg.(tea.KeyMsg); ok &&
-		(km.Type == tea.KeyCtrlL || (p.voice != nil && km.String() == chatKeyLogsVoice)) {
-		p.logs.Toggle()
-		return p, nil
-	}
-	if p.logs.Visible() {
-		if km, ok := msg.(tea.KeyMsg); ok {
-			return p, p.logs.Update(km)
-		}
+	if cmd, handled := p.handleLogOverlay(msg); handled {
+		return p, cmd
 	}
 
 	switch v := msg.(type) {
 	case tea.KeyMsg:
-		cmd := p.handleKey(v)
-		return p, cmd
-
+		return p, p.handleKey(v)
 	case chatStreamDoneMsg:
-		cmd := p.handleStreamDone()
-		return p, cmd
-
+		return p, p.handleStreamDone()
 	case chatEvalMsg:
-		if v.err != nil {
-			p.statusLine = "evals: error: " + v.err.Error()
-		} else {
-			p.statusLine = chatFormatEvalScores(v.results)
-		}
+		p.applyEvalMsg(v)
 		return p, nil
-
 	case chatErrMsg:
-		// In-chat turn errors are recoverable: surface them inline and keep the
-		// session alive so the user can retry. Sanitized so a provider's HTTP body
-		// can't corrupt the TUI.
-		p.busy = false
-		p.input.Focus()
-		p.statusLine = "⚠ " + chatSanitizeErrorLine(v.err)
+		p.applyChatErrMsg(v)
 		return p, nil
 	}
 
-	// Voice-mode level and refresh messages.
+	if cmd, handled := p.handleVoiceMsg(msg); handled {
+		return p, cmd
+	}
+
+	if p.state == chatStateChat {
+		return p, p.panel.Update(msg)
+	}
+	return p, nil
+}
+
+// handleLogOverlay buffers runtime logs and drives the in-chat log overlay
+// (toggled with ctrl+l, which avoids colliding with text typed into the input).
+// While the overlay is visible it consumes scroll keys. The bool reports whether
+// the message was fully handled and Update should return early.
+func (p *ChatPage) handleLogOverlay(msg tea.Msg) (tea.Cmd, bool) {
+	if lm, ok := msg.(logging.Msg); ok {
+		p.logs.Append(lm)
+		return nil, true
+	}
+	if km, ok := msg.(tea.KeyMsg); ok &&
+		(km.Type == tea.KeyCtrlL || (p.voice != nil && km.String() == chatKeyLogsVoice)) {
+		p.logs.Toggle()
+		return nil, true
+	}
+	if p.logs.Visible() {
+		if km, ok := msg.(tea.KeyMsg); ok {
+			return p.logs.Update(km), true
+		}
+	}
+	return nil, false
+}
+
+// applyEvalMsg renders eval results (or an error) into the status line.
+func (p *ChatPage) applyEvalMsg(v chatEvalMsg) {
+	if v.err != nil {
+		p.statusLine = "evals: error: " + v.err.Error()
+		return
+	}
+	p.statusLine = chatFormatEvalScores(v.results)
+}
+
+// applyChatErrMsg surfaces a recoverable in-chat turn error inline and keeps the
+// session alive so the user can retry. Sanitized so a provider's HTTP body can't
+// corrupt the TUI.
+func (p *ChatPage) applyChatErrMsg(v chatErrMsg) {
+	p.busy = false
+	p.input.Focus()
+	p.statusLine = "⚠ " + chatSanitizeErrorLine(v.err)
+}
+
+// handleVoiceMsg processes voice-mode level, refresh, and ended messages. The
+// bool reports whether the message was handled and Update should return early.
+func (p *ChatPage) handleVoiceMsg(msg tea.Msg) (tea.Cmd, bool) {
 	switch v := msg.(type) {
 	case voiceLevelMsg:
 		p.micLevel = v.user
 		p.agentLevel = v.agent
 		// Update the panel's built-in audio meter so it renders the live levels.
 		p.panel.SetAudioLevels(v.user, v.agent, true)
-		return p, nil
+		return nil, true
 	case chatRefreshMsg:
 		// A message.created event arrived from the voice pipeline; reload the
 		// conversation panel from the voice state store (single source of truth).
 		p.refreshVoicePanel()
-		return p, nil
+		return nil, true
 	case voiceEndedMsg:
 		// The voice driver exited. Reflect it so the console doesn't look hung:
 		// freeze the audio meter and show an ended status.
@@ -373,13 +399,9 @@ func (p *ChatPage) Update(msg tea.Msg) (Page, tea.Cmd) {
 		} else {
 			p.statusLine = "🛑 interactive session ended (idle timeout or mic closed) — press q to exit"
 		}
-		return p, nil
+		return nil, true
 	}
-
-	if p.state == chatStateChat {
-		return p, p.panel.Update(msg)
-	}
-	return p, nil
+	return nil, false
 }
 
 func (p *ChatPage) handleKey(msg tea.KeyMsg) tea.Cmd {
@@ -638,7 +660,7 @@ func (p *ChatPage) chatBindings() []views.KeyBinding {
 			{Keys: "🎤 listening", Description: ""},
 			{Keys: chatKeyLabelTab, Description: "focus convo"},
 			{Keys: chatKeyLogsVoice, Description: chatKeyLabelLogs},
-			{Keys: chatKeyLabelEsc + "/ctrl+c", Description: chatKeyLabelQuit},
+			{Keys: chatKeyLabelEscCtrlC, Description: chatKeyLabelQuit},
 		}
 	}
 	if p.panelFocused {
@@ -647,7 +669,7 @@ func (p *ChatPage) chatBindings() []views.KeyBinding {
 			{Keys: chatKeyLabelArrs, Description: "turns/detail"},
 			{Keys: chatKeyLabelTab, Description: "back to input"},
 			{Keys: chatKeyCtrlL, Description: chatKeyLabelLogs},
-			{Keys: chatKeyLabelEsc + "/ctrl+c", Description: chatKeyLabelQuit},
+			{Keys: chatKeyLabelEscCtrlC, Description: chatKeyLabelQuit},
 		}
 	}
 	return []views.KeyBinding{
@@ -655,7 +677,7 @@ func (p *ChatPage) chatBindings() []views.KeyBinding {
 		{Keys: chatKeyLabelScrl, Description: "scroll"},
 		{Keys: chatKeyLabelTab, Description: "focus conversation"},
 		{Keys: chatKeyCtrlL, Description: chatKeyLabelLogs},
-		{Keys: chatKeyLabelEsc + "/ctrl+c", Description: chatKeyLabelQuit},
+		{Keys: chatKeyLabelEscCtrlC, Description: chatKeyLabelQuit},
 	}
 }
 
