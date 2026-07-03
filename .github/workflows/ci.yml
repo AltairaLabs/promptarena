@@ -38,6 +38,7 @@ jobs:
               # (negations don't subtract).
               - 'arena/**/*.go'
               - 'packc/**/*.go'
+              - 'tools/**/*.go'
               - 'go.mod'
               - 'go.sum'
               - '.golangci.yml'
@@ -68,6 +69,11 @@ jobs:
         run: go build ./...
       - name: Test
         run: go test ./... -count=1
+      # The hosted JSON schemas (served from promptkit.altairalabs.ai) are
+      # generated from arena/arenaconfig + PromptKit/pkg/config. Fail the build
+      # if a config-type change didn't regenerate schemas/v1alpha1.
+      - name: Schemas up to date
+        run: go run ./tools/schema-gen/ --check
 
   lint:
     name: Lint (new code)
