@@ -232,25 +232,7 @@ func (de *DuplexConversationExecutor) buildDuplexPipeline(
 	// can quietly take longer than 30s. Drive it from the scenario's
 	// `duplex.timeout` instead so a scenario declaring `timeout: 10m`
 	// gets a 10-minute idle ceiling, not 30s.
-	idleTimeout := defaultPipelineIdleTimeout
-	if req.Scenario != nil && req.Scenario.Duplex != nil {
-		idleTimeout = req.Scenario.Duplex.GetTimeoutDuration(idleTimeout)
-	}
-	pipelineConfig := stage.DefaultPipelineConfig().
-		WithExecutionTimeout(0).
-		WithIdleTimeout(idleTimeout)
-	// With barge-in, shrink the inter-stage channel buffers. The default (32)
-	// lets several seconds of response audio queue between the provider stage and
-	// the real-time output pacing stage — downstream of the session's drop and
-	// the sink flush, so barge-in can't clear it and the agent keeps talking for
-	// seconds after the user interrupts. The session's unbounded pump queue
-	// already absorbs the provider's faster-than-real-time audio, so a small
-	// downstream buffer costs nothing for normal playback and bounds how much
-	// audio survives a barge-in to a few hundred ms.
-	if req.VoiceBargeIn {
-		pipelineConfig = pipelineConfig.WithChannelBufferSize(bargeInChannelBufferSize)
-	}
-	builder := stage.NewPipelineBuilderWithConfig(pipelineConfig)
+	builder := stage.NewPipelineBuilderWithConfig(de.buildDuplexPipelineConfig(req))
 	var stages []stage.Stage
 
 	// Build merged variables for prompt assembly (consistent with non-duplex pipeline)
@@ -258,68 +240,11 @@ func (de *DuplexConversationExecutor) buildDuplexPipeline(
 
 	// Determine target sample rate from provider capabilities
 	// Each provider has different audio requirements (e.g., Gemini: 16kHz, OpenAI: 24kHz)
-	targetSampleRate := defaultSampleRate // fallback to 16kHz
-	caps := streamProvider.GetStreamingCapabilities()
-	if caps.Audio != nil && caps.Audio.PreferredSampleRate > 0 {
-		targetSampleRate = caps.Audio.PreferredSampleRate
-		logger.Debug("buildDuplexPipeline: using provider preferred sample rate",
-			"sample_rate", targetSampleRate)
-	}
+	targetSampleRate := resolveTargetSampleRate(streamProvider)
 
-	// 0a. Audio pacing stage — emits each audio element at the cadence
-	// implied by its byte count and sample rate, so chunks downstream
-	// (the input MonitorTap → local-sink playback, and the duplex
-	// provider's VAD) see the same arrival rhythm a microphone would
-	// produce. Without this, a TTS source that delivers chunks faster
-	// than realtime (or instantly, like the mock) collapses an entire
-	// utterance into a single instant, which causes oto playback
-	// underruns at the local sink and trips false turn-end detection at
-	// the provider.
-	//
-	// Skipped when there's no consumer that cares about cadence:
-	// selfplay (VAD disabled at the provider) AND no AudioRouter (no
-	// LocalSink listening). In that combination — typical of headless
-	// CI runs — pacing would just spend real wall-clock time sleeping
-	// for nothing, multiplying every test's runtime by the audio
-	// duration of every utterance.
-	//
-	// Placed first, before the input MonitorTap, so both the playback
-	// path and the provider path observe the paced flow when enabled.
-	if needsAudioPacing(req) {
-		stages = append(stages, stage.NewAudioPacingStage())
-	}
-
-	// 0b. Input audio monitor tap (opt-in) — placed BEFORE the resample
-	// stage so the router (and downstream LocalSink) hear the audio at
-	// its source sample rate. Going through resample first introduces
-	// chunk-boundary phase discontinuities that sound like consistent
-	// clicks during playback (24 kHz → 16 kHz → 24 kHz round-trips
-	// each round per-chunk sample counts independently).
-	//
-	// MonitorTap still resamples to the router's canonical rate inside
-	// the tap itself, so consumers continue to see one rate.
-	if req.AudioRouter != nil {
-		stages = append(stages, arenaaudio.NewMonitorTap(req.AudioRouter, arenaaudio.MonitorTapConfig{
-			Position: stage.RecordingPositionInput,
-		}))
-	}
-
-	// 1. Audio resample stage - normalizes all input audio to target sample rate
-	// for the provider. Downstream stages receive consistent sample rates.
-	resampleConfig := stage.AudioResampleConfig{
-		TargetSampleRate:      targetSampleRate,
-		PassthroughIfSameRate: true,
-	}
-	stages = append(stages, stage.NewAudioResampleStage(resampleConfig))
-
-	// Add VAD stage if using client-side turn detection
-	if de.shouldUseClientVAD(req) {
-		vadConfig := de.buildVADConfig(req)
-		vadStage, err := stage.NewAudioTurnStage(vadConfig)
-		if err != nil {
-			return nil, fmt.Errorf("failed to create VAD stage: %w", err)
-		}
-		stages = append(stages, vadStage)
+	stages, err := de.appendDuplexInputStages(stages, req, targetSampleRate)
+	if err != nil {
+		return nil, err
 	}
 
 	// 1. Prompt assembly stage (runs BEFORE provider, like non-duplex)
@@ -363,73 +288,143 @@ func (de *DuplexConversationExecutor) buildDuplexPipeline(
 	}
 	stages = append(stages, duplexStage)
 
-	// 2a-pre. Output audio pacing. Realtime providers (OpenAI, Gemini)
-	// stream assistant audio faster than playback rate — gpt-4o-realtime
-	// commonly delivers a 5-second utterance in ~1 second of wall clock.
-	// Without pacing on the output side:
-	//   - the LocalSink queue fills instantly and playback continues for
-	//     several seconds after response.done already arrived, so the
-	//     turn-end barrier (response.done from the wire) fires before the
-	//     audio has actually been heard.
-	//   - the next selfplay user turn's TTS starts streaming while the
-	//     previous assistant audio is still audibly playing — the
-	//     observed "turns are overlapping" symptom.
-	// Pacing here aligns the output flow with realtime, so the EndOfStream
-	// element naturally queues behind the last paced audio chunk and the
-	// response collector signals done at the same instant playback ends.
-	// Same gate as the input pacing — only when something downstream cares
-	// about cadence. Separate instance from input pacing per the
-	// AudioPacingStage "direction singularity" note. Distinct name from
-	// the input pacing stage so the pipeline builder doesn't reject the
-	// pair as duplicates.
+	stages = de.appendDuplexOutputStages(stages, req, turnState, emitter)
+
+	return builder.Chain(stages...).Build()
+}
+
+// buildDuplexPipelineConfig builds the StreamPipeline configuration for a duplex
+// run. ExecutionTimeout is disabled (duplex uses the parent context's
+// scenario-driven timeout) and IdleTimeout is driven from the scenario's
+// duplex.timeout so long single LLM/TTS cycles don't trip the 30s default. With
+// barge-in it also shrinks the inter-stage channel buffers so interrupted
+// response audio can't keep playing for seconds after the user speaks.
+func (de *DuplexConversationExecutor) buildDuplexPipelineConfig(req *ConversationRequest) *stage.PipelineConfig {
+	idleTimeout := defaultPipelineIdleTimeout
+	if req.Scenario != nil && req.Scenario.Duplex != nil {
+		idleTimeout = req.Scenario.Duplex.GetTimeoutDuration(idleTimeout)
+	}
+	pipelineConfig := stage.DefaultPipelineConfig().
+		WithExecutionTimeout(0).
+		WithIdleTimeout(idleTimeout)
+	if req.VoiceBargeIn {
+		pipelineConfig = pipelineConfig.WithChannelBufferSize(bargeInChannelBufferSize)
+	}
+	return pipelineConfig
+}
+
+// resolveTargetSampleRate returns the provider's preferred input sample rate,
+// falling back to the default when the provider declares no preference. Each
+// provider has different audio requirements (e.g. Gemini 16kHz, OpenAI 24kHz).
+func resolveTargetSampleRate(streamProvider providers.StreamInputSupport) int {
+	targetSampleRate := defaultSampleRate // fallback to 16kHz
+	caps := streamProvider.GetStreamingCapabilities()
+	if caps.Audio != nil && caps.Audio.PreferredSampleRate > 0 {
+		targetSampleRate = caps.Audio.PreferredSampleRate
+		logger.Debug("buildDuplexPipeline: using provider preferred sample rate",
+			"sample_rate", targetSampleRate)
+	}
+	return targetSampleRate
+}
+
+// appendDuplexInputStages appends the input-side stages (audio pacing, input
+// monitor tap, resample, client-side VAD) in order. Pacing and the monitor tap
+// are opt-in; the resample stage always runs. Returns an error only if the VAD
+// stage fails to construct.
+func (de *DuplexConversationExecutor) appendDuplexInputStages(
+	stages []stage.Stage,
+	req *ConversationRequest,
+	targetSampleRate int,
+) ([]stage.Stage, error) {
+	// 0a. Audio pacing stage — emits each audio element at the cadence implied
+	// by its byte count and sample rate so downstream consumers (input tap →
+	// local-sink playback, and the provider's VAD) see a microphone-like rhythm.
+	// Skipped when nothing downstream cares about cadence (selfplay + no router).
+	// Placed first, before the input MonitorTap, so both paths observe the flow.
+	if needsAudioPacing(req) {
+		stages = append(stages, stage.NewAudioPacingStage())
+	}
+
+	// 0b. Input audio monitor tap (opt-in) — placed BEFORE the resample stage so
+	// the router hears audio at its source sample rate (resample-first causes
+	// chunk-boundary phase clicks). The tap still resamples to the router's
+	// canonical rate internally so consumers continue to see one rate.
+	if req.AudioRouter != nil {
+		stages = append(stages, arenaaudio.NewMonitorTap(req.AudioRouter, arenaaudio.MonitorTapConfig{
+			Position: stage.RecordingPositionInput,
+		}))
+	}
+
+	// 1. Audio resample stage - normalizes all input audio to target sample rate
+	// for the provider. Downstream stages receive consistent sample rates.
+	stages = append(stages, stage.NewAudioResampleStage(stage.AudioResampleConfig{
+		TargetSampleRate:      targetSampleRate,
+		PassthroughIfSameRate: true,
+	}))
+
+	// Add VAD stage if using client-side turn detection
+	if de.shouldUseClientVAD(req) {
+		vadStage, err := stage.NewAudioTurnStage(de.buildVADConfig(req))
+		if err != nil {
+			return nil, fmt.Errorf("failed to create VAD stage: %w", err)
+		}
+		stages = append(stages, vadStage)
+	}
+	return stages, nil
+}
+
+// appendDuplexOutputStages appends the output-side stages (output audio pacing,
+// output monitor tap, media externalizer, arena state-store save) in order.
+// Each is gated on its enabling condition; the save stage wires the emitter when
+// one is available so message elements are broadcast to the live TUI.
+func (de *DuplexConversationExecutor) appendDuplexOutputStages(
+	stages []stage.Stage,
+	req *ConversationRequest,
+	turnState *stage.TurnState,
+	emitter *events.Emitter,
+) []stage.Stage {
+	// 2a-pre. Output audio pacing. Realtime providers stream assistant audio
+	// faster than playback rate; without output pacing the LocalSink queue fills
+	// instantly (turn-end fires before audio is heard) and the next selfplay turn
+	// overlaps the still-playing response. Same gate as input pacing; distinct
+	// name so the builder doesn't reject the pair as duplicates.
 	if needsAudioPacing(req) {
 		stages = append(stages, stage.NewNamedAudioPacingStage("audio-pacing-output"))
 	}
 
 	// 2a. Output audio monitor tap (opt-in). Placed after the provider so
-	// generated agent audio flows through the tap to the router. With the
-	// pacing stage above, the tap (and downstream LocalSink) sees audio
-	// arriving at realtime rate.
+	// generated agent audio flows through the tap to the router at realtime rate.
 	if req.AudioRouter != nil {
 		stages = append(stages, arenaaudio.NewMonitorTap(req.AudioRouter, arenaaudio.MonitorTapConfig{
 			Position: stage.RecordingPositionOutput,
 		}))
 	}
 
-	// NOTE: ResponseVADStage was removed. It was intended to delay EndOfStream until
-	// VAD confirmed response audio stopped, but it caused timing issues with selfplay:
-	// 1. The 3-second max wait overlapped with TTS synthesis time
-	// 2. This caused turn overlaps leading to Gemini interruptions
-	// Gemini's turnComplete signal is now used directly for turn completion.
-
 	// 3. Media externalizer stage to save audio files
 	if de.mediaStorage != nil {
-		mediaConfig := &stage.MediaExternalizerConfig{
+		stages = append(stages, stage.NewMediaExternalizerStage(&stage.MediaExternalizerConfig{
 			Enabled:         true,
 			StorageService:  de.mediaStorage,
 			SizeThresholdKB: 0, // Externalize all media (audio can be large)
 			DefaultPolicy:   "retain",
 			RunID:           req.RunID,
 			ConversationID:  req.ConversationID,
-		}
-		stages = append(stages, stage.NewMediaExternalizerStage(mediaConfig))
+		}))
 	}
 
-	// 5. Arena state store save stage to capture conversation messages.
-	// This stage handles system_prompt in metadata and prepends it as a
-	// system message. When an event bus is available we wire an emitter so
-	// each Message element is also broadcast on the bus — that's what feeds
-	// the live TUI conversation panel during a duplex run.
+	// 5. Arena state store save stage to capture conversation messages. Handles
+	// system_prompt in metadata and prepends it as a system message. When an
+	// event bus is available we wire an emitter so each Message element is also
+	// broadcast on the bus — that feeds the live TUI conversation panel.
 	if req.StateStoreConfig != nil && req.StateStoreConfig.Store != nil {
-		storeConfig := de.buildPipelineStateStoreConfig(req)
-		saveStage := arenastages.NewArenaStateStoreSaveStageWithTurnState(storeConfig, turnState)
+		saveStage := arenastages.NewArenaStateStoreSaveStageWithTurnState(
+			de.buildPipelineStateStoreConfig(req), turnState)
 		if emitter != nil {
 			saveStage = saveStage.WithEmitter(emitter)
 		}
 		stages = append(stages, saveStage)
 	}
-
-	return builder.Chain(stages...).Build()
+	return stages
 }
 
 // buildBaseSessionConfig creates the base streaming configuration without system instruction.
