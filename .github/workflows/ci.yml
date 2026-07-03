@@ -19,6 +19,7 @@ jobs:
     outputs:
       code: ${{ steps.filter.outputs.code }}
       actions: ${{ steps.filter.outputs.actions }}
+      examples: ${{ steps.filter.outputs.examples }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -28,7 +29,15 @@ jobs:
         with:
           filters: |
             code:
-              - '**/*.go'
+              # Core Go lives in arena/ and packc/. Example packs are NOT part
+              # of the shippable module (they're verified by test-examples), so
+              # they're deliberately excluded here — an examples-only PR then
+              # skips the Go pipeline (a skipped required job still satisfies
+              # branch protection). A positive list is used rather than a
+              # `!examples/**` negation because dorny/paths-filter ORs patterns
+              # (negations don't subtract).
+              - 'arena/**/*.go'
+              - 'packc/**/*.go'
               - 'go.mod'
               - 'go.sum'
               - '.golangci.yml'
@@ -36,6 +45,10 @@ jobs:
               - 'npm/**'
             actions:
               - '.github/actions/**'
+            examples:
+              - 'examples/**'
+              - 'arena/cmd/**'
+              - 'schemas/**'
 
   build-test:
     name: Build & Test
@@ -128,3 +141,49 @@ jobs:
       - name: Test
         working-directory: .github/actions/${{ matrix.action }}
         run: npm test
+
+  test-examples:
+    name: Test example packs
+    needs: changes
+    if: needs.changes.outputs.examples == 'true'
+    runs-on: ubuntu-latest
+    env:
+      # Validate against the in-repo schema snapshots (matches the runtime the
+      # packs ship against) rather than the published remote schemas.
+      PROMPTKIT_SCHEMA_SOURCE: local
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26.0'
+      - name: Install ALSA dev headers (for voice CGO)
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev
+      - name: Build promptarena
+        run: go build -o bin/promptarena ./arena/cmd/promptarena
+
+      - name: Validate every example config against the schemas
+        run: |
+          FAILED=0; TOTAL=0
+          while IFS= read -r cfg; do
+            TOTAL=$((TOTAL+1))
+            if ! ./bin/promptarena validate "$cfg" --schema-only >/dev/null 2>&1; then
+              echo "::error::$cfg failed schema validation"
+              ./bin/promptarena validate "$cfg" --schema-only 2>&1 | grep -iE 'error|❌' | head -5
+              FAILED=$((FAILED+1))
+            fi
+          done < <(find examples -maxdepth 2 \( -name 'config.arena.yaml' -o -name '*.arena.yaml' -o -name 'arena.yaml' \) -not -path '*/out/*' | sort)
+          echo "Validated $TOTAL config(s); $FAILED failed."
+          [ $FAILED -eq 0 ]
+
+      - name: Mock-run the showcase examples
+        run: |
+          set -e
+          run() { local ex="$1"; shift; echo "=== $ex ==="; ( cd "examples/$ex" && ../../bin/promptarena run "$@" ); }
+          run customer-support  --config config.arena.yaml --ci --mock-provider --mock-config mock-responses.yaml --scenario customer-support-scenarios --formats json
+          run multimodal-basics --config config.arena.yaml --ci --mock-provider --mock-config mock-responses.yaml --formats json
+          run variables-demo    --config config.arena.yaml --ci --mock-provider --mock-config mock-config.yaml --formats json
+          run assertions-test   --config config.arena.yaml --ci --mock-provider --mock-config mock-responses.yaml --formats json
+          run llm-judge         --config config.arena.yaml --ci --formats json
+          run guardrails-test   --config config.arena.yaml --ci --formats json
+          run eval-test         --config config.arena.yaml --ci --formats json
+          run document-analysis --config config.arena.yaml --ci --formats json
