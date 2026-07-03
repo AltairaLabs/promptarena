@@ -120,24 +120,32 @@ func (e *Engine) initWorkflow() error {
 	// them into LoadedPack.Compositions so buildCompositionResolver can find
 	// them at turn time. This mirrors the packc compile-time path but avoids
 	// requiring a compiled pack for arena testing.
-	if e.config.Compositions != nil {
-		comps, compErr := composition.ParseConfig(e.config.Compositions)
-		if compErr != nil {
-			return fmt.Errorf("parsing compositions: %w", compErr)
-		}
-		if len(comps) > 0 {
-			if e.config.LoadedPack == nil {
-				e.config.LoadedPack = &prompt.Pack{}
-			}
-			if e.config.LoadedPack.Compositions == nil {
-				e.config.LoadedPack.Compositions = make(map[string]*composition.Composition)
-			}
-			for name, comp := range comps {
-				e.config.LoadedPack.Compositions[name] = comp
-			}
-		}
-	}
+	return e.mergeInlineCompositions()
+}
 
+// mergeInlineCompositions parses inline compositions declared on the arena
+// config and merges them into LoadedPack.Compositions so buildCompositionResolver
+// can find them at turn time (RFC 0010). No-op when none are declared.
+func (e *Engine) mergeInlineCompositions() error {
+	if e.config.Compositions == nil {
+		return nil
+	}
+	comps, compErr := composition.ParseConfig(e.config.Compositions)
+	if compErr != nil {
+		return fmt.Errorf("parsing compositions: %w", compErr)
+	}
+	if len(comps) == 0 {
+		return nil
+	}
+	if e.config.LoadedPack == nil {
+		e.config.LoadedPack = &prompt.Pack{}
+	}
+	if e.config.LoadedPack.Compositions == nil {
+		e.config.LoadedPack.Compositions = make(map[string]*composition.Composition)
+	}
+	for name, comp := range comps {
+		e.config.LoadedPack.Compositions[name] = comp
+	}
 	return nil
 }
 
