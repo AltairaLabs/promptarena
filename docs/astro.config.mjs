@@ -44,6 +44,7 @@ export default defineConfig({
             { label: 'How-To Guides', collapsed: true, items: [{ autogenerate: { directory: 'arena/how-to' } }] },
             { label: 'Reference', collapsed: true, items: [{ autogenerate: { directory: 'arena/reference' } }] },
             { label: 'Explanation', collapsed: true, items: [{ autogenerate: { directory: 'arena/explanation' } }] },
+            { label: 'Examples', collapsed: true, items: [{ autogenerate: { directory: 'arena/examples' } }] },
           ],
         },
         {

@@ -89,8 +89,7 @@ docs/dist/
 docs/.astro/
 docs/node_modules/
 docs/src/content/api/
-docs/src/content/arena/examples/
-docs/src/content/sdk/examples/
+docs/src/content/docs/arena/examples/
 docs/src/content/reference/*-cli.txt
 docs/public/schemas/
 
