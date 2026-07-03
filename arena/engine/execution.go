@@ -405,8 +405,6 @@ func (e *Engine) ingestArtifacts(ctx context.Context, runID string) {
 //
 // Handles errors gracefully, always returning a RunID (with Error saved in StateStore if failed).
 // Returns the RunID. Results can be retrieved from StateStore using GetResult().
-//
-//nolint:gocognit,gocritic // pre-existing large orchestration func; resilience additions are minimal + extracted
 func (e *Engine) executeRun(ctx context.Context, combo RunCombination) (runID string, err error) {
 	// Defer per-run timeout setup until after scenario lookup so duplex
 	// scenarios can stretch the deadline to their declared
@@ -477,14 +475,9 @@ func (e *Engine) executeScenarioRun(
 	runCtx, cancel := context.WithTimeout(ctx, runTimeout)
 	defer cancel()
 
-	// Prepare workflow scenarios: shallow-copy to avoid mutating the shared
-	// scenario, then set TaskType from state machine and wire metadata.
-	// Register per-run memory scope and seed memories if configured
-	if e.memoryStore != nil {
-		scope := e.registerMemoryForRun(combo.ScenarioID, runID)
-		if err := e.seedMemoriesForRun(scenario, scope); err != nil {
-			return saveError(fmt.Sprintf("failed to seed memories: %v", err))
-		}
+	// Register per-run memory scope and seed memories if configured.
+	if err := e.seedRunMemory(scenario, combo.ScenarioID, runID); err != nil {
+		return saveError(fmt.Sprintf("failed to seed memories: %v", err))
 	}
 
 	var workflowOrch *EvalOrchestrator
@@ -593,6 +586,16 @@ func (e *Engine) executeScenarioRun(
 	e.notifyRunCompletion(runEmitter, convResult, runID, duration, cost)
 
 	return runID, nil
+}
+
+// seedRunMemory registers a per-run memory scope and seeds any configured
+// memories for the scenario. It is a no-op when the engine has no memory store.
+func (e *Engine) seedRunMemory(scenario *arenaconfig.Scenario, scenarioID, runID string) error {
+	if e.memoryStore == nil {
+		return nil
+	}
+	scope := e.registerMemoryForRun(scenarioID, runID)
+	return e.seedMemoriesForRun(scenario, scope)
 }
 
 // perturbedScenario returns a copy of the scenario with perturbation

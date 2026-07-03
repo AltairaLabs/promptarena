@@ -14,6 +14,12 @@ import (
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 )
 
+func TestSeedRunMemory_NilStoreIsNoOp(t *testing.T) {
+	e := &Engine{}
+	err := e.seedRunMemory(&arenaconfig.Scenario{ID: "s"}, "s", "run-1")
+	assert.NoError(t, err)
+}
+
 func TestCollectExecutionErrors(t *testing.T) {
 	t.Run("nil when all entries succeed", func(t *testing.T) {
 		assert.Nil(t, collectExecutionErrors([]error{nil, nil}))
