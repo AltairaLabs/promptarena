@@ -16,6 +16,9 @@ const (
 	jsonKeyError    = "error"
 	jsonKeyTaskType = "taskType"
 	msgBadRequest   = "bad request"
+	// msgEngineNotConfigured is returned when an interactive handler is hit but no
+	// interactive engine was wired into the server.
+	msgEngineNotConfigured = "engine not configured"
 )
 
 // interactiveSessions holds live chat sessions keyed by conversation ID.
@@ -43,7 +46,7 @@ func (s *interactiveSessions) get(id string) (*engine.InteractiveSession, bool) 
 
 func (s *Server) handleInteractiveOptions(w http.ResponseWriter, _ *http.Request) {
 	if s.interactiveEngine == nil {
-		http.Error(w, "engine not configured", http.StatusServiceUnavailable)
+		http.Error(w, msgEngineNotConfigured, http.StatusServiceUnavailable)
 		return
 	}
 	agents := s.interactiveEngine.Agents()
@@ -63,7 +66,7 @@ func (s *Server) handleInteractiveOptions(w http.ResponseWriter, _ *http.Request
 
 func (s *Server) handleInteractiveSession(w http.ResponseWriter, r *http.Request) {
 	if s.interactiveEngine == nil {
-		http.Error(w, "engine not configured", http.StatusServiceUnavailable)
+		http.Error(w, msgEngineNotConfigured, http.StatusServiceUnavailable)
 		return
 	}
 	var body struct {
@@ -101,7 +104,7 @@ func (s *Server) handleInteractiveSession(w http.ResponseWriter, r *http.Request
 
 func (s *Server) handleInteractiveMessage(w http.ResponseWriter, r *http.Request) {
 	if s.interactiveEngine == nil {
-		http.Error(w, "engine not configured", http.StatusServiceUnavailable)
+		http.Error(w, msgEngineNotConfigured, http.StatusServiceUnavailable)
 		return
 	}
 	var body struct {

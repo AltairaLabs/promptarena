@@ -47,6 +47,8 @@ const echoGuardThreshold = 0.02
 // nil instead of crashing.
 func (p *ChatPage) startVoice(send func(tea.Msg)) tea.Cmd {
 	if send == nil {
+		// No-op sink: headless/test callers pass a nil send. Dropping voice
+		// messages is intentional — there is no bubbletea loop to receive them.
 		send = func(tea.Msg) {}
 	}
 

@@ -156,6 +156,8 @@ func (a *App) activateIfNeeded(p Page) tea.Cmd {
 	a.activated[p] = true
 	send := a.send
 	if send == nil {
+		// No-op sink: headless/test hosts never set a.send. Activation still runs,
+		// but async messages have nowhere to go, so we intentionally drop them.
 		send = func(tea.Msg) {}
 	}
 	return act.Activate(send)
