@@ -314,9 +314,11 @@ func (p *ChatPage) Update(msg tea.Msg) (Page, tea.Cmd) {
 
 	switch v := msg.(type) {
 	case tea.KeyMsg:
-		return p, p.handleKey(v)
+		cmd := p.handleKey(v)
+		return p, cmd
 	case chatStreamDoneMsg:
-		return p, p.handleStreamDone()
+		cmd := p.handleStreamDone()
+		return p, cmd
 	case chatEvalMsg:
 		p.applyEvalMsg(v)
 		return p, nil
@@ -325,8 +327,8 @@ func (p *ChatPage) Update(msg tea.Msg) (Page, tea.Cmd) {
 		return p, nil
 	}
 
-	if cmd, handled := p.handleVoiceMsg(msg); handled {
-		return p, cmd
+	if p.handleVoiceMsg(msg) {
+		return p, nil
 	}
 
 	if p.state == chatStateChat {
@@ -375,21 +377,22 @@ func (p *ChatPage) applyChatErrMsg(v chatErrMsg) {
 	p.statusLine = "⚠ " + chatSanitizeErrorLine(v.err)
 }
 
-// handleVoiceMsg processes voice-mode level, refresh, and ended messages. The
-// bool reports whether the message was handled and Update should return early.
-func (p *ChatPage) handleVoiceMsg(msg tea.Msg) (tea.Cmd, bool) {
+// handleVoiceMsg processes voice-mode level, refresh, and ended messages. It
+// reports whether the message was handled and Update should return early. None
+// of these branches produce a tea.Cmd, so no Cmd is returned.
+func (p *ChatPage) handleVoiceMsg(msg tea.Msg) bool {
 	switch v := msg.(type) {
 	case voiceLevelMsg:
 		p.micLevel = v.user
 		p.agentLevel = v.agent
 		// Update the panel's built-in audio meter so it renders the live levels.
 		p.panel.SetAudioLevels(v.user, v.agent, true)
-		return nil, true
+		return true
 	case chatRefreshMsg:
 		// A message.created event arrived from the voice pipeline; reload the
 		// conversation panel from the voice state store (single source of truth).
 		p.refreshVoicePanel()
-		return nil, true
+		return true
 	case voiceEndedMsg:
 		// The voice driver exited. Reflect it so the console doesn't look hung:
 		// freeze the audio meter and show an ended status.
@@ -399,9 +402,9 @@ func (p *ChatPage) handleVoiceMsg(msg tea.Msg) (tea.Cmd, bool) {
 		} else {
 			p.statusLine = "🛑 interactive session ended (idle timeout or mic closed) — press q to exit"
 		}
-		return nil, true
+		return true
 	}
-	return nil, false
+	return false
 }
 
 func (p *ChatPage) handleKey(msg tea.KeyMsg) tea.Cmd {
