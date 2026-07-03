@@ -317,39 +317,46 @@ func (h *EvalOrchestrator) buildEvalContext(
 ) *evals.EvalContext {
 	latencyMs, haveLatency := latestAssistantLatencyMs(messages)
 	metadata := h.metadata
-	needsCopy := h.eventBus != nil || h.workflowMetaProvider != nil || h.compositionMetaProvider != nil || haveLatency
-	if needsCopy {
-		merged := make(map[string]any, len(metadata)+4) //nolint:mnd // extra capacity for emitter + workflow + latency keys
-		for k, v := range metadata {
-			merged[k] = v
-		}
-		if h.eventBus != nil {
-			emitter := events.NewEmitter(h.eventBus, sessionID, sessionID, sessionID)
-			merged["emitter"] = emitter
-			// Wire the emitter into the runner for eval.completed/failed events.
-			// Safe: each concurrent run gets its own orchestrator clone (and runner).
-			if h.runner != nil {
-				h.runner.SetEmitter(emitter)
-			}
-		}
-		if h.workflowMetaProvider != nil {
-			for k, v := range h.workflowMetaProvider.WorkflowMetadata() {
-				merged[k] = v
-			}
-		}
-		if h.compositionMetaProvider != nil {
-			for k, v := range h.compositionMetaProvider.CompositionMetadata() {
-				merged[k] = v
-			}
-		}
-		if haveLatency {
-			// Bridge per-turn provider latency from the assistant message
-			// into metadata so the latency_budget assertion can read it.
-			merged["latency_ms"] = float64(latencyMs)
-		}
-		metadata = merged
+	if h.eventBus != nil || h.workflowMetaProvider != nil || h.compositionMetaProvider != nil || haveLatency {
+		metadata = h.mergeEvalMetadata(sessionID, latencyMs, haveLatency)
 	}
 	return evals.BuildEvalContext(messages, turnIndex, sessionID, h.taskType, metadata)
+}
+
+// mergeEvalMetadata builds a per-invocation copy of the orchestrator metadata,
+// overlaying the emitter (wired into the runner), workflow state, composition
+// state, and per-turn provider latency. The base h.metadata map is never
+// mutated so concurrent invocations stay isolated.
+func (h *EvalOrchestrator) mergeEvalMetadata(sessionID string, latencyMs int64, haveLatency bool) map[string]any {
+	merged := make(map[string]any, len(h.metadata)+4) //nolint:mnd // extra capacity for emitter + workflow + latency keys
+	for k, v := range h.metadata {
+		merged[k] = v
+	}
+	if h.eventBus != nil {
+		emitter := events.NewEmitter(h.eventBus, sessionID, sessionID, sessionID)
+		merged["emitter"] = emitter
+		// Wire the emitter into the runner for eval.completed/failed events.
+		// Safe: each concurrent run gets its own orchestrator clone (and runner).
+		if h.runner != nil {
+			h.runner.SetEmitter(emitter)
+		}
+	}
+	if h.workflowMetaProvider != nil {
+		for k, v := range h.workflowMetaProvider.WorkflowMetadata() {
+			merged[k] = v
+		}
+	}
+	if h.compositionMetaProvider != nil {
+		for k, v := range h.compositionMetaProvider.CompositionMetadata() {
+			merged[k] = v
+		}
+	}
+	if haveLatency {
+		// Bridge per-turn provider latency from the assistant message
+		// into metadata so the latency_budget assertion can read it.
+		merged["latency_ms"] = float64(latencyMs)
+	}
+	return merged
 }
 
 // latestAssistantLatencyMs returns the LatencyMs of the most recent
