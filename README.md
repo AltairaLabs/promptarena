@@ -42,26 +42,54 @@ Building from source: see [CONTRIBUTING.md](./CONTRIBUTING.md).
 
 ## Quick Start
 
+### 1. Create a project from a template
+
 ```bash
-# 1. Create a project from a template
 promptarena init my-project --template iot-maintenance-demo
 cd my-project
+```
 
-# 2. Inspect configuration
+![init project](recordings/gifs/02-init-project.gif)
+
+### 2. Inspect configuration
+
+```bash
 promptarena config-inspect
+```
 
-# 3. Run a test scenario
+![config overview](recordings/gifs/03-config-overview.gif)
+
+### 3. Run a test scenario
+
+```bash
 promptarena run --scenario scenarios/hardware-faults.scenario.yaml
+```
 
-# 4. Red-team security testing
+![run scenario](recordings/gifs/05-run-scenario.gif)
+
+### 4. Red-team security testing
+
+```bash
 promptarena run --scenario scenarios/redteam-selfplay.scenario.yaml
+```
 
-# 5. Review results
+![redteam test](recordings/gifs/06-redteam-test.gif)
+
+### 5. Review results
+
+```bash
 promptarena view
+```
 
-# 6. Compile prompts to a portable pack for your app
+![view conversation](recordings/gifs/07-view-conversation.gif)
+
+### 6. Compile prompts to a portable pack for your app
+
+```bash
 packc compile -c config.arena.yaml -o app.pack.json
 ```
+
+![sdk demo](recordings/gifs/08-sdk-demo.gif)
 
 ## Voice-agent self-play
 
