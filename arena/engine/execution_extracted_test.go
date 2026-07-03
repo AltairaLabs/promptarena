@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"errors"
 	"strings"
 	"testing"
 	"time"
@@ -12,6 +13,21 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/types"
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 )
+
+func TestCollectExecutionErrors(t *testing.T) {
+	t.Run("nil when all entries succeed", func(t *testing.T) {
+		assert.Nil(t, collectExecutionErrors([]error{nil, nil}))
+	})
+
+	t.Run("collects only non-nil errors in order", func(t *testing.T) {
+		e1 := errors.New("boom")
+		e2 := errors.New("bang")
+		got := collectExecutionErrors([]error{nil, e1, nil, e2})
+		require.Len(t, got, 2)
+		assert.Same(t, e1, got[0])
+		assert.Same(t, e2, got[1])
+	})
+}
 
 func TestPerturbedScenario(t *testing.T) {
 	base := &arenaconfig.Scenario{
