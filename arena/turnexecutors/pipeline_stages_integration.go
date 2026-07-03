@@ -317,13 +317,7 @@ func (e *PipelineExecutor) buildStagePipeline(
 	turnState := stage.NewTurnState()
 
 	// Merge prompt vars into base variables
-	mergedVars := map[string]string{}
-	for k, v := range baseVariables {
-		mergedVars[k] = v
-	}
-	for k, v := range req.PromptVars {
-		mergedVars[k] = v
-	}
+	mergedVars := mergeStringMaps(baseVariables, req.PromptVars)
 
 	var stages []stage.Stage
 
@@ -335,48 +329,9 @@ func (e *PipelineExecutor) buildStagePipeline(
 		)
 	}
 
-	// 1-4. Variable provider, prompt assembly, context extraction, template.
-	// For composition turns (RFC 0010), these stages are skipped: the
-	// CompositionStage builds its own per-step sub-pipelines and there is no
-	// top-level prompt_task to assemble.
-	if req.ActiveComposition == nil {
-		stages = append(stages,
-			stage.NewVariableProviderStageWithVarsAndTurnState(mergedVars, nil, turnState),
-			stage.NewPromptAssemblyStageWithTurnState(req.PromptRegistry, req.TaskType, mergedVars, turnState),
-			arenastages.NewScenarioContextExtractionStageWithTurnState(req.Scenario, turnState),
-			stage.NewTemplateStageWithTurnState(emitterFromRequest(req), turnState),
-		)
-	}
-
-	if req.ActiveComposition == nil {
-		// 4b. Append preloaded skill instructions to system_prompt so skills
-		// marked preload: true are active from turn 1 without requiring the
-		// model to call skill__activate.
-		if e.preloadedSkillInstructions != "" {
-			stages = append(stages,
-				arenastages.NewSkillInstructionStageWithTurnState(e.preloadedSkillInstructions, turnState),
-			)
-		}
-
-		// 4a. Mock scenario context (for mock providers only)
-		if isMockProvider(req.Provider) {
-			logger.Debug("Adding MockScenarioContext stage", "scenario_id", req.Scenario.ID)
-			stages = append(stages, arenastages.NewMockScenarioContextStageWithTurnState(req.Scenario, turnState))
-		} else {
-			logger.Debug("Skipping MockScenarioContext stage - not a mock provider",
-				"provider_type", fmt.Sprintf("%T", req.Provider))
-		}
-
-		// 5. Context builder (if policy exists)
-		if contextPolicy := buildContextPolicy(req.Scenario); contextPolicy != nil {
-			stages = append(stages, stage.NewContextBuilderStageWithTurnState(contextPolicy, turnState))
-		}
-
-		// 5a. Media conversion stage - converts media to provider-supported formats
-		if mediaConvertConfig := buildMediaConvertConfig(req.Provider); mediaConvertConfig != nil {
-			stages = append(stages, stage.NewMediaConvertStage(mediaConvertConfig))
-		}
-	}
+	// 1-5a. Variable/prompt/context/template plus skill, mock, context-builder
+	// and media-convert stages (all skipped for composition turns).
+	stages = e.appendPromptContextStages(stages, req, mergedVars, turnState)
 
 	// 5b. Input recording stage (opt-in via RecordingConfig)
 	stages = appendRecordingStage(stages, req, stage.RecordingPositionInput)
@@ -384,51 +339,117 @@ func (e *PipelineExecutor) buildStagePipeline(
 	// the recording stage always sees every chunk before observers do.
 	stages = appendMonitorTap(stages, req, stage.RecordingPositionInput)
 
-	// 6. Provider/composition stage.
-	// Composition turns (RFC 0010): run a CompositionStage that executes the
-	// composition graph instead of the normal LLM ProviderStage.
-	// Normal turns: consent + chaos tool hooks and pack-declared guardrail
-	// provider hooks all live here. Guardrails run inline in ProviderStage's
-	// hook chain, identically to SDK; no separate stage.
+	// 6. Provider (normal turns) or composition (RFC 0010) stage.
+	stages = e.appendProviderOrCompositionStage(stages, req, mergedVars, turnState)
+
+	// 7-10. Output recording/monitor, media externalization, assertions, and
+	// arena state store save.
+	stages = e.appendPostProviderStages(stages, req, turnState)
+
+	// Chain all stages together
+	return builder.Chain(stages...).Build()
+}
+
+// appendPromptContextStages adds the variable/prompt/context/template stages
+// plus skill, mock-context, context-builder and media-convert stages. All are
+// skipped for composition turns (RFC 0010), where CompositionStage builds its
+// own per-step sub-pipelines and there is no top-level prompt_task to assemble.
+func (e *PipelineExecutor) appendPromptContextStages(
+	stages []stage.Stage, req *TurnRequest, mergedVars map[string]string, turnState *stage.TurnState,
+) []stage.Stage {
 	if req.ActiveComposition != nil {
-		emitter := emitterFromRequest(req)
-		guardrailHooks := loadGuardrailHooks(req, mergedVars)
-		hookReg := buildHookRegistry(req, guardrailHooks)
-		// BaseMetadata propagates mock_scenario_id (and future per-turn metadata)
-		// into composition sub-pipelines so the mock provider can key per-step
-		// responses against the right scenario.
-		baseMetadata := map[string]interface{}{}
-		if req.Scenario != nil && req.Scenario.ID != "" && isMockProvider(req.Provider) {
-			baseMetadata["mock_scenario_id"] = req.Scenario.ID
-		}
-		deps := stage.CompositionExecutorDeps{
-			PromptRegistry: req.PromptRegistry,
-			Provider:       req.Provider,
-			ToolRegistry:   e.toolRegistry,
-			Emitter:        emitter,
-			HookRegistry:   hookReg,
-			BaseVariables:  mergedVars,
-			SchemaResolver: stage.NewFileSchemaResolver(req.BaseDir),
-			BaseMetadata:   baseMetadata,
-		}
-		// RFC 0010 Task 5: when a per-run recorder is wired, build the
-		// CompositionStage with it so step outputs, branch targets, and
-		// parallel statuses are captured for composition_* assertions.
-		if req.CompositionRecorder != nil {
-			stages = append(stages, stage.NewCompositionStageWithRecorder(
-				"composition", req.ActiveComposition, deps, req.CompositionRecorder,
-			))
-		} else {
-			stages = append(stages, stage.NewCompositionStage("composition", req.ActiveComposition, deps))
-		}
-	} else {
-		providerConfig := buildProviderConfig(req)
-		guardrailHooks := loadGuardrailHooks(req, mergedVars)
+		return stages
+	}
+
+	// 1-4. Variable provider, prompt assembly, context extraction, template.
+	stages = append(stages,
+		stage.NewVariableProviderStageWithVarsAndTurnState(mergedVars, nil, turnState),
+		stage.NewPromptAssemblyStageWithTurnState(req.PromptRegistry, req.TaskType, mergedVars, turnState),
+		arenastages.NewScenarioContextExtractionStageWithTurnState(req.Scenario, turnState),
+		stage.NewTemplateStageWithTurnState(emitterFromRequest(req), turnState),
+	)
+
+	// 4b. Append preloaded skill instructions to system_prompt so skills marked
+	// preload: true are active from turn 1 without requiring the model to call
+	// skill__activate.
+	if e.preloadedSkillInstructions != "" {
 		stages = append(stages,
-			e.buildProviderStage(req, providerConfig, turnState, guardrailHooks),
+			arenastages.NewSkillInstructionStageWithTurnState(e.preloadedSkillInstructions, turnState),
 		)
 	}
 
+	// 4a. Mock scenario context (for mock providers only)
+	if isMockProvider(req.Provider) {
+		logger.Debug("Adding MockScenarioContext stage", "scenario_id", req.Scenario.ID)
+		stages = append(stages, arenastages.NewMockScenarioContextStageWithTurnState(req.Scenario, turnState))
+	} else {
+		logger.Debug("Skipping MockScenarioContext stage - not a mock provider",
+			"provider_type", fmt.Sprintf("%T", req.Provider))
+	}
+
+	// 5. Context builder (if policy exists)
+	if contextPolicy := buildContextPolicy(req.Scenario); contextPolicy != nil {
+		stages = append(stages, stage.NewContextBuilderStageWithTurnState(contextPolicy, turnState))
+	}
+
+	// 5a. Media conversion stage - converts media to provider-supported formats
+	if mediaConvertConfig := buildMediaConvertConfig(req.Provider); mediaConvertConfig != nil {
+		stages = append(stages, stage.NewMediaConvertStage(mediaConvertConfig))
+	}
+
+	return stages
+}
+
+// appendProviderOrCompositionStage adds the CompositionStage for composition
+// turns (RFC 0010) or the normal LLM ProviderStage otherwise. Consent/chaos
+// tool hooks and pack-declared guardrail provider hooks run inline in the
+// provider/composition hook chain, identically to the SDK; no separate stage.
+func (e *PipelineExecutor) appendProviderOrCompositionStage(
+	stages []stage.Stage, req *TurnRequest, mergedVars map[string]string, turnState *stage.TurnState,
+) []stage.Stage {
+	if req.ActiveComposition == nil {
+		providerConfig := buildProviderConfig(req)
+		guardrailHooks := loadGuardrailHooks(req, mergedVars)
+		return append(stages, e.buildProviderStage(req, providerConfig, turnState, guardrailHooks))
+	}
+
+	emitter := emitterFromRequest(req)
+	guardrailHooks := loadGuardrailHooks(req, mergedVars)
+	hookReg := buildHookRegistry(req, guardrailHooks)
+	// BaseMetadata propagates mock_scenario_id (and future per-turn metadata)
+	// into composition sub-pipelines so the mock provider can key per-step
+	// responses against the right scenario.
+	baseMetadata := map[string]interface{}{}
+	if req.Scenario != nil && req.Scenario.ID != "" && isMockProvider(req.Provider) {
+		baseMetadata["mock_scenario_id"] = req.Scenario.ID
+	}
+	deps := stage.CompositionExecutorDeps{
+		PromptRegistry: req.PromptRegistry,
+		Provider:       req.Provider,
+		ToolRegistry:   e.toolRegistry,
+		Emitter:        emitter,
+		HookRegistry:   hookReg,
+		BaseVariables:  mergedVars,
+		SchemaResolver: stage.NewFileSchemaResolver(req.BaseDir),
+		BaseMetadata:   baseMetadata,
+	}
+	// RFC 0010 Task 5: when a per-run recorder is wired, build the
+	// CompositionStage with it so step outputs, branch targets, and parallel
+	// statuses are captured for composition_* assertions.
+	if req.CompositionRecorder != nil {
+		return append(stages, stage.NewCompositionStageWithRecorder(
+			"composition", req.ActiveComposition, deps, req.CompositionRecorder,
+		))
+	}
+	return append(stages, stage.NewCompositionStage("composition", req.ActiveComposition, deps))
+}
+
+// appendPostProviderStages adds the output recording/monitor, media
+// externalization, assertion, and arena state-store-save stages that run after
+// the provider/composition stage.
+func (e *PipelineExecutor) appendPostProviderStages(
+	stages []stage.Stage, req *TurnRequest, turnState *stage.TurnState,
+) []stage.Stage {
 	// 7a. Output recording stage (opt-in via RecordingConfig)
 	stages = appendRecordingStage(stages, req, stage.RecordingPositionOutput)
 	// 7b. Output audio monitor tap (opt-in via AudioRouter); after recording.
@@ -458,8 +479,20 @@ func (e *PipelineExecutor) buildStagePipeline(
 		stages = append(stages, saveStage)
 	}
 
-	// Chain all stages together
-	return builder.Chain(stages...).Build()
+	return stages
+}
+
+// mergeStringMaps returns a new map containing all of base with override
+// applied on top (override wins on key collisions).
+func mergeStringMaps(base, override map[string]string) map[string]string {
+	merged := make(map[string]string, len(base)+len(override))
+	for k, v := range base {
+		merged[k] = v
+	}
+	for k, v := range override {
+		merged[k] = v
+	}
+	return merged
 }
 
 // handleExecutionError processes pipeline execution errors
@@ -651,8 +684,6 @@ type StreamingStagesConfig struct {
 // buildCommonStreamingStages constructs the stage pipeline for streaming execution.
 // Both ScriptedExecutor and SelfPlayExecutor share the same core sequence;
 // the StreamingStagesConfig toggles executor-specific stages.
-//
-//nolint:gocognit // Consolidates two near-duplicate methods; linear config-driven branching is intentional
 func (e *PipelineExecutor) buildCommonStreamingStages(
 	req *TurnRequest,
 	cfg StreamingStagesConfig,
@@ -662,6 +693,36 @@ func (e *PipelineExecutor) buildCommonStreamingStages(
 	turnState := stage.NewTurnState()
 	var stages []stage.Stage
 
+	// StateStore load, variable/prompt/context/template and mock stages.
+	stages = e.appendStreamingPromptStages(stages, req, cfg, mergedVars, turnState)
+
+	// Input recording stage (opt-in via RecordingConfig)
+	stages = appendRecordingStage(stages, req, stage.RecordingPositionInput)
+	// Input audio monitor tap (opt-in via AudioRouter); after recording.
+	stages = appendMonitorTap(stages, req, stage.RecordingPositionInput)
+
+	// Provider stage — pack guardrails run inline as ProviderHooks (same as SDK).
+	stages = e.appendStreamingProviderStage(stages, req, cfg, mergedVars, turnState)
+
+	// Output recording stage (opt-in via RecordingConfig)
+	stages = appendRecordingStage(stages, req, stage.RecordingPositionOutput)
+	// Output audio monitor tap (opt-in via AudioRouter); after recording.
+	stages = appendMonitorTap(stages, req, stage.RecordingPositionOutput)
+
+	// Media externalization, assertions, and state store save.
+	stages = e.appendStreamingFinalizeStages(stages, req, cfg, turnState)
+
+	return builder.Chain(stages...).Build()
+}
+
+// appendStreamingPromptStages adds the StateStore load (+turn index), variable
+// injection, prompt assembly, optional scenario-context extraction, template,
+// optional strip-tool-messages, mock scenario context, and optional context
+// builder stages for the streaming pipeline.
+func (e *PipelineExecutor) appendStreamingPromptStages(
+	stages []stage.Stage, req *TurnRequest, cfg StreamingStagesConfig,
+	mergedVars map[string]string, turnState *stage.TurnState,
+) []stage.Stage {
 	// StateStore Load stage
 	if hasStateStore(req) {
 		storeConfig := buildStateStoreConfig(req)
@@ -702,31 +763,33 @@ func (e *PipelineExecutor) buildCommonStreamingStages(
 		}
 	}
 
-	// Input recording stage (opt-in via RecordingConfig)
-	stages = appendRecordingStage(stages, req, stage.RecordingPositionInput)
-	// Input audio monitor tap (opt-in via AudioRouter); after recording.
-	stages = appendMonitorTap(stages, req, stage.RecordingPositionInput)
+	return stages
+}
 
-	// Provider stage — pack guardrails run inline as ProviderHooks (same as
-	// SDK), so there is no separate guardrail-eval stage anymore. We always
-	// resolve guardrail hooks here; buildProviderStage no-ops when there
-	// are no tool hooks AND no guardrail hooks.
+// appendStreamingProviderStage adds the provider stage. Guardrail hooks are
+// always resolved; buildProviderStage no-ops when there are no tool hooks AND
+// no guardrail hooks. When neither hooks are requested a plain ProviderStage is
+// used instead.
+func (e *PipelineExecutor) appendStreamingProviderStage(
+	stages []stage.Stage, req *TurnRequest, cfg StreamingStagesConfig,
+	mergedVars map[string]string, turnState *stage.TurnState,
+) []stage.Stage {
 	providerConfig := buildProviderConfig(req)
 	guardrailHooks := loadGuardrailHooks(req, mergedVars)
 	if cfg.UseHooksProvider || len(guardrailHooks) > 0 {
-		stages = append(stages, e.buildProviderStage(req, providerConfig, turnState, guardrailHooks))
-	} else {
-		stages = append(stages, stage.NewProviderStageWithTurnState(
-			req.Provider, e.toolRegistry, buildToolPolicy(req.Scenario),
-			providerConfig, emitterFromRequest(req), nil, turnState,
-		))
+		return append(stages, e.buildProviderStage(req, providerConfig, turnState, guardrailHooks))
 	}
+	return append(stages, stage.NewProviderStageWithTurnState(
+		req.Provider, e.toolRegistry, buildToolPolicy(req.Scenario),
+		providerConfig, emitterFromRequest(req), nil, turnState,
+	))
+}
 
-	// Output recording stage (opt-in via RecordingConfig)
-	stages = appendRecordingStage(stages, req, stage.RecordingPositionOutput)
-	// Output audio monitor tap (opt-in via AudioRouter); after recording.
-	stages = appendMonitorTap(stages, req, stage.RecordingPositionOutput)
-
+// appendStreamingFinalizeStages adds the optional media externalization,
+// assertion, and state-store-save stages for the streaming pipeline.
+func (e *PipelineExecutor) appendStreamingFinalizeStages(
+	stages []stage.Stage, req *TurnRequest, cfg StreamingStagesConfig, turnState *stage.TurnState,
+) []stage.Stage {
 	// Media externalization (scripted only)
 	if cfg.IncludeMediaExternalizer && e.mediaStorage != nil {
 		mediaConfig := buildMediaConfig(req.ConversationID, e.mediaStorage)
@@ -762,7 +825,7 @@ func (e *PipelineExecutor) buildCommonStreamingStages(
 		}
 	}
 
-	return builder.Chain(stages...).Build()
+	return stages
 }
 
 // mergePromptVars merges base variables (from region) with request prompt vars.
