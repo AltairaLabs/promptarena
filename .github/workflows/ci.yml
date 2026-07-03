@@ -44,6 +44,10 @@ jobs:
               - '.golangci.yml'
               - 'sonar-project.properties'
               - 'npm/**'
+              # Changes to this workflow itself must re-run the Go pipeline it
+              # defines — otherwise a change to how build/test/coverage/scan run
+              # is never exercised before merge.
+              - '.github/workflows/ci.yml'
             actions:
               - '.github/actions/**'
             examples:
