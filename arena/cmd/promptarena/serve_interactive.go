@@ -203,11 +203,11 @@ func openBrowser(url string) {
 	// tool cannot hardcode their absolute paths across platforms.
 	switch runtime.GOOS {
 	case "darwin":
-		cmd = exec.Command("open", url) //nosec G204 -- fixed OS launcher, localhost URL (NOSONAR S4036)
+		cmd = exec.Command("open", url) //nolint:gosec // G204 fixed launcher, localhost URL (NOSONAR S4036)
 	case "linux":
-		cmd = exec.Command("xdg-open", url) //nosec G204 -- fixed OS launcher, localhost URL (NOSONAR S4036)
+		cmd = exec.Command("xdg-open", url) //nolint:gosec // G204 fixed launcher, localhost URL (NOSONAR S4036)
 	case "windows":
-		cmd = exec.Command("rundll32", "url.dll,FileProtocolHandler", url) //nosec G204 -- fixed launcher (NOSONAR S4036)
+		cmd = exec.Command("rundll32", "url.dll,FileProtocolHandler", url) //nolint:gosec // G204 (NOSONAR S4036)
 	default:
 		fmt.Printf("Open %s in your browser\n", url)
 		return
