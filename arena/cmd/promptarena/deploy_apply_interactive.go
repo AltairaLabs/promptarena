@@ -8,7 +8,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/AltairaLabs/PromptKit/runtime/deploy"
-	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 )
 
 var deployApplyCmd = &cobra.Command{
@@ -51,11 +50,42 @@ func runDeployApply(cmd *cobra.Command, args []string) error {
 	stateStore := deploy.NewStateStore(projectDir)
 	packChecksum := deploy.ComputePackChecksum(packData)
 
-	planReq, savedPlan, usedSavedPlan, err := resolvePlanRequest(
-		stateStore, deployCfg, arenaCfg, env, packData, packChecksum,
-	)
+	// Check for a saved plan.
+	var planReq *deploy.PlanRequest
+	savedPlan, err := stateStore.LoadPlan()
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to load saved plan: %w", err)
+	}
+	usedSavedPlan := false
+	if savedPlan != nil && savedPlan.PackChecksum == packChecksum && savedPlan.Environment == env {
+		fmt.Println("  Using saved plan.")
+		planReq = savedPlan.Request
+		usedSavedPlan = true
+	} else {
+		if savedPlan != nil {
+			fmt.Println("  Saved plan is stale (pack or environment changed), re-planning...")
+		}
+		configJSON, mergeErr := mergedDeployConfigJSON(deployCfg, env)
+		if mergeErr != nil {
+			return mergeErr
+		}
+
+		priorState, loadErr := stateStore.Load()
+		if loadErr != nil {
+			return fmt.Errorf("failed to load deploy state: %w", loadErr)
+		}
+		var priorStateStr string
+		if priorState != nil {
+			priorStateStr = priorState.State
+		}
+
+		planReq = &deploy.PlanRequest{
+			PackJSON:     string(packData),
+			DeployConfig: configJSON,
+			ArenaConfig:  serializeArenaConfig(arenaCfg),
+			Environment:  env,
+			PriorState:   priorStateStr,
+		}
 	}
 
 	client, err := connectAdapter(deployCfg.Provider, projectDir)
@@ -95,58 +125,6 @@ func runDeployApply(cmd *cobra.Command, args []string) error {
 	fmt.Println()
 	fmt.Println("Apply complete.")
 	return nil
-}
-
-// resolvePlanRequest returns the plan request to apply. It reuses a saved plan
-// when it still matches the current pack checksum and environment, otherwise it
-// builds a fresh request. The returned savedPlan/usedSavedPlan let the caller
-// surface the right plan-time warnings.
-func resolvePlanRequest(
-	stateStore *deploy.StateStore, deployCfg *arenaconfig.DeployConfig, arenaCfg *arenaconfig.Config,
-	env string, packData []byte, packChecksum string,
-) (planReq *deploy.PlanRequest, savedPlan *deploy.SavedPlan, usedSavedPlan bool, err error) {
-	savedPlan, err = stateStore.LoadPlan()
-	if err != nil {
-		return nil, nil, false, fmt.Errorf("failed to load saved plan: %w", err)
-	}
-	if savedPlan != nil && savedPlan.PackChecksum == packChecksum && savedPlan.Environment == env {
-		fmt.Println("  Using saved plan.")
-		return savedPlan.Request, savedPlan, true, nil
-	}
-	if savedPlan != nil {
-		fmt.Println("  Saved plan is stale (pack or environment changed), re-planning...")
-	}
-	planReq, err = buildPlanRequest(stateStore, deployCfg, arenaCfg, env, packData)
-	return planReq, savedPlan, false, err
-}
-
-// buildPlanRequest assembles a fresh plan request from the merged deploy config
-// and the current prior state.
-func buildPlanRequest(
-	stateStore *deploy.StateStore, deployCfg *arenaconfig.DeployConfig, arenaCfg *arenaconfig.Config,
-	env string, packData []byte,
-) (*deploy.PlanRequest, error) {
-	configJSON, err := mergedDeployConfigJSON(deployCfg, env)
-	if err != nil {
-		return nil, err
-	}
-
-	priorState, err := stateStore.Load()
-	if err != nil {
-		return nil, fmt.Errorf("failed to load deploy state: %w", err)
-	}
-	var priorStateStr string
-	if priorState != nil {
-		priorStateStr = priorState.State
-	}
-
-	return &deploy.PlanRequest{
-		PackJSON:     string(packData),
-		DeployConfig: configJSON,
-		ArenaConfig:  serializeArenaConfig(arenaCfg),
-		Environment:  env,
-		PriorState:   priorStateStr,
-	}, nil
 }
 
 // planWarner fetches a plan for its non-blocking warnings. It's satisfied by
