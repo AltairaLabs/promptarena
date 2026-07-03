@@ -29,12 +29,15 @@ jobs:
         with:
           filters: |
             code:
-              - '**/*.go'
-              # Example packs are not part of the shippable module and are
-              # verified by the test-examples job; exclude them from the core
-              # Go pipeline so an examples-only PR skips build/test/lint/sonar
-              # (a skipped required job still satisfies branch protection).
-              - '!examples/**'
+              # Core Go lives in arena/ and packc/. Example packs are NOT part
+              # of the shippable module (they're verified by test-examples), so
+              # they're deliberately excluded here — an examples-only PR then
+              # skips the Go pipeline (a skipped required job still satisfies
+              # branch protection). A positive list is used rather than a
+              # `!examples/**` negation because dorny/paths-filter ORs patterns
+              # (negations don't subtract).
+              - 'arena/**/*.go'
+              - 'packc/**/*.go'
               - 'go.mod'
               - 'go.sum'
               - '.golangci.yml'
