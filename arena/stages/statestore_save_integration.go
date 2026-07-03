@@ -630,35 +630,11 @@ func (s *ArenaStateStoreSaveStage) persistState(
 	// Source the system prompt from TurnState (set by TemplateStage), then
 	// fall back to config metadata for tests that wire SystemPrompt through
 	// the config path.
-	systemPrompt := ""
-	if s.turnState != nil {
-		systemPrompt = s.turnState.SystemPrompt
-	}
-	if systemPrompt == "" && s.config != nil && s.config.Metadata != nil {
-		if sp, ok := s.config.Metadata["system_prompt"].(string); ok && sp != "" {
-			systemPrompt = sp
-		}
-	}
+	systemPrompt := s.resolveSystemPrompt()
 
-	// On the error path the ProviderStage emits only an error element — no
-	// response messages reach this stage's input channel, so messages is empty.
-	// If the store implements MessageLog the ProviderStage wrote per-round
-	// messages via LogAppend+preSeedLog (including history). Do a fresh Load()
-	// to recover the full transcript.
-	//
-	// On the success path messages already contains everything the pipeline
-	// emitted (including assertion-decorated messages from downstream stages);
-	// we must NOT replace it with a stale store snapshot that predates those
-	// decorations. The guard len(messages)==0 limits the recovery to the error
-	// path only.
-	if len(messages) == 0 && s.config != nil {
-		if _, ok := s.config.Store.(runtimeStatestore.MessageLog); ok {
-			freshState, freshErr := arenaStore.Load(ctx, s.config.ConversationID)
-			if freshErr == nil && freshState != nil && len(freshState.Messages) > 0 {
-				messages = freshState.Messages
-			}
-		}
-	}
+	// Recover the full transcript from the store on the error path (see
+	// recoverErrorPathMessages for the success/error-path reasoning).
+	messages = s.recoverErrorPathMessages(ctx, arenaStore, messages)
 
 	if systemPrompt != "" {
 		state.Messages = prependSystemMessage(messages, systemPrompt)
@@ -678,6 +654,32 @@ func (s *ArenaStateStoreSaveStage) persistState(
 	}
 
 	return nil
+}
+
+// recoverErrorPathMessages recovers the full transcript from the store on the
+// error path. On the error path the ProviderStage emits only an error element —
+// no response messages reach this stage's input channel, so messages is empty.
+// If the store implements MessageLog the ProviderStage wrote per-round messages
+// via LogAppend+preSeedLog (including history); a fresh Load() recovers them.
+//
+// On the success path messages already contains everything the pipeline emitted
+// (including assertion-decorated messages from downstream stages); we must NOT
+// replace it with a stale store snapshot that predates those decorations. The
+// guard len(messages)==0 limits the recovery to the error path only.
+func (s *ArenaStateStoreSaveStage) recoverErrorPathMessages(
+	ctx context.Context, arenaStore arenaSaveStore, messages []types.Message,
+) []types.Message {
+	if len(messages) != 0 || s.config == nil {
+		return messages
+	}
+	if _, ok := s.config.Store.(runtimeStatestore.MessageLog); !ok {
+		return messages
+	}
+	freshState, freshErr := arenaStore.Load(ctx, s.config.ConversationID)
+	if freshErr == nil && freshState != nil && len(freshState.Messages) > 0 {
+		return freshState.Messages
+	}
+	return messages
 }
 
 // turnStateMetadata returns the TurnState's ProviderRequestMetadata, or nil
