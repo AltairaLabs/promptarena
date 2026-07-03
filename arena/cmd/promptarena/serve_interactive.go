@@ -197,14 +197,17 @@ func runServe(cmd *cobra.Command, args []string) error {
 //nolint:noctx // Dev tool - context not needed for opening browser
 func openBrowser(url string) {
 	var cmd *exec.Cmd
-	// NOSONAR: Command injection safe - url is internally generated (localhost URL), not user input
+	// url is internally generated (a localhost URL), never user input, so command
+	// injection is not a concern. The OS launcher name (open/xdg-open/rundll32) is
+	// resolved via $PATH by design — these are fixed system utilities and a dev
+	// tool cannot hardcode their absolute paths across platforms.
 	switch runtime.GOOS {
 	case "darwin":
-		cmd = exec.Command("open", url)
+		cmd = exec.Command("open", url) // NOSONAR S4036: fixed OS launcher, localhost URL only
 	case "linux":
-		cmd = exec.Command("xdg-open", url)
+		cmd = exec.Command("xdg-open", url) // NOSONAR S4036: fixed OS launcher, localhost URL only
 	case "windows":
-		cmd = exec.Command("rundll32", "url.dll,FileProtocolHandler", url)
+		cmd = exec.Command("rundll32", "url.dll,FileProtocolHandler", url) // NOSONAR S4036
 	default:
 		fmt.Printf("Open %s in your browser\n", url)
 		return

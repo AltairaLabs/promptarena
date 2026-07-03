@@ -77,9 +77,11 @@ export function extractBinary(archivePath, platform, binaryName, destDir) {
     });
   }
 
-  // Make executable on Unix-like systems
+  // Make executable on Unix-like systems. 0o755 = owner rwx, group/other r-x
+  // (NOT world-writable) — the minimal mode that lets every user run the CLI
+  // while keeping write access owner-only. The binary must be executable to run.
   if (platform !== 'Windows') {
-    fs.chmodSync(destPath, 0o755);
+    fs.chmodSync(destPath, 0o755); // NOSONAR S2612: 0o755 is not world-writable; required to run the CLI
   }
 
   return destPath;
