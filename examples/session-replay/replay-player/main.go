@@ -34,7 +34,7 @@ func main() {
 		}
 	} else {
 		// Create a demo recording
-		fmt.Println("Creating demo recording with audio...\n")
+		fmt.Println("Creating demo recording with audio...")
 		rec, recPath = createDemoRecording()
 	}
 

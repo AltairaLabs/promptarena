@@ -26,7 +26,7 @@ func main() {
 	}
 	defer os.RemoveAll(tempDir)
 
-	fmt.Println("=== Session Recording & Playback Demo ===\n")
+	fmt.Println("=== Session Recording & Playback Demo ===")
 
 	// Step 1: Create event store and record a session
 	fmt.Println("1. Recording session events...")
@@ -180,7 +180,7 @@ func main() {
 	fmt.Printf("  Conversation turns: %d\n", session.Metadata.ConversationTurns)
 
 	// Step 4: Play back with synchronized timing
-	fmt.Println("\n4. Playing back session (2x speed)...\n")
+	fmt.Println("\n4. Playing back session (2x speed)...")
 	fmt.Println("--- Playback Start ---")
 
 	playbackStart := time.Now()
