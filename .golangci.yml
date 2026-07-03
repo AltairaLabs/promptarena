@@ -179,6 +179,9 @@ linters:
           - funlen
           - gochecknoinits  # cobra CLI tools require init() for command registration
           - revive  # package-comments check not applicable to cmd/main packages
+      - path: 'tools/schema-gen/'
+        linters:
+          - goconst  # schema builders assemble example JSON with intentionally repeated keys
       - path: 'examples/'
         linters:
           - mnd
