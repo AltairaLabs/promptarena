@@ -26,6 +26,20 @@ type TurnEvalRunner interface {
 
 const roleAssistant = "assistant"
 
+// Map keys used in the assertion-result summaries attached to message metadata.
+const (
+	assertKeyResults = "results"
+	assertKeyPassed  = "passed"
+	assertKeyTotal   = "total"
+	assertKeyFailed  = "failed"
+	assertKeyType    = "type"
+	assertKeyMessage = "message"
+	assertKeyDetails = "details"
+	assertKeyConfig  = "config"
+	assertKeyParams  = "params"
+	assertKeySkipped = "skipped"
+)
+
 // ArenaAssertionStage validates assertions after LLM responses.
 type ArenaAssertionStage struct {
 	stage.BaseStage
@@ -178,61 +192,11 @@ func (s *ArenaAssertionStage) executeAssertions(
 	metadata map[string]interface{},
 ) (map[string]interface{}, []error) {
 	if s.turnEvalRunner == nil {
-		if len(s.assertionConfigs) == 0 {
-			return map[string]interface{}{
-				"results": []interface{}{},
-				"passed":  true,
-				"total":   0,
-				"failed":  0,
-			}, nil
-		}
-		logger.Warn("Assertions defined but eval runner not configured — marking all as failed",
-			"assertion_count", len(s.assertionConfigs))
-		failedResults := make([]interface{}, len(s.assertionConfigs))
-		var errs []error
-		for i, ac := range s.assertionConfigs {
-			failedResults[i] = map[string]interface{}{
-				"type":    ac.Type,
-				"passed":  false,
-				"message": ac.Message,
-				"details": map[string]interface{}{"error": "eval runner not configured"},
-			}
-		}
-		s.attachResultsToMessage(lastAssistantMsg, map[string]interface{}{
-			"results": failedResults,
-			"passed":  false,
-			"total":   len(s.assertionConfigs),
-			"failed":  len(s.assertionConfigs),
-		})
-		errs = append(errs, fmt.Errorf("assertions defined but eval runner not configured"))
-		return map[string]interface{}{
-			"results": failedResults,
-			"passed":  false,
-			"total":   len(s.assertionConfigs),
-			"failed":  len(s.assertionConfigs),
-		}, errs
+		return s.handleMissingEvalRunner(lastAssistantMsg)
 	}
 
 	// Pre-filter assertions by when-condition
-	var filteredConfigs []assertions.AssertionConfig
-	var skippedResults []interface{}
-	for _, ac := range s.assertionConfigs {
-		if ac.When != nil {
-			params := s.buildWhenParams(ac.Params, turnMessages, allMessages, metadata)
-			if shouldRun, reason := assertions.NewWhenEvaluator(ac.When).ShouldRun(params); !shouldRun {
-				skippedResults = append(skippedResults, map[string]interface{}{
-					"type":    ac.Type,
-					"passed":  true,
-					"skipped": true,
-					"message": ac.Message,
-					"details": map[string]interface{}{"skip_reason": reason},
-					"config":  map[string]interface{}{"type": ac.Type, "params": ac.Params},
-				})
-				continue
-			}
-		}
-		filteredConfigs = append(filteredConfigs, ac)
-	}
+	filteredConfigs, skippedResults := s.filterAssertionsByWhen(turnMessages, allMessages, metadata)
 
 	// Run filtered assertions through eval runner
 	evalResults := s.turnEvalRunner.RunAssertionsAsEvals(
@@ -243,43 +207,109 @@ func (s *ArenaAssertionStage) executeAssertions(
 
 	// Convert eval results to map format for message metadata
 	convResults := assertions.ConvertEvalResults(evalResults)
+	results, validationErrors := buildAssertionResults(convResults, filteredConfigs, skippedResults)
+
+	// Build summary map and attach to message metadata
+	resultsMap := map[string]interface{}{
+		assertKeyResults: results,
+		assertKeyPassed:  len(validationErrors) == 0,
+		assertKeyTotal:   len(results),
+		assertKeyFailed:  len(validationErrors),
+	}
+	s.attachResultsToMessage(lastAssistantMsg, resultsMap)
+
+	logger.Debug("Turn assertions evaluated via eval path",
+		assertKeyTotal, len(results),
+		"eval_results", len(evalResults),
+		assertKeySkipped, len(skippedResults))
+
+	return resultsMap, validationErrors
+}
+
+// handleMissingEvalRunner produces the result summary for the case where no
+// TurnEvalRunner is wired. With no configured assertions this is a passing
+// no-op; otherwise every assertion is marked failed and an error is returned.
+func (s *ArenaAssertionStage) handleMissingEvalRunner(
+	lastAssistantMsg *types.Message,
+) (map[string]interface{}, []error) {
+	if len(s.assertionConfigs) == 0 {
+		return map[string]interface{}{
+			assertKeyResults: []interface{}{},
+			assertKeyPassed:  true,
+			assertKeyTotal:   0,
+			assertKeyFailed:  0,
+		}, nil
+	}
+	logger.Warn("Assertions defined but eval runner not configured — marking all as failed",
+		"assertion_count", len(s.assertionConfigs))
+	failedResults := make([]interface{}, len(s.assertionConfigs))
+	for i, ac := range s.assertionConfigs {
+		failedResults[i] = map[string]interface{}{
+			assertKeyType:    ac.Type,
+			assertKeyPassed:  false,
+			assertKeyMessage: ac.Message,
+			assertKeyDetails: map[string]interface{}{"error": "eval runner not configured"},
+		}
+	}
+	resultsMap := map[string]interface{}{
+		assertKeyResults: failedResults,
+		assertKeyPassed:  false,
+		assertKeyTotal:   len(s.assertionConfigs),
+		assertKeyFailed:  len(s.assertionConfigs),
+	}
+	s.attachResultsToMessage(lastAssistantMsg, resultsMap)
+	return resultsMap, []error{fmt.Errorf("assertions defined but eval runner not configured")}
+}
+
+// filterAssertionsByWhen partitions the configured assertions into those that
+// should run (returned as filteredConfigs) and those skipped by an unmet
+// when-condition (returned as pre-built skippedResults entries).
+func (s *ArenaAssertionStage) filterAssertionsByWhen(
+	turnMessages, allMessages []types.Message,
+	metadata map[string]interface{},
+) ([]assertions.AssertionConfig, []interface{}) {
+	var filteredConfigs []assertions.AssertionConfig
+	var skippedResults []interface{}
+	for _, ac := range s.assertionConfigs {
+		if ac.When != nil {
+			params := s.buildWhenParams(ac.Params, turnMessages, allMessages, metadata)
+			if shouldRun, reason := assertions.NewWhenEvaluator(ac.When).ShouldRun(params); !shouldRun {
+				skippedResults = append(skippedResults, map[string]interface{}{
+					assertKeyType:    ac.Type,
+					assertKeyPassed:  true,
+					assertKeySkipped: true,
+					assertKeyMessage: ac.Message,
+					assertKeyDetails: map[string]interface{}{"skip_reason": reason},
+					assertKeyConfig:  map[string]interface{}{assertKeyType: ac.Type, assertKeyParams: ac.Params},
+				})
+				continue
+			}
+		}
+		filteredConfigs = append(filteredConfigs, ac)
+	}
+	return filteredConfigs, skippedResults
+}
+
+// buildAssertionResults converts eval results into report-friendly result maps
+// (prepended with any skippedResults) and collects validation errors for
+// failed assertions. The original assertion type/message override the
+// pack_eval: prefixed eval type so reports label each turn assertion
+// meaningfully; the handler explanation is kept under details.explanation.
+func buildAssertionResults(
+	convResults []assertions.ConversationValidationResult,
+	filteredConfigs []assertions.AssertionConfig,
+	skippedResults []interface{},
+) ([]interface{}, []error) {
 	results := make([]interface{}, 0, len(skippedResults)+len(convResults))
 	results = append(results, skippedResults...)
 
 	var validationErrors []error
 	for i, cr := range convResults {
-		// Use the original assertion type (not the pack_eval: prefixed eval type),
-		// and surface the assertion's configured message as the headline (same fix
-		// as conversation assertions) so reports label each turn assertion
-		// meaningfully; the handler explanation is kept under details.explanation.
-		displayType := cr.Type
-		displayMessage := cr.Message
-		details := cr.Details
+		var cfg *assertions.AssertionConfig
 		if i < len(filteredConfigs) {
-			displayType = filteredConfigs[i].Type
-			if filteredConfigs[i].Message != "" {
-				if details == nil {
-					details = map[string]interface{}{}
-				}
-				if cr.Message != "" {
-					details["explanation"] = cr.Message
-				}
-				displayMessage = filteredConfigs[i].Message
-			}
+			cfg = &filteredConfigs[i]
 		}
-		resultMap := map[string]interface{}{
-			"type":    displayType,
-			"passed":  cr.Passed,
-			"details": details,
-			"message": displayMessage,
-		}
-		// Attach the original assertion config so reports can show what was tested
-		if i < len(filteredConfigs) {
-			resultMap["config"] = map[string]interface{}{
-				"type":   filteredConfigs[i].Type,
-				"params": filteredConfigs[i].Params,
-			}
-		}
+		resultMap, displayType := buildSingleAssertionResult(cr, cfg)
 		results = append(results, resultMap)
 
 		if !cr.Passed {
@@ -287,22 +317,48 @@ func (s *ArenaAssertionStage) executeAssertions(
 				fmt.Errorf("assertion %d (%s) failed: %s", i, displayType, cr.Message))
 		}
 	}
+	return results, validationErrors
+}
 
-	// Build summary map and attach to message metadata
-	resultsMap := map[string]interface{}{
-		"results": results,
-		"passed":  len(validationErrors) == 0,
-		"total":   len(results),
-		"failed":  len(validationErrors),
+// buildSingleAssertionResult builds one report result map from a converted
+// eval result and its originating assertion config (nil when the eval has no
+// matching config). The original assertion type/message override the
+// pack_eval: prefixed eval fields; the handler explanation is preserved under
+// details.explanation. Returns the result map and the display type used for
+// the failure error message.
+func buildSingleAssertionResult(
+	cr assertions.ConversationValidationResult,
+	cfg *assertions.AssertionConfig,
+) (map[string]interface{}, string) {
+	displayType := cr.Type
+	displayMessage := cr.Message
+	details := cr.Details
+	if cfg != nil {
+		displayType = cfg.Type
+		if cfg.Message != "" {
+			if details == nil {
+				details = map[string]interface{}{}
+			}
+			if cr.Message != "" {
+				details["explanation"] = cr.Message
+			}
+			displayMessage = cfg.Message
+		}
 	}
-	s.attachResultsToMessage(lastAssistantMsg, resultsMap)
-
-	logger.Debug("Turn assertions evaluated via eval path",
-		"total", len(results),
-		"eval_results", len(evalResults),
-		"skipped", len(skippedResults))
-
-	return resultsMap, validationErrors
+	resultMap := map[string]interface{}{
+		assertKeyType:    displayType,
+		assertKeyPassed:  cr.Passed,
+		assertKeyDetails: details,
+		assertKeyMessage: displayMessage,
+	}
+	// Attach the original assertion config so reports can show what was tested
+	if cfg != nil {
+		resultMap[assertKeyConfig] = map[string]interface{}{
+			assertKeyType:   cfg.Type,
+			assertKeyParams: cfg.Params,
+		}
+	}
+	return resultMap, displayType
 }
 
 // buildWhenParams builds parameters for when-condition evaluation.

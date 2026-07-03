@@ -900,6 +900,43 @@ func TestArenaStateStoreSaveStage_UpdateExistingState(t *testing.T) {
 	assert.Equal(t, "New message", state.Messages[0].Content)
 }
 
+func TestArenaStateStoreSaveStage_RecoverErrorPathMessages(t *testing.T) {
+	store := statestore.NewArenaStateStore()
+	ctx := context.Background()
+
+	// Pre-populate the store transcript so the error-path recovery has
+	// something to Load. ArenaStateStore implements MessageLog.
+	saved := []types.Message{
+		{Role: "user", Content: "u1"},
+		{Role: "assistant", Content: "a1"},
+	}
+	require.NoError(t, store.Save(ctx, &runtimeStatestore.ConversationState{
+		ID:       "recover-conv",
+		Messages: saved,
+	}))
+
+	cfg := &pipeline.StateStoreConfig{Store: store, ConversationID: "recover-conv"}
+	s := NewArenaStateStoreSaveStage(cfg)
+
+	// Error path: empty messages → recover the full transcript from the store.
+	recovered := s.recoverErrorPathMessages(ctx, store, nil)
+	require.Len(t, recovered, 2)
+	assert.Equal(t, "u1", recovered[0].Content)
+
+	// Success path: non-empty messages are returned unchanged.
+	live := []types.Message{{Role: "assistant", Content: "decorated"}}
+	got := s.recoverErrorPathMessages(ctx, store, live)
+	require.Len(t, got, 1)
+	assert.Equal(t, "decorated", got[0].Content)
+}
+
+func TestArenaStateStoreSaveStage_RecoverErrorPathMessages_NilConfig(t *testing.T) {
+	store := statestore.NewArenaStateStore()
+	s := NewArenaStateStoreSaveStage(nil)
+	msgs := s.recoverErrorPathMessages(context.Background(), store, nil)
+	assert.Nil(t, msgs)
+}
+
 func TestArenaStateStoreSaveStage_NilStore(t *testing.T) {
 	cfg := &pipeline.StateStoreConfig{
 		Store:          nil,

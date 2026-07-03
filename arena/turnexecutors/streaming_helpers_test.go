@@ -6,6 +6,33 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/types"
 )
 
+func TestMergeStringMaps(t *testing.T) {
+	base := map[string]string{"region": "us", "keep": "base"}
+	override := map[string]string{"region": "eu", "extra": "over"}
+
+	got := mergeStringMaps(base, override)
+
+	if got["region"] != "eu" {
+		t.Errorf("override should win: region = %q, want %q", got["region"], "eu")
+	}
+	if got["keep"] != "base" {
+		t.Errorf("base-only key lost: keep = %q, want %q", got["keep"], "base")
+	}
+	if got["extra"] != "over" {
+		t.Errorf("override-only key missing: extra = %q, want %q", got["extra"], "over")
+	}
+	// Inputs must be untouched.
+	if base["region"] != "us" {
+		t.Errorf("base map mutated: region = %q, want %q", base["region"], "us")
+	}
+
+	// Nil inputs are tolerated and yield an empty (non-nil) map.
+	empty := mergeStringMaps(nil, nil)
+	if empty == nil || len(empty) != 0 {
+		t.Errorf("mergeStringMaps(nil, nil) = %v, want empty map", empty)
+	}
+}
+
 func TestScriptedExecutor_UpdateMessagesList(t *testing.T) {
 	executor := &ScriptedExecutor{}
 

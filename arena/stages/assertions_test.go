@@ -350,6 +350,105 @@ func TestArenaAssertionStage_AttachResultsToMessage_NilMeta(t *testing.T) {
 	assert.Equal(t, results, msg.Meta["assertions"])
 }
 
+func TestArenaAssertionStage_FilterAssertionsByWhen_Skips(t *testing.T) {
+	// A when-condition that requires a tool call that never happened must be
+	// skipped, and the matching assertion filtered out.
+	configs := []assertions.AssertionConfig{
+		{Type: "always", Message: "runs"},
+		{Type: "gated", Message: "gated", When: &assertions.AssertionWhen{ToolCalled: "search"}},
+	}
+	s := NewArenaAssertionStage(configs)
+
+	turnMessages := []types.Message{{Role: "assistant", Content: "Hello"}}
+	filtered, skipped := s.filterAssertionsByWhen(turnMessages, turnMessages, nil)
+
+	require.Len(t, filtered, 1)
+	assert.Equal(t, "always", filtered[0].Type)
+	require.Len(t, skipped, 1)
+	skippedMap := skipped[0].(map[string]interface{})
+	assert.Equal(t, "gated", skippedMap["type"])
+	assert.Equal(t, true, skippedMap["skipped"])
+}
+
+func TestArenaAssertionStage_FilterAssertionsByWhen_AllRun(t *testing.T) {
+	configs := []assertions.AssertionConfig{
+		{Type: "a"},
+		{Type: "b"},
+	}
+	s := NewArenaAssertionStage(configs)
+
+	turnMessages := []types.Message{{Role: "assistant", Content: "Hello"}}
+	filtered, skipped := s.filterAssertionsByWhen(turnMessages, turnMessages, nil)
+
+	require.Len(t, filtered, 2)
+	assert.Empty(t, skipped)
+}
+
+func TestBuildSingleAssertionResult_ConfigOverride(t *testing.T) {
+	cr := assertions.ConversationValidationResult{
+		Type:    "pack_eval:handler",
+		Passed:  false,
+		Message: "handler explanation",
+		Details: map[string]interface{}{"score": 0.2},
+	}
+	cfg := &assertions.AssertionConfig{
+		Type:    "toxicity",
+		Message: "must not be toxic",
+		Params:  map[string]interface{}{"threshold": 0.5},
+	}
+
+	resultMap, displayType := buildSingleAssertionResult(cr, cfg)
+
+	assert.Equal(t, "toxicity", displayType)
+	assert.Equal(t, "toxicity", resultMap["type"])
+	assert.Equal(t, "must not be toxic", resultMap["message"])
+	details := resultMap["details"].(map[string]interface{})
+	assert.Equal(t, "handler explanation", details["explanation"])
+	cfgMap := resultMap["config"].(map[string]interface{})
+	assert.Equal(t, "toxicity", cfgMap["type"])
+}
+
+func TestBuildSingleAssertionResult_NoConfig(t *testing.T) {
+	cr := assertions.ConversationValidationResult{
+		Type:    "handler",
+		Passed:  true,
+		Message: "ok",
+	}
+
+	resultMap, displayType := buildSingleAssertionResult(cr, nil)
+
+	assert.Equal(t, "handler", displayType)
+	assert.Equal(t, "ok", resultMap["message"])
+	_, hasConfig := resultMap["config"]
+	assert.False(t, hasConfig)
+}
+
+func TestBuildAssertionResults_PrependsSkipped(t *testing.T) {
+	skipped := []interface{}{map[string]interface{}{"type": "skipped", "skipped": true}}
+	convResults := []assertions.ConversationValidationResult{
+		{Type: "fail", Passed: false, Message: "nope"},
+	}
+	filtered := []assertions.AssertionConfig{{Type: "fail", Message: "must pass"}}
+
+	results, errs := buildAssertionResults(convResults, filtered, skipped)
+
+	require.Len(t, results, 2)
+	assert.Equal(t, "skipped", results[0].(map[string]interface{})["type"])
+	require.Len(t, errs, 1)
+	assert.Contains(t, errs[0].Error(), "fail")
+}
+
+func TestArenaAssertionStage_HandleMissingEvalRunner_NoConfigs(t *testing.T) {
+	s := NewArenaAssertionStage(nil)
+	msg := &types.Message{Role: "assistant", Content: "hi"}
+
+	resultsMap, errs := s.handleMissingEvalRunner(msg)
+
+	assert.Nil(t, errs)
+	assert.Equal(t, true, resultsMap["passed"])
+	assert.Equal(t, 0, resultsMap["total"])
+}
+
 func TestArenaAssertionStage_MultipleAssertions(t *testing.T) {
 	assertionConfigs := []assertions.AssertionConfig{
 		{Type: "pass1", Message: "First assertion"},
