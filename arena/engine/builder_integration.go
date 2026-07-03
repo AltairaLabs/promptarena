@@ -64,7 +64,7 @@ import (
 //
 // Returns all components needed to construct an Engine, or an error if any component fails to build.
 //
-//nolint:gocognit,gocritic // Pre-existing: complexity reduced from 24→20; 8 returns are the public API contract
+//nolint:gocritic // 8 returns are the public API contract
 func BuildEngineComponents(cfg *arenaconfig.Config, providerFilter []string) (
 	providerRegistry *providers.Registry,
 	promptRegistry *prompt.Registry,
@@ -152,35 +152,9 @@ func BuildEngineComponents(cfg *arenaconfig.Config, providerFilter []string) (
 		return nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("failed to register skill tools: %w", skillErr)
 	}
 
-	// Inject judge metadata so eval handlers (llm_judge, llm_judge_session)
-	// can resolve judge providers from config targets. Also expose the tool
-	// registry under a known key so the tool_exec handler can invoke
-	// pack-declared / MCP-discovered tools as conversation-level gates.
-	if evalOrchestrator != nil {
-		metadata := make(map[string]any)
-		attachJudgeMetadata(metadata, cfg)
-		if promptRegistry != nil {
-			metadata["prompt_registry"] = promptRegistry
-		}
-		if toolRegistry != nil {
-			metadata["tool_registry"] = toolRegistry
-		}
-		evalOrchestrator.SetMetadata(metadata)
-
-		// Build the classify.Registry from cfg.Inference and inject it into
-		// the orchestrator so eval/assertion handlers can pull a classifier
-		// via classify.FromContext. Construction errors are non-fatal — an
-		// unparseable HF entry would block every run, even ones that don't
-		// touch classify, so we log and continue with an empty registry.
-		// Handlers that need one will surface a clean "no classifier
-		// configured" error rather than panic.
-		classifyReg, classifyErr := buildClassifyRegistry(cfg)
-		if classifyErr != nil {
-			logger.Warn("classify registry build failed; classify-backed handlers unavailable",
-				"error", classifyErr)
-		}
-		evalOrchestrator.SetClassifyRegistry(classifyReg)
-	}
+	// Inject judge metadata + classify registry so eval handlers can resolve
+	// judge providers, tools, and classifiers from config.
+	configureOrchestratorMetadata(evalOrchestrator, cfg, promptRegistry, toolRegistry)
 
 	// Build conversation executor (engine-specific, stays here)
 	conversationExecutor, adapterRegistry, err := newConversationExecutor(
@@ -195,6 +169,41 @@ func BuildEngineComponents(cfg *arenaconfig.Config, providerFilter []string) (
 
 	return providerRegistry, promptRegistry, mcpRegistry, conversationExecutor,
 		adapterRegistry, a2aCleanupFn, toolRegistry, skillExec, nil
+}
+
+// configureOrchestratorMetadata injects judge metadata so eval handlers
+// (llm_judge, llm_judge_session) can resolve judge providers from config
+// targets, exposes the prompt and tool registries under known keys, and wires a
+// classify.Registry so classify-backed handlers (audio_emotion, text_toxicity,
+// ...) can pull a classifier via classify.FromContext. Nil orchestrator is a
+// no-op. Classify build errors are non-fatal — an unparseable HF entry would
+// otherwise block every run, even ones that don't touch classify — so we log
+// and continue with an empty registry.
+func configureOrchestratorMetadata(
+	evalOrchestrator *EvalOrchestrator,
+	cfg *arenaconfig.Config,
+	promptRegistry *prompt.Registry,
+	toolRegistry *tools.Registry,
+) {
+	if evalOrchestrator == nil {
+		return
+	}
+	metadata := make(map[string]any)
+	attachJudgeMetadata(metadata, cfg)
+	if promptRegistry != nil {
+		metadata["prompt_registry"] = promptRegistry
+	}
+	if toolRegistry != nil {
+		metadata["tool_registry"] = toolRegistry
+	}
+	evalOrchestrator.SetMetadata(metadata)
+
+	classifyReg, classifyErr := buildClassifyRegistry(cfg)
+	if classifyErr != nil {
+		logger.Warn("classify registry build failed; classify-backed handlers unavailable",
+			"error", classifyErr)
+	}
+	evalOrchestrator.SetClassifyRegistry(classifyReg)
 }
 
 // registerMediaGenTools wires the built-in image__generate / video__generate
@@ -230,29 +239,10 @@ func registerMediaGenTools(toolRegistry *tools.Registry, providerRegistry *provi
 // initialized — this avoids resolving credentials for providers that won't be
 // used (e.g., when --provider mock is passed, missing Azure API keys won't
 // cause a failure).
-func buildProviderRegistry( //nolint:gocognit // pre-existing complexity, unchanged by move
+func buildProviderRegistry(
 	registry *providers.Registry, cfg *arenaconfig.Config, providerFilter []string,
 ) error {
-	filterSet := make(map[string]bool, len(providerFilter))
-	for _, id := range providerFilter {
-		filterSet[id] = true
-	}
-	// Selfplay-role providers are auxiliary (used by selfplay personas to
-	// drive simulated user turns); they are NOT test targets in the run
-	// matrix. The --provider filter scopes the run matrix; it must not
-	// strand selfplay roles whose providers happen to fall outside the
-	// filter. Always include selfplay-role providers in the loadable set
-	// so role wiring (buildSelfPlayComponents) can find them.
-	if cfg.SelfPlay != nil {
-		for _, role := range cfg.SelfPlay.Roles {
-			if role.Provider == "" {
-				continue
-			}
-			if len(filterSet) > 0 {
-				filterSet[role.Provider] = true
-			}
-		}
-	}
+	filterSet := buildProviderFilterSet(cfg, providerFilter)
 	for _, provider := range cfg.LoadedProviders {
 		if len(filterSet) > 0 && !filterSet[provider.ID] {
 			continue
@@ -264,6 +254,29 @@ func buildProviderRegistry( //nolint:gocognit // pre-existing complexity, unchan
 		registry.Register(providerImpl)
 	}
 	return nil
+}
+
+// buildProviderFilterSet builds the set of provider IDs that should be
+// initialized. It seeds the set from the CLI --provider filter, then always
+// adds selfplay-role providers: those are auxiliary (they drive simulated user
+// turns) rather than test targets, so a run-matrix filter must not strand them.
+// A nil/empty result means "load all providers".
+func buildProviderFilterSet(cfg *arenaconfig.Config, providerFilter []string) map[string]bool {
+	filterSet := make(map[string]bool, len(providerFilter))
+	for _, id := range providerFilter {
+		filterSet[id] = true
+	}
+	// Only extend the set when a filter is active; an empty set means "load all"
+	// and must stay empty so selfplay providers aren't the only ones loaded.
+	if len(filterSet) == 0 || cfg.SelfPlay == nil {
+		return filterSet
+	}
+	for _, role := range cfg.SelfPlay.Roles {
+		if role.Provider != "" {
+			filterSet[role.Provider] = true
+		}
+	}
+	return filterSet
 }
 
 func createProviderImpl(configDir string, provider *config.Provider) (providers.Provider, error) {
