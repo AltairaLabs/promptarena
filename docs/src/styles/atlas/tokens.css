@@ -86,5 +86,12 @@
   --hairline-strong: rgba(16,27,46,0.16);
   --hairline-faint: rgba(16,27,46,0.06);
 
+  /* Washes/atmospheres must terminate at the LIGHT surface, not the dark
+     ink baked into the :root defaults, or wash-backed cards go muddy. */
+  --grad-blue-wash: linear-gradient(180deg, rgba(37,99,235,0.05), #FFFFFF);
+  --grad-gold-wash: linear-gradient(180deg, rgba(227,179,65,0.06), #FFFFFF);
+  --atmo-starlight: radial-gradient(1100px 540px at 86% -12%, rgba(37,99,235,0.10), transparent 58%);
+  --atmo-gold: radial-gradient(1100px 560px at 84% -14%, rgba(227,179,65,0.10), transparent 56%);
+
   --shadow-card: 0 1px 2px rgba(16,27,46,0.05), 0 10px 28px -18px rgba(16,27,46,0.20);
 }
