@@ -5,12 +5,12 @@
  * Extends starlight-theme-galaxy's header to include the version switcher.
  */
 import type { Props } from '@astrojs/starlight/props';
-import GalaxyHeader from 'starlight-theme-galaxy/overrides/GalaxyHeader.astro';
+import DefaultHeader from '@astrojs/starlight/components/Header.astro';
 import VersionSwitcher from './VersionSwitcher.astro';
 ---
 
 <div class="header-wrapper">
-  <GalaxyHeader {...Astro.props}><slot /></GalaxyHeader>
+  <DefaultHeader {...Astro.props}><slot /></DefaultHeader>
   <div class="version-switcher-container">
     <VersionSwitcher />
   </div>

@@ -1,7 +1,6 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
-import starlightThemeGalaxy from 'starlight-theme-galaxy';
 import d2 from 'astro-d2';
 
 // Archived doc versions are built at a subpath (e.g. /v1-5/) via BASE_PATH.
@@ -23,7 +22,6 @@ export default defineConfig({
         src: './public/logo.svg',
         alt: 'PromptArena Logo',
       },
-      plugins: [starlightThemeGalaxy()],
       customCss: ['./src/styles/custom.css'],
       social: [
         { icon: 'github', label: 'GitHub', href: 'https://github.com/AltairaLabs/promptarena' },
