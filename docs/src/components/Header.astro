@@ -2,15 +2,19 @@
 /**
  * Custom Header Component
  *
- * Wraps Starlight's default header to add the version switcher, positioned
- * just left of the right-hand social/theme controls.
+ * Wraps Starlight's default header to add (1) the AltairaLabs masterbrand
+ * family bar as a strip across the top of the fixed header, and (2) the
+ * version switcher, positioned just left of the right-hand social/theme
+ * controls in the nav row below the strip.
  */
 import type { Props } from '@astrojs/starlight/props';
 import DefaultHeader from '@astrojs/starlight/components/Header.astro';
+import FamilyBar from './FamilyBar.astro';
 import VersionSwitcher from './VersionSwitcher.astro';
 ---
 
 <div class="header-wrapper">
+  <FamilyBar docs />
   <DefaultHeader {...Astro.props}><slot /></DefaultHeader>
   <div class="version-switcher-container">
     <VersionSwitcher />
@@ -22,12 +26,13 @@ import VersionSwitcher from './VersionSwitcher.astro';
     display: contents;
   }
 
-  /* Clear the default header's right cluster (theme select + GitHub icon). */
+  /* Sit in the nav row (below the 38px family strip) and clear the default
+     header's right cluster (theme select + GitHub icon). */
   .version-switcher-container {
     position: fixed;
-    top: 0;
+    top: var(--fam-h, 38px);
     right: calc(var(--sl-nav-pad-x) + 7.5rem);
-    height: var(--sl-nav-height);
+    height: calc(var(--sl-nav-height) - var(--fam-h, 38px));
     display: flex;
     align-items: center;
     z-index: var(--sl-z-index-navbar);

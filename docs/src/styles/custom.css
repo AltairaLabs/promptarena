@@ -11,6 +11,25 @@
 @import './atlas/semantic.css';
 @import './atlas/starlight-map.css';
 
+/* ---- Family bar in the Starlight header ---- */
+/* Reserve a 38px masterbrand strip at the top of the fixed header: grow the
+   nav height by --fam-h so content/sidebar offsets stay correct, and push the
+   default header's nav content into the row below the strip. */
+:root {
+  --fam-h: 38px;
+  --sl-nav-height: calc(3.5rem + var(--fam-h));
+}
+@media (min-width: 50rem) {
+  :root {
+    --sl-nav-height: calc(4rem + var(--fam-h));
+  }
+}
+.header {
+  padding-top: var(--fam-h);
+  /* Let the switcher dropdown escape the header bounds. */
+  overflow: visible;
+}
+
 /* ---- Inner doc-chrome (Atlas) ---- */
 
 /* Sidebar active item: starlight tint + 2px ion-cyan left rail. */
