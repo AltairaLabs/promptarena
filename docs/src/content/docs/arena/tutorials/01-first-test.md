@@ -53,7 +53,7 @@ cd my-first-test
 
 That's it! The `init` command created everything you need:
 
-- ✅ Arena configuration (`arena.yaml`)
+- ✅ Arena configuration (`config.arena.yaml`)
 - ✅ Prompt setup (`prompts/assistant.yaml`)
 - ✅ Provider configuration (`providers/openai.yaml`)
 - ✅ Sample test scenario (`scenarios/basic-test.yaml`)
@@ -184,7 +184,7 @@ spec:
 
 ## Step 7: Create Main Configuration
 
-Create `arena.yaml` in your project root:
+Create `config.arena.yaml` in your project root:
 
 ```yaml
 apiVersion: promptkit.altairalabs.ai/v1alpha1
@@ -327,7 +327,7 @@ spec:
             message: "Response should be at least 10 characters"
 ```
 
-Add it to `arena.yaml`:
+Add it to `config.arena.yaml`:
 
 ```yaml
 spec:
@@ -375,7 +375,7 @@ echo $OPENAI_API_KEY
 
 ### "No scenarios found"
 
-Check your `arena.yaml` paths match your directory structure:
+Check your `config.arena.yaml` paths match your directory structure:
 
 ```bash
 # List your files

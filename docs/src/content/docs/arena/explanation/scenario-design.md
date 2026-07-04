@@ -367,8 +367,8 @@ fixtures:
     features: ["standard_support"]
   
   long_text: |
-    Lorem ipsum dolor sit amet...
-    (1000+ words)
+    (a long support transcript or document — paste the full 1000+ word
+    body here so every turn that references it stays in sync)
 
 turns:
   - name: "Premium User Support"

@@ -205,19 +205,19 @@ Output:
 
 Loading configuration...
   ✓ Loaded 1 prompt config
-  ✓ Loaded 3 providers (openai-mini, claude-sonnet, gemini-flash)
+  ✓ Loaded 3 providers (openai-gpt4o-mini, claude-sonnet, gemini-flash)
   ✓ Loaded 1 scenario
 
 Running tests (3 providers × 1 scenario × 2 turns = 6 test executions)...
-  ✓ Product Inquiry - Turn 1 [openai-mini] (1.2s)
+  ✓ Product Inquiry - Turn 1 [openai-gpt4o-mini] (1.2s)
   ✓ Product Inquiry - Turn 1 [claude-sonnet] (1.5s)
   ✓ Product Inquiry - Turn 1 [gemini-flash] (0.8s)
-  ✓ Product Inquiry - Turn 2 [openai-mini] (1.3s)
+  ✓ Product Inquiry - Turn 2 [openai-gpt4o-mini] (1.3s)
   ✓ Product Inquiry - Turn 2 [claude-sonnet] (1.4s)
   ✓ Product Inquiry - Turn 2 [gemini-flash] (0.9s)
 
 Results by Provider:
-  openai-mini:     2/2 passed (100%)
+  openai-gpt4o-mini:     2/2 passed (100%)
   claude-sonnet:   2/2 passed (100%)
   gemini-flash:    2/2 passed (100%)
 
@@ -242,13 +242,13 @@ Sometimes you want to test just one or two providers:
 
 ```bash
 # Test only OpenAI
-promptarena run --provider openai-mini
+promptarena run --provider openai-gpt4o-mini
 
 # Test OpenAI and Claude
-promptarena run --provider openai-mini,claude-sonnet
+promptarena run --provider openai-gpt4o-mini,claude-sonnet
 
 # Test everything except Gemini
-promptarena run --provider openai-mini,claude-sonnet
+promptarena run --provider openai-gpt4o-mini,claude-sonnet
 ```
 
 ## Analyzing Provider Differences
@@ -454,7 +454,7 @@ spec:
 Test configuration variants:
 
 ```bash
-promptarena run --provider creative-mini,precise-mini
+promptarena run --provider openai-creative,openai-precise
 ```
 
 ### 4. Document Provider Behavior
@@ -506,7 +506,7 @@ promptarena config-inspect
 promptarena run --concurrency 1
 
 # Or test one provider at a time
-promptarena run --provider openai-mini
+promptarena run --provider openai-gpt4o-mini
 ```
 
 ## Next Steps

@@ -35,7 +35,7 @@ open out/report.html
 For the dev loop:
 
 ```bash
-promptarena run --tui
+promptarena run
 ```
 
 All three surfaces share the same config; the mock provider runs deterministically so CI is stable.

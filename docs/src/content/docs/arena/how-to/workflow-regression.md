@@ -7,7 +7,7 @@ This how-to walks through `examples/workflow-support/` and `examples/workflow-or
 
 ## What it proves
 
-Workflow-driven agents fail in ways pure single-turn eval can't catch: the agent reaches the wrong terminal state, skips a required transition, or loops forever. Eval-only frameworks don't have a workflow concept at all — every demo of "agent state" ends up being a custom log scraper. PromptArena ships the state machine as a pack primitive and assertions can observe the transitions.
+Workflow-driven agents fail in ways pure single-turn eval can't catch: the agent reaches the wrong terminal state, skips a required transition, or loops forever. Eval-only frameworks don't have a workflow concept at all — every demo of "agent state" ends up being a custom log scraper. PromptArena ships the state machine as a pack primitive and assertions can observe the transitions directly.
 
 Two examples ship with the runtime:
 
@@ -16,34 +16,47 @@ Two examples ship with the runtime:
 
 ## The assertion shape
 
-Workflow scenarios drive a stateful agent across multiple turns. The agent calls `workflow__transition` to advance the state machine; the assertions observe that those calls happened.
-
-Working pattern (used in both examples after this PR):
+Workflow scenarios drive a stateful agent across multiple turns. The agent calls `workflow__transition` to advance the state machine; state-aware assertions observe the machine's state directly, per turn. Four assertion types cover the lifecycle:
 
 ```yaml
-conversation_assertions:
-  - type: tools_called
-    params:
-      tool_names: [workflow__transition]
-      min_calls: 3
-    message: "Agent must drive three workflow transitions across the lifecycle"
+turns:
+  - role: user
+    content: "I just placed an order. Can you confirm?"
+    assertions:
+      # A transition happened on this turn (the machine advanced into `payment`).
+      - type: transitioned_to
+        params:
+          state: payment
 
-  - type: tool_call_sequence
-    params:
-      sequence:
-        - workflow__transition
-        - workflow__transition
-        - workflow__transition
-    message: "Workflow transitions must occur in order"
+  - role: user
+    content: "Has my payment gone through?"
+    assertions:
+      # The current state after this turn is `fulfillment`.
+      - type: state_is
+        params:
+          state: fulfillment
+
+  - role: user
+    content: "I received the package. Thanks!"
+    assertions:
+      - type: transitioned_to
+        params:
+          state: complete
+      # The machine reached a terminal state.
+      - type: workflow_complete
+        params: {}
+      # The full ordered path the agent drove, start to finish.
+      - type: workflow_transition_order
+        params:
+          sequence: ["payment", "fulfillment", "complete"]
 ```
 
-`tools_called` checks the agent called the transition tool the expected number of times. `tool_call_sequence` enforces ordering. Both pass deterministically against the mock provider's scripted responses.
+- `transitioned_to` — assert the machine advanced into a given state on this turn.
+- `state_is` — assert the current state after the turn (useful when a turn should *not* transition).
+- `workflow_complete` — assert the machine reached a terminal state.
+- `workflow_transition_order` — assert the exact ordered sequence of states the agent drove.
 
-## Known limitation: state-aware assertions
-
-PromptKit ships richer state-aware assertions (`state_is`, `transitioned_to`, `workflow_complete`, `workflow_transition_order`) that operate on the workflow metadata directly. These are currently affected by a bridge bug ([#1169](https://github.com/AltairaLabs/PromptKit/issues/1169)) — the workflow metadata isn't reaching the eval context, so the assertions report "no workflow state in context."
-
-Both examples used to assert via those handlers and now use the tool-call shape above as a workaround. The state machine still runs (you can see the transitions in the log and the HTML report timeline); only the assertion-side bridge needs fixing. Once #1169 lands, the scenarios can move back to the state-aware assertion shape — the scenarios become tighter (asserting on actual state, not the tool call that drives it) but the runtime behaviour stays the same.
+These observe the workflow metadata directly, so they assert on actual state rather than on the tool call that drives it. All four pass deterministically against the mock provider's scripted `workflow__transition` responses.
 
 ## Running
 
@@ -53,7 +66,7 @@ cd examples/workflow-support
 open out/report.html
 ```
 
-The HTML report's timeline view shows each transition with its from/to states and the event that triggered it. Even with the state-aware assertions disabled, the transition history is fully observable in the report.
+The HTML report's timeline view shows each transition with its from/to states and the event that triggered it, alongside the assertion results for each turn.
 
 Same shape for the order-processing example:
 
@@ -64,10 +77,11 @@ cd examples/workflow-order-processing
 
 ## What's a regression suite, then?
 
-Two concrete shapes:
+Three questions the assertions answer, each catching a distinct class of regression:
 
-1. **Did the agent drive the lifecycle?** — `tools_called` with `min_calls` matching the expected number of transitions. Catches "agent stopped triggering the state machine" regressions.
-2. **In the right order?** — `tool_call_sequence` matching the expected lifecycle order. Catches "agent skipped a state" or "agent went backwards" regressions.
+1. **Did the agent reach the right states?** — `transitioned_to` / `state_is` per turn. Catches "agent stopped driving the state machine" or "landed in the wrong state" regressions.
+2. **In the right order?** — `workflow_transition_order` with the expected lifecycle. Catches "agent skipped a state" or "went backwards" regressions.
+3. **Did it finish?** — `workflow_complete`. Catches "agent stalled before the terminal state" regressions.
 
 Combine with content checks (`content_includes`, `content_excludes`) on each turn for "agent confirmed payment received" / "agent provided tracking number" assertions, and the suite gives a deterministic deploy gate for any prompt change that might break the workflow.
 
@@ -129,11 +143,11 @@ hard error at run time — it is never silently rerouted through the entry. See
 
 ## Extending it
 
-- **Add a new state**: drop it in the pack's `workflow:` block with `on_event:` mappings. Add a scenario that exercises the new path. Assertion shape stays the same — extend `min_calls` and the `sequence` to match.
-- **Test state isolation**: `workflow_tool_access` (once #1169 is fixed) lets you assert that the agent only uses certain tools in certain states. Today, fall back to combining `tools_called` per-turn with `when:` clauses.
-- **Multi-path scenarios**: register multiple scenarios that exercise different lifecycle branches (e.g., happy-path, escalation-path, error-path). The same `tool_call_sequence` shape works per scenario.
+- **Add a new state**: drop it in the pack's `workflow:` block with `on_event:` mappings. Add a scenario that exercises the new path. Extend the `workflow_transition_order` sequence to include it.
+- **Assert per-state tool access**: `workflow_tool_access` asserts that the agent only uses certain tools in certain states — useful for enforcing "no refund tool before the verification stage".
+- **Multi-path scenarios**: register multiple scenarios that exercise different lifecycle branches (e.g., happy-path, escalation-path, error-path). The same state-aware assertions work per scenario.
 
 ## Related how-tos
 
-- [Voice IVR with workflow state machine](/arena/how-to/voice-ivr/) — same workflow primitive paired with the voice harness. Uses the same `tools_called`-based assertion pattern.
+- [Voice IVR with workflow state machine](/arena/how-to/voice-ivr/) — the same workflow primitive paired with the voice harness, asserted with the same `state_is` / `transitioned_to` / `workflow_complete` shape.
 - The voice-ivr scenario is the reference for the workflow + voice pairing; the workflow-support / workflow-order-processing scenarios are the reference for the text-only workflow lifecycle pattern.

@@ -61,6 +61,18 @@ Integrate Arena into GitHub Actions, GitLab CI, and other pipelines. Set up qual
 Test bidirectional voice conversations with real-time audio streaming. Learn duplex mode, turn detection, and self-play with TTS.
 
 *Time: 45 minutes*
+
+**[Tutorial 7: Using Arena as a Go Library](/arena/tutorials/07-programmatic-usage/)**
+
+Integrate Arena into your Go applications — build scenarios, run them, and inspect results programmatically instead of via the CLI.
+
+*Time: 30 minutes*
+
+**[Tutorial 8: Client-Side Tools](/arena/tutorials/08-client-tools/)**
+
+Test tools that execute on the caller's device, including consent simulation for grant and deny scenarios.
+
+*Time: 30 minutes*
 </div>
 
 ## What's the Difference?
@@ -92,8 +104,7 @@ Stuck on a tutorial?
 
 1. Check the **[How-To Guides](/arena/how-to/)** for specific solutions
 2. Review the **[Reference Documentation](/arena/reference/)** for complete specs
-3. Visit **[GitHub Discussions](https://github.com/AltairaLabs/PromptKit/issues)**
-4. Read the **[FAQ](#)** (coming soon)
+3. Open an issue on **[GitHub](https://github.com/AltairaLabs/promptarena/issues)**
 
 ## What You'll Build
 

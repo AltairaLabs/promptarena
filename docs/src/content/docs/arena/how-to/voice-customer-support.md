@@ -37,7 +37,7 @@ open out/report.html
 For the dev loop (live transcript + tool table updating per turn):
 
 ```bash
-promptarena run --tui
+promptarena run
 ```
 
 ## What you'll see in the report

@@ -429,7 +429,7 @@ play -r 16000 -b 16 -c 1 -e signed-integer audio/greeting.pcm
 
 ```
 duplex-test/
-├── arena.yaml
+├── config.arena.yaml
 ├── audio/
 │   ├── greeting.pcm
 │   └── question.pcm
@@ -439,7 +439,7 @@ duplex-test/
 │       └── curious-customer.persona.yaml
 ├── providers/
 │   ├── gemini-live.provider.yaml
-│   └── openai-tts.provider.yaml
+│   └── openai-alloy.provider.yaml
 └── scenarios/
     ├── basic-duplex.scenario.yaml
     └── selfplay-duplex.scenario.yaml

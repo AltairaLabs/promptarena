@@ -10,7 +10,7 @@ Arena can be used in two ways: as a command-line tool or as a Go library. This g
 ### CLI Approach
 
 ```bash
-promptarena run config.arena.yaml
+promptarena run -c config.arena.yaml
 ```
 
 **What it is:** Using Arena as a standalone command-line tool with YAML configuration files.
@@ -212,7 +212,7 @@ You can combine both approaches:
 
 ```bash
 # Standard regression tests (CLI)
-promptarena run regression-tests.yaml --ci
+promptarena run -c regression-tests.yaml --ci
 
 # Custom dynamic tests (programmatic)
 go run custom-tests/main.go
@@ -338,7 +338,7 @@ log.Printf("Results: %+v", results)
 
 ```bash
 # Test product recommendations daily
-promptarena run product-tests.yaml --ci
+promptarena run -c product-tests.yaml --ci
 ```
 
 **Why:** Standard tests, CI/CD integration, team collaboration.
@@ -360,7 +360,7 @@ for _, customer := range customers {
 
 ```bash
 # Standard benchmarks (CLI)
-promptarena run benchmarks/*.yaml
+promptarena run -c benchmarks/suite.arena.yaml
 
 # Experimental tests (programmatic)
 go run experiments/ablation-study.go
