@@ -19,8 +19,8 @@ export default defineConfig({
     starlight({
       title: 'PromptArena',
       logo: {
-        src: './public/logo.svg',
-        alt: 'PromptArena Logo',
+        src: './public/atlas/logo-promptarena.svg',
+        alt: 'PromptArena',
       },
       customCss: ['./src/styles/custom.css'],
       social: [
