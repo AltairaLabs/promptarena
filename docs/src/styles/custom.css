@@ -24,14 +24,18 @@
     --sl-nav-height: calc(4rem + var(--fam-h));
   }
 }
-.header {
-  padding-top: var(--fam-h);
+/* Scope to the <header> SHELL only — Starlight also gives the inner nav row
+   class="header sl-flex", and padding it breaks the nav's vertical centering. */
+header.header {
+  /* Reserve the strip PLUS the shell's natural top padding, so the nav row
+     stays vertically centered in the band below the family strip. */
+  padding-top: calc(var(--fam-h) + var(--sl-nav-pad-y));
   /* Let the switcher dropdown escape the header bounds. */
   overflow: visible;
 }
 /* Starlight sizes the logo from --sl-nav-height; pin it so the taller header
    (which now includes the family strip) doesn't inflate the mark. */
-.header .site-title img {
+header.header .site-title img {
   height: 2rem;
   width: auto;
 }
