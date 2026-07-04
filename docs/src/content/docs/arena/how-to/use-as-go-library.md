@@ -20,7 +20,7 @@ Use Arena programmatically when you need to:
 Add Arena to your Go project:
 
 ```bash
-go get github.com/AltairaLabs/PromptKit/tools/arena/engine
+go get github.com/AltairaLabs/promptarena/arena/engine
 go get github.com/AltairaLabs/PromptKit/pkg/config
 go get github.com/AltairaLabs/PromptKit/runtime/prompt
 ```
@@ -33,7 +33,7 @@ go get github.com/AltairaLabs/PromptKit/runtime/prompt
 import (
 	"github.com/AltairaLabs/PromptKit/pkg/config"
 	"github.com/AltairaLabs/PromptKit/runtime/prompt"
-	"github.com/AltairaLabs/PromptKit/tools/arena/engine"
+	"github.com/AltairaLabs/promptarena/arena/engine"
 )
 
 // Create prompt configuration
@@ -112,7 +112,7 @@ if err != nil {
 ### 4. Retrieve Results
 
 ```go
-import "github.com/AltairaLabs/PromptKit/tools/arena/statestore"
+import "github.com/AltairaLabs/promptarena/arena/statestore"
 
 arenaStore := eng.GetStateStore().(*statestore.ArenaStateStore)
 
@@ -380,7 +380,7 @@ If you see "package not found" errors:
 
 ```bash
 go mod tidy
-go get github.com/AltairaLabs/PromptKit/tools/arena/engine@latest
+go get github.com/AltairaLabs/promptarena/arena/engine@latest
 ```
 
 ### Type Assertion Failures
@@ -414,4 +414,4 @@ for i := 0; i < len(runIDs); i += batchSize {
 
 - [Tutorial: Programmatic Usage](/arena/tutorials/07-programmatic-usage/) - Step-by-step learning
 - [Reference: API Documentation](/arena/reference/api-reference/) - Complete API reference
-- [Example Code](https://github.com/AltairaLabs/PromptKit/tree/main/examples/programmatic-arena)
+- [Example Code](https://github.com/AltairaLabs/promptarena/tree/main/examples/programmatic-arena)

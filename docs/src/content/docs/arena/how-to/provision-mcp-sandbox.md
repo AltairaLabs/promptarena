@@ -166,7 +166,7 @@ runs `git clone` unauthenticated.
 ## Worked example
 
 The repo includes a runnable end-to-end demo at
-[`examples/codegen-sandbox/`](https://github.com/AltairaLabs/PromptKit/tree/main/examples/codegen-sandbox)
+[`examples/codegen-sandbox/`](https://github.com/AltairaLabs/promptarena/tree/main/examples/codegen-sandbox)
 that:
 
 - Provisions `ghcr.io/altairalabs/codegen-sandbox:latest` per session.

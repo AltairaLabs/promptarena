@@ -29,7 +29,7 @@ Get up and running in 60 seconds with the interactive project generator:
 brew install --cask altairalabs/tap/promptkit
 
 # Or build from source with Go (needs a C compiler + audio dev headers)
-go install github.com/AltairaLabs/PromptKit/tools/arena/cmd/promptarena@latest
+go install github.com/AltairaLabs/promptarena/arena/cmd/promptarena@latest
 
 # Create a new test project instantly
 promptarena init my-test --quick

@@ -66,7 +66,7 @@ binary for a dependency-free install.
 
 ```bash
 # Install directly with Go (note the cmd/promptarena package path)
-go install github.com/AltairaLabs/PromptKit/tools/arena/cmd/promptarena@latest
+go install github.com/AltairaLabs/promptarena/arena/cmd/promptarena@latest
 
 # The binary will be in your $GOPATH/bin
 promptarena --version
@@ -78,7 +78,7 @@ Visit the [PromptKit Releases](https://github.com/altairalabs/promptkit/releases
 
 ```bash
 # Example for macOS (adjust version and platform as needed)
-curl -LO https://github.com/AltairaLabs/PromptKit/releases/latest/download/promptarena-darwin-amd64
+curl -LO https://github.com/AltairaLabs/promptarena/releases/latest/download/promptarena-darwin-amd64
 chmod +x promptarena-darwin-amd64
 sudo mv promptarena-darwin-amd64 /usr/local/bin/promptarena
 ```

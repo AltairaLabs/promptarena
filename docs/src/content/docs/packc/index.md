@@ -38,7 +38,7 @@ PackC is the reference compiler for this standard.
 
 ```bash
 # Install with Go
-go install github.com/AltairaLabs/PromptKit/tools/packc@latest
+go install github.com/AltairaLabs/promptarena/packc@latest
 
 # Create a prompt source file
 cat > greeting.yaml <<EOF

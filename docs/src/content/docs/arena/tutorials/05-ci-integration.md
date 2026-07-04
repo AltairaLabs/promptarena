@@ -68,7 +68,7 @@ For CI/CD, we recommend using npm for PromptArena installation:
     go-version: '1.23'
 
 - name: Install PromptArena
-  run: go install github.com/AltairaLabs/PromptKit/tools/arena/cmd/promptarena@latest
+  run: go install github.com/AltairaLabs/promptarena/arena/cmd/promptarena@latest
 ```
 
 For this tutorial, we'll use npm as it's simpler and faster.

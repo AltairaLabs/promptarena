@@ -31,7 +31,7 @@ description: How to build, test, and publish templates for the community repo.
 
 4. **Validate with Go tests (optional but recommended)**
    ```bash
-   GOCACHE=.cache/go-build go test ./tools/arena/templates ./tools/arena/cmd/promptarena
+   GOCACHE=.cache/go-build go test ./arena/templates ./arena/cmd/promptarena
    ```
    - This exercises template loading, repo resolution, and CLI flows.
 

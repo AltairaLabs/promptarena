@@ -344,7 +344,7 @@ type SessionSourceAdapter interface {
 }
 ```
 
-External adapters register themselves with the global registry in `init()` functions and are selected via `--source <name>`. See the [generate package](https://github.com/AltairaLabs/PromptKit/tree/main/tools/arena/generate) for the full interface definition.
+External adapters register themselves with the global registry in `init()` functions and are selected via `--source <name>`. See the [generate package](https://github.com/AltairaLabs/promptarena/tree/main/arena/generate) for the full interface definition.
 
 ---
 
@@ -1017,7 +1017,7 @@ For frontend development with hot module replacement, run the Go backend and Vit
 promptarena serve -p 8080
 
 # Terminal 2: Vite dev server (proxies /api to backend)
-cd tools/arena/web/frontend
+cd arena/web/frontend
 npm run dev
 # Open http://localhost:5173
 ```

@@ -38,7 +38,7 @@ jobs:
           go-version: '1.22'
 
       - name: Install PromptKit
-        run: go install github.com/AltairaLabs/PromptKit/tools/arena/cmd/promptarena@latest
+        run: go install github.com/AltairaLabs/promptarena/arena/cmd/promptarena@latest
 
       - name: Install adapter
         run: promptarena deploy adapter install omnia
@@ -87,7 +87,7 @@ jobs:
           go-version: '1.22'
 
       - name: Install PromptKit
-        run: go install github.com/AltairaLabs/PromptKit/tools/arena/cmd/promptarena@latest
+        run: go install github.com/AltairaLabs/promptarena/arena/cmd/promptarena@latest
 
       - name: Install adapter
         run: promptarena deploy adapter install agentcore
@@ -124,8 +124,8 @@ jobs:
 
       - name: Install tools
         run: |
-          go install github.com/AltairaLabs/PromptKit/tools/arena/cmd/promptarena@latest
-          go install github.com/AltairaLabs/PromptKit/tools/packc@latest
+          go install github.com/AltairaLabs/promptarena/arena/cmd/promptarena@latest
+          go install github.com/AltairaLabs/promptarena/packc@latest
 
       - name: Compile pack
         run: packc compile --config arena.yaml --output app.pack.json --id my-app
@@ -149,7 +149,7 @@ jobs:
 
       - name: Install tools
         run: |
-          go install github.com/AltairaLabs/PromptKit/tools/arena/cmd/promptarena@latest
+          go install github.com/AltairaLabs/promptarena/arena/cmd/promptarena@latest
 
       - name: Install adapter
         run: promptarena deploy adapter install agentcore
@@ -179,7 +179,7 @@ jobs:
 
       - name: Install tools
         run: |
-          go install github.com/AltairaLabs/PromptKit/tools/arena/cmd/promptarena@latest
+          go install github.com/AltairaLabs/promptarena/arena/cmd/promptarena@latest
 
       - name: Install adapter
         run: promptarena deploy adapter install agentcore

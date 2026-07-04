@@ -36,7 +36,7 @@ packc inspect app.pack.json
 
 ```bash
 # Install from source
-go install github.com/AltairaLabs/PromptKit/tools/packc@latest
+go install github.com/AltairaLabs/promptarena/packc@latest
 ```
 
 ### Pack File Format

@@ -278,7 +278,7 @@ This allows packs to define baseline evals while individual prompts customize or
 
 ## Example
 
-See the [`eval-test` example](https://github.com/AltairaLabs/PromptKit/tree/main/examples/eval-test) for a working Arena configuration that evaluates saved conversations with both deterministic assertions and LLM judge evals.
+See the [`eval-test` example](https://github.com/AltairaLabs/promptarena/tree/main/examples/eval-test) for a working Arena configuration that evaluates saved conversations with both deterministic assertions and LLM judge evals.
 
 ## See Also
 

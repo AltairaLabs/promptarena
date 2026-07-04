@@ -7,7 +7,7 @@ Reference documentation for the Arena Go API, covering all exported types, funct
 
 ## Core Packages
 
-### `github.com/AltairaLabs/PromptKit/tools/arena/engine`
+### `github.com/AltairaLabs/promptarena/arena/engine`
 
 The main package for programmatic Arena usage.
 
@@ -399,7 +399,7 @@ Default execution parameters.
 
 ## State Store Package
 
-### `github.com/AltairaLabs/PromptKit/tools/arena/statestore`
+### `github.com/AltairaLabs/promptarena/arena/statestore`
 
 #### `ArenaStateStore`
 
@@ -544,4 +544,4 @@ for _, runID := range runIDs {
 
 - [Tutorial: Programmatic Usage](/arena/tutorials/07-programmatic-usage/)
 - [How-To: Use as Go Library](/arena/how-to/use-as-go-library/)
-- [Example Code](https://github.com/AltairaLabs/PromptKit/tree/main/examples/programmatic-arena)
+- [Example Code](https://github.com/AltairaLabs/promptarena/tree/main/examples/programmatic-arena)

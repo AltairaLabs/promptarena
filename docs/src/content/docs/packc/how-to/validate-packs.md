@@ -195,7 +195,7 @@ jobs:
       - uses: actions/checkout@v3
       
       - name: Install packc
-        run: go install github.com/AltairaLabs/PromptKit/tools/packc@latest
+        run: go install github.com/AltairaLabs/promptarena/packc@latest
       
       - name: Compile packs
         run: |
@@ -272,7 +272,7 @@ jobs:
       - uses: actions/checkout@v3
       
       - name: Install packc
-        run: go install github.com/AltairaLabs/PromptKit/tools/packc@latest
+        run: go install github.com/AltairaLabs/promptarena/packc@latest
       
       - name: Compile $ pack
         run: |

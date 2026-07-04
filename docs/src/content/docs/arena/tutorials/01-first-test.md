@@ -28,7 +28,7 @@ brew install --cask altairalabs/tap/promptkit
 **Option 2: Go Install (builds from source — needs a C compiler + audio dev headers)**
 
 ```bash
-go install github.com/AltairaLabs/PromptKit/tools/arena/cmd/promptarena@latest
+go install github.com/AltairaLabs/promptarena/arena/cmd/promptarena@latest
 ```
 
 **Verify installation:**

@@ -52,10 +52,10 @@ Convert recorded Arena JSON results into mock provider YAML and replay conversat
 
 ## Example: IoT Maintenance
 
-Using the hardware-faults run artifacts in `tools/arena/templates/testdata`:
+Using the hardware-faults run artifacts in `arena/templates/testdata`:
 ```bash
 promptarena mocks generate \
-  --input tools/arena/templates/testdata \
+  --input arena/templates/testdata \
   --scenario hardware-faults \
   --output iot-maintenance-demo/providers/responses/mock-assistant.yaml \
   --merge
@@ -65,5 +65,5 @@ This refreshes the IoT maintenance demo mocks with real tool calls and responses
 ## Tips
 
 - Add a `--default-response` if you want a fallback when no turn-specific response exists.
-- Keep recorded JSON fixtures under version control (`tools/arena/templates/testdata/`) so tests stay deterministic.
+- Keep recorded JSON fixtures under version control (`arena/templates/testdata/`) so tests stay deterministic.
 - After generating mocks, run your flows with the mock provider to validate determinism before committing.
