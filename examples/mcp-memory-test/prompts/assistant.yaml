@@ -27,13 +27,14 @@ spec:
     Do NOT rely on conversation history. Always use the tools.
   
   # MCP tools available to this prompt
+  # Static MCP server "memory": tools are referenced as mcp__<server>__<tool>.
   allowed_tools:
-    - create_entities
-    - create_relations
-    - add_observations
-    - delete_entities
-    - delete_observations
-    - delete_relations
-    - read_graph
-    - search_nodes
-    - open_nodes
+    - mcp__memory__create_entities
+    - mcp__memory__create_relations
+    - mcp__memory__add_observations
+    - mcp__memory__delete_entities
+    - mcp__memory__delete_observations
+    - mcp__memory__delete_relations
+    - mcp__memory__read_graph
+    - mcp__memory__search_nodes
+    - mcp__memory__open_nodes

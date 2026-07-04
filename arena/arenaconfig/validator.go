@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/AltairaLabs/PromptKit/pkg/config"
 )
@@ -54,6 +55,7 @@ func (v *ConfigValidator) Validate() error {
 	v.validateJudgeDefaults()
 	v.validateCrossReferences()
 	v.validateToolUsage()
+	v.validateAllowedToolsResolve()
 	v.validateTaskTypeUsage()
 
 	if len(v.errors) > 0 {
@@ -375,6 +377,74 @@ func (v *ConfigValidator) buildToolUsageCheck(definedTools, allowedTools map[str
 		}
 	}
 	return check
+}
+
+// validateAllowedToolsResolve warns when a prompt's allowed_tools entry cannot
+// resolve to a real tool. This is the class of mistake that passes in Arena
+// (where MCP tools are currently auto-surfaced regardless of allowed_tools) but
+// yields an agent with no tools once the pack is compiled and deployed, where
+// only allowed_tools are honored. Two cases are flagged:
+//
+//	A. `mcp__<server>__<tool>` that names a server not present in mcp_servers.
+//	B. a bare (un-namespaced) name in a config whose only tool source is a
+//	   static MCP server — those tools register as `mcp__<server>__<tool>`, so a
+//	   bare name silently resolves to nothing.
+//
+// Capability tools (memory__/workflow__/image__/video__/a2a__/skill__) are
+// namespaced but system-managed, so they never trip case B, and case A only
+// looks at the `mcp` namespace — both are intentionally left alone.
+func (v *ConfigValidator) validateAllowedToolsResolve() {
+	configuredMCP := make(map[string]bool)
+	staticMCP := make([]string, 0)
+	sourceBacked := false
+	for _, s := range v.config.MCPServers {
+		if s.Name == "" {
+			continue
+		}
+		configuredMCP[s.Name] = true
+		if s.Source != "" {
+			sourceBacked = true
+		} else {
+			staticMCP = append(staticMCP, s.Name)
+		}
+	}
+
+	// A bare name is only unambiguously a mis-namespaced MCP tool when the
+	// config has no local tool files (which legitimately use bare names) and no
+	// source-backed server (whose tools are also bare).
+	bareLikelyMCP := len(v.config.LoadedTools) == 0 && !sourceBacked && len(staticMCP) > 0
+
+	for id, pc := range v.config.LoadedPromptConfigs {
+		if pc == nil || pc.Config == nil {
+			continue
+		}
+		promptCfg, ok := pc.Config.(interface{ GetAllowedTools() []string })
+		if !ok {
+			continue
+		}
+		for _, tool := range promptCfg.GetAllowedTools() {
+			if strings.Contains(tool, "__") {
+				parts := strings.SplitN(tool, "__", 3)
+				if parts[0] == "mcp" {
+					server := ""
+					if len(parts) >= 2 {
+						server = parts[1]
+					}
+					if !configuredMCP[server] {
+						v.warns = append(v.warns, fmt.Sprintf(
+							"prompt %q allowed_tools references MCP server %q which is not configured in mcp_servers; tool %q will not resolve when deployed",
+							id, server, tool))
+					}
+				}
+				continue
+			}
+			if bareLikelyMCP {
+				v.warns = append(v.warns, fmt.Sprintf(
+					"prompt %q allowed_tools entry %q is not namespaced; MCP tools from server %q must be referenced as \"mcp__%s__%s\" — a bare name resolves to nothing once compiled and deployed",
+					id, tool, staticMCP[0], staticMCP[0], tool))
+			}
+		}
+	}
 }
 
 // validateTaskTypeUsage checks task_type connections between prompts and scenarios
