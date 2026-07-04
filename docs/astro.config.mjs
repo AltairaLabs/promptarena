@@ -29,6 +29,7 @@ export default defineConfig({
       // Version switcher (header) + "not latest" banner (page title).
       components: {
         Header: './src/components/Header.astro',
+        SocialIcons: './src/components/SocialIcons.astro',
         PageTitle: './src/components/PageTitle.astro',
       },
       sidebar: [

@@ -29,6 +29,12 @@
   /* Let the switcher dropdown escape the header bounds. */
   overflow: visible;
 }
+/* Starlight sizes the logo from --sl-nav-height; pin it so the taller header
+   (which now includes the family strip) doesn't inflate the mark. */
+.header .site-title img {
+  height: 2rem;
+  width: auto;
+}
 
 /* ---- Inner doc-chrome (Atlas) ---- */
 
