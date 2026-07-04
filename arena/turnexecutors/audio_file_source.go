@@ -362,47 +362,6 @@ func (s *AudioFileSource) convertFloat32To16(data []byte) []byte {
 	return out
 }
 
-// SampleRate returns the sample rate of the audio.
-func (s *AudioFileSource) SampleRate() int {
-	return s.sampleRate
-}
-
-// Channels returns the number of audio channels.
-func (s *AudioFileSource) Channels() int {
-	return s.channels
-}
-
-// BitDepth returns the original bit depth of the audio.
-func (s *AudioFileSource) BitDepth() int {
-	return s.bitDepth
-}
-
-// Format returns the audio format.
-func (s *AudioFileSource) Format() AudioFormat {
-	return s.format
-}
-
-// Reset seeks back to the beginning of the audio data.
-func (s *AudioFileSource) Reset() error {
-	if s.file == nil {
-		return errors.New("audio source closed")
-	}
-
-	_, err := s.file.Seek(s.dataStart, io.SeekStart)
-	if err != nil {
-		return fmt.Errorf("failed to seek to data start: %w", err)
-	}
-
-	// Re-create the reader
-	if s.dataSize > 0 {
-		s.reader = io.LimitReader(s.file, s.dataSize)
-	} else {
-		s.reader = s.file
-	}
-
-	return nil
-}
-
 // Close closes the audio file.
 func (s *AudioFileSource) Close() error {
 	if s.file != nil {
@@ -412,17 +371,4 @@ func (s *AudioFileSource) Close() error {
 		return err
 	}
 	return nil
-}
-
-// Duration returns the estimated duration of the audio in seconds.
-func (s *AudioFileSource) Duration() float64 {
-	if s.dataSize == 0 || s.sampleRate == 0 || s.channels == 0 {
-		return 0
-	}
-	bytesPerSample := s.bitDepth / bitsPerByte
-	if bytesPerSample == 0 {
-		bytesPerSample = bytesPerSample16 // Default to 16-bit
-	}
-	samples := s.dataSize / int64(bytesPerSample*s.channels)
-	return float64(samples) / float64(s.sampleRate)
 }

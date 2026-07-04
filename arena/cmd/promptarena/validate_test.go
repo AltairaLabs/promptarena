@@ -196,10 +196,9 @@ spec:
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			validateType = tt.setupType
-			data, configType, err := prepareValidation(tt.filePath)
+			data, configType, err := prepareValidationWithType(tt.filePath, tt.setupType)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("prepareValidation() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("prepareValidationWithType() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !tt.wantErr {
@@ -207,7 +206,7 @@ spec:
 					t.Error("Expected non-empty data")
 				}
 				if configType != tt.wantType {
-					t.Errorf("prepareValidation() configType = %v, want %v", configType, tt.wantType)
+					t.Errorf("prepareValidationWithType() configType = %v, want %v", configType, tt.wantType)
 				}
 			}
 		})
@@ -228,10 +227,9 @@ spec:
 		t.Fatalf("Failed to create test file: %v", err)
 	}
 
-	validateType = "scenario"
-	data, configType, err := prepareValidation(testFile)
+	data, configType, err := prepareValidationWithType(testFile, "scenario")
 	if err != nil {
-		t.Fatalf("prepareValidation() failed: %v", err)
+		t.Fatalf("prepareValidationWithType() failed: %v", err)
 	}
 
 	if len(data) == 0 {
@@ -269,9 +267,9 @@ spec:
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := performSchemaValidation(tt.data, tt.configType, "test.yaml")
+			err := performSchemaValidationWithVerbose(tt.data, tt.configType, "test.yaml", false)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("performSchemaValidation() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("performSchemaValidationWithVerbose() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
@@ -510,8 +508,7 @@ func TestValidateWithInvalidYAML(t *testing.T) {
 		t.Fatalf("Failed to create test file: %v", err)
 	}
 
-	validateType = "auto"
-	_, _, err := prepareValidation(testFile)
+	_, _, err := prepareValidationWithType(testFile, "auto")
 	if err == nil {
 		t.Error("Expected error for invalid YAML")
 	}

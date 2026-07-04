@@ -117,17 +117,6 @@ type Options struct {
 	LevelMeter bool
 }
 
-// DefaultOptions returns sensible defaults: auto mode, 24 kHz, all surfaces enabled.
-func DefaultOptions() Options {
-	return Options{
-		Mode:        ModeAuto,
-		Rate:        Rate24k,
-		LocalSink:   true,
-		SSEPlayback: true,
-		LevelMeter:  true,
-	}
-}
-
 // ValidRates lists the canonical rates accepted by the router.
 var ValidRates = []int{Rate16k, Rate24k, Rate48k}
 

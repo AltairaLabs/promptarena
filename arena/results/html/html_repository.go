@@ -52,17 +52,6 @@ func NewHTMLResultRepository(outputPath string) *HTMLResultRepository {
 	}
 }
 
-// NewHTMLResultRepositoryWithOptions creates a new HTML result repository with custom options.
-func NewHTMLResultRepositoryWithOptions(outputPath string, options *HTMLOptions) *HTMLResultRepository {
-	if options == nil {
-		options = DefaultHTMLOptions()
-	}
-	return &HTMLResultRepository{
-		outputPath: outputPath,
-		options:    options,
-	}
-}
-
 // GetOutputPath returns the configured output path.
 func (r *HTMLResultRepository) GetOutputPath() string {
 	return r.outputPath

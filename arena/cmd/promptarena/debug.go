@@ -140,14 +140,6 @@ func printProviderDetails(id string, provider config.Provider) {
 	fmt.Printf("\n")
 }
 
-func getWrapperKeys(wrappers map[string]interface{}) []string {
-	keys := make([]string, 0, len(wrappers))
-	for k := range wrappers {
-		keys = append(keys, k)
-	}
-	return keys
-}
-
 func getConstraintKeys(constraints map[string]interface{}) []string {
 	keys := make([]string, 0, len(constraints))
 	for k := range constraints {

@@ -8,7 +8,7 @@ import (
 
 func TestNewConfigValidator(t *testing.T) {
 	cfg := &Config{}
-	validator := NewConfigValidator(cfg)
+	validator := NewConfigValidatorWithPath(cfg, "")
 
 	if validator == nil {
 		t.Fatal("Expected non-nil validator")
@@ -29,7 +29,7 @@ func TestNewConfigValidator(t *testing.T) {
 
 func TestConfigValidator_GetWarnings(t *testing.T) {
 	cfg := &Config{}
-	validator := NewConfigValidator(cfg)
+	validator := NewConfigValidatorWithPath(cfg, "")
 
 	warnings := validator.GetWarnings()
 	if len(warnings) != 0 {
@@ -46,7 +46,7 @@ func TestConfigValidator_GetWarnings(t *testing.T) {
 
 func TestConfigValidator_Validate_EmptyConfig(t *testing.T) {
 	cfg := &Config{}
-	validator := NewConfigValidator(cfg)
+	validator := NewConfigValidatorWithPath(cfg, "")
 
 	err := validator.Validate()
 
@@ -84,7 +84,7 @@ func TestConfigValidator_ValidatePromptConfigs_NoDuplicates(t *testing.T) {
 		},
 	}
 
-	validator := NewConfigValidator(cfg)
+	validator := NewConfigValidatorWithPath(cfg, "")
 	validator.validatePromptConfigs()
 
 	if len(validator.errors) > 0 {
@@ -100,7 +100,7 @@ func TestConfigValidator_ValidatePromptConfigs_DuplicateIDs(t *testing.T) {
 		},
 	}
 
-	validator := NewConfigValidator(cfg)
+	validator := NewConfigValidatorWithPath(cfg, "")
 	validator.validatePromptConfigs()
 
 	if len(validator.errors) == 0 {
@@ -118,7 +118,7 @@ func TestConfigValidator_ValidatePromptConfigs_MissingFile(t *testing.T) {
 		},
 	}
 
-	validator := NewConfigValidator(cfg)
+	validator := NewConfigValidatorWithPath(cfg, "")
 	validator.validatePromptConfigs()
 
 	if len(validator.errors) == 0 {
@@ -133,7 +133,7 @@ func TestConfigValidator_ValidatePromptConfigs_NoFile(t *testing.T) {
 		},
 	}
 
-	validator := NewConfigValidator(cfg)
+	validator := NewConfigValidatorWithPath(cfg, "")
 	validator.validatePromptConfigs()
 
 	warnings := validator.GetWarnings()
@@ -156,7 +156,7 @@ func TestConfigValidator_ValidateProviders_Valid(t *testing.T) {
 		},
 	}
 
-	validator := NewConfigValidator(cfg)
+	validator := NewConfigValidatorWithPath(cfg, "")
 	validator.validateProviders()
 
 	if len(validator.errors) > 0 {
@@ -171,7 +171,7 @@ func TestConfigValidator_ValidateProviders_MissingFile(t *testing.T) {
 		},
 	}
 
-	validator := NewConfigValidator(cfg)
+	validator := NewConfigValidatorWithPath(cfg, "")
 	validator.validateProviders()
 
 	if len(validator.errors) == 0 {
@@ -194,7 +194,7 @@ func TestConfigValidator_ValidateProviders_DuplicateFiles(t *testing.T) {
 		},
 	}
 
-	validator := NewConfigValidator(cfg)
+	validator := NewConfigValidatorWithPath(cfg, "")
 	validator.validateProviders()
 
 	warnings := validator.GetWarnings()
@@ -223,7 +223,7 @@ turns:
 		},
 	}
 
-	validator := NewConfigValidator(cfg)
+	validator := NewConfigValidatorWithPath(cfg, "")
 	validator.validateScenarios()
 
 	if len(validator.errors) > 0 {
@@ -238,7 +238,7 @@ func TestConfigValidator_ValidateScenarios_MissingFile(t *testing.T) {
 		},
 	}
 
-	validator := NewConfigValidator(cfg)
+	validator := NewConfigValidatorWithPath(cfg, "")
 	validator.validateScenarios()
 
 	if len(validator.errors) == 0 {
@@ -249,7 +249,7 @@ func TestConfigValidator_ValidateScenarios_MissingFile(t *testing.T) {
 func TestConfigValidator_ValidateScenarios_Empty(t *testing.T) {
 	cfg := &Config{}
 
-	validator := NewConfigValidator(cfg)
+	validator := NewConfigValidatorWithPath(cfg, "")
 	validator.validateScenarios()
 
 	warnings := validator.GetWarnings()
@@ -277,7 +277,7 @@ system_prompt: Test
 		},
 	}
 
-	validator := NewConfigValidator(cfg)
+	validator := NewConfigValidatorWithPath(cfg, "")
 	validator.validatePersonas()
 
 	if len(validator.errors) > 0 {
@@ -294,7 +294,7 @@ func TestConfigValidator_ValidatePersonas_MissingFile(t *testing.T) {
 		},
 	}
 
-	validator := NewConfigValidator(cfg)
+	validator := NewConfigValidatorWithPath(cfg, "")
 	validator.validatePersonas()
 
 	if len(validator.errors) == 0 {
@@ -310,7 +310,7 @@ func TestConfigValidator_ValidateSelfPlay_Disabled(t *testing.T) {
 		},
 	}
 
-	validator := NewConfigValidator(cfg)
+	validator := NewConfigValidatorWithPath(cfg, "")
 	validator.validateSelfPlay()
 
 	// Disabled self-play should not produce errors
@@ -326,7 +326,7 @@ func TestConfigValidator_ValidateSelfPlay_NoRoles(t *testing.T) {
 		},
 	}
 
-	validator := NewConfigValidator(cfg)
+	validator := NewConfigValidatorWithPath(cfg, "")
 	validator.validateSelfPlay()
 
 	warnings := validator.GetWarnings()
@@ -352,7 +352,7 @@ func TestConfigValidator_ValidateSelfPlay_DuplicateRoleIDs(t *testing.T) {
 		},
 	}
 
-	validator := NewConfigValidator(cfg)
+	validator := NewConfigValidatorWithPath(cfg, "")
 	validator.validateSelfPlay()
 
 	if len(validator.errors) == 0 {
@@ -369,31 +369,11 @@ func TestConfigValidator_ValidateSelfPlay_MissingProvider(t *testing.T) {
 		},
 	}
 
-	validator := NewConfigValidator(cfg)
+	validator := NewConfigValidatorWithPath(cfg, "")
 	validator.validateSelfPlay()
 
 	if len(validator.errors) == 0 {
 		t.Error("Expected error for missing provider")
-	}
-}
-
-func TestConfigValidator_GetPromptConfigIDs(t *testing.T) {
-	cfg := &Config{
-		PromptConfigs: []PromptConfigRef{
-			{ID: "config1"},
-			{ID: "config2"},
-		},
-	}
-
-	validator := NewConfigValidator(cfg)
-	ids := validator.getPromptConfigIDs()
-
-	if len(ids) != 2 {
-		t.Errorf("Expected 2 IDs, got %d", len(ids))
-	}
-
-	if !ids["config1"] || !ids["config2"] {
-		t.Error("Expected specific IDs in set")
 	}
 }
 
@@ -410,7 +390,7 @@ func TestConfigValidator_Validate_MultipleErrors(t *testing.T) {
 		},
 	}
 
-	validator := NewConfigValidator(cfg)
+	validator := NewConfigValidatorWithPath(cfg, "")
 	err := validator.Validate()
 
 	// Should have multiple errors
@@ -426,7 +406,7 @@ func TestConfigValidator_Validate_MultipleErrors(t *testing.T) {
 func TestConfigValidator_ValidatePromptConfigs_Empty(t *testing.T) {
 	cfg := &Config{}
 
-	validator := NewConfigValidator(cfg)
+	validator := NewConfigValidatorWithPath(cfg, "")
 	validator.validatePromptConfigs()
 
 	warnings := validator.GetWarnings()
@@ -438,7 +418,7 @@ func TestConfigValidator_ValidatePromptConfigs_Empty(t *testing.T) {
 func TestConfigValidator_ValidateProviders_Empty(t *testing.T) {
 	cfg := &Config{}
 
-	validator := NewConfigValidator(cfg)
+	validator := NewConfigValidatorWithPath(cfg, "")
 	validator.validateProviders()
 
 	warnings := validator.GetWarnings()
@@ -450,7 +430,7 @@ func TestConfigValidator_ValidateProviders_Empty(t *testing.T) {
 func TestConfigValidator_ValidatePersonas_Empty(t *testing.T) {
 	cfg := &Config{}
 
-	validator := NewConfigValidator(cfg)
+	validator := NewConfigValidatorWithPath(cfg, "")
 	validator.validatePersonas()
 
 	warnings := validator.GetWarnings()
@@ -464,7 +444,7 @@ func TestConfigValidator_ValidateSelfPlay_Nil(t *testing.T) {
 		SelfPlay: nil,
 	}
 
-	validator := NewConfigValidator(cfg)
+	validator := NewConfigValidatorWithPath(cfg, "")
 	validator.validateSelfPlay()
 
 	// Nil self-play should not produce errors
@@ -480,7 +460,7 @@ func TestConfigValidator_ValidatePromptConfigs_MissingID(t *testing.T) {
 		},
 	}
 
-	validator := NewConfigValidator(cfg)
+	validator := NewConfigValidatorWithPath(cfg, "")
 	validator.validatePromptConfigs()
 
 	if len(validator.errors) == 0 {

@@ -122,21 +122,6 @@ func TestGetCachePath_NoVersion(t *testing.T) {
 	assert.Equal(t, expected, path)
 }
 
-func TestGetRepoDirForType_WithName(t *testing.T) {
-	result := GetRepoDirForType(RepositoryTypeRemoteGit, "myrepo")
-	assert.Equal(t, "myrepo", result)
-}
-
-func TestGetRepoDirForType_LocalFallback(t *testing.T) {
-	result := GetRepoDirForType(RepositoryTypeLocal, "")
-	assert.Equal(t, "local", result)
-}
-
-func TestGetRepoDirForType_RemoteFallback(t *testing.T) {
-	result := GetRepoDirForType(RepositoryTypeRemoteGit, "")
-	assert.Equal(t, "default", result)
-}
-
 func TestSplitTemplateRef_WithRepo(t *testing.T) {
 	repo, name := SplitTemplateRef("myrepo/template")
 	assert.Equal(t, "myrepo", repo)

@@ -22,24 +22,6 @@ func NewSummaryBuilder(configFile string) *SummaryBuilder {
 	}
 }
 
-// SetTimestamp sets a custom timestamp for the summary
-func (b *SummaryBuilder) SetTimestamp(ts time.Time) *SummaryBuilder {
-	b.timestamp = ts
-	return b
-}
-
-// SetGitMetadata sets Git-related metadata for CI/CD integration
-func (b *SummaryBuilder) SetGitMetadata(commit, branch string) *SummaryBuilder {
-	// Store in a more complete builder if needed later
-	return b
-}
-
-// SetCIMetadata sets CI/CD-related metadata
-func (b *SummaryBuilder) SetCIMetadata(buildID, jobURL string) *SummaryBuilder {
-	// Store in a more complete builder if needed later
-	return b
-}
-
 // BuildSummary creates a ResultSummary from the provided results
 func (b *SummaryBuilder) BuildSummary(results []engine.RunResult) *ResultSummary {
 	if len(results) == 0 {

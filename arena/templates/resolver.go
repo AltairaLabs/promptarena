@@ -62,19 +62,6 @@ func (r *RepoResolver) GetCachePath(cacheDir string, ref *TemplateRef) string {
 	return filepath.Join(cacheDir, ref.RepoName, ref.TemplateName, ref.Version, "template.yaml")
 }
 
-// GetRepoDirForType returns a repo name suitable for use in cache paths.
-// For unknown repos, returns a sanitized version of the URL/path.
-func GetRepoDirForType(repoType RepositoryType, repoName string) string {
-	if repoName != "" {
-		return repoName
-	}
-	// Fallback based on type
-	if repoType == RepositoryTypeLocal {
-		return "local"
-	}
-	return "default"
-}
-
 // SplitTemplateRef is a standalone utility that splits "repo/template" into parts.
 // Returns empty repo string if no repo prefix is present.
 func SplitTemplateRef(ref string) (repo, name string) {

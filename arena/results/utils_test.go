@@ -19,15 +19,6 @@ func TestSummaryBuilder_NewSummaryBuilder(t *testing.T) {
 	assert.NotNil(t, builder)
 }
 
-func TestSummaryBuilder_SetTimestamp(t *testing.T) {
-	builder := results.NewSummaryBuilder("test-config.yaml")
-	testTime := time.Date(2025, 11, 4, 12, 0, 0, 0, time.UTC)
-
-	result := builder.SetTimestamp(testTime)
-
-	assert.Equal(t, builder, result) // Should return self for chaining
-}
-
 func TestSummaryBuilder_BuildSummary_EmptyResults(t *testing.T) {
 	builder := results.NewSummaryBuilder("test-config.yaml")
 

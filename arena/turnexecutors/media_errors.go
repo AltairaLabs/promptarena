@@ -55,12 +55,6 @@ func (e *MediaLoadError) Unwrap() error {
 	return e.Cause
 }
 
-// IsMediaLoadError checks if an error is a MediaLoadError
-func IsMediaLoadError(err error) bool {
-	_, ok := err.(*MediaLoadError)
-	return ok
-}
-
 // NewValidationError creates a validation error
 func NewValidationError(index int, contentType, source, message string) *MediaLoadError {
 	return &MediaLoadError{
@@ -96,32 +90,10 @@ func NewFileError(index int, contentType, source, message string, cause error) *
 	}
 }
 
-// NewSecurityError creates a security error
-func NewSecurityError(index int, contentType, source, message string) *MediaLoadError {
-	return &MediaLoadError{
-		Type:        MediaErrorTypeSecurity,
-		Index:       index,
-		Source:      source,
-		ContentType: contentType,
-		Message:     message,
-	}
-}
-
 // NewSizeError creates a file size error
 func NewSizeError(index int, contentType, source, message string) *MediaLoadError {
 	return &MediaLoadError{
 		Type:        MediaErrorTypeSize,
-		Index:       index,
-		Source:      source,
-		ContentType: contentType,
-		Message:     message,
-	}
-}
-
-// NewFormatError creates a format error
-func NewFormatError(index int, contentType, source, message string) *MediaLoadError {
-	return &MediaLoadError{
-		Type:        MediaErrorTypeFormat,
 		Index:       index,
 		Source:      source,
 		ContentType: contentType,

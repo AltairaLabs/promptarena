@@ -13,7 +13,7 @@ import (
 
 func TestMarkdown_ConversationAssertionsSection(t *testing.T) {
 	tmp := t.TempDir()
-	repo := NewMarkdownResultRepository(tmp)
+	repo := NewMarkdownResultRepositoryWithConfig(tmp, nil)
 
 	rr := engine.RunResult{
 		RunID:      "r1",
@@ -93,7 +93,7 @@ func TestMarkdown_FormatConversationAssertionDetails(t *testing.T) {
 
 func TestMarkdown_ScoreColumnInTable(t *testing.T) {
 	tmp := t.TempDir()
-	repo := NewMarkdownResultRepository(tmp)
+	repo := NewMarkdownResultRepositoryWithConfig(tmp, nil)
 
 	rr := engine.RunResult{
 		RunID:      "r2",

@@ -75,13 +75,6 @@ func NewMockTTSWithFiles(audioFiles []string) *MockTTSService {
 	return m
 }
 
-// NewMockTTSWithLatency creates a mock TTS service with simulated latency.
-func NewMockTTSWithLatency(latency time.Duration) *MockTTSService {
-	m := NewMockTTS()
-	m.Latency = latency
-	return m
-}
-
 // loadAudioFiles loads audio data from configured files. Called only
 // from constructors before the mock is exposed to other goroutines, so
 // no lock is needed here.

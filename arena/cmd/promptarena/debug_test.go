@@ -6,47 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestGetWrapperKeys(t *testing.T) {
-	tests := []struct {
-		name     string
-		wrappers map[string]interface{}
-		expected int // We just check the count since map iteration order is not guaranteed
-	}{
-		{
-			name:     "empty map",
-			wrappers: map[string]interface{}{},
-			expected: 0,
-		},
-		{
-			name: "single wrapper",
-			wrappers: map[string]interface{}{
-				"wrapper1": "value1",
-			},
-			expected: 1,
-		},
-		{
-			name: "multiple wrappers",
-			wrappers: map[string]interface{}{
-				"wrapper1": "value1",
-				"wrapper2": "value2",
-				"wrapper3": "value3",
-			},
-			expected: 3,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := getWrapperKeys(tt.wrappers)
-			assert.Len(t, result, tt.expected)
-			// Verify all keys are present
-			for key := range tt.wrappers {
-				assert.Contains(t, result, key)
-			}
-		})
-	}
-}
-
 func TestGetConstraintKeys(t *testing.T) {
 	tests := []struct {
 		name        string

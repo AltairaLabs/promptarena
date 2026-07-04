@@ -9,7 +9,7 @@ import (
 )
 
 func TestMarkdownRepository_MediaHelpers(t *testing.T) {
-	repo := NewMarkdownResultRepository(t.TempDir())
+	repo := NewMarkdownResultRepositoryWithConfig(t.TempDir(), nil)
 
 	t.Run("mediaHasData with data", func(t *testing.T) {
 		media := &types.MediaContent{
@@ -74,7 +74,7 @@ func TestMarkdownRepository_MediaHelpers(t *testing.T) {
 }
 
 func TestMarkdownRepository_CountMediaByType(t *testing.T) {
-	repo := NewMarkdownResultRepository(t.TempDir())
+	repo := NewMarkdownResultRepositoryWithConfig(t.TempDir(), nil)
 
 	tests := []struct {
 		name           string
@@ -108,7 +108,7 @@ func TestMarkdownRepository_CountMediaByType(t *testing.T) {
 }
 
 func TestMarkdownRepository_ProcessMediaPart(t *testing.T) {
-	repo := NewMarkdownResultRepository(t.TempDir())
+	repo := NewMarkdownResultRepositoryWithConfig(t.TempDir(), nil)
 
 	tests := []struct {
 		name           string
@@ -201,7 +201,7 @@ func TestMarkdownRepository_ProcessMediaPart(t *testing.T) {
 }
 
 func TestMarkdownRepository_AddMediaStats(t *testing.T) {
-	repo := NewMarkdownResultRepository(t.TempDir())
+	repo := NewMarkdownResultRepositoryWithConfig(t.TempDir(), nil)
 
 	tests := []struct {
 		name           string

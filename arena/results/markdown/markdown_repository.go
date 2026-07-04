@@ -42,30 +42,6 @@ type MarkdownResultRepository struct {
 	config     *MarkdownConfig
 }
 
-// NewMarkdownResultRepository creates a new Markdown result repository that writes
-// to the specified output directory with default configuration.
-func NewMarkdownResultRepository(outputDir string) *MarkdownResultRepository {
-	return NewMarkdownResultRepositoryWithConfig(outputDir, nil)
-}
-
-// NewMarkdownResultRepositoryWithFile creates a new Markdown result repository
-// with a custom output file path and default configuration.
-func NewMarkdownResultRepositoryWithFile(outputFile string) *MarkdownResultRepository {
-	config := &MarkdownConfig{
-		IncludeDetails:    true,
-		ShowOverview:      true,
-		ShowResultsMatrix: true,
-		ShowFailedTests:   true,
-		ShowCostSummary:   true,
-	}
-
-	return &MarkdownResultRepository{
-		outputDir:  filepath.Dir(outputFile),
-		outputFile: outputFile,
-		config:     config,
-	}
-}
-
 // NewMarkdownResultRepositoryWithConfig creates a new Markdown result repository
 // with the specified output directory and configuration.
 func NewMarkdownResultRepositoryWithConfig(outputDir string, config *MarkdownConfig) *MarkdownResultRepository {
