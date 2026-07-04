@@ -60,7 +60,7 @@ If you get stuck:
 
 - Check the [How-To Guides](/packc/how-to/) for specific tasks
 - Review the [Reference Documentation](/packc/reference/)
-- Ask in [GitHub Discussions](https://github.com/AltairaLabs/PromptKit/issues)
+- Ask in [GitHub Discussions](https://github.com/AltairaLabs/promptarena/issues)
 
 ## Next Steps
 

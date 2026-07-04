@@ -252,7 +252,6 @@ import (
 
 - [How-To: Use Arena as a Go Library](/arena/how-to/use-as-go-library/) - Advanced integration patterns
 - [Reference: API Documentation](/arena/reference/api-reference/) - Complete API reference
-- [Example: Programmatic Arena](https://github.com/AltairaLabs/promptarena/tree/main/examples/programmatic-arena) - Full working example
 
 ## Common Patterns
 

@@ -284,8 +284,8 @@ validate-packs:
 ## Resources
 
 - **PromptPack Specification**: [promptpack.org](https://promptpack.org)
-- **Questions**: [GitHub Discussions](https://github.com/AltairaLabs/PromptKit/issues)
-- **Issues**: [Report a Bug](https://github.com/AltairaLabs/PromptKit/issues)
+- **Questions**: [GitHub Discussions](https://github.com/AltairaLabs/promptarena/issues)
+- **Issues**: [Report a Bug](https://github.com/AltairaLabs/promptarena/issues)
 
 ---
 

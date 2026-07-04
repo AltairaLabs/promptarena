@@ -702,6 +702,8 @@ spec:
   task_type: test
   description: "Legacy Greeting Test"
   
+    # Conceptual — Arena has no deprecated/skip fields. Manage retired
+    # scenarios with labels, or remove them from the config.
     deprecated: true
     deprecated_reason: "Replaced by greeting-v2.yaml"
     skip: true

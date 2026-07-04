@@ -414,4 +414,3 @@ for i := 0; i < len(runIDs); i += batchSize {
 
 - [Tutorial: Programmatic Usage](/arena/tutorials/07-programmatic-usage/) - Step-by-step learning
 - [Reference: API Documentation](/arena/reference/api-reference/) - Complete API reference
-- [Example Code](https://github.com/AltairaLabs/promptarena/tree/main/examples/programmatic-arena)

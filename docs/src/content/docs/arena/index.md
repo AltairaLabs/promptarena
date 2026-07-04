@@ -266,8 +266,8 @@ Real-world Arena testing scenarios:
 ## Getting Help
 
 - **Quick Start**: [First Test Tutorial](/arena/tutorials/01-first-test/)
-- **Questions**: [GitHub Discussions](https://github.com/AltairaLabs/PromptKit/issues)
-- **Issues**: [Report a Bug](https://github.com/AltairaLabs/PromptKit/issues)
+- **Questions**: [GitHub Discussions](https://github.com/AltairaLabs/promptarena/issues)
+- **Issues**: [Report a Bug](https://github.com/AltairaLabs/promptarena/issues)
 - **Examples**: [Arena Examples](https://promptkit.altairalabs.ai/arena/examples/)
 
 ---
