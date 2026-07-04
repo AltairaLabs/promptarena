@@ -79,32 +79,18 @@ A key benefit of PromptPack is **portability**. Packs compiled with PackC work w
 
 Build once, deploy everywhere. No vendor lock-in.
 
-```d2
-direction: right
-
-sources: YAML Sources {
-  shape: rectangle
-  label: "YAML Sources\n(your prompts)"
-}
-
-packc: PackC {
-  shape: rectangle
-  label: "PackC\n(compiler)"
-}
-
-pack: .pack.json {
-  shape: rectangle
-  label: ".pack.json\n(PromptPack)"
-}
-
-promptkit: PromptKit (Go SDK)
-other: Other Frameworks
-custom: Custom Integration
-
-sources -> packc -> pack
-pack -> promptkit
-pack -> other
-pack -> custom
+```mermaid
+flowchart LR
+  sources["YAML Sources<br/>(your prompts)"]
+  packc["PackC<br/>(compiler)"]
+  pack[".pack.json<br/>(PromptPack)"]
+  promptkit["PromptKit (Go SDK)"]
+  other["Other Frameworks"]
+  custom["Custom Integration"]
+  sources --> packc --> pack
+  pack --> promptkit
+  pack --> other
+  pack --> custom
 ```
 
 ---

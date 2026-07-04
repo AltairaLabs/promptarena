@@ -18,31 +18,14 @@ The plugin pattern avoids these problems. Each adapter is an independent binary 
 
 ## Communication Model
 
-```d2
-direction: right
-
-cli: CLI Process {
-  shape: rectangle
-  label: "promptarena deploy\n(parent process)"
-}
-
-stdin: stdin {
-  shape: rectangle
-  label: "JSON-RPC\nrequest"
-}
-
-stdout: stdout {
-  shape: rectangle
-  label: "JSON-RPC\nresponse"
-}
-
-adapter: Adapter Process {
-  shape: rectangle
-  label: "promptarena-deploy-{provider}\n(child process)"
-}
-
-cli -> stdin -> adapter
-adapter -> stdout -> cli
+```mermaid
+flowchart LR
+  cli["promptarena deploy<br/>(parent process)"]
+  stdin["JSON-RPC<br/>request"]
+  stdout["JSON-RPC<br/>response"]
+  adapter["promptarena-deploy-(provider)<br/>(child process)"]
+  cli --> stdin --> adapter
+  adapter --> stdout --> cli
 ```
 
 The CLI launches the adapter binary as a child process. Communication flows through:

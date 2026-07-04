@@ -2,7 +2,11 @@ import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.mi
 
 function getThemeConfig() {
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-  const textColor = isDark ? '#e2e8f0' : '#1e293b';
+  // Atlas palette. Accent = ion cyan (PromptArena's lead accent); text rides
+  // the star ramp. Bright cyan on the night sky, deepened cyan on the light
+  // chart so it stays legible.
+  const accent = isDark ? '#67E8F9' : '#0E7490';
+  const textColor = isDark ? '#E6EDF8' : '#1E2C44';
 
   return {
     startOnLoad: false,
@@ -13,32 +17,32 @@ function getThemeConfig() {
       primaryColor: 'transparent',
       secondaryColor: 'transparent',
       tertiaryColor: 'transparent',
-      // Blue borders matching Galaxy theme
-      primaryBorderColor: '#3b82f6',
-      secondaryBorderColor: '#3b82f6',
-      tertiaryBorderColor: '#3b82f6',
-      // Text colors - match current mode
+      // Borders in Atlas ion-cyan
+      primaryBorderColor: accent,
+      secondaryBorderColor: accent,
+      tertiaryBorderColor: accent,
+      // Text colors - match current mode (star ramp)
       primaryTextColor: textColor,
       secondaryTextColor: textColor,
       tertiaryTextColor: textColor,
-      // Lines and edges in blue
-      lineColor: '#3b82f6',
-      // Edge labels - blue text, no background
+      // Lines and edges in ion-cyan
+      lineColor: accent,
+      // Edge labels - cyan text, no background
       edgeLabelBackground: 'transparent',
       labelBackground: 'transparent',
-      labelTextColor: '#3b82f6',
+      labelTextColor: accent,
       // Background
       background: 'transparent',
       mainBkg: 'transparent',
       nodeBkg: 'transparent',
       // Git graph specific
-      git0: '#3b82f6',
-      git1: '#3b82f6',
-      gitBranchLabel0: '#3b82f6',
-      gitBranchLabel1: '#3b82f6',
+      git0: accent,
+      git1: accent,
+      gitBranchLabel0: accent,
+      gitBranchLabel1: accent,
       commitLabelBackground: 'transparent',
       // Fonts
-      fontFamily: 'system-ui, -apple-system, sans-serif',
+      fontFamily: "'Space Grotesk', system-ui, -apple-system, sans-serif",
     },
   };
 }

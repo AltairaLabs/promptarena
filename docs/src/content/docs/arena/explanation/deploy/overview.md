@@ -59,36 +59,15 @@ promptarena deploy status
 
 ## How It Works
 
-```d2
-direction: right
-
-pack: .pack.json {
-  shape: rectangle
-  label: ".pack.json\n(compiled pack)"
-}
-
-cli: promptarena deploy {
-  shape: rectangle
-  label: "promptarena deploy\n(CLI)"
-}
-
-adapter: Adapter Binary {
-  shape: rectangle
-  label: "Adapter\n(JSON-RPC plugin)"
-}
-
-cloud: Cloud Provider {
-  shape: rectangle
-  label: "Cloud Provider\n(AWS, GCP, etc.)"
-}
-
-state: deploy.state {
-  shape: rectangle
-  label: ".promptarena/\ndeploy.state"
-}
-
-pack -> cli -> adapter -> cloud
-cli -> state
+```mermaid
+flowchart LR
+  pack[".pack.json<br/>(compiled pack)"]
+  cli["promptarena deploy<br/>(CLI)"]
+  adapter["Adapter<br/>(JSON-RPC plugin)"]
+  cloud["Cloud Provider<br/>(AWS, GCP, etc.)"]
+  state[".promptarena/<br/>deploy.state"]
+  pack --> cli --> adapter --> cloud
+  cli --> state
 ```
 
 ---
