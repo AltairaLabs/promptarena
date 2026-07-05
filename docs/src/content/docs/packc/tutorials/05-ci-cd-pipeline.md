@@ -56,8 +56,9 @@ spec:
 EOF
 
 cat > config/arena.yaml <<'EOF'
-prompts:
-  - ../prompts/assistant.yaml
+prompt_configs:
+  - id: assistant
+    file: ../prompts/assistant.yaml
 EOF
 ```
 
@@ -86,7 +87,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: '1.22'
+          go-version: '1.26'
       
       - name: Install packc
         run: go install github.com/AltairaLabs/promptarena/packc@latest
@@ -133,7 +134,7 @@ jobs:
       
       - uses: actions/setup-go@v4
         with:
-          go-version: '1.22'
+          go-version: '1.26'
       
       - name: Install packc
         run: go install github.com/AltairaLabs/promptarena/packc@latest
@@ -188,7 +189,7 @@ jobs:
       
       - uses: actions/setup-go@v4
         with:
-          go-version: '1.22'
+          go-version: '1.26'
       
       - name: Install packc
         run: go install github.com/AltairaLabs/promptarena/packc@latest

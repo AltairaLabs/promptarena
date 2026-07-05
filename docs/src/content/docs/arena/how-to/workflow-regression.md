@@ -105,7 +105,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '1.26'
-      - run: make build-arena
+      - run: go build -o bin/promptarena ./arena/cmd/promptarena
       - name: Run workflow scenarios
         run: |
           for dir in examples/workflow-support examples/workflow-order-processing; do

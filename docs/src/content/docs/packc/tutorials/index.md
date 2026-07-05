@@ -27,7 +27,7 @@ These tutorials build progressively. Start from the beginning if you're new to P
 
 Before starting these tutorials, ensure you have:
 
-- Go 1.22 or higher installed
+- Go 1.26 or higher installed
 - Basic command-line knowledge
 - A text editor
 - 1-2 hours to complete all tutorials

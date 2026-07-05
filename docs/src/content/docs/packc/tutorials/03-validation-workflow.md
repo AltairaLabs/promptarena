@@ -61,8 +61,9 @@ Create arena.yaml:
 
 ```bash
 cat > config/arena.yaml <<'EOF'
-prompts:
-  - ../prompts/assistant.yaml
+prompt_configs:
+  - id: assistant
+    file: ../prompts/assistant.yaml
 EOF
 ```
 

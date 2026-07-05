@@ -324,8 +324,11 @@ warnings := pack.Validate()
 
 **Example output**:
 
+Because these are structural issues, `packc validate` reports them as blocking
+errors and exits non-zero:
+
 ```
-⚠ Pack has 2 warnings:
+✗ Pack validation failed:
   - missing required field: id
   - prompt 'support': missing system_template
 ```
@@ -408,65 +411,13 @@ packc validate pack.json
 
 ```
 Validating pack: pack.json
-
-Pack Information:
-  ID: customer-support
-  Version: 1.0.0
-  Prompts: 3
-
-✓ Schema valid
-✓ All prompts valid
-✓ All references valid
-
-⚠️ Warnings: 2
-  - Missing description for prompt 'support'
-  - Tool 'search_kb' referenced but not defined
-
-Summary: Pack is valid with 2 warnings
+Validating against PromptPack schema...
+✓ Schema validation passed
+✓ Pack structure is valid
 ```
 
-### Detailed Report (future)
-
-A more detailed validation report may be added in future versions.
-
-**Example of what a detailed report might look like**:
-
-```
-Validation Report
-=================
-
-Pack: customer-support v1.0.0
-Compiler: packc-v0.1.0
-Validated: 2025-01-16T10:30:00Z
-
-Schema Validation: ✅ PASS
-  - Pack ID present
-  - Version valid (1.0.0)
-  - 3 prompts found
-
-Prompt Validation: ✅ PASS
-  - greeting: ✅ Valid
-  - support: ⚠️ Missing description
-  - escalation: ✅ Valid
-
-Reference Validation: ⚠️ WARNINGS
-  - Tool 'search_kb': not defined
-  - Tool 'create_ticket': not defined
-
-Template Validation: ✅ PASS
-  - All templates syntactically valid
-  - 2 variables used: name, message
-
-Fragment Validation: ✅ PASS
-  - No fragments used
-
-Size Analysis:
-  - Pack size: 45 KB
-  - Estimated load time: 5ms
-  - Memory footprint: ~100 KB
-
-Overall: ✅ VALID (2 warnings)
-```
+To see a detailed breakdown of a pack's contents (prompts, tools, workflow,
+metadata), use `packc inspect` instead.
 
 ## Validation Best Practices
 
@@ -513,28 +464,15 @@ task_type: support
 description: "Handles customer support inquiries"
 ```
 
-## Validation Evolution
+## Validation Capabilities
 
-### Current (v0.1.0)
+PackC's validation currently covers:
 
 - Schema validation
 - Template syntax checking
-- Basic reference checking
+- Reference checking (tools, fragments, media)
+- Workflow state-machine integrity
 - Size warnings
-
-### Planned (v0.2.0)
-
-- Semantic validation
-- Custom validation rules
-- Validation profiles
-- Detailed reports
-
-### Future (v1.0.0)
-
-- ML-based validation (detect poor prompts)
-- Security scanning
-- Performance predictions
-- Quality scoring
 
 ## Summary
 

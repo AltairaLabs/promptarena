@@ -4,8 +4,7 @@ description: How to build, test, and publish templates for the community repo.
 ---
 
 ## Prerequisites
-- Node.js + npm (for the PromptArena CLI)
-- Go toolchain (to run template-related tests locally)
+- Go toolchain (to build the PromptArena CLI and run template-related tests locally)
 - A clone of the template repo (e.g., `../promptkit-templates`)
 
 ## Workflow
@@ -46,4 +45,4 @@ description: How to build, test, and publish templates for the community repo.
 - [ ] README and example values included.
 - [ ] Tests pass locally (optional but encouraged).
 
-When ready, open a PR against `promptkit-templates` with the new template and index update.***
+When ready, open a PR against `promptkit-templates` with the new template and index update.

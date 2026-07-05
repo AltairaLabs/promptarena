@@ -77,9 +77,9 @@ spec:
   scenarios:
     - file: scenarios/test-1.yaml
   
-  # MCP server integration
+  # MCP server integration (mcp_servers is a list; each entry has a name)
   mcp_servers:
-    filesystem:
+    - name: filesystem
       command: npx
       args: ["@modelcontextprotocol/server-filesystem", "/data"]
   
@@ -140,23 +140,22 @@ See the [Assertions Guide](/arena/reference/assertions/) for complete documentat
 
 ### 3. Workflow Testing
 
-PromptArena supports testing workflow-based packs with step-by-step scenario execution. Workflow scenarios use `input` steps to send user messages; state transitions are **LLM-initiated** via the `workflow__transition` tool call rather than scripted in the scenario:
+PromptArena supports testing workflow-based packs. A workflow scenario is an ordinary `kind: Scenario` that uses the standard `turns` format — there is no separate `WorkflowScenario` kind. The workflow state machine is declared in `config.arena.yaml` (under `spec.workflow`), which auto-registers the `workflow__transition` tool and dynamically selects the prompt per turn. State transitions are **LLM-initiated** via the `workflow__transition` tool call rather than scripted in the scenario. Each user turn can carry state-aware assertions (`state_is`, `transitioned_to`, `workflow_complete`):
 
 ```yaml
 apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: WorkflowScenario
+kind: Scenario
 metadata:
   name: support-escalation
 spec:
   id: support-escalation
-  pack: ./support.pack.json
+  task_type: intake              # entry state of the workflow
   description: "Test customer support escalation flow"
   variables:
     company_name: "Acme Corp"
-  context_carry_forward: true
-  steps:
-    # Step 1: Send a message in the initial state
-    - type: input
+  turns:
+    # Turn 1: Send a message in the initial state
+    - role: user
       content: "I need help with my billing"
       assertions:
         - type: state_is
@@ -164,8 +163,8 @@ spec:
             state: "intake"
           message: "Should be in intake state"
 
-    # Step 2: The LLM should decide to escalate
-    - type: input
+    # Turn 2: The LLM should decide to escalate
+    - role: user
       content: "My invoice shows a duplicate charge of $49.99"
       assertions:
         - type: transitioned_to
@@ -176,8 +175,8 @@ spec:
           params:
             patterns: ["invoice"]
 
-    # Step 3: Resolve and verify completion
-    - type: input
+    # Turn 3: Resolve and verify completion
+    - role: user
       content: "Thank you, the refund looks correct!"
       assertions:
         - type: workflow_complete
@@ -186,7 +185,7 @@ spec:
 
 **How transitions work**: The LLM calls the `workflow__transition` tool with an `event` (matching the state machine's defined transitions) and a `context` string that carries forward relevant information to the next state. The driver processes the transition internally and makes the context available via `{{workflow_context}}` in the new state's system prompt.
 
-**Workflow Assertions** (available in `input` step assertions):
+**Workflow Assertions** (available in turn-level `assertions`):
 - **`state_is`** — Checks current workflow state
 - **`transitioned_to`** — Checks if a state was visited in the transition history
 - **`workflow_complete`** — Checks if the workflow reached a terminal state

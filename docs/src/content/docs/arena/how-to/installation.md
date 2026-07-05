@@ -44,7 +44,7 @@ PromptKit is distributed as a cask from the AltairaLabs tap:
 
 ```bash
 # Install PromptKit (includes PromptArena and packc)
-brew install --cask altairalabs/tap/promptkit
+brew install altairalabs/tap/promptarena
 
 # Verify installation
 promptarena --version
@@ -87,11 +87,11 @@ sudo mv promptarena-darwin-amd64 /usr/local/bin/promptarena
 
 ```bash
 # Clone the repository
-git clone https://github.com/AltairaLabs/PromptKit.git
-cd PromptKit
+git clone https://github.com/AltairaLabs/promptarena.git
+cd promptarena
 
-# Build and install
-make install-arena
+# Build and install to $GOBIN (or $GOPATH/bin)
+go install ./arena/cmd/promptarena
 ```
 
 ## Verify Installation

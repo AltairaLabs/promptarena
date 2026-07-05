@@ -152,7 +152,7 @@ Helper for emitting structured events during `Apply`:
 func (p *myProvider) Apply(ctx context.Context, req *deploy.PlanRequest, callback deploy.ApplyCallback) (string, error) {
     reporter := adaptersdk.NewProgressReporter(callback)
 
-    reporter.Progress("Creating runtime...", 25)
+    reporter.Progress("Creating runtime...", 0.25)
     // ... create runtime ...
 
     reporter.Resource(&deploy.ResourceResult{
@@ -162,7 +162,7 @@ func (p *myProvider) Apply(ctx context.Context, req *deploy.PlanRequest, callbac
         Status: "created",
     })
 
-    reporter.Progress("Creating endpoint...", 75)
+    reporter.Progress("Creating endpoint...", 0.75)
     // ... create endpoint ...
 
     reporter.Resource(&deploy.ResourceResult{
@@ -180,11 +180,14 @@ func (p *myProvider) Apply(ctx context.Context, req *deploy.PlanRequest, callbac
 
 | Method | Description |
 |--------|-------------|
-| `Progress(message string, pct float64)` | Emit a progress message with percentage (0-100) |
+| `Progress(message string, pct float64)` | Emit a progress message with a completion fraction (0.0–1.0) |
 | `Resource(result *deploy.ResourceResult)` | Report a completed resource operation |
 | `Error(err error)` | Report a non-fatal error |
 
-Progress messages with valid percentages (0-100) are formatted as `"message (XX%)"`.
+`pct` is a 0.0–1.0 fraction. When it falls in that range it is rendered as a
+percentage: the message is formatted as `"message (XX%)"` (e.g. `0.25` →
+`"Creating runtime... (25%)"`). Values outside 0.0–1.0 are emitted as the bare
+message with no percentage.
 
 ## Planning Helpers
 
@@ -322,7 +325,7 @@ type AgentInfo struct {
 type ToolInfo struct {
     Name        string      `json:"name"`
     Description string      `json:"description"`
-    Mode        string      `json:"mode"`          // "mock", "live", "local", "mcp", "client"
+    Mode        string      `json:"mode"`          // "mock", "live", "mcp", "a2a"
     HasSchema   bool        `json:"has_schema"`
     InputSchema interface{} `json:"input_schema,omitempty"`
     HTTPURL     string      `json:"http_url,omitempty"`

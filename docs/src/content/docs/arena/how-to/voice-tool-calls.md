@@ -106,7 +106,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '1.26'
-      - run: make build-arena
+      - run: go build -o bin/promptarena ./arena/cmd/promptarena
       - name: Validate duplex configs
         working-directory: examples/duplex-streaming
         run: ../../bin/promptarena validate config.arena.yaml
@@ -119,7 +119,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '1.26'
-      - run: make build-arena
+      - run: go build -o bin/promptarena ./arena/cmd/promptarena
       - name: Run duplex-tools scenario
         working-directory: examples/duplex-streaming
         env:

@@ -235,4 +235,3 @@ If important context is being truncated:
 
 - [Write Scenarios](/arena/how-to/write-scenarios/) - Scenario configuration basics
 - [Configure Providers](/arena/how-to/configure-providers/) - Provider setup
-- [SDK Context Management](/arena/how-to/manage-context/) - Programmatic context control

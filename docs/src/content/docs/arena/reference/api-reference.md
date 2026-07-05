@@ -312,7 +312,7 @@ Contains complete results of a test execution.
 
 ## Configuration Package
 
-### `github.com/AltairaLabs/PromptKit/pkg/config`
+### `github.com/AltairaLabs/promptarena/arena/arenaconfig`
 
 #### `Config`
 
@@ -335,7 +335,7 @@ Main Arena configuration structure.
 ```go
 type Provider struct {
     ID    string
-    Type  string  // "openai", "anthropic", "gemini", "mock"
+    Type  string  // "openai", "claude", "gemini", "mock"
     Model string
     // ... additional fields
 }

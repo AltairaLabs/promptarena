@@ -36,8 +36,8 @@ For development or custom builds:
 
 ```bash
 # Clone repository
-git clone https://github.com/AltairaLabs/PromptKit.git
-cd PromptKit
+git clone https://github.com/AltairaLabs/promptarena.git
+cd promptarena
 
 # Build packc
 make build-packc
@@ -64,12 +64,17 @@ which packc
 Expected outputs:
 
 ```
-packc v0.1.0
+packc dev
 packc - PromptKit Pack Compiler
-Usage: packc <command> [options]
-...
+Usage:
+  packc compile [options]         Compile ALL prompts from arena.yaml into a single pack
+  ...
 /Users/yourname/go/bin/packc
 ```
+
+Note: a `go install` build reports its version as `packc dev` because the
+version string is only injected via build flags (for example by
+`make build-packc`).
 
 ## Enable Shell Completions (Optional)
 
@@ -130,7 +135,7 @@ packc version
 ### Update from Source
 
 ```bash
-cd PromptKit
+cd promptarena
 git pull origin main
 make build-packc
 ```
@@ -249,7 +254,7 @@ chmod +x $(which packc)
 
 ### Go version too old
 
-**Problem**: Go version < 1.22
+**Problem**: Go version < 1.26
 
 **Solution**: Update Go:
 

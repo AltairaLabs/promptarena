@@ -22,7 +22,7 @@ Choose your preferred installation method:
 **Option 1: Homebrew (Recommended)**
 
 ```bash
-brew install --cask altairalabs/tap/promptkit
+brew install altairalabs/tap/promptarena
 ```
 
 **Option 2: Go Install (builds from source — needs a C compiler + audio dev headers)**

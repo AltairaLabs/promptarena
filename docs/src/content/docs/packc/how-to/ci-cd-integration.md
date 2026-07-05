@@ -44,7 +44,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: '1.22'
+          go-version: '1.26'
       
       - name: Install packc
         run: go install github.com/AltairaLabs/promptarena/packc@latest
@@ -86,7 +86,7 @@ jobs:
       
       - uses: actions/setup-go@v4
         with:
-          go-version: '1.22'
+          go-version: '1.26'
       
       - name: Install packc
         run: go install github.com/AltairaLabs/promptarena/packc@latest
@@ -129,7 +129,7 @@ jobs:
       
       - uses: actions/setup-go@v4
         with:
-          go-version: '1.22'
+          go-version: '1.26'
       
       - name: Install packc
         run: go install github.com/AltairaLabs/promptarena/packc@latest
@@ -174,7 +174,7 @@ stages:
 
 variables:
   PACK_ID: app
-  GO_VERSION: "1.22"
+  GO_VERSION: "1.26"
 
 before_script:
   - apt-get update && apt-get install -y golang-$GO_VERSION
@@ -257,7 +257,7 @@ pipeline {
     
     environment {
         PACK_ID = 'app'
-        GO_VERSION = '1.22'
+        GO_VERSION = '1.26'
     }
     
     stages {
@@ -344,7 +344,7 @@ orbs:
 jobs:
   build-packs:
     docker:
-      - image: cimg/go:1.22
+      - image: cimg/go:1.26
     steps:
       - checkout
       
@@ -400,7 +400,7 @@ workflows:
 
 ```dockerfile
 # Dockerfile.packc-build
-FROM golang:1.22 AS builder
+FROM golang:1.26 AS builder
 
 # Install packc
 RUN go install github.com/AltairaLabs/promptarena/packc@latest

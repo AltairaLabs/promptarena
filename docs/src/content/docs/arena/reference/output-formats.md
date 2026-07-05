@@ -53,23 +53,19 @@ defaults:
     formats: ["json", "html", "markdown", "junit"]
 
     # Format-specific options
-    json:
-      file: results.json
-      pretty: true
-      include_raw: false
-
     html:
-      file: report.html
-      include_metadata: true
-      theme: light
+      file: report.html              # Custom HTML output filename
 
     markdown:
-      file: report.md
-      include_details: true
+      file: report.md                # Custom markdown output filename
+      include_details: true          # Include detailed test information
+      show_overview: true            # Show executive overview section
+      show_results_matrix: true      # Show results matrix table
+      show_failed_tests: true        # Show failed tests section
+      show_cost_summary: true        # Show cost analysis section
 
     junit:
-      file: junit.xml
-      include_system_out: true
+      file: junit.xml                # Custom JUnit output filename
 ```
 
 ## JSON Format
@@ -137,12 +133,9 @@ Machine-readable format for programmatic access and integrations.
 
 ### Configuration Options
 
-```yaml
-json:
-  file: results.json          # Output filename
-  pretty: true                # Pretty-print JSON
-  include_raw: false          # Include raw API responses
-```
+JSON output currently has no format-specific options. It is enabled by adding
+`json` to `defaults.output.formats`, and written to `<dir>/index.json` (with
+per-run files) in the configured output directory.
 
 ### Use Cases
 
@@ -291,10 +284,11 @@ Interactive HTML report for human review.
 
 ```yaml
 html:
-  file: report.html           # Output filename
-  include_metadata: true      # Include test metadata
-  theme: light                # Theme: light | dark
+  file: report.html           # Custom HTML output filename
 ```
+
+The HTML report supports light and dark modes, but the theme is toggled in the
+browser at view time rather than configured here.
 
 ### Viewing
 
@@ -406,8 +400,12 @@ GitHub-friendly markdown format for documentation.
 
 ```yaml
 markdown:
-  file: report.md             # Output filename
+  file: report.md             # Custom markdown output filename
   include_details: true       # Include full conversation details
+  show_overview: true         # Show executive overview section
+  show_results_matrix: true   # Show results matrix table
+  show_failed_tests: true     # Show failed tests section
+  show_cost_summary: true     # Show cost analysis section
 ```
 
 ### Use Cases
@@ -484,8 +482,7 @@ Standard format for CI/CD systems (Jenkins, GitLab CI, GitHub Actions, etc.).
 
 ```yaml
 junit:
-  file: junit.xml             # Output filename
-  include_system_out: true    # Include conversation in <system-out>
+  file: junit.xml             # Custom JUnit output filename
 ```
 
 ### CI/CD Integration
@@ -667,17 +664,19 @@ Typical sizes for 100 tests:
 
 ### Optimization
 
-**Reduce JSON size**:
+**Emit only the formats you need** — each format in `defaults.output.formats`
+is written on every run, so drop the ones you do not consume:
 ```yaml
-json:
-  include_raw: false          # Omit raw API responses
-  pretty: false               # No formatting
+defaults:
+  output:
+    formats: ["json"]           # Skip HTML/Markdown/JUnit when not needed
 ```
 
-**Faster HTML generation**:
+**Trim Markdown reports** by disabling sections you do not use:
 ```yaml
-html:
-  include_metadata: false     # Skip detailed metadata
+markdown:
+  include_details: false        # Omit full conversation transcripts
+  show_results_matrix: false    # Omit the results matrix table
 ```
 
 ## Best Practices

@@ -22,9 +22,11 @@ flowchart LR
 
 ```yaml
 # arena.yaml
-prompts:
-  - prompts/support.yaml
-  - prompts/sales.yaml
+prompt_configs:
+  - id: support
+    file: prompts/support.yaml
+  - id: sales
+    file: prompts/sales.yaml
 ```
 
 **Process**:
@@ -354,12 +356,6 @@ Each component is:
 - Testable
 - Replaceable
 
-### Extension Points
-
-1. **Custom parsers** - Support other input formats
-2. **Custom validators** - Add validation rules
-3. **Custom serializers** - Output other formats
-
 ## Comparison with Other Compilers
 
 ### vs. TypeScript Compiler
@@ -379,7 +375,7 @@ Each component is:
 | Input | YAML | JavaScript |
 | Output | JSON | JavaScript |
 | Transformations | Few | Many |
-| Plugins | Planned | Extensive |
+| Plugins | None | Extensive |
 | Speed | Fast | Moderate |
 
 ## Summary

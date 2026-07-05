@@ -25,8 +25,8 @@ PromptArena is a powerful testing tool that helps you:
 Get up and running in 60 seconds with the interactive project generator:
 
 ```bash
-# Install PromptKit (includes PromptArena)
-brew install --cask altairalabs/tap/promptkit
+# Install PromptArena
+brew install altairalabs/tap/promptarena
 
 # Or build from source with Go (needs a C compiler + audio dev headers)
 go install github.com/AltairaLabs/promptarena/arena/cmd/promptarena@latest

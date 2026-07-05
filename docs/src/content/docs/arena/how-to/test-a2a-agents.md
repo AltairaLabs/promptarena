@@ -196,7 +196,7 @@ assertions:
 ## Run and Verify
 
 ```bash
-cd examples/a2a-demo
+cd examples/multi-agent-demo
 promptarena run -c arena/config.arena.yaml
 ```
 
@@ -282,13 +282,12 @@ For conversation-wide checks, use `conversation_assertions`:
 conversation_assertions:
   - type: agent_invoked
     params:
-      agent_names:
+      agents:
         - a2a__research_agent__search_papers
-      min_calls: 1
     message: "Research agent should be invoked at least once across the conversation"
   - type: agent_not_invoked
     params:
-      agent_names:
+      agents:
         - a2a__admin_agent__execute
     message: "Admin agent should never be invoked"
 ```

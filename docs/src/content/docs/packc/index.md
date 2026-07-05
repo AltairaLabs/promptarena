@@ -29,7 +29,7 @@ PackC is the reference compiler for this standard.
 
 - **Compiles** YAML/JSON sources into `.pack.json` files conforming to [PromptPack spec](https://promptpack.org)
 - **Validates** structure against the official schema
-- **Optimizes** for production with minification and preprocessing
+- **Outputs** readable, 2-space indented JSON that any PromptPack runtime can consume
 - **Versions** packages for distribution and deployment
 
 ---
@@ -171,10 +171,10 @@ Production-ready output:
 packc compile --config arena.yaml --output app.pack.json --id my-app
 ```
 
-- Minify JSON output
-- Remove comments and whitespace
+- Readable, 2-space indented JSON output
 - Validate templates
 - Check for common errors
+- Schema validation against the PromptPack spec
 
 ---
 

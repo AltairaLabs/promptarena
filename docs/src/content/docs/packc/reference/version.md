@@ -189,7 +189,7 @@ build-with-version: check-version
 
 ```dockerfile
 # Dockerfile
-FROM golang:1.22 AS builder
+FROM golang:1.26 AS builder
 
 RUN go install github.com/AltairaLabs/promptarena/packc@latest
 
@@ -338,7 +338,7 @@ Or in README:
 ```markdown
 ## Requirements
 
-- Go 1.22+
+- Go 1.26+
 - packc v0.1.0+
 ```
 

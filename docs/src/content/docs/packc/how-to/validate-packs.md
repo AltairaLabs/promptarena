@@ -41,14 +41,21 @@ Verify pack structure, catch errors, and enforce quality standards before deploy
    ```
 
    **With warnings:**
+
+   Non-fatal issues (such as skill or workflow warnings) are printed with a
+   `⚠` prefix while validation still succeeds:
    ```
    Validating pack: packs/app.pack.json
    Validating against PromptPack schema...
    ✓ Schema validation passed
-   ⚠ Pack has 2 warnings:
-     - Missing description for prompt 'support'
-     - prompt 'support': no variables defined
+   ✓ Pack structure is valid
+   ⚠ Workflow warnings:
+     - <warning message>
    ```
+
+   Blocking problems (missing required fields, invalid template variables, and
+   similar structural issues) are instead printed under `✗ Pack validation
+   failed:` and cause a non-zero exit code.
 
 ## Validation Checks
 
@@ -309,21 +316,21 @@ fi
 
 ## Troubleshooting
 
-### Validation fails with warnings
+### Validation fails with structural errors
 
 **Problem:**
 
 ```
-⚠ Pack has 1 warnings:
-  - Missing description for prompt 'support'
+✗ Pack validation failed:
+  - prompt 'support': missing version
 ```
 
-**Solution:** Fix warnings in source YAML:
+**Solution:** Fix the flagged fields in the source YAML:
 
 ```yaml
 spec:
   task_type: support
-  description: "Customer support assistant"  # Add missing description
+  version: v1.0.0  # Add the missing version
 ```
 
 Then recompile and validate:

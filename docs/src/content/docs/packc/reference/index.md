@@ -16,6 +16,7 @@ PackC is the official compiler for PromptKit packs. It transforms YAML prompt co
 - **[validate](/packc/reference/validate/)** - Validate a pack file
 - **[inspect](/packc/reference/inspect/)** - Display pack information and structure
 - **[version](/packc/reference/version/)** - Show packc version
+- **completion** - Generate a shell completion script (bash, zsh, fish, powershell)
 
 ## Quick Reference
 

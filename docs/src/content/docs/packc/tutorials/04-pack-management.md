@@ -34,8 +34,9 @@ mkdir -p prompts config/{dev,staging,prod} packs/{dev,staging,prod}
 
 ```bash
 cat > config/dev/arena.yaml <<'EOF'
-prompts:
-  - ../../prompts/assistant.yaml
+prompt_configs:
+  - id: assistant
+    file: ../../prompts/assistant.yaml
 
 # Development settings
 environment: dev
@@ -47,8 +48,9 @@ EOF
 
 ```bash
 cat > config/staging/arena.yaml <<'EOF'
-prompts:
-  - ../../prompts/assistant.yaml
+prompt_configs:
+  - id: assistant
+    file: ../../prompts/assistant.yaml
 
 environment: staging
 debug: false
@@ -59,8 +61,9 @@ EOF
 
 ```bash
 cat > config/prod/arena.yaml <<'EOF'
-prompts:
-  - ../../prompts/assistant.yaml
+prompt_configs:
+  - id: assistant
+    file: ../../prompts/assistant.yaml
 
 environment: prod
 debug: false

@@ -144,8 +144,6 @@ packc compile \
 **Expected output:**
 
 ```
-Loaded 1 prompt configs from memory repository
-Compiling 1 prompts into pack 'greeting'...
 ✓ Pack compiled successfully: packs/greeting.pack.json
   Contains 1 prompts: [greeting]
 ```
