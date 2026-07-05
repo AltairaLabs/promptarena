@@ -138,6 +138,9 @@ jobs:
         run: npm run build
         env:
           NODE_ENV: production
+          # Authenticates `gh api` in docs/scripts/fetch-adapter-docs.mjs, which
+          # pulls the deploy-adapter docs (agentcore, omnia) at build time.
+          GH_TOKEN: ${{ github.token }}
 
       - name: Check for broken links
         working-directory: docs

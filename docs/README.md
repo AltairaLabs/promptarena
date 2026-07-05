@@ -23,6 +23,21 @@ src/content/docs/
 
 Pages follow the [Diátaxis](https://diataxis.fr/) framework.
 
+### Build-time generated content
+
+Some pages are generated during `prebuild` and are gitignored — they are
+regenerated on every build:
+
+- **Examples** (`arena/examples/`) — copied from `examples/*/README.md` by
+  [`scripts/prepare-examples-docs.sh`](../scripts/prepare-examples-docs.sh).
+- **Deploy adapters** (`arena/*/deploy/{agentcore,omnia}/`) — pulled from the
+  deploy adapter repos ([promptarena-deploy-agentcore](https://github.com/AltairaLabs/promptarena-deploy-agentcore),
+  [promptarena-deploy-omnia](https://github.com/AltairaLabs/promptarena-deploy-omnia))
+  at build time by [`scripts/fetch-adapter-docs.mjs`](./scripts/fetch-adapter-docs.mjs).
+  Each adapter maintains its own docs; the script maps them into the arena deploy
+  sections and rewrites links. It uses `gh api`, so CI passes `GH_TOKEN`; set
+  `SKIP_ADAPTER_DOCS=1` to skip the fetch for fast local builds.
+
 ## Versioning
 
 Docs are versioned by **minor** release (`major.minor`). The latest version is

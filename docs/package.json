@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "scripts": {
     "dev": "astro dev",
-    "prebuild": "bash ../scripts/prepare-examples-docs.sh",
+    "prebuild": "bash ../scripts/prepare-examples-docs.sh && node scripts/fetch-adapter-docs.mjs",
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
