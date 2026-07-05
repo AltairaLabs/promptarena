@@ -490,7 +490,7 @@ func TestValidateAllowedToolsResolve(t *testing.T) {
 
 	t.Run("bare MCP names on a static-only server warn", func(t *testing.T) {
 		cfg := &Config{MCPServers: staticServer, LoadedPromptConfigs: promptCfgs("create_entities", "read_graph")}
-		v := NewConfigValidator(cfg)
+		v := NewConfigValidatorWithPath(cfg, "")
 		v.validateAllowedToolsResolve()
 		require.Len(t, v.GetWarnings(), 2)
 		assert.Contains(t, v.GetWarnings()[0], `mcp__memory__`)
@@ -498,14 +498,14 @@ func TestValidateAllowedToolsResolve(t *testing.T) {
 
 	t.Run("qualified MCP names do not warn", func(t *testing.T) {
 		cfg := &Config{MCPServers: staticServer, LoadedPromptConfigs: promptCfgs("mcp__memory__create_entities")}
-		v := NewConfigValidator(cfg)
+		v := NewConfigValidatorWithPath(cfg, "")
 		v.validateAllowedToolsResolve()
 		assert.Empty(t, v.GetWarnings())
 	})
 
 	t.Run("mcp reference to unconfigured server warns", func(t *testing.T) {
 		cfg := &Config{MCPServers: staticServer, LoadedPromptConfigs: promptCfgs("mcp__typo__read_graph")}
-		v := NewConfigValidator(cfg)
+		v := NewConfigValidatorWithPath(cfg, "")
 		v.validateAllowedToolsResolve()
 		require.Len(t, v.GetWarnings(), 1)
 		assert.Contains(t, v.GetWarnings()[0], "not configured")
@@ -516,14 +516,14 @@ func TestValidateAllowedToolsResolve(t *testing.T) {
 			MCPServers:          []config.MCPServerConfig{{Name: "sandbox", Source: "docker"}},
 			LoadedPromptConfigs: promptCfgs("Read", "Write"),
 		}
-		v := NewConfigValidator(cfg)
+		v := NewConfigValidatorWithPath(cfg, "")
 		v.validateAllowedToolsResolve()
 		assert.Empty(t, v.GetWarnings())
 	})
 
 	t.Run("capability tools never warn", func(t *testing.T) {
 		cfg := &Config{MCPServers: staticServer, LoadedPromptConfigs: promptCfgs("memory__recall", "workflow__transition", "image__generate")}
-		v := NewConfigValidator(cfg)
+		v := NewConfigValidatorWithPath(cfg, "")
 		v.validateAllowedToolsResolve()
 		assert.Empty(t, v.GetWarnings())
 	})
@@ -534,7 +534,7 @@ func TestValidateAllowedToolsResolve(t *testing.T) {
 			LoadedTools:         []config.ToolData{{FilePath: "tools/list.tool.yaml"}},
 			LoadedPromptConfigs: promptCfgs("list_devices"),
 		}
-		v := NewConfigValidator(cfg)
+		v := NewConfigValidatorWithPath(cfg, "")
 		v.validateAllowedToolsResolve()
 		assert.Empty(t, v.GetWarnings())
 	})
