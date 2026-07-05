@@ -24,188 +24,137 @@ This replaces all configured providers with a mock that returns predefined respo
 
 ## Mock Configuration File
 
-Create custom mock responses with a configuration file:
+A mock config file supplies canned responses keyed by scenario and turn. The
+mock provider simulates only the LLM's decision-making — any tools it "calls"
+still execute for real through the tool loop. Pass the file with `--mock-config`,
+or reference it from a mock provider (see [Mock Provider Config](#mock-provider-config)).
 
-### Simple Mock Config
+### Mock file format
 
 ```yaml
-# mock-config.yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Tool
-metadata:
-  name: mock-responses
+# mock-responses.yaml
+scenarios:
+  rental-negotiation:        # MUST match the scenario's metadata.name
+    turns:
+      1: "Thanks for your interest. We're listing at twenty-six hundred a month."
+      2: "I can come down to twenty-five hundred on a twelve-month lease."
 
-spec:
-  type: mock
-  
-  responses:
-    - pattern: "hello|hi|hey"
-      response: "Hello! How can I help you today?"
-    
-    - pattern: "weather"
-      response: "I can check the weather. What location are you interested in?"
-    
-    - pattern: ".*"  # Catch-all
-      response: "I understand. Let me help with that."
+# Fallback used when no scenario/turn matches
+default_response: "This is a mock response from the configured provider."
 ```
 
-### Run with Mock Config
+Scenario keys **must match the scenario's `metadata.name`** (not `spec.id`) — the
+mock repository looks up responses by metadata name. Turn keys are turn numbers,
+and each value is either a plain string (a text response) or a mapping with
+`response` and/or `tool_calls`.
+
+### Run with a mock config
 
 ```bash
-promptarena run --mock-provider --mock-config mock-config.yaml
+promptarena run --mock-provider --mock-config mock-responses.yaml
+```
+
+## Mock Provider Config
+
+Instead of `--mock-provider`, you can define a provider of `type: mock` that
+points at its own mock file. This lets you keep a real provider and a mock side
+by side in the same arena config:
+
+```yaml
+# providers/mock-landlord.provider.yaml
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Provider
+metadata:
+  name: mock-landlord
+spec:
+  id: mock-landlord
+  type: mock
+  model: mock-model
+  additional_config:
+    mock_config: mock-responses.yaml   # relative to the arena config directory
 ```
 
 ## Advanced Mock Patterns
 
-### Regex Matching
+### Tool call simulation
+
+A turn with `tool_calls` triggers real tool execution. The mock decides which
+tools to call; the tools run for real and their results feed back into the
+conversation:
 
 ```yaml
-responses:
-  # Match specific questions
-  - pattern: "(what|how|why).*(hours|open|closed)"
-    response: "Our business hours are Monday-Friday, 9 AM to 5 PM."
-  
-  # Match account-related queries
-  - pattern: "account|billing|payment"
-    response: "I can help with account and billing questions. What do you need?"
-  
-  # Match technical support
-  - pattern: "(error|bug|crash|issue|problem)"
-    response: "I'm sorry you're experiencing an issue. Let me help troubleshoot."
+scenarios:
+  tool-test:
+    turns:
+      1:
+        response: "Let me check your account."
+        tool_calls:
+          - name: check_subscription_status
+            arguments:
+              email: jane.smith@acme.com
+      2: "You have an active Pro subscription that renews on the 15th."
 ```
 
-### Conditional Responses
+### Multi-turn tool loops
+
+Turn numbers account for each round of the tool loop — a tool-calling turn and
+the follow-up text turn are counted separately:
 
 ```yaml
-responses:
-  # First turn response
-  - pattern: ".*"
-    turn: 1
-    response: "Welcome! I'm here to assist you."
-  
-  # Follow-up responses
-  - pattern: "thanks|thank you"
-    response: "You're welcome! Anything else I can help with?"
-  
-  # Context-aware
-  - pattern: "yes|sure|okay"
-    context_required: "asked_for_confirmation"
-    response: "Great! I'll proceed with that."
+scenarios:
+  billing-question:
+    turns:
+      1:
+        tool_calls:
+          - name: get_customer_info
+            arguments:
+              email: customer@email.com
+      2: "I can see your account. Let me check your recent billing activity."
+      3:
+        tool_calls:
+          - name: create_support_ticket
+            arguments:
+              email: customer@email.com
+              issue_type: billing
+              priority: high
+      4: "I've created ticket TICKET-98765 for your billing issue."
 ```
 
-### Tool/Function Call Mocks
+### Per-scenario defaults
+
+A scenario's `default_response` covers turns with no explicit entry; the
+top-level `default_response` covers scenarios with no match at all:
 
 ```yaml
-responses:
-  # Mock tool calling
-  - pattern: "weather in (.*)"
-    response: "Let me check the weather."
-    tool_call:
-      name: "get_weather"
-      arguments:
-        location: "$1"  # Captured from regex
-      result:
-        temperature: 72
-        condition: "sunny"
-```
+scenarios:
+  quick-question:
+    default_response: "The answer to your question is: 42."
+    turns:
+      1: "Tell me more about what you need."
 
-### Multi-turn Scenarios
-
-```yaml
-responses:
-  # Build conversation state
-  - pattern: "I need help with my account"
-    response: "I'd be happy to help. Can you provide your account ID?"
-    set_context:
-      support_type: "account"
-  
-  - pattern: "\\d{5}"  # Match 5-digit account ID
-    context_required: "support_type=account"
-    response: "Thank you. I've pulled up account $0. What can I help with?"
-```
-
-## Mock Strategies
-
-### 1. Echo Mock (Development)
-
-Simple echo for testing scenario structure:
-
-```yaml
-responses:
-  - pattern: ".*"
-    response: "Echo: $0"  # Returns user's message
-```
-
-### 2. Random Responses (Variation Testing)
-
-Test assertion robustness:
-
-```yaml
-responses:
-  - pattern: "greeting"
-    responses:  # Array of possible responses
-      - "Hello!"
-      - "Hi there!"
-      - "Greetings!"
-      - "Hey!"
-```
-
-### 3. Failure Simulation
-
-Test error handling:
-
-```yaml
-responses:
-  - pattern: "trigger error"
-    error:
-      type: "rate_limit"
-      message: "Rate limit exceeded"
-      retry_after: 60
-  
-  - pattern: "timeout"
-    delay: 30  # Simulate 30s delay
-    response: "Delayed response"
-```
-
-### 4. Context-based Mocks
-
-Simulate stateful conversations:
-
-```yaml
-responses:
-  - pattern: "book flight to (.*)"
-    response: "I can help book a flight to $1. What date?"
-    set_context:
-      destination: "$1"
-      booking_state: "awaiting_date"
-  
-  - pattern: "(\\d{4}-\\d{2}-\\d{2})"
-    context_required: "booking_state=awaiting_date"
-    response: "Flight to ${context.destination} on $1. Confirm?"
-    set_context:
-      date: "$1"
-      booking_state: "awaiting_confirmation"
+default_response: "This is a mock response from the configured provider."
 ```
 
 ## Provider Comparison Testing
 
-Compare mock vs. real providers:
+Compare mock vs. real providers by listing both in your arena config. Every
+scenario runs against each provider, so you get a side-by-side matrix:
 
 ```yaml
-# arena.yaml
-providers:
-  - path: ./providers/openai.yaml
-  - path: ./providers/mock.yaml
+# config.arena.yaml
+spec:
+  providers:
+    - file: providers/openai.yaml
+    - file: providers/mock-landlord.provider.yaml
 
-scenarios:
-  - path: ./scenarios/test.yaml
-    providers: [openai-gpt4, mock]  # Test both
+  scenarios:
+    - file: scenarios/customer-support.yaml
 ```
 
 Run side-by-side:
 
 ```bash
-# Compare real vs mock
+# Compare real vs mock across the provider matrix
 promptarena run --scenario customer-support
 ```
 
@@ -293,7 +242,7 @@ jobs:
       
       - name: Run Real Provider Tests
         env:
-          OPENAI_API_KEY: $
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           promptarena run --provider openai-gpt4 --ci
 ```
@@ -302,59 +251,26 @@ jobs:
 
 ```yaml
 # mock-customer-support.yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Tool
-metadata:
-  name: mock-customer-support
+scenarios:
+  # A conversational scenario, keyed by its metadata.name
+  customer-support:
+    turns:
+      1: "Hello! How can I assist you today?"
+      2: "We're open Monday-Friday, 9 AM to 5 PM EST."
 
-spec:
-  type: mock
-  
-  # Default behavior
-  default_response: "I'm here to help. Can you provide more details?"
-  
-  # Specific patterns
-  responses:
-    # Greetings
-    - pattern: "^(hello|hi|hey)"
-      responses:
-        - "Hello! How can I assist you today?"
-        - "Hi there! What brings you here?"
-    
-    # Business hours
-    - pattern: "(hours|open|closed|schedule)"
-      response: "We're open Monday-Friday, 9 AM to 5 PM EST."
-    
-    # Billing
-    - pattern: "(billing|payment|charge|invoice)"
-      response: "I can help with billing questions. Do you have your account number?"
-      set_context:
-        topic: "billing"
-    
-    # Account lookup
-    - pattern: "^[A-Z]{2}\\d{8}$"
-      context_required: "topic=billing"
-      response: "I found your account. Your current balance is $42.00."
-    
-    # Escalation
-    - pattern: "(angry|frustrated|manager|escalate)"
-      response: "I understand your frustration. Let me connect you with a supervisor."
-      set_context:
-        escalated: true
-    
-    # Tool calling
-    - pattern: "weather in (.*)"
-      response: "The current weather in $1 is sunny, 72°F."
-      tool_call:
-        name: "get_weather"
-        arguments:
-          location: "$1"
-    
-    # Error simulation
-    - pattern: "trigger_error"
-      error:
-        type: "api_error"
-        message: "Service temporarily unavailable"
+  # A tool-driven scenario: the mock calls a real tool, then answers
+  account-lookup:
+    turns:
+      1:
+        response: "Let me pull up your account."
+        tool_calls:
+          - name: get_customer_info
+            arguments:
+              email: customer@example.com
+      2: "I found your account. Your current balance is $42.00."
+
+# Fallback for any scenario/turn not covered above
+default_response: "I'm here to help. Can you provide more details?"
 ```
 
 Use this mock:
@@ -365,17 +281,21 @@ promptarena run --mock-provider --mock-config mock-customer-support.yaml
 
 ## Combining Mocks and Real Providers
 
-Test specific scenarios with mocks while using real providers for others:
+Keep a mock provider and real providers in the same arena config. Fast
+structure-validation runs can target the mock, while quality runs use the real
+LLMs:
 
 ```yaml
-# arena.yaml
-scenarios:
-  - path: ./scenarios/structure-validation.yaml
-    providers: [mock]  # Fast validation
-  
-  - path: ./scenarios/quality-tests.yaml
-    providers: [openai-gpt4, claude-sonnet]  # Real LLMs
+# config.arena.yaml
+spec:
+  providers:
+    - file: providers/mock-landlord.provider.yaml
+    - file: providers/openai.yaml
+    - file: providers/claude.yaml
 ```
+
+Select which provider a run uses with `--provider`, or swap one provider for
+another at run time with `--override-provider` (see below).
 
 ## Next Steps
 

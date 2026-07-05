@@ -32,16 +32,16 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.23'
+          go-version: '1.26'
       
       - name: Install PromptArena
         run: |
-          go install github.com/AltairaLabs/PromptKit/tools/arena/cmd/promptarena@latest
+          go install github.com/AltairaLabs/promptarena/arena/cmd/promptarena@latest
       
       - name: Run LLM tests
         env:
-          OPENAI_API_KEY: $
-          ANTHROPIC_API_KEY: $
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           promptarena run --ci --format junit,json,html
       
@@ -80,10 +80,10 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.23'
+          go-version: '1.26'
       
       - name: Install Arena
-        run: go install github.com/AltairaLabs/PromptKit/tools/arena/cmd/promptarena@latest
+        run: go install github.com/AltairaLabs/promptarena/arena/cmd/promptarena@latest
       
       - name: Validate with Mocks
         run: |
@@ -111,29 +111,29 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.23'
+          go-version: '1.26'
       
       - name: Install Arena
-        run: go install github.com/AltairaLabs/PromptKit/tools/arena/cmd/promptarena@latest
+        run: go install github.com/AltairaLabs/promptarena/arena/cmd/promptarena@latest
       
-      - name: Test $
+      - name: Test ${{ matrix.provider }}
         env:
-          OPENAI_API_KEY: $
-          ANTHROPIC_API_KEY: $
-          GOOGLE_API_KEY: $
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
         run: |
           promptarena run \
-            --provider $ \
+            --provider ${{ matrix.provider }} \
             --ci \
             --format junit,json \
-            --out out/$
+            --out out/${{ matrix.provider }}
       
       - name: Publish Results
         uses: dorny/test-reporter@v1
         if: always()
         with:
-          name: $ Tests
-          path: out/$/junit.xml
+          name: ${{ matrix.provider }} Tests
+          path: out/${{ matrix.provider }}/junit.xml
           reporter: java-junit
 ```
 
@@ -148,15 +148,15 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.23'
+          go-version: '1.26'
       
       - name: Install Arena
-        run: go install github.com/AltairaLabs/PromptKit/tools/arena/cmd/promptarena@latest
+        run: go install github.com/AltairaLabs/promptarena/arena/cmd/promptarena@latest
       
       - name: Run tests
         id: arena-test
         env:
-          OPENAI_API_KEY: $
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           promptarena run --ci --format json,junit
           
@@ -167,7 +167,7 @@ jobs:
       - name: Quality Gate
         if: steps.arena-test.outputs.pass_rate < 0.95
         run: |
-          echo "::error::Quality gate failed: Pass rate $ < 95%"
+          echo "::error::Quality gate failed: Pass rate ${{ steps.arena-test.outputs.pass_rate }} < 95%"
           exit 1
       
       - name: Comment PR
@@ -208,14 +208,14 @@ stages:
   - report
 
 variables:
-  GO_VERSION: "1.23"
+  GO_VERSION: "1.26"
 
 arena-tests:
   stage: test
   image: golang:${GO_VERSION}
   
   before_script:
-    - go install github.com/AltairaLabs/PromptKit/tools/arena/cmd/promptarena@latest
+    - go install github.com/AltairaLabs/promptarena/arena/cmd/promptarena@latest
   
   script:
     - promptarena run --ci --format junit,json
@@ -238,9 +238,9 @@ arena-tests:
 # .gitlab-ci.yml
 .arena-test-template: &arena-test
   stage: test
-  image: golang:1.23
+  image: golang:1.26
   before_script:
-    - go install github.com/AltairaLabs/PromptKit/tools/arena/cmd/promptarena@latest
+    - go install github.com/AltairaLabs/promptarena/arena/cmd/promptarena@latest
   script:
     - promptarena run --ci --format junit,json --out out/${CI_JOB_NAME}
   artifacts:
@@ -290,7 +290,7 @@ pipeline {
         stage('Setup') {
             steps {
                 sh 'go version'
-                sh 'go install github.com/AltairaLabs/PromptKit/tools/arena/cmd/promptarena@latest'
+                sh 'go install github.com/AltairaLabs/promptarena/arena/cmd/promptarena@latest'
             }
         }
         
@@ -355,14 +355,14 @@ version: 2.1
 jobs:
   arena-test:
     docker:
-      - image: cimg/go:1.23
+      - image: cimg/go:1.26
     
     steps:
       - checkout
       
       - run:
           name: Install PromptArena
-          command: go install github.com/AltairaLabs/PromptKit/tools/arena/cmd/promptarena@latest
+          command: go install github.com/AltairaLabs/promptarena/arena/cmd/promptarena@latest
       
       - run:
           name: Run tests
@@ -397,7 +397,7 @@ promptarena run --ci --format junit,json
 ```yaml
 # GitHub Actions
 env:
-  OPENAI_API_KEY: $
+  OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
 # GitLab CI (masked variables)
 variables:
@@ -450,7 +450,7 @@ fi
 - uses: actions/upload-artifact@v4
   if: always()
   with:
-    name: arena-results-$
+    name: arena-results-${{ github.run_id }}
     path: out/
     retention-days: 30
 ```
@@ -477,19 +477,19 @@ jq '.summary' out/results.json > metrics/run-${BUILD_ID}.json
   with:
     payload: |
       {
-        "text": "LLM tests failed in $",
+        "text": "LLM tests failed in ${{ github.repository }}",
         "blocks": [
           {
             "type": "section",
             "text": {
               "type": "mrkdwn",
-              "text": "*LLM Test Failure*\nBranch: $\nRun: $/$/actions/runs/$"
+              "text": "*LLM Test Failure*\nBranch: ${{ github.ref_name }}\nRun: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
             }
           }
         ]
       }
   env:
-    SLACK_WEBHOOK_URL: $
+    SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 ```
 
 ## Troubleshooting

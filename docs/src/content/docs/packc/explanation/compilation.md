@@ -11,8 +11,9 @@ PackC transforms human-friendly YAML configurations into validated JSON packs th
 
 ## Compilation Pipeline
 
-```
-YAML Files → Parser → Validator → Pack Builder → JSON Output
+```mermaid
+flowchart LR
+    yaml["YAML Files"] --> parser["Parser"] --> validator["Validator"] --> builder["Pack Builder"] --> json["JSON Output"]
 ```
 
 ### Stage 1: Configuration Loading
@@ -21,9 +22,11 @@ YAML Files → Parser → Validator → Pack Builder → JSON Output
 
 ```yaml
 # arena.yaml
-prompts:
-  - prompts/support.yaml
-  - prompts/sales.yaml
+prompt_configs:
+  - id: support
+    file: prompts/support.yaml
+  - id: sales
+    file: prompts/sales.yaml
 ```
 
 **Process**:
@@ -353,12 +356,6 @@ Each component is:
 - Testable
 - Replaceable
 
-### Extension Points
-
-1. **Custom parsers** - Support other input formats
-2. **Custom validators** - Add validation rules
-3. **Custom serializers** - Output other formats
-
 ## Comparison with Other Compilers
 
 ### vs. TypeScript Compiler
@@ -378,7 +375,7 @@ Each component is:
 | Input | YAML | JavaScript |
 | Output | JSON | JavaScript |
 | Transformations | Few | Many |
-| Plugins | Planned | Extensive |
+| Plugins | None | Extensive |
 | Speed | Fast | Moderate |
 
 ## Summary

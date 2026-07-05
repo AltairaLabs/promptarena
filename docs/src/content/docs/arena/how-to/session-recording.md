@@ -281,7 +281,7 @@ spec:
   description: Validate customer support conversation quality
   
   recording:
-    path: recordings/session-abc123.recording.json
+    path: out/recordings/session-abc123.jsonl
     type: session
   
   judge_targets:

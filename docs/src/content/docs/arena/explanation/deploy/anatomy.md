@@ -17,25 +17,15 @@ Every deployment combines exactly two things:
 
 The CLI itself understands neither the contents of the pack nor the contents of `deploy.config`. It compiles the pack, hands both to the adapter as opaque JSON, and the adapter translates them into provider-native resources.
 
-```d2
-direction: right
-
-pack: .pack.json {
-  label: ".pack.json\n(what the agent IS)"
-}
-config: deploy.config {
-  label: "deploy.config\n(how it RUNS here)"
-}
-adapter: Adapter {
-  label: "Adapter\n(translator)"
-}
-target: Target {
-  label: "Provider resources\n(CRDs, runtimes, …)"
-}
-
-pack -> adapter
-config -> adapter
-adapter -> target
+```mermaid
+flowchart LR
+  pack[".pack.json<br/>(what the agent IS)"]
+  config["deploy.config<br/>(how it RUNS here)"]
+  adapter["Adapter<br/>(translator)"]
+  target["Provider resources<br/>(CRDs, runtimes, …)"]
+  pack --> adapter
+  config --> adapter
+  adapter --> target
 ```
 
 ---

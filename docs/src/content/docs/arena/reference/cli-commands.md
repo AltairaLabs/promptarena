@@ -16,6 +16,7 @@ promptarena [command] [flags]
 | Command | Description |
 |---------|-------------|
 | `init` | Initialize a new Arena test project from template (built-in or remote) |
+| `templates` | Manage PromptArena templates (list, fetch, update, render, repo) |
 | `run` | Run conversation simulations (main command) |
 | `generate` | Generate scenario files from session data or external sources |
 | `mocks` | Generate mock provider responses from Arena JSON results |
@@ -29,6 +30,7 @@ promptarena [command] [flags]
 | `view` | View test results |
 | `export` | Export arena config as a PromptPack JSON file |
 | `deploy` | Deploy prompt packs to cloud providers via adapter plugins |
+| `mcp` | Run an MCP server exposing PromptArena authoring knowledge over stdio |
 | `skill` | Manage shared AgentSkills.io skills (install, list, remove) |
 | `completion` | Generate shell autocompletion script |
 | `help` | Help about any command |
@@ -48,7 +50,7 @@ Initialize a new PromptArena test project from a built-in template.
 ### Usage
 
 ```bash
-promprarena init [directory] [flags]
+promptarena init [directory] [flags]
 ```
 
 ### Flags
@@ -56,7 +58,7 @@ promprarena init [directory] [flags]
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `--quick` | bool | `false` | Skip interactive prompts, use defaults |
-| `--provider` | string | - | Provider to configure (mock, openai, claude, gemini) |
+| `--provider` | string | - | Provider to configure (openai, anthropic, google, mock) |
 | `--template` | string | `quick-start` | Template to use for initialization |
 | `--template-index` | string | `community` | Template repo name or index URL/path for remote templates |
 | `--repo-config` | string | user config | Template repo config file |
@@ -68,7 +70,7 @@ PromptArena includes 6 built-in templates:
 
 | Template | Files Generated | Description |
 |----------|-----------------|-------------|
-| `basic-chatbot` | 6 files | Simple conversational testing setup |
+| `quick-start` | 6 files | Minimal viable testing setup for rapid experimentation |
 | `customer-support` | 10 files | Support agent with KB search and order status tools |
 | `code-assistant` | 9 files | Code generation and review with separate prompts |
 | `content-generation` | 9 files | Creative content for blogs, products, social media |
@@ -94,14 +96,14 @@ promptarena templates list --index community
 #### Quick Start
 
 ```bash
-# Create project with defaults (basic-chatbot template)
-promprarena init my-test --quick
+# Create project with defaults (quick-start template)
+promptarena init my-test --quick
 
 # With specific provider
-promprarena init my-test --quick --provider openai
+promptarena init my-test --quick --provider openai
 
 # With specific template
-promprarena init my-test --quick --template customer-support --provider openai
+promptarena init my-test --quick --template customer-support --provider openai
 
 # Render a remote template explicitly
 promptarena templates fetch --template community/basic-chatbot --version 1.0.0
@@ -112,7 +114,7 @@ promptarena templates render --template community/basic-chatbot --version 1.0.0 
 
 ```bash
 # Interactive prompts guide you through setup
-promprarena init my-project
+promptarena init my-project
 ```
 
 ### What Gets Created
@@ -130,7 +132,7 @@ Depending on the template, `init` creates:
 
 ### Template Comparison
 
-**basic-chatbot** (6 files):
+**quick-start** (6 files):
 
 - Best for: Beginners, simple testing
 - Includes: 1 prompt, 1 provider, 1 basic scenario
@@ -172,7 +174,7 @@ cd my-test
 echo "OPENAI_API_KEY=sk-..." >> .env
 
 # Run tests
-promprarena run
+promptarena run
 
 # View results
 open out/report.html
@@ -344,7 +346,7 @@ type SessionSourceAdapter interface {
 }
 ```
 
-External adapters register themselves with the global registry in `init()` functions and are selected via `--source <name>`. See the [generate package](https://github.com/AltairaLabs/PromptKit/tree/main/tools/arena/generate) for the full interface definition.
+External adapters register themselves with the global registry in `init()` functions and are selected via `--source <name>`. See the [generate package](https://github.com/AltairaLabs/promptarena/tree/main/arena/generate) for the full interface definition.
 
 ---
 
@@ -372,7 +374,8 @@ promptarena run [flags]
 |------|------|---------|-------------|
 | `-j, --concurrency` | int | `6` | Number of concurrent workers |
 | `-s, --seed` | int | `42` | Random seed for reproducibility |
-| `--ci` | bool | `false` | CI mode (headless, minimal output) |
+| `--ci` | bool | `false` | CI mode (disable TUI, simple logs) |
+| `--simple` | bool | `false` | Simple mode (alias for `--ci`) |
 
 #### Filtering
 
@@ -381,6 +384,7 @@ promptarena run [flags]
 | `--provider` | []string | all | Providers to use (comma-separated) |
 | `--scenario` | []string | all | Scenarios to run (comma-separated) |
 | `--region` | []string | all | Regions to run (comma-separated) |
+| `--eval` | []string | all | Evaluations to run (comma-separated) |
 | `--roles` | []string | all | Self-play role configurations to use |
 
 #### Parameter Overrides
@@ -402,6 +406,21 @@ promptarena run [flags]
 |------|------|---------|-------------|
 | `--mock-provider` | bool | `false` | Replace all providers with MockProvider |
 | `--mock-config` | string | - | Path to mock provider configuration (YAML) |
+| `--override-provider` | []string | - | Substitute a configured provider with another: `from=to` (repeatable) |
+
+#### Pack Evals
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--skip-pack-evals` | bool | `false` | Disable pack eval execution |
+| `--eval-types` | []string | all | Filter to specific eval types (e.g., `contains,regex`) |
+
+#### Audio Monitoring
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--audio-monitor` | string | `auto` | Audio monitoring mode: auto, on, off |
+| `--audio-rate` | int | `24000` | Audio canonical sample rate: 16000, 24000, or 48000 |
 
 #### Output Configuration
 
@@ -969,6 +988,10 @@ If `config-path` is a directory, looks for `config.arena.yaml` inside it. Defaul
 |------|------|---------|-------------|
 | `-p, --port` | int | `8080` | Port to serve on |
 | `-o, --open` | bool | `false` | Open browser automatically |
+| `--mock-provider` | bool | `false` | Replace all configured providers with mocks (no real API calls) |
+| `--mock-config` | string | - | Path to a mock responses YAML file (used with `--mock-provider`) |
+| `--audio-monitor` | string | `auto` | Audio monitoring mode: auto, on, off |
+| `--audio-rate` | int | `24000` | Audio canonical sample rate: 16000, 24000, or 48000 |
 
 ### Examples
 
@@ -1017,7 +1040,7 @@ For frontend development with hot module replacement, run the Go backend and Vit
 promptarena serve -p 8080
 
 # Terminal 2: Vite dev server (proxies /api to backend)
-cd tools/arena/web/frontend
+cd arena/web/frontend
 npm run dev
 # Open http://localhost:5173
 ```
@@ -1041,6 +1064,12 @@ promptarena chat [flags]
 | `--config` | string | `config.arena.yaml` | Path to the Arena config file |
 | `--mock-provider` | bool | `false` | Replace all providers with a generic mock (no API keys needed) |
 | `--mock-config` | string | — | Path to a mock-responses YAML file (used with `--mock-provider`) |
+| `--voice` | bool | `false` | Hands-free voice mode (requires PortAudio installed) |
+| `--voice-stt` | string | — | STT provider id for voice over text agents (VAD mode) |
+| `--voice-output-voice` | string | — | TTS voice id the agent speaks in (VAD mode) |
+| `--echo-guard` | bool | `false` | Gate mic while the agent speaks (for laptop speakers) |
+| `--barge-in` | bool | `false` | Allow interrupting the agent mid-reply (needs headphones/AEC) |
+| `-v, --verbose` | bool | `false` | Enable verbose debug logging (raw provider events, transcription) |
 
 ### Setup flow
 

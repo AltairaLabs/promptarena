@@ -16,11 +16,11 @@ The `deploy` command manages prompt pack deployments to cloud providers through 
 
 | Flag | Short | Default | Description |
 |------|-------|---------|-------------|
-| `--env` | `-e` | `"default"` | Target environment name |
+| `--env` | `-e` | `""` (resolves to `default`) | Target environment name |
 | `--config` | | `arena.yaml` | Path to config file |
-| `--pack` | | Auto-detected | Path to `.pack.json` file |
+| `--pack` | | (compiled from `--config`) | Optional pre-compiled `.pack.json` to deploy |
 
-Pack auto-detection searches the current directory for `*.pack.json` files.
+When `--pack` is omitted, the CLI compiles the pack from `--config` on the fly — no separate compile step is required. Pass `--pack` only to deploy a specific pre-compiled `.pack.json` (e.g. a byte-identical artifact built once and promoted across environments).
 
 ## Commands
 
@@ -51,7 +51,7 @@ promptarena deploy --config staging.arena.yaml --env staging
 **Process:**
 
 1. Load arena.yaml deploy config
-2. Resolve pack file (auto-detect or `--pack`)
+2. Resolve pack file (compile from `--config`, or read `--pack` if set)
 3. Merge base config with environment overrides
 4. Load prior state (if exists)
 5. Refresh state from live environment (pre-plan state refresh)
@@ -319,6 +319,53 @@ CI should supply the token via the provider's environment variable.
 
 ---
 
+### deploy config import
+
+Merge an exported deploy profile into the deploy config and validate it. The
+profile is a JSON or YAML mapping — typically exported by your deploy provider
+(e.g. Omnia) — containing connection details, a scoped token, and discovered
+providers/skills. The merge is surgical: only `deploy.config` is touched, and the
+rest of the config file (comments, key order, other sections) is preserved.
+
+```bash
+promptarena deploy config import <profile-file|-> [flags]
+```
+
+**Examples:**
+
+```bash
+# Import a profile file
+promptarena deploy config import omnia-profile.json
+
+# Read the profile from stdin
+promptarena deploy config import - < omnia-profile.yaml
+
+# Set the provider when the deploy section is created
+promptarena deploy config import profile.json --provider omnia
+
+# Skip validating the merged config against the adapter
+promptarena deploy config import profile.json --skip-validate
+```
+
+**Flags:**
+
+| Flag | Default | Description |
+|------|---------|-------------|
+| `--provider` | `omnia` | Provider to set when the deploy section is created |
+| `--skip-validate` | `false` | Skip validating the merged config against the adapter |
+
+**Process:**
+
+1. Read the profile (from the file, or stdin when the argument is `-`)
+2. Deep-merge it under `spec.deploy.config`, creating the deploy section (with
+   `provider`) if absent; existing keys are overridden, nested mappings merged
+3. Write the updated config back (owner-only permissions for new files, since the
+   profile may carry a scoped token)
+4. Unless `--skip-validate`, validate the merged config via the adapter's
+   `validate_config` RPC
+
+---
+
 ### deploy adapter install
 
 Install an adapter binary from the registry.
@@ -363,13 +410,20 @@ promptarena deploy adapter list
 
 **Output format:**
 
+Each search directory that contains adapters is printed as a `label (path):`
+header followed by the binary filenames found in it:
+
 ```
-Installed adapters:
-  agentcore  ~/.promptarena/adapters/promptarena-deploy-agentcore
-  custom     .promptarena/adapters/promptarena-deploy-custom
+project-local (/path/to/project/.promptarena/adapters):
+  promptarena-deploy-custom
+user-level (/home/you/.promptarena/adapters):
+  promptarena-deploy-agentcore
 ```
 
-Searches:
+When no adapters are installed, it prints `No adapters installed.` along with a
+hint to run `promptarena deploy adapter install <provider>`.
+
+Search locations:
 
 1. Project-local: `.promptarena/adapters/`
 2. User-level: `~/.promptarena/adapters/`
@@ -412,7 +466,7 @@ deploy:
 | Path | Description |
 |------|-------------|
 | `arena.yaml` | Default config file |
-| `*.pack.json` | Auto-detected pack files |
+| `*.pack.json` | Optional pre-compiled pack file (passed via `--pack`) |
 | `.promptarena/deploy.state` | Deployment state (JSON) |
 | `.promptarena/deploy.lock` | Deploy lock file (prevents concurrent access) |
 | `.promptarena/adapters/` | Project-local adapters |

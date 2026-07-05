@@ -7,7 +7,7 @@ This how-to walks through `examples/rag-agent/` — the full named RAG primitive
 
 ## What it proves
 
-RAG eval frameworks compete on the primitive catalog: faithfulness, answer relevancy, contextual recall, hallucination. PromptArena ships those primitives in `runtime/evals/handlers/` (added in #1145) as thin wrappers over `llm_judge` with hardened default prompts adapted from public DeepEval / Ragas references (Apache 2.0).
+RAG eval frameworks compete on the primitive catalog: faithfulness, answer relevancy, contextual recall, hallucination. PromptArena ships those primitives via the PromptKit runtime as thin wrappers over `llm_judge` with hardened default prompts adapted from public DeepEval / Ragas references (Apache 2.0).
 
 Each primitive is a pure eval handler — it emits the judge's score. Wrap with `type: assertion` and a threshold to gate a scenario; the demo runs all six against a single question + answer + retrieved context, with a mock LLM judge for keyless CI.
 
@@ -131,7 +131,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '1.26'
-      - run: make build-arena
+      - run: go build -o bin/promptarena ./arena/cmd/promptarena
       - name: Run RAG scenarios
         working-directory: examples/rag-agent
         run: ../../bin/promptarena run --ci --formats json

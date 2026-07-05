@@ -7,7 +7,7 @@ Reference documentation for the Arena Go API, covering all exported types, funct
 
 ## Core Packages
 
-### `github.com/AltairaLabs/PromptKit/tools/arena/engine`
+### `github.com/AltairaLabs/promptarena/arena/engine`
 
 The main package for programmatic Arena usage.
 
@@ -312,7 +312,7 @@ Contains complete results of a test execution.
 
 ## Configuration Package
 
-### `github.com/AltairaLabs/PromptKit/pkg/config`
+### `github.com/AltairaLabs/promptarena/arena/arenaconfig`
 
 #### `Config`
 
@@ -335,7 +335,7 @@ Main Arena configuration structure.
 ```go
 type Provider struct {
     ID    string
-    Type  string  // "openai", "anthropic", "gemini", "mock"
+    Type  string  // "openai", "claude", "gemini", "mock"
     Model string
     // ... additional fields
 }
@@ -399,7 +399,7 @@ Default execution parameters.
 
 ## State Store Package
 
-### `github.com/AltairaLabs/PromptKit/tools/arena/statestore`
+### `github.com/AltairaLabs/promptarena/arena/statestore`
 
 #### `ArenaStateStore`
 
@@ -544,4 +544,3 @@ for _, runID := range runIDs {
 
 - [Tutorial: Programmatic Usage](/arena/tutorials/07-programmatic-usage/)
 - [How-To: Use as Go Library](/arena/how-to/use-as-go-library/)
-- [Example Code](https://github.com/AltairaLabs/PromptKit/tree/main/examples/programmatic-arena)

@@ -68,7 +68,7 @@ For CI/CD, we recommend using npm for PromptArena installation:
     go-version: '1.23'
 
 - name: Install PromptArena
-  run: go install github.com/AltairaLabs/PromptKit/tools/arena/cmd/promptarena@latest
+  run: go install github.com/AltairaLabs/promptarena/arena/cmd/promptarena@latest
 ```
 
 For this tutorial, we'll use npm as it's simpler and faster.
@@ -135,8 +135,8 @@ jobs:
       - name: Run integration tests
         working-directory: tests
         env:
-          OPENAI_API_KEY: $
-          ANTHROPIC_API_KEY: $
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           promptarena run \
             --scenario integration \
@@ -318,7 +318,7 @@ promptarena run --concurrency 2 --ci
     path: |
       ~/.cache/go-build
       ~/go/pkg/mod
-    key: $-go-$
+    key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
 ```
 
 ### Selective Testing
@@ -360,7 +360,7 @@ Add test results to PR comments:
       
       ${passRate >= 95 ? '✅ Quality gate: PASSED' : '❌ Quality gate: FAILED'}
       
-      [View detailed report](https://github.com/$/actions/runs/$)
+      [View detailed report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
       `;
       
       github.rest.issues.createComment({
@@ -381,14 +381,14 @@ strategy:
     environment: [dev, staging, prod]
 
 steps:
-  - name: Run tests in $
+  - name: Run tests in ${{ matrix.environment }}
     env:
       OPENAI_API_KEY: ${{ secrets[format('{0}_OPENAI_API_KEY', matrix.environment)] }}
     run: |
       promptarena run \
-        --config arena-$.yaml \
+        --config arena-${{ matrix.environment }}.yaml \
         --ci \
-        --out out/$
+        --out out/${{ matrix.environment }}
 ```
 
 ## Step 10: Scheduled Testing
@@ -412,7 +412,7 @@ jobs:
       
       - name: Run full test suite
         env:
-          OPENAI_API_KEY: $
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           promptarena run --ci --format json,html
       
@@ -428,13 +428,13 @@ jobs:
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*Scheduled LLM Tests Failed*\n<https://github.com/$/actions/runs/$|View Details>"
+                    "text": "*Scheduled LLM Tests Failed*\n<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Details>"
                   }
                 }
               ]
             }
         env:
-          SLACK_WEBHOOK_URL: $
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 ```
 
 ## Step 11: Deployment Gates
@@ -460,7 +460,7 @@ jobs:
       
       - name: Run LLM tests
         env:
-          OPENAI_API_KEY: $
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           promptarena run --scenario critical --ci
   
@@ -529,7 +529,7 @@ jobs:
       - name: Critical tests
         working-directory: tests
         env:
-          OPENAI_API_KEY: $
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           promptarena run \
             --scenario critical \
@@ -568,9 +568,9 @@ jobs:
       - name: Full test suite
         working-directory: tests
         env:
-          OPENAI_API_KEY: $
-          ANTHROPIC_API_KEY: $
-          GOOGLE_API_KEY: $
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
         run: |
           promptarena run \
             --ci \
@@ -608,7 +608,7 @@ timeout-minutes: 10  # Kill hung tests
 ```yaml
 # ✅ Use GitHub Secrets
 env:
-  OPENAI_API_KEY: $
+  OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
 # ❌ Never commit keys
 env:

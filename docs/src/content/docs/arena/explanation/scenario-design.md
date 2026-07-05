@@ -367,8 +367,8 @@ fixtures:
     features: ["standard_support"]
   
   long_text: |
-    Lorem ipsum dolor sit amet...
-    (1000+ words)
+    (a long support transcript or document — paste the full 1000+ word
+    body here so every turn that references it stays in sync)
 
 turns:
   - name: "Premium User Support"
@@ -702,6 +702,8 @@ spec:
   task_type: test
   description: "Legacy Greeting Test"
   
+    # Conceptual — Arena has no deprecated/skip fields. Manage retired
+    # scenarios with labels, or remove them from the config.
     deprecated: true
     deprecated_reason: "Replaced by greeting-v2.yaml"
     skip: true

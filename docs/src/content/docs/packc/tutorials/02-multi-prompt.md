@@ -177,12 +177,13 @@ Create a configuration that includes all three prompts:
 
 ```bash
 cat > config/arena.yaml <<'EOF'
-prompts:
-  - ../prompts/greeting.yaml
-  - ../prompts/support.yaml
-  - ../prompts/escalation.yaml
-
-tools_directory: ./tools
+prompt_configs:
+  - id: greeting
+    file: ../prompts/greeting.yaml
+  - id: support
+    file: ../prompts/support.yaml
+  - id: escalation
+    file: ../prompts/escalation.yaml
 EOF
 ```
 
@@ -200,10 +201,8 @@ packc compile \
 **Expected output:**
 
 ```
-Loaded 3 prompt configs from memory repository
-Compiling 3 prompts into pack 'customer-service'...
 ✓ Pack compiled successfully: packs/customer-service.pack.json
-  Contains 3 prompts: [greeting, support, escalation]
+  Contains 3 prompts: [greeting support escalation]
 ```
 
 ## Step 5: Inspect the Pack
@@ -217,21 +216,21 @@ packc inspect packs/customer-service.pack.json
 **Key sections to notice:**
 
 ```
-Prompts
-=======
-- ID: greeting
-  Name: Customer Greeting
-  ...
+=== Prompts (3) ===
 
-- ID: support
-  Name: Technical Support
-  Tools: [search_knowledge_base, create_ticket]
-  ...
-
-- ID: escalation
+[escalation]
   Name: Escalation Handler
-  Tools: [create_escalation_ticket, notify_manager]
-  ...
+  Version: v1.0.0
+  Tools (2): [create_escalation_ticket notify_manager]
+
+[greeting]
+  Name: Customer Greeting
+  Version: v1.0.0
+
+[support]
+  Name: Technical Support
+  Version: v1.0.0
+  Tools (2): [search_knowledge_base create_ticket]
 ```
 
 ## Step 6: Validate the Pack
@@ -343,11 +342,15 @@ EOF
 Update arena.yaml:
 
 ```yaml
-prompts:
-  - ../prompts/greeting.yaml
-  - ../prompts/support.yaml
-  - ../prompts/escalation.yaml
-  - ../prompts/followup.yaml  # Add new prompt
+prompt_configs:
+  - id: greeting
+    file: ../prompts/greeting.yaml
+  - id: support
+    file: ../prompts/support.yaml
+  - id: escalation
+    file: ../prompts/escalation.yaml
+  - id: followup
+    file: ../prompts/followup.yaml  # Add new prompt
 ```
 
 Recompile:
@@ -434,11 +437,15 @@ task_type: esc
 
 ```yaml
 # arena.yaml with comments
-prompts:
-  - ../prompts/greeting.yaml      # Step 1: Initial contact
-  - ../prompts/support.yaml       # Step 2: Problem solving
-  - ../prompts/escalation.yaml    # Step 3: Complex issues
-  - ../prompts/followup.yaml      # Step 4: Satisfaction check
+prompt_configs:
+  - id: greeting
+    file: ../prompts/greeting.yaml    # Step 1: Initial contact
+  - id: support
+    file: ../prompts/support.yaml     # Step 2: Problem solving
+  - id: escalation
+    file: ../prompts/escalation.yaml  # Step 3: Complex issues
+  - id: followup
+    file: ../prompts/followup.yaml    # Step 4: Satisfaction check
 ```
 
 ## Next Steps

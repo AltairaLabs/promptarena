@@ -29,7 +29,7 @@ PackC is the reference compiler for this standard.
 
 - **Compiles** YAML/JSON sources into `.pack.json` files conforming to [PromptPack spec](https://promptpack.org)
 - **Validates** structure against the official schema
-- **Optimizes** for production with minification and preprocessing
+- **Outputs** readable, 2-space indented JSON that any PromptPack runtime can consume
 - **Versions** packages for distribution and deployment
 
 ---
@@ -38,7 +38,7 @@ PackC is the reference compiler for this standard.
 
 ```bash
 # Install with Go
-go install github.com/AltairaLabs/PromptKit/tools/packc@latest
+go install github.com/AltairaLabs/promptarena/packc@latest
 
 # Create a prompt source file
 cat > greeting.yaml <<EOF
@@ -79,32 +79,18 @@ A key benefit of PromptPack is **portability**. Packs compiled with PackC work w
 
 Build once, deploy everywhere. No vendor lock-in.
 
-```d2
-direction: right
-
-sources: YAML Sources {
-  shape: rectangle
-  label: "YAML Sources\n(your prompts)"
-}
-
-packc: PackC {
-  shape: rectangle
-  label: "PackC\n(compiler)"
-}
-
-pack: .pack.json {
-  shape: rectangle
-  label: ".pack.json\n(PromptPack)"
-}
-
-promptkit: PromptKit (Go SDK)
-other: Other Frameworks
-custom: Custom Integration
-
-sources -> packc -> pack
-pack -> promptkit
-pack -> other
-pack -> custom
+```mermaid
+flowchart LR
+  sources["YAML Sources<br/>(your prompts)"]
+  packc["PackC<br/>(compiler)"]
+  pack[".pack.json<br/>(PromptPack)"]
+  promptkit["PromptKit (Go SDK)"]
+  other["Other Frameworks"]
+  custom["Custom Integration"]
+  sources --> packc --> pack
+  pack --> promptkit
+  pack --> other
+  pack --> custom
 ```
 
 ---
@@ -185,10 +171,10 @@ Production-ready output:
 packc compile --config arena.yaml --output app.pack.json --id my-app
 ```
 
-- Minify JSON output
-- Remove comments and whitespace
+- Readable, 2-space indented JSON output
 - Validate templates
 - Check for common errors
+- Schema validation against the PromptPack spec
 
 ---
 
@@ -284,8 +270,8 @@ validate-packs:
 ## Resources
 
 - **PromptPack Specification**: [promptpack.org](https://promptpack.org)
-- **Questions**: [GitHub Discussions](https://github.com/AltairaLabs/PromptKit/issues)
-- **Issues**: [Report a Bug](https://github.com/AltairaLabs/PromptKit/issues)
+- **Questions**: [GitHub Discussions](https://github.com/AltairaLabs/promptarena/issues)
+- **Issues**: [Report a Bug](https://github.com/AltairaLabs/promptarena/issues)
 
 ---
 

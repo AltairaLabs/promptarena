@@ -539,10 +539,10 @@ spec:
 ### Tool Not Called
 
 ```bash
-# Check if tools are enabled in prompt
-cat prompts/assistant-with-tools.yaml | grep tools_enabled
+# Check the prompt declares the MCP tools it needs
+cat prompts/assistant-with-tools.yaml | grep -A5 allowed_tools
 
-# Should be: tools_enabled: true
+# Each MCP tool must be listed under allowed_tools, e.g. mcp__<server>__<tool>
 ```
 
 ### Wrong Tool Arguments

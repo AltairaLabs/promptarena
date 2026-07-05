@@ -17,7 +17,7 @@ Voice ships **inside the standard `promptarena` binary** — there is no separat
 voice build. The binary stays pure Go (no cgo); it loads PortAudio dynamically
 **at runtime**, and only when you actually start a voice session. So you install
 `promptarena` the usual way (`npm install -g @altairalabs/promptarena`, a release
-download, or `make build-arena`) and then [install PortAudio](#install-portaudio)
+download, or `go build -o bin/promptarena ./arena/cmd/promptarena`) and then [install PortAudio](#install-portaudio)
 to enable voice.
 
 If you run `chat --voice` without PortAudio present, only voice is unavailable —

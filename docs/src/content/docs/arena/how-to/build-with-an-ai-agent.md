@@ -58,5 +58,3 @@ Pick how you want to see results:
 
 Once the kit is green against mocks, switch to a real provider, use `promptarena chat` to
 play with it conversationally, and `promptarena deploy` (or a CI workflow) to ship it.
-
-<!-- TODO(video): embed the getting-started screencast here once recorded. -->

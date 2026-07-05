@@ -249,7 +249,7 @@ Executes the deployment plan, creating/updating/deleting resources.
   "jsonrpc": "2.0",
   "id": 4,
   "result": {
-    "state": "eyJydW50aW1lX2lkIjoiYWJjMTIzIn0=",
+    "adapter_state": "eyJydW50aW1lX2lkIjoiYWJjMTIzIn0=",
     "events": [
       {
         "type": "progress",
@@ -282,7 +282,7 @@ Executes the deployment plan, creating/updating/deleting resources.
 
 | Result Field | Type | Description |
 |--------------|------|-------------|
-| `state` | string | Opaque adapter state to persist |
+| `adapter_state` | string | Opaque adapter state to persist |
 | `events` | ApplyEvent[] | Progress events from the apply |
 
 **ApplyEvent:**
@@ -331,6 +331,7 @@ Tears down all managed resources.
   "jsonrpc": "2.0",
   "id": 5,
   "result": {
+    "status": "destroyed",
     "events": [
       {
         "type": "progress",
@@ -350,6 +351,11 @@ Tears down all managed resources.
 | `deploy_config` | string | JSON-encoded provider config |
 | `environment` | string | Target environment |
 | `prior_state` | string | Opaque adapter state |
+
+| Result Field | Type | Description |
+|--------------|------|-------------|
+| `status` | string | Always `"destroyed"` on success |
+| `events` | DestroyEvent[] | Progress events from the destroy |
 
 ---
 

@@ -166,7 +166,7 @@ runs `git clone` unauthenticated.
 ## Worked example
 
 The repo includes a runnable end-to-end demo at
-[`examples/codegen-sandbox/`](https://github.com/AltairaLabs/PromptKit/tree/main/examples/codegen-sandbox)
+[`examples/codegen-sandbox/`](https://github.com/AltairaLabs/promptarena/tree/main/examples/codegen-sandbox)
 that:
 
 - Provisions `ghcr.io/altairalabs/codegen-sandbox:latest` per session.
@@ -178,13 +178,14 @@ that:
 Run it:
 
 ```bash
-make build-arena
-make codegen-demo
+go build -o bin/promptarena ./arena/cmd/promptarena
+(cd examples/codegen-sandbox && ../../bin/promptarena run --ci --format html)
 open examples/codegen-sandbox/out/report.html
 ```
 
-For a no-Docker variant against the canned LLM responses, use
-`make codegen-demo-mock`.
+For a no-Docker variant against the canned LLM responses, run
+`promptarena run --mock-provider --ci --format html` from
+`examples/codegen-sandbox/`.
 
 ---
 

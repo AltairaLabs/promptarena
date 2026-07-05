@@ -106,7 +106,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '1.26'
-      - run: make build-arena
+      - run: go build -o bin/promptarena ./arena/cmd/promptarena
       - name: Validate duplex configs
         working-directory: examples/duplex-streaming
         run: ../../bin/promptarena validate config.arena.yaml
@@ -119,7 +119,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '1.26'
-      - run: make build-arena
+      - run: go build -o bin/promptarena ./arena/cmd/promptarena
       - name: Run duplex-tools scenario
         working-directory: examples/duplex-streaming
         env:
@@ -136,7 +136,7 @@ The mock-duplex provider emits a fixed `auto_respond` text instead of executing 
 
 For deterministic mock runs where assertions can pass, see [examples/voice-ivr/](/arena/how-to/voice-ivr/), which uses a text-mode mock provider that does execute scripted tool calls.
 
-A fully-mocked duplex provider that scripts both audio output and tool calls is a planned extension; until it lands, real providers are the only path to assertion-passing tool-call evaluation under voice.
+There is no fully-mocked duplex provider that scripts both audio output and tool calls, so real providers are the only path to assertion-passing tool-call evaluation under voice.
 
 ## Extending it
 

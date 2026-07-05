@@ -22,10 +22,10 @@ cd examples/text-negotiation
 promptarena serve
 ```
 
-`serve` loads the scenario. The TUI is good for the dev loop:
+`serve` loads the scenario. The TUI is the default and is good for the dev loop:
 
 ```bash
-promptarena run --tui
+promptarena run
 ```
 
 Headless / CI:
@@ -143,7 +143,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '1.26'
-      - run: make build-arena
+      - run: go build -o bin/promptarena ./arena/cmd/promptarena
       - name: Run text-negotiation
         working-directory: examples/text-negotiation
         run: ../../bin/promptarena run --ci --formats json

@@ -169,7 +169,7 @@ Error parsing prompt config: yaml: line 5: mapping values are not allowed in thi
 Error parsing prompt config: missing required field: task_type
 ```
 
-**Solution**: Ensure the prompt YAML includes all required fields (task_type, system_prompt).
+**Solution**: Ensure the prompt YAML includes all required fields (task_type, system_template).
 
 ### Media File Not Found
 
@@ -186,7 +186,7 @@ Error parsing prompt config: missing required field: task_type
 Compilation failed: template parse error: unexpected "}" in operand
 ```
 
-**Solution**: Check Go template syntax in user_template or system_prompt. Ensure `` are balanced.
+**Solution**: Check Go template syntax in user_template or system_template. Ensure `` are balanced.
 
 ### Output Directory Missing
 
@@ -287,7 +287,7 @@ jobs:
       - uses: actions/checkout@v3
       
       - name: Install packc
-        run: go install github.com/AltairaLabs/PromptKit/tools/packc@latest
+        run: go install github.com/AltairaLabs/promptarena/packc@latest
       
       - name: Detect modified prompts
         id: changed-files

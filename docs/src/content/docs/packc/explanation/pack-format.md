@@ -157,18 +157,12 @@ The key benefit of PromptPack is **portability**. A pack compiled with PackC wor
 - **Other PromptPack runtimes** — Any language that reads the spec
 - **Custom integrations** — Parse the JSON directly
 
-```
-                    ┌─────────────────────────────────────────────┐
-                    │           .pack.json (PromptPack)           │
-                    │         Vendor-Neutral, Portable            │
-                    └─────────────────┬───────────────────────────┘
-                                      │
-          ┌───────────────────────────┼───────────────────────────┐
-          ▼                           ▼                           ▼
-   ┌─────────────┐            ┌─────────────┐            ┌─────────────┐
-   │ PromptKit   │            │ Python      │            │ Your Custom │
-   │ (Go)        │            │ Runtime     │            │ Integration │
-   └─────────────┘            └─────────────┘            └─────────────┘
+```mermaid
+flowchart TD
+    pack[".pack.json (PromptPack)<br/>Vendor-Neutral, Portable"]
+    pack --> promptkit["PromptKit<br/>(Go)"]
+    pack --> python["Python<br/>Runtime"]
+    pack --> custom["Your Custom<br/>Integration"]
 ```
 
 No vendor lock-in. Build once, deploy everywhere.

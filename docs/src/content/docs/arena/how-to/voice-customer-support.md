@@ -37,7 +37,7 @@ open out/report.html
 For the dev loop (live transcript + tool table updating per turn):
 
 ```bash
-promptarena run --tui
+promptarena run
 ```
 
 ## What you'll see in the report
@@ -85,7 +85,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '1.26'
-      - run: make build-arena
+      - run: go build -o bin/promptarena ./arena/cmd/promptarena
       - name: Validate configs (no provider keys needed)
         working-directory: examples/voice-refund-demo
         run: ../../bin/promptarena validate config.arena.yaml
@@ -98,7 +98,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '1.26'
-      - run: make build-arena
+      - run: go build -o bin/promptarena ./arena/cmd/promptarena
       - name: Run scenarios against real providers
         working-directory: examples/voice-refund-demo
         env:

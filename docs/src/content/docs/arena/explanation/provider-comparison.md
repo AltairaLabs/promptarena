@@ -611,6 +611,8 @@ spec:
   task_type: test
   description: "Provider Failover"
   
+    # Conceptual — Arena has no primary_provider/fallback_providers failover.
+    # Run the providers separately and compare their JSON summaries.
     primary_provider: openai-gpt4o
     fallback_providers: [claude-sonnet, gemini-pro]
     

@@ -392,8 +392,7 @@ text, image, and video classifiers, plus embedders. They power assertion
 handlers like `audio_emotion` that score model output against a target
 label, and don't participate in the LLM run matrix.
 
-Today the only shipped backend is the HuggingFace Inference API; the
-same shape extends to ONNX and other backends as they land.
+Today the only shipped backend is the HuggingFace Inference API.
 
 ### HuggingFace Inference API
 
@@ -690,8 +689,8 @@ For GitHub Actions, GitLab CI, or other platforms:
 ```yaml
 # .github/workflows/test.yml
 env:
-  OPENAI_API_KEY: $
-  ANTHROPIC_API_KEY: $
+  OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+  ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 ```
 
 ## Common Configurations

@@ -36,8 +36,8 @@ Add PromptKit as a dependency:
 ```bash
 go get github.com/AltairaLabs/PromptKit/pkg/config
 go get github.com/AltairaLabs/PromptKit/runtime/prompt
-go get github.com/AltairaLabs/PromptKit/tools/arena/engine
-go get github.com/AltairaLabs/PromptKit/tools/arena/statestore
+go get github.com/AltairaLabs/promptarena/arena/engine
+go get github.com/AltairaLabs/promptarena/arena/statestore
 ```
 
 ## Step 3: Create Your First Programmatic Test
@@ -54,8 +54,8 @@ import (
 
 	"github.com/AltairaLabs/PromptKit/pkg/config"
 	"github.com/AltairaLabs/PromptKit/runtime/prompt"
-	"github.com/AltairaLabs/PromptKit/tools/arena/engine"
-	"github.com/AltairaLabs/PromptKit/tools/arena/statestore"
+	"github.com/AltairaLabs/promptarena/arena/engine"
+	"github.com/AltairaLabs/promptarena/arena/statestore"
 )
 
 func main() {
@@ -236,7 +236,7 @@ Don't forget to import the assertions package:
 ```go
 import (
 	// ... other imports
-	asrt "github.com/AltairaLabs/PromptKit/tools/arena/assertions"
+	asrt "github.com/AltairaLabs/promptarena/arena/assertions"
 )
 ```
 
@@ -252,7 +252,6 @@ import (
 
 - [How-To: Use Arena as a Go Library](/arena/how-to/use-as-go-library/) - Advanced integration patterns
 - [Reference: API Documentation](/arena/reference/api-reference/) - Complete API reference
-- [Example: Programmatic Arena](https://github.com/AltairaLabs/PromptKit/tree/main/examples/programmatic-arena) - Full working example
 
 ## Common Patterns
 

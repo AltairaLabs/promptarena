@@ -35,7 +35,7 @@ Choose your preferred installation method:
 
 **Go Install**
 ```bash
-go install github.com/AltairaLabs/PromptKit/tools/packc@latest
+go install github.com/AltairaLabs/promptarena/packc@latest
 ```
 
 **Verify installation:**
@@ -144,8 +144,6 @@ packc compile \
 **Expected output:**
 
 ```
-Loaded 1 prompt configs from memory repository
-Compiling 1 prompts into pack 'greeting'...
 ✓ Pack compiled successfully: packs/greeting.pack.json
   Contains 1 prompts: [greeting]
 ```

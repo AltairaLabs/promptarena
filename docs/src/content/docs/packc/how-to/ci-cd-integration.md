@@ -44,10 +44,10 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v4
         with:
-          go-version: '1.22'
+          go-version: '1.26'
       
       - name: Install packc
-        run: go install github.com/AltairaLabs/PromptKit/tools/packc@latest
+        run: go install github.com/AltairaLabs/promptarena/packc@latest
       
       - name: Compile packs
         run: |
@@ -86,10 +86,10 @@ jobs:
       
       - uses: actions/setup-go@v4
         with:
-          go-version: '1.22'
+          go-version: '1.26'
       
       - name: Install packc
-        run: go install github.com/AltairaLabs/PromptKit/tools/packc@latest
+        run: go install github.com/AltairaLabs/promptarena/packc@latest
       
       - name: Compile $ pack
         run: |
@@ -129,10 +129,10 @@ jobs:
       
       - uses: actions/setup-go@v4
         with:
-          go-version: '1.22'
+          go-version: '1.26'
       
       - name: Install packc
-        run: go install github.com/AltairaLabs/PromptKit/tools/packc@latest
+        run: go install github.com/AltairaLabs/promptarena/packc@latest
       
       - name: Get version
         id: version
@@ -174,11 +174,11 @@ stages:
 
 variables:
   PACK_ID: app
-  GO_VERSION: "1.22"
+  GO_VERSION: "1.26"
 
 before_script:
   - apt-get update && apt-get install -y golang-$GO_VERSION
-  - go install github.com/AltairaLabs/PromptKit/tools/packc@latest
+  - go install github.com/AltairaLabs/promptarena/packc@latest
   - export PATH=$PATH:$(go env GOPATH)/bin
 
 build:packs:
@@ -257,14 +257,14 @@ pipeline {
     
     environment {
         PACK_ID = 'app'
-        GO_VERSION = '1.22'
+        GO_VERSION = '1.26'
     }
     
     stages {
         stage('Setup') {
             steps {
                 sh 'go version'
-                sh 'go install github.com/AltairaLabs/PromptKit/tools/packc@latest'
+                sh 'go install github.com/AltairaLabs/promptarena/packc@latest'
                 sh 'packc version'
             }
         }
@@ -344,13 +344,13 @@ orbs:
 jobs:
   build-packs:
     docker:
-      - image: cimg/go:1.22
+      - image: cimg/go:1.26
     steps:
       - checkout
       
       - run:
           name: Install packc
-          command: go install github.com/AltairaLabs/PromptKit/tools/packc@latest
+          command: go install github.com/AltairaLabs/promptarena/packc@latest
       
       - run:
           name: Compile packs
@@ -400,10 +400,10 @@ workflows:
 
 ```dockerfile
 # Dockerfile.packc-build
-FROM golang:1.22 AS builder
+FROM golang:1.26 AS builder
 
 # Install packc
-RUN go install github.com/AltairaLabs/PromptKit/tools/packc@latest
+RUN go install github.com/AltairaLabs/promptarena/packc@latest
 
 # Copy source files
 WORKDIR /workspace
@@ -452,7 +452,7 @@ ci-build: clean install compile validate
 .PHONY: install
 install:
 	@echo "Installing packc..."
-	@go install github.com/AltairaLabs/PromptKit/tools/packc@latest
+	@go install github.com/AltairaLabs/promptarena/packc@latest
 	@packc version
 
 .PHONY: compile
@@ -517,7 +517,7 @@ Pin packc version for reproducible builds:
 
 ```yaml
 - name: Install packc
-  run: go install github.com/AltairaLabs/PromptKit/tools/packc@v0.1.0
+  run: go install github.com/AltairaLabs/promptarena/packc@v0.1.0
 ```
 
 ### 3. Fail Fast
