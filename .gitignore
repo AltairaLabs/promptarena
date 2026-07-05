@@ -91,6 +91,16 @@ docs/node_modules/
 docs/src/content/api/
 docs/src/content/docs/arena/examples/
 docs/src/content/reference/*-cli.txt
+# Fetched deploy-adapter docs (pulled at build time from the adapter repos by
+# docs/scripts/fetch-adapter-docs.mjs)
+docs/src/content/docs/arena/tutorials/deploy/agentcore/
+docs/src/content/docs/arena/how-to/deploy/agentcore/
+docs/src/content/docs/arena/reference/deploy/agentcore/
+docs/src/content/docs/arena/explanation/deploy/agentcore/
+docs/src/content/docs/arena/tutorials/deploy/omnia/
+docs/src/content/docs/arena/how-to/deploy/omnia/
+docs/src/content/docs/arena/reference/deploy/omnia/
+docs/src/content/docs/arena/explanation/deploy/omnia/
 docs/public/schemas/
 
 # Jekyll backup (legacy)
