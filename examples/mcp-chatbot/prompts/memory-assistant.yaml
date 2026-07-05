@@ -45,15 +45,17 @@ spec:
     
     Remember: The goal is to provide a persistent, personalized experience across conversations.
   
-  # MCP tools available to this prompt
+  # MCP tools available to this prompt. Tools from a static MCP server are
+  # registered (and must be referenced) as mcp__<server>__<tool>; this server
+  # is named "memory". Bare names resolve to nothing once compiled and deployed.
   allowed_tools:
-    - create_entities
-    - create_relations
-    - add_observations
-    - delete_entities
-    - delete_observations
-    - delete_relations
-    - read_graph
-    - search_nodes
-    - open_nodes
+    - mcp__memory__create_entities
+    - mcp__memory__create_relations
+    - mcp__memory__add_observations
+    - mcp__memory__delete_entities
+    - mcp__memory__delete_observations
+    - mcp__memory__delete_relations
+    - mcp__memory__read_graph
+    - mcp__memory__search_nodes
+    - mcp__memory__open_nodes
 

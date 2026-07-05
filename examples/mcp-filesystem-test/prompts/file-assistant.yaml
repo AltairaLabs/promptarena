@@ -33,10 +33,11 @@ spec:
     
     Always use tools when file operations are requested. Do not simulate or describe what you would do - actually perform the operations using the tools.
   
+  # Static MCP server "filesystem": tools are referenced as mcp__<server>__<tool>.
   allowed_tools:
-    - read_file
-    - write_file
-    - list_directory
-    - create_directory
-    - move_file
-    - search_files
+    - mcp__filesystem__read_file
+    - mcp__filesystem__write_file
+    - mcp__filesystem__list_directory
+    - mcp__filesystem__create_directory
+    - mcp__filesystem__move_file
+    - mcp__filesystem__search_files

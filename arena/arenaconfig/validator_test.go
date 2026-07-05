@@ -4,6 +4,11 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/AltairaLabs/PromptKit/pkg/config"
 )
 
 func TestNewConfigValidator(t *testing.T) {
@@ -466,4 +471,71 @@ func TestConfigValidator_ValidatePromptConfigs_MissingID(t *testing.T) {
 	if len(validator.errors) == 0 {
 		t.Error("Expected error for missing ID")
 	}
+}
+
+// stubAllowedTools implements the duck-typed GetAllowedTools() the validator
+// looks for on a loaded prompt config.
+type stubAllowedTools struct{ tools []string }
+
+func (s stubAllowedTools) GetAllowedTools() []string { return s.tools }
+
+func promptCfgs(tools ...string) map[string]*PromptConfigData {
+	return map[string]*PromptConfigData{
+		"p": {Config: stubAllowedTools{tools: tools}},
+	}
+}
+
+func TestValidateAllowedToolsResolve(t *testing.T) {
+	staticServer := []config.MCPServerConfig{{Name: "memory", Command: "npx"}}
+
+	t.Run("bare MCP names on a static-only server warn", func(t *testing.T) {
+		cfg := &Config{MCPServers: staticServer, LoadedPromptConfigs: promptCfgs("create_entities", "read_graph")}
+		v := NewConfigValidatorWithPath(cfg, "")
+		v.validateAllowedToolsResolve()
+		require.Len(t, v.GetWarnings(), 2)
+		assert.Contains(t, v.GetWarnings()[0], `mcp__memory__`)
+	})
+
+	t.Run("qualified MCP names do not warn", func(t *testing.T) {
+		cfg := &Config{MCPServers: staticServer, LoadedPromptConfigs: promptCfgs("mcp__memory__create_entities")}
+		v := NewConfigValidatorWithPath(cfg, "")
+		v.validateAllowedToolsResolve()
+		assert.Empty(t, v.GetWarnings())
+	})
+
+	t.Run("mcp reference to unconfigured server warns", func(t *testing.T) {
+		cfg := &Config{MCPServers: staticServer, LoadedPromptConfigs: promptCfgs("mcp__typo__read_graph")}
+		v := NewConfigValidatorWithPath(cfg, "")
+		v.validateAllowedToolsResolve()
+		require.Len(t, v.GetWarnings(), 1)
+		assert.Contains(t, v.GetWarnings()[0], "not configured")
+	})
+
+	t.Run("source-backed server leaves bare names alone", func(t *testing.T) {
+		cfg := &Config{
+			MCPServers:          []config.MCPServerConfig{{Name: "sandbox", Source: "docker"}},
+			LoadedPromptConfigs: promptCfgs("Read", "Write"),
+		}
+		v := NewConfigValidatorWithPath(cfg, "")
+		v.validateAllowedToolsResolve()
+		assert.Empty(t, v.GetWarnings())
+	})
+
+	t.Run("capability tools never warn", func(t *testing.T) {
+		cfg := &Config{MCPServers: staticServer, LoadedPromptConfigs: promptCfgs("memory__recall", "workflow__transition", "image__generate")}
+		v := NewConfigValidatorWithPath(cfg, "")
+		v.validateAllowedToolsResolve()
+		assert.Empty(t, v.GetWarnings())
+	})
+
+	t.Run("local tool files suppress the bare-name warning", func(t *testing.T) {
+		cfg := &Config{
+			MCPServers:          staticServer,
+			LoadedTools:         []config.ToolData{{FilePath: "tools/list.tool.yaml"}},
+			LoadedPromptConfigs: promptCfgs("list_devices"),
+		}
+		v := NewConfigValidatorWithPath(cfg, "")
+		v.validateAllowedToolsResolve()
+		assert.Empty(t, v.GetWarnings())
+	})
 }
