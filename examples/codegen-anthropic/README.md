@@ -76,5 +76,5 @@ Sonnet ≈ $0.05–$0.10 per run.
 
 ## See also
 
-- [Provision an MCP Sandbox per Scenario](https://promptarena.altairalabs.ai/arena/how-to/provision-mcp-sandbox/) — reference docs for the source/scope/source_args fields.
+- [Provision an MCP Sandbox per Scenario](https://promptarena.altairalabs.ai/arena/how-to/agents/provision-mcp-sandbox/) — reference docs for the source/scope/source_args fields.
 - [`examples/codegen-sandbox/`](../codegen-sandbox/) — mock-provider variant for CI.

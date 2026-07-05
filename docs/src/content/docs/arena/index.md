@@ -6,6 +6,10 @@ sidebar:
 ---
 **Comprehensive testing framework for validating LLM prompts across multiple providers**
 
+:::note[📸 Screenshot needed]
+Hero shot of the Arena TUI hub — run `promptarena` with no arguments and capture the View / Run / Chat / Inspect menu. This is the most compelling first impression of the tool.
+:::
+
 ---
 
 ## What is PromptArena?
@@ -96,14 +100,14 @@ Step-by-step guides that teach you Arena through hands-on exercises:
 
 Focused guides for specific Arena tasks:
 
-- [Installation](/arena/how-to/installation/) - Get Arena running
-- [Write Test Scenarios](/arena/how-to/write-scenarios/) - Effective scenario design
-- [Configure Providers](/arena/how-to/configure-providers/) - Provider setup
-- [Use Mock Providers](/arena/how-to/use-mock-providers/) - Test without API calls
-- [Validate Outputs](/arena/how-to/validate-outputs/) - Assertion strategies
+- [Installation](/arena/how-to/setup/installation/) - Get Arena running
+- [Write Test Scenarios](/arena/how-to/scenarios/write-scenarios/) - Effective scenario design
+- [Configure Providers](/arena/how-to/providers/configure-providers/) - Provider setup
+- [Use Mock Providers](/arena/how-to/providers/use-mock-providers/) - Test without API calls
+- [Validate Outputs](/arena/how-to/scenarios/validate-outputs/) - Assertion strategies
 - [Customize Reports](/arena/reference/output-formats/) - Report formatting
-- [Integrate CI/CD](/arena/how-to/integrate-ci-cd/) - GitHub Actions, GitLab CI
-- [Session Recording](/arena/how-to/session-recording/) - Capture and replay sessions
+- [Integrate CI/CD](/arena/how-to/interfaces/run-in-ci/) - GitHub Actions, GitLab CI
+- [Session Recording](/arena/how-to/scenarios/session-recording/) - Capture and replay sessions
 
 ### 💡 Explanation (Understand the Concepts)
 

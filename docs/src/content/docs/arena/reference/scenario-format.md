@@ -47,7 +47,7 @@ promptarena run arena.yaml --provider openai,anthropic --format html
 
 - **Schema**: [v1.1 JSON Schema](https://promptpack.org/schema/v1.1/promptpack.schema.json)
 - **Local Examples**: [`examples/`](https://promptkit.altairalabs.ai/arena/examples/) directory in this repository
-- **Arena Guides**: [Writing Scenarios](/arena/how-to/write-scenarios/) | [Assertions](/arena/reference/assertions/) | [Self-Play](/arena/how-to/write-scenarios/)
+- **Arena Guides**: [Writing Scenarios](/arena/how-to/scenarios/write-scenarios/) | [Assertions](/arena/reference/assertions/) | [Self-Play](/arena/how-to/scenarios/write-scenarios/)
 - **Community**: [GitHub Discussions](https://github.com/altairalabs/promptpack-spec/discussions)
 
 ---
@@ -242,7 +242,7 @@ spec:
   model: mock-model
 ```
 
-Configure responses in `providers/mock-responses.yaml`. See [Mock Provider Usage](/arena/how-to/use-mock-providers/).
+Configure responses in `providers/mock-responses.yaml`. See [Mock Provider Usage](/arena/how-to/providers/use-mock-providers/).
 
 ### 6. Self-Play Testing
 
@@ -322,10 +322,10 @@ my-project/
 - **[GitHub Repository](https://github.com/altairalabs/promptpack-spec)** - Spec source and discussions
 
 ### PromptArena Guides
-- **[Writing Scenarios](/arena/how-to/write-scenarios/)** - Create effective test cases
+- **[Writing Scenarios](/arena/how-to/scenarios/write-scenarios/)** - Create effective test cases
 - **[Assertions Reference](/arena/reference/assertions/)** - Complete assertion documentation
-- **[Self-Play Testing](/arena/how-to/write-scenarios/)** - AI-driven testing with personas
-- **[MCP Integration](/arena/how-to/test-mcp-tools/)** - Model Context Protocol servers
+- **[Self-Play Testing](/arena/how-to/scenarios/write-scenarios/)** - AI-driven testing with personas
+- **[MCP Integration](/arena/how-to/agents/test-mcp-tools/)** - Model Context Protocol servers
 
 ### Examples
 - [`examples/customer-support/`](https://promptkit.altairalabs.ai/arena/examples/customer-support/) - Basic support bot

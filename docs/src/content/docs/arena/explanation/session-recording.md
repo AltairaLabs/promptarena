@@ -305,6 +305,6 @@ A 5-minute voice conversation generates approximately:
 
 ## Next Steps
 
-- **[Session Recording How-To](/arena/how-to/session-recording/)** - Practical usage guide
+- **[Session Recording How-To](/arena/how-to/scenarios/session-recording/)** - Practical usage guide
 - **[Duplex Architecture](/arena/explanation/duplex-architecture/)** - Voice conversation system
 - **[Testing Philosophy](/arena/explanation/testing-philosophy/)** - Why test prompts?

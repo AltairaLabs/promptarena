@@ -278,4 +278,4 @@ If turn detection isn't working:
 - [Tutorial: Duplex Voice Testing](/arena/tutorials/06-duplex-testing) - Step-by-step learning guide
 - [Duplex Configuration Reference](/arena/reference/duplex-config) - Complete configuration options
 - [Duplex Architecture](/arena/explanation/duplex-architecture) - How duplex streaming works
-- [Set Up Voice Testing with Self-Play](/arena/how-to/setup-voice-testing) - Quick-start guide
+- [Set Up Voice Testing with Self-Play](/arena/how-to/voice/setup-voice-testing) - Quick-start guide

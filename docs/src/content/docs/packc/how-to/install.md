@@ -91,7 +91,7 @@ packc completion zsh > ~/.zsh/completions/_packc
 packc completion fish > ~/.config/fish/completions/packc.fish
 ```
 
-See [Configure Shell Completions](/arena/how-to/shell-completions) for detailed setup instructions.
+See [Configure Shell Completions](/arena/how-to/setup/shell-completions) for detailed setup instructions.
 
 ## Add to PATH
 
