@@ -11,8 +11,9 @@ PackC transforms human-friendly YAML configurations into validated JSON packs th
 
 ## Compilation Pipeline
 
-```
-YAML Files → Parser → Validator → Pack Builder → JSON Output
+```mermaid
+flowchart LR
+    yaml["YAML Files"] --> parser["Parser"] --> validator["Validator"] --> builder["Pack Builder"] --> json["JSON Output"]
 ```
 
 ### Stage 1: Configuration Loading

@@ -65,8 +65,11 @@ The `.promptarena/` directory is created automatically when state is first saved
 
 State is created after a successful `deploy` or `deploy apply`:
 
-```
-deploy → plan → apply → save state
+```mermaid
+flowchart LR
+    deploy["deploy"] --> plan["plan"]
+    plan --> apply["apply"]
+    apply --> save["save state"]
 ```
 
 The CLI constructs the state from:

@@ -11,15 +11,13 @@ Session recording provides a complete audit trail of LLM interactions. Unlike si
 - **Complete data**: All messages, tool calls, and media
 - **Reconstructable state**: Enough information to replay conversations exactly
 
-```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│   Live Session  │ ──► │   Event Store   │ ──► │   Recording     │
-│   (Emitter)     │     │   (JSONL)       │     │   (Replay)      │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
-        │                       │                       │
-        ▼                       ▼                       ▼
-   Real-time              Persistent              Synchronized
-   events                 storage                 playback
+```mermaid
+flowchart TD
+    ls["Live Session<br/>(Emitter)"] --> es["Event Store<br/>(JSONL)"]
+    es --> rec["Recording<br/>(Replay)"]
+    ls --> lsd["Real-time events"]
+    es --> esd["Persistent storage"]
+    rec --> recd["Synchronized playback"]
 ```
 
 ## Event-Driven Architecture
@@ -48,11 +46,13 @@ The emitter's `MessageCreated()` automatically strips binary data (base64 `Data`
 
 Events flow through an EventBus to registered subscribers:
 
-```
-Emitter ──► EventBus ──┬──► FileEventStore (persistence)
-                       ├──► Metrics Collector
-                       ├──► Eval Listener (auto-trigger pack evals)
-                       └──► Real-time UI
+```mermaid
+flowchart LR
+    emitter["Emitter"] --> eventbus["EventBus"]
+    eventbus --> fes["FileEventStore<br/>(persistence)"]
+    eventbus --> mc["Metrics Collector"]
+    eventbus --> el["Eval Listener<br/>(auto-trigger pack evals)"]
+    eventbus --> ui["Real-time UI"]
 ```
 
 ### Event Types
@@ -86,20 +86,16 @@ type Event struct {
 
 The `EventBusEvalListener` subscribes to `message.created` events on the EventBus, enabling automatic eval execution on recorded conversations:
 
-```
-Emitter ──► EventBus ──► EventBusEvalListener
-                                │
-                                ▼
-                         SessionAccumulator
-                         (builds conversation context)
-                                │
-                                ▼
-                         EvalDispatcher ──► EvalRunner ──► ResultWriter
-                                                              │
-                                                    ┌─────────┴─────────┐
-                                                    ▼                   ▼
-                                             MetricContext       Message Metadata
-                                             (Prometheus)        (pack_evals)
+```mermaid
+flowchart TD
+    emitter["Emitter"] --> eventbus["EventBus"]
+    eventbus --> listener["EventBusEvalListener"]
+    listener --> acc["SessionAccumulator<br/>(builds conversation context)"]
+    acc --> dispatcher["EvalDispatcher"]
+    dispatcher --> runner["EvalRunner"]
+    runner --> writer["ResultWriter"]
+    writer --> metric["MetricContext<br/>(Prometheus)"]
+    writer --> meta["Message Metadata<br/>(pack_evals)"]
 ```
 
 **How it works:**
@@ -149,14 +145,12 @@ rec, err := recording.Load("session.jsonl")  // Works with either format
 
 For recordings with audio/video, the `MediaTimeline` provides synchronized access:
 
-```
-Recording
-    │
-    ▼
-MediaTimeline
-    ├── TrackAudioInput ──► User speech segments
-    ├── TrackAudioOutput ──► Assistant speech segments
-    └── TrackVideo ──► Video frames (if present)
+```mermaid
+flowchart TD
+    rec["Recording"] --> mt["MediaTimeline"]
+    mt --> tai["TrackAudioInput"] --> uss["User speech segments"]
+    mt --> tao["TrackAudioOutput"] --> ass["Assistant speech segments"]
+    mt --> tv["TrackVideo"] --> vf["Video frames (if present)"]
 ```
 
 ### Track Structure
@@ -261,27 +255,26 @@ Use cases:
 
 ## Data Flow Summary
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                        LIVE SESSION                              │
-│                                                                   │
-│  User ──► Pipeline ──► Provider ──► Response ──► User            │
-│              │                          │                         │
-│              ▼                          ▼                         │
-│          Emitter ────────────────► EventBus                       │
-│                                        │                          │
-└────────────────────────────────────────┼──────────────────────────┘
-                                         │
-                              ┌──────────┼──────────┐
-                              ▼          ▼          ▼
-┌──────────────────┐  ┌──────────────┐  ┌──────────────────────┐
-│     STORAGE      │  │    EVALS     │  │       REPLAY         │
-│                  │  │              │  │                      │
-│  FileEventStore  │  │ EvalListener │  │ session.jsonl        │
-│  ──► .jsonl      │  │ ──► Runner   │  │ ──► SessionRecording │
-│                  │  │ ──► Metrics   │  │ ──► ReplayPlayer     │
-│                  │  │ ──► Prom     │  │ ──► MediaTimeline     │
-└──────────────────┘  └──────────────┘  └──────────────────────┘
+```mermaid
+flowchart TD
+    subgraph live["LIVE SESSION"]
+        user["User"] --> pipeline["Pipeline"] --> provider["Provider"] --> response["Response"] --> user2["User"]
+        pipeline --> emitter["Emitter"]
+        response --> eventbus["EventBus"]
+        emitter --> eventbus
+    end
+    eventbus --> storage
+    eventbus --> evals
+    eventbus --> replay
+    subgraph storage["STORAGE"]
+        fes["FileEventStore"] --> jsonl[".jsonl"]
+    end
+    subgraph evals["EVALS"]
+        el["EvalListener"] --> runner["Runner"] --> metrics["Metrics"] --> prom["Prom"]
+    end
+    subgraph replay["REPLAY"]
+        sj["session.jsonl"] --> sr["SessionRecording"] --> rp["ReplayPlayer"] --> mt["MediaTimeline"]
+    end
 ```
 
 ## Performance Considerations

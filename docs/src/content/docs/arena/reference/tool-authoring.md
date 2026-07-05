@@ -179,16 +179,17 @@ spec:
 
 ## Choosing a mode
 
-```
-Need a deterministic test fixture?
-├─ Same response every call            → mock + mock_result
-└─ Response should depend on args      → mock + mock_template
+```mermaid
+flowchart TD
+    q1{"Need a deterministic<br/>test fixture?"}
+    q1 -->|Same response every call| a1["mock + mock_result"]
+    q1 -->|Response depends on args| a2["mock + mock_template"]
 
-Want the LLM to hit a real system?
-├─ HTTP API I control                  → live + http
-├─ Tool provided by an MCP server      → mcp
-├─ Local CLI / script                  → exec
-└─ Caller (SDK / app) handles it       → client
+    q2{"Want the LLM to<br/>hit a real system?"}
+    q2 -->|HTTP API I control| b1["live + http"]
+    q2 -->|Tool from an MCP server| b2["mcp"]
+    q2 -->|Local CLI or script| b3["exec"]
+    q2 -->|Caller SDK or app handles it| b4["client"]
 ```
 
 ## See also

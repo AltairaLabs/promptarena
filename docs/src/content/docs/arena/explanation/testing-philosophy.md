@@ -526,8 +526,11 @@ LLMs require human judgment for:
 - **Benchmark creation**: Ground truth for automated tests
 
 **Hybrid Approach:**
-```
-Human Eval → Ground Truth → Automated Tests → Continuous Validation
+```mermaid
+flowchart LR
+    he["Human Eval"] --> gt["Ground Truth"]
+    gt --> at["Automated Tests"]
+    at --> cv["Continuous Validation"]
 ```
 
 ### Human-in-the-Loop Testing
