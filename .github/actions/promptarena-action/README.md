@@ -152,7 +152,7 @@ The action uses GitHub's tool cache to store downloaded binaries. Subsequent run
 
 ## Documentation
 
-Full documentation with more examples: [PromptArena Action Docs](https://promptarena.altairalabs.ai/arena/how-to/integrate-ci-cd/)
+Full documentation with more examples: [PromptArena Action Docs](https://promptarena.altairalabs.ai/arena/how-to/interfaces/run-in-ci/)
 
 ## License
 

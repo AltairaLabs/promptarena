@@ -11,51 +11,40 @@ Work through these tutorials in order for the best learning experience:
 
 ### Beginner
 
-<div class="code-example" markdown="1">
 **[Tutorial 1: Your First Test](/arena/tutorials/01-first-test/)**
 
 Install PromptArena, write your first test scenario, configure a provider, and run tests. Perfect starting point for newcomers.
 
 *Time: 20 minutes*
-</div>
 
 ### Intermediate
 
-<div class="code-example" markdown="1">
 **[Tutorial 2: Multi-Provider Testing](/arena/tutorials/02-multi-provider/)**
 
 Test the same scenario across OpenAI, Claude, and Gemini. Learn to compare providers and optimize for cost vs. quality.
 
 *Time: 30 minutes*
-</div>
 
-<div class="code-example" markdown="1">
 **[Tutorial 3: Multi-Turn Conversations](/arena/tutorials/03-multi-turn/)**
 
 Build complex conversation flows with context retention. Test customer support dialogs, information gathering, and conversation branching.
 
 *Time: 45 minutes*
-</div>
 
 ### Advanced
 
-<div class="code-example" markdown="1">
 **[Tutorial 4: Testing MCP Tools](/arena/tutorials/04-mcp-tools/)**
 
 Test LLMs that use Model Context Protocol tools for database queries, API calls, and system interactions.
 
 *Time: 45 minutes*
-</div>
 
-<div class="code-example" markdown="1">
 **[Tutorial 5: CI/CD Integration](/arena/tutorials/05-ci-integration/)**
 
 Integrate Arena into GitHub Actions, GitLab CI, and other pipelines. Set up quality gates and deployment automation.
 
 *Time: 60 minutes*
-</div>
 
-<div class="code-example" markdown="1">
 **[Tutorial 6: Duplex Voice Testing](/arena/tutorials/06-duplex-testing/)**
 
 Test bidirectional voice conversations with real-time audio streaming. Learn duplex mode, turn detection, and self-play with TTS.
@@ -73,7 +62,6 @@ Integrate Arena into your Go applications — build scenarios, run them, and ins
 Test tools that execute on the caller's device, including consent simulation for grant and deny scenarios.
 
 *Time: 30 minutes*
-</div>
 
 ## What's the Difference?
 

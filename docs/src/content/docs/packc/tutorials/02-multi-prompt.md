@@ -1,5 +1,5 @@
 ---
-title: '02: Multi-Prompt Packs'
+title: 'Tutorial 2: Multi-Prompt Packs'
 sidebar:
   order: 2
 ---

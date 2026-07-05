@@ -729,9 +729,9 @@ jq '.results | group_by(.provider) | map({provider: .[0].provider, cost: map(.co
 
 ## Next Steps
 
-- **[CI/CD Integration](/arena/how-to/integrate-ci-cd/)** - Running in pipelines
+- **[CI/CD Integration](/arena/how-to/interfaces/run-in-ci/)** - Running in pipelines
 - **[Configuration Reference](/arena/reference/config-schema/)** - Output configuration
-- **[Best Practices](/arena/how-to/validate-outputs/)** - Production tips
+- **[Best Practices](/arena/how-to/scenarios/validate-outputs/)** - Production tips
 
 ---
 

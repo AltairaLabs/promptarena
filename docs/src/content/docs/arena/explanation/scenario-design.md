@@ -829,4 +829,4 @@ turns:
 - **[Testing Philosophy](/arena/explanation/testing-philosophy/)** - Why we test LLMs this way
 - **[Validation Strategies](/arena/explanation/validation-strategies/)** - Choosing assertions
 - **[Provider Comparison](/arena/explanation/provider-comparison/)** - Testing across providers
-- **[How-To: Write Scenarios](/arena/how-to/write-scenarios/)** - Practical guide
+- **[How-To: Write Scenarios](/arena/how-to/scenarios/write-scenarios/)** - Practical guide

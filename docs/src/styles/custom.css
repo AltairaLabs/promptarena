@@ -74,11 +74,58 @@ starlight-toc a[aria-current='page'] {
   padding: 0.15em 0.4em;
 }
 
-/* Code-block frames: align the outer radius/hairline to Atlas; leave the
-   Expressive Code syntax theme as-is. */
-.sl-markdown-content .expressive-code .frame pre {
+/* Code blocks get a window titlebar with dots — the same terminal chrome as
+   the landing, so docs code reads as first-class, not the plain default.
+   Applied to plain code frames (not ones that already show a title tab or a
+   terminal header). */
+.sl-markdown-content .expressive-code {
+  --code-bar-h: 36px;
+}
+.sl-markdown-content .expressive-code .frame:not(.has-title):not(.is-terminal) {
+  position: relative;
+  padding-top: var(--code-bar-h);
+  background: var(--ink-surface);
   border: 1px solid var(--hairline);
   border-radius: var(--radius-code);
+  box-shadow: 0 12px 32px -18px rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+}
+/* Three traffic-light dots at the left of the titlebar. */
+.sl-markdown-content .expressive-code .frame:not(.has-title):not(.is-terminal)::before {
+  content: '';
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #ff5f57;
+  box-shadow:
+    16px 0 0 #febc2e,
+    32px 0 0 #28c840;
+  opacity: 0.9;
+  z-index: 1;
+}
+/* Titlebar bottom hairline. */
+.sl-markdown-content .expressive-code .frame:not(.has-title):not(.is-terminal)::after {
+  content: '';
+  position: absolute;
+  top: var(--code-bar-h);
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--hairline);
+  z-index: 1;
+}
+.sl-markdown-content .expressive-code .frame:not(.has-title):not(.is-terminal) pre {
+  border: 0;
+  border-radius: 0;
+  margin: 0;
+  background: var(--ink-void);
+}
+/* Keep the copy button clear of the titlebar dots. */
+.sl-markdown-content .expressive-code .frame:not(.has-title):not(.is-terminal) .copy {
+  top: 3px;
 }
 
 /* Asides / callouts: starlight border + tint for note & tip. */
@@ -87,4 +134,47 @@ starlight-toc a[aria-current='page'] {
   border: 1px solid var(--starlight-border);
   background: var(--starlight-tint);
   border-radius: var(--radius-input);
+}
+
+/* ---- Prev/Next pagination ---- */
+/* Slim Starlight's oversized default cards into hairline cards: a small
+   mono-uppercase "Previous/Next" micro-label (matching the sidebar group
+   labels) over a normal-weight title, with a cyan hover. */
+.pagination-links a {
+  gap: 0.35rem;
+  padding: 0.6rem 0.85rem;
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-input);
+  box-shadow: none;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.pagination-links a:hover {
+  border-color: var(--starlight-border);
+  background: var(--starlight-tint);
+}
+/* Shrink the direction arrow. */
+.pagination-links a svg {
+  --sl-icon-size: 1rem;
+}
+/* The wrapping span carries the "Previous"/"Next" label text. */
+.pagination-links a > span {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--star-900);
+}
+/* The page title: normal case/size, sits below the micro-label. */
+.pagination-links a .link-title {
+  font-family: var(--font-sans);
+  font-size: 0.95rem;
+  font-weight: 500;
+  letter-spacing: normal;
+  text-transform: none;
+  line-height: 1.3;
+  color: var(--sl-color-white);
+}
+.pagination-links a:hover .link-title {
+  color: var(--ion-cyan);
 }

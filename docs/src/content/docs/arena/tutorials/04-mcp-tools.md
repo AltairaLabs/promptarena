@@ -571,7 +571,7 @@ You now know how to test LLMs with tool calling!
 
 **Continue learning:**
 - **[Tutorial 5: CI Integration](/arena/tutorials/05-ci-integration/)** - Automate tool testing in CI/CD
-- **[How-To: MCP Tools](/arena/how-to/use-mock-providers/)** - Advanced tool configuration
+- **[How-To: MCP Tools](/arena/how-to/providers/use-mock-providers/)** - Advanced tool configuration
 - **[Runtime: Tools & MCP](https://promptkit.altairalabs.ai/runtime/reference/tools-mcp/)** - Complete tool reference
 
 **Try this:**

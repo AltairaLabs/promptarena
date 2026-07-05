@@ -1,5 +1,5 @@
 ---
-title: '03: Validation Workflows'
+title: 'Tutorial 3: Validation Workflows'
 sidebar:
   order: 3
 ---

@@ -2163,7 +2163,7 @@ promptarena prompt-debug --scenario scenarios/test.yaml
 
 - **[PromptArena Getting Started](/arena/tutorials/01-first-test/)** - First project walkthrough
 - **[Configuration Reference](/arena/reference/config-schema/)** - Complete config documentation
-- **[CI/CD Integration](/arena/how-to/integrate-ci-cd/)** - Running in pipelines
+- **[CI/CD Integration](/arena/how-to/interfaces/run-in-ci/)** - Running in pipelines
 
 ---
 

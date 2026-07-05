@@ -1,5 +1,5 @@
 ---
-title: '01: Your First Pack'
+title: 'Tutorial 1: Your First Pack'
 sidebar:
   order: 1
 ---

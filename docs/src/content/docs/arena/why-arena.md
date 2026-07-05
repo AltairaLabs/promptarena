@@ -29,14 +29,14 @@ PromptArena tests voice as a full conversation:
 
 Demos:
 
-- [Voice customer support self-play](/arena/how-to/voice-customer-support/) — four personas drive a refund agent. Asserts the tool-call pattern.
-- [Voice IVR with workflow](/arena/how-to/voice-ivr/) — workflow state machine routes the call. Asserts transitions.
-- [Voice + tool calls](/arena/how-to/voice-tool-calls/) — agent calls tools mid-conversation under live audio.
-- [Voice latency budget](/arena/how-to/voice-latency-budget/) — assert `latency_budget(max_ms: ...)` per turn.
-- [Voice red-team](/arena/how-to/voice-red-team/) — adversarial personas probe safety guardrails.
-- [Voice + guardrails](/arena/how-to/voice-guardrails/) — PII redaction observed via `guardrail_triggered`.
-- [Voice provider bake-off](/arena/how-to/voice-bake-off/) — same scenario, multiple duplex providers, side-by-side report.
-- [Expressive voice characterization](/arena/how-to/voice-characterization/) — bracket-tag persona markup lowered into each provider's native dialect.
+- [Voice customer support self-play](/arena/how-to/voice/voice-customer-support/) — four personas drive a refund agent. Asserts the tool-call pattern.
+- [Voice IVR with workflow](/arena/how-to/voice/voice-ivr/) — workflow state machine routes the call. Asserts transitions.
+- [Voice + tool calls](/arena/how-to/voice/voice-tool-calls/) — agent calls tools mid-conversation under live audio.
+- [Voice latency budget](/arena/how-to/voice/voice-latency-budget/) — assert `latency_budget(max_ms: ...)` per turn.
+- [Voice red-team](/arena/how-to/voice/voice-red-team/) — adversarial personas probe safety guardrails.
+- [Voice + guardrails](/arena/how-to/voice/voice-guardrails/) — PII redaction observed via `guardrail_triggered`.
+- [Voice provider bake-off](/arena/how-to/voice/voice-bake-off/) — same scenario, multiple duplex providers, side-by-side report.
+- [Expressive voice characterization](/arena/how-to/voice/voice-characterization/) — bracket-tag persona markup lowered into each provider's native dialect.
 
 ## Test multi-turn agent conversations with scripted users
 
@@ -44,9 +44,9 @@ Single-turn evaluators miss the failure modes that only show up across multiple 
 
 Demos:
 
-- [Voice customer support self-play](/arena/how-to/voice-customer-support/) — multi-turn voice conversation with adversarial personas.
-- [Voice red-team](/arena/how-to/voice-red-team/) — sustained adversarial pressure.
-- [Text negotiation](/arena/how-to/text-negotiation/) — four-turn rental haggling with conversation-outcome assertions.
+- [Voice customer support self-play](/arena/how-to/voice/voice-customer-support/) — multi-turn voice conversation with adversarial personas.
+- [Voice red-team](/arena/how-to/voice/voice-red-team/) — sustained adversarial pressure.
+- [Text negotiation](/arena/how-to/agents/text-negotiation/) — four-turn rental haggling with conversation-outcome assertions.
 
 ## Assert workflow state transitions
 
@@ -54,7 +54,7 @@ Workflow state machines aren't an eval concern in any other framework — they'r
 
 Demos:
 
-- [Voice IVR with workflow](/arena/how-to/voice-ivr/) — three-state IVR with the assertion pattern that catches misroutes.
+- [Voice IVR with workflow](/arena/how-to/voice/voice-ivr/) — three-state IVR with the assertion pattern that catches misroutes.
 
 ## Observe runtime guardrails as test signals — the three-role model
 
@@ -73,9 +73,9 @@ This is the gap competing frameworks structurally can't fill:
 
 Demos:
 
-- [Guardrails as test signals](/arena/how-to/guardrails-as-signals/) — the canonical demonstration: `banned_words` wired as a guardrail, asserted via `guardrail_triggered`.
-- [Voice red-team](/arena/how-to/voice-red-team/) — the safety primitives (`pii_leakage`, etc.) applied under voice.
-- [Voice + guardrails](/arena/how-to/voice-guardrails/) — focused PII redaction demo emphasising the runtime + test bridge.
+- [Guardrails as test signals](/arena/how-to/scenarios/guardrails-as-signals/) — the canonical demonstration: `banned_words` wired as a guardrail, asserted via `guardrail_triggered`.
+- [Voice red-team](/arena/how-to/voice/voice-red-team/) — the safety primitives (`pii_leakage`, etc.) applied under voice.
+- [Voice + guardrails](/arena/how-to/voice/voice-guardrails/) — focused PII redaction demo emphasising the runtime + test bridge.
 
 ## Run a real agent runtime under mock LLMs
 
@@ -89,7 +89,7 @@ Multi-agent systems fail in two ways: the supervisor routes to the wrong special
 
 Demos:
 
-- [A2A multi-agent](/arena/how-to/a2a-multi-agent/) — supervisor delegates research and translation to two specialised A2A agents; assertions catch routing and content per turn.
+- [A2A multi-agent](/arena/how-to/agents/a2a-multi-agent/) — supervisor delegates research and translation to two specialised A2A agents; assertions catch routing and content per turn.
 
 ## Compare providers across the same scenario
 
@@ -97,8 +97,8 @@ Migrating models without a regression suite is how you ship bugs to production. 
 
 Demos:
 
-- [Voice provider bake-off](/arena/how-to/voice-bake-off/) — one scenario, multiple voice providers, side-by-side report.
-- [Model migration regression](/arena/how-to/model-migration/) — same scenarios across two model versions; CI catches behavioural drift.
+- [Voice provider bake-off](/arena/how-to/voice/voice-bake-off/) — one scenario, multiple voice providers, side-by-side report.
+- [Model migration regression](/arena/how-to/providers/model-migration/) — same scenarios across two model versions; CI catches behavioural drift.
 
 ## Test RAG with the standard primitives
 
@@ -106,7 +106,7 @@ The named RAG primitives every buyer searches for — `faithfulness`, `hallucina
 
 Demos:
 
-- [RAG agent assertions](/arena/how-to/rag-agent/) — full named primitive suite as scenario assertions, keyless via a mock LLM judge.
+- [RAG agent assertions](/arena/how-to/agents/rag-agent/) — full named primitive suite as scenario assertions, keyless via a mock LLM judge.
 
 ## Wire it as a CI quality gate
 
@@ -114,8 +114,8 @@ The product is unfinished until the gate works. `promptarena run --ci` exits non
 
 Demos:
 
-- [Arena CI quality gate](/arena/how-to/arena-ci-quality-gate/) — fork-safe split, threshold strategies per gate type, branch-protection wiring.
-- [Integrate with CI/CD](/arena/how-to/integrate-ci-cd/) — broader CI integration story across GitHub Actions, GitLab CI, Jenkins.
+- [Arena CI quality gate](/arena/how-to/interfaces/run-in-ci/) — fork-safe split, threshold strategies per gate type, branch-protection wiring.
+- [Integrate with CI/CD](/arena/how-to/interfaces/run-in-ci/) — broader CI integration story across GitHub Actions, GitLab CI, Jenkins.
 
 ## Where PromptArena does NOT lead
 

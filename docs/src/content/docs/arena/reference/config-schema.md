@@ -318,7 +318,7 @@ mcp_servers:
 
 A registered `MCPSource` opens the endpoint at a scope boundary and
 closes it when the boundary ends. See
-[Provision an MCP Sandbox per Scenario](/arena/how-to/provision-mcp-sandbox/)
+[Provision an MCP Sandbox per Scenario](/arena/how-to/agents/provision-mcp-sandbox/)
 for the full guide.
 
 - `source` (string, required): Name of a registered `MCPSource`
@@ -360,7 +360,7 @@ Output configuration for test results.
   - `enabled` (bool): Enable session recording (default: false)
   - `dir` (string): Subdirectory for recordings (default: "recordings")
 
-**Session Recording**: When enabled, Arena captures detailed event streams for each test run, including audio data for voice conversations. Recordings can be used for debugging, replay, and analysis. See [Session Recording Guide](/arena/how-to/session-recording/) for details.
+**Session Recording**: When enabled, Arena captures detailed event streams for each test run, including audio data for voice conversations. Recordings can be used for debugging, replay, and analysis. See [Session Recording Guide](/arena/how-to/scenarios/session-recording/) for details.
 
 #### `defaults.fail_on`
 
@@ -1351,7 +1351,7 @@ promptar ena run --config arena.yaml
 
 ### See Also
 
-- **[Session Recording Guide](/arena/how-to/session-recording/)** - Enable and use session recording
+- **[Session Recording Guide](/arena/how-to/scenarios/session-recording/)** - Enable and use session recording
 - **[Assertions Reference](/arena/reference/assertions/)** - All available assertion types
 - **[Replay Provider](/arena/reference/config-schema/#replay-provider)** - Replay provider details
 

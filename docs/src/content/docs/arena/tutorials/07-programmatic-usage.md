@@ -1,5 +1,5 @@
 ---
-title: Using Arena as a Go Library
+title: 'Tutorial 7: Using Arena as a Go Library'
 description: Learn how to integrate Arena into your Go applications for programmatic testing
 ---
 
@@ -250,7 +250,7 @@ import (
 
 ## Next Steps
 
-- [How-To: Use Arena as a Go Library](/arena/how-to/use-as-go-library/) - Advanced integration patterns
+- [How-To: Use Arena as a Go Library](/arena/how-to/setup/use-as-go-library/) - Advanced integration patterns
 - [Reference: API Documentation](/arena/reference/api-reference/) - Complete API reference
 
 ## Common Patterns

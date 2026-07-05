@@ -632,7 +632,7 @@ You now know how to test complex multi-turn conversations!
 **Continue learning:**
 - **[Tutorial 4: MCP Tools](/arena/tutorials/04-mcp-tools/)** - Test tool/function calling in conversations
 - **[Tutorial 5: CI Integration](/arena/tutorials/05-ci-integration/)** - Automate conversation testing
-- **[How-To: Write Scenarios](/arena/how-to/write-scenarios/)** - Advanced patterns
+- **[How-To: Write Scenarios](/arena/how-to/scenarios/write-scenarios/)** - Advanced patterns
 
 **Try this:**
 - Create a 10+ turn conversation test

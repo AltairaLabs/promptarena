@@ -1,5 +1,5 @@
 ---
-title: '04: Pack Management'
+title: 'Tutorial 4: Pack Management'
 sidebar:
   order: 4
 ---

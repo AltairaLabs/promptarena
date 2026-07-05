@@ -65,7 +65,7 @@ promptarena chat
 promptarena chat --voice
 ```
 
-See the [Voice Console guide](https://promptkit.altairalabs.ai/arena/how-to/voice-console/) for setup details.
+See the [Voice Console guide](https://promptkit.altairalabs.ai/arena/how-to/voice/voice-console/) for setup details.
 
 ## What is PromptKit Arena?
 

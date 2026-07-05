@@ -1,5 +1,5 @@
 ---
-title: '05: CI/CD Pipeline'
+title: 'Tutorial 5: CI/CD Pipeline'
 sidebar:
   order: 5
 ---

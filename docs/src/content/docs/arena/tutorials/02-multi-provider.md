@@ -516,7 +516,7 @@ You now know how to test across multiple providers!
 **Continue learning:**
 - **[Tutorial 3: Multi-Turn Conversations](/arena/tutorials/03-multi-turn/)** - Build complex dialog flows
 - **[Tutorial 4: MCP Tools](/arena/tutorials/04-mcp-tools/)** - Test tool/function calling
-- **[How-To: Configure Providers](/arena/how-to/configure-providers/)** - Advanced provider setup
+- **[How-To: Configure Providers](/arena/how-to/providers/configure-providers/)** - Advanced provider setup
 
 **Try this:**
 - Add more providers (Azure OpenAI, Groq, etc.)
