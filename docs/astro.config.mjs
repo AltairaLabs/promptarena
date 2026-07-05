@@ -130,16 +130,36 @@ export default defineConfig({
           label: 'Tutorials',
           collapsed: true,
           items: [
+            // Hand-listed so each product header holds just its numbered
+            // tutorials — autogenerate would also dump the index page and the
+            // deploy/examples subdirs in as flat siblings.
             {
               label: 'Arena',
               items: [
-                auto('arena/tutorials'),
-                ...(has('arena/examples')
-                  ? [{ label: 'Examples', collapsed: true, items: [auto('arena/examples')] }]
-                  : []),
+                { slug: 'arena/tutorials/01-first-test' },
+                { slug: 'arena/tutorials/02-multi-provider' },
+                { slug: 'arena/tutorials/03-multi-turn' },
+                { slug: 'arena/tutorials/04-mcp-tools' },
+                { slug: 'arena/tutorials/05-ci-integration' },
+                { slug: 'arena/tutorials/06-duplex-testing' },
+                { slug: 'arena/tutorials/07-programmatic-usage' },
+                { slug: 'arena/tutorials/08-client-tools' },
               ],
             },
-            grp('PackC', 'packc/tutorials'),
+            {
+              label: 'PackC',
+              items: [
+                { slug: 'packc/tutorials/01-first-pack' },
+                { slug: 'packc/tutorials/02-multi-prompt' },
+                { slug: 'packc/tutorials/03-validation-workflow' },
+                { slug: 'packc/tutorials/04-pack-management' },
+                { slug: 'packc/tutorials/05-ci-cd-pipeline' },
+              ],
+            },
+            ...(has('arena/tutorials/deploy') ? [grp('Deploy', 'arena/tutorials/deploy')] : []),
+            ...(has('arena/examples')
+              ? [{ label: 'Examples', collapsed: true, items: [auto('arena/examples')] }]
+              : []),
           ],
         },
         {
