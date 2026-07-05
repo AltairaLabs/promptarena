@@ -52,13 +52,13 @@ Add multiple provider files and re-register them in `config.arena.yaml`. Arena f
 
 `latency_budget` checks the **total provider-call duration per turn**: LLM round-trip time, including any tool-call rounds that happen within that turn. It's a coarse "is this turn fast enough" signal — well-suited to gating regressions.
 
-What richer voice testing wants — and what's coming next — is per-metric capture:
+What richer voice testing wants is per-metric capture:
 
 - **TTFB** — time to first token / first audio frame
 - **First-audio** — time from user-input-end to first audio-out (duplex providers)
 - **End-of-turn delta** — silence-detection latency between generation-complete and turn-complete
 
-Provider stages capture some of these timings internally; they just don't yet flow into the eval context as named metadata keys. When they do, `latency_budget` will accept per-metric thresholds (`max_ttfb_ms`, `max_first_audio_ms`, …); the existing single-metric usage continues to work.
+Provider stages capture some of these timings internally, but they aren't exposed to the eval context as named metadata keys, so `latency_budget` gates on the total turn duration only.
 
 ## CI gate
 
@@ -81,7 +81,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '1.26'
-      - run: make build-arena
+      - run: go build -o bin/promptarena ./arena/cmd/promptarena
       - name: Run latency-budget scenarios
         working-directory: examples/voice-latency-budget
         run: ../../bin/promptarena run --ci --formats json

@@ -12,7 +12,7 @@ PromptKit's shell completions include:
 - **Dynamic value completion** - Context-aware suggestions for:
   - `--scenario` - Lists scenarios from your `config.arena.yaml`
   - `--provider` - Lists configured providers
-  - `--role` - Lists self-play role configurations
+  - `--roles` - Lists self-play role configurations
   - `--region` - Suggests prompt regions
   - `--format` - Output format options (json, junit, html, markdown)
   - `--section` - Config sections for `config-inspect`

@@ -82,7 +82,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '1.26'
-      - run: make build-arena
+      - run: go build -o bin/promptarena ./arena/cmd/promptarena
       - name: Run voice-guardrails scenario
         working-directory: examples/voice-guardrails
         run: ../../bin/promptarena run --ci --formats json

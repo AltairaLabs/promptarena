@@ -35,10 +35,10 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version: '1.26'
 
       - name: Install PromptKit
-        run: go install github.com/AltairaLabs/PromptKit/tools/arena/cmd/promptarena@latest
+        run: go install github.com/AltairaLabs/promptarena/arena/cmd/promptarena@latest
 
       - name: Install adapter
         run: promptarena deploy adapter install omnia
@@ -84,10 +84,10 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version: '1.26'
 
       - name: Install PromptKit
-        run: go install github.com/AltairaLabs/PromptKit/tools/arena/cmd/promptarena@latest
+        run: go install github.com/AltairaLabs/promptarena/arena/cmd/promptarena@latest
 
       - name: Install adapter
         run: promptarena deploy adapter install agentcore
@@ -120,12 +120,12 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version: '1.26'
 
       - name: Install tools
         run: |
-          go install github.com/AltairaLabs/PromptKit/tools/arena/cmd/promptarena@latest
-          go install github.com/AltairaLabs/PromptKit/tools/packc@latest
+          go install github.com/AltairaLabs/promptarena/arena/cmd/promptarena@latest
+          go install github.com/AltairaLabs/promptarena/packc@latest
 
       - name: Compile pack
         run: packc compile --config arena.yaml --output app.pack.json --id my-app
@@ -145,11 +145,11 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version: '1.26'
 
       - name: Install tools
         run: |
-          go install github.com/AltairaLabs/PromptKit/tools/arena/cmd/promptarena@latest
+          go install github.com/AltairaLabs/promptarena/arena/cmd/promptarena@latest
 
       - name: Install adapter
         run: promptarena deploy adapter install agentcore
@@ -175,11 +175,11 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version: '1.26'
 
       - name: Install tools
         run: |
-          go install github.com/AltairaLabs/PromptKit/tools/arena/cmd/promptarena@latest
+          go install github.com/AltairaLabs/promptarena/arena/cmd/promptarena@latest
 
       - name: Install adapter
         run: promptarena deploy adapter install agentcore
@@ -198,33 +198,22 @@ jobs:
 
 The `environment: production` setting enables GitHub's environment protection rules, requiring manual approval before the production deployment runs.
 
-## Makefile Integration
+## Wrapping the deploy commands
 
-Add deploy targets to your Makefile:
-
-```makefile
-.PHONY: deploy-plan deploy deploy-status deploy-destroy
-
-deploy-plan:
-	promptarena deploy plan --env $(ENV)
-
-deploy:
-	promptarena deploy --env $(ENV)
-
-deploy-status:
-	promptarena deploy status --env $(ENV)
-
-deploy-destroy:
-	promptarena deploy destroy --env $(ENV)
-```
-
-Usage:
+PromptArena does not ship a Makefile — the CLI is a single binary you install
+with `go install` (or `go build -o bin/promptarena ./arena/cmd/promptarena`).
+The deploy subcommands take an `--env` flag directly, so you can drive them from
+your shell or from whatever task runner your project already uses:
 
 ```bash
-make deploy-plan ENV=staging
-make deploy ENV=staging
-make deploy-status ENV=staging
+promptarena deploy plan    --env staging   # preview changes
+promptarena deploy         --env staging   # plan + apply
+promptarena deploy status  --env staging   # current status
+promptarena deploy destroy --env staging   # tear down
 ```
+
+If you prefer short aliases, wrap these in your own Makefile or script — for
+example a `deploy` target that runs `promptarena deploy --env $(ENV)`.
 
 ## State Management in CI
 

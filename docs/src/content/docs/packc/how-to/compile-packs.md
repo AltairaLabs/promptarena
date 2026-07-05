@@ -25,12 +25,13 @@ This is the standard approach for production packs.
 
    ```yaml
    # config/arena.yaml
-   prompts:
-     - prompts/support.yaml
-     - prompts/sales.yaml
-     - prompts/marketing.yaml
-   
-   tools_directory: ./tools
+   prompt_configs:
+     - id: support
+       file: prompts/support.yaml
+     - id: sales
+       file: prompts/sales.yaml
+     - id: marketing
+       file: prompts/marketing.yaml
    ```
 
 2. **Run the compile command**
@@ -52,10 +53,8 @@ This is the standard approach for production packs.
 ### Expected Output
 
 ```
-Loaded 3 prompt configs from memory repository
-Compiling 3 prompts into pack 'customer-service'...
 ✓ Pack compiled successfully: packs/customer-service.pack.json
-  Contains 3 prompts: [support, sales, marketing]
+  Contains 3 prompts: [marketing sales support]
 ```
 
 ## Method 2: Compile Single Prompt
@@ -342,8 +341,9 @@ Error loading prompt: open prompts/support.yaml: no such file or directory
 
 ```yaml
 # arena.yaml should reference prompts correctly
-prompts:
-  - ../prompts/support.yaml  # Adjust path as needed
+prompt_configs:
+  - id: support
+    file: ../prompts/support.yaml  # Adjust path as needed
 ```
 
 ### Invalid YAML syntax

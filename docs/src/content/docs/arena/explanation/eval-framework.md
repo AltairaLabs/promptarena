@@ -12,8 +12,11 @@ Evals use the same [check types](https://promptkit.altairalabs.ai/reference/chec
 
 Eval handlers produce **scores only** (0.0–1.0). They never determine pass/fail — that responsibility belongs to assertion and guardrail wrappers. When used as standalone evals, the score is recorded as a metric and emitted as an event.
 
-```
-Pack File (evals) ──► EvalRunner ──► ResultWriter ──► Metrics / Metadata
+```mermaid
+flowchart LR
+    pack["Pack File (evals)"] --> runner["EvalRunner"]
+    runner --> writer["ResultWriter"]
+    writer --> out["Metrics / Metadata"]
 ```
 
 :::note
@@ -152,24 +155,38 @@ The eval system supports three dispatch patterns for different deployment scenar
 
 Runs evals synchronously in the same process. Used by Arena and simple SDK deployments.
 
-```
-Conversation ──► InProcDispatcher ──► EvalRunner ──► Handlers ──► ResultWriter
+```mermaid
+flowchart LR
+    conv["Conversation"] --> disp["InProcDispatcher"]
+    disp --> runner["EvalRunner"]
+    runner --> handlers["Handlers"]
+    handlers --> writer["ResultWriter"]
 ```
 
 ### Pattern B: EventDispatcher
 
 Publishes eval requests to an event bus for async processing by workers. Used in production SDK deployments.
 
-```
-Conversation ──► EventDispatcher ──► Event Bus ──► EvalWorker ──► EvalRunner ──► ResultWriter
+```mermaid
+flowchart LR
+    conv["Conversation"] --> disp["EventDispatcher"]
+    disp --> bus["Event Bus"]
+    bus --> worker["EvalWorker"]
+    worker --> runner["EvalRunner"]
+    runner --> writer["ResultWriter"]
 ```
 
 ### Pattern C: EventBusEvalListener
 
 Subscribes to EventBus `message.created` events and triggers evals automatically. No explicit middleware needed.
 
-```
-RecordingStage ──► EventBus ──► EventBusEvalListener ──► SessionAccumulator ──► Dispatcher ──► Runner
+```mermaid
+flowchart LR
+    stage["RecordingStage"] --> bus["EventBus"]
+    bus --> listener["EventBusEvalListener"]
+    listener --> acc["SessionAccumulator"]
+    acc --> disp["Dispatcher"]
+    disp --> runner["Runner"]
 ```
 
 The `EventBusEvalListener` uses a `SessionAccumulator` that accumulates messages per session and builds `EvalContext` on demand. Sessions expire after a configurable TTL (default: 30 minutes).
@@ -278,7 +295,7 @@ This allows packs to define baseline evals while individual prompts customize or
 
 ## Example
 
-See the [`eval-test` example](https://github.com/AltairaLabs/PromptKit/tree/main/examples/eval-test) for a working Arena configuration that evaluates saved conversations with both deterministic assertions and LLM judge evals.
+See the [`eval-test` example](https://github.com/AltairaLabs/promptarena/tree/main/examples/eval-test) for a working Arena configuration that evaluates saved conversations with both deterministic assertions and LLM judge evals.
 
 ## See Also
 

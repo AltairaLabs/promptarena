@@ -37,7 +37,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '1.26'
-      - run: make build-arena
+      - run: go build -o bin/promptarena ./arena/cmd/promptarena
 
       - name: Validate all example configs
         run: |
@@ -60,7 +60,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '1.26'
-      - run: make build-arena
+      - run: go build -o bin/promptarena ./arena/cmd/promptarena
 
       - name: Run voice-refund-demo against Gemini Live
         working-directory: examples/voice-refund-demo

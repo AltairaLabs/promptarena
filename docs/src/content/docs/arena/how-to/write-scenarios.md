@@ -350,6 +350,8 @@ spec:
     - role: user
       content: "What's my account balance?"
       assertions:
+        - type: content_includes
+          params:
             patterns: ["Your account balance is exactly $42.00"]
             message: "Exact match - too brittle"
     
@@ -380,7 +382,7 @@ spec:
   task_type: support
   
   fixtures:
-    long_patterns: ["Very long text here..."]  # 10,000 chars
+    long_text: ["Very long text here..."]  # 10,000 chars
   
   turns:
     - role: user

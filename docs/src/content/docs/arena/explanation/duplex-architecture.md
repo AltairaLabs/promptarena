@@ -56,22 +56,14 @@ This mirrors how real voice assistants work, making it essential for testing voi
 
 Duplex testing uses the same pipeline architecture as non-duplex, with specialized stages:
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                     Streaming Pipeline                       │
-├─────────────────────────────────────────────────────────────┤
-│  AudioTurnStage ──► PromptAssemblyStage ──► DuplexProvider  │
-│       (VAD)              (system prompt)         Stage       │
-│                                                    │         │
-│                                              ◄─────┘         │
-│                                        (WebSocket to Gemini) │
-│                                              │               │
-│  MediaExternalizer ◄── ValidationStage ◄─────┘              │
-│       Stage              (guardrails)                        │
-│         │                                                    │
-│         ▼                                                    │
-│  ArenaStateStoreSaveStage ──► Results                       │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    ats["AudioTurnStage<br/>(VAD)"] --> pas["PromptAssemblyStage<br/>(system prompt)"]
+    pas --> dps["DuplexProviderStage"]
+    dps -->|WebSocket to Gemini| vs["ValidationStage<br/>(guardrails)"]
+    vs --> mes["MediaExternalizerStage"]
+    mes --> ass["ArenaStateStoreSaveStage"]
+    ass --> res["Results"]
 ```
 
 ### Key Pipeline Stages
@@ -91,26 +83,11 @@ Duplex testing uses the same pipeline architecture as non-duplex, with specializ
 
 Unlike traditional pipelines where each turn creates a new request, duplex maintains a persistent session:
 
-```
-First Audio Chunk Arrives
-         │
-         ▼
-┌─────────────────────────────┐
-│ Extract system_prompt from  │
-│ element metadata            │
-└─────────────────────────────┘
-         │
-         ▼
-┌─────────────────────────────┐
-│ Create WebSocket session    │
-│ with system instruction     │
-└─────────────────────────────┘
-         │
-         ▼
-┌─────────────────────────────┐
-│ Process audio chunks        │
-│ in real-time loop           │
-└─────────────────────────────┘
+```mermaid
+flowchart TD
+    start["First Audio Chunk Arrives"] --> extract["Extract system_prompt<br/>from element metadata"]
+    extract --> create["Create WebSocket session<br/>with system instruction"]
+    create --> process["Process audio chunks<br/>in real-time loop"]
 ```
 
 The session is created **lazily** when the first element arrives, using configuration from the pipeline metadata.
@@ -167,18 +144,10 @@ Audio must be in raw PCM format:
 
 Audio is sent in small chunks to enable real-time processing:
 
-```
-Audio File (10 seconds)
-    │
-    ▼
-┌───────────────────────────────────────┐
-│  Chunk 1  │  Chunk 2  │ ... │ Chunk N │
-│  (20ms)   │  (20ms)   │     │  (20ms) │
-│  640 B    │  640 B    │     │  640 B  │
-└───────────────────────────────────────┘
-    │
-    ▼
-Streamed to provider via WebSocket
+```mermaid
+flowchart TD
+    file["Audio File (10 seconds)"] --> chunks["Chunk 1 | Chunk 2 | ... | Chunk N<br/>(20ms each, 640 B each)"]
+    chunks --> stream["Streamed to provider via WebSocket"]
 ```
 
 **Chunk size calculation:**
@@ -190,11 +159,10 @@ Streamed to provider via WebSocket
 
 Sends all audio as fast as possible:
 
-```
-[Chunk 1][Chunk 2][Chunk 3]...[Chunk N] ──► Provider
-                                              │
-                                              ▼
-                                         Response
+```mermaid
+flowchart LR
+    chunks["[Chunk 1][Chunk 2][Chunk 3]...[Chunk N]"] --> provider["Provider"]
+    provider --> response["Response"]
 ```
 
 **Best for:** Pre-recorded audio, avoiding false turn detections from natural pauses.
@@ -203,8 +171,11 @@ Sends all audio as fast as possible:
 
 Paces audio to match actual speech timing:
 
-```
-[Chunk 1] ─(20ms)─► [Chunk 2] ─(20ms)─► [Chunk 3] ...
+```mermaid
+flowchart LR
+    c1["Chunk 1"] -->|20ms| c2["Chunk 2"]
+    c2 -->|20ms| c3["Chunk 3"]
+    c3 --> more["..."]
 ```
 
 **Best for:** Testing real-time interaction, interruption handling.
@@ -213,29 +184,13 @@ Paces audio to match actual speech timing:
 
 For fully automated testing, self-play mode uses [TTS](https://promptkit.altairalabs.ai/glossary#tts) to generate audio dynamically:
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    Self-Play Turn Flow                       │
-├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│  1. Collect conversation history from state store           │
-│                          │                                   │
-│                          ▼                                   │
-│  2. Send history to self-play LLM with persona prompt        │
-│                          │                                   │
-│                          ▼                                   │
-│  3. LLM generates next user message (text)                  │
-│                          │                                   │
-│                          ▼                                   │
-│  4. TTS converts text to audio                              │
-│                          │                                   │
-│                          ▼                                   │
-│  5. Stream audio to duplex session                          │
-│                          │                                   │
-│                          ▼                                   │
-│  6. Capture and validate response                           │
-│                                                              │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    s1["1. Collect conversation history from state store"] --> s2["2. Send history to self-play LLM with persona prompt"]
+    s2 --> s3["3. LLM generates next user message (text)"]
+    s3 --> s4["4. TTS converts text to audio"]
+    s4 --> s5["5. Stream audio to duplex session"]
+    s5 --> s6["6. Capture and validate response"]
 ```
 
 This enables testing multi-turn voice conversations without pre-recording audio files.

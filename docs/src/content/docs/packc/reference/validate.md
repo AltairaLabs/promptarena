@@ -46,15 +46,22 @@ Validating against PromptPack schema...
 ✓ Pack structure is valid
 ```
 
-**Output (with warnings):**
+**Output (with non-fatal warnings):**
+
+Skill and workflow warnings are printed with a `⚠` prefix while validation
+still succeeds:
 ```
 Validating pack: packs/app.pack.json
 Validating against PromptPack schema...
 ✓ Schema validation passed
-⚠ Pack has 2 warnings:
-  - prompt 'support': no variables defined
-  - prompt 'support': missing version
+✓ Pack structure is valid
+⚠ Workflow warnings:
+  - <warning message>
 ```
+
+Structural problems (missing required fields, invalid template variables, and
+similar) are instead reported under `✗ Pack validation failed:` and exit with a
+non-zero status.
 
 ### Validate in CI/CD
 
@@ -198,7 +205,7 @@ jobs:
       - uses: actions/checkout@v3
       
       - name: Install packc
-        run: go install github.com/AltairaLabs/PromptKit/tools/packc@latest
+        run: go install github.com/AltairaLabs/promptarena/packc@latest
       
       - name: Validate all packs
         run: |

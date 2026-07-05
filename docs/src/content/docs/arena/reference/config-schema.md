@@ -94,9 +94,9 @@ spec:
     - file: tools/database-query.yaml
     - file: tools/calculator.yaml
 
-  # Optional: MCP server configurations
+  # Optional: MCP server configurations (a list; see the `mcp_servers` section below)
   mcp_servers:
-    filesystem:
+    - name: filesystem
       command: npx
       args:
         - "@modelcontextprotocol/server-filesystem"
@@ -105,7 +105,7 @@ spec:
         NODE_ENV: production
         LOG_LEVEL: info
 
-    memory:
+    - name: memory
       command: python
       args:
         - "-m"
@@ -114,16 +114,23 @@ spec:
         MEMORY_BACKEND: redis
         REDIS_URL: redis://localhost:6379
 
+  # Optional: State management (top-level, sibling to `defaults`)
+  state_store:
+    type: memory                    # memory (default), redis, or file
+    # redis:                        # Required when type=redis
+    #   address: localhost:6379
+    # file:                         # Required when type=file
+    #   root: ./state
+
   # Global defaults
   defaults:
     # LLM parameters
     temperature: 0.7                # Default: 0.7
-    top_p: 1.0                      # Default: 1.0
     max_tokens: 1500                # Default: varies by provider
+    seed: 42                        # Optional: reproducibility seed
     # Execution settings
     concurrency: 3                  # Default: 1 (number of parallel tests)
-    timeout: 30s                    # Default: 30s (per test)
-    max_retries: 0                  # Default: 0 (retry failed tests)
+    run_timeout: 5m                 # Default: 5m (per run)
 
     # Output configuration
     output:
@@ -134,24 +141,17 @@ spec:
         - markdown
         - junit
 
-      # Format-specific options
-      json:
-        file: results.json          # Default: results.json
-        pretty: true                # Default: false
-        include_raw: false          # Default: false
-
+      # Format-specific options (the `json` format has no configurable options;
+      # each result is written to <run-id>.json)
       html:
         file: report.html           # Default: report.html
-        include_metadata: true      # Default: true
-        theme: light                # Default: light (or "dark")
 
       markdown:
         file: report.md             # Default: report.md
         include_details: true       # Default: true
 
       junit:
-        file: junit.xml             # Default: junit.xml
-        include_system_out: true    # Default: false
+        file: results.xml           # Default: results.xml
 
       # Optional: Session recording for debugging and replay
       recording:
@@ -164,13 +164,6 @@ spec:
       - provider_error              # Provider API error
       - timeout                     # Test exceeded timeout
       - validation_error            # Validator/guardrail triggered
-
-    # Optional: State management
-    state:
-      enabled: true                 # Default: false
-      max_history_turns: 10         # Default: 10
-      persistence: memory           # Default: memory (or "redis")
-      redis_url: redis://localhost:6379  # Required if persistence=redis
 ```
 
 ### Field Descriptions
@@ -827,7 +820,7 @@ spec:
 
 ```yaml
 spec:
-  type: anthropic
+  type: claude
   model: claude-3-5-sonnet-20241022 | claude-3-haiku-20240307
   # Authentication: ANTHROPIC_API_KEY environment variable
 ```
@@ -1010,7 +1003,7 @@ spec:
         type: number
 
   # Execution mode
-  mode: live                        # Required: "mock" | "live" | "local" | "mcp" | "client"
+  mode: live                        # Required: "mock" | "live" | "mcp" | "exec" | "client"
   timeout_ms: 5000                  # Optional: Execution timeout
 
   # For mock mode: Static response
@@ -1128,7 +1121,7 @@ spec:
       id: gpt-4o-judge              # Unique judge ID
     
     quality:
-      type: anthropic
+      type: claude
       model: claude-3-5-sonnet-20241022
       id: claude-quality-judge
 
@@ -1150,8 +1143,7 @@ spec:
     
     - type: contains
       params:
-        text: "resolution"
-        case_sensitive: false
+        patterns: ["resolution"]    # All patterns must appear (case-insensitive)
 
   # Categorization
   tags:                             # Optional: Tags for filtering
@@ -1193,7 +1185,7 @@ Defines LLM providers used for judge-based assertions.
 **Structure**: Map of judge name → provider specification
 
 **Fields** (per judge):
-- `type` (string, required): Provider type (openai, anthropic, google, etc.)
+- `type` (string, required): Provider type (openai, claude, gemini, etc.)
 - `model` (string, required): Model identifier
 - `id` (string, required): Unique judge identifier
 
@@ -1206,7 +1198,7 @@ judge_targets:
     model: gpt-4o-mini
     id: default-judge
   quality:
-    type: anthropic
+    type: claude
     model: claude-3-5-sonnet-20241022
     id: quality-judge
 ```
@@ -1217,8 +1209,7 @@ Validation criteria to evaluate against the replayed conversation.
 
 **Common Assertion Types**:
 - `llm_judge`: Use an LLM to evaluate conversation quality
-- `contains`: Check if specific text appears in conversation
-- `turn_count`: Validate number of conversation turns
+- `contains`: Check that all `patterns` (a string list) appear in the output (case-insensitive)
 - `tools_called`: Verify tool usage
 
 **Example**:
@@ -1233,8 +1224,7 @@ assertions:
   
   - type: contains
     params:
-      text: "thank you"
-      case_sensitive: false
+      patterns: ["thank you"]     # All patterns must appear (case-insensitive)
 ```
 
 #### `mode`
@@ -1304,7 +1294,7 @@ recording:
   type: transcript
 ```
 
-Human-readable transcript format (future support via recording adapters).
+Human-readable transcript format, loaded via the built-in transcript recording adapter.
 
 **Generic Chat Export**:
 ```yaml
@@ -1400,7 +1390,7 @@ spec:
 
   # Style tuning
   style:                             # Optional: Persona style
-    verbosity: medium                # low, medium, high
+    verbosity: medium                # short, medium, long
     challenge_level: high            # low, medium, high
 
   # LLM defaults for this persona

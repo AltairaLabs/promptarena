@@ -233,7 +233,7 @@ In this tutorial you learned how to:
 
 Testing consent flows is important because real users will sometimes deny permissions. Your LLM should always handle denial gracefully -- offering alternatives rather than failing silently.
 
-For a complete working example, see the [`examples/client-tools/`](https://github.com/AltairaLabs/PromptKit/tree/main/examples/client-tools) directory in the PromptKit repository.
+For a complete working example, see the [`examples/client-tools/`](https://github.com/AltairaLabs/promptarena/tree/main/examples/client-tools) directory in the PromptKit repository.
 
 ## Next Steps
 

@@ -44,7 +44,7 @@ PromptKit is distributed as a cask from the AltairaLabs tap:
 
 ```bash
 # Install PromptKit (includes PromptArena and packc)
-brew install --cask altairalabs/tap/promptkit
+brew install altairalabs/tap/promptarena
 
 # Verify installation
 promptarena --version
@@ -66,7 +66,7 @@ binary for a dependency-free install.
 
 ```bash
 # Install directly with Go (note the cmd/promptarena package path)
-go install github.com/AltairaLabs/PromptKit/tools/arena/cmd/promptarena@latest
+go install github.com/AltairaLabs/promptarena/arena/cmd/promptarena@latest
 
 # The binary will be in your $GOPATH/bin
 promptarena --version
@@ -78,7 +78,7 @@ Visit the [PromptKit Releases](https://github.com/altairalabs/promptkit/releases
 
 ```bash
 # Example for macOS (adjust version and platform as needed)
-curl -LO https://github.com/AltairaLabs/PromptKit/releases/latest/download/promptarena-darwin-amd64
+curl -LO https://github.com/AltairaLabs/promptarena/releases/latest/download/promptarena-darwin-amd64
 chmod +x promptarena-darwin-amd64
 sudo mv promptarena-darwin-amd64 /usr/local/bin/promptarena
 ```
@@ -87,11 +87,11 @@ sudo mv promptarena-darwin-amd64 /usr/local/bin/promptarena
 
 ```bash
 # Clone the repository
-git clone https://github.com/AltairaLabs/PromptKit.git
-cd PromptKit
+git clone https://github.com/AltairaLabs/promptarena.git
+cd promptarena
 
-# Build and install
-make install-arena
+# Build and install to $GOBIN (or $GOPATH/bin)
+go install ./arena/cmd/promptarena
 ```
 
 ## Verify Installation

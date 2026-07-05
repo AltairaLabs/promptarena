@@ -147,7 +147,7 @@ jobs:
       - uses: actions/checkout@v3
       
       - name: Install packc
-        run: go install github.com/AltairaLabs/PromptKit/tools/packc@latest
+        run: go install github.com/AltairaLabs/promptarena/packc@latest
       
       - name: Check version
         run: |
@@ -189,9 +189,9 @@ build-with-version: check-version
 
 ```dockerfile
 # Dockerfile
-FROM golang:1.22 AS builder
+FROM golang:1.26 AS builder
 
-RUN go install github.com/AltairaLabs/PromptKit/tools/packc@latest
+RUN go install github.com/AltairaLabs/promptarena/packc@latest
 
 # Verify installation
 RUN packc version
@@ -222,9 +222,9 @@ jobs:
       - name: Install specific packc version
         run: |
           if [ "$" = "latest" ]; then
-            go install github.com/AltairaLabs/PromptKit/tools/packc@latest
+            go install github.com/AltairaLabs/promptarena/packc@latest
           else
-            go install github.com/AltairaLabs/PromptKit/tools/packc@$
+            go install github.com/AltairaLabs/promptarena/packc@$
           fi
       
       - name: Show version
@@ -249,7 +249,7 @@ bash: packc: command not found
 
 ```bash
 # Install from source
-go install github.com/AltairaLabs/PromptKit/tools/packc@latest
+go install github.com/AltairaLabs/promptarena/packc@latest
 
 # Or add to PATH
 export PATH="$PATH:/path/to/packc"
@@ -265,7 +265,7 @@ packc v0.0.9
 **Solution**: Update to latest version:
 
 ```bash
-go install github.com/AltairaLabs/PromptKit/tools/packc@latest
+go install github.com/AltairaLabs/promptarena/packc@latest
 ```
 
 ### Version Mismatch in CI
@@ -278,7 +278,7 @@ Error: Pack compiled with packc v0.2.0 but SDK expects v0.1.0
 
 ```yaml
 - name: Install packc
-  run: go install github.com/AltairaLabs/PromptKit/tools/packc@v0.1.0
+  run: go install github.com/AltairaLabs/promptarena/packc@v0.1.0
 ```
 
 ## Version Compatibility
@@ -316,7 +316,7 @@ current_version=$(packc version)
 echo "$current_version" > .packc-version
 
 # Upgrade
-go install github.com/AltairaLabs/PromptKit/tools/packc@latest
+go install github.com/AltairaLabs/promptarena/packc@latest
 
 # Test
 packc compile --config arena.yaml --output /tmp/test.pack.json --id test
@@ -338,7 +338,7 @@ Or in README:
 ```markdown
 ## Requirements
 
-- Go 1.22+
+- Go 1.26+
 - packc v0.1.0+
 ```
 
@@ -347,7 +347,7 @@ Or in README:
 ```yaml
 # Always use specific version in CI
 - name: Install packc
-  run: go install github.com/AltairaLabs/PromptKit/tools/packc@v0.1.0
+  run: go install github.com/AltairaLabs/promptarena/packc@v0.1.0
 ```
 
 ### 3. Check Version Before Building

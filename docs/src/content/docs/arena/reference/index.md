@@ -94,4 +94,4 @@ Arena reference documentation follows semantic versioning:
 - **How-To Guides**: [Task-oriented documentation](/arena/how-to/)
 - **Tutorials**: [Learning-oriented guides](/arena/tutorials/)
 - **Explanations**: [Conceptual documentation](/arena/)
-- **Issues**: [GitHub Issues](https://github.com/AltairaLabs/PromptKit/issues)
+- **Issues**: [GitHub Issues](https://github.com/AltairaLabs/promptarena/issues)

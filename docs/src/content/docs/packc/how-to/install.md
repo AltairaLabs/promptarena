@@ -17,7 +17,7 @@ Install via `go install` (the only supported installation method):
 
 ```bash
 # Install latest version
-go install github.com/AltairaLabs/PromptKit/tools/packc@latest
+go install github.com/AltairaLabs/promptarena/packc@latest
 
 # Verify installation
 packc version
@@ -27,7 +27,7 @@ packc version
 
 ```bash
 # Install specific version
-go install github.com/AltairaLabs/PromptKit/tools/packc@v0.1.0
+go install github.com/AltairaLabs/promptarena/packc@v0.1.0
 ```
 
 ### Build from Source
@@ -36,8 +36,8 @@ For development or custom builds:
 
 ```bash
 # Clone repository
-git clone https://github.com/AltairaLabs/PromptKit.git
-cd PromptKit
+git clone https://github.com/AltairaLabs/promptarena.git
+cd promptarena
 
 # Build packc
 make build-packc
@@ -64,12 +64,17 @@ which packc
 Expected outputs:
 
 ```
-packc v0.1.0
+packc dev
 packc - PromptKit Pack Compiler
-Usage: packc <command> [options]
-...
+Usage:
+  packc compile [options]         Compile ALL prompts from arena.yaml into a single pack
+  ...
 /Users/yourname/go/bin/packc
 ```
+
+Note: a `go install` build reports its version as `packc dev` because the
+version string is only injected via build flags (for example by
+`make build-packc`).
 
 ## Enable Shell Completions (Optional)
 
@@ -121,7 +126,7 @@ Add to PATH in System Environment Variables:
 
 ```bash
 # Reinstall latest
-go install github.com/AltairaLabs/PromptKit/tools/packc@latest
+go install github.com/AltairaLabs/promptarena/packc@latest
 
 # Verify new version
 packc version
@@ -130,7 +135,7 @@ packc version
 ### Update from Source
 
 ```bash
-cd PromptKit
+cd promptarena
 git pull origin main
 make build-packc
 ```
@@ -184,13 +189,13 @@ packc compile --config arena.yaml --output "$PACKC_OUTPUT_DIR/app.pack.json" --i
 Use `go install`:
 
 ```bash
-go install github.com/AltairaLabs/PromptKit/tools/packc@latest
+go install github.com/AltairaLabs/promptarena/packc@latest
 ```
 
 ### Windows (PowerShell)
 
 ```powershell
-go install github.com/AltairaLabs/PromptKit/tools/packc@latest
+go install github.com/AltairaLabs/promptarena/packc@latest
 ```
 
 ## CI/CD Installation
@@ -199,7 +204,7 @@ go install github.com/AltairaLabs/PromptKit/tools/packc@latest
 
 ```yaml
 - name: Install packc
-  run: go install github.com/AltairaLabs/PromptKit/tools/packc@latest
+  run: go install github.com/AltairaLabs/promptarena/packc@latest
 
 - name: Verify installation
   run: packc version
@@ -210,7 +215,7 @@ go install github.com/AltairaLabs/PromptKit/tools/packc@latest
 ```yaml
 install_packc:
   script:
-    - go install github.com/AltairaLabs/PromptKit/tools/packc@latest
+    - go install github.com/AltairaLabs/promptarena/packc@latest
     - packc version
 ```
 
@@ -219,7 +224,7 @@ install_packc:
 ```groovy
 stage('Install packc') {
   steps {
-    sh 'go install github.com/AltairaLabs/PromptKit/tools/packc@latest'
+    sh 'go install github.com/AltairaLabs/promptarena/packc@latest'
     sh 'packc version'
   }
 }
@@ -249,7 +254,7 @@ chmod +x $(which packc)
 
 ### Go version too old
 
-**Problem**: Go version < 1.22
+**Problem**: Go version < 1.26
 
 **Solution**: Update Go:
 
@@ -275,7 +280,7 @@ go version
 go clean -modcache
 
 # Try again
-go install github.com/AltairaLabs/PromptKit/tools/packc@latest
+go install github.com/AltairaLabs/promptarena/packc@latest
 ```
 
 ## Next Steps

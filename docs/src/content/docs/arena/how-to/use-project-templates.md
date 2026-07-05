@@ -133,14 +133,15 @@ metadata:
   name: my-test
 
 spec:
-  prompts:
-    - path: ./prompts
-  
+  prompt_configs:
+    - id: assistant
+      file: prompts/assistant.yaml
+
   providers:
-    - path: ./providers
-  
+    - file: providers/openai.yaml
+
   scenarios:
-    - path: ./scenarios
+    - file: scenarios/basic-test.yaml
 ```
 
 ### 2. Prompt Configuration

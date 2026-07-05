@@ -488,29 +488,32 @@ assertions:
 ### Setting Thresholds
 
 ```yaml
-# Quality gates
+# Conceptual — Arena has no quality_gates block. These thresholds are
+# illustrative; enforce them in CI against the JSON run summary.
 quality_gates:
   min_pass_rate: 0.95      # 95% of assertions must pass
   max_cost_per_run: 0.50   # $0.50 per test run
   min_scenarios: 50        # At least 50 scenarios
 ```
 
+*This is a conceptual sketch, not real config — Arena has no `quality_gates` field. Gate in CI on the JSON `summary` (e.g. `jq '.summary.pass_rate'`); see [CI/CD Integration](/arena/tutorials/05-ci-integration/).*
+
 ## Testing in Production
 
 ### A/B Testing LLM Changes
 
 ```yaml
-# Test new prompt vs. old prompt
+# Conceptual — Arena has no baseline/compare_to_baseline fields.
+# In practice, run the two prompt versions as separate configs (or
+# providers) and diff their JSON summaries.
 turns:
   - name: "Baseline Prompt"
     prompt_version: "v1.0"
-    baseline: true
-  
   - name: "Candidate Prompt"
     prompt_version: "v2.0"
-    compare_to_baseline: true
-    improvement_threshold: 0.05  # 5% better
 ```
+
+*Conceptual, not real config. To A/B a prompt change, run both versions and compare the JSON `summary` pass rates in CI.*
 
 ## The Human Factor
 
@@ -523,34 +526,33 @@ LLMs require human judgment for:
 - **Benchmark creation**: Ground truth for automated tests
 
 **Hybrid Approach:**
-```
-Human Eval → Ground Truth → Automated Tests → Continuous Validation
+```mermaid
+flowchart LR
+    he["Human Eval"] --> gt["Ground Truth"]
+    gt --> at["Automated Tests"]
+    at --> cv["Continuous Validation"]
 ```
 
 ### Human-in-the-Loop Testing
 
 ```yaml
+# Conceptual — Arena has no human_evaluation field. Flag scenarios for
+# manual review with labels, then route them to a human step in CI.
 apiVersion: promptkit.altairalabs.ai/v1alpha1
 kind: Scenario
 metadata:
   name: requires-human-review
-
+  labels:
+    review: human
 spec:
   task_type: test
   description: "Requires Human Review"
-  
-    tags: [human-review]
-    
-    turns:
-      - role: user
-        content: "Complex ethical question"
-        human_evaluation:
-          required: true
-          criteria:
-            - appropriateness
-            - thoughtfulness
-            - ethical_handling
+  turns:
+    - role: user
+      content: "Complex ethical question"
 ```
+
+*Conceptual, not real config — there is no `human_evaluation` block. Tag scenarios that need judgement (via `metadata.labels`) and gate them in your own review step.*
 
 ## Conclusion
 

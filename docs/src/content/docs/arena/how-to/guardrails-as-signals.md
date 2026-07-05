@@ -107,7 +107,7 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '1.26'
-      - run: make build-arena
+      - run: go build -o bin/promptarena ./arena/cmd/promptarena
       - name: Run guardrail scenarios
         working-directory: examples/guardrails-test
         run: ../../bin/promptarena run --ci --formats json

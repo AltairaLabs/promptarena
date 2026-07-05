@@ -25,11 +25,11 @@ PromptArena is a powerful testing tool that helps you:
 Get up and running in 60 seconds with the interactive project generator:
 
 ```bash
-# Install PromptKit (includes PromptArena)
-brew install --cask altairalabs/tap/promptkit
+# Install PromptArena
+brew install altairalabs/tap/promptarena
 
 # Or build from source with Go (needs a C compiler + audio dev headers)
-go install github.com/AltairaLabs/PromptKit/tools/arena/cmd/promptarena@latest
+go install github.com/AltairaLabs/promptarena/arena/cmd/promptarena@latest
 
 # Create a new test project instantly
 promptarena init my-test --quick
@@ -266,8 +266,8 @@ Real-world Arena testing scenarios:
 ## Getting Help
 
 - **Quick Start**: [First Test Tutorial](/arena/tutorials/01-first-test/)
-- **Questions**: [GitHub Discussions](https://github.com/AltairaLabs/PromptKit/issues)
-- **Issues**: [Report a Bug](https://github.com/AltairaLabs/PromptKit/issues)
+- **Questions**: [GitHub Discussions](https://github.com/AltairaLabs/promptarena/issues)
+- **Issues**: [Report a Bug](https://github.com/AltairaLabs/promptarena/issues)
 - **Examples**: [Arena Examples](https://promptkit.altairalabs.ai/arena/examples/)
 
 ---
