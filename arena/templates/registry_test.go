@@ -107,24 +107,18 @@ func TestFetchTemplateChecksumMismatch(t *testing.T) {
 	}
 }
 
-func TestValidateChecksum(t *testing.T) {
-	dir := t.TempDir()
-	p := filepath.Join(dir, "file.txt")
-	if err := os.WriteFile(p, []byte("hello"), 0o644); err != nil {
-		t.Fatalf("write file: %v", err)
-	}
+func TestValidateChecksumBytes(t *testing.T) {
 	// sha256 of "hello"
 	sum := "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
-	if err := ValidateChecksum(p, sum); err != nil {
+	if err := validateChecksumBytes([]byte("hello"), sum); err != nil {
 		t.Fatalf("expected checksum match, got %v", err)
 	}
-	if err := ValidateChecksum(p, "deadbeef"); err == nil {
+	if err := validateChecksumBytes([]byte("hello"), "deadbeef"); err == nil {
 		t.Fatalf("expected checksum mismatch")
 	}
-
-	// bytes validation
-	if err := validateChecksumBytes([]byte("hello"), sum); err != nil {
-		t.Fatalf("bytes checksum failed: %v", err)
+	// empty expected checksum skips validation
+	if err := validateChecksumBytes([]byte("hello"), ""); err != nil {
+		t.Fatalf("expected empty checksum to skip, got %v", err)
 	}
 }
 

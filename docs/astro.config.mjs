@@ -1,7 +1,6 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
-import starlightThemeGalaxy from 'starlight-theme-galaxy';
 import d2 from 'astro-d2';
 
 // Archived doc versions are built at a subpath (e.g. /v1-5/) via BASE_PATH.
@@ -20,10 +19,9 @@ export default defineConfig({
     starlight({
       title: 'PromptArena',
       logo: {
-        src: './public/logo.svg',
-        alt: 'PromptArena Logo',
+        src: './public/atlas/logo-promptarena.svg',
+        alt: 'PromptArena',
       },
-      plugins: [starlightThemeGalaxy()],
       customCss: ['./src/styles/custom.css'],
       social: [
         { icon: 'github', label: 'GitHub', href: 'https://github.com/AltairaLabs/promptarena' },
@@ -31,6 +29,7 @@ export default defineConfig({
       // Version switcher (header) + "not latest" banner (page title).
       components: {
         Header: './src/components/Header.astro',
+        SocialIcons: './src/components/SocialIcons.astro',
         PageTitle: './src/components/PageTitle.astro',
       },
       sidebar: [

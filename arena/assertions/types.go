@@ -80,11 +80,3 @@ func buildAssertionParams(evalType string, originalParams map[string]any) map[st
 
 	return params
 }
-
-// ToConversationEvalDef converts an AssertionConfig to an evals.EvalDef
-// with TriggerOnConversationComplete. Used for conversation-level assertions.
-func ToConversationEvalDef(a AssertionConfig, index int) evals.EvalDef {
-	def := ToEvalDef(a, index)
-	def.Trigger = evals.TriggerOnConversationComplete
-	return def
-}

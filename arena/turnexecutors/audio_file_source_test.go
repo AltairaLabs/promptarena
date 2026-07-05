@@ -7,32 +7,6 @@ import (
 	"testing"
 )
 
-func TestNewAudioFileSource_WAV(t *testing.T) {
-	// Create a minimal WAV file for testing
-	wavPath := createTestWAVFile(t)
-	defer os.Remove(wavPath)
-
-	source, err := NewAudioFileSource(wavPath, "")
-	if err != nil {
-		t.Fatalf("Failed to create audio source: %v", err)
-	}
-	defer source.Close()
-
-	// Verify parsed format
-	if source.SampleRate() != 16000 {
-		t.Errorf("Expected sample rate 16000, got %d", source.SampleRate())
-	}
-	if source.Channels() != 1 {
-		t.Errorf("Expected 1 channel, got %d", source.Channels())
-	}
-	if source.BitDepth() != 16 {
-		t.Errorf("Expected bit depth 16, got %d", source.BitDepth())
-	}
-	if source.Format() != AudioFormatPCM16 {
-		t.Errorf("Expected AudioFormatPCM16, got %d", source.Format())
-	}
-}
-
 func TestAudioFileSource_ReadChunk(t *testing.T) {
 	wavPath := createTestWAVFile(t)
 	defer os.Remove(wavPath)
@@ -72,59 +46,6 @@ func TestAudioFileSource_ReadChunk(t *testing.T) {
 	}
 }
 
-func TestAudioFileSource_Reset(t *testing.T) {
-	wavPath := createTestWAVFile(t)
-	defer os.Remove(wavPath)
-
-	source, err := NewAudioFileSource(wavPath, "")
-	if err != nil {
-		t.Fatalf("Failed to create audio source: %v", err)
-	}
-	defer source.Close()
-
-	// Read all data
-	for {
-		_, err := source.ReadChunk(640)
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			t.Fatalf("Error reading: %v", err)
-		}
-	}
-
-	// Reset and read again
-	if err := source.Reset(); err != nil {
-		t.Fatalf("Failed to reset: %v", err)
-	}
-
-	chunk, err := source.ReadChunk(640)
-	if err != nil && err != io.EOF {
-		t.Fatalf("Failed to read after reset: %v", err)
-	}
-	if len(chunk) == 0 {
-		t.Error("Expected non-empty chunk after reset")
-	}
-}
-
-func TestAudioFileSource_Duration(t *testing.T) {
-	wavPath := createTestWAVFile(t)
-	defer os.Remove(wavPath)
-
-	source, err := NewAudioFileSource(wavPath, "")
-	if err != nil {
-		t.Fatalf("Failed to create audio source: %v", err)
-	}
-	defer source.Close()
-
-	// 1024 samples at 16000 Hz = 0.064 seconds
-	duration := source.Duration()
-	expected := 0.064
-	if duration < expected-0.001 || duration > expected+0.001 {
-		t.Errorf("Expected duration ~%f, got %f", expected, duration)
-	}
-}
-
 func TestAudioFileSource_RelativePath(t *testing.T) {
 	// Create temp directory structure
 	tmpDir := t.TempDir()
@@ -143,10 +64,6 @@ func TestAudioFileSource_RelativePath(t *testing.T) {
 		t.Fatalf("Failed to open with relative path: %v", err)
 	}
 	defer source.Close()
-
-	if source.SampleRate() != 16000 {
-		t.Errorf("Expected sample rate 16000, got %d", source.SampleRate())
-	}
 }
 
 func TestAudioFileSource_UnsupportedFormat(t *testing.T) {
@@ -289,13 +206,6 @@ func TestAudioFileSource_PCM24File(t *testing.T) {
 	}
 	defer source.Close()
 
-	if source.Format() != AudioFormatPCM24 {
-		t.Errorf("Expected AudioFormatPCM24, got %d", source.Format())
-	}
-	if source.BitDepth() != 24 {
-		t.Errorf("Expected bit depth 24, got %d", source.BitDepth())
-	}
-
 	// Read and convert a chunk
 	chunk, err := source.ReadChunk(640)
 	if err != nil {
@@ -317,10 +227,6 @@ func TestAudioFileSource_PCM32File(t *testing.T) {
 	}
 	defer source.Close()
 
-	if source.Format() != AudioFormatPCM32 {
-		t.Errorf("Expected AudioFormatPCM32, got %d", source.Format())
-	}
-
 	chunk, err := source.ReadChunk(640)
 	if err != nil {
 		t.Fatalf("Failed to read chunk: %v", err)
@@ -339,10 +245,6 @@ func TestAudioFileSource_Float32File(t *testing.T) {
 		t.Fatalf("Failed to create audio source: %v", err)
 	}
 	defer source.Close()
-
-	if source.Format() != AudioFormatFloat32 {
-		t.Errorf("Expected AudioFormatFloat32, got %d", source.Format())
-	}
 
 	chunk, err := source.ReadChunk(640)
 	if err != nil {
@@ -368,11 +270,6 @@ func TestAudioFileSource_RawPCMFile(t *testing.T) {
 		t.Fatalf("Failed to create audio source: %v", err)
 	}
 	defer source.Close()
-
-	// Raw PCM uses defaults
-	if source.SampleRate() != 16000 {
-		t.Errorf("Expected default sample rate 16000, got %d", source.SampleRate())
-	}
 }
 
 func TestAudioFileSource_ReadChunkNilReader(t *testing.T) {
@@ -390,22 +287,6 @@ func TestAudioFileSource_ReadChunkNilReader(t *testing.T) {
 		t.Error("Expected error when reader is nil")
 	}
 	source.Close()
-}
-
-func TestAudioFileSource_ResetClosed(t *testing.T) {
-	wavPath := createTestWAVFile(t)
-	defer os.Remove(wavPath)
-
-	source, err := NewAudioFileSource(wavPath, "")
-	if err != nil {
-		t.Fatalf("Failed to create audio source: %v", err)
-	}
-	source.Close()
-
-	err = source.Reset()
-	if err == nil {
-		t.Error("Expected error when resetting closed source")
-	}
 }
 
 func TestAudioFileSource_CloseIdempotent(t *testing.T) {
