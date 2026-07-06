@@ -370,50 +370,58 @@ func (a *EventAdapter) deliver(msg tea.Msg) {
 	}
 }
 
-func readString(data events.EventData, key string) string {
-	if d, ok := data.(events.CustomEventData); ok {
-		if v, ok := d.Data[key].(string); ok {
-			return v
+// customData extracts the payload map from a custom event, accepting both the
+// value and pointer shapes. emitter.EmitCustom always emits a pointer
+// (*events.CustomEventData); asserting only the value type silently dropped
+// every field (empty provider/scenario/region, zero duration/cost). See the
+// matching pointer/value handling in handleMessageCreated and web/event_adapter.go.
+func customData(data events.EventData) map[string]interface{} {
+	switch d := data.(type) {
+	case *events.CustomEventData:
+		if d != nil {
+			return d.Data
 		}
+	case events.CustomEventData:
+		return d.Data
+	}
+	return nil
+}
+
+func readString(data events.EventData, key string) string {
+	if v, ok := customData(data)[key].(string); ok {
+		return v
 	}
 	return ""
 }
 
 func readDuration(data events.EventData, key string) time.Duration {
-	if d, ok := data.(events.CustomEventData); ok {
-		if v, ok := d.Data[key].(time.Duration); ok {
-			return v
-		}
+	if v, ok := customData(data)[key].(time.Duration); ok {
+		return v
 	}
 	return 0
 }
 
 func readFloat(data events.EventData, key string) float64 {
-	if d, ok := data.(events.CustomEventData); ok {
-		if v, ok := d.Data[key].(float64); ok {
-			return v
-		}
+	if v, ok := customData(data)[key].(float64); ok {
+		return v
 	}
 	return 0
 }
 
 func readError(data events.EventData, key string) error {
-	if d, ok := data.(events.CustomEventData); ok {
-		if err, ok := d.Data[key].(error); ok {
-			return err
-		}
-		if msg, ok := d.Data[key].(string); ok && msg != "" {
-			return fmt.Errorf("%s", msg)
-		}
+	d := customData(data)
+	if err, ok := d[key].(error); ok {
+		return err
+	}
+	if msg, ok := d[key].(string); ok && msg != "" {
+		return fmt.Errorf("%s", msg)
 	}
 	return nil
 }
 
 func readInt(data events.EventData, key string) int {
-	if d, ok := data.(events.CustomEventData); ok {
-		if v, ok := d.Data[key].(int); ok {
-			return v
-		}
+	if v, ok := customData(data)[key].(int); ok {
+		return v
 	}
 	return 0
 }
