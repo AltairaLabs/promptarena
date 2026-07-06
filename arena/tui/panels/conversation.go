@@ -54,10 +54,15 @@ const (
 	conversationDetailMinHeight  = 6
 	conversationColNumWidth      = 4
 	conversationColRoleWidth     = 10
-	conversationContentPadding   = 20
-	scrollPercentThreshold       = 0.01
-	scrollPercentMultiplier      = 100
-	markdownExtraWidthPadding    = 4
+	// conversationContentPadding is the table's own chrome, not the other
+	// columns: bubbles renders each cell with Padding(0,1) — 2 cols of padding
+	// per column, 3 columns = 6. The Content column fills the list width minus
+	// the # and Role columns and this padding. (It was 20, which double-counted
+	// the # and Role widths and collapsed Content to a couple of characters.)
+	conversationContentPadding = 6
+	scrollPercentThreshold     = 0.01
+	scrollPercentMultiplier    = 100
+	markdownExtraWidthPadding  = 4
 )
 
 // ConversationPanel encapsulates the conversation view state (table + detail).

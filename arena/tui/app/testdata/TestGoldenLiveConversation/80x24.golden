@@ -6,10 +6,10 @@
     user  [████████░░░░░░░░]  50%                                               
     agent [████░░░░░░░░░░░░]  25%                                               
   ╭──────────────────────────────╮ ╭───────────────────────────────────────────╮
-  │ #     Role                   │ │Turn 2 • Role: user                        │
-  │──────────────────            │ │                                           │
-  │ 1     system                 │ │  ## 💬 Message                            │
-  │ 2     user                   │ │                                           │
+  │ #     Role        Content    │ │Turn 2 • Role: user                        │
+  │──────────────────────────────│ │                                           │
+  │ 1     system      You are a… │ │  ## 💬 Message                            │
+  │ 2     user        refund my… │ │                                           │
   │                              │ │  refund my order                          │
   │                              │ │                                           │
   │                              │ │                                           │
