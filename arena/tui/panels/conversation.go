@@ -144,8 +144,21 @@ func (c *ConversationPanel) Reset() {
 
 // SetDimensions sets layout constraints.
 func (c *ConversationPanel) SetDimensions(width, height int) {
+	if width == c.width && height == c.height {
+		return
+	}
 	c.width = width
 	c.height = height
+	// Re-lay-out for the new size. SetData may have run before real dimensions
+	// arrived (width 0 → default columns), and the owner calls SetDimensions on
+	// every render, so without this the turns table's Content column stays at
+	// its initial width and never expands to fill a wider pane. Rows/cursor are
+	// preserved (we don't rebuild them); the detail pane re-wraps to the new
+	// width too.
+	c.layoutTable()
+	if c.detailReady && c.res != nil {
+		c.updateDetail(c.res)
+	}
 }
 
 // SetActive controls whether the panel renders with a focused border. Owners
@@ -383,17 +396,19 @@ func (c *ConversationPanel) updateTablePanel(msg tea.Msg) tea.Cmd {
 	return cmd
 }
 
-// updateTable updates the conversation table with messages from result.
-func (c *ConversationPanel) updateTable(res *statestore.RunResult) {
+// layoutTable sizes the turns table and its columns to the current panel
+// dimensions. Split out of updateTable so it can also run on resize (via
+// SetDimensions) without rebuilding rows — otherwise the columns keep the
+// widths computed at SetData time (often before real dimensions arrive, so
+// width 0 → default fixed columns) and the Content column never fills the pane.
+func (c *ConversationPanel) layoutTable() {
 	if !c.tableReady {
 		return
 	}
-
 	height := c.height - conversationTableHeightPad
 	if height < conversationTableMinHeight {
 		height = conversationTableMinHeight
 	}
-
 	lw := c.listWidth()
 	c.table.SetHeight(height)
 	c.table.SetWidth(lw)
@@ -402,6 +417,15 @@ func (c *ConversationPanel) updateTable(res *statestore.RunResult) {
 		{Title: "Role", Width: conversationColRoleWidth},
 		{Title: "Content", Width: lw - conversationColNumWidth - conversationColRoleWidth - conversationContentPadding},
 	})
+}
+
+// updateTable updates the conversation table with messages from result.
+func (c *ConversationPanel) updateTable(res *statestore.RunResult) {
+	if !c.tableReady {
+		return
+	}
+
+	c.layoutTable()
 
 	rows := make([]table.Row, 0, len(res.Messages))
 	for i := range res.Messages {
