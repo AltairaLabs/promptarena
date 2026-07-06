@@ -15,9 +15,13 @@ import (
 )
 
 // runResultGetter is the minimal slice of the arena state store RunPage needs
-// to load a completed run's result for conversation drill-down.
+// to load a run's conversation for drill-down. GetResult returns a finalized
+// run (only after the run's metadata is saved at run end); GetArenaState
+// returns the live conversation state — including the turns exchanged so far —
+// while a run is still in progress, which is what a live drill-in seeds from.
 type runResultGetter interface {
 	GetResult(ctx context.Context, runID string) (*statestore.RunResult, error)
+	GetArenaState(ctx context.Context, conversationID string) (*statestore.ArenaConversationState, error)
 }
 
 // RunPage drives the live run view inside the hub shell. It wraps the
@@ -199,7 +203,23 @@ func (p *RunPage) drillDownCmd(run *tui.RunInfo) tea.Cmd {
 
 	var cvp *ConversationViewPage
 	if run.Status == tui.StatusRunning {
-		cvp = NewLiveConversationViewPage(run.RunID, scenarioID, providerID, result)
+		// GetResult needs the run's finalized metadata, which isn't written
+		// until the run ends — so mid-run it returns nothing and the live view
+		// would open empty, showing only the next streamed turn. Seed instead
+		// from the in-progress conversation state, which already holds the turns
+		// exchanged so far; the live feed dedups against this seed by index.
+		seed := result
+		if seed == nil && p.store != nil {
+			if st, err := p.store.GetArenaState(context.Background(), run.RunID); err == nil && st != nil {
+				seed = &statestore.RunResult{
+					RunID:      run.RunID,
+					ScenarioID: scenarioID,
+					ProviderID: providerID,
+					Messages:   st.Messages,
+				}
+			}
+		}
+		cvp = NewLiveConversationViewPage(run.RunID, scenarioID, providerID, seed)
 	} else {
 		if result == nil {
 			logger.Debug("run drill-down: result not available", "run_id", run.RunID)
