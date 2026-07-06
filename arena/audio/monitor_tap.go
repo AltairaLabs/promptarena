@@ -48,6 +48,13 @@ type MonitorTap struct {
 	// be wrong. We warn loudly the first time we see one rather than
 	// silently miscomputing.
 	stereoWarned atomic.Bool
+
+	// rateLogged latches once to emit a single diagnostic of the source
+	// vs router sample rate for the first audio frame. A source rate of 0
+	// (or one that differs from the router rate) means the resample is
+	// skipped/wrong and playback runs fast/off-pitch — this line pins that
+	// down under LOG_LEVEL=debug without spamming per frame.
+	rateLogged atomic.Bool
 }
 
 // NewMonitorTap constructs a tap that publishes audio elements to the
@@ -85,6 +92,14 @@ func (t *MonitorTap) tap(elem *stage.StreamElement) {
 		return
 	}
 	audio := elem.Audio
+	if !t.rateLogged.Swap(true) {
+		logger.Debug("audio monitor tap: first frame",
+			"position", string(t.config.Position),
+			"source_rate", audio.SampleRate,
+			"router_rate", t.router.rate,
+			"channels", audio.Channels,
+			"bytes", len(audio.Samples))
+	}
 	if audio.Channels > 1 && !t.stereoWarned.Swap(true) {
 		// runtimeaudio.ResamplePCM16 takes only fromRate/toRate; the
 		// resample math here implicitly assumes mono, so non-mono
