@@ -3,6 +3,19 @@
 
 version: 2
 
+# Build the embedded Arena web UI before compiling any binary. promptarena
+# embeds arena/web/frontend/dist via //go:embed; dist is gitignored (only
+# .gitkeep is tracked), so without this the released binary ships a blank
+# `promptarena serve` page. The final `ls` is a guard: if the build somehow
+# produced no index.html, it exits non-zero and aborts the release rather
+# than publishing an empty UI. Requires pnpm on PATH (the release workflow
+# installs it before invoking goreleaser).
+before:
+  hooks:
+    - pnpm --dir arena/web/frontend install --frozen-lockfile
+    - pnpm --dir arena/web/frontend build
+    - ls arena/web/frontend/dist/index.html
+
 # Build configuration
 builds:
   - id: promptarena
