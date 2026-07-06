@@ -39,5 +39,5 @@ func TestRunsPane_ShowsAudioGlyph_WithRealMonitor(t *testing.T) {
 
 	out := renderGolden(m, 160, 50)
 	assert.Contains(t, out, "Audio", "runs pane should have the Audio column header")
-	assert.Contains(t, out, "🔊", "active audio run should render the loud-speaker glyph")
+	assert.Contains(t, out, "LIVE", "active audio run should render the LIVE marker")
 }

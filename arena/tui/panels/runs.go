@@ -65,10 +65,12 @@ type RunInfo struct {
 }
 
 const (
-	// audioActiveGlyph marks the run currently routed to host playback.
-	audioActiveGlyph = "🔊"
+	// audioActiveGlyph marks the run currently routed to host playback. Plain
+	// text (not an emoji) so it renders in every terminal / screen recording —
+	// important for demos where the point is to *see* which run is audible.
+	audioActiveGlyph = "LIVE"
 	// audioIdleGlyph marks a run that has audio but is not the active source.
-	audioIdleGlyph = "🔈"
+	audioIdleGlyph = "•"
 )
 
 // audioIndicator returns the speaker glyph for a run's audio state, or "" when
