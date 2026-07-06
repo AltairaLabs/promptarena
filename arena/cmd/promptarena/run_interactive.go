@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -22,8 +23,39 @@ import (
 )
 
 const (
-	outputDirPerm = 0750 // Directory permissions for output directories
+	outputDirPerm             = 0750  // Directory permissions for output directories
+	logFilePerm   os.FileMode = 0o600 // Read/write for owner only (pre-TUI setup log file)
 )
+
+// quietSetupLogs routes runtime logging off stderr while the engine is built,
+// so on the TUI path engine-setup logs don't paint over the alt-screen before
+// the TUI installs its own log interceptor. It returns a restore func that puts
+// logging back on stderr; callers MUST invoke it before reporting results. On
+// non-TUI paths it is a no-op.
+//
+// Verbose runs keep the pre-TUI logs in the same file the TUI interceptor
+// appends to; otherwise they are dropped — they can't reach the TUI log panel
+// (it doesn't exist yet) and their only other destination is the screen we are
+// keeping clean.
+func quietSetupLogs(useTUI bool, params *RunParameters) func() {
+	if !useTUI {
+		return func() {}
+	}
+	if params.Verbose && params.OutDir != "" {
+		if err := os.MkdirAll(params.OutDir, outputDirPerm); err == nil {
+			logPath := filepath.Join(params.OutDir, "promptarena.log")
+			if f, ferr := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, logFilePerm); ferr == nil {
+				logger.SetOutput(f)
+				return func() {
+					logger.SetOutput(nil)
+					_ = f.Close()
+				}
+			}
+		}
+	}
+	logger.SetOutput(io.Discard)
+	return func() { logger.SetOutput(nil) }
+}
 
 // loadConfiguration loads and parses the arena configuration file
 func loadConfiguration(cmd *cobra.Command) (string, *arenaconfig.Config, error) {
@@ -130,14 +162,25 @@ func runSimulations(cmd *cobra.Command) error {
 		return err
 	}
 
-	// Display run information if not in CI mode
-	displayRunInfo(runParams, configFile)
+	// The TUI renders its own run header and streams logs into a panel, so on
+	// that path we suppress the stdout banner and keep engine-setup logging off
+	// stderr — otherwise both paint over the alt-screen before the TUI starts.
+	useTUI, _ := shouldUseTUI(runParams)
+	if !useTUI {
+		displayRunInfo(runParams, configFile)
+	}
+	restoreLogs := quietSetupLogs(useTUI, runParams)
 
 	// Execute the simulation runs.
 	// Always process results even when some runs fail — the report shows
 	// which scenarios passed and which failed. Only abort on setup errors
 	// (nil results means we couldn't start at all).
 	results, execErr := executeRuns(cfg, runParams)
+
+	// Restore stderr logging before reporting results (the TUI interceptor has
+	// torn down by now and left the runtime logger pointed at our quiet sink).
+	restoreLogs()
+
 	if results == nil && execErr != nil {
 		return execErr
 	}
