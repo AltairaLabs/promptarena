@@ -8,14 +8,27 @@ import (
 	"github.com/charmbracelet/x/exp/teatest"
 	"github.com/stretchr/testify/require"
 
+	"github.com/AltairaLabs/PromptKit/runtime/types"
 	"github.com/AltairaLabs/promptarena/arena/tui"
 	"github.com/AltairaLabs/promptarena/arena/tui/logging"
 )
 
+// goldenLiveStore is the transcript the golden live drill-in reconciles against.
+func goldenLiveStore() *fakeConvStore {
+	s := &fakeConvStore{}
+	s.set("run-1",
+		types.Message{Role: "system", Content: "You are a helpful agent."},
+		types.Message{Role: "user", Content: "refund my order"},
+	)
+	return s
+}
+
 // TestConversationViewPage_LiveAppendsAndMeter verifies a live page appends a
 // streamed message and renders the audio meter once levels arrive.
 func TestConversationViewPage_LiveAppendsAndMeter(t *testing.T) {
-	p := NewLiveConversationViewPage("run-1", "scn", "prov", nil)
+	store := &fakeConvStore{}
+	store.set("run-1", types.Message{Role: "user", Content: "hi there"})
+	p := NewLiveConversationViewPage("run-1", "scn", "prov", nil, store)
 	p.SetSize(100, 30)
 
 	p.Update(tui.MessageCreatedMsg{ConversationID: "run-1", Index: 0, Role: "user", Content: "hi there"})
@@ -32,7 +45,7 @@ func TestConversationViewPage_LiveAppendsAndMeter(t *testing.T) {
 // this run stops live streaming (further events are no longer consumed by the
 // feed).
 func TestConversationViewPage_CompletionFlipsStatic(t *testing.T) {
-	p := NewLiveConversationViewPage("run-1", "scn", "prov", nil)
+	p := NewLiveConversationViewPage("run-1", "scn", "prov", nil, nil)
 	p.SetSize(100, 30)
 	require.True(t, p.live)
 
@@ -56,7 +69,7 @@ func TestConversationViewPage_StaticIgnoresLiveEvents(t *testing.T) {
 // TestConversationViewPage_LogsToggle verifies buffered logs surface when the
 // 'L' overlay is toggled on.
 func TestConversationViewPage_LogsToggle(t *testing.T) {
-	p := NewLiveConversationViewPage("run-1", "scn", "prov", nil)
+	p := NewLiveConversationViewPage("run-1", "scn", "prov", nil, nil)
 	p.SetSize(100, 30)
 
 	p.Update(logging.Msg{Level: "INFO", Message: "engine call started"})
@@ -71,7 +84,7 @@ func TestConversationViewPage_LogsToggle(t *testing.T) {
 func TestGoldenLiveConversation(t *testing.T) {
 	for _, sz := range goldenAppSizes {
 		t.Run(sz.name, func(t *testing.T) {
-			p := NewLiveConversationViewPage("run-1", "checkout", "claude", nil)
+			p := NewLiveConversationViewPage("run-1", "checkout", "claude", nil, goldenLiveStore())
 			p.SetSize(sz.w, sz.h)
 			p.Update(tui.ConversationStartedMsg{ConversationID: "run-1", SystemPrompt: "You are a helpful agent."})
 			p.Update(tui.MessageCreatedMsg{ConversationID: "run-1", Index: 0, Role: "user", Content: "refund my order"})

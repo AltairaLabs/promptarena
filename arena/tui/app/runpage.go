@@ -205,9 +205,8 @@ func (p *RunPage) drillDownCmd(run *tui.RunInfo) tea.Cmd {
 	if run.Status == tui.StatusRunning {
 		// GetResult needs the run's finalized metadata, which isn't written
 		// until the run ends — so mid-run it returns nothing and the live view
-		// would open empty, showing only the next streamed turn. Seed instead
-		// from the in-progress conversation state, which already holds the turns
-		// exchanged so far; the live feed dedups against this seed by index.
+		// would open empty. Seed from the in-progress conversation state, and
+		// pass the store so the feed keeps reconciling against it as turns land.
 		seed := result
 		if seed == nil && p.store != nil {
 			if st, err := p.store.GetArenaState(context.Background(), run.RunID); err == nil && st != nil {
@@ -219,7 +218,7 @@ func (p *RunPage) drillDownCmd(run *tui.RunInfo) tea.Cmd {
 				}
 			}
 		}
-		cvp = NewLiveConversationViewPage(run.RunID, scenarioID, providerID, seed)
+		cvp = NewLiveConversationViewPage(run.RunID, scenarioID, providerID, seed, p.store)
 	} else {
 		if result == nil {
 			logger.Debug("run drill-down: result not available", "run_id", run.RunID)

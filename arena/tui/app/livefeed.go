@@ -1,36 +1,39 @@
 package app
 
 import (
-	"encoding/json"
+	"context"
 
 	tea "github.com/charmbracelet/bubbletea"
 
 	"github.com/AltairaLabs/PromptKit/runtime/types"
+	"github.com/AltairaLabs/promptarena/arena/statestore"
 	"github.com/AltairaLabs/promptarena/arena/tui"
 	"github.com/AltairaLabs/promptarena/arena/tui/panels"
 )
 
-// roleSystemMessage is the message role for the system prompt. It is rendered
-// via the prompt path, never as a transcript turn in the index dedup.
+// roleSystemMessage is the message role for the system prompt.
 const roleSystemMessage = "system"
 
-// liveFeed applies streamed runtime events to a ConversationPanel during a
-// live (in-progress) drill-in. It dedups message events by index against the
-// snapshot already seeded into the panel, so the seed→tail boundary can't
-// double-count an in-flight turn.
-//
-// seeded is the number of streamed-turn messages already present in the panel
-// (e.g. len of the store snapshot used to seed it; 0 for an empty seed). A
-// system prompt added via ConversationStarted is handled separately and does
-// not participate in this index arithmetic.
-type liveFeed struct {
-	convID   string
-	seeded   int
-	appended int
+// conversationStore is the slice of the arena state store the live feed needs
+// to read the in-progress transcript for a conversation.
+type conversationStore interface {
+	GetArenaState(ctx context.Context, id string) (*statestore.ArenaConversationState, error)
 }
 
-func newLiveFeed(convID string, seeded int) *liveFeed {
-	return &liveFeed{convID: convID, seeded: seeded}
+// liveFeed keeps a ConversationPanel in sync with an in-progress run during a
+// drill-in. Rather than reconstruct the transcript from individual message
+// events — which is fragile to the system-prompt offset, seed alignment, and
+// gaps when persistence lags the broadcast — it treats a message event merely
+// as a signal to RECONCILE the panel against the store, which is the same
+// source of truth the completed (static) view uses. So the live view always
+// matches the final one; it can only ever be a beat behind, never wrong.
+type liveFeed struct {
+	convID string
+	store  conversationStore
+}
+
+func newLiveFeed(convID string, store conversationStore) *liveFeed {
+	return &liveFeed{convID: convID, store: store}
 }
 
 // Apply routes msg into panel. It returns true when msg was consumed: an
@@ -46,9 +49,11 @@ func (f *liveFeed) Apply(panel *panels.ConversationPanel, msg tea.Msg) bool {
 		if m.ConversationID != f.convID {
 			return false
 		}
+		// Fast-path the system prompt before the first turn is persisted; once
+		// it is, reconcile keeps it (the store transcript leads with system).
 		if !panel.HasSystemPrompt() {
 			panel.PrependSystemPrompt(&types.Message{
-				Role:      "system",
+				Role:      roleSystemMessage,
 				Content:   m.SystemPrompt,
 				Timestamp: m.Time,
 			})
@@ -62,76 +67,32 @@ func (f *liveFeed) Apply(panel *panels.ConversationPanel, msg tea.Msg) bool {
 		if m.ConversationID != f.convID {
 			return false
 		}
-		// The system prompt is broadcast as a MessageCreated at transcript index
-		// 0. It must NOT go through appendCreated: it isn't a conversational turn,
-		// and counting it would advance f.appended by one, shifting the index
-		// dedup so every following odd-indexed message (the user turns) is
-		// skipped — the "only assistant turns show live" bug. Render it via the
-		// prompt path instead, matching how ConversationStarted handles it.
-		if m.Role == roleSystemMessage {
-			if !panel.HasSystemPrompt() {
-				panel.PrependSystemPrompt(&types.Message{
-					Role:      roleSystemMessage,
-					Content:   m.Content,
-					Timestamp: m.Time,
-				})
-			}
-			return true
-		}
-		// The turn's message arrived — clear the transient thinking display.
+		// The turn's message arrived — clear the transient thinking display and
+		// pull the authoritative transcript.
 		panel.ClearLiveReasoning()
-		f.appendCreated(panel, &m)
+		f.reconcile(panel)
 		return true
 	case tui.MessageUpdatedMsg:
 		if m.ConversationID != f.convID {
 			return false
 		}
-		panel.UpdateMessageMetadata(m.Index, m.LatencyMs, types.CostInfo{
-			InputTokens:  m.InputTokens,
-			OutputTokens: m.OutputTokens,
-			TotalCost:    m.TotalCost,
-		})
+		// Cost/latency landed on an existing message — reconcile picks it up.
+		f.reconcile(panel)
 		return true
 	}
 	return false
 }
 
-// appendCreated converts a MessageCreatedMsg to a types.Message and appends it,
-// skipping turns whose index is already covered by the seed or prior appends.
-func (f *liveFeed) appendCreated(panel *panels.ConversationPanel, m *tui.MessageCreatedMsg) {
-	if m.Index < f.seeded+f.appended {
-		return // already have this turn (seed/tail overlap)
+// reconcile replaces the panel's transcript with the store's current messages
+// for this conversation. A no-op until the store has the conversation (nil
+// store, not-found, or empty) so an early drill-in doesn't blank the seed.
+func (f *liveFeed) reconcile(panel *panels.ConversationPanel) {
+	if f.store == nil {
+		return
 	}
-
-	var toolCalls []types.MessageToolCall
-	for _, tc := range m.ToolCalls {
-		toolCalls = append(toolCalls, types.MessageToolCall{
-			ID:   tc.ID,
-			Name: tc.Name,
-			Args: json.RawMessage(tc.Args),
-		})
+	st, err := f.store.GetArenaState(context.Background(), f.convID)
+	if err != nil || st == nil || len(st.Messages) == 0 {
+		return
 	}
-
-	var toolResult *types.MessageToolResult
-	if m.ToolResult != nil {
-		parts := make([]types.ContentPart, len(m.ToolResult.Parts))
-		copy(parts, m.ToolResult.Parts)
-		toolResult = &types.MessageToolResult{
-			ID:        m.ToolResult.ID,
-			Name:      m.ToolResult.Name,
-			Parts:     parts,
-			Error:     m.ToolResult.Error,
-			LatencyMs: m.ToolResult.LatencyMs,
-		}
-	}
-
-	panel.AppendMessage(&types.Message{
-		Role:       m.Role,
-		Content:    m.Content,
-		Timestamp:  m.Time,
-		ToolCalls:  toolCalls,
-		ToolResult: toolResult,
-		Reasoning:  m.Reasoning,
-	})
-	f.appended = m.Index - f.seeded + 1
+	panel.SyncMessages(st.Messages)
 }

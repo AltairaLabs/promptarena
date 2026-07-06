@@ -1,6 +1,8 @@
 package app
 
 import (
+	"context"
+	"errors"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -10,6 +12,29 @@ import (
 	"github.com/AltairaLabs/promptarena/arena/tui"
 	"github.com/AltairaLabs/promptarena/arena/tui/panels"
 )
+
+// fakeConvStore returns a canned transcript per conversation, standing in for
+// the arena state store the live feed reconciles against.
+type fakeConvStore struct {
+	msgs map[string][]types.Message
+}
+
+func (f *fakeConvStore) set(convID string, msgs ...types.Message) {
+	if f.msgs == nil {
+		f.msgs = map[string][]types.Message{}
+	}
+	f.msgs[convID] = msgs
+}
+
+func (f *fakeConvStore) GetArenaState(_ context.Context, id string) (*statestore.ArenaConversationState, error) {
+	m, ok := f.msgs[id]
+	if !ok {
+		return nil, errors.New("not found")
+	}
+	st := &statestore.ArenaConversationState{}
+	st.Messages = m
+	return st, nil
+}
 
 func seededPanel(t *testing.T, runID string, n int) *panels.ConversationPanel {
 	t.Helper()
@@ -23,78 +48,63 @@ func seededPanel(t *testing.T, runID string, n int) *panels.ConversationPanel {
 	return panel
 }
 
-// TestLiveFeed_AppendsNewDedupsOld verifies new turns append while turns
-// already covered by the seed are ignored, and other conversations pass through.
-func TestLiveFeed_AppendsNewDedupsOld(t *testing.T) {
-	panel := seededPanel(t, "conv-1", 2)
-	require.Equal(t, 2, panel.MessageCount())
+// TestLiveFeed_ReconcilesFullTranscript is the core guard: a message event makes
+// the feed pull the WHOLE transcript from the store, so every turn — including
+// the user turns that the old index-math dropped — appears, in order.
+func TestLiveFeed_ReconcilesFullTranscript(t *testing.T) {
+	panel := seededPanel(t, "conv-1", 0) // drilled in at start
+	store := &fakeConvStore{}
+	f := newLiveFeed("conv-1", store)
 
-	f := newLiveFeed("conv-1", 2)
+	// The authoritative transcript, exactly as the completed view would show it:
+	// system + interleaved user/assistant/tool.
+	store.set("conv-1",
+		types.Message{Role: "system", Content: "you are an agent"},
+		types.Message{Role: "user", Content: "I want a refund"},
+		types.Message{Role: "assistant", Content: "let me look"},
+		types.Message{Role: "tool", Content: "{result}"},
+		types.Message{Role: "assistant", Content: "found it"},
+		types.Message{Role: "user", Content: "thanks so much"},
+		types.Message{Role: "assistant", Content: "you are welcome"},
+	)
 
-	require.True(t, f.Apply(panel, tui.MessageCreatedMsg{
-		ConversationID: "conv-1", Index: 2, Role: "assistant", Content: "new",
-	}))
-	require.Equal(t, 3, panel.MessageCount(), "new turn appended")
+	// Any message event for this conversation triggers a reconcile.
+	require.True(t, f.Apply(panel, tui.MessageCreatedMsg{ConversationID: "conv-1", Index: 6, Role: "assistant"}))
 
-	// Older index for the same conversation: consumed, but not appended.
-	require.True(t, f.Apply(panel, tui.MessageCreatedMsg{
-		ConversationID: "conv-1", Index: 1, Role: "user", Content: "old",
-	}))
-	require.Equal(t, 3, panel.MessageCount(), "duplicate/old index ignored")
-
-	// Different conversation: not consumed.
-	require.False(t, f.Apply(panel, tui.MessageCreatedMsg{ConversationID: "conv-2", Index: 0}))
-	require.Equal(t, 3, panel.MessageCount())
-}
-
-// TestLiveFeed_SystemMessageDoesNotDropUserTurns reproduces the "only assistant
-// turns show live" bug: the system prompt is broadcast as a MessageCreated at
-// index 0. If it goes through the transcript dedup it advances the append
-// counter by one, shifting every subsequent odd index so user turns get
-// skipped. It must be routed to the prompt path instead.
-func TestLiveFeed_SystemMessageDoesNotDropUserTurns(t *testing.T) {
-	panel := seededPanel(t, "conv-1", 0) // drilled in at start: empty seed
-	f := newLiveFeed("conv-1", 0)
-
-	// The exact broadcast sequence: system at transcript index 0, then
-	// interleaved user / assistant / tool turns at sequential indices.
-	seq := []tui.MessageCreatedMsg{
-		{ConversationID: "conv-1", Index: 0, Role: "system", Content: "you are an agent"},
-		{ConversationID: "conv-1", Index: 1, Role: "user", Content: "I want a refund"},
-		{ConversationID: "conv-1", Index: 2, Role: "assistant", Content: "let me look"},
-		{ConversationID: "conv-1", Index: 3, Role: "tool", Content: "{result}"},
-		{ConversationID: "conv-1", Index: 4, Role: "assistant", Content: "found it"},
-		{ConversationID: "conv-1", Index: 5, Role: "user", Content: "thanks so much"},
-		{ConversationID: "conv-1", Index: 6, Role: "assistant", Content: "you are welcome"},
-	}
-	for i := range seq {
-		require.True(t, f.Apply(panel, seq[i]))
-	}
-
-	// system (prepended) + 6 turns = 7 messages; before the fix the user turns
-	// (and tool) were dropped, leaving only system + 3 assistants = 4.
-	require.Equal(t, 7, panel.MessageCount(), "all turns present, no user turns dropped")
-
+	require.Equal(t, 7, panel.MessageCount(), "live view holds the full transcript, no dropped turns")
 	panel.SetDimensions(160, 40)
 	out := panel.View()
-	require.Contains(t, out, "I want a refund", "first user turn must show live")
-	require.Contains(t, out, "thanks so much", "later user turn must show live")
+	require.Contains(t, out, "I want a refund", "first user turn shows live")
+	require.Contains(t, out, "thanks so much", "later user turn shows live")
+
+	// An event for another conversation is not consumed.
+	require.False(t, f.Apply(panel, tui.MessageCreatedMsg{ConversationID: "conv-2", Index: 0}))
 }
 
-// TestLiveFeed_CompletedTurnShowsReasoning proves the live interactive path:
-// a MessageCreatedMsg carrying Reasoning is appended to the panel and the
-// completed turn's detail view renders the reasoning (not just the transient
-// streaming pane). Guards the event->tui-message->panel reasoning seam.
-func TestLiveFeed_CompletedTurnShowsReasoning(t *testing.T) {
-	panel := seededPanel(t, "conv-1", 1)
-	f := newLiveFeed("conv-1", 1)
+// TestLiveFeed_ReconcilePicksUpMetadataUpdate verifies MessageUpdated also
+// reconciles (cost/latency landing on an existing turn).
+func TestLiveFeed_ReconcilePicksUpMetadataUpdate(t *testing.T) {
+	panel := seededPanel(t, "conv-1", 0)
+	store := &fakeConvStore{}
+	f := newLiveFeed("conv-1", store)
 
-	// Single non-wrapping token: the detail pane line-wraps and ANSI-styles
-	// prose, so a multi-word phrase won't survive as a contiguous substring.
-	require.True(t, f.Apply(panel, tui.MessageCreatedMsg{
-		ConversationID: "conv-1", Index: 1, Role: "assistant", Content: "ANSWER: 16",
-		Reasoning: &types.ReasoningTrace{Text: "THOUGHTMARKER"},
-	}))
+	store.set("conv-1", types.Message{Role: "user", Content: "hello"})
+	require.True(t, f.Apply(panel, tui.MessageUpdatedMsg{ConversationID: "conv-1", Index: 0}))
+	require.Equal(t, 1, panel.MessageCount())
+}
+
+// TestLiveFeed_CompletedTurnShowsReasoning proves reasoning attached to a stored
+// turn renders in the detail view after a reconcile.
+func TestLiveFeed_CompletedTurnShowsReasoning(t *testing.T) {
+	panel := seededPanel(t, "conv-1", 0)
+	store := &fakeConvStore{}
+	f := newLiveFeed("conv-1", store)
+
+	store.set("conv-1",
+		types.Message{Role: "user", Content: "q"},
+		types.Message{Role: "assistant", Content: "ANSWER: 16", Reasoning: &types.ReasoningTrace{Text: "THOUGHTMARKER"}},
+	)
+	require.True(t, f.Apply(panel, tui.MessageCreatedMsg{ConversationID: "conv-1", Index: 1, Role: "assistant"}))
 	require.Equal(t, 2, panel.MessageCount())
 
 	panel.SelectLast()
@@ -103,37 +113,23 @@ func TestLiveFeed_CompletedTurnShowsReasoning(t *testing.T) {
 	require.Contains(t, view, "THOUGHTMARKER", "reasoning text rendered in the completed turn")
 }
 
-// TestLiveFeed_AudioSystemPromptAndMetadata covers the audio, conversation
-// started (system prompt), and message updated paths.
-func TestLiveFeed_AudioSystemPromptAndMetadata(t *testing.T) {
+// TestLiveFeed_AudioSystemPromptAndOtherConv covers audio frames, the system
+// prompt fast-path, and conversation filtering.
+func TestLiveFeed_AudioSystemPromptAndOtherConv(t *testing.T) {
 	panel := seededPanel(t, "conv-1", 1)
-	f := newLiveFeed("conv-1", 1)
+	store := &fakeConvStore{}
+	f := newLiveFeed("conv-1", store)
 
 	// Audio frames are always consumed.
 	require.True(t, f.Apply(panel, tui.AudioLevelMsg{UserLevel: 0.5, AgentLevel: 0.2}))
 
-	// System prompt prepended once.
-	require.True(t, f.Apply(panel, tui.ConversationStartedMsg{
-		ConversationID: "conv-1", SystemPrompt: "You are X",
-	}))
+	// System prompt prepended once, before the store has one.
+	require.True(t, f.Apply(panel, tui.ConversationStartedMsg{ConversationID: "conv-1", SystemPrompt: "You are X"}))
 	require.True(t, panel.HasSystemPrompt())
-	require.Equal(t, 2, panel.MessageCount(), "system + seeded user")
+	require.True(t, f.Apply(panel, tui.ConversationStartedMsg{ConversationID: "conv-1", SystemPrompt: "other"}))
 
-	// A second started event is consumed but does not duplicate the prompt.
-	require.True(t, f.Apply(panel, tui.ConversationStartedMsg{
-		ConversationID: "conv-1", SystemPrompt: "other",
-	}))
-	require.Equal(t, 2, panel.MessageCount())
-
-	// Metadata update for an existing index: consumed, no panic.
-	require.True(t, f.Apply(panel, tui.MessageUpdatedMsg{
-		ConversationID: "conv-1", Index: 1, LatencyMs: 100, TotalCost: 0.01,
-	}))
-
-	// Started for another conversation is not consumed.
+	// Events for another conversation / unknown types are not consumed.
 	require.False(t, f.Apply(panel, tui.ConversationStartedMsg{ConversationID: "x"}))
-
-	// Unknown message types are not consumed.
 	require.False(t, f.Apply(panel, struct{}{}))
 }
 
@@ -141,15 +137,34 @@ func TestLiveFeed_AudioSystemPromptAndMetadata(t *testing.T) {
 // ReasoningDeltaMsg accumulates transient thinking; the turn's message clears it.
 func TestLiveFeed_ReasoningStreamsThenClears(t *testing.T) {
 	panel := seededPanel(t, "conv-1", 1)
-	f := newLiveFeed("conv-1", 1)
+	store := &fakeConvStore{}
+	store.set("conv-1", types.Message{Role: "user", Content: "seed"}, types.Message{Role: "assistant", Content: "answer"})
+	f := newLiveFeed("conv-1", store)
 
 	require.True(t, f.Apply(panel, tui.ReasoningDeltaMsg{Text: "thinking "}))
 	require.True(t, f.Apply(panel, tui.ReasoningDeltaMsg{Text: "hard"}))
 	require.Equal(t, "thinking hard", panel.LiveReasoning())
 
 	// The turn's message arriving clears the transient reasoning.
-	require.True(t, f.Apply(panel, tui.MessageCreatedMsg{
-		ConversationID: "conv-1", Index: 1, Role: "assistant", Content: "answer",
-	}))
+	require.True(t, f.Apply(panel, tui.MessageCreatedMsg{ConversationID: "conv-1", Index: 1, Role: "assistant"}))
 	require.Empty(t, panel.LiveReasoning(), "reasoning cleared when the turn message arrives")
+}
+
+// TestLiveFeed_PreservesSystemPromptOnSystemlessSync guards SyncMessages: a
+// store transcript without a leading system row must not blank a system prompt
+// already shown via ConversationStarted.
+func TestLiveFeed_PreservesSystemPromptOnSystemlessSync(t *testing.T) {
+	panel := seededPanel(t, "conv-1", 0)
+	store := &fakeConvStore{}
+	f := newLiveFeed("conv-1", store)
+
+	require.True(t, f.Apply(panel, tui.ConversationStartedMsg{ConversationID: "conv-1", SystemPrompt: "You are X"}))
+	require.True(t, panel.HasSystemPrompt())
+
+	// Store transcript arrives WITHOUT a system row.
+	store.set("conv-1", types.Message{Role: "user", Content: "hi"})
+	require.True(t, f.Apply(panel, tui.MessageCreatedMsg{ConversationID: "conv-1", Index: 0, Role: "user"}))
+
+	require.True(t, panel.HasSystemPrompt(), "system prompt preserved across a system-less sync")
+	require.Equal(t, 2, panel.MessageCount(), "system + user")
 }

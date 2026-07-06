@@ -54,6 +54,8 @@ const (
 	conversationDetailMinHeight  = 6
 	conversationColNumWidth      = 4
 	conversationColRoleWidth     = 10
+	// roleSystemPrompt is the message role for the system prompt row.
+	roleSystemPrompt = "system"
 	// conversationContentPadding is the table's own chrome, not the other
 	// columns: bubbles renders each cell with Padding(0,1) — 2 cols of padding
 	// per column, 3 columns = 6. The Content column fills the list width minus
@@ -246,6 +248,39 @@ func (c *ConversationPanel) AppendMessage(msg *types.Message) {
 		c.selectedTurnIdx = len(c.res.Messages) - 1
 	}
 	c.updateDetail(c.res)
+}
+
+// SyncMessages replaces the panel's transcript with msgs (the authoritative
+// list from the store) and re-renders. Used by the live drill-in to stay in
+// lock-step with the persisted conversation instead of reconstructing it from
+// individual events — which is fragile to gaps and index drift. The cursor is
+// preserved (clamped), and follows the tail if it was already on the last turn
+// so live turns keep scrolling into view.
+func (c *ConversationPanel) SyncMessages(msgs []types.Message) {
+	if c.res == nil {
+		c.res = &statestore.RunResult{}
+	}
+	old := c.res.Messages
+	prevCount := len(old)
+	wasAtTail := prevCount == 0 || c.selectedTurnIdx >= prevCount-1
+	// Preserve a system prompt already shown (e.g. via ConversationStarted
+	// before the store's transcript included one), so a sync that arrives
+	// system-less doesn't blank it.
+	if prevCount > 0 && old[0].Role == roleSystemPrompt &&
+		(len(msgs) == 0 || msgs[0].Role != roleSystemPrompt) {
+		msgs = append([]types.Message{old[0]}, msgs...)
+	}
+	c.res.Messages = msgs
+	c.renderedCache = make(map[int]string)
+	if wasAtTail && len(msgs) > 0 {
+		c.selectedTurnIdx = len(msgs) - 1
+	}
+	if c.tableReady {
+		c.updateTable(c.res)
+	}
+	if c.detailReady {
+		c.updateDetail(c.res)
+	}
 }
 
 // SelectedTurnIdx returns the index of the currently selected message, or 0 if
