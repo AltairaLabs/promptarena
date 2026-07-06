@@ -25,7 +25,10 @@ func TestRunsPane_ShowsAudioGlyph_WithRealMonitor(t *testing.T) {
 
 	router := arenaaudio.NewAudioRouter(arenaaudio.Rate24k)
 	defer router.Close()
-	mon.AttachRouter("run-x", router) // first attach auto-activates -> active source
+	mon.AttachRouter("run-x", router)
+	// Playback follows explicit selection (no auto-activate), so listen to
+	// this run to make it the active audio source and light up the marker.
+	mon.SetActiveRun("run-x")
 
 	m := newGoldenModel()
 	m.SetAudioMonitor(mon)

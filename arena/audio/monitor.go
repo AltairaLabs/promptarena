@@ -59,13 +59,12 @@ type Monitor struct {
 	rate int
 	sink *LocalSink
 
-	mu               sync.Mutex
-	closed           bool
-	routers          map[string]*AudioRouter
-	activeRunID      string
-	activeRouter     *AudioRouter
-	forwardCancel    context.CancelFunc
-	autoActivateNext bool
+	mu            sync.Mutex
+	closed        bool
+	routers       map[string]*AudioRouter
+	activeRunID   string
+	activeRouter  *AudioRouter
+	forwardCancel context.CancelFunc
 
 	rmsMu          sync.RWMutex
 	rmsSubscribers []chan RMSFrame
@@ -79,9 +78,8 @@ func NewMonitor(cfg MonitorConfig) (*Monitor, error) {
 		cfg.Rate = Rate24k
 	}
 	m := &Monitor{
-		rate:             cfg.Rate,
-		routers:          make(map[string]*AudioRouter),
-		autoActivateNext: true,
+		rate:    cfg.Rate,
+		routers: make(map[string]*AudioRouter),
 	}
 	if !cfg.EnableLocalSink {
 		return m, nil
@@ -119,18 +117,17 @@ func (m *Monitor) AttachRouter(runID string, router *AudioRouter) {
 	}
 	m.routers[runID] = router
 	sink := m.sink
-	autoActivated := false
-	if m.activeRouter == nil && m.autoActivateNext {
-		m.activateLocked(runID, router)
-		autoActivated = true
-	}
+	// Playback follows explicit selection only (SetActiveRun) — we do NOT
+	// auto-activate. Auto-play made sense for a single interactive run, but
+	// in a parallel batch it meant every run's audio funnelled through the
+	// one sink (auto-activate + auto-fallback), producing a nonstop parade
+	// of runs the user never picked. "Nothing selected" now means silence.
 	activeRun := m.activeRunID
 	routerCount := len(m.routers)
 	m.mu.Unlock()
 
 	logger.Debug("audio monitor: router attached",
 		"run_id", runID,
-		"auto_activated", autoActivated,
 		"active_run", activeRun,
 		"registered_routers", routerCount)
 
@@ -177,16 +174,12 @@ func (m *Monitor) DetachRouter(runID string) {
 		"run_id", runID,
 		"was_active", wasActive,
 		"remaining_routers", len(m.routers))
-	if !wasActive {
-		return
-	}
-	m.deactivateLocked()
-	// Fall back to any other registered router so audio doesn't go silent
-	// just because the run you were listening to wrapped up first.
-	for id, router := range m.routers {
-		logger.Debug("audio monitor: falling back to run after detach", "run_id", id)
-		m.activateLocked(id, router)
-		return
+	// When the run being listened to ends, stop and flush — do NOT auto-fall
+	// back to another run. Falling back is what turned "listen to one run"
+	// into "hear every run in turn". Playback resumes only when the user
+	// selects another run via SetActiveRun.
+	if wasActive {
+		m.deactivateLocked()
 	}
 }
 
@@ -206,6 +199,15 @@ func (m *Monitor) SetActiveRun(runID string) bool {
 	m.deactivateLocked()
 	m.activateLocked(runID, router)
 	return true
+}
+
+// StopPlayback stops host playback and flushes any buffered audio, leaving
+// no run active. Used by the TUI's listen toggle to silence playback without
+// selecting another run.
+func (m *Monitor) StopPlayback() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.deactivateLocked()
 }
 
 // ActiveRunID returns the run currently routed to the sink, or "" if
@@ -256,7 +258,6 @@ func (m *Monitor) Close() {
 	m.closed = true
 	m.deactivateLocked()
 	m.routers = make(map[string]*AudioRouter)
-	m.autoActivateNext = false
 	m.mu.Unlock()
 
 	if m.sink != nil {
@@ -354,6 +355,12 @@ func (m *Monitor) deactivateLocked() {
 	}
 	if m.activeRunID != "" {
 		logger.Debug("audio monitor: deactivated run", "run_id", m.activeRunID)
+	}
+	// Drop whatever this run had buffered but unplayed so it doesn't keep
+	// playing after we switch away / it ends. The sink buffers several
+	// seconds; without this the tail lingers and bleeds into the next run.
+	if m.sink != nil {
+		m.sink.Flush()
 	}
 	m.activeRunID = ""
 	m.activeRouter = nil

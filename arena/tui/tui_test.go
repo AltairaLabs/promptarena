@@ -1128,6 +1128,7 @@ type fakeAudioMonitor struct {
 func (f *fakeAudioMonitor) SetActiveRun(runID string) bool { f.active = runID; return true }
 func (f *fakeAudioMonitor) ActiveRunID() string            { return f.active }
 func (f *fakeAudioMonitor) HasAudio(runID string) bool     { return f.has[runID] }
+func (f *fakeAudioMonitor) StopPlayback()                  { f.active = "" }
 
 func TestConvertToRunInfos_AudioIndicators(t *testing.T) {
 	m := NewModel("test.yaml", 2)
@@ -1153,6 +1154,27 @@ func TestConvertToRunInfos_AudioIndicators(t *testing.T) {
 
 	assert.False(t, infos[2].HasAudio, "run-text has no audio")
 	assert.False(t, infos[2].AudioActive)
+}
+
+func TestToggleListenHighlightedRun(t *testing.T) {
+	m := NewModel("test.yaml", 2)
+	m.activeRuns = append(m.activeRuns,
+		RunInfo{RunID: "run-a"},
+		RunInfo{RunID: "run-b"},
+	)
+	fake := &fakeAudioMonitor{has: map[string]bool{"run-a": true, "run-b": true}}
+	m.SetAudioMonitor(fake)
+	// Warm up the runs panel so its table cursor (defaults to row 0 = run-a) exists.
+	m.Update(tea.WindowSizeMsg{Width: 160, Height: 50})
+	_ = m.View()
+
+	// First toggle on the highlighted run starts listening to it.
+	m.toggleListenHighlightedRun()
+	assert.Equal(t, "run-a", fake.ActiveRunID(), "listen should activate the highlighted run")
+
+	// Toggling the same run again stops playback.
+	m.toggleListenHighlightedRun()
+	assert.Equal(t, "", fake.ActiveRunID(), "listening to the active run again should stop playback")
 }
 
 // TestConvertToRunInfos_NoMonitor confirms text runs (nil monitor) never flag audio.

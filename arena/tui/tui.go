@@ -106,6 +106,7 @@ type audioMonitor interface {
 	SetActiveRun(runID string) bool
 	ActiveRunID() string
 	HasAudio(runID string) bool
+	StopPlayback()
 }
 
 // RunInfo tracks information about a single run
@@ -386,6 +387,7 @@ func (m *Model) View() string {
 		{Keys: "↑/↓", Description: "navigate/scroll"},
 		{Keys: "tab", Description: "cycle focus"},
 		{Keys: "enter", Description: "open conversation"},
+		{Keys: "l", Description: "listen"},
 		{Keys: "z", Description: "collapse"},
 		{Keys: "esc", Description: "back"},
 		{Keys: "q", Description: "quit"},
@@ -531,6 +533,11 @@ func (m *Model) handleMainPageKey(msg tea.KeyMsg) (tea.Model, tea.Cmd) {
 	case "z":
 		m.mainPage.ToggleCollapseFocused()
 		return m, nil
+	case "l":
+		if m.activePane == paneRuns {
+			m.toggleListenHighlightedRun()
+			return m, nil
+		}
 	}
 	// Note: manual pane resize (formerly ctrl+arrows) was removed — those
 	// chords are swallowed by common terminals (iTerm2/tmux). Panes auto-layout;
@@ -644,6 +651,29 @@ func (m *Model) selectHighlightedRun() {
 	if m.audioMonitor != nil {
 		m.audioMonitor.SetActiveRun(m.activeRuns[idx].RunID)
 	}
+}
+
+// toggleListenHighlightedRun routes host audio playback to the run under the
+// runs-table cursor, or stops playback if that run is already the audio
+// source. Unlike Enter it does not drill into the conversation — it is the
+// "listen to this run" control that pairs with the runs-pane audio indicator.
+// Playback no longer auto-starts, so this (or selecting a run) is how the user
+// chooses which of several concurrent runs to hear.
+func (m *Model) toggleListenHighlightedRun() {
+	if m.audioMonitor == nil {
+		return
+	}
+	table := m.mainPage.RunsPanel().Table()
+	idx := table.Cursor()
+	if idx < 0 || idx >= len(m.activeRuns) {
+		return
+	}
+	runID := m.activeRuns[idx].RunID
+	if m.audioMonitor.ActiveRunID() == runID {
+		m.audioMonitor.StopPlayback()
+		return
+	}
+	m.audioMonitor.SetActiveRun(runID)
 }
 
 // TakeSelectedRun returns the run the user last selected for drill-down (Enter

@@ -241,6 +241,31 @@ func (s *LocalSink) Push(frame Frame) {
 	}
 }
 
+// Flush discards any audio still queued for playback. Used when host
+// playback switches away from a run (or the run ends) so the previous
+// run's buffered tail is cut immediately instead of draining — with a
+// deep buffer that tail could otherwise play for seconds after the run,
+// and bleed into whatever plays next. No-op in noop mode.
+func (s *LocalSink) Flush() {
+	if s.noop || s.stream == nil {
+		return
+	}
+	drainSampleChan(s.stream.left)
+	drainSampleChan(s.stream.right)
+}
+
+// drainSampleChan non-blockingly removes every queued item from ch.
+// Channel receives are safe against the concurrent oto reader.
+func drainSampleChan(ch chan []int16) {
+	for {
+		select {
+		case <-ch:
+		default:
+			return
+		}
+	}
+}
+
 // WaitDrained blocks until both per-direction audio queues are empty,
 // or until the deadline elapses, then waits a small grace period for
 // the host audio device's own output buffer to flush.

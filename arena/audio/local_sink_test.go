@@ -161,6 +161,38 @@ func TestLocalSink_RealPathInterleavesStereoOnReaderPull(t *testing.T) {
 	}
 }
 
+func TestLocalSink_FlushDropsQueuedAudio(t *testing.T) {
+	// No-op sink Flush is safe.
+	(&LocalSink{noop: true}).Flush()
+
+	fake := &fakeOtoContext{}
+	sink, err := NewLocalSink(LocalSinkConfig{
+		Rate:       Rate24k,
+		newContext: func(_, _ int) (otoContext, error) { return fake, nil },
+	})
+	if err != nil {
+		t.Fatalf("NewLocalSink: %v", err)
+	}
+	defer sink.Close()
+
+	sink.Push(Frame{Direction: DirectionInput, Samples: []int16{1, 2}})
+	sink.Push(Frame{Direction: DirectionOutput, Samples: []int16{10, 20}})
+
+	// Flush must drop everything queued so it can't play after we switch away.
+	sink.Flush()
+
+	buf := make([]byte, 8)
+	n, _ := fake.reader.Read(buf)
+	if n != 8 {
+		t.Fatalf("expected 8 bytes, got %d", n)
+	}
+	for i, v := range buf[:n] {
+		if v != 0 {
+			t.Fatalf("expected silence after flush, byte[%d]=%d (full %v)", i, v, buf[:n])
+		}
+	}
+}
+
 func TestLocalSink_ReaderReturnsSilenceWhenIdle(t *testing.T) {
 	fake := &fakeOtoContext{}
 	sink, err := NewLocalSink(LocalSinkConfig{
