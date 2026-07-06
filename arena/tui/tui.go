@@ -105,6 +105,7 @@ type Model struct {
 type audioMonitor interface {
 	SetActiveRun(runID string) bool
 	ActiveRunID() string
+	HasAudio(runID string) bool
 }
 
 // RunInfo tracks information about a single run
@@ -456,10 +457,19 @@ func (m *Model) renderMainPage(contentHeight int) string {
 
 // convertToRunInfos converts model's activeRuns to panel RunInfo format
 func (m *Model) convertToRunInfos() []panels.RunInfo {
+	// Read the active audio run once so every row's indicator is consistent
+	// within a single render. Nil monitor (text runs) leaves audio flags off.
+	activeAudioRunID := ""
+	if m.audioMonitor != nil {
+		activeAudioRunID = m.audioMonitor.ActiveRunID()
+	}
+
 	runs := make([]panels.RunInfo, len(m.activeRuns))
 	for i := range m.activeRuns {
+		runID := m.activeRuns[i].RunID
+		hasAudio := m.audioMonitor != nil && m.audioMonitor.HasAudio(runID)
 		runs[i] = panels.RunInfo{
-			RunID:            m.activeRuns[i].RunID,
+			RunID:            runID,
 			Scenario:         m.activeRuns[i].Scenario,
 			Provider:         m.activeRuns[i].Provider,
 			Region:           m.activeRuns[i].Region,
@@ -471,6 +481,8 @@ func (m *Model) convertToRunInfos() []panels.RunInfo {
 			CurrentTurnIndex: m.activeRuns[i].CurrentTurnIndex,
 			CurrentTurnRole:  m.activeRuns[i].CurrentTurnRole,
 			Selected:         m.activeRuns[i].Selected,
+			HasAudio:         hasAudio,
+			AudioActive:      hasAudio && runID == activeAudioRunID,
 		}
 	}
 	return runs

@@ -89,6 +89,29 @@ func TestMonitor_FirstAttachedRunBecomesActive(t *testing.T) {
 	}
 }
 
+func TestMonitor_HasAudioTracksRegistration(t *testing.T) {
+	m := newTestMonitor(t)
+	router := NewAudioRouter(Rate24k)
+	defer router.Close()
+
+	if m.HasAudio("run-1") {
+		t.Fatal("run should not have audio before attach")
+	}
+	if m.HasAudio("") {
+		t.Fatal("empty run ID never has audio")
+	}
+
+	m.AttachRouter("run-1", router)
+	if !m.HasAudio("run-1") {
+		t.Error("run should have audio after attach")
+	}
+
+	m.DetachRouter("run-1")
+	if m.HasAudio("run-1") {
+		t.Error("run should not have audio after detach")
+	}
+}
+
 func TestMonitor_SubsequentRunsDoNotAutoActivate(t *testing.T) {
 	m := newTestMonitor(t)
 

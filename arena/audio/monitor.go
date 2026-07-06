@@ -199,6 +199,20 @@ func (m *Monitor) ActiveRunID() string {
 	return m.activeRunID
 }
 
+// HasAudio reports whether the named run has a live audio stream registered
+// with the monitor (i.e. it is a duplex/realtime run currently producing
+// audio). Routers self-remove when the run ends, so this is false for
+// finished runs. Used by the TUI to show an audio indicator per run.
+func (m *Monitor) HasAudio(runID string) bool {
+	if runID == "" {
+		return false
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	_, ok := m.routers[runID]
+	return ok
+}
+
 // SubscribeRMS returns a channel of RMS frames sourced from the sink's
 // playback timing (so the meter is in sync with the user's ears,
 // regardless of which run is active). The buffer is per-subscriber;
