@@ -10,6 +10,10 @@ import (
 	"github.com/AltairaLabs/promptarena/arena/tui/panels"
 )
 
+// roleSystemMessage is the message role for the system prompt. It is rendered
+// via the prompt path, never as a transcript turn in the index dedup.
+const roleSystemMessage = "system"
+
 // liveFeed applies streamed runtime events to a ConversationPanel during a
 // live (in-progress) drill-in. It dedups message events by index against the
 // snapshot already seeded into the panel, so the seed→tail boundary can't
@@ -57,6 +61,22 @@ func (f *liveFeed) Apply(panel *panels.ConversationPanel, msg tea.Msg) bool {
 	case tui.MessageCreatedMsg:
 		if m.ConversationID != f.convID {
 			return false
+		}
+		// The system prompt is broadcast as a MessageCreated at transcript index
+		// 0. It must NOT go through appendCreated: it isn't a conversational turn,
+		// and counting it would advance f.appended by one, shifting the index
+		// dedup so every following odd-indexed message (the user turns) is
+		// skipped — the "only assistant turns show live" bug. Render it via the
+		// prompt path instead, matching how ConversationStarted handles it.
+		if m.Role == roleSystemMessage {
+			if !panel.HasSystemPrompt() {
+				panel.PrependSystemPrompt(&types.Message{
+					Role:      roleSystemMessage,
+					Content:   m.Content,
+					Timestamp: m.Time,
+				})
+			}
+			return true
 		}
 		// The turn's message arrived — clear the transient thinking display.
 		panel.ClearLiveReasoning()

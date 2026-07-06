@@ -47,6 +47,40 @@ func TestLiveFeed_AppendsNewDedupsOld(t *testing.T) {
 	require.Equal(t, 3, panel.MessageCount())
 }
 
+// TestLiveFeed_SystemMessageDoesNotDropUserTurns reproduces the "only assistant
+// turns show live" bug: the system prompt is broadcast as a MessageCreated at
+// index 0. If it goes through the transcript dedup it advances the append
+// counter by one, shifting every subsequent odd index so user turns get
+// skipped. It must be routed to the prompt path instead.
+func TestLiveFeed_SystemMessageDoesNotDropUserTurns(t *testing.T) {
+	panel := seededPanel(t, "conv-1", 0) // drilled in at start: empty seed
+	f := newLiveFeed("conv-1", 0)
+
+	// The exact broadcast sequence: system at transcript index 0, then
+	// interleaved user / assistant / tool turns at sequential indices.
+	seq := []tui.MessageCreatedMsg{
+		{ConversationID: "conv-1", Index: 0, Role: "system", Content: "you are an agent"},
+		{ConversationID: "conv-1", Index: 1, Role: "user", Content: "I want a refund"},
+		{ConversationID: "conv-1", Index: 2, Role: "assistant", Content: "let me look"},
+		{ConversationID: "conv-1", Index: 3, Role: "tool", Content: "{result}"},
+		{ConversationID: "conv-1", Index: 4, Role: "assistant", Content: "found it"},
+		{ConversationID: "conv-1", Index: 5, Role: "user", Content: "thanks so much"},
+		{ConversationID: "conv-1", Index: 6, Role: "assistant", Content: "you are welcome"},
+	}
+	for i := range seq {
+		require.True(t, f.Apply(panel, seq[i]))
+	}
+
+	// system (prepended) + 6 turns = 7 messages; before the fix the user turns
+	// (and tool) were dropped, leaving only system + 3 assistants = 4.
+	require.Equal(t, 7, panel.MessageCount(), "all turns present, no user turns dropped")
+
+	panel.SetDimensions(160, 40)
+	out := panel.View()
+	require.Contains(t, out, "I want a refund", "first user turn must show live")
+	require.Contains(t, out, "thanks so much", "later user turn must show live")
+}
+
 // TestLiveFeed_CompletedTurnShowsReasoning proves the live interactive path:
 // a MessageCreatedMsg carrying Reasoning is appended to the panel and the
 // completed turn's detail view renders the reasoning (not just the transient
