@@ -2,6 +2,8 @@
 package app
 
 import (
+	"github.com/AltairaLabs/promptarena/arena/tui"
+	"github.com/AltairaLabs/promptarena/arena/tui/logging"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -90,10 +92,47 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
+	// Background events (run/turn/message lifecycle from the event adapter) go
+	// to EVERY page in the stack. A page you've navigated away from — the
+	// RunPage while you're drilled into a conversation — still owns live state
+	// these events drive. Delivering them only to the top page is how a run
+	// could finish while you were in its conversation and never flip to Done:
+	// the RunPage's model never saw RunCompletedMsg, and nothing replays it on
+	// the way back out. User input / navigation still targets the top page only.
+	if isBackgroundEvent(msg) {
+		var cmds []tea.Cmd
+		for i := range a.stack {
+			newPage, cmd := a.stack[i].Update(msg)
+			a.stack[i] = newPage
+			if cmd != nil {
+				cmds = append(cmds, cmd)
+			}
+		}
+		return a, tea.Batch(cmds...)
+	}
+
 	// Forward all other messages to the top page.
 	newPage, cmd := a.top().Update(msg)
 	a.stack[len(a.stack)-1] = newPage
 	return a, cmd
+}
+
+// isBackgroundEvent reports whether a message is an engine/event-adapter
+// lifecycle update (as opposed to user input or navigation). These carry run,
+// turn, conversation, and log state that background pages — not just the top —
+// need to stay current. Keep this in sync with the messages the tui
+// EventAdapter and log interceptor emit.
+func isBackgroundEvent(msg tea.Msg) bool {
+	switch msg.(type) {
+	case tui.RunStartedMsg, tui.RunCompletedMsg, tui.RunFailedMsg,
+		tui.TurnStartedMsg, tui.TurnCompletedMsg,
+		tui.MessageCreatedMsg, tui.MessageUpdatedMsg,
+		tui.ReasoningDeltaMsg, tui.ConversationStartedMsg,
+		tui.AudioLevelMsg, logging.Msg:
+		return true
+	default:
+		return false
+	}
 }
 
 // View implements tea.Model. It delegates to the top page.
