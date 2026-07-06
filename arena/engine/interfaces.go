@@ -186,6 +186,11 @@ type ConversationResult struct {
 	Error  string `json:"error,omitempty"`  // Error message if execution failed
 	Failed bool   `json:"failed,omitempty"` // Whether execution failed (but partial results may be available)
 
+	// Err is the underlying typed error behind Error, preserved (not
+	// serialized) so retry logic can classify by type/status instead of
+	// matching on the stringified message. nil unless Failed.
+	Err error `json:"-"`
+
 	Skipped    bool   `json:"skipped,omitempty"`     // Whether execution was skipped due to transient provider error
 	SkipReason string `json:"skip_reason,omitempty"` // Reason for skipping
 }
