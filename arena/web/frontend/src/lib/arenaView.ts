@@ -9,7 +9,9 @@ import type {
   TrialRow,
   TrialMatrix,
   Standing,
+  OverallGauge,
 } from "@/types";
+import type { MetricSpec } from "@/components/atlas/types";
 
 function endTimeMs(r: RunResult): number {
   const t = Date.parse(r.EndTime);
@@ -128,4 +130,43 @@ export function buildStandings(matrix: TrialMatrix): Standing[] {
     wins: s.wins,
     leader: topWins > 0 && s.wins === topWins,
   }));
+}
+
+// buildOverallGauge rolls the matrix up into a single pass-rate readout.
+// Cells with no run yet (hasData === false) are excluded from both the
+// numerator and the denominator so an empty grid doesn't read as 0%.
+export function buildOverallGauge(matrix: TrialMatrix): OverallGauge {
+  const cellsWithData = matrix.rows.flatMap((row) => row.cells).filter((c) => c.hasData);
+  const passed = cellsWithData.filter((c) => c.passed).length;
+  const total = cellsWithData.length;
+  const passRate = total > 0 ? Math.round((100 * passed) / total) : 0;
+  return { passRate, passed, total, caption: `${passed} / ${total} passed` };
+}
+
+// p50 uses the lower-middle element of the sorted durations — a
+// deterministic nearest-rank median that needs no interpolation.
+function p50(values: number[]): number {
+  if (values.length === 0) return 0;
+  const sorted = [...values].sort((a, b) => a - b);
+  return sorted[Math.floor((sorted.length - 1) / 2)];
+}
+
+// buildMetrics summarizes the run set into the instrument-readout row:
+// trial count, total spend, p50 latency, and total tokens (in thousands).
+// `matrix` is accepted for symmetry with the rest of the selector API even
+// though today's readout is derived entirely from the raw results.
+export function buildMetrics(results: RunResult[], _matrix: TrialMatrix): MetricSpec[] {
+  const totalCost = results.reduce((sum, r) => sum + (r.Cost?.total_cost_usd ?? 0), 0);
+  const totalTokens = results.reduce(
+    (sum, r) => sum + (r.Cost?.input_tokens ?? 0) + (r.Cost?.output_tokens ?? 0),
+    0,
+  );
+  const latencyP50 = p50(results.map((r) => r.Duration ?? 0));
+
+  return [
+    { label: "TRIALS", value: String(results.length), tone: "default" },
+    { label: "SPEND", value: `$${totalCost.toFixed(4)}`, tone: "gold" },
+    { label: "P50 LATENCY", value: String(latencyP50), unit: "ms", tone: "default" },
+    { label: "TOKENS", value: (totalTokens / 1000).toFixed(1), unit: "k", tone: "healthy", dot: "healthy" },
+  ];
 }
