@@ -2,6 +2,8 @@ package app
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -121,8 +123,34 @@ func (p *DeployPage) handleKey(msg tea.KeyMsg) (Page, tea.Cmd) {
 }
 
 // handlePreflightKey handles key input while the preflight probe is running
-// or has just completed. Fleshed out in Task 3.2.
-func (p *DeployPage) handlePreflightKey(_ tea.KeyMsg) (Page, tea.Cmd) {
+// or has just completed. Every transition is gated on the relevant pf field
+// so a stale or partial preflight snapshot can't be bypassed:
+//
+//   - 'l' (login) only fires when the adapter supports login and isn't
+//     already authenticated.
+//   - 'p' (plan) only fires once pf.Ready() — adapter installed, connected
+//     without error, and authenticated.
+//   - 'r' (retry) always re-runs the preflight probe.
+func (p *DeployPage) handlePreflightKey(msg tea.KeyMsg) (Page, tea.Cmd) {
+	if p.pf == nil || msg.Type != tea.KeyRunes {
+		return p, nil
+	}
+	switch string(msg.Runes) {
+	case "l":
+		if p.pf.SupportsLogin && !p.pf.Authenticated {
+			p.state = deployStateLogin
+			// Phase 4 wires the actual login command; entering the state is
+			// enough for now.
+		}
+	case "p":
+		if p.pf.Ready() {
+			p.state = deployStatePlanning
+			// Phase 4 wires the actual plan command; entering the state is
+			// enough for now.
+		}
+	case "r":
+		return p, p.runPreflight()
+	}
 	return p, nil
 }
 
@@ -131,7 +159,7 @@ func (p *DeployPage) View() string {
 	body := func(_ int) string {
 		switch p.state {
 		case deployStatePreflight:
-			return p.viewPreflight()
+			return p.viewPreflight(p.w)
 		case deployStateError:
 			return p.viewError()
 		default:
@@ -153,24 +181,83 @@ func (p *DeployPage) chrome() views.ChromeConfig {
 
 // keyBindings returns the footer key hints for the current state.
 func (p *DeployPage) keyBindings() []views.KeyBinding {
-	return []views.KeyBinding{
-		{Keys: "esc", Description: "back"},
+	kb := []views.KeyBinding{{Keys: "esc", Description: "back"}}
+	if p.state != deployStatePreflight || p.pf == nil {
+		return kb
 	}
+	// Prepend in priority order so the most relevant action reads first.
+	if p.pf.Ready() {
+		kb = append([]views.KeyBinding{{Keys: "p", Description: "plan"}}, kb...)
+	}
+	if p.pf.SupportsLogin && !p.pf.Authenticated {
+		kb = append([]views.KeyBinding{{Keys: "l", Description: "login"}}, kb...)
+	}
+	kb = append([]views.KeyBinding{{Keys: "r", Description: "retry"}}, kb...)
+	return kb
 }
 
-// viewPreflight renders the preflight-check step. Fleshed out in Task 3.2.
-func (p *DeployPage) viewPreflight() string {
-	label := lipgloss.NewStyle().
+// viewPreflight renders the preflight-check step: target provider, a loudly
+// flagged environment banner for non-default envs, adapter presence, and
+// auth state. When the adapter isn't installed it renders the install
+// command instead of offering to plan.
+func (p *DeployPage) viewPreflight(width int) string {
+	labelStyle := lipgloss.NewStyle().
 		Bold(true).
 		Foreground(lipgloss.Color(theme.ColorPrimary)).
 		Render("Checking deploy adapter…")
 	if p.pf == nil {
-		return label
+		return theme.BorderedBoxStyle.MaxWidth(width).Render(labelStyle)
 	}
-	status := lipgloss.NewStyle().
-		Foreground(lipgloss.Color(theme.ColorGray)).
-		Render("provider: " + p.pf.Provider)
-	return label + "\n\n" + status
+	pf := p.pf
+
+	lines := []string{
+		theme.LabelStyle.Render("Provider: ") + theme.ValueStyle.Render(pf.Provider),
+		preflightEnvLine(pf.Env),
+		"",
+	}
+
+	if pf.AdapterFound {
+		lines = append(lines, theme.SuccessStyle.Render(fmt.Sprintf("✓ %s v%s", pf.Provider, pf.AdapterVersion)))
+	} else {
+		lines = append(lines, theme.ErrorStyle.Render("✗ not installed"))
+	}
+
+	if pf.Authenticated {
+		lines = append(lines, theme.SuccessStyle.Render("✓ authenticated"))
+	} else {
+		lines = append(lines, theme.ErrorStyle.Render("✗ not authenticated"))
+	}
+
+	if !pf.AdapterFound {
+		lines = append(lines, "", "Install with: "+pf.InstallCommand)
+	}
+
+	body := strings.Join(lines, "\n")
+	return theme.BorderedBoxStyle.MaxWidth(width).Render(body)
+}
+
+// preflightEnvLine renders the target environment. flow.DefaultEnv renders
+// quietly; every other environment is rendered loudly so an operator can't
+// miss it — production gets an inverse ColorError banner, anything else gets
+// bold ColorWarning text.
+func preflightEnvLine(env string) string {
+	quiet := theme.LabelStyle.Render("Environment: ") + theme.ValueStyle.Render(env)
+	if env == flow.DefaultEnv {
+		return quiet
+	}
+	label := "ENVIRONMENT: " + strings.ToUpper(env)
+	if env == "production" {
+		return lipgloss.NewStyle().
+			Bold(true).
+			Foreground(lipgloss.Color(theme.ColorWhite)).
+			Background(lipgloss.Color(theme.ColorError)).
+			Padding(0, 1).
+			Render(label)
+	}
+	return lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color(theme.ColorWarning)).
+		Render("⚠ " + label)
 }
 
 // viewError renders the error step. Fleshed out in Task 3.2.
