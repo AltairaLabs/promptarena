@@ -1,0 +1,76 @@
+/* workflow.css — Atlas overrides for @xyflow/react's default chrome.
+   React Flow ships its own light theme; we repoint every surface/hairline/
+   text color it uses onto Atlas tokens so the graph reads as part of the
+   same night-sky (dark) / paper (light) system as the rest of the app.
+   `colorMode` on <ReactFlow> flips React Flow's own `.dark`/`.light` class;
+   these rules key off the app's [data-theme] so both stay in lockstep. */
+
+.react-flow {
+  background: transparent;
+  --xy-background-color: transparent;
+  --xy-edge-label-background-color: var(--surface, var(--surface-1));
+  --xy-minimap-background-color: var(--surface, var(--surface-1));
+}
+
+.react-flow__background {
+  opacity: 0.6;
+}
+
+.react-flow__background pattern circle,
+.react-flow__background pattern path {
+  fill: var(--star-dim);
+  stroke: var(--star-dim);
+}
+
+.react-flow__controls {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: none;
+  border: 1px solid var(--hairline);
+}
+
+.react-flow__controls-button {
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--hairline);
+  color: var(--star-500);
+}
+
+.react-flow__controls-button:hover {
+  background: var(--surface-1);
+  color: var(--star-300);
+}
+
+.react-flow__controls-button svg {
+  fill: currentColor;
+}
+
+.react-flow__minimap {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+  background: var(--surface-2);
+}
+
+.react-flow__minimap-mask {
+  fill: color-mix(in srgb, var(--ink-canvas, var(--surface-1)) 60%, transparent);
+}
+
+.react-flow__attribution {
+  display: none;
+}
+
+.react-flow__edge-path {
+  stroke-linecap: round;
+}
+
+.react-flow__edge-text {
+  fill: var(--star-500);
+}
+
+.react-flow__edge-textbg {
+  fill: var(--surface, var(--surface-1));
+}
+
+[data-theme="light"] .react-flow__minimap-mask {
+  fill: color-mix(in srgb, var(--ink-canvas, var(--surface-1)) 45%, transparent);
+}
