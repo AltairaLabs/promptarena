@@ -1,18 +1,53 @@
-import { useCallback, useEffect, useRef, useState, Component } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, Component } from "react";
 import type { ReactNode, ErrorInfo } from "react";
 import { Layout } from "@/components/Layout";
-import { SummaryCards } from "@/components/SummaryCards";
-import { RunProgress } from "@/components/RunProgress";
 import { RunDetail } from "@/components/RunDetail";
 import { DevToolsPanel } from "@/components/DevToolsPanel";
 import { RunControls } from "@/components/RunControls";
 import { EmptyStateLauncher } from "@/components/EmptyStateLauncher";
 import { HistoricalResults } from "@/components/HistoricalResults";
 import { InteractiveChat } from "@/components/InteractiveChat";
+import { TrialMatrix } from "@/components/arena/TrialMatrix";
+import { Standings } from "@/components/arena/Standings";
 import { useArenaEvents } from "@/hooks/useArenaEvents";
 import { useArenaAPI } from "@/hooks/useArenaAPI";
 import { AudioPlayer } from "@/audio/player";
-import type { Message, RunResult } from "@/types";
+import { buildMatrix, buildStandings } from "@/lib/arenaView";
+import type { Message, RunResult, ActiveRun, ProviderInfo, ScenarioInfo } from "@/types";
+
+// activeRunToResult maps a still-running ActiveRun into a synthetic
+// RunResult-shaped entry so buildMatrix can overlay it onto the trial
+// matrix without any special-casing — it lands in the same scenario×
+// provider cell as the run it's replacing, and stays selectable via its
+// runId while it's in flight.
+function activeRunToResult(run: ActiveRun): RunResult {
+  return {
+    RunID: run.runId,
+    PromptPack: "",
+    Region: run.region,
+    ScenarioID: run.scenario,
+    ProviderID: run.provider,
+    Params: {},
+    Messages: [],
+    Commit: {},
+    Cost: {
+      input_tokens: run.costs.inputTokens,
+      output_tokens: run.costs.outputTokens,
+      input_cost_usd: 0,
+      output_cost_usd: 0,
+      total_cost_usd: run.costs.totalCost,
+    },
+    Violations: [],
+    StartTime: run.startTime,
+    EndTime: run.startTime,
+    Duration: run.duration ?? 0,
+    Error: run.error ?? "",
+    SelfPlay: false,
+    PersonaID: "",
+    MediaOutputs: [],
+    A2AAgents: [],
+  };
+}
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   constructor(props: { children: ReactNode }) {
@@ -45,14 +80,29 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
 export default function App() {
   const { registerInteractiveRun, ...state } = useArenaEvents();
   const [activeTab, setActiveTab] = useState<"runs" | "chat">("runs");
-  const { startRun, getResults, getResult, clearResults, loading } = useArenaAPI();
+  const { startRun, getResults, getResult, getRunOptions, clearResults, loading } = useArenaAPI();
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [showLedger, setShowLedger] = useState(false);
   const [devToolsMessage, setDevToolsMessage] = useState<Message | undefined>();
   const [devToolsAllMessages, setDevToolsAllMessages] = useState<Message[] | undefined>();
   const [devToolsIndex, setDevToolsIndex] = useState<number | undefined>();
   const [devToolsOpen, setDevToolsOpen] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
   const [historicalResults, setHistoricalResults] = useState<RunResult[]>([]);
+  const [providers, setProviders] = useState<ProviderInfo[]>([]);
+  const [scenarios, setScenarios] = useState<ScenarioInfo[]>([]);
+
+  // Run-options (the providers/scenarios universe) drive the matrix's
+  // columns/rows — same fetch pattern as RunControls/EmptyStateLauncher.
+  useEffect(() => {
+    getRunOptions()
+      .then((opts) => {
+        setProviders(opts.providers ?? []);
+        setScenarios(opts.scenarios ?? []);
+      })
+      .catch(() => {});
+  }, [getRunOptions]);
 
   // Single global AudioPlayer; rebuilt when the user switches Listen target.
   const playerRef = useRef<AudioPlayer | null>(null);
@@ -104,12 +154,39 @@ export default function App() {
   // The active interactive-chat session, surfaced as the DevTools "run" on the chat tab.
   const interactiveRun = Object.values(state.runs).find((r) => r.scenario === "interactive");
 
+  // The trial matrix overlays in-flight runs onto historical results so a
+  // cell with a live run stays selectable while its trial is running.
+  const matrixResults = useMemo(
+    () => [...historicalResults, ...liveRuns.map(activeRunToResult)],
+    [historicalResults, liveRuns],
+  );
+  const matrix = useMemo(
+    () => buildMatrix(matrixResults, providers, scenarios),
+    [matrixResults, providers, scenarios],
+  );
+  const standings = useMemo(() => buildStandings(matrix), [matrix]);
+
   const handleSelectMessage = (index: number, message?: Message, allMsgs?: Message[]) => {
     setDevToolsIndex(index);
     setDevToolsMessage(message);
     setDevToolsAllMessages(allMsgs);
     setDevToolsOpen(true);
   };
+
+  // Selecting a matrix cell drives both the matrix's own selection ring and
+  // the existing selectedRunId-based RunDetail navigation, so the current
+  // detail view keeps opening exactly as it did before the matrix existed.
+  const handleSelectCell = useCallback((key: string) => {
+    setSelectedKey(key);
+    const [scenarioId, providerId] = key.split(":");
+    const cell = matrix.rows
+      .find((row) => row.scenarioId === scenarioId)
+      ?.cells.find((c) => c.providerId === providerId);
+    if (cell?.hasData && cell.runId) {
+      setSelectedRunId(cell.runId);
+      setDevToolsOpen(false);
+    }
+  }, [matrix]);
 
   const handleStartRun = useCallback(async (providerId: string, scenarioId: string) => {
     setStartError(null);
@@ -237,23 +314,17 @@ export default function App() {
                   {startError && (
                     <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-[#EF4444]">{startError}</div>
                   )}
-                  <SummaryCards
-                    totalRuns={liveRuns.length + historicalResults.length}
-                    activeRuns={liveRuns.filter((r) => r.status === "running").length}
-                    completedRuns={liveRuns.filter((r) => r.status !== "running").length + historicalResults.length}
-                    failedRuns={liveRuns.filter((r) => r.status === "failed").length + historicalResults.filter((r) => !!r.Error).length}
-                    totalCost={state.totalCost + historicalResults.reduce((sum, r) => sum + (r.Cost?.total_cost_usd || 0), 0)}
-                    totalTokens={state.totalTokens + historicalResults.reduce((sum, r) => sum + (r.Cost?.input_tokens || 0) + (r.Cost?.output_tokens || 0), 0)}
-                  />
-                  {liveRuns.length > 0 && (
-                    <RunProgress
-                      runs={liveRuns}
-                      listeningRunId={listeningRunId}
-                      onSelectRun={setSelectedRunId}
-                      onToggleListen={handleListen}
-                    />
-                  )}
-                  {historicalResults.length > 0 && (
+                  <div className="flex justify-end">
+                    <button
+                      onClick={() => setShowLedger((v) => !v)}
+                      className="rounded-lg border border-mist bg-surface px-3 py-1.5 text-xs font-medium text-fg-muted hover:text-fg hover:bg-[var(--c-surface-2)] transition-colors"
+                    >
+                      {showLedger ? "Hide ledger" : "Show ledger"}
+                    </button>
+                  </div>
+                  <TrialMatrix matrix={matrix} selectedKey={selectedKey} onSelect={handleSelectCell} />
+                  <Standings standings={standings} />
+                  {showLedger && (
                     <HistoricalResults
                       results={historicalResults}
                       onSelectRun={setSelectedRunId}
