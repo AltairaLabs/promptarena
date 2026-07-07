@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ArrowLeft, Send } from "lucide-react";
 import { ConversationThread } from "@/components/ConversationThread";
+import { Button } from "@/components/atlas/Button";
 import { useInteractiveChat } from "@/hooks/useInteractiveChat";
 import type { ArenaState, MessageCreatedData, Message } from "@/types";
 
@@ -24,6 +25,56 @@ function liveMessageToMessage(m: MessageCreatedData): Message {
 }
 
 type Phase = "setup" | "vars" | "chat";
+
+// Atlas token styles shared by the setup/vars phase cards — mirrors the
+// ink-surface card chrome used by CommandStrip/InstrumentBand/TrialMatrix.
+const cardStyle: React.CSSProperties = {
+  border: "1px solid var(--hairline)",
+  borderRadius: "var(--radius-2xl)",
+  background: "var(--grad-surface)",
+  padding: 32,
+};
+
+const labelStyle: React.CSSProperties = {
+  display: "block",
+  font: "500 12px var(--font-mono)",
+  textTransform: "uppercase",
+  letterSpacing: "0.08em",
+  color: "var(--star-800)",
+  marginBottom: 6,
+};
+
+const selectStyle: React.CSSProperties = {
+  width: "100%",
+  borderRadius: "var(--radius-md)",
+  border: "1px solid var(--hairline-strong)",
+  background: "var(--ink-raised)",
+  color: "var(--star-300)",
+  padding: "9px 12px",
+  font: "400 13px var(--font-sans)",
+};
+
+const errorBannerStyle: React.CSSProperties = {
+  marginBottom: 16,
+  border: "1px solid rgba(239,68,68,0.3)",
+  borderRadius: "var(--radius-md)",
+  background: "color-mix(in srgb, var(--signal-red) 12%, transparent)",
+  padding: "10px 14px",
+  font: "400 13px/1.5 var(--font-sans)",
+  color: "var(--signal-red-300)",
+};
+
+const ghostLinkStyle: React.CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: 6,
+  font: "500 12px var(--font-mono)",
+  color: "var(--starlight-300)",
+  background: "transparent",
+  border: "none",
+  cursor: "pointer",
+  padding: 0,
+};
 
 export function InteractiveChat({ state, registerInteractiveRun, onBack, onSelectMessage }: InteractiveChatProps) {
   const { fetchOptions, createSession, sendMessage, busy, error } = useInteractiveChat();
@@ -167,17 +218,21 @@ export function InteractiveChat({ state, registerInteractiveRun, onBack, onSelec
 
   if (loadingOptions) {
     return (
-      <div className="flex items-center justify-center py-24">
-        <div className="text-sm text-fg-muted animate-pulse">Loading options…</div>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "center", padding: "96px 0" }}>
+        <div style={{ font: "400 13px var(--font-mono)", color: "var(--star-700)" }} className="animate-pulse">
+          Loading options…
+        </div>
       </div>
     );
   }
 
   if (optionsError) {
     return (
-      <div className="rounded-xl border border-red-200 bg-red-50 p-6 max-w-lg mx-auto">
-        <p className="text-sm text-[#EF4444] mb-4">Failed to load interactive options: {optionsError}</p>
-        <button onClick={onBack} className="flex items-center gap-2 text-sm text-[#2563EB] hover:underline">
+      <div style={{ ...cardStyle, maxWidth: 520, margin: "0 auto" }}>
+        <p style={{ font: "400 13px/1.6 var(--font-sans)", color: "var(--signal-red-300)", marginBottom: 16 }}>
+          Failed to load interactive options: {optionsError}
+        </p>
+        <button onClick={onBack} style={ghostLinkStyle}>
           <ArrowLeft className="h-4 w-4" /> Back to Runs
         </button>
       </div>
@@ -187,23 +242,23 @@ export function InteractiveChat({ state, registerInteractiveRun, onBack, onSelec
   // --- Setup phase ---
   if (phase === "setup") {
     return (
-      <div className="max-w-lg mx-auto">
-        <div className="rounded-xl border border-mist bg-surface p-8 shadow-sm">
-          <h2 className="text-lg font-semibold text-fg mb-1">Interactive Chat</h2>
-          <p className="text-sm text-fg-muted mb-6">Chat live with an agent from your Arena config.</p>
+      <div style={{ maxWidth: 480, margin: "40px auto 0" }}>
+        <div style={cardStyle}>
+          <h2 style={{ font: "600 18px var(--font-sans)", color: "var(--star-100)", margin: "0 0 6px" }}>
+            Interactive Chat
+          </h2>
+          <p style={{ font: "400 13px/1.6 var(--font-sans)", color: "var(--star-600)", margin: "0 0 24px" }}>
+            Chat live with an agent from your Arena config.
+          </p>
 
-          {sessionError && (
-            <div className="mb-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-[#EF4444]">
-              {sessionError}
-            </div>
-          )}
+          {sessionError && <div style={errorBannerStyle}>{sessionError}</div>}
 
-          <div className="space-y-4">
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             {agents.length > 1 && (
               <div>
-                <label className="block text-sm font-medium text-fg mb-1">Agent</label>
+                <label style={labelStyle}>Agent</label>
                 <select
-                  className="w-full rounded-lg border border-mist bg-canvas px-3 py-2 text-sm text-fg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  style={selectStyle}
                   value={selectedAgent}
                   onChange={(e) => setSelectedAgent(e.target.value)}
                 >
@@ -219,9 +274,9 @@ export function InteractiveChat({ state, registerInteractiveRun, onBack, onSelec
 
             {providers.length > 1 && (
               <div>
-                <label className="block text-sm font-medium text-fg mb-1">Provider</label>
+                <label style={labelStyle}>Provider</label>
                 <select
-                  className="w-full rounded-lg border border-mist bg-canvas px-3 py-2 text-sm text-fg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  style={selectStyle}
                   value={selectedProvider}
                   onChange={(e) => setSelectedProvider(e.target.value)}
                 >
@@ -236,27 +291,28 @@ export function InteractiveChat({ state, registerInteractiveRun, onBack, onSelec
             )}
 
             {hasEvals && (
-              <div className="flex items-center gap-2">
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <input
                   id="enable-evals"
                   type="checkbox"
                   checked={enableEvals}
                   onChange={(e) => setEnableEvals(e.target.checked)}
-                  className="rounded border-mist"
+                  style={{ accentColor: "var(--starlight-500)" }}
                 />
-                <label htmlFor="enable-evals" className="text-sm text-fg">
+                <label htmlFor="enable-evals" style={{ font: "400 13px var(--font-sans)", color: "var(--star-400)" }}>
                   Run evals per turn
                 </label>
               </div>
             )}
 
-            <button
-              className="w-full rounded-lg bg-[#2563EB] px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            <Button
+              variant="secondary"
+              style={{ width: "100%" }}
               disabled={!selectedAgent || !selectedProvider || sessionCreating}
               onClick={() => void handleSetupSubmit()}
             >
               {sessionCreating ? "Starting…" : "Start Chat"}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -266,26 +322,24 @@ export function InteractiveChat({ state, registerInteractiveRun, onBack, onSelec
   // --- Vars phase ---
   if (phase === "vars") {
     return (
-      <div className="max-w-lg mx-auto">
-        <div className="rounded-xl border border-mist bg-surface p-8 shadow-sm">
-          <h2 className="text-lg font-semibold text-fg mb-1">Required Variables</h2>
-          <p className="text-sm text-fg-muted mb-6">
+      <div style={{ maxWidth: 480, margin: "40px auto 0" }}>
+        <div style={cardStyle}>
+          <h2 style={{ font: "600 18px var(--font-sans)", color: "var(--star-100)", margin: "0 0 6px" }}>
+            Required Variables
+          </h2>
+          <p style={{ font: "400 13px/1.6 var(--font-sans)", color: "var(--star-600)", margin: "0 0 24px" }}>
             The selected agent requires values for the following template variables.
           </p>
 
-          {sessionError && (
-            <div className="mb-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-[#EF4444]">
-              {sessionError}
-            </div>
-          )}
+          {sessionError && <div style={errorBannerStyle}>{sessionError}</div>}
 
-          <div className="space-y-4">
+          <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
             {missingVars.map((v) => (
               <div key={v}>
-                <label className="block text-sm font-medium text-fg mb-1">{v}</label>
+                <label style={labelStyle}>{v}</label>
                 <input
                   type="text"
-                  className="w-full rounded-lg border border-mist bg-canvas px-3 py-2 text-sm text-fg focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  style={selectStyle}
                   value={varValues[v] ?? ""}
                   onChange={(e) => setVarValues((prev) => ({ ...prev, [v]: e.target.value }))}
                   placeholder={`Enter ${v}…`}
@@ -293,20 +347,18 @@ export function InteractiveChat({ state, registerInteractiveRun, onBack, onSelec
               </div>
             ))}
 
-            <div className="flex gap-3">
-              <button
-                className="flex-1 rounded-lg border border-mist bg-canvas px-4 py-2.5 text-sm font-medium text-fg-muted hover:text-fg hover:bg-surface transition-colors"
-                onClick={handleReset}
-              >
+            <div style={{ display: "flex", gap: 12 }}>
+              <Button variant="secondary" style={{ flex: 1 }} onClick={handleReset}>
                 Back
-              </button>
-              <button
-                className="flex-1 rounded-lg bg-[#2563EB] px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              </Button>
+              <Button
+                variant="secondary"
+                style={{ flex: 1 }}
                 disabled={missingVars.some((v) => !varValues[v]?.trim()) || sessionCreating}
                 onClick={() => void handleVarsSubmit()}
               >
                 {sessionCreating ? "Starting…" : "Start Chat"}
-              </button>
+              </Button>
             </div>
           </div>
         </div>
@@ -316,36 +368,53 @@ export function InteractiveChat({ state, registerInteractiveRun, onBack, onSelec
 
   // --- Chat phase ---
   return (
-    <div className="flex flex-col h-[calc(100vh-220px)] min-h-[500px]">
+    <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 220px)", minHeight: 500 }}>
       {/* Sticky header */}
-      <div className="sticky top-0 z-10 flex items-center justify-between bg-canvas border-b border-mist px-4 py-3 mb-4">
-        <div className="flex items-center gap-3">
+      <div
+        style={{
+          position: "sticky",
+          top: 0,
+          zIndex: 10,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          background: "var(--ink-canvas)",
+          borderBottom: "1px solid var(--hairline)",
+          padding: "12px 4px",
+          marginBottom: 16,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <button
             onClick={handleReset}
-            className="flex items-center gap-1.5 text-sm text-fg-muted hover:text-fg transition-colors"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              font: "500 12px var(--font-mono)",
+              color: "var(--star-600)",
+              background: "transparent",
+              border: "none",
+              cursor: "pointer",
+            }}
           >
             <ArrowLeft className="h-4 w-4" />
             Reset
           </button>
-          <div className="h-4 w-px bg-mist" />
-          <div className="flex items-center gap-3 text-xs text-fg-muted">
-            <span>
-              <span className="font-medium text-fg">{selectedAgent}</span>
-            </span>
+          <div style={{ width: 1, height: 16, background: "var(--hairline-strong)" }} />
+          <div style={{ display: "flex", alignItems: "center", gap: 10, font: "400 12px var(--font-mono)", color: "var(--star-700)" }}>
+            <span style={{ color: "var(--star-300)", fontWeight: 600 }}>{selectedAgent}</span>
             <span>·</span>
             <span>{selectedProvider}</span>
             {enableEvals && (
               <>
                 <span>·</span>
-                <span className="text-[#10B981]">evals on</span>
+                <span style={{ color: "var(--pulsar-300)" }}>evals on</span>
               </>
             )}
           </div>
         </div>
-        <button
-          onClick={onBack}
-          className="text-xs text-fg-muted hover:text-fg transition-colors"
-        >
+        <button onClick={onBack} style={{ ...ghostLinkStyle, color: "var(--star-600)" }}>
           ← Runs
         </button>
       </div>
@@ -353,8 +422,10 @@ export function InteractiveChat({ state, registerInteractiveRun, onBack, onSelec
       {/* Conversation thread */}
       <div ref={scrollRef} onScroll={handleScroll} className="flex-1 overflow-y-auto min-h-0">
         {displayMessages.length === 0 ? (
-          <div className="flex items-center justify-center h-full">
-            <p className="text-sm text-fg-muted">Send a message to start the conversation.</p>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
+            <p style={{ font: "400 13px var(--font-sans)", color: "var(--star-700)" }}>
+              Send a message to start the conversation.
+            </p>
           </div>
         ) : (
           <ConversationThread
@@ -369,17 +440,34 @@ export function InteractiveChat({ state, registerInteractiveRun, onBack, onSelec
 
       {/* Error banner */}
       {error && (
-        <div className="mx-4 mb-2 rounded-lg bg-red-50 border border-red-200 px-4 py-2 text-sm text-[#EF4444]">
-          {error}
-        </div>
+        <div style={{ ...errorBannerStyle, margin: "0 4px 8px" }}>{error}</div>
       )}
 
       {/* Input area */}
-      <div className="border-t border-mist bg-surface p-4">
-        <div className="flex items-end gap-3">
+      <div
+        style={{
+          borderTop: "1px solid var(--hairline)",
+          background: "var(--ink-surface)",
+          borderRadius: "var(--radius-xl)",
+          padding: 16,
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "flex-end", gap: 12 }}>
           <textarea
             ref={textareaRef}
-            className="flex-1 resize-none rounded-lg border border-mist bg-canvas px-3 py-2 text-sm text-fg placeholder:text-fg-muted focus:outline-none focus:ring-2 focus:ring-blue-400 min-h-[44px] max-h-40"
+            className="placeholder:text-[var(--star-800)]"
+            style={{
+              flex: 1,
+              resize: "none",
+              borderRadius: "var(--radius-md)",
+              border: "1px solid var(--hairline-strong)",
+              background: "var(--ink-raised)",
+              color: "var(--star-300)",
+              padding: "10px 12px",
+              font: "400 13px var(--font-sans)",
+              minHeight: 44,
+              maxHeight: 160,
+            }}
             placeholder="Type a message… (Enter to send, Shift+Enter for newline)"
             rows={1}
             value={inputText}
@@ -387,14 +475,15 @@ export function InteractiveChat({ state, registerInteractiveRun, onBack, onSelec
             onKeyDown={handleKeyDown}
             disabled={busy}
           />
-          <button
-            className="flex-shrink-0 rounded-lg bg-[#2563EB] p-2.5 text-white hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          <Button
+            variant="secondary"
             disabled={busy || !inputText.trim()}
             onClick={() => void handleSend()}
             aria-label="Send message"
+            style={{ flex: "none", padding: "10px 12px" }}
           >
             <Send className="h-4 w-4" />
-          </button>
+          </Button>
         </div>
       </div>
     </div>
