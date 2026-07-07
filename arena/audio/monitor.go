@@ -3,7 +3,6 @@ package audio
 import (
 	"context"
 	"sync"
-	"time"
 
 	"github.com/AltairaLabs/PromptKit/runtime/logger"
 )
@@ -122,14 +121,7 @@ func (m *Monitor) AttachRouter(runID string, router *AudioRouter) {
 	// in a parallel batch it meant every run's audio funnelled through the
 	// one sink (auto-activate + auto-fallback), producing a nonstop parade
 	// of runs the user never picked. "Nothing selected" now means silence.
-	activeRun := m.activeRunID
-	routerCount := len(m.routers)
 	m.mu.Unlock()
-
-	logger.Debug("audio monitor: router attached",
-		"run_id", runID,
-		"active_run", activeRun,
-		"registered_routers", routerCount)
 
 	// Register the sink as the router's drain handler so the duplex
 	// executor's turn loop can wait for local playback to finish
@@ -159,9 +151,10 @@ func (m *Monitor) AttachRouter(runID string, router *AudioRouter) {
 }
 
 // DetachRouter removes a run's AudioRouter from the monitor. If that run
-// was the active audio source, the monitor falls back to any other
-// registered router (so listening "moves on" automatically when the run
-// you were listening to ends and another is still going).
+// was the active audio source, playback stops — the monitor does NOT fall
+// back to another run (that is what turned "listen to one run" into "hear
+// every run in turn"). Playback resumes only when the user selects another
+// run via SetActiveRun.
 func (m *Monitor) DetachRouter(runID string) {
 	if runID == "" {
 		return
@@ -169,16 +162,8 @@ func (m *Monitor) DetachRouter(runID string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	delete(m.routers, runID)
-	wasActive := m.activeRunID == runID
-	logger.Debug("audio monitor: router detached",
-		"run_id", runID,
-		"was_active", wasActive,
-		"remaining_routers", len(m.routers))
-	// When the run being listened to ends, stop and flush — do NOT auto-fall
-	// back to another run. Falling back is what turned "listen to one run"
-	// into "hear every run in turn". Playback resumes only when the user
-	// selects another run via SetActiveRun.
-	if wasActive {
+	// When the run being listened to ends, stop and flush.
+	if m.activeRunID == runID {
 		m.deactivateLocked()
 	}
 }
@@ -303,44 +288,20 @@ func (m *Monitor) activateLocked(runID string, router *AudioRouter) {
 	m.forwardCancel = cancel
 
 	go func() {
-		start := time.Now()
-		var frames, samples int
 		for {
 			select {
 			case <-ctx.Done():
-				logForwarderStopped(runID, frames, samples, start)
 				return
 			case frame, ok := <-ch:
 				if !ok {
-					logForwarderStopped(runID, frames, samples, start)
 					return
 				}
-				frames++
-				samples += len(frame.Samples)
 				m.sink.Push(frame)
 			}
 		}
 	}()
 
 	logger.Debug("audio monitor: activated run", "run_id", runID)
-}
-
-// logForwarderStopped emits how much audio a run's forwarder pushed and over
-// what wall-clock window. samples/elapsed far above the sink rate means the
-// audio was not real-time-paced (it flooded the sink) — the signature of both
-// the "plays too fast" and "runs bleed together" symptoms.
-func logForwarderStopped(runID string, frames, samples int, start time.Time) {
-	elapsed := time.Since(start)
-	var samplesPerSec float64
-	if elapsed > 0 {
-		samplesPerSec = float64(samples) / elapsed.Seconds()
-	}
-	logger.Debug("audio monitor: forwarder stopped",
-		"run_id", runID,
-		"frames", frames,
-		"samples", samples,
-		"elapsed_ms", elapsed.Milliseconds(),
-		"samples_per_sec", int(samplesPerSec))
 }
 
 // deactivateLocked stops forwarding from the active router (if any) and
@@ -352,9 +313,6 @@ func (m *Monitor) deactivateLocked() {
 	}
 	if m.activeRouter != nil {
 		m.activeRouter.Unsubscribe(monitorForwardSubscriberID)
-	}
-	if m.activeRunID != "" {
-		logger.Debug("audio monitor: deactivated run", "run_id", m.activeRunID)
 	}
 	// Drop whatever this run had buffered but unplayed so it doesn't keep
 	// playing after we switch away / it ends. The sink buffers several
