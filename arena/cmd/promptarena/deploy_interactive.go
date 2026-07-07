@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -13,7 +12,6 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/deploy"
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 	"github.com/AltairaLabs/promptarena/arena/deploy/flow"
-	"github.com/AltairaLabs/promptarena/packc/compiler"
 )
 
 var deployCmd = &cobra.Command{
@@ -68,110 +66,20 @@ func init() {
 // configuration when one is missing or incomplete.
 const deployConfigureDocsURL = "https://promptkit.altairalabs.ai/arena/how-to/deploy/configure/"
 
+// deployOptions builds a flow.Options from the deploy command's persistent
+// flags, for handing off to the flow package's config/pack resolution.
+func deployOptions() flow.Options {
+	return flow.Options{ConfigPath: deployConfig, Env: deployEnv, PackFile: deployPackFile}
+}
+
 // loadDeployConfig loads the arena config and returns the deploy section.
 func loadDeployConfig() (*arenaconfig.DeployConfig, error) {
-	_, deployCfg, err := loadFullConfig()
+	_, deployCfg, err := flow.LoadConfig(deployOptions())
 	return deployCfg, err
 }
 
-// loadFullConfig loads the arena config and returns both the full config and deploy section.
-func loadFullConfig() (*arenaconfig.Config, *arenaconfig.DeployConfig, error) {
-	if _, err := os.Stat(deployConfig); os.IsNotExist(err) {
-		return nil, nil, fmt.Errorf(
-			"config file not found: %s\nSet up a deploy config — see %s",
-			deployConfig, deployConfigureDocsURL,
-		)
-	}
-
-	cfg, err := arenaconfig.LoadConfig(deployConfig)
-	if err != nil {
-		return nil, nil, fmt.Errorf("failed to load config: %w", err)
-	}
-
-	if cfg.Deploy == nil {
-		return nil, nil, fmt.Errorf(
-			"no deploy configuration found in %s\nAdd a 'deploy' section to your arena config — see %s",
-			deployConfig, deployConfigureDocsURL,
-		)
-	}
-
-	return cfg, cfg.Deploy, nil
-}
-
-// serializeArenaConfig serializes the full arena config as JSON for adapter consumption.
-func serializeArenaConfig(cfg *arenaconfig.Config) string {
-	data, err := json.Marshal(cfg)
-	if err != nil {
-		log.Printf("Warning: failed to serialize arena config: %v", err)
-		return ""
-	}
-	return string(data)
-}
-
-const defaultEnvironment = "default"
-
 // importArgCount is the number of positional arguments for the import command.
 const importArgCount = 3
-
-// resolveEnvironment returns the target environment name, falling back to "default" if not specified.
-func resolveEnvironment() string {
-	if deployEnv != "" {
-		return deployEnv
-	}
-	return defaultEnvironment
-}
-
-// resolvePackFile resolves the pack JSON to deploy. If --pack is set, it reads
-// that pre-compiled *.pack.json file (explicit override). Otherwise it compiles
-// the arena config (--config) on the fly and returns the freshly compiled JSON,
-// so users do not need to run a separate compile step before deploying.
-func resolvePackFile() ([]byte, error) {
-	if deployPackFile != "" {
-		data, err := os.ReadFile(deployPackFile) //nolint:gosec // path is from user flag
-		if err != nil {
-			return nil, fmt.Errorf("failed to read pack file %s: %w", deployPackFile, err)
-		}
-		fmt.Printf("  Pack file:   %s\n", deployPackFile)
-		return data, nil
-	}
-
-	result, err := compiler.Compile(deployConfig)
-	if err != nil {
-		return nil, fmt.Errorf("failed to compile pack from %s: %w", deployConfig, err)
-	}
-	for _, w := range result.Warnings {
-		fmt.Fprintf(os.Stderr, "warning: %s\n", w)
-	}
-	fmt.Printf("  Pack:        compiled from %s\n", deployConfig)
-	return result.JSON, nil
-}
-
-// mergedDeployConfigJSON merges the base deploy config with environment-specific
-// overrides and returns the result as a JSON string.
-func mergedDeployConfigJSON(deployCfg *arenaconfig.DeployConfig, env string) (string, error) {
-	merged := make(map[string]interface{})
-	for k, v := range deployCfg.Config {
-		merged[k] = v
-	}
-	if envCfg, ok := deployCfg.Environments[env]; ok && envCfg != nil {
-		for k, v := range envCfg.Config {
-			merged[k] = v
-		}
-	}
-	// `deploy login` keeps the token out of the config file. If the config has
-	// no api_token, inject the one stored at login time so the adapter can
-	// authenticate. Explicit config / env-var tokens still take precedence.
-	if tok, ok := merged["api_token"].(string); !ok || tok == "" {
-		if stored, found := flow.LookupCredential(deployCfg.Provider, deployConfig); found {
-			merged["api_token"] = stored
-		}
-	}
-	data, err := json.Marshal(merged)
-	if err != nil {
-		return "", fmt.Errorf("failed to marshal deploy config: %w", err)
-	}
-	return string(data), nil
-}
 
 // connectAdapter discovers the adapter binary and returns a connected client.
 func connectAdapter(provider, projectDir string) (*deploy.AdapterClient, error) {
@@ -332,12 +240,13 @@ func refreshState(
 // --- deploy (plan + apply) ---
 
 func runDeploy(cmd *cobra.Command, args []string) error {
-	arenaCfg, deployCfg, err := loadFullConfig()
+	opts := deployOptions()
+	arenaCfg, deployCfg, err := flow.LoadConfig(opts)
 	if err != nil {
 		return err
 	}
 
-	env := resolveEnvironment()
+	env := flow.ResolveEnv(opts)
 	projectDir, _ := os.Getwd()
 	ctx := context.Background()
 
@@ -352,12 +261,12 @@ func runDeploy(cmd *cobra.Command, args []string) error {
 	fmt.Println()
 
 	// Load pack.
-	packData, err := resolvePackFile()
+	packData, err := flow.ResolvePack(opts)
 	if err != nil {
 		return err
 	}
 
-	configJSON, err := mergedDeployConfigJSON(deployCfg, env)
+	configJSON, err := flow.MergedConfigJSON(deployCfg, env, deployConfig)
 	if err != nil {
 		return err
 	}
@@ -386,7 +295,7 @@ func runDeploy(cmd *cobra.Command, args []string) error {
 	planReq := &deploy.PlanRequest{
 		PackJSON:     string(packData),
 		DeployConfig: configJSON,
-		ArenaConfig:  serializeArenaConfig(arenaCfg),
+		ArenaConfig:  flow.SerializeArenaConfig(arenaCfg),
 		Environment:  env,
 		PriorState:   priorStateStr,
 	}

@@ -8,6 +8,8 @@ import (
 
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
+
+	"github.com/AltairaLabs/promptarena/arena/deploy/flow"
 )
 
 // withImportGlobals saves and restores the package-level flags that
@@ -416,7 +418,7 @@ func TestRunDeployConfigImportFromStdin(t *testing.T) {
 }
 
 // withDeployConfigGlobal saves and restores the package-level deployConfig flag
-// that loadFullConfig reads, so tests can set it in isolation.
+// that flow.LoadConfig (via deployOptions) reads, so tests can set it in isolation.
 func withDeployConfigGlobal(t *testing.T, cfgPath string) {
 	t.Helper()
 	old := deployConfig
@@ -427,12 +429,12 @@ func withDeployConfigGlobal(t *testing.T, cfgPath string) {
 func TestLoadFullConfigMissingFileLinksDocs(t *testing.T) {
 	withDeployConfigGlobal(t, filepath.Join(t.TempDir(), "does-not-exist.yaml"))
 
-	_, _, err := loadFullConfig()
+	_, _, err := flow.LoadConfig(deployOptions())
 	if err == nil {
 		t.Fatal("expected error when config file is missing")
 	}
-	if !strings.Contains(err.Error(), deployConfigureDocsURL) {
-		t.Errorf("error should link configure docs %q, got: %v", deployConfigureDocsURL, err)
+	if !strings.Contains(err.Error(), flow.ConfigureDocsURL) {
+		t.Errorf("error should link configure docs %q, got: %v", flow.ConfigureDocsURL, err)
 	}
 }
 
@@ -447,15 +449,15 @@ func TestLoadFullConfigNoDeploySectionLinksDocs(t *testing.T) {
 
 	withDeployConfigGlobal(t, cfgPath)
 
-	_, _, err := loadFullConfig()
+	_, _, err := flow.LoadConfig(deployOptions())
 	if err == nil {
 		t.Fatal("expected error when config has no deploy section")
 	}
-	if !strings.Contains(err.Error(), "no deploy configuration found") {
+	if !strings.Contains(err.Error(), "no deploy:") {
 		t.Errorf("error should mention missing deploy configuration, got: %v", err)
 	}
-	if !strings.Contains(err.Error(), deployConfigureDocsURL) {
-		t.Errorf("error should link configure docs %q, got: %v", deployConfigureDocsURL, err)
+	if !strings.Contains(err.Error(), flow.ConfigureDocsURL) {
+		t.Errorf("error should link configure docs %q, got: %v", flow.ConfigureDocsURL, err)
 	}
 }
 

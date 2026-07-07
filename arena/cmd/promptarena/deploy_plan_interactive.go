@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/AltairaLabs/PromptKit/runtime/deploy"
+	"github.com/AltairaLabs/promptarena/arena/deploy/flow"
 )
 
 var deployPlanCmd = &cobra.Command{
@@ -24,23 +25,24 @@ Examples:
 }
 
 func runDeployPlan(cmd *cobra.Command, args []string) error {
-	arenaCfg, deployCfg, err := loadFullConfig()
+	opts := deployOptions()
+	arenaCfg, deployCfg, err := flow.LoadConfig(opts)
 	if err != nil {
 		return err
 	}
 
-	env := resolveEnvironment()
+	env := flow.ResolveEnv(opts)
 	projectDir, _ := os.Getwd()
 	ctx := context.Background()
 
 	fmt.Printf("Deploy plan for environment: %s (provider: %s)\n", env, deployCfg.Provider)
 
-	packData, err := resolvePackFile()
+	packData, err := flow.ResolvePack(opts)
 	if err != nil {
 		return err
 	}
 
-	configJSON, err := mergedDeployConfigJSON(deployCfg, env)
+	configJSON, err := flow.MergedConfigJSON(deployCfg, env, deployConfig)
 	if err != nil {
 		return err
 	}
@@ -63,7 +65,7 @@ func runDeployPlan(cmd *cobra.Command, args []string) error {
 	planReq := &deploy.PlanRequest{
 		PackJSON:     string(packData),
 		DeployConfig: configJSON,
-		ArenaConfig:  serializeArenaConfig(arenaCfg),
+		ArenaConfig:  flow.SerializeArenaConfig(arenaCfg),
 		Environment:  env,
 		PriorState:   priorStateStr,
 	}

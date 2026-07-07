@@ -13,6 +13,7 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/AltairaLabs/PromptKit/runtime/deploy"
+	"github.com/AltairaLabs/promptarena/arena/deploy/flow"
 )
 
 // deployConfigCmd groups commands that operate on the deploy configuration
@@ -311,11 +312,11 @@ func validateDeployConfig() error {
 		return err
 	}
 
-	env := resolveEnvironment()
+	env := flow.ResolveEnv(deployOptions())
 	projectDir, _ := os.Getwd()
 	ctx := context.Background()
 
-	configJSON, err := mergedDeployConfigJSON(deployCfg, env)
+	configJSON, err := flow.MergedConfigJSON(deployCfg, env, deployConfig)
 	if err != nil {
 		return err
 	}

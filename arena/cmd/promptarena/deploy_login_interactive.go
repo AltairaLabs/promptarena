@@ -96,7 +96,7 @@ func loginConfigJSON() string {
 	if err != nil || deployCfg == nil {
 		return ""
 	}
-	j, err := mergedDeployConfigJSON(deployCfg, resolveEnvironment())
+	j, err := flow.MergedConfigJSON(deployCfg, flow.ResolveEnv(deployOptions()), deployConfig)
 	if err != nil {
 		return ""
 	}

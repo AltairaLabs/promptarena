@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/AltairaLabs/PromptKit/runtime/deploy"
+	"github.com/AltairaLabs/promptarena/arena/deploy/flow"
 )
 
 var deployApplyCmd = &cobra.Command{
@@ -24,12 +25,13 @@ Examples:
 }
 
 func runDeployApply(cmd *cobra.Command, args []string) error {
-	arenaCfg, deployCfg, err := loadFullConfig()
+	opts := deployOptions()
+	arenaCfg, deployCfg, err := flow.LoadConfig(opts)
 	if err != nil {
 		return err
 	}
 
-	env := resolveEnvironment()
+	env := flow.ResolveEnv(opts)
 	projectDir, _ := os.Getwd()
 	ctx := context.Background()
 
@@ -42,7 +44,7 @@ func runDeployApply(cmd *cobra.Command, args []string) error {
 
 	fmt.Printf("Applying deployment to environment: %s (provider: %s)\n", env, deployCfg.Provider)
 
-	packData, err := resolvePackFile()
+	packData, err := flow.ResolvePack(opts)
 	if err != nil {
 		return err
 	}
@@ -65,7 +67,7 @@ func runDeployApply(cmd *cobra.Command, args []string) error {
 		if savedPlan != nil {
 			fmt.Println("  Saved plan is stale (pack or environment changed), re-planning...")
 		}
-		configJSON, mergeErr := mergedDeployConfigJSON(deployCfg, env)
+		configJSON, mergeErr := flow.MergedConfigJSON(deployCfg, env, deployConfig)
 		if mergeErr != nil {
 			return mergeErr
 		}
@@ -82,7 +84,7 @@ func runDeployApply(cmd *cobra.Command, args []string) error {
 		planReq = &deploy.PlanRequest{
 			PackJSON:     string(packData),
 			DeployConfig: configJSON,
-			ArenaConfig:  serializeArenaConfig(arenaCfg),
+			ArenaConfig:  flow.SerializeArenaConfig(arenaCfg),
 			Environment:  env,
 			PriorState:   priorStateStr,
 		}

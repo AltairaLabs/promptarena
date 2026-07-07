@@ -8,10 +8,12 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/AltairaLabs/promptarena/arena/deploy/flow"
 )
 
 // withDeployPackGlobals saves and restores the package-level flags that
-// resolvePackFile reads, so tests can set them in isolation.
+// flow.ResolvePack (via deployOptions) reads, so tests can set them in isolation.
 func withDeployPackGlobals(t *testing.T, cfgPath, packFile string) {
 	t.Helper()
 	oldCfg, oldPack := deployConfig, deployPackFile
@@ -33,7 +35,7 @@ func TestResolvePackFile_ExplicitPackOverride(t *testing.T) {
 	// touch the compiler when --pack is provided.
 	withDeployPackGlobals(t, filepath.Join(dir, "does-not-exist.yaml"), packPath)
 
-	got, err := resolvePackFile()
+	got, err := flow.ResolvePack(deployOptions())
 	require.NoError(t, err)
 	assert.Equal(t, want, got)
 }
@@ -51,7 +53,7 @@ func TestResolvePackFile_CompilesFromConfig(t *testing.T) {
 
 	withDeployPackGlobals(t, configFile, "")
 
-	got, err := resolvePackFile()
+	got, err := flow.ResolvePack(deployOptions())
 	require.NoError(t, err)
 	require.NotEmpty(t, got)
 	assert.True(t, json.Valid(got), "compiled pack should be valid JSON")
@@ -65,7 +67,7 @@ func TestResolvePackFile_MissingPackFileErrors(t *testing.T) {
 	dir := t.TempDir()
 	withDeployPackGlobals(t, "arena.yaml", filepath.Join(dir, "missing.pack.json"))
 
-	_, err := resolvePackFile()
+	_, err := flow.ResolvePack(deployOptions())
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to read pack file")
 }
@@ -73,7 +75,7 @@ func TestResolvePackFile_MissingPackFileErrors(t *testing.T) {
 func TestResolvePackFile_CompileFailureIsClear(t *testing.T) {
 	withDeployPackGlobals(t, "/nonexistent/path/config.arena.yaml", "")
 
-	_, err := resolvePackFile()
+	_, err := flow.ResolvePack(deployOptions())
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "failed to compile pack")
 	assert.NotContains(t, err.Error(), "packc compile",
