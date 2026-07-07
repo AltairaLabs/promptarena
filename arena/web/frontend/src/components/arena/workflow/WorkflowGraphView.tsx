@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { ReactFlow, Background, Controls, MiniMap, MarkerType, type ColorMode, type Edge, type Node } from "@xyflow/react";
+import { ReactFlow, Controls, MiniMap, MarkerType, type ColorMode, type Edge, type Node } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import "./workflow.css";
 import type { FlowElements } from "@/lib/workflowFlow";
@@ -14,10 +14,12 @@ export interface WorkflowGraphViewProps {
 }
 
 // WorkflowGraphView — the React Flow render of a workflow topology built by
-// `buildFlowElements`. Arrowheads carry direction, dashed strokes mark
-// "else" branches, gold marks the visited path, and reduced opacity marks
-// anything the current toggles have dimmed. Node/edge styling reads Atlas
-// tokens so it reskins for free across the light/dark theme flip.
+// `buildFlowElements`, styled as thin starlight wayfinding lines between
+// glyph nodes (the Atlas star-chart look). Small open arrowheads carry
+// direction, dashed strokes mark "else" branches, gold marks the visited
+// path, and reduced opacity marks anything the current toggles have
+// dimmed. Node/edge styling reads Atlas tokens so it reskins for free
+// across the light/dark theme flip.
 // `FlowNode`/`FlowEdge` (from workflowFlow.ts) are plain interfaces without
 // index signatures, so they don't structurally satisfy React Flow's
 // `Node`/`Edge` generic constraint (`Record<string, unknown>` data). They're
@@ -37,19 +39,20 @@ export function WorkflowGraphView({ elements, theme }: WorkflowGraphViewProps) {
           source: e.source,
           target: e.target,
           data: e.data as unknown as Record<string, unknown>,
-          markerEnd: { type: MarkerType.ArrowClosed, color: stroke },
+          // A small, open arrow (not the chunky filled ArrowClosed) — a
+          // wayfinding tick, not a box-diagram arrowhead.
+          markerEnd: { type: MarkerType.Arrow, width: 14, height: 14, color: stroke },
           label: e.data.label,
           style: {
             stroke,
-            strokeWidth: 1.5,
-            strokeDasharray: e.data.dashed ? "5 4" : undefined,
-            opacity: e.data.dim ? 0.3 : 1,
+            strokeWidth: 1.3,
+            strokeDasharray: e.data.dashed ? "4 4" : undefined,
+            opacity: e.data.dim ? 0.35 : 0.55,
           },
           labelStyle: { fill: "var(--star-500)", fontFamily: "var(--font-mono)", fontSize: 10 },
-          // `--surface` isn't defined in atlas-tokens.css (a pre-existing
-          // gap ConstellationGraph's own label halo had); fall back to the
-          // semantic card surface alias so the label backdrop always paints.
-          labelBgStyle: { fill: "var(--surface, var(--surface-1))" },
+          // Label background reads over the night sky (no more "--surface"
+          // fallback gap — the canvas var is always defined).
+          labelBgStyle: { fill: "var(--c-canvas)" },
         };
       }),
     [elements.edges],
@@ -67,7 +70,8 @@ export function WorkflowGraphView({ elements, theme }: WorkflowGraphViewProps) {
       nodesConnectable={false}
       elementsSelectable={false}
     >
-      <Background />
+      {/* No <Background/> — the night sky comes from workflow.css's atmosphere
+          on the .react-flow pane itself, not React Flow's dotted grid. */}
       <Controls showInteractive={false} />
       <MiniMap pannable zoomable />
     </ReactFlow>

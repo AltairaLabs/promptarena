@@ -1,124 +1,85 @@
-import type { CSSProperties } from "react";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import type { FlowNodeData } from "@/lib/workflowFlow";
 
-// KIND_STYLE — the box-styled counterpart to ConstellationGraph's KIND map:
-// entry/output are the gold "star" nodes, agent is starlight, prompt is
-// nebula violet, tool is ion cyan, branch is a gold diamond-flavored box.
-// Borders/backgrounds are derived from the same token via color-mix() so
-// there's no new hex to keep in sync across the light/dark theme flip.
+// KIND_STYLE — the Atlas star-chart counterpart to ConstellationGraph's KIND
+// map: every state/step is a small glyph (a filled dot, or a diamond for
+// branch) with a translucent halo, not a box. entry/output are the gold
+// "star" nodes that twinkle; agent is starlight, prompt is nebula violet,
+// tool is ion cyan, branch is a gold diamond. Halo values are the same
+// rgba()s ConstellationGraph's KIND map used — kept as raw color so the
+// halo reads as a soft ring regardless of theme.
 const KIND_STYLE: Record<
   FlowNodeData["kind"],
-  { accent: string; border: string; background: string; glow?: string; diamond?: boolean }
+  { color: string; halo: string; diamond?: boolean; large?: boolean; glow?: boolean }
 > = {
   entry: {
-    accent: "var(--gold-500)",
-    border: "var(--gold-border)",
-    background: "var(--gold-tint)",
-    glow: "var(--glow-gold-soft)",
+    color: "var(--gold-500)",
+    halo: "rgba(227,179,65,0.16)",
+    large: true,
+    glow: true,
   },
   output: {
-    accent: "var(--gold-500)",
-    border: "var(--gold-border)",
-    background: "var(--gold-tint)",
-    glow: "var(--glow-gold-soft)",
+    color: "var(--gold-500)",
+    halo: "rgba(227,179,65,0.16)",
+    large: true,
+    glow: true,
   },
   agent: {
-    accent: "var(--starlight-300)",
-    border: "var(--starlight-border)",
-    background: "var(--starlight-tint)",
+    color: "var(--node-agent)",
+    halo: "rgba(147,197,253,0.14)",
   },
   prompt: {
-    accent: "var(--nebula-violet)",
-    border: "color-mix(in srgb, var(--nebula-violet) 45%, transparent)",
-    background: "color-mix(in srgb, var(--nebula-violet) 12%, transparent)",
+    color: "var(--node-prompt)",
+    halo: "rgba(196,181,253,0.16)",
   },
   tool: {
-    accent: "var(--ion-cyan)",
-    border: "color-mix(in srgb, var(--ion-cyan) 45%, transparent)",
-    background: "color-mix(in srgb, var(--ion-cyan) 12%, transparent)",
+    color: "var(--node-tool)",
+    halo: "rgba(103,232,249,0.16)",
   },
   branch: {
-    accent: "var(--gold-500)",
-    border: "var(--gold-border)",
-    background: "var(--gold-tint)",
+    color: "var(--node-branch)",
+    halo: "rgba(227,179,65,0.18)",
     diamond: true,
   },
 };
 
-// WorkflowNode — the box-shaped React Flow custom node for both states
-// (collapsed view) and steps (expanded, inside a GroupNode). Styled by
-// `data.kind`; shows a small "⤵" badge when the state owns a composition,
-// and dims to a faint outline when `data.dim` (not visited this run / not
-// reachable under the current toggles).
+// WorkflowNode — the glyph-styled React Flow custom node for both states
+// (collapsed view) and steps (expanded, inside a GroupNode). The node's own
+// container is transparent and exactly the size of the glyph itself — a
+// small dot/diamond with a halo — so the (hidden) left/right Handles React
+// Flow anchors edges to sit at the glyph's center, not a box corner. Shows a
+// small "⤵" badge when the state owns a composition, and dims to a faint
+// glimmer when `data.dim` (not visited this run / not reachable under the
+// current toggles).
 export function WorkflowNode({ data }: NodeProps & { data: FlowNodeData }) {
   const style = KIND_STYLE[data.kind] ?? KIND_STYLE.agent;
+  const glyphClass = [
+    "atlas-node__glyph",
+    style.diamond ? "atlas-node__glyph--diamond" : "",
+    style.glow ? "atlas-node__glyph--glow" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   return (
-    <div
-      style={{
-        position: "relative",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        minWidth: 140,
-        minHeight: 44,
-        padding: "8px 14px",
-        borderRadius: style.diamond ? "6px" : "var(--radius-lg)",
-        border: `1.5px solid ${style.border}`,
-        background: style.background,
-        boxShadow: style.glow ? `0 0 0 1px transparent, ${style.glow}` : undefined,
-        opacity: data.dim ? 0.3 : 1,
-        transition: "opacity var(--dur-base, 200ms) var(--ease-standard, ease)",
-      }}
-    >
-      <Handle type="target" position={Position.Left} style={HANDLE_STYLE} />
+    <div className={`atlas-node${style.large ? " atlas-node--large" : ""}`} style={{ opacity: data.dim ? 0.35 : 1 }}>
+      <Handle type="target" position={Position.Left} isConnectable={false} />
       <span
+        className={glyphClass}
         style={{
-          font: "600 12px var(--font-mono)",
-          color: "var(--star-300)",
-          textAlign: "center",
-          whiteSpace: "normal",
-          wordBreak: "break-word",
+          background: style.color,
+          boxShadow: style.glow
+            ? `0 0 0 6px ${style.halo}, 0 0 14px rgba(227,179,65,0.55)`
+            : `0 0 0 6px ${style.halo}`,
         }}
-      >
-        {data.label}
-      </span>
+      />
       {data.hasComposition && (
-        <span
-          aria-label="has composition"
-          style={{
-            position: "absolute",
-            top: -8,
-            right: -8,
-            width: 18,
-            height: 18,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            borderRadius: "999px",
-            background: "var(--surface-2)",
-            border: `1px solid ${style.accent}`,
-            color: style.accent,
-            font: "11px var(--font-mono)",
-            lineHeight: 1,
-          }}
-        >
+        <span aria-label="has composition" className="atlas-node__badge">
           ⤵
         </span>
       )}
-      <Handle type="source" position={Position.Right} style={HANDLE_STYLE} />
+      <div className="atlas-node__label">{data.label}</div>
+      <Handle type="source" position={Position.Right} isConnectable={false} />
     </div>
   );
 }
-
-// Handles just need to exist for React Flow to route edges to/from this
-// node in the LR layout dagre produced; they carry no visual weight of
-// their own beyond a faint dot on the accent color.
-const HANDLE_STYLE: CSSProperties = {
-  width: 6,
-  height: 6,
-  background: "var(--starlight-500)",
-  border: "none",
-  opacity: 0.6,
-};
