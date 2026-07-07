@@ -15,6 +15,13 @@ export interface TrialInspectorProps {
   // clicked — mirrors the old RunDetail/ConversationThread contract so the
   // DevTools drawer stays reachable from the Runs tab.
   onSelectMessage?: (index: number, message?: Message, allMessages?: Message[]) => void;
+  // listeningRunId/onToggleListen surface the audio "Listen" control for a
+  // live running trial — mirrors the original RunDetail wiring. Omitted (or
+  // undefined onToggleListen) hides the toggle entirely, and it's only ever
+  // shown for a still-running ActiveRun (a completed/historical run has no
+  // live audio stream to attach to).
+  listeningRunId?: string | null;
+  onToggleListen?: (runId: string) => void;
 }
 
 // statusFor derives the header StatusPill's status/label. A still-running
@@ -40,8 +47,16 @@ export function TrialInspector({
   providerId,
   providerLabel,
   onSelectMessage,
+  listeningRunId,
+  onToggleListen,
 }: TrialInspectorProps) {
   const { status, label } = statusFor(run, cell);
+
+  // The Listen toggle only makes sense for a still-running ActiveRun — a
+  // completed RunResult has no live audio stream to attach to.
+  const isLiveRunning = run !== undefined && "status" in run && run.status === "running";
+  const liveRunId = isLiveRunning ? (run as ActiveRun).runId : undefined;
+  const isListening = liveRunId !== undefined && listeningRunId === liveRunId;
 
   // handleSelectMessage adapts the transcript's index-only click into the
   // (index, message, allMessages) triple DevToolsPanel expects. A completed
@@ -87,7 +102,23 @@ export function TrialInspector({
           <span style={{ font: "400 12px var(--font-mono)", color: "var(--star-800)" }}>·</span>
           <span style={{ font: "500 12px var(--font-mono)", color: "var(--star-500)" }}>{scenarioId}</span>
           <span style={{ font: "400 12px var(--font-mono)", color: "var(--star-800)" }}>· {providerLabel}</span>
-          <div style={{ marginLeft: "auto" }}>
+          <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
+            {liveRunId !== undefined && onToggleListen && (
+              <button
+                onClick={() => onToggleListen(liveRunId)}
+                style={{
+                  font: "500 11px var(--font-mono)",
+                  color: isListening ? "var(--gold-300)" : "var(--star-600)",
+                  background: "transparent",
+                  border: "1px solid var(--hairline-strong)",
+                  borderRadius: "var(--radius-sm)",
+                  padding: "6px 10px",
+                  cursor: "pointer",
+                }}
+              >
+                {isListening ? "🔇 Listening" : "🔊 Listen"}
+              </button>
+            )}
             <StatusPill status={status}>{label}</StatusPill>
           </div>
         </div>

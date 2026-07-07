@@ -13,6 +13,7 @@ import { TrialInspector } from "@/components/arena/TrialInspector";
 import { useArenaEvents } from "@/hooks/useArenaEvents";
 import { useArenaAPI } from "@/hooks/useArenaAPI";
 import { useTheme } from "@/hooks/useTheme";
+import { AudioPlayer } from "@/audio/player";
 import { buildMatrix } from "@/lib/arenaView";
 import type { Message, RunResult, ActiveRun, ProviderInfo, ScenarioInfo, TrialCell } from "@/types";
 
@@ -121,6 +122,40 @@ export default function App() {
       })
       .catch(() => {});
   }, [getConfig]);
+
+  // Single global AudioPlayer for the TrialInspector's "Listen" toggle;
+  // rebuilt when the user switches Listen target. Restored from the
+  // original RunDetail-era wiring (see git history pre-TrialInspector).
+  const playerRef = useRef<AudioPlayer | null>(null);
+  const [listeningRunId, setListeningRunId] = useState<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      playerRef.current?.close();
+      playerRef.current = null;
+    };
+  }, []);
+
+  // Toggle audio playback for a run. Closes any prior EventSource before
+  // opening a new one so we never have two audio streams in flight.
+  const handleListen = useCallback((runId: string) => {
+    if (listeningRunId === runId) {
+      playerRef.current?.pause();
+      setListeningRunId(null);
+      return;
+    }
+    if (playerRef.current) {
+      playerRef.current.close();
+      playerRef.current = null;
+    }
+    playerRef.current = new AudioPlayer({
+      runId,
+      onError: (msg) => console.warn("audio:", msg),
+    });
+    playerRef.current.connect("/api/events");
+    playerRef.current.play();
+    setListeningRunId(runId);
+  }, [listeningRunId]);
 
   // Track runIds we've already seen so a freshly-spawned run can be auto-
   // selected even when StartRun returns no runId.
@@ -392,6 +427,8 @@ export default function App() {
                     providerId={inspectorCell?.providerId ?? selectedCell.providerId}
                     providerLabel={selectedProviderLabel}
                     onSelectMessage={handleSelectMessage}
+                    listeningRunId={listeningRunId}
+                    onToggleListen={handleListen}
                   />
                 </div>
               ) : showEmptyHero ? (

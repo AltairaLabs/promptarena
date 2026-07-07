@@ -126,6 +126,75 @@ describe("TrialInspector", () => {
     expect(onSelectMessage).toHaveBeenCalledWith(1, run.Messages[1], run.Messages);
   });
 
+  it("shows a Listen toggle for a live running ActiveRun and calls onToggleListen with its runId", () => {
+    const onToggleListen = vi.fn();
+    const run: ActiveRun = {
+      runId: "r2",
+      scenario: "checkout",
+      provider: "claude",
+      region: "us",
+      startTime: "2026-01-01T00:00:00Z",
+      turnIndex: 1,
+      messages: [{ role: "user", content: "Hi", index: 0 }],
+      costs: { inputTokens: 5, outputTokens: 0, totalCost: 0 },
+      status: "running",
+    };
+    render(
+      <TrialInspector
+        run={run}
+        cell={makeCell({ hasData: false, runId: "r2" })}
+        scenarioId="checkout"
+        providerId="claude"
+        providerLabel="Claude"
+        listeningRunId={null}
+        onToggleListen={onToggleListen}
+      />,
+    );
+    fireEvent.click(screen.getByText(/Listen/));
+    expect(onToggleListen).toHaveBeenCalledWith("r2");
+  });
+
+  it("shows the Listening state when listeningRunId matches the live run", () => {
+    const run: ActiveRun = {
+      runId: "r2",
+      scenario: "checkout",
+      provider: "claude",
+      region: "us",
+      startTime: "2026-01-01T00:00:00Z",
+      turnIndex: 1,
+      messages: [{ role: "user", content: "Hi", index: 0 }],
+      costs: { inputTokens: 5, outputTokens: 0, totalCost: 0 },
+      status: "running",
+    };
+    render(
+      <TrialInspector
+        run={run}
+        cell={makeCell({ hasData: false, runId: "r2" })}
+        scenarioId="checkout"
+        providerId="claude"
+        providerLabel="Claude"
+        listeningRunId="r2"
+        onToggleListen={vi.fn()}
+      />,
+    );
+    expect(screen.getByText(/Listening/)).toBeInTheDocument();
+  });
+
+  it("does not show a Listen toggle for a completed RunResult", () => {
+    render(
+      <TrialInspector
+        run={makeRun()}
+        cell={makeCell()}
+        scenarioId="checkout"
+        providerId="claude"
+        providerLabel="Claude"
+        listeningRunId={null}
+        onToggleListen={vi.fn()}
+      />,
+    );
+    expect(screen.queryByText(/Listen/)).not.toBeInTheDocument();
+  });
+
   it("calls onSelectMessage with just the index for a clicked transcript message on an ActiveRun (no Message[] to offer)", () => {
     const onSelectMessage = vi.fn();
     const run: ActiveRun = {
