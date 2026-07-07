@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, Component } from "react";
 import type { ReactNode, ErrorInfo } from "react";
+import { ArrowLeft } from "lucide-react";
 import { Layout } from "@/components/Layout";
-import { RunDetail } from "@/components/RunDetail";
 import { DevToolsPanel } from "@/components/DevToolsPanel";
 import { RunControls } from "@/components/RunControls";
 import { EmptyStateLauncher } from "@/components/EmptyStateLauncher";
@@ -9,9 +9,9 @@ import { HistoricalResults } from "@/components/HistoricalResults";
 import { InteractiveChat } from "@/components/InteractiveChat";
 import { TrialMatrix } from "@/components/arena/TrialMatrix";
 import { InstrumentBand } from "@/components/arena/InstrumentBand";
+import { TrialInspector } from "@/components/arena/TrialInspector";
 import { useArenaEvents } from "@/hooks/useArenaEvents";
 import { useArenaAPI } from "@/hooks/useArenaAPI";
-import { AudioPlayer } from "@/audio/player";
 import { buildMatrix } from "@/lib/arenaView";
 import type { Message, RunResult, ActiveRun, ProviderInfo, ScenarioInfo } from "@/types";
 
@@ -104,10 +104,6 @@ export default function App() {
       .catch(() => {});
   }, [getRunOptions]);
 
-  // Single global AudioPlayer; rebuilt when the user switches Listen target.
-  const playerRef = useRef<AudioPlayer | null>(null);
-  const [listeningRunId, setListeningRunId] = useState<string | null>(null);
-
   // Track runIds we've already seen so a freshly-spawned run can be auto-
   // selected even when StartRun returns no runId.
   const knownRunIdsRef = useRef<Set<string>>(new Set(Object.keys(state.runs)));
@@ -134,19 +130,14 @@ export default function App() {
         (id) => !knownRunIdsRef.current.has(id) && state.runs[id]?.scenario !== "interactive"
       );
       if (newId) {
+        const newRun = state.runs[newId];
+        if (newRun) setSelectedKey(`${newRun.scenario}:${newRun.provider}`);
         setSelectedRunId(newId);
         setPendingAutoSelect(false);
       }
     }
     knownRunIdsRef.current = new Set(ids);
   }, [state.runs, pendingAutoSelect]);
-
-  useEffect(() => {
-    return () => {
-      playerRef.current?.close();
-      playerRef.current = null;
-    };
-  }, []);
 
   // Exclude synthetic interactive-chat entries from the runs-tab aggregates.
   const liveRuns = Object.values(state.runs).filter((r) => r.scenario !== "interactive");
@@ -170,6 +161,25 @@ export default function App() {
     [matrixResults, providers, scenarios],
   );
 
+  // The Trial Inspector is driven entirely off selectedKey: it looks up the
+  // backing cell in the matrix, then the run behind that cell — the saved
+  // RunResult if one's landed, else the still-running ActiveRun.
+  const selectedCell = useMemo(
+    () => (selectedKey ? matrix.rows.flatMap((row) => row.cells).find((c) => c.key === selectedKey) : undefined),
+    [matrix, selectedKey],
+  );
+  const selectedCellRun: RunResult | ActiveRun | undefined = useMemo(() => {
+    if (!selectedCell?.runId) return undefined;
+    return (
+      historicalResults.find((r) => r.RunID === selectedCell.runId) ??
+      liveRuns.find((r) => r.runId === selectedCell.runId)
+    );
+  }, [selectedCell, historicalResults, liveRuns]);
+  const selectedProviderLabel = useMemo(
+    () => matrix.providers.find((p) => p.id === selectedCell?.providerId)?.label ?? selectedCell?.providerId ?? "",
+    [matrix, selectedCell],
+  );
+
   const handleSelectMessage = (index: number, message?: Message, allMsgs?: Message[]) => {
     setDevToolsIndex(index);
     setDevToolsMessage(message);
@@ -178,8 +188,8 @@ export default function App() {
   };
 
   // Selecting a matrix cell drives both the matrix's own selection ring and
-  // the existing selectedRunId-based RunDetail navigation, so the current
-  // detail view keeps opening exactly as it did before the matrix existed.
+  // the TrialInspector navigation (which reads off selectedKey); selectedRunId
+  // is kept in step purely so DevToolsPanel's live-run lookup keeps working.
   const handleSelectCell = useCallback((key: string) => {
     setSelectedKey(key);
     const cell = matrix.rows.flatMap((row) => row.cells).find((c) => c.key === key);
@@ -189,6 +199,23 @@ export default function App() {
     }
   }, [matrix]);
 
+  // Clears the Trial Inspector back to the matrix/empty-hero view.
+  const handleBackFromInspector = useCallback(() => {
+    setSelectedKey(null);
+    setSelectedRunId(null);
+    setDevToolsOpen(false);
+  }, []);
+
+  // Rows in the ledger (HistoricalResults) carry a RunResult, not a matrix
+  // key — derive the key so selecting a ledger row opens the same Trial
+  // Inspector a matrix click would.
+  const handleSelectHistoricalRun = useCallback((id: string) => {
+    const r = historicalResults.find((x) => x.RunID === id);
+    if (r) setSelectedKey(`${r.ScenarioID}:${r.ProviderID}`);
+    setSelectedRunId(id);
+    setDevToolsOpen(false);
+  }, [historicalResults]);
+
   const handleStartRun = useCallback(async (providerId: string, scenarioId: string) => {
     setStartError(null);
     setPendingAutoSelect(true);
@@ -197,8 +224,9 @@ export default function App() {
     // at the old run until SSE delivered the first turn of the new one,
     // which feels like nothing happened. The dashboard shows the live
     // run appearing, then pendingAutoSelect kicks in and switches to
-    // the new RunDetail when the runId lands.
+    // the new TrialInspector when the runId lands.
     setSelectedRunId(null);
+    setSelectedKey(null);
     setDevToolsOpen(false);
     try {
       await startRun({ providers: [providerId], scenarios: [scenarioId] });
@@ -207,27 +235,6 @@ export default function App() {
       setStartError(err instanceof Error ? err.message : "Failed to start run");
     }
   }, [startRun]);
-
-  // Toggle audio playback for a run. Closes any prior EventSource before
-  // opening a new one so we never have two audio streams in flight.
-  const handleListen = useCallback((runId: string) => {
-    if (listeningRunId === runId) {
-      playerRef.current?.pause();
-      setListeningRunId(null);
-      return;
-    }
-    if (playerRef.current) {
-      playerRef.current.close();
-      playerRef.current = null;
-    }
-    playerRef.current = new AudioPlayer({
-      runId,
-      onError: (msg) => console.warn("audio:", msg),
-    });
-    playerRef.current.connect("/api/events");
-    playerRef.current.play();
-    setListeningRunId(runId);
-  }, [listeningRunId]);
 
   const showEmptyHero = liveRuns.length === 0 && historicalResults.length === 0;
 
@@ -292,15 +299,22 @@ export default function App() {
         ) : (
           <>
             <div className={devToolsOpen ? "lg:mr-[420px] transition-[margin] duration-200" : "transition-[margin] duration-200"}>
-              {selectedRunId ? (
-                <RunDetail
-                  runId={selectedRunId}
-                  liveRun={state.runs[selectedRunId]}
-                  listeningRunId={listeningRunId}
-                  onToggleListen={handleListen}
-                  onBack={() => { setSelectedRunId(null); setDevToolsOpen(false); }}
-                  onSelectMessage={handleSelectMessage}
-                />
+              {selectedKey && selectedCell ? (
+                <div className="space-y-4">
+                  <button
+                    onClick={handleBackFromInspector}
+                    className="flex items-center gap-2 text-sm text-[#2563EB] hover:underline"
+                  >
+                    <ArrowLeft className="h-4 w-4" /> Back
+                  </button>
+                  <TrialInspector
+                    run={selectedCellRun}
+                    cell={selectedCell}
+                    scenarioId={selectedCell.scenarioId}
+                    providerId={selectedCell.providerId}
+                    providerLabel={selectedProviderLabel}
+                  />
+                </div>
               ) : showEmptyHero ? (
                 <div className="max-w-2xl mx-auto">
                   <EmptyStateLauncher
@@ -328,7 +342,7 @@ export default function App() {
                   {showLedger && (
                     <HistoricalResults
                       results={historicalResults}
-                      onSelectRun={setSelectedRunId}
+                      onSelectRun={handleSelectHistoricalRun}
                       onClear={async () => {
                         await clearResults();
                         setHistoricalResults([]);

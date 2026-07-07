@@ -123,14 +123,16 @@ describe("App — Runs view", () => {
     expect(screen.queryByText("Previous Runs")).not.toBeInTheDocument();
   });
 
-  it("opens RunDetail when a populated matrix cell is clicked", async () => {
+  it("opens the TrialInspector when a populated matrix cell is clicked", async () => {
     render(<App />);
     const rate = await screen.findByText("100%");
     fireEvent.click(rate);
-    // RunDetail replaces the matrix view; the matrix's own heading disappears.
+    // TrialInspector replaces the matrix view; the matrix's own heading disappears.
     expect(screen.queryByText("TRIAL MATRIX · SCENARIO × PROVIDER")).not.toBeInTheDocument();
-    // Let RunDetail's own getResult() fetch settle before the test tears down,
-    // so its state update lands inside act() instead of warning after the fact.
+    // The inspector's transcript header, agent-flow graph, and terminal render
+    // instead of the old RunDetail.
+    expect(await screen.findByText("TRANSCRIPT")).toBeInTheDocument();
+    expect(screen.getByText(/promptarena run --scenario checkout --provider claude/)).toBeInTheDocument();
     await act(async () => {
       await Promise.resolve();
     });
