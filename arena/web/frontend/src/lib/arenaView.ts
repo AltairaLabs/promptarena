@@ -16,6 +16,7 @@ import type {
   Standing,
   OverallGauge,
   TranscriptMessage,
+  WorkflowGraph,
 } from "@/types";
 import type { MetricSpec, TerminalLine, GraphNode, GraphEdge } from "@/components/atlas/types";
 
@@ -391,4 +392,62 @@ export function buildAgentFlow(run: RunResult | ActiveRun | undefined): { nodes:
   });
 
   return { nodes: [entry, ...middle, output], edges };
+}
+
+// DEFAULT_WORKFLOW_NODE_ID is the single-node id the backend hands back for
+// a config with no declared workflow. It always counts as visited so it
+// never reads as dimmed/unreached.
+const DEFAULT_WORKFLOW_NODE_ID = "default";
+
+interface WorkflowStateMeta {
+  current_state?: unknown;
+  previous_state?: unknown;
+}
+
+function workflowStateFromMeta(meta: Record<string, unknown> | undefined): WorkflowStateMeta | undefined {
+  const raw = meta?.["_workflow_state"];
+  if (!raw || typeof raw !== "object") return undefined;
+  return raw as WorkflowStateMeta;
+}
+
+// visitedWorkflowPath walks a completed RunResult's messages, collecting the
+// visited node ids and traversed from->to edges from each message's
+// Meta["_workflow_state"] (current_state / previous_state). ActiveRun
+// messages carry no such meta (it's only stamped post-hoc on persisted
+// RunResults), so live runs always come back empty here.
+function visitedWorkflowPath(run: RunResult | ActiveRun | undefined): { nodes: Set<string>; edges: Set<string> } {
+  const nodes = new Set<string>([DEFAULT_WORKFLOW_NODE_ID]);
+  const edges = new Set<string>();
+  if (!run || !isRunResult(run)) return { nodes, edges };
+
+  for (const msg of run.Messages) {
+    const state = workflowStateFromMeta(msg.meta);
+    if (!state) continue;
+    const current = typeof state.current_state === "string" ? state.current_state : undefined;
+    const previous = typeof state.previous_state === "string" ? state.previous_state : undefined;
+    if (current) nodes.add(current);
+    if (previous) nodes.add(previous);
+    if (previous && current) edges.add(`${previous}->${current}`);
+  }
+  return { nodes, edges };
+}
+
+// overlayWorkflowRun (Task 5) highlights the given run's path over a static
+// WorkflowGraph: visited nodes/edges are left alone, unvisited ones get
+// `dim: true`, and edges actually traversed also get `gold: true`. When the
+// run carries no workflow-state meta at all (an in-progress ActiveRun, an
+// undefined run, or a completed run whose scenario has no workflow), the
+// graph is returned unchanged rather than dimming everything.
+export function overlayWorkflowRun(graph: WorkflowGraph, run: RunResult | ActiveRun | undefined): WorkflowGraph {
+  const { nodes: visited, edges: visitedEdges } = visitedWorkflowPath(run);
+  if (visited.size <= 1 && visitedEdges.size === 0) return graph;
+
+  return {
+    nodes: graph.nodes.map((n) => (visited.has(n.id) ? { ...n } : { ...n, dim: true })),
+    edges: graph.edges.map((e) => {
+      const key = `${e.from}->${e.to}`;
+      if (visitedEdges.has(key)) return { ...e, gold: true };
+      return { ...e, dim: true };
+    }),
+  };
 }

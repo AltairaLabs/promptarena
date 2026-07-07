@@ -8,8 +8,9 @@ import {
   buildTerminalLines,
   buildTrend,
   buildAgentFlow,
+  overlayWorkflowRun,
 } from "./arenaView";
-import type { RunResult, TrialCell } from "@/types";
+import type { RunResult, TrialCell, WorkflowGraph, ActiveRun } from "@/types";
 
 const mk = (o: Partial<RunResult>): RunResult => ({
   RunID: o.RunID ?? "r", PromptPack: "", Region: "", ScenarioID: o.ScenarioID!, ProviderID: o.ProviderID!,
@@ -281,5 +282,84 @@ describe("buildAgentFlow", () => {
 
     const incoming = edges.find((e) => e.to === terminal.id)!;
     expect(incoming.gold).not.toBe(true);
+  });
+});
+
+describe("overlayWorkflowRun", () => {
+  const wfGraph: WorkflowGraph = {
+    nodes: [
+      { id: "default", label: "default", kind: "entry", entry: true, terminal: false },
+      { id: "intake", label: "intake", kind: "entry", entry: false, terminal: false },
+      { id: "resolve", label: "resolve", kind: "output", entry: false, terminal: true },
+      { id: "escalate", label: "escalate", kind: "agent", entry: false, terminal: true },
+    ],
+    edges: [
+      { from: "intake", to: "resolve", label: "classified" },
+      { from: "intake", to: "escalate", label: "unclear" },
+    ],
+  };
+
+  it("marks the visited path gold and dims the unvisited sibling node/edge", () => {
+    const run = mk({
+      ScenarioID: "checkout", ProviderID: "claude",
+      Messages: [
+        { role: "system", content: "", meta: { _workflow_state: { current_state: "intake" } } },
+        { role: "tool", content: "", meta: { _workflow_state: { current_state: "resolve", previous_state: "intake", transition: "classified" } } },
+      ],
+    });
+
+    const out = overlayWorkflowRun(wfGraph, run);
+
+    const intake = out.nodes.find((n) => n.id === "intake")!;
+    const resolve = out.nodes.find((n) => n.id === "resolve")!;
+    const escalate = out.nodes.find((n) => n.id === "escalate")!;
+    expect(intake.dim).not.toBe(true);
+    expect(resolve.dim).not.toBe(true);
+    expect(escalate.dim).toBe(true);
+
+    const visitedEdge = out.edges.find((e) => e.from === "intake" && e.to === "resolve")!;
+    const unvisitedEdge = out.edges.find((e) => e.from === "intake" && e.to === "escalate")!;
+    expect(visitedEdge.gold).toBe(true);
+    expect(visitedEdge.dim).not.toBe(true);
+    expect(unvisitedEdge.gold).not.toBe(true);
+    expect(unvisitedEdge.dim).toBe(true);
+  });
+
+  it("never dims the default node even when unvisited by the run's path", () => {
+    const run = mk({
+      ScenarioID: "checkout", ProviderID: "claude",
+      Messages: [
+        { role: "system", content: "", meta: { _workflow_state: { current_state: "intake" } } },
+      ],
+    });
+    const out = overlayWorkflowRun(wfGraph, run);
+    const defaultNode = out.nodes.find((n) => n.id === "default")!;
+    expect(defaultNode.dim).not.toBe(true);
+  });
+
+  it("leaves everything undimmed when no message carries workflow-state meta", () => {
+    const run = mk({
+      ScenarioID: "checkout", ProviderID: "claude",
+      Messages: [{ role: "user", content: "hi" }, { role: "assistant", content: "hello" }],
+    });
+    const out = overlayWorkflowRun(wfGraph, run);
+    expect(out.nodes.every((n) => n.dim !== true)).toBe(true);
+    expect(out.edges.every((e) => e.dim !== true)).toBe(true);
+  });
+
+  it("returns the graph unchanged for an ActiveRun (no per-message workflow state exists yet)", () => {
+    const active: ActiveRun = {
+      runId: "r1", scenario: "checkout", provider: "claude", region: "us", startTime: "2026-07-07T00:00:00Z",
+      turnIndex: 1, status: "running", costs: { inputTokens: 0, outputTokens: 0, totalCost: 0 },
+      messages: [{ role: "user", content: "hi", index: 0 }],
+    };
+    const out = overlayWorkflowRun(wfGraph, active);
+    expect(out.nodes.every((n) => n.dim !== true)).toBe(true);
+    expect(out.edges.every((e) => e.dim !== true)).toBe(true);
+  });
+
+  it("returns the graph unchanged for an undefined run", () => {
+    const out = overlayWorkflowRun(wfGraph, undefined);
+    expect(out.nodes.every((n) => n.dim !== true)).toBe(true);
   });
 });
