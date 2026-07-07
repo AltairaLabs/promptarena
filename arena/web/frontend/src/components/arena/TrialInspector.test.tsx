@@ -109,18 +109,14 @@ describe("TrialInspector", () => {
     expect(screen.getByText("WORKFLOW")).toBeInTheDocument();
     expect(container.querySelector("svg")).toBeTruthy();
 
-    // ConstellationGraph renders each node inside a <g>, dimmed via inline
-    // opacity when the node's `dim` flag is set by overlayWorkflowRun.
-    const groups = Array.from(container.querySelectorAll("svg > g"));
-    const findGroupByLabel = (label: string) =>
-      groups.find((g) => Array.from(g.querySelectorAll("text")).some((t) => t.textContent === label));
-
-    const resolveGroup = findGroupByLabel("resolve"); // visited
-    const escalateGroup = findGroupByLabel("escalate"); // unvisited
-    expect(resolveGroup).toBeTruthy();
-    expect(escalateGroup).toBeTruthy();
-    expect((resolveGroup as HTMLElement).getAttribute("style") ?? "").not.toContain("opacity");
-    expect((escalateGroup as HTMLElement).getAttribute("style") ?? "").toContain("opacity");
+    // WorkflowNode renders each state's label inside a box whose own inline
+    // style carries `opacity: 0.3` when the node's `dim` flag is set by
+    // overlayWorkflowRun (unvisited under the selected run), vs `opacity: 1`
+    // for a visited node.
+    const resolveBox = screen.getByText("resolve").parentElement; // visited
+    const escalateBox = screen.getByText("escalate").parentElement; // unvisited
+    expect(resolveBox?.getAttribute("style") ?? "").toContain("opacity: 1");
+    expect(escalateBox?.getAttribute("style") ?? "").toContain("opacity: 0.3");
   });
 
   it("renders the AgentFlowCard placeholder without crashing when the workflow graph hasn't loaded yet", () => {

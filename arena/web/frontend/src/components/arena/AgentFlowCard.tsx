@@ -1,6 +1,6 @@
-import { ConstellationGraph } from "@/components/atlas/ConstellationGraph";
-import { overlayWorkflowRun } from "@/lib/arenaView";
-import { layoutWorkflow } from "@/lib/workflowLayout";
+import { WorkflowGraphView } from "@/components/arena/workflow/WorkflowGraphView";
+import { useTheme } from "@/hooks/useTheme";
+import { buildFlowElements, type FlowToggles } from "@/lib/workflowFlow";
 import type { RunResult, ActiveRun, WorkflowGraph } from "@/types";
 
 export interface AgentFlowCardProps {
@@ -8,13 +8,19 @@ export interface AgentFlowCardProps {
   run: RunResult | ActiveRun | undefined;
 }
 
+// Fixed defaults for this unit — the interactive compositions/this-run-only
+// toggles are a later unit's UI; until then every panel renders collapsed
+// (states only) and shows the full topology regardless of the selected run.
+const DEFAULT_TOGGLES: FlowToggles = { compositionsExpanded: false, thisRunOnly: false };
+
 // AgentFlowCard — the Trial Inspector's right-rail top card: renders the
 // real workflow topology (fetched once via getWorkflow) with the selected
 // run's path overlaid — visited nodes/edges stay lit, unvisited ones dim.
 // Until the graph has loaded (App's initial fetch hasn't resolved yet), the
 // card renders its shell with an empty/placeholder body rather than crash.
 export function AgentFlowCard({ graph, run }: AgentFlowCardProps) {
-  const laid = graph ? layoutWorkflow(overlayWorkflowRun(graph, run)) : null;
+  const { theme } = useTheme();
+  const elements = graph ? buildFlowElements(graph, run, DEFAULT_TOGGLES) : null;
 
   return (
     <div
@@ -37,11 +43,11 @@ export function AgentFlowCard({ graph, run }: AgentFlowCardProps) {
       >
         WORKFLOW
       </div>
-      <div style={{ padding: 14, maxHeight: 320, overflow: "auto" }}>
-        {laid ? (
-          <ConstellationGraph nodes={laid.nodes} edges={laid.edges} width={laid.width} height={laid.height} showLabels />
+      <div style={{ height: 360 }}>
+        {elements ? (
+          <WorkflowGraphView elements={elements} theme={theme} />
         ) : (
-          <div style={{ font: "12px var(--font-mono)", color: "var(--star-600)", padding: "8px 4px" }}>
+          <div style={{ font: "12px var(--font-mono)", color: "var(--star-600)", padding: "22px 18px" }}>
             Loading workflow…
           </div>
         )}

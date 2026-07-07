@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import { AgentFlowCard } from "./AgentFlowCard";
 import type { RunResult, WorkflowGraph } from "@/types";
@@ -37,15 +37,15 @@ function makeRun(overrides: Partial<RunResult> = {}): RunResult {
 
 describe("AgentFlowCard", () => {
   it("renders the WORKFLOW header and a placeholder body without crashing when the graph hasn't loaded", () => {
-    const { container } = render(<AgentFlowCard graph={null} run={undefined} />);
+    render(<AgentFlowCard graph={null} run={undefined} />);
     expect(screen.getByText("WORKFLOW")).toBeInTheDocument();
-    expect(container.querySelector("svg")).toBeFalsy();
+    expect(screen.getByText("Loading workflow…")).toBeInTheDocument();
   });
 
-  it("renders the ConstellationGraph svg once the graph has loaded", () => {
-    const { container } = render(<AgentFlowCard graph={graph} run={makeRun()} />);
+  it("renders the React Flow workflow view once the graph has loaded", async () => {
+    render(<AgentFlowCard graph={graph} run={makeRun()} />);
     expect(screen.getByText("WORKFLOW")).toBeInTheDocument();
-    expect(container.querySelector("svg")).toBeTruthy();
-    expect(container.querySelectorAll("svg > g")).toHaveLength(2);
+    await waitFor(() => expect(screen.getByText("intake")).toBeInTheDocument());
+    expect(screen.getByText("resolve")).toBeInTheDocument();
   });
 });

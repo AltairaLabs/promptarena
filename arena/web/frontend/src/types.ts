@@ -101,7 +101,7 @@ export interface RunOptionsResponse {
 
 // === Workflow Graph ===
 // Mirrors the Go backend's GET /api/workflow response exactly (no x/y —
-// layout is a frontend concern, see src/lib/workflowLayout.ts).
+// layout is a frontend concern, see src/lib/workflowFlow.ts's dagre pass).
 
 export interface WorkflowGraphNode {
   id: string;
