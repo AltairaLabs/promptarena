@@ -41,6 +41,21 @@ func ResultsDirFromConfig(configPath string) string {
 	return filepath.Join(filepath.Dir(configPath), "out")
 }
 
+// ProjectDir returns the project root directory for deploy operations,
+// derived from the loaded config file's directory. It returns "" when no
+// config is loaded (or the config path has no meaningful parent directory),
+// letting callers such as flow.Options fall back to the current working
+// directory themselves.
+func (c *AppContext) ProjectDir() string {
+	if c.ConfigPath == "" {
+		return ""
+	}
+	if dir := filepath.Dir(c.ConfigPath); dir != "" && dir != "." {
+		return dir
+	}
+	return ""
+}
+
 // LoadConfig loads the arena configuration from path, sets Config and
 // ConfigPath on the context, and derives ResultsDir as the out/ directory
 // next to the config file.

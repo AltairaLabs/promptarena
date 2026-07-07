@@ -47,6 +47,13 @@ func DefaultMenu(ctx *AppContext) []menuItem {
 				return NewInspectPage(c)
 			},
 		},
+		{
+			label:       "Deploy   — deploy this pack to a target environment",
+			needsConfig: true,
+			make: func(c *AppContext) Page {
+				return NewDeployPage(c)
+			},
+		},
 	}
 }
 
