@@ -195,3 +195,215 @@ func TestBuildWorkflowGraph_ParseError(t *testing.T) {
 		t.Fatal("want error for unparsable workflow config, got nil")
 	}
 }
+
+func TestBuildWorkflowGraph_CompositionExpansion(t *testing.T) {
+	cfg := &arenaconfig.Config{
+		Workflow: map[string]any{
+			"version": 2, "entry": "intake",
+			"states": map[string]any{
+				"intake": map[string]any{"on_event": map[string]any{"go": "process"}},
+				"process": map[string]any{
+					"orchestration": "composition",
+					"composition":   "flow",
+					"terminal":      true,
+				},
+			},
+		},
+		Compositions: map[string]any{
+			"flow": map[string]any{
+				"version": 1,
+				"steps": []map[string]any{
+					{"id": "fetch", "kind": "agent", "termination": map[string]any{"max_steps": 3}},
+					{"id": "check", "kind": "tool", "tool": "echo", "depends_on": []string{"fetch"}},
+					{
+						"id": "route", "kind": "branch", "depends_on": []string{"check"},
+						"predicate": map[string]any{"path": "check.ok", "op": "equals", "value": true},
+						"then":      "approve", "else": "reject",
+					},
+					{"id": "approve", "kind": "prompt", "depends_on": []string{"route"}},
+					{"id": "reject", "kind": "prompt", "depends_on": []string{"route"}},
+				},
+			},
+		},
+	}
+
+	g, err := BuildWorkflowGraph(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	nodeByID := map[string]WorkflowGraphNode{}
+	for _, n := range g.Nodes {
+		nodeByID[n.ID] = n
+	}
+	wantKinds := map[string]string{
+		"process/fetch":   "agent",
+		"process/check":   "tool",
+		"process/route":   "branch",
+		"process/approve": "prompt",
+		"process/reject":  "prompt",
+	}
+	for id, kind := range wantKinds {
+		n, ok := nodeByID[id]
+		if !ok {
+			t.Fatalf("missing composition step node %q, got nodes %+v", id, g.Nodes)
+		}
+		if n.Kind != kind {
+			t.Fatalf("node %q: want kind %q, got %q", id, kind, n.Kind)
+		}
+	}
+
+	hasEdge := func(from, to string, dashed bool) bool {
+		for _, e := range g.Edges {
+			if e.From == from && e.To == to && e.Dashed == dashed {
+				return true
+			}
+		}
+		return false
+	}
+
+	if !hasEdge("process", "process/fetch", false) {
+		t.Fatalf("want edge from state node process to entry step process/fetch, got %+v", g.Edges)
+	}
+	if !hasEdge("process/fetch", "process/check", false) {
+		t.Fatalf("want depends_on edge process/fetch->process/check, got %+v", g.Edges)
+	}
+	if !hasEdge("process/check", "process/route", false) {
+		t.Fatalf("want depends_on edge process/check->process/route, got %+v", g.Edges)
+	}
+	if !hasEdge("process/route", "process/approve", false) {
+		t.Fatalf("want solid then edge process/route->process/approve, got %+v", g.Edges)
+	}
+	if !hasEdge("process/route", "process/reject", true) {
+		t.Fatalf("want dashed else edge process/route->process/reject, got %+v", g.Edges)
+	}
+	if hasEdge("process", "process/approve", false) || hasEdge("process", "process/reject", false) {
+		t.Fatalf("approve/reject are not entry steps (they depend_on route), want no state->step edge, got %+v", g.Edges)
+	}
+}
+
+func TestBuildWorkflowGraph_CompositionExpansion_ParallelFanOut(t *testing.T) {
+	cfg := &arenaconfig.Config{
+		Workflow: map[string]any{
+			"version": 2, "entry": "run",
+			"states": map[string]any{
+				"run": map[string]any{
+					"orchestration": "composition",
+					"composition":   "par",
+					"terminal":      true,
+				},
+			},
+		},
+		Compositions: map[string]any{
+			"par": map[string]any{
+				"version": 1,
+				"steps": []map[string]any{
+					{"id": "start", "kind": "agent", "termination": map[string]any{"max_steps": 1}},
+					{
+						"id": "fan", "kind": "parallel", "depends_on": []string{"start"},
+						"reduce": map[string]any{"strategy": "append", "into": "results"},
+						"branches": []map[string]any{
+							{"id": "b1", "kind": "tool", "tool": "echo"},
+							{"id": "b2", "kind": "tool", "tool": "echo"},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	g, err := BuildWorkflowGraph(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	nodeByID := map[string]WorkflowGraphNode{}
+	for _, n := range g.Nodes {
+		nodeByID[n.ID] = n
+	}
+	if nodeByID["run/fan"].Kind != "branch" {
+		t.Fatalf("parallel step should map to kind branch, got %+v", nodeByID["run/fan"])
+	}
+	if nodeByID["run/b1"].Kind != "tool" || nodeByID["run/b2"].Kind != "tool" {
+		t.Fatalf("want branch steps b1/b2 as tool nodes, got %+v %+v", nodeByID["run/b1"], nodeByID["run/b2"])
+	}
+
+	hasEdge := func(from, to string) bool {
+		for _, e := range g.Edges {
+			if e.From == from && e.To == to {
+				return true
+			}
+		}
+		return false
+	}
+	if !hasEdge("run", "run/start") {
+		t.Fatalf("want state->entry edge run->run/start, got %+v", g.Edges)
+	}
+	if !hasEdge("run/start", "run/fan") {
+		t.Fatalf("want depends_on edge run/start->run/fan, got %+v", g.Edges)
+	}
+	if !hasEdge("run/fan", "run/b1") || !hasEdge("run/fan", "run/b2") {
+		t.Fatalf("want fan-out edges from run/fan to both branches, got %+v", g.Edges)
+	}
+}
+
+func TestBuildWorkflowGraph_CompositionExpansion_MissingCompositions(t *testing.T) {
+	cfg := &arenaconfig.Config{
+		Workflow: map[string]any{
+			"version": 2, "entry": "process",
+			"states": map[string]any{
+				"process": map[string]any{
+					"orchestration": "composition",
+					"composition":   "flow",
+					"terminal":      true,
+				},
+			},
+		},
+		// Compositions intentionally left nil.
+	}
+
+	g, err := BuildWorkflowGraph(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(g.Nodes) != 1 || g.Nodes[0].ID != "process" {
+		t.Fatalf("want only the state node when cfg.Compositions is nil, got %+v", g.Nodes)
+	}
+	if len(g.Edges) != 0 {
+		t.Fatalf("want no edges when cfg.Compositions is nil, got %+v", g.Edges)
+	}
+}
+
+func TestBuildWorkflowGraph_CompositionExpansion_UnknownCompositionName(t *testing.T) {
+	cfg := &arenaconfig.Config{
+		Workflow: map[string]any{
+			"version": 2, "entry": "process",
+			"states": map[string]any{
+				"process": map[string]any{
+					"orchestration": "composition",
+					"composition":   "missing",
+					"terminal":      true,
+				},
+			},
+		},
+		Compositions: map[string]any{
+			"other": map[string]any{
+				"version": 1,
+				"steps": []map[string]any{
+					{"id": "s", "kind": "tool", "tool": "echo"},
+				},
+			},
+		},
+	}
+
+	g, err := BuildWorkflowGraph(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(g.Nodes) != 1 || g.Nodes[0].ID != "process" {
+		t.Fatalf("want only the state node when the named composition is not found, got %+v", g.Nodes)
+	}
+	if len(g.Edges) != 0 {
+		t.Fatalf("want no edges when the named composition is not found, got %+v", g.Edges)
+	}
+}
