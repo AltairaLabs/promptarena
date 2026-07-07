@@ -335,14 +335,18 @@ export function buildAgentFlow(run: RunResult | ActiveRun | undefined): { nodes:
   if (!run) return { nodes: [], edges: [] };
 
   const hasError = isRunResult(run) ? Boolean(run.Error) : run.status === "failed";
+  // A live ActiveRun that hasn't reached "completed" or "failed" yet is still
+  // in flight — its terminal node must not read as resolved (no gold glow),
+  // so it gets the plain "agent" kind instead of "output".
+  const isRunning = !isRunResult(run) && run.status !== "completed" && run.status !== "failed";
   const edgeMargin = 15; // keeps the entry/output node halos inside the viewBox
   const entry: GraphNode = { id: "entry", x: edgeMargin, y: FLOW_VIEWBOX.height / 2, kind: "entry", label: "user" };
   const output: GraphNode = {
     id: "output",
     x: FLOW_VIEWBOX.width - edgeMargin,
     y: FLOW_VIEWBOX.height / 2,
-    kind: "output",
-    label: hasError ? "failed" : "resolved",
+    kind: isRunning ? "agent" : "output",
+    label: isRunning ? "running" : hasError ? "failed" : "resolved",
   };
 
   const middle: GraphNode[] = [];
@@ -372,7 +376,7 @@ export function buildAgentFlow(run: RunResult | ActiveRun | undefined): { nodes:
     }
   }
 
-  edges.push({ from: cursor, to: output.id, gold: !hasError });
+  edges.push({ from: cursor, to: output.id, gold: !hasError && !isRunning });
 
   // Deterministic layout: spread the intermediate nodes evenly between
   // entry and output, offsetting tool nodes onto a second row so the

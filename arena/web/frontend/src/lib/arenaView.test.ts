@@ -267,4 +267,19 @@ describe("buildAgentFlow", () => {
   it("returns empty nodes/edges for an undefined run", () => {
     expect(buildAgentFlow(undefined)).toEqual({ nodes: [], edges: [] });
   });
+
+  it("marks the terminal node running (not resolved) for a live in-progress ActiveRun", () => {
+    const active = {
+      runId: "r1", scenario: "checkout", provider: "claude", region: "us", startTime: "2026-07-07T00:00:00Z",
+      turnIndex: 1, status: "running" as const, costs: { inputTokens: 0, outputTokens: 0, totalCost: 0 },
+      messages: [{ role: "user", content: "hi", index: 0 }],
+    };
+    const { nodes, edges } = buildAgentFlow(active);
+    const terminal = nodes.find((n) => n.id === "output")!;
+    expect(terminal.label).toBe("running");
+    expect(terminal.kind).not.toBe("output");
+
+    const incoming = edges.find((e) => e.to === terminal.id)!;
+    expect(incoming.gold).not.toBe(true);
+  });
 });
