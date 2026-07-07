@@ -79,6 +79,13 @@ func MergedConfigJSON(deployCfg *arenaconfig.DeployConfig, env, configPath strin
 	return string(b), nil
 }
 
+// jsonUnmarshalString is a tiny wrapper so callers elsewhere in the package
+// (e.g. preflight.go) can unmarshal a JSON string without importing
+// encoding/json a second time.
+func jsonUnmarshalString(s string, v interface{}) error {
+	return json.Unmarshal([]byte(s), v)
+}
+
 // SerializeArenaConfig serializes the full arena config as JSON for adapter
 // consumption. Returns "" (rather than erroring) on marshal failure since
 // arena config always round-trips through JSON-tagged structs.
