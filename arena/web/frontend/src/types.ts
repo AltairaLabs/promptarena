@@ -109,6 +109,9 @@ export interface WorkflowGraphNode {
   kind: "entry" | "output" | "agent" | "prompt" | "tool" | "branch";
   entry: boolean;
   terminal: boolean;
+  // dim is a frontend-only overlay field set by arenaView's
+  // overlayWorkflowRun — never present in the raw backend payload.
+  dim?: boolean;
 }
 
 export interface WorkflowGraphEdge {
@@ -116,6 +119,10 @@ export interface WorkflowGraphEdge {
   to: string;
   label?: string;
   dashed?: boolean;
+  // gold/dim are frontend-only overlay fields set by arenaView's
+  // overlayWorkflowRun — never present in the raw backend payload.
+  gold?: boolean;
+  dim?: boolean;
 }
 
 export interface WorkflowGraph {
