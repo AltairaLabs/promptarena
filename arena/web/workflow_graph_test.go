@@ -1,6 +1,8 @@
 package web
 
 import (
+	"encoding/json"
+	"strings"
 	"testing"
 
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
@@ -16,6 +18,23 @@ func TestBuildWorkflowGraph_NoConfig(t *testing.T) {
 	}
 	if len(g.Edges) != 0 {
 		t.Fatalf("want no edges, got %+v", g.Edges)
+	}
+}
+
+func TestBuildWorkflowGraph_NoConfig_SerializesEdgesAsEmptyArray(t *testing.T) {
+	g, err := BuildWorkflowGraph(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	b, err := json.Marshal(g)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(b), `"edges":null`) {
+		t.Fatalf("want edges to serialize as [], got null: %s", b)
+	}
+	if !strings.Contains(string(b), `"edges":[]`) {
+		t.Fatalf("want edges to serialize as [], got: %s", b)
 	}
 }
 
@@ -133,7 +152,7 @@ func TestBuildWorkflowGraph_DeterministicOrdering(t *testing.T) {
 	}}
 
 	var first WorkflowGraph
-	for i := 0; i < 10; i++ {
+	for i := range 10 {
 		g, err := BuildWorkflowGraph(cfg)
 		if err != nil {
 			t.Fatal(err)

@@ -43,6 +43,7 @@ func BuildWorkflowGraph(cfg *arenaconfig.Config) (WorkflowGraph, error) {
 			Nodes: []WorkflowGraphNode{
 				{ID: "default", Label: "default", Kind: "entry", Terminal: true},
 			},
+			Edges: []WorkflowGraphEdge{},
 		}, nil
 	}
 
