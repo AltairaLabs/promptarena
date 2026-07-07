@@ -35,6 +35,12 @@ func runDeployStatus(cmd *cobra.Command, args []string) error {
 
 	fmt.Printf("Deployment status for environment: %s (provider: %s)\n", env, deployCfg.Provider)
 
+	// Validate the deploy config before checking local state, so a broken
+	// --config surfaces its error even when there is no prior deployment.
+	if _, err := flow.MergedConfigJSON(deployCfg, env, deployConfig); err != nil {
+		return err
+	}
+
 	// Peek at local state before connecting the adapter — status should be a
 	// cheap, local check when nothing has been deployed yet (and shouldn't
 	// require the adapter binary to be installed just to say so).

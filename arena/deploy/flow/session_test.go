@@ -78,6 +78,13 @@ func TestSession_PlanApplyRoundtrip(t *testing.T) {
 		t.Fatalf("Plan: %v %+v", err, plan)
 	}
 
+	if err := s.SavePlan(plan, req); err != nil {
+		t.Fatalf("SavePlan: %v", err)
+	}
+	if saved, err := s.LoadPlan(); err != nil || saved == nil {
+		t.Fatalf("expected saved plan before apply: saved=%+v err=%v", saved, err)
+	}
+
 	var seen []string
 	if err := s.Apply(ctx, req, func(e *deploy.ApplyEvent) error {
 		seen = append(seen, e.Type)
@@ -91,6 +98,11 @@ func TestSession_PlanApplyRoundtrip(t *testing.T) {
 	// State saved, plan cleared.
 	if st, _ := s.Store.Load(); st == nil {
 		t.Fatal("expected state saved after apply")
+	}
+	if saved, err := s.LoadPlan(); err != nil {
+		t.Fatalf("LoadPlan after apply: %v", err)
+	} else if saved != nil {
+		t.Fatal("expected saved plan deleted after apply")
 	}
 }
 

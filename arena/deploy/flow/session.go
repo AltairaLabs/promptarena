@@ -3,6 +3,7 @@ package flow
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/AltairaLabs/PromptKit/runtime/deploy"
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
@@ -74,11 +75,16 @@ func (s *Session) PackChecksum() string { return deploy.ComputePackChecksum(s.pa
 // PlanRequest builds a PlanRequest, refreshing prior adapter state first (soft-fail).
 func (s *Session) PlanRequest(ctx context.Context) (*deploy.PlanRequest, error) {
 	prior := ""
-	if st, _ := s.Store.Load(); st != nil {
+	st, err := s.Store.Load()
+	if err != nil {
+		return nil, err
+	}
+	if st != nil {
 		prior = st.State
 		if refreshed, err := s.Status(ctx); err == nil && refreshed.State != "" {
 			prior = refreshed.State
 			st.State = refreshed.State
+			st.LastRefreshed = time.Now().UTC().Format(time.RFC3339)
 			_ = s.Store.Save(st)
 		}
 	}
@@ -126,7 +132,11 @@ func (s *Session) Apply(ctx context.Context, req *deploy.PlanRequest, cb deploy.
 // Status queries current deployment health.
 func (s *Session) Status(ctx context.Context) (*deploy.StatusResponse, error) {
 	prior := ""
-	if st, _ := s.Store.Load(); st != nil {
+	st, err := s.Store.Load()
+	if err != nil {
+		return nil, err
+	}
+	if st != nil {
 		prior = st.State
 	}
 	return s.Client.Status(ctx, &deploy.StatusRequest{
