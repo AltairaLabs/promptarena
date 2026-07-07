@@ -10,7 +10,7 @@ describe("StatusPill", () => {
     expect(container.querySelectorAll("span").length).toBeGreaterThan(1);
   });
   it("renders reconciled without a dot", () => {
-    const { container } = render(<StatusPill status="reconciled">Passed</StatusPill>);
+    render(<StatusPill status="reconciled">Passed</StatusPill>);
     expect(screen.getByText("Passed")).toBeInTheDocument();
   });
 });
