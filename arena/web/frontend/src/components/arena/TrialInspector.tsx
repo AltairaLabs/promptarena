@@ -26,6 +26,10 @@ export interface TrialInspectorProps {
   // live audio stream to attach to).
   listeningRunId?: string | null;
   onToggleListen?: (runId: string) => void;
+  // theme is threaded down from App's single useTheme() owner so the
+  // AgentFlowCard's React Flow view re-renders with the right colorMode when
+  // the TopBar's theme toggle flips — see AgentFlowCard's own theme prop doc.
+  theme: "light" | "dark";
 }
 
 // statusFor derives the header StatusPill's status/label. A still-running
@@ -54,6 +58,7 @@ export function TrialInspector({
   onSelectMessage,
   listeningRunId,
   onToggleListen,
+  theme,
 }: TrialInspectorProps) {
   const { status, label } = statusFor(run, cell);
 
@@ -133,7 +138,7 @@ export function TrialInspector({
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-        <AgentFlowCard graph={workflowGraph} run={run} />
+        <AgentFlowCard graph={workflowGraph} run={run} theme={theme} />
         <TerminalCard lines={buildTerminalLines(cell, scenarioId, providerId)} />
       </div>
     </div>

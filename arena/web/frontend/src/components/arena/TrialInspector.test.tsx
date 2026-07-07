@@ -74,6 +74,7 @@ describe("TrialInspector", () => {
         providerId="claude"
         providerLabel="Claude"
         workflowGraph={wfGraph}
+        theme="dark"
       />,
     );
     expect(screen.getByText("TRANSCRIPT")).toBeInTheDocument();
@@ -104,6 +105,7 @@ describe("TrialInspector", () => {
         providerId="claude"
         providerLabel="Claude"
         workflowGraph={wfGraph}
+        theme="dark"
       />,
     );
     expect(screen.getByText("WORKFLOW")).toBeInTheDocument();
@@ -128,6 +130,7 @@ describe("TrialInspector", () => {
         providerId="claude"
         providerLabel="Claude"
         workflowGraph={null}
+        theme="dark"
       />,
     );
     expect(screen.getByText("WORKFLOW")).toBeInTheDocument();
@@ -142,6 +145,7 @@ describe("TrialInspector", () => {
         providerId="claude"
         providerLabel="Claude"
         workflowGraph={wfGraph}
+        theme="dark"
       />,
     );
     expect(screen.getByText("Failed")).toBeInTheDocument();
@@ -167,6 +171,7 @@ describe("TrialInspector", () => {
         providerId="claude"
         providerLabel="Claude"
         workflowGraph={wfGraph}
+        theme="dark"
       />,
     );
     expect(screen.getByText("Running")).toBeInTheDocument();
@@ -184,6 +189,7 @@ describe("TrialInspector", () => {
         providerLabel="Claude"
         workflowGraph={wfGraph}
         onSelectMessage={onSelectMessage}
+        theme="dark"
       />,
     );
     fireEvent.click(screen.getByText("Hello!"));
@@ -213,6 +219,7 @@ describe("TrialInspector", () => {
         workflowGraph={wfGraph}
         listeningRunId={null}
         onToggleListen={onToggleListen}
+        theme="dark"
       />,
     );
     fireEvent.click(screen.getByText(/Listen/));
@@ -241,6 +248,7 @@ describe("TrialInspector", () => {
         workflowGraph={wfGraph}
         listeningRunId="r2"
         onToggleListen={vi.fn()}
+        theme="dark"
       />,
     );
     expect(screen.getByText(/Listening/)).toBeInTheDocument();
@@ -257,6 +265,7 @@ describe("TrialInspector", () => {
         workflowGraph={wfGraph}
         listeningRunId={null}
         onToggleListen={vi.fn()}
+        theme="dark"
       />,
     );
     expect(screen.queryByText(/Listen/)).not.toBeInTheDocument();
@@ -284,9 +293,40 @@ describe("TrialInspector", () => {
         providerLabel="Claude"
         workflowGraph={wfGraph}
         onSelectMessage={onSelectMessage}
+        theme="dark"
       />,
     );
     fireEvent.click(screen.getByText("Hi"));
     expect(onSelectMessage).toHaveBeenCalledWith(0);
+  });
+
+  it("threads the theme prop down to the WORKFLOW panel's React Flow view", () => {
+    const { container, rerender } = render(
+      <TrialInspector
+        run={makeRun()}
+        cell={makeCell()}
+        scenarioId="checkout"
+        providerId="claude"
+        providerLabel="Claude"
+        workflowGraph={wfGraph}
+        theme="dark"
+      />,
+    );
+    expect(container.querySelector(".react-flow.dark")).toBeTruthy();
+    expect(container.querySelector(".react-flow.light")).toBeFalsy();
+
+    rerender(
+      <TrialInspector
+        run={makeRun()}
+        cell={makeCell()}
+        scenarioId="checkout"
+        providerId="claude"
+        providerLabel="Claude"
+        workflowGraph={wfGraph}
+        theme="light"
+      />,
+    );
+    expect(container.querySelector(".react-flow.light")).toBeTruthy();
+    expect(container.querySelector(".react-flow.dark")).toBeFalsy();
   });
 });

@@ -462,6 +462,7 @@ export default function App() {
                     onSelectMessage={handleSelectMessage}
                     listeningRunId={listeningRunId}
                     onToggleListen={handleListen}
+                    theme={theme}
                   />
                 </div>
               ) : (
