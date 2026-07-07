@@ -99,6 +99,30 @@ export interface RunOptionsResponse {
   scenarios: ScenarioInfo[];
 }
 
+// === Workflow Graph ===
+// Mirrors the Go backend's GET /api/workflow response exactly (no x/y —
+// layout is a frontend concern, see src/lib/workflowLayout.ts).
+
+export interface WorkflowGraphNode {
+  id: string;
+  label: string;
+  kind: "entry" | "output" | "agent" | "prompt" | "tool" | "branch";
+  entry: boolean;
+  terminal: boolean;
+}
+
+export interface WorkflowGraphEdge {
+  from: string;
+  to: string;
+  label?: string;
+  dashed?: boolean;
+}
+
+export interface WorkflowGraph {
+  nodes: WorkflowGraphNode[];
+  edges: WorkflowGraphEdge[];
+}
+
 // === Run Results ===
 
 export interface RunResult {

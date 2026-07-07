@@ -23,11 +23,14 @@ export interface GraphNode {
   y: number;
   kind: "prompt" | "agent" | "tool" | "branch" | "output" | "entry";
   label?: string;
+  dim?: boolean;
 }
 
 export interface GraphEdge {
   from: string;
   to: string;
+  label?: string;
   dashed?: boolean;
   gold?: boolean;
+  dim?: boolean;
 }
