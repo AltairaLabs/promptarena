@@ -1,3 +1,4 @@
+import { Fragment } from "react";
 import type { GraphNode, GraphEdge } from "./types";
 
 const KIND: Record<string, { fill: string; halo: string; r: number; diamond?: boolean; glow?: boolean }> = {
@@ -45,22 +46,35 @@ export function ConstellationGraph({
         const a = byId[e.from], b = byId[e.to];
         if (!a || !b) return null;
         const goldEdge = (byId[e.to] && (byId[e.to].kind === 'output')) || e.gold;
+        const opacity = e.dim ? 0.3 : (goldEdge ? 0.55 : 0.45);
+        const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
         return (
-          <line
-            key={`e${i}`}
-            x1={a.x} y1={a.y} x2={b.x} y2={b.y}
-            stroke={goldEdge ? 'var(--gold-500)' : 'var(--starlight-500)'}
-            strokeWidth={1.2}
-            opacity={goldEdge ? 0.55 : 0.45}
-            strokeDasharray={e.dashed ? '3 5' : undefined}
-          />
+          <Fragment key={`e${i}`}>
+            <line
+              x1={a.x} y1={a.y} x2={b.x} y2={b.y}
+              stroke={goldEdge ? 'var(--gold-500)' : 'var(--starlight-500)'}
+              strokeWidth={1.2}
+              opacity={opacity}
+              strokeDasharray={e.dashed ? '3 5' : undefined}
+            />
+            {e.label && (
+              <text
+                x={mx} y={my}
+                textAnchor="middle"
+                opacity={opacity}
+                style={{ font: '500 8px var(--font-mono)', fill: 'var(--star-900)' }}
+              >
+                {e.label}
+              </text>
+            )}
+          </Fragment>
         );
       })}
       {nodes.map((n) => {
         const k = KIND[n.kind] || KIND.agent;
         const cx = n.x, cy = n.y;
         return (
-          <g key={n.id}>
+          <g key={n.id} style={n.dim ? { opacity: 0.3 } : undefined}>
             {k.diamond ? (
               <rect
                 x={cx - k.r * 2.2} y={cy - k.r * 2.2}
