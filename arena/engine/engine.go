@@ -697,6 +697,11 @@ func (e *Engine) EnableMockProviderMode(mockConfigPath string) error {
 		repository = mock.NewInMemoryMockRepository("Mock response from provider")
 	}
 
+	// Default agent turns that declare no audio to the built-in "mock assistant
+	// turn" clip, so mock duplex runs are audible and self-labeling out of the
+	// box (the mock TTS handles the user side).
+	repository = withDefaultMockAudio(repository)
+
 	// Create a new provider registry with mock providers
 	mockRegistry := providers.NewRegistry()
 

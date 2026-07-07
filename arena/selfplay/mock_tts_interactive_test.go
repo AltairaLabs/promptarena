@@ -1,13 +1,37 @@
 package selfplay
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"sync"
 	"testing"
 
 	"github.com/AltairaLabs/PromptKit/runtime/tts"
+	arenaaudio "github.com/AltairaLabs/promptarena/arena/audio"
 )
+
+// TestMockTTS_DefaultsToBuiltInUserClip verifies that with no fixture audio
+// configured, Synthesize returns the built-in "mock user turn" clip (not the
+// old silence), so mock self-play personas are audible and self-labeling.
+func TestMockTTS_DefaultsToBuiltInUserClip(t *testing.T) {
+	m := &MockTTSService{SampleRate: mockTTSDefaultSampleRate} // no cachedAudio
+
+	rc, err := m.Synthesize(context.Background(), "some persona line", tts.SynthesisConfig{})
+	if err != nil {
+		t.Fatalf("Synthesize: %v", err)
+	}
+	got, err := io.ReadAll(rc)
+	if err != nil {
+		t.Fatalf("ReadAll: %v", err)
+	}
+	_ = rc.Close()
+
+	if !bytes.Equal(got, arenaaudio.MockUserTurnPCM()) {
+		t.Errorf("fallback audio = %d bytes, want the built-in user clip (%d bytes)",
+			len(got), len(arenaaudio.MockUserTurnPCM()))
+	}
+}
 
 // TestMockTTS_ConcurrentSynthesizeIsRaceSafe exercises the mutex added
 // to MockTTSService. Without the lock, currentFileIndex + cachedAudio
