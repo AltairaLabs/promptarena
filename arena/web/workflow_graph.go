@@ -16,6 +16,11 @@ type WorkflowGraphNode struct {
 	Kind     string `json:"kind"` // entry|output|agent (composition kinds added in a later task)
 	Entry    bool   `json:"entry"`
 	Terminal bool   `json:"terminal"`
+	// Parent is the owning workflow state's name for composition-step nodes
+	// (including nested parallel-branch steps), letting the frontend
+	// group/collapse a composition's steps under their state. Empty for
+	// workflow state nodes themselves.
+	Parent string `json:"parent,omitempty"`
 }
 
 // WorkflowGraphEdge is a single transition between two states in the
@@ -238,9 +243,10 @@ func expandComposition(stateName string, comp *composition.Composition) ([]Workf
 				continue
 			}
 			nodes = append(nodes, WorkflowGraphNode{
-				ID:    prefix(step.ID),
-				Label: step.ID,
-				Kind:  compositionStepKind(step.Kind),
+				ID:     prefix(step.ID),
+				Label:  step.ID,
+				Kind:   compositionStepKind(step.Kind),
+				Parent: stateName,
 			})
 
 			switch {

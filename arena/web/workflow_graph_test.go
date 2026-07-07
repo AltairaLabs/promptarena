@@ -518,6 +518,23 @@ func TestBuildWorkflowGraph_CompositionExpansion_ImplicitSequencing(t *testing.T
 	if !hasEdge("analyzing/meta", "analyzing/synthesize", false) {
 		t.Fatalf("want parallel-join edge meta->synthesize, got %+v", g.Edges)
 	}
+
+	// Every composition-step node emitted for the "analyzing" state --
+	// including nested parallel-branch steps -- is tagged with its owning
+	// state so the frontend can group/collapse compositions. The state node
+	// itself is not a composition step and must leave Parent empty.
+	nodeByID := map[string]WorkflowGraphNode{}
+	for _, n := range g.Nodes {
+		nodeByID[n.ID] = n
+	}
+	if p := nodeByID["analyzing"].Parent; p != "" {
+		t.Fatalf("state node analyzing should have empty Parent, got %q", p)
+	}
+	for _, n := range g.Nodes {
+		if strings.HasPrefix(n.ID, "analyzing/") && n.Parent != "analyzing" {
+			t.Fatalf("composition step node %q: want Parent %q, got %q", n.ID, "analyzing", n.Parent)
+		}
+	}
 }
 
 func TestBuildWorkflowGraph_CompositionExpansion_MissingCompositions(t *testing.T) {
