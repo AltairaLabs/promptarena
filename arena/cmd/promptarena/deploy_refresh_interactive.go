@@ -36,7 +36,7 @@ func runDeployRefresh(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
 
 	// Acquire deploy lock.
-	unlock, err := acquireLock(projectDir)
+	unlock, err := flow.Lock(projectDir)
 	if err != nil {
 		return err
 	}

@@ -83,21 +83,10 @@ const importArgCount = 3
 
 // connectAdapter discovers the adapter binary and returns a connected client.
 func connectAdapter(provider, projectDir string) (*deploy.AdapterClient, error) {
-	mgr := deploy.NewAdapterManager(projectDir)
-	binaryPath, err := mgr.Discover(provider)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"adapter not found for provider %q: %w\n"+
-				"Install it with: promptarena deploy adapter install %s",
-			provider, err, provider,
-		)
+	if path, found := flow.AdapterInstalled(provider, projectDir); found {
+		fmt.Printf("  Adapter:     %s\n", path)
 	}
-	fmt.Printf("  Adapter:     %s\n", binaryPath)
-	client, err := deploy.NewAdapterClient(binaryPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to start adapter: %w", err)
-	}
-	return client, nil
+	return flow.Connect(context.Background(), provider, projectDir)
 }
 
 // printDeployWarnings renders non-blocking adapter warnings to stderr with a
@@ -119,43 +108,13 @@ func printPlan(plan *deploy.PlanResponse) {
 		return
 	}
 	for _, c := range plan.Changes {
-		symbol := " "
-		switch c.Action {
-		case deploy.ActionCreate:
-			symbol = "+"
-		case deploy.ActionUpdate:
-			symbol = "~"
-		case deploy.ActionDelete:
-			symbol = "-"
-		case deploy.ActionNoChange:
-			symbol = " "
-		case deploy.ActionDrift:
-			symbol = "!"
-		}
-		line := fmt.Sprintf("  %s %s.%s", symbol, c.Type, c.Name)
+		line := fmt.Sprintf("  %s %s.%s", flow.ActionSymbol(c.Action), c.Type, c.Name)
 		if c.Detail != "" {
 			line += " (" + c.Detail + ")"
 		}
 		fmt.Println(line)
 	}
 	fmt.Println()
-}
-
-// resultStatusSymbol maps a resource result status to a display symbol,
-// consistent with printPlan's action symbols.
-func resultStatusSymbol(status string) string {
-	switch status {
-	case "created":
-		return "+"
-	case "updated":
-		return "~"
-	case "deleted":
-		return "-"
-	case "failed":
-		return "!"
-	default:
-		return " "
-	}
 }
 
 // printDeployEvent renders a streaming apply/destroy event to stdout. Apply and
@@ -166,7 +125,7 @@ func printDeployEvent(eventType, message string, res *deploy.ResourceResult) {
 	case "resource":
 		if res != nil {
 			line := fmt.Sprintf("  %s %s.%s (%s)",
-				resultStatusSymbol(res.Status), res.Type, res.Name, res.Status)
+				flow.StatusSymbol(res.Status), res.Type, res.Name, res.Status)
 			if res.Detail != "" {
 				line += ": " + res.Detail
 			}
@@ -191,15 +150,6 @@ func printStatus(status *deploy.StatusResponse) {
 		}
 	}
 	fmt.Println()
-}
-
-// acquireLock acquires the deploy lock and returns an unlock function.
-func acquireLock(projectDir string) (func(), error) {
-	locker := deploy.NewLocker(projectDir)
-	if err := locker.Lock(); err != nil {
-		return nil, err
-	}
-	return func() { _ = locker.Unlock() }, nil
 }
 
 // refreshState calls Status on the adapter and updates local state with the
@@ -251,7 +201,7 @@ func runDeploy(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
 
 	// Acquire deploy lock.
-	unlock, err := acquireLock(projectDir)
+	unlock, err := flow.Lock(projectDir)
 	if err != nil {
 		return err
 	}
