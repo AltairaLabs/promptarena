@@ -14,6 +14,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/AltairaLabs/PromptKit/runtime/deploy"
+	"github.com/AltairaLabs/promptarena/arena/deploy/flow"
 )
 
 var deployLoginProvider string
@@ -271,14 +272,14 @@ func writeLoginResult(provider string, resp *deploy.CompleteLoginResponse) error
 	}
 
 	if resp.Token != "" {
-		cred := deployCredential{Token: resp.Token}
+		cred := flow.Credential{Token: resp.Token}
 		if v, ok := resp.Profile["api_endpoint"].(string); ok {
 			cred.Endpoint = v
 		}
 		if v, ok := resp.Profile["workspace"].(string); ok {
 			cred.Workspace = v
 		}
-		if err := storeDeployCredential(provider, deployConfig, cred); err != nil {
+		if err := flow.StoreCredential(provider, deployConfig, cred); err != nil {
 			return fmt.Errorf("config written, but failed to store token: %w", err)
 		}
 	}

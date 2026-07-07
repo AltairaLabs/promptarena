@@ -12,6 +12,7 @@ import (
 
 	"github.com/AltairaLabs/PromptKit/runtime/deploy"
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/deploy/flow"
 	"github.com/AltairaLabs/promptarena/packc/compiler"
 )
 
@@ -161,7 +162,7 @@ func mergedDeployConfigJSON(deployCfg *arenaconfig.DeployConfig, env string) (st
 	// no api_token, inject the one stored at login time so the adapter can
 	// authenticate. Explicit config / env-var tokens still take precedence.
 	if tok, ok := merged["api_token"].(string); !ok || tok == "" {
-		if stored, found := lookupDeployCredential(deployCfg.Provider, deployConfig); found {
+		if stored, found := flow.LookupCredential(deployCfg.Provider, deployConfig); found {
 			merged["api_token"] = stored
 		}
 	}

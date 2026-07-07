@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/AltairaLabs/PromptKit/runtime/deploy"
+	"github.com/AltairaLabs/promptarena/arena/deploy/flow"
 )
 
 // fakeLoginAdapter implements loginAdapter for tests — no subprocess.
@@ -189,7 +190,7 @@ func TestWriteLoginResult_NoToken(t *testing.T) {
 	}); err != nil {
 		t.Fatalf("writeLoginResult: %v", err)
 	}
-	if _, ok := lookupDeployCredential("omnia", cfgPath); ok {
+	if _, ok := flow.LookupCredential("omnia", cfgPath); ok {
 		t.Error("no credential should be stored when there is no token")
 	}
 }
@@ -244,7 +245,7 @@ func assertLoginWrote(t *testing.T, cfgPath string) {
 	if strings.Contains(string(data), "omnia_sk_secret") {
 		t.Error("token must NOT be written into the config file")
 	}
-	if tok, ok := lookupDeployCredential("omnia", cfgPath); !ok || tok != "omnia_sk_secret" {
+	if tok, ok := flow.LookupCredential("omnia", cfgPath); !ok || tok != "omnia_sk_secret" {
 		t.Errorf("token not stored in credentials: (%q, %v)", tok, ok)
 	}
 }
