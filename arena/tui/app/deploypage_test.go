@@ -282,3 +282,110 @@ func TestGoldenDeployLogin_Waiting(t *testing.T) {
 	out := stripANSI(p.View())
 	teatest.RequireEqualOutput(t, []byte(out))
 }
+
+// TestDeployPage_Close_CancelsLoginGoroutine verifies DeployPage implements
+// Closeable and that Close cancels an in-flight login. App.pop() calls Close
+// on any popped page implementing Closeable (see TestApp_PopClosesPage in
+// app_test.go and ChatPage.Close's voice-driver cancellation) — this is what
+// stops the flow.Login goroutine (and its loopback OAuth callback server) when
+// the operator backs out via esc, which App's global esc handler processes
+// before DeployPage.handleLoginKey ever sees the key.
+func TestDeployPage_Close_CancelsLoginGoroutine(t *testing.T) {
+	canceled := false
+	p := &DeployPage{
+		state:       deployStateLogin,
+		pf:          &flow.Preflight{Provider: "omnia"},
+		loginCancel: func() { canceled = true },
+	}
+	var _ Closeable = p // compile-time assertion that DeployPage implements Closeable
+
+	p.Close()
+
+	if !canceled {
+		t.Fatal("expected Close to cancel the in-flight login")
+	}
+	if p.loginCancel != nil {
+		t.Fatal("expected Close to nil out loginCancel")
+	}
+}
+
+// TestDeployPage_Close_NoLoginInFlight verifies Close is a safe no-op when
+// there is no in-flight login (e.g. closed from the preflight state, or a
+// page that never started a login at all).
+func TestDeployPage_Close_NoLoginInFlight(t *testing.T) {
+	p := &DeployPage{state: deployStatePreflight}
+	p.Close() // must not panic
+}
+
+// TestLogin_StaleDoneMsgIgnored_CurrentGenProcessed exercises the loginGen
+// guard against a cancel-then-retry race: pressing 'c' cancels attempt 0 and
+// 'l' starts attempt 1 (bumping loginGen to 1). Attempt 0's goroutine can
+// still deliver a late loginDoneMsg{gen: 0} — that must be ignored rather
+// than wiping attempt 1's loginCancel/state and bouncing the operator out
+// with a stale error. A loginDoneMsg carrying the current generation must
+// still be processed normally.
+func TestLogin_StaleDoneMsgIgnored_CurrentGenProcessed(t *testing.T) {
+	currentCanceled := false
+	p := &DeployPage{
+		state:       deployStateLogin,
+		pf:          &flow.Preflight{Provider: "omnia"},
+		loginGen:    1, // attempt 0 was canceled; attempt 1 (current) is in flight
+		loginCancel: func() { currentCanceled = true },
+	}
+
+	// Stale: attempt 0's loginDoneMsg arrives after the retry.
+	np, cmd := p.Update(loginDoneMsg{
+		err: errors.New("login timed out waiting for the browser callback"),
+		gen: 0,
+	})
+	dp := np.(*DeployPage)
+	if cmd != nil {
+		t.Fatal("expected no cmd from a stale loginDoneMsg")
+	}
+	if dp.state != deployStateLogin {
+		t.Fatalf("stale loginDoneMsg must not change state, got %v", dp.state)
+	}
+	if dp.loginCancel == nil {
+		t.Fatal("stale loginDoneMsg must not reset the current attempt's loginCancel")
+	}
+	if currentCanceled {
+		t.Fatal("stale loginDoneMsg must not invoke the current attempt's cancel func")
+	}
+	if dp.loginErr != nil {
+		t.Fatalf("stale loginDoneMsg must not set loginErr, got %v", dp.loginErr)
+	}
+
+	// Current: attempt 1's loginDoneMsg (success) arrives and IS processed.
+	np2, cmd2 := dp.Update(loginDoneMsg{err: nil, gen: 1})
+	dp2 := np2.(*DeployPage)
+	if dp2.state != deployStatePreflight {
+		t.Fatalf("current-gen loginDoneMsg should transition to preflight, got %v", dp2.state)
+	}
+	if cmd2 == nil {
+		t.Fatal("expected a re-probe command after the current-gen login succeeds")
+	}
+	if dp2.loginCancel != nil {
+		t.Fatal("current-gen loginDoneMsg should clear loginCancel")
+	}
+}
+
+// TestLogin_StaleStatusMsgIgnored verifies a stale loginStatusMsg (stamped
+// with a prior generation) does not overwrite the current attempt's
+// displayed status text or headless-fallback URL.
+func TestLogin_StaleStatusMsgIgnored(t *testing.T) {
+	p := &DeployPage{
+		state:       deployStateLogin,
+		pf:          &flow.Preflight{Provider: "omnia"},
+		loginGen:    1,
+		loginStatus: "Waiting for authorization…",
+		loginURL:    "https://auth.example/current",
+	}
+	np, _ := p.Update(loginStatusMsg{text: "stale status", url: "https://auth.example/stale", gen: 0})
+	dp := np.(*DeployPage)
+	if dp.loginStatus != "Waiting for authorization…" {
+		t.Fatalf("stale loginStatusMsg must not overwrite status, got %q", dp.loginStatus)
+	}
+	if dp.loginURL != "https://auth.example/current" {
+		t.Fatalf("stale loginStatusMsg must not overwrite URL, got %q", dp.loginURL)
+	}
+}

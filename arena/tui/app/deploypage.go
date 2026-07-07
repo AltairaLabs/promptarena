@@ -42,14 +42,23 @@ type deployErrMsg struct{ err error }
 // goroutine. text is the human-readable status line ("Waiting for
 // authorization…"); url is set only on the update that carries the OAuth
 // authorize URL (flow.LoginHooks.OnAuthorizeURL), so it can persist as the
-// headless-fallback link even after later status updates change text.
+// headless-fallback link even after later status updates change text. gen is
+// the loginGen the originating startLogin call captured, so a stale attempt's
+// message (delivered after a cancel-then-retry) can be told apart from the
+// current one.
 type loginStatusMsg struct {
 	text string
 	url  string
+	gen  int
 }
 
-// loginDoneMsg carries the result of the background flow.Login goroutine.
-type loginDoneMsg struct{ err error }
+// loginDoneMsg carries the result of the background flow.Login goroutine. gen
+// is the loginGen the originating startLogin call captured — see
+// loginStatusMsg.
+type loginDoneMsg struct {
+	err error
+	gen int
+}
 
 // DeployPage is the guided deploy wizard: preflight check, adapter login,
 // plan, confirm, apply, and status, driven by the arena/deploy/flow package.
@@ -71,6 +80,11 @@ type DeployPage struct {
 	loginURL    string
 	loginErr    error
 	loginCancel context.CancelFunc
+	// loginGen is bumped at the start of every startLogin call. It is stamped
+	// on loginStatusMsg/loginDoneMsg so Update can ignore messages from a prior
+	// (canceled-then-retried) login attempt instead of letting a stale goroutine
+	// clobber the current attempt's state.
+	loginGen int
 }
 
 // NewDeployPage builds the deploy wizard page for ctx. It is the entry point
@@ -97,6 +111,18 @@ func newLoginSpinner() spinner.Model {
 
 // Title implements Page.
 func (p *DeployPage) Title() string { return "Deploy" }
+
+// Close implements Closeable. It cancels any in-flight flow.Login goroutine
+// so that popping the page (e.g. pressing esc during deployStateLogin, which
+// App's global esc handler pops before handleLoginKey ever sees the key) does
+// not leave the login goroutine and its loopback OAuth callback server running
+// against a page nothing is listening to anymore.
+func (p *DeployPage) Close() {
+	if p.loginCancel != nil {
+		p.loginCancel()
+		p.loginCancel = nil
+	}
+}
 
 // SetSize implements Page.
 func (p *DeployPage) SetSize(w, h int) { p.w, p.h = w, h }
@@ -135,12 +161,23 @@ func (p *DeployPage) Update(msg tea.Msg) (Page, tea.Cmd) {
 		p.err, p.state = m.err, deployStateError
 		return p, nil
 	case loginStatusMsg:
+		if m.gen != p.loginGen {
+			// Stale progress update from a canceled-then-retried attempt; drop it.
+			return p, nil
+		}
 		p.loginStatus = m.text
 		if m.url != "" {
 			p.loginURL = m.url
 		}
 		return p, nil
 	case loginDoneMsg:
+		if m.gen != p.loginGen {
+			// Stale completion from a canceled-then-retried attempt: a later
+			// login is already in flight (or the operator backed out entirely).
+			// Processing this would wipe the current attempt's loginCancel and
+			// bounce the operator to preflight with a confusing stale error.
+			return p, nil
+		}
 		p.loginCancel = nil
 		if m.err != nil {
 			// Recoverable: surface the error on the preflight screen rather
@@ -242,6 +279,14 @@ func (p *DeployPage) startLogin() tea.Cmd {
 	p.loginURL = ""
 	p.loginErr = nil
 
+	// Bump the generation and capture it into a local for the goroutine below.
+	// This is the only thing that ties a background attempt's messages back to
+	// "is this still the current attempt" — the goroutine must never read
+	// p.loginGen directly (that field is only ever touched from the bubbletea
+	// update goroutine).
+	p.loginGen++
+	gen := p.loginGen
+
 	provider := p.pf.Provider
 	opts := p.opts
 	send := p.send
@@ -249,11 +294,11 @@ func (p *DeployPage) startLogin() tea.Cmd {
 	return func() tea.Msg {
 		go func() {
 			hooks := flow.LoginHooks{
-				OnStatus:       func(s string) { send(loginStatusMsg{text: s}) },
-				OnAuthorizeURL: func(u string) { send(loginStatusMsg{text: "Waiting for authorization…", url: u}) },
+				OnStatus:       func(s string) { send(loginStatusMsg{text: s, gen: gen}) },
+				OnAuthorizeURL: func(u string) { send(loginStatusMsg{text: "Waiting for authorization…", url: u, gen: gen}) },
 			}
 			err := flow.Login(ctx, provider, opts, hooks)
-			send(loginDoneMsg{err: err})
+			send(loginDoneMsg{err: err, gen: gen})
 		}()
 		return nil
 	}
