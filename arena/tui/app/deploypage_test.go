@@ -867,3 +867,110 @@ func TestGoldenDeployApply_Result(t *testing.T) {
 	out := stripANSI(p.View())
 	teatest.RequireEqualOutput(t, []byte(out))
 }
+
+// TestApplyResult_SKeyStartsStatusGoroutine verifies pressing 's' on the
+// apply-result screen advances to deployStateStatus, sets statusFetching
+// synchronously (before the goroutine itself has run, mirroring
+// TestConfirm_YKeyStartsApplyGoroutine), and returns a non-nil cmd (the
+// status goroutine batched with the spinner tick). cmd is deliberately never
+// invoked here — sess is nil, and calling cmd() would start a real goroutine
+// against it — this test only checks the synchronous state change and that a
+// cmd was returned, exactly as TestConfirm_YKeyStartsApplyGoroutine does for
+// startApply.
+func TestApplyResult_SKeyStartsStatusGoroutine(t *testing.T) {
+	p := &DeployPage{state: deployStateApplyResult, spinner: newLoginSpinner()}
+	np, cmd := p.handleApplyResultKey(keyRunes("s"))
+	dp := np.(*DeployPage)
+	if dp.state != deployStateStatus {
+		t.Fatalf("state = %v, want deployStateStatus", dp.state)
+	}
+	if !dp.statusFetching {
+		t.Fatal("expected statusFetching to be set synchronously by startStatus")
+	}
+	if cmd == nil {
+		t.Fatal("expected a non-nil cmd to launch the status goroutine")
+	}
+}
+
+// TestStatus_ReadyMsgRendersHeadlineAndResources feeds a statusReadyMsg
+// carrying a 2-resource status (one healthy, one unhealthy) into Update and
+// verifies statusFetching is cleared and viewStatus renders both the
+// headline and both resources.
+func TestStatus_ReadyMsgRendersHeadlineAndResources(t *testing.T) {
+	p := &DeployPage{state: deployStateStatus, statusFetching: true, spinner: newLoginSpinner()}
+	status := &deploy.StatusResponse{
+		Status: "degraded",
+		Resources: []deploy.ResourceStatus{
+			{Type: "agent_runtime", Name: "bot", Status: "healthy"},
+			{Type: "a2a_endpoint", Name: "ep", Status: "unhealthy", Detail: "5xx errors"},
+		},
+	}
+	np, _ := p.Update(statusReadyMsg{status: status})
+	dp := np.(*DeployPage)
+	if dp.statusFetching {
+		t.Fatal("expected statusFetching to be cleared once statusReadyMsg lands")
+	}
+	dp.SetSize(80, 24)
+	out := stripANSI(dp.View())
+	if !strings.Contains(out, "degraded") {
+		t.Fatalf("expected headline to show the status, got:\n%s", out)
+	}
+	if !strings.Contains(out, "bot") || !strings.Contains(out, "ep") {
+		t.Fatalf("expected both resources in the view:\n%s", out)
+	}
+	if !strings.Contains(out, "✓") || !strings.Contains(out, "✗") {
+		t.Fatalf("expected both status symbols in the view:\n%s", out)
+	}
+}
+
+// TestStatus_QuitKeyPopsPage verifies 'q' on the status screen pops the page
+// (esc is handled globally by App before handleStatusKey ever sees it, as
+// documented on handleConfirmKey; 'q' has no such global handling once the
+// wizard is a non-root page, so the status screen handles it directly).
+func TestStatus_QuitKeyPopsPage(t *testing.T) {
+	p := &DeployPage{state: deployStateStatus}
+	_, cmd := p.handleStatusKey(keyRunes("q"))
+	if cmd == nil {
+		t.Fatal("expected 'q' to return a pop command")
+	}
+	msg := cmd()
+	if _, ok := msg.(PopPageMsg); !ok {
+		t.Fatalf("expected PopPageMsg, got %#v", msg)
+	}
+}
+
+// TestDeployPage_Close_CancelsStatusGoroutine verifies Close cancels an
+// in-flight startStatus context, mirroring
+// TestDeployPage_Close_CancelsApplyGoroutine.
+func TestDeployPage_Close_CancelsStatusGoroutine(t *testing.T) {
+	canceled := false
+	p := &DeployPage{
+		state:        deployStateStatus,
+		statusCancel: func() { canceled = true },
+	}
+	p.Close()
+	if !canceled {
+		t.Fatal("expected Close to cancel the in-flight status fetch")
+	}
+	if p.statusCancel != nil {
+		t.Fatal("expected Close to nil out statusCancel")
+	}
+}
+
+// TestGoldenDeployStatus_Degraded captures a stable snapshot of the status
+// screen for a degraded deployment: one healthy and one unhealthy resource.
+func TestGoldenDeployStatus_Degraded(t *testing.T) {
+	p := &DeployPage{
+		state: deployStateStatus,
+		status: &deploy.StatusResponse{
+			Status: "degraded",
+			Resources: []deploy.ResourceStatus{
+				{Type: "agent_runtime", Name: "bot", Status: "healthy"},
+				{Type: "a2a_endpoint", Name: "ep", Status: "unhealthy", Detail: "5xx errors"},
+			},
+		},
+	}
+	p.SetSize(80, 24)
+	out := stripANSI(p.View())
+	teatest.RequireEqualOutput(t, []byte(out))
+}

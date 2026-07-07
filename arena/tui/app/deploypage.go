@@ -89,6 +89,12 @@ type applyEventMsg struct{ event *deploy.ApplyEvent }
 // started from handleConfirmKey via startApply.
 type applyDoneMsg struct{ err error }
 
+// statusReadyMsg carries the result of the background flow.Session.Status
+// call started from handleApplyResultKey via startStatus. A failed Status
+// call is reported as a deployErrMsg instead (see startStatus), so this msg
+// only ever carries a successful *deploy.StatusResponse.
+type statusReadyMsg struct{ status *deploy.StatusResponse }
+
 // DeployPage is the guided deploy wizard: preflight check, adapter login,
 // plan, confirm, apply, and status, driven by the arena/deploy/flow package.
 type DeployPage struct {
@@ -152,6 +158,17 @@ type DeployPage struct {
 	applyRows       []views.DeployResourceRow
 	applyLogs       *panels.LogsPanel
 	applyLogEntries []panels.LogEntry
+
+	// Status-state fields, populated by the flow.Session.Status goroutine
+	// started from handleApplyResultKey via startStatus and delivered through
+	// p.send. statusCancel cancels the goroutine's context from Close, the
+	// same best-effort cancellation applyCancel gives startApply — Status is
+	// a single blocking call with no intermediate abandon checkpoint, so the
+	// adapter subprocess may still be mid-Status when sess is closed just
+	// after (see Close's doc comment for the identical apply-side race).
+	statusCancel   context.CancelFunc
+	statusFetching bool
+	status         *deploy.StatusResponse
 }
 
 // NewDeployPage builds the deploy wizard page for ctx. It is the entry point
@@ -193,7 +210,8 @@ func (p *DeployPage) Title() string { return "Deploy" }
 // Apply is a single blocking call with no intermediate abandon checkpoint
 // (unlike Open/Plan), so the adapter subprocess may still be mid-Apply when
 // sess is closed just below — exactly the same race already accepted for an
-// in-flight Plan call.
+// in-flight Plan call. It also cancels any in-flight startStatus goroutine,
+// on the same best-effort basis as startApply.
 func (p *DeployPage) Close() {
 	if p.loginCancel != nil {
 		p.loginCancel()
@@ -206,6 +224,10 @@ func (p *DeployPage) Close() {
 	if p.applyCancel != nil {
 		p.applyCancel()
 		p.applyCancel = nil
+	}
+	if p.statusCancel != nil {
+		p.statusCancel()
+		p.statusCancel = nil
 	}
 	if p.sess != nil {
 		_ = p.sess.Close()
@@ -301,8 +323,13 @@ func (p *DeployPage) Update(msg tea.Msg) (Page, tea.Cmd) {
 			p.state = deployStateApplyResult
 		}
 		return p, nil
+	case statusReadyMsg:
+		p.statusFetching = false
+		p.status = m.status
+		return p, nil
 	case spinner.TickMsg:
-		if p.state != deployStateLogin && p.state != deployStatePlanning && p.state != deployStateApplying {
+		fetchingStatus := p.state == deployStateStatus && p.statusFetching
+		if p.state != deployStateLogin && p.state != deployStatePlanning && p.state != deployStateApplying && !fetchingStatus {
 			return p, nil
 		}
 		var cmd tea.Cmd
@@ -327,10 +354,11 @@ func (p *DeployPage) handleKey(msg tea.KeyMsg) (Page, tea.Cmd) {
 		return p.handleConfirmKey(msg)
 	case deployStateApplyResult:
 		return p.handleApplyResultKey(msg)
+	case deployStateStatus:
+		return p.handleStatusKey(msg)
 	// deployStatePlanning and deployStateApplying have no keys of their own
 	// (the background plan/apply cmd runs to completion or error).
-	// deployStateStatus and deployStateError key handling arrive in later
-	// tasks (5.x).
+	// deployStateError key handling arrives in a later task.
 	default:
 		return p, nil
 	}
@@ -602,6 +630,36 @@ func (p *DeployPage) startApply() tea.Cmd {
 	}
 }
 
+// startStatus returns a tea.Cmd that starts a background goroutine which
+// runs Session.Status against the already-open adapter session, exactly as
+// startApply starts Session.Apply: the returned tea.Cmd only launches the
+// goroutine and returns nil, while the goroutine reports the result back
+// through p.send as statusReadyMsg (or deployErrMsg on failure, folded into
+// deployStateError by Update exactly like a failed applyDoneMsg). Locals are
+// captured before the goroutine starts and the goroutine never touches p.*
+// directly, mirroring startLogin/startPlan/startApply's race discipline.
+func (p *DeployPage) startStatus() tea.Cmd {
+	ctx, cancel := context.WithCancel(context.Background())
+	p.statusCancel = cancel
+	p.statusFetching = true
+	p.status = nil
+
+	sess := p.sess
+	send := p.send
+
+	return func() tea.Msg {
+		go func() {
+			status, err := sess.Status(ctx)
+			if err != nil {
+				send(deployErrMsg{err: err})
+				return
+			}
+			send(statusReadyMsg{status: status})
+		}()
+		return nil
+	}
+}
+
 // handleApplyEvent folds a single *deploy.ApplyEvent from the Session.Apply
 // callback into the page's apply-state: a "resource" event appends to
 // applyResults and rebuilds applyRows via views.DeployRowsFromResults, and
@@ -626,11 +684,26 @@ func (p *DeployPage) handleApplyEvent(e *deploy.ApplyEvent) {
 }
 
 // handleApplyResultKey handles key input on the apply-result screen. 's'
-// advances to deployStateStatus (Task 5.3 fleshes out the status fetch
-// itself); every other key is ignored.
+// advances to deployStateStatus and kicks off the background Session.Status
+// fetch, exactly as handleConfirmKey's 'y' advances to deployStateApplying
+// via startApply; every other key is ignored.
 func (p *DeployPage) handleApplyResultKey(msg tea.KeyMsg) (Page, tea.Cmd) {
 	if msg.Type == tea.KeyRunes && string(msg.Runes) == "s" {
 		p.state = deployStateStatus
+		return p, tea.Batch(p.startStatus(), p.spinner.Tick)
+	}
+	return p, nil
+}
+
+// handleStatusKey handles key input on the status screen. 'q' pops the page.
+// There is no esc case here for the same reason handleConfirmKey has none:
+// App's global esc handler pops the whole page before this method ever sees
+// the key. Unlike esc, 'q' is only handled globally at the root of the nav
+// stack (see App.Update), so the status screen — a non-root page — must
+// handle it directly to let the operator back out with 'q' too.
+func (p *DeployPage) handleStatusKey(msg tea.KeyMsg) (Page, tea.Cmd) {
+	if msg.Type == tea.KeyRunes && string(msg.Runes) == "q" {
+		return p, func() tea.Msg { return PopPageMsg{} }
 	}
 	return p, nil
 }
@@ -653,6 +726,8 @@ func (p *DeployPage) View() string {
 			return p.viewApplying(p.w)
 		case deployStateApplyResult:
 			return p.viewApplyResult(p.w)
+		case deployStateStatus:
+			return p.viewStatus(p.w)
 		case deployStateError:
 			return p.viewError()
 		default:
@@ -689,6 +764,8 @@ func (p *DeployPage) keyBindings() []views.KeyBinding {
 		kb = append([]views.KeyBinding{{Keys: keyEnter, Description: "confirm"}}, kb...)
 	case p.state == deployStateApplyResult:
 		kb = append([]views.KeyBinding{{Keys: "s", Description: "status"}}, kb...)
+	case p.state == deployStateStatus:
+		kb = append([]views.KeyBinding{{Keys: "q", Description: "back"}}, kb...)
 	case p.state == deployStatePreflight && p.pf != nil:
 		// Prepend in priority order so the most relevant action reads first.
 		if p.pf.Ready() {
@@ -893,6 +970,36 @@ func (p *DeployPage) applyResultHeadline() string {
 		return theme.ErrorStyle.Render(fmt.Sprintf("Apply completed with %d failure(s)", failed))
 	}
 	return theme.SuccessStyle.Render("Apply completed successfully")
+}
+
+// viewStatus renders the post-apply Status screen. While startStatus's
+// goroutine is still running (statusFetching, no status yet), it shows a
+// spinner mirroring viewApplying's pre-burst state; once statusReadyMsg has
+// landed, it shows a colored headline plus the per-resource health table
+// (views.RenderDeployResources, shared with viewApplyProgress).
+func (p *DeployPage) viewStatus(width int) string {
+	if p.status == nil {
+		line := p.spinner.View() + " " + theme.ValueStyle.Render("Checking status…")
+		return theme.BorderedBoxStyle.MaxWidth(width).Render(line)
+	}
+	table := views.RenderDeployResources(views.DeployRowsFromStatus(p.status.Resources), width)
+	return lipgloss.JoinVertical(lipgloss.Left, p.statusHeadline(), "", table)
+}
+
+// statusHeadline summarizes p.status.Status: "deployed" in
+// theme.SuccessStyle, "degraded" in theme.WarningStyle (a call for
+// attention, not necessarily broken), and anything else ("not_deployed",
+// "unknown") in theme.ErrorStyle.
+func (p *DeployPage) statusHeadline() string {
+	label := "Status: " + p.status.Status
+	switch p.status.Status {
+	case "deployed":
+		return theme.SuccessStyle.Render(label)
+	case "degraded":
+		return theme.WarningStyle.Render(label)
+	default:
+		return theme.ErrorStyle.Render(label)
+	}
 }
 
 // preflightEnvLine renders the target environment. flow.DefaultEnv renders
