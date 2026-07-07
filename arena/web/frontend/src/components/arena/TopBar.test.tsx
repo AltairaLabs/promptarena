@@ -117,6 +117,15 @@ describe("TopBar", () => {
     expect(headerAfter.style.getPropertyValue("--star-100")).toBe("#F4F8FF");
   });
 
+  it("pins --gold-300 (and its glow) to the dark-ramp value so the gold Run trial button never inherits the light-theme brown hover fill", () => {
+    const { container } = render(
+      <TopBar connected={true} runningLive={false} theme="light" onToggleTheme={vi.fn()} onRunTrial={vi.fn()} />,
+    );
+    const header = container.querySelector("header")!;
+    expect(header.style.getPropertyValue("--gold-300")).toBe("#F0D79A");
+    expect(header.style.getPropertyValue("--glow-gold")).toBe("0 8px 22px -8px rgba(227,179,65,0.5)");
+  });
+
   it("disables the Run trial button when runDisabled is true", () => {
     render(
       <TopBar

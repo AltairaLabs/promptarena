@@ -49,6 +49,8 @@ const DARK_RAMP_OVERRIDE = {
   "--pulsar-300": "#7DD3A8",
   "--pulsar-500": "#34D399",
   "--signal-red-300": "#FCA5A5",
+  "--gold-300": "#F0D79A",
+  "--glow-gold": "0 8px 22px -8px rgba(227,179,65,0.5)",
 } as React.CSSProperties;
 
 // TopBar — the sticky Atlas top bar: logo + wordmark + studio tag + promptpack
