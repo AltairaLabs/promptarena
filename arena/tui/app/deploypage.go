@@ -531,29 +531,42 @@ func (p *DeployPage) startLogin() tea.Cmd {
 // deployStatePlanning. Locals are captured before the goroutine starts and
 // the goroutine never touches p.* directly, mirroring startLogin's race
 // discipline.
+//
+// If p.sess is already set, Open is skipped entirely and the goroutine plans
+// directly against that session. In production p.sess is always nil here —
+// it is only ever populated by this same goroutine's sessionOpenedMsg
+// (handled in Update) or cleared by Close on pop — so this branch never fires
+// outside tests. It exists solely so integration tests can pre-inject a
+// *flow.Session backed by a fake deploy.Provider (via the test-only
+// newDeployPageWithSession constructor) and drive the wizard end-to-end
+// without a real adapter subprocess.
 func (p *DeployPage) startPlan() tea.Cmd {
 	ctx, cancel := context.WithCancel(context.Background())
 	p.planCancel = cancel
 	opts := p.opts
 	send := p.send
+	sess := p.sess
 
 	return func() tea.Msg {
 		go func() {
-			sess, err := flow.Open(ctx, opts)
-			if err != nil {
-				send(deployErrMsg{err: err})
-				return
+			if sess == nil {
+				var err error
+				sess, err = flow.Open(ctx, opts)
+				if err != nil {
+					send(deployErrMsg{err: err})
+					return
+				}
+				// The page may have been popped (Close cancels ctx) while Open was
+				// still connecting the adapter subprocess. If so, sending
+				// sessionOpenedMsg would be dropped by App.Update (it routes to
+				// whatever page is now on top of the stack), leaking sess and its
+				// subprocess with no reaper. Close it here instead, on the
+				// goroutine that actually holds it.
+				if abandonIfCancelled(ctx, sess) {
+					return
+				}
+				send(sessionOpenedMsg{sess: sess})
 			}
-			// The page may have been popped (Close cancels ctx) while Open was
-			// still connecting the adapter subprocess. If so, sending
-			// sessionOpenedMsg would be dropped by App.Update (it routes to
-			// whatever page is now on top of the stack), leaking sess and its
-			// subprocess with no reaper. Close it here instead, on the
-			// goroutine that actually holds it.
-			if abandonIfCancelled(ctx, sess) {
-				return
-			}
-			send(sessionOpenedMsg{sess: sess})
 
 			plan, req, err := sess.Plan(ctx)
 			if err != nil {
