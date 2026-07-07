@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 
 	"github.com/AltairaLabs/PromptKit/runtime/logger"
+	"github.com/AltairaLabs/PromptKit/runtime/providers"
 	"github.com/AltairaLabs/PromptKit/runtime/providers/mock"
 	arenaaudio "github.com/AltairaLabs/promptarena/arena/audio"
 )
@@ -73,4 +74,46 @@ func withDefaultMockAudio(repo mock.ResponseRepository) mock.ResponseRepository 
 		return repo
 	}
 	return newDefaultAudioRepository(repo, clipPath)
+}
+
+// mockResponseInjector is satisfied by the runtime mock streaming provider (via
+// its embedded *StreamingProvider). It lets arena swap in a decorated
+// repository after the runtime factory has already built the provider.
+type mockResponseInjector interface {
+	WithMockResponses(repo mock.ResponseRepository, scenarioID, fixtureBaseDir string) *mock.StreamingProvider
+}
+
+// applyDefaultMockAgentAudio re-wires a config-built mock provider so agent
+// turns that declare no audio default to the built-in assistant clip. This is
+// the `--provider mock-duplex` counterpart of withDefaultMockAudio (which only
+// runs under --mock-provider). No-op unless the provider is a mock streaming
+// provider backed by a mock_config file.
+func applyDefaultMockAgentAudio(prov providers.Provider, additionalConfig map[string]any) {
+	injector, ok := prov.(mockResponseInjector)
+	if !ok {
+		return
+	}
+	mockCfg, _ := additionalConfig["mock_config"].(string)
+	if mockCfg == "" {
+		return
+	}
+	repo, baseDir, err := buildDecoratedMockRepo(mockCfg)
+	if err != nil {
+		logger.Warn("mock provider: default agent audio unavailable", "error", err)
+		return
+	}
+	scenarioID, _ := additionalConfig["duplex_scenario"].(string)
+	injector.WithMockResponses(repo, scenarioID, baseDir)
+}
+
+// buildDecoratedMockRepo loads a FileMockRepository from mockCfg and wraps it so
+// audio-less agent turns default to the built-in assistant clip. Returns the
+// decorated repo and the repo's fixture base dir (relative audio_file paths
+// resolve against it).
+func buildDecoratedMockRepo(mockCfg string) (mock.ResponseRepository, string, error) {
+	fileRepo, err := mock.NewFileMockRepository(mockCfg)
+	if err != nil {
+		return nil, "", err
+	}
+	return withDefaultMockAudio(fileRepo), fileRepo.BaseDir(), nil
 }
