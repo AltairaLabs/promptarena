@@ -1,6 +1,6 @@
 import { act, render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { RunResult, RunOptionsResponse } from "@/types";
+import type { RunResult, RunOptionsResponse, ActiveRun } from "@/types";
 
 const mk = (o: Partial<RunResult>): RunResult => ({
   RunID: o.RunID ?? "r",
@@ -66,17 +66,23 @@ vi.mock("@/hooks/useArenaAPI", () => ({
   }),
 }));
 
+// useArenaEventsMock is a vi.fn() (rather than a fixed object) so individual
+// tests can override `runs` to simulate in-flight/just-completed live runs.
+const useArenaEventsMock = vi.fn();
+
 vi.mock("@/hooks/useArenaEvents", () => ({
-  useArenaEvents: () => ({
-    registerInteractiveRun: vi.fn(),
-    connected: true,
-    runs: {},
-    completedRunIds: ["run-1"],
-    totalCost: 0,
-    totalTokens: 0,
-    logs: [],
-  }),
+  useArenaEvents: () => useArenaEventsMock(),
 }));
+
+const defaultArenaState = () => ({
+  registerInteractiveRun: vi.fn(),
+  connected: true,
+  runs: {} as Record<string, ActiveRun>,
+  completedRunIds: ["run-1"],
+  totalCost: 0,
+  totalTokens: 0,
+  logs: [],
+});
 
 // Imported after the mocks above so App picks up the mocked hooks.
 const { default: App } = await import("@/App");
@@ -85,6 +91,8 @@ describe("App — Runs view", () => {
   beforeEach(() => {
     getResults.mockClear();
     getResult.mockClear();
+    useArenaEventsMock.mockReset();
+    useArenaEventsMock.mockReturnValue(defaultArenaState());
   });
 
   it("renders the trial matrix given seeded historical results", async () => {
@@ -116,5 +124,47 @@ describe("App — Runs view", () => {
     await act(async () => {
       await Promise.resolve();
     });
+  });
+
+  it("does not let a completed-but-not-yet-refetched live run mask a failing historical result", async () => {
+    // The real, persisted result for run-1 failed one of its two assertions
+    // (50% pass rate). Its EndTime is deliberately earlier than the live
+    // run's startTime below, so a buggy overlay that includes completed
+    // ActiveRuns would pick the synthetic entry as "latest" and read it as
+    // a bare 100% pass (no ConversationAssertions + no Error on the
+    // synthetic RunResult falls through to a full pass).
+    const failingResult = mk({
+      RunID: "run-1",
+      ScenarioID: "checkout",
+      ProviderID: "claude",
+      EndTime: "2026-07-07T00:00:01Z",
+      ConversationAssertions: { passed: false, failed: 1, total: 2, results: [] },
+    });
+    getResult.mockImplementationOnce((id: string) =>
+      Promise.resolve(id === "run-1" ? failingResult : null),
+    );
+    // Simulate the window between the "completed" SSE event and the async
+    // getResults() refetch: state.runs still holds the completed ActiveRun.
+    useArenaEventsMock.mockReturnValue({
+      ...defaultArenaState(),
+      runs: {
+        "run-1": {
+          runId: "run-1",
+          scenario: "checkout",
+          provider: "claude",
+          region: "default",
+          startTime: "2026-07-07T00:00:05Z",
+          turnIndex: 3,
+          messages: [],
+          costs: { inputTokens: 0, outputTokens: 0, totalCost: 0 },
+          status: "completed",
+        } satisfies ActiveRun,
+      },
+    });
+
+    render(<App />);
+
+    expect(await screen.findByText("50%")).toBeInTheDocument();
+    expect(screen.queryByText("100%")).not.toBeInTheDocument();
   });
 });

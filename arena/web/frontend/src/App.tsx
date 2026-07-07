@@ -155,9 +155,14 @@ export default function App() {
   const interactiveRun = Object.values(state.runs).find((r) => r.scenario === "interactive");
 
   // The trial matrix overlays in-flight runs onto historical results so a
-  // cell with a live run stays selectable while its trial is running.
+  // cell with a live run stays selectable while its trial is running. Only
+  // runs still "running" are overlaid: a "completed" ActiveRun has no
+  // ConversationAssertions, so cellPassRate would read it as a bare 100%
+  // pass regardless of the real outcome. Excluding it means a just-finished
+  // cell briefly shows its prior/empty state instead of a false pass in the
+  // window before historicalResults' async refetch lands.
   const matrixResults = useMemo(
-    () => [...historicalResults, ...liveRuns.map(activeRunToResult)],
+    () => [...historicalResults, ...liveRuns.filter((r) => r.status === "running").map(activeRunToResult)],
     [historicalResults, liveRuns],
   );
   const matrix = useMemo(
@@ -178,10 +183,7 @@ export default function App() {
   // detail view keeps opening exactly as it did before the matrix existed.
   const handleSelectCell = useCallback((key: string) => {
     setSelectedKey(key);
-    const [scenarioId, providerId] = key.split(":");
-    const cell = matrix.rows
-      .find((row) => row.scenarioId === scenarioId)
-      ?.cells.find((c) => c.providerId === providerId);
+    const cell = matrix.rows.flatMap((row) => row.cells).find((c) => c.key === key);
     if (cell?.hasData && cell.runId) {
       setSelectedRunId(cell.runId);
       setDevToolsOpen(false);

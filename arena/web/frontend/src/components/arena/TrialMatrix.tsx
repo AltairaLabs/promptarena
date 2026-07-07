@@ -12,7 +12,7 @@ export interface TrialMatrixProps {
 // Purely presentational — the matrix viewmodel is built upstream by
 // `buildMatrix` in `lib/arenaView.ts`.
 export function TrialMatrix({ matrix, selectedKey, onSelect }: TrialMatrixProps) {
-  const gridTemplateColumns = `180px repeat(${matrix.providers.length}, 1fr)`;
+  const gridTemplateColumns = `180px repeat(${Math.max(1, matrix.providers.length)}, 1fr)`;
 
   return (
     <div
