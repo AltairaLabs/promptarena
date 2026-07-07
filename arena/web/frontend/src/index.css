@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./styles/atlas-tokens.css";
 
 /* Theme tokens. We expose semantic names (canvas, surface, fg, …) and
    keep the legacy palette names (cloud-white, deep-space, mist, onyx,
@@ -34,10 +35,11 @@
   --color-mist: var(--c-mist);
   --color-slate-muted: var(--c-slate-muted);
 
-  --radius-sm: 4px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
+  --radius-sm: 6px;
+  --radius-md: 7px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+  --radius-2xl: 14px;
 
   --font-sans: "Inter", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", monospace;
