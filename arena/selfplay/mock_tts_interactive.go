@@ -9,6 +9,8 @@ import (
 
 	"github.com/AltairaLabs/PromptKit/runtime/providers/base"
 	"github.com/AltairaLabs/PromptKit/runtime/tts"
+
+	arenaaudio "github.com/AltairaLabs/promptarena/arena/audio"
 )
 
 // Compile-time check: MockTTSService must satisfy base.TTSProvider.
@@ -20,10 +22,6 @@ const (
 
 	// mockTTSDefaultSampleRate is the default sample rate for mock TTS (24kHz).
 	mockTTSDefaultSampleRate = 24000
-	// mockTTSSamplesPerCharDivisor calculates samples per character (sampleRate / 10 = 0.1 sec per char).
-	mockTTSSamplesPerCharDivisor = 10
-	// mockTTSMinSamples is the minimum number of samples (0.2 seconds at 24kHz).
-	mockTTSMinSamples = 4800
 	// mockTTSBytesPerSample is bytes per sample for 16-bit PCM audio.
 	mockTTSBytesPerSample = 2
 	// mockTTSReadChunkBytes caps how much one Read returns. Sized at 20 ms
@@ -129,8 +127,11 @@ func (m *MockTTSService) Synthesize(
 	}
 	m.mu.Unlock()
 
-	// Fall back to generating silence (text-only — no shared state).
-	return newChunkedBytesReadCloser(m.generatePCMAudio(text), mockTTSReadChunkBytes), nil
+	// No fixture audio configured: fall back to the built-in "mock user turn"
+	// clip so mock duplex runs have clear, self-labeling audio by default. The
+	// old fallback was silence, which reads as "no audio" and doesn't trigger
+	// VAD; a spoken clip does both.
+	return newChunkedBytesReadCloser(arenaaudio.MockUserTurnPCM(), mockTTSReadChunkBytes), nil
 }
 
 // chunkedBytesReader returns up to chunkSize bytes per Read so callers
@@ -207,29 +208,4 @@ func (m *MockTTSService) SynthesizeTTS(ctx context.Context, req base.TTSRequest)
 	}
 	// Wrap the io.ReadCloser in a TTSStream. Mock has no pricing so cost is nil.
 	return newMockTTSStream(reader), nil
-}
-
-// generatePCMAudio generates 16-bit PCM audio data.
-// Creates silence (all zeros) proportional to text length.
-// This is a fallback when no audio files are configured.
-// Note: Silence won't trigger VAD in speech models, so this should only be
-// used when audio files are not available or for basic testing.
-func (m *MockTTSService) generatePCMAudio(text string) []byte {
-	sampleRate := m.SampleRate
-	if sampleRate == 0 {
-		sampleRate = mockTTSDefaultSampleRate
-	}
-
-	// ~0.1 seconds per character, minimum 0.2 seconds
-	samplesPerChar := sampleRate / mockTTSSamplesPerCharDivisor
-	numSamples := len(text) * samplesPerChar
-	if numSamples < mockTTSMinSamples {
-		numSamples = mockTTSMinSamples
-	}
-
-	// Generate 16-bit PCM samples (2 bytes per sample)
-	// All zeros = silence
-	audio := make([]byte, numSamples*mockTTSBytesPerSample)
-
-	return audio
 }

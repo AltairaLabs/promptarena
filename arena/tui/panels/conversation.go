@@ -54,10 +54,17 @@ const (
 	conversationDetailMinHeight  = 6
 	conversationColNumWidth      = 4
 	conversationColRoleWidth     = 10
-	conversationContentPadding   = 20
-	scrollPercentThreshold       = 0.01
-	scrollPercentMultiplier      = 100
-	markdownExtraWidthPadding    = 4
+	// roleSystemPrompt is the message role for the system prompt row.
+	roleSystemPrompt = "system"
+	// conversationContentPadding is the table's own chrome, not the other
+	// columns: bubbles renders each cell with Padding(0,1) — 2 cols of padding
+	// per column, 3 columns = 6. The Content column fills the list width minus
+	// the # and Role columns and this padding. (It was 20, which double-counted
+	// the # and Role widths and collapsed Content to a couple of characters.)
+	conversationContentPadding = 6
+	scrollPercentThreshold     = 0.01
+	scrollPercentMultiplier    = 100
+	markdownExtraWidthPadding  = 4
 )
 
 // ConversationPanel encapsulates the conversation view state (table + detail).
@@ -144,8 +151,21 @@ func (c *ConversationPanel) Reset() {
 
 // SetDimensions sets layout constraints.
 func (c *ConversationPanel) SetDimensions(width, height int) {
+	if width == c.width && height == c.height {
+		return
+	}
 	c.width = width
 	c.height = height
+	// Re-lay-out for the new size. SetData may have run before real dimensions
+	// arrived (width 0 → default columns), and the owner calls SetDimensions on
+	// every render, so without this the turns table's Content column stays at
+	// its initial width and never expands to fill a wider pane. Rows/cursor are
+	// preserved (we don't rebuild them); the detail pane re-wraps to the new
+	// width too.
+	c.layoutTable()
+	if c.detailReady && c.res != nil {
+		c.updateDetail(c.res)
+	}
 }
 
 // SetActive controls whether the panel renders with a focused border. Owners
@@ -228,6 +248,39 @@ func (c *ConversationPanel) AppendMessage(msg *types.Message) {
 		c.selectedTurnIdx = len(c.res.Messages) - 1
 	}
 	c.updateDetail(c.res)
+}
+
+// SyncMessages replaces the panel's transcript with msgs (the authoritative
+// list from the store) and re-renders. Used by the live drill-in to stay in
+// lock-step with the persisted conversation instead of reconstructing it from
+// individual events — which is fragile to gaps and index drift. The cursor is
+// preserved (clamped), and follows the tail if it was already on the last turn
+// so live turns keep scrolling into view.
+func (c *ConversationPanel) SyncMessages(msgs []types.Message) {
+	if c.res == nil {
+		c.res = &statestore.RunResult{}
+	}
+	old := c.res.Messages
+	prevCount := len(old)
+	wasAtTail := prevCount == 0 || c.selectedTurnIdx >= prevCount-1
+	// Preserve a system prompt already shown (e.g. via ConversationStarted
+	// before the store's transcript included one), so a sync that arrives
+	// system-less doesn't blank it.
+	if prevCount > 0 && old[0].Role == roleSystemPrompt &&
+		(len(msgs) == 0 || msgs[0].Role != roleSystemPrompt) {
+		msgs = append([]types.Message{old[0]}, msgs...)
+	}
+	c.res.Messages = msgs
+	c.renderedCache = make(map[int]string)
+	if wasAtTail && len(msgs) > 0 {
+		c.selectedTurnIdx = len(msgs) - 1
+	}
+	if c.tableReady {
+		c.updateTable(c.res)
+	}
+	if c.detailReady {
+		c.updateDetail(c.res)
+	}
 }
 
 // SelectedTurnIdx returns the index of the currently selected message, or 0 if
@@ -383,17 +436,19 @@ func (c *ConversationPanel) updateTablePanel(msg tea.Msg) tea.Cmd {
 	return cmd
 }
 
-// updateTable updates the conversation table with messages from result.
-func (c *ConversationPanel) updateTable(res *statestore.RunResult) {
+// layoutTable sizes the turns table and its columns to the current panel
+// dimensions. Split out of updateTable so it can also run on resize (via
+// SetDimensions) without rebuilding rows — otherwise the columns keep the
+// widths computed at SetData time (often before real dimensions arrive, so
+// width 0 → default fixed columns) and the Content column never fills the pane.
+func (c *ConversationPanel) layoutTable() {
 	if !c.tableReady {
 		return
 	}
-
 	height := c.height - conversationTableHeightPad
 	if height < conversationTableMinHeight {
 		height = conversationTableMinHeight
 	}
-
 	lw := c.listWidth()
 	c.table.SetHeight(height)
 	c.table.SetWidth(lw)
@@ -402,6 +457,15 @@ func (c *ConversationPanel) updateTable(res *statestore.RunResult) {
 		{Title: "Role", Width: conversationColRoleWidth},
 		{Title: "Content", Width: lw - conversationColNumWidth - conversationColRoleWidth - conversationContentPadding},
 	})
+}
+
+// updateTable updates the conversation table with messages from result.
+func (c *ConversationPanel) updateTable(res *statestore.RunResult) {
+	if !c.tableReady {
+		return
+	}
+
+	c.layoutTable()
 
 	rows := make([]table.Row, 0, len(res.Messages))
 	for i := range res.Messages {

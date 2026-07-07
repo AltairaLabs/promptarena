@@ -7,8 +7,6 @@ spec:
   id: mock-tts
   type: mock
   role: tts
-  audio_files:
-    - audio/greeting.pcm
-    - audio/question.pcm
-    - audio/funfact.pcm
-  sample_rate: 16000
+  # No audio_files: mock-TTS falls back to the built-in "mock user turn" clip
+  # (24 kHz), so the persona side is audible and self-labeling with no fixtures.
+  sample_rate: 24000

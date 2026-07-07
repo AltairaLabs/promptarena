@@ -1,7 +1,10 @@
 package engine
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"testing"
 	"time"
 
@@ -14,24 +17,41 @@ import (
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 )
 
-func TestIsRecoverableError(t *testing.T) {
-	de := &DuplexConversationExecutor{}
-	recoverable := []string{
-		"output channel closed unexpectedly",
-		"session ended",
-		"WebSocket read failed",
-		"connection reset by peer",
-		"i/o timeout",
-		"unexpected EOF",
-		"Gemini interrupted the response",
-		"empty response, likely interrupted",
-	}
-	for _, msg := range recoverable {
-		assert.Truef(t, de.isRecoverableError(msg), "expected %q to be recoverable", msg)
-	}
+// fakeProviderErr models a runtime provider error carrying typed
+// classification (status code + auth/retryable), like gemini.APIError.
+type fakeProviderErr struct {
+	msg       string
+	auth      bool
+	retryable bool
+	status    int
+}
 
-	assert.False(t, de.isRecoverableError("invalid api key"))
-	assert.False(t, de.isRecoverableError(""))
+func (e *fakeProviderErr) Error() string     { return e.msg }
+func (e *fakeProviderErr) IsAuthError() bool { return e.auth }
+func (e *fakeProviderErr) IsRetryable() bool { return e.retryable }
+func (e *fakeProviderErr) StatusCode() int   { return e.status }
+
+func TestIsRecoverableError(t *testing.T) {
+	// nil and context death are never retried.
+	assert.False(t, isRecoverableError(nil))
+	assert.False(t, isRecoverableError(context.Canceled))
+	assert.False(t, isRecoverableError(context.DeadlineExceeded))
+
+	// A 401 is a 401 — terminal, even when wrapped in the error chain.
+	authErr := &fakeProviderErr{msg: "authentication failed", auth: true, status: 401}
+	assert.False(t, isRecoverableError(authErr))
+	assert.False(t, isRecoverableError(fmt.Errorf("duplex conversation failed: %w", authErr)))
+
+	// Other 4xx client errors are terminal too.
+	assert.False(t, isRecoverableError(&fakeProviderErr{msg: "bad request", status: 400}))
+
+	// Provider-declared transient errors (429, 5xx) retry.
+	assert.True(t, isRecoverableError(&fakeProviderErr{msg: "rate limited", retryable: true, status: 429}))
+	assert.True(t, isRecoverableError(&fakeProviderErr{msg: "unavailable", retryable: true, status: 503}))
+
+	// Untyped errors are NOT retried — no more blind substring matching (a
+	// message merely containing "websocket" used to loop a 401 forever).
+	assert.False(t, isRecoverableError(errors.New("websocket read failed")))
 }
 
 func TestSelfplayHistoryView(t *testing.T) {

@@ -326,10 +326,12 @@ func NewConversationViewPage(runID, scenarioID, providerID string, result *state
 
 // NewLiveConversationViewPage creates a ConversationViewPage that streams the
 // conversation live while focused. seed may be a partial snapshot (turns so
-// far) or nil; later runtime events are tailed via liveFeed and deduped against
-// the seed. The page reverts to static once the run completes or fails.
+// far) or nil; runtime events then trigger the liveFeed to reconcile the panel
+// against store (the authoritative transcript), so the live view stays in
+// lock-step with what the completed view will show. store may be nil (no live
+// reconcile, seed-only). The page reverts to static once the run completes.
 func NewLiveConversationViewPage(
-	runID, scenarioID, providerID string, seed *statestore.RunResult,
+	runID, scenarioID, providerID string, seed *statestore.RunResult, store conversationStore,
 ) *ConversationViewPage {
 	cp := pages.NewConversationPage()
 	// The panel only appends when it holds a non-nil result, so seed an empty
@@ -342,7 +344,7 @@ func NewLiveConversationViewPage(
 		convPage: cp,
 		live:     true,
 		runID:    runID,
-		feed:     newLiveFeed(runID, len(seed.Messages)),
+		feed:     newLiveFeed(runID, store),
 		logs:     NewLogsOverlay(),
 	}
 }

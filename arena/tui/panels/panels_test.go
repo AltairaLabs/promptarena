@@ -85,6 +85,23 @@ func TestRunsPanel_Basic(t *testing.T) {
 	assert.Contains(t, view, "p1")
 }
 
+func TestRunsPanel_AudioIndicator(t *testing.T) {
+	// audioIndicator maps run audio state to a speaker glyph.
+	assert.Equal(t, audioActiveGlyph, audioIndicator(&RunInfo{HasAudio: true, AudioActive: true}))
+	assert.Equal(t, audioIdleGlyph, audioIndicator(&RunInfo{HasAudio: true, AudioActive: false}))
+	assert.Empty(t, audioIndicator(&RunInfo{}))
+
+	panel := NewRunsPanel()
+	panel.Init(30)
+	panel.Update([]RunInfo{
+		{RunID: "run-1", Scenario: "s1", Provider: "p1", Status: StatusRunning, HasAudio: true, AudioActive: true},
+	}, 120, 30)
+
+	view := panel.View(true)
+	assert.Contains(t, view, "Audio", "audio column header is present")
+	assert.Contains(t, view, audioActiveGlyph, "active run shows the loud-speaker glyph")
+}
+
 func TestLogsPanel_Basic(t *testing.T) {
 	panel := NewLogsPanel()
 

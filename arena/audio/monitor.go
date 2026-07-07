@@ -58,13 +58,12 @@ type Monitor struct {
 	rate int
 	sink *LocalSink
 
-	mu               sync.Mutex
-	closed           bool
-	routers          map[string]*AudioRouter
-	activeRunID      string
-	activeRouter     *AudioRouter
-	forwardCancel    context.CancelFunc
-	autoActivateNext bool
+	mu            sync.Mutex
+	closed        bool
+	routers       map[string]*AudioRouter
+	activeRunID   string
+	activeRouter  *AudioRouter
+	forwardCancel context.CancelFunc
 
 	rmsMu          sync.RWMutex
 	rmsSubscribers []chan RMSFrame
@@ -78,9 +77,8 @@ func NewMonitor(cfg MonitorConfig) (*Monitor, error) {
 		cfg.Rate = Rate24k
 	}
 	m := &Monitor{
-		rate:             cfg.Rate,
-		routers:          make(map[string]*AudioRouter),
-		autoActivateNext: true,
+		rate:    cfg.Rate,
+		routers: make(map[string]*AudioRouter),
 	}
 	if !cfg.EnableLocalSink {
 		return m, nil
@@ -118,9 +116,11 @@ func (m *Monitor) AttachRouter(runID string, router *AudioRouter) {
 	}
 	m.routers[runID] = router
 	sink := m.sink
-	if m.activeRouter == nil && m.autoActivateNext {
-		m.activateLocked(runID, router)
-	}
+	// Playback follows explicit selection only (SetActiveRun) — we do NOT
+	// auto-activate. Auto-play made sense for a single interactive run, but
+	// in a parallel batch it meant every run's audio funneled through the
+	// one sink (auto-activate + auto-fallback), producing a nonstop parade
+	// of runs the user never picked. "Nothing selected" now means silence.
 	m.mu.Unlock()
 
 	// Register the sink as the router's drain handler so the duplex
@@ -151,9 +151,10 @@ func (m *Monitor) AttachRouter(runID string, router *AudioRouter) {
 }
 
 // DetachRouter removes a run's AudioRouter from the monitor. If that run
-// was the active audio source, the monitor falls back to any other
-// registered router (so listening "moves on" automatically when the run
-// you were listening to ends and another is still going).
+// was the active audio source, playback stops — the monitor does NOT fall
+// back to another run (that is what turned "listen to one run" into "hear
+// every run in turn"). Playback resumes only when the user selects another
+// run via SetActiveRun.
 func (m *Monitor) DetachRouter(runID string) {
 	if runID == "" {
 		return
@@ -161,15 +162,9 @@ func (m *Monitor) DetachRouter(runID string) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	delete(m.routers, runID)
-	if m.activeRunID != runID {
-		return
-	}
-	m.deactivateLocked()
-	// Fall back to any other registered router so audio doesn't go silent
-	// just because the run you were listening to wrapped up first.
-	for id, router := range m.routers {
-		m.activateLocked(id, router)
-		return
+	// When the run being listened to ends, stop and flush.
+	if m.activeRunID == runID {
+		m.deactivateLocked()
 	}
 }
 
@@ -191,12 +186,35 @@ func (m *Monitor) SetActiveRun(runID string) bool {
 	return true
 }
 
+// StopPlayback stops host playback and flushes any buffered audio, leaving
+// no run active. Used by the TUI's listen toggle to silence playback without
+// selecting another run.
+func (m *Monitor) StopPlayback() {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.deactivateLocked()
+}
+
 // ActiveRunID returns the run currently routed to the sink, or "" if
 // nothing is active.
 func (m *Monitor) ActiveRunID() string {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	return m.activeRunID
+}
+
+// HasAudio reports whether the named run has a live audio stream registered
+// with the monitor (i.e. it is a duplex/realtime run currently producing
+// audio). Routers self-remove when the run ends, so this is false for
+// finished runs. Used by the TUI to show an audio indicator per run.
+func (m *Monitor) HasAudio(runID string) bool {
+	if runID == "" {
+		return false
+	}
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	_, ok := m.routers[runID]
+	return ok
 }
 
 // SubscribeRMS returns a channel of RMS frames sourced from the sink's
@@ -225,7 +243,6 @@ func (m *Monitor) Close() {
 	m.closed = true
 	m.deactivateLocked()
 	m.routers = make(map[string]*AudioRouter)
-	m.autoActivateNext = false
 	m.mu.Unlock()
 
 	if m.sink != nil {
@@ -296,6 +313,12 @@ func (m *Monitor) deactivateLocked() {
 	}
 	if m.activeRouter != nil {
 		m.activeRouter.Unsubscribe(monitorForwardSubscriberID)
+	}
+	// Drop whatever this run had buffered but unplayed so it doesn't keep
+	// playing after we switch away / it ends. The sink buffers several
+	// seconds; without this the tail lingers and bleeds into the next run.
+	if m.sink != nil {
+		m.sink.Flush()
 	}
 	m.activeRunID = ""
 	m.activeRouter = nil

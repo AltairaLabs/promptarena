@@ -60,6 +60,10 @@ func TestMonitor_ActivateForwardsFramesToSink(t *testing.T) {
 	defer router.Close()
 
 	m.AttachRouter("run-1", router)
+	// Playback follows explicit selection now — attach alone does not play.
+	if !m.SetActiveRun("run-1") {
+		t.Fatal("SetActiveRun should succeed for a registered run")
+	}
 	if m.ActiveRunID() != "run-1" {
 		t.Fatalf("expected run-1 active, got %q", m.ActiveRunID())
 	}
@@ -77,15 +81,41 @@ func TestMonitor_ActivateForwardsFramesToSink(t *testing.T) {
 	time.Sleep(20 * time.Millisecond)
 }
 
-func TestMonitor_FirstAttachedRunBecomesActive(t *testing.T) {
+func TestMonitor_AttachDoesNotAutoActivate(t *testing.T) {
 	m := newTestMonitor(t)
 	router := NewAudioRouter(Rate24k)
 	defer router.Close()
 
 	m.AttachRouter("run-1", router)
 
-	if got := m.ActiveRunID(); got != "run-1" {
-		t.Errorf("expected first attached run to be active, got %q", got)
+	// Attaching a run must not start playback — that only happens on an
+	// explicit SetActiveRun (user selection). Auto-play in a parallel batch
+	// was the source of the "every run plays" bug.
+	if got := m.ActiveRunID(); got != "" {
+		t.Errorf("attach must not auto-activate playback; got active %q", got)
+	}
+}
+
+func TestMonitor_HasAudioTracksRegistration(t *testing.T) {
+	m := newTestMonitor(t)
+	router := NewAudioRouter(Rate24k)
+	defer router.Close()
+
+	if m.HasAudio("run-1") {
+		t.Fatal("run should not have audio before attach")
+	}
+	if m.HasAudio("") {
+		t.Fatal("empty run ID never has audio")
+	}
+
+	m.AttachRouter("run-1", router)
+	if !m.HasAudio("run-1") {
+		t.Error("run should have audio after attach")
+	}
+
+	m.DetachRouter("run-1")
+	if m.HasAudio("run-1") {
+		t.Error("run should not have audio after detach")
 	}
 }
 
@@ -100,8 +130,8 @@ func TestMonitor_SubsequentRunsDoNotAutoActivate(t *testing.T) {
 	m.AttachRouter("run-1", r1)
 	m.AttachRouter("run-2", r2)
 
-	if got := m.ActiveRunID(); got != "run-1" {
-		t.Errorf("expected first run to remain active when others attach, got %q", got)
+	if got := m.ActiveRunID(); got != "" {
+		t.Errorf("no run should be active until SetActiveRun; got %q", got)
 	}
 }
 
@@ -134,7 +164,7 @@ func TestMonitor_SetActiveRunRejectsUnknown(t *testing.T) {
 	}
 }
 
-func TestMonitor_DetachActiveRunFallsBackToAnotherRegistered(t *testing.T) {
+func TestMonitor_DetachActiveRunDoesNotFallBack(t *testing.T) {
 	m := newTestMonitor(t)
 
 	r1 := NewAudioRouter(Rate24k)
@@ -149,9 +179,12 @@ func TestMonitor_DetachActiveRunFallsBackToAnotherRegistered(t *testing.T) {
 		t.Fatal("SetActiveRun")
 	}
 
+	// When the listened-to run ends, playback stops — it must NOT auto-fall
+	// back to another still-registered run (that was the "hear every run in
+	// turn" bug). The user re-selects if they want to keep listening.
 	m.DetachRouter("run-2")
-	if got := m.ActiveRunID(); got != "run-1" {
-		t.Errorf("expected fallback to run-1 after run-2 detach, got %q", got)
+	if got := m.ActiveRunID(); got != "" {
+		t.Errorf("detaching the active run must not fall back; got active %q", got)
 	}
 }
 
@@ -174,6 +207,9 @@ func TestMonitor_RouterCloseAutoDetaches(t *testing.T) {
 
 	router := NewAudioRouter(Rate24k)
 	m.AttachRouter("run-1", router)
+	if !m.SetActiveRun("run-1") {
+		t.Fatal("SetActiveRun should succeed for a registered run")
+	}
 	if got := m.ActiveRunID(); got != "run-1" {
 		t.Fatalf("expected active=run-1, got %q", got)
 	}

@@ -19,6 +19,8 @@ const (
 	runsPanelPadding           = 2
 	runsPanelHorizontalPadding = runsPanelPadding * 2
 
+	audioColTitle    = "Audio"
+	audioColWidth    = 6
 	statusColWidth   = 10
 	providerColWidth = 20
 	scenarioColWidth = 30
@@ -54,6 +56,35 @@ type RunInfo struct {
 	CurrentTurnIndex int
 	CurrentTurnRole  string
 	Selected         bool
+
+	// HasAudio is true when the run has a live audio stream (duplex/realtime).
+	// AudioActive is true when this run is the one currently routed to host
+	// playback (and the level meter). The runs table renders a speaker glyph
+	// from these so demos show which run is audible even with the sound off.
+	HasAudio    bool
+	AudioActive bool
+}
+
+const (
+	// audioActiveGlyph marks the run currently routed to host playback. Plain
+	// text (not an emoji) so it renders in every terminal / screen recording —
+	// important for demos where the point is to *see* which run is audible.
+	audioActiveGlyph = "LIVE"
+	// audioIdleGlyph marks a run that has audio but is not the active source.
+	audioIdleGlyph = "•"
+)
+
+// audioIndicator returns the speaker glyph for a run's audio state, or "" when
+// the run has no audio stream.
+func audioIndicator(run *RunInfo) string {
+	switch {
+	case run.AudioActive:
+		return audioActiveGlyph
+	case run.HasAudio:
+		return audioIdleGlyph
+	default:
+		return ""
+	}
 }
 
 // RunsPanel manages the active runs table display
@@ -71,6 +102,7 @@ func NewRunsPanel() *RunsPanel {
 // Init initializes the runs table
 func (p *RunsPanel) Init(height int) {
 	columns := []table.Column{
+		{Title: audioColTitle, Width: audioColWidth},
 		{Title: "Status", Width: statusColWidth},
 		{Title: "Provider", Width: providerColWidth},
 		{Title: "Scenario", Width: scenarioColWidth},
@@ -110,9 +142,9 @@ func (p *RunsPanel) Init(height int) {
 // fixed-width columns ignored it and overflowed). Columns shrink on narrow
 // terminals and grow to fill wide ones; a floor keeps each readable.
 func responsiveRunsColumns(avail int) []table.Column {
-	titles := []string{"Status", "Provider", "Scenario", "Region", "Duration", "Cost", "Notes"}
+	titles := []string{audioColTitle, "Status", "Provider", "Scenario", "Region", "Duration", "Cost", "Notes"}
 	weights := []int{
-		statusColWidth, providerColWidth, scenarioColWidth, regionColWidth,
+		audioColWidth, statusColWidth, providerColWidth, scenarioColWidth, regionColWidth,
 		durationColWidth, costColWidth, notesColWidth,
 	}
 
@@ -138,7 +170,7 @@ func responsiveRunsColumns(avail int) []table.Column {
 		used += cw
 	}
 	if rem := target - used; rem > 0 {
-		cols[2].Width += rem // hand rounding slack to the flexible Scenario column
+		cols[3].Width += rem // hand rounding slack to the flexible Scenario column
 	}
 	return cols
 }
@@ -177,6 +209,7 @@ func (p *RunsPanel) Update(runs []RunInfo, width, height int) {
 			status = fmt.Sprintf("%s *", status)
 		}
 		rows = append(rows, table.Row{
+			audioIndicator(run),
 			status,
 			run.Provider,
 			run.Scenario,

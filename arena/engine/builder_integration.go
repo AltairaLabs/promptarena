@@ -350,7 +350,19 @@ func createProviderImpl(configDir string, provider *config.Provider) (providers.
 			},
 		},
 	}
-	return providers.CreateProviderFromSpec(spec)
+	providerImpl, err := providers.CreateProviderFromSpec(spec)
+	if err != nil {
+		return nil, err
+	}
+	// A config-loaded mock provider (e.g. `--provider mock-duplex`) builds its
+	// repository inside the runtime factory, so EnableMockProviderMode's audio
+	// decorator never sees it. Re-wire it here so agent turns without their own
+	// audio default to the built-in "mock assistant turn" clip — keyless mock
+	// runs are then audible on both sides with no per-turn config.
+	if provider.Type == "mock" {
+		applyDefaultMockAgentAudio(providerImpl, provider.AdditionalConfig)
+	}
+	return providerImpl, nil
 }
 
 // buildStreamRetryPolicy translates a StreamRetryConfig from arena config

@@ -1118,3 +1118,72 @@ func TestDelegateKeyToActivePane_ResultPane(t *testing.T) {
 	// Result pane handler should be called
 	_ = cmd
 }
+
+// fakeAudioMonitor is a test double for the audioMonitor interface.
+type fakeAudioMonitor struct {
+	active string
+	has    map[string]bool
+}
+
+func (f *fakeAudioMonitor) SetActiveRun(runID string) bool { f.active = runID; return true }
+func (f *fakeAudioMonitor) ActiveRunID() string            { return f.active }
+func (f *fakeAudioMonitor) HasAudio(runID string) bool     { return f.has[runID] }
+func (f *fakeAudioMonitor) StopPlayback()                  { f.active = "" }
+
+func TestConvertToRunInfos_AudioIndicators(t *testing.T) {
+	m := NewModel("test.yaml", 2)
+	m.activeRuns = append(m.activeRuns,
+		RunInfo{RunID: "run-a"},
+		RunInfo{RunID: "run-b"},
+		RunInfo{RunID: "run-text"},
+	)
+	// run-a is the audible run, run-b has audio but isn't active, run-text has none.
+	m.SetAudioMonitor(&fakeAudioMonitor{
+		active: "run-a",
+		has:    map[string]bool{"run-a": true, "run-b": true},
+	})
+
+	infos := m.convertToRunInfos()
+	require.Len(t, infos, 3)
+
+	assert.True(t, infos[0].HasAudio, "run-a has audio")
+	assert.True(t, infos[0].AudioActive, "run-a is the active audio source")
+
+	assert.True(t, infos[1].HasAudio, "run-b has audio")
+	assert.False(t, infos[1].AudioActive, "run-b is not the active source")
+
+	assert.False(t, infos[2].HasAudio, "run-text has no audio")
+	assert.False(t, infos[2].AudioActive)
+}
+
+func TestToggleListenHighlightedRun(t *testing.T) {
+	m := NewModel("test.yaml", 2)
+	m.activeRuns = append(m.activeRuns,
+		RunInfo{RunID: "run-a"},
+		RunInfo{RunID: "run-b"},
+	)
+	fake := &fakeAudioMonitor{has: map[string]bool{"run-a": true, "run-b": true}}
+	m.SetAudioMonitor(fake)
+	// Warm up the runs panel so its table cursor (defaults to row 0 = run-a) exists.
+	m.Update(tea.WindowSizeMsg{Width: 160, Height: 50})
+	_ = m.View()
+
+	// First toggle on the highlighted run starts listening to it.
+	m.toggleListenHighlightedRun()
+	assert.Equal(t, "run-a", fake.ActiveRunID(), "listen should activate the highlighted run")
+
+	// Toggling the same run again stops playback.
+	m.toggleListenHighlightedRun()
+	assert.Equal(t, "", fake.ActiveRunID(), "listening to the active run again should stop playback")
+}
+
+// TestConvertToRunInfos_NoMonitor confirms text runs (nil monitor) never flag audio.
+func TestConvertToRunInfos_NoMonitor(t *testing.T) {
+	m := NewModel("test.yaml", 1)
+	m.activeRuns = append(m.activeRuns, RunInfo{RunID: "run-a"})
+
+	infos := m.convertToRunInfos()
+	require.Len(t, infos, 1)
+	assert.False(t, infos[0].HasAudio)
+	assert.False(t, infos[0].AudioActive)
+}

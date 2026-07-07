@@ -393,6 +393,14 @@ func (b *liveBroadcaster) observe(elem *stage.StreamElement, pos int) {
 
 	if isNew {
 		b.stage.broadcastMessage(elem, pos+b.offset)
+	} else {
+		// Diagnostic: a message reached the save stage but is treated as history
+		// replay (pos < prevLen) so it is NOT broadcast live. If user turns show
+		// up here, they reach the stage but the live index arithmetic is dropping
+		// them.
+		logger.Debug("save-stage: message NOT broadcast (history replay)",
+			"role", elem.Message.Role, "pos", pos, "prev_len", b.prevLen,
+			"content_len", len(elem.Message.Content))
 	}
 }
 
@@ -450,6 +458,13 @@ func (s *ArenaStateStoreSaveStage) broadcastMessage(elem *stage.StreamElement, i
 	if s.emitter == nil || elem.Message == nil || idx < 0 || elem.Message.Role == roleSystem {
 		return
 	}
+	// Diagnostic: every non-system message the save stage broadcasts live. If a
+	// role (e.g. user) never appears here but shows up in the completed run, its
+	// turn is being persisted by another path (provider write-through) and never
+	// reaches this live broadcast.
+	logger.Debug("save-stage: broadcasting message",
+		"role", elem.Message.Role, "index", idx,
+		"content_len", len(elem.Message.Content))
 	s.emitter.MessageCreated(
 		elem.Message.Role,
 		elem.Message.Content,

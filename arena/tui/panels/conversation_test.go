@@ -78,6 +78,42 @@ func TestConversationPanel_SetData_ValidResult(t *testing.T) {
 	assert.Equal(t, result, panel.res)
 }
 
+func TestConversationPanel_ColumnsExpandOnResize(t *testing.T) {
+	panel := NewConversationPanel()
+
+	result := &statestore.RunResult{
+		RunID: "run-123",
+		Messages: []types.Message{
+			{Role: "user", Content: "Hello"},
+			{Role: "assistant", Content: "Hi there"},
+		},
+	}
+
+	// SetData before real dimensions arrive (width 0) — this is the real order:
+	// the page hydrates the result, then the owner supplies dimensions on the
+	// first render. Columns are computed against the default width here.
+	panel.SetData("run-123", "s", "p", result)
+	narrowContent := panel.table.Columns()[2].Width
+
+	// Wide dimensions arrive via SetDimensions (called every render).
+	panel.SetDimensions(200, 50)
+	wideContent := panel.table.Columns()[2].Width
+
+	assert.Greater(t, wideContent, narrowContent,
+		"Content column must expand to fill a wider pane after resize")
+	// And it fills the turns list: everything left after the #/Role columns and
+	// the table's own cell padding. Guards against the over-subtraction that
+	// collapsed Content to a couple of characters ("C…").
+	lw := panel.listWidth()
+	want := lw - conversationColNumWidth - conversationColRoleWidth - conversationContentPadding
+	assert.Equal(t, want, wideContent, "Content column should fill the turns-list width")
+	assert.Greater(t, wideContent, len("Content"),
+		"Content column must be wide enough to show its own header, not truncate to 'C…'")
+	// Content should dominate the list — it's the flexible column.
+	assert.Greater(t, wideContent, conversationColNumWidth+conversationColRoleWidth,
+		"Content should be the widest column in the turns list")
+}
+
 func TestConversationPanel_Update_NotReady(t *testing.T) {
 	panel := NewConversationPanel()
 
@@ -743,7 +779,7 @@ func TestConversationPanel_Constants(t *testing.T) {
 	assert.Equal(t, 6, conversationDetailMinHeight)
 	assert.Equal(t, 4, conversationColNumWidth)
 	assert.Equal(t, 10, conversationColRoleWidth)
-	assert.Equal(t, 20, conversationContentPadding)
+	assert.Equal(t, 6, conversationContentPadding)
 }
 
 func TestConversationPanel_EnsureTable_SameRunID(t *testing.T) {

@@ -54,6 +54,52 @@ func TestEventAdapterHandlesRunLifecycle(t *testing.T) {
 	}
 }
 
+// TestEventAdapterPopulatesRunFieldsFromPointerData guards the pointer-vs-value
+// bug: emitter.EmitCustom always emits *events.CustomEventData, so the adapter's
+// read helpers must accept the pointer shape. If they only match the value type,
+// scenario/provider/region/duration/cost silently arrive as zero values.
+func TestEventAdapterPopulatesRunFieldsFromPointerData(t *testing.T) {
+	t.Parallel()
+
+	model := NewModel("cfg", 1)
+	adapter := NewEventAdapterWithModel(model)
+
+	start := &events.Event{
+		Type:        events.EventType("arena.run.started"),
+		ExecutionID: "run-1",
+		Timestamp:   time.Now(),
+		Data: &events.CustomEventData{
+			Data: map[string]interface{}{
+				"scenario": "sc-1",
+				"provider": "prov-1",
+				"region":   "us-east",
+			},
+		},
+	}
+	complete := &events.Event{
+		Type:        events.EventType("arena.run.completed"),
+		ExecutionID: "run-1",
+		Timestamp:   time.Now(),
+		Data: &events.CustomEventData{
+			Data: map[string]interface{}{
+				"duration": 3 * time.Second,
+				"cost":     0.42,
+			},
+		},
+	}
+
+	adapter.HandleEvent(start)
+	require.Len(t, model.activeRuns, 1)
+	assert.Equal(t, "sc-1", model.activeRuns[0].Scenario)
+	assert.Equal(t, "prov-1", model.activeRuns[0].Provider)
+	assert.Equal(t, "us-east", model.activeRuns[0].Region)
+
+	adapter.HandleEvent(complete)
+	require.Len(t, model.activeRuns, 1)
+	assert.Equal(t, 3*time.Second, model.activeRuns[0].Duration)
+	assert.InEpsilon(t, 0.42, model.activeRuns[0].Cost, 1e-9)
+}
+
 func TestEventAdapterLogsProviderEvents(t *testing.T) {
 	t.Parallel()
 

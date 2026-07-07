@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"strings"
+	"net/http"
 	"time"
 
 	"github.com/AltairaLabs/PromptKit/runtime/events"
@@ -82,7 +82,7 @@ func (de *DuplexConversationExecutor) executeDuplexConversation(
 			break
 		}
 
-		if !de.isRecoverableError(result.Error) {
+		if !isRecoverableError(result.Err) {
 			// Non-recoverable error - don't retry
 			logger.Debug("Non-recoverable error, not retrying", "error", result.Error)
 			break
@@ -100,28 +100,51 @@ func (de *DuplexConversationExecutor) executeDuplexConversation(
 	return result
 }
 
-// isRecoverableError checks if an error is recoverable and should trigger a retry.
-// Recoverable errors include session drops, network issues, and provider transient failures.
-func (de *DuplexConversationExecutor) isRecoverableError(errMsg string) bool {
-	recoverablePatterns := []string{
-		"output channel closed unexpectedly",
-		"session ended",
-		"websocket",
-		"connection reset",
-		"connection refused",
-		"timeout",
-		"EOF",
-		"broken pipe",
-		"interrupted",    // Gemini interrupted the response
-		"empty response", // Empty response, likely from interruption
-	}
+// statusCoder is any error that carries an HTTP-style status code (runtime
+// provider error types may implement this).
+type statusCoder interface{ StatusCode() int }
 
-	errLower := strings.ToLower(errMsg)
-	for _, pattern := range recoverablePatterns {
-		if strings.Contains(errLower, strings.ToLower(pattern)) {
-			return true
+// authErrorClassifier / retryableErrorClassifier are the typed classification
+// hooks the runtime provider errors expose (e.g. gemini.APIError). Matching on
+// these — not on substrings of the stringified message — is how we tell a 401
+// from a transient socket drop.
+type authErrorClassifier interface{ IsAuthError() bool }
+type retryableErrorClassifier interface{ IsRetryable() bool }
+
+// isRecoverableError reports whether a failed duplex attempt should be retried.
+// It classifies by error TYPE, never by substring: retrying is only worthwhile
+// for errors the provider itself declares transient (rate limits, 5xx, socket
+// drops). Auth failures (401/403) and client errors are terminal — retrying a
+// bad API key just loops. Unknown error types are treated as non-recoverable:
+// blind retrying is exactly what turned a 401 into an endless run.
+func isRecoverableError(err error) bool {
+	if err == nil {
+		return false
+	}
+	// Context death is never retryable.
+	if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+		return false
+	}
+	// Auth errors are terminal — a 401 is a 401.
+	var authErr authErrorClassifier
+	if errors.As(err, &authErr) && authErr.IsAuthError() {
+		return false
+	}
+	// Any 4xx (client error) is terminal; 429 is the one retryable 4xx and the
+	// provider's own IsRetryable handles it below.
+	var coded statusCoder
+	if errors.As(err, &coded) {
+		code := coded.StatusCode()
+		if code >= 400 && code < 500 && code != http.StatusTooManyRequests {
+			return false
 		}
 	}
+	// Honor the provider's explicit retryability classification.
+	var retryable retryableErrorClassifier
+	if errors.As(err, &retryable) {
+		return retryable.IsRetryable()
+	}
+	// Unknown/untyped error: do not retry.
 	return false
 }
 
@@ -178,6 +201,7 @@ func (de *DuplexConversationExecutor) executeDuplexPipeline(
 		return &ConversationResult{
 			Failed: true,
 			Error:  fmt.Sprintf("failed to execute duplex pipeline: %v", err),
+			Err:    err,
 		}
 	}
 
@@ -194,6 +218,7 @@ func (de *DuplexConversationExecutor) executeDuplexPipeline(
 		return &ConversationResult{
 			Failed: true,
 			Error:  fmt.Sprintf("duplex conversation failed: %v", err),
+			Err:    err,
 		}
 	}
 
