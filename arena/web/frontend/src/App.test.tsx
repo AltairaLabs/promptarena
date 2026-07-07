@@ -1,6 +1,6 @@
 import { act, render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { RunResult, RunOptionsResponse, ActiveRun } from "@/types";
+import type { RunResult, RunOptionsResponse, ActiveRun, WorkflowGraph } from "@/types";
 
 const mk = (o: Partial<RunResult>): RunResult => ({
   RunID: o.RunID ?? "r",
@@ -56,6 +56,15 @@ const getConfig = vi.fn().mockResolvedValue({});
 const startRun = vi.fn().mockResolvedValue({});
 const clearResults = vi.fn().mockResolvedValue({});
 
+const seededWorkflowGraph: WorkflowGraph = {
+  nodes: [
+    { id: "intake", label: "intake", kind: "entry", entry: true, terminal: false },
+    { id: "resolve", label: "resolve", kind: "output", entry: false, terminal: true },
+  ],
+  edges: [{ from: "intake", to: "resolve" }],
+};
+const getWorkflow = vi.fn().mockResolvedValue(seededWorkflowGraph);
+
 vi.mock("@/hooks/useArenaAPI", () => ({
   useArenaAPI: () => ({
     startRun,
@@ -64,6 +73,7 @@ vi.mock("@/hooks/useArenaAPI", () => ({
     getConfig,
     getRunOptions,
     clearResults,
+    getWorkflow,
     loading: false,
   }),
 }));
@@ -93,6 +103,7 @@ describe("App — Runs view", () => {
   beforeEach(() => {
     getResults.mockClear();
     getResult.mockClear();
+    getWorkflow.mockClear();
     useArenaEventsMock.mockReset();
     useArenaEventsMock.mockReturnValue(defaultArenaState());
   });
@@ -138,6 +149,16 @@ describe("App — Runs view", () => {
     await act(async () => {
       await Promise.resolve();
     });
+  });
+
+  it("fetches the workflow graph on mount and passes it into the inspector's WORKFLOW panel", async () => {
+    render(<App />);
+    const rate = await screen.findByText("100%");
+    fireEvent.click(rate);
+    await screen.findByText("TRANSCRIPT");
+
+    expect(getWorkflow).toHaveBeenCalled();
+    expect(await screen.findByText("WORKFLOW")).toBeInTheDocument();
   });
 
   it("does not let a completed-but-not-yet-refetched live run mask a failing historical result", async () => {

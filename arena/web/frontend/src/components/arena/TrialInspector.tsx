@@ -2,8 +2,8 @@ import { Transcript } from "./Transcript";
 import { AgentFlowCard } from "./AgentFlowCard";
 import { TerminalCard } from "./TerminalCard";
 import { StatusPill } from "@/components/atlas/StatusPill";
-import { buildTranscript, buildAgentFlow, buildTerminalLines } from "@/lib/arenaView";
-import type { RunResult, ActiveRun, TrialCell, Message } from "@/types";
+import { buildTranscript, buildTerminalLines } from "@/lib/arenaView";
+import type { RunResult, ActiveRun, TrialCell, Message, WorkflowGraph } from "@/types";
 
 export interface TrialInspectorProps {
   run: RunResult | ActiveRun | undefined;
@@ -11,6 +11,10 @@ export interface TrialInspectorProps {
   scenarioId: string;
   providerId: string;
   providerLabel: string;
+  // workflowGraph is the config's static workflow topology, fetched once by
+  // App on mount — null until that fetch resolves. AgentFlowCard renders a
+  // placeholder shell in that window.
+  workflowGraph: WorkflowGraph | null;
   // onSelectMessage, when provided, is invoked when a transcript message is
   // clicked — mirrors the old RunDetail/ConversationThread contract so the
   // DevTools drawer stays reachable from the Runs tab.
@@ -46,6 +50,7 @@ export function TrialInspector({
   scenarioId,
   providerId,
   providerLabel,
+  workflowGraph,
   onSelectMessage,
   listeningRunId,
   onToggleListen,
@@ -128,7 +133,7 @@ export function TrialInspector({
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-        <AgentFlowCard flow={buildAgentFlow(run)} />
+        <AgentFlowCard graph={workflowGraph} run={run} />
         <TerminalCard lines={buildTerminalLines(cell, scenarioId, providerId)} />
       </div>
     </div>

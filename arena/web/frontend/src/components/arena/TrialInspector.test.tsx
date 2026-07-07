@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import { TrialInspector } from "./TrialInspector";
-import type { RunResult, ActiveRun, TrialCell } from "@/types";
+import type { RunResult, ActiveRun, TrialCell, WorkflowGraph } from "@/types";
 
 function makeCell(overrides: Partial<TrialCell> = {}): TrialCell {
   return {
@@ -52,6 +52,18 @@ function makeRun(overrides: Partial<RunResult> = {}): RunResult {
   };
 }
 
+const wfGraph: WorkflowGraph = {
+  nodes: [
+    { id: "intake", label: "intake", kind: "entry", entry: true, terminal: false },
+    { id: "resolve", label: "resolve", kind: "output", entry: false, terminal: true },
+    { id: "escalate", label: "escalate", kind: "agent", entry: false, terminal: true },
+  ],
+  edges: [
+    { from: "intake", to: "resolve", label: "classified" },
+    { from: "intake", to: "escalate", label: "unclear" },
+  ],
+};
+
 describe("TrialInspector", () => {
   it("renders the transcript, agent-flow svg, terminal, and a Passed status pill", () => {
     const { container } = render(
@@ -61,6 +73,7 @@ describe("TrialInspector", () => {
         scenarioId="checkout"
         providerId="claude"
         providerLabel="Claude"
+        workflowGraph={wfGraph}
       />,
     );
     expect(screen.getByText("TRANSCRIPT")).toBeInTheDocument();
@@ -72,6 +85,58 @@ describe("TrialInspector", () => {
     expect(screen.getByText("Passed")).toBeInTheDocument();
   });
 
+  it("renders the WORKFLOW panel with a visited node undimmed and an unvisited node dimmed", () => {
+    const run = makeRun({
+      Messages: [
+        { role: "system", content: "", meta: { _workflow_state: { current_state: "intake" } } },
+        {
+          role: "tool",
+          content: "",
+          meta: { _workflow_state: { current_state: "resolve", previous_state: "intake", transition: "classified" } },
+        },
+      ],
+    });
+    const { container } = render(
+      <TrialInspector
+        run={run}
+        cell={makeCell()}
+        scenarioId="checkout"
+        providerId="claude"
+        providerLabel="Claude"
+        workflowGraph={wfGraph}
+      />,
+    );
+    expect(screen.getByText("WORKFLOW")).toBeInTheDocument();
+    expect(container.querySelector("svg")).toBeTruthy();
+
+    // ConstellationGraph renders each node inside a <g>, dimmed via inline
+    // opacity when the node's `dim` flag is set by overlayWorkflowRun.
+    const groups = Array.from(container.querySelectorAll("svg > g"));
+    const findGroupByLabel = (label: string) =>
+      groups.find((g) => Array.from(g.querySelectorAll("text")).some((t) => t.textContent === label));
+
+    const resolveGroup = findGroupByLabel("resolve"); // visited
+    const escalateGroup = findGroupByLabel("escalate"); // unvisited
+    expect(resolveGroup).toBeTruthy();
+    expect(escalateGroup).toBeTruthy();
+    expect((resolveGroup as HTMLElement).getAttribute("style") ?? "").not.toContain("opacity");
+    expect((escalateGroup as HTMLElement).getAttribute("style") ?? "").toContain("opacity");
+  });
+
+  it("renders the AgentFlowCard placeholder without crashing when the workflow graph hasn't loaded yet", () => {
+    render(
+      <TrialInspector
+        run={makeRun()}
+        cell={makeCell()}
+        scenarioId="checkout"
+        providerId="claude"
+        providerLabel="Claude"
+        workflowGraph={null}
+      />,
+    );
+    expect(screen.getByText("WORKFLOW")).toBeInTheDocument();
+  });
+
   it("renders a Failed status pill when the cell did not pass", () => {
     render(
       <TrialInspector
@@ -80,6 +145,7 @@ describe("TrialInspector", () => {
         scenarioId="checkout"
         providerId="claude"
         providerLabel="Claude"
+        workflowGraph={wfGraph}
       />,
     );
     expect(screen.getByText("Failed")).toBeInTheDocument();
@@ -104,6 +170,7 @@ describe("TrialInspector", () => {
         scenarioId="checkout"
         providerId="claude"
         providerLabel="Claude"
+        workflowGraph={wfGraph}
       />,
     );
     expect(screen.getByText("Running")).toBeInTheDocument();
@@ -119,6 +186,7 @@ describe("TrialInspector", () => {
         scenarioId="checkout"
         providerId="claude"
         providerLabel="Claude"
+        workflowGraph={wfGraph}
         onSelectMessage={onSelectMessage}
       />,
     );
@@ -146,6 +214,7 @@ describe("TrialInspector", () => {
         scenarioId="checkout"
         providerId="claude"
         providerLabel="Claude"
+        workflowGraph={wfGraph}
         listeningRunId={null}
         onToggleListen={onToggleListen}
       />,
@@ -173,6 +242,7 @@ describe("TrialInspector", () => {
         scenarioId="checkout"
         providerId="claude"
         providerLabel="Claude"
+        workflowGraph={wfGraph}
         listeningRunId="r2"
         onToggleListen={vi.fn()}
       />,
@@ -188,6 +258,7 @@ describe("TrialInspector", () => {
         scenarioId="checkout"
         providerId="claude"
         providerLabel="Claude"
+        workflowGraph={wfGraph}
         listeningRunId={null}
         onToggleListen={vi.fn()}
       />,
@@ -215,6 +286,7 @@ describe("TrialInspector", () => {
         scenarioId="checkout"
         providerId="claude"
         providerLabel="Claude"
+        workflowGraph={wfGraph}
         onSelectMessage={onSelectMessage}
       />,
     );

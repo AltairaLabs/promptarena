@@ -15,7 +15,7 @@ import { useArenaAPI } from "@/hooks/useArenaAPI";
 import { useTheme } from "@/hooks/useTheme";
 import { AudioPlayer } from "@/audio/player";
 import { buildMatrix } from "@/lib/arenaView";
-import type { Message, RunResult, ActiveRun, ProviderInfo, ScenarioInfo, TrialCell } from "@/types";
+import type { Message, RunResult, ActiveRun, ProviderInfo, ScenarioInfo, TrialCell, WorkflowGraph } from "@/types";
 
 // activeRunToResult maps a still-running ActiveRun into a synthetic
 // RunResult-shaped entry so buildMatrix can overlay it onto the trial
@@ -83,7 +83,7 @@ export default function App() {
   const { registerInteractiveRun, ...state } = useArenaEvents();
   const { theme, toggle: toggleTheme } = useTheme();
   const [activeTab, setActiveTab] = useState<"runs" | "chat">("runs");
-  const { startRun, getResults, getResult, getConfig, getRunOptions, clearResults, loading } = useArenaAPI();
+  const { startRun, getResults, getResult, getConfig, getRunOptions, clearResults, getWorkflow, loading } = useArenaAPI();
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [showLedger, setShowLedger] = useState(false);
@@ -97,6 +97,16 @@ export default function App() {
   const [providers, setProviders] = useState<ProviderInfo[]>([]);
   const [scenarios, setScenarios] = useState<ScenarioInfo[]>([]);
   const [promptpack, setPromptpack] = useState<string | undefined>(undefined);
+  const [workflowGraph, setWorkflowGraph] = useState<WorkflowGraph | null>(null);
+
+  // The workflow topology is static for the life of the config — fetched
+  // once on mount, same pattern as run-options/config below. TrialInspector
+  // renders a placeholder until this resolves.
+  useEffect(() => {
+    getWorkflow()
+      .then((graph) => setWorkflowGraph(graph))
+      .catch(() => {});
+  }, [getWorkflow]);
 
   // Run-options (the providers/scenarios universe) drive the matrix's
   // columns/rows — same fetch pattern as RunControls/EmptyStateLauncher.
@@ -448,6 +458,7 @@ export default function App() {
                     scenarioId={inspectorCell?.scenarioId ?? selectedCell.scenarioId}
                     providerId={inspectorCell?.providerId ?? selectedCell.providerId}
                     providerLabel={selectedProviderLabel}
+                    workflowGraph={workflowGraph}
                     onSelectMessage={handleSelectMessage}
                     listeningRunId={listeningRunId}
                     onToggleListen={handleListen}

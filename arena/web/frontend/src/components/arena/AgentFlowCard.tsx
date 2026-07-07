@@ -1,14 +1,21 @@
 import { ConstellationGraph } from "@/components/atlas/ConstellationGraph";
-import type { GraphNode, GraphEdge } from "@/components/atlas/types";
+import { overlayWorkflowRun } from "@/lib/arenaView";
+import { layoutWorkflow } from "@/lib/workflowLayout";
+import type { RunResult, ActiveRun, WorkflowGraph } from "@/types";
 
 export interface AgentFlowCardProps {
-  flow: { nodes: GraphNode[]; edges: GraphEdge[] };
+  graph: WorkflowGraph | null;
+  run: RunResult | ActiveRun | undefined;
 }
 
-// AgentFlowCard — the Trial Inspector's right-rail top card: wraps the
-// ConstellationGraph reading of a run's message/tool sequence, built
-// upstream by `buildAgentFlow` in `lib/arenaView.ts`.
-export function AgentFlowCard({ flow }: AgentFlowCardProps) {
+// AgentFlowCard — the Trial Inspector's right-rail top card: renders the
+// real workflow topology (fetched once via getWorkflow) with the selected
+// run's path overlaid — visited nodes/edges stay lit, unvisited ones dim.
+// Until the graph has loaded (App's initial fetch hasn't resolved yet), the
+// card renders its shell with an empty/placeholder body rather than crash.
+export function AgentFlowCard({ graph, run }: AgentFlowCardProps) {
+  const laid = graph ? layoutWorkflow(overlayWorkflowRun(graph, run)) : null;
+
   return (
     <div
       style={{
@@ -28,10 +35,16 @@ export function AgentFlowCard({ flow }: AgentFlowCardProps) {
           borderBottom: "1px solid var(--hairline)",
         }}
       >
-        AGENT FLOW
+        WORKFLOW
       </div>
-      <div style={{ padding: 14 }}>
-        <ConstellationGraph nodes={flow.nodes} edges={flow.edges} width={360} height={150} showLabels />
+      <div style={{ padding: 14, maxHeight: 320, overflow: "auto" }}>
+        {laid ? (
+          <ConstellationGraph nodes={laid.nodes} edges={laid.edges} width={laid.width} height={laid.height} showLabels />
+        ) : (
+          <div style={{ font: "12px var(--font-mono)", color: "var(--star-600)", padding: "8px 4px" }}>
+            Loading workflow…
+          </div>
+        )}
       </div>
     </div>
   );
