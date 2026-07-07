@@ -101,6 +101,16 @@ describe("App — Runs view", () => {
     expect(await screen.findByText("100%")).toBeInTheDocument();
   });
 
+  it("renders the instrument band above the trial matrix", async () => {
+    render(<App />);
+    const gaugeLabel = await screen.findByText("PASS RATE · ALL TRIALS");
+    const matrixHeading = await screen.findByText("TRIAL MATRIX · SCENARIO × PROVIDER");
+    expect(gaugeLabel).toBeInTheDocument();
+    expect(
+      gaugeLabel.compareDocumentPosition(matrixHeading) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
   it("hides HistoricalResults by default and shows it via the ledger toggle", async () => {
     render(<App />);
     await screen.findByText("TRIAL MATRIX · SCENARIO × PROVIDER");

@@ -8,11 +8,11 @@ import { EmptyStateLauncher } from "@/components/EmptyStateLauncher";
 import { HistoricalResults } from "@/components/HistoricalResults";
 import { InteractiveChat } from "@/components/InteractiveChat";
 import { TrialMatrix } from "@/components/arena/TrialMatrix";
-import { Standings } from "@/components/arena/Standings";
+import { InstrumentBand } from "@/components/arena/InstrumentBand";
 import { useArenaEvents } from "@/hooks/useArenaEvents";
 import { useArenaAPI } from "@/hooks/useArenaAPI";
 import { AudioPlayer } from "@/audio/player";
-import { buildMatrix, buildStandings } from "@/lib/arenaView";
+import { buildMatrix } from "@/lib/arenaView";
 import type { Message, RunResult, ActiveRun, ProviderInfo, ScenarioInfo } from "@/types";
 
 // activeRunToResult maps a still-running ActiveRun into a synthetic
@@ -169,7 +169,6 @@ export default function App() {
     () => buildMatrix(matrixResults, providers, scenarios),
     [matrixResults, providers, scenarios],
   );
-  const standings = useMemo(() => buildStandings(matrix), [matrix]);
 
   const handleSelectMessage = (index: number, message?: Message, allMsgs?: Message[]) => {
     setDevToolsIndex(index);
@@ -324,8 +323,8 @@ export default function App() {
                       {showLedger ? "Hide ledger" : "Show ledger"}
                     </button>
                   </div>
+                  <InstrumentBand matrix={matrix} results={matrixResults} />
                   <TrialMatrix matrix={matrix} selectedKey={selectedKey} onSelect={handleSelectCell} />
-                  <Standings standings={standings} />
                   {showLedger && (
                     <HistoricalResults
                       results={historicalResults}
