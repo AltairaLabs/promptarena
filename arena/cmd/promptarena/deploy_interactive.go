@@ -3,9 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	"log"
 	"os"
-	"time"
 
 	"github.com/spf13/cobra"
 
@@ -83,10 +81,17 @@ const importArgCount = 3
 
 // connectAdapter discovers the adapter binary and returns a connected client.
 func connectAdapter(provider, projectDir string) (*deploy.AdapterClient, error) {
+	printAdapterPath(provider, projectDir)
+	return flow.Connect(context.Background(), provider, projectDir)
+}
+
+// printAdapterPath shows which adapter binary a command will use. It mirrors
+// connectAdapter's informational line for commands that connect via an
+// already-open flow.Session (flow.Open) rather than connectAdapter directly.
+func printAdapterPath(provider, projectDir string) {
 	if path, found := flow.AdapterInstalled(provider, projectDir); found {
 		fmt.Printf("  Adapter:     %s\n", path)
 	}
-	return flow.Connect(context.Background(), provider, projectDir)
 }
 
 // printDeployWarnings renders non-blocking adapter warnings to stderr with a
@@ -152,51 +157,10 @@ func printStatus(status *deploy.StatusResponse) {
 	fmt.Println()
 }
 
-// refreshState calls Status on the adapter and updates local state with the
-// refreshed adapter state. It is a soft-fail operation: if the refresh fails,
-// it logs a warning and returns the existing prior state string unchanged.
-func refreshState(
-	ctx context.Context,
-	client *deploy.AdapterClient,
-	stateStore *deploy.StateStore,
-	priorState *deploy.State,
-	configJSON, env string,
-) string {
-	if priorState == nil {
-		return ""
-	}
-
-	status, err := client.Status(ctx, &deploy.StatusRequest{
-		DeployConfig: configJSON,
-		Environment:  env,
-		PriorState:   priorState.State,
-	})
-	if err != nil {
-		log.Printf("Warning: state refresh failed: %v (proceeding with cached state)", err)
-		return priorState.State
-	}
-
-	if status.State != "" {
-		priorState.State = status.State
-		priorState.LastRefreshed = time.Now().UTC().Format(time.RFC3339)
-		if saveErr := stateStore.Save(priorState); saveErr != nil {
-			log.Printf("Warning: failed to persist refreshed state: %v", saveErr)
-		}
-	}
-
-	return priorState.State
-}
-
 // --- deploy (plan + apply) ---
 
 func runDeploy(cmd *cobra.Command, args []string) error {
 	opts := deployOptions()
-	arenaCfg, deployCfg, err := flow.LoadConfig(opts)
-	if err != nil {
-		return err
-	}
-
-	env := flow.ResolveEnv(opts)
 	projectDir, _ := os.Getwd()
 	ctx := context.Background()
 
@@ -207,81 +171,35 @@ func runDeploy(cmd *cobra.Command, args []string) error {
 	}
 	defer unlock()
 
-	fmt.Printf("Deploying with provider %q to environment %q\n", deployCfg.Provider, env)
+	sess, err := flow.Open(ctx, opts)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = sess.Close() }()
+
+	fmt.Printf("Deploying with provider %q to environment %q\n", sess.Deploy.Provider, sess.Env)
 	fmt.Println()
-
-	// Load pack.
-	packData, err := flow.ResolvePack(opts)
-	if err != nil {
-		return err
-	}
-
-	configJSON, err := flow.MergedConfigJSON(deployCfg, env, deployConfig)
-	if err != nil {
-		return err
-	}
-
-	// Load prior state.
-	stateStore := deploy.NewStateStore(projectDir)
-	priorState, err := stateStore.Load()
-	if err != nil {
-		return fmt.Errorf("failed to load deploy state: %w", err)
-	}
-
-	// Connect adapter.
-	client, err := connectAdapter(deployCfg.Provider, projectDir)
-	if err != nil {
-		return err
-	}
-	defer client.Close()
-
-	// Refresh state from the adapter before planning.
-	priorStateStr := refreshState(ctx, client, stateStore, priorState, configJSON, env)
+	printAdapterPath(sess.Deploy.Provider, projectDir)
 
 	// Step 1: Plan.
 	fmt.Println()
 	fmt.Println("Step 1: Planning deployment...")
 
-	planReq := &deploy.PlanRequest{
-		PackJSON:     string(packData),
-		DeployConfig: configJSON,
-		ArenaConfig:  flow.SerializeArenaConfig(arenaCfg),
-		Environment:  env,
-		PriorState:   priorStateStr,
-	}
-
-	plan, err := client.Plan(ctx, planReq)
+	plan, planReq, err := sess.Plan(ctx)
 	if err != nil {
-		return fmt.Errorf("plan failed: %w", err)
+		return err
 	}
 	printPlan(plan)
 
 	// Step 2: Apply.
 	fmt.Println("Step 2: Applying deployment...")
 
-	adapterState, err := client.Apply(ctx, planReq, func(e *deploy.ApplyEvent) error {
+	if err := sess.Apply(ctx, planReq, func(e *deploy.ApplyEvent) error {
 		printDeployEvent(e.Type, e.Message, e.Resource)
 		return nil
-	})
-	if err != nil {
-		return fmt.Errorf("apply failed: %w", err)
+	}); err != nil {
+		return err
 	}
-
-	// Save state and clean up any saved plan.
-	info, _ := client.GetProviderInfo(ctx)
-	adapterVersion := ""
-	if info != nil {
-		adapterVersion = info.Version
-	}
-
-	newState := deploy.NewState(
-		deployCfg.Provider, env, "", deploy.ComputePackChecksum(packData), adapterVersion,
-	)
-	newState.State = adapterState
-	if err := stateStore.Save(newState); err != nil {
-		return fmt.Errorf("failed to save deploy state: %w", err)
-	}
-	_ = stateStore.DeletePlan()
 
 	fmt.Println("Deployment complete.")
 	return nil

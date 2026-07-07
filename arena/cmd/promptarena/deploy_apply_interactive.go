@@ -26,12 +26,6 @@ Examples:
 
 func runDeployApply(cmd *cobra.Command, args []string) error {
 	opts := deployOptions()
-	arenaCfg, deployCfg, err := flow.LoadConfig(opts)
-	if err != nil {
-		return err
-	}
-
-	env := flow.ResolveEnv(opts)
 	projectDir, _ := os.Getwd()
 	ctx := context.Background()
 
@@ -42,24 +36,22 @@ func runDeployApply(cmd *cobra.Command, args []string) error {
 	}
 	defer unlock()
 
-	fmt.Printf("Applying deployment to environment: %s (provider: %s)\n", env, deployCfg.Provider)
-
-	packData, err := flow.ResolvePack(opts)
+	sess, err := flow.Open(ctx, opts)
 	if err != nil {
 		return err
 	}
+	defer func() { _ = sess.Close() }()
 
-	stateStore := deploy.NewStateStore(projectDir)
-	packChecksum := deploy.ComputePackChecksum(packData)
+	fmt.Printf("Applying deployment to environment: %s (provider: %s)\n", sess.Env, sess.Deploy.Provider)
 
 	// Check for a saved plan.
 	var planReq *deploy.PlanRequest
-	savedPlan, err := stateStore.LoadPlan()
+	savedPlan, err := sess.LoadPlan()
 	if err != nil {
 		return fmt.Errorf("failed to load saved plan: %w", err)
 	}
 	usedSavedPlan := false
-	if savedPlan != nil && savedPlan.PackChecksum == packChecksum && savedPlan.Environment == env {
+	if sess.PlanIsFresh(savedPlan) {
 		fmt.Println("  Using saved plan.")
 		planReq = savedPlan.Request
 		usedSavedPlan = true
@@ -67,62 +59,25 @@ func runDeployApply(cmd *cobra.Command, args []string) error {
 		if savedPlan != nil {
 			fmt.Println("  Saved plan is stale (pack or environment changed), re-planning...")
 		}
-		configJSON, mergeErr := flow.MergedConfigJSON(deployCfg, env, deployConfig)
-		if mergeErr != nil {
-			return mergeErr
-		}
-
-		priorState, loadErr := stateStore.Load()
-		if loadErr != nil {
-			return fmt.Errorf("failed to load deploy state: %w", loadErr)
-		}
-		var priorStateStr string
-		if priorState != nil {
-			priorStateStr = priorState.State
-		}
-
-		planReq = &deploy.PlanRequest{
-			PackJSON:     string(packData),
-			DeployConfig: configJSON,
-			ArenaConfig:  flow.SerializeArenaConfig(arenaCfg),
-			Environment:  env,
-			PriorState:   priorStateStr,
+		planReq, err = sess.PlanRequest(ctx)
+		if err != nil {
+			return err
 		}
 	}
 
-	client, err := connectAdapter(deployCfg.Provider, projectDir)
-	if err != nil {
-		return err
-	}
-	defer client.Close()
+	printAdapterPath(sess.Deploy.Provider, projectDir)
 
 	// Surface the plan's non-blocking advisories before applying — the same
 	// warnings the plan command shows — from the saved plan, or a fresh plan when
 	// re-planning. Apply streams resource events but has no Warnings channel.
-	printDeployWarnings(applyWarnings(ctx, client, usedSavedPlan, savedPlan, planReq))
+	printDeployWarnings(applyWarnings(ctx, sess.Client, usedSavedPlan, savedPlan, planReq))
 
-	adapterState, err := client.Apply(ctx, planReq, func(e *deploy.ApplyEvent) error {
+	if err := sess.Apply(ctx, planReq, func(e *deploy.ApplyEvent) error {
 		printDeployEvent(e.Type, e.Message, e.Resource)
 		return nil
-	})
-	if err != nil {
-		return fmt.Errorf("apply failed: %w", err)
+	}); err != nil {
+		return err
 	}
-
-	info, _ := client.GetProviderInfo(ctx)
-	adapterVersion := ""
-	if info != nil {
-		adapterVersion = info.Version
-	}
-
-	newState := deploy.NewState(
-		deployCfg.Provider, env, "", packChecksum, adapterVersion,
-	)
-	newState.State = adapterState
-	if err := stateStore.Save(newState); err != nil {
-		return fmt.Errorf("failed to save deploy state: %w", err)
-	}
-	_ = stateStore.DeletePlan()
 
 	fmt.Println()
 	fmt.Println("Apply complete.")

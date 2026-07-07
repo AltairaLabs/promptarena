@@ -7,7 +7,6 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/AltairaLabs/PromptKit/runtime/deploy"
 	"github.com/AltairaLabs/promptarena/arena/deploy/flow"
 )
 
@@ -26,62 +25,27 @@ Examples:
 
 func runDeployPlan(cmd *cobra.Command, args []string) error {
 	opts := deployOptions()
-	arenaCfg, deployCfg, err := flow.LoadConfig(opts)
-	if err != nil {
-		return err
-	}
-
-	env := flow.ResolveEnv(opts)
 	projectDir, _ := os.Getwd()
 	ctx := context.Background()
 
-	fmt.Printf("Deploy plan for environment: %s (provider: %s)\n", env, deployCfg.Provider)
-
-	packData, err := flow.ResolvePack(opts)
+	sess, err := flow.Open(ctx, opts)
 	if err != nil {
 		return err
 	}
+	defer func() { _ = sess.Close() }()
 
-	configJSON, err := flow.MergedConfigJSON(deployCfg, env, deployConfig)
+	fmt.Printf("Deploy plan for environment: %s (provider: %s)\n", sess.Env, sess.Deploy.Provider)
+	printAdapterPath(sess.Deploy.Provider, projectDir)
+
+	plan, planReq, err := sess.Plan(ctx)
 	if err != nil {
 		return err
-	}
-
-	stateStore := deploy.NewStateStore(projectDir)
-	priorState, err := stateStore.Load()
-	if err != nil {
-		return fmt.Errorf("failed to load deploy state: %w", err)
-	}
-
-	client, err := connectAdapter(deployCfg.Provider, projectDir)
-	if err != nil {
-		return err
-	}
-	defer client.Close()
-
-	// Refresh state from the adapter before planning.
-	priorStateStr := refreshState(ctx, client, stateStore, priorState, configJSON, env)
-
-	planReq := &deploy.PlanRequest{
-		PackJSON:     string(packData),
-		DeployConfig: configJSON,
-		ArenaConfig:  flow.SerializeArenaConfig(arenaCfg),
-		Environment:  env,
-		PriorState:   priorStateStr,
-	}
-
-	plan, err := client.Plan(ctx, planReq)
-	if err != nil {
-		return fmt.Errorf("plan failed: %w", err)
 	}
 
 	printPlan(plan)
 
 	// Save plan for later apply.
-	savedPlan := deploy.NewSavedPlan(
-		deployCfg.Provider, env, deploy.ComputePackChecksum(packData), plan, planReq,
-	)
-	if err := stateStore.SavePlan(savedPlan); err != nil {
+	if err := sess.SavePlan(plan, planReq); err != nil {
 		return fmt.Errorf("failed to save plan: %w", err)
 	}
 	fmt.Println("Plan saved. Run 'promptarena deploy apply' to execute.")
