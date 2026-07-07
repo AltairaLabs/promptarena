@@ -183,6 +183,21 @@ func dedupeEdges(edges []WorkflowGraphEdge) []WorkflowGraphEdge {
 // Nested branch steps inside a parallel step's Branches never get a
 // state-entry edge or implicit sequential edge — they are reached only via
 // the parallel step's fan-out edge (or an explicit DependsOn of their own).
+//
+// Known limitation: the frontier/openArms/joinAccum bookkeeping below
+// assumes a branch (or parallel) step's arms are walked — as top-level
+// steps — before the frontier is consumed by whatever comes next. That
+// holds for the idiomatic shape (document-analysis: branch, then both arms
+// contiguously, then the join), but nothing enforces it. Two back-to-back
+// top-level branches with no DependsOn (e.g. routeA(then=x,else=y) followed
+// immediately by routeB(then=p,else=q), with x/y/p/q listed afterward) will
+// have routeB overwrite routeA's still-open arm bookkeeping while frontier
+// still holds routeA's unwalked arms, producing causally-backwards edges
+// (x->routeB, y->routeB) once x and y are finally walked. See
+// TestBuildWorkflowGraph_CompositionExpansion_BackToBackBranches_KnownLimitation,
+// which pins this approximate output. Compositions with non-contiguous arms
+// or consecutive top-level branches should use explicit DependsOn to get
+// correct edges instead of relying on implicit sequencing.
 func expandComposition(stateName string, comp *composition.Composition) ([]WorkflowGraphNode, []WorkflowGraphEdge) {
 	prefix := func(id string) string { return stateName + "/" + id }
 

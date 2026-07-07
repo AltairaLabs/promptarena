@@ -580,3 +580,127 @@ func TestBuildWorkflowGraph_CompositionExpansion_UnknownCompositionName(t *testi
 		t.Fatalf("want no edges when the named composition is not found, got %+v", g.Edges)
 	}
 }
+
+// TestBuildWorkflowGraph_CompositionExpansion_BackToBackBranches_KnownLimitation
+// pins the current, approximate output of expandComposition's join model for
+// a shape it does not handle correctly: two back-to-back top-level branches
+// with no explicit DependsOn (routeA(then=x,else=y) immediately followed by
+// routeB(then=p,else=q), with x/y/p/q listed afterward). routeB's branch
+// handling overwrites routeA's still-open arm bookkeeping while the
+// frontier still holds routeA's unwalked arms [x, y]; when x and y are
+// finally walked, they get an implicit predecessor edge to routeB even
+// though routeB was declared (and causally runs) before them.
+//
+// This test does NOT assert correct/ideal behavior -- it documents today's
+// output so a future change to the join model shows up as a deliberate,
+// visible diff here rather than a silent regression. See the "Known
+// limitation" note on expandComposition's doc comment. Do not "fix" this
+// test by changing the join model without reading that note.
+func TestBuildWorkflowGraph_CompositionExpansion_BackToBackBranches_KnownLimitation(t *testing.T) {
+	cfg := &arenaconfig.Config{
+		Workflow: map[string]any{
+			"version": 2, "entry": "intake",
+			"states": map[string]any{
+				"intake": map[string]any{"on_event": map[string]any{"go": "route_test"}},
+				"route_test": map[string]any{
+					"orchestration": "composition",
+					"composition":   "back_to_back",
+					"terminal":      true,
+				},
+			},
+		},
+		Compositions: map[string]any{
+			"back_to_back": map[string]any{
+				"version": 1,
+				"steps": []map[string]any{
+					{"id": "start", "kind": "prompt"},
+					{
+						"id": "routeA", "kind": "branch",
+						"predicate": map[string]any{"path": "start.output.a", "op": "equals", "value": true},
+						"then":      "x", "else": "y",
+					},
+					{
+						"id": "routeB", "kind": "branch",
+						"predicate": map[string]any{"path": "start.output.b", "op": "equals", "value": true},
+						"then":      "p", "else": "q",
+					},
+					{"id": "x", "kind": "prompt"},
+					{"id": "y", "kind": "prompt"},
+					{"id": "p", "kind": "prompt"},
+					{"id": "q", "kind": "prompt"},
+				},
+			},
+		},
+	}
+
+	g, err := BuildWorkflowGraph(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	hasEdge := func(from, to string, dashed bool) bool {
+		for _, e := range g.Edges {
+			if e.From == from && e.To == to && e.Dashed == dashed {
+				return true
+			}
+		}
+		return false
+	}
+
+	// Entry and the first branch's own edges are unaffected by the
+	// limitation.
+	if !hasEdge("route_test", "route_test/start", false) {
+		t.Fatalf("want entry edge route_test->route_test/start, got %+v", g.Edges)
+	}
+	if !hasEdge("route_test/start", "route_test/routeA", false) {
+		t.Fatalf("want implicit sequential edge start->routeA, got %+v", g.Edges)
+	}
+	if !hasEdge("route_test/routeA", "route_test/x", false) {
+		t.Fatalf("want solid then edge routeA->x, got %+v", g.Edges)
+	}
+	if !hasEdge("route_test/routeA", "route_test/y", true) {
+		t.Fatalf("want dashed else edge routeA->y, got %+v", g.Edges)
+	}
+	if !hasEdge("route_test/routeB", "route_test/p", false) {
+		t.Fatalf("want solid then edge routeB->p, got %+v", g.Edges)
+	}
+	if !hasEdge("route_test/routeB", "route_test/q", true) {
+		t.Fatalf("want dashed else edge routeB->q, got %+v", g.Edges)
+	}
+
+	// KNOWN LIMITATION: routeA's arms x/y each get an implicit predecessor
+	// edge to routeB -- causally backwards, since routeB is declared (and
+	// runs) before x and y in the step list. A correct join model would
+	// instead have routeA's arms join *before* routeB runs, giving routeB
+	// an implicit predecessor edge from x/y (not the reverse), or would
+	// require the composition author to add explicit DependsOn. This
+	// assertion exists to make a future fix to the join model a visible,
+	// intentional diff -- it is not the desired end state.
+	if !hasEdge("route_test/x", "route_test/routeB", false) {
+		t.Fatalf("want (approximate, backwards) edge x->routeB reflecting current join model, got %+v", g.Edges)
+	}
+	if !hasEdge("route_test/y", "route_test/routeB", false) {
+		t.Fatalf("want (approximate, backwards) edge y->routeB reflecting current join model, got %+v", g.Edges)
+	}
+
+	// The correct edge (routeA's join feeding routeB, rather than the
+	// reverse) must not appear -- this pins that the limitation is present,
+	// not accidentally masked.
+	if hasEdge("route_test/routeA", "route_test/routeB", false) {
+		t.Fatalf("did not expect a direct routeA->routeB edge, got %+v", g.Edges)
+	}
+
+	// Exactly 8 composition edges total (excluding the workflow-level
+	// intake->route_test state transition): entry, start->routeA, routeA's
+	// two arm edges, the two backwards x/y->routeB edges, and routeB's two
+	// arm edges.
+	compositionEdges := 0
+	for _, e := range g.Edges {
+		if e.From == "route_test" || strings.HasPrefix(e.From, "route_test/") {
+			compositionEdges++
+		}
+	}
+	if compositionEdges != 8 {
+		t.Fatalf("want exactly 8 composition edges pinning the current approximate output, got %d: %+v", compositionEdges, g.Edges)
+	}
+}
