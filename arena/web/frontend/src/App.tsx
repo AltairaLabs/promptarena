@@ -336,7 +336,10 @@ export default function App() {
     setDevToolsOpen(false);
   }, [historicalResults]);
 
-  const handleStartRun = useCallback(async (providerId: string, scenarioId: string) => {
+  // handleStartRun kicks off a run for an arbitrary set of provider/scenario
+  // ids — shared by "Run trial" (all providers) and a single matrix-cell run
+  // (one provider × one scenario).
+  const handleStartRun = useCallback(async (providerIds: string[], scenarioIds: string[]) => {
     setStartError(null);
     setPendingAutoSelect(true);
     // If the user is currently viewing a previous run's detail, navigate
@@ -349,19 +352,25 @@ export default function App() {
     setSelectedKey(null);
     setDevToolsOpen(false);
     try {
-      await startRun({ providers: [providerId], scenarios: [scenarioId] });
+      await startRun({ providers: providerIds, scenarios: scenarioIds });
     } catch (err) {
       setPendingAutoSelect(false);
       setStartError(err instanceof Error ? err.message : "Failed to start run");
     }
   }, [startRun]);
 
-  // Shared by both the TopBar's and the CommandStrip's "Run trial" — starts
-  // the selected scenario against its best (or first) provider.
+  // Shared by both the TopBar's and the CommandStrip's "Run trial" — runs the
+  // selected scenario across EVERY configured provider so it fills the whole
+  // matrix row in one go (real providers are billed; that's intended).
   const handleRunTrial = useCallback(() => {
-    if (!selectedScenario || !chartProvider) return;
-    void handleStartRun(chartProvider.id, selectedScenario);
-  }, [selectedScenario, chartProvider, handleStartRun]);
+    if (!selectedScenario || providers.length === 0) return;
+    void handleStartRun(providers.map((p) => p.id), [selectedScenario]);
+  }, [selectedScenario, providers, handleStartRun]);
+
+  // Clicking an empty matrix cell runs just that scenario×provider pair.
+  const handleRunCell = useCallback((scenarioId: string, providerId: string) => {
+    void handleStartRun([providerId], [scenarioId]);
+  }, [handleStartRun]);
 
   return (
     <ErrorBoundary>
@@ -376,7 +385,7 @@ export default function App() {
             setActiveTab("runs");
             handleRunTrial();
           }}
-          runDisabled={!state.connected || loading || !selectedScenario || !chartProvider}
+          runDisabled={!state.connected || loading || !selectedScenario || providers.length === 0}
         />
         <main className="py-8">
         {/* Tab bar */}
@@ -453,7 +462,7 @@ export default function App() {
                     selectedProviderLabel={chartProvider?.label ?? null}
                     onSelectScenario={setSelectedScenario}
                     onRunTrial={handleRunTrial}
-                    runDisabled={!state.connected || loading || !selectedScenario || !chartProvider}
+                    runDisabled={!state.connected || loading || !selectedScenario || providers.length === 0}
                   />
                   {startError && (
                     <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-[#EF4444]">{startError}</div>
@@ -467,7 +476,7 @@ export default function App() {
                     </button>
                   </div>
                   <InstrumentBand matrix={matrix} results={matrixResults} />
-                  <TrialMatrix matrix={matrix} selectedKey={selectedKey} onSelect={handleSelectCell} />
+                  <TrialMatrix matrix={matrix} selectedKey={selectedKey} onSelect={handleSelectCell} onRunCell={handleRunCell} />
                   {showLedger && (
                     <HistoricalResults
                       results={historicalResults}

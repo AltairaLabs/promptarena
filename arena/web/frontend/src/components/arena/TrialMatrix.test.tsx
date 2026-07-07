@@ -108,10 +108,28 @@ describe("TrialMatrix", () => {
     expect(selectedButton.style.boxShadow).toContain("var(--ion-cyan)");
   });
 
-  it("renders empty cells as non-interactive dashes", () => {
+  it("renders empty cells as non-interactive dashes when onRunCell is not provided", () => {
     render(<TrialMatrix matrix={makeMatrix()} selectedKey={null} onSelect={() => {}} />);
     const dashes = screen.getAllByText("—");
     expect(dashes).toHaveLength(2);
     dashes.forEach((d) => expect(d.closest("button")).toBeNull());
+  });
+
+  it("renders a clickable run affordance for an empty cell when onRunCell is provided, and calls it with scenario+provider", () => {
+    const onRunCell = vi.fn();
+    render(<TrialMatrix matrix={makeMatrix()} selectedKey={null} onSelect={() => {}} onRunCell={onRunCell} />);
+    expect(screen.queryByText("—")).not.toBeInTheDocument();
+    const runButton = screen.getByRole("button", { name: "Run refund on claude" });
+    fireEvent.click(runButton);
+    expect(onRunCell).toHaveBeenCalledWith("refund", "claude");
+  });
+
+  it("still calls onSelect (not onRunCell) when a filled cell is clicked, even with onRunCell provided", () => {
+    const onSelect = vi.fn();
+    const onRunCell = vi.fn();
+    render(<TrialMatrix matrix={makeMatrix()} selectedKey={null} onSelect={onSelect} onRunCell={onRunCell} />);
+    fireEvent.click(screen.getByText("100%"));
+    expect(onSelect).toHaveBeenCalledWith("checkout:claude");
+    expect(onRunCell).not.toHaveBeenCalled();
   });
 });

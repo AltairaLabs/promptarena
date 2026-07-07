@@ -298,7 +298,7 @@ describe("App — Runs view", () => {
     expect(await screen.findByText("mock · refund")).toBeInTheDocument();
   });
 
-  it("TopBar's Run trial switches from the Chat tab to Runs and starts the selected scenario", async () => {
+  it("TopBar's Run trial switches from the Chat tab to Runs and starts the selected scenario across ALL providers", async () => {
     render(<App />);
     await screen.findByText("CHART A RUN");
 
@@ -306,6 +306,27 @@ describe("App — Runs view", () => {
     fireEvent.click(screen.getByText(/Run trial/));
 
     expect(await screen.findByText("TRIAL MATRIX · SCENARIO × PROVIDER")).toBeInTheDocument();
-    expect(startRun).toHaveBeenCalledWith({ providers: ["claude"], scenarios: ["checkout"] });
+    expect(startRun).toHaveBeenCalledWith({ providers: ["claude", "mock"], scenarios: ["checkout"] });
+  });
+
+  it("CommandStrip's Run trial also starts the selected scenario across ALL providers", async () => {
+    render(<App />);
+    await screen.findByText("CHART A RUN");
+
+    // Both TopBar and CommandStrip render a "Run trial" button on the Runs
+    // tab; CommandStrip's is the second one in document order.
+    const runButtons = screen.getAllByText(/Run trial/);
+    fireEvent.click(runButtons[runButtons.length - 1]);
+
+    expect(startRun).toHaveBeenCalledWith({ providers: ["claude", "mock"], scenarios: ["checkout"] });
+  });
+
+  it("clicking an empty matrix cell starts a run for just that scenario+provider", async () => {
+    render(<App />);
+    // "mock" has no result for "checkout" in seededResults, so its cell is empty.
+    const runCellButton = await screen.findByRole("button", { name: "Run checkout on mock" });
+    fireEvent.click(runCellButton);
+
+    expect(startRun).toHaveBeenCalledWith({ providers: ["mock"], scenarios: ["checkout"] });
   });
 });

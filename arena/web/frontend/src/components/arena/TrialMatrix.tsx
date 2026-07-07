@@ -5,13 +5,17 @@ export interface TrialMatrixProps {
   matrix: TrialMatrixModel;
   selectedKey: string | null;
   onSelect: (key: string) => void;
+  // onRunCell, when provided, turns an empty (no-data) cell into a clickable
+  // "run this scenario×provider" affordance. Omitted means empty cells stay
+  // inert dashes.
+  onRunCell?: (scenarioId: string, providerId: string) => void;
 }
 
 // TrialMatrix — the Atlas redesign's centerpiece: a scenario × provider grid
 // where each cell is a clickable trial readout (pass rate, cost, latency).
 // Purely presentational — the matrix viewmodel is built upstream by
 // `buildMatrix` in `lib/arenaView.ts`.
-export function TrialMatrix({ matrix, selectedKey, onSelect }: TrialMatrixProps) {
+export function TrialMatrix({ matrix, selectedKey, onSelect, onRunCell }: TrialMatrixProps) {
   const gridTemplateColumns = `180px repeat(${Math.max(1, matrix.providers.length)}, 1fr)`;
 
   return (
@@ -112,7 +116,13 @@ export function TrialMatrix({ matrix, selectedKey, onSelect }: TrialMatrixProps)
             {row.label}
           </div>
           {row.cells.map((cell) => (
-            <MatrixCell key={cell.key} cell={cell} selected={cell.key === selectedKey} onSelect={onSelect} />
+            <MatrixCell
+              key={cell.key}
+              cell={cell}
+              selected={cell.key === selectedKey}
+              onSelect={onSelect}
+              onRunCell={onRunCell}
+            />
           ))}
         </div>
       ))}
@@ -124,22 +134,48 @@ function MatrixCell({
   cell,
   selected,
   onSelect,
+  onRunCell,
 }: {
   cell: TrialCell;
   selected: boolean;
   onSelect: (key: string) => void;
+  onRunCell?: (scenarioId: string, providerId: string) => void;
 }) {
   if (!cell.hasData) {
+    if (!onRunCell) {
+      return (
+        <div
+          style={{
+            borderLeft: "1px solid var(--hairline-faint)",
+            padding: "12px 14px",
+            color: "var(--star-950)",
+          }}
+        >
+          —
+        </div>
+      );
+    }
+    // Empty cell with a run handler wired up — a subtle, no-gold affordance
+    // that runs just this scenario×provider pair.
     return (
-      <div
+      <button
+        type="button"
+        onClick={() => onRunCell(cell.scenarioId, cell.providerId)}
+        aria-label={`Run ${cell.scenarioId} on ${cell.providerId}`}
         style={{
+          textAlign: "left",
+          border: 0,
           borderLeft: "1px solid var(--hairline-faint)",
           padding: "12px 14px",
-          color: "var(--star-950)",
+          cursor: "pointer",
+          background: "transparent",
+          color: "var(--star-800)",
+          font: "13px var(--font-mono)",
+          transition: "color .15s ease",
         }}
       >
-        —
-      </div>
+        ▶
+      </button>
     );
   }
 
