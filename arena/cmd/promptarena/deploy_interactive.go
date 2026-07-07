@@ -7,9 +7,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/AltairaLabs/PromptKit/runtime/deploy"
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 	"github.com/AltairaLabs/promptarena/arena/deploy/flow"
+
+	"github.com/AltairaLabs/PromptKit/runtime/deploy"
 )
 
 var deployCmd = &cobra.Command{
@@ -59,10 +60,6 @@ func init() {
 	deployCmd.AddCommand(deployRefreshCmd)
 	deployCmd.AddCommand(deployImportCmd)
 }
-
-// deployConfigureDocsURL points users at the how-to for setting up a deploy
-// configuration when one is missing or incomplete.
-const deployConfigureDocsURL = "https://promptkit.altairalabs.ai/arena/how-to/deploy/configure/"
 
 // deployOptions builds a flow.Options from the deploy command's persistent
 // flags, for handing off to the flow package's config/pack resolution.
