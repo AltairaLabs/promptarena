@@ -106,6 +106,7 @@ func newServerWithRunner(
 	}
 	s.mux.HandleFunc("GET /api/events", s.handleSSE)
 	s.mux.HandleFunc("GET /api/config", s.handleGetConfig)
+	s.mux.HandleFunc("GET /api/workflow", s.handleWorkflow)
 	s.mux.HandleFunc("GET /api/run-options", s.handleRunOptions)
 	s.mux.HandleFunc("GET /api/results", s.handleListResults)
 	s.mux.HandleFunc("GET /api/results/{id}", s.handleGetResult)
@@ -288,6 +289,21 @@ func (s *Server) handleGetConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, s.engine.GetConfig())
+}
+
+// handleWorkflow returns the workflow-topology graph derived from the
+// loaded arena config.
+func (s *Server) handleWorkflow(w http.ResponseWriter, r *http.Request) {
+	if s.engine == nil {
+		http.Error(w, "engine not configured", http.StatusServiceUnavailable)
+		return
+	}
+	graph, err := BuildWorkflowGraph(s.engine.GetConfig())
+	if err != nil {
+		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
+		return
+	}
+	writeJSON(w, http.StatusOK, graph)
 }
 
 // handleListResults returns all completed run IDs.
