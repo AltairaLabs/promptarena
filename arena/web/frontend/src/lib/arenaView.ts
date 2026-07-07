@@ -17,7 +17,7 @@ import type {
   OverallGauge,
   TranscriptMessage,
 } from "@/types";
-import type { MetricSpec, TerminalLine } from "@/components/atlas/types";
+import type { MetricSpec, TerminalLine, GraphNode, GraphEdge } from "@/components/atlas/types";
 
 function endTimeMs(r: RunResult): number {
   const t = Date.parse(r.EndTime);
@@ -306,4 +306,85 @@ export function buildTrend(results: RunResult[], buckets = 8): number[] {
   if (results.length < 3) return [];
   const sorted = [...results].sort((a, b) => (Date.parse(a.StartTime) || 0) - (Date.parse(b.StartTime) || 0));
   return sorted.slice(-buckets).map((r) => cellPassRate(r));
+}
+
+interface FlowMessage {
+  role: string;
+  toolCallNames: string[];
+}
+
+function extractFlowMessages(run: RunResult | ActiveRun): FlowMessage[] {
+  if (isRunResult(run)) {
+    return run.Messages.map((m) => ({ role: m.role, toolCallNames: (m.tool_calls ?? []).map((tc) => tc.name) }));
+  }
+  return (run.messages ?? []).map((m: MessageCreatedData) => ({
+    role: m.role,
+    toolCallNames: (m.toolCalls ?? []).map((tc) => tc.name),
+  }));
+}
+
+const FLOW_VIEWBOX = { width: 360, height: 150 };
+
+// buildAgentFlow (D2, option b) derives an approximate constellation from a
+// run's message/tool sequence: entry (user) -> agent (each assistant turn)
+// -> tool (each distinct tool call, revisited rather than duplicated) ->
+// output (resolved/failed). There's no backend endpoint behind this — it's
+// a deterministic reading of the transcript already on hand, laid out in a
+// fixed viewBox with entry pinned left and output pinned right.
+export function buildAgentFlow(run: RunResult | ActiveRun | undefined): { nodes: GraphNode[]; edges: GraphEdge[] } {
+  if (!run) return { nodes: [], edges: [] };
+
+  const hasError = isRunResult(run) ? Boolean(run.Error) : run.status === "failed";
+  const edgeMargin = 15; // keeps the entry/output node halos inside the viewBox
+  const entry: GraphNode = { id: "entry", x: edgeMargin, y: FLOW_VIEWBOX.height / 2, kind: "entry", label: "user" };
+  const output: GraphNode = {
+    id: "output",
+    x: FLOW_VIEWBOX.width - edgeMargin,
+    y: FLOW_VIEWBOX.height / 2,
+    kind: "output",
+    label: hasError ? "failed" : "resolved",
+  };
+
+  const middle: GraphNode[] = [];
+  const edges: GraphEdge[] = [];
+  const toolNodeIds = new Map<string, string>();
+  let agentCount = 0;
+  let cursor: string = entry.id;
+
+  for (const msg of extractFlowMessages(run)) {
+    if (msg.role !== "assistant") continue;
+
+    agentCount += 1;
+    const agentId = `agent-${agentCount}`;
+    middle.push({ id: agentId, x: 0, y: 0, kind: "agent", label: `turn ${agentCount}` });
+    edges.push({ from: cursor, to: agentId });
+    cursor = agentId;
+
+    for (const name of msg.toolCallNames) {
+      let toolId = toolNodeIds.get(name);
+      if (!toolId) {
+        toolId = `tool-${name}`;
+        toolNodeIds.set(name, toolId);
+        middle.push({ id: toolId, x: 0, y: 0, kind: "tool", label: name });
+      }
+      edges.push({ from: cursor, to: toolId });
+      cursor = toolId;
+    }
+  }
+
+  edges.push({ from: cursor, to: output.id, gold: !hasError });
+
+  // Deterministic layout: spread the intermediate nodes evenly between
+  // entry and output, offsetting tool nodes onto a second row so the
+  // constellation doesn't collapse onto a single line.
+  const margin = FLOW_VIEWBOX.width * 0.2;
+  const spanStart = margin;
+  const spanEnd = FLOW_VIEWBOX.width - margin;
+  const n = middle.length;
+  middle.forEach((node, i) => {
+    node.x = n === 1 ? (spanStart + spanEnd) / 2 : spanStart + ((spanEnd - spanStart) * i) / (n - 1);
+    node.y = node.kind === "tool" ? FLOW_VIEWBOX.height * 0.7 : FLOW_VIEWBOX.height * 0.3;
+  });
+
+  return { nodes: [entry, ...middle, output], edges };
 }

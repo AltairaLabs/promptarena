@@ -7,6 +7,7 @@ import {
   buildTranscript,
   buildTerminalLines,
   buildTrend,
+  buildAgentFlow,
 } from "./arenaView";
 import type { RunResult, TrialCell } from "@/types";
 
@@ -214,5 +215,56 @@ describe("buildTrend", () => {
     const trend = buildTrend(results);
     // sorted by StartTime ascending: pass(100), fail(0), fail(0)
     expect(trend).toEqual([100, 0, 0]);
+  });
+});
+
+describe("buildAgentFlow", () => {
+  it("returns entry/agent/tool/output nodes and connecting edges for one tool call", () => {
+    const run = mk({
+      ScenarioID: "checkout", ProviderID: "claude",
+      Messages: [
+        { role: "user", content: "refund my order" },
+        { role: "assistant", content: "checking", tool_calls: [{ id: "1", name: "lookup_order", args: {} }] },
+        { role: "tool", content: "order found" },
+        { role: "assistant", content: "here's your refund status" },
+      ],
+    });
+    const { nodes, edges } = buildAgentFlow(run);
+
+    expect(nodes.map((n) => n.kind).sort()).toEqual(["agent", "agent", "entry", "output", "tool"].sort());
+    const entry = nodes.find((n) => n.kind === "entry")!;
+    const tool = nodes.find((n) => n.kind === "tool")!;
+    const output = nodes.find((n) => n.kind === "output")!;
+    expect(tool.label).toBe("lookup_order");
+    expect(output.label).toBe("resolved");
+
+    // every node fits the fixed 360x150 viewBox
+    for (const n of nodes) {
+      expect(n.x).toBeGreaterThanOrEqual(0);
+      expect(n.x).toBeLessThanOrEqual(360);
+      expect(n.y).toBeGreaterThanOrEqual(0);
+      expect(n.y).toBeLessThanOrEqual(150);
+    }
+
+    // edges connect entry all the way through to output
+    const byFrom = new Map(edges.map((e) => [e.from, e.to]));
+    let cur = entry.id;
+    const visited = [cur];
+    while (byFrom.has(cur) && visited.length < nodes.length + 1) {
+      cur = byFrom.get(cur)!;
+      visited.push(cur);
+    }
+    expect(visited[visited.length - 1]).toBe(output.id);
+  });
+
+  it("marks the output node failed when the run errored", () => {
+    const run = mk({ ScenarioID: "checkout", ProviderID: "claude", Error: "boom", Messages: [{ role: "user", content: "hi" }] });
+    const { nodes } = buildAgentFlow(run);
+    const output = nodes.find((n) => n.kind === "output")!;
+    expect(output.label).toBe("failed");
+  });
+
+  it("returns empty nodes/edges for an undefined run", () => {
+    expect(buildAgentFlow(undefined)).toEqual({ nodes: [], edges: [] });
   });
 });
