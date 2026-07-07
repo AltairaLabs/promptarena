@@ -11,7 +11,10 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/x/exp/teatest"
 
+	"github.com/AltairaLabs/PromptKit/runtime/deploy"
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 	"github.com/AltairaLabs/promptarena/arena/deploy/flow"
+	"github.com/AltairaLabs/promptarena/arena/tui/viewmodels"
 )
 
 // loginMsgSink is a thread-safe collector for the messages a DeployPage
@@ -388,4 +391,146 @@ func TestLogin_StaleStatusMsgIgnored(t *testing.T) {
 	if dp.loginURL != "https://auth.example/current" {
 		t.Fatalf("stale loginStatusMsg must not overwrite URL, got %q", dp.loginURL)
 	}
+}
+
+// planWithChanges builds a *deploy.PlanResponse with one real change (a
+// create) so tests can exercise the "plan has changes" path.
+func planWithChanges() *deploy.PlanResponse {
+	return &deploy.PlanResponse{
+		Summary: "1 to add",
+		Changes: []deploy.ResourceChange{
+			{Type: "agent_runtime", Name: "bot", Action: deploy.ActionCreate},
+		},
+	}
+}
+
+// planAllNoChange builds a *deploy.PlanResponse whose only change is a
+// NO_CHANGE, so tests can exercise the "empty plan" gating path.
+func planAllNoChange() *deploy.PlanResponse {
+	return &deploy.PlanResponse{
+		Summary: "no changes",
+		Changes: []deploy.ResourceChange{
+			{Type: "secret", Name: "unused", Action: deploy.ActionNoChange},
+		},
+	}
+}
+
+// TestPlan_ReadyMsgWithChangesTransitionsAndRenders verifies that feeding a
+// planReadyMsg carrying a 1-add plan transitions to deployStatePlan and
+// renders the created row.
+func TestPlan_ReadyMsgWithChangesTransitionsAndRenders(t *testing.T) {
+	p := &DeployPage{state: deployStatePlanning, pf: &flow.Preflight{Provider: "omnia"}}
+	plan := planWithChanges()
+	np, _ := p.Update(planReadyMsg{plan: plan, req: &deploy.PlanRequest{}})
+	dp := np.(*DeployPage)
+	if dp.state != deployStatePlan {
+		t.Fatalf("state = %v, want deployStatePlan", dp.state)
+	}
+	dp.SetSize(80, 24)
+	out := stripANSI(dp.View())
+	if !strings.Contains(out, "+ agent_runtime.bot") {
+		t.Fatalf("expected created row in view:\n%s", out)
+	}
+}
+
+// TestPlan_SpaceTogglesCollapse verifies the space key toggles
+// collapseNoChange while in deployStatePlan.
+func TestPlan_SpaceTogglesCollapse(t *testing.T) {
+	p := &DeployPage{state: deployStatePlan, collapseNoChange: true, planDiff: viewmodels.BuildPlanDiff(planWithChanges())}
+	np, _ := p.handlePlanKey(tea.KeyMsg{Type: tea.KeySpace})
+	dp := np.(*DeployPage)
+	if dp.collapseNoChange {
+		t.Fatal("expected space to toggle collapseNoChange to false")
+	}
+	np2, _ := dp.handlePlanKey(tea.KeyMsg{Type: tea.KeySpace})
+	dp2 := np2.(*DeployPage)
+	if !dp2.collapseNoChange {
+		t.Fatal("expected a second space to toggle collapseNoChange back to true")
+	}
+}
+
+// TestPlan_EmptyPlanGatesApply verifies that an all-no-change (or empty) plan
+// renders the "No changes" message and blocks 'a' from advancing to confirm.
+func TestPlan_EmptyPlanGatesApply(t *testing.T) {
+	p := &DeployPage{state: deployStatePlanning, pf: &flow.Preflight{Provider: "omnia"}}
+	np, _ := p.Update(planReadyMsg{plan: planAllNoChange(), req: &deploy.PlanRequest{}})
+	dp := np.(*DeployPage)
+	if dp.state != deployStatePlan {
+		t.Fatalf("state = %v, want deployStatePlan", dp.state)
+	}
+
+	dp.SetSize(80, 24)
+	out := stripANSI(dp.View())
+	if !strings.Contains(out, "No changes. Infrastructure is up to date.") {
+		t.Fatalf("expected no-changes message in view:\n%s", out)
+	}
+
+	np2, _ := dp.handlePlanKey(keyRunes("a"))
+	dp2 := np2.(*DeployPage)
+	if dp2.state != deployStatePlan {
+		t.Fatalf("'a' must not advance past an all-no-change plan, state = %v", dp2.state)
+	}
+}
+
+// TestPlan_ApplyKeyAdvancesWhenChangesExist verifies 'a' advances to
+// deployStateConfirm once the plan has real changes.
+func TestPlan_ApplyKeyAdvancesWhenChangesExist(t *testing.T) {
+	p := &DeployPage{state: deployStatePlan, planDiff: viewmodels.BuildPlanDiff(planWithChanges())}
+	np, _ := p.handlePlanKey(keyRunes("a"))
+	dp := np.(*DeployPage)
+	if dp.state != deployStateConfirm {
+		t.Fatalf("state = %v, want deployStateConfirm", dp.state)
+	}
+}
+
+// TestDeployPage_Close_ClosesSession verifies Close releases an open
+// flow.Session's adapter subprocess (Task 4.2 extends Task 4.1's Close to
+// cover the session opened by startPlan, in addition to the existing
+// login-goroutine cancellation).
+func TestDeployPage_Close_ClosesSession(t *testing.T) {
+	closed := false
+	sess := flow.NewSession(flow.Options{}, nil, &arenaconfig.DeployConfig{Provider: "omnia"},
+		nil, nil, nil, "", func() error { closed = true; return nil })
+
+	loginCanceled := false
+	planCanceled := false
+	p := &DeployPage{
+		state:       deployStatePlan,
+		sess:        sess,
+		loginCancel: func() { loginCanceled = true },
+		planCancel:  func() { planCanceled = true },
+	}
+
+	p.Close()
+
+	if !closed {
+		t.Fatal("expected Close to close the open session")
+	}
+	if p.sess != nil {
+		t.Fatal("expected Close to nil out sess")
+	}
+	if !loginCanceled {
+		t.Fatal("expected Close to still cancel the login goroutine (Task 4.1 behavior)")
+	}
+	if !planCanceled {
+		t.Fatal("expected Close to cancel the planning context")
+	}
+}
+
+// TestGoldenDeployPlan_WithChanges captures a stable snapshot of the plan
+// diff view with a mix of changes, collapsed no-change rows by default.
+func TestGoldenDeployPlan_WithChanges(t *testing.T) {
+	plan := &deploy.PlanResponse{
+		Summary: "2 to add, 1 to change",
+		Changes: []deploy.ResourceChange{
+			{Type: "agent_runtime", Name: "bot", Action: deploy.ActionCreate},
+			{Type: "a2a_endpoint", Name: "ep", Action: deploy.ActionCreate},
+			{Type: "agent_runtime", Name: "old", Action: deploy.ActionUpdate, Detail: "image bumped"},
+			{Type: "secret", Name: "unused", Action: deploy.ActionNoChange},
+		},
+	}
+	p := &DeployPage{state: deployStatePlan, collapseNoChange: true, planDiff: viewmodels.BuildPlanDiff(plan)}
+	p.SetSize(80, 24)
+	out := stripANSI(p.View())
+	teatest.RequireEqualOutput(t, []byte(out))
 }

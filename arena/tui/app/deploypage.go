@@ -9,8 +9,10 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
+	"github.com/AltairaLabs/PromptKit/runtime/deploy"
 	"github.com/AltairaLabs/promptarena/arena/deploy/flow"
 	"github.com/AltairaLabs/promptarena/arena/tui/theme"
+	"github.com/AltairaLabs/promptarena/arena/tui/viewmodels"
 	"github.com/AltairaLabs/promptarena/arena/tui/views"
 )
 
@@ -60,6 +62,20 @@ type loginDoneMsg struct {
 	gen int
 }
 
+// sessionOpenedMsg carries a *flow.Session once the background startPlan
+// goroutine's flow.Open call succeeds. It is delivered before planReadyMsg so
+// Update can store the session (for Close and, later, Apply) even if the
+// subsequent Session.Plan call fails and the wizard falls into
+// deployStateError.
+type sessionOpenedMsg struct{ sess *flow.Session }
+
+// planReadyMsg carries the result of the background flow.Session.Plan call
+// started from handlePreflightKey via startPlan.
+type planReadyMsg struct {
+	plan *deploy.PlanResponse
+	req  *deploy.PlanRequest
+}
+
 // DeployPage is the guided deploy wizard: preflight check, adapter login,
 // plan, confirm, apply, and status, driven by the arena/deploy/flow package.
 type DeployPage struct {
@@ -85,6 +101,17 @@ type DeployPage struct {
 	// (canceled-then-retried) login attempt instead of letting a stale goroutine
 	// clobber the current attempt's state.
 	loginGen int
+
+	// Planning/plan-state fields, populated by the flow.Open + Session.Plan
+	// goroutine started from handlePreflightKey via startPlan and delivered
+	// through p.send. sess is held past the plan step so Task 5's Apply can
+	// reuse the already-connected adapter subprocess; Close releases it.
+	planCancel       context.CancelFunc
+	sess             *flow.Session
+	plan             *deploy.PlanResponse
+	planReq          *deploy.PlanRequest
+	planDiff         viewmodels.PlanDiffData
+	collapseNoChange bool
 }
 
 // NewDeployPage builds the deploy wizard page for ctx. It is the entry point
@@ -116,11 +143,23 @@ func (p *DeployPage) Title() string { return "Deploy" }
 // so that popping the page (e.g. pressing esc during deployStateLogin, which
 // App's global esc handler pops before handleLoginKey ever sees the key) does
 // not leave the login goroutine and its loopback OAuth callback server running
-// against a page nothing is listening to anymore.
+// against a page nothing is listening to anymore. It also cancels any
+// in-flight planning goroutine and closes the flow.Session opened by
+// startPlan — the session holds an adapter subprocess that MUST be released
+// when the page is popped, however the wizard got here (plan failure, esc
+// during planning/plan/confirm, or a later successful apply).
 func (p *DeployPage) Close() {
 	if p.loginCancel != nil {
 		p.loginCancel()
 		p.loginCancel = nil
+	}
+	if p.planCancel != nil {
+		p.planCancel()
+		p.planCancel = nil
+	}
+	if p.sess != nil {
+		_ = p.sess.Close()
+		p.sess = nil
 	}
 }
 
@@ -190,8 +229,18 @@ func (p *DeployPage) Update(msg tea.Msg) (Page, tea.Cmd) {
 		p.loginErr = nil
 		p.state = deployStatePreflight
 		return p, p.runPreflight()
+	case sessionOpenedMsg:
+		p.sess = m.sess
+		return p, nil
+	case planReadyMsg:
+		p.plan = m.plan
+		p.planReq = m.req
+		p.planDiff = viewmodels.BuildPlanDiff(m.plan)
+		p.collapseNoChange = true
+		p.state = deployStatePlan
+		return p, nil
 	case spinner.TickMsg:
-		if p.state != deployStateLogin {
+		if p.state != deployStateLogin && p.state != deployStatePlanning {
 			return p, nil
 		}
 		var cmd tea.Cmd
@@ -210,9 +259,12 @@ func (p *DeployPage) handleKey(msg tea.KeyMsg) (Page, tea.Cmd) {
 		return p.handlePreflightKey(msg)
 	case deployStateLogin:
 		return p.handleLoginKey(msg)
-	// deployStatePlanning, deployStatePlan, deployStateConfirm,
-	// deployStateApplying, deployStateApplyResult, deployStateStatus, and
-	// deployStateError key handling arrive in later tasks (4.x, 5.x).
+	case deployStatePlan:
+		return p.handlePlanKey(msg)
+	// deployStatePlanning has no keys of its own (the background plan cmd
+	// runs to completion or error). deployStateConfirm, deployStateApplying,
+	// deployStateApplyResult, deployStateStatus, and deployStateError key
+	// handling arrive in later tasks (5.x).
 	default:
 		return p, nil
 	}
@@ -240,8 +292,7 @@ func (p *DeployPage) handlePreflightKey(msg tea.KeyMsg) (Page, tea.Cmd) {
 	case "p":
 		if p.pf.Ready() {
 			p.state = deployStatePlanning
-			// Phase 4 wires the actual plan command; entering the state is
-			// enough for now.
+			return p, tea.Batch(p.startPlan(), p.spinner.Tick)
 		}
 	case "r":
 		p.loginErr = nil
@@ -264,6 +315,28 @@ func (p *DeployPage) handleLoginKey(msg tea.KeyMsg) (Page, tea.Cmd) {
 		p.state = deployStatePreflight
 	}
 	return p, nil
+}
+
+// handlePlanKey handles key input while the plan diff is showing. '[space]'
+// toggles whether unchanged resources are collapsed; 'a' advances to
+// deployStateConfirm, but only when the plan has real (non-no-change)
+// changes — an empty plan leaves nothing for the operator to apply.
+func (p *DeployPage) handlePlanKey(msg tea.KeyMsg) (Page, tea.Cmd) {
+	switch msg.String() {
+	case " ":
+		p.collapseNoChange = !p.collapseNoChange
+	case "a":
+		if p.planHasChanges() {
+			p.state = deployStateConfirm
+		}
+	}
+	return p, nil
+}
+
+// planHasChanges reports whether the current plan has any resource change
+// other than NO_CHANGE.
+func (p *DeployPage) planHasChanges() bool {
+	return p.planDiff.Adds+p.planDiff.Changes+p.planDiff.Destroys+p.planDiff.Drifts > 0
 }
 
 // startLogin returns a tea.Cmd that starts flow.Login in a background
@@ -304,6 +377,42 @@ func (p *DeployPage) startLogin() tea.Cmd {
 	}
 }
 
+// startPlan returns a tea.Cmd that starts a background goroutine which opens
+// a flow.Session (connecting the adapter subprocess) and computes a plan,
+// exactly as startLogin starts flow.Login: the returned tea.Cmd only launches
+// the goroutine and returns nil, while the goroutine streams its results back
+// through p.send. sessionOpenedMsg is sent as soon as Open succeeds — even if
+// the subsequent Plan call fails — so Update can store the session (and
+// Close can release its adapter subprocess) no matter how the wizard leaves
+// deployStatePlanning. Locals are captured before the goroutine starts and
+// the goroutine never touches p.* directly, mirroring startLogin's race
+// discipline.
+func (p *DeployPage) startPlan() tea.Cmd {
+	ctx, cancel := context.WithCancel(context.Background())
+	p.planCancel = cancel
+	opts := p.opts
+	send := p.send
+
+	return func() tea.Msg {
+		go func() {
+			sess, err := flow.Open(ctx, opts)
+			if err != nil {
+				send(deployErrMsg{err: err})
+				return
+			}
+			send(sessionOpenedMsg{sess: sess})
+
+			plan, req, err := sess.Plan(ctx)
+			if err != nil {
+				send(deployErrMsg{err: err})
+				return
+			}
+			send(planReadyMsg{plan: plan, req: req})
+		}()
+		return nil
+	}
+}
+
 // View implements Page.
 func (p *DeployPage) View() string {
 	body := func(_ int) string {
@@ -312,6 +421,10 @@ func (p *DeployPage) View() string {
 			return p.viewPreflight(p.w)
 		case deployStateLogin:
 			return p.viewLogin(p.w)
+		case deployStatePlanning:
+			return p.viewPlanning(p.w)
+		case deployStatePlan:
+			return p.viewPlan(p.w)
 		case deployStateError:
 			return p.viewError()
 		default:
@@ -337,6 +450,11 @@ func (p *DeployPage) keyBindings() []views.KeyBinding {
 	switch {
 	case p.state == deployStateLogin:
 		kb = append([]views.KeyBinding{{Keys: "c", Description: "cancel"}}, kb...)
+	case p.state == deployStatePlan:
+		kb = append([]views.KeyBinding{{Keys: "space", Description: "toggle unchanged"}}, kb...)
+		if p.planHasChanges() {
+			kb = append([]views.KeyBinding{{Keys: "a", Description: "apply"}}, kb...)
+		}
 	case p.state == deployStatePreflight && p.pf != nil:
 		// Prepend in priority order so the most relevant action reads first.
 		if p.pf.Ready() {
@@ -412,6 +530,28 @@ func (p *DeployPage) viewLogin(width int) string {
 		)
 	}
 	body := strings.Join(lines, "\n")
+	return theme.BorderedBoxStyle.MaxWidth(width).Render(body)
+}
+
+// viewPlanning renders the planning step: a spinner and status text while the
+// background startPlan goroutine opens the adapter session and computes the
+// plan. Mirrors viewLogin's spinner pattern.
+func (p *DeployPage) viewPlanning(width int) string {
+	line := p.spinner.View() + " " + theme.ValueStyle.Render("Computing plan…")
+	return theme.BorderedBoxStyle.MaxWidth(width).Render(line)
+}
+
+// viewPlan renders the plan diff once startPlan's goroutine has delivered a
+// planReadyMsg. A plan with no real changes (empty, or every change is
+// deploy.ActionNoChange) renders a plain "up to date" message instead of the
+// diff — handlePlanKey gates 'a' on the same condition (planHasChanges) so
+// there is nothing to advance to confirm.
+func (p *DeployPage) viewPlan(width int) string {
+	if !p.planHasChanges() {
+		body := theme.SuccessStyle.Render("No changes. Infrastructure is up to date.")
+		return theme.BorderedBoxStyle.MaxWidth(width).Render(body)
+	}
+	body := views.RenderPlanDiff(p.planDiff, width, p.collapseNoChange)
 	return theme.BorderedBoxStyle.MaxWidth(width).Render(body)
 }
 
