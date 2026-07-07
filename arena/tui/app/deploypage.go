@@ -112,6 +112,16 @@ type DeployPage struct {
 	planReq          *deploy.PlanRequest
 	planDiff         viewmodels.PlanDiffData
 	collapseNoChange bool
+
+	// Confirm-state fields. confirmInput accumulates the operator's typed
+	// characters when pf.Env is non-default (the type-to-confirm guardrail);
+	// it is unused (and unrendered) for the default-env [y/N] prompt.
+	// confirmMismatch is set when Enter is pressed with a confirmInput that
+	// doesn't match pf.Env exactly, so viewConfirm can show a "names don't
+	// match" message; it is cleared as soon as the operator edits the input
+	// again.
+	confirmInput    string
+	confirmMismatch bool
 }
 
 // NewDeployPage builds the deploy wizard page for ctx. It is the entry point
@@ -261,10 +271,12 @@ func (p *DeployPage) handleKey(msg tea.KeyMsg) (Page, tea.Cmd) {
 		return p.handleLoginKey(msg)
 	case deployStatePlan:
 		return p.handlePlanKey(msg)
+	case deployStateConfirm:
+		return p.handleConfirmKey(msg)
 	// deployStatePlanning has no keys of its own (the background plan cmd
-	// runs to completion or error). deployStateConfirm, deployStateApplying,
-	// deployStateApplyResult, deployStateStatus, and deployStateError key
-	// handling arrive in later tasks (5.x).
+	// runs to completion or error). deployStateApplying, deployStateApplyResult,
+	// deployStateStatus, and deployStateError key handling arrive in later
+	// tasks (5.x).
 	default:
 		return p, nil
 	}
@@ -337,6 +349,56 @@ func (p *DeployPage) handlePlanKey(msg tea.KeyMsg) (Page, tea.Cmd) {
 // other than NO_CHANGE.
 func (p *DeployPage) planHasChanges() bool {
 	return p.planDiff.Adds+p.planDiff.Changes+p.planDiff.Destroys+p.planDiff.Drifts > 0
+}
+
+// handleConfirmKey handles key input on the confirm screen. It implements two
+// distinct guardrails depending on the target environment:
+//
+//   - Default env (flow.DefaultEnv): a quiet [y/N] prompt. 'y' advances to
+//     deployStateApplying; every other key backs out to deployStatePlan —
+//     there is nothing typed to edit, so any non-'y' key is a "no".
+//   - Non-default env: the operator must type the exact environment name.
+//     Printable runes append to confirmInput and backspace edits it (both
+//     clear any prior mismatch flag); Enter compares confirmInput against
+//     pf.Env — a match advances to deployStateApplying, a mismatch stays in
+//     deployStateConfirm and sets confirmMismatch so viewConfirm can show
+//     "names don't match".
+//
+// There is no esc case here: App's global esc handler (see Close's doc
+// comment) pops the whole page before this handler ever sees the key,
+// exactly as it does for deployStateLogin/deployStatePlan. Adding one would
+// be dead code.
+func (p *DeployPage) handleConfirmKey(msg tea.KeyMsg) (Page, tea.Cmd) {
+	if p.pf == nil {
+		return p, nil
+	}
+	if p.pf.Env == flow.DefaultEnv {
+		if msg.Type == tea.KeyRunes && string(msg.Runes) == "y" {
+			p.state = deployStateApplying
+		} else {
+			p.state = deployStatePlan
+		}
+		return p, nil
+	}
+
+	switch msg.Type {
+	case tea.KeyEnter:
+		if p.confirmInput == p.pf.Env {
+			p.confirmMismatch = false
+			p.state = deployStateApplying
+		} else {
+			p.confirmMismatch = true
+		}
+	case tea.KeyBackspace:
+		if len(p.confirmInput) > 0 {
+			p.confirmInput = p.confirmInput[:len(p.confirmInput)-1]
+		}
+		p.confirmMismatch = false
+	case tea.KeyRunes:
+		p.confirmInput += string(msg.Runes)
+		p.confirmMismatch = false
+	}
+	return p, nil
 }
 
 // startLogin returns a tea.Cmd that starts flow.Login in a background
@@ -455,6 +517,8 @@ func (p *DeployPage) View() string {
 			return p.viewPlanning(p.w)
 		case deployStatePlan:
 			return p.viewPlan(p.w)
+		case deployStateConfirm:
+			return p.viewConfirm(p.w)
 		case deployStateError:
 			return p.viewError()
 		default:
@@ -485,6 +549,10 @@ func (p *DeployPage) keyBindings() []views.KeyBinding {
 		if p.planHasChanges() {
 			kb = append([]views.KeyBinding{{Keys: "a", Description: "apply"}}, kb...)
 		}
+	case p.state == deployStateConfirm && p.pf != nil && p.pf.Env == flow.DefaultEnv:
+		kb = append([]views.KeyBinding{{Keys: "y", Description: "confirm"}}, kb...)
+	case p.state == deployStateConfirm:
+		kb = append([]views.KeyBinding{{Keys: keyEnter, Description: "confirm"}}, kb...)
 	case p.state == deployStatePreflight && p.pf != nil:
 		// Prepend in priority order so the most relevant action reads first.
 		if p.pf.Ready() {
@@ -582,6 +650,57 @@ func (p *DeployPage) viewPlan(width int) string {
 		return theme.BorderedBoxStyle.MaxWidth(width).Render(body)
 	}
 	body := views.RenderPlanDiff(p.planDiff, width, p.collapseNoChange)
+	return theme.BorderedBoxStyle.MaxWidth(width).Render(body)
+}
+
+// viewConfirm renders the confirm step. Its shape depends entirely on
+// pf.Env, mirroring handleConfirmKey's two modes: a quiet [y/N] prompt for
+// flow.DefaultEnv, or a loud banner plus type-to-confirm prompt for every
+// other environment.
+func (p *DeployPage) viewConfirm(width int) string {
+	if p.pf == nil {
+		return theme.BorderedBoxStyle.MaxWidth(width).Render("")
+	}
+	if p.pf.Env == flow.DefaultEnv {
+		return p.viewConfirmDefault(width)
+	}
+	return p.viewConfirmTyped(width)
+}
+
+// viewConfirmDefault renders the simple [y/N] confirm prompt used for
+// flow.DefaultEnv deploys.
+func (p *DeployPage) viewConfirmDefault(width int) string {
+	prompt := fmt.Sprintf("Apply this plan to %s · %s? [y/N]", p.pf.Provider, p.pf.Env)
+	body := theme.ValueStyle.Render(prompt)
+	return theme.BorderedBoxStyle.MaxWidth(width).Render(body)
+}
+
+// viewConfirmTyped renders the type-to-confirm guardrail used for every
+// non-default environment: a loud banner (ColorError for production,
+// ColorWarning otherwise), the typed-so-far confirmInput, and a
+// "names don't match" message once a mismatched Enter has been pressed.
+func (p *DeployPage) viewConfirmTyped(width int) string {
+	color := theme.ColorWarning
+	if p.pf.Env == "production" {
+		color = theme.ColorError
+	}
+	banner := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color(theme.ColorWhite)).
+		Background(lipgloss.Color(color)).
+		Padding(0, 1).
+		Render("⚠ Deploying to " + strings.ToUpper(p.pf.Env))
+
+	lines := []string{
+		banner,
+		"",
+		theme.LabelStyle.Render("Type the environment name to confirm:"),
+		theme.ValueStyle.Render(p.confirmInput) + "▏",
+	}
+	if p.confirmMismatch {
+		lines = append(lines, "", theme.ErrorStyle.Render("names don't match"))
+	}
+	body := strings.Join(lines, "\n")
 	return theme.BorderedBoxStyle.MaxWidth(width).Render(body)
 }
 

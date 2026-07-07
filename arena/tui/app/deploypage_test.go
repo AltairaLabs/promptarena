@@ -560,6 +560,103 @@ func TestAbandonIfCancelled_LiveContextLeavesSessionOpen(t *testing.T) {
 	}
 }
 
+// keyEnterMsg builds a tea.KeyMsg for the Enter key. Named to avoid colliding
+// with the package-level keyEnter string constant in viewpage.go (used for
+// KeyBinding descriptions).
+func keyEnterMsg() tea.KeyMsg {
+	return tea.KeyMsg{Type: tea.KeyEnter}
+}
+
+// TestConfirm_ProductionRequiresTypedName verifies the non-default-env confirm
+// mode: a mismatched typed name must not advance past deployStateConfirm, and
+// the exact env name must advance to deployStateApplying.
+func TestConfirm_ProductionRequiresTypedName(t *testing.T) {
+	p := &DeployPage{state: deployStateConfirm, pf: &flow.Preflight{Env: "production"}}
+	// Wrong text does not advance.
+	p.confirmInput = "prod"
+	np, _ := p.handleConfirmKey(keyEnterMsg())
+	if np.(*DeployPage).state != deployStateConfirm {
+		t.Fatal("must not advance on mismatched env name")
+	}
+	// Exact name advances to applying.
+	p.confirmInput = "production"
+	np, _ = p.handleConfirmKey(keyEnterMsg())
+	if np.(*DeployPage).state != deployStateApplying {
+		t.Fatal("should advance when env name typed exactly")
+	}
+}
+
+// TestConfirm_DefaultEnvIsYN verifies the default-env confirm mode: a simple
+// [y/N] prompt where 'y' advances to deployStateApplying.
+func TestConfirm_DefaultEnvIsYN(t *testing.T) {
+	p := &DeployPage{state: deployStateConfirm, pf: &flow.Preflight{Env: "default"}}
+	np, _ := p.handleConfirmKey(keyRunes("y"))
+	if np.(*DeployPage).state != deployStateApplying {
+		t.Fatal("y should advance in default env")
+	}
+}
+
+// TestConfirm_DefaultEnvOtherKeyReturnsToPlan verifies any key other than 'y'
+// in the default-env confirm mode backs out to deployStatePlan.
+func TestConfirm_DefaultEnvOtherKeyReturnsToPlan(t *testing.T) {
+	p := &DeployPage{state: deployStateConfirm, pf: &flow.Preflight{Env: "default"}}
+	np, _ := p.handleConfirmKey(keyRunes("n"))
+	if np.(*DeployPage).state != deployStatePlan {
+		t.Fatalf("state = %v, want deployStatePlan", np.(*DeployPage).state)
+	}
+}
+
+// TestConfirm_TypedRunesAppendAndBackspaceEdits verifies rune keys append to
+// confirmInput and backspace removes the last character.
+func TestConfirm_TypedRunesAppendAndBackspaceEdits(t *testing.T) {
+	p := &DeployPage{state: deployStateConfirm, pf: &flow.Preflight{Env: "production"}}
+	np, _ := p.handleConfirmKey(keyRunes("p"))
+	np, _ = np.(*DeployPage).handleConfirmKey(keyRunes("r"))
+	dp := np.(*DeployPage)
+	if dp.confirmInput != "pr" {
+		t.Fatalf("confirmInput = %q, want %q", dp.confirmInput, "pr")
+	}
+	np2, _ := dp.handleConfirmKey(tea.KeyMsg{Type: tea.KeyBackspace})
+	dp2 := np2.(*DeployPage)
+	if dp2.confirmInput != "p" {
+		t.Fatalf("confirmInput after backspace = %q, want %q", dp2.confirmInput, "p")
+	}
+}
+
+// TestConfirm_MismatchShowsMessageThenClearsOnEdit verifies a mismatched
+// Enter sets a "names don't match" flag rendered by viewConfirm, and further
+// typing clears it.
+func TestConfirm_MismatchShowsMessageThenClearsOnEdit(t *testing.T) {
+	p := &DeployPage{state: deployStateConfirm, pf: &flow.Preflight{Provider: "omnia", Env: "production"}, confirmInput: "wrong"}
+	np, _ := p.handleConfirmKey(keyEnterMsg())
+	dp := np.(*DeployPage)
+	if dp.state != deployStateConfirm {
+		t.Fatal("mismatch must not advance")
+	}
+	out := stripANSI(dp.viewConfirm(80))
+	if !strings.Contains(out, "don't match") {
+		t.Fatalf("expected mismatch message in view:\n%s", out)
+	}
+	np2, _ := dp.handleConfirmKey(keyRunes("x"))
+	dp2 := np2.(*DeployPage)
+	if dp2.confirmMismatch {
+		t.Fatal("expected typing to clear the mismatch flag")
+	}
+}
+
+// TestGoldenDeployConfirm_Production captures a stable snapshot of the loud
+// non-default-env confirm banner and typed-name prompt.
+func TestGoldenDeployConfirm_Production(t *testing.T) {
+	p := &DeployPage{
+		state:        deployStateConfirm,
+		pf:           &flow.Preflight{Provider: "omnia", Env: "production"},
+		confirmInput: "prod",
+	}
+	p.SetSize(80, 24)
+	out := stripANSI(p.View())
+	teatest.RequireEqualOutput(t, []byte(out))
+}
+
 // TestGoldenDeployPlan_WithChanges captures a stable snapshot of the plan
 // diff view with a mix of changes, collapsed no-change rows by default.
 func TestGoldenDeployPlan_WithChanges(t *testing.T) {
