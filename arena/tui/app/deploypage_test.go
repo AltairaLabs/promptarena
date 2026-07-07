@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"errors"
 	"strings"
 	"sync"
@@ -514,6 +515,48 @@ func TestDeployPage_Close_ClosesSession(t *testing.T) {
 	}
 	if !planCanceled {
 		t.Fatal("expected Close to cancel the planning context")
+	}
+}
+
+// TestAbandonIfCancelled_CancelledContextClosesSession verifies the
+// after-close-during-Open/Plan abandon path: when startPlan's goroutine
+// discovers ctx was already cancelled (the page was popped mid-Open/Plan),
+// abandonIfCancelled must close sess so the adapter subprocess is reaped
+// even though sessionOpenedMsg/planReadyMsg is never sent (nothing would be
+// listening for it — App.Update would route it to whatever page is now on
+// top of the stack).
+func TestAbandonIfCancelled_CancelledContextClosesSession(t *testing.T) {
+	closed := false
+	sess := flow.NewSession(flow.Options{}, nil, &arenaconfig.DeployConfig{Provider: "omnia"},
+		nil, nil, nil, "", func() error { closed = true; return nil })
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	if !abandonIfCancelled(ctx, sess) {
+		t.Fatal("expected abandonIfCancelled to report true for a cancelled context")
+	}
+	if !closed {
+		t.Fatal("expected abandonIfCancelled to close the session on the abandon path")
+	}
+}
+
+// TestAbandonIfCancelled_LiveContextLeavesSessionOpen verifies the normal
+// (non-abandoned) path: a still-live context must not close sess, so
+// startPlan's goroutine goes on to send sessionOpenedMsg/planReadyMsg as
+// usual.
+func TestAbandonIfCancelled_LiveContextLeavesSessionOpen(t *testing.T) {
+	closed := false
+	sess := flow.NewSession(flow.Options{}, nil, &arenaconfig.DeployConfig{Provider: "omnia"},
+		nil, nil, nil, "", func() error { closed = true; return nil })
+
+	ctx := context.Background()
+
+	if abandonIfCancelled(ctx, sess) {
+		t.Fatal("expected abandonIfCancelled to report false for a live context")
+	}
+	if closed {
+		t.Fatal("expected abandonIfCancelled to leave the session open on the live path")
 	}
 }
 

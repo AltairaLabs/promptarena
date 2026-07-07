@@ -400,6 +400,15 @@ func (p *DeployPage) startPlan() tea.Cmd {
 				send(deployErrMsg{err: err})
 				return
 			}
+			// The page may have been popped (Close cancels ctx) while Open was
+			// still connecting the adapter subprocess. If so, sending
+			// sessionOpenedMsg would be dropped by App.Update (it routes to
+			// whatever page is now on top of the stack), leaking sess and its
+			// subprocess with no reaper. Close it here instead, on the
+			// goroutine that actually holds it.
+			if abandonIfCancelled(ctx, sess) {
+				return
+			}
 			send(sessionOpenedMsg{sess: sess})
 
 			plan, req, err := sess.Plan(ctx)
@@ -407,10 +416,31 @@ func (p *DeployPage) startPlan() tea.Cmd {
 				send(deployErrMsg{err: err})
 				return
 			}
+			// Same race, one step later: the page may have been popped while
+			// Plan was still running.
+			if abandonIfCancelled(ctx, sess) {
+				return
+			}
 			send(planReadyMsg{plan: plan, req: req})
 		}()
 		return nil
 	}
+}
+
+// abandonIfCancelled reports whether ctx was already cancelled by the time a
+// blocking flow.Session step (Open, Plan) returned — meaning the page that
+// started startPlan's goroutine has since been Close()d. When it has, it
+// closes sess (reaping the adapter subprocess) so the caller can return
+// without sending a message that would only be dropped by App.Update once
+// nothing is listening for it. Extracted as a pure(ish) helper so the
+// abandon-path logic is testable without racing a real goroutine against a
+// real Close call.
+func abandonIfCancelled(ctx context.Context, sess *flow.Session) bool {
+	if ctx.Err() == nil {
+		return false
+	}
+	_ = sess.Close()
+	return true
 }
 
 // View implements Page.
