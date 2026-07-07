@@ -4,30 +4,45 @@ import type { TranscriptMessage } from "@/types";
 
 export interface TranscriptProps {
   messages: TranscriptMessage[];
+  // onSelectMessage, when provided, makes each message card clickable —
+  // clicking it opens the shared DevTools drawer for that message, the way
+  // clicking a bubble in the old RunDetail/ConversationThread flow did.
+  onSelectMessage?: (idx: number) => void;
 }
 
 // Transcript — the Atlas Trial Inspector's left pane: role-accented turn
 // cards (3px left border + faint tint per role), tool calls rendered as
 // ink-void JSON cards, and pass/fail assertion chips. Purely presentational;
 // the viewmodel is built upstream by `buildTranscript` in `lib/arenaView.ts`.
-export function Transcript({ messages }: TranscriptProps) {
+export function Transcript({ messages, onSelectMessage }: TranscriptProps) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
       {messages.map((m) => (
-        <TranscriptCard key={m.idx} message={m} />
+        <TranscriptCard key={m.idx} message={m} onSelectMessage={onSelectMessage} />
       ))}
     </div>
   );
 }
 
-function TranscriptCard({ message: m }: { message: TranscriptMessage }) {
+function TranscriptCard({
+  message: m,
+  onSelectMessage,
+}: {
+  message: TranscriptMessage;
+  onSelectMessage?: (idx: number) => void;
+}) {
+  const clickable = Boolean(onSelectMessage);
   return (
     <div
+      role={clickable ? "button" : undefined}
+      tabIndex={clickable ? 0 : undefined}
+      onClick={clickable ? () => onSelectMessage!(m.idx) : undefined}
       style={{
         borderLeft: `3px solid ${m.accent}`,
         background: m.bg,
         borderRadius: 10,
         padding: "11px 14px",
+        cursor: clickable ? "pointer" : undefined,
       }}
     >
       <div style={{ display: "flex", gap: 9, alignItems: "baseline", marginBottom: 5 }}>

@@ -13,7 +13,7 @@ import { TrialInspector } from "@/components/arena/TrialInspector";
 import { useArenaEvents } from "@/hooks/useArenaEvents";
 import { useArenaAPI } from "@/hooks/useArenaAPI";
 import { buildMatrix } from "@/lib/arenaView";
-import type { Message, RunResult, ActiveRun, ProviderInfo, ScenarioInfo } from "@/types";
+import type { Message, RunResult, ActiveRun, ProviderInfo, ScenarioInfo, TrialCell } from "@/types";
 
 // activeRunToResult maps a still-running ActiveRun into a synthetic
 // RunResult-shaped entry so buildMatrix can overlay it onto the trial
@@ -168,16 +168,56 @@ export default function App() {
     () => (selectedKey ? matrix.rows.flatMap((row) => row.cells).find((c) => c.key === selectedKey) : undefined),
     [matrix, selectedKey],
   );
+  // The inspector's run prefers the SPECIFIC run identified by selectedRunId
+  // (set when a ledger/historical row is clicked) over the cell's latest
+  // run — buildMatrix always pins a cell's runId to the most recent run for
+  // that scenario:provider, so an older ledger row would otherwise be
+  // shadowed by a newer run in the same cell. Falls back to the run behind
+  // selectedCell.runId, then to a matching live ActiveRun.
   const selectedCellRun: RunResult | ActiveRun | undefined = useMemo(() => {
-    if (!selectedCell?.runId) return undefined;
-    return (
-      historicalResults.find((r) => r.RunID === selectedCell.runId) ??
-      liveRuns.find((r) => r.runId === selectedCell.runId)
-    );
-  }, [selectedCell, historicalResults, liveRuns]);
+    const bySelectedRunId = selectedRunId
+      ? historicalResults.find((r) => r.RunID === selectedRunId)
+      : undefined;
+    if (bySelectedRunId) return bySelectedRunId;
+
+    const byCell = selectedCell?.runId
+      ? (historicalResults.find((r) => r.RunID === selectedCell.runId) ??
+         liveRuns.find((r) => r.runId === selectedCell.runId))
+      : undefined;
+    if (byCell) return byCell;
+
+    return selectedRunId ? liveRuns.find((r) => r.runId === selectedRunId) : undefined;
+  }, [selectedRunId, selectedCell, historicalResults, liveRuns]);
+
+  // When the run being shown differs from the matrix cell (an older ledger
+  // run selected while the cell points at a newer one), the StatusPill and
+  // terminal readout must reflect the SHOWN run, not the (possibly newer)
+  // cell. isRunResult narrows: only completed RunResults carry
+  // ConversationAssertions/Cost/Duration to derive a cell-shaped reading
+  // from; a live ActiveRun's own cell already matches (buildMatrix overlays
+  // it 1:1), so it's returned as-is.
+  const inspectorCell: TrialCell | undefined = useMemo(() => {
+    if (!selectedCell) return undefined;
+    if (!selectedCellRun) return selectedCell;
+    const isRunResult = "Messages" in selectedCellRun && Array.isArray(selectedCellRun.Messages);
+    if (!isRunResult) return selectedCell;
+    const run = selectedCellRun as RunResult;
+    if (run.RunID === selectedCell.runId) return selectedCell;
+    return {
+      ...selectedCell,
+      scenarioId: run.ScenarioID,
+      providerId: run.ProviderID,
+      passed: run.ConversationAssertions?.passed ?? !run.Error,
+      costUsd: run.Cost?.total_cost_usd ?? 0,
+      latencyMs: run.Duration,
+      runId: run.RunID,
+      hasData: true,
+    };
+  }, [selectedCell, selectedCellRun]);
+
   const selectedProviderLabel = useMemo(
-    () => matrix.providers.find((p) => p.id === selectedCell?.providerId)?.label ?? selectedCell?.providerId ?? "",
-    [matrix, selectedCell],
+    () => matrix.providers.find((p) => p.id === inspectorCell?.providerId)?.label ?? inspectorCell?.providerId ?? "",
+    [matrix, inspectorCell],
   );
 
   const handleSelectMessage = (index: number, message?: Message, allMsgs?: Message[]) => {
@@ -309,10 +349,11 @@ export default function App() {
                   </button>
                   <TrialInspector
                     run={selectedCellRun}
-                    cell={selectedCell}
-                    scenarioId={selectedCell.scenarioId}
-                    providerId={selectedCell.providerId}
+                    cell={inspectorCell}
+                    scenarioId={inspectorCell?.scenarioId ?? selectedCell.scenarioId}
+                    providerId={inspectorCell?.providerId ?? selectedCell.providerId}
                     providerLabel={selectedProviderLabel}
+                    onSelectMessage={handleSelectMessage}
                   />
                 </div>
               ) : showEmptyHero ? (

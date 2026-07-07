@@ -3,7 +3,7 @@ import { AgentFlowCard } from "./AgentFlowCard";
 import { TerminalCard } from "./TerminalCard";
 import { StatusPill } from "@/components/atlas/StatusPill";
 import { buildTranscript, buildAgentFlow, buildTerminalLines } from "@/lib/arenaView";
-import type { RunResult, ActiveRun, TrialCell } from "@/types";
+import type { RunResult, ActiveRun, TrialCell, Message } from "@/types";
 
 export interface TrialInspectorProps {
   run: RunResult | ActiveRun | undefined;
@@ -11,6 +11,10 @@ export interface TrialInspectorProps {
   scenarioId: string;
   providerId: string;
   providerLabel: string;
+  // onSelectMessage, when provided, is invoked when a transcript message is
+  // clicked — mirrors the old RunDetail/ConversationThread contract so the
+  // DevTools drawer stays reachable from the Runs tab.
+  onSelectMessage?: (index: number, message?: Message, allMessages?: Message[]) => void;
 }
 
 // statusFor derives the header StatusPill's status/label. A still-running
@@ -29,8 +33,28 @@ function statusFor(
 // TrialInspector — the redesign's three-pane Trial Inspector: transcript
 // (left) + agent-flow + terminal (right rail), replacing RunDetail for a
 // selected trial cell.
-export function TrialInspector({ run, cell, scenarioId, providerId, providerLabel }: TrialInspectorProps) {
+export function TrialInspector({
+  run,
+  cell,
+  scenarioId,
+  providerId,
+  providerLabel,
+  onSelectMessage,
+}: TrialInspectorProps) {
   const { status, label } = statusFor(run, cell);
+
+  // handleSelectMessage adapts the transcript's index-only click into the
+  // (index, message, allMessages) triple DevToolsPanel expects. A completed
+  // RunResult carries the full Message[] the DevTools tabs need; a still-
+  // running ActiveRun has no Message[] to offer, so only the index is passed
+  // — DevToolsPanel tolerates an undefined message/allMessages.
+  const handleSelectMessage = (idx: number) => {
+    if (run && "Messages" in run && Array.isArray(run.Messages)) {
+      onSelectMessage?.(idx, run.Messages[idx], run.Messages);
+    } else {
+      onSelectMessage?.(idx);
+    }
+  };
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "1.55fr 1fr", gap: 16 }}>
@@ -60,6 +84,7 @@ export function TrialInspector({ run, cell, scenarioId, providerId, providerLabe
           >
             TRANSCRIPT
           </span>
+          <span style={{ font: "400 12px var(--font-mono)", color: "var(--star-800)" }}>·</span>
           <span style={{ font: "500 12px var(--font-mono)", color: "var(--star-500)" }}>{scenarioId}</span>
           <span style={{ font: "400 12px var(--font-mono)", color: "var(--star-800)" }}>· {providerLabel}</span>
           <div style={{ marginLeft: "auto" }}>
@@ -67,7 +92,7 @@ export function TrialInspector({ run, cell, scenarioId, providerId, providerLabe
           </div>
         </div>
         <div style={{ padding: "16px 18px", maxHeight: 560, overflowY: "auto" }}>
-          <Transcript messages={buildTranscript(run)} />
+          <Transcript messages={buildTranscript(run)} onSelectMessage={onSelectMessage ? handleSelectMessage : undefined} />
         </div>
       </div>
 

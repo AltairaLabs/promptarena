@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { describe, it, expect } from "vitest";
+import { render, screen, fireEvent } from "@testing-library/react";
+import { describe, it, expect, vi } from "vitest";
 import { TrialInspector } from "./TrialInspector";
 import type { RunResult, ActiveRun, TrialCell } from "@/types";
 
@@ -107,5 +107,49 @@ describe("TrialInspector", () => {
       />,
     );
     expect(screen.getByText("Running")).toBeInTheDocument();
+  });
+
+  it("calls onSelectMessage with the index and Message for a clicked transcript message on a RunResult run", () => {
+    const onSelectMessage = vi.fn();
+    const run = makeRun();
+    render(
+      <TrialInspector
+        run={run}
+        cell={makeCell()}
+        scenarioId="checkout"
+        providerId="claude"
+        providerLabel="Claude"
+        onSelectMessage={onSelectMessage}
+      />,
+    );
+    fireEvent.click(screen.getByText("Hello!"));
+    expect(onSelectMessage).toHaveBeenCalledWith(1, run.Messages[1], run.Messages);
+  });
+
+  it("calls onSelectMessage with just the index for a clicked transcript message on an ActiveRun (no Message[] to offer)", () => {
+    const onSelectMessage = vi.fn();
+    const run: ActiveRun = {
+      runId: "r2",
+      scenario: "checkout",
+      provider: "claude",
+      region: "us",
+      startTime: "2026-01-01T00:00:00Z",
+      turnIndex: 1,
+      messages: [{ role: "user", content: "Hi", index: 0 }],
+      costs: { inputTokens: 5, outputTokens: 0, totalCost: 0 },
+      status: "running",
+    };
+    render(
+      <TrialInspector
+        run={run}
+        cell={makeCell({ hasData: false, runId: "r2" })}
+        scenarioId="checkout"
+        providerId="claude"
+        providerLabel="Claude"
+        onSelectMessage={onSelectMessage}
+      />,
+    );
+    fireEvent.click(screen.getByText("Hi"));
+    expect(onSelectMessage).toHaveBeenCalledWith(0);
   });
 });

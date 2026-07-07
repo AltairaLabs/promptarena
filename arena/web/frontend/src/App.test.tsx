@@ -179,4 +179,70 @@ describe("App — Runs view", () => {
     expect(await screen.findByText("50%")).toBeInTheDocument();
     expect(screen.queryByText("100%")).not.toBeInTheDocument();
   });
+
+  it("clicking a transcript message in the Runs-tab inspector opens the DevTools drawer", async () => {
+    const runWithMessages = mk({
+      RunID: "run-1",
+      ScenarioID: "checkout",
+      ProviderID: "claude",
+      Messages: [
+        { role: "user", content: "Hi" },
+        { role: "assistant", content: "Hello!" },
+      ],
+      ConversationAssertions: { passed: true, failed: 0, total: 2, results: [] },
+    });
+    getResult.mockImplementationOnce((id: string) =>
+      Promise.resolve(id === "run-1" ? runWithMessages : null),
+    );
+
+    render(<App />);
+    const rate = await screen.findByText("100%");
+    fireEvent.click(rate);
+    await screen.findByText("TRANSCRIPT");
+
+    expect(screen.queryByText("Details")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText("Hello!"));
+    expect(await screen.findByText("Details")).toBeInTheDocument();
+  });
+
+  it("selecting an OLDER run from the ledger shows that run's transcript/StatusPill, not the newer run pinned to the matrix cell", async () => {
+    const olderFailingRun = mk({
+      RunID: "run-old",
+      ScenarioID: "checkout",
+      ProviderID: "claude",
+      StartTime: "2026-07-01T00:00:00Z",
+      EndTime: "2026-07-01T00:00:01Z",
+      Cost: { total_cost_usd: 0.01, input_tokens: 0, output_tokens: 0, input_cost_usd: 0, output_cost_usd: 0 },
+      Duration: 500,
+      ConversationAssertions: { passed: false, failed: 1, total: 2, results: [] },
+    });
+    const newerPassingRun = mk({
+      RunID: "run-new",
+      ScenarioID: "checkout",
+      ProviderID: "claude",
+      StartTime: "2026-07-07T00:00:00Z",
+      EndTime: "2026-07-07T00:00:01Z",
+      Cost: { total_cost_usd: 0.02, input_tokens: 0, output_tokens: 0, input_cost_usd: 0, output_cost_usd: 0 },
+      Duration: 900,
+      ConversationAssertions: { passed: true, failed: 0, total: 2, results: [] },
+    });
+    getResults.mockResolvedValueOnce(["run-old", "run-new"]);
+    getResult.mockImplementationOnce(() => Promise.resolve(olderFailingRun));
+    getResult.mockImplementationOnce(() => Promise.resolve(newerPassingRun));
+
+    render(<App />);
+    // The matrix cell aggregates to the latest (passing) run — confirm the
+    // dashboard is up before diving into the ledger.
+    await screen.findByText("TRIAL MATRIX · SCENARIO × PROVIDER");
+
+    fireEvent.click(screen.getByRole("button", { name: /show ledger/i }));
+    await screen.findByText("Previous Runs");
+
+    // Only the older run failed, so "Fail" uniquely identifies its row.
+    fireEvent.click(screen.getByText("Fail"));
+
+    expect(await screen.findByText("TRANSCRIPT")).toBeInTheDocument();
+    expect(screen.getByText("Failed")).toBeInTheDocument();
+    expect(screen.queryByText("Passed")).not.toBeInTheDocument();
+  });
 });

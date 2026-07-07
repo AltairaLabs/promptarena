@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { describe, it, expect } from "vitest";
+import { render, screen, fireEvent } from "@testing-library/react";
+import { describe, it, expect, vi } from "vitest";
 import { Transcript } from "./Transcript";
 import type { TranscriptMessage } from "@/types";
 
@@ -82,5 +82,25 @@ describe("Transcript", () => {
     ];
     render(<Transcript messages={messages} />);
     expect(screen.getByText("$0.0069 · 820ms")).toBeInTheDocument();
+  });
+
+  it("calls onSelectMessage with the clicked message's idx when provided", () => {
+    const onSelectMessage = vi.fn();
+    const messages: TranscriptMessage[] = [
+      { role: "user", idx: 0, accent: "var(--starlight-300)", bg: "transparent", content: "Hi there" },
+      { role: "assistant", idx: 1, accent: "var(--ion-cyan)", bg: "transparent", content: "Hello!" },
+    ];
+    render(<Transcript messages={messages} onSelectMessage={onSelectMessage} />);
+    fireEvent.click(screen.getByText("Hello!"));
+    expect(onSelectMessage).toHaveBeenCalledWith(1);
+  });
+
+  it("does not make message cards clickable when onSelectMessage is omitted", () => {
+    const messages: TranscriptMessage[] = [
+      { role: "user", idx: 0, accent: "var(--starlight-300)", bg: "transparent", content: "Hi there" },
+    ];
+    const { container } = render(<Transcript messages={messages} />);
+    const card = container.firstElementChild!.children[0] as HTMLElement;
+    expect(card.style.cursor).not.toBe("pointer");
   });
 });
