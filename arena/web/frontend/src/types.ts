@@ -332,3 +332,55 @@ export interface LogEntry {
   message: string;
   runId?: string;
 }
+
+// === Atlas Viewmodels (arenaView selectors) ===
+
+export interface TrialCell {
+  scenarioId: string;
+  providerId: string;
+  key: string; // `${scenarioId}:${providerId}`
+  passRate: number; // 0-100
+  passed: boolean; // passRate resolves to a pass (assertions all passed)
+  best: boolean; // best provider in this scenario row
+  costUsd: number; // total cost; 0 => rendered "free"
+  latencyMs: number; // run duration in ms
+  runId: string; // the RunResult.RunID backing this cell (latest)
+  hasData: boolean; // false => empty cell (no run yet)
+}
+
+export interface TrialRow {
+  scenarioId: string;
+  label: string;
+  cells: TrialCell[];
+}
+
+export interface TrialMatrix {
+  providers: { id: string; label: string }[];
+  rows: TrialRow[];
+}
+
+export interface Standing {
+  rank: number;
+  providerId: string;
+  label: string;
+  wins: number;
+  leader: boolean;
+}
+
+export interface OverallGauge {
+  passRate: number;
+  passed: number;
+  total: number;
+  caption: string; // e.g. "13 / 20 passed"
+}
+
+export interface TranscriptMessage {
+  role: string;
+  idx: number;
+  accent: string; // from roleAccent(role)
+  bg: string; // color-mix accent 11%
+  content?: string;
+  meta?: string; // e.g. "$0.0069 · 820ms"
+  tool?: { name: string; body: string };
+  asserts?: { name: string; ok: boolean }[];
+}
