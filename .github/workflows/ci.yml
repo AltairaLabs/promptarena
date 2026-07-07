@@ -88,6 +88,27 @@ jobs:
       # if a config-type change didn't regenerate schemas/v1alpha1.
       - name: Schemas up to date
         run: go run ./tools/schema-gen/ --check
+      # Frontend (React/TS): build catches type errors via `tsc -b`; the test
+      # run produces the lcov report SonarCloud needs for .ts/.tsx coverage.
+      # Single source of truth for the frontend suite, same as the Go coverage
+      # above — run once here and hand the report to the SonarCloud job.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: arena/web/frontend/package-lock.json
+      - name: Install frontend dependencies
+        run: npm --prefix arena/web/frontend ci
+      - name: Build frontend
+        run: npm --prefix arena/web/frontend run build
+      - name: Test frontend (with coverage)
+        run: npm --prefix arena/web/frontend run test:ci
+      - name: Upload frontend coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage
+          path: arena/web/frontend/coverage/lcov.info
+          retention-days: 1
 
   lint:
     name: Lint (new code)
@@ -131,6 +152,11 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: go-coverage
+      - name: Download frontend coverage report
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-coverage
+          path: arena/web/frontend/coverage/
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v8
         env:
