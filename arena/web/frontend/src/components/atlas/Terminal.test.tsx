@@ -11,7 +11,7 @@ describe("Terminal", () => {
     ];
     render(<Terminal lines={lines} cursor={false} />);
     expect(screen.getByText("bundle install")).toBeInTheDocument();
-    expect(screen.getByText("omnia ❯")).toBeInTheDocument();
+    expect(screen.getByText("arena ❯")).toBeInTheDocument();
     expect(screen.getByText("✓", { exact: false })).toBeInTheDocument();
     expect(screen.getByText("Bundle complete")).toBeInTheDocument();
   });

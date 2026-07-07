@@ -1,10 +1,9 @@
 import type { TerminalLine } from "./types";
 
 /**
- * Terminal — the Atlas TUI surface. Omnia is self-hosted and lives in the
- * SRE's terminal (`bundle install`, the Console). This renders an
- * on-brand terminal block on the deepest ink, with the gold prompt glyph
- * and a brand-mapped line palette. Themes dark & light (deepest surface).
+ * Terminal — the Atlas TUI surface: an on-brand terminal block on the
+ * deepest ink, with the gold prompt glyph and a brand-mapped line palette.
+ * Renders in both dark & light themes (deepest surface).
  *
  * Line types → colour role:
  *   command  gold ❯ prompt + bright text     comment  faint (# …)
@@ -35,7 +34,7 @@ export interface TerminalProps {
 export function Terminal({
   lines = [],
   title = null,
-  prompt = 'omnia ❯',
+  prompt = 'arena ❯',
   cursor = true,
   height = null,
   style = {},

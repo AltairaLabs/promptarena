@@ -105,4 +105,68 @@ describe("InstrumentBand", () => {
     expect(screen.getByText("PASS RATE · LAST 12 RUNS")).toBeInTheDocument();
     expect(document.querySelector("polyline")).toBeInTheDocument();
   });
+
+  it("labels the trail LAST 12 RUNS matching the buildTrend(results, 12) bucket size", () => {
+    const results: RunResult[] = [
+      mk({ RunID: "r1", StartTime: "2026-07-01T00:00:00Z", EndTime: "2026-07-01T00:00:01Z" }),
+      mk({ RunID: "r2", StartTime: "2026-07-02T00:00:00Z", EndTime: "2026-07-02T00:00:01Z" }),
+      mk({ RunID: "r3", StartTime: "2026-07-03T00:00:00Z", EndTime: "2026-07-03T00:00:01Z" }),
+    ];
+    const matrix = buildMatrix(results, providers, scenarios);
+    render(<InstrumentBand matrix={matrix} results={results} />);
+    expect(screen.getByText("PASS RATE · LAST 12 RUNS")).toBeInTheDocument();
+  });
+
+  it("colors a negative trend delta red and a positive delta gold", () => {
+    const declining: RunResult[] = [
+      mk({
+        RunID: "r1",
+        StartTime: "2026-07-01T00:00:00Z",
+        EndTime: "2026-07-01T00:00:01Z",
+        ConversationAssertions: { passed: true, failed: 0, total: 2, results: [] },
+      }),
+      mk({
+        RunID: "r2",
+        StartTime: "2026-07-02T00:00:00Z",
+        EndTime: "2026-07-02T00:00:01Z",
+        ConversationAssertions: { passed: true, failed: 0, total: 2, results: [] },
+      }),
+      mk({
+        RunID: "r3",
+        StartTime: "2026-07-03T00:00:00Z",
+        EndTime: "2026-07-03T00:00:01Z",
+        ConversationAssertions: { passed: false, failed: 2, total: 2, results: [] },
+      }),
+    ];
+    const decliningMatrix = buildMatrix(declining, providers, scenarios);
+    const { unmount } = render(<InstrumentBand matrix={decliningMatrix} results={declining} />);
+    const downDelta = screen.getByText(/^▼/);
+    expect(downDelta).toHaveStyle({ color: "var(--signal-red-300)" });
+    unmount();
+
+    const improving: RunResult[] = [
+      mk({
+        RunID: "r1",
+        StartTime: "2026-07-01T00:00:00Z",
+        EndTime: "2026-07-01T00:00:01Z",
+        ConversationAssertions: { passed: false, failed: 2, total: 2, results: [] },
+      }),
+      mk({
+        RunID: "r2",
+        StartTime: "2026-07-02T00:00:00Z",
+        EndTime: "2026-07-02T00:00:01Z",
+        ConversationAssertions: { passed: true, failed: 0, total: 2, results: [] },
+      }),
+      mk({
+        RunID: "r3",
+        StartTime: "2026-07-03T00:00:00Z",
+        EndTime: "2026-07-03T00:00:01Z",
+        ConversationAssertions: { passed: true, failed: 0, total: 2, results: [] },
+      }),
+    ];
+    const improvingMatrix = buildMatrix(improving, providers, scenarios);
+    render(<InstrumentBand matrix={improvingMatrix} results={improving} />);
+    const upDelta = screen.getByText(/^▲/);
+    expect(upDelta).toHaveStyle({ color: "var(--gold-300)" });
+  });
 });

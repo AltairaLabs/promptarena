@@ -40,9 +40,6 @@
   --radius-lg: 8px;
   --radius-xl: 12px;
   --radius-2xl: 14px;
-
-  --font-sans: "Inter", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", monospace;
 }
 
 :root,

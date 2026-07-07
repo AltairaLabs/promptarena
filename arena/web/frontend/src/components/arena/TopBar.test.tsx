@@ -101,6 +101,22 @@ describe("TopBar", () => {
     expect(onRunTrial).toHaveBeenCalledTimes(1);
   });
 
+  it("pins the bar to the fixed dark ramp regardless of the active theme (never flips light)", () => {
+    const { container, rerender } = render(
+      <TopBar connected={true} runningLive={false} theme="dark" onToggleTheme={vi.fn()} onRunTrial={vi.fn()} />,
+    );
+    const header = container.querySelector("header")!;
+    expect(header.style.getPropertyValue("--ink-canvas")).toBe("#0A1120");
+    expect(header.style.getPropertyValue("--star-100")).toBe("#F4F8FF");
+
+    rerender(
+      <TopBar connected={true} runningLive={false} theme="light" onToggleTheme={vi.fn()} onRunTrial={vi.fn()} />,
+    );
+    const headerAfter = container.querySelector("header")!;
+    expect(headerAfter.style.getPropertyValue("--ink-canvas")).toBe("#0A1120");
+    expect(headerAfter.style.getPropertyValue("--star-100")).toBe("#F4F8FF");
+  });
+
   it("disables the Run trial button when runDisabled is true", () => {
     render(
       <TopBar

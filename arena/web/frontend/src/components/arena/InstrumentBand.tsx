@@ -30,11 +30,12 @@ const sectionLabelStyle: React.CSSProperties = {
 export function InstrumentBand({ matrix, results }: InstrumentBandProps) {
   const gauge = buildOverallGauge(matrix);
   const metrics = buildMetrics(results, matrix);
-  const trend = buildTrend(results);
+  const trend = buildTrend(results, 12);
   const standings = buildStandings(matrix);
 
   const delta = trend.length > 0 ? trend[trend.length - 1] - trend[0] : 0;
   const deltaText = delta >= 0 ? `▲ +${delta}` : `▼ ${delta}`;
+  const deltaColor = delta < 0 ? "var(--signal-red-300)" : "var(--gold-300)";
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "0.9fr 1.5fr 1.1fr", gap: 16, marginBottom: 16 }}>
@@ -51,7 +52,7 @@ export function InstrumentBand({ matrix, results }: InstrumentBandProps) {
           <div style={{ padding: "14px 18px", borderTop: "1px solid var(--hairline)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
               <span style={sectionLabelStyle}>PASS RATE · LAST 12 RUNS</span>
-              <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--gold-300)" }}>
+              <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: deltaColor }}>
                 {deltaText}
               </span>
             </div>
