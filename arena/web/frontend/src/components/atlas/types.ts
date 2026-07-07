@@ -33,4 +33,9 @@ export interface GraphEdge {
   dashed?: boolean;
   gold?: boolean;
   dim?: boolean;
+  // Optional quadratic-bezier control point. When set, the edge is drawn as a
+  // curve bowing through (cx,cy) instead of a straight line — used to route a
+  // skip-layer edge around the intermediate node it would otherwise cross, and
+  // to place its label on the arc rather than on top of that node.
+  curve?: { cx: number; cy: number };
 }
