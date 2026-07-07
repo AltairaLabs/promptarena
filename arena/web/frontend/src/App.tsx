@@ -2,9 +2,9 @@ import { useCallback, useEffect, useMemo, useRef, useState, Component } from "re
 import type { ReactNode, ErrorInfo } from "react";
 import { ArrowLeft } from "lucide-react";
 import { TopBar } from "@/components/arena/TopBar";
+import { Hero } from "@/components/arena/Hero";
+import { CommandStrip } from "@/components/arena/CommandStrip";
 import { DevToolsPanel } from "@/components/DevToolsPanel";
-import { RunControls } from "@/components/RunControls";
-import { EmptyStateLauncher } from "@/components/EmptyStateLauncher";
 import { HistoricalResults } from "@/components/HistoricalResults";
 import { InteractiveChat } from "@/components/InteractiveChat";
 import { TrialMatrix } from "@/components/arena/TrialMatrix";
@@ -87,7 +87,7 @@ export default function App() {
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [showLedger, setShowLedger] = useState(false);
-  const [showRunPicker, setShowRunPicker] = useState(false);
+  const [selectedScenario, setSelectedScenario] = useState<string | null>(null);
   const [devToolsMessage, setDevToolsMessage] = useState<Message | undefined>();
   const [devToolsAllMessages, setDevToolsAllMessages] = useState<Message[] | undefined>();
   const [devToolsIndex, setDevToolsIndex] = useState<number | undefined>();
@@ -108,6 +108,15 @@ export default function App() {
       })
       .catch(() => {});
   }, [getRunOptions]);
+
+  // CommandStrip's chip selection defaults to the first scenario once
+  // run-options land — mirrors the old pickers' "first scenario by sort
+  // order" default.
+  useEffect(() => {
+    if (!selectedScenario && scenarios.length > 0) {
+      setSelectedScenario(scenarios[0].id);
+    }
+  }, [scenarios, selectedScenario]);
 
   // TopBar's promptpack context — "<name> · <version>" when the arena
   // config has a loaded pack, else omitted entirely (TopBar renders nothing
@@ -214,6 +223,24 @@ export default function App() {
     [matrixResults, providers, scenarios],
   );
 
+  // CommandStrip's chip-click contract: clicking a scenario selects that
+  // scenario's best provider (matrix row's `best` cell), falling back to
+  // the row's first provider when nothing's run yet.
+  const bestProviderForScenario = useCallback(
+    (scenarioId: string | null): { id: string; label: string } | undefined => {
+      if (!scenarioId) return undefined;
+      const row = matrix.rows.find((r) => r.scenarioId === scenarioId);
+      const cell = row?.cells.find((c) => c.best) ?? row?.cells[0];
+      if (!cell) return undefined;
+      return matrix.providers.find((p) => p.id === cell.providerId) ?? { id: cell.providerId, label: cell.providerId };
+    },
+    [matrix],
+  );
+  const chartProvider = useMemo(
+    () => bestProviderForScenario(selectedScenario),
+    [bestProviderForScenario, selectedScenario],
+  );
+
   // The Trial Inspector is driven entirely off selectedKey: it looks up the
   // backing cell in the matrix, then the run behind that cell — the saved
   // RunResult if one's landed, else the still-running ActiveRun.
@@ -312,7 +339,6 @@ export default function App() {
   const handleStartRun = useCallback(async (providerId: string, scenarioId: string) => {
     setStartError(null);
     setPendingAutoSelect(true);
-    setShowRunPicker(false);
     // If the user is currently viewing a previous run's detail, navigate
     // them back to the dashboard immediately. Without this they'd stare
     // at the old run until SSE delivered the first turn of the new one,
@@ -330,7 +356,12 @@ export default function App() {
     }
   }, [startRun]);
 
-  const showEmptyHero = liveRuns.length === 0 && historicalResults.length === 0;
+  // Shared by both the TopBar's and the CommandStrip's "Run trial" — starts
+  // the selected scenario against its best (or first) provider.
+  const handleRunTrial = useCallback(() => {
+    if (!selectedScenario || !chartProvider) return;
+    void handleStartRun(chartProvider.id, selectedScenario);
+  }, [selectedScenario, chartProvider, handleStartRun]);
 
   return (
     <ErrorBoundary>
@@ -341,30 +372,12 @@ export default function App() {
           runningLive={liveRuns.some((r) => r.status === "running")}
           theme={theme}
           onToggleTheme={toggleTheme}
-          onRunTrial={() => setShowRunPicker((v) => !v)}
-          runDisabled={!state.connected || loading}
+          onRunTrial={() => {
+            setActiveTab("runs");
+            handleRunTrial();
+          }}
+          runDisabled={!state.connected || loading || !selectedScenario || !chartProvider}
         />
-        {/* Minimal run-picker disclosure opened by the TopBar's gold "Run
-            trial" button — reuses the existing RunControls provider/scenario
-            picker as-is. This is a placeholder until the Hero + CommandStrip
-            bands (next dispatch) replace it with the scenario-chip picker. */}
-        {showRunPicker && activeTab === "runs" && (
-          <div
-            style={{
-              background: "var(--ink-canvas)",
-              borderBottom: "1px solid var(--hairline)",
-              margin: "0 -32px",
-              padding: "12px 32px",
-            }}
-          >
-            <RunControls
-              connected={state.connected}
-              loading={loading}
-              startError={startError}
-              onStart={handleStartRun}
-            />
-          </div>
-        )}
         <main className="py-8">
         {/* Tab bar */}
         <div className="flex gap-1 mb-6 border-b border-mist pb-0">
@@ -431,17 +444,17 @@ export default function App() {
                     onToggleListen={handleListen}
                   />
                 </div>
-              ) : showEmptyHero ? (
-                <div className="max-w-2xl mx-auto">
-                  <EmptyStateLauncher
-                    connected={state.connected}
-                    loading={loading}
-                    startError={startError}
-                    onStart={handleStartRun}
-                  />
-                </div>
               ) : (
                 <div className="space-y-8">
+                  <Hero scenarioCount={scenarios.length} providerCount={providers.length} />
+                  <CommandStrip
+                    scenarios={scenarios}
+                    selectedScenario={selectedScenario}
+                    selectedProviderLabel={chartProvider?.label ?? null}
+                    onSelectScenario={setSelectedScenario}
+                    onRunTrial={handleRunTrial}
+                    runDisabled={!state.connected || loading || !selectedScenario || !chartProvider}
+                  />
                   {startError && (
                     <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-[#EF4444]">{startError}</div>
                   )}

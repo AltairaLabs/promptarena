@@ -247,4 +247,65 @@ describe("App — Runs view", () => {
     expect(screen.getByText("Failed")).toBeInTheDocument();
     expect(screen.queryByText("Passed")).not.toBeInTheDocument();
   });
+
+  it("renders Hero + CommandStrip above the instrument band and trial matrix", async () => {
+    render(<App />);
+    const commandStripLabel = await screen.findByText("CHART A RUN");
+    const gaugeLabel = await screen.findByText("PASS RATE · ALL TRIALS");
+    const matrixHeading = await screen.findByText("TRIAL MATRIX · SCENARIO × PROVIDER");
+    expect(screen.getByText(/^THE ARENA · CHARTED /)).toBeInTheDocument();
+    expect(
+      commandStripLabel.compareDocumentPosition(gaugeLabel) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+    expect(
+      gaugeLabel.compareDocumentPosition(matrixHeading) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it("selecting a scenario chip updates the CommandStrip provider label to that scenario's best provider", async () => {
+    getRunOptions.mockResolvedValueOnce({
+      providers: [
+        { id: "claude", type: "anthropic" },
+        { id: "mock", type: "mock" },
+      ],
+      scenarios: [{ id: "checkout" }, { id: "refund" }],
+    });
+    const checkoutRun = mk({
+      RunID: "run-checkout",
+      ScenarioID: "checkout",
+      ProviderID: "claude",
+      ConversationAssertions: { passed: true, failed: 0, total: 1, results: [] },
+    });
+    const refundRun = mk({
+      RunID: "run-refund",
+      ScenarioID: "refund",
+      ProviderID: "mock",
+      ConversationAssertions: { passed: true, failed: 0, total: 1, results: [] },
+    });
+    getResults.mockResolvedValueOnce(["run-checkout", "run-refund"]);
+    getResult.mockImplementationOnce((id: string) =>
+      Promise.resolve(id === "run-checkout" ? checkoutRun : null),
+    );
+    getResult.mockImplementationOnce((id: string) =>
+      Promise.resolve(id === "run-refund" ? refundRun : null),
+    );
+
+    render(<App />);
+    await screen.findByText("CHART A RUN");
+    expect(await screen.findByText("claude · checkout")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "refund" }));
+    expect(await screen.findByText("mock · refund")).toBeInTheDocument();
+  });
+
+  it("TopBar's Run trial switches from the Chat tab to Runs and starts the selected scenario", async () => {
+    render(<App />);
+    await screen.findByText("CHART A RUN");
+
+    fireEvent.click(screen.getByText("Interactive Chat"));
+    fireEvent.click(screen.getByText(/Run trial/));
+
+    expect(await screen.findByText("TRIAL MATRIX · SCENARIO × PROVIDER")).toBeInTheDocument();
+    expect(startRun).toHaveBeenCalledWith({ providers: ["claude"], scenarios: ["checkout"] });
+  });
 });

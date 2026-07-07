@@ -60,9 +60,7 @@ export function InstrumentBand({ matrix, results }: InstrumentBandProps) {
         )}
       </div>
 
-      <div style={panelCardStyle}>
-        <Standings standings={standings} />
-      </div>
+      <Standings standings={standings} />
     </div>
   );
 }
