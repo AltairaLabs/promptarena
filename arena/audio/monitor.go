@@ -118,7 +118,7 @@ func (m *Monitor) AttachRouter(runID string, router *AudioRouter) {
 	sink := m.sink
 	// Playback follows explicit selection only (SetActiveRun) — we do NOT
 	// auto-activate. Auto-play made sense for a single interactive run, but
-	// in a parallel batch it meant every run's audio funnelled through the
+	// in a parallel batch it meant every run's audio funneled through the
 	// one sink (auto-activate + auto-fallback), producing a nonstop parade
 	// of runs the user never picked. "Nothing selected" now means silence.
 	m.mu.Unlock()

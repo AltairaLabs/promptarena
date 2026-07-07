@@ -44,6 +44,7 @@ func quietSetupLogs(useTUI bool, params *RunParameters) func() {
 	if params.Verbose && params.OutDir != "" {
 		if err := os.MkdirAll(params.OutDir, outputDirPerm); err == nil {
 			logPath := filepath.Join(params.OutDir, "promptarena.log")
+			// #nosec G304 -- logPath comes from the user's own --out-dir.
 			if f, ferr := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, logFilePerm); ferr == nil {
 				logger.SetOutput(f)
 				return func() {

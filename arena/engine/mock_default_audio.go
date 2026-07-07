@@ -8,6 +8,7 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/logger"
 	"github.com/AltairaLabs/PromptKit/runtime/providers"
 	"github.com/AltairaLabs/PromptKit/runtime/providers/mock"
+
 	arenaaudio "github.com/AltairaLabs/promptarena/arena/audio"
 )
 
@@ -15,6 +16,10 @@ import (
 // turn with. Those turns' audio is synthesized by the mock TTS, so the default
 // agent clip must not be applied to them.
 const selfPlayUserArenaRole = "self_play_user"
+
+// mockAssistantClipPerm is the file mode for the materialized mock assistant
+// clip. Owner read/write only — it's a scratch fixture in the temp dir.
+const mockAssistantClipPerm = 0o600
 
 // defaultAudioRepository wraps a mock ResponseRepository and fills in the
 // built-in "mock assistant turn" clip for agent turns that carry no audio of
@@ -30,10 +35,13 @@ func newDefaultAudioRepository(inner mock.ResponseRepository, assistantAudioFile
 	return &defaultAudioRepository{inner: inner, assistantAudioFile: assistantAudioFile}
 }
 
+// GetResponse delegates to the wrapped repository unchanged.
 func (r *defaultAudioRepository) GetResponse(ctx context.Context, params mock.ResponseParams) (string, error) {
 	return r.inner.GetResponse(ctx, params)
 }
 
+// GetTurn delegates to the wrapped repository, then fills in the built-in
+// assistant clip for agent turns that carry no audio of their own.
 func (r *defaultAudioRepository) GetTurn(ctx context.Context, params mock.ResponseParams) (*mock.Turn, error) {
 	turn, err := r.inner.GetTurn(ctx, params)
 	if err != nil || turn == nil {
@@ -58,7 +66,7 @@ func (r *defaultAudioRepository) GetTurn(ctx context.Context, params mock.Respon
 // path each run is harmless — the bytes are identical.
 func writeMockAssistantClip() (string, error) {
 	path := filepath.Join(os.TempDir(), "promptarena-mock-assistant-turn.pcm")
-	if err := os.WriteFile(path, arenaaudio.MockAssistantTurnPCM(), 0o600); err != nil {
+	if err := os.WriteFile(path, arenaaudio.MockAssistantTurnPCM(), mockAssistantClipPerm); err != nil {
 		return "", err
 	}
 	return path, nil

@@ -139,7 +139,7 @@ func isRecoverableError(err error) bool {
 			return false
 		}
 	}
-	// Honour the provider's explicit retryability classification.
+	// Honor the provider's explicit retryability classification.
 	var retryable retryableErrorClassifier
 	if errors.As(err, &retryable) {
 		return retryable.IsRetryable()

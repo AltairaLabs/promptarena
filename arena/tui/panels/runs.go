@@ -19,6 +19,7 @@ const (
 	runsPanelPadding           = 2
 	runsPanelHorizontalPadding = runsPanelPadding * 2
 
+	audioColTitle    = "Audio"
 	audioColWidth    = 6
 	statusColWidth   = 10
 	providerColWidth = 20
@@ -101,7 +102,7 @@ func NewRunsPanel() *RunsPanel {
 // Init initializes the runs table
 func (p *RunsPanel) Init(height int) {
 	columns := []table.Column{
-		{Title: "Audio", Width: audioColWidth},
+		{Title: audioColTitle, Width: audioColWidth},
 		{Title: "Status", Width: statusColWidth},
 		{Title: "Provider", Width: providerColWidth},
 		{Title: "Scenario", Width: scenarioColWidth},
@@ -141,7 +142,7 @@ func (p *RunsPanel) Init(height int) {
 // fixed-width columns ignored it and overflowed). Columns shrink on narrow
 // terminals and grow to fill wide ones; a floor keeps each readable.
 func responsiveRunsColumns(avail int) []table.Column {
-	titles := []string{"Audio", "Status", "Provider", "Scenario", "Region", "Duration", "Cost", "Notes"}
+	titles := []string{audioColTitle, "Status", "Provider", "Scenario", "Region", "Duration", "Cost", "Notes"}
 	weights := []int{
 		audioColWidth, statusColWidth, providerColWidth, scenarioColWidth, regionColWidth,
 		durationColWidth, costColWidth, notesColWidth,
