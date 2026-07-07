@@ -16,3 +16,18 @@ export interface TerminalLine {
   text: string;
   prompt?: string;
 }
+
+export interface GraphNode {
+  id: string;
+  x: number;
+  y: number;
+  kind: "prompt" | "agent" | "tool" | "branch" | "output" | "entry";
+  label?: string;
+}
+
+export interface GraphEdge {
+  from: string;
+  to: string;
+  dashed?: boolean;
+  gold?: boolean;
+}

@@ -4,4 +4,5 @@ export { Gauge } from "./Gauge";
 export { InstrumentReadout } from "./InstrumentReadout";
 export { StarTrail } from "./StarTrail";
 export { Terminal } from "./Terminal";
-export type { MetricSpec, TerminalLine } from "./types";
+export { ConstellationGraph } from "./ConstellationGraph";
+export type { MetricSpec, TerminalLine, GraphNode, GraphEdge } from "./types";
