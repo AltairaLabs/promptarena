@@ -282,6 +282,58 @@ func TestBuildWorkflowGraph_CompositionExpansion(t *testing.T) {
 	}
 }
 
+func TestBuildWorkflowGraph_CompositionExpansion_JoinHintDedupesEdge(t *testing.T) {
+	// A branch step's "then" target that also declares depends_on back to
+	// the branch step is the runtime's recommended join-hint pattern (see
+	// validateJoinHints). It must not produce two stacked edges in the
+	// graph: one from the branch's Then loop and one from the DependsOn
+	// loop.
+	cfg := &arenaconfig.Config{
+		Workflow: map[string]any{
+			"version": 2, "entry": "intake",
+			"states": map[string]any{
+				"intake": map[string]any{"on_event": map[string]any{"go": "process"}},
+				"process": map[string]any{
+					"orchestration": "composition",
+					"composition":   "flow",
+					"terminal":      true,
+				},
+			},
+		},
+		Compositions: map[string]any{
+			"flow": map[string]any{
+				"version": 1,
+				"steps": []map[string]any{
+					{"id": "route", "kind": "branch",
+						"predicate": map[string]any{"path": "x", "op": "equals", "value": true},
+						"then":      "approve", "else": "reject",
+					},
+					// approve declares depends_on ["route"] in addition to
+					// being the branch's "then" target -- the join-hint
+					// pattern that previously produced a duplicate edge.
+					{"id": "approve", "kind": "prompt", "depends_on": []string{"route"}},
+					{"id": "reject", "kind": "prompt", "depends_on": []string{"route"}},
+				},
+			},
+		},
+	}
+
+	g, err := BuildWorkflowGraph(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var matches int
+	for _, e := range g.Edges {
+		if e.From == "process/route" && e.To == "process/approve" && !e.Dashed {
+			matches++
+		}
+	}
+	if matches != 1 {
+		t.Fatalf("want exactly 1 edge process/route->process/approve, got %d in %+v", matches, g.Edges)
+	}
+}
+
 func TestBuildWorkflowGraph_CompositionExpansion_ParallelFanOut(t *testing.T) {
 	cfg := &arenaconfig.Config{
 		Workflow: map[string]any{

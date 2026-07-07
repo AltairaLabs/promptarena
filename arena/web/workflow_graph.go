@@ -120,7 +120,34 @@ func BuildWorkflowGraph(cfg *arenaconfig.Config) (WorkflowGraph, error) {
 		}
 	}
 
+	graph.Edges = dedupeEdges(graph.Edges)
+
 	return graph, nil
+}
+
+// dedupeEdges removes duplicate edges (same From, To, and Dashed) from the
+// whole graph's edge set, keeping the first occurrence and preserving order.
+// Duplicates can arise when a state-machine or composition edge is derivable
+// two ways — e.g. a branch step's "then" target that also declares a
+// depends_on back to the branch step (the runtime's recommended join-hint
+// pattern) produces the same edge from both the Then/Else loop and the
+// DependsOn loop in expandComposition.
+func dedupeEdges(edges []WorkflowGraphEdge) []WorkflowGraphEdge {
+	type key struct {
+		from, to string
+		dashed   bool
+	}
+	seen := make(map[key]bool, len(edges))
+	out := make([]WorkflowGraphEdge, 0, len(edges))
+	for _, e := range edges {
+		k := key{e.From, e.To, e.Dashed}
+		if seen[k] {
+			continue
+		}
+		seen[k] = true
+		out = append(out, e)
+	}
+	return out
 }
 
 // expandComposition inlines a composition's step graph as nodes/edges scoped
@@ -141,16 +168,10 @@ func expandComposition(stateName string, comp *composition.Composition) ([]Workf
 
 	var walk func(steps []*composition.Step, topLevel bool)
 	walk = func(steps []*composition.Step, topLevel bool) {
-		sorted := make([]*composition.Step, 0, len(steps))
 		for _, step := range steps {
 			if step == nil {
 				continue
 			}
-			sorted = append(sorted, step)
-		}
-		sort.Slice(sorted, func(i, j int) bool { return sorted[i].ID < sorted[j].ID })
-
-		for _, step := range sorted {
 			nodes = append(nodes, WorkflowGraphNode{
 				ID:    prefix(step.ID),
 				Label: step.ID,
