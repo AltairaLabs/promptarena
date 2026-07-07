@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, Component } from "react";
 import type { ReactNode, ErrorInfo } from "react";
 import { ArrowLeft } from "lucide-react";
-import { Layout } from "@/components/Layout";
+import { TopBar } from "@/components/arena/TopBar";
 import { DevToolsPanel } from "@/components/DevToolsPanel";
 import { RunControls } from "@/components/RunControls";
 import { EmptyStateLauncher } from "@/components/EmptyStateLauncher";
@@ -12,6 +12,7 @@ import { InstrumentBand } from "@/components/arena/InstrumentBand";
 import { TrialInspector } from "@/components/arena/TrialInspector";
 import { useArenaEvents } from "@/hooks/useArenaEvents";
 import { useArenaAPI } from "@/hooks/useArenaAPI";
+import { useTheme } from "@/hooks/useTheme";
 import { buildMatrix } from "@/lib/arenaView";
 import type { Message, RunResult, ActiveRun, ProviderInfo, ScenarioInfo, TrialCell } from "@/types";
 
@@ -79,11 +80,13 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
 
 export default function App() {
   const { registerInteractiveRun, ...state } = useArenaEvents();
+  const { theme, toggle: toggleTheme } = useTheme();
   const [activeTab, setActiveTab] = useState<"runs" | "chat">("runs");
-  const { startRun, getResults, getResult, getRunOptions, clearResults, loading } = useArenaAPI();
+  const { startRun, getResults, getResult, getConfig, getRunOptions, clearResults, loading } = useArenaAPI();
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [showLedger, setShowLedger] = useState(false);
+  const [showRunPicker, setShowRunPicker] = useState(false);
   const [devToolsMessage, setDevToolsMessage] = useState<Message | undefined>();
   const [devToolsAllMessages, setDevToolsAllMessages] = useState<Message[] | undefined>();
   const [devToolsIndex, setDevToolsIndex] = useState<number | undefined>();
@@ -92,6 +95,7 @@ export default function App() {
   const [historicalResults, setHistoricalResults] = useState<RunResult[]>([]);
   const [providers, setProviders] = useState<ProviderInfo[]>([]);
   const [scenarios, setScenarios] = useState<ScenarioInfo[]>([]);
+  const [promptpack, setPromptpack] = useState<string | undefined>(undefined);
 
   // Run-options (the providers/scenarios universe) drive the matrix's
   // columns/rows — same fetch pattern as RunControls/EmptyStateLauncher.
@@ -103,6 +107,20 @@ export default function App() {
       })
       .catch(() => {});
   }, [getRunOptions]);
+
+  // TopBar's promptpack context — "<name> · <version>" when the arena
+  // config has a loaded pack, else omitted entirely (TopBar renders nothing
+  // for an undefined promptpack).
+  useEffect(() => {
+    getConfig()
+      .then((cfg) => {
+        const pack = cfg?.loaded_pack;
+        if (pack?.name) {
+          setPromptpack(pack.version ? `${pack.name} · ${pack.version}` : pack.name);
+        }
+      })
+      .catch(() => {});
+  }, [getConfig]);
 
   // Track runIds we've already seen so a freshly-spawned run can be auto-
   // selected even when StartRun returns no runId.
@@ -259,6 +277,7 @@ export default function App() {
   const handleStartRun = useCallback(async (providerId: string, scenarioId: string) => {
     setStartError(null);
     setPendingAutoSelect(true);
+    setShowRunPicker(false);
     // If the user is currently viewing a previous run's detail, navigate
     // them back to the dashboard immediately. Without this they'd stare
     // at the old run until SSE delivered the first turn of the new one,
@@ -280,19 +299,38 @@ export default function App() {
 
   return (
     <ErrorBoundary>
-      <Layout
-        connected={state.connected}
-        headerActions={
-          activeTab === "runs" ? (
+      <div className="min-h-screen bg-canvas" style={{ paddingLeft: 32, paddingRight: 32 }}>
+        <TopBar
+          connected={state.connected}
+          promptpack={promptpack}
+          runningLive={liveRuns.some((r) => r.status === "running")}
+          theme={theme}
+          onToggleTheme={toggleTheme}
+          onRunTrial={() => setShowRunPicker((v) => !v)}
+          runDisabled={!state.connected || loading}
+        />
+        {/* Minimal run-picker disclosure opened by the TopBar's gold "Run
+            trial" button — reuses the existing RunControls provider/scenario
+            picker as-is. This is a placeholder until the Hero + CommandStrip
+            bands (next dispatch) replace it with the scenario-chip picker. */}
+        {showRunPicker && activeTab === "runs" && (
+          <div
+            style={{
+              background: "var(--ink-canvas)",
+              borderBottom: "1px solid var(--hairline)",
+              margin: "0 -32px",
+              padding: "12px 32px",
+            }}
+          >
             <RunControls
               connected={state.connected}
               loading={loading}
               startError={startError}
               onStart={handleStartRun}
             />
-          ) : null
-        }
-      >
+          </div>
+        )}
+        <main className="py-8">
         {/* Tab bar */}
         <div className="flex gap-1 mb-6 border-b border-mist pb-0">
           <button
@@ -403,7 +441,8 @@ export default function App() {
             />
           </>
         )}
-      </Layout>
+        </main>
+      </div>
     </ErrorBoundary>
   );
 }

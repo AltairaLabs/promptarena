@@ -52,6 +52,7 @@ const getResult = vi.fn().mockImplementation((id: string) =>
   Promise.resolve(seededResults.find((r) => r.RunID === id)),
 );
 const getRunOptions = vi.fn().mockResolvedValue(runOptions);
+const getConfig = vi.fn().mockResolvedValue({});
 const startRun = vi.fn().mockResolvedValue({});
 const clearResults = vi.fn().mockResolvedValue({});
 
@@ -60,6 +61,7 @@ vi.mock("@/hooks/useArenaAPI", () => ({
     startRun,
     getResults,
     getResult,
+    getConfig,
     getRunOptions,
     clearResults,
     loading: false,
