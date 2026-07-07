@@ -59,4 +59,29 @@ describe("layoutWorkflow", () => {
     expect(JSON.stringify(g)).toBe(before);
     expect(out.height).toBeGreaterThan(0);
   });
+
+  it("bows a skip-layer edge into a curve that clears the intermediate node", () => {
+    const wf = {
+      nodes: [
+        { id: "intake", label: "intake", kind: "entry" as const, entry: true, terminal: false },
+        { id: "specialist", label: "specialist", kind: "agent" as const, entry: false, terminal: false },
+        { id: "closed", label: "closed", kind: "output" as const, entry: false, terminal: true },
+      ],
+      edges: [
+        { from: "intake", to: "specialist" },
+        { from: "specialist", to: "closed" },
+        { from: "intake", to: "closed", label: "Resolve" }, // spans two layers
+      ],
+    };
+    const out = layoutWorkflow(wf);
+    const adj = out.edges.find((e) => e.from === "intake" && e.to === "specialist")!;
+    const skip = out.edges.find((e) => e.from === "intake" && e.to === "closed")!;
+    expect(adj.curve).toBeUndefined();
+    expect(skip.curve).toBeDefined();
+    const intake = out.nodes.find((n) => n.id === "intake")!;
+    const closed = out.nodes.find((n) => n.id === "closed")!;
+    // control point is midway in x and bowed above the shared row in y
+    expect(skip.curve!.cx).toBeCloseTo((intake.x + closed.x) / 2);
+    expect(skip.curve!.cy).toBeLessThan(intake.y);
+  });
 });

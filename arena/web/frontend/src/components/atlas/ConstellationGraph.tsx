@@ -37,7 +37,8 @@ export function ConstellationGraph({
   return (
     <svg
       viewBox={`0 0 ${width} ${height}`}
-      width="100%"
+      width={width}
+      height={height}
       preserveAspectRatio="xMidYMid meet"
       style={{ display: 'block', ...style }}
       {...rest}
@@ -47,22 +48,45 @@ export function ConstellationGraph({
         if (!a || !b) return null;
         const goldEdge = (byId[e.to] && (byId[e.to].kind === 'output')) || e.gold;
         const opacity = e.dim ? 0.3 : (goldEdge ? 0.55 : 0.45);
-        const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+        const stroke = goldEdge ? 'var(--gold-500)' : 'var(--starlight-500)';
+        // Label sits on the arc apex for a curved (skip-layer) edge, else just
+        // above the straight line's midpoint.
+        const lx = e.curve ? e.curve.cx : (a.x + b.x) / 2;
+        const ly = e.curve ? e.curve.cy - 2 : (a.y + b.y) / 2 - 5;
         return (
           <Fragment key={`e${i}`}>
-            <line
-              x1={a.x} y1={a.y} x2={b.x} y2={b.y}
-              stroke={goldEdge ? 'var(--gold-500)' : 'var(--starlight-500)'}
-              strokeWidth={1.2}
-              opacity={opacity}
-              strokeDasharray={e.dashed ? '3 5' : undefined}
-            />
+            {e.curve ? (
+              <path
+                d={`M ${a.x} ${a.y} Q ${e.curve.cx} ${e.curve.cy} ${b.x} ${b.y}`}
+                fill="none"
+                stroke={stroke}
+                strokeWidth={1.2}
+                opacity={opacity}
+                strokeDasharray={e.dashed ? '3 5' : undefined}
+              />
+            ) : (
+              <line
+                x1={a.x} y1={a.y} x2={b.x} y2={b.y}
+                stroke={stroke}
+                strokeWidth={1.2}
+                opacity={opacity}
+                strokeDasharray={e.dashed ? '3 5' : undefined}
+              />
+            )}
             {e.label && (
               <text
-                x={mx} y={my}
+                x={lx} y={ly}
                 textAnchor="middle"
                 opacity={opacity}
-                style={{ font: '500 8px var(--font-mono)', fill: 'var(--star-900)' }}
+                style={{
+                  font: '500 10px var(--font-mono)',
+                  fill: 'var(--star-500)',
+                  // halo so the label stays readable where it crosses the wayfinding line
+                  stroke: 'var(--surface)',
+                  strokeWidth: 3,
+                  strokeLinejoin: 'round',
+                  paintOrder: 'stroke',
+                }}
               >
                 {e.label}
               </text>
@@ -102,9 +126,16 @@ export function ConstellationGraph({
             )}
             {showLabels && n.label && (
               <text
-                x={cx} y={cy + k.r * 2.4 + 12}
+                x={cx} y={cy + k.r * 2.4 + 15}
                 textAnchor="middle"
-                style={{ font: '500 9px var(--font-mono)', fill: 'var(--star-900)' }}
+                style={{
+                  font: '600 12px var(--font-mono)',
+                  fill: 'var(--star-300)',
+                  stroke: 'var(--surface)',
+                  strokeWidth: 3,
+                  strokeLinejoin: 'round',
+                  paintOrder: 'stroke',
+                }}
               >
                 {n.label}
               </text>
