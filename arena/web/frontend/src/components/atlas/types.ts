@@ -10,3 +10,9 @@ export interface MetricSpec {
   tone?: "default" | "healthy" | "pending" | "error" | "gold";
   dot?: "healthy" | "pending" | "error";
 }
+
+export interface TerminalLine {
+  type: "command" | "cmd" | "comment" | "muted" | "output" | "flag" | "path" | "success" | "error" | "warn";
+  text: string;
+  prompt?: string;
+}
