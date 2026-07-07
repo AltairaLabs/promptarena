@@ -156,19 +156,69 @@ func dedupeEdges(edges []WorkflowGraphEdge) []WorkflowGraphEdge {
 // (composition.Validate enforces step id uniqueness within a composition,
 // including nested parallel.branches, so the prefix alone is enough).
 //
-// Top-level steps with no DependsOn are treated as the composition's entry
-// points and get an edge from the state node itself. Nested branch steps
-// inside a parallel step's Branches never get a state-entry edge — they are
-// reached only via the parallel step's fan-out edge.
+// Edges follow how the runtime's composition engine actually executes the
+// step list (github.com/AltairaLabs/PromptKit/runtime/composition/engine):
+// top-level steps run in list order, so a step with no explicit DependsOn
+// implicitly follows whatever ran immediately before it in the flow —
+// *not* necessarily the literal previous list entry:
+//
+//   - The composition's entry point is only the first top-level step; it
+//     gets the sole edge from the state node itself.
+//   - A step with an explicit DependsOn always honors it instead of
+//     implicit sequencing.
+//   - A branch step's Then/Else targets get their edges from the branch
+//     (solid/dashed); they never additionally chain from the literal
+//     previous step, which would wrongly link one arm to the other (e.g.
+//     extract_paper -> extract_general).
+//   - Once both a branch's arms have been walked, the next step with no
+//     explicit DependsOn gets an implicit predecessor edge from *both*
+//     arms (the join), not just the last one.
+//   - A parallel step fans out to its branches; the next step with no
+//     explicit DependsOn implicitly follows the parallel step itself
+//     (the barrier/join), matching the runtime's own step-edge model
+//     (runtime/composition/validate.go's buildStepEdges advances its
+//     "prev" pointer over top-level steps only — nested parallel
+//     branches never update it).
+//
+// Nested branch steps inside a parallel step's Branches never get a
+// state-entry edge or implicit sequential edge — they are reached only via
+// the parallel step's fan-out edge (or an explicit DependsOn of their own).
 func expandComposition(stateName string, comp *composition.Composition) ([]WorkflowGraphNode, []WorkflowGraphEdge) {
 	prefix := func(id string) string { return stateName + "/" + id }
 
 	var nodes []WorkflowGraphNode
 	var edges []WorkflowGraphEdge
 
+	// armTarget marks step ids that are the then/else target of a top-level
+	// branch step. Such a step's sole implicit predecessor is the branch
+	// edge added below; it must never also chain from list order or the
+	// join frontier.
+	armTarget := make(map[string]bool)
+	for _, s := range comp.Steps {
+		if s != nil && s.Kind == composition.KindBranch {
+			if s.Then != "" {
+				armTarget[s.Then] = true
+			}
+			if s.Else != "" {
+				armTarget[s.Else] = true
+			}
+		}
+	}
+
+	// frontier is the implicit-predecessor set for whichever top-level step
+	// comes next without its own DependsOn. A branch step seeds it with its
+	// arms (refined below as each arm is actually walked); a parallel step
+	// sets it to itself; a plain leaf step sets it to itself.
+	var frontier []string
+	// openArms tracks branch arms seeded into frontier that haven't been
+	// walked yet; joinAccum accumulates the arms actually walked so far so
+	// frontier can collapse to the true join once openArms empties.
+	openArms := map[string]bool{}
+	var joinAccum []string
+
 	var walk func(steps []*composition.Step, topLevel bool)
 	walk = func(steps []*composition.Step, topLevel bool) {
-		for _, step := range steps {
+		for i, step := range steps {
 			if step == nil {
 				continue
 			}
@@ -178,14 +228,32 @@ func expandComposition(stateName string, comp *composition.Composition) ([]Workf
 				Kind:  compositionStepKind(step.Kind),
 			})
 
-			if topLevel && len(step.DependsOn) == 0 {
+			switch {
+			case len(step.DependsOn) > 0:
+				deps := append([]string(nil), step.DependsOn...)
+				sort.Strings(deps)
+				for _, dep := range deps {
+					edges = append(edges, WorkflowGraphEdge{From: prefix(dep), To: prefix(step.ID)})
+				}
+			case topLevel && armTarget[step.ID]:
+				// Predecessor already added via the branch's then/else edge.
+			case topLevel && i == 0:
 				edges = append(edges, WorkflowGraphEdge{From: stateName, To: prefix(step.ID)})
+			case topLevel:
+				for _, from := range frontier {
+					edges = append(edges, WorkflowGraphEdge{From: prefix(from), To: prefix(step.ID)})
+				}
 			}
 
-			deps := append([]string(nil), step.DependsOn...)
-			sort.Strings(deps)
-			for _, dep := range deps {
-				edges = append(edges, WorkflowGraphEdge{From: prefix(dep), To: prefix(step.ID)})
+			// Resolve this step against any pending branch join.
+			resolvedArm := false
+			if topLevel && openArms[step.ID] {
+				delete(openArms, step.ID)
+				joinAccum = append(joinAccum, step.ID)
+				resolvedArm = true
+				if len(openArms) == 0 {
+					frontier = append([]string(nil), joinAccum...)
+				}
 			}
 
 			switch step.Kind {
@@ -195,6 +263,16 @@ func expandComposition(stateName string, comp *composition.Composition) ([]Workf
 				}
 				if step.Else != "" {
 					edges = append(edges, WorkflowGraphEdge{From: prefix(step.ID), To: prefix(step.Else), Dashed: true})
+				}
+				if topLevel {
+					arms := distinctNonEmpty(step.Then, step.Else)
+					newOpen := make(map[string]bool, len(arms))
+					for _, a := range arms {
+						newOpen[a] = true
+					}
+					openArms = newOpen
+					joinAccum = nil
+					frontier = arms
 				}
 			case composition.KindParallel:
 				branches := make([]*composition.Step, 0, len(step.Branches))
@@ -209,6 +287,22 @@ func expandComposition(stateName string, comp *composition.Composition) ([]Workf
 					edges = append(edges, WorkflowGraphEdge{From: prefix(step.ID), To: prefix(b.ID)})
 				}
 				walk(step.Branches, false)
+				if topLevel {
+					frontier = []string{step.ID}
+					openArms = map[string]bool{}
+					joinAccum = nil
+				}
+			default:
+				// Plain leaf step (prompt/agent/tool). If it just resolved a
+				// pending branch join (whether or not that closed it out),
+				// frontier bookkeeping above already reflects the right
+				// state -- leave it alone. Otherwise this step becomes the
+				// new single-node frontier for whatever follows.
+				if topLevel && !resolvedArm {
+					frontier = []string{step.ID}
+					openArms = map[string]bool{}
+					joinAccum = nil
+				}
 			}
 		}
 	}
@@ -227,6 +321,21 @@ func expandComposition(stateName string, comp *composition.Composition) ([]Workf
 	})
 
 	return nodes, edges
+}
+
+// distinctNonEmpty returns the non-empty, de-duplicated members of a and b,
+// preserving order (a before b). Used to collapse a branch step's then/else
+// targets into its join arms -- a and b are equal when a branch's then and
+// else point at the same step (an immediate converge).
+func distinctNonEmpty(a, b string) []string {
+	var out []string
+	if a != "" {
+		out = append(out, a)
+	}
+	if b != "" && b != a {
+		out = append(out, b)
+	}
+	return out
 }
 
 // compositionStepKind maps a composition.StepKind to the WorkflowGraphNode

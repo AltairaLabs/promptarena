@@ -399,6 +399,127 @@ func TestBuildWorkflowGraph_CompositionExpansion_ParallelFanOut(t *testing.T) {
 	}
 }
 
+func TestBuildWorkflowGraph_CompositionExpansion_ImplicitSequencing(t *testing.T) {
+	// document-analysis shape: classify(prompt) -> route(branch: then
+	// extract_paper / else extract_general) -> extract_paper(prompt) ->
+	// extract_general(prompt) -> meta(parallel: branches meta_summary,
+	// meta_keywords) -> synthesize(agent). None of the top-level steps
+	// declare depends_on -- the graph must be derived entirely from list
+	// order + branch/parallel structure, matching how the runtime's
+	// composition engine actually executes the step list.
+	cfg := &arenaconfig.Config{
+		Workflow: map[string]any{
+			"version": 2, "entry": "intake",
+			"states": map[string]any{
+				"intake": map[string]any{"on_event": map[string]any{"go": "analyzing"}},
+				"analyzing": map[string]any{
+					"orchestration": "composition",
+					"composition":   "document-analysis",
+					"terminal":      true,
+				},
+			},
+		},
+		Compositions: map[string]any{
+			"document-analysis": map[string]any{
+				"version": 1,
+				"steps": []map[string]any{
+					{"id": "classify", "kind": "prompt"},
+					{
+						"id": "route", "kind": "branch",
+						"predicate": map[string]any{"path": "classify.output.type", "op": "equals", "value": "paper"},
+						"then":      "extract_paper", "else": "extract_general",
+					},
+					{"id": "extract_paper", "kind": "prompt"},
+					{"id": "extract_general", "kind": "prompt"},
+					{
+						"id": "meta", "kind": "parallel",
+						"reduce": map[string]any{"strategy": "append", "into": "results"},
+						"branches": []map[string]any{
+							{"id": "meta_summary", "kind": "tool", "tool": "echo"},
+							{"id": "meta_keywords", "kind": "tool", "tool": "echo"},
+						},
+					},
+					{"id": "synthesize", "kind": "agent", "termination": map[string]any{"max_steps": 3}},
+				},
+			},
+		},
+	}
+
+	g, err := BuildWorkflowGraph(cfg)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	hasEdge := func(from, to string, dashed bool) bool {
+		for _, e := range g.Edges {
+			if e.From == from && e.To == to && e.Dashed == dashed {
+				return true
+			}
+		}
+		return false
+	}
+	countEdgesFrom := func(from string) int {
+		n := 0
+		for _, e := range g.Edges {
+			if e.From == from {
+				n++
+			}
+		}
+		return n
+	}
+
+	// State entry edge: only the composition's first step, not a star to
+	// every step.
+	if countEdgesFrom("analyzing") != 1 {
+		t.Fatalf("want exactly 1 out-edge from analyzing, got %d in %+v", countEdgesFrom("analyzing"), g.Edges)
+	}
+	if !hasEdge("analyzing", "analyzing/classify", false) {
+		t.Fatalf("want analyzing->analyzing/classify entry edge, got %+v", g.Edges)
+	}
+
+	// Implicit sequential edge.
+	if !hasEdge("analyzing/classify", "analyzing/route", false) {
+		t.Fatalf("want implicit sequential edge classify->route, got %+v", g.Edges)
+	}
+
+	// Branch then/else edges.
+	if !hasEdge("analyzing/route", "analyzing/extract_paper", false) {
+		t.Fatalf("want solid then edge route->extract_paper, got %+v", g.Edges)
+	}
+	if !hasEdge("analyzing/route", "analyzing/extract_general", true) {
+		t.Fatalf("want dashed else edge route->extract_general, got %+v", g.Edges)
+	}
+
+	// Branch join: both arms converge on the next step.
+	if !hasEdge("analyzing/extract_paper", "analyzing/meta", false) {
+		t.Fatalf("want branch-join edge extract_paper->meta, got %+v", g.Edges)
+	}
+	if !hasEdge("analyzing/extract_general", "analyzing/meta", false) {
+		t.Fatalf("want branch-join edge extract_general->meta, got %+v", g.Edges)
+	}
+
+	// Naive list-order chaining across the branch's arms must NOT appear.
+	if hasEdge("analyzing/extract_paper", "analyzing/extract_general", false) ||
+		hasEdge("analyzing/extract_paper", "analyzing/extract_general", true) {
+		t.Fatalf("must not have a naive edge extract_paper->extract_general, got %+v", g.Edges)
+	}
+
+	// Parallel fan-out.
+	if !hasEdge("analyzing/meta", "analyzing/meta_summary", false) {
+		t.Fatalf("want fan-out edge meta->meta_summary, got %+v", g.Edges)
+	}
+	if !hasEdge("analyzing/meta", "analyzing/meta_keywords", false) {
+		t.Fatalf("want fan-out edge meta->meta_keywords, got %+v", g.Edges)
+	}
+
+	// Parallel join to the next step: modeled from the parallel step itself
+	// (the barrier/join), matching the runtime's own top-level "prev"
+	// sequencing -- nested parallel branches never advance it.
+	if !hasEdge("analyzing/meta", "analyzing/synthesize", false) {
+		t.Fatalf("want parallel-join edge meta->synthesize, got %+v", g.Edges)
+	}
+}
+
 func TestBuildWorkflowGraph_CompositionExpansion_MissingCompositions(t *testing.T) {
 	cfg := &arenaconfig.Config{
 		Workflow: map[string]any{
