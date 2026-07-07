@@ -11,6 +11,7 @@ import (
 
 	"github.com/AltairaLabs/PromptKit/runtime/deploy"
 	"github.com/AltairaLabs/promptarena/arena/deploy/flow"
+	"github.com/AltairaLabs/promptarena/arena/tui/panels"
 	"github.com/AltairaLabs/promptarena/arena/tui/theme"
 	"github.com/AltairaLabs/promptarena/arena/tui/viewmodels"
 	"github.com/AltairaLabs/promptarena/arena/tui/views"
@@ -76,6 +77,18 @@ type planReadyMsg struct {
 	req  *deploy.PlanRequest
 }
 
+// applyEventMsg carries a single *deploy.ApplyEvent delivered by the
+// deploy.ApplyCallback passed to Session.Apply from startApply. Because the
+// adapter protocol does not stream — Apply blocks until the adapter
+// finishes and only then replays every event in a tight burst just before
+// returning — a whole sequence of applyEventMsg values typically lands
+// back-to-back, immediately followed by applyDoneMsg.
+type applyEventMsg struct{ event *deploy.ApplyEvent }
+
+// applyDoneMsg carries the result of the background Session.Apply call
+// started from handleConfirmKey via startApply.
+type applyDoneMsg struct{ err error }
+
 // DeployPage is the guided deploy wizard: preflight check, adapter login,
 // plan, confirm, apply, and status, driven by the arena/deploy/flow package.
 type DeployPage struct {
@@ -122,6 +135,23 @@ type DeployPage struct {
 	// again.
 	confirmInput    string
 	confirmMismatch bool
+
+	// Apply-state fields, populated by the flow.Lock + Session.Apply goroutine
+	// started from handleConfirmKey via startApply and delivered through
+	// p.send. applyCancel cancels the goroutine's context from Close so a
+	// popped page doesn't leave the lock/apply call running unsupervised.
+	// applyResults accumulates every *deploy.ResourceResult carried by a
+	// "resource" applyEventMsg, in arrival order; applyRows is the
+	// views.DeployResourceRow projection rebuilt from applyResults each time
+	// it grows, so the table and the golden/unit tests can read it directly.
+	// applyLogEntries accumulates a panels.LogEntry per event that carries a
+	// Message (progress/error/complete), rendered through applyLogs.
+	applyCancel     context.CancelFunc
+	applying        bool
+	applyResults    []*deploy.ResourceResult
+	applyRows       []views.DeployResourceRow
+	applyLogs       *panels.LogsPanel
+	applyLogEntries []panels.LogEntry
 }
 
 // NewDeployPage builds the deploy wizard page for ctx. It is the entry point
@@ -134,7 +164,8 @@ func NewDeployPage(ctx *AppContext) Page {
 			ConfigPath: ctx.ConfigPath,
 			ProjectDir: ctx.ProjectDir(),
 		},
-		spinner: newLoginSpinner(),
+		spinner:   newLoginSpinner(),
+		applyLogs: panels.NewLogsPanel(),
 	}
 }
 
@@ -157,7 +188,12 @@ func (p *DeployPage) Title() string { return "Deploy" }
 // in-flight planning goroutine and closes the flow.Session opened by
 // startPlan — the session holds an adapter subprocess that MUST be released
 // when the page is popped, however the wizard got here (plan failure, esc
-// during planning/plan/confirm, or a later successful apply).
+// during planning/plan/confirm, or a later successful apply). It also cancels
+// any in-flight startApply goroutine; that cancellation is best-effort since
+// Apply is a single blocking call with no intermediate abandon checkpoint
+// (unlike Open/Plan), so the adapter subprocess may still be mid-Apply when
+// sess is closed just below — exactly the same race already accepted for an
+// in-flight Plan call.
 func (p *DeployPage) Close() {
 	if p.loginCancel != nil {
 		p.loginCancel()
@@ -166,6 +202,10 @@ func (p *DeployPage) Close() {
 	if p.planCancel != nil {
 		p.planCancel()
 		p.planCancel = nil
+	}
+	if p.applyCancel != nil {
+		p.applyCancel()
+		p.applyCancel = nil
 	}
 	if p.sess != nil {
 		_ = p.sess.Close()
@@ -249,8 +289,20 @@ func (p *DeployPage) Update(msg tea.Msg) (Page, tea.Cmd) {
 		p.collapseNoChange = true
 		p.state = deployStatePlan
 		return p, nil
+	case applyEventMsg:
+		p.handleApplyEvent(m.event)
+		return p, nil
+	case applyDoneMsg:
+		p.applying = false
+		if m.err != nil {
+			p.err = m.err
+			p.state = deployStateError
+		} else {
+			p.state = deployStateApplyResult
+		}
+		return p, nil
 	case spinner.TickMsg:
-		if p.state != deployStateLogin && p.state != deployStatePlanning {
+		if p.state != deployStateLogin && p.state != deployStatePlanning && p.state != deployStateApplying {
 			return p, nil
 		}
 		var cmd tea.Cmd
@@ -273,9 +325,11 @@ func (p *DeployPage) handleKey(msg tea.KeyMsg) (Page, tea.Cmd) {
 		return p.handlePlanKey(msg)
 	case deployStateConfirm:
 		return p.handleConfirmKey(msg)
-	// deployStatePlanning has no keys of its own (the background plan cmd
-	// runs to completion or error). deployStateApplying, deployStateApplyResult,
-	// deployStateStatus, and deployStateError key handling arrive in later
+	case deployStateApplyResult:
+		return p.handleApplyResultKey(msg)
+	// deployStatePlanning and deployStateApplying have no keys of their own
+	// (the background plan/apply cmd runs to completion or error).
+	// deployStateStatus and deployStateError key handling arrive in later
 	// tasks (5.x).
 	default:
 		return p, nil
@@ -375,9 +429,9 @@ func (p *DeployPage) handleConfirmKey(msg tea.KeyMsg) (Page, tea.Cmd) {
 	if p.pf.Env == flow.DefaultEnv {
 		if msg.Type == tea.KeyRunes && string(msg.Runes) == "y" {
 			p.state = deployStateApplying
-		} else {
-			p.state = deployStatePlan
+			return p, tea.Batch(p.startApply(), p.spinner.Tick)
 		}
+		p.state = deployStatePlan
 		return p, nil
 	}
 
@@ -386,9 +440,9 @@ func (p *DeployPage) handleConfirmKey(msg tea.KeyMsg) (Page, tea.Cmd) {
 		if p.confirmInput == p.pf.Env {
 			p.confirmMismatch = false
 			p.state = deployStateApplying
-		} else {
-			p.confirmMismatch = true
+			return p, tea.Batch(p.startApply(), p.spinner.Tick)
 		}
+		p.confirmMismatch = true
 	case tea.KeyBackspace:
 		if len(p.confirmInput) > 0 {
 			p.confirmInput = p.confirmInput[:len(p.confirmInput)-1]
@@ -505,6 +559,82 @@ func abandonIfCancelled(ctx context.Context, sess *flow.Session) bool {
 	return true
 }
 
+// startApply returns a tea.Cmd that starts a background goroutine which
+// acquires the deploy file lock for the project directory and runs
+// Session.Apply, exactly as startPlan starts flow.Open+Plan: the returned
+// tea.Cmd only launches the goroutine and returns nil, while the goroutine
+// streams every deploy.ApplyEvent back through p.send as an applyEventMsg and
+// reports the final result as applyDoneMsg. Locals are captured before the
+// goroutine starts and the goroutine never touches p.* directly (including
+// inside the deploy.ApplyCallback), mirroring startLogin/startPlan's race
+// discipline. If the lock is already held (another deploy in progress), the
+// goroutine reports the contention error as a deployErrMsg and never calls
+// Apply.
+func (p *DeployPage) startApply() tea.Cmd {
+	ctx, cancel := context.WithCancel(context.Background())
+	p.applyCancel = cancel
+	p.applying = true
+	p.applyResults = nil
+	p.applyRows = nil
+	p.applyLogEntries = nil
+
+	projectDir := p.opts.ProjectDir
+	sess := p.sess
+	req := p.planReq
+	send := p.send
+
+	return func() tea.Msg {
+		go func() {
+			release, err := flow.Lock(projectDir)
+			if err != nil {
+				send(deployErrMsg{err: err})
+				return
+			}
+			defer release()
+
+			cb := func(e *deploy.ApplyEvent) error {
+				send(applyEventMsg{event: e})
+				return nil
+			}
+			send(applyDoneMsg{err: sess.Apply(ctx, req, cb)})
+		}()
+		return nil
+	}
+}
+
+// handleApplyEvent folds a single *deploy.ApplyEvent from the Session.Apply
+// callback into the page's apply-state: a "resource" event appends to
+// applyResults and rebuilds applyRows via views.DeployRowsFromResults, and
+// any event carrying a Message (progress/error/complete, and resource events
+// that also set Message) appends a panels.LogEntry so the logs panel shows
+// the same narrative the adapter streamed.
+func (p *DeployPage) handleApplyEvent(e *deploy.ApplyEvent) {
+	if e == nil {
+		return
+	}
+	if e.Type == "resource" && e.Resource != nil {
+		p.applyResults = append(p.applyResults, e.Resource)
+		p.applyRows = views.DeployRowsFromResults(p.applyResults)
+	}
+	if e.Message != "" {
+		level := "info"
+		if e.Type == "error" {
+			level = "error"
+		}
+		p.applyLogEntries = append(p.applyLogEntries, panels.LogEntry{Level: level, Message: e.Message})
+	}
+}
+
+// handleApplyResultKey handles key input on the apply-result screen. 's'
+// advances to deployStateStatus (Task 5.3 fleshes out the status fetch
+// itself); every other key is ignored.
+func (p *DeployPage) handleApplyResultKey(msg tea.KeyMsg) (Page, tea.Cmd) {
+	if msg.Type == tea.KeyRunes && string(msg.Runes) == "s" {
+		p.state = deployStateStatus
+	}
+	return p, nil
+}
+
 // View implements Page.
 func (p *DeployPage) View() string {
 	body := func(_ int) string {
@@ -519,6 +649,10 @@ func (p *DeployPage) View() string {
 			return p.viewPlan(p.w)
 		case deployStateConfirm:
 			return p.viewConfirm(p.w)
+		case deployStateApplying:
+			return p.viewApplying(p.w)
+		case deployStateApplyResult:
+			return p.viewApplyResult(p.w)
 		case deployStateError:
 			return p.viewError()
 		default:
@@ -553,6 +687,8 @@ func (p *DeployPage) keyBindings() []views.KeyBinding {
 		kb = append([]views.KeyBinding{{Keys: "y", Description: "confirm"}}, kb...)
 	case p.state == deployStateConfirm:
 		kb = append([]views.KeyBinding{{Keys: keyEnter, Description: "confirm"}}, kb...)
+	case p.state == deployStateApplyResult:
+		kb = append([]views.KeyBinding{{Keys: "s", Description: "status"}}, kb...)
 	case p.state == deployStatePreflight && p.pf != nil:
 		// Prepend in priority order so the most relevant action reads first.
 		if p.pf.Ready() {
@@ -702,6 +838,61 @@ func (p *DeployPage) viewConfirmTyped(width int) string {
 	}
 	body := strings.Join(lines, "\n")
 	return theme.BorderedBoxStyle.MaxWidth(width).Render(body)
+}
+
+// applyLogsHeight is the fixed height handed to applyLogs.Update — the
+// resource table above it is height-bounded by views.RenderDeployResources
+// (deployTableHeight rows), so the logs panel gets a modest, constant slice
+// of the remaining vertical space rather than a layout-computed rect (there
+// is no panels.Layout in play here, unlike pages.MainPage).
+const applyLogsHeight = 10
+
+// viewApplying renders the applying step. Session.Apply does not stream —
+// the adapter blocks until it finishes and only then replays every event in
+// a burst just before returning — so the screen shows a spinner and
+// "Applying…" until the first "resource" event lands (applyRows is empty),
+// then switches to the resource table + logs for the remainder of the
+// (typically near-instant) burst.
+func (p *DeployPage) viewApplying(width int) string {
+	if p.applying && len(p.applyRows) == 0 {
+		line := p.spinner.View() + " " + theme.ValueStyle.Render("Applying…")
+		return theme.BorderedBoxStyle.MaxWidth(width).Render(line)
+	}
+	return p.viewApplyProgress(width)
+}
+
+// viewApplyProgress renders the resource table (as filled in so far by
+// applyRows) followed by the logs panel, shared by the mid-burst
+// viewApplying and the terminal viewApplyResult.
+func (p *DeployPage) viewApplyProgress(width int) string {
+	table := views.RenderDeployResources(p.applyRows, width)
+	p.applyLogs.Update(p.applyLogEntries, width, applyLogsHeight)
+	logs := p.applyLogs.View(false)
+	return lipgloss.JoinVertical(lipgloss.Left, table, logs)
+}
+
+// viewApplyResult renders the terminal apply-result screen: a pass/fail
+// headline over the same resource table + logs used mid-burst by
+// viewApplying, plus (via keyBindings) an [s] hint to advance to
+// deployStateStatus.
+func (p *DeployPage) viewApplyResult(width int) string {
+	return lipgloss.JoinVertical(lipgloss.Left, p.applyResultHeadline(), "", p.viewApplyProgress(width))
+}
+
+// applyResultHeadline summarizes the completed apply: success in
+// theme.SuccessStyle, or the failure count in theme.ErrorStyle if any
+// applyResults entry has Status "failed".
+func (p *DeployPage) applyResultHeadline() string {
+	failed := 0
+	for _, r := range p.applyResults {
+		if r.Status == "failed" {
+			failed++
+		}
+	}
+	if failed > 0 {
+		return theme.ErrorStyle.Render(fmt.Sprintf("Apply completed with %d failure(s)", failed))
+	}
+	return theme.SuccessStyle.Render("Apply completed successfully")
 }
 
 // preflightEnvLine renders the target environment. flow.DefaultEnv renders

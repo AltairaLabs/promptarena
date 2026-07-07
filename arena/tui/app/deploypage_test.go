@@ -15,7 +15,9 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/deploy"
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 	"github.com/AltairaLabs/promptarena/arena/deploy/flow"
+	"github.com/AltairaLabs/promptarena/arena/tui/panels"
 	"github.com/AltairaLabs/promptarena/arena/tui/viewmodels"
+	"github.com/AltairaLabs/promptarena/arena/tui/views"
 )
 
 // loginMsgSink is a thread-safe collector for the messages a DeployPage
@@ -670,6 +672,197 @@ func TestGoldenDeployPlan_WithChanges(t *testing.T) {
 		},
 	}
 	p := &DeployPage{state: deployStatePlan, collapseNoChange: true, planDiff: viewmodels.BuildPlanDiff(plan)}
+	p.SetSize(80, 24)
+	out := stripANSI(p.View())
+	teatest.RequireEqualOutput(t, []byte(out))
+}
+
+// resourceResultEvent builds a "resource" *deploy.ApplyEvent, mirroring the
+// shape delivered by a real Session.Apply callback: the event's own Message
+// narrates the outcome in addition to the structured Resource.
+func resourceResultEvent(message string, r *deploy.ResourceResult) *deploy.ApplyEvent {
+	return &deploy.ApplyEvent{Type: "resource", Message: message, Resource: r}
+}
+
+// TestApply_EventSequenceBuildsRowsAndLogsThenAdvances feeds the burst of
+// applyEventMsg values Session.Apply's callback delivers just before
+// returning (Apply does not stream — see startApply's doc comment) followed
+// by a successful applyDoneMsg, and verifies: applyRows picks up both
+// resources with the right status symbols (flow.StatusSymbol "+"/"!"), the
+// logs panel captured every event's message in order, and the page advances
+// to deployStateApplyResult with applying cleared.
+func TestApply_EventSequenceBuildsRowsAndLogsThenAdvances(t *testing.T) {
+	p := &DeployPage{state: deployStateApplying, applying: true, applyLogs: panels.NewLogsPanel()}
+
+	np, _ := p.Update(applyEventMsg{event: resourceResultEvent(
+		"created agent_runtime.bot",
+		&deploy.ResourceResult{Type: "agent_runtime", Name: "bot", Action: deploy.ActionCreate, Status: "created"},
+	)})
+	dp := np.(*DeployPage)
+
+	np2, _ := dp.Update(applyEventMsg{event: resourceResultEvent(
+		"failed a2a_endpoint.ep: quota exceeded",
+		&deploy.ResourceResult{Type: "a2a_endpoint", Name: "ep", Action: deploy.ActionCreate, Status: "failed", Detail: "quota exceeded"},
+	)})
+	dp2 := np2.(*DeployPage)
+
+	np3, _ := dp2.Update(applyEventMsg{event: &deploy.ApplyEvent{Type: "complete", Message: "apply finished"}})
+	dp3 := np3.(*DeployPage)
+
+	if len(dp3.applyRows) != 2 {
+		t.Fatalf("applyRows = %d rows, want 2: %+v", len(dp3.applyRows), dp3.applyRows)
+	}
+	if dp3.applyRows[0].Symbol != "+" {
+		t.Fatalf("applyRows[0].Symbol = %q, want %q", dp3.applyRows[0].Symbol, "+")
+	}
+	if dp3.applyRows[1].Symbol != "!" {
+		t.Fatalf("applyRows[1].Symbol = %q, want %q", dp3.applyRows[1].Symbol, "!")
+	}
+
+	wantMsgs := []string{"created agent_runtime.bot", "failed a2a_endpoint.ep: quota exceeded", "apply finished"}
+	if len(dp3.applyLogEntries) != len(wantMsgs) {
+		t.Fatalf("applyLogEntries = %d entries, want %d: %+v", len(dp3.applyLogEntries), len(wantMsgs), dp3.applyLogEntries)
+	}
+	for i, want := range wantMsgs {
+		if dp3.applyLogEntries[i].Message != want {
+			t.Fatalf("applyLogEntries[%d].Message = %q, want %q", i, dp3.applyLogEntries[i].Message, want)
+		}
+	}
+
+	np4, _ := dp3.Update(applyDoneMsg{err: nil})
+	dp4 := np4.(*DeployPage)
+	if dp4.state != deployStateApplyResult {
+		t.Fatalf("state = %v, want deployStateApplyResult", dp4.state)
+	}
+	if dp4.applying {
+		t.Fatal("expected applying to be cleared once applyDoneMsg lands")
+	}
+}
+
+// TestApply_DoneMsgWithErrTransitionsToError verifies a failed Session.Apply
+// call surfaces its error and lands the wizard in deployStateError (unlike
+// a recoverable login failure, a failed apply is terminal — infrastructure
+// may be left partially applied and the operator needs the full error).
+func TestApply_DoneMsgWithErrTransitionsToError(t *testing.T) {
+	p := &DeployPage{state: deployStateApplying, applying: true}
+	wantErr := errors.New("apply failed: adapter exited")
+	np, _ := p.Update(applyDoneMsg{err: wantErr})
+	dp := np.(*DeployPage)
+	if dp.state != deployStateError {
+		t.Fatalf("state = %v, want deployStateError", dp.state)
+	}
+	if dp.err == nil || dp.err.Error() != wantErr.Error() {
+		t.Fatalf("err = %v, want %v", dp.err, wantErr)
+	}
+	if dp.applying {
+		t.Fatal("expected applying to be cleared even on error")
+	}
+}
+
+// TestConfirm_YKeyStartsApplyGoroutine verifies pressing 'y' in the
+// default-env confirm screen both advances to deployStateApplying and
+// returns a non-nil cmd (startApply's goroutine-launching tea.Cmd, batched
+// with the spinner tick), setting applying immediately (synchronously,
+// before the goroutine itself has run).
+func TestConfirm_YKeyStartsApplyGoroutine(t *testing.T) {
+	p := &DeployPage{state: deployStateConfirm, pf: &flow.Preflight{Env: "default"}, spinner: newLoginSpinner()}
+	np, cmd := p.handleConfirmKey(keyRunes("y"))
+	dp := np.(*DeployPage)
+	if dp.state != deployStateApplying {
+		t.Fatalf("state = %v, want deployStateApplying", dp.state)
+	}
+	if !dp.applying {
+		t.Fatal("expected applying to be set synchronously by startApply")
+	}
+	if cmd == nil {
+		t.Fatal("expected a non-nil cmd to launch the apply goroutine")
+	}
+}
+
+// TestDeployPage_StartApply_LockContentionReportsErr drives the real
+// startApply goroutine wiring against a lock already held by the test
+// itself, so flow.Lock fails with contention and the goroutine must report
+// deployErrMsg without ever calling Session.Apply — p.sess is left nil on
+// purpose; if startApply's goroutine reached sess.Apply despite the
+// contention, this would panic on a nil pointer and fail the test.
+func TestDeployPage_StartApply_LockContentionReportsErr(t *testing.T) {
+	dir := t.TempDir()
+	release, err := flow.Lock(dir)
+	if err != nil {
+		t.Fatalf("failed to acquire test lock: %v", err)
+	}
+	defer release()
+
+	sink := &loginMsgSink{}
+	p := &DeployPage{
+		opts: flow.Options{ProjectDir: dir},
+		send: sink.send,
+	}
+	cmd := p.startApply()
+	if cmd == nil {
+		t.Fatal("expected a non-nil cmd from startApply")
+	}
+	cmd() // starts the goroutine; the cmd itself returns nil
+
+	deadline := time.Now().Add(5 * time.Second)
+	var got tea.Msg
+	for time.Now().Before(deadline) && got == nil {
+		if msgs := sink.snapshot(); len(msgs) > 0 {
+			got = msgs[0]
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	errMsg, ok := got.(deployErrMsg)
+	if !ok {
+		t.Fatalf("expected deployErrMsg from lock contention, got %#v", got)
+	}
+	if !strings.Contains(errMsg.err.Error(), "lock") {
+		t.Fatalf("unexpected error: %v", errMsg.err)
+	}
+}
+
+// TestDeployPage_Close_CancelsApplyGoroutine verifies Close cancels an
+// in-flight startApply context, mirroring TestDeployPage_Close_CancelsLoginGoroutine.
+func TestDeployPage_Close_CancelsApplyGoroutine(t *testing.T) {
+	canceled := false
+	p := &DeployPage{
+		state:       deployStateApplying,
+		applyCancel: func() { canceled = true },
+	}
+	p.Close()
+	if !canceled {
+		t.Fatal("expected Close to cancel the in-flight apply")
+	}
+	if p.applyCancel != nil {
+		t.Fatal("expected Close to nil out applyCancel")
+	}
+}
+
+// TestViewApplying_SpinnerWhileNoRowsYet verifies the applying screen shows
+// the spinner + "Applying…" before any resource rows have arrived.
+func TestViewApplying_SpinnerWhileNoRowsYet(t *testing.T) {
+	p := &DeployPage{state: deployStateApplying, applying: true, spinner: newLoginSpinner(), applyLogs: panels.NewLogsPanel()}
+	p.SetSize(80, 24)
+	out := stripANSI(p.View())
+	if !strings.Contains(out, "Applying") {
+		t.Fatalf("expected an Applying… spinner line:\n%s", out)
+	}
+}
+
+// TestGoldenDeployApply_Result captures a stable snapshot of the terminal
+// apply-result screen (post-burst): one created and one failed resource in
+// the table, with the failure headline.
+func TestGoldenDeployApply_Result(t *testing.T) {
+	results := []*deploy.ResourceResult{
+		{Type: "agent_runtime", Name: "bot", Status: "created"},
+		{Type: "a2a_endpoint", Name: "ep", Status: "failed", Detail: "quota exceeded"},
+	}
+	p := &DeployPage{
+		state:        deployStateApplyResult,
+		applyResults: results,
+		applyRows:    views.DeployRowsFromResults(results),
+		applyLogs:    panels.NewLogsPanel(),
+	}
 	p.SetSize(80, 24)
 	out := stripANSI(p.View())
 	teatest.RequireEqualOutput(t, []byte(out))
