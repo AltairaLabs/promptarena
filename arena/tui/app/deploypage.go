@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
@@ -37,6 +38,19 @@ type preflightDoneMsg struct{ pf *flow.Preflight }
 // deployErrMsg carries an error encountered while driving the wizard.
 type deployErrMsg struct{ err error }
 
+// loginStatusMsg carries a progress update from the background flow.Login
+// goroutine. text is the human-readable status line ("Waiting for
+// authorization…"); url is set only on the update that carries the OAuth
+// authorize URL (flow.LoginHooks.OnAuthorizeURL), so it can persist as the
+// headless-fallback link even after later status updates change text.
+type loginStatusMsg struct {
+	text string
+	url  string
+}
+
+// loginDoneMsg carries the result of the background flow.Login goroutine.
+type loginDoneMsg struct{ err error }
+
 // DeployPage is the guided deploy wizard: preflight check, adapter login,
 // plan, confirm, apply, and status, driven by the arena/deploy/flow package.
 type DeployPage struct {
@@ -49,6 +63,14 @@ type DeployPage struct {
 	opts flow.Options
 	pf   *flow.Preflight
 	err  error
+
+	// Login-state fields, populated by the flow.Login goroutine started from
+	// handlePreflightKey via startLogin and delivered through p.send.
+	spinner     spinner.Model
+	loginStatus string
+	loginURL    string
+	loginErr    error
+	loginCancel context.CancelFunc
 }
 
 // NewDeployPage builds the deploy wizard page for ctx. It is the entry point
@@ -61,7 +83,16 @@ func NewDeployPage(ctx *AppContext) Page {
 			ConfigPath: ctx.ConfigPath,
 			ProjectDir: ctx.ProjectDir(),
 		},
+		spinner: newLoginSpinner(),
 	}
+}
+
+// newLoginSpinner builds the spinner model used by the login screen.
+func newLoginSpinner() spinner.Model {
+	return spinner.New(
+		spinner.WithSpinner(spinner.MiniDot),
+		spinner.WithStyle(lipgloss.NewStyle().Foreground(lipgloss.Color(theme.ColorPrimary))),
+	)
 }
 
 // Title implements Page.
@@ -103,6 +134,32 @@ func (p *DeployPage) Update(msg tea.Msg) (Page, tea.Cmd) {
 	case deployErrMsg:
 		p.err, p.state = m.err, deployStateError
 		return p, nil
+	case loginStatusMsg:
+		p.loginStatus = m.text
+		if m.url != "" {
+			p.loginURL = m.url
+		}
+		return p, nil
+	case loginDoneMsg:
+		p.loginCancel = nil
+		if m.err != nil {
+			// Recoverable: surface the error on the preflight screen rather
+			// than dead-ending the wizard in deployStateError, so the
+			// operator can retry login ('l') or the probe ('r') directly.
+			p.loginErr = m.err
+			p.state = deployStatePreflight
+			return p, nil
+		}
+		p.loginErr = nil
+		p.state = deployStatePreflight
+		return p, p.runPreflight()
+	case spinner.TickMsg:
+		if p.state != deployStateLogin {
+			return p, nil
+		}
+		var cmd tea.Cmd
+		p.spinner, cmd = p.spinner.Update(m)
+		return p, cmd
 	case tea.KeyMsg:
 		return p.handleKey(m)
 	}
@@ -114,9 +171,11 @@ func (p *DeployPage) handleKey(msg tea.KeyMsg) (Page, tea.Cmd) {
 	switch p.state {
 	case deployStatePreflight:
 		return p.handlePreflightKey(msg)
-	// deployStateLogin, deployStatePlanning, deployStatePlan, deployStateConfirm,
+	case deployStateLogin:
+		return p.handleLoginKey(msg)
+	// deployStatePlanning, deployStatePlan, deployStateConfirm,
 	// deployStateApplying, deployStateApplyResult, deployStateStatus, and
-	// deployStateError key handling arrive in later tasks (3.2, 4.x, 5.x).
+	// deployStateError key handling arrive in later tasks (4.x, 5.x).
 	default:
 		return p, nil
 	}
@@ -139,8 +198,7 @@ func (p *DeployPage) handlePreflightKey(msg tea.KeyMsg) (Page, tea.Cmd) {
 	case "l":
 		if p.pf.SupportsLogin && !p.pf.Authenticated {
 			p.state = deployStateLogin
-			// Phase 4 wires the actual login command; entering the state is
-			// enough for now.
+			return p, tea.Batch(p.startLogin(), p.spinner.Tick)
 		}
 	case "p":
 		if p.pf.Ready() {
@@ -149,9 +207,56 @@ func (p *DeployPage) handlePreflightKey(msg tea.KeyMsg) (Page, tea.Cmd) {
 			// enough for now.
 		}
 	case "r":
+		p.loginErr = nil
 		return p, p.runPreflight()
 	}
 	return p, nil
+}
+
+// handleLoginKey handles key input while the login screen is showing.
+// 'c' cancels the in-flight login and returns to preflight.
+func (p *DeployPage) handleLoginKey(msg tea.KeyMsg) (Page, tea.Cmd) {
+	if msg.Type != tea.KeyRunes {
+		return p, nil
+	}
+	if string(msg.Runes) == "c" {
+		if p.loginCancel != nil {
+			p.loginCancel()
+			p.loginCancel = nil
+		}
+		p.state = deployStatePreflight
+	}
+	return p, nil
+}
+
+// startLogin returns a tea.Cmd that starts flow.Login in a background
+// goroutine, exactly as RunPage.Activate starts ExecuteRuns: the returned
+// tea.Cmd only launches the goroutine and returns nil, while the goroutine
+// itself streams progress and its final result through p.send — the same
+// send handle stored by Activate (Task 3.1) and used by the run engine's
+// EventAdapter.
+func (p *DeployPage) startLogin() tea.Cmd {
+	ctx, cancel := context.WithCancel(context.Background())
+	p.loginCancel = cancel
+	p.loginStatus = "Starting login…"
+	p.loginURL = ""
+	p.loginErr = nil
+
+	provider := p.pf.Provider
+	opts := p.opts
+	send := p.send
+
+	return func() tea.Msg {
+		go func() {
+			hooks := flow.LoginHooks{
+				OnStatus:       func(s string) { send(loginStatusMsg{text: s}) },
+				OnAuthorizeURL: func(u string) { send(loginStatusMsg{text: "Waiting for authorization…", url: u}) },
+			}
+			err := flow.Login(ctx, provider, opts, hooks)
+			send(loginDoneMsg{err: err})
+		}()
+		return nil
+	}
 }
 
 // View implements Page.
@@ -160,6 +265,8 @@ func (p *DeployPage) View() string {
 		switch p.state {
 		case deployStatePreflight:
 			return p.viewPreflight(p.w)
+		case deployStateLogin:
+			return p.viewLogin(p.w)
 		case deployStateError:
 			return p.viewError()
 		default:
@@ -182,17 +289,19 @@ func (p *DeployPage) chrome() views.ChromeConfig {
 // keyBindings returns the footer key hints for the current state.
 func (p *DeployPage) keyBindings() []views.KeyBinding {
 	kb := []views.KeyBinding{{Keys: "esc", Description: "back"}}
-	if p.state != deployStatePreflight || p.pf == nil {
-		return kb
+	switch {
+	case p.state == deployStateLogin:
+		kb = append([]views.KeyBinding{{Keys: "c", Description: "cancel"}}, kb...)
+	case p.state == deployStatePreflight && p.pf != nil:
+		// Prepend in priority order so the most relevant action reads first.
+		if p.pf.Ready() {
+			kb = append([]views.KeyBinding{{Keys: "p", Description: "plan"}}, kb...)
+		}
+		if p.pf.SupportsLogin && !p.pf.Authenticated {
+			kb = append([]views.KeyBinding{{Keys: "l", Description: "login"}}, kb...)
+		}
+		kb = append([]views.KeyBinding{{Keys: "r", Description: "retry"}}, kb...)
 	}
-	// Prepend in priority order so the most relevant action reads first.
-	if p.pf.Ready() {
-		kb = append([]views.KeyBinding{{Keys: "p", Description: "plan"}}, kb...)
-	}
-	if p.pf.SupportsLogin && !p.pf.Authenticated {
-		kb = append([]views.KeyBinding{{Keys: "l", Description: "login"}}, kb...)
-	}
-	kb = append([]views.KeyBinding{{Keys: "r", Description: "retry"}}, kb...)
 	return kb
 }
 
@@ -232,6 +341,31 @@ func (p *DeployPage) viewPreflight(width int) string {
 		lines = append(lines, "", "Install with: "+pf.InstallCommand)
 	}
 
+	if p.loginErr != nil {
+		lines = append(lines, "", theme.ErrorStyle.Render("Login failed: "+p.loginErr.Error()))
+	}
+
+	body := strings.Join(lines, "\n")
+	return theme.BorderedBoxStyle.MaxWidth(width).Render(body)
+}
+
+// viewLogin renders the login screen: a spinner, the latest status text, the
+// authorize URL as a headless fallback (once known), and the cancel hint.
+func (p *DeployPage) viewLogin(width int) string {
+	status := p.loginStatus
+	if status == "" {
+		status = "Starting login…"
+	}
+	lines := []string{
+		p.spinner.View() + " " + theme.ValueStyle.Render(status),
+	}
+	if p.loginURL != "" {
+		lines = append(lines,
+			"",
+			theme.LabelStyle.Render("If your browser didn't open, visit:"),
+			theme.ValueStyle.Render(p.loginURL),
+		)
+	}
 	body := strings.Join(lines, "\n")
 	return theme.BorderedBoxStyle.MaxWidth(width).Render(body)
 }
