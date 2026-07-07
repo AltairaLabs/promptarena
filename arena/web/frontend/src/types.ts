@@ -109,6 +109,9 @@ export interface WorkflowGraphNode {
   kind: "entry" | "output" | "agent" | "prompt" | "tool" | "branch";
   entry: boolean;
   terminal: boolean;
+  // parent is the owning state's node id for a prompt-composition "step"
+  // node; unset for top-level state nodes. Mirrors the backend field.
+  parent?: string;
   // dim is a frontend-only overlay field set by arenaView's
   // overlayWorkflowRun — never present in the raw backend payload.
   dim?: boolean;
