@@ -42,6 +42,12 @@ describe("buildMatrix", () => {
     ], providers, scenarios);
     expect(m.rows[0].cells.find(c => c.providerId === "claude")!.passRate).toBe(100);
   });
+  it("converts RunResult.Duration from nanoseconds (the Go wire format) to milliseconds", () => {
+    const m = buildMatrix([
+      mk({ ScenarioID: "checkout", ProviderID: "claude", Duration: 633792000 }),
+    ], providers, scenarios);
+    expect(m.rows[0].cells.find(c => c.providerId === "claude")!.latencyMs).toBeCloseTo(633.792);
+  });
 });
 
 describe("buildStandings", () => {
@@ -76,14 +82,17 @@ describe("buildOverallGauge", () => {
 
 describe("buildMetrics", () => {
   it("produces trials/spend/latency/tokens metrics with a gold spend tone", () => {
+    // Duration is nanoseconds on the wire (Go time.Duration): 800_000_000ns
+    // and 1_200_000_000ns are 800ms and 1200ms respectively, so the p50
+    // (lower-middle of the sorted pair) lands on 800ms -> "800ms".
     const results = [
       mk({
-        ScenarioID: "checkout", ProviderID: "claude", Duration: 800,
+        ScenarioID: "checkout", ProviderID: "claude", Duration: 800_000_000,
         Cost: { total_cost_usd: 0.01, input_tokens: 1000, output_tokens: 500, input_cost_usd: 0.006, output_cost_usd: 0.004 },
         ConversationAssertions: { passed: true, failed: 0, total: 1, results: [] },
       }),
       mk({
-        ScenarioID: "checkout", ProviderID: "gpt4o", Duration: 1200,
+        ScenarioID: "checkout", ProviderID: "gpt4o", Duration: 1_200_000_000,
         Cost: { total_cost_usd: 0.02, input_tokens: 2000, output_tokens: 1000, input_cost_usd: 0.012, output_cost_usd: 0.008 },
         ConversationAssertions: { passed: false, failed: 1, total: 1, results: [] },
       }),
@@ -97,7 +106,8 @@ describe("buildMetrics", () => {
     const trials = metrics.find((x) => x.label.toLowerCase().includes("trial"))!;
     expect(trials.value).toBe("2");
     const latency = metrics.find((x) => x.label.toLowerCase().includes("latency"))!;
-    expect(latency.unit).toBe("ms");
+    expect(latency.value).toBe("800ms");
+    expect(latency.unit).toBeUndefined();
     const tokens = metrics.find((x) => x.label.toLowerCase().includes("token"))!;
     expect(tokens.unit).toBe("k");
     expect(tokens.dot).toBe("healthy");
@@ -174,16 +184,22 @@ describe("buildTranscript", () => {
 describe("buildTerminalLines", () => {
   const baseCell: TrialCell = {
     scenarioId: "checkout", providerId: "claude", key: "checkout:claude",
-    passRate: 100, passed: true, best: true, costUsd: 0.0069, latencyMs: 820, runId: "r1", hasData: true,
+    passRate: 100, passed: true, best: true, costUsd: 0.0069, latencyMs: 633792, runId: "r1", hasData: true,
   };
 
-  it("synthesizes the command line and a success line when the cell passed", () => {
+  it("synthesizes the command line and a success line when the cell passed, formatting latency as m/s", () => {
     const lines = buildTerminalLines(baseCell, "checkout", "claude");
     expect(lines[0].text).toBe("promptarena run --scenario checkout --provider claude");
     const success = lines.find((l) => l.type === "success")!;
     expect(success.text).toContain("✓");
     expect(success.text).toContain("$0.0069");
-    expect(success.text).toContain("820ms");
+    expect(success.text).toContain("10m 34s");
+  });
+
+  it("formats a sub-millisecond latency as <1ms", () => {
+    const lines = buildTerminalLines({ ...baseCell, latencyMs: 0.634 }, "checkout", "claude");
+    const success = lines.find((l) => l.type === "success")!;
+    expect(success.text).toContain("<1ms");
   });
 
   it("synthesizes an error line when the cell failed", () => {

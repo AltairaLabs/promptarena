@@ -19,6 +19,7 @@ import type {
   WorkflowGraph,
 } from "@/types";
 import type { MetricSpec, TerminalLine } from "@/components/atlas/types";
+import { formatDuration } from "./utils";
 
 function endTimeMs(r: RunResult): number {
   const t = Date.parse(r.EndTime);
@@ -89,7 +90,10 @@ export function buildMatrix(
         passed: passRate === 100,
         best: false,
         costUsd: latest.Cost?.total_cost_usd ?? 0,
-        latencyMs: latest.Duration ?? 0,
+        // RunResult.Duration is a Go time.Duration, serialized in
+        // nanoseconds — convert to milliseconds so TrialCell.latencyMs
+        // is real milliseconds throughout the viewmodel.
+        latencyMs: (latest.Duration ?? 0) / 1e6,
         runId: latest.RunID,
         hasData: true,
       };
@@ -168,12 +172,14 @@ export function buildMetrics(results: RunResult[], _matrix: TrialMatrix): Metric
     (sum, r) => sum + (r.Cost?.input_tokens ?? 0) + (r.Cost?.output_tokens ?? 0),
     0,
   );
-  const latencyP50 = p50(results.map((r) => r.Duration ?? 0));
+  // RunResult.Duration is nanoseconds on the wire; convert to milliseconds
+  // before taking the median so p50 lines up with TrialCell.latencyMs.
+  const latencyP50 = p50(results.map((r) => (r.Duration ?? 0) / 1e6));
 
   return [
     { label: "TRIALS", value: String(results.length), tone: "default" },
     { label: "SPEND", value: `$${totalCost.toFixed(4)}`, tone: "gold" },
-    { label: "P50 LATENCY", value: String(latencyP50), unit: "ms", tone: "default" },
+    { label: "P50 LATENCY", value: formatDuration(latencyP50), tone: "default" },
     { label: "TOKENS", value: (totalTokens / 1000).toFixed(1), unit: "k", tone: "healthy", dot: "healthy" },
   ];
 }
@@ -220,7 +226,10 @@ function toolFromCallAndResult(
 function metaFromMessage(msg: Message): string | undefined {
   const parts: string[] = [];
   if (msg.cost_info) parts.push(`$${msg.cost_info.total_cost_usd.toFixed(4)}`);
-  if (typeof msg.latency_ms === "number") parts.push(`${msg.latency_ms}ms`);
+  // Message.latency_ms comes straight off the Go engine's types.Message
+  // struct, which is already an int64 milliseconds field (not a
+  // time.Duration) — no unit conversion needed here, just formatting.
+  if (typeof msg.latency_ms === "number") parts.push(formatDuration(msg.latency_ms));
   return parts.length > 0 ? parts.join(" · ") : undefined;
 }
 
@@ -291,10 +300,11 @@ export function buildTerminalLines(
     return lines;
   }
   const cost = cell.costUsd > 0 ? `$${cell.costUsd.toFixed(4)}` : "free";
+  const latency = formatDuration(cell.latencyMs);
   if (cell.passed) {
-    lines.push({ type: "success", text: `✓ assertions passed · ${cost} · ${cell.latencyMs}ms` });
+    lines.push({ type: "success", text: `✓ assertions passed · ${cost} · ${latency}` });
   } else {
-    lines.push({ type: "error", text: `✗ assertions failed · ${cost} · ${cell.latencyMs}ms` });
+    lines.push({ type: "error", text: `✗ assertions failed · ${cost} · ${latency}` });
   }
   return lines;
 }

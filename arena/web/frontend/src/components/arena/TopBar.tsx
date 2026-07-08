@@ -1,5 +1,4 @@
 import { StatusPill } from "@/components/atlas/StatusPill";
-import { Button } from "@/components/atlas/Button";
 import logoUrl from "@/assets/logo-promptarena.svg";
 
 export interface TopBarProps {
@@ -8,8 +7,6 @@ export interface TopBarProps {
   runningLive: boolean;
   theme: "light" | "dark";
   onToggleTheme: () => void;
-  onRunTrial: () => void;
-  runDisabled?: boolean;
 }
 
 function MoonIcon() {
@@ -31,8 +28,8 @@ function SunIcon() {
 
 // The TopBar is the app's "instrument bezel" — a night-sky ink bar that never
 // flips to the light/paper surface, unlike the rest of the page chrome. The
-// semantic tokens it (and its children, StatusPill/Button) read via var(...)
-// are theme-dependent (they re-point under [data-theme="light"]), so the bar
+// semantic tokens it (and its children, StatusPill) read via var(...) are
+// theme-dependent (they re-point under [data-theme="light"]), so the bar
 // pins its own local values for the ones actually used here, overriding the
 // cascade for this subtree only. Keeping these as CSS custom-property
 // overrides (rather than hardcoding hex through the JSX below) means every
@@ -54,18 +51,18 @@ const DARK_RAMP_OVERRIDE = {
 } as React.CSSProperties;
 
 // TopBar — the sticky Atlas top bar: logo + wordmark + studio tag + promptpack
-// context on the left, the connection/live StatusPill + theme toggle + the
-// one gold action (Run trial) on the right. Rendered as an ink night-sky bar
-// in BOTH themes (intentional — it's the app's "instrument bezel", not page
-// chrome that follows the light/dark surface) via DARK_RAMP_OVERRIDE above.
+// context on the left, the connection/live StatusPill + theme toggle on the
+// right. The gold "Run trial" action lives in CommandStrip instead — TopBar
+// used to duplicate it, but one action surface is enough. Rendered as an ink
+// night-sky bar in BOTH themes (intentional — it's the app's "instrument
+// bezel", not page chrome that follows the light/dark surface) via
+// DARK_RAMP_OVERRIDE above.
 export function TopBar({
   connected,
   promptpack,
   runningLive,
   theme,
   onToggleTheme,
-  onRunTrial,
-  runDisabled,
 }: TopBarProps) {
   const status = runningLive ? "running" : connected ? "healthy" : "error";
   const statusLabel = runningLive ? "Live" : connected ? "Online" : "Offline";
@@ -129,9 +126,6 @@ export function TopBar({
         >
           {isDark ? <MoonIcon /> : <SunIcon />}
         </button>
-        <Button variant="primary" onClick={onRunTrial} disabled={runDisabled}>
-          ▶ Run trial
-        </Button>
       </div>
     </header>
   );

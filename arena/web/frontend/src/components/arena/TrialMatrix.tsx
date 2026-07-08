@@ -1,4 +1,5 @@
 import starGlyphGold from "@/assets/star-glyph-gold.svg";
+import { formatDuration } from "@/lib/utils";
 import type { TrialMatrix as TrialMatrixModel, TrialCell } from "@/types";
 
 export interface TrialMatrixProps {
@@ -223,7 +224,7 @@ function MatrixCell({
       </div>
       <div style={{ display: "flex", gap: 12, font: "11px var(--font-mono)", color: "var(--star-800)" }}>
         <span>{cell.costUsd ? `$${cell.costUsd.toFixed(3)}` : "free"}</span>
-        <span>{cell.latencyMs}ms</span>
+        <span>{formatDuration(cell.latencyMs)}</span>
       </div>
     </button>
   );

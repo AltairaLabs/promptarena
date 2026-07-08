@@ -299,7 +299,10 @@ export default function App() {
       providerId: run.ProviderID,
       passed: run.ConversationAssertions?.passed ?? !run.Error,
       costUsd: run.Cost?.total_cost_usd ?? 0,
-      latencyMs: run.Duration,
+      // run.Duration is nanoseconds (Go time.Duration on the wire); convert
+      // to milliseconds to match TrialCell.latencyMs's contract, same as
+      // buildMatrix does for the cells sourced directly from arenaView.
+      latencyMs: (run.Duration ?? 0) / 1e6,
       runId: run.RunID,
       hasData: true,
     };
@@ -369,9 +372,9 @@ export default function App() {
     }
   }, [startRun]);
 
-  // Shared by both the TopBar's and the CommandStrip's "Run trial" — runs the
-  // selected scenario across EVERY configured provider so it fills the whole
-  // matrix row in one go (real providers are billed; that's intended).
+  // Backs the CommandStrip's "Run trial" — runs the selected scenario across
+  // EVERY configured provider so it fills the whole matrix row in one go
+  // (real providers are billed; that's intended).
   const handleRunTrial = useCallback(() => {
     if (!selectedScenario || providers.length === 0) return;
     void handleStartRun(providers.map((p) => p.id), [selectedScenario]);
@@ -391,11 +394,6 @@ export default function App() {
           runningLive={liveRuns.some((r) => r.status === "running")}
           theme={theme}
           onToggleTheme={toggleTheme}
-          onRunTrial={() => {
-            setActiveTab("runs");
-            handleRunTrial();
-          }}
-          runDisabled={!state.connected || loading || !selectedScenario || providers.length === 0}
         />
         <main className="py-8">
         {/* Tab bar */}

@@ -20,7 +20,7 @@ function pluralize(count: number, noun: string): string {
 // it's shown whether or not there are runs yet.
 export function Hero({ scenarioCount, providerCount }: HeroProps) {
   return (
-    <section style={{ padding: "40px 0 24px" }}>
+    <section style={{ padding: "8px 0 24px" }}>
       <div
         style={{
           font: "500 12px var(--font-mono)",

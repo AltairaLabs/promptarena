@@ -319,25 +319,18 @@ describe("App — Runs view", () => {
     expect(await screen.findByText("mock · refund")).toBeInTheDocument();
   });
 
-  it("TopBar's Run trial switches from the Chat tab to Runs and starts the selected scenario across ALL providers", async () => {
+  it("CommandStrip's Run trial starts the selected scenario across ALL providers", async () => {
     render(<App />);
     await screen.findByText("CHART A RUN");
+    // Wait for selectedScenario's async default (set in a useEffect once
+    // scenarios load) to land — otherwise the button is still disabled and
+    // the click is a no-op, same race any other "disabled until ready"
+    // button in this suite has to wait out.
+    await screen.findByText("claude · checkout");
 
-    fireEvent.click(screen.getByText("Interactive Chat"));
+    // TopBar no longer renders a Run trial button — CommandStrip is the only
+    // one left, so this is unambiguous.
     fireEvent.click(screen.getByText(/Run trial/));
-
-    expect(await screen.findByText("TRIAL MATRIX · SCENARIO × PROVIDER")).toBeInTheDocument();
-    expect(startRun).toHaveBeenCalledWith({ providers: ["claude", "mock"], scenarios: ["checkout"] });
-  });
-
-  it("CommandStrip's Run trial also starts the selected scenario across ALL providers", async () => {
-    render(<App />);
-    await screen.findByText("CHART A RUN");
-
-    // Both TopBar and CommandStrip render a "Run trial" button on the Runs
-    // tab; CommandStrip's is the second one in document order.
-    const runButtons = screen.getAllByText(/Run trial/);
-    fireEvent.click(runButtons[runButtons.length - 1]);
 
     expect(startRun).toHaveBeenCalledWith({ providers: ["claude", "mock"], scenarios: ["checkout"] });
   });

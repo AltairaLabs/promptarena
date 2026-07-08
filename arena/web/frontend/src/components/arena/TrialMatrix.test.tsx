@@ -22,7 +22,7 @@ function makeMatrix(): TrialMatrixModel {
             passed: true,
             best: true,
             costUsd: 0.01,
-            latencyMs: 820,
+            latencyMs: 633792,
             runId: "r1",
             hasData: true,
           },
@@ -34,7 +34,7 @@ function makeMatrix(): TrialMatrixModel {
             passed: false,
             best: false,
             costUsd: 0,
-            latencyMs: 900,
+            latencyMs: 0.634,
             runId: "r2",
             hasData: true,
           },
@@ -88,6 +88,12 @@ describe("TrialMatrix", () => {
     render(<TrialMatrix matrix={makeMatrix()} selectedKey={null} onSelect={onSelect} />);
     fireEvent.click(screen.getByText("100%"));
     expect(onSelect).toHaveBeenCalledWith("checkout:claude");
+  });
+
+  it("renders latency as a human-readable duration, not a raw millisecond count", () => {
+    render(<TrialMatrix matrix={makeMatrix()} selectedKey={null} onSelect={() => {}} />);
+    expect(screen.getByText("10m 34s")).toBeInTheDocument();
+    expect(screen.getByText("<1ms")).toBeInTheDocument();
   });
 
   it("shows the gold star for the best cell", () => {
