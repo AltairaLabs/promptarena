@@ -73,4 +73,5 @@ variable (for Omnia, `OMNIA_API_TOKEN`). See [CI/CD Integration](/arena/how-to/d
 
 - [Configure Deploy](/arena/how-to/deploy/configure/) — set the deploy section up manually
 - [Plan and Apply](/arena/how-to/deploy/plan-and-apply/) — deploy once configured
+- [Use the TUI: Deploy from the TUI](/arena/how-to/interfaces/use-the-tui/#deploy-from-the-tui) — the Deploy wizard's preflight step offers this same login flow with `[l]`
 - [CLI Commands](/arena/reference/deploy/cli-commands/) — full `deploy login` reference

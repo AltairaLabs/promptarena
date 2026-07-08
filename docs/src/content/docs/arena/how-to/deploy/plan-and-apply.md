@@ -275,5 +275,6 @@ If plan shows all resources as NO_CHANGE, the pack and config haven't changed si
 
 - [Configure Deploy](/arena/how-to/deploy/configure/) — Set up arena.yaml
 - [CI/CD Integration](/arena/how-to/deploy/ci-cd/) — Automate plan and apply
+- [Use the TUI: Deploy from the TUI](/arena/how-to/interfaces/use-the-tui/#deploy-from-the-tui) — run plan, confirm, apply, and status as a guided wizard (destroy, import, and refresh remain CLI-only)
 - [CLI Commands](/arena/reference/deploy/cli-commands/) — Complete flag reference
 - [State Management](/arena/explanation/deploy/state-management/) — How state tracking works
