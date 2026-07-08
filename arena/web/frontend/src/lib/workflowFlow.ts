@@ -74,8 +74,9 @@ const LABEL_CHAR_WIDTH = 8.5;
 const LABEL_PADDING = 24;
 const GROUP_PADDING = 14;
 const GROUP_HEADER = 20;
-const DAGRE_NODESEP = 26;
-const DAGRE_RANKSEP = 64;
+const DAGRE_NODESEP = 40;
+const DAGRE_RANKSEP = 72;
+const DAGRE_EDGESEP = 18;
 // Gap kept between a terminator and the nearest group boundary once clamped
 // outside it — same order of magnitude as DAGRE_RANKSEP so it reads as a
 // normal rank gap rather than a cramped special case.
@@ -115,7 +116,7 @@ function runDagreLayout(
   labelById: Map<string, string>,
 ): Map<string, { x: number; y: number; width: number; height: number }> {
   const g = new dagre.graphlib.Graph();
-  g.setGraph({ rankdir: "LR", nodesep: DAGRE_NODESEP, ranksep: DAGRE_RANKSEP });
+  g.setGraph({ rankdir: "LR", nodesep: DAGRE_NODESEP, ranksep: DAGRE_RANKSEP, edgesep: DAGRE_EDGESEP });
   g.setDefaultEdgeLabel(() => ({}));
   for (const id of nodeIds) {
     g.setNode(id, nodeSize(labelById.get(id) ?? ""));

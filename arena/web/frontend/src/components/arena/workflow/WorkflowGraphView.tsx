@@ -104,6 +104,11 @@ export function WorkflowGraphView({ elements, theme, onStateClick }: WorkflowGra
           id: e.id,
           source: e.source,
           target: e.target,
+          // Orthogonal routing with rounded corners — clean wayfinding lines
+          // that separate cleanly through branch/join/parallel, instead of
+          // bezier curves that overlap in a tight pipeline.
+          type: "smoothstep",
+          pathOptions: { borderRadius: 8 },
           data: e.data as unknown as Record<string, unknown>,
           // A small, open arrow (not the chunky filled ArrowClosed) — a
           // wayfinding tick, not a box-diagram arrowhead.
