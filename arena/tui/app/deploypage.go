@@ -170,6 +170,13 @@ type DeployPage struct {
 	applyRows       []views.DeployResourceRow
 	applyLogs       *panels.LogsPanel
 	applyLogEntries []panels.LogEntry
+	// applySawErrorEvent is set by handleApplyEvent when a top-level (no
+	// Resource) "error"-type applyEventMsg is seen during apply — e.g. an
+	// adapter-reported failure that Session.Apply itself still returns nil
+	// for. applyResultHeadline folds this in alongside any failed
+	// applyResults entry so the headline never claims success while the logs
+	// show an error.
+	applySawErrorEvent bool
 
 	// Status-state fields, populated by the flow.Session.Status goroutine
 	// started from handleApplyResultKey via startStatus and delivered through
@@ -599,6 +606,13 @@ func (p *DeployPage) startPlan() tea.Cmd {
 
 			plan, req, err := sess.Plan(ctx)
 			if err != nil {
+				// Plan failed on a session this goroutine (or a pre-injected
+				// caller) already opened — close it here rather than leaving
+				// it to whenever the page is eventually popped. Session.Close
+				// is idempotent, so this is safe even though p.sess (set by
+				// the earlier sessionOpenedMsg) still holds the same session
+				// and Close will call it again on pop.
+				_ = sess.Close()
 				send(deployErrMsg{err: err})
 				return
 			}
@@ -647,6 +661,7 @@ func (p *DeployPage) startApply() tea.Cmd {
 	p.applyResults = nil
 	p.applyRows = nil
 	p.applyLogEntries = nil
+	p.applySawErrorEvent = false
 
 	projectDir := p.opts.ProjectDir
 	sess := p.sess
@@ -707,7 +722,9 @@ func (p *DeployPage) startStatus() tea.Cmd {
 // applyResults and rebuilds applyRows via views.DeployRowsFromResults, and
 // any event carrying a Message (progress/error/complete, and resource events
 // that also set Message) appends a panels.LogEntry so the logs panel shows
-// the same narrative the adapter streamed.
+// the same narrative the adapter streamed. A top-level "error" event (no
+// Resource) also sets applySawErrorEvent so applyResultHeadline can flag a
+// failure even when Session.Apply itself returns nil.
 func (p *DeployPage) handleApplyEvent(e *deploy.ApplyEvent) {
 	if e == nil {
 		return
@@ -715,6 +732,9 @@ func (p *DeployPage) handleApplyEvent(e *deploy.ApplyEvent) {
 	if e.Type == "resource" && e.Resource != nil {
 		p.applyResults = append(p.applyResults, e.Resource)
 		p.applyRows = views.DeployRowsFromResults(p.applyResults)
+	}
+	if e.Type == "error" && e.Resource == nil {
+		p.applySawErrorEvent = true
 	}
 	if e.Message != "" {
 		level := "info"
@@ -1056,8 +1076,11 @@ func (p *DeployPage) viewApplyResult(width int) string {
 }
 
 // applyResultHeadline summarizes the completed apply: success in
-// theme.SuccessStyle, or the failure count in theme.ErrorStyle if any
-// applyResults entry has Status "failed".
+// theme.SuccessStyle, or a failure in theme.ErrorStyle if any applyResults
+// entry has Status "failed" or a top-level "error" applyEventMsg was seen
+// (applySawErrorEvent) — the latter covers an adapter-reported failure that
+// Session.Apply itself still returns nil for, so the headline never claims
+// success while the logs show an error.
 func (p *DeployPage) applyResultHeadline() string {
 	failed := 0
 	for _, r := range p.applyResults {
@@ -1067,6 +1090,9 @@ func (p *DeployPage) applyResultHeadline() string {
 	}
 	if failed > 0 {
 		return theme.ErrorStyle.Render(fmt.Sprintf("Apply completed with %d failure(s)", failed))
+	}
+	if p.applySawErrorEvent {
+		return theme.ErrorStyle.Render("Apply completed with errors")
 	}
 	return theme.SuccessStyle.Render("Apply completed successfully")
 }
