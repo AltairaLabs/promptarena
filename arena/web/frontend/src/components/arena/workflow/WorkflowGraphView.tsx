@@ -1,5 +1,5 @@
-import { useCallback, useMemo } from "react";
-import { ReactFlow, Controls, MarkerType, type ColorMode, type Edge, type Node } from "@xyflow/react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
+import { ReactFlow, Controls, MarkerType, useReactFlow, type ColorMode, type Edge, type Node } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import "./workflow.css";
 import type { FlowElements, FlowNodeData } from "@/lib/workflowFlow";
@@ -34,6 +34,35 @@ function toRfNodes(nodes: FlowElements["nodes"]): Node[] {
   return nodes as unknown as Node[];
 }
 
+// FitOnChange — rendered as a child of <ReactFlow>, which (per React Flow
+// v12) wraps its children in an implicit ReactFlowProvider whenever the app
+// doesn't supply its own, so useReactFlow() works here without
+// WorkflowGraphView needing a <ReactFlowProvider> of its own. Re-frames the
+// viewport whenever `signal` changes (expand/collapse, this-run-only, a
+// different graph) — the `<ReactFlow fitView>` prop alone only fits once, on
+// mount, so toggling a state after that leaves the panel stuck at the old
+// framing until the user zooms out manually.
+function FitOnChange({ signal }: { signal: string }) {
+  const { fitView } = useReactFlow();
+  const isFirstRun = useRef(true);
+
+  useEffect(() => {
+    // The initial mount frame is already handled by <ReactFlow fitView>;
+    // re-running here would just duplicate that first fit.
+    if (isFirstRun.current) {
+      isFirstRun.current = false;
+      return;
+    }
+    // Deferred a tick so newly (un)mounted nodes have been measured (React
+    // Flow sizes nodes via ResizeObserver, which delivers asynchronously)
+    // before fitView reads their dimensions.
+    const timer = setTimeout(() => fitView({ padding: 0.15, duration: 300 }), 0);
+    return () => clearTimeout(timer);
+  }, [signal, fitView]);
+
+  return null;
+}
+
 export function WorkflowGraphView({ elements, theme, onStateClick }: WorkflowGraphViewProps) {
   // handleNodeClick — a click on a collapsed composition-owning state
   // (data.hasComposition) reports its own id; a click on that state's
@@ -52,6 +81,19 @@ export function WorkflowGraphView({ elements, theme, onStateClick }: WorkflowGra
       if (data.hasComposition) onStateClick(node.id);
     },
     [onStateClick],
+  );
+
+  // A stable signal that changes exactly when the rendered node set changes
+  // shape (expand/collapse, this-run-only, a different graph) — sorted node
+  // ids joined, so re-ordering within the same set (which doesn't happen
+  // today, but would be harmless) doesn't spuriously re-trigger a fit.
+  const fitSignal = useMemo(
+    () =>
+      elements.nodes
+        .map((n) => n.id)
+        .sort()
+        .join(","),
+    [elements.nodes],
   );
 
   const rfEdges = useMemo<Edge[]>(
@@ -73,7 +115,7 @@ export function WorkflowGraphView({ elements, theme, onStateClick }: WorkflowGra
             strokeDasharray: e.data.dashed ? "4 4" : undefined,
             opacity: e.data.dim ? 0.35 : 0.55,
           },
-          labelStyle: { fill: "var(--star-500)", fontFamily: "var(--font-mono)", fontSize: 10 },
+          labelStyle: { fill: "var(--star-500)", fontFamily: "var(--font-mono)", fontSize: 12 },
           // Label background reads over the night sky (no more "--surface"
           // fallback gap — the canvas var is always defined).
           labelBgStyle: { fill: "var(--c-canvas)" },
@@ -99,6 +141,7 @@ export function WorkflowGraphView({ elements, theme, onStateClick }: WorkflowGra
           on the .react-flow pane itself, not React Flow's dotted grid. No
           <MiniMap/> either — the panel is small enough that the nav box just
           eats space without earning it. */}
+      <FitOnChange signal={fitSignal} />
       <Controls showInteractive={false} />
     </ReactFlow>
   );

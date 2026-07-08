@@ -99,15 +99,15 @@
 
 .atlas-node {
   position: relative;
-  width: 13px;
-  height: 13px;
+  width: 15px;
+  height: 15px;
   cursor: default;
   transition: opacity var(--dur-base, 200ms) var(--ease-standard, ease);
 }
 
 .atlas-node--large {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
 }
 
 /* A composition-owning state (collapsed or its group) is click-to-expand
@@ -159,7 +159,7 @@
   left: 50%;
   transform: translateX(-50%);
   margin-top: 6px;
-  font: 600 11px var(--font-mono);
+  font: 600 13px var(--font-mono);
   color: var(--star-300);
   text-align: center;
   white-space: nowrap;

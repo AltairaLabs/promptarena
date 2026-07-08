@@ -61,12 +61,25 @@ export interface FlowElements {
   edges: FlowEdge[];
 }
 
-const NODE_WIDTH = 180;
-const NODE_HEIGHT = 56;
-const GROUP_PADDING = 32;
-const GROUP_HEADER = 28;
-const DAGRE_NODESEP = 48;
-const DAGRE_RANKSEP = 96;
+// Node footprints are sized to the glyph + label WorkflowNode.tsx actually
+// renders (a ~15-18px glyph plus a ~13px mono label underneath it), not a
+// generic box — dagre reserving big uniform cells for tiny glyphs is what
+// produced the old sprawling, whitespace-heavy layout. Width scales with
+// label length (~8.5px/char, matching the 13px mono label) so long labels
+// (e.g. "extract_general") get room without over-spacing short ones; height
+// is fixed (glyph + gap + one line of label).
+const NODE_HEIGHT = 50;
+const MIN_NODE_WIDTH = 56;
+const LABEL_CHAR_WIDTH = 8.5;
+const LABEL_PADDING = 24;
+const GROUP_PADDING = 14;
+const GROUP_HEADER = 20;
+const DAGRE_NODESEP = 26;
+const DAGRE_RANKSEP = 64;
+
+function nodeSize(label: string): { width: number; height: number } {
+  return { width: Math.max(MIN_NODE_WIDTH, label.length * LABEL_CHAR_WIDTH + LABEL_PADDING), height: NODE_HEIGHT };
+}
 
 function groupId(stateId: string): string {
   return `grp:${stateId}`;
@@ -85,18 +98,23 @@ function byFromTo(a: WorkflowGraphEdge, b: WorkflowGraphEdge): number {
   return a.to.localeCompare(b.to);
 }
 
-// runDagreLayout lays out `nodeIds` (uniform-sized boxes) using the edges
-// between them and returns each node's TOP-LEFT position (React Flow's
-// convention; dagre itself returns centers).
+// runDagreLayout lays out `nodeIds` (each sized to its own label via
+// `nodeSize`) using the edges between them and returns each node's TOP-LEFT
+// position plus the footprint dagre laid it out with (React Flow's
+// position convention; dagre itself returns centers). `labelById` supplies
+// the label used to size each node — ids missing from it (shouldn't happen;
+// callers populate it from the same node lists they pass here) fall back to
+// the minimum-width box.
 function runDagreLayout(
   nodeIds: string[],
   edges: { from: string; to: string }[],
-): Map<string, { x: number; y: number }> {
+  labelById: Map<string, string>,
+): Map<string, { x: number; y: number; width: number; height: number }> {
   const g = new dagre.graphlib.Graph();
   g.setGraph({ rankdir: "LR", nodesep: DAGRE_NODESEP, ranksep: DAGRE_RANKSEP });
   g.setDefaultEdgeLabel(() => ({}));
   for (const id of nodeIds) {
-    g.setNode(id, { width: NODE_WIDTH, height: NODE_HEIGHT });
+    g.setNode(id, nodeSize(labelById.get(id) ?? ""));
   }
   for (const e of edges) {
     if (g.hasNode(e.from) && g.hasNode(e.to)) {
@@ -105,10 +123,10 @@ function runDagreLayout(
   }
   dagre.layout(g);
 
-  const positions = new Map<string, { x: number; y: number }>();
+  const positions = new Map<string, { x: number; y: number; width: number; height: number }>();
   for (const id of nodeIds) {
     const n = g.node(id);
-    positions.set(id, { x: n.x - NODE_WIDTH / 2, y: n.y - NODE_HEIGHT / 2 });
+    positions.set(id, { x: n.x - n.width / 2, y: n.y - n.height / 2, width: n.width, height: n.height });
   }
   return positions;
 }
@@ -233,7 +251,13 @@ function buildElements(
       .map((e) => ({ from: e.from, to: e.to })),
     ...terminatorEdges,
   ];
-  const positions = runDagreLayout(dagreNodeIds, dagreEdges);
+  const labelById = new Map<string, string>([
+    [START_ID, "start"],
+    [END_ID, "end"],
+    ...survivingStates.map((s): [string, string] => [s.id, s.label]),
+    ...survivingSteps.map((s): [string, string] => [s.id, s.label]),
+  ]);
+  const positions = runDagreLayout(dagreNodeIds, dagreEdges, labelById);
 
   const nodes: FlowNode[] = [
     { id: START_ID, type: "workflowNode", position: positions.get(START_ID) ?? { x: 0, y: 0 }, data: { label: "start", kind: "terminator" } },
@@ -280,11 +304,13 @@ function buildElements(
       continue;
     }
 
-    const stepPositions = steps.map((step) => positions.get(step.id) ?? { x: 0, y: 0 });
+    const stepPositions = steps.map(
+      (step) => positions.get(step.id) ?? { x: 0, y: 0, width: MIN_NODE_WIDTH, height: NODE_HEIGHT },
+    );
     const minX = Math.min(...stepPositions.map((p) => p.x));
     const minY = Math.min(...stepPositions.map((p) => p.y));
-    const maxX = Math.max(...stepPositions.map((p) => p.x + NODE_WIDTH));
-    const maxY = Math.max(...stepPositions.map((p) => p.y + NODE_HEIGHT));
+    const maxX = Math.max(...stepPositions.map((p) => p.x + p.width));
+    const maxY = Math.max(...stepPositions.map((p) => p.y + p.height));
 
     const groupX = minX - GROUP_PADDING;
     const groupY = minY - GROUP_PADDING - GROUP_HEADER;

@@ -1,4 +1,4 @@
-import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent, within } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import { AgentFlowCard } from "./AgentFlowCard";
 import type { RunResult, WorkflowGraph } from "@/types";
@@ -152,5 +152,60 @@ describe("AgentFlowCard", () => {
     await waitFor(() => expect(screen.queryByText("resolve")).not.toBeInTheDocument());
     expect(screen.getByText("intake")).toBeInTheDocument();
     expect(screen.getByText("analyzing")).toBeInTheDocument();
+  });
+});
+
+describe("AgentFlowCard maximize", () => {
+  it("has no maximized overlay until the maximize control is clicked", async () => {
+    render(<AgentFlowCard graph={graph} run={makeRun()} theme="dark" />);
+    await waitFor(() => expect(screen.getByText("intake")).toBeInTheDocument());
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+  });
+
+  it("opens a fullscreen overlay on maximize, and closes it on Escape", async () => {
+    render(<AgentFlowCard graph={graph} run={makeRun()} theme="dark" />);
+    await waitFor(() => expect(screen.getByText("intake")).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole("button", { name: "Maximize workflow" }));
+
+    const dialog = await screen.findByRole("dialog");
+    expect(within(dialog).getByText("WORKFLOW")).toBeInTheDocument();
+
+    fireEvent.keyDown(window, { key: "Escape" });
+
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  });
+
+  it("closes the overlay via the close button and via the scrim click", async () => {
+    render(<AgentFlowCard graph={graph} run={makeRun()} theme="dark" />);
+    await waitFor(() => expect(screen.getByText("intake")).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole("button", { name: "Maximize workflow" }));
+    await screen.findByRole("dialog");
+
+    fireEvent.click(screen.getByRole("button", { name: "Close maximized workflow" }));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole("button", { name: "Maximize workflow" }));
+    await screen.findByRole("dialog");
+
+    fireEvent.click(screen.getByTestId("workflow-overlay-scrim"));
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  });
+
+  it("shares expandedStates and thisRunOnly between the inline card and the maximized overlay", async () => {
+    render(<AgentFlowCard graph={compositionGraph} run={makeRun()} theme="dark" />);
+    await waitFor(() => expect(screen.getByText("analyzing")).toBeInTheDocument());
+
+    fireEvent.click(screen.getByRole("button", { name: "Maximize workflow" }));
+    const dialog = await screen.findByRole("dialog");
+
+    // Expand via the overlay's own "Expand all" control.
+    fireEvent.click(within(dialog).getByRole("button", { name: "Expand all" }));
+
+    await waitFor(() => expect(within(dialog).getByText("classify")).toBeInTheDocument());
+    // The inline card (still mounted behind the overlay) reflects the same
+    // shared expandedStates state — "classify" now renders in both places.
+    expect(screen.getAllByText("classify").length).toBeGreaterThan(1);
   });
 });
