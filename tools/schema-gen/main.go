@@ -46,6 +46,12 @@ func run() error {
 		return fmt.Errorf("failed to find repository root: %w", err)
 	}
 
+	// Run from the repo root so the generators' repo-relative Go-comment source
+	// dirs (see generators.goCommentDirs) resolve regardless of the caller's cwd.
+	if err := os.Chdir(repoRoot); err != nil {
+		return fmt.Errorf("failed to chdir to repo root: %w", err)
+	}
+
 	outputPath := filepath.Join(repoRoot, *outputDir)
 
 	if *formatOnly {

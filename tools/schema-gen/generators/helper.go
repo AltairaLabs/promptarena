@@ -1,8 +1,21 @@
 package generators
 
 import (
+	"fmt"
+	"os"
+
 	"github.com/invopop/jsonschema"
 )
+
+// goCommentDirs maps a Go module base import path to a repo-relative source
+// directory whose doc comments should populate schema field descriptions. The
+// comment-map key invopop builds is gopath.Join(base, dir(file)), which must
+// equal the reflected type's PkgPath — so base+dir together must reproduce the
+// full import path, and the generator must run from the repo root for the
+// relative dir to resolve.
+var goCommentDirs = []struct{ base, dir string }{
+	{"github.com/AltairaLabs/promptarena", "arena/arenaconfig"},
+}
 
 // draftSchemaVersion is the JSON Schema draft all generated schemas declare.
 const draftSchemaVersion = "https://json-schema.org/draft-07/schema"
@@ -48,6 +61,20 @@ func newReflector(fieldNameTag string) jsonschema.Reflector {
 // property, and applies any custom modifications.
 func Generate(cfg *SchemaConfig) (interface{}, error) {
 	reflector := newReflector(cfg.FieldNameTag)
+
+	// Populate field descriptions from Go doc comments on arena-local config
+	// types. Harmless for schemas whose target lives elsewhere (no keys match).
+	// Best-effort: when the source tree isn't reachable from the cwd (e.g. unit
+	// tests running from the package dir), skip rather than fail — the CLI
+	// chdirs to the repo root so comments are extracted for real regeneration.
+	for _, c := range goCommentDirs {
+		if _, statErr := os.Stat(c.dir); statErr != nil {
+			continue
+		}
+		if err := reflector.AddGoComments(c.base, c.dir); err != nil {
+			return nil, fmt.Errorf("extract go comments from %s: %w", c.dir, err)
+		}
+	}
 
 	schema := reflector.Reflect(cfg.Target)
 
