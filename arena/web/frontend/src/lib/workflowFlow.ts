@@ -384,15 +384,27 @@ function buildElements(
     edges.push({ id: makeEdgeId(source, target, usedIds), source, target, data: {} });
   }
 
+  // An edge between a group and one of its OWN child steps (the remapped
+  // state->entry-step edge, e.g. grp:analyzing -> analyzing/classify) is
+  // redundant — the group container already shows it contains the step — and
+  // renders as a confusing arrow looping back into the group (looking like the
+  // entry step points at itself). Drop group<->own-child edges.
+  const parentById = new Map(
+    nodes.filter((n) => n.parentId).map((n) => [n.id, n.parentId as string]),
+  );
+  const routableEdges = edges.filter(
+    (e) => parentById.get(e.target) !== e.source && parentById.get(e.source) !== e.target,
+  );
+
   // A terminator with no surviving edge (e.g. thisRunOnly dropped the entry
   // or terminal state it connects to, or an in-progress run hasn't reached
   // the terminal state yet) would render as a floating, edgeless dot — drop
   // it rather than show an orphan.
-  const startHasEdge = edges.some((e) => e.source === START_ID);
-  const endHasEdge = edges.some((e) => e.target === END_ID);
+  const startHasEdge = routableEdges.some((e) => e.source === START_ID);
+  const endHasEdge = routableEdges.some((e) => e.target === END_ID);
   const survivingNodes = nodes.filter(
     (n) => (n.id !== START_ID || startHasEdge) && (n.id !== END_ID || endHasEdge),
   );
 
-  return { nodes: survivingNodes, edges };
+  return { nodes: survivingNodes, edges: routableEdges };
 }

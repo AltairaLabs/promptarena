@@ -99,8 +99,10 @@ describe("buildFlowElements — expanded (per-state)", () => {
 
     // Composition-internal edge is kept.
     expect(edges.some((e) => e.source === "analyzing/classify" && e.target === "analyzing/route")).toBe(true);
-    // The state->entry-step edge is remapped to originate from the group.
-    expect(edges.some((e) => e.source === "grp:analyzing" && e.target === "analyzing/classify")).toBe(true);
+    // The state->entry-step edge (grp:analyzing -> its own child classify) is
+    // DROPPED: the group already contains the step, and such a group->own-child
+    // edge would render as a confusing arrow looping back into the group.
+    expect(edges.some((e) => e.source === "grp:analyzing" && e.target === "analyzing/classify")).toBe(false);
     // The state->state edge out of the composition-owning state is also
     // remapped to originate from the group so it renders from the container.
     expect(edges.some((e) => e.source === "grp:analyzing" && e.target === "done")).toBe(true);

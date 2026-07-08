@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ReactFlow, Controls, MarkerType, useReactFlow, type ColorMode, type Edge, type Node } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import "./workflow.css";
@@ -96,19 +96,56 @@ export function WorkflowGraphView({ elements, theme, onStateClick }: WorkflowGra
     [elements.nodes],
   );
 
+  // Hovering a node lights up its FORWARD path — every edge reachable by
+  // following the flow onward from that node — so you can trace "what happens
+  // after this step" at a glance. `forwardEdgeIds` is the set of those edge
+  // ids (or null when nothing is hovered / the node has no successors).
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const forwardEdgeIds = useMemo<Set<string> | null>(() => {
+    if (!hoveredId) return null;
+    const outgoing = new Map<string, { edgeId: string; to: string }[]>();
+    for (const e of elements.edges) {
+      const list = outgoing.get(e.source);
+      if (list) list.push({ edgeId: e.id, to: e.target });
+      else outgoing.set(e.source, [{ edgeId: e.id, to: e.target }]);
+    }
+    const hit = new Set<string>();
+    const seen = new Set<string>([hoveredId]);
+    const queue = [hoveredId];
+    while (queue.length) {
+      const cur = queue.shift()!;
+      for (const { edgeId, to } of outgoing.get(cur) ?? []) {
+        hit.add(edgeId);
+        if (!seen.has(to)) {
+          seen.add(to);
+          queue.push(to);
+        }
+      }
+    }
+    return hit.size > 0 ? hit : null;
+  }, [hoveredId, elements.edges]);
+
   const rfEdges = useMemo<Edge[]>(
     () =>
       elements.edges.map((e): Edge => {
-        const stroke = e.data.gold ? "var(--gold-500)" : "var(--starlight-500)";
+        const baseStroke = e.data.gold ? "var(--gold-500)" : "var(--starlight-500)";
+        // When a forward path is active: highlighted edges brighten to the
+        // product accent + animate; the rest fade back so the traced path pops.
+        const onPath = forwardEdgeIds?.has(e.id) ?? false;
+        const hoverActive = forwardEdgeIds !== null;
+        const stroke = onPath ? "var(--c-accent)" : baseStroke;
+        const opacity = e.data.dim ? 0.35 : hoverActive ? (onPath ? 1 : 0.12) : 0.55;
         return {
           id: e.id,
           source: e.source,
           target: e.target,
           // Orthogonal routing with rounded corners — clean wayfinding lines
           // that separate cleanly through branch/join/parallel, instead of
-          // bezier curves that overlap in a tight pipeline.
+          // bezier curves that overlap in a tight pipeline. (smoothstep's
+          // default corner radius is fine; pathOptions isn't on the base Edge
+          // type.)
           type: "smoothstep",
-          pathOptions: { borderRadius: 8 },
+          animated: onPath,
           data: e.data as unknown as Record<string, unknown>,
           // A small, open arrow (not the chunky filled ArrowClosed) — a
           // wayfinding tick, not a box-diagram arrowhead.
@@ -116,9 +153,9 @@ export function WorkflowGraphView({ elements, theme, onStateClick }: WorkflowGra
           label: e.data.label,
           style: {
             stroke,
-            strokeWidth: 1.3,
+            strokeWidth: onPath ? 2.2 : 1.3,
             strokeDasharray: e.data.dashed ? "4 4" : undefined,
-            opacity: e.data.dim ? 0.35 : 0.55,
+            opacity,
           },
           labelStyle: { fill: "var(--star-500)", fontFamily: "var(--font-mono)", fontSize: 12 },
           // Label background reads over the night sky (no more "--surface"
@@ -126,7 +163,7 @@ export function WorkflowGraphView({ elements, theme, onStateClick }: WorkflowGra
           labelBgStyle: { fill: "var(--c-canvas)" },
         };
       }),
-    [elements.edges],
+    [elements.edges, forwardEdgeIds],
   );
 
   return (
@@ -147,6 +184,8 @@ export function WorkflowGraphView({ elements, theme, onStateClick }: WorkflowGra
       nodesConnectable={false}
       elementsSelectable={false}
       onNodeClick={handleNodeClick}
+      onNodeMouseEnter={(_e, node) => setHoveredId(node.id)}
+      onNodeMouseLeave={() => setHoveredId(null)}
     >
       {/* No <Background/> — the night sky comes from workflow.css's atmosphere
           on the .react-flow pane itself, not React Flow's dotted grid. No
