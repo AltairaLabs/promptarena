@@ -4,10 +4,30 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>PromptArena</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'><path d='M24 32 L48 64 L24 96' stroke='%238B5CF6' stroke-width='12' stroke-linecap='round' stroke-linejoin='round' fill='none'/><rect x='60' y='28' width='44' height='20' rx='4' fill='%233B82F6'/><rect x='60' y='54' width='44' height='20' rx='4' fill='%2306B6D4'/><rect x='60' y='80' width='44' height='20' rx='4' fill='%238B5CF6'/></svg>" />
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect x='3' y='3' width='58' height='58' rx='16' fill='%23101D30' stroke='%231E3149' stroke-width='1'/><polygon points='23,12 27,24 39,28 27,32 23,44 19,32 7,28 19,24' fill='%2367E8F9'/><polygon points='43,22 46.5,32.5 57,36 46.5,39.5 43,50 39.5,39.5 29,36 39.5,32.5' fill='%2367E8F9' opacity='0.62'/></svg>" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Spline+Sans+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+    <script>
+      // Blocking, pre-mount theme bootstrap — mirrors useTheme's
+      // readInitialTheme so <html data-theme> is set before first paint and
+      // there's no mixed-theme flash. useTheme takes over from here once
+      // React mounts.
+      (function () {
+        try {
+          var stored = window.localStorage.getItem("arena.theme");
+          var theme =
+            stored === "light" || stored === "dark"
+              ? stored
+              : window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches
+                ? "dark"
+                : "light";
+          document.documentElement.dataset.theme = theme;
+        } catch (e) {
+          document.documentElement.dataset.theme = "light";
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

@@ -1,18 +1,55 @@
-import { useCallback, useEffect, useRef, useState, Component } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, Component } from "react";
 import type { ReactNode, ErrorInfo } from "react";
-import { Layout } from "@/components/Layout";
-import { SummaryCards } from "@/components/SummaryCards";
-import { RunProgress } from "@/components/RunProgress";
-import { RunDetail } from "@/components/RunDetail";
+import { ArrowLeft } from "lucide-react";
+import { TopBar } from "@/components/arena/TopBar";
+import { Hero } from "@/components/arena/Hero";
+import { CommandStrip } from "@/components/arena/CommandStrip";
 import { DevToolsPanel } from "@/components/DevToolsPanel";
-import { RunControls } from "@/components/RunControls";
-import { EmptyStateLauncher } from "@/components/EmptyStateLauncher";
 import { HistoricalResults } from "@/components/HistoricalResults";
 import { InteractiveChat } from "@/components/InteractiveChat";
+import { TrialMatrix } from "@/components/arena/TrialMatrix";
+import { InstrumentBand } from "@/components/arena/InstrumentBand";
+import { TrialInspector } from "@/components/arena/TrialInspector";
 import { useArenaEvents } from "@/hooks/useArenaEvents";
 import { useArenaAPI } from "@/hooks/useArenaAPI";
+import { useTheme } from "@/hooks/useTheme";
 import { AudioPlayer } from "@/audio/player";
-import type { Message, RunResult } from "@/types";
+import { buildMatrix } from "@/lib/arenaView";
+import type { Message, RunResult, ActiveRun, ProviderInfo, ScenarioInfo, TrialCell, WorkflowGraph } from "@/types";
+
+// activeRunToResult maps a still-running ActiveRun into a synthetic
+// RunResult-shaped entry so buildMatrix can overlay it onto the trial
+// matrix without any special-casing — it lands in the same scenario×
+// provider cell as the run it's replacing, and stays selectable via its
+// runId while it's in flight.
+function activeRunToResult(run: ActiveRun): RunResult {
+  return {
+    RunID: run.runId,
+    PromptPack: "",
+    Region: run.region,
+    ScenarioID: run.scenario,
+    ProviderID: run.provider,
+    Params: {},
+    Messages: [],
+    Commit: {},
+    Cost: {
+      input_tokens: run.costs.inputTokens,
+      output_tokens: run.costs.outputTokens,
+      input_cost_usd: 0,
+      output_cost_usd: 0,
+      total_cost_usd: run.costs.totalCost,
+    },
+    Violations: [],
+    StartTime: run.startTime,
+    EndTime: run.startTime,
+    Duration: run.duration ?? 0,
+    Error: run.error ?? "",
+    SelfPlay: false,
+    PersonaID: "",
+    MediaOutputs: [],
+    A2AAgents: [],
+  };
+}
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   constructor(props: { children: ReactNode }) {
@@ -44,19 +81,100 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
 
 export default function App() {
   const { registerInteractiveRun, ...state } = useArenaEvents();
+  const { theme, toggle: toggleTheme } = useTheme();
   const [activeTab, setActiveTab] = useState<"runs" | "chat">("runs");
-  const { startRun, getResults, getResult, clearResults, loading } = useArenaAPI();
+  const { startRun, getResults, getResult, getConfig, getRunOptions, clearResults, getWorkflow, loading } = useArenaAPI();
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
+  const [selectedKey, setSelectedKey] = useState<string | null>(null);
+  const [showLedger, setShowLedger] = useState(false);
+  const [selectedScenario, setSelectedScenario] = useState<string | null>(null);
   const [devToolsMessage, setDevToolsMessage] = useState<Message | undefined>();
   const [devToolsAllMessages, setDevToolsAllMessages] = useState<Message[] | undefined>();
   const [devToolsIndex, setDevToolsIndex] = useState<number | undefined>();
   const [devToolsOpen, setDevToolsOpen] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
   const [historicalResults, setHistoricalResults] = useState<RunResult[]>([]);
+  const [providers, setProviders] = useState<ProviderInfo[]>([]);
+  const [scenarios, setScenarios] = useState<ScenarioInfo[]>([]);
+  const [promptpack, setPromptpack] = useState<string | undefined>(undefined);
+  const [workflowGraph, setWorkflowGraph] = useState<WorkflowGraph | null>(null);
 
-  // Single global AudioPlayer; rebuilt when the user switches Listen target.
+  // The workflow topology is static for the life of the config — fetched
+  // once on mount, same pattern as run-options/config below. TrialInspector
+  // renders a placeholder until this resolves.
+  useEffect(() => {
+    getWorkflow()
+      .then((graph) => setWorkflowGraph(graph))
+      .catch(() => {});
+  }, [getWorkflow]);
+
+  // Run-options (the providers/scenarios universe) drive the matrix's
+  // columns/rows — same fetch pattern as RunControls/EmptyStateLauncher.
+  useEffect(() => {
+    getRunOptions()
+      .then((opts) => {
+        setProviders(opts.providers ?? []);
+        setScenarios(opts.scenarios ?? []);
+      })
+      .catch(() => {});
+  }, [getRunOptions]);
+
+  // CommandStrip's chip selection defaults to the first scenario once
+  // run-options land — mirrors the old pickers' "first scenario by sort
+  // order" default.
+  useEffect(() => {
+    if (!selectedScenario && scenarios.length > 0) {
+      setSelectedScenario(scenarios[0].id);
+    }
+  }, [scenarios, selectedScenario]);
+
+  // TopBar's promptpack context — "<name> · <version>" when the arena
+  // config has a loaded pack, else omitted entirely (TopBar renders nothing
+  // for an undefined promptpack).
+  useEffect(() => {
+    getConfig()
+      .then((cfg) => {
+        const pack = cfg?.loaded_pack;
+        if (pack?.name) {
+          setPromptpack(pack.version ? `${pack.name} · ${pack.version}` : pack.name);
+        }
+      })
+      .catch(() => {});
+  }, [getConfig]);
+
+  // Single global AudioPlayer for the TrialInspector's "Listen" toggle;
+  // rebuilt when the user switches Listen target. Restored from the
+  // original RunDetail-era wiring (see git history pre-TrialInspector).
   const playerRef = useRef<AudioPlayer | null>(null);
   const [listeningRunId, setListeningRunId] = useState<string | null>(null);
+
+  useEffect(() => {
+    return () => {
+      playerRef.current?.close();
+      playerRef.current = null;
+    };
+  }, []);
+
+  // Toggle audio playback for a run. Closes any prior EventSource before
+  // opening a new one so we never have two audio streams in flight.
+  const handleListen = useCallback((runId: string) => {
+    if (listeningRunId === runId) {
+      playerRef.current?.pause();
+      setListeningRunId(null);
+      return;
+    }
+    if (playerRef.current) {
+      playerRef.current.close();
+      playerRef.current = null;
+    }
+    playerRef.current = new AudioPlayer({
+      runId,
+      onError: (msg) => console.warn("audio:", msg),
+    });
+    playerRef.current.connect("/api/events");
+    playerRef.current.play();
+    setListeningRunId(runId);
+  }, [listeningRunId]);
 
   // Track runIds we've already seen so a freshly-spawned run can be auto-
   // selected even when StartRun returns no runId.
@@ -84,6 +202,8 @@ export default function App() {
         (id) => !knownRunIdsRef.current.has(id) && state.runs[id]?.scenario !== "interactive"
       );
       if (newId) {
+        const newRun = state.runs[newId];
+        if (newRun) setSelectedKey(`${newRun.scenario}:${newRun.provider}`);
         setSelectedRunId(newId);
         setPendingAutoSelect(false);
       }
@@ -91,18 +211,107 @@ export default function App() {
     knownRunIdsRef.current = new Set(ids);
   }, [state.runs, pendingAutoSelect]);
 
-  useEffect(() => {
-    return () => {
-      playerRef.current?.close();
-      playerRef.current = null;
-    };
-  }, []);
-
   // Exclude synthetic interactive-chat entries from the runs-tab aggregates.
   const liveRuns = Object.values(state.runs).filter((r) => r.scenario !== "interactive");
   const selectedRun = selectedRunId ? state.runs[selectedRunId] : undefined;
   // The active interactive-chat session, surfaced as the DevTools "run" on the chat tab.
   const interactiveRun = Object.values(state.runs).find((r) => r.scenario === "interactive");
+
+  // The trial matrix overlays in-flight runs onto historical results so a
+  // cell with a live run stays selectable while its trial is running. Only
+  // runs still "running" are overlaid: a "completed" ActiveRun has no
+  // ConversationAssertions, so cellPassRate would read it as a bare 100%
+  // pass regardless of the real outcome. Excluding it means a just-finished
+  // cell briefly shows its prior/empty state instead of a false pass in the
+  // window before historicalResults' async refetch lands.
+  const matrixResults = useMemo(
+    () => [...historicalResults, ...liveRuns.filter((r) => r.status === "running").map(activeRunToResult)],
+    [historicalResults, liveRuns],
+  );
+  const matrix = useMemo(
+    () => buildMatrix(matrixResults, providers, scenarios),
+    [matrixResults, providers, scenarios],
+  );
+
+  // CommandStrip's chip-click contract: clicking a scenario selects that
+  // scenario's best provider (matrix row's `best` cell), falling back to
+  // the row's first provider when nothing's run yet.
+  const bestProviderForScenario = useCallback(
+    (scenarioId: string | null): { id: string; label: string } | undefined => {
+      if (!scenarioId) return undefined;
+      const row = matrix.rows.find((r) => r.scenarioId === scenarioId);
+      const cell = row?.cells.find((c) => c.best) ?? row?.cells[0];
+      if (!cell) return undefined;
+      return matrix.providers.find((p) => p.id === cell.providerId) ?? { id: cell.providerId, label: cell.providerId };
+    },
+    [matrix],
+  );
+  const chartProvider = useMemo(
+    () => bestProviderForScenario(selectedScenario),
+    [bestProviderForScenario, selectedScenario],
+  );
+
+  // The Trial Inspector is driven entirely off selectedKey: it looks up the
+  // backing cell in the matrix, then the run behind that cell — the saved
+  // RunResult if one's landed, else the still-running ActiveRun.
+  const selectedCell = useMemo(
+    () => (selectedKey ? matrix.rows.flatMap((row) => row.cells).find((c) => c.key === selectedKey) : undefined),
+    [matrix, selectedKey],
+  );
+  // The inspector's run prefers the SPECIFIC run identified by selectedRunId
+  // (set when a ledger/historical row is clicked) over the cell's latest
+  // run — buildMatrix always pins a cell's runId to the most recent run for
+  // that scenario:provider, so an older ledger row would otherwise be
+  // shadowed by a newer run in the same cell. Falls back to the run behind
+  // selectedCell.runId, then to a matching live ActiveRun.
+  const selectedCellRun: RunResult | ActiveRun | undefined = useMemo(() => {
+    const bySelectedRunId = selectedRunId
+      ? historicalResults.find((r) => r.RunID === selectedRunId)
+      : undefined;
+    if (bySelectedRunId) return bySelectedRunId;
+
+    const byCell = selectedCell?.runId
+      ? (historicalResults.find((r) => r.RunID === selectedCell.runId) ??
+         liveRuns.find((r) => r.runId === selectedCell.runId))
+      : undefined;
+    if (byCell) return byCell;
+
+    return selectedRunId ? liveRuns.find((r) => r.runId === selectedRunId) : undefined;
+  }, [selectedRunId, selectedCell, historicalResults, liveRuns]);
+
+  // When the run being shown differs from the matrix cell (an older ledger
+  // run selected while the cell points at a newer one), the StatusPill and
+  // terminal readout must reflect the SHOWN run, not the (possibly newer)
+  // cell. isRunResult narrows: only completed RunResults carry
+  // ConversationAssertions/Cost/Duration to derive a cell-shaped reading
+  // from; a live ActiveRun's own cell already matches (buildMatrix overlays
+  // it 1:1), so it's returned as-is.
+  const inspectorCell: TrialCell | undefined = useMemo(() => {
+    if (!selectedCell) return undefined;
+    if (!selectedCellRun) return selectedCell;
+    const isRunResult = "Messages" in selectedCellRun && Array.isArray(selectedCellRun.Messages);
+    if (!isRunResult) return selectedCell;
+    const run = selectedCellRun as RunResult;
+    if (run.RunID === selectedCell.runId) return selectedCell;
+    return {
+      ...selectedCell,
+      scenarioId: run.ScenarioID,
+      providerId: run.ProviderID,
+      passed: run.ConversationAssertions?.passed ?? !run.Error,
+      costUsd: run.Cost?.total_cost_usd ?? 0,
+      // run.Duration is nanoseconds (Go time.Duration on the wire); convert
+      // to milliseconds to match TrialCell.latencyMs's contract, same as
+      // buildMatrix does for the cells sourced directly from arenaView.
+      latencyMs: (run.Duration ?? 0) / 1e6,
+      runId: run.RunID,
+      hasData: true,
+    };
+  }, [selectedCell, selectedCellRun]);
+
+  const selectedProviderLabel = useMemo(
+    () => matrix.providers.find((p) => p.id === inspectorCell?.providerId)?.label ?? inspectorCell?.providerId ?? "",
+    [matrix, inspectorCell],
+  );
 
   const handleSelectMessage = (index: number, message?: Message, allMsgs?: Message[]) => {
     setDevToolsIndex(index);
@@ -111,7 +320,39 @@ export default function App() {
     setDevToolsOpen(true);
   };
 
-  const handleStartRun = useCallback(async (providerId: string, scenarioId: string) => {
+  // Selecting a matrix cell drives both the matrix's own selection ring and
+  // the TrialInspector navigation (which reads off selectedKey); selectedRunId
+  // is kept in step purely so DevToolsPanel's live-run lookup keeps working.
+  const handleSelectCell = useCallback((key: string) => {
+    setSelectedKey(key);
+    const cell = matrix.rows.flatMap((row) => row.cells).find((c) => c.key === key);
+    if (cell?.hasData && cell.runId) {
+      setSelectedRunId(cell.runId);
+      setDevToolsOpen(false);
+    }
+  }, [matrix]);
+
+  // Clears the Trial Inspector back to the matrix/empty-hero view.
+  const handleBackFromInspector = useCallback(() => {
+    setSelectedKey(null);
+    setSelectedRunId(null);
+    setDevToolsOpen(false);
+  }, []);
+
+  // Rows in the ledger (HistoricalResults) carry a RunResult, not a matrix
+  // key — derive the key so selecting a ledger row opens the same Trial
+  // Inspector a matrix click would.
+  const handleSelectHistoricalRun = useCallback((id: string) => {
+    const r = historicalResults.find((x) => x.RunID === id);
+    if (r) setSelectedKey(`${r.ScenarioID}:${r.ProviderID}`);
+    setSelectedRunId(id);
+    setDevToolsOpen(false);
+  }, [historicalResults]);
+
+  // handleStartRun kicks off a run for an arbitrary set of provider/scenario
+  // ids — shared by "Run trial" (all providers) and a single matrix-cell run
+  // (one provider × one scenario).
+  const handleStartRun = useCallback(async (providerIds: string[], scenarioIds: string[]) => {
     setStartError(null);
     setPendingAutoSelect(true);
     // If the user is currently viewing a previous run's detail, navigate
@@ -119,55 +360,42 @@ export default function App() {
     // at the old run until SSE delivered the first turn of the new one,
     // which feels like nothing happened. The dashboard shows the live
     // run appearing, then pendingAutoSelect kicks in and switches to
-    // the new RunDetail when the runId lands.
+    // the new TrialInspector when the runId lands.
     setSelectedRunId(null);
+    setSelectedKey(null);
     setDevToolsOpen(false);
     try {
-      await startRun({ providers: [providerId], scenarios: [scenarioId] });
+      await startRun({ providers: providerIds, scenarios: scenarioIds });
     } catch (err) {
       setPendingAutoSelect(false);
       setStartError(err instanceof Error ? err.message : "Failed to start run");
     }
   }, [startRun]);
 
-  // Toggle audio playback for a run. Closes any prior EventSource before
-  // opening a new one so we never have two audio streams in flight.
-  const handleListen = useCallback((runId: string) => {
-    if (listeningRunId === runId) {
-      playerRef.current?.pause();
-      setListeningRunId(null);
-      return;
-    }
-    if (playerRef.current) {
-      playerRef.current.close();
-      playerRef.current = null;
-    }
-    playerRef.current = new AudioPlayer({
-      runId,
-      onError: (msg) => console.warn("audio:", msg),
-    });
-    playerRef.current.connect("/api/events");
-    playerRef.current.play();
-    setListeningRunId(runId);
-  }, [listeningRunId]);
+  // Backs the CommandStrip's "Run trial" — runs the selected scenario across
+  // EVERY configured provider so it fills the whole matrix row in one go
+  // (real providers are billed; that's intended).
+  const handleRunTrial = useCallback(() => {
+    if (!selectedScenario || providers.length === 0) return;
+    void handleStartRun(providers.map((p) => p.id), [selectedScenario]);
+  }, [selectedScenario, providers, handleStartRun]);
 
-  const showEmptyHero = liveRuns.length === 0 && historicalResults.length === 0;
+  // Clicking an empty matrix cell runs just that scenario×provider pair.
+  const handleRunCell = useCallback((scenarioId: string, providerId: string) => {
+    void handleStartRun([providerId], [scenarioId]);
+  }, [handleStartRun]);
 
   return (
     <ErrorBoundary>
-      <Layout
-        connected={state.connected}
-        headerActions={
-          activeTab === "runs" ? (
-            <RunControls
-              connected={state.connected}
-              loading={loading}
-              startError={startError}
-              onStart={handleStartRun}
-            />
-          ) : null
-        }
-      >
+      <div className="min-h-screen bg-canvas" style={{ paddingLeft: 32, paddingRight: 32 }}>
+        <TopBar
+          connected={state.connected}
+          promptpack={promptpack}
+          runningLive={liveRuns.some((r) => r.status === "running")}
+          theme={theme}
+          onToggleTheme={toggleTheme}
+        />
+        <main className="py-8">
         {/* Tab bar */}
         <div className="flex gap-1 mb-6 border-b border-mist pb-0">
           <button
@@ -214,49 +442,55 @@ export default function App() {
         ) : (
           <>
             <div className={devToolsOpen ? "lg:mr-[420px] transition-[margin] duration-200" : "transition-[margin] duration-200"}>
-              {selectedRunId ? (
-                <RunDetail
-                  runId={selectedRunId}
-                  liveRun={state.runs[selectedRunId]}
-                  listeningRunId={listeningRunId}
-                  onToggleListen={handleListen}
-                  onBack={() => { setSelectedRunId(null); setDevToolsOpen(false); }}
-                  onSelectMessage={handleSelectMessage}
-                />
-              ) : showEmptyHero ? (
-                <div className="max-w-2xl mx-auto">
-                  <EmptyStateLauncher
-                    connected={state.connected}
-                    loading={loading}
-                    startError={startError}
-                    onStart={handleStartRun}
+              {selectedKey && selectedCell ? (
+                <div className="space-y-4">
+                  <button
+                    onClick={handleBackFromInspector}
+                    className="flex items-center gap-2 text-sm text-[#2563EB] hover:underline"
+                  >
+                    <ArrowLeft className="h-4 w-4" /> Back
+                  </button>
+                  <TrialInspector
+                    run={selectedCellRun}
+                    cell={inspectorCell}
+                    scenarioId={inspectorCell?.scenarioId ?? selectedCell.scenarioId}
+                    providerId={inspectorCell?.providerId ?? selectedCell.providerId}
+                    providerLabel={selectedProviderLabel}
+                    workflowGraph={workflowGraph}
+                    onSelectMessage={handleSelectMessage}
+                    listeningRunId={listeningRunId}
+                    onToggleListen={handleListen}
+                    theme={theme}
                   />
                 </div>
               ) : (
                 <div className="space-y-8">
+                  <Hero scenarioCount={scenarios.length} providerCount={providers.length} />
+                  <CommandStrip
+                    scenarios={scenarios}
+                    selectedScenario={selectedScenario}
+                    selectedProviderLabel={chartProvider?.label ?? null}
+                    onSelectScenario={setSelectedScenario}
+                    onRunTrial={handleRunTrial}
+                    runDisabled={!state.connected || loading || !selectedScenario || providers.length === 0}
+                  />
                   {startError && (
                     <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-[#EF4444]">{startError}</div>
                   )}
-                  <SummaryCards
-                    totalRuns={liveRuns.length + historicalResults.length}
-                    activeRuns={liveRuns.filter((r) => r.status === "running").length}
-                    completedRuns={liveRuns.filter((r) => r.status !== "running").length + historicalResults.length}
-                    failedRuns={liveRuns.filter((r) => r.status === "failed").length + historicalResults.filter((r) => !!r.Error).length}
-                    totalCost={state.totalCost + historicalResults.reduce((sum, r) => sum + (r.Cost?.total_cost_usd || 0), 0)}
-                    totalTokens={state.totalTokens + historicalResults.reduce((sum, r) => sum + (r.Cost?.input_tokens || 0) + (r.Cost?.output_tokens || 0), 0)}
-                  />
-                  {liveRuns.length > 0 && (
-                    <RunProgress
-                      runs={liveRuns}
-                      listeningRunId={listeningRunId}
-                      onSelectRun={setSelectedRunId}
-                      onToggleListen={handleListen}
-                    />
-                  )}
-                  {historicalResults.length > 0 && (
+                  <div className="flex justify-end">
+                    <button
+                      onClick={() => setShowLedger((v) => !v)}
+                      className="rounded-lg border border-mist bg-surface px-3 py-1.5 text-xs font-medium text-fg-muted hover:text-fg hover:bg-[var(--c-surface-2)] transition-colors"
+                    >
+                      {showLedger ? "Hide ledger" : "Show ledger"}
+                    </button>
+                  </div>
+                  <InstrumentBand matrix={matrix} results={matrixResults} />
+                  <TrialMatrix matrix={matrix} selectedKey={selectedKey} onSelect={handleSelectCell} onRunCell={handleRunCell} />
+                  {showLedger && (
                     <HistoricalResults
                       results={historicalResults}
-                      onSelectRun={setSelectedRunId}
+                      onSelectRun={handleSelectHistoricalRun}
                       onClear={async () => {
                         await clearResults();
                         setHistoricalResults([]);
@@ -276,7 +510,8 @@ export default function App() {
             />
           </>
         )}
-      </Layout>
+        </main>
+      </div>
     </ErrorBoundary>
   );
 }

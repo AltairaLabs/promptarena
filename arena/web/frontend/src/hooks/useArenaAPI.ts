@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import type { RunOptionsResponse, RunResult, RunRequest } from "@/types";
+import type { RunOptionsResponse, RunResult, RunRequest, WorkflowGraph } from "@/types";
 
 export function useArenaAPI() {
   const [loading, setLoading] = useState(false);
@@ -43,5 +43,10 @@ export function useArenaAPI() {
     return resp.json();
   }, []);
 
-  return { startRun, getResults, getResult, getConfig, getRunOptions, clearResults, loading };
+  const getWorkflow = useCallback(async (): Promise<WorkflowGraph> => {
+    const resp = await fetch("/api/workflow");
+    return resp.json();
+  }, []);
+
+  return { startRun, getResults, getResult, getConfig, getRunOptions, clearResults, getWorkflow, loading };
 }

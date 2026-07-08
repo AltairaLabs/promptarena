@@ -1,0 +1,175 @@
+/* workflow.css — the Atlas "star chart" skin for @xyflow/react's chrome.
+   Nodes render as glyphs (see WorkflowNode.tsx / GroupNode.tsx); this file
+   covers the parts React Flow owns: the pane's night-sky atmosphere, edge
+   label backdrops, and the Controls chrome (no MiniMap — the panel doesn't
+   render one). `colorMode` on <ReactFlow> flips React Flow's own
+   `.dark`/`.light` class; these rules key off the app's [data-theme] so both
+   stay in lockstep. */
+
+.react-flow {
+  position: relative;
+  --xy-background-color: transparent;
+  --xy-edge-label-background-color: var(--c-canvas);
+
+  /* The night sky: gold top-right + violet top-left over the canvas,
+     the same --atmo-* atmospheres the rest of the app uses behind its
+     hero surfaces. Each is a plain radial-gradient() — no raw hex here. */
+  background-color: var(--c-canvas);
+  background-image: var(--atmo-gold), var(--atmo-violet);
+  background-repeat: no-repeat;
+}
+
+/* The starfield texture — layered behind the nodes/edges, dark theme only
+   (it washes out on paper). A separate layer (rather than folded into the
+   .react-flow background-image above) so it can carry its own opacity and
+   blend mode without lightening the atmosphere gradients in light mode. */
+.react-flow::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: url("../../../assets/starfield.svg");
+  background-size: cover;
+  background-repeat: repeat;
+  opacity: 0;
+  mix-blend-mode: screen;
+}
+
+[data-theme="dark"] .react-flow::before {
+  opacity: 0.35;
+}
+
+/* Handles exist only so React Flow has an anchor to route edges to/from —
+   they're visually folded into the glyph they sit on (see WorkflowNode.tsx
+   / GroupNode.tsx), never their own box-corner dot. */
+.react-flow__handle {
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+  min-width: 1px;
+  min-height: 1px;
+  border: 0;
+  background: transparent;
+  pointer-events: none;
+}
+
+.react-flow__controls {
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  box-shadow: none;
+  border: 1px solid var(--hairline);
+}
+
+.react-flow__controls-button {
+  background: var(--surface-1);
+  border-bottom: 1px solid var(--hairline);
+  color: var(--star-500);
+}
+
+.react-flow__controls-button:hover {
+  background: var(--surface-2);
+  color: var(--star-300);
+}
+
+.react-flow__controls-button svg {
+  fill: currentColor;
+}
+
+.react-flow__attribution {
+  display: none;
+}
+
+.react-flow__edge-path {
+  stroke-linecap: round;
+}
+
+.react-flow__edge-text {
+  fill: var(--star-500);
+}
+
+.react-flow__edge-textbg {
+  fill: var(--c-canvas);
+}
+
+/* ============================================================
+   Node glyphs — the star-chart counterpart to the old boxes.
+   The node's own container is transparent and exactly the size of the
+   glyph, so hidden Handles anchored to it read as touching the star.
+   ============================================================ */
+
+.atlas-node {
+  position: relative;
+  width: 15px;
+  height: 15px;
+  cursor: default;
+  transition: opacity var(--dur-base, 200ms) var(--ease-standard, ease);
+}
+
+.atlas-node--large {
+  width: 18px;
+  height: 18px;
+}
+
+/* A composition-owning state (collapsed or its group) is click-to-expand
+   (or click-to-collapse); the cursor and a subtle glyph brightening on
+   hover are the only affordance — no layout shift. */
+.atlas-node--clickable {
+  cursor: pointer;
+}
+
+.atlas-node--clickable:hover .atlas-node__glyph {
+  filter: brightness(1.35);
+}
+
+.atlas-node__glyph {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+}
+
+.atlas-node__glyph--diamond {
+  border-radius: 3px;
+  transform: rotate(45deg);
+}
+
+.atlas-node__glyph--glow {
+  animation: atlas-twinkle 3s ease-in-out infinite;
+}
+
+/* The synthetic __start/__end terminators: a hollow, muted ring — never a
+   filled glyph (no kind/halo of its own) and never dimmed, so it reads as
+   on-brand wayfinding chrome rather than another state on the chart. */
+.atlas-node__glyph--terminator {
+  background: transparent;
+  border: 1.5px solid var(--hairline-strong);
+}
+
+.atlas-node__badge {
+  position: absolute;
+  top: -7px;
+  right: -9px;
+  font: 11px var(--font-mono);
+  line-height: 1;
+  color: var(--star-600);
+}
+
+.atlas-node__label {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  margin-top: 6px;
+  font: 600 13px var(--font-mono);
+  color: var(--star-300);
+  text-align: center;
+  white-space: nowrap;
+  /* Legibility halo so the label reads over crossing starlight lines. */
+  text-shadow:
+    0 0 3px var(--c-canvas),
+    0 0 3px var(--c-canvas);
+}
+
+.atlas-node__label--terminator {
+  color: var(--star-600);
+  font-weight: 500;
+}

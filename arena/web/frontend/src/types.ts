@@ -99,6 +99,40 @@ export interface RunOptionsResponse {
   scenarios: ScenarioInfo[];
 }
 
+// === Workflow Graph ===
+// Mirrors the Go backend's GET /api/workflow response exactly (no x/y —
+// layout is a frontend concern, see src/lib/workflowFlow.ts's dagre pass).
+
+export interface WorkflowGraphNode {
+  id: string;
+  label: string;
+  kind: "entry" | "output" | "agent" | "prompt" | "tool" | "branch";
+  entry: boolean;
+  terminal: boolean;
+  // parent is the owning state's node id for a prompt-composition "step"
+  // node; unset for top-level state nodes. Mirrors the backend field.
+  parent?: string;
+  // dim is a frontend-only overlay field set by arenaView's
+  // overlayWorkflowRun — never present in the raw backend payload.
+  dim?: boolean;
+}
+
+export interface WorkflowGraphEdge {
+  from: string;
+  to: string;
+  label?: string;
+  dashed?: boolean;
+  // gold/dim are frontend-only overlay fields set by arenaView's
+  // overlayWorkflowRun — never present in the raw backend payload.
+  gold?: boolean;
+  dim?: boolean;
+}
+
+export interface WorkflowGraph {
+  nodes: WorkflowGraphNode[];
+  edges: WorkflowGraphEdge[];
+}
+
 // === Run Results ===
 
 export interface RunResult {
@@ -331,4 +365,56 @@ export interface LogEntry {
   level: "info" | "error";
   message: string;
   runId?: string;
+}
+
+// === Atlas Viewmodels (arenaView selectors) ===
+
+export interface TrialCell {
+  scenarioId: string;
+  providerId: string;
+  key: string; // `${scenarioId}:${providerId}`
+  passRate: number; // 0-100
+  passed: boolean; // passRate resolves to a pass (assertions all passed)
+  best: boolean; // best provider in this scenario row
+  costUsd: number; // total cost; 0 => rendered "free"
+  latencyMs: number; // run duration in ms
+  runId: string; // the RunResult.RunID backing this cell (latest)
+  hasData: boolean; // false => empty cell (no run yet)
+}
+
+export interface TrialRow {
+  scenarioId: string;
+  label: string;
+  cells: TrialCell[];
+}
+
+export interface TrialMatrix {
+  providers: { id: string; label: string }[];
+  rows: TrialRow[];
+}
+
+export interface Standing {
+  rank: number;
+  providerId: string;
+  label: string;
+  wins: number;
+  leader: boolean;
+}
+
+export interface OverallGauge {
+  passRate: number;
+  passed: number;
+  total: number;
+  caption: string; // e.g. "13 / 20 passed"
+}
+
+export interface TranscriptMessage {
+  role: string;
+  idx: number;
+  accent: string; // from roleAccent(role)
+  bg: string; // color-mix accent 11%
+  content?: string;
+  meta?: string; // e.g. "$0.0069 · 820ms"
+  tool?: { name: string; body: string };
+  asserts?: { name: string; ok: boolean }[];
 }

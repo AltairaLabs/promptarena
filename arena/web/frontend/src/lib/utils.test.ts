@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { cn, toDisplayString } from "./utils";
+import { cn, formatDuration, toDisplayString } from "./utils";
 
 describe("cn", () => {
   it("concatenates space-separated class names", () => {
@@ -16,6 +16,34 @@ describe("cn", () => {
 
   it("returns empty string when given no arguments", () => {
     expect(cn()).toBe("");
+  });
+});
+
+describe("formatDuration", () => {
+  it("shows <1ms for sub-millisecond durations", () => {
+    expect(formatDuration(0.634)).toBe("<1ms");
+    expect(formatDuration(0)).toBe("<1ms");
+  });
+
+  it("shows whole milliseconds under 1s", () => {
+    expect(formatDuration(820)).toBe("820ms");
+    expect(formatDuration(1)).toBe("1ms");
+    expect(formatDuration(999)).toBe("999ms");
+  });
+
+  it("shows one decimal of seconds under 10s", () => {
+    expect(formatDuration(5000)).toBe("5.0s");
+    expect(formatDuration(1234)).toBe("1.2s");
+  });
+
+  it("shows whole seconds from 10s up to a minute", () => {
+    expect(formatDuration(45000)).toBe("45s");
+    expect(formatDuration(59999)).toBe("60s");
+  });
+
+  it("rolls over into minutes and seconds at 60s and above", () => {
+    expect(formatDuration(633792)).toBe("10m 34s");
+    expect(formatDuration(60000)).toBe("1m 0s");
   });
 });
 
