@@ -56,7 +56,7 @@ function FitOnChange({ signal }: { signal: string }) {
     // Deferred a tick so newly (un)mounted nodes have been measured (React
     // Flow sizes nodes via ResizeObserver, which delivers asynchronously)
     // before fitView reads their dimensions.
-    const timer = setTimeout(() => fitView({ padding: 0.15, duration: 300 }), 0);
+    const timer = setTimeout(() => fitView({ padding: 0.22, maxZoom: 1, duration: 300 }), 0);
     return () => clearTimeout(timer);
   }, [signal, fitView]);
 
@@ -131,6 +131,12 @@ export function WorkflowGraphView({ elements, theme, onStateClick }: WorkflowGra
       nodeTypes={nodeTypes}
       colorMode={(theme ?? "dark") as ColorMode}
       fitView
+      // Cap the auto-fit at natural scale so a small graph settles at its
+      // designed glyph size instead of blowing up to fill the panel; leave
+      // headroom for manual zoom in either direction.
+      fitViewOptions={{ padding: 0.22, maxZoom: 1 }}
+      minZoom={0.2}
+      maxZoom={2.5}
       proOptions={{ hideAttribution: true }}
       nodesDraggable={false}
       nodesConnectable={false}
