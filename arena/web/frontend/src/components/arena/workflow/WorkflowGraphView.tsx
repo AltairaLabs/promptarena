@@ -96,31 +96,16 @@ export function WorkflowGraphView({ elements, theme, onStateClick }: WorkflowGra
     [elements.nodes],
   );
 
-  // Hovering a node lights up its FORWARD path — every edge reachable by
-  // following the flow onward from that node — so you can trace "what happens
-  // after this step" at a glance. `forwardEdgeIds` is the set of those edge
-  // ids (or null when nothing is hovered / the node has no successors).
+  // Hovering a node lights up its immediate forward links — the edges to its
+  // direct next node(s) — so you can see "where this step goes next" without
+  // lighting the whole downstream path. `forwardEdgeIds` is the set of those
+  // edge ids (or null when nothing is hovered / the node has no successors).
   const [hoveredId, setHoveredId] = useState<string | null>(null);
   const forwardEdgeIds = useMemo<Set<string> | null>(() => {
     if (!hoveredId) return null;
-    const outgoing = new Map<string, { edgeId: string; to: string }[]>();
-    for (const e of elements.edges) {
-      const list = outgoing.get(e.source);
-      if (list) list.push({ edgeId: e.id, to: e.target });
-      else outgoing.set(e.source, [{ edgeId: e.id, to: e.target }]);
-    }
     const hit = new Set<string>();
-    const seen = new Set<string>([hoveredId]);
-    const queue = [hoveredId];
-    while (queue.length) {
-      const cur = queue.shift()!;
-      for (const { edgeId, to } of outgoing.get(cur) ?? []) {
-        hit.add(edgeId);
-        if (!seen.has(to)) {
-          seen.add(to);
-          queue.push(to);
-        }
-      }
+    for (const e of elements.edges) {
+      if (e.source === hoveredId) hit.add(e.id);
     }
     return hit.size > 0 ? hit : null;
   }, [hoveredId, elements.edges]);
