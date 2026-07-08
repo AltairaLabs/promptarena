@@ -839,7 +839,7 @@ func (p *DeployPage) keyBindings() []views.KeyBinding {
 			kb = append([]views.KeyBinding{{Keys: "a", Description: "apply"}}, kb...)
 		}
 	case p.state == deployStateConfirm && p.pf != nil && p.pf.Env == flow.DefaultEnv:
-		kb = append([]views.KeyBinding{{Keys: "y", Description: "confirm"}}, kb...)
+		kb = append([]views.KeyBinding{{Keys: "y", Description: "confirm"}, {Keys: "n", Description: "cancel"}}, kb...)
 	case p.state == deployStateConfirm:
 		kb = append([]views.KeyBinding{{Keys: keyEnter, Description: "confirm"}}, kb...)
 	case p.state == deployStateApplyResult:
@@ -849,7 +849,12 @@ func (p *DeployPage) keyBindings() []views.KeyBinding {
 	case p.state == deployStateError:
 		switch classifyDeployErr(p.err) {
 		case errorKindAuth:
-			kb = append([]views.KeyBinding{{Keys: "l", Description: "log in"}}, kb...)
+			// Mirror handleErrorKey's exact guard: 'l' only fires when the
+			// adapter actually supports login, so the footer must not
+			// advertise it otherwise.
+			if p.pf != nil && p.pf.SupportsLogin {
+				kb = append([]views.KeyBinding{{Keys: "l", Description: "log in"}}, kb...)
+			}
 		case errorKindLockContention:
 			kb = append([]views.KeyBinding{{Keys: "r", Description: "retry"}}, kb...)
 		}
