@@ -1,6 +1,7 @@
 package flow
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -261,6 +262,96 @@ func TestMergeProfileMissingSpecErrors(t *testing.T) {
 	_, err := mergeProfileIntoConfigDoc(doc, profile, "omnia")
 	if err == nil {
 		t.Fatal("expected error when manifest has no spec: section")
+	}
+}
+
+// TestMergeProfileIntoConfigDoc_EmptyDocument covers documentMapping's first
+// branch: an empty YAML document parses to a zero-value node (Kind !=
+// DocumentNode), which must be turned into a fresh empty mapping rather than
+// panicking — and then fail with the usual missing-spec error rather than a
+// nil-pointer dereference.
+func TestMergeProfileIntoConfigDoc_EmptyDocument(t *testing.T) {
+	_, err := mergeProfileIntoConfigDoc([]byte(""), map[string]interface{}{"token": "abc"}, "omnia")
+	if err == nil || !strings.Contains(err.Error(), "missing or malformed spec") {
+		t.Fatalf("expected missing-spec error for an empty document, got %v", err)
+	}
+}
+
+// TestMergeProfileIntoConfigDoc_NonMappingRoot covers documentMapping's
+// second branch: a document whose root is a scalar (not a mapping) must also
+// be handled gracefully rather than panicking on root.Content[0].
+func TestMergeProfileIntoConfigDoc_NonMappingRoot(t *testing.T) {
+	_, err := mergeProfileIntoConfigDoc([]byte("just-a-scalar-value\n"), map[string]interface{}{"token": "abc"}, "omnia")
+	if err == nil || !strings.Contains(err.Error(), "missing or malformed spec") {
+		t.Fatalf("expected missing-spec error for a non-mapping root, got %v", err)
+	}
+}
+
+// TestMergeProfileDeployNotMapping covers the branch where spec.deploy exists
+// but is not itself a mapping (here, a scalar) — a malformed manifest that
+// must be rejected rather than silently coerced.
+func TestMergeProfileDeployNotMapping(t *testing.T) {
+	doc := arenaManifest(`  deploy: not-a-mapping
+`)
+	_, err := mergeProfileIntoConfigDoc(doc, map[string]interface{}{"token": "abc"}, "omnia")
+	if err == nil || !strings.Contains(err.Error(), "deploy section is not a mapping") {
+		t.Fatalf("expected deploy-not-a-mapping error, got %v", err)
+	}
+}
+
+// TestMergeProfileDeployConfigNotMapping covers the branch where
+// spec.deploy.config exists but is not a mapping.
+func TestMergeProfileDeployConfigNotMapping(t *testing.T) {
+	doc := arenaManifest(`  deploy:
+    provider: omnia
+    config: not-a-mapping
+`)
+	_, err := mergeProfileIntoConfigDoc(doc, map[string]interface{}{"token": "abc"}, "omnia")
+	if err == nil || !strings.Contains(err.Error(), "deploy.config is not a mapping") {
+		t.Fatalf("expected deploy.config-not-a-mapping error, got %v", err)
+	}
+}
+
+// failingMarshaler implements yaml.Marshaler and always errors, so
+// yaml.Node.Encode returns a clean error rather than panicking (unlike, say,
+// an unsupported Go kind such as chan, which yaml.v3 panics on).
+type failingMarshaler struct{}
+
+func (failingMarshaler) MarshalYAML() (interface{}, error) {
+	return nil, fmt.Errorf("marshaling deliberately failed")
+}
+
+// TestMergeMapIntoNode_EncodeError covers mergeMapIntoNode's error branch: a
+// profile value whose YAML encoding fails must surface a clear "failed to
+// encode profile value" error instead of silently dropping the key.
+func TestMergeMapIntoNode_EncodeError(t *testing.T) {
+	doc := arenaManifest(`  deploy:
+    provider: omnia
+    config:
+      region: us-east-1
+`)
+	profile := map[string]interface{}{"bad": failingMarshaler{}}
+
+	_, err := mergeProfileIntoConfigDoc(doc, profile, "omnia")
+	if err == nil || !strings.Contains(err.Error(), "failed to encode profile value") {
+		t.Fatalf("expected encode error for an unencodable profile value, got %v", err)
+	}
+}
+
+// TestMergeProfileIntoConfigFile_PropagatesDocError ensures a structurally
+// invalid config file (exists, but fails mergeProfileIntoConfigDoc's own
+// validation) surfaces that error rather than writing back a broken doc.
+func TestMergeProfileIntoConfigFile_PropagatesDocError(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "arena.yaml")
+	// No spec: section at all -> mergeProfileIntoConfigDoc errors.
+	if err := os.WriteFile(path, []byte("apiVersion: v1\nkind: Arena\n"), 0o600); err != nil {
+		t.Fatalf("write manifest: %v", err)
+	}
+
+	err := MergeProfileIntoConfigFile(path, map[string]interface{}{"token": "abc"}, "omnia")
+	if err == nil || !strings.Contains(err.Error(), "missing or malformed spec") {
+		t.Fatalf("expected the doc-merge error to propagate, got %v", err)
 	}
 }
 

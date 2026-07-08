@@ -1,6 +1,8 @@
 package flow
 
 import (
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -17,6 +19,32 @@ func TestAdapterInstalled_Missing(t *testing.T) {
 	_, found := AdapterInstalled("nonexistent-xyz", t.TempDir())
 	if found {
 		t.Fatal("expected adapter not found")
+	}
+}
+
+// TestAdapterInstalled_ProjectLocal covers the discovery-succeeds branch:
+// Discover never executes the candidate, only checks it exists with the
+// executable bit set, so a project-local placeholder binary is enough to
+// prove the project-local search tier resolves and returns its path — no
+// real adapter subprocess involved.
+func TestAdapterInstalled_ProjectLocal(t *testing.T) {
+	t.Setenv("HOME", t.TempDir())
+	dir := t.TempDir()
+	adapterDir := filepath.Join(dir, ".promptarena", "adapters")
+	if err := os.MkdirAll(adapterDir, 0o755); err != nil {
+		t.Fatalf("mkdir adapter dir: %v", err)
+	}
+	binPath := filepath.Join(adapterDir, "promptarena-deploy-fakeprov")
+	if err := os.WriteFile(binPath, []byte("#!/bin/sh\necho fake\n"), 0o755); err != nil {
+		t.Fatalf("write placeholder adapter: %v", err)
+	}
+
+	path, found := AdapterInstalled("fakeprov", dir)
+	if !found {
+		t.Fatal("expected the project-local placeholder adapter to be discovered")
+	}
+	if path != binPath {
+		t.Fatalf("path = %q, want %q", path, binPath)
 	}
 }
 
