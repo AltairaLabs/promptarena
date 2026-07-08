@@ -1,4 +1,4 @@
-$schema: https://promptkit.altairalabs.ai/schemas/latest/scenario.json
+# yaml-language-server: $schema=../../../schemas/v1alpha1/scenario.json
 apiVersion: promptkit.altairalabs.ai/v1alpha1
 kind: Scenario
 metadata:
