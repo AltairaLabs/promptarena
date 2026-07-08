@@ -10,6 +10,7 @@ import (
 
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/exp/teatest"
 
 	"github.com/AltairaLabs/PromptKit/runtime/deploy"
@@ -177,6 +178,21 @@ func TestGoldenDeployPreflight_Ready(t *testing.T) {
 	p.SetSize(80, 24)
 	out := stripANSI(p.View())
 	teatest.RequireEqualOutput(t, []byte(out))
+}
+
+// TestPreflight_BoxFillsWidth verifies the preflight box stretches to the full
+// available width rather than hugging its content. Regression guard: the box
+// previously used MaxWidth, which only clips overflow and left a narrow box
+// misaligned with the full-width chrome header and footer.
+func TestPreflight_BoxFillsWidth(t *testing.T) {
+	p := &DeployPage{state: deployStatePreflight, pf: &flow.Preflight{
+		Provider: "omnia", Env: "default", AdapterFound: true,
+		AdapterVersion: "1.0.0", Authenticated: true,
+	}}
+	const width = 80
+	if got := lipgloss.Width(p.viewPreflight(width)); got != width {
+		t.Fatalf("preflight box width = %d, want %d (box should fill the frame width)", got, width)
+	}
 }
 
 // TestLogin_StatusMsgUpdatesText verifies loginStatusMsg updates the

@@ -891,6 +891,21 @@ func (p *DeployPage) keyBindings() []views.KeyBinding {
 	return kb
 }
 
+// deployBox returns the standard bordered box stretched to fill width so it
+// lines up with the full-width chrome header and footer. theme.BorderedBoxStyle
+// on its own (via MaxWidth) only clips overflow and otherwise leaves the box
+// hugging its content; setting an explicit Width stretches it. lipgloss's Width
+// is the content-plus-padding width and excludes the border, so we subtract the
+// horizontal border size to land exactly on width. Falls back to the natural
+// box when width is too small to hold the border.
+func deployBox(width int) lipgloss.Style {
+	borderH := theme.BorderedBoxStyle.GetHorizontalBorderSize()
+	if width <= borderH {
+		return theme.BorderedBoxStyle
+	}
+	return theme.BorderedBoxStyle.Width(width - borderH)
+}
+
 // viewPreflight renders the preflight-check step: target provider, a loudly
 // flagged environment banner for non-default envs, adapter presence, and
 // auth state. When the adapter isn't installed it renders the install
@@ -901,7 +916,7 @@ func (p *DeployPage) viewPreflight(width int) string {
 		Foreground(lipgloss.Color(theme.ColorPrimary)).
 		Render("Checking deploy adapter…")
 	if p.pf == nil {
-		return theme.BorderedBoxStyle.MaxWidth(width).Render(labelStyle)
+		return deployBox(width).Render(labelStyle)
 	}
 	pf := p.pf
 
@@ -932,7 +947,7 @@ func (p *DeployPage) viewPreflight(width int) string {
 	}
 
 	body := strings.Join(lines, "\n")
-	return theme.BorderedBoxStyle.MaxWidth(width).Render(body)
+	return deployBox(width).Render(body)
 }
 
 // viewLogin renders the login screen: a spinner, the latest status text, the
@@ -953,7 +968,7 @@ func (p *DeployPage) viewLogin(width int) string {
 		)
 	}
 	body := strings.Join(lines, "\n")
-	return theme.BorderedBoxStyle.MaxWidth(width).Render(body)
+	return deployBox(width).Render(body)
 }
 
 // viewPlanning renders the planning step: a spinner and status text while the
@@ -968,7 +983,7 @@ func (p *DeployPage) viewPlanning(width int) string {
 		lines = append([]string{theme.WarningStyle.Render("pack changed — re-planning…"), ""}, lines...)
 	}
 	body := strings.Join(lines, "\n")
-	return theme.BorderedBoxStyle.MaxWidth(width).Render(body)
+	return deployBox(width).Render(body)
 }
 
 // viewPlan renders the plan diff once startPlan's goroutine has delivered a
@@ -979,10 +994,10 @@ func (p *DeployPage) viewPlanning(width int) string {
 func (p *DeployPage) viewPlan(width int) string {
 	if !p.planHasChanges() {
 		body := theme.SuccessStyle.Render("No changes. Infrastructure is up to date.")
-		return theme.BorderedBoxStyle.MaxWidth(width).Render(body)
+		return deployBox(width).Render(body)
 	}
 	body := views.RenderPlanDiff(p.planDiff, width, p.collapseNoChange)
-	return theme.BorderedBoxStyle.MaxWidth(width).Render(body)
+	return deployBox(width).Render(body)
 }
 
 // viewConfirm renders the confirm step. Its shape depends entirely on
@@ -991,7 +1006,7 @@ func (p *DeployPage) viewPlan(width int) string {
 // other environment.
 func (p *DeployPage) viewConfirm(width int) string {
 	if p.pf == nil {
-		return theme.BorderedBoxStyle.MaxWidth(width).Render("")
+		return deployBox(width).Render("")
 	}
 	if p.pf.Env == flow.DefaultEnv {
 		return p.viewConfirmDefault(width)
@@ -1004,7 +1019,7 @@ func (p *DeployPage) viewConfirm(width int) string {
 func (p *DeployPage) viewConfirmDefault(width int) string {
 	prompt := fmt.Sprintf("Apply this plan to %s · %s? [y/N]", p.pf.Provider, p.pf.Env)
 	body := theme.ValueStyle.Render(prompt)
-	return theme.BorderedBoxStyle.MaxWidth(width).Render(body)
+	return deployBox(width).Render(body)
 }
 
 // viewConfirmTyped renders the type-to-confirm guardrail used for every
@@ -1033,7 +1048,7 @@ func (p *DeployPage) viewConfirmTyped(width int) string {
 		lines = append(lines, "", theme.ErrorStyle.Render("names don't match"))
 	}
 	body := strings.Join(lines, "\n")
-	return theme.BorderedBoxStyle.MaxWidth(width).Render(body)
+	return deployBox(width).Render(body)
 }
 
 // applyLogsHeight is the fixed height handed to applyLogs.Update — the
@@ -1052,7 +1067,7 @@ const applyLogsHeight = 10
 func (p *DeployPage) viewApplying(width int) string {
 	if p.applying && len(p.applyRows) == 0 {
 		line := p.spinner.View() + " " + theme.ValueStyle.Render("Applying…")
-		return theme.BorderedBoxStyle.MaxWidth(width).Render(line)
+		return deployBox(width).Render(line)
 	}
 	return p.viewApplyProgress(width)
 }
@@ -1105,7 +1120,7 @@ func (p *DeployPage) applyResultHeadline() string {
 func (p *DeployPage) viewStatus(width int) string {
 	if p.status == nil {
 		line := p.spinner.View() + " " + theme.ValueStyle.Render("Checking status…")
-		return theme.BorderedBoxStyle.MaxWidth(width).Render(line)
+		return deployBox(width).Render(line)
 	}
 	table := views.RenderDeployResources(views.DeployRowsFromStatus(p.status.Resources), width)
 	return lipgloss.JoinVertical(lipgloss.Left, p.statusHeadline(), "", table)
