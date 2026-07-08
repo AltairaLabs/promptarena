@@ -128,23 +128,19 @@ export function WorkflowGraphView({ elements, theme, onStateClick }: WorkflowGra
   const rfEdges = useMemo<Edge[]>(
     () =>
       elements.edges.map((e): Edge => {
-        const baseStroke = e.data.gold ? "var(--gold-500)" : "var(--starlight-500)";
-        // When a forward path is active: highlighted edges brighten to the
-        // product accent + animate; the rest fade back so the traced path pops.
+        const stroke = e.data.gold ? "var(--gold-500)" : "var(--starlight-500)";
+        // On hover, the forward path stays full-strength, thicker, and animated
+        // while the rest fades back only modestly — the path stands out without
+        // recoloring or washing the rest out.
         const onPath = forwardEdgeIds?.has(e.id) ?? false;
         const hoverActive = forwardEdgeIds !== null;
-        const stroke = onPath ? "var(--c-accent)" : baseStroke;
-        const opacity = e.data.dim ? 0.35 : hoverActive ? (onPath ? 1 : 0.12) : 0.55;
+        const opacity = e.data.dim ? 0.35 : hoverActive ? (onPath ? 1 : 0.28) : 0.55;
         return {
           id: e.id,
           source: e.source,
           target: e.target,
-          // Orthogonal routing with rounded corners — clean wayfinding lines
-          // that separate cleanly through branch/join/parallel, instead of
-          // bezier curves that overlap in a tight pipeline. (smoothstep's
-          // default corner radius is fine; pathOptions isn't on the base Edge
-          // type.)
-          type: "smoothstep",
+          // Default bezier — the curved wayfinding lines; the roomier dagre
+          // separation keeps them from overlapping without going orthogonal.
           animated: onPath,
           data: e.data as unknown as Record<string, unknown>,
           // A small, open arrow (not the chunky filled ArrowClosed) — a
@@ -153,7 +149,7 @@ export function WorkflowGraphView({ elements, theme, onStateClick }: WorkflowGra
           label: e.data.label,
           style: {
             stroke,
-            strokeWidth: onPath ? 2.2 : 1.3,
+            strokeWidth: onPath ? 2.6 : 1.3,
             strokeDasharray: e.data.dashed ? "4 4" : undefined,
             opacity,
           },
