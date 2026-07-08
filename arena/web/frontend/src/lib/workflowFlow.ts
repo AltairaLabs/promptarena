@@ -327,5 +327,15 @@ function buildElements(
     edges.push({ id: makeEdgeId(source, target, usedIds), source, target, data: {} });
   }
 
-  return { nodes, edges };
+  // A terminator with no surviving edge (e.g. thisRunOnly dropped the entry
+  // or terminal state it connects to, or an in-progress run hasn't reached
+  // the terminal state yet) would render as a floating, edgeless dot — drop
+  // it rather than show an orphan.
+  const startHasEdge = edges.some((e) => e.source === START_ID);
+  const endHasEdge = edges.some((e) => e.target === END_ID);
+  const survivingNodes = nodes.filter(
+    (n) => (n.id !== START_ID || startHasEdge) && (n.id !== END_ID || endHasEdge),
+  );
+
+  return { nodes: survivingNodes, edges };
 }

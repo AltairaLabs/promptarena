@@ -258,6 +258,34 @@ describe("buildFlowElements — thisRunOnly", () => {
     expect(ids).toEqual(["__end", "__start", "default", "escalate", "intake", "resolve"]);
   });
 
+  it("drops the orphaned __end terminator when the run's path never reaches the terminal state, but keeps __start", () => {
+    // The run only ever reaches "analyzing" — "done" (the sole terminal
+    // state) is unvisited and gets filtered out by thisRunOnly, so the
+    // __end terminator that would target it has no surviving edge and must
+    // not render as a floating, edgeless dot. "default" (the entry state)
+    // is visited, so __start keeps its edge and survives.
+    const run = mkRun({
+      Messages: [
+        {
+          role: "system",
+          content: "",
+          meta: { _workflow_state: { current_state: "analyzing", previous_state: "default" } },
+        },
+      ],
+    });
+
+    const { nodes, edges } = buildFlowElements(documentAnalysisGraph, run, {
+      expandedStates: [],
+      thisRunOnly: true,
+    });
+
+    expect(nodes.some((n) => n.id === "__end")).toBe(false);
+    expect(edges.some((e) => e.target === "__end")).toBe(false);
+
+    expect(nodes.some((n) => n.id === "__start")).toBe(true);
+    expect(edges.some((e) => e.source === "__start" && e.target === "default")).toBe(true);
+  });
+
   it("drops an unvisited state's composition steps and group in expanded mode", () => {
     const graph: WorkflowGraph = {
       nodes: [

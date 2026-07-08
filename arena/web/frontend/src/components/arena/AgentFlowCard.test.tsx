@@ -112,6 +112,26 @@ describe("AgentFlowCard", () => {
     await waitFor(() => expect(screen.getByText("classify")).toBeInTheDocument());
   });
 
+  it("clicking the expanded group node collapses it back", async () => {
+    render(<AgentFlowCard graph={compositionGraph} run={makeRun()} theme="dark" />);
+    await waitFor(() => expect(screen.getByText("analyzing")).toBeInTheDocument());
+
+    // Expand via the header shortcut so "analyzing" renders as a GroupNode
+    // (WorkflowGraphView's onNodeClick reports data.stateId for a group
+    // click, same as it reports node.id for the collapsed single node).
+    fireEvent.click(screen.getByRole("button", { name: "Expand all" }));
+    await waitFor(() => expect(screen.getByText("classify")).toBeInTheDocument());
+
+    // Click the now-expanded group node itself (its label span, same text
+    // "analyzing" the collapsed node used) — this drives the same
+    // toggleState handler as the collapsed-node click, so it should remove
+    // "analyzing" from expandedStates and collapse the group back.
+    fireEvent.click(screen.getByText("analyzing"));
+
+    await waitFor(() => expect(screen.queryByText("classify")).not.toBeInTheDocument());
+    expect(screen.getByRole("button", { name: "Expand all" })).toBeInTheDocument();
+  });
+
   it("toggling This run only drops a state the run never visited", async () => {
     const run = makeRun({
       Messages: [
