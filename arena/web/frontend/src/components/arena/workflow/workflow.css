@@ -1,15 +1,15 @@
 /* workflow.css — the Atlas "star chart" skin for @xyflow/react's chrome.
    Nodes render as glyphs (see WorkflowNode.tsx / GroupNode.tsx); this file
    covers the parts React Flow owns: the pane's night-sky atmosphere, edge
-   label backdrops, and the Controls/MiniMap chrome. `colorMode` on
-   <ReactFlow> flips React Flow's own `.dark`/`.light` class; these rules key
-   off the app's [data-theme] so both stay in lockstep. */
+   label backdrops, and the Controls chrome (no MiniMap — the panel doesn't
+   render one). `colorMode` on <ReactFlow> flips React Flow's own
+   `.dark`/`.light` class; these rules key off the app's [data-theme] so both
+   stay in lockstep. */
 
 .react-flow {
   position: relative;
   --xy-background-color: transparent;
   --xy-edge-label-background-color: var(--c-canvas);
-  --xy-minimap-background-color: var(--surface-1);
 
   /* The night sky: gold top-right + violet top-left over the canvas,
      the same --atmo-* atmospheres the rest of the app uses behind its
@@ -75,17 +75,6 @@
   fill: currentColor;
 }
 
-.react-flow__minimap {
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  border: 1px solid var(--hairline);
-  background: var(--surface-1);
-}
-
-.react-flow__minimap-mask {
-  fill: color-mix(in srgb, var(--ink-canvas, var(--surface-1)) 60%, transparent);
-}
-
 .react-flow__attribution {
   display: none;
 }
@@ -102,10 +91,6 @@
   fill: var(--c-canvas);
 }
 
-[data-theme="light"] .react-flow__minimap-mask {
-  fill: color-mix(in srgb, var(--ink-canvas, var(--surface-1)) 45%, transparent);
-}
-
 /* ============================================================
    Node glyphs — the star-chart counterpart to the old boxes.
    The node's own container is transparent and exactly the size of the
@@ -116,12 +101,24 @@
   position: relative;
   width: 13px;
   height: 13px;
+  cursor: default;
   transition: opacity var(--dur-base, 200ms) var(--ease-standard, ease);
 }
 
 .atlas-node--large {
   width: 16px;
   height: 16px;
+}
+
+/* A composition-owning state (collapsed or its group) is click-to-expand
+   (or click-to-collapse); the cursor and a subtle glyph brightening on
+   hover are the only affordance — no layout shift. */
+.atlas-node--clickable {
+  cursor: pointer;
+}
+
+.atlas-node--clickable:hover .atlas-node__glyph {
+  filter: brightness(1.35);
 }
 
 .atlas-node__glyph {
@@ -137,6 +134,14 @@
 
 .atlas-node__glyph--glow {
   animation: atlas-twinkle 3s ease-in-out infinite;
+}
+
+/* The synthetic __start/__end terminators: a hollow, muted ring — never a
+   filled glyph (no kind/halo of its own) and never dimmed, so it reads as
+   on-brand wayfinding chrome rather than another state on the chart. */
+.atlas-node__glyph--terminator {
+  background: transparent;
+  border: 1.5px solid var(--hairline-strong);
 }
 
 .atlas-node__badge {
@@ -162,4 +167,9 @@
   text-shadow:
     0 0 3px var(--c-canvas),
     0 0 3px var(--c-canvas);
+}
+
+.atlas-node__label--terminator {
+  color: var(--star-600);
+  font-weight: 500;
 }

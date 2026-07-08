@@ -20,6 +20,10 @@ export function GroupNode({ data }: NodeProps & { data: FlowNodeData }) {
         background: "color-mix(in srgb, var(--c-canvas) 40%, transparent)",
         borderRadius: "var(--radius-lg)",
         opacity: data.dim ? 0.35 : 1,
+        // A composition's group is always click-to-collapse (see
+        // WorkflowGraphView's onNodeClick / data.stateId), so the pointer
+        // cursor is unconditional here.
+        cursor: "pointer",
       }}
     >
       <Handle type="target" position={Position.Left} isConnectable={false} />

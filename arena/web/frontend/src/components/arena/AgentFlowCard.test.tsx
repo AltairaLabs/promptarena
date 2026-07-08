@@ -66,31 +66,50 @@ describe("AgentFlowCard", () => {
     expect(screen.getByText("resolve")).toBeInTheDocument();
   });
 
-  it("defaults to Compositions Collapsed and This-run-only off", async () => {
-    render(<AgentFlowCard graph={compositionGraph} run={makeRun()} theme="dark" />);
+  it("defaults to all compositions collapsed and This-run-only off, with no minimap", async () => {
+    const { container } = render(<AgentFlowCard graph={compositionGraph} run={makeRun()} theme="dark" />);
     await waitFor(() => expect(screen.getByText("analyzing")).toBeInTheDocument());
 
     // Collapsed: the composition-owning state renders as a single node, not
     // its step ("classify") — and every top-level state is present since
-    // this-run-only defaults to off.
+    // this-run-only defaults to off. Start/end terminators always show.
     expect(screen.queryByText("classify")).not.toBeInTheDocument();
     expect(screen.getByText("intake")).toBeInTheDocument();
     expect(screen.getByText("resolve")).toBeInTheDocument();
+    expect(screen.getByText("start")).toBeInTheDocument();
+    expect(screen.getByText("end")).toBeInTheDocument();
 
-    expect(screen.getByRole("button", { name: "Collapsed" })).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByRole("button", { name: "Expanded" })).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByRole("button", { name: "Expand all" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "This run only" })).toHaveAttribute("aria-pressed", "false");
+
+    // No minimap chrome anywhere in the panel.
+    expect(container.querySelector(".react-flow__minimap")).not.toBeInTheDocument();
   });
 
-  it("clicking Expanded reveals the composition's step nodes", async () => {
+  it("clicking Expand all reveals the composition's step nodes, then Collapse all hides them again", async () => {
     render(<AgentFlowCard graph={compositionGraph} run={makeRun()} theme="dark" />);
     await waitFor(() => expect(screen.getByText("analyzing")).toBeInTheDocument());
     expect(screen.queryByText("classify")).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Expanded" }));
+    fireEvent.click(screen.getByRole("button", { name: "Expand all" }));
 
     await waitFor(() => expect(screen.getByText("classify")).toBeInTheDocument());
-    expect(screen.getByRole("button", { name: "Expanded" })).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByRole("button", { name: "Collapse all" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Collapse all" }));
+
+    await waitFor(() => expect(screen.queryByText("classify")).not.toBeInTheDocument());
+    expect(screen.getByRole("button", { name: "Expand all" })).toBeInTheDocument();
+  });
+
+  it("clicking the composition-owning state node itself expands it", async () => {
+    render(<AgentFlowCard graph={compositionGraph} run={makeRun()} theme="dark" />);
+    await waitFor(() => expect(screen.getByText("analyzing")).toBeInTheDocument());
+    expect(screen.queryByText("classify")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByText("analyzing"));
+
+    await waitFor(() => expect(screen.getByText("classify")).toBeInTheDocument());
   });
 
   it("toggling This run only drops a state the run never visited", async () => {

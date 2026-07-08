@@ -1,8 +1,8 @@
-import { useMemo } from "react";
-import { ReactFlow, Controls, MiniMap, MarkerType, type ColorMode, type Edge, type Node } from "@xyflow/react";
+import { useCallback, useMemo } from "react";
+import { ReactFlow, Controls, MarkerType, type ColorMode, type Edge, type Node } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import "./workflow.css";
-import type { FlowElements } from "@/lib/workflowFlow";
+import type { FlowElements, FlowNodeData } from "@/lib/workflowFlow";
 import { WorkflowNode } from "./nodes/WorkflowNode";
 import { GroupNode } from "./nodes/GroupNode";
 
@@ -11,6 +11,11 @@ const nodeTypes = { workflowNode: WorkflowNode, group: GroupNode };
 export interface WorkflowGraphViewProps {
   elements: FlowElements;
   theme?: "light" | "dark";
+  // onStateClick fires with the composition-owning state's raw id, whether
+  // the click landed on its collapsed single node (data.hasComposition) or
+  // its expanded group (mapped back via data.stateId) — callers don't need
+  // to know which shape it's currently rendered as.
+  onStateClick?: (stateId: string) => void;
 }
 
 // WorkflowGraphView — the React Flow render of a workflow topology built by
@@ -29,7 +34,26 @@ function toRfNodes(nodes: FlowElements["nodes"]): Node[] {
   return nodes as unknown as Node[];
 }
 
-export function WorkflowGraphView({ elements, theme }: WorkflowGraphViewProps) {
+export function WorkflowGraphView({ elements, theme, onStateClick }: WorkflowGraphViewProps) {
+  // handleNodeClick — a click on a collapsed composition-owning state
+  // (data.hasComposition) reports its own id; a click on that state's
+  // expanded group (data.isGroup) reports the owning state's id back via
+  // data.stateId instead of the group's "grp:<id>" id, so the caller's
+  // expandedStates toggle logic never has to know about the group prefix.
+  // Non-composition nodes and the start/end terminators are inert.
+  const handleNodeClick = useCallback(
+    (_event: unknown, node: Node) => {
+      if (!onStateClick) return;
+      const data = node.data as unknown as FlowNodeData;
+      if (data.isGroup) {
+        if (data.stateId) onStateClick(data.stateId);
+        return;
+      }
+      if (data.hasComposition) onStateClick(node.id);
+    },
+    [onStateClick],
+  );
+
   const rfEdges = useMemo<Edge[]>(
     () =>
       elements.edges.map((e): Edge => {
@@ -69,11 +93,13 @@ export function WorkflowGraphView({ elements, theme }: WorkflowGraphViewProps) {
       nodesDraggable={false}
       nodesConnectable={false}
       elementsSelectable={false}
+      onNodeClick={handleNodeClick}
     >
       {/* No <Background/> — the night sky comes from workflow.css's atmosphere
-          on the .react-flow pane itself, not React Flow's dotted grid. */}
+          on the .react-flow pane itself, not React Flow's dotted grid. No
+          <MiniMap/> either — the panel is small enough that the nav box just
+          eats space without earning it. */}
       <Controls showInteractive={false} />
-      <MiniMap pannable zoomable />
     </ReactFlow>
   );
 }

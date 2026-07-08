@@ -1,5 +1,6 @@
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import type { FlowNodeData } from "@/lib/workflowFlow";
+import type { WorkflowGraphNode } from "@/types";
 
 // KIND_STYLE — the Atlas star-chart counterpart to ConstellationGraph's KIND
 // map: every state/step is a small glyph (a filled dot, or a diamond for
@@ -7,9 +8,12 @@ import type { FlowNodeData } from "@/lib/workflowFlow";
 // "star" nodes that twinkle; agent is starlight, prompt is nebula violet,
 // tool is ion cyan, branch is a gold diamond. Halo values are the same
 // rgba()s ConstellationGraph's KIND map used — kept as raw color so the
-// halo reads as a soft ring regardless of theme.
+// halo reads as a soft ring regardless of theme. Keyed on the backend's kind
+// union only — FlowNodeData["kind"] also carries the frontend-only
+// "terminator" kind, which the early return below handles separately (a
+// hollow ring, not a glyph from this map).
 const KIND_STYLE: Record<
-  FlowNodeData["kind"],
+  WorkflowGraphNode["kind"],
   { color: string; halo: string; diamond?: boolean; large?: boolean; glow?: boolean }
 > = {
   entry: {
@@ -43,15 +47,30 @@ const KIND_STYLE: Record<
   },
 };
 
-// WorkflowNode — the glyph-styled React Flow custom node for both states
-// (collapsed view) and steps (expanded, inside a GroupNode). The node's own
-// container is transparent and exactly the size of the glyph itself — a
-// small dot/diamond with a halo — so the (hidden) left/right Handles React
-// Flow anchors edges to sit at the glyph's center, not a box corner. Shows a
-// small "⤵" badge when the state owns a composition, and dims to a faint
-// glimmer when `data.dim` (not visited this run / not reachable under the
-// current toggles).
+// WorkflowNode — the glyph-styled React Flow custom node for states
+// (collapsed view), steps (expanded, inside a GroupNode), and the synthetic
+// __start/__end terminators. The node's own container is transparent and
+// exactly the size of the glyph itself — a small dot/diamond/ring with a
+// halo — so the (hidden) left/right Handles React Flow anchors edges to sit
+// at the glyph's center, not a box corner. Shows a small "⤵" badge when the
+// state owns a composition (also the click-to-expand affordance — see
+// WorkflowGraphView's onNodeClick), and dims to a faint glimmer when
+// `data.dim` (not visited this run / not reachable under the current
+// toggles).
 export function WorkflowNode({ data }: NodeProps & { data: FlowNodeData }) {
+  if (data.kind === "terminator") {
+    // Non-clickable, never dimmed — on-brand wayfinding chrome rather than
+    // another state on the chart.
+    return (
+      <div className="atlas-node">
+        <Handle type="target" position={Position.Left} isConnectable={false} />
+        <span className="atlas-node__glyph atlas-node__glyph--terminator" />
+        <div className="atlas-node__label atlas-node__label--terminator">{data.label}</div>
+        <Handle type="source" position={Position.Right} isConnectable={false} />
+      </div>
+    );
+  }
+
   const style = KIND_STYLE[data.kind] ?? KIND_STYLE.agent;
   const glyphClass = [
     "atlas-node__glyph",
@@ -60,9 +79,15 @@ export function WorkflowNode({ data }: NodeProps & { data: FlowNodeData }) {
   ]
     .filter(Boolean)
     .join(" ");
+  // A composition-owning state is the only clickable node kind — clicking it
+  // (or, once expanded, its group — see GroupNode.tsx) drills in/out.
+  const clickable = Boolean(data.hasComposition);
 
   return (
-    <div className={`atlas-node${style.large ? " atlas-node--large" : ""}`} style={{ opacity: data.dim ? 0.35 : 1 }}>
+    <div
+      className={`atlas-node${style.large ? " atlas-node--large" : ""}${clickable ? " atlas-node--clickable" : ""}`}
+      style={{ opacity: data.dim ? 0.35 : 1 }}
+    >
       <Handle type="target" position={Position.Left} isConnectable={false} />
       <span
         className={glyphClass}

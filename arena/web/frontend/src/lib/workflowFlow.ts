@@ -8,17 +8,28 @@ import type { RunResult, ActiveRun, WorkflowGraph, WorkflowGraphNode, WorkflowGr
 import { overlayWorkflowRun } from "./arenaView";
 
 export interface FlowToggles {
-  compositionsExpanded: boolean;
+  // expandedStates lists the composition-owning state ids currently drilled
+  // into (per-state, not all-or-nothing) — a state expands into its group +
+  // steps iff its id is a member; every other composition-owning state stays
+  // a single node with the collapsed ⤵ badge.
+  expandedStates: string[];
   thisRunOnly: boolean;
 }
 
 export interface FlowNodeData {
   label: string;
-  kind: WorkflowGraphNode["kind"];
+  // "terminator" is a frontend-only synthetic kind for the __start/__end
+  // nodes buildFlowElements always adds — never a backend WorkflowGraphNode
+  // kind.
+  kind: WorkflowGraphNode["kind"] | "terminator";
   hasComposition?: boolean;
   dim?: boolean;
   gold?: boolean;
   isGroup?: boolean;
+  // stateId recovers the owning state's raw id from its group node (id
+  // `grp:<stateId>`) — WorkflowGraphView needs it to report the right id
+  // back through onStateClick when a click lands on the expanded group.
+  stateId?: string;
 }
 
 export interface FlowNode {
@@ -60,6 +71,10 @@ const DAGRE_RANKSEP = 96;
 function groupId(stateId: string): string {
   return `grp:${stateId}`;
 }
+
+// Synthetic terminator node ids — always present, never real backend nodes.
+const START_ID = "__start";
+const END_ID = "__end";
 
 function byId<T extends { id: string }>(a: T, b: T): number {
   return a.id.localeCompare(b.id);
@@ -128,6 +143,7 @@ export function buildFlowElements(
   const stepNodes = overlaid.nodes.filter((n) => n.parent).sort(byId);
 
   const hasCompositionStates = new Set(stepNodes.map((s) => s.parent!));
+  const expandedSet = new Set(toggles.expandedStates);
 
   const visitedStateIds = toggles.thisRunOnly
     ? new Set(stateNodes.filter((s) => !s.dim || s.id === "default").map((s) => s.id))
@@ -135,82 +151,107 @@ export function buildFlowElements(
 
   const survivingStates = stateNodes.filter((s) => visitedStateIds.has(s.id));
   const survivingStateIds = new Set(survivingStates.map((s) => s.id));
-  const survivingSteps = stepNodes.filter((s) => survivingStateIds.has(s.parent!));
+
+  // A state only actually expands when it both owns a composition and is
+  // named in expandedStates — a non-composition id in the array (shouldn't
+  // happen, callers only ever add composition-owning ids) is inert.
+  const expandedStateIds = new Set(
+    survivingStates.filter((s) => hasCompositionStates.has(s.id) && expandedSet.has(s.id)).map((s) => s.id),
+  );
+
+  const survivingSteps = stepNodes.filter((s) => expandedStateIds.has(s.parent!));
 
   const sortedEdges = [...overlaid.edges].sort(byFromTo);
 
-  if (!toggles.compositionsExpanded) {
-    return buildCollapsed(survivingStates, sortedEdges, survivingStateIds, hasCompositionStates);
-  }
-  return buildExpanded(survivingStates, survivingSteps, sortedEdges, survivingStateIds, hasCompositionStates);
-}
+  const entryState = stateNodes.find((s) => s.entry);
+  const terminalStates = stateNodes.filter((s) => s.terminal);
 
-function buildCollapsed(
-  survivingStates: WorkflowGraphNode[],
-  sortedEdges: WorkflowGraphEdge[],
-  survivingStateIds: Set<string>,
-  hasCompositionStates: Set<string>,
-): FlowElements {
-  const nodeIds = survivingStates.map((s) => s.id);
-  const stateEdges = sortedEdges.filter((e) => survivingStateIds.has(e.from) && survivingStateIds.has(e.to));
-  const positions = runDagreLayout(
-    nodeIds,
-    stateEdges.map((e) => ({ from: e.from, to: e.to })),
+  return buildElements(
+    survivingStates,
+    survivingSteps,
+    sortedEdges,
+    survivingStateIds,
+    hasCompositionStates,
+    expandedStateIds,
+    entryState,
+    terminalStates,
   );
-
-  const nodes: FlowNode[] = survivingStates.map((s) => ({
-    id: s.id,
-    type: "workflowNode",
-    position: positions.get(s.id) ?? { x: 0, y: 0 },
-    data: {
-      label: s.label,
-      kind: s.kind,
-      hasComposition: hasCompositionStates.has(s.id) || undefined,
-      dim: s.dim,
-    },
-  }));
-
-  const usedIds = new Set<string>();
-  const edges: FlowEdge[] = stateEdges.map((e) => ({
-    id: makeEdgeId(e.from, e.to, usedIds),
-    source: e.from,
-    target: e.to,
-    data: toFlowEdgeData(e),
-  }));
-
-  return { nodes, edges };
 }
 
-function buildExpanded(
+// buildElements is the single node/edge builder for every toggle
+// combination: a composition-owning state renders as a group + its steps
+// iff its id is in `expandedStateIds`, otherwise (like every
+// non-composition state) it's a plain single node. Two synthetic
+// terminators (`__start`/`__end`) are always added, wired to the graph's
+// declared entry state and terminal state(s) so the panel always reads
+// start -> ... -> end rather than a lone dot.
+function buildElements(
   survivingStates: WorkflowGraphNode[],
   survivingSteps: WorkflowGraphNode[],
   sortedEdges: WorkflowGraphEdge[],
   survivingStateIds: Set<string>,
   hasCompositionStates: Set<string>,
+  expandedStateIds: Set<string>,
+  entryState: WorkflowGraphNode | undefined,
+  terminalStates: WorkflowGraphNode[],
 ): FlowElements {
   const survivingStepIds = new Set(survivingSteps.map((s) => s.id));
   const survivingIds = new Set<string>([...survivingStateIds, ...survivingStepIds]);
 
-  // Dagre lays out every real (non-group) node — states and steps alike —
-  // using the raw graph edges (including the state->entry-step edge, whose
-  // "from" is the composition-owning state's own id). The state's own
-  // dagre position is only used to seed the layout; it never becomes a
-  // rendered node once it owns a composition (the group replaces it).
-  const dagreNodeIds = [...survivingStates.map((s) => s.id), ...survivingSteps.map((s) => s.id)].sort();
-  const dagreEdges = sortedEdges
-    .filter((e) => survivingIds.has(e.from) && survivingIds.has(e.to))
-    .map((e) => ({ from: e.from, to: e.to }));
+  // Any edge endpoint that names an expanded composition-owning state is
+  // remapped to that state's group id — the group visually replaces the
+  // state node, so edges (including the synthetic terminator edges below)
+  // must originate/terminate at the container.
+  const remap = (id: string) => (expandedStateIds.has(id) ? groupId(id) : id);
+
+  // Terminator edges only target states that actually survived the current
+  // toggles (e.g. This-run-only can drop the declared entry/terminal state
+  // from a path that never reached it).
+  const terminatorEdges: { from: string; to: string }[] = [];
+  if (entryState && survivingStateIds.has(entryState.id)) {
+    terminatorEdges.push({ from: START_ID, to: entryState.id });
+  }
+  for (const t of terminalStates) {
+    if (survivingStateIds.has(t.id)) terminatorEdges.push({ from: t.id, to: END_ID });
+  }
+
+  // Dagre lays out every real (non-group) node — states, steps, and the two
+  // terminators alike — using the raw graph edges (including the
+  // state->entry-step edge, whose "from" is the composition-owning state's
+  // own id) plus the terminator edges. A state's own dagre position is only
+  // used to seed the layout; it never becomes a rendered node once it's
+  // expanded (the group replaces it).
+  const dagreNodeIds = [
+    START_ID,
+    END_ID,
+    ...survivingStates.map((s) => s.id),
+    ...survivingSteps.map((s) => s.id),
+  ].sort();
+  const dagreEdges = [
+    ...sortedEdges
+      .filter((e) => survivingIds.has(e.from) && survivingIds.has(e.to))
+      .map((e) => ({ from: e.from, to: e.to })),
+    ...terminatorEdges,
+  ];
   const positions = runDagreLayout(dagreNodeIds, dagreEdges);
 
-  const nodes: FlowNode[] = [];
+  const nodes: FlowNode[] = [
+    { id: START_ID, type: "workflowNode", position: positions.get(START_ID) ?? { x: 0, y: 0 }, data: { label: "start", kind: "terminator" } },
+    { id: END_ID, type: "workflowNode", position: positions.get(END_ID) ?? { x: 0, y: 0 }, data: { label: "end", kind: "terminator" } },
+  ];
 
   for (const s of survivingStates) {
-    if (hasCompositionStates.has(s.id)) continue; // becomes a group below
+    if (expandedStateIds.has(s.id)) continue; // becomes a group below
     nodes.push({
       id: s.id,
       type: "workflowNode",
       position: positions.get(s.id) ?? { x: 0, y: 0 },
-      data: { label: s.label, kind: s.kind, dim: s.dim },
+      data: {
+        label: s.label,
+        kind: s.kind,
+        hasComposition: hasCompositionStates.has(s.id) || undefined,
+        dim: s.dim,
+      },
     });
   }
 
@@ -222,19 +263,19 @@ function buildExpanded(
   }
 
   for (const s of survivingStates) {
-    if (!hasCompositionStates.has(s.id)) continue;
+    if (!expandedStateIds.has(s.id)) continue;
     const steps = stepsByParent.get(s.id) ?? [];
     const gid = groupId(s.id);
 
     if (steps.length === 0) {
-      // Defensive: a composition-owning state with no surviving steps
-      // (shouldn't happen — steps survive iff their parent state does)
-      // falls back to a plain node rather than an empty group.
+      // Defensive: an expanded state with no surviving steps (shouldn't
+      // happen — steps survive iff their parent state is expanded) falls
+      // back to a plain node rather than an empty group.
       nodes.push({
         id: s.id,
         type: "workflowNode",
         position: positions.get(s.id) ?? { x: 0, y: 0 },
-        data: { label: s.label, kind: s.kind, dim: s.dim },
+        data: { label: s.label, kind: s.kind, hasComposition: true, dim: s.dim },
       });
       continue;
     }
@@ -254,7 +295,7 @@ function buildExpanded(
       id: gid,
       type: "group",
       position: { x: groupX, y: groupY },
-      data: { label: s.label, kind: s.kind, isGroup: true, dim: s.dim },
+      data: { label: s.label, kind: s.kind, isGroup: true, dim: s.dim, stateId: s.id },
       style: { width, height },
     });
 
@@ -271,11 +312,6 @@ function buildExpanded(
     });
   }
 
-  // Any edge endpoint that names a composition-owning surviving state is
-  // remapped to that state's group id — the group visually replaces the
-  // state node, so edges must originate/terminate at the container.
-  const remap = (id: string) => (hasCompositionStates.has(id) && survivingStateIds.has(id) ? groupId(id) : id);
-
   const usedIds = new Set<string>();
   const edges: FlowEdge[] = sortedEdges
     .filter((e) => survivingIds.has(e.from) && survivingIds.has(e.to))
@@ -284,6 +320,12 @@ function buildExpanded(
       const target = remap(e.to);
       return { id: makeEdgeId(source, target, usedIds), source, target, data: toFlowEdgeData(e) };
     });
+
+  for (const te of terminatorEdges) {
+    const source = remap(te.from);
+    const target = remap(te.to);
+    edges.push({ id: makeEdgeId(source, target, usedIds), source, target, data: {} });
+  }
 
   return { nodes, edges };
 }
