@@ -974,3 +974,216 @@ func TestGoldenDeployStatus_Degraded(t *testing.T) {
 	out := stripANSI(p.View())
 	teatest.RequireEqualOutput(t, []byte(out))
 }
+
+// TestEmptyPlan_MessageAndApplyGated re-verifies (alongside
+// TestPlan_EmptyPlanGatesApply, Task 4.2) that an all-no-change plan renders
+// the "up to date" message and that 'a' cannot advance past it — and adds the
+// footer check: the [a] apply hint itself must not appear in keyBindings when
+// there is nothing to apply, so an operator never sees a key that does
+// nothing.
+func TestEmptyPlan_MessageAndApplyGated(t *testing.T) {
+	p := &DeployPage{state: deployStatePlanning, pf: &flow.Preflight{Provider: "omnia"}}
+	np, _ := p.Update(planReadyMsg{plan: planAllNoChange(), req: &deploy.PlanRequest{}})
+	dp := np.(*DeployPage)
+	if dp.state != deployStatePlan {
+		t.Fatalf("state = %v, want deployStatePlan", dp.state)
+	}
+
+	dp.SetSize(80, 24)
+	out := stripANSI(dp.View())
+	if !strings.Contains(out, "No changes. Infrastructure is up to date.") {
+		t.Fatalf("expected no-changes message in view:\n%s", out)
+	}
+	for _, kb := range dp.keyBindings() {
+		if kb.Keys == "a" {
+			t.Fatalf("expected no [a] apply hint for an empty plan, got bindings: %+v", dp.keyBindings())
+		}
+	}
+
+	np2, _ := dp.handlePlanKey(keyRunes("a"))
+	if np2.(*DeployPage).state != deployStatePlan {
+		t.Fatal("'a' must not advance past an all-no-change plan")
+	}
+}
+
+// TestDriftPlan_BadgeRendered verifies a plan containing a DRIFT change
+// renders views.RenderPlanDiff's "⚠ N drifted" footer badge on the plan
+// screen (RenderPlanDiff already implements this — this test only confirms
+// DeployPage wires a drift-containing plan through to it, since drifted
+// resources still count as "changes" so the plan screen — not the empty-plan
+// message — is what renders).
+func TestDriftPlan_BadgeRendered(t *testing.T) {
+	plan := &deploy.PlanResponse{
+		Summary: "resources drifted",
+		Changes: []deploy.ResourceChange{
+			{Type: "agent_runtime", Name: "bot", Action: deploy.ActionDrift, Detail: "manually modified"},
+		},
+	}
+	p := &DeployPage{state: deployStatePlan, planDiff: viewmodels.BuildPlanDiff(plan)}
+	if !p.planHasChanges() {
+		t.Fatal("a drift-only plan must count as having changes (so it renders the diff, not the up-to-date message)")
+	}
+	p.SetSize(80, 24)
+	out := stripANSI(p.View())
+	if !strings.Contains(out, "⚠ 1 drifted") {
+		t.Fatalf("expected the drift badge in the plan view:\n%s", out)
+	}
+}
+
+// TestStalePlan_NoticeShownBeforeReplan seeds a saved plan (via a real
+// flow.Session backed by a temp-dir StateStore) whose PackChecksum and
+// Environment don't match the session's current pack/env — i.e. stale per
+// Session.PlanIsFresh — and drives the real startPlan goroutine against it.
+// It asserts a planStaleMsg (rendered as "pack changed — re-planning…" on the
+// planning screen) is delivered before the goroutine automatically proceeds
+// to re-plan (planReadyMsg), so the operator is never silently re-planned.
+func TestStalePlan_NoticeShownBeforeReplan(t *testing.T) {
+	dir := t.TempDir()
+	fp := &fakeDeployProvider{plan: planWithChanges()}
+	dc := &arenaconfig.DeployConfig{Provider: "fake"}
+	store := deploy.NewStateStore(dir)
+
+	// Seed a saved plan with a checksum/env that won't match this session's
+	// (whose packData is `{"pack":true}` and whose Env resolves to
+	// flow.DefaultEnv) — i.e. a stale saved plan.
+	if err := store.SavePlan(deploy.NewSavedPlan("fake", "stale-env", "sha256:deadbeef", planWithChanges(), &deploy.PlanRequest{})); err != nil {
+		t.Fatalf("failed to seed stale saved plan: %v", err)
+	}
+
+	sess := flow.NewSession(flow.Options{ProjectDir: dir}, &arenaconfig.Config{Deploy: dc}, dc,
+		fp, store, []byte(`{"pack":true}`), `{}`, func() error { return nil })
+
+	p := &DeployPage{state: deployStatePlanning, sess: sess}
+	sink := &loginMsgSink{}
+	p.send = sink.send
+
+	cmd := p.startPlan()
+	if cmd == nil {
+		t.Fatal("expected a non-nil cmd from startPlan")
+	}
+	cmd() // starts the goroutine; the cmd itself returns nil
+
+	deadline := time.Now().Add(5 * time.Second)
+	var sawStale, sawReady bool
+	for time.Now().Before(deadline) && !(sawStale && sawReady) {
+		for _, m := range sink.snapshot() {
+			switch m.(type) {
+			case planStaleMsg:
+				sawStale = true
+			case planReadyMsg:
+				sawReady = true
+			}
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+	if !sawStale {
+		t.Fatal("expected a planStaleMsg for a stale saved plan")
+	}
+	if !sawReady {
+		t.Fatal("expected the goroutine to automatically re-plan (planReadyMsg) after the stale notice")
+	}
+
+	np, _ := p.Update(planStaleMsg{})
+	dp := np.(*DeployPage)
+	dp.SetSize(80, 24)
+	out := stripANSI(dp.View())
+	if !strings.Contains(out, "pack changed") {
+		t.Fatalf("expected the stale-plan notice in the planning view:\n%s", out)
+	}
+}
+
+// TestErrorState_AdapterMissingShowsInstallCommandAndOnlyEsc verifies the
+// adapter-not-found error (flow.Connect's exact wrapped message) surfaces the
+// install command on the error screen, and that neither 'r' nor 'l' do
+// anything — esc (handled globally, see handleConfirmKey's doc comment) is
+// the only way out.
+func TestErrorState_AdapterMissingShowsInstallCommandAndOnlyEsc(t *testing.T) {
+	err := errors.New("adapter not found for provider \"omnia\": adapter binary \"promptarena-deploy-omnia\" not found in project, user, or system paths\nInstall it with: promptarena deploy adapter install omnia")
+	p := &DeployPage{state: deployStateError, err: err, pf: &flow.Preflight{Provider: "omnia", InstallCommand: "promptarena deploy adapter install omnia"}}
+
+	out := stripANSI(p.viewError())
+	if !strings.Contains(out, "promptarena deploy adapter install omnia") {
+		t.Fatalf("expected the install command in the error view:\n%s", out)
+	}
+
+	np, cmd := p.handleErrorKey(keyRunes("r"))
+	if cmd != nil || np.(*DeployPage).state != deployStateError {
+		t.Fatal("adapter-missing error must not react to 'r'")
+	}
+	np2, cmd2 := p.handleErrorKey(keyRunes("l"))
+	if cmd2 != nil || np2.(*DeployPage).state != deployStateError {
+		t.Fatal("adapter-missing error must not react to 'l'")
+	}
+}
+
+// TestErrorState_AuthFailureOffersLogin verifies an auth-failure error
+// surfaces a "[l] log in" hint and that 'l' transitions to deployStateLogin
+// with a non-nil cmd (the same startLogin wiring handlePreflightKey's 'l'
+// uses).
+func TestErrorState_AuthFailureOffersLogin(t *testing.T) {
+	err := errors.New("failed to complete login: authentication failed: invalid credentials")
+	p := &DeployPage{state: deployStateError, err: err, pf: &flow.Preflight{Provider: "omnia", SupportsLogin: true}}
+
+	out := stripANSI(p.viewError())
+	if !strings.Contains(out, "[l] log in") {
+		t.Fatalf("expected a log-in hint in the error view:\n%s", out)
+	}
+
+	np, cmd := p.handleErrorKey(keyRunes("l"))
+	dp := np.(*DeployPage)
+	if dp.state != deployStateLogin {
+		t.Fatalf("state = %v, want deployStateLogin", dp.state)
+	}
+	if cmd == nil {
+		t.Fatal("expected a non-nil cmd to launch the login goroutine")
+	}
+}
+
+// TestErrorState_LockContentionOffersRetry verifies the exact lock-contention
+// message flow.Lock produces surfaces "a deploy is already running" plus a
+// "[r] retry" hint, and that 'r' returns to deployStatePreflight with a
+// non-nil re-probe cmd.
+func TestErrorState_LockContentionOffersRetry(t *testing.T) {
+	err := errors.New("deploy lock is held by another process; wait for the other deploy to finish or remove the lock file")
+	p := &DeployPage{state: deployStateError, err: err}
+
+	out := stripANSI(p.viewError())
+	if !strings.Contains(out, "already running") {
+		t.Fatalf("expected an already-running message in the error view:\n%s", out)
+	}
+	if !strings.Contains(out, "[r] retry") {
+		t.Fatalf("expected a retry hint in the error view:\n%s", out)
+	}
+
+	np, cmd := p.handleErrorKey(keyRunes("r"))
+	dp := np.(*DeployPage)
+	if dp.state != deployStatePreflight {
+		t.Fatalf("state = %v, want deployStatePreflight", dp.state)
+	}
+	if cmd == nil {
+		t.Fatal("expected a non-nil re-probe cmd")
+	}
+}
+
+// TestErrorState_GenericErrorHasNoRecoveryKeys verifies an error that matches
+// none of the recognized kinds (e.g. a bare plan failure) renders only the
+// raw error text — no install/login/retry hint — and that 'r'/'l' are inert,
+// leaving esc as the only way out exactly as for the adapter-missing case.
+func TestErrorState_GenericErrorHasNoRecoveryKeys(t *testing.T) {
+	err := errors.New("plan failed: adapter exited unexpectedly")
+	p := &DeployPage{state: deployStateError, err: err}
+
+	out := stripANSI(p.viewError())
+	if strings.Contains(out, "[l] log in") || strings.Contains(out, "[r] retry") {
+		t.Fatalf("expected no recovery-key hints for a generic error:\n%s", out)
+	}
+
+	np, cmd := p.handleErrorKey(keyRunes("r"))
+	if cmd != nil || np.(*DeployPage).state != deployStateError {
+		t.Fatal("generic error must not react to 'r'")
+	}
+	np2, cmd2 := p.handleErrorKey(keyRunes("l"))
+	if cmd2 != nil || np2.(*DeployPage).state != deployStateError {
+		t.Fatal("generic error must not react to 'l'")
+	}
+}

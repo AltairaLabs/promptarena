@@ -77,6 +77,14 @@ type planReadyMsg struct {
 	req  *deploy.PlanRequest
 }
 
+// planStaleMsg is sent by startPlan's goroutine when it finds a saved plan on
+// disk (via Session.LoadPlan) that is no longer fresh (Session.PlanIsFresh
+// returns false — the pack checksum or target environment has since
+// changed). It is always sent before the goroutine proceeds to compute a
+// fresh plan, so the operator sees "pack changed — re-planning…" rather than
+// being silently re-planned against stale expectations.
+type planStaleMsg struct{}
+
 // applyEventMsg carries a single *deploy.ApplyEvent delivered by the
 // deploy.ApplyCallback passed to Session.Apply from startApply. Because the
 // adapter protocol does not stream — Apply blocks until the adapter
@@ -131,6 +139,10 @@ type DeployPage struct {
 	planReq          *deploy.PlanRequest
 	planDiff         viewmodels.PlanDiffData
 	collapseNoChange bool
+	// planStaleNotice is set by a planStaleMsg (see its doc comment) and
+	// rendered by viewPlanning; it is reset to false at the start of every
+	// startPlan call so a prior attempt's notice never bleeds into a new one.
+	planStaleNotice bool
 
 	// Confirm-state fields. confirmInput accumulates the operator's typed
 	// characters when pf.Env is non-default (the type-to-confirm guardrail);
@@ -304,6 +316,9 @@ func (p *DeployPage) Update(msg tea.Msg) (Page, tea.Cmd) {
 	case sessionOpenedMsg:
 		p.sess = m.sess
 		return p, nil
+	case planStaleMsg:
+		p.planStaleNotice = true
+		return p, nil
 	case planReadyMsg:
 		p.plan = m.plan
 		p.planReq = m.req
@@ -356,9 +371,10 @@ func (p *DeployPage) handleKey(msg tea.KeyMsg) (Page, tea.Cmd) {
 		return p.handleApplyResultKey(msg)
 	case deployStateStatus:
 		return p.handleStatusKey(msg)
+	case deployStateError:
+		return p.handleErrorKey(msg)
 	// deployStatePlanning and deployStateApplying have no keys of their own
 	// (the background plan/apply cmd runs to completion or error).
-	// deployStateError key handling arrives in a later task.
 	default:
 		return p, nil
 	}
@@ -540,9 +556,18 @@ func (p *DeployPage) startLogin() tea.Cmd {
 // *flow.Session backed by a fake deploy.Provider (via the test-only
 // newDeployPageWithSession constructor) and drive the wizard end-to-end
 // without a real adapter subprocess.
+//
+// Once a session is in hand (either freshly opened or pre-injected), the
+// goroutine checks for a saved plan (Session.LoadPlan) and, if one exists but
+// is no longer fresh (Session.PlanIsFresh — the pack checksum or target
+// environment has changed since it was saved), sends planStaleMsg before
+// proceeding to compute a fresh plan. The wizard always re-plans from
+// scratch here regardless — there is no saved-plan reuse — so this is purely
+// a "don't silently re-plan" notice, never a gate.
 func (p *DeployPage) startPlan() tea.Cmd {
 	ctx, cancel := context.WithCancel(context.Background())
 	p.planCancel = cancel
+	p.planStaleNotice = false
 	opts := p.opts
 	send := p.send
 	sess := p.sess
@@ -566,6 +591,10 @@ func (p *DeployPage) startPlan() tea.Cmd {
 					return
 				}
 				send(sessionOpenedMsg{sess: sess})
+			}
+
+			if saved, err := sess.LoadPlan(); err == nil && saved != nil && !sess.PlanIsFresh(saved) {
+				send(planStaleMsg{})
 			}
 
 			plan, req, err := sess.Plan(ctx)
@@ -721,6 +750,44 @@ func (p *DeployPage) handleStatusKey(msg tea.KeyMsg) (Page, tea.Cmd) {
 	return p, nil
 }
 
+// handleErrorKey handles key input on the terminal error screen. Recovery
+// keys are gated to the error kind classifyDeployErr detects from p.err's
+// text, mirroring handlePreflightKey's per-field gating:
+//
+//   - 'l' (log in) only fires for an auth-failure error, and only when the
+//     adapter actually supports login — exactly the same gate
+//     handlePreflightKey's 'l' uses, since it launches the same startLogin.
+//   - 'r' (retry) only fires for lock contention, re-running the preflight
+//     probe so the operator can see whether the other deploy has since
+//     finished (there is no narrower "retry the failed step" to return to —
+//     the failed step's own inputs, e.g. planReq, are gone by the time the
+//     wizard reaches deployStateError from a lock-contention apply attempt).
+//
+// Every other key (including esc, handled globally by App before this method
+// ever sees it — see handleConfirmKey's doc comment) is a no-op, and so is
+// every key for an error kind that offers no matching recovery action
+// (adapter-missing: esc only; generic: esc only).
+func (p *DeployPage) handleErrorKey(msg tea.KeyMsg) (Page, tea.Cmd) {
+	if msg.Type != tea.KeyRunes || p.err == nil {
+		return p, nil
+	}
+	switch string(msg.Runes) {
+	case "l":
+		if classifyDeployErr(p.err) == errorKindAuth && p.pf != nil && p.pf.SupportsLogin {
+			p.err = nil
+			p.state = deployStateLogin
+			return p, tea.Batch(p.startLogin(), p.spinner.Tick)
+		}
+	case "r":
+		if classifyDeployErr(p.err) == errorKindLockContention {
+			p.err = nil
+			p.state = deployStatePreflight
+			return p, p.runPreflight()
+		}
+	}
+	return p, nil
+}
+
 // View implements Page.
 func (p *DeployPage) View() string {
 	body := func(_ int) string {
@@ -779,6 +846,13 @@ func (p *DeployPage) keyBindings() []views.KeyBinding {
 		kb = append([]views.KeyBinding{{Keys: "s", Description: "status"}}, kb...)
 	case p.state == deployStateStatus:
 		kb = append([]views.KeyBinding{{Keys: "q", Description: "back"}}, kb...)
+	case p.state == deployStateError:
+		switch classifyDeployErr(p.err) {
+		case errorKindAuth:
+			kb = append([]views.KeyBinding{{Keys: "l", Description: "log in"}}, kb...)
+		case errorKindLockContention:
+			kb = append([]views.KeyBinding{{Keys: "r", Description: "retry"}}, kb...)
+		}
 	case p.state == deployStatePreflight && p.pf != nil:
 		// Prepend in priority order so the most relevant action reads first.
 		if p.pf.Ready() {
@@ -859,10 +933,17 @@ func (p *DeployPage) viewLogin(width int) string {
 
 // viewPlanning renders the planning step: a spinner and status text while the
 // background startPlan goroutine opens the adapter session and computes the
-// plan. Mirrors viewLogin's spinner pattern.
+// plan. Mirrors viewLogin's spinner pattern. When startPlan's goroutine has
+// found a stale saved plan (planStaleNotice, set by a planStaleMsg — see its
+// doc comment), a "pack changed — re-planning…" line is shown above the
+// spinner so the automatic re-plan is never silent.
 func (p *DeployPage) viewPlanning(width int) string {
-	line := p.spinner.View() + " " + theme.ValueStyle.Render("Computing plan…")
-	return theme.BorderedBoxStyle.MaxWidth(width).Render(line)
+	lines := []string{p.spinner.View() + " " + theme.ValueStyle.Render("Computing plan…")}
+	if p.planStaleNotice {
+		lines = append([]string{theme.WarningStyle.Render("pack changed — re-planning…"), ""}, lines...)
+	}
+	body := strings.Join(lines, "\n")
+	return theme.BorderedBoxStyle.MaxWidth(width).Render(body)
 }
 
 // viewPlan renders the plan diff once startPlan's goroutine has delivered a
@@ -1039,7 +1120,95 @@ func preflightEnvLine(env string) string {
 		Render("⚠ " + label)
 }
 
-// viewError renders the error step. Fleshed out in Task 3.2.
+// errorKind classifies p.err so viewError and handleErrorKey can offer
+// contextual guidance and recovery keys instead of just the bare error text.
+type errorKind int
+
+const (
+	// errorKindGeneric covers any error that doesn't match a recognized
+	// pattern below (e.g. a config error, or a plan/apply failure with no
+	// distinguishing text) — only the raw error text is shown, with no extra
+	// recovery key beyond the globally-handled esc.
+	errorKindGeneric errorKind = iota
+	// errorKindAdapterMissing is a flow.Connect "adapter not found" error —
+	// it always carries an "Install it with: <command>" suggestion.
+	errorKindAdapterMissing
+	// errorKindAuth is a login/authentication failure. Unlike the other two
+	// kinds, PromptKit's runtime/deploy and arena/deploy/flow packages do not
+	// produce a reserved sentinel error or fixed string for this case (see
+	// the Task 6.1 report) — this is a best-effort heuristic over common
+	// auth-failure vocabulary, not a guaranteed match against every adapter's
+	// wrapped error text.
+	errorKindAuth
+	// errorKindLockContention is a flow.Lock contention error — another
+	// deploy already holds the project's deploy lock.
+	errorKindLockContention
+)
+
+// installedWithMarker is the exact suggestion text flow.Connect appends to an
+// adapter-not-found error (see arena/deploy/flow/connect.go), used both to
+// classify the error and (via installCommandFromErr) to extract the command
+// itself.
+const installedWithMarker = "Install it with: "
+
+// lockHeldMarker is a stable substring of the exact lock-contention message
+// produced by the runtime's flock-based Locker (deploy lock is held by
+// another process; ...).
+const lockHeldMarker = "lock is held"
+
+// classifyDeployErr inspects err's text to determine which contextual
+// guidance viewError/handleErrorKey should offer. It returns errorKindGeneric
+// for a nil error or any error matching none of the recognized patterns.
+func classifyDeployErr(err error) errorKind {
+	if err == nil {
+		return errorKindGeneric
+	}
+	msg := err.Error()
+	switch {
+	case strings.Contains(msg, installedWithMarker):
+		return errorKindAdapterMissing
+	case strings.Contains(msg, lockHeldMarker):
+		return errorKindLockContention
+	case containsAny(strings.ToLower(msg), "unauthorized", "authentication failed", "not authenticated") ||
+		strings.Contains(msg, "401"):
+		return errorKindAuth
+	default:
+		return errorKindGeneric
+	}
+}
+
+// containsAny reports whether s contains any of the given substrings.
+func containsAny(s string, substrs ...string) bool {
+	for _, sub := range substrs {
+		if strings.Contains(s, sub) {
+			return true
+		}
+	}
+	return false
+}
+
+// installCommandFromErr extracts the command following flow.Connect's
+// "Install it with: " suggestion from err's text, so viewError can surface it
+// as a distinct call to action rather than relying on the operator to spot it
+// inside the raw error text. Returns "" if err is nil or carries no such
+// suggestion.
+func installCommandFromErr(err error) string {
+	if err == nil {
+		return ""
+	}
+	msg := err.Error()
+	idx := strings.Index(msg, installedWithMarker)
+	if idx < 0 {
+		return ""
+	}
+	return strings.TrimSpace(msg[idx+len(installedWithMarker):])
+}
+
+// viewError renders the terminal error step: the wrapped error text plus
+// contextual recovery guidance keyed off classifyDeployErr — an install
+// command for a missing adapter, a login hint for an auth failure, or a
+// "try again once the other deploy finishes" nudge for lock contention.
+// handleErrorKey wires the actual recovery keys these hints describe.
 func (p *DeployPage) viewError() string {
 	title := lipgloss.NewStyle().
 		Bold(true).
@@ -1052,7 +1221,23 @@ func (p *DeployPage) viewError() string {
 	detail := lipgloss.NewStyle().
 		Foreground(lipgloss.Color(theme.ColorGray)).
 		Render(msg)
-	return title + "\n\n" + detail
+	lines := []string{title, "", detail}
+
+	switch classifyDeployErr(p.err) {
+	case errorKindAdapterMissing:
+		cmd := installCommandFromErr(p.err)
+		if cmd == "" && p.pf != nil {
+			cmd = p.pf.InstallCommand
+		}
+		if cmd != "" {
+			lines = append(lines, "", theme.LabelStyle.Render("Install with: ")+theme.ValueStyle.Render(cmd))
+		}
+	case errorKindAuth:
+		lines = append(lines, "", theme.WarningStyle.Render("Log in and try again."), theme.LabelStyle.Render("[l] log in"))
+	case errorKindLockContention:
+		lines = append(lines, "", theme.WarningStyle.Render("A deploy is already running."), theme.LabelStyle.Render("[r] retry"))
+	}
+	return strings.Join(lines, "\n")
 }
 
 // contextTODO returns the context used for background deploy operations.
