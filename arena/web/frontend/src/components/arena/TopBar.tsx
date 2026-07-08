@@ -26,37 +26,12 @@ function SunIcon() {
   );
 }
 
-// The TopBar is the app's "instrument bezel" — a night-sky ink bar that never
-// flips to the light/paper surface, unlike the rest of the page chrome. The
-// semantic tokens it (and its children, StatusPill) read via var(...) are
-// theme-dependent (they re-point under [data-theme="light"]), so the bar
-// pins its own local values for the ones actually used here, overriding the
-// cascade for this subtree only. Keeping these as CSS custom-property
-// overrides (rather than hardcoding hex through the JSX below) means every
-// var(--…) reference in TopBar and its children keeps working — it just
-// always resolves to the dark ramp inside this <header>.
-const DARK_RAMP_OVERRIDE = {
-  "--ink-canvas": "#0A1120",
-  "--star-100": "#F4F8FF",
-  "--star-600": "#9FB1CC",
-  "--star-700": "#8195B0",
-  "--star-900": "#5E708C",
-  "--hairline": "rgba(147, 197, 253, 0.10)",
-  "--hairline-strong": "rgba(147, 197, 253, 0.18)",
-  "--pulsar-300": "#7DD3A8",
-  "--pulsar-500": "#34D399",
-  "--signal-red-300": "#FCA5A5",
-  "--gold-300": "#F0D79A",
-  "--glow-gold": "0 8px 22px -8px rgba(227,179,65,0.5)",
-} as React.CSSProperties;
-
 // TopBar — the sticky Atlas top bar: logo + wordmark + studio tag + promptpack
 // context on the left, the connection/live StatusPill + theme toggle on the
 // right. The gold "Run trial" action lives in CommandStrip instead — TopBar
-// used to duplicate it, but one action surface is enough. Rendered as an ink
-// night-sky bar in BOTH themes (intentional — it's the app's "instrument
-// bezel", not page chrome that follows the light/dark surface) via
-// DARK_RAMP_OVERRIDE above.
+// used to duplicate it, but one action surface is enough. The bar follows the
+// theme: a light frosted surface in light mode, dark ink in dark mode, with
+// child text/pills reading the flipping --star-*/--c-* tokens.
 export function TopBar({
   connected,
   promptpack,
@@ -71,7 +46,6 @@ export function TopBar({
   return (
     <header
       style={{
-        ...DARK_RAMP_OVERRIDE,
         display: "flex",
         alignItems: "center",
         gap: 16,
@@ -80,7 +54,10 @@ export function TopBar({
         top: 0,
         zIndex: 20,
         backdropFilter: "blur(8px)",
-        background: "linear-gradient(90deg, #070C16 0%, #0C1526 60%, #101D30 100%)",
+        // Follows the theme: a light frosted surface in light mode, dark in
+        // dark mode. All child text/pills use the flipping --star-*/--c-*
+        // tokens, so they stay legible on either surface.
+        background: "color-mix(in srgb, var(--c-surface) 85%, transparent)",
         borderBottom: "1px solid var(--hairline)",
         margin: "0 -32px",
         padding: "0 32px",

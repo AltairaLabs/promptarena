@@ -92,28 +92,16 @@ describe("TopBar", () => {
     expect(screen.queryByText(/Run trial/)).not.toBeInTheDocument();
   });
 
-  it("pins the bar to the fixed dark ramp regardless of the active theme (never flips light)", () => {
-    const { container, rerender } = render(
-      <TopBar connected={true} runningLive={false} theme="dark" onToggleTheme={vi.fn()} />,
-    );
-    const header = container.querySelector("header")!;
-    expect(header.style.getPropertyValue("--ink-canvas")).toBe("#0A1120");
-    expect(header.style.getPropertyValue("--star-100")).toBe("#F4F8FF");
-
-    rerender(
-      <TopBar connected={true} runningLive={false} theme="light" onToggleTheme={vi.fn()} />,
-    );
-    const headerAfter = container.querySelector("header")!;
-    expect(headerAfter.style.getPropertyValue("--ink-canvas")).toBe("#0A1120");
-    expect(headerAfter.style.getPropertyValue("--star-100")).toBe("#F4F8FF");
-  });
-
-  it("pins --gold-300 (and its glow) to the dark-ramp value regardless of theme", () => {
+  it("follows the theme (a translucent surface bar, no forced dark-ramp pins)", () => {
     const { container } = render(
       <TopBar connected={true} runningLive={false} theme="light" onToggleTheme={vi.fn()} />,
     );
     const header = container.querySelector("header")!;
-    expect(header.style.getPropertyValue("--gold-300")).toBe("#F0D79A");
-    expect(header.style.getPropertyValue("--glow-gold")).toBe("0 8px 22px -8px rgba(227,179,65,0.5)");
+    // The bar no longer pins the dark ramp locally — it inherits the flipping
+    // --c-*/--star-* tokens so it goes light in light mode, dark in dark mode.
+    expect(header.style.getPropertyValue("--ink-canvas")).toBe("");
+    expect(header.style.getPropertyValue("--star-100")).toBe("");
+    // Background is the theme-following frosted surface.
+    expect(header.style.background).toContain("var(--c-surface)");
   });
 });
