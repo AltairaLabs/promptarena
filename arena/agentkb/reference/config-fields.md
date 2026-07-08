@@ -8,39 +8,39 @@ Fields under `spec`:
 
 | field | type | required | description |
 |-------|------|----------|-------------|
-| `a2a_agents` | array |  | — |
-| `agents` | — |  | — |
-| `compositions` | — |  | — |
-| `defaults` | object | ✓ | — |
-| `deploy` | object |  | — |
+| `a2a_agents` | array |  | A2AAgents configures agent-to-agent (A2A) endpoints. |
+| `agents` | — |  | Agents configures named agents. |
+| `compositions` | — |  | Compositions configures composed multi-agent pipelines. |
+| `defaults` | object | ✓ | Defaults holds global defaults applied when a scenario does not specify its own (temperature, max_tokens, concurrency, output, fail_on, …). |
+| `deploy` | object |  | Deploy configures `promptarena deploy`: the target provider plus base and per-environment adapter config. |
 | `embedding_providers` | array |  | — |
 | `eval_specs` | object |  | — |
-| `evals` | array |  | — |
+| `evals` | array |  | Evals references saved-conversation evaluation files. |
 | `globals` | object |  | Globals holds arena-level cross-cutting config that applies to every scenario in addition to its own definitions. Distinct from Defaults (which are "values when unspecified") — Globals is for "always-additive" entries. |
 | `image_providers` | array |  | — |
-| `judge_defaults` | object |  | — |
+| `judge_defaults` | object |  | JudgeDefaults sets the default judge prompt and prompt registry used by LLM-as-judge assertions. |
 | `judge_specs` | object |  | — |
-| `judges` | array |  | — |
-| `mcp_servers` | array |  | — |
-| `memory` | — |  | — |
-| `pack_evals` | array |  | — |
-| `pack_file` | string |  | — |
-| `prompt_configs` | array |  | File references for YAML serialization |
+| `judges` | array |  | Judges maps a judge name to a provider for LLM-as-judge assertions. |
+| `mcp_servers` | array |  | MCPServers configures MCP (Model Context Protocol) servers whose tools the LLM can call. |
+| `memory` | — |  | Memory configures the memory capability (auto-registers the memory tools). |
+| `pack_evals` | array |  | PackEvals lists pack-level eval definitions. |
+| `pack_file` | string |  | PackFile is the path to a pre-compiled pack (*.pack.json) to deploy instead of compiling from this config. |
+| `prompt_configs` | array |  | PromptConfigs references prompt configuration files, each binding an id to a PromptConfig file (with optional per-file variable overrides). |
 | `prompt_specs` | object |  | — |
 | `provider_specs` | object |  | Inline resource specs (alternative to file refs, merged into LoadedX during load) |
-| `providers` | array | ✓ | — |
+| `providers` | array | ✓ | Providers lists the LLM provider configurations (file references); the loader routes each into the right role slot based on its role. |
 | `runtime` | object |  | Runtime carries a runtime configuration spec passed straight through to the runtime layer (hooks, sandboxes, …). Arena wraps the runtime, so anything the runtime config supports is available here under `runtime:` without Arena needing a bespoke field for each. |
 | `scenario_specs` | object |  | — |
-| `scenarios` | array |  | — |
-| `self_play` | object |  | — |
-| `skills` | array |  | — |
-| `state_store` | object |  | — |
+| `scenarios` | array |  | Scenarios references the test scenario files to run. |
+| `self_play` | object |  | SelfPlay configures self-play: personas and roles that drive the user side of a conversation. |
+| `skills` | array |  | Skills lists skill sources made available to the run. |
+| `state_store` | object |  | StateStore configures conversation state persistence (memory, redis, or file). |
 | `stt_providers` | array |  | — |
 | `tool_specs` | object |  | — |
-| `tools` | array |  | — |
+| `tools` | array |  | Tools references tool (function) definition files the LLM may call. |
 | `tts_providers` | array |  | TTSProviders / STTProviders / EmbeddingProviders / ImageProviders are the legacy role-specific slots. They still load correctly — every entry's `role:` is validated against the slot — but the preferred shape is a single unified `providers:` list where the loader routes each provider into the right Loaded* map based on its `role:` value. Mixing the legacy slots and the unified list is supported during migration; both populate the same Loaded* maps. |
 | `voices` | array |  | Voices binds voice IDs to loaded TTS provider IDs. Personas reference voice IDs (not provider IDs) so the same persona can run against a real Cartesia voice in recording mode and a mock TTS provider in CI just by editing this list. |
-| `workflow` | — |  | — |
+| `workflow` | — |  | Workflow configures a workflow state machine (auto-registers the workflow tool). |
 
 ## eval
 

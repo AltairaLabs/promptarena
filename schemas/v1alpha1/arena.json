@@ -490,52 +490,60 @@
             "$ref": "#/$defs/PromptConfigRef"
           },
           "type": "array",
-          "description": "File references for YAML serialization"
+          "description": "PromptConfigs references prompt configuration files, each binding an id to a\nPromptConfig file (with optional per-file variable overrides)."
         },
         "providers": {
           "items": {
             "$ref": "#/$defs/ProviderRef"
           },
-          "type": "array"
+          "type": "array",
+          "description": "Providers lists the LLM provider configurations (file references); the loader\nroutes each into the right role slot based on its role."
         },
         "judges": {
           "items": {
             "$ref": "#/$defs/JudgeRef"
           },
-          "type": "array"
+          "type": "array",
+          "description": "Judges maps a judge name to a provider for LLM-as-judge assertions."
         },
         "judge_defaults": {
-          "$ref": "#/$defs/JudgeDefaults"
+          "$ref": "#/$defs/JudgeDefaults",
+          "description": "JudgeDefaults sets the default judge prompt and prompt registry used by\nLLM-as-judge assertions."
         },
         "scenarios": {
           "items": {
             "$ref": "#/$defs/ScenarioRef"
           },
-          "type": "array"
+          "type": "array",
+          "description": "Scenarios references the test scenario files to run."
         },
         "evals": {
           "items": {
             "$ref": "#/$defs/EvalRef"
           },
-          "type": "array"
+          "type": "array",
+          "description": "Evals references saved-conversation evaluation files."
         },
         "tools": {
           "items": {
             "$ref": "#/$defs/ToolRef"
           },
-          "type": "array"
+          "type": "array",
+          "description": "Tools references tool (function) definition files the LLM may call."
         },
         "skills": {
           "items": {
             "$ref": "#/$defs/SkillSourceConfig"
           },
-          "type": "array"
+          "type": "array",
+          "description": "Skills lists skill sources made available to the run."
         },
         "pack_evals": {
           "items": {
             "$ref": "#/$defs/EvalDef"
           },
-          "type": "array"
+          "type": "array",
+          "description": "PackEvals lists pack-level eval definitions."
         },
         "globals": {
           "$ref": "#/$defs/Globals",
@@ -545,36 +553,51 @@
           "$ref": "#/$defs/RuntimeConfigSpec",
           "description": "Runtime carries a runtime configuration spec passed straight through to the\nruntime layer (hooks, sandboxes, …). Arena wraps the runtime, so anything\nthe runtime config supports is available here under `runtime:` without\nArena needing a bespoke field for each."
         },
-        "workflow": true,
-        "compositions": true,
-        "memory": true,
-        "agents": true,
+        "workflow": {
+          "description": "Workflow configures a workflow state machine (auto-registers the workflow tool)."
+        },
+        "compositions": {
+          "description": "Compositions configures composed multi-agent pipelines."
+        },
+        "memory": {
+          "description": "Memory configures the memory capability (auto-registers the memory tools)."
+        },
+        "agents": {
+          "description": "Agents configures named agents."
+        },
         "deploy": {
-          "$ref": "#/$defs/DeployConfig"
+          "$ref": "#/$defs/DeployConfig",
+          "description": "Deploy configures `promptarena deploy`: the target provider plus base and\nper-environment adapter config."
         },
         "mcp_servers": {
           "items": {
             "$ref": "#/$defs/MCPServerConfig"
           },
-          "type": "array"
+          "type": "array",
+          "description": "MCPServers configures MCP (Model Context Protocol) servers whose tools the\nLLM can call."
         },
         "a2a_agents": {
           "items": {
             "$ref": "#/$defs/A2AAgentConfig"
           },
-          "type": "array"
+          "type": "array",
+          "description": "A2AAgents configures agent-to-agent (A2A) endpoints."
         },
         "state_store": {
-          "$ref": "#/$defs/StateStoreConfig"
+          "$ref": "#/$defs/StateStoreConfig",
+          "description": "StateStore configures conversation state persistence (memory, redis, or file)."
         },
         "defaults": {
-          "$ref": "#/$defs/Defaults"
+          "$ref": "#/$defs/Defaults",
+          "description": "Defaults holds global defaults applied when a scenario does not specify its\nown (temperature, max_tokens, concurrency, output, fail_on, …)."
         },
         "self_play": {
-          "$ref": "#/$defs/SelfPlayConfig"
+          "$ref": "#/$defs/SelfPlayConfig",
+          "description": "SelfPlay configures self-play: personas and roles that drive the user side\nof a conversation."
         },
         "pack_file": {
-          "type": "string"
+          "type": "string",
+          "description": "PackFile is the path to a pre-compiled pack (*.pack.json) to deploy instead\nof compiling from this config."
         },
         "provider_specs": {
           "additionalProperties": {
