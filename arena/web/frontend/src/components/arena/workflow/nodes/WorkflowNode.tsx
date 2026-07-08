@@ -47,6 +47,37 @@ const KIND_STYLE: Record<
   },
 };
 
+// describeNode returns the plain-language tooltip/aria-label explaining what
+// a glyph means — surfaced via the node's title attribute (native hover
+// tooltip) and aria-label (screen readers) so the star-chart's shapes/colors
+// are self-documenting rather than tribal knowledge.
+export function describeNode(data: FlowNodeData): string {
+  if (data.kind === "terminator") {
+    return data.label === "start" ? "Start of the workflow" : "End of the workflow";
+  }
+
+  const base = (() => {
+    switch (data.kind) {
+      case "entry":
+        return "Entry state — where the run begins";
+      case "output":
+        return "Terminal state — where the run ends";
+      case "agent":
+        return "Agent / workflow state";
+      case "prompt":
+        return "Prompt step";
+      case "tool":
+        return "Tool call";
+      case "branch":
+        return "Branch / parallel step";
+      default:
+        return "Agent / workflow state";
+    }
+  })();
+
+  return data.hasComposition ? `${base} · click to expand its composition` : base;
+}
+
 // WorkflowNode — the glyph-styled React Flow custom node for states
 // (collapsed view), steps (expanded, inside a GroupNode), and the synthetic
 // __start/__end terminators. The node's own container is transparent and
@@ -61,8 +92,9 @@ export function WorkflowNode({ data }: NodeProps & { data: FlowNodeData }) {
   if (data.kind === "terminator") {
     // Non-clickable, never dimmed — on-brand wayfinding chrome rather than
     // another state on the chart.
+    const description = describeNode(data);
     return (
-      <div className="atlas-node">
+      <div className="atlas-node" title={description} aria-label={description}>
         <Handle type="target" position={Position.Left} isConnectable={false} />
         <span className="atlas-node__glyph atlas-node__glyph--terminator" />
         <div className="atlas-node__label atlas-node__label--terminator">{data.label}</div>
@@ -82,11 +114,14 @@ export function WorkflowNode({ data }: NodeProps & { data: FlowNodeData }) {
   // A composition-owning state is the only clickable node kind — clicking it
   // (or, once expanded, its group — see GroupNode.tsx) drills in/out.
   const clickable = Boolean(data.hasComposition);
+  const description = describeNode(data);
 
   return (
     <div
       className={`atlas-node${style.large ? " atlas-node--large" : ""}${clickable ? " atlas-node--clickable" : ""}`}
       style={{ opacity: data.dim ? 0.35 : 1 }}
+      title={description}
+      aria-label={description}
     >
       <Handle type="target" position={Position.Left} isConnectable={false} />
       <span

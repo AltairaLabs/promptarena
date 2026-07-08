@@ -25,6 +25,8 @@ export function GroupNode({ data }: NodeProps & { data: FlowNodeData }) {
         // cursor is unconditional here.
         cursor: "pointer",
       }}
+      title="Composition — click to collapse"
+      aria-label="Composition — click to collapse"
     >
       <Handle type="target" position={Position.Left} isConnectable={false} />
       <span

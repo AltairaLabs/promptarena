@@ -184,6 +184,25 @@ describe("buildFlowElements — start/end terminators", () => {
     expect(edges.some((e) => e.source === "grp:analyzing" && e.target === "__end")).toBe(true);
   });
 
+  it("keeps __start/__end outside the group's bounding box when the sole state is both entry and terminal", () => {
+    // "analyzing" is entry AND terminal, so dagre wires __start -> analyzing
+    // and analyzing -> __end as flat siblings of analyzing's own (invisible,
+    // once expanded) seed node — without a fix, __end can land at the same
+    // rank as the group's first step, inside the group's x-range.
+    const { nodes } = buildFlowElements(singleCompositionGraph, undefined, {
+      expandedStates: ["analyzing"],
+      thisRunOnly: false,
+    });
+
+    const group = nodes.find((n) => n.id === "grp:analyzing")!;
+    const start = nodes.find((n) => n.id === "__start")!;
+    const end = nodes.find((n) => n.id === "__end")!;
+    const groupWidth = typeof group.style?.width === "number" ? group.style.width : 0;
+
+    expect(start.position.x).toBeLessThan(group.position.x);
+    expect(end.position.x).toBeGreaterThan(group.position.x + groupWidth);
+  });
+
   it("gives the terminator nodes a terminator kind and lowercase label", () => {
     const { nodes } = buildFlowElements(singleCompositionGraph, undefined, {
       expandedStates: [],

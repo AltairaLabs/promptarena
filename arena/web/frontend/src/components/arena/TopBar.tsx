@@ -80,7 +80,7 @@ export function TopBar({
         top: 0,
         zIndex: 20,
         backdropFilter: "blur(8px)",
-        background: "color-mix(in srgb, var(--ink-canvas) 78%, transparent)",
+        background: "linear-gradient(90deg, #070C16 0%, #0C1526 60%, #101D30 100%)",
         borderBottom: "1px solid var(--hairline)",
         margin: "0 -32px",
         padding: "0 32px",

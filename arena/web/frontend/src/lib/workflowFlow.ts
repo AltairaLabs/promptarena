@@ -76,6 +76,10 @@ const GROUP_PADDING = 14;
 const GROUP_HEADER = 20;
 const DAGRE_NODESEP = 26;
 const DAGRE_RANKSEP = 64;
+// Gap kept between a terminator and the nearest group boundary once clamped
+// outside it — same order of magnitude as DAGRE_RANKSEP so it reads as a
+// normal rank gap rather than a cramped special case.
+const TERMINATOR_GROUP_GAP = 40;
 
 function nodeSize(label: string): { width: number; height: number } {
   return { width: Math.max(MIN_NODE_WIDTH, label.length * LABEL_CHAR_WIDTH + LABEL_PADDING), height: NODE_HEIGHT };
@@ -336,6 +340,32 @@ function buildElements(
         extent: "parent",
       });
     });
+  }
+
+  // Dagre lays the terminators out as flat siblings of the composition
+  // state's own (invisible, once expanded) seed node — a state that's both
+  // entry/terminal and expanded can land __end at the same rank as the
+  // group's first step, inside the group's x-range (and symmetrically for
+  // __start against a group it precedes). Once every group's geometry is
+  // known, push __start left of the leftmost group and __end right of the
+  // rightmost group so a terminator never overlaps a group box; y is left
+  // as dagre computed it (already sensible — seeded from the real
+  // entry/terminal state's row).
+  const groupNodes = nodes.filter((n) => n.type === "group");
+  if (groupNodes.length > 0) {
+    const minGroupLeft = Math.min(...groupNodes.map((g) => g.position.x));
+    const maxGroupRight = Math.max(
+      ...groupNodes.map((g) => g.position.x + (typeof g.style?.width === "number" ? g.style.width : 0)),
+    );
+    const startNode = nodes.find((n) => n.id === START_ID);
+    const endNode = nodes.find((n) => n.id === END_ID);
+    const startWidth = positions.get(START_ID)?.width ?? MIN_NODE_WIDTH;
+    if (startNode) {
+      startNode.position.x = Math.min(startNode.position.x, minGroupLeft - TERMINATOR_GROUP_GAP - startWidth);
+    }
+    if (endNode) {
+      endNode.position.x = Math.max(endNode.position.x, maxGroupRight + TERMINATOR_GROUP_GAP);
+    }
   }
 
   const usedIds = new Set<string>();
