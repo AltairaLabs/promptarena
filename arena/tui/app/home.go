@@ -83,12 +83,27 @@ func (h *Home) Update(msg tea.Msg) (Page, tea.Cmd) {
 // and the menu with disabled items rendered faint/greyed.
 func (h *Home) View() string {
 	var configLine string
-	if h.ctx.HasConfig() {
+	switch {
+	case h.ctx.HasConfig():
 		name := configName(h.ctx.ConfigPath)
 		configLine = lipgloss.NewStyle().
 			Foreground(lipgloss.Color(theme.ColorSuccess)).
 			Render("config: " + name)
-	} else {
+	case h.ctx.ConfigInvalid():
+		// A config file was found but failed to load — surface it as an error
+		// with the reason, rather than the generic "no config" message.
+		name := configName(h.ctx.ConfigErrPath)
+		headline := lipgloss.NewStyle().
+			Foreground(lipgloss.Color(theme.ColorError)).
+			Bold(true).
+			Render("invalid config: " + name + " — press c to pick another")
+		detailStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(theme.ColorGray))
+		if h.w > 0 {
+			detailStyle = detailStyle.MaxWidth(h.w)
+		}
+		detail := detailStyle.Render(flattenError(h.ctx.ConfigErr))
+		configLine = lipgloss.JoinVertical(lipgloss.Left, headline, detail)
+	default:
 		configLine = lipgloss.NewStyle().
 			Foreground(lipgloss.Color(theme.ColorGray)).
 			Render("no config — press c to pick, or run `promptarena init`")
@@ -209,6 +224,25 @@ func configName(path string) string {
 		return filepath.Base(path)
 	}
 	return dir
+}
+
+// flattenError renders err as a single line suitable for the Home config line.
+// Schema-validation errors list a generic preamble followed by the specific
+// violation(s) as "- " bullets; the first bullet is the actionable part, so it
+// is preferred over the preamble (which would otherwise consume the width and
+// truncate the useful detail on narrow terminals). Newlines and runs of
+// whitespace collapse to single spaces; the caller clamps to the width.
+func flattenError(err error) string {
+	if err == nil {
+		return ""
+	}
+	msg := err.Error()
+	for _, line := range strings.Split(msg, "\n") {
+		if t := strings.TrimSpace(line); strings.HasPrefix(t, "- ") {
+			return strings.Join(strings.Fields(strings.TrimPrefix(t, "- ")), " ")
+		}
+	}
+	return strings.Join(strings.Fields(msg), " ")
 }
 
 // configSwitcherStartDir returns the initial directory for the config switcher.

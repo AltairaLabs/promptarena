@@ -62,8 +62,15 @@ func (c *AppContext) ProjectDir() string {
 func (c *AppContext) LoadConfig(path string) error {
 	cfg, err := arenaconfig.LoadConfig(path)
 	if err != nil {
+		// Remember that a config file was found here but did not load, so the
+		// hub can show an "invalid config" state (with the error) rather than
+		// collapsing it into "no config". Config is left unchanged.
+		c.ConfigErr = err
+		c.ConfigErrPath = path
 		return err
 	}
+	c.ConfigErr = nil
+	c.ConfigErrPath = ""
 	c.Config = cfg
 	c.ConfigPath = path
 	c.ResultsDir = ResultsDirFromConfig(path)

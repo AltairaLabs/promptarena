@@ -1,6 +1,9 @@
 package app
 
 import (
+	"errors"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -9,6 +12,53 @@ import (
 
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 )
+
+// TestAppContext_LoadConfig_RecordsInvalid verifies that a found-but-unloadable
+// config is remembered as invalid (not collapsed into "no config").
+func TestAppContext_LoadConfig_RecordsInvalid(t *testing.T) {
+	dir := t.TempDir()
+	bad := filepath.Join(dir, arenaConfigFilename)
+	if err := os.WriteFile(bad, []byte("this: : :\n  - not: valid: yaml"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	ctx := &AppContext{}
+	if err := ctx.LoadConfig(bad); err == nil {
+		t.Fatal("expected LoadConfig to fail on a malformed config")
+	}
+	if !ctx.ConfigInvalid() {
+		t.Fatal("ConfigInvalid() should be true after a failed load")
+	}
+	if ctx.HasConfig() {
+		t.Fatal("HasConfig() should be false after a failed load")
+	}
+	if ctx.ConfigErrPath != bad {
+		t.Fatalf("ConfigErrPath = %q, want %q", ctx.ConfigErrPath, bad)
+	}
+}
+
+// TestHome_InvalidConfigShowsError verifies the Home page surfaces an invalid
+// config (with the load error) instead of the generic "no config" message.
+func TestHome_InvalidConfigShowsError(t *testing.T) {
+	ctx := &AppContext{
+		ConfigErr: errors.New("schema validation failed: arena configuration does not match schema:\n" +
+			"  - spec.defaults: Additional property deploy is not allowed"),
+		ConfigErrPath: "/proj/config.arena.yaml",
+	}
+	h := NewHome(ctx, DefaultMenu(ctx))
+	h.SetSize(80, 24)
+	out := stripANSI(h.View())
+	if !strings.Contains(out, "invalid config") {
+		t.Fatalf("expected 'invalid config' in view:\n%s", out)
+	}
+	// The actionable violation (the "- " bullet) is surfaced, not just the
+	// generic preamble — and it fits the width because the preamble is dropped.
+	if !strings.Contains(out, "spec.defaults: Additional property deploy is not allowed") {
+		t.Fatalf("expected the specific schema violation in view:\n%s", out)
+	}
+	if strings.Contains(out, "no config —") {
+		t.Fatalf("should not show the generic no-config message:\n%s", out)
+	}
+}
 
 // goldenHomeSizes is the size matrix for home golden snapshots.
 var goldenHomeSizes = []struct {
