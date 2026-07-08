@@ -8,6 +8,8 @@ import (
 
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
+
+	"github.com/AltairaLabs/promptarena/arena/deploy/flow"
 )
 
 // withImportGlobals saves and restores the package-level flags that
@@ -122,230 +124,10 @@ func parseDeployConfig(t *testing.T, doc []byte) map[string]interface{} {
 	return parsed.Spec.Deploy.Config
 }
 
-func TestMergeProfileIntoExistingConfig(t *testing.T) {
-	doc := arenaManifest(`  deploy:
-    provider: omnia
-    config:
-      region: us-east-1
-`)
-	profile := map[string]interface{}{
-		"endpoint": "https://omnia.example.com",
-		"token":    "secret-123",
-	}
-
-	merged, err := mergeProfileIntoConfigDoc(doc, profile, "omnia")
-	if err != nil {
-		t.Fatalf("mergeProfileIntoConfigDoc() error: %v", err)
-	}
-
-	cfg := parseDeployConfig(t, merged)
-	if cfg["region"] != "us-east-1" {
-		t.Errorf("existing region lost: got %v", cfg["region"])
-	}
-	if cfg["endpoint"] != "https://omnia.example.com" {
-		t.Errorf("endpoint = %v, want merged in", cfg["endpoint"])
-	}
-	if cfg["token"] != "secret-123" {
-		t.Errorf("token = %v, want merged in", cfg["token"])
-	}
-}
-
-func TestMergeProfileOverridesExistingKey(t *testing.T) {
-	doc := arenaManifest(`  deploy:
-    provider: omnia
-    config:
-      token: old-token
-`)
-	profile := map[string]interface{}{"token": "new-token"}
-
-	merged, err := mergeProfileIntoConfigDoc(doc, profile, "omnia")
-	if err != nil {
-		t.Fatalf("mergeProfileIntoConfigDoc() error: %v", err)
-	}
-
-	cfg := parseDeployConfig(t, merged)
-	if cfg["token"] != "new-token" {
-		t.Errorf("token = %v, want new-token (override)", cfg["token"])
-	}
-}
-
-func TestMergeProfileDeepMergesNestedMaps(t *testing.T) {
-	doc := arenaManifest(`  deploy:
-    provider: omnia
-    config:
-      auth:
-        mode: token
-        scope: read
-`)
-	profile := map[string]interface{}{
-		"auth": map[string]interface{}{
-			"scope": "write",
-			"realm": "prod",
-		},
-	}
-
-	merged, err := mergeProfileIntoConfigDoc(doc, profile, "omnia")
-	if err != nil {
-		t.Fatalf("mergeProfileIntoConfigDoc() error: %v", err)
-	}
-
-	cfg := parseDeployConfig(t, merged)
-	auth, ok := cfg["auth"].(map[string]interface{})
-	if !ok {
-		t.Fatalf("auth not a map: %v", cfg["auth"])
-	}
-	if auth["mode"] != "token" {
-		t.Errorf("auth.mode = %v, want token (preserved)", auth["mode"])
-	}
-	if auth["scope"] != "write" {
-		t.Errorf("auth.scope = %v, want write (overridden)", auth["scope"])
-	}
-	if auth["realm"] != "prod" {
-		t.Errorf("auth.realm = %v, want prod (added)", auth["realm"])
-	}
-}
-
-func TestMergeProfileCreatesDeploySection(t *testing.T) {
-	doc := arenaManifest(`  providers:
-    - file: providers/openai.yaml
-`)
-	profile := map[string]interface{}{"endpoint": "https://omnia.example.com"}
-
-	merged, err := mergeProfileIntoConfigDoc(doc, profile, "omnia")
-	if err != nil {
-		t.Fatalf("mergeProfileIntoConfigDoc() error: %v", err)
-	}
-
-	var parsed struct {
-		Spec struct {
-			Deploy struct {
-				Provider string                 `yaml:"provider"`
-				Config   map[string]interface{} `yaml:"config"`
-			} `yaml:"deploy"`
-		} `yaml:"spec"`
-	}
-	if err := yaml.Unmarshal(merged, &parsed); err != nil {
-		t.Fatalf("re-parse: %v", err)
-	}
-	if parsed.Spec.Deploy.Provider != "omnia" {
-		t.Errorf("deploy.provider = %q, want omnia", parsed.Spec.Deploy.Provider)
-	}
-	if parsed.Spec.Deploy.Config["endpoint"] != "https://omnia.example.com" {
-		t.Errorf("deploy.config.endpoint = %v, want merged in", parsed.Spec.Deploy.Config["endpoint"])
-	}
-	// The existing spec content must survive.
-	if !strings.Contains(string(merged), "providers/openai.yaml") {
-		t.Errorf("existing spec content lost:\n%s", merged)
-	}
-}
-
-func TestMergeProfileCreatesConfigUnderExistingDeploy(t *testing.T) {
-	doc := arenaManifest(`  deploy:
-    provider: omnia
-`)
-	profile := map[string]interface{}{"endpoint": "https://omnia.example.com"}
-
-	merged, err := mergeProfileIntoConfigDoc(doc, profile, "omnia")
-	if err != nil {
-		t.Fatalf("mergeProfileIntoConfigDoc() error: %v", err)
-	}
-
-	cfg := parseDeployConfig(t, merged)
-	if cfg["endpoint"] != "https://omnia.example.com" {
-		t.Errorf("deploy.config.endpoint = %v, want merged in", cfg["endpoint"])
-	}
-}
-
-func TestMergeProfileDoesNotOverrideExistingProvider(t *testing.T) {
-	doc := arenaManifest(`  deploy:
-    provider: agentcore
-    config:
-      region: us-east-1
-`)
-	profile := map[string]interface{}{"endpoint": "https://omnia.example.com"}
-
-	merged, err := mergeProfileIntoConfigDoc(doc, profile, "omnia")
-	if err != nil {
-		t.Fatalf("mergeProfileIntoConfigDoc() error: %v", err)
-	}
-
-	var parsed struct {
-		Spec struct {
-			Deploy struct {
-				Provider string `yaml:"provider"`
-			} `yaml:"deploy"`
-		} `yaml:"spec"`
-	}
-	if err := yaml.Unmarshal(merged, &parsed); err != nil {
-		t.Fatalf("re-parse: %v", err)
-	}
-	if parsed.Spec.Deploy.Provider != "agentcore" {
-		t.Errorf("deploy.provider = %q, want agentcore (preserved)", parsed.Spec.Deploy.Provider)
-	}
-}
-
-func TestMergeProfilePreservesComments(t *testing.T) {
-	doc := []byte(`# Arena config for my project
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Arena
-metadata:
-  name: test
-spec:
-  deploy:
-    provider: omnia
-    config:
-      # region is required
-      region: us-east-1
-`)
-	profile := map[string]interface{}{"token": "secret-123"}
-
-	merged, err := mergeProfileIntoConfigDoc(doc, profile, "omnia")
-	if err != nil {
-		t.Fatalf("mergeProfileIntoConfigDoc() error: %v", err)
-	}
-
-	out := string(merged)
-	if !strings.Contains(out, "# Arena config for my project") {
-		t.Errorf("top-level comment lost:\n%s", out)
-	}
-	if !strings.Contains(out, "# region is required") {
-		t.Errorf("inline comment lost:\n%s", out)
-	}
-}
-
-func TestMergeProfilePreservesTwoSpaceIndent(t *testing.T) {
-	doc := arenaManifest(`  deploy:
-    provider: omnia
-    config:
-      workspace: existing-ws
-`)
-	profile := map[string]interface{}{"token": "abc"}
-
-	merged, err := mergeProfileIntoConfigDoc(doc, profile, "omnia")
-	if err != nil {
-		t.Fatalf("mergeProfileIntoConfigDoc() error: %v", err)
-	}
-
-	out := string(merged)
-	// The whole document must keep the repo's 2-space indentation; a 4-space
-	// reindent (yaml.Marshal's default) would rewrite every line.
-	if !strings.Contains(out, "\n  name: test\n") {
-		t.Errorf("metadata.name should stay at 2-space indent:\n%s", out)
-	}
-	if strings.Contains(out, "\n    name: test\n") {
-		t.Errorf("document was reindented to 4 spaces:\n%s", out)
-	}
-}
-
-func TestMergeProfileMissingSpecErrors(t *testing.T) {
-	doc := []byte("apiVersion: promptkit.altairalabs.ai/v1alpha1\nkind: Arena\n")
-	profile := map[string]interface{}{"endpoint": "https://omnia.example.com"}
-
-	_, err := mergeProfileIntoConfigDoc(doc, profile, "omnia")
-	if err == nil {
-		t.Fatal("expected error when manifest has no spec: section")
-	}
-}
+// Note: the comment/order-preserving YAML merge semantics
+// (mergeProfileIntoConfigDoc) now live in arena/deploy/flow and are covered by
+// arena/deploy/flow/merge_test.go. This file only tests this package's own
+// glue: reading profiles and driving `deploy config import` end to end.
 
 func TestRunDeployConfigImportWritesAndSkipsValidate(t *testing.T) {
 	dir := t.TempDir()
@@ -416,7 +198,7 @@ func TestRunDeployConfigImportFromStdin(t *testing.T) {
 }
 
 // withDeployConfigGlobal saves and restores the package-level deployConfig flag
-// that loadFullConfig reads, so tests can set it in isolation.
+// that flow.LoadConfig (via deployOptions) reads, so tests can set it in isolation.
 func withDeployConfigGlobal(t *testing.T, cfgPath string) {
 	t.Helper()
 	old := deployConfig
@@ -427,12 +209,12 @@ func withDeployConfigGlobal(t *testing.T, cfgPath string) {
 func TestLoadFullConfigMissingFileLinksDocs(t *testing.T) {
 	withDeployConfigGlobal(t, filepath.Join(t.TempDir(), "does-not-exist.yaml"))
 
-	_, _, err := loadFullConfig()
+	_, _, err := flow.LoadConfig(deployOptions())
 	if err == nil {
 		t.Fatal("expected error when config file is missing")
 	}
-	if !strings.Contains(err.Error(), deployConfigureDocsURL) {
-		t.Errorf("error should link configure docs %q, got: %v", deployConfigureDocsURL, err)
+	if !strings.Contains(err.Error(), flow.ConfigureDocsURL) {
+		t.Errorf("error should link configure docs %q, got: %v", flow.ConfigureDocsURL, err)
 	}
 }
 
@@ -447,15 +229,15 @@ func TestLoadFullConfigNoDeploySectionLinksDocs(t *testing.T) {
 
 	withDeployConfigGlobal(t, cfgPath)
 
-	_, _, err := loadFullConfig()
+	_, _, err := flow.LoadConfig(deployOptions())
 	if err == nil {
 		t.Fatal("expected error when config has no deploy section")
 	}
-	if !strings.Contains(err.Error(), "no deploy configuration found") {
+	if !strings.Contains(err.Error(), "no deploy:") {
 		t.Errorf("error should mention missing deploy configuration, got: %v", err)
 	}
-	if !strings.Contains(err.Error(), deployConfigureDocsURL) {
-		t.Errorf("error should link configure docs %q, got: %v", deployConfigureDocsURL, err)
+	if !strings.Contains(err.Error(), flow.ConfigureDocsURL) {
+		t.Errorf("error should link configure docs %q, got: %v", flow.ConfigureDocsURL, err)
 	}
 }
 

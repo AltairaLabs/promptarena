@@ -1,16 +1,15 @@
 package main
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"io"
 	"os"
-	"sort"
-	"strings"
 
 	"github.com/spf13/cobra"
 	"gopkg.in/yaml.v3"
+
+	"github.com/AltairaLabs/promptarena/arena/deploy/flow"
 
 	"github.com/AltairaLabs/PromptKit/runtime/deploy"
 )
@@ -71,21 +70,9 @@ func init() {
 	)
 }
 
-const (
-	// configFilePerms is the fallback permission used when writing a config
-	// file that does not yet exist. The profile may carry a scoped token, so
-	// default to owner-only.
-	configFilePerms = 0o600
-	// yamlIndentSpaces matches the repo's 2-space YAML convention.
-	yamlIndentSpaces = 2
-
-	yamlTagMap = "!!map"
-	yamlTagStr = "!!str"
-
-	// deployConfigCmdName is the "config" subcommand name (shared with the
-	// --config flag string elsewhere in the package).
-	deployConfigCmdName = "config"
-)
+// deployConfigCmdName is the "config" subcommand name (shared with the
+// --config flag string elsewhere in the package).
+const deployConfigCmdName = "config"
 
 // readProfile reads a deploy profile fragment from path (or stdin when path is
 // "-") and parses it as YAML, which is a superset of JSON. The profile must be
@@ -120,147 +107,6 @@ func readProfile(path string, stdin io.Reader) (map[string]interface{}, error) {
 	return profile, nil
 }
 
-// mergeProfileIntoConfigDoc deep-merges the profile fragment into the
-// spec.deploy.config mapping of the arena config YAML document, preserving the
-// rest of the document (comments, key order, unrelated sections). The arena
-// config is a Kubernetes-style manifest, so the deploy section lives under
-// spec. If the deploy section or its config mapping is absent it is created,
-// and provider sets spec.deploy.provider when it is otherwise empty.
-func mergeProfileIntoConfigDoc(doc []byte, profile map[string]interface{}, provider string) ([]byte, error) {
-	var root yaml.Node
-	if err := yaml.Unmarshal(doc, &root); err != nil {
-		return nil, fmt.Errorf("failed to parse config: %w", err)
-	}
-
-	rootMap := documentMapping(&root)
-
-	specNode := mappingGet(rootMap, "spec")
-	if specNode == nil || specNode.Kind != yaml.MappingNode {
-		return nil, fmt.Errorf(
-			"config is not a valid arena manifest: missing or malformed spec: section",
-		)
-	}
-
-	deployNode := mappingGet(specNode, "deploy")
-	if deployNode == nil {
-		deployNode = &yaml.Node{Kind: yaml.MappingNode, Tag: yamlTagMap}
-		mappingSet(specNode, "deploy", deployNode)
-	}
-	if deployNode.Kind != yaml.MappingNode {
-		return nil, fmt.Errorf("deploy section is not a mapping")
-	}
-
-	if provider != "" {
-		provNode := mappingGet(deployNode, "provider")
-		switch {
-		case provNode == nil:
-			mappingSet(deployNode, "provider", scalarNode(provider))
-		case strings.TrimSpace(provNode.Value) == "":
-			provNode.Kind = yaml.ScalarNode
-			provNode.Tag = yamlTagStr
-			provNode.Value = provider
-		}
-	}
-
-	cfgNode := mappingGet(deployNode, "config")
-	if cfgNode == nil {
-		cfgNode = &yaml.Node{Kind: yaml.MappingNode, Tag: yamlTagMap}
-		mappingSet(deployNode, "config", cfgNode)
-	}
-	if cfgNode.Kind != yaml.MappingNode {
-		return nil, fmt.Errorf("deploy.config is not a mapping")
-	}
-
-	if err := mergeMapIntoNode(cfgNode, profile); err != nil {
-		return nil, err
-	}
-
-	var buf bytes.Buffer
-	enc := yaml.NewEncoder(&buf)
-	// Match the repo's 2-space YAML convention; yaml.Marshal would otherwise
-	// reindent the entire document to 4 spaces.
-	enc.SetIndent(yamlIndentSpaces)
-	if err := enc.Encode(&root); err != nil {
-		return nil, fmt.Errorf("failed to marshal merged config: %w", err)
-	}
-	if err := enc.Close(); err != nil {
-		return nil, fmt.Errorf("failed to flush merged config: %w", err)
-	}
-	return buf.Bytes(), nil
-}
-
-// documentMapping returns the root mapping node of a YAML document, creating an
-// empty mapping when the document is empty or not a mapping.
-func documentMapping(root *yaml.Node) *yaml.Node {
-	if root.Kind != yaml.DocumentNode {
-		m := &yaml.Node{Kind: yaml.MappingNode, Tag: yamlTagMap}
-		root.Kind = yaml.DocumentNode
-		root.Content = []*yaml.Node{m}
-		return m
-	}
-	if len(root.Content) == 0 || root.Content[0].Kind != yaml.MappingNode {
-		m := &yaml.Node{Kind: yaml.MappingNode, Tag: yamlTagMap}
-		root.Content = []*yaml.Node{m}
-		return m
-	}
-	return root.Content[0]
-}
-
-// mappingGet returns the value node for key in a mapping node, or nil.
-func mappingGet(m *yaml.Node, key string) *yaml.Node {
-	for i := 0; i+1 < len(m.Content); i += 2 {
-		if m.Content[i].Value == key {
-			return m.Content[i+1]
-		}
-	}
-	return nil
-}
-
-// mappingSet replaces the value for key in a mapping node, appending a new
-// key/value pair when the key is absent.
-func mappingSet(m *yaml.Node, key string, val *yaml.Node) {
-	for i := 0; i+1 < len(m.Content); i += 2 {
-		if m.Content[i].Value == key {
-			m.Content[i+1] = val
-			return
-		}
-	}
-	m.Content = append(m.Content, scalarNode(key), val)
-}
-
-// scalarNode builds a string scalar node.
-func scalarNode(s string) *yaml.Node {
-	return &yaml.Node{Kind: yaml.ScalarNode, Tag: "!!str", Value: s}
-}
-
-// mergeMapIntoNode deep-merges src into the target mapping node. Keys are
-// applied in sorted order for deterministic output. Nested mappings recurse;
-// every other value type replaces the existing node.
-func mergeMapIntoNode(target *yaml.Node, src map[string]interface{}) error {
-	keys := make([]string, 0, len(src))
-	for k := range src {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-
-	for _, k := range keys {
-		v := src[k]
-		existing := mappingGet(target, k)
-		if sub, ok := v.(map[string]interface{}); ok && existing != nil && existing.Kind == yaml.MappingNode {
-			if err := mergeMapIntoNode(existing, sub); err != nil {
-				return err
-			}
-			continue
-		}
-		node := &yaml.Node{}
-		if err := node.Encode(v); err != nil {
-			return fmt.Errorf("failed to encode profile value for key %q: %w", k, err)
-		}
-		mappingSet(target, k, node)
-	}
-	return nil
-}
-
 func runDeployConfigImport(cmd *cobra.Command, args []string) error {
 	profilePath := args[0]
 
@@ -269,29 +115,8 @@ func runDeployConfigImport(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if _, statErr := os.Stat(deployConfig); os.IsNotExist(statErr) {
-		return fmt.Errorf(
-			"config file not found: %s\nCreate one first (e.g. 'promptarena init')",
-			deployConfig,
-		)
-	}
-
-	doc, err := os.ReadFile(deployConfig)
-	if err != nil {
-		return fmt.Errorf("failed to read config %s: %w", deployConfig, err)
-	}
-
-	merged, err := mergeProfileIntoConfigDoc(doc, profile, deployConfigImportProvider)
-	if err != nil {
+	if err := flow.MergeProfileIntoConfigFile(deployConfig, profile, deployConfigImportProvider); err != nil {
 		return err
-	}
-
-	mode := os.FileMode(configFilePerms)
-	if fi, statErr := os.Stat(deployConfig); statErr == nil {
-		mode = fi.Mode().Perm()
-	}
-	if err := os.WriteFile(deployConfig, merged, mode); err != nil {
-		return fmt.Errorf("failed to write config %s: %w", deployConfig, err)
 	}
 	fmt.Printf("Imported profile into %s (merged under deploy.config)\n", deployConfig)
 
@@ -311,11 +136,11 @@ func validateDeployConfig() error {
 		return err
 	}
 
-	env := resolveEnvironment()
+	env := flow.ResolveEnv(deployOptions())
 	projectDir, _ := os.Getwd()
 	ctx := context.Background()
 
-	configJSON, err := mergedDeployConfigJSON(deployCfg, env)
+	configJSON, err := flow.MergedConfigJSON(deployCfg, env, deployConfig)
 	if err != nil {
 		return err
 	}

@@ -113,10 +113,19 @@ type AppContext struct {
 	Config     *arenaconfig.Config
 	ConfigPath string
 	ResultsDir string
-	StateStore statestore.Store
-	Engine     *engine.Engine
-	Version    string
-	Voice      *VoiceOptions // nil => text chat
+
+	// ConfigErr and ConfigErrPath record the most recent failed LoadConfig
+	// attempt: a config file was found at ConfigErrPath but did not load (e.g.
+	// schema validation failed). They let the hub distinguish "a config exists
+	// but is invalid" from "no config at all". Both are cleared on a successful
+	// load. A load failure leaves Config unchanged (nil at startup, or a
+	// previously-loaded config if the user switched to a bad one at runtime).
+	ConfigErr     error
+	ConfigErrPath string
+	StateStore    statestore.Store
+	Engine        *engine.Engine
+	Version       string
+	Voice         *VoiceOptions // nil => text chat
 
 	// Verbose raises the hub's log interceptor to debug level and (with
 	// LogDir set) tees logs to <LogDir>/promptarena.log. LogDir is the
@@ -127,6 +136,12 @@ type AppContext struct {
 
 // HasConfig reports whether a config has been loaded into this context.
 func (c *AppContext) HasConfig() bool { return c.Config != nil }
+
+// ConfigInvalid reports whether a config file was found but failed to load
+// (e.g. schema validation), and no valid config is currently loaded. This is
+// distinct from "no config at all": the hub surfaces the load error instead of
+// telling the user there is no config to pick.
+func (c *AppContext) ConfigInvalid() bool { return c.Config == nil && c.ConfigErr != nil }
 
 // PushPageMsg instructs the hub shell to push a new page onto the navigation
 // stack, making it the active page.

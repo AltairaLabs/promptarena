@@ -1,4 +1,4 @@
-$schema: https://promptkit.altairalabs.ai/schemas/latest/provider.json
+# yaml-language-server: $schema=../../../schemas/v1alpha1/provider.json
 apiVersion: promptkit.altairalabs.ai/v1alpha1
 kind: Provider
 metadata:

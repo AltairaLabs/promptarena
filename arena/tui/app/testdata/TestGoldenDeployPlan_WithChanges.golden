@@ -1,0 +1,24 @@
+                               ✨ PromptArena ✨                                
+                                     Deploy                                     
+                                                                                
+╭──────────────────────────────────────────────────────────────────────────────╮
+│                                                                              │
+│  2 to add, 1 to change                                                       │
+│                                                                              │
+│    + agent_runtime.bot                                                       │
+│    + a2a_endpoint.ep                                                         │
+│    ~ agent_runtime.old  (image bumped)                                       │
+│    … 1 unchanged (press [space] to expand)                                   │
+│                                                                              │
+│  Plan: 2 to add, 1 to change, 0 to destroy                                   │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+                                                                                
+ a apply • space toggle unchanged • esc back                                    

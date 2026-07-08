@@ -165,5 +165,6 @@ promptarena deploy adapter install omnia
 ## See Also
 
 - [Configure Deploy](/arena/how-to/deploy/configure/) — Set up arena.yaml after installing an adapter
+- [Use the TUI: Deploy from the TUI](/arena/how-to/interfaces/use-the-tui/#deploy-from-the-tui) — the Deploy wizard's preflight step detects a missing adapter and prints this install command, but adapter management stays CLI-only
 - [CLI Commands](/arena/reference/deploy/cli-commands/) — Complete adapter command reference
 - [Adapter SDK](/arena/reference/deploy/adapter-sdk/) — Build your own adapter

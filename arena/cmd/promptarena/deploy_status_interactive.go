@@ -7,6 +7,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/AltairaLabs/promptarena/arena/deploy/flow"
+
 	"github.com/AltairaLabs/PromptKit/runtime/deploy"
 )
 
@@ -22,50 +24,47 @@ Examples:
 }
 
 func runDeployStatus(cmd *cobra.Command, args []string) error {
+	opts := deployOptions()
 	deployCfg, err := loadDeployConfig()
 	if err != nil {
 		return err
 	}
 
-	env := resolveEnvironment()
+	env := flow.ResolveEnv(opts)
 	projectDir, _ := os.Getwd()
 	ctx := context.Background()
 
 	fmt.Printf("Deployment status for environment: %s (provider: %s)\n", env, deployCfg.Provider)
 
-	configJSON, err := mergedDeployConfigJSON(deployCfg, env)
-	if err != nil {
-		return err
+	// Validate the deploy config before checking local state, so a broken
+	// --config surfaces its error even when there is no prior deployment.
+	if _, mergeErr := flow.MergedConfigJSON(deployCfg, env, deployConfig); mergeErr != nil {
+		return mergeErr
 	}
 
+	// Peek at local state before connecting the adapter — status should be a
+	// cheap, local check when nothing has been deployed yet (and shouldn't
+	// require the adapter binary to be installed just to say so).
 	stateStore := deploy.NewStateStore(projectDir)
 	priorState, err := stateStore.Load()
 	if err != nil {
 		return fmt.Errorf("failed to load deploy state: %w", err)
 	}
-
 	if priorState == nil {
 		fmt.Println()
 		fmt.Println("  No deployment state found. Run 'promptarena deploy' first.")
 		return nil
 	}
 
-	var priorStateStr string
-	if priorState != nil {
-		priorStateStr = priorState.State
-	}
-
-	client, err := connectAdapter(deployCfg.Provider, projectDir)
+	sess, err := flow.Open(ctx, opts)
 	if err != nil {
 		return err
 	}
-	defer client.Close()
+	defer func() { _ = sess.Close() }()
 
-	status, err := client.Status(ctx, &deploy.StatusRequest{
-		DeployConfig: configJSON,
-		Environment:  env,
-		PriorState:   priorStateStr,
-	})
+	printAdapterPath(sess.Deploy.Provider, projectDir)
+
+	status, err := sess.Status(ctx)
 	if err != nil {
 		return fmt.Errorf("status check failed: %w", err)
 	}

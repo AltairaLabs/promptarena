@@ -8,6 +8,8 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/AltairaLabs/promptarena/arena/deploy/flow"
+
 	"github.com/AltairaLabs/PromptKit/runtime/deploy"
 )
 
@@ -30,12 +32,12 @@ func runDeployRefresh(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	env := resolveEnvironment()
+	env := flow.ResolveEnv(deployOptions())
 	projectDir, _ := os.Getwd()
 	ctx := context.Background()
 
 	// Acquire deploy lock.
-	unlock, err := acquireLock(projectDir)
+	unlock, err := flow.Lock(projectDir)
 	if err != nil {
 		return err
 	}
@@ -43,7 +45,7 @@ func runDeployRefresh(cmd *cobra.Command, args []string) error {
 
 	fmt.Printf("Refreshing state for environment: %s (provider: %s)\n", env, deployCfg.Provider)
 
-	configJSON, err := mergedDeployConfigJSON(deployCfg, env)
+	configJSON, err := flow.MergedConfigJSON(deployCfg, env, deployConfig)
 	if err != nil {
 		return err
 	}

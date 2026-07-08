@@ -7,7 +7,7 @@ no config — press c to pick, or run `promptarena init`
   Run      — run scenarios against providers                                    
   Chat     — interactive multi-turn session                                     
   Inspect  — explore config and state                                           
-                                                                                
+  Deploy   — deploy this pack to a target environment                           
                                                                                 
                                                                                 
                                                                                 

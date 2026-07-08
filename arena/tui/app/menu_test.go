@@ -13,8 +13,24 @@ import (
 func TestDefaultMenu_ItemCount(t *testing.T) {
 	ctx := &AppContext{Version: "vTEST"}
 	items := DefaultMenu(ctx)
-	if len(items) != 4 {
-		t.Fatalf("expected 4 menu items, got %d", len(items))
+	if len(items) != 5 {
+		t.Fatalf("expected 5 menu items, got %d", len(items))
+	}
+}
+
+// TestDefaultMenu_IncludesDeploy verifies that DefaultMenu includes a Deploy
+// item.
+func TestDefaultMenu_IncludesDeploy(t *testing.T) {
+	ctx := newMenuTestCtx(t)
+	items := DefaultMenu(ctx)
+	found := false
+	for _, it := range items {
+		if strings.HasPrefix(it.label, "Deploy") {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatal("DefaultMenu missing Deploy item")
 	}
 }
 
@@ -103,6 +119,13 @@ func TestDefaultMenu_MakePages(t *testing.T) {
 		t.Fatal("Inspect make() returned nil")
 	} else if _, ok := p.(*InspectPage); !ok {
 		t.Fatalf("Inspect: expected *InspectPage, got %T", p)
+	}
+
+	// Deploy → *DeployPage
+	if p := items[4].make(ctx); p == nil {
+		t.Fatal("Deploy make() returned nil")
+	} else if _, ok := p.(*DeployPage); !ok {
+		t.Fatalf("Deploy: expected *DeployPage, got %T", p)
 	}
 }
 

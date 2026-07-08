@@ -1,0 +1,1357 @@
+package app
+
+import (
+	"context"
+	"fmt"
+	"strings"
+
+	"github.com/charmbracelet/bubbles/spinner"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
+
+	"github.com/AltairaLabs/promptarena/arena/deploy/flow"
+	"github.com/AltairaLabs/promptarena/arena/tui/panels"
+	"github.com/AltairaLabs/promptarena/arena/tui/theme"
+	"github.com/AltairaLabs/promptarena/arena/tui/viewmodels"
+	"github.com/AltairaLabs/promptarena/arena/tui/views"
+
+	"github.com/AltairaLabs/PromptKit/runtime/deploy"
+)
+
+// Shared label/status literals (satisfies goconst: repeated string literals
+// become constants).
+const (
+	titleDeploy         = "Deploy"
+	loginStatusStarting = "Starting login…"
+	applyEventTypeError = "error"
+	keyHintCancel       = "cancel"
+	keyHintConfirm      = "confirm"
+	keyHintRetry        = "retry"
+	envProduction       = "production"
+)
+
+// deployState enumerates the steps of the guided Deploy wizard. Phase 1
+// (this task) only drives deployStatePreflight and deployStateError; later
+// tasks flesh out the remaining states.
+type deployState int
+
+const (
+	deployStatePreflight deployState = iota
+	deployStateLogin
+	deployStatePlanning
+	deployStatePlan
+	deployStateConfirm
+	deployStateApplying
+	deployStateApplyResult
+	deployStateStatus
+	deployStateError
+)
+
+// preflightDoneMsg carries the result of the background flow.CheckPreflight
+// probe kicked off from Activate.
+type preflightDoneMsg struct{ pf *flow.Preflight }
+
+// deployErrMsg carries an error encountered while driving the wizard.
+type deployErrMsg struct{ err error }
+
+// loginStatusMsg carries a progress update from the background flow.Login
+// goroutine. text is the human-readable status line ("Waiting for
+// authorization…"); url is set only on the update that carries the OAuth
+// authorize URL (flow.LoginHooks.OnAuthorizeURL), so it can persist as the
+// headless-fallback link even after later status updates change text. gen is
+// the loginGen the originating startLogin call captured, so a stale attempt's
+// message (delivered after a cancel-then-retry) can be told apart from the
+// current one.
+type loginStatusMsg struct {
+	text string
+	url  string
+	gen  int
+}
+
+// loginDoneMsg carries the result of the background flow.Login goroutine. gen
+// is the loginGen the originating startLogin call captured — see
+// loginStatusMsg.
+type loginDoneMsg struct {
+	err error
+	gen int
+}
+
+// sessionOpenedMsg carries a *flow.Session once the background startPlan
+// goroutine's flow.Open call succeeds. It is delivered before planReadyMsg so
+// Update can store the session (for Close and, later, Apply) even if the
+// subsequent Session.Plan call fails and the wizard falls into
+// deployStateError.
+type sessionOpenedMsg struct{ sess *flow.Session }
+
+// planReadyMsg carries the result of the background flow.Session.Plan call
+// started from handlePreflightKey via startPlan.
+type planReadyMsg struct {
+	plan *deploy.PlanResponse
+	req  *deploy.PlanRequest
+}
+
+// planStaleMsg is sent by startPlan's goroutine when it finds a saved plan on
+// disk (via Session.LoadPlan) that is no longer fresh (Session.PlanIsFresh
+// returns false — the pack checksum or target environment has since
+// changed). It is always sent before the goroutine proceeds to compute a
+// fresh plan, so the operator sees "pack changed — re-planning…" rather than
+// being silently re-planned against stale expectations.
+type planStaleMsg struct{}
+
+// applyEventMsg carries a single *deploy.ApplyEvent delivered by the
+// deploy.ApplyCallback passed to Session.Apply from startApply. Because the
+// adapter protocol does not stream — Apply blocks until the adapter
+// finishes and only then replays every event in a tight burst just before
+// returning — a whole sequence of applyEventMsg values typically lands
+// back-to-back, immediately followed by applyDoneMsg.
+type applyEventMsg struct{ event *deploy.ApplyEvent }
+
+// applyDoneMsg carries the result of the background Session.Apply call
+// started from handleConfirmKey via startApply.
+type applyDoneMsg struct{ err error }
+
+// statusReadyMsg carries the result of the background flow.Session.Status
+// call started from handleApplyResultKey via startStatus. A failed Status
+// call is reported as a deployErrMsg instead (see startStatus), so this msg
+// only ever carries a successful *deploy.StatusResponse.
+type statusReadyMsg struct{ status *deploy.StatusResponse }
+
+// DeployPage is the guided deploy wizard: preflight check, adapter login,
+// plan, confirm, apply, and status, driven by the arena/deploy/flow package.
+type DeployPage struct {
+	ctx  *AppContext
+	send func(tea.Msg)
+	w, h int
+
+	state deployState
+
+	opts flow.Options
+	pf   *flow.Preflight
+	err  error
+
+	// Login-state fields, populated by the flow.Login goroutine started from
+	// handlePreflightKey via startLogin and delivered through p.send.
+	spinner     spinner.Model
+	loginStatus string
+	loginURL    string
+	loginErr    error
+	loginCancel context.CancelFunc
+	// loginGen is bumped at the start of every startLogin call. It is stamped
+	// on loginStatusMsg/loginDoneMsg so Update can ignore messages from a prior
+	// (canceled-then-retried) login attempt instead of letting a stale goroutine
+	// clobber the current attempt's state.
+	loginGen int
+
+	// Planning/plan-state fields, populated by the flow.Open + Session.Plan
+	// goroutine started from handlePreflightKey via startPlan and delivered
+	// through p.send. sess is held past the plan step so Task 5's Apply can
+	// reuse the already-connected adapter subprocess; Close releases it.
+	planCancel       context.CancelFunc
+	sess             *flow.Session
+	plan             *deploy.PlanResponse
+	planReq          *deploy.PlanRequest
+	planDiff         viewmodels.PlanDiffData
+	collapseNoChange bool
+	// planStaleNotice is set by a planStaleMsg (see its doc comment) and
+	// rendered by viewPlanning; it is reset to false at the start of every
+	// startPlan call so a prior attempt's notice never bleeds into a new one.
+	planStaleNotice bool
+
+	// Confirm-state fields. confirmInput accumulates the operator's typed
+	// characters when pf.Env is non-default (the type-to-confirm guardrail);
+	// it is unused (and unrendered) for the default-env [y/N] prompt.
+	// confirmMismatch is set when Enter is pressed with a confirmInput that
+	// doesn't match pf.Env exactly, so viewConfirm can show a "names don't
+	// match" message; it is cleared as soon as the operator edits the input
+	// again.
+	confirmInput    string
+	confirmMismatch bool
+
+	// Apply-state fields, populated by the flow.Lock + Session.Apply goroutine
+	// started from handleConfirmKey via startApply and delivered through
+	// p.send. applyCancel cancels the goroutine's context from Close so a
+	// popped page doesn't leave the lock/apply call running unsupervised.
+	// applyResults accumulates every *deploy.ResourceResult carried by a
+	// "resource" applyEventMsg, in arrival order; applyRows is the
+	// views.DeployResourceRow projection rebuilt from applyResults each time
+	// it grows, so the table and the golden/unit tests can read it directly.
+	// applyLogEntries accumulates a panels.LogEntry per event that carries a
+	// Message (progress/error/complete), rendered through applyLogs.
+	applyCancel     context.CancelFunc
+	applying        bool
+	applyResults    []*deploy.ResourceResult
+	applyRows       []views.DeployResourceRow
+	applyLogs       *panels.LogsPanel
+	applyLogEntries []panels.LogEntry
+	// applySawErrorEvent is set by handleApplyEvent when a top-level (no
+	// Resource) "error"-type applyEventMsg is seen during apply — e.g. an
+	// adapter-reported failure that Session.Apply itself still returns nil
+	// for. applyResultHeadline folds this in alongside any failed
+	// applyResults entry so the headline never claims success while the logs
+	// show an error.
+	applySawErrorEvent bool
+
+	// Status-state fields, populated by the flow.Session.Status goroutine
+	// started from handleApplyResultKey via startStatus and delivered through
+	// p.send. statusCancel cancels the goroutine's context from Close, the
+	// same best-effort cancellation applyCancel gives startApply — Status is
+	// a single blocking call with no intermediate abandon checkpoint, so the
+	// adapter subprocess may still be mid-Status when sess is closed just
+	// after (see Close's doc comment for the identical apply-side race).
+	statusCancel   context.CancelFunc
+	statusFetching bool
+	status         *deploy.StatusResponse
+}
+
+// NewDeployPage builds the deploy wizard page for ctx. It is the entry point
+// used by the Home menu's Deploy item.
+func NewDeployPage(ctx *AppContext) Page {
+	return &DeployPage{
+		ctx:   ctx,
+		state: deployStatePreflight,
+		opts: flow.Options{
+			ConfigPath: ctx.ConfigPath,
+			ProjectDir: ctx.ProjectDir(),
+		},
+		spinner:   newLoginSpinner(),
+		applyLogs: panels.NewLogsPanel(),
+	}
+}
+
+// newLoginSpinner builds the spinner model used by the login screen.
+func newLoginSpinner() spinner.Model {
+	return spinner.New(
+		spinner.WithSpinner(spinner.MiniDot),
+		spinner.WithStyle(lipgloss.NewStyle().Foreground(lipgloss.Color(theme.ColorPrimary))),
+	)
+}
+
+// Title implements Page.
+func (p *DeployPage) Title() string { return titleDeploy }
+
+// Close implements Closeable. It cancels any in-flight flow.Login goroutine
+// so that popping the page (e.g. pressing esc during deployStateLogin, which
+// App's global esc handler pops before handleLoginKey ever sees the key) does
+// not leave the login goroutine and its loopback OAuth callback server running
+// against a page nothing is listening to anymore. It also cancels any
+// in-flight planning goroutine and closes the flow.Session opened by
+// startPlan — the session holds an adapter subprocess that MUST be released
+// when the page is popped, however the wizard got here (plan failure, esc
+// during planning/plan/confirm, or a later successful apply). It also cancels
+// any in-flight startApply goroutine; that cancellation is best-effort since
+// Apply is a single blocking call with no intermediate abandon checkpoint
+// (unlike Open/Plan), so the adapter subprocess may still be mid-Apply when
+// sess is closed just below — exactly the same race already accepted for an
+// in-flight Plan call. It also cancels any in-flight startStatus goroutine,
+// on the same best-effort basis as startApply.
+func (p *DeployPage) Close() {
+	if p.loginCancel != nil {
+		p.loginCancel()
+		p.loginCancel = nil
+	}
+	if p.planCancel != nil {
+		p.planCancel()
+		p.planCancel = nil
+	}
+	if p.applyCancel != nil {
+		p.applyCancel()
+		p.applyCancel = nil
+	}
+	if p.statusCancel != nil {
+		p.statusCancel()
+		p.statusCancel = nil
+	}
+	if p.sess != nil {
+		_ = p.sess.Close()
+		p.sess = nil
+	}
+}
+
+// SetSize implements Page.
+func (p *DeployPage) SetSize(w, h int) { p.w, p.h = w, h }
+
+// Init implements Page. No command runs here — Activate kicks off preflight
+// once the page is pushed onto the navigation stack.
+func (p *DeployPage) Init() tea.Cmd { return nil }
+
+// Activate implements Activatable. It stores the send handle and kicks off
+// the background preflight probe.
+func (p *DeployPage) Activate(send func(tea.Msg)) tea.Cmd {
+	p.send = send
+	return p.runPreflight()
+}
+
+// runPreflight returns a tea.Cmd that runs flow.CheckPreflight in the
+// background and reports the result as a preflightDoneMsg.
+func (p *DeployPage) runPreflight() tea.Cmd {
+	opts := p.opts
+	return func() tea.Msg {
+		pf := flow.CheckPreflight(contextTODO(), opts)
+		return preflightDoneMsg{pf: pf}
+	}
+}
+
+// Update implements Page.
+func (p *DeployPage) Update(msg tea.Msg) (Page, tea.Cmd) {
+	switch m := msg.(type) {
+	case preflightDoneMsg:
+		p.pf = m.pf
+		if m.pf.ConfigErr != nil || m.pf.ProbeErr != nil {
+			p.err, p.state = firstErr(m.pf), deployStateError
+		}
+		return p, nil
+	case deployErrMsg:
+		p.err, p.state = m.err, deployStateError
+		return p, nil
+	case loginStatusMsg:
+		return p.handleLoginStatusMsg(m)
+	case loginDoneMsg:
+		return p.handleLoginDoneMsg(m)
+	case sessionOpenedMsg:
+		p.sess = m.sess
+		return p, nil
+	case planStaleMsg:
+		p.planStaleNotice = true
+		return p, nil
+	case planReadyMsg:
+		p.plan = m.plan
+		p.planReq = m.req
+		p.planDiff = viewmodels.BuildPlanDiff(m.plan)
+		p.collapseNoChange = true
+		p.state = deployStatePlan
+		return p, nil
+	case applyEventMsg:
+		p.handleApplyEvent(m.event)
+		return p, nil
+	case applyDoneMsg:
+		p.applying = false
+		if m.err != nil {
+			p.err = m.err
+			p.state = deployStateError
+		} else {
+			p.state = deployStateApplyResult
+		}
+		return p, nil
+	case statusReadyMsg:
+		p.statusFetching = false
+		p.status = m.status
+		return p, nil
+	case spinner.TickMsg:
+		fetchingStatus := p.state == deployStateStatus && p.statusFetching
+		activeState := p.state == deployStateLogin || p.state == deployStatePlanning || p.state == deployStateApplying
+		if !activeState && !fetchingStatus {
+			return p, nil
+		}
+		var cmd tea.Cmd
+		p.spinner, cmd = p.spinner.Update(m)
+		return p, cmd
+	case tea.KeyMsg:
+		return p.handleKey(m)
+	}
+	return p, nil
+}
+
+// handleLoginStatusMsg applies a loginStatusMsg progress update, dropping it
+// if it is stale (see loginStatusMsg's doc comment).
+func (p *DeployPage) handleLoginStatusMsg(m loginStatusMsg) (Page, tea.Cmd) {
+	if m.gen != p.loginGen {
+		// Stale progress update from a canceled-then-retried attempt; drop it.
+		return p, nil
+	}
+	p.loginStatus = m.text
+	if m.url != "" {
+		p.loginURL = m.url
+	}
+	return p, nil
+}
+
+// handleLoginDoneMsg applies a loginDoneMsg completion, dropping it if it is
+// stale (see loginDoneMsg's doc comment).
+func (p *DeployPage) handleLoginDoneMsg(m loginDoneMsg) (Page, tea.Cmd) {
+	if m.gen != p.loginGen {
+		// Stale completion from a canceled-then-retried attempt: a later
+		// login is already in flight (or the operator backed out entirely).
+		// Processing this would wipe the current attempt's loginCancel and
+		// bounce the operator to preflight with a confusing stale error.
+		return p, nil
+	}
+	p.loginCancel = nil
+	if m.err != nil {
+		// Recoverable: surface the error on the preflight screen rather
+		// than dead-ending the wizard in deployStateError, so the
+		// operator can retry login ('l') or the probe ('r') directly.
+		p.loginErr = m.err
+		p.state = deployStatePreflight
+		return p, nil
+	}
+	p.loginErr = nil
+	p.state = deployStatePreflight
+	cmd := p.runPreflight()
+	return p, cmd
+}
+
+// handleKey dispatches a key message to the handler for the current state.
+func (p *DeployPage) handleKey(msg tea.KeyMsg) (Page, tea.Cmd) {
+	switch p.state { //nolint:exhaustive // Planning/Applying have no keys of their own; see default below
+	case deployStatePreflight:
+		return p.handlePreflightKey(msg)
+	case deployStateLogin:
+		return p.handleLoginKey(msg)
+	case deployStatePlan:
+		return p.handlePlanKey(msg)
+	case deployStateConfirm:
+		return p.handleConfirmKey(msg)
+	case deployStateApplyResult:
+		return p.handleApplyResultKey(msg)
+	case deployStateStatus:
+		return p.handleStatusKey(msg)
+	case deployStateError:
+		return p.handleErrorKey(msg)
+	// deployStatePlanning and deployStateApplying have no keys of their own
+	// (the background plan/apply cmd runs to completion or error).
+	default:
+		return p, nil
+	}
+}
+
+// handlePreflightKey handles key input while the preflight probe is running
+// or has just completed. Every transition is gated on the relevant pf field
+// so a stale or partial preflight snapshot can't be bypassed:
+//
+//   - 'l' (login) only fires when the adapter supports login and isn't
+//     already authenticated.
+//   - 'p' (plan) only fires once pf.Ready() — adapter installed, connected
+//     without error, and authenticated.
+//   - 'r' (retry) always re-runs the preflight probe.
+func (p *DeployPage) handlePreflightKey(msg tea.KeyMsg) (Page, tea.Cmd) {
+	if p.pf == nil || msg.Type != tea.KeyRunes {
+		return p, nil
+	}
+	switch string(msg.Runes) {
+	case "l":
+		if p.pf.SupportsLogin && !p.pf.Authenticated {
+			p.state = deployStateLogin
+			return p, tea.Batch(p.startLogin(), p.spinner.Tick)
+		}
+	case "p":
+		if p.pf.Ready() {
+			p.state = deployStatePlanning
+			return p, tea.Batch(p.startPlan(), p.spinner.Tick)
+		}
+	case "r":
+		p.loginErr = nil
+		cmd := p.runPreflight()
+		return p, cmd
+	}
+	return p, nil
+}
+
+// handleLoginKey handles key input while the login screen is showing.
+// 'c' cancels the in-flight login and returns to preflight.
+func (p *DeployPage) handleLoginKey(msg tea.KeyMsg) (Page, tea.Cmd) {
+	if msg.Type != tea.KeyRunes {
+		return p, nil
+	}
+	if string(msg.Runes) == "c" {
+		if p.loginCancel != nil {
+			p.loginCancel()
+			p.loginCancel = nil
+		}
+		p.state = deployStatePreflight
+	}
+	return p, nil
+}
+
+// handlePlanKey handles key input while the plan diff is showing. '[space]'
+// toggles whether unchanged resources are collapsed; 'a' advances to
+// deployStateConfirm, but only when the plan has real (non-no-change)
+// changes — an empty plan leaves nothing for the operator to apply.
+func (p *DeployPage) handlePlanKey(msg tea.KeyMsg) (Page, tea.Cmd) {
+	switch msg.String() {
+	case " ":
+		p.collapseNoChange = !p.collapseNoChange
+	case "a":
+		if p.planHasChanges() {
+			p.state = deployStateConfirm
+		}
+	}
+	return p, nil
+}
+
+// planHasChanges reports whether the current plan has any resource change
+// other than NO_CHANGE.
+func (p *DeployPage) planHasChanges() bool {
+	return p.planDiff.Adds+p.planDiff.Changes+p.planDiff.Destroys+p.planDiff.Drifts > 0
+}
+
+// handleConfirmKey handles key input on the confirm screen. It implements two
+// distinct guardrails depending on the target environment:
+//
+//   - Default env (flow.DefaultEnv): a quiet [y/N] prompt. 'y' advances to
+//     deployStateApplying; every other key backs out to deployStatePlan —
+//     there is nothing typed to edit, so any non-'y' key is a "no".
+//   - Non-default env: the operator must type the exact environment name.
+//     Printable runes append to confirmInput and backspace edits it (both
+//     clear any prior mismatch flag); Enter compares confirmInput against
+//     pf.Env — a match advances to deployStateApplying, a mismatch stays in
+//     deployStateConfirm and sets confirmMismatch so viewConfirm can show
+//     "names don't match".
+//
+// There is no esc case here: App's global esc handler (see Close's doc
+// comment) pops the whole page before this handler ever sees the key,
+// exactly as it does for deployStateLogin/deployStatePlan. Adding one would
+// be dead code.
+func (p *DeployPage) handleConfirmKey(msg tea.KeyMsg) (Page, tea.Cmd) {
+	if p.pf == nil {
+		return p, nil
+	}
+	if p.pf.Env == flow.DefaultEnv {
+		if msg.Type == tea.KeyRunes && string(msg.Runes) == "y" {
+			p.state = deployStateApplying
+			return p, tea.Batch(p.startApply(), p.spinner.Tick)
+		}
+		p.state = deployStatePlan
+		return p, nil
+	}
+
+	switch msg.Type { //nolint:exhaustive // only Enter/Backspace/Runes are meaningful while typing the confirm input
+	case tea.KeyEnter:
+		if p.confirmInput == p.pf.Env {
+			p.confirmMismatch = false
+			p.state = deployStateApplying
+			return p, tea.Batch(p.startApply(), p.spinner.Tick)
+		}
+		p.confirmMismatch = true
+	case tea.KeyBackspace:
+		if p.confirmInput != "" {
+			p.confirmInput = p.confirmInput[:len(p.confirmInput)-1]
+		}
+		p.confirmMismatch = false
+	case tea.KeyRunes:
+		p.confirmInput += string(msg.Runes)
+		p.confirmMismatch = false
+	}
+	return p, nil
+}
+
+// startLogin returns a tea.Cmd that starts flow.Login in a background
+// goroutine, exactly as RunPage.Activate starts ExecuteRuns: the returned
+// tea.Cmd only launches the goroutine and returns nil, while the goroutine
+// itself streams progress and its final result through p.send — the same
+// send handle stored by Activate (Task 3.1) and used by the run engine's
+// EventAdapter.
+func (p *DeployPage) startLogin() tea.Cmd {
+	ctx, cancel := context.WithCancel(context.Background())
+	p.loginCancel = cancel
+	p.loginStatus = loginStatusStarting
+	p.loginURL = ""
+	p.loginErr = nil
+
+	// Bump the generation and capture it into a local for the goroutine below.
+	// This is the only thing that ties a background attempt's messages back to
+	// "is this still the current attempt" — the goroutine must never read
+	// p.loginGen directly (that field is only ever touched from the bubbletea
+	// update goroutine).
+	p.loginGen++
+	gen := p.loginGen
+
+	provider := p.pf.Provider
+	opts := p.opts
+	send := p.send
+
+	return func() tea.Msg {
+		go func() {
+			hooks := flow.LoginHooks{
+				OnStatus:       func(s string) { send(loginStatusMsg{text: s, gen: gen}) },
+				OnAuthorizeURL: func(u string) { send(loginStatusMsg{text: "Waiting for authorization…", url: u, gen: gen}) },
+			}
+			err := flow.Login(ctx, provider, opts, hooks)
+			send(loginDoneMsg{err: err, gen: gen})
+		}()
+		return nil
+	}
+}
+
+// startPlan returns a tea.Cmd that starts a background goroutine which opens
+// a flow.Session (connecting the adapter subprocess) and computes a plan,
+// exactly as startLogin starts flow.Login: the returned tea.Cmd only launches
+// the goroutine and returns nil, while the goroutine streams its results back
+// through p.send. sessionOpenedMsg is sent as soon as Open succeeds — even if
+// the subsequent Plan call fails — so Update can store the session (and
+// Close can release its adapter subprocess) no matter how the wizard leaves
+// deployStatePlanning. Locals are captured before the goroutine starts and
+// the goroutine never touches p.* directly, mirroring startLogin's race
+// discipline.
+//
+// If p.sess is already set, Open is skipped entirely and the goroutine plans
+// directly against that session. In production p.sess is always nil here —
+// it is only ever populated by this same goroutine's sessionOpenedMsg
+// (handled in Update) or cleared by Close on pop — so this branch never fires
+// outside tests. It exists solely so integration tests can pre-inject a
+// *flow.Session backed by a fake deploy.Provider (via the test-only
+// newDeployPageWithSession constructor) and drive the wizard end-to-end
+// without a real adapter subprocess.
+//
+// Once a session is in hand (either freshly opened or pre-injected), the
+// goroutine checks for a saved plan (Session.LoadPlan) and, if one exists but
+// is no longer fresh (Session.PlanIsFresh — the pack checksum or target
+// environment has changed since it was saved), sends planStaleMsg before
+// proceeding to compute a fresh plan. The wizard always re-plans from
+// scratch here regardless — there is no saved-plan reuse — so this is purely
+// a "don't silently re-plan" notice, never a gate.
+func (p *DeployPage) startPlan() tea.Cmd {
+	ctx, cancel := context.WithCancel(context.Background())
+	p.planCancel = cancel
+	p.planStaleNotice = false
+	opts := p.opts
+	send := p.send
+	sess := p.sess
+
+	return func() tea.Msg {
+		go runPlan(ctx, opts, sess, send)
+		return nil
+	}
+}
+
+// runPlan is startPlan's background goroutine body, extracted so its control
+// flow isn't nested inside the tea.Cmd/goroutine closures startPlan returns.
+// See startPlan's doc comment for the full open-then-plan sequencing this
+// implements, including the pre-injected-session and stale-plan-notice cases.
+func runPlan(ctx context.Context, opts flow.Options, sess *flow.Session, send func(tea.Msg)) {
+	if sess == nil {
+		var err error
+		sess, err = flow.Open(ctx, opts)
+		if err != nil {
+			send(deployErrMsg{err: err})
+			return
+		}
+		// The page may have been popped (Close cancels ctx) while Open was
+		// still connecting the adapter subprocess. If so, sending
+		// sessionOpenedMsg would be dropped by App.Update (it routes to
+		// whatever page is now on top of the stack), leaking sess and its
+		// subprocess with no reaper. Close it here instead, on the
+		// goroutine that actually holds it.
+		if abandonIfCancelled(ctx, sess) {
+			return
+		}
+		send(sessionOpenedMsg{sess: sess})
+	}
+
+	if saved, err := sess.LoadPlan(); err == nil && saved != nil && !sess.PlanIsFresh(saved) {
+		send(planStaleMsg{})
+	}
+
+	plan, req, err := sess.Plan(ctx)
+	if err != nil {
+		// Plan failed on a session this goroutine (or a pre-injected
+		// caller) already opened — close it here rather than leaving
+		// it to whenever the page is eventually popped. Session.Close
+		// is idempotent, so this is safe even though p.sess (set by
+		// the earlier sessionOpenedMsg) still holds the same session
+		// and Close will call it again on pop.
+		_ = sess.Close()
+		send(deployErrMsg{err: err})
+		return
+	}
+	// Same race, one step later: the page may have been popped while
+	// Plan was still running.
+	if abandonIfCancelled(ctx, sess) {
+		return
+	}
+	send(planReadyMsg{plan: plan, req: req})
+}
+
+// abandonIfCancelled reports whether ctx was already canceled by the time a
+// blocking flow.Session step (Open, Plan) returned — meaning the page that
+// started startPlan's goroutine has since been Close()d. When it has, it
+// closes sess (reaping the adapter subprocess) so the caller can return
+// without sending a message that would only be dropped by App.Update once
+// nothing is listening for it. Extracted as a pure(ish) helper so the
+// abandon-path logic is testable without racing a real goroutine against a
+// real Close call.
+func abandonIfCancelled(ctx context.Context, sess *flow.Session) bool {
+	if ctx.Err() == nil {
+		return false
+	}
+	_ = sess.Close()
+	return true
+}
+
+// startApply returns a tea.Cmd that starts a background goroutine which
+// acquires the deploy file lock for the project directory and runs
+// Session.Apply, exactly as startPlan starts flow.Open+Plan: the returned
+// tea.Cmd only launches the goroutine and returns nil, while the goroutine
+// streams every deploy.ApplyEvent back through p.send as an applyEventMsg and
+// reports the final result as applyDoneMsg. Locals are captured before the
+// goroutine starts and the goroutine never touches p.* directly (including
+// inside the deploy.ApplyCallback), mirroring startLogin/startPlan's race
+// discipline. If the lock is already held (another deploy in progress), the
+// goroutine reports the contention error as a deployErrMsg and never calls
+// Apply.
+func (p *DeployPage) startApply() tea.Cmd {
+	ctx, cancel := context.WithCancel(context.Background())
+	p.applyCancel = cancel
+	p.applying = true
+	p.applyResults = nil
+	p.applyRows = nil
+	p.applyLogEntries = nil
+	p.applySawErrorEvent = false
+
+	projectDir := p.opts.ProjectDir
+	sess := p.sess
+	req := p.planReq
+	send := p.send
+
+	return func() tea.Msg {
+		go func() {
+			release, err := flow.Lock(projectDir)
+			if err != nil {
+				send(deployErrMsg{err: err})
+				return
+			}
+			defer release()
+
+			cb := func(e *deploy.ApplyEvent) error {
+				send(applyEventMsg{event: e})
+				return nil
+			}
+			send(applyDoneMsg{err: sess.Apply(ctx, req, cb)})
+		}()
+		return nil
+	}
+}
+
+// startStatus returns a tea.Cmd that starts a background goroutine which
+// runs Session.Status against the already-open adapter session, exactly as
+// startApply starts Session.Apply: the returned tea.Cmd only launches the
+// goroutine and returns nil, while the goroutine reports the result back
+// through p.send as statusReadyMsg (or deployErrMsg on failure, folded into
+// deployStateError by Update exactly like a failed applyDoneMsg). Locals are
+// captured before the goroutine starts and the goroutine never touches p.*
+// directly, mirroring startLogin/startPlan/startApply's race discipline.
+func (p *DeployPage) startStatus() tea.Cmd {
+	ctx, cancel := context.WithCancel(context.Background())
+	p.statusCancel = cancel
+	p.statusFetching = true
+	p.status = nil
+
+	sess := p.sess
+	send := p.send
+
+	return func() tea.Msg {
+		go func() {
+			status, err := sess.Status(ctx)
+			if err != nil {
+				send(deployErrMsg{err: err})
+				return
+			}
+			send(statusReadyMsg{status: status})
+		}()
+		return nil
+	}
+}
+
+// handleApplyEvent folds a single *deploy.ApplyEvent from the Session.Apply
+// callback into the page's apply-state: a "resource" event appends to
+// applyResults and rebuilds applyRows via views.DeployRowsFromResults, and
+// any event carrying a Message (progress/error/complete, and resource events
+// that also set Message) appends a panels.LogEntry so the logs panel shows
+// the same narrative the adapter streamed. A top-level "error" event (no
+// Resource) also sets applySawErrorEvent so applyResultHeadline can flag a
+// failure even when Session.Apply itself returns nil.
+func (p *DeployPage) handleApplyEvent(e *deploy.ApplyEvent) {
+	if e == nil {
+		return
+	}
+	if e.Type == "resource" && e.Resource != nil {
+		p.applyResults = append(p.applyResults, e.Resource)
+		p.applyRows = views.DeployRowsFromResults(p.applyResults)
+	}
+	if e.Type == applyEventTypeError && e.Resource == nil {
+		p.applySawErrorEvent = true
+	}
+	if e.Message != "" {
+		level := "info"
+		if e.Type == applyEventTypeError {
+			level = applyEventTypeError
+		}
+		p.applyLogEntries = append(p.applyLogEntries, panels.LogEntry{Level: level, Message: e.Message})
+	}
+}
+
+// handleApplyResultKey handles key input on the apply-result screen. 's'
+// advances to deployStateStatus and kicks off the background Session.Status
+// fetch, exactly as handleConfirmKey's 'y' advances to deployStateApplying
+// via startApply; every other key is ignored.
+func (p *DeployPage) handleApplyResultKey(msg tea.KeyMsg) (Page, tea.Cmd) {
+	if msg.Type == tea.KeyRunes && string(msg.Runes) == "s" {
+		p.state = deployStateStatus
+		return p, tea.Batch(p.startStatus(), p.spinner.Tick)
+	}
+	return p, nil
+}
+
+// handleStatusKey handles key input on the status screen. 'q' pops the page.
+// There is no esc case here for the same reason handleConfirmKey has none:
+// App's global esc handler pops the whole page before this method ever sees
+// the key. Unlike esc, 'q' is only handled globally at the root of the nav
+// stack (see App.Update), so the status screen — a non-root page — must
+// handle it directly to let the operator back out with 'q' too.
+func (p *DeployPage) handleStatusKey(msg tea.KeyMsg) (Page, tea.Cmd) {
+	if msg.Type == tea.KeyRunes && string(msg.Runes) == "q" {
+		return p, func() tea.Msg { return PopPageMsg{} }
+	}
+	return p, nil
+}
+
+// handleErrorKey handles key input on the terminal error screen. Recovery
+// keys are gated to the error kind classifyDeployErr detects from p.err's
+// text, mirroring handlePreflightKey's per-field gating:
+//
+//   - 'l' (log in) only fires for an auth-failure error, and only when the
+//     adapter actually supports login — exactly the same gate
+//     handlePreflightKey's 'l' uses, since it launches the same startLogin.
+//   - 'r' (retry) only fires for lock contention, re-running the preflight
+//     probe so the operator can see whether the other deploy has since
+//     finished (there is no narrower "retry the failed step" to return to —
+//     the failed step's own inputs, e.g. planReq, are gone by the time the
+//     wizard reaches deployStateError from a lock-contention apply attempt).
+//
+// Every other key (including esc, handled globally by App before this method
+// ever sees it — see handleConfirmKey's doc comment) is a no-op, and so is
+// every key for an error kind that offers no matching recovery action
+// (adapter-missing: esc only; generic: esc only).
+func (p *DeployPage) handleErrorKey(msg tea.KeyMsg) (Page, tea.Cmd) {
+	if msg.Type != tea.KeyRunes || p.err == nil {
+		return p, nil
+	}
+	switch string(msg.Runes) {
+	case "l":
+		if classifyDeployErr(p.err) == errorKindAuth && p.pf != nil && p.pf.SupportsLogin {
+			p.err = nil
+			p.state = deployStateLogin
+			return p, tea.Batch(p.startLogin(), p.spinner.Tick)
+		}
+	case "r":
+		if classifyDeployErr(p.err) == errorKindLockContention {
+			p.err = nil
+			p.state = deployStatePreflight
+			cmd := p.runPreflight()
+			return p, cmd
+		}
+	}
+	return p, nil
+}
+
+// View implements Page.
+func (p *DeployPage) View() string {
+	body := func(_ int) string {
+		switch p.state {
+		case deployStatePreflight:
+			return p.viewPreflight(p.w)
+		case deployStateLogin:
+			return p.viewLogin(p.w)
+		case deployStatePlanning:
+			return p.viewPlanning(p.w)
+		case deployStatePlan:
+			return p.viewPlan(p.w)
+		case deployStateConfirm:
+			return p.viewConfirm(p.w)
+		case deployStateApplying:
+			return p.viewApplying(p.w)
+		case deployStateApplyResult:
+			return p.viewApplyResult(p.w)
+		case deployStateStatus:
+			return p.viewStatus(p.w)
+		case deployStateError:
+			return p.viewError()
+		default:
+			return ""
+		}
+	}
+	return views.RenderWithChrome(p.chrome(), body)
+}
+
+// chrome builds the ChromeConfig for the current state.
+func (p *DeployPage) chrome() views.ChromeConfig {
+	return views.ChromeConfig{
+		Width:       p.w,
+		Height:      p.h,
+		Title:       titleDeploy,
+		KeyBindings: p.keyBindings(),
+	}
+}
+
+// keyBindings returns the footer key hints for the current state.
+func (p *DeployPage) keyBindings() []views.KeyBinding {
+	kb := []views.KeyBinding{{Keys: "esc", Description: keyHintBack}}
+	switch {
+	case p.state == deployStateLogin:
+		kb = append([]views.KeyBinding{{Keys: "c", Description: keyHintCancel}}, kb...)
+	case p.state == deployStatePlan:
+		kb = append([]views.KeyBinding{{Keys: "space", Description: "toggle unchanged"}}, kb...)
+		if p.planHasChanges() {
+			kb = append([]views.KeyBinding{{Keys: "a", Description: "apply"}}, kb...)
+		}
+	case p.state == deployStateConfirm && p.pf != nil && p.pf.Env == flow.DefaultEnv:
+		kb = append([]views.KeyBinding{
+			{Keys: "y", Description: keyHintConfirm}, {Keys: "n", Description: keyHintCancel},
+		}, kb...)
+	case p.state == deployStateConfirm:
+		kb = append([]views.KeyBinding{{Keys: keyEnter, Description: keyHintConfirm}}, kb...)
+	case p.state == deployStateApplyResult:
+		kb = append([]views.KeyBinding{{Keys: "s", Description: "status"}}, kb...)
+	case p.state == deployStateStatus:
+		kb = append([]views.KeyBinding{{Keys: "q", Description: keyHintBack}}, kb...)
+	case p.state == deployStateError:
+		kb = append(errorKeyBindings(p.err, p.pf), kb...)
+	case p.state == deployStatePreflight && p.pf != nil:
+		kb = append(preflightKeyBindings(p.pf), kb...)
+	}
+	return kb
+}
+
+// errorKeyBindings returns the deployStateError footer key hints, keyed off
+// classifyDeployErr exactly as handleErrorKey gates the corresponding
+// recovery keys — see keyBindings' deployStateError case.
+func errorKeyBindings(err error, pf *flow.Preflight) []views.KeyBinding {
+	var kb []views.KeyBinding
+	switch classifyDeployErr(err) { //nolint:exhaustive // generic/adapter-missing errors offer no extra footer key
+	case errorKindAuth:
+		// Mirror handleErrorKey's exact guard: 'l' only fires when the
+		// adapter actually supports login, so the footer must not
+		// advertise it otherwise.
+		if pf != nil && pf.SupportsLogin {
+			kb = append([]views.KeyBinding{{Keys: "l", Description: "log in"}}, kb...)
+		}
+	case errorKindLockContention:
+		kb = append([]views.KeyBinding{{Keys: "r", Description: keyHintRetry}}, kb...)
+	}
+	return kb
+}
+
+// preflightKeyBindings returns the deployStatePreflight footer key hints.
+// Bindings are prepended in the same order keyBindings always used, so the
+// most relevant action reads first: plan, then login, then retry — see
+// keyBindings' deployStatePreflight case.
+func preflightKeyBindings(pf *flow.Preflight) []views.KeyBinding {
+	var kb []views.KeyBinding
+	if pf.Ready() {
+		kb = append([]views.KeyBinding{{Keys: "p", Description: "plan"}}, kb...)
+	}
+	if pf.SupportsLogin && !pf.Authenticated {
+		kb = append([]views.KeyBinding{{Keys: "l", Description: "login"}}, kb...)
+	}
+	kb = append([]views.KeyBinding{{Keys: "r", Description: keyHintRetry}}, kb...)
+	return kb
+}
+
+// deployBox returns the standard bordered box stretched to fill width so it
+// lines up with the full-width chrome header and footer. theme.BorderedBoxStyle
+// on its own (via MaxWidth) only clips overflow and otherwise leaves the box
+// hugging its content; setting an explicit Width stretches it. lipgloss's Width
+// is the content-plus-padding width and excludes the border, so we subtract the
+// horizontal border size to land exactly on width. Falls back to the natural
+// box when width is too small to hold the border.
+func deployBox(width int) lipgloss.Style {
+	borderH := theme.BorderedBoxStyle.GetHorizontalBorderSize()
+	if width <= borderH {
+		return theme.BorderedBoxStyle
+	}
+	return theme.BorderedBoxStyle.Width(width - borderH)
+}
+
+// viewPreflight renders the preflight-check step: target provider, a loudly
+// flagged environment banner for non-default envs, adapter presence, and
+// auth state. When the adapter isn't installed it renders the install
+// command instead of offering to plan.
+func (p *DeployPage) viewPreflight(width int) string {
+	labelStyle := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color(theme.ColorPrimary)).
+		Render("Checking deploy adapter…")
+	if p.pf == nil {
+		return deployBox(width).Render(labelStyle)
+	}
+	pf := p.pf
+
+	lines := []string{
+		theme.LabelStyle.Render("Provider: ") + theme.ValueStyle.Render(pf.Provider),
+		preflightEnvLine(pf.Env),
+		"",
+	}
+
+	if pf.AdapterFound {
+		lines = append(lines, theme.SuccessStyle.Render(fmt.Sprintf("✓ %s v%s", pf.Provider, pf.AdapterVersion)))
+	} else {
+		lines = append(lines, theme.ErrorStyle.Render("✗ not installed"))
+	}
+
+	if pf.Authenticated {
+		lines = append(lines, theme.SuccessStyle.Render("✓ authenticated"))
+	} else {
+		lines = append(lines, theme.ErrorStyle.Render("✗ not authenticated"))
+	}
+
+	if !pf.AdapterFound {
+		lines = append(lines, "", "Install with: "+pf.InstallCommand)
+	}
+
+	if p.loginErr != nil {
+		lines = append(lines, "", theme.ErrorStyle.Render("Login failed: "+p.loginErr.Error()))
+	}
+
+	body := strings.Join(lines, "\n")
+	return deployBox(width).Render(body)
+}
+
+// viewLogin renders the login screen: a spinner, the latest status text, the
+// authorize URL as a headless fallback (once known), and the cancel hint.
+func (p *DeployPage) viewLogin(width int) string {
+	status := p.loginStatus
+	if status == "" {
+		status = loginStatusStarting
+	}
+	lines := []string{
+		p.spinner.View() + " " + theme.ValueStyle.Render(status),
+	}
+	if p.loginURL != "" {
+		lines = append(lines,
+			"",
+			theme.LabelStyle.Render("If your browser didn't open, visit:"),
+			theme.ValueStyle.Render(p.loginURL),
+		)
+	}
+	body := strings.Join(lines, "\n")
+	return deployBox(width).Render(body)
+}
+
+// viewPlanning renders the planning step: a spinner and status text while the
+// background startPlan goroutine opens the adapter session and computes the
+// plan. Mirrors viewLogin's spinner pattern. When startPlan's goroutine has
+// found a stale saved plan (planStaleNotice, set by a planStaleMsg — see its
+// doc comment), a "pack changed — re-planning…" line is shown above the
+// spinner so the automatic re-plan is never silent.
+func (p *DeployPage) viewPlanning(width int) string {
+	lines := []string{p.spinner.View() + " " + theme.ValueStyle.Render("Computing plan…")}
+	if p.planStaleNotice {
+		lines = append([]string{theme.WarningStyle.Render("pack changed — re-planning…"), ""}, lines...)
+	}
+	body := strings.Join(lines, "\n")
+	return deployBox(width).Render(body)
+}
+
+// viewPlan renders the plan diff once startPlan's goroutine has delivered a
+// planReadyMsg. A plan with no real changes (empty, or every change is
+// deploy.ActionNoChange) renders a plain "up to date" message instead of the
+// diff — handlePlanKey gates 'a' on the same condition (planHasChanges) so
+// there is nothing to advance to confirm.
+func (p *DeployPage) viewPlan(width int) string {
+	if !p.planHasChanges() {
+		body := theme.SuccessStyle.Render("No changes. Infrastructure is up to date.")
+		return deployBox(width).Render(body)
+	}
+	body := views.RenderPlanDiff(p.planDiff, width, p.collapseNoChange)
+	return deployBox(width).Render(body)
+}
+
+// viewConfirm renders the confirm step. Its shape depends entirely on
+// pf.Env, mirroring handleConfirmKey's two modes: a quiet [y/N] prompt for
+// flow.DefaultEnv, or a loud banner plus type-to-confirm prompt for every
+// other environment.
+func (p *DeployPage) viewConfirm(width int) string {
+	if p.pf == nil {
+		return deployBox(width).Render("")
+	}
+	if p.pf.Env == flow.DefaultEnv {
+		return p.viewConfirmDefault(width)
+	}
+	return p.viewConfirmTyped(width)
+}
+
+// viewConfirmDefault renders the simple [y/N] confirm prompt used for
+// flow.DefaultEnv deploys.
+func (p *DeployPage) viewConfirmDefault(width int) string {
+	prompt := fmt.Sprintf("Apply this plan to %s · %s? [y/N]", p.pf.Provider, p.pf.Env)
+	body := theme.ValueStyle.Render(prompt)
+	return deployBox(width).Render(body)
+}
+
+// viewConfirmTyped renders the type-to-confirm guardrail used for every
+// non-default environment: a loud banner (ColorError for production,
+// ColorWarning otherwise), the typed-so-far confirmInput, and a
+// "names don't match" message once a mismatched Enter has been pressed.
+func (p *DeployPage) viewConfirmTyped(width int) string {
+	color := theme.ColorWarning
+	if p.pf.Env == envProduction {
+		color = theme.ColorError
+	}
+	banner := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color(theme.ColorWhite)).
+		Background(lipgloss.Color(color)).
+		Padding(0, 1).
+		Render("⚠ Deploying to " + strings.ToUpper(p.pf.Env))
+
+	lines := []string{
+		banner,
+		"",
+		theme.LabelStyle.Render("Type the environment name to confirm:"),
+		theme.ValueStyle.Render(p.confirmInput) + "▏",
+	}
+	if p.confirmMismatch {
+		lines = append(lines, "", theme.ErrorStyle.Render("names don't match"))
+	}
+	body := strings.Join(lines, "\n")
+	return deployBox(width).Render(body)
+}
+
+// applyLogsHeight is the fixed height handed to applyLogs.Update — the
+// resource table above it is height-bounded by views.RenderDeployResources
+// (deployTableHeight rows), so the logs panel gets a modest, constant slice
+// of the remaining vertical space rather than a layout-computed rect (there
+// is no panels.Layout in play here, unlike pages.MainPage).
+const applyLogsHeight = 10
+
+// viewApplying renders the applying step. Session.Apply does not stream —
+// the adapter blocks until it finishes and only then replays every event in
+// a burst just before returning — so the screen shows a spinner and
+// "Applying…" until the first "resource" event lands (applyRows is empty),
+// then switches to the resource table + logs for the remainder of the
+// (typically near-instant) burst.
+func (p *DeployPage) viewApplying(width int) string {
+	if p.applying && len(p.applyRows) == 0 {
+		line := p.spinner.View() + " " + theme.ValueStyle.Render("Applying…")
+		return deployBox(width).Render(line)
+	}
+	return p.viewApplyProgress(width)
+}
+
+// viewApplyProgress renders the resource table (as filled in so far by
+// applyRows) followed by the logs panel, shared by the mid-burst
+// viewApplying and the terminal viewApplyResult.
+func (p *DeployPage) viewApplyProgress(width int) string {
+	table := views.RenderDeployResources(p.applyRows, width)
+	p.applyLogs.Update(p.applyLogEntries, width, applyLogsHeight)
+	logs := p.applyLogs.View(false)
+	return lipgloss.JoinVertical(lipgloss.Left, table, logs)
+}
+
+// viewApplyResult renders the terminal apply-result screen: a pass/fail
+// headline over the same resource table + logs used mid-burst by
+// viewApplying, plus (via keyBindings) an [s] hint to advance to
+// deployStateStatus.
+func (p *DeployPage) viewApplyResult(width int) string {
+	return lipgloss.JoinVertical(lipgloss.Left, p.applyResultHeadline(), "", p.viewApplyProgress(width))
+}
+
+// applyResultHeadline summarizes the completed apply: success in
+// theme.SuccessStyle, or a failure in theme.ErrorStyle if any applyResults
+// entry has Status "failed" or a top-level "error" applyEventMsg was seen
+// (applySawErrorEvent) — the latter covers an adapter-reported failure that
+// Session.Apply itself still returns nil for, so the headline never claims
+// success while the logs show an error.
+func (p *DeployPage) applyResultHeadline() string {
+	failed := 0
+	for _, r := range p.applyResults {
+		if r.Status == "failed" {
+			failed++
+		}
+	}
+	if failed > 0 {
+		return theme.ErrorStyle.Render(fmt.Sprintf("Apply completed with %d failure(s)", failed))
+	}
+	if p.applySawErrorEvent {
+		return theme.ErrorStyle.Render("Apply completed with errors")
+	}
+	return theme.SuccessStyle.Render("Apply completed successfully")
+}
+
+// viewStatus renders the post-apply Status screen. While startStatus's
+// goroutine is still running (statusFetching, no status yet), it shows a
+// spinner mirroring viewApplying's pre-burst state; once statusReadyMsg has
+// landed, it shows a colored headline plus the per-resource health table
+// (views.RenderDeployResources, shared with viewApplyProgress).
+func (p *DeployPage) viewStatus(width int) string {
+	if p.status == nil {
+		line := p.spinner.View() + " " + theme.ValueStyle.Render("Checking status…")
+		return deployBox(width).Render(line)
+	}
+	table := views.RenderDeployResources(views.DeployRowsFromStatus(p.status.Resources), width)
+	return lipgloss.JoinVertical(lipgloss.Left, p.statusHeadline(), "", table)
+}
+
+// statusHeadline summarizes p.status.Status: "deployed" in
+// theme.SuccessStyle, "degraded" in theme.WarningStyle (a call for
+// attention, not necessarily broken), and anything else ("not_deployed",
+// "unknown") in theme.ErrorStyle.
+func (p *DeployPage) statusHeadline() string {
+	label := "Status: " + p.status.Status
+	switch p.status.Status {
+	case "deployed":
+		return theme.SuccessStyle.Render(label)
+	case "degraded":
+		return theme.WarningStyle.Render(label)
+	default:
+		return theme.ErrorStyle.Render(label)
+	}
+}
+
+// preflightEnvLine renders the target environment. flow.DefaultEnv renders
+// quietly; every other environment is rendered loudly so an operator can't
+// miss it — production gets an inverse ColorError banner, anything else gets
+// bold ColorWarning text.
+func preflightEnvLine(env string) string {
+	quiet := theme.LabelStyle.Render("Environment: ") + theme.ValueStyle.Render(env)
+	if env == flow.DefaultEnv {
+		return quiet
+	}
+	label := "ENVIRONMENT: " + strings.ToUpper(env)
+	if env == envProduction {
+		return lipgloss.NewStyle().
+			Bold(true).
+			Foreground(lipgloss.Color(theme.ColorWhite)).
+			Background(lipgloss.Color(theme.ColorError)).
+			Padding(0, 1).
+			Render(label)
+	}
+	return lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color(theme.ColorWarning)).
+		Render("⚠ " + label)
+}
+
+// errorKind classifies p.err so viewError and handleErrorKey can offer
+// contextual guidance and recovery keys instead of just the bare error text.
+type errorKind int
+
+const (
+	// errorKindGeneric covers any error that doesn't match a recognized
+	// pattern below (e.g. a config error, or a plan/apply failure with no
+	// distinguishing text) — only the raw error text is shown, with no extra
+	// recovery key beyond the globally-handled esc.
+	errorKindGeneric errorKind = iota
+	// errorKindAdapterMissing is a flow.Connect "adapter not found" error —
+	// it always carries an "Install it with: <command>" suggestion.
+	errorKindAdapterMissing
+	// errorKindAuth is a login/authentication failure. Unlike the other two
+	// kinds, PromptKit's runtime/deploy and arena/deploy/flow packages do not
+	// produce a reserved sentinel error or fixed string for this case (see
+	// the Task 6.1 report) — this is a best-effort heuristic over common
+	// auth-failure vocabulary, not a guaranteed match against every adapter's
+	// wrapped error text.
+	errorKindAuth
+	// errorKindLockContention is a flow.Lock contention error — another
+	// deploy already holds the project's deploy lock.
+	errorKindLockContention
+)
+
+// installedWithMarker is the exact suggestion text flow.Connect appends to an
+// adapter-not-found error (see arena/deploy/flow/connect.go), used both to
+// classify the error and (via installCommandFromErr) to extract the command
+// itself.
+const installedWithMarker = "Install it with: "
+
+// lockHeldMarker is a stable substring of the exact lock-contention message
+// produced by the runtime's flock-based Locker (deploy lock is held by
+// another process; ...).
+const lockHeldMarker = "lock is held"
+
+// classifyDeployErr inspects err's text to determine which contextual
+// guidance viewError/handleErrorKey should offer. It returns errorKindGeneric
+// for a nil error or any error matching none of the recognized patterns.
+func classifyDeployErr(err error) errorKind {
+	if err == nil {
+		return errorKindGeneric
+	}
+	msg := err.Error()
+	switch {
+	case strings.Contains(msg, installedWithMarker):
+		return errorKindAdapterMissing
+	case strings.Contains(msg, lockHeldMarker):
+		return errorKindLockContention
+	case containsAny(strings.ToLower(msg), "unauthorized", "authentication failed", "not authenticated") ||
+		strings.Contains(msg, "401"):
+		return errorKindAuth
+	default:
+		return errorKindGeneric
+	}
+}
+
+// containsAny reports whether s contains any of the given substrings.
+func containsAny(s string, substrs ...string) bool {
+	for _, sub := range substrs {
+		if strings.Contains(s, sub) {
+			return true
+		}
+	}
+	return false
+}
+
+// installCommandFromErr extracts the command following flow.Connect's
+// "Install it with: " suggestion from err's text, so viewError can surface it
+// as a distinct call to action rather than relying on the operator to spot it
+// inside the raw error text. Returns "" if err is nil or carries no such
+// suggestion.
+func installCommandFromErr(err error) string {
+	if err == nil {
+		return ""
+	}
+	msg := err.Error()
+	idx := strings.Index(msg, installedWithMarker)
+	if idx < 0 {
+		return ""
+	}
+	return strings.TrimSpace(msg[idx+len(installedWithMarker):])
+}
+
+// viewError renders the terminal error step: the wrapped error text plus
+// contextual recovery guidance keyed off classifyDeployErr — an install
+// command for a missing adapter, a login hint for an auth failure, or a
+// "try again once the other deploy finishes" nudge for lock contention.
+// handleErrorKey wires the actual recovery keys these hints describe.
+func (p *DeployPage) viewError() string {
+	title := lipgloss.NewStyle().
+		Bold(true).
+		Foreground(lipgloss.Color(theme.ColorError)).
+		Render("Deploy failed")
+	msg := ""
+	if p.err != nil {
+		msg = p.err.Error()
+	}
+	detail := lipgloss.NewStyle().
+		Foreground(lipgloss.Color(theme.ColorGray)).
+		Render(msg)
+	lines := []string{title, "", detail}
+
+	switch classifyDeployErr(p.err) { //nolint:exhaustive // generic errors show only the raw error text above
+	case errorKindAdapterMissing:
+		cmd := installCommandFromErr(p.err)
+		if cmd == "" && p.pf != nil {
+			cmd = p.pf.InstallCommand
+		}
+		if cmd != "" {
+			lines = append(lines, "", theme.LabelStyle.Render("Install with: ")+theme.ValueStyle.Render(cmd))
+		}
+	case errorKindAuth:
+		lines = append(lines, "", theme.WarningStyle.Render("Log in and try again."), theme.LabelStyle.Render("[l] log in"))
+	case errorKindLockContention:
+		lines = append(lines, "",
+			theme.WarningStyle.Render("A deploy is already running."), theme.LabelStyle.Render("[r] retry"))
+	}
+	return strings.Join(lines, "\n")
+}
+
+// contextTODO returns the context used for background deploy operations.
+// AppContext does not currently carry a cancelable context, so this returns
+// context.Background(); replace with a context sourced from AppContext if one
+// is added later.
+func contextTODO() context.Context { return context.Background() }
+
+// firstErr returns pf.ConfigErr if set, otherwise pf.ProbeErr.
+func firstErr(pf *flow.Preflight) error {
+	if pf.ConfigErr != nil {
+		return pf.ConfigErr
+	}
+	return pf.ProbeErr
+}

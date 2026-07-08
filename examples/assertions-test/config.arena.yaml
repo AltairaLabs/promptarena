@@ -1,4 +1,4 @@
-$schema: https://promptkit.altairalabs.ai/schemas/latest/arena.json
+# yaml-language-server: $schema=../../schemas/v1alpha1/arena.json
 apiVersion: promptkit.altairalabs.ai/v1alpha1
 kind: Arena
 metadata:
@@ -21,7 +21,7 @@ spec:
 
   tools:
     - file: tools/search.tool.yaml
-    - file: tools/calculate.tool.yaml
+    - file: tools/calculate.tool.yaml    
 
     # Self-play configuration
   self_play:
@@ -29,15 +29,25 @@ spec:
       - file: personas/curious-learner.persona.yaml
     roles:
       - id: gemini-user
-        provider: selfplay-mock
+        provider: selfplay-mock    
 
   defaults:
     temperature: 0.5
     max_tokens: 1000
-    seed: 42
+    seed: 42  
     concurrency: 3
     output:
       dir: out
       formats: ["json", "html"]
       html:
         file: report.html
+    
+  deploy:
+    provider: omnia          # or agentcore        
+    config:      
+      region: us-east-1
+      api_endpoint: https://omnia-demo.azure.altairalabs.ai/      
+    environments:
+      production:
+        config:
+          region: eu-west-1

@@ -81,16 +81,27 @@ type ArenaConfigK8s struct {
 
 // Config represents the main configuration structure
 type Config struct {
-	// File references for YAML serialization
-	PromptConfigs []PromptConfigRef          `yaml:"prompt_configs,omitempty" json:"prompt_configs,omitempty"`
-	Providers     []ProviderRef              `yaml:"providers" json:"providers"`
-	Judges        []JudgeRef                 `yaml:"judges,omitempty" json:"judges,omitempty"`
-	JudgeDefaults *JudgeDefaults             `yaml:"judge_defaults,omitempty" json:"judge_defaults,omitempty"`
-	Scenarios     []ScenarioRef              `yaml:"scenarios,omitempty" json:"scenarios,omitempty"`
-	Evals         []EvalRef                  `yaml:"evals,omitempty" json:"evals,omitempty"`
-	Tools         []ToolRef                  `yaml:"tools,omitempty" json:"tools,omitempty"`
-	Skills        []prompt.SkillSourceConfig `yaml:"skills,omitempty" json:"skills,omitempty"`
-	PackEvals     []evals.EvalDef            `yaml:"pack_evals,omitempty" json:"pack_evals,omitempty"`
+	// PromptConfigs references prompt configuration files, each binding an id to a
+	// PromptConfig file (with optional per-file variable overrides).
+	PromptConfigs []PromptConfigRef `yaml:"prompt_configs,omitempty" json:"prompt_configs,omitempty"`
+	// Providers lists the LLM provider configurations (file references); the loader
+	// routes each into the right role slot based on its role.
+	Providers []ProviderRef `yaml:"providers" json:"providers"`
+	// Judges maps a judge name to a provider for LLM-as-judge assertions.
+	Judges []JudgeRef `yaml:"judges,omitempty" json:"judges,omitempty"`
+	// JudgeDefaults sets the default judge prompt and prompt registry used by
+	// LLM-as-judge assertions.
+	JudgeDefaults *JudgeDefaults `yaml:"judge_defaults,omitempty" json:"judge_defaults,omitempty"`
+	// Scenarios references the test scenario files to run.
+	Scenarios []ScenarioRef `yaml:"scenarios,omitempty" json:"scenarios,omitempty"`
+	// Evals references saved-conversation evaluation files.
+	Evals []EvalRef `yaml:"evals,omitempty" json:"evals,omitempty"`
+	// Tools references tool (function) definition files the LLM may call.
+	Tools []ToolRef `yaml:"tools,omitempty" json:"tools,omitempty"`
+	// Skills lists skill sources made available to the run.
+	Skills []prompt.SkillSourceConfig `yaml:"skills,omitempty" json:"skills,omitempty"`
+	// PackEvals lists pack-level eval definitions.
+	PackEvals []evals.EvalDef `yaml:"pack_evals,omitempty" json:"pack_evals,omitempty"`
 	// Globals holds arena-level cross-cutting config that applies to
 	// every scenario in addition to its own definitions. Distinct from
 	// Defaults (which are "values when unspecified") — Globals is for
@@ -100,18 +111,34 @@ type Config struct {
 	// runtime layer (hooks, sandboxes, …). Arena wraps the runtime, so anything
 	// the runtime config supports is available here under `runtime:` without
 	// Arena needing a bespoke field for each.
-	Runtime      *config.RuntimeConfigSpec `yaml:"runtime,omitempty" json:"runtime,omitempty"`
-	Workflow     interface{}               `yaml:"workflow,omitempty" json:"workflow,omitempty"`
-	Compositions interface{}               `yaml:"compositions,omitempty" json:"compositions,omitempty"`
-	Memory       interface{}               `yaml:"memory,omitempty" json:"memory,omitempty"`
-	Agents       interface{}               `yaml:"agents,omitempty" json:"agents,omitempty"`
-	Deploy       *DeployConfig             `yaml:"deploy,omitempty" json:"deploy,omitempty"`
-	MCPServers   []config.MCPServerConfig  `yaml:"mcp_servers,omitempty" json:"mcp_servers,omitempty"`
-	A2AAgents    []A2AAgentConfig          `yaml:"a2a_agents,omitempty" json:"a2a_agents,omitempty"`
-	StateStore   *config.StateStoreConfig  `yaml:"state_store,omitempty" json:"state_store,omitempty"`
-	Defaults     Defaults                  `yaml:"defaults" json:"defaults"`
-	SelfPlay     *SelfPlayConfig           `yaml:"self_play,omitempty" json:"self_play,omitempty"`
-	PackFile     string                    `yaml:"pack_file,omitempty" json:"pack_file,omitempty"`
+	Runtime *config.RuntimeConfigSpec `yaml:"runtime,omitempty" json:"runtime,omitempty"`
+	// Workflow configures a workflow state machine (auto-registers the workflow tool).
+	Workflow interface{} `yaml:"workflow,omitempty" json:"workflow,omitempty"`
+	// Compositions configures composed multi-agent pipelines.
+	Compositions interface{} `yaml:"compositions,omitempty" json:"compositions,omitempty"`
+	// Memory configures the memory capability (auto-registers the memory tools).
+	Memory interface{} `yaml:"memory,omitempty" json:"memory,omitempty"`
+	// Agents configures named agents.
+	Agents interface{} `yaml:"agents,omitempty" json:"agents,omitempty"`
+	// Deploy configures `promptarena deploy`: the target provider plus base and
+	// per-environment adapter config.
+	Deploy *DeployConfig `yaml:"deploy,omitempty" json:"deploy,omitempty"`
+	// MCPServers configures MCP (Model Context Protocol) servers whose tools the
+	// LLM can call.
+	MCPServers []config.MCPServerConfig `yaml:"mcp_servers,omitempty" json:"mcp_servers,omitempty"`
+	// A2AAgents configures agent-to-agent (A2A) endpoints.
+	A2AAgents []A2AAgentConfig `yaml:"a2a_agents,omitempty" json:"a2a_agents,omitempty"`
+	// StateStore configures conversation state persistence (memory, redis, or file).
+	StateStore *config.StateStoreConfig `yaml:"state_store,omitempty" json:"state_store,omitempty"`
+	// Defaults holds global defaults applied when a scenario does not specify its
+	// own (temperature, max_tokens, concurrency, output, fail_on, …).
+	Defaults Defaults `yaml:"defaults" json:"defaults"`
+	// SelfPlay configures self-play: personas and roles that drive the user side
+	// of a conversation.
+	SelfPlay *SelfPlayConfig `yaml:"self_play,omitempty" json:"self_play,omitempty"`
+	// PackFile is the path to a pre-compiled pack (*.pack.json) to deploy instead
+	// of compiling from this config.
+	PackFile string `yaml:"pack_file,omitempty" json:"pack_file,omitempty"`
 
 	// Inline resource specs (alternative to file refs, merged into LoadedX during load)
 	ProviderSpecs map[string]*config.Provider `yaml:"provider_specs,omitempty" json:"provider_specs,omitempty"`
