@@ -179,7 +179,7 @@ export function buildMetrics(results: RunResult[], _matrix: TrialMatrix): Metric
   return [
     { label: "TRIALS", value: String(results.length), tone: "default" },
     { label: "SPEND", value: `$${totalCost.toFixed(4)}`, tone: "gold" },
-    { label: "P50 LATENCY", value: formatDuration(latencyP50), tone: "default" },
+    { label: "P50", value: formatDuration(latencyP50), tone: "default" },
     { label: "TOKENS", value: (totalTokens / 1000).toFixed(1), unit: "k", tone: "healthy", dot: "healthy" },
   ];
 }

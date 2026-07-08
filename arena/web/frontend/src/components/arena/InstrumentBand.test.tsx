@@ -59,10 +59,10 @@ describe("InstrumentBand", () => {
     expect(screen.getByText("50")).toBeInTheDocument();
     expect(screen.getByText("1 / 2 passed")).toBeInTheDocument();
 
-    // InstrumentReadout metric labels (buildMetrics: TRIALS, SPEND, P50 LATENCY, TOKENS).
+    // InstrumentReadout metric labels (buildMetrics: TRIALS, SPEND, P50, TOKENS).
     expect(screen.getByText("TRIALS")).toBeInTheDocument();
     expect(screen.getByText("SPEND")).toBeInTheDocument();
-    expect(screen.getByText("P50 LATENCY")).toBeInTheDocument();
+    expect(screen.getByText("P50")).toBeInTheDocument();
     expect(screen.getByText("TOKENS")).toBeInTheDocument();
 
     // Standings rows for both providers.

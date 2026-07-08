@@ -105,7 +105,7 @@ describe("buildMetrics", () => {
     expect(spend.value).toBe("$0.0300");
     const trials = metrics.find((x) => x.label.toLowerCase().includes("trial"))!;
     expect(trials.value).toBe("2");
-    const latency = metrics.find((x) => x.label.toLowerCase().includes("latency"))!;
+    const latency = metrics.find((x) => x.label === "P50")!;
     expect(latency.value).toBe("800ms");
     expect(latency.unit).toBeUndefined();
     const tokens = metrics.find((x) => x.label.toLowerCase().includes("token"))!;
