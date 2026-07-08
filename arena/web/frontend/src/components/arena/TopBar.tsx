@@ -54,10 +54,11 @@ export function TopBar({
         top: 0,
         zIndex: 20,
         backdropFilter: "blur(8px)",
-        // Follows the theme: a light frosted surface in light mode, dark in
-        // dark mode. All child text/pills use the flipping --star-*/--c-*
-        // tokens, so they stay legible on either surface.
-        background: "color-mix(in srgb, var(--c-surface) 85%, transparent)",
+        // Exactly the Atlas design's top bar (Arena.dc.html): a frosted bar
+        // that follows the theme via --ink-canvas (light paper in light mode,
+        // night-sky ink in dark). Child text/pills use the flipping
+        // --star-*/--c-* tokens, so they stay legible on either surface.
+        background: "color-mix(in srgb, var(--ink-canvas) 78%, transparent)",
         borderBottom: "1px solid var(--hairline)",
         margin: "0 -32px",
         padding: "0 32px",

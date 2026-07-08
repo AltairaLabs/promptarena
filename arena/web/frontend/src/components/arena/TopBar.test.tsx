@@ -101,7 +101,7 @@ describe("TopBar", () => {
     // --c-*/--star-* tokens so it goes light in light mode, dark in dark mode.
     expect(header.style.getPropertyValue("--ink-canvas")).toBe("");
     expect(header.style.getPropertyValue("--star-100")).toBe("");
-    // Background is the theme-following frosted surface.
-    expect(header.style.background).toContain("var(--c-surface)");
+    // Background is the design's theme-following frosted ink bar.
+    expect(header.style.background).toContain("var(--ink-canvas)");
   });
 });
