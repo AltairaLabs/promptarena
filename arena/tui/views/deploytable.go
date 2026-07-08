@@ -19,6 +19,11 @@ const (
 	deployColFloor       = 4
 	deployTableHeight    = 10
 	deployWidthPadding   = 8
+
+	// deployNotesColTitle is the "Notes" column header.
+	deployNotesColTitle = "Notes"
+	// deployStatusColTitle is the "Status" column header.
+	deployStatusColTitle = "Status"
 )
 
 // DeployResourceRow is a row of the deploy resource table, shared by the
@@ -68,7 +73,7 @@ func DeployRowsFromStatus(statuses []deploy.ResourceStatus) []DeployResourceRow 
 // responsiveDeployColumns scales the fixed column proportions to fit avail,
 // mirroring panels.responsiveRunsColumns so the table never overflows.
 func responsiveDeployColumns(avail int) []table.Column {
-	titles := []string{"", "Type", "Name", "Status", "Notes"}
+	titles := []string{"", "Type", "Name", deployStatusColTitle, deployNotesColTitle}
 	weights := []int{
 		deploySymbolColWidth, deployTypeColWidth, deployNameColWidth,
 		deployStatusColWidth, deployNotesColWidth,

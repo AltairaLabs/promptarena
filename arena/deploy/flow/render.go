@@ -4,7 +4,7 @@ import "github.com/AltairaLabs/PromptKit/runtime/deploy"
 
 // ActionSymbol maps a plan Action to its diff glyph (Terraform-style).
 func ActionSymbol(a deploy.Action) string {
-	switch a {
+	switch a { //nolint:exhaustive // ActionNoChange and unknown actions fall through to default
 	case deploy.ActionCreate:
 		return "+"
 	case deploy.ActionUpdate:

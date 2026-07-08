@@ -113,7 +113,7 @@ func runLoginFlow(ctx context.Context, client loginClient, provider, configPath,
 	if hooks.OnAuthorizeURL != nil {
 		hooks.OnAuthorizeURL(urlResp.AuthorizeURL)
 	}
-	if err := hooks.openBrowser(urlResp.AuthorizeURL); err != nil {
+	if browserErr := hooks.openBrowser(urlResp.AuthorizeURL); browserErr != nil {
 		hooks.status("Could not open a browser automatically — visit the URL above.")
 	}
 	hooks.status("Waiting for authorization…")
@@ -217,7 +217,7 @@ func MergeProfileIntoConfigFile(configPath string, profile map[string]interface{
 			configPath,
 		)
 	}
-	doc, err := os.ReadFile(configPath)
+	doc, err := os.ReadFile(configPath) //nolint:gosec // configPath is the user-specified arena config path
 	if err != nil {
 		return fmt.Errorf("failed to read config %s: %w", configPath, err)
 	}

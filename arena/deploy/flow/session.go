@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/AltairaLabs/PromptKit/runtime/deploy"
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+
+	"github.com/AltairaLabs/PromptKit/runtime/deploy"
 )
 
 // Session bundles resolved config, a connected adapter, and the state store.

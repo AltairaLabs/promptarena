@@ -9,12 +9,25 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/AltairaLabs/PromptKit/runtime/deploy"
 	"github.com/AltairaLabs/promptarena/arena/deploy/flow"
 	"github.com/AltairaLabs/promptarena/arena/tui/panels"
 	"github.com/AltairaLabs/promptarena/arena/tui/theme"
 	"github.com/AltairaLabs/promptarena/arena/tui/viewmodels"
 	"github.com/AltairaLabs/promptarena/arena/tui/views"
+
+	"github.com/AltairaLabs/PromptKit/runtime/deploy"
+)
+
+// Shared label/status literals (satisfies goconst: repeated string literals
+// become constants).
+const (
+	titleDeploy         = "Deploy"
+	loginStatusStarting = "Starting login…"
+	applyEventTypeError = "error"
+	keyHintCancel       = "cancel"
+	keyHintConfirm      = "confirm"
+	keyHintRetry        = "retry"
+	envProduction       = "production"
 )
 
 // deployState enumerates the steps of the guided Deploy wizard. Phase 1
@@ -214,7 +227,7 @@ func newLoginSpinner() spinner.Model {
 }
 
 // Title implements Page.
-func (p *DeployPage) Title() string { return "Deploy" }
+func (p *DeployPage) Title() string { return titleDeploy }
 
 // Close implements Closeable. It cancels any in-flight flow.Login goroutine
 // so that popping the page (e.g. pressing esc during deployStateLogin, which
@@ -291,35 +304,9 @@ func (p *DeployPage) Update(msg tea.Msg) (Page, tea.Cmd) {
 		p.err, p.state = m.err, deployStateError
 		return p, nil
 	case loginStatusMsg:
-		if m.gen != p.loginGen {
-			// Stale progress update from a canceled-then-retried attempt; drop it.
-			return p, nil
-		}
-		p.loginStatus = m.text
-		if m.url != "" {
-			p.loginURL = m.url
-		}
-		return p, nil
+		return p.handleLoginStatusMsg(m)
 	case loginDoneMsg:
-		if m.gen != p.loginGen {
-			// Stale completion from a canceled-then-retried attempt: a later
-			// login is already in flight (or the operator backed out entirely).
-			// Processing this would wipe the current attempt's loginCancel and
-			// bounce the operator to preflight with a confusing stale error.
-			return p, nil
-		}
-		p.loginCancel = nil
-		if m.err != nil {
-			// Recoverable: surface the error on the preflight screen rather
-			// than dead-ending the wizard in deployStateError, so the
-			// operator can retry login ('l') or the probe ('r') directly.
-			p.loginErr = m.err
-			p.state = deployStatePreflight
-			return p, nil
-		}
-		p.loginErr = nil
-		p.state = deployStatePreflight
-		return p, p.runPreflight()
+		return p.handleLoginDoneMsg(m)
 	case sessionOpenedMsg:
 		p.sess = m.sess
 		return p, nil
@@ -351,7 +338,8 @@ func (p *DeployPage) Update(msg tea.Msg) (Page, tea.Cmd) {
 		return p, nil
 	case spinner.TickMsg:
 		fetchingStatus := p.state == deployStateStatus && p.statusFetching
-		if p.state != deployStateLogin && p.state != deployStatePlanning && p.state != deployStateApplying && !fetchingStatus {
+		activeState := p.state == deployStateLogin || p.state == deployStatePlanning || p.state == deployStateApplying
+		if !activeState && !fetchingStatus {
 			return p, nil
 		}
 		var cmd tea.Cmd
@@ -363,9 +351,48 @@ func (p *DeployPage) Update(msg tea.Msg) (Page, tea.Cmd) {
 	return p, nil
 }
 
+// handleLoginStatusMsg applies a loginStatusMsg progress update, dropping it
+// if it is stale (see loginStatusMsg's doc comment).
+func (p *DeployPage) handleLoginStatusMsg(m loginStatusMsg) (Page, tea.Cmd) {
+	if m.gen != p.loginGen {
+		// Stale progress update from a canceled-then-retried attempt; drop it.
+		return p, nil
+	}
+	p.loginStatus = m.text
+	if m.url != "" {
+		p.loginURL = m.url
+	}
+	return p, nil
+}
+
+// handleLoginDoneMsg applies a loginDoneMsg completion, dropping it if it is
+// stale (see loginDoneMsg's doc comment).
+func (p *DeployPage) handleLoginDoneMsg(m loginDoneMsg) (Page, tea.Cmd) {
+	if m.gen != p.loginGen {
+		// Stale completion from a canceled-then-retried attempt: a later
+		// login is already in flight (or the operator backed out entirely).
+		// Processing this would wipe the current attempt's loginCancel and
+		// bounce the operator to preflight with a confusing stale error.
+		return p, nil
+	}
+	p.loginCancel = nil
+	if m.err != nil {
+		// Recoverable: surface the error on the preflight screen rather
+		// than dead-ending the wizard in deployStateError, so the
+		// operator can retry login ('l') or the probe ('r') directly.
+		p.loginErr = m.err
+		p.state = deployStatePreflight
+		return p, nil
+	}
+	p.loginErr = nil
+	p.state = deployStatePreflight
+	cmd := p.runPreflight()
+	return p, cmd
+}
+
 // handleKey dispatches a key message to the handler for the current state.
 func (p *DeployPage) handleKey(msg tea.KeyMsg) (Page, tea.Cmd) {
-	switch p.state {
+	switch p.state { //nolint:exhaustive // Planning/Applying have no keys of their own; see default below
 	case deployStatePreflight:
 		return p.handlePreflightKey(msg)
 	case deployStateLogin:
@@ -413,7 +440,8 @@ func (p *DeployPage) handlePreflightKey(msg tea.KeyMsg) (Page, tea.Cmd) {
 		}
 	case "r":
 		p.loginErr = nil
-		return p, p.runPreflight()
+		cmd := p.runPreflight()
+		return p, cmd
 	}
 	return p, nil
 }
@@ -486,7 +514,7 @@ func (p *DeployPage) handleConfirmKey(msg tea.KeyMsg) (Page, tea.Cmd) {
 		return p, nil
 	}
 
-	switch msg.Type {
+	switch msg.Type { //nolint:exhaustive // only Enter/Backspace/Runes are meaningful while typing the confirm input
 	case tea.KeyEnter:
 		if p.confirmInput == p.pf.Env {
 			p.confirmMismatch = false
@@ -495,7 +523,7 @@ func (p *DeployPage) handleConfirmKey(msg tea.KeyMsg) (Page, tea.Cmd) {
 		}
 		p.confirmMismatch = true
 	case tea.KeyBackspace:
-		if len(p.confirmInput) > 0 {
+		if p.confirmInput != "" {
 			p.confirmInput = p.confirmInput[:len(p.confirmInput)-1]
 		}
 		p.confirmMismatch = false
@@ -515,7 +543,7 @@ func (p *DeployPage) handleConfirmKey(msg tea.KeyMsg) (Page, tea.Cmd) {
 func (p *DeployPage) startLogin() tea.Cmd {
 	ctx, cancel := context.WithCancel(context.Background())
 	p.loginCancel = cancel
-	p.loginStatus = "Starting login…"
+	p.loginStatus = loginStatusStarting
 	p.loginURL = ""
 	p.loginErr = nil
 
@@ -580,54 +608,60 @@ func (p *DeployPage) startPlan() tea.Cmd {
 	sess := p.sess
 
 	return func() tea.Msg {
-		go func() {
-			if sess == nil {
-				var err error
-				sess, err = flow.Open(ctx, opts)
-				if err != nil {
-					send(deployErrMsg{err: err})
-					return
-				}
-				// The page may have been popped (Close cancels ctx) while Open was
-				// still connecting the adapter subprocess. If so, sending
-				// sessionOpenedMsg would be dropped by App.Update (it routes to
-				// whatever page is now on top of the stack), leaking sess and its
-				// subprocess with no reaper. Close it here instead, on the
-				// goroutine that actually holds it.
-				if abandonIfCancelled(ctx, sess) {
-					return
-				}
-				send(sessionOpenedMsg{sess: sess})
-			}
-
-			if saved, err := sess.LoadPlan(); err == nil && saved != nil && !sess.PlanIsFresh(saved) {
-				send(planStaleMsg{})
-			}
-
-			plan, req, err := sess.Plan(ctx)
-			if err != nil {
-				// Plan failed on a session this goroutine (or a pre-injected
-				// caller) already opened — close it here rather than leaving
-				// it to whenever the page is eventually popped. Session.Close
-				// is idempotent, so this is safe even though p.sess (set by
-				// the earlier sessionOpenedMsg) still holds the same session
-				// and Close will call it again on pop.
-				_ = sess.Close()
-				send(deployErrMsg{err: err})
-				return
-			}
-			// Same race, one step later: the page may have been popped while
-			// Plan was still running.
-			if abandonIfCancelled(ctx, sess) {
-				return
-			}
-			send(planReadyMsg{plan: plan, req: req})
-		}()
+		go runPlan(ctx, opts, sess, send)
 		return nil
 	}
 }
 
-// abandonIfCancelled reports whether ctx was already cancelled by the time a
+// runPlan is startPlan's background goroutine body, extracted so its control
+// flow isn't nested inside the tea.Cmd/goroutine closures startPlan returns.
+// See startPlan's doc comment for the full open-then-plan sequencing this
+// implements, including the pre-injected-session and stale-plan-notice cases.
+func runPlan(ctx context.Context, opts flow.Options, sess *flow.Session, send func(tea.Msg)) {
+	if sess == nil {
+		var err error
+		sess, err = flow.Open(ctx, opts)
+		if err != nil {
+			send(deployErrMsg{err: err})
+			return
+		}
+		// The page may have been popped (Close cancels ctx) while Open was
+		// still connecting the adapter subprocess. If so, sending
+		// sessionOpenedMsg would be dropped by App.Update (it routes to
+		// whatever page is now on top of the stack), leaking sess and its
+		// subprocess with no reaper. Close it here instead, on the
+		// goroutine that actually holds it.
+		if abandonIfCancelled(ctx, sess) {
+			return
+		}
+		send(sessionOpenedMsg{sess: sess})
+	}
+
+	if saved, err := sess.LoadPlan(); err == nil && saved != nil && !sess.PlanIsFresh(saved) {
+		send(planStaleMsg{})
+	}
+
+	plan, req, err := sess.Plan(ctx)
+	if err != nil {
+		// Plan failed on a session this goroutine (or a pre-injected
+		// caller) already opened — close it here rather than leaving
+		// it to whenever the page is eventually popped. Session.Close
+		// is idempotent, so this is safe even though p.sess (set by
+		// the earlier sessionOpenedMsg) still holds the same session
+		// and Close will call it again on pop.
+		_ = sess.Close()
+		send(deployErrMsg{err: err})
+		return
+	}
+	// Same race, one step later: the page may have been popped while
+	// Plan was still running.
+	if abandonIfCancelled(ctx, sess) {
+		return
+	}
+	send(planReadyMsg{plan: plan, req: req})
+}
+
+// abandonIfCancelled reports whether ctx was already canceled by the time a
 // blocking flow.Session step (Open, Plan) returned — meaning the page that
 // started startPlan's goroutine has since been Close()d. When it has, it
 // closes sess (reaping the adapter subprocess) so the caller can return
@@ -733,13 +767,13 @@ func (p *DeployPage) handleApplyEvent(e *deploy.ApplyEvent) {
 		p.applyResults = append(p.applyResults, e.Resource)
 		p.applyRows = views.DeployRowsFromResults(p.applyResults)
 	}
-	if e.Type == "error" && e.Resource == nil {
+	if e.Type == applyEventTypeError && e.Resource == nil {
 		p.applySawErrorEvent = true
 	}
 	if e.Message != "" {
 		level := "info"
-		if e.Type == "error" {
-			level = "error"
+		if e.Type == applyEventTypeError {
+			level = applyEventTypeError
 		}
 		p.applyLogEntries = append(p.applyLogEntries, panels.LogEntry{Level: level, Message: e.Message})
 	}
@@ -802,7 +836,8 @@ func (p *DeployPage) handleErrorKey(msg tea.KeyMsg) (Page, tea.Cmd) {
 		if classifyDeployErr(p.err) == errorKindLockContention {
 			p.err = nil
 			p.state = deployStatePreflight
-			return p, p.runPreflight()
+			cmd := p.runPreflight()
+			return p, cmd
 		}
 	}
 	return p, nil
@@ -842,52 +877,72 @@ func (p *DeployPage) chrome() views.ChromeConfig {
 	return views.ChromeConfig{
 		Width:       p.w,
 		Height:      p.h,
-		Title:       "Deploy",
+		Title:       titleDeploy,
 		KeyBindings: p.keyBindings(),
 	}
 }
 
 // keyBindings returns the footer key hints for the current state.
 func (p *DeployPage) keyBindings() []views.KeyBinding {
-	kb := []views.KeyBinding{{Keys: "esc", Description: "back"}}
+	kb := []views.KeyBinding{{Keys: "esc", Description: keyHintBack}}
 	switch {
 	case p.state == deployStateLogin:
-		kb = append([]views.KeyBinding{{Keys: "c", Description: "cancel"}}, kb...)
+		kb = append([]views.KeyBinding{{Keys: "c", Description: keyHintCancel}}, kb...)
 	case p.state == deployStatePlan:
 		kb = append([]views.KeyBinding{{Keys: "space", Description: "toggle unchanged"}}, kb...)
 		if p.planHasChanges() {
 			kb = append([]views.KeyBinding{{Keys: "a", Description: "apply"}}, kb...)
 		}
 	case p.state == deployStateConfirm && p.pf != nil && p.pf.Env == flow.DefaultEnv:
-		kb = append([]views.KeyBinding{{Keys: "y", Description: "confirm"}, {Keys: "n", Description: "cancel"}}, kb...)
+		kb = append([]views.KeyBinding{
+			{Keys: "y", Description: keyHintConfirm}, {Keys: "n", Description: keyHintCancel},
+		}, kb...)
 	case p.state == deployStateConfirm:
-		kb = append([]views.KeyBinding{{Keys: keyEnter, Description: "confirm"}}, kb...)
+		kb = append([]views.KeyBinding{{Keys: keyEnter, Description: keyHintConfirm}}, kb...)
 	case p.state == deployStateApplyResult:
 		kb = append([]views.KeyBinding{{Keys: "s", Description: "status"}}, kb...)
 	case p.state == deployStateStatus:
-		kb = append([]views.KeyBinding{{Keys: "q", Description: "back"}}, kb...)
+		kb = append([]views.KeyBinding{{Keys: "q", Description: keyHintBack}}, kb...)
 	case p.state == deployStateError:
-		switch classifyDeployErr(p.err) {
-		case errorKindAuth:
-			// Mirror handleErrorKey's exact guard: 'l' only fires when the
-			// adapter actually supports login, so the footer must not
-			// advertise it otherwise.
-			if p.pf != nil && p.pf.SupportsLogin {
-				kb = append([]views.KeyBinding{{Keys: "l", Description: "log in"}}, kb...)
-			}
-		case errorKindLockContention:
-			kb = append([]views.KeyBinding{{Keys: "r", Description: "retry"}}, kb...)
-		}
+		kb = append(errorKeyBindings(p.err, p.pf), kb...)
 	case p.state == deployStatePreflight && p.pf != nil:
-		// Prepend in priority order so the most relevant action reads first.
-		if p.pf.Ready() {
-			kb = append([]views.KeyBinding{{Keys: "p", Description: "plan"}}, kb...)
-		}
-		if p.pf.SupportsLogin && !p.pf.Authenticated {
-			kb = append([]views.KeyBinding{{Keys: "l", Description: "login"}}, kb...)
-		}
-		kb = append([]views.KeyBinding{{Keys: "r", Description: "retry"}}, kb...)
+		kb = append(preflightKeyBindings(p.pf), kb...)
 	}
+	return kb
+}
+
+// errorKeyBindings returns the deployStateError footer key hints, keyed off
+// classifyDeployErr exactly as handleErrorKey gates the corresponding
+// recovery keys — see keyBindings' deployStateError case.
+func errorKeyBindings(err error, pf *flow.Preflight) []views.KeyBinding {
+	var kb []views.KeyBinding
+	switch classifyDeployErr(err) { //nolint:exhaustive // generic/adapter-missing errors offer no extra footer key
+	case errorKindAuth:
+		// Mirror handleErrorKey's exact guard: 'l' only fires when the
+		// adapter actually supports login, so the footer must not
+		// advertise it otherwise.
+		if pf != nil && pf.SupportsLogin {
+			kb = append([]views.KeyBinding{{Keys: "l", Description: "log in"}}, kb...)
+		}
+	case errorKindLockContention:
+		kb = append([]views.KeyBinding{{Keys: "r", Description: keyHintRetry}}, kb...)
+	}
+	return kb
+}
+
+// preflightKeyBindings returns the deployStatePreflight footer key hints.
+// Bindings are prepended in the same order keyBindings always used, so the
+// most relevant action reads first: plan, then login, then retry — see
+// keyBindings' deployStatePreflight case.
+func preflightKeyBindings(pf *flow.Preflight) []views.KeyBinding {
+	var kb []views.KeyBinding
+	if pf.Ready() {
+		kb = append([]views.KeyBinding{{Keys: "p", Description: "plan"}}, kb...)
+	}
+	if pf.SupportsLogin && !pf.Authenticated {
+		kb = append([]views.KeyBinding{{Keys: "l", Description: "login"}}, kb...)
+	}
+	kb = append([]views.KeyBinding{{Keys: "r", Description: keyHintRetry}}, kb...)
 	return kb
 }
 
@@ -955,7 +1010,7 @@ func (p *DeployPage) viewPreflight(width int) string {
 func (p *DeployPage) viewLogin(width int) string {
 	status := p.loginStatus
 	if status == "" {
-		status = "Starting login…"
+		status = loginStatusStarting
 	}
 	lines := []string{
 		p.spinner.View() + " " + theme.ValueStyle.Render(status),
@@ -1028,7 +1083,7 @@ func (p *DeployPage) viewConfirmDefault(width int) string {
 // "names don't match" message once a mismatched Enter has been pressed.
 func (p *DeployPage) viewConfirmTyped(width int) string {
 	color := theme.ColorWarning
-	if p.pf.Env == "production" {
+	if p.pf.Env == envProduction {
 		color = theme.ColorError
 	}
 	banner := lipgloss.NewStyle().
@@ -1152,7 +1207,7 @@ func preflightEnvLine(env string) string {
 		return quiet
 	}
 	label := "ENVIRONMENT: " + strings.ToUpper(env)
-	if env == "production" {
+	if env == envProduction {
 		return lipgloss.NewStyle().
 			Bold(true).
 			Foreground(lipgloss.Color(theme.ColorWhite)).
@@ -1269,7 +1324,7 @@ func (p *DeployPage) viewError() string {
 		Render(msg)
 	lines := []string{title, "", detail}
 
-	switch classifyDeployErr(p.err) {
+	switch classifyDeployErr(p.err) { //nolint:exhaustive // generic errors show only the raw error text above
 	case errorKindAdapterMissing:
 		cmd := installCommandFromErr(p.err)
 		if cmd == "" && p.pf != nil {
@@ -1281,7 +1336,8 @@ func (p *DeployPage) viewError() string {
 	case errorKindAuth:
 		lines = append(lines, "", theme.WarningStyle.Render("Log in and try again."), theme.LabelStyle.Render("[l] log in"))
 	case errorKindLockContention:
-		lines = append(lines, "", theme.WarningStyle.Render("A deploy is already running."), theme.LabelStyle.Render("[r] retry"))
+		lines = append(lines, "",
+			theme.WarningStyle.Render("A deploy is already running."), theme.LabelStyle.Render("[r] retry"))
 	}
 	return strings.Join(lines, "\n")
 }

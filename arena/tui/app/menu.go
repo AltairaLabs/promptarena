@@ -50,9 +50,7 @@ func DefaultMenu(ctx *AppContext) []menuItem {
 		{
 			label:       "Deploy   — deploy this pack to a target environment",
 			needsConfig: true,
-			make: func(c *AppContext) Page {
-				return NewDeployPage(c)
-			},
+			make:        NewDeployPage,
 		},
 	}
 }

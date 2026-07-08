@@ -8,8 +8,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/AltairaLabs/PromptKit/runtime/deploy"
 	"github.com/AltairaLabs/promptarena/arena/deploy/flow"
+
+	"github.com/AltairaLabs/PromptKit/runtime/deploy"
 )
 
 var deployImportCmd = &cobra.Command{

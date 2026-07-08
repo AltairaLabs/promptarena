@@ -1,8 +1,9 @@
 package viewmodels
 
 import (
-	"github.com/AltairaLabs/PromptKit/runtime/deploy"
 	"github.com/AltairaLabs/promptarena/arena/deploy/flow"
+
+	"github.com/AltairaLabs/PromptKit/runtime/deploy"
 )
 
 // PlanDiffRow is one resource change, presentation-ready.
@@ -36,7 +37,7 @@ func BuildPlanDiff(plan *deploy.PlanResponse) PlanDiffData {
 			Detail: c.Detail, Action: c.Action, NoChange: c.Action == deploy.ActionNoChange,
 		}
 		d.Rows = append(d.Rows, row)
-		switch c.Action {
+		switch c.Action { //nolint:exhaustive // ActionNoChange and unknown actions fall through to default
 		case deploy.ActionCreate:
 			d.Adds++
 		case deploy.ActionUpdate:

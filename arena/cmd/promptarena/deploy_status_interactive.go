@@ -7,8 +7,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/AltairaLabs/PromptKit/runtime/deploy"
 	"github.com/AltairaLabs/promptarena/arena/deploy/flow"
+
+	"github.com/AltairaLabs/PromptKit/runtime/deploy"
 )
 
 var deployStatusCmd = &cobra.Command{
@@ -37,8 +38,8 @@ func runDeployStatus(cmd *cobra.Command, args []string) error {
 
 	// Validate the deploy config before checking local state, so a broken
 	// --config surfaces its error even when there is no prior deployment.
-	if _, err := flow.MergedConfigJSON(deployCfg, env, deployConfig); err != nil {
-		return err
+	if _, mergeErr := flow.MergedConfigJSON(deployCfg, env, deployConfig); mergeErr != nil {
+		return mergeErr
 	}
 
 	// Peek at local state before connecting the adapter — status should be a

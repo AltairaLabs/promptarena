@@ -74,8 +74,8 @@ func StoreCredential(provider, configPath string, cred Credential) error {
 	if err != nil {
 		return err
 	}
-	if err := os.MkdirAll(filepath.Dir(path), credentialDirPerm); err != nil {
-		return fmt.Errorf("failed to create credentials directory: %w", err)
+	if mkdirErr := os.MkdirAll(filepath.Dir(path), credentialDirPerm); mkdirErr != nil {
+		return fmt.Errorf("failed to create credentials directory: %w", mkdirErr)
 	}
 	data, err := json.MarshalIndent(store, "", "  ")
 	if err != nil {
