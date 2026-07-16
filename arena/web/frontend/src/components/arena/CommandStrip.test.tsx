@@ -22,7 +22,7 @@ describe("CommandStrip", () => {
     expect(screen.getByText("refund")).toBeInTheDocument();
   });
 
-  it("gold-tints the active scenario chip", () => {
+  it("highlights the active scenario chip", () => {
     render(
       <CommandStrip
         scenarios={scenarios}
@@ -34,8 +34,8 @@ describe("CommandStrip", () => {
     );
     const active = screen.getByText("Checkout").closest("button");
     const inactive = screen.getByText("refund").closest("button");
-    expect(active).toHaveStyle({ background: "var(--gold-tint)" });
-    expect(inactive).not.toHaveStyle({ background: "var(--gold-tint)" });
+    expect(active).toHaveStyle({ background: "var(--starlight-tint)" });
+    expect(inactive).not.toHaveStyle({ background: "var(--starlight-tint)" });
   });
 
   it("calls onSelectScenario with the scenario id when a chip is clicked", () => {
