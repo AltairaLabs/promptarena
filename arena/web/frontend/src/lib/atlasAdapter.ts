@@ -3,8 +3,8 @@
 // nanosecond latencies, and checks that live in meta.assertions / conversation_
 // assertions rather than a single field. Covers the historical path; the live
 // SSE camelCase bridge and derived trace events land in later WUs.
-import type { AtlasMessage, AtlasCheck, AtlasContentPart, AtlasToolCall, AtlasCheckViolation } from "@altairalabs/atlas";
-import type { Message, RunResult, ContentPart, EvalResult } from "@/types";
+import type { AtlasMessage, AtlasCheck, AtlasContentPart, AtlasToolCall, AtlasCheckViolation, ConstellationNode, ConstellationEdge } from "@altairalabs/atlas";
+import type { Message, RunResult, ContentPart, EvalResult, WorkflowGraph } from "@/types";
 
 const ROLES = new Set(["user", "assistant", "system", "tool"]);
 const toRole = (r: string): AtlasMessage["role"] => (ROLES.has(r) ? r : "assistant") as AtlasMessage["role"];
@@ -178,6 +178,33 @@ export interface AdaptedRun {
   messages: AtlasMessage[];
   checks?: AtlasCheck[];
   recording?: { src: string };
+}
+
+// Arena's WorkflowGraph maps almost 1:1 onto ConstellationGraph: node.kind is
+// the same vocabulary; edges rename from/to → source/target; the dim/gold
+// overlay fields (set by overlayWorkflowRun for the taken path) pass straight
+// through. A node referenced as someone's parent becomes a group container.
+export function adaptWorkflow(graph: WorkflowGraph): { nodes: ConstellationNode[]; edges: ConstellationEdge[] } {
+  const parents = new Set(graph.nodes.map((n) => n.parent).filter(Boolean) as string[]);
+  return {
+    nodes: graph.nodes.map((n) => ({
+      id: n.id,
+      kind: n.kind,
+      label: n.label,
+      dim: n.dim,
+      parent: n.parent,
+      group: parents.has(n.id) || undefined,
+    })),
+    edges: graph.edges.map((e, i) => ({
+      id: `${e.from}->${e.to}-${i}`,
+      source: e.from,
+      target: e.to,
+      label: e.label,
+      dashed: e.dashed,
+      gold: e.gold,
+      dim: e.dim,
+    })),
+  };
 }
 
 export function adaptRun(run: RunResult): AdaptedRun {

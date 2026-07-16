@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { adaptMessage, adaptRun, conversationChecks } from "./atlasAdapter";
-import type { Message, RunResult } from "@/types";
+import { adaptMessage, adaptRun, conversationChecks, adaptWorkflow } from "./atlasAdapter";
+import type { Message, RunResult, WorkflowGraph } from "@/types";
 
 const run = (over: Partial<RunResult> = {}): RunResult =>
   ({ RunID: "r", ScenarioID: "helpfulness", ProviderID: "mock", StartTime: "2026-07-03T12:52:15Z", Messages: [], Error: "", ...over } as unknown as RunResult);
@@ -78,5 +78,26 @@ describe("adaptRun", () => {
   it("exposes a recording url when RecordingPath is set", () => {
     const out = adaptRun(run({ RecordingPath: "sessions/abc.wav" } as never));
     expect(out.recording?.src).toBe("/api/media/sessions/abc.wav");
+  });
+});
+
+describe("adaptWorkflow", () => {
+  const graph: WorkflowGraph = {
+    nodes: [
+      { id: "s1", label: "start", kind: "entry", entry: true, terminal: false },
+      { id: "a1", label: "agent", kind: "agent", entry: false, terminal: false },
+      { id: "step1", label: "prompt", kind: "prompt", entry: false, terminal: false, parent: "a1" },
+    ],
+    edges: [{ from: "s1", to: "a1", gold: true }],
+  };
+  it("maps kinds 1:1 and renames from/to → source/target", () => {
+    const { nodes, edges } = adaptWorkflow(graph);
+    expect(nodes[0]).toMatchObject({ id: "s1", kind: "entry", label: "start" });
+    expect(edges[0]).toMatchObject({ source: "s1", target: "a1", gold: true });
+  });
+  it("marks a parent-referenced node as a group container", () => {
+    const { nodes } = adaptWorkflow(graph);
+    expect(nodes.find((n) => n.id === "a1")?.group).toBe(true);
+    expect(nodes.find((n) => n.id === "step1")?.parent).toBe("a1");
   });
 });
