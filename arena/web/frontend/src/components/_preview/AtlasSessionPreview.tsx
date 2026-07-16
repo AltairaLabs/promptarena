@@ -46,17 +46,17 @@ export function AtlasSessionPreview() {
         </select>
         <span style={{ marginLeft: "auto", color: "var(--text-faint)" }}>#atlas · throwaway · {ids.length} runs</span>
       </div>
-      <div style={{ flex: 1, minHeight: 0, display: "flex" }}>
-        <div style={{ flex: 1, minWidth: 0, padding: 12 }}>
-          {adapted ? <SessionReview title={adapted.title} messages={adapted.messages} checks={adapted.checks} recording={adapted.recording} /> : <div style={{ padding: 24, color: "var(--text-faint)" }}>Loading run…</div>}
-        </div>
-        {wf && (
-          <div style={{ width: 400, flex: "none", borderLeft: "1px solid var(--border-default)", display: "flex", flexDirection: "column", minHeight: 0 }}>
-            <div style={{ padding: "8px 12px", borderBottom: "1px solid var(--border-default)", fontFamily: "var(--font-mono)", fontSize: "var(--text-size-mono-micro)", color: "var(--text-faint)", textTransform: "uppercase" }}>Workflow</div>
-            <div style={{ flex: 1, minHeight: 0 }}>
-              <ConstellationGraph nodes={wf.nodes} edges={wf.edges} theme={theme} direction="LR" height="100%" />
-            </div>
-          </div>
+      <div style={{ flex: 1, minHeight: 0, padding: 12 }}>
+        {adapted ? (
+          <SessionReview
+            title={adapted.title}
+            messages={adapted.messages}
+            checks={adapted.checks}
+            recording={adapted.recording}
+            tabs={wf ? [{ id: "workflow", label: "Workflow", render: () => <ConstellationGraph nodes={wf.nodes} edges={wf.edges} theme={theme} direction="LR" height="100%" /> }] : undefined}
+          />
+        ) : (
+          <div style={{ padding: 24, color: "var(--text-faint)" }}>Loading run…</div>
         )}
       </div>
     </div>
