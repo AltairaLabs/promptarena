@@ -17,6 +17,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { AudioPlayer } from "@/audio/player";
 import { buildMatrix, overlayWorkflowRun } from "@/lib/arenaView";
 import { adaptRun, adaptWorkflow } from "@/lib/atlasAdapter";
+import { arenaInspectorTabs } from "@/lib/arenaInspectorTabs";
 import type { Message, RunResult, ActiveRun, ProviderInfo, ScenarioInfo, TrialCell, WorkflowGraph } from "@/types";
 
 // activeRunToResult maps a still-running ActiveRun into a synthetic
@@ -452,6 +453,7 @@ export default function App() {
                             messages={a.messages}
                             checks={a.checks}
                             recording={a.recording}
+                            inspectorTabs={arenaInspectorTabs}
                             tabs={
                               wf
                                 ? [{ id: "workflow", label: "Workflow", render: () => <ConstellationGraph nodes={wf.nodes} edges={wf.edges} theme={theme} direction="LR" height="100%" /> }]

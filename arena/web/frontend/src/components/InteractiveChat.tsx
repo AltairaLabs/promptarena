@@ -3,6 +3,7 @@ import { ArrowLeft } from "lucide-react";
 import { LiveConsole, Button } from "@altairalabs/atlas";
 import { useInteractiveChat } from "@/hooks/useInteractiveChat";
 import { adaptLiveMessages } from "@/lib/atlasAdapter";
+import { arenaInspectorTabs } from "@/lib/arenaInspectorTabs";
 import type { ArenaState, MessageCreatedData, Message } from "@/types";
 
 interface InteractiveChatProps {
@@ -337,6 +338,7 @@ export function InteractiveChat({ state, registerInteractiveRun, onBack }: Inter
     <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 220px)", minHeight: 500 }}>
       <LiveConsole
         messages={liveMessages}
+        inspectorTabs={arenaInspectorTabs}
         onSend={handleSend}
         connectionStatus={state.connected ? "connected" : "connecting"}
         composerDisabled={busy}
