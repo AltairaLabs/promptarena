@@ -1,4 +1,4 @@
-import { Gauge, InstrumentReadout, StarTrail } from "@/components/atlas";
+import { Gauge, InstrumentReadout, StarTrail } from "@altairalabs/atlas";
 import { buildOverallGauge, buildMetrics, buildTrend, buildStandings } from "@/lib/arenaView";
 import { Standings } from "@/components/arena/Standings";
 import type { TrialMatrix, RunResult } from "@/types";

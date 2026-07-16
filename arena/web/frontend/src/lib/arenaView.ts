@@ -18,7 +18,7 @@ import type {
   TranscriptMessage,
   WorkflowGraph,
 } from "@/types";
-import type { MetricSpec, TerminalLine } from "@/components/atlas/types";
+import type { MetricSpec, TerminalLine } from "@altairalabs/atlas";
 import { formatDuration } from "./utils";
 
 function endTimeMs(r: RunResult): number {

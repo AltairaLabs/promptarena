@@ -1,5 +1,5 @@
-import { Terminal } from "@/components/atlas/Terminal";
-import type { TerminalLine } from "@/components/atlas/types";
+import { Terminal } from "@altairalabs/atlas";
+import type { TerminalLine } from "@altairalabs/atlas";
 
 export interface TerminalCardProps {
   lines: TerminalLine[];

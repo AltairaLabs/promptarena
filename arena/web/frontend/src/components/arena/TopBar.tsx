@@ -1,4 +1,4 @@
-import { StatusPill } from "@/components/atlas/StatusPill";
+import { StatusPill } from "@altairalabs/atlas";
 import logoUrl from "@/assets/logo-promptarena.svg";
 
 export interface TopBarProps {

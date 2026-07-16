@@ -1,7 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, it, expect } from "vitest";
 import { TerminalCard } from "./TerminalCard";
-import type { TerminalLine } from "@/components/atlas/types";
+import type { TerminalLine } from "@altairalabs/atlas";
 
 describe("TerminalCard", () => {
   it("renders the terminal command line and its prompt", () => {

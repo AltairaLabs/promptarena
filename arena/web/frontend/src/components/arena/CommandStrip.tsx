@@ -1,4 +1,4 @@
-import { Button } from "@/components/atlas/Button";
+import { Button } from "@altairalabs/atlas";
 
 export interface CommandStripProps {
   scenarios: { id: string; label?: string }[];

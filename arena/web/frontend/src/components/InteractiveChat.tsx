@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowLeft } from "lucide-react";
-import { LiveConsole } from "@altairalabs/atlas";
-import { Button } from "@/components/atlas/Button";
+import { LiveConsole, Button } from "@altairalabs/atlas";
 import { useInteractiveChat } from "@/hooks/useInteractiveChat";
 import { adaptLiveMessages } from "@/lib/atlasAdapter";
 import type { ArenaState, MessageCreatedData, Message } from "@/types";

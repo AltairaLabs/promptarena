@@ -1,7 +1,7 @@
 import { Transcript } from "./Transcript";
 import { AgentFlowCard } from "./AgentFlowCard";
 import { TerminalCard } from "./TerminalCard";
-import { StatusPill } from "@/components/atlas/StatusPill";
+import { StatusPill } from "@altairalabs/atlas";
 import { buildTranscript, buildTerminalLines } from "@/lib/arenaView";
 import type { RunResult, ActiveRun, TrialCell, Message, WorkflowGraph } from "@/types";
 
