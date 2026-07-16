@@ -9,9 +9,9 @@
 // renders it faithfully: structured payloads as a collapsible JSON tree, raw
 // prompt/YAML text as literal preformatted text so exact bytes survive.
 //
-// InspectorTab visibility is by subject KIND, not per-value, so these tabs are
-// always present for message subjects; when the meta key is absent for a given
-// message we show a small faint empty-state note rather than hiding the tab.
+// Each tab is contextual: its `visible` predicate hides it for messages that
+// carry no data for it (Chrome-DevTools style), so a message only shows the
+// panels that apply. The Empty fallback stays as a defensive belt-and-braces.
 import type * as React from "react";
 import { JsonView, Markdown, type InspectorSubject, type InspectorTab } from "@altairalabs/atlas";
 
@@ -55,6 +55,7 @@ function jsonTab(id: string, label: string, key: string, emptyLabel: string): In
     id,
     label,
     appliesTo: ["message"],
+    visible: (subject) => metaValue(subject, key) != null,
     render: (subject) => {
       const value = metaValue(subject, key);
       if (value == null) return <Empty label={emptyLabel} />;
@@ -71,6 +72,7 @@ function markdownTab(id: string, label: string, key: string, emptyLabel: string)
     id,
     label,
     appliesTo: ["message"],
+    visible: (subject) => metaValue(subject, key) != null,
     render: (subject) => {
       const value = metaValue(subject, key);
       if (value == null) return <Empty label={emptyLabel} />;
@@ -88,6 +90,7 @@ function textTab(id: string, label: string, key: string, emptyLabel: string): In
     id,
     label,
     appliesTo: ["message"],
+    visible: (subject) => metaValue(subject, key) != null,
     render: (subject) => {
       const value = metaValue(subject, key);
       if (value == null) return <Empty label={emptyLabel} />;
