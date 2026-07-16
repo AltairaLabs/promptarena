@@ -89,6 +89,7 @@ describe("InteractiveChat", () => {
     await waitFor(() => expect(registerInteractiveRun).toHaveBeenCalledWith("sess-1"));
     expect(await screen.findByText("support")).toBeInTheDocument();
     expect(screen.getByText("claude")).toBeInTheDocument();
-    expect(screen.getByText("Send a message to start the conversation.")).toBeInTheDocument();
+    // The Atlas LiveConsole composer renders in the chat phase.
+    expect(screen.getByPlaceholderText(/Type a message/)).toBeInTheDocument();
   });
 });

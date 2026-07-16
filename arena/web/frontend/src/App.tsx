@@ -216,8 +216,6 @@ export default function App() {
   // Exclude synthetic interactive-chat entries from the runs-tab aggregates.
   const liveRuns = Object.values(state.runs).filter((r) => r.scenario !== "interactive");
   const selectedRun = selectedRunId ? state.runs[selectedRunId] : undefined;
-  // The active interactive-chat session, surfaced as the DevTools "run" on the chat tab.
-  const interactiveRun = Object.values(state.runs).find((r) => r.scenario === "interactive");
 
   // The trial matrix overlays in-flight runs onto historical results so a
   // cell with a live run stays selectable while its trial is running. Only
@@ -423,24 +421,11 @@ export default function App() {
         </div>
 
         {activeTab === "chat" ? (
-          <>
-            <div className={devToolsOpen ? "lg:mr-[420px] transition-[margin] duration-200" : "transition-[margin] duration-200"}>
-              <InteractiveChat
-                state={state}
-                registerInteractiveRun={registerInteractiveRun}
-                onSelectMessage={handleSelectMessage}
-                onBack={() => setActiveTab("runs")}
-              />
-            </div>
-            <DevToolsPanel
-              message={devToolsMessage}
-              messageIndex={devToolsIndex}
-              allMessages={devToolsAllMessages}
-              run={interactiveRun}
-              open={devToolsOpen}
-              onClose={() => setDevToolsOpen(false)}
-            />
-          </>
+          <InteractiveChat
+            state={state}
+            registerInteractiveRun={registerInteractiveRun}
+            onBack={() => setActiveTab("runs")}
+          />
         ) : (
           <>
             <div className={devToolsOpen ? "lg:mr-[420px] transition-[margin] duration-200" : "transition-[margin] duration-200"}>

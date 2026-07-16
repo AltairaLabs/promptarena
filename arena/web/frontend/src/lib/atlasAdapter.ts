@@ -176,6 +176,23 @@ export function adaptMessage(m: Message, i: number, run: RunResult, baseMs: numb
   };
 }
 
+// Live path: the SSE reducer already normalises camelCase → the snake Message
+// shape (liveMessageToMessage), so we just map those in-flight turns to Atlas.
+// No run context yet (checks stream separately), so this is lighter than adaptRun.
+export function adaptLiveMessages(messages: Message[]): AtlasMessage[] {
+  const baseMs = Date.now();
+  return messages.map((m, i) => ({
+    id: `m${i}`,
+    role: toRole(m.role),
+    sequenceNum: i,
+    timestamp: m.timestamp ?? new Date(baseMs + i * 1000).toISOString(),
+    parts: partsOf(m),
+    toolCalls: toolCallsOf(m),
+    metrics: metricsOf(m),
+    meta: m.meta,
+  }));
+}
+
 export interface AdaptedRun {
   title: string;
   messages: AtlasMessage[];

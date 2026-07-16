@@ -1,16 +1,15 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ArrowLeft, Send } from "lucide-react";
-import { ConversationThread } from "@/components/ConversationThread";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { ArrowLeft } from "lucide-react";
+import { LiveConsole } from "@altairalabs/atlas";
 import { Button } from "@/components/atlas/Button";
 import { useInteractiveChat } from "@/hooks/useInteractiveChat";
+import { adaptLiveMessages } from "@/lib/atlasAdapter";
 import type { ArenaState, MessageCreatedData, Message } from "@/types";
 
 interface InteractiveChatProps {
   state: ArenaState;
   registerInteractiveRun: (sessionId: string) => void;
   onBack: () => void;
-  // Clicking a message opens the shared DevTools panel (same as the run view).
-  onSelectMessage?: (index: number, message: Message, allMessages: Message[]) => void;
 }
 
 // liveMessageToMessage maps in-flight SSE MessageCreatedData to the Message
@@ -76,7 +75,7 @@ const ghostLinkStyle: React.CSSProperties = {
   padding: 0,
 };
 
-export function InteractiveChat({ state, registerInteractiveRun, onBack, onSelectMessage }: InteractiveChatProps) {
+export function InteractiveChat({ state, registerInteractiveRun, onBack }: InteractiveChatProps) {
   const { fetchOptions, createSession, sendMessage, busy, error } = useInteractiveChat();
 
   // Setup phase state
@@ -103,12 +102,6 @@ export function InteractiveChat({ state, registerInteractiveRun, onBack, onSelec
 
   // Chat phase state
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [inputText, setInputText] = useState("");
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  // Auto-scroll: keep the conversation pinned to the bottom as messages arrive,
-  // unless the user has scrolled up to read history.
-  const scrollRef = useRef<HTMLDivElement>(null);
-  const stickToBottomRef = useRef(true);
 
   const phase: Phase = sessionId ? "chat" : missingVars.length > 0 ? "vars" : "setup";
 
@@ -162,22 +155,12 @@ export function InteractiveChat({ state, registerInteractiveRun, onBack, onSelec
     await doCreateSession(pendingParams.agent, pendingParams.provider, varValues, pendingParams.evals);
   }, [pendingParams, varValues, doCreateSession]);
 
-  const handleSend = useCallback(async () => {
-    if (!sessionId || !inputText.trim() || busy) return;
-    const text = inputText.trim();
-    setInputText("");
-    await sendMessage(sessionId, text);
-    textareaRef.current?.focus();
-  }, [sessionId, inputText, busy, sendMessage]);
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (e.key === "Enter" && !e.shiftKey) {
-        e.preventDefault();
-        void handleSend();
-      }
+  const handleSend = useCallback(
+    (text: string) => {
+      if (!sessionId || !text.trim() || busy) return;
+      void sendMessage(sessionId, text.trim());
     },
-    [handleSend],
+    [sessionId, busy, sendMessage],
   );
 
   const handleReset = useCallback(() => {
@@ -186,35 +169,19 @@ export function InteractiveChat({ state, registerInteractiveRun, onBack, onSelec
     setPendingParams(null);
     setVarValues({});
     setSessionError(null);
-    setInputText("");
   }, []);
 
   // Messages for the active session, sorted by index (upsert already sorts,
-  // but defensive sort here handles any edge case).
-  const displayMessages: Message[] = useMemo(() => {
+  // but defensive sort here handles any edge case), then adapted to Atlas.
+  const liveMessages = useMemo(() => {
     if (!sessionId) return [];
     const run = state.runs[sessionId];
     if (!run?.messages?.length) return [];
-    return [...run.messages]
+    const msgs: Message[] = [...run.messages]
       .sort((a, b) => (a.index ?? 0) - (b.index ?? 0))
       .map(liveMessageToMessage);
+    return adaptLiveMessages(msgs);
   }, [sessionId, state.runs]);
-
-  // Track whether the user is near the bottom so we only auto-stick when they
-  // haven't scrolled up to read history.
-  const handleScroll = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    stickToBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
-  }, []);
-
-  // Pin to the bottom as new messages stream in (when stuck to bottom).
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (el && stickToBottomRef.current) {
-      el.scrollTop = el.scrollHeight;
-    }
-  }, [displayMessages, busy]);
 
   if (loadingOptions) {
     return (
@@ -369,123 +336,32 @@ export function InteractiveChat({ state, registerInteractiveRun, onBack, onSelec
   // --- Chat phase ---
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 220px)", minHeight: 500 }}>
-      {/* Sticky header */}
-      <div
-        style={{
-          position: "sticky",
-          top: 0,
-          zIndex: 10,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          background: "var(--ink-canvas)",
-          borderBottom: "1px solid var(--hairline)",
-          padding: "12px 4px",
-          marginBottom: 16,
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <button
-            onClick={handleReset}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              font: "500 12px var(--font-mono)",
-              color: "var(--star-600)",
-              background: "transparent",
-              border: "none",
-              cursor: "pointer",
-            }}
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Reset
-          </button>
-          <div style={{ width: 1, height: 16, background: "var(--hairline-strong)" }} />
-          <div style={{ display: "flex", alignItems: "center", gap: 10, font: "400 12px var(--font-mono)", color: "var(--star-700)" }}>
-            <span style={{ color: "var(--star-300)", fontWeight: 600 }}>{selectedAgent}</span>
-            <span>·</span>
-            <span>{selectedProvider}</span>
-            {enableEvals && (
-              <>
-                <span>·</span>
-                <span style={{ color: "var(--pulsar-300)" }}>evals on</span>
-              </>
-            )}
-          </div>
-        </div>
-        <button onClick={onBack} style={{ ...ghostLinkStyle, color: "var(--star-600)" }}>
-          ← Runs
-        </button>
-      </div>
-
-      {/* Conversation thread */}
-      <div ref={scrollRef} onScroll={handleScroll} className="flex-1 overflow-y-auto min-h-0">
-        {displayMessages.length === 0 ? (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%" }}>
-            <p style={{ font: "400 13px var(--font-sans)", color: "var(--star-700)" }}>
-              Send a message to start the conversation.
-            </p>
-          </div>
-        ) : (
-          <ConversationThread
-            messages={displayMessages}
-            streaming={busy}
-            onSelectMessage={
-              onSelectMessage ? (i, m) => onSelectMessage(i, m, displayMessages) : undefined
-            }
-          />
-        )}
-      </div>
-
-      {/* Error banner */}
-      {error && (
-        <div style={{ ...errorBannerStyle, margin: "0 4px 8px" }}>{error}</div>
-      )}
-
-      {/* Input area */}
-      <div
-        style={{
-          borderTop: "1px solid var(--hairline)",
-          background: "var(--ink-surface)",
-          borderRadius: "var(--radius-xl)",
-          padding: 16,
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "flex-end", gap: 12 }}>
-          <textarea
-            ref={textareaRef}
-            className="placeholder:text-[var(--star-800)]"
-            style={{
-              flex: 1,
-              resize: "none",
-              borderRadius: "var(--radius-md)",
-              border: "1px solid var(--hairline-strong)",
-              background: "var(--ink-raised)",
-              color: "var(--star-300)",
-              padding: "10px 12px",
-              font: "400 13px var(--font-sans)",
-              minHeight: 44,
-              maxHeight: 160,
-            }}
-            placeholder="Type a message… (Enter to send, Shift+Enter for newline)"
-            rows={1}
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            onKeyDown={handleKeyDown}
-            disabled={busy}
-          />
-          <Button
-            variant="secondary"
-            disabled={busy || !inputText.trim()}
-            onClick={() => void handleSend()}
-            aria-label="Send message"
-            style={{ flex: "none", padding: "10px 12px" }}
-          >
-            <Send className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
+      <LiveConsole
+        messages={liveMessages}
+        onSend={handleSend}
+        connectionStatus={state.connected ? "connected" : "connecting"}
+        composerDisabled={busy}
+        composerPlaceholder="Type a message… (Enter to send, Shift+Enter for newline)"
+        title={
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontWeight: 600 }}>{selectedAgent}</span>
+            <span style={{ color: "var(--text-faint)" }}>·</span>
+            <span style={{ color: "var(--text-muted)" }}>{selectedProvider}</span>
+            {enableEvals && <span style={{ color: "var(--pulsar-300)" }}>· evals on</span>}
+          </span>
+        }
+        headerExtra={
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 14 }}>
+            <button onClick={handleReset} style={ghostLinkStyle}>
+              <ArrowLeft className="h-4 w-4" /> Reset
+            </button>
+            <button onClick={onBack} style={ghostLinkStyle}>
+              ← Runs
+            </button>
+          </span>
+        }
+      />
+      {error && <div style={{ ...errorBannerStyle, margin: "8px 4px 0" }}>{error}</div>}
     </div>
   );
 }
