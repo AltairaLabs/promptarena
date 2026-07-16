@@ -170,6 +170,9 @@ export function adaptMessage(m: Message, i: number, run: RunResult, baseMs: numb
     metrics: metricsOf(m),
     checks: checks.length ? checks : undefined,
     error: run.Error && i === run.Messages.length - 1 ? { message: run.Error } : undefined,
+    // Carry Arena's meta through so the Inspector (Raw tab + future custom tabs)
+    // can surface _llm_trace / _llm_raw_request / _llm_raw_response / persona etc.
+    meta: m.meta,
   };
 }
 

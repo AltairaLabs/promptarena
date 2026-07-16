@@ -9,6 +9,13 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+      // Force the single (app) React everywhere — the link:'d @altairalabs/atlas
+      // is symlinked outside this tree and would otherwise resolve its own React.
+      react: path.resolve(__dirname, "node_modules/react"),
+      "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
+      "react/jsx-runtime": path.resolve(__dirname, "node_modules/react/jsx-runtime"),
+      "react/jsx-dev-runtime": path.resolve(__dirname, "node_modules/react/jsx-dev-runtime"),
+      "react-dom/client": path.resolve(__dirname, "node_modules/react-dom/client"),
     },
     dedupe: ["react", "react-dom"],
   },
@@ -25,6 +32,10 @@ export default defineConfig({
     globals: true,
     setupFiles: ["./src/test/setup.ts"],
     css: false,
+    // The linked @altairalabs/atlas package is symlinked outside this tree, so
+    // its `react` peer would otherwise resolve to atlas-components' own React.
+    // Inline it (with resolve.dedupe above) so tests use the app's single React.
+    server: { deps: { inline: [/@altairalabs\/atlas/, "react-markdown", "remark-gfm", "lucide-react"] } },
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
     coverage: {
       provider: "v8",

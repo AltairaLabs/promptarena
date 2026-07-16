@@ -10,11 +10,13 @@ import { InteractiveChat } from "@/components/InteractiveChat";
 import { TrialMatrix } from "@/components/arena/TrialMatrix";
 import { InstrumentBand } from "@/components/arena/InstrumentBand";
 import { TrialInspector } from "@/components/arena/TrialInspector";
+import { SessionReview, ConstellationGraph } from "@altairalabs/atlas";
 import { useArenaEvents } from "@/hooks/useArenaEvents";
 import { useArenaAPI } from "@/hooks/useArenaAPI";
 import { useTheme } from "@/hooks/useTheme";
 import { AudioPlayer } from "@/audio/player";
-import { buildMatrix } from "@/lib/arenaView";
+import { buildMatrix, overlayWorkflowRun } from "@/lib/arenaView";
+import { adaptRun, adaptWorkflow } from "@/lib/atlasAdapter";
 import type { Message, RunResult, ActiveRun, ProviderInfo, ScenarioInfo, TrialCell, WorkflowGraph } from "@/types";
 
 // activeRunToResult maps a still-running ActiveRun into a synthetic
@@ -450,18 +452,44 @@ export default function App() {
                   >
                     <ArrowLeft className="h-4 w-4" /> Back
                   </button>
-                  <TrialInspector
-                    run={selectedCellRun}
-                    cell={inspectorCell}
-                    scenarioId={inspectorCell?.scenarioId ?? selectedCell.scenarioId}
-                    providerId={inspectorCell?.providerId ?? selectedCell.providerId}
-                    providerLabel={selectedProviderLabel}
-                    workflowGraph={workflowGraph}
-                    onSelectMessage={handleSelectMessage}
-                    listeningRunId={listeningRunId}
-                    onToggleListen={handleListen}
-                    theme={theme}
-                  />
+                  {selectedCellRun && "Messages" in selectedCellRun && Array.isArray(selectedCellRun.Messages) ? (
+                    (() => {
+                      const run = selectedCellRun as RunResult;
+                      const a = adaptRun(run);
+                      const wf =
+                        workflowGraph && workflowGraph.nodes.length
+                          ? adaptWorkflow(overlayWorkflowRun(workflowGraph, run))
+                          : null;
+                      return (
+                        <div style={{ height: "calc(100vh - 210px)", minHeight: 460 }}>
+                          <SessionReview
+                            title={a.title}
+                            messages={a.messages}
+                            checks={a.checks}
+                            recording={a.recording}
+                            tabs={
+                              wf
+                                ? [{ id: "workflow", label: "Workflow", render: () => <ConstellationGraph nodes={wf.nodes} edges={wf.edges} theme={theme} direction="LR" height="100%" /> }]
+                                : undefined
+                            }
+                          />
+                        </div>
+                      );
+                    })()
+                  ) : (
+                    <TrialInspector
+                      run={selectedCellRun}
+                      cell={inspectorCell}
+                      scenarioId={inspectorCell?.scenarioId ?? selectedCell.scenarioId}
+                      providerId={inspectorCell?.providerId ?? selectedCell.providerId}
+                      providerLabel={selectedProviderLabel}
+                      workflowGraph={workflowGraph}
+                      onSelectMessage={handleSelectMessage}
+                      listeningRunId={listeningRunId}
+                      onToggleListen={handleListen}
+                      theme={theme}
+                    />
+                  )}
                 </div>
               ) : (
                 <div className="space-y-8">

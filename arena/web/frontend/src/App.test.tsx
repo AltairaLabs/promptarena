@@ -136,29 +136,27 @@ describe("App — Runs view", () => {
     expect(screen.queryByText("Previous Runs")).not.toBeInTheDocument();
   });
 
-  it("opens the TrialInspector when a populated matrix cell is clicked", async () => {
+  it("opens SessionReview when a populated matrix cell is clicked", async () => {
     render(<App />);
     const rate = await screen.findByText("100%");
     fireEvent.click(rate);
-    // TrialInspector replaces the matrix view; the matrix's own heading disappears.
+    // SessionReview replaces the matrix view; the matrix heading disappears.
     expect(screen.queryByText("TRIAL MATRIX · SCENARIO × PROVIDER")).not.toBeInTheDocument();
-    // The inspector's transcript header, agent-flow graph, and terminal render
-    // instead of the old RunDetail.
-    expect(await screen.findByText("TRANSCRIPT")).toBeInTheDocument();
-    expect(screen.getByText(/promptarena run --scenario checkout --provider claude/)).toBeInTheDocument();
+    // SessionReview's Transcript tab renders instead of the old TrialInspector.
+    expect(await screen.findByRole("button", { name: /^transcript$/i })).toBeInTheDocument();
     await act(async () => {
       await Promise.resolve();
     });
   });
 
-  it("fetches the workflow graph on mount and passes it into the inspector's WORKFLOW panel", async () => {
+  it("fetches the workflow graph on mount and offers it as a Workflow tab", async () => {
     render(<App />);
     const rate = await screen.findByText("100%");
     fireEvent.click(rate);
-    await screen.findByText("TRANSCRIPT");
+    await screen.findByRole("button", { name: /^transcript$/i });
 
     expect(getWorkflow).toHaveBeenCalled();
-    expect(await screen.findByText("WORKFLOW")).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: /^workflow$/i })).toBeInTheDocument();
   });
 
   it("does not let a completed-but-not-yet-refetched live run mask a failing historical result", async () => {
@@ -203,7 +201,7 @@ describe("App — Runs view", () => {
     expect(screen.queryByText("100%")).not.toBeInTheDocument();
   });
 
-  it("clicking a transcript message in the Runs-tab inspector opens the DevTools drawer", async () => {
+  it("clicking a transcript message opens the SessionReview Inspector", async () => {
     const runWithMessages = mk({
       RunID: "run-1",
       ScenarioID: "checkout",
@@ -221,20 +219,21 @@ describe("App — Runs view", () => {
     render(<App />);
     const rate = await screen.findByText("100%");
     fireEvent.click(rate);
-    await screen.findByText("TRANSCRIPT");
+    await screen.findByRole("button", { name: /^transcript$/i });
 
-    expect(screen.queryByText("Details")).not.toBeInTheDocument();
+    expect(screen.queryByText("Overview")).not.toBeInTheDocument();
     fireEvent.click(screen.getByText("Hello!"));
-    expect(await screen.findByText("Details")).toBeInTheDocument();
+    expect(await screen.findByText("Overview")).toBeInTheDocument();
   });
 
-  it("selecting an OLDER run from the ledger shows that run's transcript/StatusPill, not the newer run pinned to the matrix cell", async () => {
+  it("selecting an OLDER run from the ledger shows that run's transcript, not the newer run pinned to the matrix cell", async () => {
     const olderFailingRun = mk({
       RunID: "run-old",
       ScenarioID: "checkout",
       ProviderID: "claude",
       StartTime: "2026-07-01T00:00:00Z",
       EndTime: "2026-07-01T00:00:01Z",
+      Messages: [{ role: "assistant", content: "older-answer" }],
       Cost: { total_cost_usd: 0.01, input_tokens: 0, output_tokens: 0, input_cost_usd: 0, output_cost_usd: 0 },
       Duration: 500,
       ConversationAssertions: { passed: false, failed: 1, total: 2, results: [] },
@@ -245,6 +244,7 @@ describe("App — Runs view", () => {
       ProviderID: "claude",
       StartTime: "2026-07-07T00:00:00Z",
       EndTime: "2026-07-07T00:00:01Z",
+      Messages: [{ role: "assistant", content: "newer-answer" }],
       Cost: { total_cost_usd: 0.02, input_tokens: 0, output_tokens: 0, input_cost_usd: 0, output_cost_usd: 0 },
       Duration: 900,
       ConversationAssertions: { passed: true, failed: 0, total: 2, results: [] },
@@ -264,9 +264,8 @@ describe("App — Runs view", () => {
     // Only the older run failed, so "Fail" uniquely identifies its row.
     fireEvent.click(screen.getByText("Fail"));
 
-    expect(await screen.findByText("TRANSCRIPT")).toBeInTheDocument();
-    expect(screen.getByText("Failed")).toBeInTheDocument();
-    expect(screen.queryByText("Passed")).not.toBeInTheDocument();
+    expect(await screen.findByText("older-answer")).toBeInTheDocument();
+    expect(screen.queryByText("newer-answer")).not.toBeInTheDocument();
   });
 
   it("renders Hero + CommandStrip above the instrument band and trial matrix", async () => {
