@@ -92,12 +92,18 @@ describe("adaptWorkflow", () => {
   };
   it("maps kinds 1:1 and renames from/to → source/target", () => {
     const { nodes, edges } = adaptWorkflow(graph);
-    expect(nodes[0]).toMatchObject({ id: "s1", kind: "entry", label: "start" });
-    expect(edges[0]).toMatchObject({ source: "s1", target: "a1", gold: true });
+    expect(nodes.find((n) => n.id === "s1")).toMatchObject({ kind: "entry", label: "start" });
+    expect(edges.find((e) => e.source === "s1" && e.target === "a1")).toMatchObject({ gold: true });
   });
   it("marks a parent-referenced node as a group container", () => {
     const { nodes } = adaptWorkflow(graph);
     expect(nodes.find((n) => n.id === "a1")?.group).toBe(true);
     expect(nodes.find((n) => n.id === "step1")?.parent).toBe("a1");
+  });
+  it("bookends the graph with start/end terminators wired to entry/terminal nodes", () => {
+    const { nodes, edges } = adaptWorkflow(graph);
+    expect(nodes.find((n) => n.id === "__start")).toMatchObject({ kind: "terminator" });
+    expect(nodes.find((n) => n.id === "__end")).toMatchObject({ kind: "terminator" });
+    expect(edges.some((e) => e.source === "__start" && e.target === "s1")).toBe(true);
   });
 });
