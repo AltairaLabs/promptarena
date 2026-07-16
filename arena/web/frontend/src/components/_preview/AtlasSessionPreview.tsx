@@ -42,7 +42,7 @@ export function AtlasSessionPreview() {
         <span style={{ marginLeft: "auto", color: "var(--text-faint)" }}>#atlas · throwaway · {ids.length} runs</span>
       </div>
       <div style={{ flex: 1, minHeight: 0, padding: 12 }}>
-        {adapted ? <SessionReview title={adapted.title} messages={adapted.messages} checks={adapted.checks} /> : <div style={{ padding: 24, color: "var(--text-faint)" }}>Loading run…</div>}
+        {adapted ? <SessionReview title={adapted.title} messages={adapted.messages} checks={adapted.checks} recording={adapted.recording} /> : <div style={{ padding: 24, color: "var(--text-faint)" }}>Loading run…</div>}
       </div>
     </div>
   );

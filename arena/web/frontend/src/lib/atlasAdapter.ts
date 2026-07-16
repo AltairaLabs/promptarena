@@ -1,17 +1,36 @@
-// PREVIEW-GRADE adapter: Arena RunResult/Message → Atlas model.
-// WU-2 hardens this (TDD, live-SSE camelCase bridge, media refs). For now it
-// covers the historical path well enough to render SessionReview on a real run.
-import type { AtlasMessage, AtlasCheck, AtlasContentPart, AtlasToolCall } from "@altairalabs/atlas";
+// Adapter: Arena RunResult/Message → Atlas model. The one place that knows
+// Arena's wire shapes — mixed casing (RunResult PascalCase, Message snake_case),
+// nanosecond latencies, and checks that live in meta.assertions / conversation_
+// assertions rather than a single field. Covers the historical path; the live
+// SSE camelCase bridge and derived trace events land in later WUs.
+import type { AtlasMessage, AtlasCheck, AtlasContentPart, AtlasToolCall, AtlasCheckViolation } from "@altairalabs/atlas";
 import type { Message, RunResult, ContentPart, EvalResult } from "@/types";
 
 const ROLES = new Set(["user", "assistant", "system", "tool"]);
-const toRole = (r: string): AtlasMessage["role"] =>
-  (ROLES.has(r) ? r : "assistant") as AtlasMessage["role"];
+const toRole = (r: string): AtlasMessage["role"] => (ROLES.has(r) ? r : "assistant") as AtlasMessage["role"];
+const MEDIA = new Set(["image", "audio", "video", "document"]);
 
-// Preview keeps parts text-only (llm-judge is text); media lands in WU-2.
+// ---- content parts ----
+
 function partOf(p: ContentPart): AtlasContentPart | null {
+  if (MEDIA.has(p.type) && p.media) {
+    return {
+      type: p.type as "image" | "audio" | "video" | "document",
+      media: {
+        url: p.media.url,
+        storageRef: p.media.storage_reference,
+        mimeType: p.media.mime_type ?? "application/octet-stream",
+        fileName: p.media.file_path,
+        sizeBytes: p.media.size_bytes,
+        width: p.media.width,
+        height: p.media.height,
+        durationMs: p.media.duration != null ? p.media.duration * 1000 : undefined,
+      },
+    };
+  }
   return p.text ? { type: "text", text: p.text } : null;
 }
+
 function partsOf(m: Message): AtlasContentPart[] {
   if (m.parts?.length) return m.parts.map(partOf).filter(Boolean) as AtlasContentPart[];
   return m.content ? [{ type: "text", text: m.content }] : [];
@@ -34,17 +53,43 @@ function toolCallsOf(m: Message): AtlasToolCall[] | undefined {
   });
 }
 
-function metricsOf(m: Message): AtlasMessage["metrics"] {
-  if (m.latency_ms == null && !m.cost_info) return undefined;
+// ---- checks ----
+// Arena serialises assertion/eval/guardrail results in several shapes. The
+// message-level `meta.assertions.results` and run-level `conversation_assertions.
+// results` share this loose shape; EvalResult (`eval_results`) is separate.
+
+interface RawAssertion {
+  type?: string;
+  name?: string;
+  passed?: boolean;
+  score?: number;
+  message?: string;
+  action?: AtlasCheck["action"];
+  details?: { score?: number; value?: unknown; explanation?: string; metric_value?: number; passed?: boolean };
+  config?: { params?: { eval_type?: string; action?: AtlasCheck["action"] } };
+  violations?: { turn_index?: number; description?: string; evidence?: Record<string, unknown> }[];
+}
+
+function violationsOf(vs?: RawAssertion["violations"]): AtlasCheckViolation[] | undefined {
+  return vs?.map((v) => ({ turnIndex: v.turn_index, description: v.description ?? "", evidence: v.evidence }));
+}
+
+function assertionToCheck(r: RawAssertion): AtlasCheck {
+  const evalType = r.config?.params?.eval_type;
+  const action = r.action ?? r.config?.params?.action;
+  const kind: AtlasCheck["kind"] = evalType === "guardrail" || action ? "guardrail" : "assertion";
+  const passed = r.passed ?? (typeof r.details?.value === "boolean" ? (r.details.value as boolean) : undefined);
   return {
-    latencyMs: m.latency_ms,
-    inputTokens: m.cost_info?.input_tokens,
-    outputTokens: m.cost_info?.output_tokens,
-    costUsd: m.cost_info?.total_cost_usd,
+    type: evalType || r.type || r.name || "assertion",
+    kind,
+    passed,
+    score: r.score ?? r.details?.score ?? r.details?.metric_value,
+    action: kind === "guardrail" ? action ?? (passed === false ? "block" : "allow") : undefined,
+    explanation: r.message ?? r.details?.explanation,
+    violations: violationsOf(r.violations),
   };
 }
 
-// An eval result → a scored Atlas check (assertion when value is a bool).
 function evalToCheck(e: EvalResult): AtlasCheck {
   const isBool = typeof e.value === "boolean";
   return {
@@ -62,41 +107,56 @@ function evalToCheck(e: EvalResult): AtlasCheck {
   };
 }
 
-// Turn-level checks: per-message validators (as guardrails) + evals scoped to this turn.
+// Message assertions are persisted under meta.assertions.results.
+function metaAssertions(m: Message): RawAssertion[] {
+  const a = (m.meta as { assertions?: { results?: RawAssertion[] } } | undefined)?.assertions;
+  return Array.isArray(a?.results) ? a!.results! : [];
+}
+
 function messageChecks(m: Message, i: number, run: RunResult): AtlasCheck[] {
   const out: AtlasCheck[] = [];
+  for (const r of metaAssertions(m)) out.push(assertionToCheck(r));
   for (const v of m.validations ?? []) {
     out.push({ type: v.validator_type, kind: "guardrail", passed: v.passed, action: v.passed ? "allow" : "block" });
   }
-  for (const e of run.eval_results ?? []) {
-    if (e.turn_index === i) out.push(evalToCheck(e));
-  }
+  for (const e of run.eval_results ?? []) if (e.turn_index === i) out.push(evalToCheck(e));
   return out;
 }
 
-// Conversation-level checks: gating assertions + session-scoped evals.
-function conversationChecks(run: RunResult): AtlasCheck[] {
+// Conversation checks are under `conversation_assertions` (snake, wire) — read
+// the PascalCase field too in case an endpoint re-marshals.
+function convResults(run: RunResult): RawAssertion[] {
+  const ca = (run as { conversation_assertions?: { results?: RawAssertion[] } }).conversation_assertions ?? run.ConversationAssertions;
+  return Array.isArray(ca?.results) ? (ca!.results as RawAssertion[]) : [];
+}
+
+export function conversationChecks(run: RunResult): AtlasCheck[] {
   const out: AtlasCheck[] = [];
-  for (const r of run.ConversationAssertions?.results ?? []) {
-    out.push({
-      type: r.name || r.type,
-      kind: "assertion",
-      passed: r.passed,
-      score: r.score,
-      explanation: r.message,
-      violations: r.violations?.map((v) => ({ turnIndex: v.turn_index, description: v.description, evidence: v.evidence })),
-    });
-  }
-  for (const e of run.eval_results ?? []) {
-    if (e.turn_index == null) out.push(evalToCheck(e));
-  }
+  for (const r of convResults(run)) out.push(assertionToCheck(r));
+  for (const e of run.eval_results ?? []) if (e.turn_index == null) out.push(evalToCheck(e));
   return out;
+}
+
+// ---- metrics ----
+
+function metricsOf(m: Message): AtlasMessage["metrics"] {
+  const latencyNs = (m.cost_info as { latency_ns?: number } | undefined)?.latency_ns;
+  const latencyMs = m.latency_ms ?? (latencyNs != null ? latencyNs / 1e6 : undefined);
+  if (latencyMs == null && !m.cost_info) return undefined;
+  return {
+    latencyMs: latencyMs != null ? Math.round(latencyMs) : undefined,
+    inputTokens: m.cost_info?.input_tokens,
+    outputTokens: m.cost_info?.output_tokens,
+    costUsd: m.cost_info?.total_cost_usd,
+  };
 }
 
 function tsOf(m: Message, i: number, baseMs: number): string {
   if (m.timestamp) return m.timestamp;
   return new Date(baseMs + i * 1000).toISOString();
 }
+
+// ---- top-level ----
 
 export function adaptMessage(m: Message, i: number, run: RunResult, baseMs: number): AtlasMessage {
   const checks = messageChecks(m, i, run);
@@ -109,10 +169,18 @@ export function adaptMessage(m: Message, i: number, run: RunResult, baseMs: numb
     toolCalls: toolCallsOf(m),
     metrics: metricsOf(m),
     checks: checks.length ? checks : undefined,
+    error: run.Error && i === run.Messages.length - 1 ? { message: run.Error } : undefined,
   };
 }
 
-export function adaptRun(run: RunResult): { title: string; messages: AtlasMessage[]; checks?: AtlasCheck[] } {
+export interface AdaptedRun {
+  title: string;
+  messages: AtlasMessage[];
+  checks?: AtlasCheck[];
+  recording?: { src: string };
+}
+
+export function adaptRun(run: RunResult): AdaptedRun {
   const baseMs = Date.parse(run.StartTime) || Date.now();
   const messages = (run.Messages ?? []).map((m, i) => adaptMessage(m, i, run, baseMs));
   const checks = conversationChecks(run);
@@ -120,5 +188,6 @@ export function adaptRun(run: RunResult): { title: string; messages: AtlasMessag
     title: `${run.ScenarioID} · ${run.ProviderID}`,
     messages,
     checks: checks.length ? checks : undefined,
+    recording: run.RecordingPath ? { src: `/api/media/${encodeURI(run.RecordingPath)}` } : undefined,
   };
 }
