@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=https://promptkit.altairalabs.ai/schemas/latest/arena.json
+#
+# Minimal voice-capable Arena manifest for arena/web voice request builder
+# tests (buildVoiceRequest). One realtime-capable provider (mock type, so
+# tests run without external credentials) plus one STT provider so both the
+# realtime and composed-VAD branches can be exercised.
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Arena
+metadata:
+  name: web-voice-fixture
+spec:
+  prompt_configs:
+    - id: voice
+      file: prompts/voice.prompt.yaml
+
+  providers:
+    - file: providers/voice-realtime.provider.yaml
+    - file: providers/voice-stt.provider.yaml
+
+  defaults:
+    temperature: 0.5
+    max_tokens: 100

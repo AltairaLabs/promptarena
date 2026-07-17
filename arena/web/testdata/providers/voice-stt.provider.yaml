@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=https://promptkit.altairalabs.ai/schemas/latest/provider.json
+#
+# Composed-VAD STT provider. type: mock keeps the fixture credential-free.
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Provider
+metadata:
+  name: voice-stt
+spec:
+  id: voice-stt
+  type: mock
+  role: stt

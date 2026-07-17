@@ -181,6 +181,13 @@ func (s *InteractiveSession) ConversationID() string { return s.conversationID }
 // chat path to obtain the provider handle without a separate registry lookup.
 func (s *InteractiveSession) Provider() providers.Provider { return s.provider }
 
+// TaskType returns the agent (prompt config) task_type this session was
+// created with. Voice callers (TUI and web) need it to build the
+// arenaconfig.Scenario for a duplex run: both the ASM and composed-VAD duplex
+// pipelines resolve the system prompt from req.Scenario.TaskType, so it must
+// be carried over from the text session that resolved the provider.
+func (s *InteractiveSession) TaskType() string { return s.taskType }
+
 // RunEvalsEnabled reports whether eval scoring is on for this session.
 func (s *InteractiveSession) RunEvalsEnabled() bool { return s.runEvals }
 

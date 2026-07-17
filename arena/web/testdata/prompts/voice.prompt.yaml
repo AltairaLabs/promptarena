@@ -1,0 +1,9 @@
+# yaml-language-server: $schema=https://promptkit.altairalabs.ai/schemas/latest/promptconfig.json
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: PromptConfig
+metadata:
+  name: voice
+spec:
+  version: "1.0.0"
+  task_type: "voice"
+  system_template: "You are a friendly voice assistant."
