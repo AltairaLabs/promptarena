@@ -236,3 +236,21 @@ func TestWSSourceCloseIsSafe(t *testing.T) {
 		t.Fatal("frames channel was not closed within timeout")
 	}
 }
+
+// TestWSSessionDoubleCloseSafe pins the fix that wsSink.stop() is idempotent:
+// a second Close() (e.g. from both a deferred cleanup and an explicit close)
+// must not panic on a double close(s.stopCh).
+func TestWSSessionDoubleCloseSafe(t *testing.T) {
+	conn := newFakeConn()
+	sess := newWSAudioSession(conn)
+	if err := sess.Start(context.Background()); err != nil {
+		t.Fatalf("start: %v", err)
+	}
+
+	if err := sess.Close(); err != nil {
+		t.Fatalf("first close: %v", err)
+	}
+	if err := sess.Close(); err != nil {
+		t.Fatalf("second close: %v", err)
+	}
+}

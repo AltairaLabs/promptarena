@@ -145,6 +145,7 @@ type wsSink struct {
 	speaking  bool
 	lastWrite time.Time
 	stopCh    chan struct{}
+	stopOnce  sync.Once
 }
 
 func newWSSink(conn wsConn, now func() time.Time) *wsSink {
@@ -154,12 +155,14 @@ func newWSSink(conn wsConn, now func() time.Time) *wsSink {
 
 func (s *wsSink) Write(fr audio.MediaFrame) {
 	s.mu.Lock()
+	defer s.mu.Unlock()
 	if !s.speaking {
 		s.speaking = true
 		_ = s.conn.WriteMessage(websocket.TextMessage, voiceStateMsg(voiceStateSpeaking))
 	}
 	s.lastWrite = s.now()
-	s.mu.Unlock()
+	// Hold the lock across the binary write too: gorilla's Conn allows only one
+	// concurrent writer, and tick()/Flush() write control frames under the same lock.
 	_ = s.conn.WriteMessage(websocket.BinaryMessage, fr.Data)
 }
 
@@ -182,7 +185,7 @@ func (s *wsSink) Flush() {
 
 func (s *wsSink) Kind() audio.MediaKind { return audio.KindAudio }
 func (s *wsSink) Close() error          { return nil }
-func (s *wsSink) stop()                 { close(s.stopCh) }
+func (s *wsSink) stop()                 { s.stopOnce.Do(func() { close(s.stopCh) }) }
 
 // --- tiny atomic bool (avoid importing sync/atomic bool churn) ---
 
