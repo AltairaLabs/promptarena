@@ -39,7 +39,19 @@ func (c *fakeConn) WriteMessage(mt int, data []byte) error {
 	c.writes = append(c.writes, fakeMsg{mt, cp})
 	return nil
 }
-func (c *fakeConn) Close() error { c.mu.Lock(); c.closed = true; c.mu.Unlock(); return nil }
+
+// Close marks the conn closed and closes reads so a pending ReadMessage
+// unblocks with an error, letting readPump exit. Guarded against double-close.
+func (c *fakeConn) Close() error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.closed {
+		return nil
+	}
+	c.closed = true
+	close(c.reads)
+	return nil
+}
 
 func (c *fakeConn) writeSnapshot() []fakeMsg {
 	c.mu.Lock()
@@ -102,5 +114,92 @@ func TestWSSessionSinkWritesBinaryAndFlush(t *testing.T) {
 	}
 	if !sawBinary || !sawFlush {
 		t.Fatalf("sawBinary=%v sawFlush=%v", sawBinary, sawFlush)
+	}
+}
+
+func TestWSSessionCloseClosesFrames(t *testing.T) {
+	conn := newFakeConn()
+	sess := newWSAudioSession(conn)
+	if err := sess.Start(context.Background()); err != nil {
+		t.Fatalf("start: %v", err)
+	}
+
+	frame := pcm16(1, 2, 3)
+	conn.reads <- fakeMsg{websocket.BinaryMessage, frame}
+
+	src := sess.Sources()[0]
+	select {
+	case <-src.Frames():
+	case <-time.After(time.Second):
+		t.Fatal("no frame forwarded")
+	}
+
+	if err := sess.Close(); err != nil {
+		t.Fatalf("close: %v", err)
+	}
+
+	select {
+	case _, ok := <-src.Frames():
+		if ok {
+			t.Fatal("expected frames channel to be closed after Close, got a value")
+		}
+	case <-time.After(time.Second):
+		t.Fatal("frames channel was not closed within timeout")
+	}
+}
+
+func TestWSSessionMuteDropsFrames(t *testing.T) {
+	conn := newFakeConn()
+	sess := newWSAudioSession(conn)
+	if err := sess.Start(context.Background()); err != nil {
+		t.Fatalf("start: %v", err)
+	}
+	defer sess.Close()
+
+	src := sess.Sources()[0]
+
+	conn.reads <- fakeMsg{websocket.TextMessage, []byte(`{"type":"mute","muted":true}`)}
+	conn.reads <- fakeMsg{websocket.BinaryMessage, pcm16(1, 2, 3)}
+
+	select {
+	case mf := <-src.Frames():
+		t.Fatalf("expected no frame while muted, got %+v", mf)
+	case <-time.After(200 * time.Millisecond):
+	}
+
+	conn.reads <- fakeMsg{websocket.TextMessage, []byte(`{"type":"mute","muted":false}`)}
+	frame := pcm16(4, 5, 6)
+	conn.reads <- fakeMsg{websocket.BinaryMessage, frame}
+
+	select {
+	case mf := <-src.Frames():
+		if string(mf.Data) != string(frame) {
+			t.Fatalf("bad frame: %+v", mf)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("no frame forwarded after unmute")
+	}
+}
+
+func TestWSSourceCloseIsSafe(t *testing.T) {
+	conn := newFakeConn()
+	sess := newWSAudioSession(conn)
+	if err := sess.Start(context.Background()); err != nil {
+		t.Fatalf("start: %v", err)
+	}
+	defer sess.Close()
+
+	src := sess.Sources()[0]
+	if err := src.Close(); err != nil {
+		t.Fatalf("source close: %v", err)
+	}
+
+	select {
+	case _, ok := <-src.Frames():
+		if ok {
+			t.Fatal("expected frames channel to be closed, got a value")
+		}
+	case <-time.After(time.Second):
+		t.Fatal("frames channel was not closed within timeout")
 	}
 }

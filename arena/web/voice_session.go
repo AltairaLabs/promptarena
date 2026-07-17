@@ -73,12 +73,7 @@ func (s *wsAudioSession) readPump(ctx context.Context) {
 				Data:   data,
 				Format: audio.Format{SampleRate: audio.SampleRate16kHz, Channels: 1},
 			}
-			select {
-			case s.src.frames <- frame:
-			case <-ctx.Done():
-				return
-			default: // drop on backpressure, preserve capture cadence
-			}
+			s.src.send(frame)
 		case websocket.TextMessage:
 			if c, err := parseVoiceControl(data); err == nil && c.Type == "mute" {
 				s.muted.set(c.Muted)
@@ -91,13 +86,37 @@ func (s *wsAudioSession) readPump(ctx context.Context) {
 
 type wsSource struct {
 	frames chan audio.MediaFrame
-	once   sync.Once
+	mu     sync.Mutex
+	closed bool
 }
 
 func (s *wsSource) Frames() <-chan audio.MediaFrame { return s.frames }
 func (s *wsSource) Kind() audio.MediaKind           { return audio.KindAudio }
 func (s *wsSource) Close() error                    { s.closeOnce(); return nil }
-func (s *wsSource) closeOnce()                      { s.once.Do(func() { close(s.frames) }) }
+
+// send delivers a frame non-blockingly, dropping on backpressure. Serialized
+// with closeOnce so a send can never race the channel close.
+func (s *wsSource) send(f audio.MediaFrame) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.closed {
+		return
+	}
+	select {
+	case s.frames <- f:
+	default: // drop on backpressure — preserve capture cadence
+	}
+}
+
+func (s *wsSource) closeOnce() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.closed {
+		return
+	}
+	s.closed = true
+	close(s.frames)
+}
 
 // --- Sink ---
 
