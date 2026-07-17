@@ -3,6 +3,7 @@ package web
 import (
 	"context"
 	"sync"
+	"time"
 
 	"github.com/AltairaLabs/PromptKit/runtime/audio"
 	"github.com/gorilla/websocket"
@@ -27,19 +28,34 @@ type wsAudioSession struct {
 }
 
 func newWSAudioSession(conn wsConn) *wsAudioSession {
-	muted := &atomicBool{}
 	return &wsAudioSession{
 		conn:  conn,
 		src:   &wsSource{frames: make(chan audio.MediaFrame, 32)},
-		sink:  newWSSink(conn),
-		muted: muted,
+		sink:  newWSSink(conn, time.Now),
+		muted: &atomicBool{},
 	}
 }
 
 func (s *wsAudioSession) Start(ctx context.Context) error {
 	ctx, s.cancel = context.WithCancel(ctx)
 	go s.readPump(ctx)
+	go s.runQuietDetector(ctx)
 	return nil
+}
+
+func (s *wsAudioSession) runQuietDetector(ctx context.Context) {
+	t := time.NewTicker(sinkQuietGap / 2)
+	defer t.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-s.sink.stopCh:
+			return
+		case <-t.C:
+			s.sink.tick()
+		}
+	}
 }
 
 func (s *wsAudioSession) Sources() []audio.Source { return []audio.Source{s.src} }
@@ -120,17 +136,42 @@ func (s *wsSource) closeOnce() {
 
 // --- Sink ---
 
+const sinkQuietGap = 200 * time.Millisecond
+
 type wsSink struct {
-	conn wsConn
-	mu   sync.Mutex
+	conn      wsConn
+	now       func() time.Time
+	mu        sync.Mutex
+	speaking  bool
+	lastWrite time.Time
+	stopCh    chan struct{}
 }
 
-func newWSSink(conn wsConn) *wsSink { return &wsSink{conn: conn} }
+func newWSSink(conn wsConn, now func() time.Time) *wsSink {
+	s := &wsSink{conn: conn, now: now, stopCh: make(chan struct{})}
+	return s
+}
 
 func (s *wsSink) Write(fr audio.MediaFrame) {
 	s.mu.Lock()
-	defer s.mu.Unlock()
+	if !s.speaking {
+		s.speaking = true
+		_ = s.conn.WriteMessage(websocket.TextMessage, voiceStateMsg(voiceStateSpeaking))
+	}
+	s.lastWrite = s.now()
+	s.mu.Unlock()
 	_ = s.conn.WriteMessage(websocket.BinaryMessage, fr.Data)
+}
+
+// tick flips speaking→listening once the quiet gap has elapsed. Called on a
+// timer by the session (see runQuietDetector); exposed for tests.
+func (s *wsSink) tick() {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.speaking && s.now().Sub(s.lastWrite) >= sinkQuietGap {
+		s.speaking = false
+		_ = s.conn.WriteMessage(websocket.TextMessage, voiceStateMsg(voiceStateListening))
+	}
 }
 
 func (s *wsSink) Flush() {
@@ -141,7 +182,7 @@ func (s *wsSink) Flush() {
 
 func (s *wsSink) Kind() audio.MediaKind { return audio.KindAudio }
 func (s *wsSink) Close() error          { return nil }
-func (s *wsSink) stop()                 {}
+func (s *wsSink) stop()                 { close(s.stopCh) }
 
 // --- tiny atomic bool (avoid importing sync/atomic bool churn) ---
 

@@ -181,6 +181,39 @@ func TestWSSessionMuteDropsFrames(t *testing.T) {
 	}
 }
 
+func TestWSSinkEmitsSpeakingThenListening(t *testing.T) {
+	conn := newFakeConn()
+	clock := &fakeClock{t: time.Unix(0, 0)}
+	sink := newWSSink(conn, clock.now)
+
+	sink.Write(audio.MediaFrame{Data: pcm16(1)}) // first write → speaking
+	clock.advance(sinkQuietGap + time.Millisecond)
+	sink.tick() // quiet detector → listening
+
+	var sawSpeaking, sawListening bool
+	for _, w := range conn.writeSnapshot() {
+		if w.mt == websocket.TextMessage {
+			switch string(w.data) {
+			case string(voiceStateMsg(voiceStateSpeaking)):
+				sawSpeaking = true
+			case string(voiceStateMsg(voiceStateListening)):
+				sawListening = true
+			}
+		}
+	}
+	if !sawSpeaking || !sawListening {
+		t.Fatalf("sawSpeaking=%v sawListening=%v", sawSpeaking, sawListening)
+	}
+}
+
+type fakeClock struct {
+	mu sync.Mutex
+	t  time.Time
+}
+
+func (c *fakeClock) now() time.Time          { c.mu.Lock(); defer c.mu.Unlock(); return c.t }
+func (c *fakeClock) advance(d time.Duration) { c.mu.Lock(); c.t = c.t.Add(d); c.mu.Unlock() }
+
 func TestWSSourceCloseIsSafe(t *testing.T) {
 	conn := newFakeConn()
 	sess := newWSAudioSession(conn)
