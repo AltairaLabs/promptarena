@@ -83,3 +83,11 @@ if (typeof globalThis.DOMMatrixReadOnly === "undefined") {
   }
   globalThis.DOMMatrixReadOnly = DOMMatrixReadOnlyStub as unknown as typeof DOMMatrixReadOnly;
 }
+
+// Web Audio / mic stubs for jsdom (voice modules import these at module load).
+if (!("AudioContext" in globalThis)) {
+  (globalThis as unknown as { AudioContext: unknown }).AudioContext = class {};
+}
+if (!("AudioWorkletNode" in globalThis)) {
+  (globalThis as unknown as { AudioWorkletNode: unknown }).AudioWorkletNode = class {};
+}
