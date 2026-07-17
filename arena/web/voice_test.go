@@ -1,6 +1,8 @@
 package web
 
 import (
+	"net/http"
+	"net/http/httptest"
 	"path/filepath"
 	"testing"
 
@@ -29,6 +31,17 @@ func newVoiceTestEngine(t *testing.T) *engine.Engine {
 	}
 	t.Cleanup(func() { _ = eng.Close() })
 	return eng
+}
+
+// newTestServerWithVoiceEngine builds a *Server via the same constructor the
+// other web tests use, with interactiveEngine set to the Task 4 voice fixture
+// engine so handlers gated on it (e.g. handleInteractiveVoice) can run.
+func newTestServerWithVoiceEngine(t *testing.T) *Server {
+	t.Helper()
+	eng := newVoiceTestEngine(t)
+	s := newServerWithRunner(nil, eng, nil, "")
+	s.interactiveEngine = eng
+	return s
 }
 
 func newVoiceTestSession(t *testing.T, eng *engine.Engine) *engine.InteractiveSession {
@@ -117,5 +130,15 @@ func TestBuildVoiceRequest_UnknownSTTErrors(t *testing.T) {
 
 	if _, err := buildVoiceRequest(eng, sess, "no-such-stt", "", false); err == nil {
 		t.Fatal("want error for unknown stt provider id, got nil")
+	}
+}
+
+func TestHandleVoiceUnknownSession(t *testing.T) {
+	s := newTestServerWithVoiceEngine(t)
+	req := httptest.NewRequest(http.MethodGet, "/api/interactive/voice?session=nope", nil)
+	rec := httptest.NewRecorder()
+	s.handleInteractiveVoice(rec, req)
+	if rec.Code != http.StatusNotFound {
+		t.Fatalf("want 404, got %d", rec.Code)
 	}
 }

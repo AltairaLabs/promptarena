@@ -116,6 +116,7 @@ func newServerWithRunner(
 	s.mux.HandleFunc("GET /api/interactive/options", s.handleInteractiveOptions)
 	s.mux.HandleFunc("POST /api/interactive/session", s.handleInteractiveSession)
 	s.mux.HandleFunc("POST /api/interactive/message", s.handleInteractiveMessage)
+	s.mux.HandleFunc("GET /api/interactive/voice", s.handleInteractiveVoice)
 
 	// SPA fallback: serve embedded frontend
 	sub, subErr := fs.Sub(frontendFS, "frontend/dist")
