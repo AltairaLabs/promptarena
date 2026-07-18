@@ -7,7 +7,9 @@ import type {
   ArenaRunCompletedData,
   ArenaRunFailedData,
   ArenaTurnData,
+  LiveMessage,
   MessageCreatedData,
+  MessageFullData,
   MessageUpdatedData,
   ProviderCallData,
   LogEntry,
@@ -32,6 +34,7 @@ type Action =
   | { type: "TURN_STARTED"; runId: string; data: ArenaTurnData; timestamp: string }
   | { type: "TURN_COMPLETED"; runId: string; data: ArenaTurnData; timestamp: string }
   | { type: "MESSAGE_CREATED"; runId: string; data: MessageCreatedData; timestamp: string }
+  | { type: "MESSAGE_FULL"; runId: string; data: MessageFullData; timestamp: string }
   | { type: "MESSAGE_UPDATED"; runId: string; data: MessageUpdatedData; timestamp: string }
   | { type: "PROVIDER_CALL_COMPLETED"; runId: string; data: ProviderCallData; timestamp: string }
   | { type: "LOG"; entry: LogEntry };
@@ -39,6 +42,31 @@ type Action =
 // Exported for tests so the reducer/mapper contracts are pinned without
 // having to mount the hook against a real EventSource.
 export { reducer as __reducer, mapSSEToAction as __mapSSEToAction, initialState as __initialState };
+
+// liveMessageFromCreated adapts the thin MESSAGE_CREATED payload (camelCase
+// toolCalls/toolResult) into the LiveMessage shape stored on the run — the
+// same snake_case Message fields the later MESSAGE_FULL upsert (and the
+// historical REST path) use, so both coexist in ActiveRun.messages by index.
+function liveMessageFromCreated(d: MessageCreatedData): LiveMessage {
+  return {
+    index: d.index,
+    role: d.role,
+    content: d.content,
+    tool_calls: d.toolCalls,
+    tool_result: d.toolResult ?? undefined,
+  };
+}
+
+// upsertByIndex replaces the entry at `incoming.index` if one exists,
+// otherwise inserts and keeps the array sorted by index. Shared by
+// MESSAGE_CREATED (thin) and MESSAGE_FULL (rich) — both upsert the same
+// per-run messages array keyed on index.
+function upsertByIndex(msgs: LiveMessage[], incoming: LiveMessage): LiveMessage[] {
+  const idx = msgs.findIndex((m) => m.index === incoming.index);
+  return idx >= 0
+    ? msgs.map((m, i) => (i === idx ? incoming : m))
+    : [...msgs, incoming].sort((a, b) => a.index - b.index);
+}
 
 function reducer(state: ArenaState, action: Action): ArenaState {
   switch (action.type) {
@@ -111,12 +139,24 @@ function reducer(state: ArenaState, action: Action): ArenaState {
     case "MESSAGE_CREATED": {
       const existing = state.runs[action.runId];
       if (!existing) return state;
-      const msgs = existing.messages;
-      const idx = msgs.findIndex((m) => m.index === action.data.index);
-      const updatedMsgs =
-        idx >= 0
-          ? msgs.map((m, i) => (i === idx ? action.data : m))
-          : [...msgs, action.data].sort((a, b) => a.index - b.index);
+      const updatedMsgs = upsertByIndex(existing.messages, liveMessageFromCreated(action.data));
+      return {
+        ...state,
+        runs: {
+          ...state.runs,
+          [action.runId]: {
+            ...existing,
+            messages: updatedMsgs,
+          },
+        },
+      };
+    }
+
+    case "MESSAGE_FULL": {
+      const existing = state.runs[action.runId];
+      if (!existing) return state;
+      const incoming: LiveMessage = { ...action.data.message, index: action.data.index };
+      const updatedMsgs = upsertByIndex(existing.messages, incoming);
       return {
         ...state,
         runs: {
@@ -188,6 +228,8 @@ function mapSSEToAction(event: SSEEvent): Action | null {
       return { type: "TURN_COMPLETED", runId, data: d as unknown as ArenaTurnData, timestamp: ts };
     case "message.created":
       return { type: "MESSAGE_CREATED", runId, data: d as unknown as MessageCreatedData, timestamp: ts };
+    case "message.full":
+      return { type: "MESSAGE_FULL", runId, data: d as unknown as MessageFullData, timestamp: ts };
     case "message.updated":
       return { type: "MESSAGE_UPDATED", runId, data: d as unknown as MessageUpdatedData, timestamp: ts };
     case "provider.call.completed":

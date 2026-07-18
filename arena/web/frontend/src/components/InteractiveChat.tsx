@@ -5,23 +5,12 @@ import { useInteractiveChat } from "@/hooks/useInteractiveChat";
 import { useVoiceCall } from "@/hooks/useVoiceCall";
 import { adaptLiveMessages } from "@/lib/atlasAdapter";
 import { arenaInspectorTabs } from "@/lib/arenaInspectorTabs";
-import type { ArenaState, MessageCreatedData, Message } from "@/types";
+import type { ArenaState } from "@/types";
 
 interface InteractiveChatProps {
   state: ArenaState;
   registerInteractiveRun: (sessionId: string) => void;
   onBack: () => void;
-}
-
-// liveMessageToMessage maps in-flight SSE MessageCreatedData to the Message
-// shape ConversationThread renders. Mirrors the same helper in RunDetail.
-function liveMessageToMessage(m: MessageCreatedData): Message {
-  return {
-    role: m.role,
-    content: m.content,
-    tool_calls: m.toolCalls,
-    tool_result: m.toolResult ?? undefined,
-  };
 }
 
 type Phase = "setup" | "vars" | "chat";
@@ -184,13 +173,15 @@ export function InteractiveChat({ state, registerInteractiveRun, onBack }: Inter
 
   // Messages for the active session, sorted by index (upsert already sorts,
   // but defensive sort here handles any edge case), then adapted to Atlas.
+  // Stored entries are LiveMessage (thin message.created fields, upgraded
+  // in place to the full persisted Message once message.full arrives) — a
+  // superset of Message, so adaptLiveMessages picks up metrics/meta/raw
+  // fields with no extra mapping once the full event lands.
   const liveMessages = useMemo(() => {
     if (!sessionId) return [];
     const run = state.runs[sessionId];
     if (!run?.messages?.length) return [];
-    const msgs: Message[] = [...run.messages]
-      .sort((a, b) => (a.index ?? 0) - (b.index ?? 0))
-      .map(liveMessageToMessage);
+    const msgs = [...run.messages].sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
     return adaptLiveMessages(msgs);
   }, [sessionId, state.runs]);
 

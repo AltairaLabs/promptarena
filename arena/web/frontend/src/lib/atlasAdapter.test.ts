@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { adaptMessage, adaptRun, conversationChecks, adaptWorkflow } from "./atlasAdapter";
-import type { Message, RunResult, WorkflowGraph } from "@/types";
+import { adaptMessage, adaptRun, adaptLiveMessages, conversationChecks, adaptWorkflow } from "./atlasAdapter";
+import type { LiveMessage, Message, RunResult, WorkflowGraph } from "@/types";
 
 const run = (over: Partial<RunResult> = {}): RunResult =>
   ({ RunID: "r", ScenarioID: "helpfulness", ProviderID: "mock", StartTime: "2026-07-03T12:52:15Z", Messages: [], Error: "", ...over } as unknown as RunResult);
@@ -46,6 +46,25 @@ describe("adaptMessage", () => {
     const r = run({ Messages: [msg(), msg()] as Message[], Error: "provider timeout" });
     expect(adaptMessage(msg(), 1, r, 0).error?.message).toBe("provider timeout");
     expect(adaptMessage(msg(), 0, r, 0).error).toBeUndefined();
+  });
+});
+
+describe("adaptLiveMessages", () => {
+  it("populates metrics/meta on a live message once the SSE message.full upsert supplies cost_info/meta (proves the live Inspector renders them)", () => {
+    const thin: LiveMessage = { index: 0, role: "user", content: "hi" };
+    const full: LiveMessage = {
+      index: 1,
+      role: "assistant",
+      content: "hello",
+      latency_ms: 812,
+      cost_info: { input_tokens: 10, output_tokens: 5, input_cost_usd: 0, output_cost_usd: 0, total_cost_usd: 0.001 },
+      meta: { persona: "support" },
+    };
+    const [a0, a1] = adaptLiveMessages([thin, full]);
+    expect(a0.metrics).toBeUndefined();
+    expect(a0.meta).toBeUndefined();
+    expect(a1.metrics).toMatchObject({ latencyMs: 812, inputTokens: 10, outputTokens: 5, costUsd: 0.001 });
+    expect(a1.meta).toEqual({ persona: "support" });
   });
 });
 

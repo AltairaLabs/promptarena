@@ -48,6 +48,16 @@ export interface MessageCreatedData {
   toolResult?: MessageToolResult | null;
 }
 
+// MessageFullData is the payload of the `message.full` SSE event: the same
+// full, persisted Message the historical/REST path renders (role/content/
+// parts/tool_calls/tool_result/timestamp/latency_ms/cost_info/finish_reason/
+// meta/validations), plus the message's index in the conversation. It
+// supersedes the thin MessageCreatedData for the same index once it arrives.
+export interface MessageFullData {
+  index: number;
+  message: Message;
+}
+
 export interface MessageUpdatedData {
   index: number;
   latencyMs: number;
@@ -199,6 +209,7 @@ export interface Message {
   timestamp?: string;
   latency_ms?: number;
   cost_info?: CostInfo;
+  finish_reason?: string;
   meta?: Record<string, unknown>;
   validations?: ValidationResult[];
 }
@@ -337,6 +348,17 @@ export interface SelfPlayRoleInfo {
 
 // === App State ===
 
+// LiveMessage is what ActiveRun.messages stores: the SSE index plus whatever
+// Message fields are known so far. The thin `message.created` event
+// populates only role/content/tool_calls/tool_result; the later
+// `message.full` event upserts the same index with the rest (cost_info,
+// meta, latency_ms, validations, parts, timestamp, finish_reason) once the
+// backend has persisted the message — the same shape the historical/REST
+// `adaptMessage` path already renders.
+export interface LiveMessage extends Message {
+  index: number;
+}
+
 export interface ActiveRun {
   runId: string;
   scenario: string;
@@ -344,7 +366,7 @@ export interface ActiveRun {
   region: string;
   startTime: string;
   turnIndex: number;
-  messages: MessageCreatedData[];
+  messages: LiveMessage[];
   costs: { inputTokens: number; outputTokens: number; totalCost: number };
   status: "running" | "completed" | "failed";
   duration?: number;

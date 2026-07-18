@@ -23,6 +23,14 @@ const fakeMessageCreated = (
   data: { role, content, index, toolCalls: null, toolResult: null },
 });
 
+const fakeMessageFull = (runId: string, index: number, message: Record<string, unknown>): SSEEvent => ({
+  type: "message.full",
+  timestamp: "2026-05-06T12:00:01Z",
+  executionId: runId,
+  conversationId: runId,
+  data: { index, message },
+});
+
 describe("mapSSEToAction", () => {
   it("returns null when SSE event has no data field — protects the reducer from publisher gaps", () => {
     const event: SSEEvent = {
@@ -51,6 +59,17 @@ describe("mapSSEToAction", () => {
       type: "MESSAGE_CREATED",
       runId: "run-1",
       data: { role: "user", content: "Hi", index: 0 },
+    });
+  });
+
+  it("maps message.full → MESSAGE_FULL with the index + full message payload", () => {
+    const action = __mapSSEToAction(
+      fakeMessageFull("run-1", 0, { role: "assistant", content: "hi", meta: { foo: "bar" } }),
+    );
+    expect(action).toMatchObject({
+      type: "MESSAGE_FULL",
+      runId: "run-1",
+      data: { index: 0, message: { role: "assistant", content: "hi", meta: { foo: "bar" } } },
     });
   });
 
@@ -175,6 +194,57 @@ describe("reducer", () => {
     });
     expect(state.runs["run-upsert"].messages).toHaveLength(1);
     expect(state.runs["run-upsert"].messages[0].content).toBe("hello updated");
+  });
+
+  it("MESSAGE_FULL upserts the full persisted message over the thin MESSAGE_CREATED entry at the same index", () => {
+    let state = __reducer(__initialState, {
+      type: "RUN_STARTED",
+      runId: "run-full",
+      data: { provider: "mock", region: "default", scenario: "test" },
+      timestamp: "t0",
+    });
+    // Thin entry arrives first, as it does on the wire.
+    state = __reducer(state, {
+      type: "MESSAGE_CREATED",
+      runId: "run-full",
+      data: { role: "assistant", content: "hello", index: 0 },
+      timestamp: "t1",
+    });
+    expect(state.runs["run-full"].messages[0].meta).toBeUndefined();
+
+    // The full persisted message follows, carrying metrics/meta/cost_info.
+    state = __reducer(state, {
+      type: "MESSAGE_FULL",
+      runId: "run-full",
+      data: {
+        index: 0,
+        message: {
+          role: "assistant",
+          content: "hello",
+          latency_ms: 812,
+          cost_info: { input_tokens: 10, output_tokens: 5, input_cost_usd: 0, output_cost_usd: 0, total_cost_usd: 0.001 },
+          meta: { persona: "support" },
+        },
+      },
+      timestamp: "t2",
+    });
+
+    expect(state.runs["run-full"].messages).toHaveLength(1);
+    const full = state.runs["run-full"].messages[0];
+    expect(full.index).toBe(0);
+    expect(full.meta).toEqual({ persona: "support" });
+    expect(full.cost_info?.total_cost_usd).toBeCloseTo(0.001);
+    expect(full.latency_ms).toBe(812);
+  });
+
+  it("MESSAGE_FULL for an unknown runId is silently dropped", () => {
+    const next = __reducer(__initialState, {
+      type: "MESSAGE_FULL",
+      runId: "unknown-run",
+      data: { index: 0, message: { role: "user", content: "stray" } },
+      timestamp: "t",
+    });
+    expect(next.runs["unknown-run"]).toBeUndefined();
   });
 
   it("MESSAGE_CREATED with different indices inserts in index order", () => {
