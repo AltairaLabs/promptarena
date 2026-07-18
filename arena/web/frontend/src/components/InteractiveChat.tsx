@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ArrowLeft } from "lucide-react";
 import { LiveConsole, Button } from "@altairalabs/atlas";
 import { useInteractiveChat } from "@/hooks/useInteractiveChat";
+import { useVoiceCall } from "@/hooks/useVoiceCall";
 import { adaptLiveMessages } from "@/lib/atlasAdapter";
 import { arenaInspectorTabs } from "@/lib/arenaInspectorTabs";
 import type { ArenaState, MessageCreatedData, Message } from "@/types";
@@ -84,6 +85,7 @@ export function InteractiveChat({ state, registerInteractiveRun, onBack }: Inter
   const [agents, setAgents] = useState<Array<{ taskType: string; description: string }>>([]);
   const [providers, setProviders] = useState<string[]>([]);
   const [hasEvals, setHasEvals] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
 
   const [selectedAgent, setSelectedAgent] = useState<string>("");
   const [selectedProvider, setSelectedProvider] = useState<string>("");
@@ -105,6 +107,8 @@ export function InteractiveChat({ state, registerInteractiveRun, onBack }: Inter
 
   const phase: Phase = sessionId ? "chat" : missingVars.length > 0 ? "vars" : "setup";
 
+  const voiceCall = useVoiceCall({ sessionId, enabled: voiceEnabled });
+
   // Load options on mount
   useEffect(() => {
     setLoadingOptions(true);
@@ -113,6 +117,7 @@ export function InteractiveChat({ state, registerInteractiveRun, onBack }: Inter
         setAgents(opts.agents);
         setProviders(opts.providers);
         setHasEvals(opts.hasEvals);
+        setVoiceEnabled(opts.voice);
         if (opts.agents.length === 1) setSelectedAgent(opts.agents[0].taskType);
         if (opts.providers.length === 1) setSelectedProvider(opts.providers[0]);
       })
@@ -340,6 +345,7 @@ export function InteractiveChat({ state, registerInteractiveRun, onBack }: Inter
         messages={liveMessages}
         inspectorTabs={arenaInspectorTabs}
         onSend={handleSend}
+        call={voiceEnabled ? voiceCall : undefined}
         connectionStatus={state.connected ? "connected" : "connecting"}
         composerDisabled={busy}
         composerPlaceholder="Type a message… (Enter to send, Shift+Enter for newline)"
