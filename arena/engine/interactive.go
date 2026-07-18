@@ -7,7 +7,6 @@ import (
 	"sort"
 	"time"
 
-	"github.com/AltairaLabs/PromptKit/pkg/config"
 	"github.com/AltairaLabs/PromptKit/runtime/evals"
 	"github.com/AltairaLabs/PromptKit/runtime/prompt"
 	"github.com/AltairaLabs/PromptKit/runtime/providers"
@@ -261,55 +260,52 @@ func (e *Engine) HasConfigEvals() bool {
 }
 
 // SupportsVoice reports whether the loaded config can drive a duplex voice
-// session: any scenario declaring a Duplex block, or any native-realtime
-// provider (additional_config.realtime: true/"true"). Mirrors
-// app.DetectInteractiveSession (arena/tui/app/page.go) without the TUI
-// dependency, so web can gate the voice control the same way the TUI does.
+// session: any scenario declaring a Duplex block, or any provider that supports
+// realtime audio input (see VoiceProviderIDs).
 func (e *Engine) SupportsVoice() bool {
 	for _, sc := range e.config.LoadedScenarios {
 		if sc != nil && sc.Duplex != nil {
 			return true
 		}
 	}
-	for _, p := range e.config.LoadedProviders {
-		if isRealtimeProvider(p) {
-			return true
-		}
-	}
-	return false
+	return len(e.VoiceProviderIDs()) > 0
 }
 
-// isRealtimeProvider reports whether a provider declares native realtime
-// audio (additional_config.realtime: true). Mirrors
-// app.isRealtimeProvider (arena/tui/app/page.go), which accepts either a
-// bool or the string "true" for the flag.
-func isRealtimeProvider(p *config.Provider) bool {
-	if p == nil {
-		return false
-	}
-	switch v := p.AdditionalConfig["realtime"].(type) {
-	case bool:
-		return v
-	case string:
-		return v == "true"
-	default:
-		return false
-	}
-}
-
-// VoiceProviderIDs lists the loaded provider IDs that support native realtime
-// audio, so the web console can offer the voice call control only when a
-// realtime-capable provider is selected (rather than for any provider whenever
-// the config happens to contain one realtime model). Sorted for stable order.
+// VoiceProviderIDs lists the loaded provider IDs whose constructed provider
+// supports realtime duplex audio input, so the web console offers the voice
+// control only for models that can actually do it. It asks each provider its own
+// capability (providers.StreamInputSupport.SupportsStreamInput) rather than
+// pattern-matching config keys — so it tracks whatever the OpenAI / Gemini / mock
+// providers report (OpenAI gates on realtime models, Gemini Live always
+// supports it, the mock always does) and correctly excludes plain-text models.
+// Sorted for stable ordering.
 func (e *Engine) VoiceProviderIDs() []string {
 	out := make([]string, 0)
-	for id, p := range e.config.LoadedProviders {
-		if isRealtimeProvider(p) {
+	for _, id := range e.ProviderIDs() {
+		if prov, ok := e.providerRegistry.Get(id); ok && providerSupportsRealtimeAudio(prov) {
 			out = append(out, id)
 		}
 	}
 	sort.Strings(out)
 	return out
+}
+
+// providerSupportsRealtimeAudio reports whether a constructed provider accepts
+// streaming audio input — the same capability the duplex executor relies on to
+// run a realtime session. This is the authoritative signal; the provider owns
+// the logic (OpenAI gates on the model name, Gemini always supports it), so this
+// stays correct as providers evolve without re-encoding their rules here.
+func providerSupportsRealtimeAudio(p providers.Provider) bool {
+	si, ok := p.(providers.StreamInputSupport)
+	if !ok {
+		return false
+	}
+	for _, ct := range si.SupportsStreamInput() {
+		if ct == types.ContentTypeAudio {
+			return true
+		}
+	}
+	return false
 }
 
 // Cost sums per-message cost across the transcript.

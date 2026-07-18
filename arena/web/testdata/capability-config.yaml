@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=https://promptkit.altairalabs.ai/schemas/latest/arena.json
+#
+# Real-provider fixture (NOT mock-mode) for VoiceProviderIDs discrimination:
+# a Gemini Live provider and an OpenAI realtime provider (both realtime-audio
+# capable) plus an OpenAI text provider (not). Providers construct without
+# credentials, so VoiceProviderIDs can query their streaming capability offline.
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Arena
+metadata:
+  name: web-voice-capability-fixture
+spec:
+  prompt_configs:
+    - id: voice
+      file: prompts/voice.prompt.yaml
+
+  providers:
+    - file: providers/cap-gemini.provider.yaml
+    - file: providers/cap-openai-realtime.provider.yaml
+    - file: providers/cap-openai-text.provider.yaml
+
+  defaults:
+    temperature: 0.5
+    max_tokens: 100

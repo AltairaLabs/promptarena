@@ -1,0 +1,10 @@
+# Real OpenAI realtime provider. The OpenAI provider advertises streaming audio
+# input only when the model name contains "realtime", so this one is detected.
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Provider
+metadata:
+  name: cap-openai-realtime
+spec:
+  id: cap-openai-realtime
+  type: openai
+  model: gpt-realtime

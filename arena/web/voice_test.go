@@ -87,6 +87,30 @@ func TestVoiceProviderIDs_OnlyRealtime(t *testing.T) {
 	}
 }
 
+// TestVoiceProviderIDs_DiscriminatesRealProviders is the authoritative test for
+// the capability check: with REAL providers (no mock mode, constructed
+// credential-free), a Gemini Live provider and an OpenAI realtime provider are
+// detected, while an OpenAI text model is excluded. This is the case the old
+// config-flag heuristic got wrong for Gemini.
+func TestVoiceProviderIDs_DiscriminatesRealProviders(t *testing.T) {
+	eng, err := engine.NewEngineFromConfigFile(filepath.Clean("testdata/capability-config.yaml"))
+	if err != nil {
+		t.Fatalf("NewEngineFromConfigFile: %v", err)
+	}
+	t.Cleanup(func() { _ = eng.Close() })
+
+	got := eng.VoiceProviderIDs()
+	want := []string{"cap-gemini", "cap-openai-realtime"} // sorted; cap-openai-text excluded
+	if len(got) != len(want) {
+		t.Fatalf("VoiceProviderIDs: want %v (gemini + openai-realtime, excluding the text model), got %v", want, got)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("VoiceProviderIDs: want %v, got %v", want, got)
+		}
+	}
+}
+
 func TestOptionsIncludesVoiceProviders(t *testing.T) {
 	s := newTestServerWithVoiceEngine(t)
 	rec := httptest.NewRecorder()

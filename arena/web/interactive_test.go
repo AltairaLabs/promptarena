@@ -72,18 +72,31 @@ func TestOptionsAdvertisesVoice(t *testing.T) {
 }
 
 func TestOptionsDoesNotAdvertiseVoiceForNonVoiceConfig(t *testing.T) {
-	s := newTestServer(t) // non-voice engine fixture (no duplex scenario, no realtime provider)
+	// A genuinely non-voice config: a real text-only provider (no realtime audio,
+	// no duplex scenario). A mock provider can't express this — mocks advertise
+	// audio unconditionally and so are correctly voice-capable.
+	eng, err := engine.NewEngineFromConfigFile(filepath.Clean("testdata/text-only-config.yaml"))
+	if err != nil {
+		t.Fatalf("NewEngineFromConfigFile: %v", err)
+	}
+	t.Cleanup(func() { _ = eng.Close() })
+	s := NewServer(NewEventAdapter(), eng, nil, "")
+
 	req := httptest.NewRequest("GET", "/api/interactive/options", nil)
 	rec := httptest.NewRecorder()
 	s.handleInteractiveOptions(rec, req)
 	var out struct {
-		Voice bool `json:"voice"`
+		Voice          bool     `json:"voice"`
+		VoiceProviders []string `json:"voiceProviders"`
 	}
 	if err := json.Unmarshal(rec.Body.Bytes(), &out); err != nil {
 		t.Fatalf("unmarshal: %v", err)
 	}
 	if out.Voice {
-		t.Fatal("expected voice:false for a non-voice config")
+		t.Fatal("expected voice:false for a non-voice (text-only real provider) config")
+	}
+	if len(out.VoiceProviders) != 0 {
+		t.Fatalf("expected no voiceProviders for a text-only config, got %v", out.VoiceProviders)
 	}
 }
 

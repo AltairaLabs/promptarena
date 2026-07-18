@@ -1,0 +1,21 @@
+# yaml-language-server: $schema=https://promptkit.altairalabs.ai/schemas/latest/arena.json
+#
+# Real text-only provider (no realtime-audio capability, no duplex scenario) —
+# a genuinely non-voice config, so SupportsVoice()/the options `voice` flag is
+# false. Uses a real provider rather than a mock, because mocks advertise audio
+# unconditionally and so are (correctly) voice-capable.
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Arena
+metadata:
+  name: web-voice-textonly-fixture
+spec:
+  prompt_configs:
+    - id: voice
+      file: prompts/voice.prompt.yaml
+
+  providers:
+    - file: providers/cap-openai-text.provider.yaml
+
+  defaults:
+    temperature: 0.5
+    max_tokens: 100
