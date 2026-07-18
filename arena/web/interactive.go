@@ -135,5 +135,8 @@ func (s *Server) handleInteractiveMessage(w http.ResponseWriter, r *http.Request
 			return
 		}
 	}
+	// Turn persisted — stamp the available-tools metadata onto the system message
+	// so the Inspector shows it (the re-save re-emits the enriched message via SSE).
+	s.interactiveEngine.EnrichConversationTools(r.Context(), sess.ConversationID())
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true})
 }
