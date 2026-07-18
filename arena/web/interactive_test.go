@@ -55,6 +55,38 @@ func TestInteractiveOptions(t *testing.T) {
 	}
 }
 
+func TestOptionsAdvertisesVoice(t *testing.T) {
+	s := newTestServerWithVoiceEngine(t) // voice-capable engine (Task 4 fixture)
+	req := httptest.NewRequest("GET", "/api/interactive/options", nil)
+	rec := httptest.NewRecorder()
+	s.handleInteractiveOptions(rec, req)
+	var out struct {
+		Voice bool `json:"voice"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &out); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if !out.Voice {
+		t.Fatal("expected voice:true for a duplex-capable config")
+	}
+}
+
+func TestOptionsDoesNotAdvertiseVoiceForNonVoiceConfig(t *testing.T) {
+	s := newTestServer(t) // non-voice engine fixture (no duplex scenario, no realtime provider)
+	req := httptest.NewRequest("GET", "/api/interactive/options", nil)
+	rec := httptest.NewRecorder()
+	s.handleInteractiveOptions(rec, req)
+	var out struct {
+		Voice bool `json:"voice"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &out); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if out.Voice {
+		t.Fatal("expected voice:false for a non-voice config")
+	}
+}
+
 func TestInteractiveSession_MissingVars(t *testing.T) {
 	srv := newTestServer(t)
 	body := `{"agent":"basic","provider":"mock","variables":{}}`

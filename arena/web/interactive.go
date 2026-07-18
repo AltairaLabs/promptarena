@@ -54,9 +54,11 @@ func (s *Server) handleInteractiveOptions(w http.ResponseWriter, _ *http.Request
 		Agents    []map[string]string `json:"agents"`
 		Providers []string            `json:"providers"`
 		HasEvals  bool                `json:"hasEvals"`
+		Voice     bool                `json:"voice"`
 	}{
 		Providers: s.interactiveEngine.ProviderIDs(),
 		HasEvals:  s.interactiveEngine.HasConfigEvals(),
+		Voice:     s.interactiveEngine.SupportsVoice(),
 	}
 	for _, a := range agents {
 		out.Agents = append(out.Agents, map[string]string{jsonKeyTaskType: a.TaskType, "description": a.Description})

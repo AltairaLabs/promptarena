@@ -7,6 +7,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/AltairaLabs/PromptKit/pkg/config"
 	"github.com/AltairaLabs/PromptKit/runtime/evals"
 	"github.com/AltairaLabs/PromptKit/runtime/prompt"
 	"github.com/AltairaLabs/PromptKit/runtime/providers"
@@ -257,6 +258,43 @@ func (s *InteractiveSession) RunEvals(ctx context.Context) ([]evals.EvalResult, 
 // run for scores.
 func (e *Engine) HasConfigEvals() bool {
 	return e.evalOrchestrator != nil && e.evalOrchestrator.HasEvals()
+}
+
+// SupportsVoice reports whether the loaded config can drive a duplex voice
+// session: any scenario declaring a Duplex block, or any native-realtime
+// provider (additional_config.realtime: true/"true"). Mirrors
+// app.DetectInteractiveSession (arena/tui/app/page.go) without the TUI
+// dependency, so web can gate the voice control the same way the TUI does.
+func (e *Engine) SupportsVoice() bool {
+	for _, sc := range e.config.LoadedScenarios {
+		if sc != nil && sc.Duplex != nil {
+			return true
+		}
+	}
+	for _, p := range e.config.LoadedProviders {
+		if isRealtimeProvider(p) {
+			return true
+		}
+	}
+	return false
+}
+
+// isRealtimeProvider reports whether a provider declares native realtime
+// audio (additional_config.realtime: true). Mirrors
+// app.isRealtimeProvider (arena/tui/app/page.go), which accepts either a
+// bool or the string "true" for the flag.
+func isRealtimeProvider(p *config.Provider) bool {
+	if p == nil {
+		return false
+	}
+	switch v := p.AdditionalConfig["realtime"].(type) {
+	case bool:
+		return v
+	case string:
+		return v == "true"
+	default:
+		return false
+	}
 }
 
 // Cost sums per-message cost across the transcript.

@@ -4,6 +4,7 @@ export interface InteractiveOptions {
   agents: Array<{ taskType: string; description: string }>;
   providers: string[];
   hasEvals: boolean;
+  voice: boolean;
 }
 
 export interface CreateSessionResult {
