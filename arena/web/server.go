@@ -88,7 +88,21 @@ func NewServer(adapter *EventAdapter, eng *engine.Engine, store *statestore.Aren
 
 	if store != nil && adapter != nil {
 		store.SetOnSave(func(st *runtimestore.ConversationState) {
-			adapter.BroadcastFullMessages(st.ID, st.Messages)
+			// Stamp the available-tools metadata onto the conversation's system
+			// message once, on every persist path (text, voice, batch), so the
+			// Inspector surfaces tools everywhere — not just the text turn handler.
+			// EnrichConversationTools is idempotent (no-op once stamped), and its
+			// re-save re-enters this callback where the second pass does nothing,
+			// so it terminates. Broadcast the freshly stored state so the tools
+			// (added on a separately loaded copy) are included.
+			msgs := st.Messages
+			if eng != nil {
+				eng.EnrichConversationTools(context.Background(), st.ID)
+				if full, err := store.Load(context.Background(), st.ID); err == nil && full != nil {
+					msgs = full.Messages
+				}
+			}
+			adapter.BroadcastFullMessages(st.ID, msgs)
 		})
 	}
 	return s

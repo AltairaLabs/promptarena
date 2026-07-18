@@ -764,6 +764,14 @@ func (e *Engine) enrichMessagesWithToolDescriptors(
 		if convState.Messages[i].Role != "system" {
 			continue
 		}
+		// Idempotent: if the system message is already enriched, skip the re-save.
+		// This keeps calling from the store's onSave hook loop-free (the stamp
+		// re-saves, which re-enters onSave — the second pass is a no-op here).
+		if convState.Messages[i].Meta != nil {
+			if _, already := convState.Messages[i].Meta["_available_tools"]; already {
+				return
+			}
+		}
 		if convState.Messages[i].Meta == nil {
 			convState.Messages[i].Meta = map[string]interface{}{}
 		}
