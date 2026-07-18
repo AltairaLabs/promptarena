@@ -126,4 +126,45 @@ describe("useVoiceCall", () => {
     expect(result.current.state).not.toBe("error");
     expect(result.current.state).toBe("connecting");
   });
+
+  it("tears down mic/transport/playback on unmount mid-call", () => {
+    const transport = { connect: vi.fn(), sendPcm: vi.fn(), setMuted: vi.fn(), close: vi.fn() };
+    const mic = { start: vi.fn().mockResolvedValue(undefined), stop: vi.fn() };
+    const playback = { enqueue: vi.fn(), flush: vi.fn(), close: vi.fn() };
+    vi.spyOn(voiceFactories, "makeTransport").mockReturnValue(transport as never);
+    vi.spyOn(voiceFactories, "makeMic").mockReturnValue(mic as never);
+    vi.spyOn(voiceFactories, "makePlayback").mockReturnValue(playback as never);
+
+    const { result, unmount } = renderHook(() => useVoiceCall({ sessionId: "s1", enabled: true }));
+    act(() => result.current.onCall());
+
+    unmount();
+
+    expect(transport.close).toHaveBeenCalled();
+    expect(mic.stop).toHaveBeenCalled();
+    expect(playback.close).toHaveBeenCalled();
+  });
+
+  it("surfaces mic.start rejection as an error and tears down resources", async () => {
+    const transport = { connect: vi.fn(), sendPcm: vi.fn(), setMuted: vi.fn(), close: vi.fn() };
+    const mic = { start: vi.fn().mockRejectedValue(new Error("Permission denied")), stop: vi.fn() };
+    const playback = { enqueue: vi.fn(), flush: vi.fn(), close: vi.fn() };
+    vi.spyOn(voiceFactories, "makeTransport").mockReturnValue(transport as never);
+    vi.spyOn(voiceFactories, "makeMic").mockReturnValue(mic as never);
+    vi.spyOn(voiceFactories, "makePlayback").mockReturnValue(playback as never);
+
+    const { result } = renderHook(() => useVoiceCall({ sessionId: "s1", enabled: true }));
+
+    await act(async () => {
+      result.current.onCall();
+      // flush the rejected-promise microtask queue
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(result.current.state).toBe("error");
+    expect(result.current.errorMessage).toContain("Permission denied");
+    expect(transport.close).toHaveBeenCalled();
+    expect(mic.stop).toHaveBeenCalled();
+  });
 });

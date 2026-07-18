@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import { WsPlayback } from "./wsPlayback";
 
 // Minimal AudioContext fake capturing scheduled sources.
@@ -21,6 +21,7 @@ function fakeCtx() {
     sources,
     currentTime: 0,
     destination: {},
+    close: vi.fn(),
     createBuffer: (_ch: number, len: number, _rate: number) => ({
       length: len,
       duration: len / 24000,
@@ -31,7 +32,7 @@ function fakeCtx() {
       sources.push(s);
       return s;
     },
-  } as unknown as AudioContext & { sources: FakeSource[] };
+  } as unknown as AudioContext & { sources: FakeSource[]; close: ReturnType<typeof vi.fn> };
 }
 
 describe("WsPlayback", () => {
@@ -52,5 +53,13 @@ describe("WsPlayback", () => {
     p.enqueue(new Int16Array([1, 2]).buffer);
     p.flush();
     expect(ctx.sources[0].stopped).toBe(true);
+  });
+
+  it("close() flushes queued sources and closes the AudioContext", () => {
+    const p = new WsPlayback(ctx);
+    p.enqueue(new Int16Array([1, 2]).buffer);
+    p.close();
+    expect(ctx.sources[0].stopped).toBe(true);
+    expect(ctx.close).toHaveBeenCalled();
   });
 });

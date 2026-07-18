@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { MicCapture } from "@/audio/micCapture";
 import { WsPlayback } from "@/audio/wsPlayback";
 import { VoiceTransport, type CallState } from "@/voice/voiceTransport";
@@ -31,12 +31,21 @@ export function useVoiceCall(opts: { sessionId: string | null; enabled: boolean 
   const transportRef = useRef<ReturnType<typeof voiceFactories.makeTransport> | null>(null);
   const genRef = useRef(0);
 
-  const onCall = useCallback(() => {
-    if (!opts.sessionId || !opts.enabled) return;
-    // Tear down any prior/active instances before starting fresh (double-invoke safety + retry-after-error).
+  // Resource-only teardown — no setState, so it's safe to call during unmount.
+  const teardownRefs = useCallback(() => {
+    genRef.current++; // invalidate in-flight callbacks
     micRef.current?.stop();
     transportRef.current?.close();
     playbackRef.current?.close();
+    micRef.current = null;
+    transportRef.current = null;
+    playbackRef.current = null;
+  }, []);
+
+  const onCall = useCallback(() => {
+    if (!opts.sessionId || !opts.enabled) return;
+    // Tear down any prior/active instances before starting fresh (double-invoke safety + retry-after-error).
+    teardownRefs();
 
     const gen = ++genRef.current;
     setErrorMessage(undefined);
@@ -63,27 +72,37 @@ export function useVoiceCall(opts: { sessionId: string | null; enabled: boolean 
     micRef.current = mic;
 
     transport.connect();
-    void mic.start(
-      (buf) => transport.sendPcm(buf),
-      (v) => {
-        if (gen === genRef.current) setLevel(v);
-      },
-    );
-  }, [opts.sessionId, opts.enabled]);
+    mic
+      .start(
+        (buf) => transport.sendPcm(buf),
+        (v) => {
+          if (gen === genRef.current) setLevel(v);
+        },
+      )
+      .catch((e: unknown) => {
+        if (gen !== genRef.current) return; // superseded — ignore
+        micRef.current?.stop();
+        transportRef.current?.close();
+        playbackRef.current?.close();
+        micRef.current = null;
+        transportRef.current = null;
+        playbackRef.current = null;
+        setErrorMessage(e instanceof Error ? e.message : String(e));
+        setState("error"); // guard keeps this from being clobbered by trailing onclose->idle
+      });
+  }, [opts.sessionId, opts.enabled, teardownRefs]);
 
   const onHangup = useCallback(() => {
-    genRef.current++;
-    micRef.current?.stop();
-    transportRef.current?.close();
-    playbackRef.current?.close();
-    micRef.current = null;
-    transportRef.current = null;
-    playbackRef.current = null;
+    teardownRefs();
     setState("idle");
     setLevel(0);
     setMuted(false);
     setErrorMessage(undefined);
-  }, []);
+  }, [teardownRefs]);
+
+  // Unmount cleanup: if the consumer unmounts mid-call (e.g. navigating away),
+  // tear down the mic/socket/AudioContext instead of leaking them.
+  useEffect(() => teardownRefs, [teardownRefs]);
 
   const onToggleMute = useCallback(() => {
     setMuted((m) => {

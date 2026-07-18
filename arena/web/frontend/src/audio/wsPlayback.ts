@@ -48,5 +48,6 @@ export class WsPlayback {
 
   close(): void {
     this.flush();
+    void this.ctx.close();
   }
 }
