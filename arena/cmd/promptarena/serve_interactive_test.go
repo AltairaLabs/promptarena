@@ -20,6 +20,30 @@ func freeStartPort(t *testing.T) int {
 	return port
 }
 
+func TestLoopbackPortAnswering(t *testing.T) {
+	free := freeStartPort(t)
+	if loopbackPortAnswering(free) {
+		t.Fatalf("nothing is listening on %d, expected not-answering", free)
+	}
+	ln, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", free))
+	if err != nil {
+		t.Fatalf("listen: %v", err)
+	}
+	defer func() { _ = ln.Close() }()
+	go func() {
+		for {
+			c, e := ln.Accept()
+			if e != nil {
+				return
+			}
+			_ = c.Close()
+		}
+	}()
+	if !loopbackPortAnswering(free) {
+		t.Fatalf("something is listening on %d, expected answering", free)
+	}
+}
+
 func TestFirstFreeLoopbackPort_ReturnsUsablePort(t *testing.T) {
 	v4, v6, port, err := firstFreeLoopbackPort(freeStartPort(t), 50)
 	if err != nil {

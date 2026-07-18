@@ -35,6 +35,20 @@ func serveAddr(port int) string {
 	return fmt.Sprintf("127.0.0.1:%d", port)
 }
 
+// loopbackPortAnswering reports whether something already accepts connections on
+// the loopback at this port (either IPv4 or IPv6). Used to skip ports held by a
+// dual-stack listener that a bind check wouldn't catch.
+func loopbackPortAnswering(port int) bool {
+	for _, addr := range []string{serveAddr(port), fmt.Sprintf("[::1]:%d", port)} {
+		c, err := net.DialTimeout("tcp", addr, 200*time.Millisecond)
+		if err == nil {
+			_ = c.Close()
+			return true
+		}
+	}
+	return false
+}
+
 // firstFreeLoopbackPort finds the first port >= start (scanning up to `attempts`
 // consecutive ports) that is bindable on BOTH the IPv4 (127.0.0.1) and IPv6
 // (::1) loopback, returning an open listener for each. If the host has no IPv6
@@ -54,6 +68,14 @@ func firstFreeLoopbackPort(start, attempts int) (v4, v6 net.Listener, port int, 
 	}
 	var lastErr error
 	for p := start; p < start+attempts; p++ {
+		// A dual-stack listener elsewhere (e.g. another app on [::]:PORT) is
+		// bindable-around on macOS but still answers "localhost", so a bind check
+		// alone would let us start on a port a browser then routes to that other
+		// app. Skip any port where something already accepts loopback connections.
+		if loopbackPortAnswering(p) {
+			lastErr = fmt.Errorf("port %d already in use", p)
+			continue
+		}
 		l4, e4 := net.Listen("tcp4", serveAddr(p))
 		if e4 != nil {
 			lastErr = e4
