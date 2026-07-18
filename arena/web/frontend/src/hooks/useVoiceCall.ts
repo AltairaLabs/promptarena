@@ -29,19 +29,32 @@ export function useVoiceCall(opts: { sessionId: string | null; enabled: boolean 
   const micRef = useRef<ReturnType<typeof voiceFactories.makeMic> | null>(null);
   const playbackRef = useRef<ReturnType<typeof voiceFactories.makePlayback> | null>(null);
   const transportRef = useRef<ReturnType<typeof voiceFactories.makeTransport> | null>(null);
+  const genRef = useRef(0);
 
   const onCall = useCallback(() => {
     if (!opts.sessionId || !opts.enabled) return;
+    // Tear down any prior/active instances before starting fresh (double-invoke safety + retry-after-error).
+    micRef.current?.stop();
+    transportRef.current?.close();
+    playbackRef.current?.close();
+
+    const gen = ++genRef.current;
     setErrorMessage(undefined);
-    const playback = voiceFactories.makePlayback();
+
     const url = `${location.origin.replace(/^http/, "ws")}/api/interactive/voice?session=${encodeURIComponent(opts.sessionId)}&bargein=1`;
+    const playback = voiceFactories.makePlayback();
     const transport = voiceFactories.makeTransport({
       url,
       playback,
-      onState: (s) => setState(s),
+      // Ignore callbacks from a superseded transport; never downgrade error->idle.
+      onState: (s) => {
+        if (gen === genRef.current) setState((prev) => (prev === "error" && s === "idle" ? prev : s));
+      },
       onError: (m) => {
-        setErrorMessage(m);
-        setState("error");
+        if (gen === genRef.current) {
+          setErrorMessage(m);
+          setState("error");
+        }
       },
     });
     const mic = voiceFactories.makeMic();
@@ -52,11 +65,14 @@ export function useVoiceCall(opts: { sessionId: string | null; enabled: boolean 
     transport.connect();
     void mic.start(
       (buf) => transport.sendPcm(buf),
-      (v) => setLevel(v),
+      (v) => {
+        if (gen === genRef.current) setLevel(v);
+      },
     );
   }, [opts.sessionId, opts.enabled]);
 
   const onHangup = useCallback(() => {
+    genRef.current++;
     micRef.current?.stop();
     transportRef.current?.close();
     playbackRef.current?.close();
@@ -66,6 +82,7 @@ export function useVoiceCall(opts: { sessionId: string | null; enabled: boolean 
     setState("idle");
     setLevel(0);
     setMuted(false);
+    setErrorMessage(undefined);
   }, []);
 
   const onToggleMute = useCallback(() => {
