@@ -15,6 +15,7 @@ import (
 	"sync"
 	"time"
 
+	runtimestore "github.com/AltairaLabs/PromptKit/runtime/statestore"
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 	arenaaudio "github.com/AltairaLabs/promptarena/arena/audio"
 	"github.com/AltairaLabs/promptarena/arena/engine"
@@ -84,6 +85,12 @@ func NewServer(adapter *EventAdapter, eng *engine.Engine, store *statestore.Aren
 	}
 	s := newServerWithRunner(adapter, runner, store, outputDir)
 	s.interactiveEngine = eng
+
+	if store != nil && adapter != nil {
+		store.SetOnSave(func(st *runtimestore.ConversationState) {
+			adapter.BroadcastFullMessages(st.ID, st.Messages)
+		})
+	}
 	return s
 }
 

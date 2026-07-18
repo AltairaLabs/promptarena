@@ -133,6 +133,30 @@ type ArenaStateStore struct {
 	// without rewriting the full slice on every transition.
 	lists map[string]map[string][][]byte
 	mu    sync.RWMutex
+
+	// onSave, when set, is invoked after every successful Save/SaveWithTrace
+	// with the full persisted ConversationState (including message Meta and
+	// CostInfo). It is invoked AFTER s.mu is released — never while the
+	// store's write lock is held — so the callback (e.g. an SSE fan-out) can
+	// safely call back into the store without risking deadlock/re-entrancy.
+	onSaveMu sync.RWMutex
+	onSave   func(state *runtimestore.ConversationState)
+}
+
+// SetOnSave registers a callback invoked after every successful Save or
+// SaveWithTrace, with the full persisted ConversationState. Pass nil to
+// clear the callback. Safe to call concurrently with Save/SaveWithTrace.
+func (s *ArenaStateStore) SetOnSave(fn func(state *runtimestore.ConversationState)) {
+	s.onSaveMu.Lock()
+	s.onSave = fn
+	s.onSaveMu.Unlock()
+}
+
+// getOnSave returns the currently registered onSave callback, if any.
+func (s *ArenaStateStore) getOnSave() func(state *runtimestore.ConversationState) {
+	s.onSaveMu.RLock()
+	defer s.onSaveMu.RUnlock()
+	return s.onSave
 }
 
 // NewArenaStateStore creates a new Arena state store
@@ -161,9 +185,12 @@ func (s *ArenaStateStore) Save(ctx context.Context, state *runtimestore.Conversa
 	}
 
 	s.mu.Lock()
-	defer s.mu.Unlock()
-
 	s.saveStateLocked(state, nil)
+	s.mu.Unlock()
+
+	if onSave := s.getOnSave(); onSave != nil {
+		onSave(state)
+	}
 	return nil
 }
 
@@ -180,9 +207,12 @@ func (s *ArenaStateStore) SaveWithTrace(
 	}
 
 	s.mu.Lock()
-	defer s.mu.Unlock()
-
 	s.saveStateLocked(state, trace)
+	s.mu.Unlock()
+
+	if onSave := s.getOnSave(); onSave != nil {
+		onSave(state)
+	}
 	return nil
 }
 

@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/AltairaLabs/PromptKit/runtime/events"
+	"github.com/AltairaLabs/PromptKit/runtime/types"
 	arenaaudio "github.com/AltairaLabs/promptarena/arena/audio"
 )
 
@@ -185,6 +186,12 @@ func (a *EventAdapter) HandleEvent(event *events.Event) {
 		return
 	}
 
+	a.broadcast(data)
+}
+
+// broadcast fans a pre-marshaled SSE frame out to every registered client,
+// dropping it for any client whose buffer is full rather than blocking.
+func (a *EventAdapter) broadcast(data []byte) {
 	a.mu.RLock()
 	for ch := range a.clients {
 		select {
@@ -194,6 +201,37 @@ func (a *EventAdapter) HandleEvent(event *events.Event) {
 		}
 	}
 	a.mu.RUnlock()
+}
+
+// BroadcastFullMessages emits a "message.full" SSE event per message in msgs,
+// carrying the complete persisted types.Message (role, content, parts,
+// tool_calls, tool_result, timestamp, latency_ms, cost_info, finish_reason,
+// meta, validations) rather than the thin projection used by the live
+// runtime-event stream. This lets the Inspector show metrics/meta/cost/raw
+// JSON for messages as they're persisted.
+func (a *EventAdapter) BroadcastFullMessages(convID string, msgs []types.Message) {
+	a.mu.RLock()
+	hasClients := len(a.clients) > 0
+	a.mu.RUnlock()
+	if !hasClients {
+		return
+	}
+
+	for i := range msgs {
+		sse := &SSEEvent{
+			Type:           "message.full",
+			ConversationID: convID,
+			Data: map[string]interface{}{
+				"index":   i,
+				"message": msgs[i],
+			},
+		}
+		data, err := json.Marshal(sse)
+		if err != nil {
+			continue
+		}
+		a.broadcast(data)
+	}
 }
 
 // mapEvent converts a runtime event to an SSEEvent.
