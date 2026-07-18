@@ -209,6 +209,12 @@ func (a *EventAdapter) broadcast(data []byte) {
 // meta, validations) rather than the thin projection used by the live
 // runtime-event stream. This lets the Inspector show metrics/meta/cost/raw
 // JSON for messages as they're persisted.
+//
+// TODO(perf): re-sends the FULL history on every store Save, so a long
+// conversation / high-turn batch run with a live dashboard pays O(N) SSE traffic
+// per save (O(N^2) over the run). Fine for short interactive chats; optimize to
+// broadcast only the changed message(s) since the last save before this runs
+// against long-lived conversations with dashboards attached.
 func (a *EventAdapter) BroadcastFullMessages(convID string, msgs []types.Message) {
 	a.mu.RLock()
 	hasClients := len(a.clients) > 0
