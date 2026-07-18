@@ -139,12 +139,13 @@ describe("InteractiveChat", () => {
     expect(screen.getByPlaceholderText(/Type a message/)).toBeInTheDocument();
   });
 
-  it("passes a call to LiveConsole once a session is active and voice is enabled", async () => {
+  it("passes a call to LiveConsole once a session is active and the selected provider supports voice", async () => {
     fetchOptions.mockResolvedValue({
       agents: [{ taskType: "support", description: "" }],
       providers: ["claude"],
       hasEvals: false,
       voice: true,
+      voiceProviders: ["claude"],
     });
     createSession.mockResolvedValue({ sessionId: "sess-voice" });
 
@@ -162,12 +163,13 @@ describe("InteractiveChat", () => {
     expect(screen.getByLabelText("Call")).toBeInTheDocument();
   });
 
-  it("does not pass a call to LiveConsole when voice is disabled", async () => {
+  it("does not pass a call to LiveConsole when the config has no voice-capable providers", async () => {
     fetchOptions.mockResolvedValue({
       agents: [{ taskType: "support", description: "" }],
       providers: ["claude"],
       hasEvals: false,
       voice: false,
+      voiceProviders: [],
     });
     createSession.mockResolvedValue({ sessionId: "sess-no-voice" });
 
@@ -183,5 +185,36 @@ describe("InteractiveChat", () => {
     const lastProps = calls[calls.length - 1]?.[0] as { call?: unknown } | undefined;
     expect(lastProps?.call).toBeUndefined();
     expect(screen.queryByLabelText("Call")).not.toBeInTheDocument();
+    // No hint either — voice isn't possible at all in this config.
+    expect(screen.queryByText(/voice needs a realtime model/i)).not.toBeInTheDocument();
+  });
+
+  it("gates voice off and explains when the selected provider can't do voice but another one could", async () => {
+    fetchOptions.mockResolvedValue({
+      agents: [{ taskType: "support", description: "" }],
+      providers: ["claude", "rt-model"],
+      hasEvals: false,
+      voice: true,
+      voiceProviders: ["rt-model"], // config can do voice, but not via "claude"
+    });
+    createSession.mockResolvedValue({ sessionId: "sess-hint" });
+
+    render(
+      <InteractiveChat state={emptyState()} registerInteractiveRun={vi.fn()} onBack={vi.fn()} />,
+    );
+
+    // Two providers → not auto-selected; pick the non-voice one explicitly.
+    fireEvent.change(await screen.findByDisplayValue("Select provider…"), {
+      target: { value: "claude" },
+    });
+    fireEvent.click(screen.getByText("Start Chat"));
+
+    await waitFor(() => expect(screen.getByPlaceholderText(/Type a message/)).toBeInTheDocument());
+
+    expect(screen.getByText(/voice needs a realtime model/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText("Call")).not.toBeInTheDocument();
+    const calls = liveConsoleSpy.mock.calls;
+    const lastProps = calls[calls.length - 1]?.[0] as { call?: unknown } | undefined;
+    expect(lastProps?.call).toBeUndefined();
   });
 });

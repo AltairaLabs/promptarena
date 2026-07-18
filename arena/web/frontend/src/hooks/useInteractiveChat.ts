@@ -5,6 +5,9 @@ export interface InteractiveOptions {
   providers: string[];
   hasEvals: boolean;
   voice: boolean;
+  /** Provider ids that support realtime voice — the voice call control is
+   *  offered only when the selected provider is one of these. */
+  voiceProviders: string[];
 }
 
 export interface CreateSessionResult {

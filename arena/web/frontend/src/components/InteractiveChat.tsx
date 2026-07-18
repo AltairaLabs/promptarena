@@ -85,7 +85,7 @@ export function InteractiveChat({ state, registerInteractiveRun, onBack }: Inter
   const [agents, setAgents] = useState<Array<{ taskType: string; description: string }>>([]);
   const [providers, setProviders] = useState<string[]>([]);
   const [hasEvals, setHasEvals] = useState(false);
-  const [voiceEnabled, setVoiceEnabled] = useState(false);
+  const [voiceProviders, setVoiceProviders] = useState<string[]>([]);
 
   const [selectedAgent, setSelectedAgent] = useState<string>("");
   const [selectedProvider, setSelectedProvider] = useState<string>("");
@@ -107,6 +107,12 @@ export function InteractiveChat({ state, registerInteractiveRun, onBack }: Inter
 
   const phase: Phase = sessionId ? "chat" : missingVars.length > 0 ? "vars" : "setup";
 
+  // Voice is offered per-provider: only when the selected model supports realtime
+  // audio. voiceUnavailable = the config CAN do voice, but this provider can't —
+  // used to explain (rather than silently hide) why there's no call control.
+  const voiceEnabled = voiceProviders.includes(selectedProvider);
+  const voiceUnavailable = voiceProviders.length > 0 && !voiceEnabled;
+
   const voiceCall = useVoiceCall({ sessionId, enabled: voiceEnabled });
 
   // Load options on mount
@@ -117,7 +123,7 @@ export function InteractiveChat({ state, registerInteractiveRun, onBack }: Inter
         setAgents(opts.agents);
         setProviders(opts.providers);
         setHasEvals(opts.hasEvals);
-        setVoiceEnabled(opts.voice);
+        setVoiceProviders(opts.voiceProviders ?? []);
         if (opts.agents.length === 1) setSelectedAgent(opts.agents[0].taskType);
         if (opts.providers.length === 1) setSelectedProvider(opts.providers[0]);
       })
@@ -355,6 +361,9 @@ export function InteractiveChat({ state, registerInteractiveRun, onBack }: Inter
             <span style={{ color: "var(--text-faint)" }}>·</span>
             <span style={{ color: "var(--text-muted)" }}>{selectedProvider}</span>
             {enableEvals && <span style={{ color: "var(--pulsar-300)" }}>· evals on</span>}
+            {voiceUnavailable && (
+              <span style={{ color: "var(--text-faint)" }}>· voice needs a realtime model</span>
+            )}
           </span>
         }
         headerExtra={

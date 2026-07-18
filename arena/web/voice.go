@@ -75,6 +75,9 @@ func buildVoiceRequest(
 		StateStoreConfig: &engine.StateStoreConfig{
 			Store: eng.GetStateStore(),
 		},
+		// Wire the engine's bus so voice turns publish message/transcript/tool
+		// events to the same SSE stream the message window renders.
+		EventBus:         eng.EventBus(),
 		VoiceSTT:         voiceSTT,
 		VoiceOutputVoice: outputVoice,
 		VoiceBargeIn:     bargeIn,

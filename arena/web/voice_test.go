@@ -1,11 +1,13 @@
 package web
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
 	"testing"
 
+	"github.com/AltairaLabs/PromptKit/runtime/events"
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 	"github.com/AltairaLabs/promptarena/arena/engine"
 )
@@ -54,6 +56,59 @@ func newVoiceTestSession(t *testing.T, eng *engine.Engine) *engine.InteractiveSe
 		t.Fatalf("NewInteractiveSession: %v", err)
 	}
 	return sess
+}
+
+// TestBuildVoiceRequest_WiresEventBus pins the fix for the empty-message-window
+// bug: the voice request must carry the engine's event bus so voice turns
+// publish message/transcript/tool events to the SSE stream the console renders.
+func TestBuildVoiceRequest_WiresEventBus(t *testing.T) {
+	eng := newVoiceTestEngine(t)
+	bus := events.NewEventBus()
+	eng.SetEventBus(bus, engine.WithMessageEvents())
+	sess := newVoiceTestSession(t, eng)
+
+	req, err := buildVoiceRequest(eng, sess, "", "", true)
+	if err != nil {
+		t.Fatalf("buildVoiceRequest: %v", err)
+	}
+	if req.EventBus == nil {
+		t.Fatal("EventBus not wired onto the voice request — message window would stay empty")
+	}
+	if req.EventBus != bus {
+		t.Fatal("EventBus should be the engine's configured bus")
+	}
+}
+
+func TestVoiceProviderIDs_OnlyRealtime(t *testing.T) {
+	eng := newVoiceTestEngine(t)
+	got := eng.VoiceProviderIDs()
+	if len(got) != 1 || got[0] != voiceFixtureProviderID {
+		t.Fatalf("want [%s] (only the realtime provider, not the stt provider), got %v", voiceFixtureProviderID, got)
+	}
+}
+
+func TestOptionsIncludesVoiceProviders(t *testing.T) {
+	s := newTestServerWithVoiceEngine(t)
+	rec := httptest.NewRecorder()
+	s.handleInteractiveOptions(rec, httptest.NewRequest(http.MethodGet, "/api/interactive/options", nil))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("want 200, got %d", rec.Code)
+	}
+	var out struct {
+		VoiceProviders []string `json:"voiceProviders"`
+	}
+	if err := json.Unmarshal(rec.Body.Bytes(), &out); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	found := false
+	for _, id := range out.VoiceProviders {
+		if id == voiceFixtureProviderID {
+			found = true
+		}
+	}
+	if !found {
+		t.Fatalf("voiceProviders should include %q, got %v", voiceFixtureProviderID, out.VoiceProviders)
+	}
 }
 
 func TestBuildVoiceRequest_RealtimeWhenNoSTT(t *testing.T) {

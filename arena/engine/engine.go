@@ -500,6 +500,13 @@ func (e *Engine) SetEventBus(bus events.Bus, opts ...EventBusOption) {
 	}
 }
 
+// EventBus returns the engine's configured event bus (set via SetEventBus), or
+// nil if none is configured. The web voice path wires this onto the duplex
+// ConversationRequest so voice turns publish transcript, message, and tool
+// events to the same bus the web SSE adapter is subscribed to — otherwise the
+// message window stays empty during a call.
+func (e *Engine) EventBus() events.Bus { return e.eventBus }
+
 // SetTracerProvider configures OpenTelemetry distributed tracing for the engine.
 // When set, an OTelEventListener is created and subscribed to the event bus,
 // converting provider call, tool call, and pipeline events into OTel spans.

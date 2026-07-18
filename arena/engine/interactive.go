@@ -297,6 +297,21 @@ func isRealtimeProvider(p *config.Provider) bool {
 	}
 }
 
+// VoiceProviderIDs lists the loaded provider IDs that support native realtime
+// audio, so the web console can offer the voice call control only when a
+// realtime-capable provider is selected (rather than for any provider whenever
+// the config happens to contain one realtime model). Sorted for stable order.
+func (e *Engine) VoiceProviderIDs() []string {
+	out := make([]string, 0)
+	for id, p := range e.config.LoadedProviders {
+		if isRealtimeProvider(p) {
+			out = append(out, id)
+		}
+	}
+	sort.Strings(out)
+	return out
+}
+
 // Cost sums per-message cost across the transcript.
 func (s *InteractiveSession) Cost(ctx context.Context) (types.CostInfo, error) {
 	msgs, err := s.Messages(ctx)
