@@ -7,6 +7,10 @@ on:
 
 permissions:
   contents: read
+  # The frontend pulls @altairalabs/atlas from GitHub Packages (private). An
+  # explicit permissions block sets every unlisted scope to none, so without
+  # this the install 403s even when the package grants this repo read access.
+  packages: read
 
 jobs:
   # Detect whether anything outside docs/ changed. The Go pipeline is gated on
