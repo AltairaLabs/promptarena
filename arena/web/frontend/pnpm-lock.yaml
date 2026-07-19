@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@altairalabs/atlas':
-        specifier: ^0.2.0
-        version: 0.2.0(@dagrejs/dagre@3.0.0)(@types/react@19.2.14)(@xyflow/react@12.11.2(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+        specifier: ^0.2.1
+        version: 0.2.1(@dagrejs/dagre@3.0.0)(@types/react@19.2.14)(@xyflow/react@12.11.2(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@altairalabs/atlas-tokens':
         specifier: ^0.2.0
         version: 0.2.0
@@ -96,8 +96,8 @@ packages:
   '@altairalabs/atlas-tokens@0.2.0':
     resolution: {integrity: sha512-sbQuuoJSI7pfmaG3MOhkklEVxf48OcKWbq+Mz4iRWXcDXkKngT481hMxfzGzSvKtqt+Y+TFVVvv+OFgy9JCrBA==, tarball: https://npm.pkg.github.com/download/@altairalabs/atlas-tokens/0.2.0/1e0976648be67bd1d663419d601323f66c1ab380}
 
-  '@altairalabs/atlas@0.2.0':
-    resolution: {integrity: sha512-xs+kv9mMR9jE3DC2B3jwezZoNo8eNxCsGTpXLIoyDZl7Jb36qBn+xoyhB/VgDI4llypznZK+uOykfJJ7t6SZCg==, tarball: https://npm.pkg.github.com/download/@altairalabs/atlas/0.2.0/db71628b6faf0d4d12721465a558eae470827e9a}
+  '@altairalabs/atlas@0.2.1':
+    resolution: {integrity: sha512-rX3jmiPSEk+MDH2+Kn+BSCoM5iw7iBB2TguH7gKqckHtbIxCAl8VE69QC1qVkyR8qI31N1J6RUzNZdwoROx97g==, tarball: https://npm.pkg.github.com/download/@altairalabs/atlas/0.2.1/7f3fa2f6e5300014511bd1a260b241759506df33}
     peerDependencies:
       '@dagrejs/dagre': ^3.0.0
       '@xyflow/react': ^12.0.0
@@ -125,6 +125,10 @@ packages:
 
   '@babel/code-frame@7.29.0':
     resolution: {integrity: sha512-9NhCeYjq9+3uxgdtp20LSiJXJvN0FeCtNGpJxuMFZ1Kv3cWUNb6DOhJwUvcVCzKGR66cw4njwM6hrJLqgOwbcw==}
+    engines: {node: '>=6.9.0'}
+
+  '@babel/code-frame@7.29.7':
+    resolution: {integrity: sha512-Aup7aUOfpbAUg2ROOJN6Iw5f9DMBlzu0mIkm/malLQFN/YQgO48wCj0Kxa3sEHJvPVFg7siR+qRInwXd2qhQKw==}
     engines: {node: '>=6.9.0'}
 
   '@babel/compat-data@7.29.3':
@@ -167,6 +171,10 @@ packages:
 
   '@babel/helper-validator-identifier@7.28.5':
     resolution: {integrity: sha512-qSs4ifwzKJSV39ucNjsvc6WVHs6b7S03sOh2OcHF9UHfVPqWWALUsNUVzhSBiItjRZoLHx7nIarVjqKVusUZ1Q==}
+    engines: {node: '>=6.9.0'}
+
+  '@babel/helper-validator-identifier@7.29.7':
+    resolution: {integrity: sha512-qehxGkRj55h/ff8EMaJ+cYhyaKlHIxqYDn682wQD7RNp9UujOQsHog2uS0r2vzr4pW+sXf90NeeayjcNaX3fFg==}
     engines: {node: '>=6.9.0'}
 
   '@babel/helper-validator-option@7.27.1':
@@ -2698,7 +2706,7 @@ snapshots:
 
   '@altairalabs/atlas-tokens@0.2.0': {}
 
-  '@altairalabs/atlas@0.2.0(@dagrejs/dagre@3.0.0)(@types/react@19.2.14)(@xyflow/react@12.11.2(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
+  '@altairalabs/atlas@0.2.1(@dagrejs/dagre@3.0.0)(@types/react@19.2.14)(@xyflow/react@12.11.2(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
     dependencies:
       '@dagrejs/dagre': 3.0.0
       '@xyflow/react': 12.11.2(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
@@ -2739,6 +2747,12 @@ snapshots:
   '@babel/code-frame@7.29.0':
     dependencies:
       '@babel/helper-validator-identifier': 7.28.5
+      js-tokens: 4.0.0
+      picocolors: 1.1.1
+
+  '@babel/code-frame@7.29.7':
+    dependencies:
+      '@babel/helper-validator-identifier': 7.29.7
       js-tokens: 4.0.0
       picocolors: 1.1.1
 
@@ -2803,6 +2817,8 @@ snapshots:
   '@babel/helper-string-parser@7.27.1': {}
 
   '@babel/helper-validator-identifier@7.28.5': {}
+
+  '@babel/helper-validator-identifier@7.29.7': {}
 
   '@babel/helper-validator-option@7.27.1': {}
 
@@ -3910,7 +3926,7 @@ snapshots:
 
   '@testing-library/dom@10.4.1':
     dependencies:
-      '@babel/code-frame': 7.29.0
+      '@babel/code-frame': 7.29.7
       '@babel/runtime': 7.29.7
       '@types/aria-query': 5.0.4
       aria-query: 5.3.0
