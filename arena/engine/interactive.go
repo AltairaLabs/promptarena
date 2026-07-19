@@ -263,12 +263,21 @@ func (e *Engine) HasConfigEvals() bool {
 // session: any scenario declaring a Duplex block, or any provider that supports
 // realtime audio input (see VoiceProviderIDs).
 func (e *Engine) SupportsVoice() bool {
+	if e.hasDuplexScenario() {
+		return true
+	}
+	return len(e.VoiceProviderIDs()) > 0
+}
+
+// hasDuplexScenario reports whether the config declares a realtime audio
+// conversation at all.
+func (e *Engine) hasDuplexScenario() bool {
 	for _, sc := range e.config.LoadedScenarios {
 		if sc != nil && sc.Duplex != nil {
 			return true
 		}
 	}
-	return len(e.VoiceProviderIDs()) > 0
+	return false
 }
 
 // VoiceProviderIDs lists the loaded provider IDs whose constructed provider
@@ -280,7 +289,21 @@ func (e *Engine) SupportsVoice() bool {
 // supports it, the mock always does) and correctly excludes plain-text models.
 // Sorted for stable ordering.
 func (e *Engine) VoiceProviderIDs() []string {
+	// --mock-provider replaces every provider with a mock, and the mock claims
+	// realtime audio unconditionally — so asking the providers here would report
+	// any config as voice-capable and the console would offer a voice call on a
+	// plain text demo. Answer from the capability the REAL providers reported
+	// before they were swapped out (captured by EnableMockProviderMode), which
+	// keeps genuinely voice-capable configs working under --mock-provider.
+	if e.mockProviderMode {
+		// Copy into a non-nil slice so this marshals as [] rather than null,
+		// matching the live path below.
+		return append(make([]string, 0, len(e.realVoiceProviderIDs)), e.realVoiceProviderIDs...)
+	}
 	out := make([]string, 0)
+	if e.providerRegistry == nil {
+		return out
+	}
 	for _, id := range e.ProviderIDs() {
 		if prov, ok := e.providerRegistry.Get(id); ok && providerSupportsRealtimeAudio(prov) {
 			out = append(out, id)
