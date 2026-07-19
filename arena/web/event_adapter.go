@@ -258,14 +258,21 @@ func (a *EventAdapter) BroadcastFullMessages(convID string, msgs []types.Message
 
 	for ch, st := range a.clients {
 		sent := st.sentFull[convID]
-		// Conversations only grow in practice, but tolerate a shorter slice
-		// (e.g. a reloaded/truncated state) without indexing out of range.
+		// Grow to cover the current length, and never shrink. A save can
+		// legitimately carry FEWER messages than the last one: the engine
+		// re-saves a conversation progressively, from a single system message
+		// up to the full history, on every turn. Truncating here would discard
+		// the hashes above that low-water mark and re-send the whole history
+		// each turn — which is the cost this delta exists to avoid.
+		//
+		// Keeping stale entries is safe: an index past len(msgs) is never
+		// read, and if it comes back the hash comparison decides. Should a
+		// conversation genuinely reset, an index whose payload is unchanged
+		// needs no resend anyway, since the client already renders it.
 		if len(sent) < len(msgs) {
 			grown := make([]uint64, len(msgs))
 			copy(grown, sent)
 			sent = grown
-		} else if len(sent) > len(msgs) {
-			sent = sent[:len(msgs)]
 		}
 
 		for i := range msgs {

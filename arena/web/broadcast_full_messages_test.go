@@ -186,6 +186,46 @@ func TestBroadcastFullMessages_SendsOnlyChanged(t *testing.T) {
 	}
 }
 
+// TestBroadcastFullMessages_ProgressiveResaveSendsEachMessageOnce reproduces
+// the save pattern the engine actually produces: on every turn it re-saves the
+// conversation progressively, from a single system message back up to the full
+// history (observed live as 2,3,3, 1,2,3,4,5,5, 1,2,3,4,5,6,7,7).
+//
+// A save carrying fewer messages than the previous one must not be read as the
+// conversation shrinking. An earlier version truncated the per-client sent-set
+// to the shorter length, discarded every hash above it, and so re-sent the
+// whole history on each turn — leaving the delta barely better than the full
+// re-send it replaced. Each message must go out exactly once.
+func TestBroadcastFullMessages_ProgressiveResaveSendsEachMessageOnce(t *testing.T) {
+	adapter := NewEventAdapter()
+	ch := adapter.Register()
+
+	full := []types.Message{
+		{Role: "system", Content: "sys"},
+		{Role: "user", Content: "q1"},
+		{Role: "assistant", Content: "a1"},
+		{Role: "user", Content: "q2"},
+		{Role: "assistant", Content: "a2"},
+	}
+
+	// Turn one builds up to 3 messages, then turn two restarts from 1 and
+	// builds to 5 — the shape seen on the wire.
+	for _, n := range []int{2, 3, 3, 1, 2, 3, 4, 5, 5} {
+		adapter.BroadcastFullMessages("conv", full[:n])
+	}
+
+	got := drainIndices(t, ch)
+	want := []int{0, 1, 2, 3, 4}
+	if len(got) != len(want) {
+		t.Fatalf("sent %v (%d events), want each message exactly once %v", got, len(got), want)
+	}
+	for i, idx := range got {
+		if idx != want[i] {
+			t.Errorf("event %d had index %d, want %d (got %v)", i, idx, want[i], got)
+		}
+	}
+}
+
 // TestBroadcastFullMessages_LateClientGetsFullHistory verifies the catch-up
 // property the full re-send used to provide: a client that registers midway
 // through a conversation receives the entire history on the next save, while
