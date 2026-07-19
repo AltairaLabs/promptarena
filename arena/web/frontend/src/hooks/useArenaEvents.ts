@@ -68,6 +68,31 @@ function upsertByIndex(msgs: LiveMessage[], incoming: LiveMessage): LiveMessage[
     : [...msgs, incoming].sort((a, b) => a.index - b.index);
 }
 
+// ensureRun returns the existing run entry, or a placeholder for a run this
+// client never saw start. A page loaded mid-run misses arena.run.started —
+// it fired before the EventSource existed and is never replayed — so message
+// events have to be able to create the entry themselves. Without this, every
+// message for that run is discarded and the conversation renders empty.
+//
+// Run metadata is unknown at this point; it stays at the same defaults
+// RUN_STARTED itself falls back to, and is overwritten if the real event
+// does arrive.
+function ensureRun(state: ArenaState, runId: string, timestamp: string): ActiveRun {
+  return (
+    state.runs[runId] ?? {
+      runId,
+      scenario: "unknown",
+      provider: "unknown",
+      region: "default",
+      startTime: timestamp,
+      turnIndex: 0,
+      messages: [],
+      costs: { inputTokens: 0, outputTokens: 0, totalCost: 0 },
+      status: "running",
+    }
+  );
+}
+
 function reducer(state: ArenaState, action: Action): ArenaState {
   switch (action.type) {
     case "CONNECTED":
@@ -78,15 +103,20 @@ function reducer(state: ArenaState, action: Action): ArenaState {
 
     case "RUN_STARTED": {
       const d = action.data || {} as ArenaRunStartedData;
+      // Carry over anything a message event already accumulated: since
+      // message events now create run entries themselves, RUN_STARTED can
+      // land on a populated placeholder and must not reset it. Run IDs are
+      // unique per run, so there is no stale history to discard here.
+      const prior = state.runs[action.runId];
       const run: ActiveRun = {
         runId: action.runId,
         scenario: d.scenario || "unknown",
         provider: d.provider || "unknown",
         region: d.region || "default",
         startTime: action.timestamp,
-        turnIndex: 0,
-        messages: [],
-        costs: { inputTokens: 0, outputTokens: 0, totalCost: 0 },
+        turnIndex: prior?.turnIndex ?? 0,
+        messages: prior?.messages ?? [],
+        costs: prior?.costs ?? { inputTokens: 0, outputTokens: 0, totalCost: 0 },
         status: "running",
       };
       return { ...state, runs: { ...state.runs, [action.runId]: run } };
@@ -137,8 +167,7 @@ function reducer(state: ArenaState, action: Action): ArenaState {
       return state;
 
     case "MESSAGE_CREATED": {
-      const existing = state.runs[action.runId];
-      if (!existing) return state;
+      const existing = ensureRun(state, action.runId, action.timestamp);
       const updatedMsgs = upsertByIndex(existing.messages, liveMessageFromCreated(action.data));
       return {
         ...state,
@@ -153,8 +182,7 @@ function reducer(state: ArenaState, action: Action): ArenaState {
     }
 
     case "MESSAGE_FULL": {
-      const existing = state.runs[action.runId];
-      if (!existing) return state;
+      const existing = ensureRun(state, action.runId, action.timestamp);
       const incoming: LiveMessage = { ...action.data.message, index: action.data.index };
       const updatedMsgs = upsertByIndex(existing.messages, incoming);
       return {

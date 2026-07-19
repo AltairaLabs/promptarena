@@ -127,16 +127,6 @@ describe("reducer", () => {
     expect(state.runs["run-1"].messages[1]).toMatchObject({ role: "assistant", content: "hello" });
   });
 
-  it("MESSAGE_CREATED for an unknown runId is silently dropped (no implicit run creation)", () => {
-    const next = __reducer(__initialState, {
-      type: "MESSAGE_CREATED",
-      runId: "unknown-run",
-      data: { role: "user", content: "stray", index: 0 },
-      timestamp: "t",
-    });
-    expect(next.runs["unknown-run"]).toBeUndefined();
-  });
-
   it("RUN_COMPLETED flips status and adds to completedRunIds", () => {
     let state = __reducer(__initialState, {
       type: "RUN_STARTED",
@@ -237,14 +227,76 @@ describe("reducer", () => {
     expect(full.latency_ms).toBe(812);
   });
 
-  it("MESSAGE_FULL for an unknown runId is silently dropped", () => {
+  // A client that loads the page mid-run never receives arena.run.started for
+  // the run already in flight — it fired before the EventSource existed, and
+  // there is no replay. Message events must therefore be able to create the
+  // run entry themselves, or the whole conversation is dropped on the floor.
+  it("MESSAGE_FULL for an unseen runId creates the run entry (mid-run page load)", () => {
     const next = __reducer(__initialState, {
       type: "MESSAGE_FULL",
-      runId: "unknown-run",
+      runId: "joined-late",
       data: { index: 0, message: { role: "user", content: "stray" } },
       timestamp: "t",
     });
-    expect(next.runs["unknown-run"]).toBeUndefined();
+    const run = next.runs["joined-late"];
+    expect(run).toBeDefined();
+    expect(run.messages).toHaveLength(1);
+    expect(run.messages[0].content).toBe("stray");
+    expect(run.status).toBe("running");
+    expect(run.startTime).toBe("t");
+  });
+
+  it("MESSAGE_CREATED for an unseen runId creates the run entry", () => {
+    const next = __reducer(__initialState, {
+      type: "MESSAGE_CREATED",
+      runId: "joined-late",
+      data: { role: "assistant", content: "thin", index: 3 },
+      timestamp: "t",
+    });
+    expect(next.runs["joined-late"].messages[0]).toMatchObject({ index: 3, content: "thin" });
+  });
+
+  it("a mid-run joiner rebuilds the full history from replayed MESSAGE_FULL events", () => {
+    // The server sends a late-joining client every message it has not yet
+    // received, in index order, on the next save.
+    let state = __initialState;
+    for (const [i, content] of ["one", "two", "three"].entries()) {
+      state = __reducer(state, {
+        type: "MESSAGE_FULL",
+        runId: "joined-late",
+        data: { index: i, message: { role: "user", content } },
+        timestamp: "t",
+      });
+    }
+    expect(state.runs["joined-late"].messages.map((m) => m.content)).toEqual([
+      "one",
+      "two",
+      "three",
+    ]);
+  });
+
+  // Guards the hazard that lazy creation introduces: RUN_STARTED must not
+  // reset an entry that message events already populated. This is reachable
+  // for interactive sessions, where registerInteractiveRun dispatches
+  // RUN_STARTED from the client rather than from the wire.
+  it("RUN_STARTED preserves messages already accumulated on a lazily created run", () => {
+    let state = __reducer(__initialState, {
+      type: "MESSAGE_FULL",
+      runId: "run-race",
+      data: { index: 0, message: { role: "user", content: "early" } },
+      timestamp: "t0",
+    });
+    state = __reducer(state, {
+      type: "RUN_STARTED",
+      runId: "run-race",
+      data: { provider: "mock", region: "default", scenario: "test" },
+      timestamp: "t1",
+    });
+    expect(state.runs["run-race"].messages).toHaveLength(1);
+    expect(state.runs["run-race"].messages[0].content).toBe("early");
+    // Real run metadata from the wire still wins over the placeholder.
+    expect(state.runs["run-race"].scenario).toBe("test");
+    expect(state.runs["run-race"].provider).toBe("mock");
   });
 
   it("MESSAGE_CREATED with different indices inserts in index order", () => {
