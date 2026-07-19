@@ -92,17 +92,24 @@ jobs:
       # run produces the lcov report SonarCloud needs for .ts/.tsx coverage.
       # Single source of truth for the frontend suite, same as the Go coverage
       # above — run once here and hand the report to the SonarCloud job.
+      # The frontend uses pnpm, and pulls @altairalabs/atlas from GitHub
+      # Packages (private), so the install needs a token with read:packages.
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: arena/web/frontend/package-lock.json
+          cache: 'pnpm'
+          cache-dependency-path: arena/web/frontend/pnpm-lock.yaml
       - name: Install frontend dependencies
-        run: npm --prefix arena/web/frontend ci
+        run: pnpm --dir arena/web/frontend install --frozen-lockfile
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.ATLAS_PACKAGES_TOKEN || secrets.GITHUB_TOKEN }}
       - name: Build frontend
-        run: npm --prefix arena/web/frontend run build
+        run: pnpm --dir arena/web/frontend build
       - name: Test frontend (with coverage)
-        run: npm --prefix arena/web/frontend run test:ci
+        run: pnpm --dir arena/web/frontend test:ci
       - name: Upload frontend coverage report
         uses: actions/upload-artifact@v4
         with:
