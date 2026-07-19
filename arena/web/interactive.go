@@ -15,6 +15,10 @@ import (
 const (
 	jsonKeyError    = "error"
 	jsonKeyTaskType = "taskType"
+	jsonKeyType     = "type"
+	jsonKeyIndex    = "index"
+	jsonKeyMessage  = "message"
+	jsonKeyState    = "state"
 	msgBadRequest   = "bad request"
 	// msgEngineNotConfigured is returned when an interactive handler is hit but no
 	// interactive engine was wired into the server.

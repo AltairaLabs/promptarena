@@ -250,50 +250,76 @@ func (a *EventAdapter) BroadcastFullMessages(convID string, msgs []types.Message
 		return
 	}
 
-	// Frames are marshaled lazily and at most once per index, then shared
-	// across every client that turns out to need that index.
-	frames := make([][]byte, len(msgs))
-	hashes := make([]uint64, len(msgs))
-	marshaled := make([]bool, len(msgs))
+	cache := &frameCache{
+		frames:    make([][]byte, len(msgs)),
+		hashes:    make([]uint64, len(msgs)),
+		marshaled: make([]bool, len(msgs)),
+	}
 
 	for ch, st := range a.clients {
-		sent := st.sentFull[convID]
-		// Grow to cover the current length, and never shrink. A save can
-		// legitimately carry FEWER messages than the last one: the engine
-		// re-saves a conversation progressively, from a single system message
-		// up to the full history, on every turn. Truncating here would discard
-		// the hashes above that low-water mark and re-send the whole history
-		// each turn — which is the cost this delta exists to avoid.
-		//
-		// Keeping stale entries is safe: an index past len(msgs) is never
-		// read, and if it comes back the hash comparison decides. Should a
-		// conversation genuinely reset, an index whose payload is unchanged
-		// needs no resend anyway, since the client already renders it.
-		if len(sent) < len(msgs) {
-			grown := make([]uint64, len(msgs))
-			copy(grown, sent)
-			sent = grown
-		}
-
-		for i := range msgs {
-			if !marshaled[i] {
-				marshaled[i] = true
-				frames[i], hashes[i] = marshalFullMessage(convID, i, &msgs[i])
-			}
-			// Marshal failed for this message, or the client already has this
-			// exact payload — nothing to send.
-			if frames[i] == nil || sent[i] == hashes[i] {
-				continue
-			}
-			select {
-			case ch <- frames[i]:
-				sent[i] = hashes[i]
-			default:
-				// Buffer full — leave unsent so the next save retries it.
-			}
-		}
-		st.sentFull[convID] = sent
+		st.sentFull[convID] = sendDelta(ch, st.sentFull[convID], convID, msgs, cache)
 	}
+}
+
+// frameCache marshals each message.full frame lazily and at most once, then
+// shares it across every client that turns out to need that index.
+type frameCache struct {
+	frames    [][]byte
+	hashes    []uint64
+	marshaled []bool
+}
+
+// frame returns the SSE frame and payload hash for one message, marshaling on
+// first use. A nil frame means the message could not be marshaled.
+func (c *frameCache) frame(convID string, i int, msg *types.Message) ([]byte, uint64) {
+	if !c.marshaled[i] {
+		c.marshaled[i] = true
+		c.frames[i], c.hashes[i] = marshalFullMessage(convID, i, msg)
+	}
+	return c.frames[i], c.hashes[i]
+}
+
+// sendDelta delivers to one client the messages whose payload differs from what
+// that client last received, and returns its updated sent-set.
+func sendDelta(
+	ch chan []byte, sent []uint64, convID string, msgs []types.Message, cache *frameCache,
+) []uint64 {
+	sent = growSentSet(sent, len(msgs))
+	for i := range msgs {
+		frame, hash := cache.frame(convID, i, &msgs[i])
+		// Marshal failed for this message, or the client already has this
+		// exact payload — nothing to send.
+		if frame == nil || sent[i] == hash {
+			continue
+		}
+		select {
+		case ch <- frame:
+			sent[i] = hash
+		default:
+			// Buffer full — leave unsent so the next save retries it.
+		}
+	}
+	return sent
+}
+
+// growSentSet extends a client's sent-set to cover n messages, and never
+// shrinks it. A save can legitimately carry FEWER messages than the last one:
+// the engine re-saves a conversation progressively, from a single system
+// message up to the full history, on every turn. Truncating would discard the
+// hashes above that low-water mark and re-send the whole history each turn —
+// which is the cost this delta exists to avoid.
+//
+// Keeping stale entries is safe: an index past n is never read, and if it comes
+// back the hash comparison decides. Should a conversation genuinely reset, an
+// index whose payload is unchanged needs no resend anyway, since the client
+// already renders it.
+func growSentSet(sent []uint64, n int) []uint64 {
+	if len(sent) >= n {
+		return sent
+	}
+	grown := make([]uint64, n)
+	copy(grown, sent)
+	return grown
 }
 
 // marshalFullMessage encodes one message.full SSE frame and returns it with a
@@ -308,8 +334,8 @@ func marshalFullMessage(convID string, index int, msg *types.Message) ([]byte, u
 		Type:           "message.full",
 		ConversationID: convID,
 		Data: map[string]interface{}{
-			"index":   index,
-			"message": json.RawMessage(body),
+			jsonKeyIndex:   index,
+			jsonKeyMessage: json.RawMessage(body),
 		},
 	})
 	if err != nil {
@@ -361,7 +387,7 @@ func (a *EventAdapter) mapEvent(event *events.Event) *SSEEvent {
 		sse.Data = map[string]interface{}{
 			"role":       data.Role,
 			"content":    data.Content,
-			"index":      data.Index,
+			jsonKeyIndex: data.Index,
 			"toolCalls":  data.ToolCalls,
 			"toolResult": data.ToolResult,
 		}
@@ -373,14 +399,14 @@ func (a *EventAdapter) mapEvent(event *events.Event) *SSEEvent {
 			sse.Data = map[string]interface{}{
 				"role":       data.Role,
 				"content":    data.Content,
-				"index":      data.Index,
+				jsonKeyIndex: data.Index,
 				"toolCalls":  data.ToolCalls,
 				"toolResult": data.ToolResult,
 			}
 		}
 	case events.MessageUpdatedData:
 		sse.Data = map[string]interface{}{
-			"index":        data.Index,
+			jsonKeyIndex:   data.Index,
 			"latencyMs":    data.LatencyMs,
 			"inputTokens":  data.InputTokens,
 			"outputTokens": data.OutputTokens,
@@ -389,7 +415,7 @@ func (a *EventAdapter) mapEvent(event *events.Event) *SSEEvent {
 	case *events.MessageUpdatedData:
 		if data != nil {
 			sse.Data = map[string]interface{}{
-				"index":        data.Index,
+				jsonKeyIndex:   data.Index,
 				"latencyMs":    data.LatencyMs,
 				"inputTokens":  data.InputTokens,
 				"outputTokens": data.OutputTokens,

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/http"
@@ -38,9 +39,12 @@ func serveAddr(port int) string {
 // loopbackPortAnswering reports whether something already accepts connections on
 // the loopback at this port (either IPv4 or IPv6). Used to skip ports held by a
 // dual-stack listener that a bind check wouldn't catch.
-func loopbackPortAnswering(port int) bool {
+func loopbackPortAnswering(ctx context.Context, port int) bool {
+	var d net.Dialer
 	for _, addr := range []string{serveAddr(port), fmt.Sprintf("[::1]:%d", port)} {
-		c, err := net.DialTimeout("tcp", addr, 200*time.Millisecond)
+		dialCtx, cancel := context.WithTimeout(ctx, loopbackProbeTimeout)
+		c, err := d.DialContext(dialCtx, "tcp", addr)
+		cancel()
 		if err == nil {
 			_ = c.Close()
 			return true
@@ -48,6 +52,10 @@ func loopbackPortAnswering(port int) bool {
 	}
 	return false
 }
+
+// loopbackProbeTimeout bounds each loopback reachability probe. Generous for a
+// local connect, short enough that scanning a range of ports stays quick.
+const loopbackProbeTimeout = 200 * time.Millisecond
 
 // firstFreeLoopbackPort finds the first port >= start (scanning up to `attempts`
 // consecutive ports) that is bindable on BOTH the IPv4 (127.0.0.1) and IPv6
@@ -60,9 +68,10 @@ func loopbackPortAnswering(port int) bool {
 // "localhost" to ::1 connects to that other process instead of us. By refusing
 // any port occupied on either family and serving on both, "localhost" always
 // reaches us. The caller owns closing the returned listeners.
-func firstFreeLoopbackPort(start, attempts int) (v4, v6 net.Listener, port int, err error) {
+func firstFreeLoopbackPort(ctx context.Context, start, attempts int) (v4, v6 net.Listener, port int, err error) {
+	var lc net.ListenConfig
 	ipv6OK := false
-	if probe, probeErr := net.Listen("tcp6", "[::1]:0"); probeErr == nil {
+	if probe, probeErr := lc.Listen(ctx, "tcp6", "[::1]:0"); probeErr == nil {
 		ipv6OK = true
 		_ = probe.Close()
 	}
@@ -72,11 +81,11 @@ func firstFreeLoopbackPort(start, attempts int) (v4, v6 net.Listener, port int, 
 		// bindable-around on macOS but still answers "localhost", so a bind check
 		// alone would let us start on a port a browser then routes to that other
 		// app. Skip any port where something already accepts loopback connections.
-		if loopbackPortAnswering(p) {
+		if loopbackPortAnswering(ctx, p) {
 			lastErr = fmt.Errorf("port %d already in use", p)
 			continue
 		}
-		l4, e4 := net.Listen("tcp4", serveAddr(p))
+		l4, e4 := lc.Listen(ctx, "tcp4", serveAddr(p))
 		if e4 != nil {
 			lastErr = e4
 			continue
@@ -84,7 +93,7 @@ func firstFreeLoopbackPort(start, attempts int) (v4, v6 net.Listener, port int, 
 		if !ipv6OK {
 			return l4, nil, p, nil
 		}
-		l6, e6 := net.Listen("tcp6", fmt.Sprintf("[::1]:%d", p))
+		l6, e6 := lc.Listen(ctx, "tcp6", fmt.Sprintf("[::1]:%d", p))
 		if e6 != nil {
 			_ = l4.Close()
 			lastErr = e6
@@ -229,7 +238,7 @@ func runServe(cmd *cobra.Command, args []string) error {
 	// Reserve a port free on BOTH loopback families and auto-advance if the
 	// requested one is busy, so the user never lands on some other process that
 	// happens to hold the port on the family "localhost" resolves to.
-	l4, l6, actualPort, err := firstFreeLoopbackPort(servePort, servePortScanAttempts)
+	l4, l6, actualPort, err := firstFreeLoopbackPort(cmd.Context(), servePort, servePortScanAttempts)
 	if err != nil {
 		return fmt.Errorf("could not find a free port starting at %d (try -p): %w", servePort, err)
 	}

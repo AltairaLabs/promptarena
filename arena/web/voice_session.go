@@ -5,8 +5,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AltairaLabs/PromptKit/runtime/audio"
 	"github.com/gorilla/websocket"
+
+	"github.com/AltairaLabs/PromptKit/runtime/audio"
 )
 
 // wsConn is the slice of *websocket.Conn this package needs, so tests can fake it.
@@ -27,24 +28,34 @@ type wsAudioSession struct {
 	muted  *atomicBool
 }
 
+// captureFrameBuffer is the inbound capture-frame queue depth. Sized to absorb
+// short bursts; sends beyond it are dropped rather than blocking the read pump.
+const captureFrameBuffer = 32
+
+// quietTickInterval polls the sink for end-of-speech at twice the quiet-gap
+// rate, so a gap is detected within roughly one tick of elapsing.
+const quietTickInterval = sinkQuietGap / 2
+
 func newWSAudioSession(conn wsConn) *wsAudioSession {
 	return &wsAudioSession{
 		conn:  conn,
-		src:   &wsSource{frames: make(chan audio.MediaFrame, 32)},
+		src:   &wsSource{frames: make(chan audio.MediaFrame, captureFrameBuffer)},
 		sink:  newWSSink(conn, time.Now),
 		muted: &atomicBool{},
 	}
 }
 
+// Start begins the read pump and quiet detector, and returns immediately.
+// Both stop when ctx is canceled or Close is called.
 func (s *wsAudioSession) Start(ctx context.Context) error {
 	ctx, s.cancel = context.WithCancel(ctx)
-	go s.readPump(ctx)
+	go s.readPump()
 	go s.runQuietDetector(ctx)
 	return nil
 }
 
 func (s *wsAudioSession) runQuietDetector(ctx context.Context) {
-	t := time.NewTicker(sinkQuietGap / 2)
+	t := time.NewTicker(quietTickInterval)
 	defer t.Stop()
 	for {
 		select {
@@ -58,9 +69,13 @@ func (s *wsAudioSession) runQuietDetector(ctx context.Context) {
 	}
 }
 
+// Sources returns the single capture source fed by inbound WebSocket frames.
 func (s *wsAudioSession) Sources() []audio.Source { return []audio.Source{s.src} }
-func (s *wsAudioSession) Sinks() []audio.Sink     { return []audio.Sink{s.sink} }
 
+// Sinks returns the single playback sink that writes frames back to the socket.
+func (s *wsAudioSession) Sinks() []audio.Sink { return []audio.Sink{s.sink} }
+
+// Close cancels the session's goroutines, stops the sink and closes the socket.
 func (s *wsAudioSession) Close() error {
 	if s.cancel != nil {
 		s.cancel()
@@ -71,8 +86,9 @@ func (s *wsAudioSession) Close() error {
 
 // readPump reads WS messages: binary → capture frames (unless muted); text →
 // control (mute toggle). It closes the source channel when the socket ends,
-// which RunInteractiveVoice reads as end-of-user-speech.
-func (s *wsAudioSession) readPump(ctx context.Context) {
+// which RunInteractiveVoice reads as end-of-user-speech. Cancellation arrives
+// by way of the socket closing, so this takes no context.
+func (s *wsAudioSession) readPump() {
 	defer s.src.closeOnce()
 	for {
 		mt, data, err := s.conn.ReadMessage()
@@ -106,9 +122,14 @@ type wsSource struct {
 	closed bool
 }
 
+// Frames exposes the capture channel consumed by the duplex executor.
 func (s *wsSource) Frames() <-chan audio.MediaFrame { return s.frames }
-func (s *wsSource) Kind() audio.MediaKind           { return audio.KindAudio }
-func (s *wsSource) Close() error                    { s.closeOnce(); return nil }
+
+// Kind reports that this source carries audio.
+func (s *wsSource) Kind() audio.MediaKind { return audio.KindAudio }
+
+// Close closes the capture channel; safe to call more than once.
+func (s *wsSource) Close() error { s.closeOnce(); return nil }
 
 // send delivers a frame non-blockingly, dropping on backpressure. Serialized
 // with closeOnce so a send can never race the channel close.
@@ -177,15 +198,19 @@ func (s *wsSink) tick() {
 	}
 }
 
+// Flush forwards an end-of-utterance marker to the browser as a control frame.
 func (s *wsSink) Flush() {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	_ = s.conn.WriteMessage(websocket.TextMessage, voiceFlushMsg())
 }
 
+// Kind reports that this sink carries audio.
 func (s *wsSink) Kind() audio.MediaKind { return audio.KindAudio }
-func (s *wsSink) Close() error          { return nil }
-func (s *wsSink) stop()                 { s.stopOnce.Do(func() { close(s.stopCh) }) }
+
+// Close is a no-op: the socket is owned and closed by the session.
+func (s *wsSink) Close() error { return nil }
+func (s *wsSink) stop()        { s.stopOnce.Do(func() { close(s.stopCh) }) }
 
 // --- tiny atomic bool (avoid importing sync/atomic bool churn) ---
 

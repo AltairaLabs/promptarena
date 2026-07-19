@@ -4,18 +4,23 @@ import (
 	"fmt"
 	"net/http"
 
-	pkgconfig "github.com/AltairaLabs/PromptKit/pkg/config"
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 	"github.com/AltairaLabs/promptarena/arena/engine"
 	"github.com/gorilla/websocket"
+
+	pkgconfig "github.com/AltairaLabs/PromptKit/pkg/config"
 )
 
 // voiceUpgrader upgrades /api/interactive/voice connections. CheckOrigin
 // returns true unconditionally: same-origin in prod, and the Vite dev proxy
 // forwards Origin so cross-origin dev requests need to pass too.
+// voiceWSBufferSize is the read/write buffer for the voice WebSocket, sized to
+// comfortably hold one PCM frame plus framing overhead.
+const voiceWSBufferSize = 4096
+
 var voiceUpgrader = websocket.Upgrader{
-	ReadBufferSize:  4096,
-	WriteBufferSize: 4096,
+	ReadBufferSize:  voiceWSBufferSize,
+	WriteBufferSize: voiceWSBufferSize,
 	CheckOrigin:     func(r *http.Request) bool { return true },
 }
 

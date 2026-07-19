@@ -22,7 +22,7 @@ func freeStartPort(t *testing.T) int {
 
 func TestLoopbackPortAnswering(t *testing.T) {
 	free := freeStartPort(t)
-	if loopbackPortAnswering(free) {
+	if loopbackPortAnswering(t.Context(), free) {
 		t.Fatalf("nothing is listening on %d, expected not-answering", free)
 	}
 	ln, err := net.Listen("tcp", fmt.Sprintf("127.0.0.1:%d", free))
@@ -39,13 +39,13 @@ func TestLoopbackPortAnswering(t *testing.T) {
 			_ = c.Close()
 		}
 	}()
-	if !loopbackPortAnswering(free) {
+	if !loopbackPortAnswering(t.Context(), free) {
 		t.Fatalf("something is listening on %d, expected answering", free)
 	}
 }
 
 func TestFirstFreeLoopbackPort_ReturnsUsablePort(t *testing.T) {
-	v4, v6, port, err := firstFreeLoopbackPort(freeStartPort(t), 50)
+	v4, v6, port, err := firstFreeLoopbackPort(t.Context(), freeStartPort(t), 50)
 	if err != nil {
 		t.Fatalf("expected a free port, got error: %v", err)
 	}
@@ -66,7 +66,7 @@ func TestFirstFreeLoopbackPort_SkipsIPv4Occupied(t *testing.T) {
 	}
 	defer func() { _ = block.Close() }()
 
-	v4, v6, port, err := firstFreeLoopbackPort(start, 50)
+	v4, v6, port, err := firstFreeLoopbackPort(t.Context(), start, 50)
 	if err != nil {
 		t.Fatalf("scan error: %v", err)
 	}
@@ -90,7 +90,7 @@ func TestFirstFreeLoopbackPort_SkipsIPv6Occupied(t *testing.T) {
 	}
 	defer func() { _ = block.Close() }()
 
-	v4, v6, port, err := firstFreeLoopbackPort(start, 50)
+	v4, v6, port, err := firstFreeLoopbackPort(t.Context(), start, 50)
 	if err != nil {
 		t.Fatalf("scan error: %v", err)
 	}

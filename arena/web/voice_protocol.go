@@ -15,17 +15,17 @@ type voiceControl struct {
 }
 
 func voiceStateMsg(state string) []byte {
-	b, _ := json.Marshal(map[string]string{"type": "state", "state": state})
+	b, _ := json.Marshal(map[string]string{jsonKeyType: jsonKeyState, jsonKeyState: state})
 	return b
 }
 
 func voiceFlushMsg() []byte {
-	b, _ := json.Marshal(map[string]string{"type": "flush"})
+	b, _ := json.Marshal(map[string]string{jsonKeyType: "flush"})
 	return b
 }
 
 func voiceErrorMsg(msg string) []byte {
-	b, _ := json.Marshal(map[string]string{"type": "error", "message": msg})
+	b, _ := json.Marshal(map[string]string{jsonKeyType: jsonKeyError, jsonKeyMessage: msg})
 	return b
 }
 

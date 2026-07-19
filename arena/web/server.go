@@ -15,11 +15,12 @@ import (
 	"sync"
 	"time"
 
-	runtimestore "github.com/AltairaLabs/PromptKit/runtime/statestore"
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 	arenaaudio "github.com/AltairaLabs/promptarena/arena/audio"
 	"github.com/AltairaLabs/promptarena/arena/engine"
 	"github.com/AltairaLabs/promptarena/arena/statestore"
+
+	runtimestore "github.com/AltairaLabs/PromptKit/runtime/statestore"
 )
 
 // audioSSEPrefix identifies pre-formatted SSE frames (audio relay messages)
