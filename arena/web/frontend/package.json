@@ -12,6 +12,8 @@
     "test:ci": "vitest run --coverage --reporter=default --reporter=junit --outputFile=junit.xml"
   },
   "dependencies": {
+    "@altairalabs/atlas": "^0.2.2",
+    "@altairalabs/atlas-tokens": "^0.2.0",
     "@dagrejs/dagre": "^3.0.0",
     "@xyflow/react": "^12.11.2",
     "class-variance-authority": "^0.7.1",

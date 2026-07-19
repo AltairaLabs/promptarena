@@ -1,4 +1,4 @@
-import { StatusPill } from "@/components/atlas/StatusPill";
+import { HeaderShell, StatusPill } from "@altairalabs/atlas";
 import logoUrl from "@/assets/logo-promptarena.svg";
 
 export interface TopBarProps {
@@ -44,67 +44,68 @@ export function TopBar({
   const isDark = theme === "dark";
 
   return (
-    <header
+    <HeaderShell
+      sticky
       style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 16,
+        // Override HeaderShell's default surface with the Atlas design's top
+        // bar (Arena.dc.html): a frosted bar that follows the theme via
+        // --ink-canvas (light paper in light mode, night-sky ink in dark).
+        // Child text/pills use the flipping --star-*/--c-* tokens, so they
+        // stay legible on either surface. `style` is spread last by
+        // HeaderShell, so these win over its defaults.
         height: 68,
-        position: "sticky",
-        top: 0,
-        zIndex: 20,
         backdropFilter: "blur(8px)",
-        // Exactly the Atlas design's top bar (Arena.dc.html): a frosted bar
-        // that follows the theme via --ink-canvas (light paper in light mode,
-        // night-sky ink in dark). Child text/pills use the flipping
-        // --star-*/--c-* tokens, so they stay legible on either surface.
         background: "color-mix(in srgb, var(--ink-canvas) 78%, transparent)",
         borderBottom: "1px solid var(--hairline)",
         margin: "0 -32px",
         padding: "0 32px",
       }}
-    >
-      <img src={logoUrl} alt="PromptArena" width={30} height={30} style={{ flex: "none" }} />
-      <span style={{ font: "600 17px var(--font-sans)", letterSpacing: "-0.01em", color: "var(--star-100)" }}>
-        PromptArena
-      </span>
-      <span
-        style={{
-          font: "500 10px var(--font-mono)",
-          letterSpacing: "0.22em",
-          textTransform: "uppercase",
-          color: "var(--star-900)",
-        }}
-      >
-        studio
-      </span>
-      <div style={{ width: 1, height: 22, background: "var(--hairline)", flex: "none" }} />
-      {promptpack && (
-        <span style={{ font: "400 12px var(--font-mono)", color: "var(--star-700)" }}>{promptpack}</span>
-      )}
-
-      <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 12 }}>
-        <StatusPill status={status}>{statusLabel}</StatusPill>
-        <button
-          onClick={onToggleTheme}
-          aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
-          title={isDark ? "Switch to light mode" : "Switch to dark mode"}
-          style={{
-            width: 38,
-            height: 38,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            borderRadius: "var(--radius-md)",
-            border: "1px solid var(--hairline-strong)",
-            background: "transparent",
-            color: "var(--star-600)",
-            cursor: "pointer",
-          }}
-        >
-          {isDark ? <MoonIcon /> : <SunIcon />}
-        </button>
-      </div>
-    </header>
+      left={
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <img src={logoUrl} alt="PromptArena" width={30} height={30} style={{ flex: "none" }} />
+          <span style={{ font: "600 17px var(--font-sans)", letterSpacing: "-0.01em", color: "var(--star-100)" }}>
+            PromptArena
+          </span>
+          <span
+            style={{
+              font: "500 10px var(--font-mono)",
+              letterSpacing: "0.22em",
+              textTransform: "uppercase",
+              color: "var(--star-900)",
+            }}
+          >
+            studio
+          </span>
+          <div style={{ width: 1, height: 22, background: "var(--hairline)", flex: "none" }} />
+          {promptpack && (
+            <span style={{ font: "400 12px var(--font-mono)", color: "var(--star-700)" }}>{promptpack}</span>
+          )}
+        </div>
+      }
+      right={
+        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+          <StatusPill status={status}>{statusLabel}</StatusPill>
+          <button
+            onClick={onToggleTheme}
+            aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+            title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+            style={{
+              width: 38,
+              height: 38,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              borderRadius: "var(--radius-md)",
+              border: "1px solid var(--hairline-strong)",
+              background: "transparent",
+              color: "var(--star-600)",
+              cursor: "pointer",
+            }}
+          >
+            {isDark ? <MoonIcon /> : <SunIcon />}
+          </button>
+        </div>
+      }
+    />
   );
 }

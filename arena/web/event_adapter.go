@@ -4,10 +4,12 @@ package web
 import (
 	"encoding/base64"
 	"encoding/json"
+	"hash/fnv"
 	"sync"
 	"time"
 
 	"github.com/AltairaLabs/PromptKit/runtime/events"
+	"github.com/AltairaLabs/PromptKit/runtime/types"
 	arenaaudio "github.com/AltairaLabs/promptarena/arena/audio"
 )
 
@@ -23,11 +25,28 @@ type SSEEvent struct {
 // clientBufferSize is the channel buffer for each SSE client.
 const clientBufferSize = 256
 
+// clientState tracks what a single SSE client has successfully been sent, so
+// BroadcastFullMessages can skip messages that client already holds unchanged.
+//
+// sentFull maps conversation ID -> per-index hash of the last message.full
+// payload delivered to this client. An entry is recorded only when the
+// non-blocking send succeeds, so a frame dropped for a full buffer stays
+// "unsent" and is retried on the next save — this is what makes dropped
+// messages self-heal.
+type clientState struct {
+	sentFull map[string][]uint64
+}
+
+// unsentHash is the zero entry for an index this client has never received.
+// Real payload hashes are offset away from it (see hashMessage), so a genuine
+// hash can never collide with "never sent".
+const unsentHash uint64 = 0
+
 // EventAdapter subscribes to an events.Bus and fans out
 // JSON-serialized events to registered SSE client channels.
 type EventAdapter struct {
 	mu      sync.RWMutex
-	clients map[chan []byte]struct{}
+	clients map[chan []byte]*clientState
 
 	audioMu      sync.RWMutex
 	audioClients map[chan []byte]struct{}
@@ -36,7 +55,7 @@ type EventAdapter struct {
 // NewEventAdapter creates a new EventAdapter.
 func NewEventAdapter() *EventAdapter {
 	return &EventAdapter{
-		clients:      make(map[chan []byte]struct{}),
+		clients:      make(map[chan []byte]*clientState),
 		audioClients: make(map[chan []byte]struct{}),
 	}
 }
@@ -53,7 +72,9 @@ func (a *EventAdapter) Subscribe(bus events.Bus) {
 func (a *EventAdapter) Register() chan []byte {
 	ch := make(chan []byte, clientBufferSize)
 	a.mu.Lock()
-	a.clients[ch] = struct{}{}
+	// Fresh client: empty sent-set, so the next BroadcastFullMessages sends it
+	// the complete history while established clients get only what changed.
+	a.clients[ch] = &clientState{sentFull: make(map[string][]uint64)}
 	a.mu.Unlock()
 	return ch
 }
@@ -185,6 +206,12 @@ func (a *EventAdapter) HandleEvent(event *events.Event) {
 		return
 	}
 
+	a.broadcast(data)
+}
+
+// broadcast fans a pre-marshaled SSE frame out to every registered client,
+// dropping it for any client whose buffer is full rather than blocking.
+func (a *EventAdapter) broadcast(data []byte) {
 	a.mu.RLock()
 	for ch := range a.clients {
 		select {
@@ -194,6 +221,138 @@ func (a *EventAdapter) HandleEvent(event *events.Event) {
 		}
 	}
 	a.mu.RUnlock()
+}
+
+// BroadcastFullMessages emits a "message.full" SSE event per message in msgs,
+// carrying the complete persisted types.Message (role, content, parts,
+// tool_calls, tool_result, timestamp, latency_ms, cost_info, finish_reason,
+// meta, validations) rather than the thin projection used by the live
+// runtime-event stream. This lets the Inspector show metrics/meta/cost/raw
+// JSON for messages as they're persisted.
+//
+// Delivery is per-client delta: each client is sent only the messages whose
+// payload differs from what that client last received. This keeps a long
+// conversation from re-sending its whole history on every save (which cost
+// O(N) SSE traffic per save, O(N^2) over a run) while preserving the two
+// catch-up properties the full re-send used to provide for free:
+//
+//   - A newly registered or reconnecting client starts with an empty sent-set,
+//     so it still receives the complete history on the next save.
+//   - A frame dropped because a client's buffer was full is not recorded as
+//     sent, so it is retried on the next save rather than lost.
+//
+// The client reducer keys on index and upserts, so a partial send is safe.
+func (a *EventAdapter) BroadcastFullMessages(convID string, msgs []types.Message) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	if len(a.clients) == 0 {
+		return
+	}
+
+	cache := &frameCache{
+		frames:    make([][]byte, len(msgs)),
+		hashes:    make([]uint64, len(msgs)),
+		marshaled: make([]bool, len(msgs)),
+	}
+
+	for ch, st := range a.clients {
+		st.sentFull[convID] = sendDelta(ch, st.sentFull[convID], convID, msgs, cache)
+	}
+}
+
+// frameCache marshals each message.full frame lazily and at most once, then
+// shares it across every client that turns out to need that index.
+type frameCache struct {
+	frames    [][]byte
+	hashes    []uint64
+	marshaled []bool
+}
+
+// frame returns the SSE frame and payload hash for one message, marshaling on
+// first use. A nil frame means the message could not be marshaled.
+func (c *frameCache) frame(convID string, i int, msg *types.Message) ([]byte, uint64) {
+	if !c.marshaled[i] {
+		c.marshaled[i] = true
+		c.frames[i], c.hashes[i] = marshalFullMessage(convID, i, msg)
+	}
+	return c.frames[i], c.hashes[i]
+}
+
+// sendDelta delivers to one client the messages whose payload differs from what
+// that client last received, and returns its updated sent-set.
+func sendDelta(
+	ch chan []byte, sent []uint64, convID string, msgs []types.Message, cache *frameCache,
+) []uint64 {
+	sent = growSentSet(sent, len(msgs))
+	for i := range msgs {
+		frame, hash := cache.frame(convID, i, &msgs[i])
+		// Marshal failed for this message, or the client already has this
+		// exact payload — nothing to send.
+		if frame == nil || sent[i] == hash {
+			continue
+		}
+		select {
+		case ch <- frame:
+			sent[i] = hash
+		default:
+			// Buffer full — leave unsent so the next save retries it.
+		}
+	}
+	return sent
+}
+
+// growSentSet extends a client's sent-set to cover n messages, and never
+// shrinks it. A save can legitimately carry FEWER messages than the last one:
+// the engine re-saves a conversation progressively, from a single system
+// message up to the full history, on every turn. Truncating would discard the
+// hashes above that low-water mark and re-send the whole history each turn —
+// which is the cost this delta exists to avoid.
+//
+// Keeping stale entries is safe: an index past n is never read, and if it comes
+// back the hash comparison decides. Should a conversation genuinely reset, an
+// index whose payload is unchanged needs no resend anyway, since the client
+// already renders it.
+func growSentSet(sent []uint64, n int) []uint64 {
+	if len(sent) >= n {
+		return sent
+	}
+	grown := make([]uint64, n)
+	copy(grown, sent)
+	return grown
+}
+
+// marshalFullMessage encodes one message.full SSE frame and returns it with a
+// hash of the message payload used for per-client change detection. It returns
+// (nil, 0) if the message cannot be marshaled.
+func marshalFullMessage(convID string, index int, msg *types.Message) ([]byte, uint64) {
+	body, err := json.Marshal(msg)
+	if err != nil {
+		return nil, 0
+	}
+	data, err := json.Marshal(&SSEEvent{
+		Type:           "message.full",
+		ConversationID: convID,
+		Data: map[string]interface{}{
+			jsonKeyIndex:   index,
+			jsonKeyMessage: json.RawMessage(body),
+		},
+	})
+	if err != nil {
+		return nil, 0
+	}
+	return data, hashMessage(body)
+}
+
+// hashMessage returns a non-zero FNV-1a hash of a marshaled message, so that
+// no real payload is ever indistinguishable from the unsentHash sentinel.
+func hashMessage(body []byte) uint64 {
+	h := fnv.New64a()
+	_, _ = h.Write(body)
+	if sum := h.Sum64(); sum != unsentHash {
+		return sum
+	}
+	return 1
 }
 
 // mapEvent converts a runtime event to an SSEEvent.
@@ -228,7 +387,7 @@ func (a *EventAdapter) mapEvent(event *events.Event) *SSEEvent {
 		sse.Data = map[string]interface{}{
 			"role":       data.Role,
 			"content":    data.Content,
-			"index":      data.Index,
+			jsonKeyIndex: data.Index,
 			"toolCalls":  data.ToolCalls,
 			"toolResult": data.ToolResult,
 		}
@@ -240,14 +399,14 @@ func (a *EventAdapter) mapEvent(event *events.Event) *SSEEvent {
 			sse.Data = map[string]interface{}{
 				"role":       data.Role,
 				"content":    data.Content,
-				"index":      data.Index,
+				jsonKeyIndex: data.Index,
 				"toolCalls":  data.ToolCalls,
 				"toolResult": data.ToolResult,
 			}
 		}
 	case events.MessageUpdatedData:
 		sse.Data = map[string]interface{}{
-			"index":        data.Index,
+			jsonKeyIndex:   data.Index,
 			"latencyMs":    data.LatencyMs,
 			"inputTokens":  data.InputTokens,
 			"outputTokens": data.OutputTokens,
@@ -256,7 +415,7 @@ func (a *EventAdapter) mapEvent(event *events.Event) *SSEEvent {
 	case *events.MessageUpdatedData:
 		if data != nil {
 			sse.Data = map[string]interface{}{
-				"index":        data.Index,
+				jsonKeyIndex:   data.Index,
 				"latencyMs":    data.LatencyMs,
 				"inputTokens":  data.InputTokens,
 				"outputTokens": data.OutputTokens,

@@ -707,6 +707,20 @@ func (e *Engine) stampTimeoutError(
 	return false, ""
 }
 
+// EnrichConversationTools stamps the available tools (_available_tools /
+// _tool_descriptors) onto the conversation's system message in the state store,
+// so the live web console's Inspector shows them — the same metadata the HTML
+// report renders. Intended to be called after an interactive turn persists; the
+// store's Save then re-emits the enriched system message to connected clients.
+// No-op when the state store isn't the Arena store.
+func (e *Engine) EnrichConversationTools(ctx context.Context, conversationID string) {
+	store, ok := e.GetStateStore().(*statestore.ArenaStateStore)
+	if !ok {
+		return
+	}
+	e.enrichMessagesWithToolDescriptors(ctx, store, conversationID)
+}
+
 // enrichMessagesWithToolDescriptors adds _available_tools and _tool_descriptors
 // metadata to the system prompt message in the state store. This makes tool
 // information visible in the HTML report for non-workflow (pipeline) runs.
@@ -749,6 +763,14 @@ func (e *Engine) enrichMessagesWithToolDescriptors(
 	for i := range convState.Messages {
 		if convState.Messages[i].Role != "system" {
 			continue
+		}
+		// Idempotent: if the system message is already enriched, skip the re-save.
+		// This keeps calling from the store's onSave hook loop-free (the stamp
+		// re-saves, which re-enters onSave — the second pass is a no-op here).
+		if convState.Messages[i].Meta != nil {
+			if _, already := convState.Messages[i].Meta["_available_tools"]; already {
+				return
+			}
 		}
 		if convState.Messages[i].Meta == nil {
 			convState.Messages[i].Meta = map[string]interface{}{}

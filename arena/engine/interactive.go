@@ -181,6 +181,13 @@ func (s *InteractiveSession) ConversationID() string { return s.conversationID }
 // chat path to obtain the provider handle without a separate registry lookup.
 func (s *InteractiveSession) Provider() providers.Provider { return s.provider }
 
+// TaskType returns the agent (prompt config) task_type this session was
+// created with. Voice callers (TUI and web) need it to build the
+// arenaconfig.Scenario for a duplex run: both the ASM and composed-VAD duplex
+// pipelines resolve the system prompt from req.Scenario.TaskType, so it must
+// be carried over from the text session that resolved the provider.
+func (s *InteractiveSession) TaskType() string { return s.taskType }
+
 // RunEvalsEnabled reports whether eval scoring is on for this session.
 func (s *InteractiveSession) RunEvalsEnabled() bool { return s.runEvals }
 
@@ -250,6 +257,78 @@ func (s *InteractiveSession) RunEvals(ctx context.Context) ([]evals.EvalResult, 
 // run for scores.
 func (e *Engine) HasConfigEvals() bool {
 	return e.evalOrchestrator != nil && e.evalOrchestrator.HasEvals()
+}
+
+// SupportsVoice reports whether the loaded config can drive a duplex voice
+// session: any scenario declaring a Duplex block, or any provider that supports
+// realtime audio input (see VoiceProviderIDs).
+func (e *Engine) SupportsVoice() bool {
+	if e.hasDuplexScenario() {
+		return true
+	}
+	return len(e.VoiceProviderIDs()) > 0
+}
+
+// hasDuplexScenario reports whether the config declares a realtime audio
+// conversation at all.
+func (e *Engine) hasDuplexScenario() bool {
+	for _, sc := range e.config.LoadedScenarios {
+		if sc != nil && sc.Duplex != nil {
+			return true
+		}
+	}
+	return false
+}
+
+// VoiceProviderIDs lists the loaded provider IDs whose constructed provider
+// supports realtime duplex audio input, so the web console offers the voice
+// control only for models that can actually do it. It asks each provider its own
+// capability (providers.StreamInputSupport.SupportsStreamInput) rather than
+// pattern-matching config keys — so it tracks whatever the OpenAI / Gemini / mock
+// providers report (OpenAI gates on realtime models, Gemini Live always
+// supports it, the mock always does) and correctly excludes plain-text models.
+// Sorted for stable ordering.
+func (e *Engine) VoiceProviderIDs() []string {
+	// --mock-provider replaces every provider with a mock, and the mock claims
+	// realtime audio unconditionally — so asking the providers here would report
+	// any config as voice-capable and the console would offer a voice call on a
+	// plain text demo. Answer from the capability the REAL providers reported
+	// before they were swapped out (captured by EnableMockProviderMode), which
+	// keeps genuinely voice-capable configs working under --mock-provider.
+	if e.mockProviderMode {
+		// Copy into a non-nil slice so this marshals as [] rather than null,
+		// matching the live path below.
+		return append(make([]string, 0, len(e.realVoiceProviderIDs)), e.realVoiceProviderIDs...)
+	}
+	out := make([]string, 0)
+	if e.providerRegistry == nil {
+		return out
+	}
+	for _, id := range e.ProviderIDs() {
+		if prov, ok := e.providerRegistry.Get(id); ok && providerSupportsRealtimeAudio(prov) {
+			out = append(out, id)
+		}
+	}
+	sort.Strings(out)
+	return out
+}
+
+// providerSupportsRealtimeAudio reports whether a constructed provider accepts
+// streaming audio input — the same capability the duplex executor relies on to
+// run a realtime session. This is the authoritative signal; the provider owns
+// the logic (OpenAI gates on the model name, Gemini always supports it), so this
+// stays correct as providers evolve without re-encoding their rules here.
+func providerSupportsRealtimeAudio(p providers.Provider) bool {
+	si, ok := p.(providers.StreamInputSupport)
+	if !ok {
+		return false
+	}
+	for _, ct := range si.SupportsStreamInput() {
+		if ct == types.ContentTypeAudio {
+			return true
+		}
+	}
+	return false
 }
 
 // Cost sums per-message cost across the transcript.

@@ -1,6 +1,7 @@
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { ArenaState } from "@/types";
+import type { LiveConsoleProps } from "@altairalabs/atlas";
 
 const fetchOptions = vi.fn();
 const createSession = vi.fn();
@@ -15,6 +16,49 @@ vi.mock("@/hooks/useInteractiveChat", () => ({
     error: null,
   }),
 }));
+
+// useVoiceCall is mocked so voice-wiring tests don't need real Web Audio/WS —
+// it always returns a stable LiveConsoleCall-shaped object; the tests only
+// assert on whether that object reaches LiveConsole, not on call behavior.
+const useVoiceCallSpy = vi.fn((_opts: unknown) => ({
+  state: "idle" as const,
+  muted: false,
+  level: 0,
+  onCall: vi.fn(),
+  onHangup: vi.fn(),
+  onToggleMute: vi.fn(),
+}));
+
+vi.mock("@/hooks/useVoiceCall", () => ({
+  useVoiceCall: (opts: unknown) => useVoiceCallSpy(opts),
+}));
+
+// LiveConsole is replaced with a minimal stand-in (rather than rendering the
+// real Atlas component) so we can assert on the `call` prop it receives
+// without driving the full setup -> chat phase transition for every voice
+// assertion, and without pulling the real component's React tree — and its
+// own copy of `react` resolved from the atlas package — into this render.
+// It renders just enough surface for existing/adjacent tests to still find
+// the composer placeholder, plus a "Call" button gated on `call` being set,
+// mirroring Atlas's own LiveCallBar (`aria-label="Call"` when idle).
+const liveConsoleSpy = vi.fn();
+
+vi.mock("@altairalabs/atlas", async () => {
+  const actual = await vi.importActual<typeof import("@altairalabs/atlas")>("@altairalabs/atlas");
+  return {
+    ...actual,
+    LiveConsole: (props: LiveConsoleProps) => {
+      liveConsoleSpy(props);
+      return (
+        <div>
+          <div>{props.title}</div>
+          <input placeholder={props.composerPlaceholder} disabled={props.composerDisabled} readOnly />
+          {props.call && <button aria-label="Call" onClick={props.call.onCall} />}
+        </div>
+      );
+    },
+  };
+});
 
 const { InteractiveChat } = await import("@/components/InteractiveChat");
 
@@ -35,6 +79,8 @@ describe("InteractiveChat", () => {
     fetchOptions.mockReset();
     createSession.mockReset();
     sendMessage.mockReset();
+    useVoiceCallSpy.mockClear();
+    liveConsoleSpy.mockClear();
   });
 
   it("renders the setup card once options load, gating Start Chat until agent + provider are chosen", async () => {
@@ -89,6 +135,86 @@ describe("InteractiveChat", () => {
     await waitFor(() => expect(registerInteractiveRun).toHaveBeenCalledWith("sess-1"));
     expect(await screen.findByText("support")).toBeInTheDocument();
     expect(screen.getByText("claude")).toBeInTheDocument();
-    expect(screen.getByText("Send a message to start the conversation.")).toBeInTheDocument();
+    // The Atlas LiveConsole composer renders in the chat phase.
+    expect(screen.getByPlaceholderText(/Type a message/)).toBeInTheDocument();
+  });
+
+  it("passes a call to LiveConsole once a session is active and the selected provider supports voice", async () => {
+    fetchOptions.mockResolvedValue({
+      agents: [{ taskType: "support", description: "" }],
+      providers: ["claude"],
+      hasEvals: false,
+      voice: true,
+      voiceProviders: ["claude"],
+    });
+    createSession.mockResolvedValue({ sessionId: "sess-voice" });
+
+    render(
+      <InteractiveChat state={emptyState()} registerInteractiveRun={vi.fn()} onBack={vi.fn()} />,
+    );
+
+    fireEvent.click(await screen.findByText("Start Chat"));
+
+    await waitFor(() => expect(screen.getByPlaceholderText(/Type a message/)).toBeInTheDocument());
+
+    const calls = liveConsoleSpy.mock.calls;
+    const lastProps = calls[calls.length - 1]?.[0] as { call?: unknown } | undefined;
+    expect(lastProps?.call).toBeDefined();
+    expect(screen.getByLabelText("Call")).toBeInTheDocument();
+  });
+
+  it("does not pass a call to LiveConsole when the config has no voice-capable providers", async () => {
+    fetchOptions.mockResolvedValue({
+      agents: [{ taskType: "support", description: "" }],
+      providers: ["claude"],
+      hasEvals: false,
+      voice: false,
+      voiceProviders: [],
+    });
+    createSession.mockResolvedValue({ sessionId: "sess-no-voice" });
+
+    render(
+      <InteractiveChat state={emptyState()} registerInteractiveRun={vi.fn()} onBack={vi.fn()} />,
+    );
+
+    fireEvent.click(await screen.findByText("Start Chat"));
+
+    await waitFor(() => expect(screen.getByPlaceholderText(/Type a message/)).toBeInTheDocument());
+
+    const calls = liveConsoleSpy.mock.calls;
+    const lastProps = calls[calls.length - 1]?.[0] as { call?: unknown } | undefined;
+    expect(lastProps?.call).toBeUndefined();
+    expect(screen.queryByLabelText("Call")).not.toBeInTheDocument();
+    // No hint either — voice isn't possible at all in this config.
+    expect(screen.queryByText(/voice needs a realtime model/i)).not.toBeInTheDocument();
+  });
+
+  it("gates voice off and explains when the selected provider can't do voice but another one could", async () => {
+    fetchOptions.mockResolvedValue({
+      agents: [{ taskType: "support", description: "" }],
+      providers: ["claude", "rt-model"],
+      hasEvals: false,
+      voice: true,
+      voiceProviders: ["rt-model"], // config can do voice, but not via "claude"
+    });
+    createSession.mockResolvedValue({ sessionId: "sess-hint" });
+
+    render(
+      <InteractiveChat state={emptyState()} registerInteractiveRun={vi.fn()} onBack={vi.fn()} />,
+    );
+
+    // Two providers → not auto-selected; pick the non-voice one explicitly.
+    fireEvent.change(await screen.findByDisplayValue("Select provider…"), {
+      target: { value: "claude" },
+    });
+    fireEvent.click(screen.getByText("Start Chat"));
+
+    await waitFor(() => expect(screen.getByPlaceholderText(/Type a message/)).toBeInTheDocument());
+
+    expect(screen.getByText(/voice needs a realtime model/i)).toBeInTheDocument();
+    expect(screen.queryByLabelText("Call")).not.toBeInTheDocument();
+    const calls = liveConsoleSpy.mock.calls;
+    const lastProps = calls[calls.length - 1]?.[0] as { call?: unknown } | undefined;
+    expect(lastProps?.call).toBeUndefined();
   });
 });

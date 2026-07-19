@@ -1,0 +1,12 @@
+# Real OpenAI TEXT provider (non-realtime model). Its streaming-audio capability
+# is false (the model name has no "realtime"), so it must be EXCLUDED from
+# VoiceProviderIDs — the discriminator that the old config-flag heuristic got
+# wrong for Gemini and this proves the capability check gets right.
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Provider
+metadata:
+  name: cap-openai-text
+spec:
+  id: cap-openai-text
+  type: openai
+  model: gpt-4o-mini

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"net/http"
@@ -25,11 +26,82 @@ import (
 const (
 	serverReadTimeout = 30 * time.Second
 	defaultServePort  = 8080
+	// servePortScanAttempts bounds how many consecutive ports we try before
+	// giving up when the requested one is busy.
+	servePortScanAttempts = 20
 )
 
-// serveAddr returns the listen address for the given port, binding to localhost only.
+// serveAddr returns the IPv4 loopback listen address for the given port.
 func serveAddr(port int) string {
 	return fmt.Sprintf("127.0.0.1:%d", port)
+}
+
+// loopbackPortAnswering reports whether something already accepts connections on
+// the loopback at this port (either IPv4 or IPv6). Used to skip ports held by a
+// dual-stack listener that a bind check wouldn't catch.
+func loopbackPortAnswering(ctx context.Context, port int) bool {
+	var d net.Dialer
+	for _, addr := range []string{serveAddr(port), fmt.Sprintf("[::1]:%d", port)} {
+		dialCtx, cancel := context.WithTimeout(ctx, loopbackProbeTimeout)
+		c, err := d.DialContext(dialCtx, "tcp", addr)
+		cancel()
+		if err == nil {
+			_ = c.Close()
+			return true
+		}
+	}
+	return false
+}
+
+// loopbackProbeTimeout bounds each loopback reachability probe. Generous for a
+// local connect, short enough that scanning a range of ports stays quick.
+const loopbackProbeTimeout = 200 * time.Millisecond
+
+// firstFreeLoopbackPort finds the first port >= start (scanning up to `attempts`
+// consecutive ports) that is bindable on BOTH the IPv4 (127.0.0.1) and IPv6
+// (::1) loopback, returning an open listener for each. If the host has no IPv6
+// loopback at all, it falls back to IPv4-only (v6 == nil).
+//
+// Checking both families is the fix for a silent failure: binding only IPv4 lets
+// a process holding the port on the IPv6 loopback (e.g. another app on
+// [::]:8080) slip through — our bind succeeds, but a browser resolving
+// "localhost" to ::1 connects to that other process instead of us. By refusing
+// any port occupied on either family and serving on both, "localhost" always
+// reaches us. The caller owns closing the returned listeners.
+func firstFreeLoopbackPort(ctx context.Context, start, attempts int) (v4, v6 net.Listener, port int, err error) {
+	var lc net.ListenConfig
+	ipv6OK := false
+	if probe, probeErr := lc.Listen(ctx, "tcp6", "[::1]:0"); probeErr == nil {
+		ipv6OK = true
+		_ = probe.Close()
+	}
+	var lastErr error
+	for p := start; p < start+attempts; p++ {
+		// A dual-stack listener elsewhere (e.g. another app on [::]:PORT) is
+		// bindable-around on macOS but still answers "localhost", so a bind check
+		// alone would let us start on a port a browser then routes to that other
+		// app. Skip any port where something already accepts loopback connections.
+		if loopbackPortAnswering(ctx, p) {
+			lastErr = fmt.Errorf("port %d already in use", p)
+			continue
+		}
+		l4, e4 := lc.Listen(ctx, "tcp4", serveAddr(p))
+		if e4 != nil {
+			lastErr = e4
+			continue
+		}
+		if !ipv6OK {
+			return l4, nil, p, nil
+		}
+		l6, e6 := lc.Listen(ctx, "tcp6", fmt.Sprintf("[::1]:%d", p))
+		if e6 != nil {
+			_ = l4.Close()
+			lastErr = e6
+			continue
+		}
+		return l4, l6, p, nil
+	}
+	return nil, nil, 0, fmt.Errorf("no free port in range %d-%d: %w", start, start+attempts-1, lastErr)
 }
 
 var serveCmd = &cobra.Command{
@@ -163,14 +235,20 @@ func runServe(cmd *cobra.Command, args []string) error {
 	// Create web server
 	srv := web.NewServer(adapter, eng, arenaStore, outDir)
 
-	// Check port availability
-	//nolint:noctx // Dev tool - context not needed for port check
-	listener, err := net.Listen("tcp", serveAddr(servePort))
+	// Reserve a port free on BOTH loopback families and auto-advance if the
+	// requested one is busy, so the user never lands on some other process that
+	// happens to hold the port on the family "localhost" resolves to.
+	l4, l6, actualPort, err := firstFreeLoopbackPort(cmd.Context(), servePort, servePortScanAttempts)
 	if err != nil {
-		return fmt.Errorf("port %d is in use, try a different port with -p", servePort)
+		return fmt.Errorf("could not find a free port starting at %d (try -p): %w", servePort, err)
 	}
-	actualPort := listener.Addr().(*net.TCPAddr).Port
-	_ = listener.Close()
+	defer func() { _ = l4.Close() }()
+	if l6 != nil {
+		defer func() { _ = l6.Close() }()
+	}
+	if actualPort != servePort {
+		fmt.Printf("Port %d is in use — serving on %d instead\n", servePort, actualPort)
+	}
 
 	url := fmt.Sprintf("http://localhost:%d", actualPort)
 	fmt.Printf("Arena Web UI: %s\n", url)
@@ -181,15 +259,27 @@ func runServe(cmd *cobra.Command, args []string) error {
 		go openBrowser(url)
 	}
 
-	// NOSONAR: TLS not required - local development tool, binds to localhost only
+	// NOSONAR: TLS not required - local development tool, binds to loopback only
 	httpServer := &http.Server{
-		Addr:        serveAddr(actualPort),
 		Handler:     srv.Handler(),
 		ReadTimeout: serverReadTimeout,
 		// WriteTimeout intentionally omitted: SSE requires long-lived connections;
 		// a non-zero write timeout would kill active SSE streams.
 	}
-	return httpServer.ListenAndServe()
+	// Serve both loopback families so "localhost" reaches us however it resolves.
+	// The IPv6 listener (if present) runs in the background; the IPv4 listener
+	// blocks. Serve closes each listener on return.
+	if l6 != nil {
+		go func() {
+			if serveErr := httpServer.Serve(l6); serveErr != nil && serveErr != http.ErrServerClosed {
+				log.Printf("IPv6 listener stopped: %v", serveErr)
+			}
+		}()
+	}
+	if serveErr := httpServer.Serve(l4); serveErr != nil && serveErr != http.ErrServerClosed {
+		return serveErr
+	}
+	return nil
 }
 
 // openBrowser opens the default browser to the given URL.

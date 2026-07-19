@@ -4,18 +4,21 @@ import { ArrowLeft } from "lucide-react";
 import { TopBar } from "@/components/arena/TopBar";
 import { Hero } from "@/components/arena/Hero";
 import { CommandStrip } from "@/components/arena/CommandStrip";
-import { DevToolsPanel } from "@/components/DevToolsPanel";
+
 import { HistoricalResults } from "@/components/HistoricalResults";
 import { InteractiveChat } from "@/components/InteractiveChat";
 import { TrialMatrix } from "@/components/arena/TrialMatrix";
 import { InstrumentBand } from "@/components/arena/InstrumentBand";
-import { TrialInspector } from "@/components/arena/TrialInspector";
+
+import { SessionReview, ConstellationGraph } from "@altairalabs/atlas";
 import { useArenaEvents } from "@/hooks/useArenaEvents";
 import { useArenaAPI } from "@/hooks/useArenaAPI";
 import { useTheme } from "@/hooks/useTheme";
 import { AudioPlayer } from "@/audio/player";
-import { buildMatrix } from "@/lib/arenaView";
-import type { Message, RunResult, ActiveRun, ProviderInfo, ScenarioInfo, TrialCell, WorkflowGraph } from "@/types";
+import { buildMatrix, overlayWorkflowRun } from "@/lib/arenaView";
+import { adaptAnyRun, adaptWorkflow, isRunResult } from "@/lib/atlasAdapter";
+import { arenaInspectorTabs } from "@/lib/arenaInspectorTabs";
+import type { RunResult, ActiveRun, ProviderInfo, ScenarioInfo, WorkflowGraph } from "@/types";
 
 // activeRunToResult maps a still-running ActiveRun into a synthetic
 // RunResult-shaped entry so buildMatrix can overlay it onto the trial
@@ -88,10 +91,6 @@ export default function App() {
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [showLedger, setShowLedger] = useState(false);
   const [selectedScenario, setSelectedScenario] = useState<string | null>(null);
-  const [devToolsMessage, setDevToolsMessage] = useState<Message | undefined>();
-  const [devToolsAllMessages, setDevToolsAllMessages] = useState<Message[] | undefined>();
-  const [devToolsIndex, setDevToolsIndex] = useState<number | undefined>();
-  const [devToolsOpen, setDevToolsOpen] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
   const [historicalResults, setHistoricalResults] = useState<RunResult[]>([]);
   const [providers, setProviders] = useState<ProviderInfo[]>([]);
@@ -100,8 +99,8 @@ export default function App() {
   const [workflowGraph, setWorkflowGraph] = useState<WorkflowGraph | null>(null);
 
   // The workflow topology is static for the life of the config — fetched
-  // once on mount, same pattern as run-options/config below. TrialInspector
-  // renders a placeholder until this resolves.
+  // once on mount, same pattern as run-options/config below. The Workflow
+  // tab is omitted until this resolves.
   useEffect(() => {
     getWorkflow()
       .then((graph) => setWorkflowGraph(graph))
@@ -142,9 +141,9 @@ export default function App() {
       .catch(() => {});
   }, [getConfig]);
 
-  // Single global AudioPlayer for the TrialInspector's "Listen" toggle;
-  // rebuilt when the user switches Listen target. Restored from the
-  // original RunDetail-era wiring (see git history pre-TrialInspector).
+  // Single global AudioPlayer for the run view's "Listen" toggle, rebuilt
+  // when the user switches Listen target. Only offered for a still-running
+  // run — a completed one has no live audio stream to attach to.
   const playerRef = useRef<AudioPlayer | null>(null);
   const [listeningRunId, setListeningRunId] = useState<string | null>(null);
 
@@ -213,9 +212,6 @@ export default function App() {
 
   // Exclude synthetic interactive-chat entries from the runs-tab aggregates.
   const liveRuns = Object.values(state.runs).filter((r) => r.scenario !== "interactive");
-  const selectedRun = selectedRunId ? state.runs[selectedRunId] : undefined;
-  // The active interactive-chat session, surfaced as the DevTools "run" on the chat tab.
-  const interactiveRun = Object.values(state.runs).find((r) => r.scenario === "interactive");
 
   // The trial matrix overlays in-flight runs onto historical results so a
   // cell with a live run stays selectable while its trial is running. Only
@@ -279,56 +275,16 @@ export default function App() {
     return selectedRunId ? liveRuns.find((r) => r.runId === selectedRunId) : undefined;
   }, [selectedRunId, selectedCell, historicalResults, liveRuns]);
 
-  // When the run being shown differs from the matrix cell (an older ledger
-  // run selected while the cell points at a newer one), the StatusPill and
-  // terminal readout must reflect the SHOWN run, not the (possibly newer)
-  // cell. isRunResult narrows: only completed RunResults carry
-  // ConversationAssertions/Cost/Duration to derive a cell-shaped reading
-  // from; a live ActiveRun's own cell already matches (buildMatrix overlays
-  // it 1:1), so it's returned as-is.
-  const inspectorCell: TrialCell | undefined = useMemo(() => {
-    if (!selectedCell) return undefined;
-    if (!selectedCellRun) return selectedCell;
-    const isRunResult = "Messages" in selectedCellRun && Array.isArray(selectedCellRun.Messages);
-    if (!isRunResult) return selectedCell;
-    const run = selectedCellRun as RunResult;
-    if (run.RunID === selectedCell.runId) return selectedCell;
-    return {
-      ...selectedCell,
-      scenarioId: run.ScenarioID,
-      providerId: run.ProviderID,
-      passed: run.ConversationAssertions?.passed ?? !run.Error,
-      costUsd: run.Cost?.total_cost_usd ?? 0,
-      // run.Duration is nanoseconds (Go time.Duration on the wire); convert
-      // to milliseconds to match TrialCell.latencyMs's contract, same as
-      // buildMatrix does for the cells sourced directly from arenaView.
-      latencyMs: (run.Duration ?? 0) / 1e6,
-      runId: run.RunID,
-      hasData: true,
-    };
-  }, [selectedCell, selectedCellRun]);
-
-  const selectedProviderLabel = useMemo(
-    () => matrix.providers.find((p) => p.id === inspectorCell?.providerId)?.label ?? inspectorCell?.providerId ?? "",
-    [matrix, inspectorCell],
-  );
-
-  const handleSelectMessage = (index: number, message?: Message, allMsgs?: Message[]) => {
-    setDevToolsIndex(index);
-    setDevToolsMessage(message);
-    setDevToolsAllMessages(allMsgs);
-    setDevToolsOpen(true);
-  };
 
   // Selecting a matrix cell drives both the matrix's own selection ring and
-  // the TrialInspector navigation (which reads off selectedKey); selectedRunId
-  // is kept in step purely so DevToolsPanel's live-run lookup keeps working.
+  // the run detail view (which reads off selectedKey); selectedRunId is kept
+  // in step so the specific run behind the cell resolves.
   const handleSelectCell = useCallback((key: string) => {
     setSelectedKey(key);
     const cell = matrix.rows.flatMap((row) => row.cells).find((c) => c.key === key);
     if (cell?.hasData && cell.runId) {
       setSelectedRunId(cell.runId);
-      setDevToolsOpen(false);
+
     }
   }, [matrix]);
 
@@ -336,7 +292,7 @@ export default function App() {
   const handleBackFromInspector = useCallback(() => {
     setSelectedKey(null);
     setSelectedRunId(null);
-    setDevToolsOpen(false);
+
   }, []);
 
   // Rows in the ledger (HistoricalResults) carry a RunResult, not a matrix
@@ -346,7 +302,7 @@ export default function App() {
     const r = historicalResults.find((x) => x.RunID === id);
     if (r) setSelectedKey(`${r.ScenarioID}:${r.ProviderID}`);
     setSelectedRunId(id);
-    setDevToolsOpen(false);
+
   }, [historicalResults]);
 
   // handleStartRun kicks off a run for an arbitrary set of provider/scenario
@@ -360,10 +316,10 @@ export default function App() {
     // at the old run until SSE delivered the first turn of the new one,
     // which feels like nothing happened. The dashboard shows the live
     // run appearing, then pendingAutoSelect kicks in and switches to
-    // the new TrialInspector when the runId lands.
+    // the new run's detail view when the runId lands.
     setSelectedRunId(null);
     setSelectedKey(null);
-    setDevToolsOpen(false);
+
     try {
       await startRun({ providers: providerIds, scenarios: scenarioIds });
     } catch (err) {
@@ -404,7 +360,7 @@ export default function App() {
                 ? "bg-surface border-mist text-fg"
                 : "bg-canvas border-transparent text-fg-muted hover:text-fg hover:bg-surface"
             }`}
-            onClick={() => { setActiveTab("runs"); setDevToolsOpen(false); }}
+            onClick={() => setActiveTab("runs")}
           >
             Runs
           </button>
@@ -414,34 +370,21 @@ export default function App() {
                 ? "bg-surface border-mist text-fg"
                 : "bg-canvas border-transparent text-fg-muted hover:text-fg hover:bg-surface"
             }`}
-            onClick={() => { setActiveTab("chat"); setDevToolsOpen(false); }}
+            onClick={() => setActiveTab("chat")}
           >
             Interactive Chat
           </button>
         </div>
 
         {activeTab === "chat" ? (
-          <>
-            <div className={devToolsOpen ? "lg:mr-[420px] transition-[margin] duration-200" : "transition-[margin] duration-200"}>
-              <InteractiveChat
-                state={state}
-                registerInteractiveRun={registerInteractiveRun}
-                onSelectMessage={handleSelectMessage}
-                onBack={() => setActiveTab("runs")}
-              />
-            </div>
-            <DevToolsPanel
-              message={devToolsMessage}
-              messageIndex={devToolsIndex}
-              allMessages={devToolsAllMessages}
-              run={interactiveRun}
-              open={devToolsOpen}
-              onClose={() => setDevToolsOpen(false)}
-            />
-          </>
+          <InteractiveChat
+            state={state}
+            registerInteractiveRun={registerInteractiveRun}
+            onBack={() => setActiveTab("runs")}
+          />
         ) : (
           <>
-            <div className={devToolsOpen ? "lg:mr-[420px] transition-[margin] duration-200" : "transition-[margin] duration-200"}>
+            <div className="transition-[margin] duration-200">
               {selectedKey && selectedCell ? (
                 <div className="space-y-4">
                   <button
@@ -450,18 +393,54 @@ export default function App() {
                   >
                     <ArrowLeft className="h-4 w-4" /> Back
                   </button>
-                  <TrialInspector
-                    run={selectedCellRun}
-                    cell={inspectorCell}
-                    scenarioId={inspectorCell?.scenarioId ?? selectedCell.scenarioId}
-                    providerId={inspectorCell?.providerId ?? selectedCell.providerId}
-                    providerLabel={selectedProviderLabel}
-                    workflowGraph={workflowGraph}
-                    onSelectMessage={handleSelectMessage}
-                    listeningRunId={listeningRunId}
-                    onToggleListen={handleListen}
-                    theme={theme}
-                  />
+                  {selectedCellRun ? (
+                    (() => {
+                      // One path for both shapes. Live and completed runs
+                      // render through the same SessionReview — the adapter
+                      // owns the shape difference.
+                      const a = adaptAnyRun(selectedCellRun);
+                      const wf =
+                        workflowGraph && workflowGraph.nodes.length
+                          ? adaptWorkflow(overlayWorkflowRun(workflowGraph, selectedCellRun))
+                          : null;
+                      // Live audio only exists while a run is in flight; a
+                      // completed run has no stream to attach to.
+                      const liveRunId =
+                        !isRunResult(selectedCellRun) && selectedCellRun.status === "running"
+                          ? selectedCellRun.runId
+                          : undefined;
+                      return (
+                        <div style={{ height: "calc(100vh - 210px)", minHeight: 460 }}>
+                          {liveRunId && (
+                            <div className="mb-2 flex justify-end">
+                              <button
+                                onClick={() => handleListen(liveRunId)}
+                                className="rounded-lg border border-mist bg-surface px-3 py-1.5 text-xs font-medium text-fg-muted hover:text-fg hover:bg-[var(--c-surface-2)] transition-colors"
+                              >
+                                {listeningRunId === liveRunId ? "Stop listening" : "Listen"}
+                              </button>
+                            </div>
+                          )}
+                          <SessionReview
+                            title={a.title}
+                            messages={a.messages}
+                            checks={a.checks}
+                            recording={a.recording}
+                            inspectorTabs={arenaInspectorTabs}
+                            tabs={
+                              wf
+                                ? [{ id: "workflow", label: "Workflow", render: () => <ConstellationGraph nodes={wf.nodes} edges={wf.edges} theme={theme} direction="LR" height="100%" /> }]
+                                : undefined
+                            }
+                          />
+                        </div>
+                      );
+                    })()
+                  ) : (
+                    <div className="rounded-xl border border-mist bg-surface px-4 py-6 text-sm text-fg-muted">
+                      Loading trial…
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-8">
@@ -500,14 +479,6 @@ export default function App() {
                 </div>
               )}
             </div>
-            <DevToolsPanel
-              message={devToolsMessage}
-              messageIndex={devToolsIndex}
-              allMessages={devToolsAllMessages}
-              run={selectedRun}
-              open={devToolsOpen}
-              onClose={() => setDevToolsOpen(false)}
-            />
           </>
         )}
         </main>

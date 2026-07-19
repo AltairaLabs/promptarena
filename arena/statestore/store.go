@@ -133,6 +133,30 @@ type ArenaStateStore struct {
 	// without rewriting the full slice on every transition.
 	lists map[string]map[string][][]byte
 	mu    sync.RWMutex
+
+	// onSave, when set, is invoked after every successful Save/SaveWithTrace
+	// with the full persisted ConversationState (including message Meta and
+	// CostInfo). It is invoked AFTER s.mu is released — never while the
+	// store's write lock is held — so the callback (e.g. an SSE fan-out) can
+	// safely call back into the store without risking deadlock/re-entrancy.
+	onSaveMu sync.RWMutex
+	onSave   func(state *runtimestore.ConversationState)
+}
+
+// SetOnSave registers a callback invoked after every successful Save or
+// SaveWithTrace, with the full persisted ConversationState. Pass nil to
+// clear the callback. Safe to call concurrently with Save/SaveWithTrace.
+func (s *ArenaStateStore) SetOnSave(fn func(state *runtimestore.ConversationState)) {
+	s.onSaveMu.Lock()
+	s.onSave = fn
+	s.onSaveMu.Unlock()
+}
+
+// getOnSave returns the currently registered onSave callback, if any.
+func (s *ArenaStateStore) getOnSave() func(state *runtimestore.ConversationState) {
+	s.onSaveMu.RLock()
+	defer s.onSaveMu.RUnlock()
+	return s.onSave
 }
 
 // NewArenaStateStore creates a new Arena state store
@@ -160,10 +184,16 @@ func (s *ArenaStateStore) Save(ctx context.Context, state *runtimestore.Conversa
 		return fmt.Errorf("state cannot be nil")
 	}
 
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	// Closure keeps the deferred unlock (panic-safe) while still releasing the
+	// lock before firing onSave — the callback fans out to SSE and must not run
+	// under s.mu.
+	func() {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		s.saveStateLocked(state, nil)
+	}()
 
-	s.saveStateLocked(state, nil)
+	s.notifySaved(state)
 	return nil
 }
 
@@ -179,11 +209,26 @@ func (s *ArenaStateStore) SaveWithTrace(
 		return fmt.Errorf("state cannot be nil")
 	}
 
-	s.mu.Lock()
-	defer s.mu.Unlock()
+	func() {
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		s.saveStateLocked(state, trace)
+	}()
 
-	s.saveStateLocked(state, trace)
+	s.notifySaved(state)
 	return nil
+}
+
+// notifySaved fires the onSave callback (if registered) after the store lock is
+// released. onSave receives the caller's state, whose messages already carry the
+// pipeline-stamped metadata (meta, cost_info, etc.). NOTE: metadata the store
+// stamps only onto its INTERNAL copy — e.g. _llm_trace via attachTraceToMessages
+// in SaveWithTrace, currently dead code with no production caller — is not
+// reflected in this broadcast; revisit if LLM-call tracing is ever wired up.
+func (s *ArenaStateStore) notifySaved(state *runtimestore.ConversationState) {
+	if onSave := s.getOnSave(); onSave != nil {
+		onSave(state)
+	}
 }
 
 // saveStateLocked is the shared implementation for Save and SaveWithTrace.

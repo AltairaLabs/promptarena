@@ -1,0 +1,14 @@
+# yaml-language-server: $schema=https://promptkit.altairalabs.ai/schemas/latest/provider.json
+#
+# Realtime-capable provider. type: mock keeps the fixture credential-free;
+# additional_config.realtime mirrors how a real duplex provider (e.g. OpenAI
+# Realtime) is declared.
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Provider
+metadata:
+  name: voice-mock
+spec:
+  id: voice-mock
+  type: mock
+  additional_config:
+    realtime: true

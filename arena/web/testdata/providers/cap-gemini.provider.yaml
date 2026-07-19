@@ -1,0 +1,14 @@
+# Real Gemini Live provider (native-audio model). Constructed credential-free —
+# GEMINI_API_KEY is only needed at session time, so VoiceProviderIDs can query
+# its streaming capability offline. Used to prove Gemini Live is detected.
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Provider
+metadata:
+  name: cap-gemini
+spec:
+  id: cap-gemini
+  type: gemini
+  model: gemini-2.5-flash-native-audio-latest
+  additional_config:
+    response_modalities:
+      - AUDIO

@@ -1,5 +1,6 @@
 @import "tailwindcss";
-@import "./styles/atlas-tokens.css";
+@import "@altairalabs/atlas-tokens/index.css";
+@import "@altairalabs/atlas/styles.css";
 
 /* Theme tokens. We expose semantic names (canvas, surface, fg, …) and
    keep the legacy palette names (cloud-white, deep-space, mist, onyx,

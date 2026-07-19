@@ -101,6 +101,14 @@ type Engine struct {
 	sessionHooks         *hooks.Registry              // Optional — fires SessionHook lifecycle per run
 	outputDir            string                       // Resolved report output dir; exposes per-run artifacts base
 	artifactStore        artifacts.Store              // Persists per-run report artifacts (default: local backend)
+	// mockProviderMode records that EnableMockProviderMode replaced every
+	// provider with a mock. Mocks claim every capability, so capability
+	// questions (see VoiceProviderIDs) must not take their word for it.
+	mockProviderMode bool
+	// realVoiceProviderIDs is the voice-capable set as reported by the REAL
+	// providers, captured before mocks replaced them. Meaningful only when
+	// mockProviderMode is set.
+	realVoiceProviderIDs []string
 	// mcpSourceScope manages source-backed MCP entries at run/scenario/session scopes.
 	mcpSourceScope  *mcpSourceScope
 	mcpConfig       []config.MCPServerConfig   // Source-backed MCP entries, re-read at each scope boundary
@@ -500,6 +508,13 @@ func (e *Engine) SetEventBus(bus events.Bus, opts ...EventBusOption) {
 	}
 }
 
+// EventBus returns the engine's configured event bus (set via SetEventBus), or
+// nil if none is configured. The web voice path wires this onto the duplex
+// ConversationRequest so voice turns publish transcript, message, and tool
+// events to the same bus the web SSE adapter is subscribed to — otherwise the
+// message window stays empty during a call.
+func (e *Engine) EventBus() events.Bus { return e.eventBus }
+
 // SetTracerProvider configures OpenTelemetry distributed tracing for the engine.
 // When set, an OTelEventListener is created and subscribed to the event bus,
 // converting provider call, tool call, and pipeline events into OTel spans.
@@ -716,8 +731,15 @@ func (e *Engine) EnableMockProviderMode(mockConfigPath string) error {
 		mockRegistry.Register(mockProvider)
 	}
 
+	// Capture what the REAL providers could do before swapping them out. Mocks
+	// claim every capability, so once the registry is replaced the engine can
+	// no longer tell a realtime-audio config from a plain text one — and the
+	// console would offer a voice call on either.
+	e.realVoiceProviderIDs = e.VoiceProviderIDs()
+
 	// Replace the engine's provider registry
 	e.providerRegistry = mockRegistry
+	e.mockProviderMode = true
 
 	return nil
 }

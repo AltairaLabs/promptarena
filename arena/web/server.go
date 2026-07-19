@@ -19,6 +19,8 @@ import (
 	arenaaudio "github.com/AltairaLabs/promptarena/arena/audio"
 	"github.com/AltairaLabs/promptarena/arena/engine"
 	"github.com/AltairaLabs/promptarena/arena/statestore"
+
+	runtimestore "github.com/AltairaLabs/PromptKit/runtime/statestore"
 )
 
 // audioSSEPrefix identifies pre-formatted SSE frames (audio relay messages)
@@ -84,6 +86,26 @@ func NewServer(adapter *EventAdapter, eng *engine.Engine, store *statestore.Aren
 	}
 	s := newServerWithRunner(adapter, runner, store, outputDir)
 	s.interactiveEngine = eng
+
+	if store != nil && adapter != nil {
+		store.SetOnSave(func(st *runtimestore.ConversationState) {
+			// Stamp the available-tools metadata onto the conversation's system
+			// message once, on every persist path (text, voice, batch), so the
+			// Inspector surfaces tools everywhere — not just the text turn handler.
+			// EnrichConversationTools is idempotent (no-op once stamped), and its
+			// re-save re-enters this callback where the second pass does nothing,
+			// so it terminates. Broadcast the freshly stored state so the tools
+			// (added on a separately loaded copy) are included.
+			msgs := st.Messages
+			if eng != nil {
+				eng.EnrichConversationTools(context.Background(), st.ID)
+				if full, err := store.Load(context.Background(), st.ID); err == nil && full != nil {
+					msgs = full.Messages
+				}
+			}
+			adapter.BroadcastFullMessages(st.ID, msgs)
+		})
+	}
 	return s
 }
 
@@ -116,6 +138,7 @@ func newServerWithRunner(
 	s.mux.HandleFunc("GET /api/interactive/options", s.handleInteractiveOptions)
 	s.mux.HandleFunc("POST /api/interactive/session", s.handleInteractiveSession)
 	s.mux.HandleFunc("POST /api/interactive/message", s.handleInteractiveMessage)
+	s.mux.HandleFunc("GET /api/interactive/voice", s.handleInteractiveVoice)
 
 	// SPA fallback: serve embedded frontend
 	sub, subErr := fs.Sub(frontendFS, "frontend/dist")

@@ -15,6 +15,10 @@ import (
 const (
 	jsonKeyError    = "error"
 	jsonKeyTaskType = "taskType"
+	jsonKeyType     = "type"
+	jsonKeyIndex    = "index"
+	jsonKeyMessage  = "message"
+	jsonKeyState    = "state"
 	msgBadRequest   = "bad request"
 	// msgEngineNotConfigured is returned when an interactive handler is hit but no
 	// interactive engine was wired into the server.
@@ -51,12 +55,16 @@ func (s *Server) handleInteractiveOptions(w http.ResponseWriter, _ *http.Request
 	}
 	agents := s.interactiveEngine.Agents()
 	out := struct {
-		Agents    []map[string]string `json:"agents"`
-		Providers []string            `json:"providers"`
-		HasEvals  bool                `json:"hasEvals"`
+		Agents         []map[string]string `json:"agents"`
+		Providers      []string            `json:"providers"`
+		HasEvals       bool                `json:"hasEvals"`
+		Voice          bool                `json:"voice"`
+		VoiceProviders []string            `json:"voiceProviders"`
 	}{
-		Providers: s.interactiveEngine.ProviderIDs(),
-		HasEvals:  s.interactiveEngine.HasConfigEvals(),
+		Providers:      s.interactiveEngine.ProviderIDs(),
+		HasEvals:       s.interactiveEngine.HasConfigEvals(),
+		Voice:          s.interactiveEngine.SupportsVoice(),
+		VoiceProviders: s.interactiveEngine.VoiceProviderIDs(),
 	}
 	for _, a := range agents {
 		out.Agents = append(out.Agents, map[string]string{jsonKeyTaskType: a.TaskType, "description": a.Description})
