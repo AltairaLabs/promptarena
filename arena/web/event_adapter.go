@@ -4,6 +4,7 @@ package web
 import (
 	"encoding/base64"
 	"encoding/json"
+	"hash/fnv"
 	"sync"
 	"time"
 
@@ -24,11 +25,28 @@ type SSEEvent struct {
 // clientBufferSize is the channel buffer for each SSE client.
 const clientBufferSize = 256
 
+// clientState tracks what a single SSE client has successfully been sent, so
+// BroadcastFullMessages can skip messages that client already holds unchanged.
+//
+// sentFull maps conversation ID -> per-index hash of the last message.full
+// payload delivered to this client. An entry is recorded only when the
+// non-blocking send succeeds, so a frame dropped for a full buffer stays
+// "unsent" and is retried on the next save — this is what makes dropped
+// messages self-heal.
+type clientState struct {
+	sentFull map[string][]uint64
+}
+
+// unsentHash is the zero entry for an index this client has never received.
+// Real payload hashes are offset away from it (see hashMessage), so a genuine
+// hash can never collide with "never sent".
+const unsentHash uint64 = 0
+
 // EventAdapter subscribes to an events.Bus and fans out
 // JSON-serialized events to registered SSE client channels.
 type EventAdapter struct {
 	mu      sync.RWMutex
-	clients map[chan []byte]struct{}
+	clients map[chan []byte]*clientState
 
 	audioMu      sync.RWMutex
 	audioClients map[chan []byte]struct{}
@@ -37,7 +55,7 @@ type EventAdapter struct {
 // NewEventAdapter creates a new EventAdapter.
 func NewEventAdapter() *EventAdapter {
 	return &EventAdapter{
-		clients:      make(map[chan []byte]struct{}),
+		clients:      make(map[chan []byte]*clientState),
 		audioClients: make(map[chan []byte]struct{}),
 	}
 }
@@ -54,7 +72,9 @@ func (a *EventAdapter) Subscribe(bus events.Bus) {
 func (a *EventAdapter) Register() chan []byte {
 	ch := make(chan []byte, clientBufferSize)
 	a.mu.Lock()
-	a.clients[ch] = struct{}{}
+	// Fresh client: empty sent-set, so the next BroadcastFullMessages sends it
+	// the complete history while established clients get only what changed.
+	a.clients[ch] = &clientState{sentFull: make(map[string][]uint64)}
 	a.mu.Unlock()
 	return ch
 }
@@ -210,34 +230,96 @@ func (a *EventAdapter) broadcast(data []byte) {
 // runtime-event stream. This lets the Inspector show metrics/meta/cost/raw
 // JSON for messages as they're persisted.
 //
-// TODO(perf): re-sends the FULL history on every store Save, so a long
-// conversation / high-turn batch run with a live dashboard pays O(N) SSE traffic
-// per save (O(N^2) over the run). Fine for short interactive chats; optimize to
-// broadcast only the changed message(s) since the last save before this runs
-// against long-lived conversations with dashboards attached.
+// Delivery is per-client delta: each client is sent only the messages whose
+// payload differs from what that client last received. This keeps a long
+// conversation from re-sending its whole history on every save (which cost
+// O(N) SSE traffic per save, O(N^2) over a run) while preserving the two
+// catch-up properties the full re-send used to provide for free:
+//
+//   - A newly registered or reconnecting client starts with an empty sent-set,
+//     so it still receives the complete history on the next save.
+//   - A frame dropped because a client's buffer was full is not recorded as
+//     sent, so it is retried on the next save rather than lost.
+//
+// The client reducer keys on index and upserts, so a partial send is safe.
 func (a *EventAdapter) BroadcastFullMessages(convID string, msgs []types.Message) {
-	a.mu.RLock()
-	hasClients := len(a.clients) > 0
-	a.mu.RUnlock()
-	if !hasClients {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	if len(a.clients) == 0 {
 		return
 	}
 
-	for i := range msgs {
-		sse := &SSEEvent{
-			Type:           "message.full",
-			ConversationID: convID,
-			Data: map[string]interface{}{
-				"index":   i,
-				"message": msgs[i],
-			},
+	// Frames are marshaled lazily and at most once per index, then shared
+	// across every client that turns out to need that index.
+	frames := make([][]byte, len(msgs))
+	hashes := make([]uint64, len(msgs))
+	marshaled := make([]bool, len(msgs))
+
+	for ch, st := range a.clients {
+		sent := st.sentFull[convID]
+		// Conversations only grow in practice, but tolerate a shorter slice
+		// (e.g. a reloaded/truncated state) without indexing out of range.
+		if len(sent) < len(msgs) {
+			grown := make([]uint64, len(msgs))
+			copy(grown, sent)
+			sent = grown
+		} else if len(sent) > len(msgs) {
+			sent = sent[:len(msgs)]
 		}
-		data, err := json.Marshal(sse)
-		if err != nil {
-			continue
+
+		for i := range msgs {
+			if !marshaled[i] {
+				marshaled[i] = true
+				frames[i], hashes[i] = marshalFullMessage(convID, i, &msgs[i])
+			}
+			// Marshal failed for this message, or the client already has this
+			// exact payload — nothing to send.
+			if frames[i] == nil || sent[i] == hashes[i] {
+				continue
+			}
+			select {
+			case ch <- frames[i]:
+				sent[i] = hashes[i]
+			default:
+				// Buffer full — leave unsent so the next save retries it.
+			}
 		}
-		a.broadcast(data)
+		st.sentFull[convID] = sent
 	}
+}
+
+// marshalFullMessage encodes one message.full SSE frame and returns it with a
+// hash of the message payload used for per-client change detection. It returns
+// (nil, 0) if the message cannot be marshaled.
+func marshalFullMessage(convID string, index int, msg *types.Message) ([]byte, uint64) {
+	body, err := json.Marshal(msg)
+	if err != nil {
+		return nil, 0
+	}
+	data, err := json.Marshal(&SSEEvent{
+		Type:           "message.full",
+		ConversationID: convID,
+		Data: map[string]interface{}{
+			"index":   index,
+			"message": json.RawMessage(body),
+		},
+	})
+	if err != nil {
+		return nil, 0
+	}
+	return data, hashMessage(body)
+}
+
+// hashMessage returns a non-zero FNV-1a hash of a marshaled message, so that
+// no real payload is ever indistinguishable from the unsentHash sentinel.
+func hashMessage(body []byte) uint64 {
+	h := fnv.New64a()
+	_, _ = h.Write(body)
+	if sum := h.Sum64(); sum != unsentHash {
+		return sum
+	}
+	return 1
 }
 
 // mapEvent converts a runtime event to an SSEEvent.
