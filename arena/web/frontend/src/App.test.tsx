@@ -149,6 +149,46 @@ describe("App — Runs view", () => {
     });
   });
 
+  // A live ActiveRun carries lowercase `messages`; a completed RunResult
+  // PascalCase `Messages`. The run-detail view used to branch on that shape
+  // and sent every in-flight run to the pre-migration TrialInspector, so a
+  // running trial showed the old UI for its whole duration. Both shapes must
+  // now render through SessionReview.
+  it("opens SessionReview for a still-running live run, not a legacy inspector", async () => {
+    useArenaEventsMock.mockReturnValue({
+      ...defaultArenaState(),
+      completedRunIds: [],
+      runs: {
+        "live-1": {
+          runId: "live-1",
+          scenario: "checkout",
+          provider: "mock",
+          region: "default",
+          startTime: "2026-07-07T00:00:00Z",
+          turnIndex: 1,
+          messages: [
+            { index: 0, role: "user", content: "live question" },
+            { index: 1, role: "assistant", content: "live answer" },
+          ],
+          costs: { inputTokens: 1, outputTokens: 2, totalCost: 0.01 },
+          status: "running",
+        } as ActiveRun,
+      },
+    });
+
+    render(<App />);
+    // The live run overlays the checkout×mock cell, which carries its cost.
+    const cell = await screen.findByText("$0.010");
+    fireEvent.click(cell);
+
+    // SessionReview's Transcript tab, and the live turns inside it.
+    expect(await screen.findByRole("button", { name: /^transcript$/i })).toBeInTheDocument();
+    expect(await screen.findByText("live answer")).toBeInTheDocument();
+    await act(async () => {
+      await Promise.resolve();
+    });
+  });
+
   it("fetches the workflow graph on mount and offers it as a Workflow tab", async () => {
     render(<App />);
     const rate = await screen.findByText("100%");

@@ -4,12 +4,10 @@ import {
   buildStandings,
   buildOverallGauge,
   buildMetrics,
-  buildTranscript,
-  buildTerminalLines,
   buildTrend,
   overlayWorkflowRun,
 } from "./arenaView";
-import type { RunResult, TrialCell, WorkflowGraph, ActiveRun } from "@/types";
+import type { RunResult, WorkflowGraph, ActiveRun } from "@/types";
 
 const mk = (o: Partial<RunResult>): RunResult => ({
   RunID: o.RunID ?? "r", PromptPack: "", Region: "", ScenarioID: o.ScenarioID!, ProviderID: o.ProviderID!,
@@ -111,108 +109,6 @@ describe("buildMetrics", () => {
     const tokens = metrics.find((x) => x.label.toLowerCase().includes("token"))!;
     expect(tokens.unit).toBe("k");
     expect(tokens.dot).toBe("healthy");
-  });
-});
-
-describe("buildTranscript", () => {
-  it("gives assistant messages the ion-cyan accent", () => {
-    const run = mk({ ScenarioID: "checkout", ProviderID: "claude", Messages: [
-      { role: "assistant", content: "hi there" },
-    ] });
-    const t = buildTranscript(run);
-    expect(t).toHaveLength(1);
-    expect(t[0].role).toBe("assistant");
-    expect(t[0].accent).toBe("var(--ion-cyan)");
-    expect(t[0].bg).toContain("var(--ion-cyan)");
-  });
-
-  it("gives system/user/tool messages their accents, defaulting unknown roles", () => {
-    const run = mk({ ScenarioID: "checkout", ProviderID: "claude", Messages: [
-      { role: "system", content: "sys" },
-      { role: "user", content: "hello" },
-      { role: "tool", content: "result" },
-      { role: "narrator", content: "???" },
-    ] });
-    const t = buildTranscript(run);
-    expect(t.map((m) => m.accent)).toEqual([
-      "var(--nebula-violet)",
-      "var(--starlight-300)",
-      "var(--amber-500)",
-      "var(--starlight-300)",
-    ]);
-  });
-
-  it("surfaces a tool call as a tool entry", () => {
-    const run = mk({ ScenarioID: "checkout", ProviderID: "claude", Messages: [
-      { role: "assistant", content: "", tool_calls: [{ id: "1", name: "search_docs", args: { q: "refund policy" } }] },
-    ] });
-    const t = buildTranscript(run);
-    expect(t[0].tool?.name).toBe("search_docs");
-    expect(t[0].tool?.body).toContain("refund policy");
-  });
-
-  it("builds meta from cost + latency and asserts from validations", () => {
-    const run = mk({ ScenarioID: "checkout", ProviderID: "claude", Messages: [
-      {
-        role: "assistant", content: "done", latency_ms: 820,
-        cost_info: { total_cost_usd: 0.0069, input_tokens: 10, output_tokens: 5, input_cost_usd: 0.004, output_cost_usd: 0.0029 },
-        validations: [{ validator_type: "no_pii", passed: true }],
-      },
-    ] });
-    const t = buildTranscript(run);
-    expect(t[0].meta).toBe("$0.0069 · 820ms");
-    expect(t[0].asserts).toEqual([{ name: "no_pii", ok: true }]);
-  });
-
-  it("returns [] for an undefined run", () => {
-    expect(buildTranscript(undefined)).toEqual([]);
-  });
-
-  it("reads an ActiveRun's live messages", () => {
-    const active = {
-      runId: "r1", scenario: "checkout", provider: "claude", region: "us", startTime: "2026-07-07T00:00:00Z",
-      turnIndex: 1, status: "running" as const, costs: { inputTokens: 0, outputTokens: 0, totalCost: 0 },
-      messages: [{ role: "user", content: "hi", index: 0 }],
-    };
-    const t = buildTranscript(active);
-    expect(t).toHaveLength(1);
-    expect(t[0].role).toBe("user");
-    expect(t[0].content).toBe("hi");
-  });
-});
-
-describe("buildTerminalLines", () => {
-  const baseCell: TrialCell = {
-    scenarioId: "checkout", providerId: "claude", key: "checkout:claude",
-    passRate: 100, passed: true, best: true, costUsd: 0.0069, latencyMs: 633792, runId: "r1", hasData: true,
-  };
-
-  it("synthesizes the command line and a success line when the cell passed, formatting latency as m/s", () => {
-    const lines = buildTerminalLines(baseCell, "checkout", "claude");
-    expect(lines[0].text).toBe("promptarena run --scenario checkout --provider claude");
-    const success = lines.find((l) => l.type === "success")!;
-    expect(success.text).toContain("✓");
-    expect(success.text).toContain("$0.0069");
-    expect(success.text).toContain("10m 34s");
-  });
-
-  it("formats a sub-millisecond latency as <1ms", () => {
-    const lines = buildTerminalLines({ ...baseCell, latencyMs: 0.634 }, "checkout", "claude");
-    const success = lines.find((l) => l.type === "success")!;
-    expect(success.text).toContain("<1ms");
-  });
-
-  it("synthesizes an error line when the cell failed", () => {
-    const failed: TrialCell = { ...baseCell, passed: false, passRate: 0 };
-    const lines = buildTerminalLines(failed, "checkout", "claude");
-    const error = lines.find((l) => l.type === "error")!;
-    expect(error.text).toContain("✗");
-  });
-
-  it("handles an empty cell", () => {
-    const lines = buildTerminalLines(undefined, "checkout", "claude");
-    expect(lines[0].text).toBe("promptarena run --scenario checkout --provider claude");
-    expect(lines.some((l) => l.type === "success" || l.type === "error")).toBe(false);
   });
 });
 

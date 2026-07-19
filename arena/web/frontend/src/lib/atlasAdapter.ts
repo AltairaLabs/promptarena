@@ -4,7 +4,7 @@
 // assertions rather than a single field. Covers the historical path; the live
 // SSE camelCase bridge and derived trace events land in later WUs.
 import type { AtlasMessage, AtlasCheck, AtlasContentPart, AtlasToolCall, AtlasCheckViolation, ConstellationNode, ConstellationEdge } from "@altairalabs/atlas";
-import type { Message, RunResult, ContentPart, EvalResult, WorkflowGraph } from "@/types";
+import type { ActiveRun, Message, RunResult, ContentPart, EvalResult, WorkflowGraph } from "@/types";
 
 const ROLES = new Set(["user", "assistant", "system", "tool"]);
 const toRole = (r: string): AtlasMessage["role"] => (ROLES.has(r) ? r : "assistant") as AtlasMessage["role"];
@@ -243,6 +243,31 @@ export function adaptWorkflow(graph: WorkflowGraph): { nodes: ConstellationNode[
     for (const n of ends) edges.push({ id: `${n.id}->${END_ID}`, source: n.id, target: END_ID });
   }
   return { nodes, edges };
+}
+
+// Live counterpart of adaptRun, so a still-running trial renders through the
+// same SessionReview as a completed one instead of a separate legacy UI. An
+// ActiveRun carries no checks or recording yet — those arrive with the saved
+// RunResult, at which point adaptRun takes over for the same trial.
+export function adaptLiveRun(run: ActiveRun): AdaptedRun {
+  return {
+    title: `${run.scenario} · ${run.provider}`,
+    messages: adaptLiveMessages(run.messages),
+  };
+}
+
+// isRunResult distinguishes the two run shapes on the wire: a completed
+// RunResult has PascalCase Messages, a live ActiveRun lowercase messages.
+// Keeping the check here means callers never re-derive it — an earlier
+// inline version of this test in App silently routed every in-flight run
+// into the pre-migration inspector.
+export function isRunResult(run: RunResult | ActiveRun | undefined): run is RunResult {
+  return !!run && "Messages" in run && Array.isArray((run as RunResult).Messages);
+}
+
+// adaptAnyRun renders either shape through the same path.
+export function adaptAnyRun(run: RunResult | ActiveRun): AdaptedRun {
+  return isRunResult(run) ? adaptRun(run) : adaptLiveRun(run);
 }
 
 export function adaptRun(run: RunResult): AdaptedRun {

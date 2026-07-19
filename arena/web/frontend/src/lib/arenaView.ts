@@ -6,19 +6,14 @@
 import type {
   RunResult,
   ActiveRun,
-  Message,
-  MessageCreatedData,
-  MessageToolCall,
-  MessageToolResult,
   TrialCell,
   TrialRow,
   TrialMatrix,
   Standing,
   OverallGauge,
-  TranscriptMessage,
   WorkflowGraph,
 } from "@/types";
-import type { MetricSpec, TerminalLine } from "@altairalabs/atlas";
+import type { MetricSpec } from "@altairalabs/atlas";
 import { formatDuration } from "./utils";
 
 function endTimeMs(r: RunResult): number {
@@ -184,130 +179,10 @@ export function buildMetrics(results: RunResult[], _matrix: TrialMatrix): Metric
   ];
 }
 
-// roleAccent maps a transcript role to its Atlas accent color token.
-export function roleAccent(role: string): string {
-  switch (role) {
-    case "system":
-      return "var(--nebula-violet)";
-    case "user":
-      return "var(--starlight-300)";
-    case "assistant":
-      return "var(--ion-cyan)";
-    case "tool":
-      return "var(--amber-500)";
-    default:
-      return "var(--starlight-300)";
-  }
-}
-
-function accentBg(accent: string): string {
-  return `color-mix(in srgb, ${accent} 11%, transparent)`;
-}
-
-function firstTextPart(parts: { type: string; text?: string }[] | undefined): string | undefined {
-  return parts?.find((p) => p.type === "text")?.text;
-}
-
-function toolFromCallAndResult(
-  toolCalls: MessageToolCall[] | undefined,
-  toolResult: MessageToolResult | null | undefined,
-): { name: string; body: string } | undefined {
-  if (toolResult) {
-    const text = firstTextPart(toolResult.parts as { type: string; text?: string }[] | undefined);
-    return { name: toolResult.name, body: text ?? JSON.stringify(toolResult.parts ?? []) };
-  }
-  if (toolCalls && toolCalls.length > 0) {
-    const call = toolCalls[0];
-    return { name: call.name, body: JSON.stringify(call.args ?? {}) };
-  }
-  return undefined;
-}
-
-function metaFromMessage(msg: Message): string | undefined {
-  const parts: string[] = [];
-  if (msg.cost_info) parts.push(`$${msg.cost_info.total_cost_usd.toFixed(4)}`);
-  // Message.latency_ms comes straight off the Go engine's types.Message
-  // struct, which is already an int64 milliseconds field (not a
-  // time.Duration) — no unit conversion needed here, just formatting.
-  if (typeof msg.latency_ms === "number") parts.push(formatDuration(msg.latency_ms));
-  return parts.length > 0 ? parts.join(" · ") : undefined;
-}
-
-function assertsFromMessage(msg: Message): { name: string; ok: boolean }[] | undefined {
-  if (!msg.validations || msg.validations.length === 0) return undefined;
-  return msg.validations.map((v) => ({ name: v.validator_type, ok: v.passed }));
-}
-
-function toTranscriptMessage(
-  role: string,
-  idx: number,
-  content: string | undefined,
-  meta: string | undefined,
-  tool: { name: string; body: string } | undefined,
-  asserts: { name: string; ok: boolean }[] | undefined,
-): TranscriptMessage {
-  const accent = roleAccent(role);
-  return { role, idx, accent, bg: accentBg(accent), content, meta, tool, asserts };
-}
-
 function isRunResult(run: RunResult | ActiveRun): run is RunResult {
   return Array.isArray((run as RunResult).Messages);
 }
 
-// buildTranscript maps a RunResult's (or a still-running ActiveRun's) message
-// sequence into the transcript viewmodel. ActiveRun messages carry no
-// per-message cost/latency/validation data (that only exists on completed
-// RunResults), so `meta` and `asserts` are omitted for live runs.
-export function buildTranscript(run: RunResult | ActiveRun | undefined): TranscriptMessage[] {
-  if (!run) return [];
-  if (isRunResult(run)) {
-    return run.Messages.map((msg, idx) =>
-      toTranscriptMessage(
-        msg.role,
-        idx,
-        msg.content,
-        metaFromMessage(msg),
-        toolFromCallAndResult(msg.tool_calls, msg.tool_result),
-        assertsFromMessage(msg),
-      ),
-    );
-  }
-  return (run.messages ?? []).map((msg: MessageCreatedData, idx) =>
-    toTranscriptMessage(
-      msg.role,
-      idx,
-      msg.content,
-      undefined,
-      toolFromCallAndResult(msg.toolCalls, msg.toolResult),
-      undefined,
-    ),
-  );
-}
-
-// buildTerminalLines (D3) synthesizes a cosmetic CLI transcript for a trial
-// cell — the command that would reproduce it, plus a pass/fail summary line.
-// There's no real terminal session behind this; it's a readable stand-in.
-export function buildTerminalLines(
-  cell: TrialCell | undefined,
-  scenarioId: string,
-  providerId: string,
-): TerminalLine[] {
-  const lines: TerminalLine[] = [
-    { type: "command", text: `promptarena run --scenario ${scenarioId} --provider ${providerId}`, prompt: "$" },
-  ];
-  if (!cell || !cell.hasData) {
-    lines.push({ type: "muted", text: "no run yet" });
-    return lines;
-  }
-  const cost = cell.costUsd > 0 ? `$${cell.costUsd.toFixed(4)}` : "free";
-  const latency = formatDuration(cell.latencyMs);
-  if (cell.passed) {
-    lines.push({ type: "success", text: `✓ assertions passed · ${cost} · ${latency}` });
-  } else {
-    lines.push({ type: "error", text: `✗ assertions failed · ${cost} · ${latency}` });
-  }
-  return lines;
-}
 
 // buildTrend (D1) derives a real pass-rate series by bucketing historical
 // RunResults chronologically by StartTime, keeping only the last `buckets`

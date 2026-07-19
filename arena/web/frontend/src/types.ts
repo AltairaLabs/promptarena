@@ -429,14 +429,3 @@ export interface OverallGauge {
   total: number;
   caption: string; // e.g. "13 / 20 passed"
 }
-
-export interface TranscriptMessage {
-  role: string;
-  idx: number;
-  accent: string; // from roleAccent(role)
-  bg: string; // color-mix accent 11%
-  content?: string;
-  meta?: string; // e.g. "$0.0069 · 820ms"
-  tool?: { name: string; body: string };
-  asserts?: { name: string; ok: boolean }[];
-}
