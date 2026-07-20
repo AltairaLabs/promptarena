@@ -217,4 +217,93 @@ describe("InteractiveChat", () => {
     const lastProps = calls[calls.length - 1]?.[0] as { call?: unknown } | undefined;
     expect(lastProps?.call).toBeUndefined();
   });
+
+  // The setup and vars phases moved onto Atlas Select/Checkbox/Input/Alert.
+  // These cover the branches that swap in, which the existing tests reached
+  // only incidentally on the way to the chat phase.
+  describe("setup form", () => {
+    const twoOfEach = {
+      agents: [
+        { taskType: "support", description: "" },
+        { taskType: "sales", description: "" },
+      ],
+      providers: ["claude", "mock"],
+      hasEvals: true,
+    };
+
+    it("offers agent and provider as labelled selects", async () => {
+      fetchOptions.mockResolvedValue(twoOfEach);
+      render(<InteractiveChat state={emptyState()} registerInteractiveRun={vi.fn()} onBack={vi.fn()} />);
+
+      const agent = (await screen.findByLabelText("Agent")) as HTMLSelectElement;
+      const provider = screen.getByLabelText("Provider") as HTMLSelectElement;
+      expect(Array.from(agent.options).map((o) => o.value)).toEqual(["", "support", "sales"]);
+      expect(Array.from(provider.options).map((o) => o.value)).toEqual(["", "claude", "mock"]);
+    });
+
+    it("passes the chosen agent, provider and evals flag through to the session", async () => {
+      fetchOptions.mockResolvedValue(twoOfEach);
+      createSession.mockResolvedValue({ sessionId: "s1" });
+      render(<InteractiveChat state={emptyState()} registerInteractiveRun={vi.fn()} onBack={vi.fn()} />);
+
+      fireEvent.change(await screen.findByLabelText("Agent"), { target: { value: "sales" } });
+      fireEvent.change(screen.getByLabelText("Provider"), { target: { value: "mock" } });
+      fireEvent.click(screen.getByLabelText("Run evals per turn"));
+      fireEvent.click(screen.getByRole("button", { name: /start chat/i }));
+
+      await waitFor(() =>
+        expect(createSession).toHaveBeenCalledWith({
+          agent: "sales",
+          provider: "mock",
+          variables: {},
+          evals: true,
+        }),
+      );
+    });
+
+    it("surfaces a session failure as an alert", async () => {
+      fetchOptions.mockResolvedValue({ ...twoOfEach, hasEvals: false });
+      createSession.mockResolvedValue({ error: "provider unreachable" });
+      render(<InteractiveChat state={emptyState()} registerInteractiveRun={vi.fn()} onBack={vi.fn()} />);
+
+      fireEvent.change(await screen.findByLabelText("Agent"), { target: { value: "sales" } });
+      fireEvent.change(screen.getByLabelText("Provider"), { target: { value: "mock" } });
+      fireEvent.click(screen.getByRole("button", { name: /start chat/i }));
+
+      const alert = await screen.findByRole("alert");
+      expect(alert).toHaveTextContent("provider unreachable");
+    });
+
+    it("collects missing variables, then retries the session with them", async () => {
+      fetchOptions.mockResolvedValue({ ...twoOfEach, hasEvals: false });
+      createSession
+        .mockResolvedValueOnce({ missingVars: ["customer_name"] })
+        .mockResolvedValueOnce({ sessionId: "s2" });
+      render(<InteractiveChat state={emptyState()} registerInteractiveRun={vi.fn()} onBack={vi.fn()} />);
+
+      fireEvent.change(await screen.findByLabelText("Agent"), { target: { value: "sales" } });
+      fireEvent.change(screen.getByLabelText("Provider"), { target: { value: "mock" } });
+      fireEvent.click(screen.getByRole("button", { name: /start chat/i }));
+
+      // Vars phase: one Input per missing variable.
+      const field = await screen.findByLabelText("customer_name");
+      fireEvent.change(field, { target: { value: "Ada" } });
+      fireEvent.click(screen.getByRole("button", { name: /start chat/i }));
+
+      await waitFor(() =>
+        expect(createSession).toHaveBeenLastCalledWith({
+          agent: "sales",
+          provider: "mock",
+          variables: { customer_name: "Ada" },
+          evals: false,
+        }),
+      );
+    });
+
+    it("reports a failure to load options at all", async () => {
+      fetchOptions.mockRejectedValue(new Error("options endpoint down"));
+      render(<InteractiveChat state={emptyState()} registerInteractiveRun={vi.fn()} onBack={vi.fn()} />);
+      expect(await screen.findByRole("alert")).toHaveTextContent("options endpoint down");
+    });
+  });
 });
