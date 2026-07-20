@@ -22,19 +22,66 @@ const byId = (id: string) => {
 };
 
 describe("arenaInspectorTabs", () => {
-  it("exposes the seven Arena-only tabs, all scoped to message subjects", () => {
+  it("exposes the Arena-only tabs, all scoped to message subjects", () => {
     expect(arenaInspectorTabs.map((t) => t.id)).toEqual([
       "prompt",
       "request",
       "response",
       "trace",
+      "tools",
       "workflow",
+      "workflow-current",
+      "composition",
       "persona",
       "selfplay",
     ]);
     for (const tab of arenaInspectorTabs) {
       expect(tab.appliesTo).toEqual(["message"]);
     }
+  });
+
+  // The HTML report has shown these for a long time; the web UI had no
+  // equivalent, and _available_tools/_tool_descriptors appear in roughly half
+  // the saved runs — so this was a real blind spot.
+  describe("tools tab", () => {
+    it("lists the available tool names", () => {
+      const subject = messageSubject({ _available_tools: ["calculate", "search"] });
+      render(<>{byId("tools").render(subject)}</>);
+      expect(screen.getByText("calculate")).toBeInTheDocument();
+      expect(screen.getByText("search")).toBeInTheDocument();
+    });
+
+    it("shows the descriptors alongside the names", () => {
+      const subject = messageSubject({
+        _available_tools: ["calculate"],
+        _tool_descriptors: [{ description: "Perform mathematical calculations" }],
+      });
+      render(<>{byId("tools").render(subject)}</>);
+      expect(screen.getByText("calculate")).toBeInTheDocument();
+      expect(screen.getByText(/Perform mathematical calculations/)).toBeInTheDocument();
+    });
+
+    // Either key alone must open the tab — a turn can carry descriptors
+    // without the name list.
+    it("is visible when only descriptors are present", () => {
+      const tab = byId("tools");
+      expect(tab.visible?.(messageSubject({ _tool_descriptors: [{ description: "x" }] }))).toBe(true);
+      expect(tab.visible?.(messageSubject({ _available_tools: ["a"] }))).toBe(true);
+      expect(tab.visible?.(messageSubject({}))).toBe(false);
+    });
+  });
+
+  it("shows the composition snapshot", () => {
+    const subject = messageSubject({ _composition_snapshot: { step: "resolve" } });
+    render(<>{byId("composition").render(subject)}</>);
+    expect(screen.getByText(/resolve/)).toBeInTheDocument();
+  });
+
+  it("shows the current workflow state separately from the workflow tab", () => {
+    const subject = messageSubject({ current_workflow_state: { node: "intake" } });
+    expect(byId("workflow-current").visible?.(subject)).toBe(true);
+    // The pre-existing workflow tab reads a different key and must stay closed.
+    expect(byId("workflow").visible?.(subject)).toBe(false);
   });
 
   it("renders a structured meta payload as JSON (trace)", () => {
