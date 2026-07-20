@@ -3,7 +3,7 @@ module github.com/AltairaLabs/promptarena
 go 1.26.0
 
 require (
-	github.com/AltairaLabs/PromptKit/pkg v1.5.4
+	github.com/AltairaLabs/PromptKit/pkg v1.5.5
 	github.com/AltairaLabs/PromptKit/runtime v1.5.4
 	github.com/charmbracelet/bubbles v1.0.0
 	github.com/charmbracelet/bubbletea v1.3.10
