@@ -27,9 +27,7 @@ spec:
     concurrency: 1
     output:
       dir: out
-      formats: ["json", "html", "markdown"]
-      html:
-        file: azure-foundry.html
+      formats: ["json", "markdown"]
       markdown:
         file: azure-foundry.md
         include_details: true

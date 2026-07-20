@@ -13,7 +13,6 @@ import (
 	arenaaudio "github.com/AltairaLabs/promptarena/arena/audio"
 	"github.com/AltairaLabs/promptarena/arena/engine"
 	"github.com/AltairaLabs/promptarena/arena/results"
-	"github.com/AltairaLabs/promptarena/arena/results/html"
 	jsonrepo "github.com/AltairaLabs/promptarena/arena/results/json"
 	"github.com/AltairaLabs/promptarena/arena/results/junit"
 	"github.com/AltairaLabs/promptarena/arena/results/markdown"
@@ -47,10 +46,10 @@ func createResultRepository(params *RunParameters, configFile string) (results.R
 		case "junit":
 			junitRepo := junit.NewJUnitResultRepository(params.JUnitFile)
 			composite.AddRepository(junitRepo)
-		case "html":
-			htmlRepo := html.NewHTMLResultRepository(params.HTMLFile)
-			composite.AddRepository(htmlRepo)
-		case "markdown":
+		// "html" was a bespoke standalone report; the web UI supersedes it and
+		// markdown carries the same content for CI. Accepted and mapped to
+		// markdown so existing configs and scripts keep working.
+		case "html", "markdown":
 			// Get markdown configuration from arena defaults
 			var markdownConfig *markdown.MarkdownConfig
 			if configFile != "" {
@@ -112,8 +111,8 @@ func init() {
 	runCmd.Flags().Bool("ci", false, "CI mode (disable TUI, simple logs)")
 	runCmd.Flags().Bool("simple", false, "Simple mode (alias for --ci)")
 	runCmd.Flags().Bool("html", false, "Generate HTML report (deprecated: use --format)")
-	runCmd.Flags().StringSlice("format", []string{}, "Output formats (json, junit, html, markdown) - defaults from config")
-	runCmd.Flags().StringSlice("formats", []string{}, "Output formats (json, junit, html, markdown) - alias for --format")
+	runCmd.Flags().StringSlice("format", []string{}, "Output formats (json, junit, markdown) - defaults from config")
+	runCmd.Flags().StringSlice("formats", []string{}, "Output formats (json, junit, markdown) - alias for --format")
 	runCmd.Flags().String("junit-file", "", "JUnit XML output file (default: out/junit.xml)")
 	runCmd.Flags().String("html-file", "", "HTML report output file (default: out/report-[timestamp].html)")
 	runCmd.Flags().String("markdown-file", "", "Markdown report output file (default: out/results.md)")

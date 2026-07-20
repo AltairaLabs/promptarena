@@ -23,6 +23,6 @@ spec:
     seed: 42
     output:
       dir: out
-      formats: ["json", "html"]
+      formats: ["json", "markdown"]
     fail_on:
       - provider_error

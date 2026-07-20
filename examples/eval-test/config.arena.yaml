@@ -22,7 +22,5 @@ spec:
       dir: out
       formats:
         - json
-        - html
-      html:
-        file: document-report.html
+        - markdown
       

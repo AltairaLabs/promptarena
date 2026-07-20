@@ -42,6 +42,4 @@ spec:
     # Output configuration for CI/CD test results integration
     output:
       dir: out
-      formats: ["json", "junit", "html"]  # Detailed results, CI/CD integration, human-readable reports
-      html:
-        file: report.html
+      formats: ["json", "junit", "markdown"]  # Detailed results, CI/CD integration, human-readable reports

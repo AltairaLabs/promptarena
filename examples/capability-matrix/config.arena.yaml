@@ -166,9 +166,7 @@ spec:
     concurrency: 6
     output:
       dir: out
-      formats: ["json", "markdown", "html"]
-      html:
-        file: capability-matrix.html
+      formats: ["json", "markdown"]
       markdown:
         file: capability-matrix.md
         include_details: true

@@ -85,12 +85,6 @@ Debug and test prompt generation
 
 Flags: `--config`, `--context`, `--domain`, `--json`, `--list`, `--persona`, `--region`, `--scenario`, `--show-meta`, `--show-prompt`, `--show-stats`, `--task-type`, `--user`, `--verbose`
 
-## promptarena render
-
-Generate HTML report from existing results
-
-Flags: `--output`
-
 ## promptarena run
 
 Run conversation simulations
