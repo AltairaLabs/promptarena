@@ -48,6 +48,12 @@ jobs:
               - '.golangci.yml'
               - 'sonar-project.properties'
               - 'npm/**'
+              # The web UI is built and tested inside Build & Test (tsc, vite,
+              # vitest) and embedded into the Go binary, so a frontend-only
+              # change must run that job. Without this a pure frontend PR — a
+              # dependency bump, or any .tsx edit — skips build, typecheck and
+              # the whole frontend suite, and merges unvalidated.
+              - 'arena/web/frontend/**'
               # Changes to this workflow itself must re-run the Go pipeline it
               # defines — otherwise a change to how build/test/coverage/scan run
               # is never exercised before merge.
