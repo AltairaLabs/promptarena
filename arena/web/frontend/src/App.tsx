@@ -10,7 +10,7 @@ import { InteractiveChat } from "@/components/InteractiveChat";
 import { TrialMatrix } from "@/components/arena/TrialMatrix";
 import { InstrumentBand } from "@/components/arena/InstrumentBand";
 
-import { SessionReview, ConstellationGraph } from "@altairalabs/atlas";
+import { SessionReview, ConstellationGraph, Tabs, Card, Button } from "@altairalabs/atlas";
 import { useArenaEvents } from "@/hooks/useArenaEvents";
 import { useArenaAPI } from "@/hooks/useArenaAPI";
 import { useTheme } from "@/hooks/useTheme";
@@ -65,16 +65,23 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
     if (this.state.error) {
       return (
         <div className="min-h-screen bg-canvas flex items-center justify-center p-8">
-          <div className="rounded-xl border border-red-200 bg-surface p-8 max-w-lg w-full text-center shadow-sm">
-            <h2 className="text-lg font-semibold text-[#EF4444] mb-2">Something went wrong</h2>
-            <p className="text-sm text-fg-muted mb-6">{this.state.error.message}</p>
-            <button
-              className="rounded-lg bg-blue-50 border border-blue-200 px-4 py-2 text-sm font-medium text-[#2563EB] hover:bg-blue-100 transition-colors"
-              onClick={() => this.setState({ error: null })}
+          <Card style={{ maxWidth: 512, width: "100%", textAlign: "center" }}>
+            <h2
+              style={{
+                font: "var(--fw-semibold) var(--text-size-h4)/1.3 var(--font-sans)",
+                color: "var(--status-error-text)",
+                margin: "0 0 8px",
+              }}
             >
+              Something went wrong
+            </h2>
+            <p style={{ font: "var(--text-size-body-sm) var(--font-sans)", color: "var(--text-muted)", margin: "0 0 24px" }}>
+              {this.state.error.message}
+            </p>
+            <Button variant="secondary" onClick={() => this.setState({ error: null })}>
               Try again
-            </button>
-          </div>
+            </Button>
+          </Card>
         </div>
       );
     }
@@ -352,28 +359,18 @@ export default function App() {
           onToggleTheme={toggleTheme}
         />
         <main className="py-8">
-        {/* Tab bar */}
-        <div className="flex gap-1 mb-6 border-b border-mist pb-0">
-          <button
-            className={`px-4 py-2 text-sm font-medium rounded-t-lg border border-b-0 transition-colors ${
-              activeTab === "runs"
-                ? "bg-surface border-mist text-fg"
-                : "bg-canvas border-transparent text-fg-muted hover:text-fg hover:bg-surface"
-            }`}
-            onClick={() => setActiveTab("runs")}
-          >
-            Runs
-          </button>
-          <button
-            className={`px-4 py-2 text-sm font-medium rounded-t-lg border border-b-0 transition-colors ${
-              activeTab === "chat"
-                ? "bg-surface border-mist text-fg"
-                : "bg-canvas border-transparent text-fg-muted hover:text-fg hover:bg-surface"
-            }`}
-            onClick={() => setActiveTab("chat")}
-          >
-            Interactive Chat
-          </button>
+        {/* Atlas Tabs rather than a hand-rolled strip: it brings the
+            role="tablist" / aria-selected / roving-tabindex keyboard nav the
+            local version never had. */}
+        <div style={{ marginBottom: 24 }}>
+          <Tabs
+            tabs={[
+              { id: "runs", label: "Runs" },
+              { id: "chat", label: "Interactive Chat" },
+            ]}
+            value={activeTab}
+            onChange={(id) => setActiveTab(id as "runs" | "chat")}
+          />
         </div>
 
         {activeTab === "chat" ? (
@@ -389,7 +386,8 @@ export default function App() {
                 <div className="space-y-4">
                   <button
                     onClick={handleBackFromInspector}
-                    className="flex items-center gap-2 text-sm text-[#2563EB] hover:underline"
+                    className="flex items-center gap-2 text-sm hover:underline"
+                    style={{ color: "var(--text-link)" }}
                   >
                     <ArrowLeft className="h-4 w-4" /> Back
                   </button>
@@ -415,7 +413,7 @@ export default function App() {
                             <div className="mb-2 flex justify-end">
                               <button
                                 onClick={() => handleListen(liveRunId)}
-                                className="rounded-lg border border-mist bg-surface px-3 py-1.5 text-xs font-medium text-fg-muted hover:text-fg hover:bg-[var(--c-surface-2)] transition-colors"
+                                className="rounded-lg border border-mist bg-surface px-3 py-1.5 text-xs font-medium text-fg-muted hover:text-fg hover:bg-surface-2 transition-colors"
                               >
                                 {listeningRunId === liveRunId ? "Stop listening" : "Listen"}
                               </button>
@@ -454,12 +452,23 @@ export default function App() {
                     runDisabled={!state.connected || loading || !selectedScenario || providers.length === 0}
                   />
                   {startError && (
-                    <div className="rounded-xl bg-red-50 border border-red-200 px-4 py-3 text-sm text-[#EF4444]">{startError}</div>
+                    <div
+                      style={{
+                        borderRadius: "var(--radius-xl)",
+                        background: "var(--status-error-tint)",
+                        border: "1px solid color-mix(in srgb, var(--signal-red) 30%, transparent)",
+                        padding: "12px 16px",
+                        font: "var(--text-size-body-sm) var(--font-sans)",
+                        color: "var(--status-error-text)",
+                      }}
+                    >
+                      {startError}
+                    </div>
                   )}
                   <div className="flex justify-end">
                     <button
                       onClick={() => setShowLedger((v) => !v)}
-                      className="rounded-lg border border-mist bg-surface px-3 py-1.5 text-xs font-medium text-fg-muted hover:text-fg hover:bg-[var(--c-surface-2)] transition-colors"
+                      className="rounded-lg border border-mist bg-surface px-3 py-1.5 text-xs font-medium text-fg-muted hover:text-fg hover:bg-surface-2 transition-colors"
                     >
                       {showLedger ? "Hide ledger" : "Show ledger"}
                     </button>

@@ -2,40 +2,51 @@
 @import "@altairalabs/atlas-tokens/index.css";
 @import "@altairalabs/atlas/styles.css";
 
-/* Theme tokens. We expose semantic names (canvas, surface, fg, …) and
-   keep the legacy palette names (cloud-white, deep-space, mist, onyx,
-   slate-muted, white) pointing at CSS custom properties so existing
-   components flip with [data-theme="dark"] without rewriting every
-   class. Hardcoded hex usages still need targeted updates, but the
-   bulk of the surface inverts via these vars. */
+/* Tailwind theme, sourced entirely from the Atlas token layer imported
+   above. Every colour here is a reference, never a value: Atlas owns the
+   palette and its light/dark switching, and these names exist only so
+   Tailwind emits matching utilities (bg-surface, text-fg-muted, …).
+
+   There is deliberately no local palette. An earlier version defined a
+   parallel `--c-*` set of hardcoded slate hexes that shadowed Atlas, so
+   the dashboard and the Atlas components rendered from two different
+   colour systems on the same page — close enough to look almost right,
+   which is worse than obviously wrong. */
 @theme {
-  --color-altair-blue: #2563EB;
-  --color-altair-blue-dark: #1D4ED8;
-  --color-nebula-cyan: #06B6D4;
-  --color-cosmic-violet: #8B5CF6;
-  --color-deploy-green: #10B981;
-  --color-stellar-gold: #F59E0B;
-  --color-error-red: #EF4444;
+  /* Brand/status names kept for existing utilities, now pointing at the
+     Atlas tokens they were copied from. These previously froze Atlas's
+     LIGHT-mode values as hex, so they did not flip with the theme. */
+  --color-altair-blue: var(--text-link);
+  --color-cosmic-violet: var(--nebula-violet);
+  --color-deploy-green: var(--status-healthy);
+  --color-stellar-gold: var(--accent-primary);
+  --color-error-red: var(--status-error);
+  --color-nebula-cyan: var(--ion-cyan);
 
-  /* Semantic tokens — values pull from CSS vars. */
-  --color-canvas: var(--c-canvas);
-  --color-surface: var(--c-surface);
-  --color-surface-2: var(--c-surface-2);
-  --color-fg: var(--c-fg);
-  --color-fg-muted: var(--c-fg-muted);
-  --color-border-subtle: var(--c-border-subtle);
+  /* Semantic surface/text/border names. */
+  --color-canvas: var(--bg-app);
+  --color-surface: var(--surface-1);
+  --color-surface-2: var(--surface-2);
+  --color-fg: var(--text-body);
+  --color-fg-muted: var(--text-muted);
+  --color-border-subtle: var(--border-default);
 
-  /* Legacy palette aliases (so bg-cloud-white, text-deep-space, etc.
-     still resolve and now respond to dark mode). `white` deliberately
-     stays as true white — translucent overlays (bg-white/10) and
-     button text (text-white) on colored backgrounds rely on it.
-     Card surfaces use `bg-surface` instead. */
-  --color-cloud-white: var(--c-cloud-white);
-  --color-deep-space: var(--c-deep-space);
-  --color-onyx: var(--c-onyx);
-  --color-mist: var(--c-mist);
-  --color-slate-muted: var(--c-slate-muted);
+  /* Legacy palette aliases retained so existing classes keep resolving
+     (bg-cloud-white, text-deep-space, border-mist, …). They now mean
+     whatever the Atlas equivalent means, in both themes. `white` stays
+     true white — translucent overlays and text on coloured fills rely
+     on it. */
+  --color-cloud-white: var(--bg-app);
+  --color-deep-space: var(--text-body);
+  --color-onyx: var(--surface-2);
+  --color-mist: var(--border-default);
+  --color-slate-muted: var(--text-muted);
 
+  /* Radii mirror Atlas spacing.css. These cannot be aliased — Tailwind
+     needs --radius-* under @theme to emit rounded-* utilities, and that
+     is the same name Atlas defines, so a reference would be circular.
+     Keep in sync with Atlas; see radius.test.ts, which fails if they
+     drift apart. */
   --radius-sm: 6px;
   --radius-md: 7px;
   --radius-lg: 8px;
@@ -43,55 +54,10 @@
   --radius-2xl: 14px;
 }
 
-:root,
-[data-theme="light"] {
-  --c-canvas: #F8FAFC;
-  --c-surface: #FFFFFF;
-  --c-surface-2: #F1F5F9;
-  --c-fg: #0F172A;
-  --c-fg-muted: #64748B;
-  --c-border-subtle: #E2E8F0;
-
-  --c-cloud-white: #F8FAFC;
-  --c-deep-space: #0F172A;
-  --c-onyx: #1E293B;
-  --c-mist: #E2E8F0;
-  --c-slate-muted: #64748B;
-
-  /* Role-tint backgrounds for conversation bubbles. Light tints in
-     light mode; translucent role color in dark mode so foreground text
-     stays readable. */
-  --c-bubble-user: #EFF6FF;
-  --c-bubble-assistant: #ECFDF5;
-  --c-bubble-system: #F5F3FF;
-  --c-bubble-tool: #FFFBEB;
-}
-
-[data-theme="dark"] {
-  --c-canvas: #0B1220;
-  --c-surface: #111827;
-  --c-surface-2: #1E293B;
-  --c-fg: #F1F5F9;
-  --c-fg-muted: #94A3B8;
-  --c-border-subtle: #1F2937;
-
-  /* Legacy alias overrides — invert what each name "feels" like. */
-  --c-cloud-white: #0B1220; /* used as page bg → dark canvas */
-  --c-deep-space: #F1F5F9;  /* used as text color → light text */
-  --c-onyx: #1E293B;
-  --c-mist: #1F2937;        /* borders → muted dark */
-  --c-slate-muted: #94A3B8;
-
-  --c-bubble-user: rgba(37, 99, 235, 0.14);
-  --c-bubble-assistant: rgba(16, 185, 129, 0.14);
-  --c-bubble-system: rgba(139, 92, 246, 0.14);
-  --c-bubble-tool: rgba(245, 158, 11, 0.14);
-}
-
 body {
   font-family: var(--font-sans);
-  background-color: var(--c-canvas);
-  color: var(--c-fg);
+  background-color: var(--bg-app);
+  color: var(--text-body);
   margin: 0;
   -webkit-font-smoothing: antialiased;
   transition: background-color 120ms ease, color 120ms ease;
@@ -113,17 +79,17 @@ body {
 .markdown-message h3 { font-size: 0.9rem; }
 .markdown-message h4 { font-size: 0.85rem; }
 .markdown-message code {
-  background: color-mix(in srgb, var(--c-border-subtle) 60%, transparent);
+  background: color-mix(in srgb, var(--border-default) 60%, transparent);
   padding: 0.05rem 0.3rem;
-  border-radius: 3px;
+  border-radius: var(--radius-xs);
   font-family: var(--font-mono);
   font-size: 0.85em;
 }
 .markdown-message pre {
-  background: #0F172A;
-  color: #F8FAFC;
+  background: var(--surface-code);
+  color: var(--text-body);
   padding: 0.6rem 0.75rem;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   overflow-x: auto;
   font-family: var(--font-mono);
   font-size: 0.78rem;
@@ -136,15 +102,15 @@ body {
   color: inherit;
 }
 .markdown-message a {
-  color: var(--color-altair-blue);
+  color: var(--text-link);
   text-decoration: underline;
   text-underline-offset: 2px;
 }
 .markdown-message blockquote {
-  border-left: 3px solid var(--c-border-subtle);
+  border-left: 3px solid var(--border-default);
   padding-left: 0.6rem;
   margin: 0.4rem 0;
-  color: var(--c-fg-muted);
+  color: var(--text-muted);
 }
 .markdown-message table {
   border-collapse: collapse;
@@ -152,8 +118,8 @@ body {
   margin: 0.4rem 0;
 }
 .markdown-message th, .markdown-message td {
-  border: 1px solid var(--c-border-subtle);
+  border: 1px solid var(--border-default);
   padding: 0.25rem 0.5rem;
   text-align: left;
 }
-.markdown-message th { background: color-mix(in srgb, var(--c-border-subtle) 40%, transparent); }
+.markdown-message th { background: color-mix(in srgb, var(--border-default) 40%, transparent); }
