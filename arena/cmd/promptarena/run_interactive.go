@@ -382,7 +382,7 @@ func executeWithTUI(ctx context.Context, eng *engine.Engine, plan *engine.RunPla
 	}
 
 	// Build and print the summary after the hub exits.
-	summary := runPage.Model().BuildSummary(params.OutDir, params.HTMLFile)
+	summary := runPage.Model().BuildSummary(params.OutDir)
 	fmt.Println()
 	fmt.Println(tui.RenderSummary(summary, 80))
 
@@ -463,9 +463,6 @@ func displayRunInfo(params *RunParameters, configFile string) {
 	fmt.Printf("Formats: %s\n", strings.Join(params.OutputFormats, ", "))
 	if contains(params.OutputFormats, "junit") {
 		fmt.Printf("JUnit XML: %s\n", params.JUnitFile)
-	}
-	if contains(params.OutputFormats, "html") || params.GenerateHTML {
-		fmt.Printf("HTML Report: %s\n", params.HTMLFile)
 	}
 	if contains(params.OutputFormats, "markdown") {
 		fmt.Printf("Markdown Report: %s\n", params.MarkdownFile)

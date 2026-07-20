@@ -27,9 +27,7 @@ spec:
     concurrency: 1
     output:
       dir: out
-      formats: ["json", "html", "markdown"]
-      html:
-        file: bedrock.html
+      formats: ["json", "markdown"]
       markdown:
         file: bedrock.md
         include_details: true

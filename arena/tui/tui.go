@@ -696,19 +696,19 @@ func (m *Model) TakeSelectedRun() (RunInfo, bool) {
 	return RunInfo{}, false
 }
 
-// BuildSummary creates a Summary from the current model state with output directory and HTML report path.
+// BuildSummary creates a Summary from the current model state with output directory.
 // Thread-safe for external callers.
-func (m *Model) BuildSummary(outputDir, htmlReport string) *Summary {
+func (m *Model) BuildSummary(outputDir string) *Summary {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	return m.buildSummary(outputDir, htmlReport)
+	return m.buildSummary(outputDir)
 }
 
 // buildSummary is the internal implementation. Caller must hold m.mu.
-func (m *Model) buildSummary(outputDir, htmlReport string) *Summary {
+func (m *Model) buildSummary(outputDir string) *Summary {
 	// If a state store is available, try to reconstruct results for richer summary
 	if m.stateStore != nil && len(m.activeRuns) > 0 {
-		return m.buildSummaryFromStateStore(outputDir, htmlReport)
+		return m.buildSummaryFromStateStore(outputDir)
 	}
 
 	// Calculate average duration
@@ -758,12 +758,11 @@ func (m *Model) buildSummary(outputDir, htmlReport string) *Summary {
 		Regions:        regions,
 		Errors:         errors,
 		OutputDir:      outputDir,
-		HTMLReport:     htmlReport,
 	}
 }
 
 // buildSummaryFromStateStore builds summary using persisted run results (assertions, tool stats).
-func (m *Model) buildSummaryFromStateStore(outputDir, htmlReport string) *Summary {
+func (m *Model) buildSummaryFromStateStore(outputDir string) *Summary {
 	ctx := m.ctx
 	if ctx == nil {
 		ctx = context.Background()
@@ -845,7 +844,6 @@ func (m *Model) buildSummaryFromStateStore(outputDir, htmlReport string) *Summar
 		Regions:         regions,
 		Errors:          errors,
 		OutputDir:       outputDir,
-		HTMLReport:      htmlReport,
 		AssertionTotal:  assertTotal,
 		AssertionFailed: assertFailed,
 	}
@@ -969,7 +967,6 @@ type Summary struct {
 	Regions        []string
 	Errors         []ErrorInfo
 	OutputDir      string
-	HTMLReport     string
 
 	AssertionTotal  int
 	AssertionFailed int
@@ -1062,7 +1059,6 @@ func convertSummaryToData(summary *Summary) *viewmodels.SummaryData {
 		Regions:         summary.Regions,
 		Errors:          errors,
 		OutputDir:       summary.OutputDir,
-		HTMLReport:      summary.HTMLReport,
 		AssertionTotal:  summary.AssertionTotal,
 		AssertionFailed: summary.AssertionFailed,
 	}

@@ -85,17 +85,11 @@ Debug and test prompt generation
 
 Flags: `--config`, `--context`, `--domain`, `--json`, `--list`, `--persona`, `--region`, `--scenario`, `--show-meta`, `--show-prompt`, `--show-stats`, `--task-type`, `--user`, `--verbose`
 
-## promptarena render
-
-Generate HTML report from existing results
-
-Flags: `--output`
-
 ## promptarena run
 
 Run conversation simulations
 
-Flags: `--audio-monitor`, `--audio-rate`, `--ci`, `--concurrency`, `--config`, `--eval-types`, `--eval`, `--format`, `--formats`, `--html-file`, `--html`, `--junit-file`, `--markdown-file`, `--max-tokens`, `--mock-config`, `--mock-provider`, `--out`, `--override-provider`, `--provider`, `--region`, `--roles`, `--scenario`, `--seed`, `--selfplay`, `--simple`, `--skip-pack-evals`, `--temperature`, `--verbose`
+Flags: `--audio-monitor`, `--audio-rate`, `--ci`, `--concurrency`, `--config`, `--eval-types`, `--eval`, `--format`, `--formats`, `--junit-file`, `--markdown-file`, `--max-tokens`, `--mock-config`, `--mock-provider`, `--out`, `--override-provider`, `--provider`, `--region`, `--roles`, `--scenario`, `--seed`, `--selfplay`, `--simple`, `--skip-pack-evals`, `--temperature`, `--verbose`
 
 ## promptarena schema
 

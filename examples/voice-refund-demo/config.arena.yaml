@@ -82,9 +82,7 @@ spec:
       dir: out
       formats:
         - json
-        - html
-      html:
-        file: report.html
+        - markdown
       recording:
         enabled: true
         dir: recordings

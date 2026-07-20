@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"path/filepath"
-	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -13,7 +12,6 @@ import (
 	arenaaudio "github.com/AltairaLabs/promptarena/arena/audio"
 	"github.com/AltairaLabs/promptarena/arena/engine"
 	"github.com/AltairaLabs/promptarena/arena/results"
-	"github.com/AltairaLabs/promptarena/arena/results/html"
 	jsonrepo "github.com/AltairaLabs/promptarena/arena/results/json"
 	"github.com/AltairaLabs/promptarena/arena/results/junit"
 	"github.com/AltairaLabs/promptarena/arena/results/markdown"
@@ -23,6 +21,13 @@ import (
 // Flag name constants to avoid duplication
 const (
 	flagMaxTokens = "max-tokens"
+
+	formatMarkdown = "markdown"
+	// formatHTML was a bespoke standalone report renderer. The web UI
+	// supersedes it and markdown carries the same content for CI, so the
+	// format is still accepted but normalised to markdown — see
+	// normalizeOutputFormats.
+	formatHTML = "html"
 )
 
 // contains checks if a string slice contains a specific string
@@ -47,10 +52,9 @@ func createResultRepository(params *RunParameters, configFile string) (results.R
 		case "junit":
 			junitRepo := junit.NewJUnitResultRepository(params.JUnitFile)
 			composite.AddRepository(junitRepo)
-		case "html":
-			htmlRepo := html.NewHTMLResultRepository(params.HTMLFile)
-			composite.AddRepository(htmlRepo)
-		case "markdown":
+		// formatHTML is normalised away in processHTMLSettings; accept it here
+		// too so any caller building params directly still gets a report.
+		case formatMarkdown, formatHTML:
 			// Get markdown configuration from arena defaults
 			var markdownConfig *markdown.MarkdownConfig
 			if configFile != "" {
@@ -111,11 +115,14 @@ func init() {
 	runCmd.Flags().StringP("out", "o", "out", "Output directory")
 	runCmd.Flags().Bool("ci", false, "CI mode (disable TUI, simple logs)")
 	runCmd.Flags().Bool("simple", false, "Simple mode (alias for --ci)")
-	runCmd.Flags().Bool("html", false, "Generate HTML report (deprecated: use --format)")
-	runCmd.Flags().StringSlice("format", []string{}, "Output formats (json, junit, html, markdown) - defaults from config")
-	runCmd.Flags().StringSlice("formats", []string{}, "Output formats (json, junit, html, markdown) - alias for --format")
+	runCmd.Flags().Bool("html", false, "Deprecated: the HTML report was removed; produces markdown instead")
+	runCmd.Flags().StringSlice("format", []string{}, "Output formats (json, junit, markdown) - defaults from config")
+	runCmd.Flags().StringSlice("formats", []string{}, "Output formats (json, junit, markdown) - alias for --format")
 	runCmd.Flags().String("junit-file", "", "JUnit XML output file (default: out/junit.xml)")
-	runCmd.Flags().String("html-file", "", "HTML report output file (default: out/report-[timestamp].html)")
+	runCmd.Flags().String("html-file", "", "Deprecated: the HTML report was removed; use --markdown-file")
+	// Keep both accepted so existing scripts do not fail outright, but say so.
+	_ = runCmd.Flags().MarkDeprecated("html", "the HTML report was removed; markdown is produced instead")
+	_ = runCmd.Flags().MarkDeprecated("html-file", "the HTML report was removed; use --markdown-file")
 	runCmd.Flags().String("markdown-file", "", "Markdown report output file (default: out/results.md)")
 	runCmd.Flags().Float32("temperature", 0.6, "Override temperature")
 	runCmd.Flags().Int(flagMaxTokens, 0, "Override max tokens for all scenarios")
@@ -162,23 +169,20 @@ func init() {
 
 // RunParameters holds all the parameters for running simulations
 type RunParameters struct {
-	Regions        []string
-	Providers      []string
-	Scenarios      []string
-	Evals          []string // Evaluation configurations to run
-	Concurrency    int
-	OutDir         string
-	CIMode         bool
-	SimpleMode     bool // Alias for CIMode
-	Verbose        bool
-	GenerateHTML   bool     // Deprecated: use OutputFormats
-	HTMLReportPath string   // Deprecated: use HTMLFile
-	OutputFormats  []string // New: output formats (json, junit, html, markdown)
-	JUnitFile      string   // New: JUnit XML output file
-	HTMLFile       string   // New: HTML output file
-	MarkdownFile   string   // New: Markdown output file
-	MockProvider   bool     // Enable mock provider mode
-	MockConfig     string   // Path to mock provider configuration
+	Regions       []string
+	Providers     []string
+	Scenarios     []string
+	Evals         []string // Evaluation configurations to run
+	Concurrency   int
+	OutDir        string
+	CIMode        bool
+	SimpleMode    bool // Alias for CIMode
+	Verbose       bool
+	OutputFormats []string // New: output formats (json, junit, markdown)
+	JUnitFile     string   // New: JUnit XML output file
+	MarkdownFile  string   // New: Markdown output file
+	MockProvider  bool     // Enable mock provider mode
+	MockConfig    string   // Path to mock provider configuration
 	// ProviderOverrides holds raw "from=to" pairs from --override-provider,
 	// substituting one configured provider's spec for another at invocation time.
 	ProviderOverrides []string
@@ -342,22 +346,21 @@ func extractOutputFormatFlags(cmd *cobra.Command, cfg *arenaconfig.Config, param
 	if params.JUnitFile, err = cmd.Flags().GetString("junit-file"); err != nil {
 		return fmt.Errorf("failed to get junit-file flag: %w", err)
 	}
-	if params.HTMLFile, err = cmd.Flags().GetString("html-file"); err != nil {
-		return fmt.Errorf("failed to get html-file flag: %w", err)
-	}
 	if params.MarkdownFile, err = cmd.Flags().GetString("markdown-file"); err != nil {
 		return fmt.Errorf("failed to get markdown-file flag: %w", err)
 	}
 	return nil
 }
 
-// processHTMLSettings determines HTML report generation settings
-// Maintains backward compatibility while transitioning to new format system
+// processHTMLSettings folds the retired HTML report settings into the live
+// formats and resolves the default output file paths.
 func processHTMLSettings(cmd *cobra.Command, cfg *arenaconfig.Config, params *RunParameters) error {
 	// Handle HTML flag and config settings
 	if err := processHTMLFlags(cmd, cfg, params); err != nil {
 		return err
 	}
+
+	params.OutputFormats = normalizeOutputFormats(params.OutputFormats)
 
 	// Set default output file paths
 	setDefaultFilePaths(cfg, params)
@@ -365,39 +368,44 @@ func processHTMLSettings(cmd *cobra.Command, cfg *arenaconfig.Config, params *Ru
 	return nil
 }
 
-// processHTMLFlags handles the deprecated --html flag and config HTML settings
+// processHTMLFlags maps the retired HTML report onto markdown. The --html flag
+// and the html_report config key both used to request a standalone HTML report;
+// they now request markdown instead, so existing configs and CI scripts keep
+// producing a human-readable report rather than erroring or silently emitting
+// nothing.
 func processHTMLFlags(cmd *cobra.Command, cfg *arenaconfig.Config, params *RunParameters) error {
 	if cmd.Flags().Changed("html") {
-		return processDeprecatedHTMLFlag(cmd, params)
+		wantHTML, err := cmd.Flags().GetBool("html")
+		if err != nil {
+			return fmt.Errorf("failed to get html flag: %w", err)
+		}
+		if wantHTML {
+			params.OutputFormats = append(params.OutputFormats, formatMarkdown)
+		}
+		return nil
 	}
 	if cfg.Defaults.HTMLReport != "" {
-		processConfigHTMLSetting(cfg, params)
+		params.OutputFormats = append(params.OutputFormats, formatMarkdown)
 	}
 	return nil
 }
 
-// processDeprecatedHTMLFlag handles the deprecated --html flag for backward compatibility
-func processDeprecatedHTMLFlag(cmd *cobra.Command, params *RunParameters) error {
-	var err error
-	params.GenerateHTML, err = cmd.Flags().GetBool("html")
-	if err != nil {
-		return fmt.Errorf("failed to get html flag: %w", err)
+// normalizeOutputFormats rewrites the retired "html" format to "markdown" and
+// drops any duplicates, so downstream code only ever sees live formats.
+func normalizeOutputFormats(formats []string) []string {
+	seen := make(map[string]bool, len(formats))
+	out := make([]string, 0, len(formats))
+	for _, f := range formats {
+		if f == formatHTML {
+			f = formatMarkdown
+		}
+		if seen[f] {
+			continue
+		}
+		seen[f] = true
+		out = append(out, f)
 	}
-	// Add html to output formats if not already present
-	if params.GenerateHTML && !contains(params.OutputFormats, "html") {
-		params.OutputFormats = append(params.OutputFormats, "html")
-	}
-	return nil
-}
-
-// processConfigHTMLSetting processes HTML settings from configuration file
-func processConfigHTMLSetting(cfg *arenaconfig.Config, params *RunParameters) {
-	params.GenerateHTML = true
-	params.HTMLReportPath = cfg.Defaults.HTMLReport
-	// Add html to output formats if not already present
-	if !contains(params.OutputFormats, "html") {
-		params.OutputFormats = append(params.OutputFormats, "html")
-	}
+	return out
 }
 
 // setDefaultFilePaths sets default file paths for output files if not specified
@@ -407,23 +415,8 @@ func setDefaultFilePaths(cfg *arenaconfig.Config, params *RunParameters) {
 		params.JUnitFile = filepath.Join(params.OutDir, "junit.xml")
 	}
 
-	// Set default HTML file path if HTML generation is enabled
-	if params.HTMLFile == "" && (params.GenerateHTML || contains(params.OutputFormats, "html")) {
-		// First priority: deprecated HTMLReportPath for backward compatibility
-		if params.HTMLReportPath != "" {
-			params.HTMLFile = config.ResolveOutputPath(params.OutDir, params.HTMLReportPath)
-		} else if cfg.Defaults.Output.HTML != nil && cfg.Defaults.Output.HTML.File != "" {
-			// Second priority: new Output.HTML.File configuration
-			params.HTMLFile = config.ResolveOutputPath(params.OutDir, cfg.Defaults.Output.HTML.File)
-		} else {
-			// Default: timestamped report file
-			timestamp := time.Now().Format("2006-01-02T15-04-05")
-			params.HTMLFile = filepath.Join(params.OutDir, fmt.Sprintf("report-%s.html", timestamp))
-		}
-	}
-
 	// Set default Markdown file path if markdown generation is enabled
-	if params.MarkdownFile == "" && contains(params.OutputFormats, "markdown") {
+	if params.MarkdownFile == "" && contains(params.OutputFormats, formatMarkdown) {
 		if cfg.Defaults.Output.Markdown != nil && cfg.Defaults.Output.Markdown.File != "" {
 			params.MarkdownFile = config.ResolveOutputPath(params.OutDir, cfg.Defaults.Output.Markdown.File)
 		} else {

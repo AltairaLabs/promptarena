@@ -10,7 +10,7 @@ metadata:
         export ANTHROPIC_API_KEY=...
         make build-codegen-agent-sandbox
         cd examples/test-a-codegen-agent
-        promptarena run -c config.arena.yaml --ci --format html
+        promptarena run -c config.arena.yaml --ci --format markdown
 spec:
   prompt_configs:
     - id: authoring-agent
@@ -113,6 +113,4 @@ spec:
     max_tokens: 4096
     output:
       dir: out
-      formats: ["json", "html"]
-      html:
-        file: report.html
+      formats: ["json", "markdown"]

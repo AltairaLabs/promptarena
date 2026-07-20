@@ -385,22 +385,6 @@ func TestGetOutputDir(t *testing.T) {
 	assert.Equal(t, "/tmp/results", vm.GetOutputDir())
 }
 
-func TestHasHTMLReport(t *testing.T) {
-	dataWith := SummaryData{HTMLReport: "/tmp/report.html"}
-	vmWith := NewSummaryViewModel(&dataWith)
-	assert.True(t, vmWith.HasHTMLReport())
-
-	dataWithout := SummaryData{HTMLReport: ""}
-	vmWithout := NewSummaryViewModel(&dataWithout)
-	assert.False(t, vmWithout.HasHTMLReport())
-}
-
-func TestGetHTMLReport(t *testing.T) {
-	data := SummaryData{HTMLReport: "/tmp/report.html"}
-	vm := NewSummaryViewModel(&data)
-	assert.Equal(t, "/tmp/report.html", vm.GetHTMLReport())
-}
-
 func TestCompactString(t *testing.T) {
 	tests := []struct {
 		name     string

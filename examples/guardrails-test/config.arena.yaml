@@ -26,7 +26,5 @@ spec:
     seed: 42
     output:
       dir: out
-      formats: ["json", "html"]
-      html:
-        file: report.html
+      formats: ["json", "markdown"]
 

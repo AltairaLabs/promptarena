@@ -206,7 +206,7 @@ func TestModel_BuildSummary_FromStateStore(t *testing.T) {
 		},
 	}
 
-	summary := m.BuildSummary("out", "")
+	summary := m.BuildSummary("out")
 	require.NotNil(t, summary)
 	assert.Equal(t, 1, summary.TotalRuns)
 	assert.Equal(t, 1, summary.ScenarioCount)
@@ -223,7 +223,7 @@ func TestModel_BuildSummary_FromStateStoreError(t *testing.T) {
 		err: fmt.Errorf("load failed"),
 	}
 
-	summary := m.BuildSummary("out", "")
+	summary := m.BuildSummary("out")
 	require.NotNil(t, summary)
 	assert.Equal(t, 1, summary.FailedCount)
 	assert.Len(t, summary.Errors, 1)
@@ -782,7 +782,6 @@ func TestRenderSummary(t *testing.T) {
 			{RunID: "run-1", Scenario: "scn1", Provider: "prov1", Region: "us", Error: "failed"},
 		},
 		OutputDir:       "/tmp/output",
-		HTMLReport:      "/tmp/report.html",
 		AssertionTotal:  20,
 		AssertionFailed: 2,
 	}
@@ -806,7 +805,6 @@ func TestRenderSummaryCIMode(t *testing.T) {
 		Regions:        []string{"us-east-1"},
 		Errors:         []ErrorInfo{},
 		OutputDir:      "/tmp/output",
-		HTMLReport:     "",
 		AssertionTotal: 10,
 	}
 
@@ -831,7 +829,6 @@ func TestConvertSummaryToData(t *testing.T) {
 			{RunID: "run-1", Scenario: "scn1", Provider: "prov1", Region: "us", Error: "failed"},
 		},
 		OutputDir:       "/tmp/output",
-		HTMLReport:      "/tmp/report.html",
 		AssertionTotal:  20,
 		AssertionFailed: 2,
 	}
@@ -848,7 +845,6 @@ func TestConvertSummaryToData(t *testing.T) {
 	assert.Equal(t, 3, data.ScenarioCount)
 	assert.Equal(t, []string{"us-east-1", "us-west-2"}, data.Regions)
 	assert.Equal(t, "/tmp/output", data.OutputDir)
-	assert.Equal(t, "/tmp/report.html", data.HTMLReport)
 	assert.Equal(t, 20, data.AssertionTotal)
 	assert.Equal(t, 2, data.AssertionFailed)
 
@@ -982,7 +978,7 @@ func TestBuildSummary_InternalThreadSafety(t *testing.T) {
 	m.totalDuration = 2 * time.Second
 
 	// BuildSummary is thread-safe and acquires mutex
-	summary := m.BuildSummary("/tmp", "")
+	summary := m.BuildSummary("/tmp")
 	require.NotNil(t, summary)
 	assert.Equal(t, 5, summary.TotalRuns)
 	assert.Equal(t, 1, summary.SuccessCount)
@@ -1017,7 +1013,7 @@ func TestBuildSummaryFromStateStore_WithContext(t *testing.T) {
 	customCtx := context.WithValue(context.Background(), "testKey", "testValue")
 	m.ctx = customCtx
 
-	summary := m.BuildSummary("/tmp", "")
+	summary := m.BuildSummary("/tmp")
 	require.NotNil(t, summary)
 	assert.Equal(t, 1, summary.TotalRuns)
 	assert.Equal(t, 1.5, summary.TotalCost)

@@ -10,10 +10,10 @@ metadata:
         make build-arena
         docker pull ghcr.io/altairalabs/codegen-sandbox:latest
         cd examples/codegen-sandbox
-        ../../bin/promptarena run --ci --format html
+        ../../bin/promptarena run --ci --format markdown
 
       Offline / CI (mock provider, no sandbox):
-        ../../bin/promptarena run --mock-provider --ci --format html
+        ../../bin/promptarena run --mock-provider --ci --format markdown
 
 spec:
   prompt_configs:
@@ -45,4 +45,4 @@ spec:
     max_tokens: 512
     output:
       dir: out
-      formats: ["json", "html"]
+      formats: ["json", "markdown"]

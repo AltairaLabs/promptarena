@@ -62,4 +62,4 @@ spec:
     max_tokens: 512
     output:
       dir: out
-      formats: ["json", "html"]
+      formats: ["json", "markdown"]

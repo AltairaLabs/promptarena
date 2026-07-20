@@ -1,6 +1,7 @@
 package main
 
 import (
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -368,40 +369,33 @@ func TestSetDefaultFilePaths(t *testing.T) {
 		params            *RunParameters
 		expectedOutDir    string
 		expectedJUnitFile string
-		expectedHTMLFile  string
 	}{
 		{
 			name: "all empty - sets junit default",
 			params: &RunParameters{
 				OutDir:    "",
 				JUnitFile: "",
-				HTMLFile:  "",
 			},
 			expectedOutDir:    "",          // OutDir not changed by function
 			expectedJUnitFile: "junit.xml", // Default JUnit file
-			expectedHTMLFile:  "",
 		},
 		{
 			name: "custom outdir",
 			params: &RunParameters{
 				OutDir:    "custom-output",
 				JUnitFile: "",
-				HTMLFile:  "",
 			},
 			expectedOutDir:    "custom-output",
 			expectedJUnitFile: "custom-output/junit.xml", // JUnit uses OutDir
-			expectedHTMLFile:  "",
 		},
 		{
 			name: "custom files - keeps as-is",
 			params: &RunParameters{
 				OutDir:    "results",
 				JUnitFile: "custom.xml",
-				HTMLFile:  "custom.html",
 			},
 			expectedOutDir:    "results",
 			expectedJUnitFile: "custom.xml",
-			expectedHTMLFile:  "custom.html",
 		},
 	}
 
@@ -412,7 +406,6 @@ func TestSetDefaultFilePaths(t *testing.T) {
 			setDefaultFilePaths(cfg, tt.params)
 			assert.Equal(t, tt.expectedOutDir, tt.params.OutDir)
 			assert.Equal(t, tt.expectedJUnitFile, tt.params.JUnitFile)
-			assert.Equal(t, tt.expectedHTMLFile, tt.params.HTMLFile)
 		})
 	}
 }
@@ -473,7 +466,6 @@ func TestDisplayRunInfo(t *testing.T) {
 		Verbose:      true,
 		MockProvider: true,
 		JUnitFile:    "junit.xml",
-		HTMLFile:     "report.html",
 	}
 
 	configFile := "test.yaml"
@@ -534,7 +526,6 @@ func TestRunParametersStructure(t *testing.T) {
 			Concurrency:  4,
 			OutDir:       "output",
 			JUnitFile:    "junit.xml",
-			HTMLFile:     "report.html",
 			CIMode:       false,
 			Verbose:      true,
 			MockProvider: true,
@@ -549,7 +540,6 @@ func TestRunParametersStructure(t *testing.T) {
 		assert.Equal(t, 4, params.Concurrency)
 		assert.Equal(t, "output", params.OutDir)
 		assert.Equal(t, "junit.xml", params.JUnitFile)
-		assert.Equal(t, "report.html", params.HTMLFile)
 		assert.False(t, params.CIMode)
 		assert.True(t, params.Verbose)
 		assert.True(t, params.MockProvider)
@@ -592,45 +582,34 @@ func TestSetDefaultFilePaths_JUnitDefaults(t *testing.T) {
 		name           string
 		params         *RunParameters
 		expectedJUnit  string
-		expectedHTML   string
 		shouldSetJUnit bool
-		shouldSetHTML  bool
 	}{
 		{
 			name: "sets junit default when empty",
 			params: &RunParameters{
 				OutDir:    "",
 				JUnitFile: "",
-				HTMLFile:  "",
 			},
 			expectedJUnit:  "junit.xml",
-			expectedHTML:   "",
 			shouldSetJUnit: true,
-			shouldSetHTML:  false,
 		},
 		{
 			name: "uses outdir for junit when set",
 			params: &RunParameters{
 				OutDir:    "custom-output",
 				JUnitFile: "",
-				HTMLFile:  "",
 			},
 			expectedJUnit:  "custom-output/junit.xml",
-			expectedHTML:   "",
 			shouldSetJUnit: true,
-			shouldSetHTML:  false,
 		},
 		{
 			name: "preserves custom junit file",
 			params: &RunParameters{
 				OutDir:    "output",
 				JUnitFile: "custom-junit.xml",
-				HTMLFile:  "",
 			},
 			expectedJUnit:  "custom-junit.xml",
-			expectedHTML:   "",
 			shouldSetJUnit: false,
-			shouldSetHTML:  false,
 		},
 	}
 
@@ -641,9 +620,6 @@ func TestSetDefaultFilePaths_JUnitDefaults(t *testing.T) {
 
 			if tt.shouldSetJUnit {
 				assert.Equal(t, tt.expectedJUnit, tt.params.JUnitFile)
-			}
-			if tt.shouldSetHTML {
-				assert.Equal(t, tt.expectedHTML, tt.params.HTMLFile)
 			}
 		})
 	}
@@ -790,50 +766,20 @@ func TestSetDefaultFilePaths_MarkdownConfig(t *testing.T) {
 	}
 }
 
-func TestSetDefaultFilePaths_HTMLConfig(t *testing.T) {
-	tests := []struct {
-		name         string
-		params       *RunParameters
-		cfg          *arenaconfig.Config
-		expectedHTML string
-	}{
-		{
-			name: "uses config html file when set",
-			params: &RunParameters{
-				OutDir:        "output",
-				OutputFormats: []string{"html"},
-				HTMLFile:      "",
-			},
-			cfg: &arenaconfig.Config{
-				Defaults: arenaconfig.Defaults{
-					Output: arenaconfig.OutputConfig{
-						HTML: &arenaconfig.HTMLOutputConfig{
-							File: "report.html",
-						},
-					},
-				},
-			},
-			expectedHTML: "output/report.html",
-		},
-		{
-			name: "uses deprecated HTMLReportPath when set",
-			params: &RunParameters{
-				OutDir:         "output",
-				OutputFormats:  []string{"html"},
-				HTMLFile:       "",
-				HTMLReportPath: "deprecated-report.html",
-			},
-			cfg:          &arenaconfig.Config{},
-			expectedHTML: "output/deprecated-report.html",
-		},
+// A config asking for the retired "html" format must end up writing markdown:
+// normalizeOutputFormats rewrites the format, and setDefaultFilePaths then
+// resolves the markdown destination. Previously this path produced a
+// report-<timestamp>.html that nothing ever wrote.
+func TestHTMLFormatResolvesToMarkdownFile(t *testing.T) {
+	params := &RunParameters{
+		OutDir:        "output",
+		OutputFormats: normalizeOutputFormats([]string{"html"}),
 	}
 
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			setDefaultFilePaths(tt.cfg, tt.params)
-			assert.Equal(t, tt.expectedHTML, tt.params.HTMLFile)
-		})
-	}
+	setDefaultFilePaths(&arenaconfig.Config{}, params)
+
+	assert.Equal(t, []string{"markdown"}, params.OutputFormats)
+	assert.Equal(t, filepath.Join("output", "results.md"), params.MarkdownFile)
 }
 
 func TestCountFailed(t *testing.T) {
@@ -911,7 +857,6 @@ func TestCreateResultRepository(t *testing.T) {
 		params := &RunParameters{
 			OutDir:        "test-output",
 			OutputFormats: []string{"html"},
-			HTMLFile:      "test.html",
 		}
 		repo, err := createResultRepository(params, "")
 		require.NoError(t, err)
@@ -934,7 +879,6 @@ func TestCreateResultRepository(t *testing.T) {
 			OutDir:        "test-output",
 			OutputFormats: []string{"json", "junit", "html", "markdown"},
 			JUnitFile:     "test.xml",
-			HTMLFile:      "test.html",
 			MarkdownFile:  "test.md",
 		}
 		repo, err := createResultRepository(params, "")
