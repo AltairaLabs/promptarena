@@ -1,4 +1,3 @@
-import { useMemo } from "react";
 import { DataTable, Button, type DataTableColumn } from "@altairalabs/atlas";
 import type { RunResult } from "@/types";
 
@@ -148,26 +147,11 @@ const columns: DataTableColumn<RunResult>[] = [
 ];
 
 export function HistoricalResults({ results, onSelectRun, onClear }: HistoricalResultsProps) {
-  // Default to newest-first, matching the old table's initial "when desc"
-  // ordering. DataTable has no initial-sort prop, so we pre-sort the rows
-  // it receives; clicking a header still re-sorts via each column's
-  // sortValue.
-  const rows = useMemo(() => [...results].sort((a, b) => runTime(b) - runTime(a)), [results]);
-
+  // Newest first, seeded into the table's own sort state rather than by
+  // pre-sorting the rows — a pre-sort competes with the table's sorting the
+  // moment a header is clicked.
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between gap-3">
-        <h3 className="text-xs font-semibold text-fg-muted uppercase tracking-wider whitespace-nowrap">
-          Previous Runs
-          <span className="ml-2 rounded-full bg-surface-2 text-fg-muted px-2 py-0.5 text-[10px] font-mono normal-case tracking-normal">
-            {results.length}
-          </span>
-        </h3>
-        <Button variant="danger" size="sm" onClick={onClear}>
-          Clear all
-        </Button>
-      </div>
-
       {results.length === 0 ? (
         <div className="rounded-xl border border-mist bg-surface px-6 py-8 text-center text-xs text-fg-muted">
           No runs yet.
@@ -175,13 +159,28 @@ export function HistoricalResults({ results, onSelectRun, onClear }: HistoricalR
       ) : (
         <DataTable<RunResult>
           columns={columns}
-          rows={rows}
+          rows={results}
           rowKey={(r) => r.RunID}
           pageSize={PAGE_SIZE}
           searchable
           getSearchText={getSearchText}
           onRowClick={(r) => onSelectRun(r.RunID)}
           empty="No runs match your search."
+          defaultSortKey="when"
+          defaultSortDir="desc"
+          toolbar={
+            <>
+              <h3 className="text-xs font-semibold text-fg-muted uppercase tracking-wider whitespace-nowrap">
+                Previous Runs
+              </h3>
+              <span className="rounded-full bg-surface-2 text-fg-muted px-2 py-0.5 text-[10px] font-mono">
+                {results.length}
+              </span>
+              <Button variant="danger" size="sm" onClick={onClear}>
+                Clear all
+              </Button>
+            </>
+          }
         />
       )}
     </div>
