@@ -1,4 +1,4 @@
-import { HeaderShell, StatusPill } from "@altairalabs/atlas";
+import { HeaderShell, StatusPill, Button } from "@altairalabs/atlas";
 import logoUrl from "@/assets/logo-promptarena.svg";
 
 export interface TopBarProps {
@@ -85,25 +85,13 @@ export function TopBar({
       right={
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <StatusPill status={status}>{statusLabel}</StatusPill>
-          <button
+          <Button
+            variant="secondary"
+            icon={isDark ? <MoonIcon /> : <SunIcon />}
             onClick={onToggleTheme}
             aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
             title={isDark ? "Switch to light mode" : "Switch to dark mode"}
-            style={{
-              width: 38,
-              height: 38,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              borderRadius: "var(--radius-md)",
-              border: "1px solid var(--hairline-strong)",
-              background: "transparent",
-              color: "var(--star-600)",
-              cursor: "pointer",
-            }}
-          >
-            {isDark ? <MoonIcon /> : <SunIcon />}
-          </button>
+          />
         </div>
       }
     />
