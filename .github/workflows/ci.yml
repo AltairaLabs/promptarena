@@ -64,6 +64,14 @@ jobs:
               - 'examples/**'
               - 'arena/cmd/**'
               - 'schemas/**'
+              # The example packs are the integration test for the engine that
+              # runs them, so engine and dependency changes must exercise them
+              # too. Watching only examples/** meant a dependency bump skipped
+              # this job entirely — PromptKit 1.5.5 shipped three breaking API
+              # changes in a PATCH release and the example packs never ran.
+              - 'arena/**/*.go'
+              - 'go.mod'
+              - 'go.sum'
 
   build-test:
     name: Build & Test
