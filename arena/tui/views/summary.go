@@ -102,10 +102,6 @@ func (v *SummaryView) renderTUIMode(vm *viewmodels.SummaryViewModel) string {
 	sb.WriteString("\n")
 	sb.WriteString(formatLine("Results saved to:", vm.GetOutputDir(), &labelStyle, &valueStyle))
 
-	if vm.HasHTMLReport() {
-		sb.WriteString(formatLine("HTML Report:", vm.GetHTMLReport(), &labelStyle, &valueStyle))
-	}
-
 	return sb.String()
 }
 
@@ -163,10 +159,6 @@ func (v *SummaryView) renderCIMode(vm *viewmodels.SummaryViewModel) string {
 	// Output info
 	sb.WriteString("\n")
 	sb.WriteString(fmt.Sprintf("Results saved to: %s\n", vm.GetOutputDir()))
-
-	if vm.HasHTMLReport() {
-		sb.WriteString(fmt.Sprintf("HTML Report:      %s\n", vm.GetHTMLReport()))
-	}
 
 	return sb.String()
 }

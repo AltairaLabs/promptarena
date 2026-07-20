@@ -38,7 +38,6 @@ func TestSummaryView_Render_TUIMode(t *testing.T) {
 		ScenarioCount: 5,
 		Regions:       []string{"us-east-1", "eu-west-1"},
 		OutputDir:     "/tmp/results",
-		HTMLReport:    "/tmp/report.html",
 	}
 
 	vm := viewmodels.NewSummaryViewModel(data)
@@ -79,8 +78,6 @@ func TestSummaryView_Render_TUIMode(t *testing.T) {
 	// Verify output info
 	assert.Contains(t, output, "Results saved to:")
 	assert.Contains(t, output, "/tmp/results")
-	assert.Contains(t, output, "HTML Report:")
-	assert.Contains(t, output, "/tmp/report.html")
 }
 
 func TestSummaryView_Render_CIMode(t *testing.T) {

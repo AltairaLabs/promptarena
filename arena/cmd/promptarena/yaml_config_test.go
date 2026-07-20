@@ -106,9 +106,10 @@ func TestExtractRunParameters_OutputFormats(t *testing.T) {
 		expectedResult []string
 	}{
 		{
+			// "html" is retired and normalised to markdown on the way through.
 			name:           "uses config defaults when no flag",
 			configFormats:  []string{"json", "html"},
-			expectedResult: []string{"json", "html"},
+			expectedResult: []string{"json", "markdown"},
 		},
 		{
 			name:           "uses flag when provided",
@@ -211,25 +212,17 @@ func TestEvalFiltering(t *testing.T) {
 	}
 }
 
-func TestProcessDeprecatedHTMLFlag(t *testing.T) {
+// The standalone HTML report was removed. Both the --html flag and the
+// html_report config key now request markdown instead, so existing configs and
+// CI scripts still get a human-readable report rather than nothing at all.
+func TestProcessHTMLFlagRequestsMarkdown(t *testing.T) {
 	tests := []struct {
-		name              string
-		htmlFlag          bool
-		expectedHTML      bool
-		expectedInFormats bool
+		name             string
+		htmlFlag         bool
+		expectedMarkdown bool
 	}{
-		{
-			name:              "html flag not set",
-			htmlFlag:          false,
-			expectedHTML:      false,
-			expectedInFormats: false,
-		},
-		{
-			name:              "html flag set",
-			htmlFlag:          true,
-			expectedHTML:      true,
-			expectedInFormats: true,
-		},
+		{name: "html flag not set", htmlFlag: false, expectedMarkdown: false},
+		{name: "html flag set", htmlFlag: true, expectedMarkdown: true},
 	}
 
 	for _, tt := range tests {
@@ -240,39 +233,44 @@ func TestProcessDeprecatedHTMLFlag(t *testing.T) {
 			err := cmd.Flags().Set("html", fmt.Sprintf("%t", tt.htmlFlag))
 			require.NoError(t, err)
 
-			params := &RunParameters{
-				OutputFormats: []string{},
-			}
+			params := &RunParameters{OutputFormats: []string{}}
+			require.NoError(t, processHTMLFlags(cmd, &arenaconfig.Config{}, params))
 
-			err = processDeprecatedHTMLFlag(cmd, params)
-			require.NoError(t, err)
-
-			assert.Equal(t, tt.expectedHTML, params.GenerateHTML)
-			if tt.expectedInFormats {
-				assert.Contains(t, params.OutputFormats, "html")
+			if tt.expectedMarkdown {
+				assert.Contains(t, params.OutputFormats, "markdown")
 			} else {
-				assert.NotContains(t, params.OutputFormats, "html")
+				assert.NotContains(t, params.OutputFormats, "markdown")
 			}
+			// The retired format must never reach the repository switch.
+			assert.NotContains(t, params.OutputFormats, "html")
 		})
 	}
 }
 
-func TestProcessConfigHTMLSetting(t *testing.T) {
+func TestProcessConfigHTMLSettingRequestsMarkdown(t *testing.T) {
 	cfg := &arenaconfig.Config{
 		Defaults: arenaconfig.Defaults{
 			HTMLReport: "/path/to/report.html",
 		},
 	}
 
-	params := &RunParameters{
-		OutputFormats: []string{},
-	}
+	cmd := &cobra.Command{}
+	setupTestFlags(cmd)
+	params := &RunParameters{OutputFormats: []string{}}
 
-	processConfigHTMLSetting(cfg, params)
+	require.NoError(t, processHTMLFlags(cmd, cfg, params))
 
-	assert.True(t, params.GenerateHTML)
-	assert.Equal(t, "/path/to/report.html", params.HTMLReportPath)
-	assert.Contains(t, params.OutputFormats, "html")
+	assert.Contains(t, params.OutputFormats, "markdown")
+	assert.NotContains(t, params.OutputFormats, "html")
+}
+
+// normalizeOutputFormats is the single place "html" is retired, so an explicit
+// `formats: [html]` config lands on markdown exactly once.
+func TestNormalizeOutputFormats(t *testing.T) {
+	assert.Equal(t, []string{"markdown"}, normalizeOutputFormats([]string{"html"}))
+	assert.Equal(t, []string{"markdown"}, normalizeOutputFormats([]string{"html", "markdown"}))
+	assert.Equal(t, []string{"json", "markdown"}, normalizeOutputFormats([]string{"json", "html", "html"}))
+	assert.Equal(t, []string{"json", "junit"}, normalizeOutputFormats([]string{"json", "junit"}))
 }
 
 func TestApplyConfigurationOverrides(t *testing.T) {

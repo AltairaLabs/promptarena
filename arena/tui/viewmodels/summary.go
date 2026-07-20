@@ -24,7 +24,6 @@ type SummaryData struct {
 	Regions         []string
 	Errors          []ErrorInfo
 	OutputDir       string
-	HTMLReport      string
 	AssertionTotal  int
 	AssertionFailed int
 }
@@ -229,15 +228,6 @@ func (vm *SummaryViewModel) GetOutputDir() string {
 	return vm.data.OutputDir
 }
 
-// HasHTMLReport returns true if there's an HTML report
-func (vm *SummaryViewModel) HasHTMLReport() bool {
-	return vm.data.HTMLReport != ""
-}
-
-// GetHTMLReport returns the HTML report path
-func (vm *SummaryViewModel) GetHTMLReport() string {
-	return vm.data.HTMLReport
-}
 
 // compactString removes excess whitespace and newlines from a string
 func compactString(s string) string {

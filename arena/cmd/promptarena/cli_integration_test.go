@@ -21,9 +21,9 @@ func TestCreateResultRepository_JSON(t *testing.T) {
 func TestCreateResultRepository_Multiple(t *testing.T) {
 	params := &RunParameters{
 		OutDir:        "/tmp/test",
-		OutputFormats: []string{"json", "junit", "html"},
+		OutputFormats: []string{"json", "junit", "markdown"},
 		JUnitFile:     "/tmp/test/junit.xml",
-		HTMLFile:      "/tmp/test/report.html",
+		MarkdownFile:  "/tmp/test/results.md",
 	}
 
 	repo, err := createResultRepository(params, "")
