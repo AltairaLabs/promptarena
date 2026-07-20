@@ -1,3 +1,4 @@
+import { Card } from "@altairalabs/atlas";
 import starGlyphGold from "@/assets/star-glyph-gold.svg";
 import type { Standing } from "@/types";
 
@@ -10,22 +11,16 @@ export interface StandingsProps {
 // echoes the matrix's "best" cells.
 export function Standings({ standings }: StandingsProps) {
   return (
-    <div
-      style={{
-        border: "1px solid var(--hairline)",
-        borderRadius: "var(--radius-2xl)",
-        background: "var(--grad-surface)",
-        overflow: "hidden",
-      }}
-    >
+    <Card padding={0} style={{ overflow: "hidden" }}>
       <div
         style={{
           padding: "13px 16px",
           borderBottom: "1px solid var(--hairline)",
           fontFamily: "var(--font-mono)",
-          fontSize: 11,
+          fontSize: "var(--text-size-mono-label)",
+          fontWeight: "var(--fw-medium)",
           textTransform: "uppercase",
-          letterSpacing: "0.1em",
+          letterSpacing: "var(--tracking-eyebrow)",
           color: "var(--star-900)",
         }}
       >
@@ -70,6 +65,6 @@ export function Standings({ standings }: StandingsProps) {
           </span>
         </div>
       ))}
-    </div>
+    </Card>
   );
 }

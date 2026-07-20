@@ -1,4 +1,4 @@
-import { Gauge, InstrumentReadout, StarTrail } from "@altairalabs/atlas";
+import { Gauge, InstrumentReadout, StarTrail, Card } from "@altairalabs/atlas";
 import { buildOverallGauge, buildMetrics, buildTrend, buildStandings } from "@/lib/arenaView";
 import { Standings } from "@/components/arena/Standings";
 import type { TrialMatrix, RunResult } from "@/types";
@@ -8,12 +8,6 @@ export interface InstrumentBandProps {
   results: RunResult[];
 }
 
-const panelCardStyle: React.CSSProperties = {
-  border: "1px solid var(--hairline)",
-  borderRadius: "var(--radius-2xl)",
-  background: "var(--grad-surface)",
-  overflow: "hidden",
-};
 
 const sectionLabelStyle: React.CSSProperties = {
   fontFamily: "var(--font-mono)",
@@ -39,14 +33,17 @@ export function InstrumentBand({ matrix, results }: InstrumentBandProps) {
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "0.9fr 1.5fr 1.1fr", gap: 16, marginBottom: 16 }}>
-      <div style={{ ...panelCardStyle, padding: 18, display: "flex", flexDirection: "column" }}>
-        <span style={sectionLabelStyle}>PASS RATE · ALL TRIALS</span>
+      <Card
+        eyebrow="PASS RATE · ALL TRIALS"
+        padding={18}
+        style={{ display: "flex", flexDirection: "column" }}
+      >
         <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
           <Gauge value={gauge.passRate} max={100} unit="converged" label={gauge.caption} />
         </div>
-      </div>
+      </Card>
 
-      <div style={{ ...panelCardStyle, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+      <Card padding={0} style={{ overflow: "hidden", display: "flex", flexDirection: "column" }}>
         <InstrumentReadout metrics={metrics} columns={4} />
         {trend.length > 0 && (
           <div style={{ padding: "14px 18px", borderTop: "1px solid var(--hairline)" }}>
@@ -59,7 +56,7 @@ export function InstrumentBand({ matrix, results }: InstrumentBandProps) {
             <StarTrail points={trend} height={64} />
           </div>
         )}
-      </div>
+      </Card>
 
       <Standings standings={standings} />
     </div>
