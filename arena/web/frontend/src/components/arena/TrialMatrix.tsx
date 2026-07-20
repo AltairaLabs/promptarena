@@ -1,4 +1,5 @@
 import starGlyphGold from "@/assets/star-glyph-gold.svg";
+import { Card } from "@altairalabs/atlas";
 import { formatDuration } from "@/lib/utils";
 import type { TrialMatrix as TrialMatrixModel, TrialCell } from "@/types";
 
@@ -20,14 +21,7 @@ export function TrialMatrix({ matrix, selectedKey, onSelect, onRunCell }: TrialM
   const gridTemplateColumns = `180px repeat(${Math.max(1, matrix.providers.length)}, 1fr)`;
 
   return (
-    <div
-      style={{
-        border: "1px solid var(--hairline)",
-        borderRadius: "var(--radius-2xl)",
-        background: "var(--grad-surface)",
-        overflow: "hidden",
-      }}
-    >
+    <Card padding={0} style={{ overflow: "hidden" }}>
       <div
         style={{
           display: "flex",
@@ -40,9 +34,10 @@ export function TrialMatrix({ matrix, selectedKey, onSelect, onRunCell }: TrialM
         <span
           style={{
             fontFamily: "var(--font-mono)",
-            fontSize: 11,
+            fontSize: "var(--text-size-mono-label)",
+            fontWeight: "var(--fw-medium)",
             textTransform: "uppercase",
-            letterSpacing: "0.1em",
+            letterSpacing: "var(--tracking-eyebrow)",
             color: "var(--star-900)",
           }}
         >
@@ -127,7 +122,7 @@ export function TrialMatrix({ matrix, selectedKey, onSelect, onRunCell }: TrialM
           ))}
         </div>
       ))}
-    </div>
+    </Card>
   );
 }
 

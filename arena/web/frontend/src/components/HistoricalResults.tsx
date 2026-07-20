@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { DataTable, type DataTableColumn } from "@altairalabs/atlas";
+import { DataTable, Button, type DataTableColumn } from "@altairalabs/atlas";
 import type { RunResult } from "@/types";
 
 interface HistoricalResultsProps {
@@ -90,10 +90,20 @@ const columns: DataTableColumn<RunResult>[] = [
       const passed = runPassed(r);
       return (
         <div className="flex flex-col gap-0.5">
+          {/* Atlas splits status fill from status text on purpose — the dot
+              uses the saturated fill, the label the contrast-tuned text
+              variant. Mapping both to one token would lose that tuning. */}
           <span
-            className={`inline-flex items-center gap-1.5 text-[12px] font-semibold ${passed ? "text-[#10B981]" : "text-[#EF4444]"}`}
+            className="inline-flex items-center gap-1.5"
+            style={{
+              font: "var(--fw-semibold) var(--text-size-mono-xs) var(--font-mono)",
+              color: passed ? "var(--status-healthy-text)" : "var(--status-error-text)",
+            }}
           >
-            <span className={`h-1.5 w-1.5 rounded-full ${passed ? "bg-[#10B981]" : "bg-[#EF4444]"}`} />
+            <span
+              className="h-1.5 w-1.5 rounded-full"
+              style={{ background: passed ? "var(--status-healthy)" : "var(--status-error)" }}
+            />
             {passed ? "Pass" : "Fail"}
           </span>
           {!passed && (
@@ -149,16 +159,13 @@ export function HistoricalResults({ results, onSelectRun, onClear }: HistoricalR
       <div className="flex items-center justify-between gap-3">
         <h3 className="text-xs font-semibold text-fg-muted uppercase tracking-wider whitespace-nowrap">
           Previous Runs
-          <span className="ml-2 rounded-full bg-[var(--c-surface-2)] text-fg-muted px-2 py-0.5 text-[10px] font-mono normal-case tracking-normal">
+          <span className="ml-2 rounded-full bg-surface-2 text-fg-muted px-2 py-0.5 text-[10px] font-mono normal-case tracking-normal">
             {results.length}
           </span>
         </h3>
-        <button
-          onClick={onClear}
-          className="rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-medium text-[#EF4444] hover:bg-red-100 transition-colors whitespace-nowrap"
-        >
+        <Button variant="danger" size="sm" onClick={onClear}>
           Clear all
-        </button>
+        </Button>
       </div>
 
       {results.length === 0 ? (
