@@ -120,7 +120,7 @@ func TestScriptedExecutor_ExecuteTurn_Success(t *testing.T) {
 	// Ensure validator configs present so DynamicValidatorMiddleware continues the chain
 	if req.StateStoreConfig != nil {
 		req.StateStoreConfig.Metadata = map[string]interface{}{
-			"validator_configs": []prompt.ValidatorConfig{{Type: "length", Params: map[string]interface{}{"length": 100}}},
+			"validator_configs": []prompt.Validator{{Type: "length", Params: map[string]interface{}{"length": 100}}},
 		}
 	}
 
@@ -216,7 +216,7 @@ func TestScriptedExecutor_ExecuteTurn_EmptyScriptedContent(t *testing.T) {
 	}
 	if req.StateStoreConfig != nil {
 		req.StateStoreConfig.Metadata = map[string]interface{}{
-			"validator_configs": []prompt.ValidatorConfig{{Type: "length", Params: map[string]interface{}{"length": 100}}},
+			"validator_configs": []prompt.Validator{{Type: "length", Params: map[string]interface{}{"length": 100}}},
 		}
 	}
 
@@ -302,7 +302,7 @@ func TestScriptedExecutor_ExecuteTurn_WithHistory(t *testing.T) {
 	}
 	if req.StateStoreConfig != nil {
 		req.StateStoreConfig.Metadata = map[string]interface{}{
-			"validator_configs": []prompt.ValidatorConfig{{Type: "length", Params: map[string]interface{}{"length": 100}}},
+			"validator_configs": []prompt.Validator{{Type: "length", Params: map[string]interface{}{"length": 100}}},
 		}
 	}
 
@@ -391,7 +391,7 @@ func TestScriptedExecutor_ExecuteTurn_SetsTimestamp(t *testing.T) {
 	}
 	if req.StateStoreConfig != nil {
 		req.StateStoreConfig.Metadata = map[string]interface{}{
-			"validator_configs": []prompt.ValidatorConfig{{Type: "length", Params: map[string]interface{}{"length": 100}}},
+			"validator_configs": []prompt.Validator{{Type: "length", Params: map[string]interface{}{"length": 100}}},
 		}
 	}
 
