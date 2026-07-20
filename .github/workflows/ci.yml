@@ -147,7 +147,7 @@ jobs:
       # v7 installs golangci-lint v2, matching the repo's `version: "2"`
       # .golangci.yml. v6 pins golangci-lint v1 (1.64.x), which rejects the v2
       # config and refused to run against go.mod's `go 1.26.0`.
-      - uses: golangci/golangci-lint-action@v7
+      - uses: golangci/golangci-lint-action@v9
         with:
           version: latest
           only-new-issues: true
