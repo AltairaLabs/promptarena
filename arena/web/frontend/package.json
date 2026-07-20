@@ -10,7 +10,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "dev:atlas": "ATLAS_LOCAL=1 vite",
-    "build:atlas": "ATLAS_LOCAL=1 vite build",
+    "build:atlas": "ATLAS_LOCAL=1 vite build && touch dist/.gitkeep",
     "test:atlas": "ATLAS_LOCAL=1 vitest run",
     "test:ci": "vitest run --coverage --reporter=default --reporter=junit --outputFile=junit.xml"
   },
