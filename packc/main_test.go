@@ -346,7 +346,7 @@ func TestPrintCompilationInfo(t *testing.T) {
 func TestPrintPromptVariables(t *testing.T) {
 	t.Run("with mixed variables", func(t *testing.T) {
 		p := &prompt.PackPrompt{
-			Variables: []prompt.VariableMetadata{
+			Variables: []prompt.Variable{
 				{Name: "required1", Required: true},
 				{Name: "optional1", Required: false},
 				{Name: "required2", Required: true},
@@ -381,14 +381,14 @@ func TestPrintPromptValidators(t *testing.T) {
 
 	t.Run("with validators", func(t *testing.T) {
 		p := &prompt.PackPrompt{
-			Validators: []prompt.ValidatorConfig{
+			Validators: []prompt.Validator{
 				{
 					Type:    "length",
-					Enabled: &enabled,
+					Enabled: enabled,
 				},
 				{
 					Type:    "sentiment",
-					Enabled: &disabled,
+					Enabled: disabled,
 				},
 			},
 		}
@@ -544,14 +544,14 @@ func TestPrintPromptDetails(t *testing.T) {
 		Name:        "Test Prompt",
 		Description: "A test prompt",
 		Version:     "1.0.0",
-		Variables: []prompt.VariableMetadata{
+		Variables: []prompt.Variable{
 			{Name: "var1", Required: true},
 		},
 		Tools: []string{"tool1"},
-		Validators: []prompt.ValidatorConfig{
+		Validators: []prompt.Validator{
 			{
 				Type:    "length",
-				Enabled: &enabled,
+				Enabled: enabled,
 			},
 		},
 		TestedModels: []prompt.ModelTestResultRef{

@@ -124,8 +124,11 @@ func printPromptValidators(p *prompt.PackPrompt) {
 	if len(p.Validators) > 0 {
 		fmt.Printf("  Validators (%d):\n", len(p.Validators))
 		for _, v := range p.Validators {
+			// PromptKit 1.5.5 changed Validator.Enabled from *bool to bool, so
+			// "unset" and "false" are no longer distinguishable — both read as
+			// disabled here, which is what the pointer form displayed anyway.
 			enabled := "disabled"
-			if v.Enabled != nil && *v.Enabled {
+			if v.Enabled {
 				enabled = "enabled"
 			}
 			fmt.Printf("    - %s (%s)\n", v.Type, enabled)
