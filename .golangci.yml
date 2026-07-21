@@ -183,6 +183,13 @@ linters:
         linters:
           - goconst  # schema builders assemble example JSON with intentionally repeated keys
           - gosec    # G101 false positives on example "credential" field names
+      # The dark/light palettes are parallel design-token tables: identical field
+      # structure (dupl) and hex values that recur across unrelated tokens by
+      # coincidence (goconst). Both are intrinsic to a two-theme colour port.
+      - path: 'arena/tui/theme/palette.go'
+        linters:
+          - dupl
+          - goconst
       - path: 'examples/'
         linters:
           - mnd

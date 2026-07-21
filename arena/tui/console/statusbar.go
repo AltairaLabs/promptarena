@@ -1,5 +1,5 @@
 // Package console renders Atlas-themed output for the non-TUI ("simple") run
-// path: styled run info and a live progress status bar. Colours come from the
+// path: styled run info and a live progress status bar. Colors come from the
 // theme package's active theme and degrade automatically when stdout is not a
 // terminal, so piped/CI output stays clean.
 package console
@@ -29,7 +29,7 @@ type StatusBar struct {
 	done   int
 	failed int
 
-	// outMu serialises writes to the destination so concurrent Live calls from
+	// outMu serializes writes to the destination so concurrent Live calls from
 	// worker goroutines do not interleave. Kept separate from mu so Live can
 	// hold it while Render independently takes mu (mu is not reentrant).
 	outMu sync.Mutex
@@ -100,7 +100,7 @@ func (s *StatusBar) Live(w io.Writer) {
 	line := s.Render()
 	s.outMu.Lock()
 	defer s.outMu.Unlock()
-	fmt.Fprint(w, "\r\033[K"+line)
+	_, _ = fmt.Fprint(w, "\r\033[K"+line)
 }
 
 // Finish writes the final bar followed by a newline. On a terminal it clears
@@ -110,7 +110,7 @@ func (s *StatusBar) Finish(w io.Writer) {
 	s.outMu.Lock()
 	defer s.outMu.Unlock()
 	if s.tty {
-		fmt.Fprint(w, "\r\033[K")
+		_, _ = fmt.Fprint(w, "\r\033[K")
 	}
-	fmt.Fprintln(w, line)
+	_, _ = fmt.Fprintln(w, line)
 }

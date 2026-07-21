@@ -1334,7 +1334,9 @@ func (p *DeployPage) viewError() string {
 			lines = append(lines, "", theme.Active().Muted.Render("Install with: ")+theme.Active().Value.Render(cmd))
 		}
 	case errorKindAuth:
-		lines = append(lines, "", theme.Active().Pending.Render("Log in and try again."), theme.Active().Muted.Render("[l] log in"))
+		lines = append(lines, "",
+			theme.Active().Pending.Render("Log in and try again."),
+			theme.Active().Muted.Render("[l] log in"))
 	case errorKindLockContention:
 		lines = append(lines, "",
 			theme.Active().Pending.Render("A deploy is already running."), theme.Active().Muted.Render("[r] retry"))

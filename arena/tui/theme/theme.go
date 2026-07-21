@@ -64,7 +64,7 @@ type Theme struct {
 }
 
 // HexOf returns a token's truecolor #RRGGBB value, whether it auto-degrades
-// (a plain colour) or is pinned across profiles (a CompleteColor). Useful for
+// (a plain color) or is pinned across profiles (a CompleteColor). Useful for
 // probes and tests; render code should pass the token itself to lipgloss.
 func HexOf(tc lipgloss.TerminalColor) string {
 	switch v := tc.(type) {
@@ -92,7 +92,7 @@ func resolve(name string, p palette) Theme {
 
 	// pin fixes a token's rendering across all three profiles so it does NOT
 	// auto-degrade. Used only for the near-navy surfaces and borders, which
-	// would otherwise collapse onto one 256-colour index (see fallback).
+	// would otherwise collapse onto one 256-color index (see fallback).
 	pin := func(hex string, f fallback) lipgloss.TerminalColor {
 		return lipgloss.CompleteColor{TrueColor: hex, ANSI256: f.c256, ANSI: f.c16}
 	}

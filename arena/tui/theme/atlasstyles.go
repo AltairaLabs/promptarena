@@ -19,7 +19,7 @@ const (
 
 // Styles is the prebuilt lipgloss style set for one Theme. Building styles
 // once per theme (rather than calling lipgloss.NewStyle() at render time, as
-// the legacy TUI does) keeps colour decisions in this package.
+// the legacy TUI does) keeps color decisions in this package.
 type Styles struct {
 	Theme Theme
 
@@ -39,10 +39,10 @@ type Styles struct {
 	Accent lipgloss.Style
 
 	// Info is the neutral interactive accent (starlight) — links, hints, the
-	// non-primary "this is interactive" colour.
+	// non-primary "this is interactive" color.
 	Info lipgloss.Style
 
-	// Value is bright emphasised data (heading star, bold).
+	// Value is bright emphasized data (heading star, bold).
 	Value lipgloss.Style
 
 	// Card is the Atlas panel: a hairline defines it, and there is no

@@ -114,8 +114,7 @@ func (v *SummaryView) renderCIMode(vm *viewmodels.SummaryViewModel) string {
 	var sb strings.Builder
 
 	// Header — plain and deterministic for CI logs.
-	sb.WriteString("Run Summary\n")
-	sb.WriteString(strings.Repeat("=", len("Run Summary")) + "\n\n")
+	sb.WriteString("Run Summary\n===========\n\n")
 
 	// Execution stats
 	sb.WriteString(fmt.Sprintf("Total Runs:       %s\n", vm.GetFormattedTotalRuns()))
@@ -186,13 +185,13 @@ func summaryRow(label, value string, labelStyle, valueStyle lipgloss.Style) stri
 
 // truncateToWidth clips s to max display columns, appending an ellipsis when it
 // would overflow, so a long line never wraps into a ragged block.
-func truncateToWidth(s string, max int) string {
-	if max <= 1 || lipgloss.Width(s) <= max {
+func truncateToWidth(s string, maxWidth int) string {
+	if maxWidth <= 1 || lipgloss.Width(s) <= maxWidth {
 		return s
 	}
 	r := []rune(s)
-	if len(r) <= max-1 {
+	if len(r) <= maxWidth-1 {
 		return s
 	}
-	return string(r[:max-1]) + "…"
+	return string(r[:maxWidth-1]) + "…"
 }

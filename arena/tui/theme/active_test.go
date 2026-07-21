@@ -4,7 +4,7 @@ import "testing"
 
 func TestActiveDefaultsToDark(t *testing.T) {
 	// Without any SetActive call, the process theme is Atlas dark — matching
-	// the TUI's historical hardcoded-dark behaviour.
+	// the TUI's historical hardcoded-dark behavior.
 	if got := Active().Theme.Name; got != "dark" {
 		t.Errorf("Active().Theme.Name = %q, want %q", got, "dark")
 	}

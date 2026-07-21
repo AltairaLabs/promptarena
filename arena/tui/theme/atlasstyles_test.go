@@ -20,7 +20,7 @@ func TestInfoAndValueStylesMapToTheirTokens(t *testing.T) {
 	s := NewStyles(Dark())
 
 	// Info is the neutral interactive accent (starlight); Value is bright
-	// emphasised data (heading star, bold). These back the legacy InfoStyle /
+	// emphasized data (heading star, bold). These back the legacy InfoStyle /
 	// ValueStyle during the migration.
 	if got := HexOf(s.Info.GetForeground()); got != "#3B82F6" {
 		t.Errorf("Info foreground = %v, want --starlight-500 #3B82F6", got)
@@ -29,7 +29,7 @@ func TestInfoAndValueStylesMapToTheirTokens(t *testing.T) {
 		t.Errorf("Value foreground = %v, want --star-200 #F2F6FC", got)
 	}
 	if !s.Value.GetBold() {
-		t.Error("Value should be bold — it emphasises data")
+		t.Error("Value should be bold — it emphasizes data")
 	}
 }
 
@@ -37,7 +37,7 @@ func TestCardUsesFlattenedHairlineBorder(t *testing.T) {
 	s := NewStyles(Dark())
 
 	if got := HexOf(s.Card.GetBorderTopForeground()); got != "#182336" {
-		t.Errorf("Card border colour = %v, want flattened hairline #182336", got)
+		t.Errorf("Card border color = %v, want flattened hairline #182336", got)
 	}
 	if !s.Card.GetBorderTop() {
 		t.Error("Card should have a border — the hairline defines the panel in Atlas")

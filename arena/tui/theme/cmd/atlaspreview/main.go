@@ -16,6 +16,13 @@ import (
 	"github.com/muesli/termenv"
 )
 
+// Preview layout dimensions (cells).
+const (
+	previewPad    = 2  // page horizontal padding
+	previewLabelW = 10 // row-label column width
+	previewCardW  = 34 // demo card width
+)
+
 func main() {
 	light := flag.Bool("light", false, "render the light theme only")
 	dark := flag.Bool("dark", false, "render the dark theme only")
@@ -23,7 +30,7 @@ func main() {
 	flag.Parse()
 
 	// Default to truecolor so the full Atlas ramp shows. -p256 forces the
-	// 256-colour profile instead, so the pinned surface/border fallbacks can be
+	// 256-color profile instead, so the pinned surface/border fallbacks can be
 	// eyeballed (unpinned surfaces would collapse to one index here).
 	profile := termenv.TrueColor
 	if *p256 {
@@ -44,7 +51,7 @@ func main() {
 
 func render(t theme.Theme) string {
 	s := theme.NewStyles(t)
-	page := lipgloss.NewStyle().Background(t.BgApp).Padding(1, 2)
+	page := lipgloss.NewStyle().Background(t.BgApp).Padding(1, previewPad)
 
 	body := lipgloss.JoinVertical(lipgloss.Left,
 		header(t, s),
@@ -73,7 +80,7 @@ func swatches(t theme.Theme) string {
 	}
 	row := func(label string, cs ...lipgloss.TerminalColor) string {
 		var b strings.Builder
-		b.WriteString(lipgloss.NewStyle().Foreground(t.TextFaint).Width(10).Render(label))
+		b.WriteString(lipgloss.NewStyle().Foreground(t.TextFaint).Width(previewLabelW).Render(label))
 		for _, c := range cs {
 			b.WriteString(chip(c))
 		}
@@ -103,9 +110,9 @@ func panel(s theme.Styles) string {
 	lines = append(lines, s.Label.Render(theme.Eyebrow("Run summary")), "")
 	for _, r := range rows {
 		lines = append(lines,
-			s.Muted.Width(10).Render(r.k)+s.Body.Render(r.v))
+			s.Muted.Width(previewLabelW).Render(r.k)+s.Body.Render(r.v))
 	}
-	return s.Card.Width(34).Render(lipgloss.JoinVertical(lipgloss.Left, lines...))
+	return s.Card.Width(previewCardW).Render(lipgloss.JoinVertical(lipgloss.Left, lines...))
 }
 
 func statuses(s theme.Styles) string {
@@ -117,7 +124,7 @@ func statuses(s theme.Styles) string {
 		s.Label.Render(theme.Eyebrow("Agents")), "",
 		line(s.Healthy, "●", "researcher", "running"),
 		line(s.Pending, "●", "critic", "pending"),
-		line(s.Error, "●", "summariser", "failed"),
+		line(s.Error, "●", "summarizer", "failed"),
 	}
-	return s.CardFocused.Width(34).Render(lipgloss.JoinVertical(lipgloss.Left, lines...))
+	return s.CardFocused.Width(previewCardW).Render(lipgloss.JoinVertical(lipgloss.Left, lines...))
 }

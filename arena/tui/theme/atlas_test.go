@@ -6,9 +6,9 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
-// flattenOver composites an alpha colour against an opaque backdrop.
+// flattenOver composites an alpha color against an opaque backdrop.
 // Terminals have no alpha channel, so every Atlas rgba() token has to be
-// resolved to a solid colour at construction time.
+// resolved to a solid color at construction time.
 func TestFlattenOverCompositesAlphaAgainstBackdrop(t *testing.T) {
 	// Atlas --hairline: rgba(147,197,253,0.10) over --ink-canvas #0A1120.
 	got := flattenOver(rgba{147, 197, 253, 0.10}, "#0A1120")
@@ -133,7 +133,7 @@ func TestSurfacesDoNotCollapseOn256Colour(t *testing.T) {
 				t.Errorf("%s %s has no ANSI256 pin", th.Name, name)
 			}
 			if prev, dup := seen[cc.ANSI256]; dup {
-				t.Errorf("%s %s and %s share ANSI256 %q — they collapse on 256-colour terminals",
+				t.Errorf("%s %s and %s share ANSI256 %q — they collapse on 256-color terminals",
 					th.Name, name, prev, cc.ANSI256)
 			}
 			seen[cc.ANSI256] = name

@@ -282,12 +282,10 @@ func (c *ConversationPanel) renderMarkdown(content string) string {
 
 	// Create or recreate renderer if width changed
 	if c.renderer == nil || c.lastContentWidth != contentWidth {
-		stylePath := "dark"
-		if theme.Colors().Name == "light" {
-			stylePath = "light"
-		}
+		// theme.Colors().Name is "dark" or "light" — both are built-in glamour
+		// style paths, so the markdown follows the session theme.
 		r, err := glamour.NewTermRenderer(
-			glamour.WithStylePath(stylePath),
+			glamour.WithStylePath(theme.Colors().Name),
 			glamour.WithWordWrap(contentWidth),
 		)
 		if err == nil {

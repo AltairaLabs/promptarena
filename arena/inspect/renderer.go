@@ -65,7 +65,7 @@ const (
 var (
 	// Box style — width is applied per render (full width or a grid column).
 	// Atlas: the hairline defines the panel, so the border is the default
-	// hairline rather than an accent colour.
+	// hairline rather than an accent color.
 	boxStyle = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			BorderForeground(theme.Colors().BorderDefault).
@@ -84,7 +84,7 @@ var (
 	valueStyle = lipgloss.NewStyle().
 			Foreground(theme.Colors().TextBody)
 
-	// highlightStyle emphasises a value (e.g. the config path). Mapped to the
+	// highlightStyle emphasizes a value (e.g. the config path). Mapped to the
 	// starlight AccentNode rather than a status green — this is emphasis, not a
 	// health signal.
 	highlightStyle = lipgloss.NewStyle().

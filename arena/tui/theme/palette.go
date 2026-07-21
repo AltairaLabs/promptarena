@@ -23,11 +23,11 @@ type rgba struct {
 	A       float64
 }
 
-// fallback pins the ANSI256 and ANSI (16-colour) rendering of a token so
+// fallback pins the ANSI256 and ANSI (16-color) rendering of a token so
 // lipgloss does NOT auto-degrade it. It exists only for the ink surfaces and
 // borders: those are all near-navy near-black (or, in light, near-white), and
-// termenv's nearest-colour match collapses four distinct surfaces onto a single
-// 256-colour index (measured: #070C16/#0A1120/#0C1526/#111C2E all → 232), which
+// termenv's nearest-color match collapses four distinct surfaces onto a single
+// 256-color index (measured: #070C16/#0A1120/#0C1526/#111C2E all → 232), which
 // would make cards and panels indistinguishable. Text and accents are distinct
 // hues that auto-degrade cleanly, so they are left unpinned. Values are 256/16
 // palette indices as strings, monotonic so surfaces stay layered.
@@ -95,7 +95,7 @@ var darkPalette = palette{
 
 	// Dark: greyscale ramp 232→238, ascending so void < canvas < surface <
 	// tile < raised < hairline stay distinct. ANSI: black shell, bright-black
-	// for raised/hairline/borders so dividers remain visible on 16 colours.
+	// for raised/hairline/borders so dividers remain visible on 16 colors.
 	fbVoid:          fallback{"232", "0"},
 	fbCanvas:        fallback{"233", "0"},
 	fbSurface:       fallback{"234", "0"},
@@ -142,7 +142,7 @@ var lightPalette = palette{
 
 	// Light: pure white (231) card sits above a near-white canvas (255); the
 	// deepest panel and raised chips are faint greys. ANSI: white shell, plain
-	// black borders so hairlines read on 16-colour paper terminals.
+	// black borders so hairlines read on 16-color paper terminals.
 	fbVoid:          fallback{"254", "7"},
 	fbCanvas:        fallback{"255", "15"},
 	fbSurface:       fallback{"231", "15"},
@@ -154,7 +154,7 @@ var lightPalette = palette{
 	fbBorderFaint:   fallback{"253", "7"},
 }
 
-// flattenOver composites an alpha colour against an opaque backdrop, returning
+// flattenOver composites an alpha color against an opaque backdrop, returning
 // an opaque #RRGGBB. Atlas expresses every border and tint as rgba(); the
 // terminal cannot blend, so we resolve them once against the surface they sit
 // on.
@@ -176,5 +176,7 @@ func parseHex(s string) (r, g, b uint8) {
 	if err != nil {
 		return 0, 0, 0
 	}
-	return uint8(v >> 16), uint8(v >> 8), uint8(v)
+	const redShift, greenShift = 16, 8
+	//nolint:gosec // v is a 6-hex-digit color literal; each 8-bit component fits uint8.
+	return uint8(v >> redShift), uint8(v >> greenShift), uint8(v)
 }

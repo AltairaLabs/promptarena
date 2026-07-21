@@ -27,13 +27,13 @@ func Note(s string) string {
 	return theme.Active().Muted.Render(s)
 }
 
-// Emphasis renders a value that should stand out without being a status colour
+// Emphasis renders a value that should stand out without being a status color
 // (starlight) — e.g. a count.
 func Emphasis(s string) string {
 	return theme.Active().Info.Render(s)
 }
 
-// Countf is a convenience for an emphasised count embedded in a muted sentence,
+// Countf is a convenience for an emphasized count embedded in a muted sentence,
 // e.g. Countf("Generated", 12, "run combinations").
 func Countf(prefix string, n int, suffix string) string {
 	return theme.Active().Muted.Render(prefix+" ") +

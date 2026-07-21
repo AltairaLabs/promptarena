@@ -13,8 +13,6 @@ import (
 	"github.com/spf13/viper"
 	"golang.org/x/term"
 
-	"github.com/AltairaLabs/PromptKit/runtime/events"
-	"github.com/AltairaLabs/PromptKit/runtime/logger"
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 	arenaaudio "github.com/AltairaLabs/promptarena/arena/audio"
 	"github.com/AltairaLabs/promptarena/arena/engine"
@@ -23,6 +21,9 @@ import (
 	"github.com/AltairaLabs/promptarena/arena/tui/app"
 	"github.com/AltairaLabs/promptarena/arena/tui/console"
 	"github.com/AltairaLabs/promptarena/arena/tui/theme"
+
+	"github.com/AltairaLabs/PromptKit/runtime/events"
+	"github.com/AltairaLabs/PromptKit/runtime/logger"
 )
 
 const (
@@ -467,7 +468,7 @@ func executeSimple(ctx context.Context, eng *engine.Engine, plan *engine.RunPlan
 	}
 
 	// Print the run summary — the same Atlas-styled view the TUI shows — so
-	// `run --ci` / `--simple` returns the summary without the full TUI. Colour
+	// `run --ci` / `--simple` returns the summary without the full TUI. Color
 	// is stripped automatically when piped.
 	if store, ok := eng.GetStateStore().(*statestore.ArenaStateStore); ok {
 		summary := tui.SummaryFromStore(ctx, store, runIDs, params.OutDir)
@@ -484,19 +485,21 @@ func executeSimple(ctx context.Context, eng *engine.Engine, plan *engine.RunPlan
 	return runIDs, err
 }
 
+// Console summary render widths.
+const (
+	summaryMaxWidth   = 120 // cap so a very wide terminal stays readable
+	summaryPipedWidth = 80  // fixed width when stdout is not a TTY
+)
+
 // summaryWidth returns the width to render the console summary at: the terminal
-// width on a TTY (capped for readability), else a fixed 80 columns for piped
-// output.
+// width on a TTY (capped for readability), else a fixed width for piped output.
 func summaryWidth(tty bool) int {
 	if tty {
 		if w, _, err := term.GetSize(int(os.Stdout.Fd())); err == nil && w > 0 {
-			if w > 120 {
-				return 120
-			}
-			return w
+			return min(w, summaryMaxWidth)
 		}
 	}
-	return 80
+	return summaryPipedWidth
 }
 
 // displayRunInfo prints configuration and execution parameters.

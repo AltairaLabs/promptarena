@@ -16,7 +16,7 @@ type splashDoneMsg struct{}
 
 // paLogo is the PromptArena mark rendered as terminal block-art: the twin
 // four-pointed sparkles from logo-promptarena.svg (a large star with a smaller
-// companion). It is drawn in ion-cyan (--ion-cyan, the mark's fill colour) by
+// companion). It is drawn in ion-cyan (--ion-cyan, the mark's fill color) by
 // View. Keep the two stars aligned if you edit this.
 const paLogo = `      ▲
      ███
