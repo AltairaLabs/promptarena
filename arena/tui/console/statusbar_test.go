@@ -1,6 +1,7 @@
 package console
 
 import (
+	"bytes"
 	"regexp"
 	"strings"
 	"testing"
@@ -70,6 +71,48 @@ func TestStatusBarLabelFlipsWhenComplete(t *testing.T) {
 	sb.Advance(nil)
 	if !strings.Contains(plain(sb.Render()), "Done") {
 		t.Errorf("after all runs complete, Render() = %q, want it to read Done", plain(sb.Render()))
+	}
+}
+
+func TestLiveIsSilentWhenNotTTY(t *testing.T) {
+	sb := NewStatusBar(4, false)
+	sb.Advance(nil)
+
+	var buf bytes.Buffer
+	sb.Live(&buf)
+	if buf.Len() != 0 {
+		t.Errorf("Live on a non-TTY wrote %q, want nothing", buf.String())
+	}
+}
+
+func TestLiveRepaintsInPlaceOnTTY(t *testing.T) {
+	sb := NewStatusBar(4, true)
+	sb.Advance(nil)
+
+	var buf bytes.Buffer
+	sb.Live(&buf)
+	out := buf.String()
+	if !strings.HasPrefix(out, "\r") {
+		t.Errorf("Live on a TTY = %q, want a leading carriage return", out)
+	}
+	if !strings.Contains(plain(out), "1/4") {
+		t.Errorf("Live on a TTY = %q, want the progress count", plain(out))
+	}
+}
+
+func TestFinishWritesFinalLineWithNewline(t *testing.T) {
+	sb := NewStatusBar(2, false)
+	sb.Advance(nil)
+	sb.Advance(nil)
+
+	var buf bytes.Buffer
+	sb.Finish(&buf)
+	out := plain(buf.String())
+	if !strings.Contains(out, "Done") || !strings.Contains(out, "2/2") {
+		t.Errorf("Finish() = %q, want the completed summary", out)
+	}
+	if !strings.HasSuffix(buf.String(), "\n") {
+		t.Errorf("Finish() = %q, want a trailing newline", buf.String())
 	}
 }
 

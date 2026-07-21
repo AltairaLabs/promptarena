@@ -761,92 +761,20 @@ func (m *Model) buildSummary(outputDir string) *Summary {
 	}
 }
 
-// buildSummaryFromStateStore builds summary using persisted run results (assertions, tool stats).
+// buildSummaryFromStateStore builds the summary from persisted run results
+// (assertions, tool stats) for the in-model active runs. It delegates to the
+// shared SummaryFromStore so the TUI and the non-TUI ("simple"/CI) paths report
+// identical stats.
 func (m *Model) buildSummaryFromStateStore(outputDir string) *Summary {
 	ctx := m.ctx
 	if ctx == nil {
 		ctx = context.Background()
 	}
-
-	totalRuns := len(m.activeRuns)
-	success := 0
-	failed := 0
-	var totalCost float64
-	var totalTokens int64
-	var totalDuration time.Duration
-	providerCounts := make(map[string]int)
-	scenarioSet := make(map[string]bool)
-	regionSet := make(map[string]bool)
-	errors := make([]ErrorInfo, 0)
-	assertTotal := 0
-	assertFailed := 0
-
+	runIDs := make([]string, len(m.activeRuns))
 	for i := range m.activeRuns {
-		run := &m.activeRuns[i]
-		res, err := m.stateStore.GetResult(ctx, run.RunID)
-		if err != nil {
-			errors = append(errors, ErrorInfo{
-				RunID:    run.RunID,
-				Scenario: run.Scenario,
-				Provider: run.Provider,
-				Region:   run.Region,
-				Error:    err.Error(),
-			})
-			failed++
-			continue
-		}
-
-		providerCounts[res.ProviderID]++
-		scenarioSet[res.ScenarioID] = true
-		regionSet[res.Region] = true
-
-		totalCost += res.Cost.TotalCost
-		totalTokens += int64(res.Cost.InputTokens + res.Cost.OutputTokens + res.Cost.CachedTokens)
-		totalDuration += res.Duration
-
-		if res.Error != "" {
-			failed++
-			errors = append(errors, ErrorInfo{
-				RunID:    res.RunID,
-				Scenario: res.ScenarioID,
-				Provider: res.ProviderID,
-				Region:   res.Region,
-				Error:    res.Error,
-			})
-		} else {
-			success++
-		}
-
-		assertTotal += res.ConversationAssertions.Total
-		assertFailed += res.ConversationAssertions.Failed
+		runIDs[i] = m.activeRuns[i].RunID
 	}
-
-	regions := make([]string, 0, len(regionSet))
-	for region := range regionSet {
-		regions = append(regions, region)
-	}
-
-	avgDuration := time.Duration(0)
-	if success+failed > 0 {
-		avgDuration = totalDuration / time.Duration(success+failed)
-	}
-
-	return &Summary{
-		TotalRuns:       totalRuns,
-		SuccessCount:    success,
-		FailedCount:     failed,
-		TotalCost:       totalCost,
-		TotalTokens:     totalTokens,
-		TotalDuration:   totalDuration,
-		AvgDuration:     avgDuration,
-		ProviderCounts:  providerCounts,
-		ScenarioCount:   len(scenarioSet),
-		Regions:         regions,
-		Errors:          errors,
-		OutputDir:       outputDir,
-		AssertionTotal:  assertTotal,
-		AssertionFailed: assertFailed,
-	}
+	return SummaryFromStore(ctx, m.stateStore, runIDs, outputDir)
 }
 
 // SummaryFromStore builds a run Summary from persisted results in the state
