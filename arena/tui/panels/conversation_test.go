@@ -1181,22 +1181,22 @@ func TestConversationPanel_SetActive(t *testing.T) {
 	c := NewConversationPanel()
 	c.focus = focusConversationTurns
 
-	// Default (active): the focused sub-pane gets the focused border colour.
+	// Default (active): the focused sub-pane gets the strong (focused) border.
 	tb, db := c.getBorderColors()
-	assert.Equal(t, theme.BorderColorFocused(), tb)
-	assert.Equal(t, theme.BorderColorUnfocused(), db)
+	assert.Equal(t, theme.Colors().BorderStrong, tb)
+	assert.Equal(t, theme.Colors().BorderDefault, db)
 
-	// Inactive: both sub-panes render with the unfocused border colour, so an
+	// Inactive: both sub-panes render with the default border colour, so an
 	// external owner (the chat input box) can hold the visible focus.
 	c.SetActive(false)
 	tb, db = c.getBorderColors()
-	assert.Equal(t, theme.BorderColorUnfocused(), tb)
-	assert.Equal(t, theme.BorderColorUnfocused(), db)
+	assert.Equal(t, theme.Colors().BorderDefault, tb)
+	assert.Equal(t, theme.Colors().BorderDefault, db)
 
-	// Re-activating restores the focused border.
+	// Re-activating restores the strong border.
 	c.SetActive(true)
 	tb, _ = c.getBorderColors()
-	assert.Equal(t, theme.BorderColorFocused(), tb)
+	assert.Equal(t, theme.Colors().BorderStrong, tb)
 }
 
 func TestConversationPanel_LiveReasoning(t *testing.T) {

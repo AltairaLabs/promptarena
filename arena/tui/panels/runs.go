@@ -123,13 +123,13 @@ func (p *RunsPanel) Init(height int) {
 	s := table.DefaultStyles()
 	s.Header = s.Header.
 		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(theme.BorderColorFocused()).
+		BorderForeground(theme.Colors().BorderStrong).
 		BorderBottom(true).
 		Bold(true).
-		Foreground(lipgloss.Color(theme.ColorViolet))
+		Foreground(theme.Colors().AccentNode)
 	s.Selected = s.Selected.
-		Foreground(lipgloss.Color(theme.ColorWhite)).
-		Background(theme.BorderColorFocused()).
+		Foreground(theme.Colors().TextHeading).
+		Background(theme.Colors().BorderStrong).
 		Bold(false)
 	t.SetStyles(s)
 
@@ -251,12 +251,12 @@ func (p *RunsPanel) Update(runs []RunInfo, width, height int) {
 
 // View renders the runs panel
 func (p *RunsPanel) View(focused bool) string {
-	borderColor := theme.BorderColorUnfocused()
+	borderColor := theme.Colors().BorderDefault
 	if focused {
-		borderColor = theme.BorderColorFocused()
+		borderColor = theme.Colors().BorderStrong
 	}
 
-	titleStyle := theme.TitleStyle
+	titleStyle := theme.Active().Heading
 	title := titleStyle.Render("📊 Active Runs")
 
 	content := lipgloss.JoinVertical(lipgloss.Left, title, p.table.View())

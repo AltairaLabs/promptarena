@@ -175,8 +175,8 @@ type RunParameters struct {
 	Evals         []string // Evaluation configurations to run
 	Concurrency   int
 	OutDir        string
-	CIMode        bool
-	SimpleMode    bool // Alias for CIMode
+	CIMode        bool // --ci: deterministic machine output, non-zero exit on failure
+	SimpleMode    bool // --simple: human-friendly non-TUI (styled + live status bar)
 	Verbose       bool
 	OutputFormats []string // New: output formats (json, junit, markdown)
 	JUnitFile     string   // New: JUnit XML output file
@@ -264,10 +264,10 @@ func extractBasicFlags(cmd *cobra.Command, params *RunParameters) error {
 	if params.SimpleMode, err = cmd.Flags().GetBool("simple"); err != nil {
 		return fmt.Errorf("failed to get simple flag: %w", err)
 	}
-	// If either --ci or --simple is set, disable TUI
-	if params.SimpleMode {
-		params.CIMode = true
-	}
+	// --ci and --simple both disable the TUI (see shouldUseTUI) but are NOT the
+	// same mode: --ci is deterministic machine output (no status bar, CI-format
+	// summary, non-zero exit on failure), --simple is human-friendly linear
+	// output (styled banner, live status bar, full summary). Keep them distinct.
 	if params.Verbose, err = cmd.Flags().GetBool("verbose"); err != nil {
 		return fmt.Errorf("failed to get verbose flag: %w", err)
 	}

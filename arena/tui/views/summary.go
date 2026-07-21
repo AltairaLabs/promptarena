@@ -6,6 +6,7 @@ import (
 
 	"github.com/charmbracelet/lipgloss"
 
+	"github.com/AltairaLabs/promptarena/arena/tui/theme"
 	"github.com/AltairaLabs/promptarena/arena/tui/viewmodels"
 )
 
@@ -34,73 +35,77 @@ func (v *SummaryView) Render(vm *viewmodels.SummaryViewModel) string {
 func (v *SummaryView) renderTUIMode(vm *viewmodels.SummaryViewModel) string {
 	var sb strings.Builder
 
-	// Header
-	headerStyle := lipgloss.NewStyle().
-		Bold(true).
-		Foreground(lipgloss.Color("12")).
-		Align(lipgloss.Center)
+	width := v.width
+	if width <= 0 {
+		width = 80
+	}
+	ruleWidth := min(width, summaryRuleWidth)
 
-	sb.WriteString(headerStyle.Render("╔═════════════════════════════════════════════════════════════╗"))
+	labelStyle := lipgloss.NewStyle().Foreground(theme.Colors().TextMuted)
+	valueStyle := lipgloss.NewStyle().Foreground(theme.Colors().TextHeading)
+	successStyle := lipgloss.NewStyle().Foreground(theme.Colors().StatusHealthyText)
+	failStyle := lipgloss.NewStyle().Foreground(theme.Colors().StatusErrorText)
+	headingStyle := lipgloss.NewStyle().Bold(true).Foreground(theme.Colors().TextHeading)
+	eyebrowStyle := lipgloss.NewStyle().Foreground(theme.Colors().TextMuted)
+	ruleStyle := lipgloss.NewStyle().Foreground(theme.Colors().BorderDefault)
+
+	// Title: bold heading over a hairline rule (the Atlas "the line defines the
+	// section" idiom, no ASCII box).
+	sb.WriteString(headingStyle.Render("Run Summary"))
 	sb.WriteString("\n")
-	sb.WriteString(headerStyle.Render("║                   Run Summary                               ║"))
-	sb.WriteString("\n")
-	sb.WriteString(headerStyle.Render("╚═════════════════════════════════════════════════════════════╝"))
+	sb.WriteString(ruleStyle.Render(strings.Repeat("─", ruleWidth)))
 	sb.WriteString("\n\n")
 
-	// Execution stats
-	labelStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("14"))
-	valueStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("15"))
-	successStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("10"))
-	failStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("9"))
-
-	sb.WriteString(formatLine("Total Runs:", vm.GetFormattedTotalRuns(), &labelStyle, &valueStyle))
-	sb.WriteString(formatLine("Successful:", vm.GetFormattedSuccessful(), &labelStyle, &successStyle))
-	sb.WriteString(formatLine("Failed:", vm.GetFormattedFailed(), &labelStyle, &failStyle))
+	// Headline counts.
+	sb.WriteString(summaryRow("Total runs", vm.GetFormattedTotalRuns(), labelStyle, valueStyle))
+	sb.WriteString(summaryRow("Passed", vm.GetFormattedSuccessful(), labelStyle, successStyle))
+	sb.WriteString(summaryRow("Failed", vm.GetFormattedFailed(), labelStyle, failStyle))
 	sb.WriteString("\n")
 
-	// Assertions (if any)
+	// Assertions (if any).
 	if vm.HasAssertions() {
-		sb.WriteString(formatLine("Assertions:", vm.GetFormattedAssertionTotal(), &labelStyle, &valueStyle))
+		sb.WriteString(summaryRow("Assertions", vm.GetFormattedAssertionTotal(), labelStyle, valueStyle))
 		if vm.HasFailedAssertions() {
-			sb.WriteString(formatLine("Assertions Fail:", vm.GetFormattedAssertionFailed(), &labelStyle, &failStyle))
+			sb.WriteString(summaryRow("Assertions Fail", vm.GetFormattedAssertionFailed(), labelStyle, failStyle))
 		} else {
-			sb.WriteString(formatLine("Assertions Pass:", "all passed", &labelStyle, &successStyle))
+			sb.WriteString(summaryRow("Assertions Pass", "all passed", labelStyle, successStyle))
 		}
 		sb.WriteString("\n")
 	}
 
-	// Cost and performance
-	sb.WriteString(formatLine("Total Cost:", vm.GetFormattedTotalCost(), &labelStyle, &valueStyle))
-	sb.WriteString(formatLine("Total Tokens:", vm.GetFormattedTotalTokens(), &labelStyle, &valueStyle))
-	sb.WriteString(formatLine("Total Duration:", vm.GetFormattedTotalDuration(), &labelStyle, &valueStyle))
-	sb.WriteString(formatLine("Avg Duration:", vm.GetFormattedAvgDurationWithSuffix(), &labelStyle, &valueStyle))
+	// Cost and performance.
+	sb.WriteString(summaryRow("Total cost", vm.GetFormattedTotalCost(), labelStyle, valueStyle))
+	sb.WriteString(summaryRow("Total tokens", vm.GetFormattedTotalTokens(), labelStyle, valueStyle))
+	sb.WriteString(summaryRow("Total duration", vm.GetFormattedTotalDuration(), labelStyle, valueStyle))
+	sb.WriteString(summaryRow("Avg duration", vm.GetFormattedAvgDurationWithSuffix(), labelStyle, valueStyle))
 	sb.WriteString("\n")
 
-	// Provider breakdown
+	// Breakdown.
 	if vm.HasProviders() {
-		sb.WriteString(formatLine("Providers:", vm.GetFormattedProviders(), &labelStyle, &valueStyle))
+		sb.WriteString(summaryRow("Providers", vm.GetFormattedProviders(), labelStyle, valueStyle))
 	}
-
-	sb.WriteString(formatLine("Scenarios:", vm.GetFormattedScenarios(), &labelStyle, &valueStyle))
-
+	sb.WriteString(summaryRow("Scenarios", vm.GetFormattedScenarios(), labelStyle, valueStyle))
 	if vm.HasRegions() {
-		sb.WriteString(formatLine("Regions:", vm.GetFormattedRegions(), &labelStyle, &valueStyle))
+		sb.WriteString(summaryRow("Regions", vm.GetFormattedRegions(), labelStyle, valueStyle))
 	}
 
-	// Errors
+	// Failures: an eyebrow header then one truncated line per failure, so long
+	// validation messages never wrap into a ragged block.
 	if vm.HasErrors() {
 		sb.WriteString("\n")
-		sb.WriteString(labelStyle.Render("Errors:\n"))
-		const errorMarginLeft = 2
-		errorStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("9")).MarginLeft(errorMarginLeft)
+		sb.WriteString(eyebrowStyle.Render(theme.Eyebrow("Failures")))
+		sb.WriteString("\n")
 		for _, errStr := range vm.GetFormattedErrors() {
-			sb.WriteString(errorStyle.Render(fmt.Sprintf("• %s\n", errStr)))
+			line := truncateToWidth("• "+errStr, width-summaryErrorIndent)
+			sb.WriteString(strings.Repeat(" ", summaryErrorIndent))
+			sb.WriteString(failStyle.Render(line))
+			sb.WriteString("\n")
 		}
 	}
 
-	// Output info
+	// Output location.
 	sb.WriteString("\n")
-	sb.WriteString(formatLine("Results saved to:", vm.GetOutputDir(), &labelStyle, &valueStyle))
+	sb.WriteString(summaryRow("Saved to", vm.GetOutputDir(), labelStyle, valueStyle))
 
 	return sb.String()
 }
@@ -108,10 +113,8 @@ func (v *SummaryView) renderTUIMode(vm *viewmodels.SummaryViewModel) string {
 func (v *SummaryView) renderCIMode(vm *viewmodels.SummaryViewModel) string {
 	var sb strings.Builder
 
-	// Header
-	sb.WriteString("╔═══════════════════════════════════════════════════════════╗\n")
-	sb.WriteString("║                   Run Summary                             ║\n")
-	sb.WriteString("╚═══════════════════════════════════════════════════════════╝\n\n")
+	// Header — plain and deterministic for CI logs.
+	sb.WriteString("Run Summary\n===========\n\n")
 
 	// Execution stats
 	sb.WriteString(fmt.Sprintf("Total Runs:       %s\n", vm.GetFormattedTotalRuns()))
@@ -163,9 +166,32 @@ func (v *SummaryView) renderCIMode(vm *viewmodels.SummaryViewModel) string {
 	return sb.String()
 }
 
-func formatLine(label, value string, labelStyle, valueStyle *lipgloss.Style) string {
-	const labelWidth = 16
-	lbl := labelStyle.Render(fmt.Sprintf("%-*s", labelWidth, label))
-	val := valueStyle.Render(value)
-	return fmt.Sprintf("%s %s\n", lbl, val)
+const (
+	// summaryLabelWidth is the fixed column the values align to.
+	summaryLabelWidth = 16
+	// summaryRuleWidth caps the title hairline so it stays a tidy underline
+	// rather than spanning a very wide terminal.
+	summaryRuleWidth = 52
+	// summaryErrorIndent is the left inset of each failure line.
+	summaryErrorIndent = 2
+)
+
+// summaryRow renders one aligned "label   value" line: the label padded to a
+// fixed column in labelStyle, the value in valueStyle.
+func summaryRow(label, value string, labelStyle, valueStyle lipgloss.Style) string {
+	lbl := labelStyle.Render(fmt.Sprintf("%-*s", summaryLabelWidth, label))
+	return lbl + valueStyle.Render(value) + "\n"
+}
+
+// truncateToWidth clips s to max display columns, appending an ellipsis when it
+// would overflow, so a long line never wraps into a ragged block.
+func truncateToWidth(s string, maxWidth int) string {
+	if maxWidth <= 1 || lipgloss.Width(s) <= maxWidth {
+		return s
+	}
+	r := []rune(s)
+	if len(r) <= maxWidth-1 {
+		return s
+	}
+	return string(r[:maxWidth-1]) + "…"
 }

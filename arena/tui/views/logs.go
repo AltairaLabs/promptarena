@@ -36,12 +36,12 @@ func NewLogsView(focused bool) *LogsView {
 
 // Render renders the logs panel
 func (v *LogsView) Render(vp *viewport.Model, ready bool, width int) string {
-	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color(theme.ColorSky))
+	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(theme.Colors().AccentNode)
 	title := titleStyle.Render("Logs")
 
-	borderColor := theme.BorderColorUnfocused()
+	borderColor := theme.Colors().BorderDefault
 	if v.focused {
-		borderColor = theme.BorderColorFocused()
+		borderColor = theme.Colors().BorderStrong
 	}
 
 	var content string
@@ -68,18 +68,18 @@ func (v *LogsView) Render(vp *viewport.Model, ready bool, width int) string {
 
 // FormatLogLine formats a single log entry with appropriate styling
 func FormatLogLine(level, message string) string {
-	var levelColor lipgloss.Color
+	var levelColor lipgloss.TerminalColor
 	switch level {
 	case "INFO":
-		levelColor = lipgloss.Color(theme.ColorInfo) // Blue
+		levelColor = theme.Colors().AccentInter // Blue
 	case "WARN":
-		levelColor = lipgloss.Color(theme.ColorWarning) // Amber
+		levelColor = theme.Colors().StatusPending // Amber
 	case "ERROR":
-		levelColor = lipgloss.Color(theme.ColorError) // Red
+		levelColor = theme.Colors().StatusError // Red
 	case "DEBUG":
-		levelColor = lipgloss.Color(theme.ColorGray) // Gray
+		levelColor = theme.Colors().TextMuted // Gray
 	default:
-		levelColor = lipgloss.Color(theme.ColorLightGray) // Light gray
+		levelColor = theme.Colors().TextMuted // Light gray
 	}
 
 	levelStyle := lipgloss.NewStyle().Foreground(levelColor)

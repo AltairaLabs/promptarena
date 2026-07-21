@@ -358,11 +358,11 @@ func (c *ConversationPanel) ensureTable(runID string) {
 	style.Header = style.Header.
 		BorderStyle(lipgloss.NormalBorder()).
 		BorderBottom(true).
-		BorderForeground(theme.BorderColorFocused()).
+		BorderForeground(theme.Colors().BorderStrong).
 		Bold(true)
 	style.Selected = style.Selected.
-		Foreground(lipgloss.Color(theme.ColorWhite)).
-		Background(theme.BorderColorFocused()).
+		Foreground(theme.Colors().TextHeading).
+		Background(theme.Colors().BorderStrong).
 		Bold(true)
 	t.SetStyles(style)
 

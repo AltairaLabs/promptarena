@@ -54,11 +54,11 @@ func (c *Composer) IsSpeech() bool { return c.mode == composerSpeech }
 
 // borderColor is the text box's border color: highlighted when the input holds
 // focus, dimmed when the conversation panel does.
-func (c *Composer) borderColor(focused bool) lipgloss.Color {
+func (c *Composer) borderColor(focused bool) lipgloss.TerminalColor {
 	if focused {
-		return theme.BorderColorFocused()
+		return theme.Colors().BorderStrong
 	}
-	return theme.BorderColorUnfocused()
+	return theme.Colors().BorderDefault
 }
 
 // View renders the composer. In text mode it wraps inputView in a bordered box
@@ -67,7 +67,7 @@ func (c *Composer) borderColor(focused bool) lipgloss.Color {
 func (c *Composer) View(inputView string, focused bool) string {
 	if c.mode == composerSpeech {
 		return lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#7dd3fc")). // sky-300 — matches theme
+			Foreground(theme.Colors().AccentNode).
 			Render(composerSpeechLabel)
 	}
 	width := max(c.width-composerBorderChars, 0)

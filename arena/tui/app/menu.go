@@ -91,15 +91,15 @@ func (p *placeholder) Update(msg tea.Msg) (Page, tea.Cmd) {
 func (p *placeholder) View() string {
 	notice := lipgloss.NewStyle().
 		Bold(true).
-		Foreground(lipgloss.Color(theme.ColorPrimary)).
+		Foreground(theme.Colors().TextHeading).
 		Render(p.title)
 
 	sub := lipgloss.NewStyle().
-		Foreground(lipgloss.Color(theme.ColorGray)).
+		Foreground(theme.Colors().TextMuted).
 		Render(p.issue)
 
 	hint := lipgloss.NewStyle().
-		Foreground(lipgloss.Color(theme.ColorLightGray)).
+		Foreground(theme.Colors().TextMuted).
 		Render("press any key to return")
 
 	content := notice + "\n\n" + sub + "\n\n" + hint

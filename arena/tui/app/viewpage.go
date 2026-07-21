@@ -150,10 +150,10 @@ func (p *ViewPage) View() string {
 			p.browser.SetDimensions(p.w, contentHeight)
 			if p.err != nil {
 				errorStyle := lipgloss.NewStyle().
-					Foreground(lipgloss.Color(theme.ColorError)).
+					Foreground(theme.Colors().StatusError).
 					Bold(true)
 				helpStyle := lipgloss.NewStyle().
-					Foreground(lipgloss.Color(theme.ColorGray)).
+					Foreground(theme.Colors().TextMuted).
 					Italic(true)
 				return lipgloss.JoinVertical(lipgloss.Left,
 					errorStyle.Render("error: "+p.err.Error()),

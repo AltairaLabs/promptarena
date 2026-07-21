@@ -35,24 +35,25 @@ func (v *HeaderFooterView) RenderHeader(
 	configFile string,
 	completedCount, totalRuns int,
 ) string {
-	// Banner style
+	// Banner. Not gold: Atlas reserves gold for the one primary thing per
+	// view, so persistent chrome uses bright heading starlight instead.
 	bannerStyle := lipgloss.NewStyle().
 		Bold(true).
-		Foreground(lipgloss.Color(theme.ColorPrimary)).
+		Foreground(theme.Colors().TextHeading).
 		Align(lipgloss.Center).
 		Width(v.width)
 
 	infoStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color(theme.ColorLightGray)).
+		Foreground(theme.Colors().TextMuted).
 		Align(lipgloss.Center).
 		Width(v.width)
 
 	progressStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color(theme.ColorSuccess)).
+		Foreground(theme.Colors().StatusHealthy).
 		Bold(true)
 
 	tagStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color(theme.ColorWarning)).
+		Foreground(theme.Colors().StatusPending).
 		Bold(true)
 
 	mockTag := ""
@@ -80,11 +81,11 @@ func (v *HeaderFooterView) RenderHeader(
 func (v *HeaderFooterView) RenderTitleHeader(title string) string {
 	bannerStyle := lipgloss.NewStyle().
 		Bold(true).
-		Foreground(lipgloss.Color(theme.ColorPrimary)).
+		Foreground(theme.Colors().TextHeading).
 		Align(lipgloss.Center).
 		Width(v.width)
 	titleStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color(theme.ColorLightGray)).
+		Foreground(theme.Colors().TextMuted).
 		Align(lipgloss.Center).
 		Width(v.width)
 
@@ -98,12 +99,12 @@ func (v *HeaderFooterView) RenderTitleHeader(title string) string {
 // RenderFooter renders the bottom help text with dynamic key bindings
 func (v *HeaderFooterView) RenderFooter(keyBindings []KeyBinding) string {
 	legendStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("240")).
-		Background(lipgloss.Color("235")).
+		Foreground(theme.Colors().TextFaint).
+		Background(theme.Colors().Surface2).
 		Padding(0, 1)
 
 	keyStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("12")).
+		Foreground(theme.Colors().AccentInter).
 		Bold(true)
 
 	var helpItems []string

@@ -103,7 +103,7 @@ func (c *ConversationPanel) buildEmptyConversationView() string {
 	}
 
 	waitingMessage := lipgloss.NewStyle().
-		Foreground(lipgloss.Color(theme.ColorLightGray)).
+		Foreground(theme.Colors().TextMuted).
 		Italic(true).
 		Width(width).
 		Height(height).
@@ -157,7 +157,7 @@ func renderAudioMeters(userLevel, agentLevel float32, active bool) string {
 }
 
 func (c *ConversationPanel) buildTitle() string {
-	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color(theme.ColorSky))
+	titleStyle := lipgloss.NewStyle().Bold(true).Foreground(theme.Colors().AccentNode)
 	titleText := "🧭 Conversation"
 
 	if c.scenario != "" || c.provider != "" {
@@ -174,9 +174,9 @@ func (c *ConversationPanel) buildTitle() string {
 	return titleStyle.Render(titleText)
 }
 
-func (c *ConversationPanel) getBorderColors() (tableBorderColor, detailBorderColor lipgloss.Color) {
-	tableBorderColor = theme.BorderColorUnfocused()
-	detailBorderColor = theme.BorderColorUnfocused()
+func (c *ConversationPanel) getBorderColors() (tableBorderColor, detailBorderColor lipgloss.TerminalColor) {
+	tableBorderColor = theme.Colors().BorderDefault
+	detailBorderColor = theme.Colors().BorderDefault
 
 	// When the panel is not the active widget (the chat input holds focus),
 	// keep both borders dim so focus reads correctly.
@@ -186,9 +186,9 @@ func (c *ConversationPanel) getBorderColors() (tableBorderColor, detailBorderCol
 
 	switch c.focus {
 	case focusConversationTurns:
-		tableBorderColor = theme.BorderColorFocused()
+		tableBorderColor = theme.Colors().BorderStrong
 	case focusConversationDetail:
-		detailBorderColor = theme.BorderColorFocused()
+		detailBorderColor = theme.Colors().BorderStrong
 	}
 
 	return
@@ -231,7 +231,7 @@ func (c *ConversationPanel) addScrollIndicators(content string) string {
 
 	viewportWidth := c.calculateViewportWidth()
 	indicatorStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color(theme.ColorLightGray)).
+		Foreground(theme.Colors().TextMuted).
 		Italic(true)
 
 	// Add top indicator if not at top
@@ -282,8 +282,10 @@ func (c *ConversationPanel) renderMarkdown(content string) string {
 
 	// Create or recreate renderer if width changed
 	if c.renderer == nil || c.lastContentWidth != contentWidth {
+		// theme.Colors().Name is "dark" or "light" — both are built-in glamour
+		// style paths, so the markdown follows the session theme.
 		r, err := glamour.NewTermRenderer(
-			glamour.WithStylePath("dark"),
+			glamour.WithStylePath(theme.Colors().Name),
 			glamour.WithWordWrap(contentWidth),
 		)
 		if err == nil {
@@ -419,7 +421,7 @@ func (c *ConversationPanel) renderDetailHeader(res *statestore.RunResult, idx in
 	header := strings.Join(parts, " • ")
 
 	return lipgloss.NewStyle().
-		Foreground(theme.BorderColorFocused()).
+		Foreground(theme.Colors().TextHeading).
 		Bold(true).
 		Render(header)
 }

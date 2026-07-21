@@ -11,15 +11,19 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"golang.org/x/term"
 
-	"github.com/AltairaLabs/PromptKit/runtime/events"
-	"github.com/AltairaLabs/PromptKit/runtime/logger"
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 	arenaaudio "github.com/AltairaLabs/promptarena/arena/audio"
 	"github.com/AltairaLabs/promptarena/arena/engine"
 	"github.com/AltairaLabs/promptarena/arena/statestore"
 	"github.com/AltairaLabs/promptarena/arena/tui"
 	"github.com/AltairaLabs/promptarena/arena/tui/app"
+	"github.com/AltairaLabs/promptarena/arena/tui/console"
+	"github.com/AltairaLabs/promptarena/arena/tui/theme"
+
+	"github.com/AltairaLabs/PromptKit/runtime/events"
+	"github.com/AltairaLabs/PromptKit/runtime/logger"
 )
 
 const (
@@ -27,18 +31,19 @@ const (
 	logFilePerm   os.FileMode = 0o600 // Read/write for owner only (pre-TUI setup log file)
 )
 
-// quietSetupLogs routes runtime logging off stderr while the engine is built,
-// so on the TUI path engine-setup logs don't paint over the alt-screen before
-// the TUI installs its own log interceptor. It returns a restore func that puts
-// logging back on stderr; callers MUST invoke it before reporting results. On
-// non-TUI paths it is a no-op.
+// quietSetupLogs routes runtime logging off stderr for the whole run on any
+// path that owns a clean terminal: the TUI (so engine logs don't paint over the
+// alt-screen before its interceptor installs) AND --simple (so streaming logs
+// don't stomp the live status bar and summary). It returns a restore func that
+// puts logging back on stderr; callers MUST invoke it before reporting results.
 //
-// Verbose runs keep the pre-TUI logs in the same file the TUI interceptor
-// appends to; otherwise they are dropped — they can't reach the TUI log panel
-// (it doesn't exist yet) and their only other destination is the screen we are
-// keeping clean.
+// --ci is deliberately excluded: CI wants the runtime logs on stderr for
+// debugging, and it renders no status bar to corrupt.
+//
+// Verbose runs keep the logs in <out>/promptarena.log; otherwise they are
+// dropped — their only other destination is the screen we are keeping clean.
 func quietSetupLogs(useTUI bool, params *RunParameters) func() {
-	if !useTUI {
+	if !useTUI && !params.SimpleMode {
 		return func() {}
 	}
 	if params.Verbose && params.OutDir != "" {
@@ -168,6 +173,10 @@ func runSimulations(cmd *cobra.Command) error {
 	// stderr — otherwise both paint over the alt-screen before the TUI starts.
 	useTUI, _ := shouldUseTUI(runParams)
 	if !useTUI {
+		// Non-TUI path: select the Atlas theme from the terminal (or ARENA_THEME)
+		// once, so the styled console output and status bar match it. The TUI
+		// path does its own detection inside app.Run.
+		theme.Detect(os.Getenv("ARENA_THEME"))
 		displayRunInfo(runParams, configFile)
 	}
 	restoreLogs := quietSetupLogs(useTUI, runParams)
@@ -288,9 +297,9 @@ func configureMockProvider(eng *engine.Engine, params *RunParameters) error {
 	}
 
 	if !params.CIMode {
-		fmt.Println("Mock Provider Mode: ENABLED")
+		fmt.Println(console.Field("Mock Provider Mode", "ENABLED"))
 		if params.MockConfig != "" {
-			fmt.Printf("Mock Config: %s\n", params.MockConfig)
+			fmt.Println(console.Field("Mock Config", params.MockConfig))
 		}
 	}
 
@@ -316,7 +325,7 @@ func executeWithMode(ctx context.Context, eng *engine.Engine, plan *engine.RunPl
 
 // shouldUseTUI determines if TUI mode should be used based on CI mode and terminal size.
 func shouldUseTUI(params *RunParameters) (useTUI bool, reason string) {
-	if params.CIMode {
+	if params.CIMode || params.SimpleMode {
 		return false, ""
 	}
 
@@ -396,12 +405,32 @@ func executeWithTUI(ctx context.Context, eng *engine.Engine, plan *engine.RunPla
 // This function provides a headless execution mode without TUI interaction.
 // It is excluded from coverage testing as it requires real engine execution.
 func executeSimple(ctx context.Context, eng *engine.Engine, plan *engine.RunPlan, params *RunParameters) ([]string, error) {
-	fmt.Printf("Generated %d run combinations\n", len(plan.Combinations))
-	fmt.Println("Starting execution...")
-	fmt.Println()
+	// The theme was already selected on the non-TUI path (runSimulations).
+	tty := term.IsTerminal(int(os.Stdout.Fd()))
+	total := len(plan.Combinations)
+
+	if !params.CIMode {
+		fmt.Println(console.Countf("Generated", total, "run combinations"))
+		fmt.Println(console.Note("Starting execution…"))
+		fmt.Println()
+	}
 
 	eventBus := events.NewEventBus()
 	eng.SetEventBus(eventBus)
+
+	// A live Atlas-styled progress bar for the human-facing --simple / small-
+	// terminal fallback. Deliberately NOT used in --ci: CI output must be
+	// deterministic and free of carriage-return repaints, even when a runner
+	// allocates a pseudo-TTY. It repaints in place only on a real terminal.
+	var status *console.StatusBar
+	if !params.CIMode {
+		status = console.NewStatusBar(total, tty)
+		eng.RegisterRunCompletedHook(func(_ string, runErr error) {
+			status.Advance(runErr)
+			status.Live(os.Stdout)
+		})
+		status.Live(os.Stdout)
+	}
 
 	// In CI / headless mode we don't open an audio device, but if the
 	// caller asked for a capture (AUDIO_CAPTURE_PATH) we still wire a
@@ -432,9 +461,45 @@ func executeSimple(ctx context.Context, eng *engine.Engine, plan *engine.RunPlan
 	// Close event bus to drain pending events and stop worker goroutines.
 	eventBus.Close()
 
+	// Paint the final status line (clears the live bar on a terminal). Skipped
+	// in --ci, where no status bar was created.
+	if status != nil {
+		status.Finish(os.Stdout)
+	}
+
+	// Print the run summary — the same Atlas-styled view the TUI shows — so
+	// `run --ci` / `--simple` returns the summary without the full TUI. Color
+	// is stripped automatically when piped.
+	if store, ok := eng.GetStateStore().(*statestore.ArenaStateStore); ok {
+		summary := tui.SummaryFromStore(ctx, store, runIDs, params.OutDir)
+		fmt.Println()
+		if params.CIMode {
+			fmt.Println(tui.RenderSummaryCIMode(summary))
+		} else {
+			fmt.Println(tui.RenderSummary(summary, summaryWidth(tty)))
+		}
+	}
+
 	// Return runIDs even on error — runs are in the state store and
 	// reports should be generated for whatever completed.
 	return runIDs, err
+}
+
+// Console summary render widths.
+const (
+	summaryMaxWidth   = 120 // cap so a very wide terminal stays readable
+	summaryPipedWidth = 80  // fixed width when stdout is not a TTY
+)
+
+// summaryWidth returns the width to render the console summary at: the terminal
+// width on a TTY (capped for readability), else a fixed width for piped output.
+func summaryWidth(tty bool) int {
+	if tty {
+		if w, _, err := term.GetSize(int(os.Stdout.Fd())); err == nil && w > 0 {
+			return min(w, summaryMaxWidth)
+		}
+	}
+	return summaryPipedWidth
 }
 
 // displayRunInfo prints configuration and execution parameters.
@@ -444,28 +509,28 @@ func displayRunInfo(params *RunParameters, configFile string) {
 		return
 	}
 
-	fmt.Printf("Running Altaira Prompt Arena\n")
-	fmt.Printf("Config: %s\n", configFile)
+	fmt.Println(console.Banner("PromptArena"))
+	fmt.Println(console.Field("Config", configFile))
 	if len(params.Regions) > 0 {
-		fmt.Printf("Regions: %s\n", strings.Join(params.Regions, ", "))
+		fmt.Println(console.Field("Regions", strings.Join(params.Regions, ", ")))
 	}
 	if len(params.Providers) > 0 {
-		fmt.Printf("Providers: %s\n", strings.Join(params.Providers, ", "))
+		fmt.Println(console.Field("Providers", strings.Join(params.Providers, ", ")))
 	}
 	if len(params.Scenarios) > 0 {
-		fmt.Printf("Scenarios: %s\n", strings.Join(params.Scenarios, ", "))
+		fmt.Println(console.Field("Scenarios", strings.Join(params.Scenarios, ", ")))
 	}
 	if len(params.Evals) > 0 {
-		fmt.Printf("Evaluations: %s\n", strings.Join(params.Evals, ", "))
+		fmt.Println(console.Field("Evaluations", strings.Join(params.Evals, ", ")))
 	}
-	fmt.Printf("Concurrency: %d\n", params.Concurrency)
-	fmt.Printf("Output: %s\n", params.OutDir)
-	fmt.Printf("Formats: %s\n", strings.Join(params.OutputFormats, ", "))
+	fmt.Println(console.Field("Concurrency", fmt.Sprintf("%d", params.Concurrency)))
+	fmt.Println(console.Field("Output", params.OutDir))
+	fmt.Println(console.Field("Formats", strings.Join(params.OutputFormats, ", ")))
 	if contains(params.OutputFormats, "junit") {
-		fmt.Printf("JUnit XML: %s\n", params.JUnitFile)
+		fmt.Println(console.Field("JUnit XML", params.JUnitFile))
 	}
 	if contains(params.OutputFormats, "markdown") {
-		fmt.Printf("Markdown Report: %s\n", params.MarkdownFile)
+		fmt.Println(console.Field("Markdown Report", params.MarkdownFile))
 	}
 	fmt.Println()
 }

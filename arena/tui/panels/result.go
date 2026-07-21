@@ -77,13 +77,13 @@ func (p *ResultPanel) Update(width, height int) {
 		s := table.DefaultStyles()
 		s.Header = s.Header.
 			BorderStyle(lipgloss.NormalBorder()).
-			BorderForeground(theme.BorderColorUnfocused()).
+			BorderForeground(theme.Colors().BorderDefault).
 			BorderBottom(true).
 			Bold(true).
-			Foreground(lipgloss.Color(theme.ColorViolet))
+			Foreground(theme.Colors().AccentNode)
 		s.Selected = s.Selected.
-			Foreground(lipgloss.Color(theme.ColorWhite)).
-			Background(theme.BorderColorUnfocused()).
+			Foreground(theme.Colors().TextHeading).
+			Background(theme.Colors().BorderDefault).
 			Bold(false)
 		// Hide the cursor/selector
 		s.Cell = s.Cell.PaddingLeft(0)
@@ -140,13 +140,13 @@ func (p *ResultPanel) View(data *ResultPanelData, focused bool) string {
 	rows, summaryText := p.buildTableContent(data)
 	p.table.SetRows(rows)
 
-	title := theme.TitleStyle.Render(summaryText)
+	title := theme.Active().Heading.Render(summaryText)
 	tableView := p.table.View()
 
 	// Apply color formatting by replacing symbols in the rendered output
 	// This avoids breaking table width calculations
-	greenCheck := lipgloss.NewStyle().Foreground(lipgloss.Color("#00FF00")).Render("✓")
-	redX := lipgloss.NewStyle().Foreground(lipgloss.Color("#FF0000")).Render("✗")
+	greenCheck := lipgloss.NewStyle().Foreground(theme.Colors().StatusHealthy).Render("✓")
+	redX := lipgloss.NewStyle().Foreground(theme.Colors().StatusError).Render("✗")
 
 	// Replace plain symbols with styled versions
 	// This works because the table has already calculated widths
@@ -158,9 +158,9 @@ func (p *ResultPanel) View(data *ResultPanelData, focused bool) string {
 	// Set viewport content and render
 	p.viewport.SetContent(content)
 
-	borderColor := theme.BorderColorUnfocused()
+	borderColor := theme.Colors().BorderDefault
 	if focused {
-		borderColor = theme.BorderColorFocused()
+		borderColor = theme.Colors().BorderStrong
 	}
 
 	return lipgloss.NewStyle().
