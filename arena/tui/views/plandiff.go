@@ -16,18 +16,18 @@ var planGroupOrder = []deploy.Action{
 	deploy.ActionCreate, deploy.ActionUpdate, deploy.ActionDrift, deploy.ActionDelete,
 }
 
-func planRowColor(a deploy.Action) lipgloss.Color {
+func planRowColor(a deploy.Action) lipgloss.TerminalColor {
 	switch a { //nolint:exhaustive // ActionNoChange and unknown actions fall through to default
 	case deploy.ActionCreate:
-		return lipgloss.Color(theme.ColorSuccess)
+		return theme.Colors().StatusHealthy
 	case deploy.ActionUpdate:
-		return lipgloss.Color(theme.ColorWarning)
+		return theme.Colors().StatusPending
 	case deploy.ActionDelete:
-		return lipgloss.Color(theme.ColorError)
+		return theme.Colors().StatusError
 	case deploy.ActionDrift:
-		return lipgloss.Color(theme.ColorYellow)
+		return theme.Colors().GoldText
 	default:
-		return lipgloss.Color(theme.ColorGray)
+		return theme.Colors().TextMuted
 	}
 }
 
@@ -36,12 +36,12 @@ func planRowColor(a deploy.Action) lipgloss.Color {
 func RenderPlanDiff(d viewmodels.PlanDiffData, width int, collapseNoChange bool) string {
 	var b strings.Builder
 	if d.Summary != "" {
-		b.WriteString(theme.TitleStyle.Render(d.Summary))
+		b.WriteString(theme.Active().Heading.Render(d.Summary))
 		b.WriteString("\n\n")
 	}
 	writePlanWarnings(&b, d.Warnings)
 
-	dim := lipgloss.NewStyle().Foreground(lipgloss.Color(theme.ColorGray))
+	dim := lipgloss.NewStyle().Foreground(theme.Colors().TextMuted)
 	writeGroupedPlanRows(&b, d.Rows, dim)
 	writeNoChangeRows(&b, d, dim, collapseNoChange)
 	writePlanSummary(&b, d)
@@ -52,7 +52,7 @@ func RenderPlanDiff(d viewmodels.PlanDiffData, width int, collapseNoChange bool)
 // if there were any, mirroring RenderPlanDiff's original inline warnings block.
 func writePlanWarnings(b *strings.Builder, warnings []string) {
 	for _, w := range warnings {
-		b.WriteString(theme.WarningStyle.Render("⚠ " + w))
+		b.WriteString(theme.Active().Pending.Render("⚠ " + w))
 		b.WriteString("\n")
 	}
 	if len(warnings) > 0 {
@@ -102,9 +102,9 @@ func writeNoChangeRows(b *strings.Builder, d viewmodels.PlanDiffData, dim lipglo
 // the plan has drifted resources, the "⚠ N drifted" suffix.
 func writePlanSummary(b *strings.Builder, d viewmodels.PlanDiffData) {
 	b.WriteString("\n")
-	b.WriteString(theme.TitleStyle.Render(fmt.Sprintf("Plan: %d to add, %d to change, %d to destroy",
+	b.WriteString(theme.Active().Heading.Render(fmt.Sprintf("Plan: %d to add, %d to change, %d to destroy",
 		d.Adds, d.Changes, d.Destroys)))
 	if d.Drifts > 0 {
-		b.WriteString(theme.WarningStyle.Render(fmt.Sprintf("  ⚠ %d drifted", d.Drifts)))
+		b.WriteString(theme.Active().Pending.Render(fmt.Sprintf("  ⚠ %d drifted", d.Drifts)))
 	}
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/stretchr/testify/assert"
 
+	"github.com/AltairaLabs/promptarena/arena/tui/theme"
 	"github.com/AltairaLabs/promptarena/arena/tui/viewmodels"
 )
 
@@ -46,37 +47,35 @@ func TestSummaryView_Render_TUIMode(t *testing.T) {
 
 	// Verify header
 	assert.Contains(t, output, "Run Summary")
-	assert.Contains(t, output, "╔═════")
-	assert.Contains(t, output, "╚═════")
 
 	// Verify stats
-	assert.Contains(t, output, "Total Runs:")
+	assert.Contains(t, output, "Total runs")
 	assert.Contains(t, output, "10")
-	assert.Contains(t, output, "Successful:")
+	assert.Contains(t, output, "Passed")
 	assert.Contains(t, output, "8")
-	assert.Contains(t, output, "Failed:")
+	assert.Contains(t, output, "Failed")
 	assert.Contains(t, output, "2")
 
 	// Verify cost and performance
-	assert.Contains(t, output, "Total Cost:")
+	assert.Contains(t, output, "Total cost")
 	assert.Contains(t, output, "$1.50")
-	assert.Contains(t, output, "Total Tokens:")
+	assert.Contains(t, output, "Total tokens")
 	assert.Contains(t, output, "5,000")
-	assert.Contains(t, output, "Total Duration:")
+	assert.Contains(t, output, "Total duration")
 	assert.Contains(t, output, "30s")
 
 	// Verify providers
-	assert.Contains(t, output, "Providers:")
+	assert.Contains(t, output, "Providers")
 	assert.Contains(t, output, "openai")
 	assert.Contains(t, output, "claude")
 
 	// Verify regions
-	assert.Contains(t, output, "Regions:")
+	assert.Contains(t, output, "Regions")
 	assert.Contains(t, output, "us-east-1")
 	assert.Contains(t, output, "eu-west-1")
 
 	// Verify output info
-	assert.Contains(t, output, "Results saved to:")
+	assert.Contains(t, output, "Saved to")
 	assert.Contains(t, output, "/tmp/results")
 }
 
@@ -100,10 +99,8 @@ func TestSummaryView_Render_CIMode(t *testing.T) {
 	view := NewSummaryView(100, true)
 	output := view.Render(vm)
 
-	// Verify CI mode header (simpler)
+	// Verify CI mode header (plain, deterministic)
 	assert.Contains(t, output, "Run Summary")
-	assert.Contains(t, output, "╔═══")
-	assert.Contains(t, output, "╚═══")
 
 	// Verify stats with proper formatting
 	assert.Contains(t, output, "Total Runs:       5")
@@ -175,9 +172,9 @@ func TestSummaryView_WithAssertions(t *testing.T) {
 	view := NewSummaryView(100, false)
 	output := view.Render(vm)
 
-	assert.Contains(t, output, "Assertions:")
+	assert.Contains(t, output, "Assertions")
 	assert.Contains(t, output, "20 total")
-	assert.Contains(t, output, "Assertions Fail:")
+	assert.Contains(t, output, "Assertions Fail")
 	assert.Contains(t, output, "2")
 }
 
@@ -200,9 +197,9 @@ func TestSummaryView_WithAllAssertionsPassed(t *testing.T) {
 	view := NewSummaryView(100, false)
 	output := view.Render(vm)
 
-	assert.Contains(t, output, "Assertions:")
+	assert.Contains(t, output, "Assertions")
 	assert.Contains(t, output, "10 total")
-	assert.Contains(t, output, "Assertions Pass:")
+	assert.Contains(t, output, "Assertions Pass")
 	assert.Contains(t, output, "all passed")
 }
 
@@ -239,7 +236,8 @@ func TestSummaryView_WithErrors(t *testing.T) {
 	view := NewSummaryView(100, false)
 	output := view.Render(vm)
 
-	assert.Contains(t, output, "Errors:")
+	// Failures section (rendered as an eyebrow) then one line per failure.
+	assert.Contains(t, output, theme.Eyebrow("Failures"))
 	assert.Contains(t, output, "test-scenario/openai/us-east-1")
 	assert.Contains(t, output, "Connection timeout")
 	assert.Contains(t, output, "test-scenario-2/claude/eu-west-1")
@@ -272,23 +270,28 @@ func TestSummaryView_MinimalData(t *testing.T) {
 
 	// Should still have basic info
 	assert.Contains(t, output, "Run Summary")
-	assert.Contains(t, output, "Total Runs:")
-	assert.Contains(t, output, "Results saved to:")
+	assert.Contains(t, output, "Total runs")
+	assert.Contains(t, output, "Saved to")
 }
 
-func TestFormatLine(t *testing.T) {
-	label := "Test:"
-	value := "Value"
-	result := formatLine(label, value, &labelStyle, &valueStyle)
+func TestSummaryRow(t *testing.T) {
+	result := summaryRow("Test", "Value", labelStyle, valueStyle)
 
 	// Should contain both label and value
-	assert.Contains(t, result, "Test:")
+	assert.Contains(t, result, "Test")
 	assert.Contains(t, result, "Value")
+	// Value aligns to a fixed column, so there is padding between them.
+	assert.Contains(t, result, "Test "+strings.Repeat(" ", summaryLabelWidth-len("Test")-1))
 	// Should end with newline
 	assert.True(t, strings.HasSuffix(result, "\n"))
 }
 
-// Mock styles for testing formatLine
+func TestTruncateToWidth(t *testing.T) {
+	assert.Equal(t, "short", truncateToWidth("short", 10))
+	assert.Equal(t, "abcd…", truncateToWidth("abcdefghij", 5))
+}
+
+// Mock styles for the row helper test.
 var (
 	labelStyle = lipgloss.NewStyle().Bold(true)
 	valueStyle = lipgloss.NewStyle()

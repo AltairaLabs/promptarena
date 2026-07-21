@@ -222,7 +222,7 @@ func NewDeployPage(ctx *AppContext) Page {
 func newLoginSpinner() spinner.Model {
 	return spinner.New(
 		spinner.WithSpinner(spinner.MiniDot),
-		spinner.WithStyle(lipgloss.NewStyle().Foreground(lipgloss.Color(theme.ColorPrimary))),
+		spinner.WithStyle(lipgloss.NewStyle().Foreground(theme.Colors().AccentPrimary)),
 	)
 }
 
@@ -947,18 +947,18 @@ func preflightKeyBindings(pf *flow.Preflight) []views.KeyBinding {
 }
 
 // deployBox returns the standard bordered box stretched to fill width so it
-// lines up with the full-width chrome header and footer. theme.BorderedBoxStyle
+// lines up with the full-width chrome header and footer. theme.Active().Card
 // on its own (via MaxWidth) only clips overflow and otherwise leaves the box
 // hugging its content; setting an explicit Width stretches it. lipgloss's Width
 // is the content-plus-padding width and excludes the border, so we subtract the
 // horizontal border size to land exactly on width. Falls back to the natural
 // box when width is too small to hold the border.
 func deployBox(width int) lipgloss.Style {
-	borderH := theme.BorderedBoxStyle.GetHorizontalBorderSize()
+	borderH := theme.Active().Card.GetHorizontalBorderSize()
 	if width <= borderH {
-		return theme.BorderedBoxStyle
+		return theme.Active().Card
 	}
-	return theme.BorderedBoxStyle.Width(width - borderH)
+	return theme.Active().Card.Width(width - borderH)
 }
 
 // viewPreflight renders the preflight-check step: target provider, a loudly
@@ -968,7 +968,7 @@ func deployBox(width int) lipgloss.Style {
 func (p *DeployPage) viewPreflight(width int) string {
 	labelStyle := lipgloss.NewStyle().
 		Bold(true).
-		Foreground(lipgloss.Color(theme.ColorPrimary)).
+		Foreground(theme.Colors().TextHeading).
 		Render("Checking deploy adapter…")
 	if p.pf == nil {
 		return deployBox(width).Render(labelStyle)
@@ -976,21 +976,21 @@ func (p *DeployPage) viewPreflight(width int) string {
 	pf := p.pf
 
 	lines := []string{
-		theme.LabelStyle.Render("Provider: ") + theme.ValueStyle.Render(pf.Provider),
+		theme.Active().Muted.Render("Provider: ") + theme.Active().Value.Render(pf.Provider),
 		preflightEnvLine(pf.Env),
 		"",
 	}
 
 	if pf.AdapterFound {
-		lines = append(lines, theme.SuccessStyle.Render(fmt.Sprintf("✓ %s v%s", pf.Provider, pf.AdapterVersion)))
+		lines = append(lines, theme.Active().Healthy.Render(fmt.Sprintf("✓ %s v%s", pf.Provider, pf.AdapterVersion)))
 	} else {
-		lines = append(lines, theme.ErrorStyle.Render("✗ not installed"))
+		lines = append(lines, theme.Active().Error.Render("✗ not installed"))
 	}
 
 	if pf.Authenticated {
-		lines = append(lines, theme.SuccessStyle.Render("✓ authenticated"))
+		lines = append(lines, theme.Active().Healthy.Render("✓ authenticated"))
 	} else {
-		lines = append(lines, theme.ErrorStyle.Render("✗ not authenticated"))
+		lines = append(lines, theme.Active().Error.Render("✗ not authenticated"))
 	}
 
 	if !pf.AdapterFound {
@@ -998,7 +998,7 @@ func (p *DeployPage) viewPreflight(width int) string {
 	}
 
 	if p.loginErr != nil {
-		lines = append(lines, "", theme.ErrorStyle.Render("Login failed: "+p.loginErr.Error()))
+		lines = append(lines, "", theme.Active().Error.Render("Login failed: "+p.loginErr.Error()))
 	}
 
 	body := strings.Join(lines, "\n")
@@ -1013,13 +1013,13 @@ func (p *DeployPage) viewLogin(width int) string {
 		status = loginStatusStarting
 	}
 	lines := []string{
-		p.spinner.View() + " " + theme.ValueStyle.Render(status),
+		p.spinner.View() + " " + theme.Active().Value.Render(status),
 	}
 	if p.loginURL != "" {
 		lines = append(lines,
 			"",
-			theme.LabelStyle.Render("If your browser didn't open, visit:"),
-			theme.ValueStyle.Render(p.loginURL),
+			theme.Active().Muted.Render("If your browser didn't open, visit:"),
+			theme.Active().Value.Render(p.loginURL),
 		)
 	}
 	body := strings.Join(lines, "\n")
@@ -1033,9 +1033,9 @@ func (p *DeployPage) viewLogin(width int) string {
 // doc comment), a "pack changed — re-planning…" line is shown above the
 // spinner so the automatic re-plan is never silent.
 func (p *DeployPage) viewPlanning(width int) string {
-	lines := []string{p.spinner.View() + " " + theme.ValueStyle.Render("Computing plan…")}
+	lines := []string{p.spinner.View() + " " + theme.Active().Value.Render("Computing plan…")}
 	if p.planStaleNotice {
-		lines = append([]string{theme.WarningStyle.Render("pack changed — re-planning…"), ""}, lines...)
+		lines = append([]string{theme.Active().Pending.Render("pack changed — re-planning…"), ""}, lines...)
 	}
 	body := strings.Join(lines, "\n")
 	return deployBox(width).Render(body)
@@ -1048,7 +1048,7 @@ func (p *DeployPage) viewPlanning(width int) string {
 // there is nothing to advance to confirm.
 func (p *DeployPage) viewPlan(width int) string {
 	if !p.planHasChanges() {
-		body := theme.SuccessStyle.Render("No changes. Infrastructure is up to date.")
+		body := theme.Active().Healthy.Render("No changes. Infrastructure is up to date.")
 		return deployBox(width).Render(body)
 	}
 	body := views.RenderPlanDiff(p.planDiff, width, p.collapseNoChange)
@@ -1073,34 +1073,34 @@ func (p *DeployPage) viewConfirm(width int) string {
 // flow.DefaultEnv deploys.
 func (p *DeployPage) viewConfirmDefault(width int) string {
 	prompt := fmt.Sprintf("Apply this plan to %s · %s? [y/N]", p.pf.Provider, p.pf.Env)
-	body := theme.ValueStyle.Render(prompt)
+	body := theme.Active().Value.Render(prompt)
 	return deployBox(width).Render(body)
 }
 
 // viewConfirmTyped renders the type-to-confirm guardrail used for every
-// non-default environment: a loud banner (ColorError for production,
-// ColorWarning otherwise), the typed-so-far confirmInput, and a
+// non-default environment: a loud banner (StatusError for production,
+// StatusPending otherwise), the typed-so-far confirmInput, and a
 // "names don't match" message once a mismatched Enter has been pressed.
 func (p *DeployPage) viewConfirmTyped(width int) string {
-	color := theme.ColorWarning
+	color := theme.Colors().StatusPending
 	if p.pf.Env == envProduction {
-		color = theme.ColorError
+		color = theme.Colors().StatusError
 	}
 	banner := lipgloss.NewStyle().
 		Bold(true).
-		Foreground(lipgloss.Color(theme.ColorWhite)).
-		Background(lipgloss.Color(color)).
+		Foreground(theme.Colors().TextHeading).
+		Background(color).
 		Padding(0, 1).
 		Render("⚠ Deploying to " + strings.ToUpper(p.pf.Env))
 
 	lines := []string{
 		banner,
 		"",
-		theme.LabelStyle.Render("Type the environment name to confirm:"),
-		theme.ValueStyle.Render(p.confirmInput) + "▏",
+		theme.Active().Muted.Render("Type the environment name to confirm:"),
+		theme.Active().Value.Render(p.confirmInput) + "▏",
 	}
 	if p.confirmMismatch {
-		lines = append(lines, "", theme.ErrorStyle.Render("names don't match"))
+		lines = append(lines, "", theme.Active().Error.Render("names don't match"))
 	}
 	body := strings.Join(lines, "\n")
 	return deployBox(width).Render(body)
@@ -1121,7 +1121,7 @@ const applyLogsHeight = 10
 // (typically near-instant) burst.
 func (p *DeployPage) viewApplying(width int) string {
 	if p.applying && len(p.applyRows) == 0 {
-		line := p.spinner.View() + " " + theme.ValueStyle.Render("Applying…")
+		line := p.spinner.View() + " " + theme.Active().Value.Render("Applying…")
 		return deployBox(width).Render(line)
 	}
 	return p.viewApplyProgress(width)
@@ -1146,7 +1146,7 @@ func (p *DeployPage) viewApplyResult(width int) string {
 }
 
 // applyResultHeadline summarizes the completed apply: success in
-// theme.SuccessStyle, or a failure in theme.ErrorStyle if any applyResults
+// theme.Active().Healthy, or a failure in theme.Active().Error if any applyResults
 // entry has Status "failed" or a top-level "error" applyEventMsg was seen
 // (applySawErrorEvent) — the latter covers an adapter-reported failure that
 // Session.Apply itself still returns nil for, so the headline never claims
@@ -1159,12 +1159,12 @@ func (p *DeployPage) applyResultHeadline() string {
 		}
 	}
 	if failed > 0 {
-		return theme.ErrorStyle.Render(fmt.Sprintf("Apply completed with %d failure(s)", failed))
+		return theme.Active().Error.Render(fmt.Sprintf("Apply completed with %d failure(s)", failed))
 	}
 	if p.applySawErrorEvent {
-		return theme.ErrorStyle.Render("Apply completed with errors")
+		return theme.Active().Error.Render("Apply completed with errors")
 	}
-	return theme.SuccessStyle.Render("Apply completed successfully")
+	return theme.Active().Healthy.Render("Apply completed successfully")
 }
 
 // viewStatus renders the post-apply Status screen. While startStatus's
@@ -1174,7 +1174,7 @@ func (p *DeployPage) applyResultHeadline() string {
 // (views.RenderDeployResources, shared with viewApplyProgress).
 func (p *DeployPage) viewStatus(width int) string {
 	if p.status == nil {
-		line := p.spinner.View() + " " + theme.ValueStyle.Render("Checking status…")
+		line := p.spinner.View() + " " + theme.Active().Value.Render("Checking status…")
 		return deployBox(width).Render(line)
 	}
 	table := views.RenderDeployResources(views.DeployRowsFromStatus(p.status.Resources), width)
@@ -1182,27 +1182,27 @@ func (p *DeployPage) viewStatus(width int) string {
 }
 
 // statusHeadline summarizes p.status.Status: "deployed" in
-// theme.SuccessStyle, "degraded" in theme.WarningStyle (a call for
+// theme.Active().Healthy, "degraded" in theme.Active().Pending (a call for
 // attention, not necessarily broken), and anything else ("not_deployed",
-// "unknown") in theme.ErrorStyle.
+// "unknown") in theme.Active().Error.
 func (p *DeployPage) statusHeadline() string {
 	label := "Status: " + p.status.Status
 	switch p.status.Status {
 	case "deployed":
-		return theme.SuccessStyle.Render(label)
+		return theme.Active().Healthy.Render(label)
 	case "degraded":
-		return theme.WarningStyle.Render(label)
+		return theme.Active().Pending.Render(label)
 	default:
-		return theme.ErrorStyle.Render(label)
+		return theme.Active().Error.Render(label)
 	}
 }
 
 // preflightEnvLine renders the target environment. flow.DefaultEnv renders
 // quietly; every other environment is rendered loudly so an operator can't
-// miss it — production gets an inverse ColorError banner, anything else gets
-// bold ColorWarning text.
+// miss it — production gets an inverse StatusError banner, anything else gets
+// bold StatusPending text.
 func preflightEnvLine(env string) string {
-	quiet := theme.LabelStyle.Render("Environment: ") + theme.ValueStyle.Render(env)
+	quiet := theme.Active().Muted.Render("Environment: ") + theme.Active().Value.Render(env)
 	if env == flow.DefaultEnv {
 		return quiet
 	}
@@ -1210,14 +1210,14 @@ func preflightEnvLine(env string) string {
 	if env == envProduction {
 		return lipgloss.NewStyle().
 			Bold(true).
-			Foreground(lipgloss.Color(theme.ColorWhite)).
-			Background(lipgloss.Color(theme.ColorError)).
+			Foreground(theme.Colors().TextHeading).
+			Background(theme.Colors().StatusError).
 			Padding(0, 1).
 			Render(label)
 	}
 	return lipgloss.NewStyle().
 		Bold(true).
-		Foreground(lipgloss.Color(theme.ColorWarning)).
+		Foreground(theme.Colors().StatusPending).
 		Render("⚠ " + label)
 }
 
@@ -1313,14 +1313,14 @@ func installCommandFromErr(err error) string {
 func (p *DeployPage) viewError() string {
 	title := lipgloss.NewStyle().
 		Bold(true).
-		Foreground(lipgloss.Color(theme.ColorError)).
+		Foreground(theme.Colors().StatusError).
 		Render("Deploy failed")
 	msg := ""
 	if p.err != nil {
 		msg = p.err.Error()
 	}
 	detail := lipgloss.NewStyle().
-		Foreground(lipgloss.Color(theme.ColorGray)).
+		Foreground(theme.Colors().TextMuted).
 		Render(msg)
 	lines := []string{title, "", detail}
 
@@ -1331,13 +1331,13 @@ func (p *DeployPage) viewError() string {
 			cmd = p.pf.InstallCommand
 		}
 		if cmd != "" {
-			lines = append(lines, "", theme.LabelStyle.Render("Install with: ")+theme.ValueStyle.Render(cmd))
+			lines = append(lines, "", theme.Active().Muted.Render("Install with: ")+theme.Active().Value.Render(cmd))
 		}
 	case errorKindAuth:
-		lines = append(lines, "", theme.WarningStyle.Render("Log in and try again."), theme.LabelStyle.Render("[l] log in"))
+		lines = append(lines, "", theme.Active().Pending.Render("Log in and try again."), theme.Active().Muted.Render("[l] log in"))
 	case errorKindLockContention:
 		lines = append(lines, "",
-			theme.WarningStyle.Render("A deploy is already running."), theme.LabelStyle.Render("[r] retry"))
+			theme.Active().Pending.Render("A deploy is already running."), theme.Active().Muted.Render("[r] retry"))
 	}
 	return strings.Join(lines, "\n")
 }

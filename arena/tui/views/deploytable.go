@@ -119,17 +119,17 @@ func RenderDeployResources(rows []DeployResourceRow, width int) string {
 	s := table.DefaultStyles()
 	s.Header = s.Header.
 		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(theme.BorderColorFocused()).
+		BorderForeground(theme.Colors().BorderStrong).
 		BorderBottom(true).
 		Bold(true).
-		Foreground(lipgloss.Color(theme.ColorViolet))
+		Foreground(theme.Colors().AccentNode)
 	s.Selected = lipgloss.NewStyle()
 	t.SetStyles(s)
 	t.SetWidth(width - deployWidthPadding)
 
 	return lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
-		BorderForeground(theme.BorderColorUnfocused()).
-		Padding(theme.BoxPaddingVertical, theme.BoxPaddingHorizontal).
+		BorderForeground(theme.Colors().BorderDefault).
+		Padding(theme.PadY, theme.PadX).
 		Render(t.View())
 }

@@ -10,6 +10,7 @@ import (
 
 	"github.com/AltairaLabs/PromptKit/runtime/logger"
 	"github.com/AltairaLabs/promptarena/arena/tui/logging"
+	"github.com/AltairaLabs/promptarena/arena/tui/theme"
 )
 
 // Program is the slice of *tea.Program that Run depends on. It exists as a
@@ -36,6 +37,12 @@ type Program interface {
 // agents/setup state when revealed by splash dismiss, not before.
 // Esc/q at root (the only page remaining after splash dismiss) will quit.
 func Run(ctx *AppContext, root Page) error {
+	// Select the Atlas theme for this session from the real terminal
+	// background, honouring an ARENA_THEME=light|dark override. Do it here on
+	// the production entry (not RunWithProgram, the test seam) so tests stay
+	// deterministic on the default dark theme.
+	theme.Detect(os.Getenv("ARENA_THEME"))
+
 	return RunWithProgram(ctx, root, func(m tea.Model) Program {
 		return tea.NewProgram(m, tea.WithAltScreen(), tea.WithMouseCellMotion())
 	})

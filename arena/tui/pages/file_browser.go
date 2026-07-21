@@ -14,6 +14,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 
 	"github.com/AltairaLabs/promptarena/arena/tui/layout"
+	"github.com/AltairaLabs/promptarena/arena/tui/theme"
 	"github.com/AltairaLabs/promptarena/arena/tui/views"
 )
 
@@ -158,10 +159,10 @@ func (p *FileBrowserPage) handleEnterKey(msg tea.Msg) tea.Cmd {
 func (p *FileBrowserPage) Render() string {
 	if p.err != nil {
 		errorStyle := lipgloss.NewStyle().
-			Foreground(lipgloss.Color("9")).
+			Foreground(theme.Colors().StatusError).
 			Bold(true)
 		helpStyle := lipgloss.NewStyle().
-			Foreground(lipgloss.Color("8")).
+			Foreground(theme.Colors().TextFaint).
 			Italic(true)
 
 		errorMsg := fmt.Sprintf("Error: %v", p.err)
@@ -183,7 +184,7 @@ func (p *FileBrowserPage) Render() string {
 	// Build the view with border
 	titleStyle := lipgloss.NewStyle().
 		Bold(true).
-		Foreground(lipgloss.Color("12"))
+		Foreground(theme.Colors().AccentInter)
 	title := titleStyle.Render("📁 Browse Results")
 
 	// Calculate available height for filepicker
@@ -210,7 +211,7 @@ func (p *FileBrowserPage) Render() string {
 
 	return lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
-		BorderForeground(lipgloss.Color("#7D56F4")).
+		BorderForeground(theme.Colors().AccentInter).
 		Padding(1, fileBrowserPaddingHoriz).
 		Width(innerWidth).
 		Render(content)

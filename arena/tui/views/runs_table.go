@@ -34,13 +34,13 @@ func NewRunsTableView() *RunsTableView {
 	style := table.DefaultStyles()
 	style.Header = style.Header.
 		BorderStyle(lipgloss.NormalBorder()).
-		BorderForeground(theme.BorderColorFocused()).
+		BorderForeground(theme.Colors().BorderStrong).
 		BorderBottom(true).
 		Bold(true).
-		Foreground(lipgloss.Color(theme.ColorViolet))
+		Foreground(theme.Colors().AccentNode)
 	style.Selected = style.Selected.
-		Foreground(lipgloss.Color(theme.ColorWhite)).
-		Background(theme.BorderColorFocused()).
+		Foreground(theme.Colors().TextHeading).
+		Background(theme.Colors().BorderStrong).
 		Bold(false)
 
 	return &RunsTableView{
@@ -89,12 +89,12 @@ func (v *RunsTableView) Render(vm *viewmodels.RunsTableViewModel) string {
 	t.SetStyles(v.tableStyle)
 	t.SetWidth(v.width)
 
-	borderColor := theme.BorderColorUnfocused()
+	borderColor := theme.Colors().BorderDefault
 	if v.focused {
-		borderColor = lipgloss.Color(theme.ColorWhite)
+		borderColor = theme.Colors().TextHeading
 	}
 
-	title := theme.TitleStyle.Render(
+	title := theme.Active().Heading.Render(
 		fmt.Sprintf("📊 Active Runs (%d concurrent workers)", vm.GetRowCount()),
 	)
 

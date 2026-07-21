@@ -64,14 +64,15 @@ func TestSplash_View_ContainsLogo(t *testing.T) {
 	s.SetSize(80, 24)
 	view := stripANSI(s.View())
 
-	// A recognizable substring from the locked logo art (second line of art).
-	const logoRow = "████▓"
+	// A recognizable row from the PromptArena sparkle mark (the large star's
+	// horizontal arm).
+	const logoRow = "◀███████████▶"
 	if !strings.Contains(view, logoRow) {
 		t.Errorf("View does not contain expected logo row %q", logoRow)
 	}
 
 	// Tagline must be present.
-	const tagline = "prompt testing, in your terminal"
+	const tagline = "Test, evaluate, and ship AI agents with confidence."
 	if !strings.Contains(view, tagline) {
 		t.Errorf("View does not contain tagline %q", tagline)
 	}

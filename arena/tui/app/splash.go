@@ -14,24 +14,17 @@ import (
 // splash screen after ~1.5 seconds.
 type splashDoneMsg struct{}
 
-// pkLogo is the locked PromptKit ASCII art. Do not modify.
-const pkLogo = `         ░▒░
-          ████▓            ░█████████████████▓
-          ▓█████▒          ▓██████████████████
-           ▒█████▓         ▓██████████████████
-             ▓█████▒       ▒██████████████████
-              ▒█████▓        ░░░░░░░░░░░░░░░
-                ▓█████▒     ▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒░
-                 ▒█████▓   ▒██████████████████
-                   █████▓  ▓██████████████████
-                 ░██████   ▒██████████████████
-                ▓█████▒     ▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓░
-              ░██████░
-             ▓█████▒       ▒██████████████████
-           ░██████░        ▓██████████████████
-          ▓█████▒          ▓██████████████████
-          █████░           ▒██████████████████
-           ▒▒░`
+// paLogo is the PromptArena mark rendered as terminal block-art: the twin
+// four-pointed sparkles from logo-promptarena.svg (a large star with a smaller
+// companion). It is drawn in ion-cyan (--ion-cyan, the mark's fill colour) by
+// View. Keep the two stars aligned if you edit this.
+const paLogo = `      ▲
+     ███
+    █████            ▲
+◀███████████▶       ███
+    █████         ◀█████▶
+     ███            ███
+      ▼              ▼`
 
 // splashDuration is the time before the splash auto-dismisses.
 const splashDuration = 1500 * time.Millisecond
@@ -71,25 +64,27 @@ func (s *Splash) Update(msg tea.Msg) (Page, tea.Cmd) {
 // View implements Page. It renders the logo, wordmark, version, and tagline
 // centered within the allocated terminal size.
 func (s *Splash) View() string {
+	// The mark renders in ion-cyan — the sparkle fill from the PromptArena
+	// logo (--ion-cyan / --node-tool).
 	logoStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color(theme.ColorIndigo))
+		Foreground(theme.Colors().NodeTool)
 
-	logo := logoStyle.Render(pkLogo)
+	logo := logoStyle.Render(paLogo)
 
 	wordmark := lipgloss.NewStyle().
 		Bold(true).
-		Foreground(lipgloss.Color(theme.ColorPrimary)).
-		Render("P r o m p t K i t   ·   " + s.ctx.Version)
+		Foreground(theme.Colors().TextHeading).
+		Render("P r o m p t A r e n a   ·   " + s.ctx.Version)
 
 	tagline := lipgloss.NewStyle().
-		Foreground(lipgloss.Color(theme.ColorLightGray)).
-		Render("prompt testing, in your terminal")
+		Foreground(theme.Colors().TextMuted).
+		Render("Test, evaluate, and ship AI agents with confidence.")
 
 	hint := lipgloss.NewStyle().
-		Foreground(lipgloss.Color(theme.ColorGray)).
+		Foreground(theme.Colors().TextMuted).
 		Render("press any key ▸")
 
-	content := strings.Join([]string{logo, "", wordmark, tagline, "", hint}, "\n")
+	content := strings.Join([]string{logo, "", "", "", wordmark, tagline, "", hint}, "\n")
 
 	return lipgloss.Place(s.w, s.h, lipgloss.Center, lipgloss.Center, content)
 }

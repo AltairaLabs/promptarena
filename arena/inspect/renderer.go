@@ -56,46 +56,57 @@ const (
 	sectionValidation = "validation"
 )
 
-// Style definitions for terminal output
+// Style definitions for terminal output.
+//
+// These are package-level vars, so they freeze the theme at init time to
+// theme.Active()'s default (dark). That matches the CLI inspector, which always
+// renders dark and never calls theme.Detect(). If the inspector ever needs to
+// follow a light terminal, build these at render time inside RenderText instead.
 var (
 	// Box style — width is applied per render (full width or a grid column).
+	// Atlas: the hairline defines the panel, so the border is the default
+	// hairline rather than an accent colour.
 	boxStyle = lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
-			BorderForeground(lipgloss.Color(theme.ColorPrimary)).
+			BorderForeground(theme.Colors().BorderDefault).
 			Padding(0, 1)
 
 	sectionHeaderStyle = lipgloss.NewStyle().
 				Bold(true).
-				Foreground(lipgloss.Color(theme.ColorWhite)).
-				Background(lipgloss.Color(theme.ColorPrimary)).
+				Foreground(theme.Colors().TextHeading).
+				Background(theme.Colors().Surface2).
 				Padding(0, 1).
 				MarginTop(1)
 
 	labelStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color(theme.ColorLightGray))
+			Foreground(theme.Colors().TextMuted)
 
 	valueStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color(theme.ColorWhite))
+			Foreground(theme.Colors().TextBody)
 
+	// highlightStyle emphasises a value (e.g. the config path). Mapped to the
+	// starlight AccentNode rather than a status green — this is emphasis, not a
+	// health signal.
 	highlightStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color(theme.ColorEmerald)).
+			Foreground(theme.Colors().AccentNode).
 			Bold(true)
 
 	dimStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color(theme.ColorGray))
+			Foreground(theme.Colors().TextMuted)
 
 	successStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color(theme.ColorSuccess))
+			Foreground(theme.Colors().StatusHealthy)
 
 	warningStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color(theme.ColorWarning))
+			Foreground(theme.Colors().StatusPending)
 
 	errorStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color(theme.ColorError))
+			Foreground(theme.Colors().StatusError)
 
+	// tagStyle is a chip: starlight label on a raised surface.
 	tagStyle = lipgloss.NewStyle().
-			Foreground(lipgloss.Color(theme.ColorPrimary)).
-			Background(lipgloss.Color("#2D2D3D")).
+			Foreground(theme.Colors().AccentInter).
+			Background(theme.Colors().Surface2).
 			Padding(0, 1)
 )
 

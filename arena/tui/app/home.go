@@ -87,17 +87,17 @@ func (h *Home) View() string {
 	case h.ctx.HasConfig():
 		name := configName(h.ctx.ConfigPath)
 		configLine = lipgloss.NewStyle().
-			Foreground(lipgloss.Color(theme.ColorSuccess)).
+			Foreground(theme.Colors().StatusHealthy).
 			Render("config: " + name)
 	case h.ctx.ConfigInvalid():
 		// A config file was found but failed to load — surface it as an error
 		// with the reason, rather than the generic "no config" message.
 		name := configName(h.ctx.ConfigErrPath)
 		headline := lipgloss.NewStyle().
-			Foreground(lipgloss.Color(theme.ColorError)).
+			Foreground(theme.Colors().StatusError).
 			Bold(true).
 			Render("invalid config: " + name + " — press c to pick another")
-		detailStyle := lipgloss.NewStyle().Foreground(lipgloss.Color(theme.ColorGray))
+		detailStyle := lipgloss.NewStyle().Foreground(theme.Colors().TextMuted)
 		if h.w > 0 {
 			detailStyle = detailStyle.MaxWidth(h.w)
 		}
@@ -105,7 +105,7 @@ func (h *Home) View() string {
 		configLine = lipgloss.JoinVertical(lipgloss.Left, headline, detail)
 	default:
 		configLine = lipgloss.NewStyle().
-			Foreground(lipgloss.Color(theme.ColorGray)).
+			Foreground(theme.Colors().TextMuted).
 			Render("no config — press c to pick, or run `promptarena init`")
 	}
 
@@ -120,16 +120,16 @@ func (h *Home) View() string {
 		if !enabled {
 			menuLines = append(menuLines, lipgloss.NewStyle().
 				Faint(true).
-				Foreground(lipgloss.Color(theme.ColorGray)).
+				Foreground(theme.Colors().TextMuted).
 				Render(label))
 		} else if i == h.cursor {
 			menuLines = append(menuLines, lipgloss.NewStyle().
 				Bold(true).
-				Foreground(lipgloss.Color(theme.ColorViolet)).
+				Foreground(theme.Colors().AccentPrimary).
 				Render(label))
 		} else {
 			menuLines = append(menuLines, lipgloss.NewStyle().
-				Foreground(lipgloss.Color(theme.ColorWhite)).
+				Foreground(theme.Colors().TextBody).
 				Render(label))
 		}
 	}

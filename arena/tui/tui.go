@@ -849,6 +849,81 @@ func (m *Model) buildSummaryFromStateStore(outputDir string) *Summary {
 	}
 }
 
+// SummaryFromStore builds a run Summary from persisted results in the state
+// store, given the completed run IDs. It is the shared basis for the non-TUI
+// ("simple"/CI) post-run summary so it reports identical stats — including
+// assertion totals — to the TUI's buildSummaryFromStateStore, which mirrors
+// this loop for its in-model activeRuns.
+func SummaryFromStore(ctx context.Context, store runResultStorer, runIDs []string, outputDir string) *Summary {
+	success, failed := 0, 0
+	var totalCost float64
+	var totalTokens int64
+	var totalDuration time.Duration
+	providerCounts := make(map[string]int)
+	scenarioSet := make(map[string]bool)
+	regionSet := make(map[string]bool)
+	errors := make([]ErrorInfo, 0)
+	assertTotal, assertFailed := 0, 0
+
+	for _, runID := range runIDs {
+		res, err := store.GetResult(ctx, runID)
+		if err != nil {
+			failed++
+			errors = append(errors, ErrorInfo{RunID: runID, Error: err.Error()})
+			continue
+		}
+
+		providerCounts[res.ProviderID]++
+		scenarioSet[res.ScenarioID] = true
+		regionSet[res.Region] = true
+		totalCost += res.Cost.TotalCost
+		totalTokens += int64(res.Cost.InputTokens + res.Cost.OutputTokens + res.Cost.CachedTokens)
+		totalDuration += res.Duration
+
+		if res.Error != "" {
+			failed++
+			errors = append(errors, ErrorInfo{
+				RunID:    res.RunID,
+				Scenario: res.ScenarioID,
+				Provider: res.ProviderID,
+				Region:   res.Region,
+				Error:    res.Error,
+			})
+		} else {
+			success++
+		}
+
+		assertTotal += res.ConversationAssertions.Total
+		assertFailed += res.ConversationAssertions.Failed
+	}
+
+	regions := make([]string, 0, len(regionSet))
+	for region := range regionSet {
+		regions = append(regions, region)
+	}
+	avgDuration := time.Duration(0)
+	if success+failed > 0 {
+		avgDuration = totalDuration / time.Duration(success+failed)
+	}
+
+	return &Summary{
+		TotalRuns:       len(runIDs),
+		SuccessCount:    success,
+		FailedCount:     failed,
+		TotalCost:       totalCost,
+		TotalTokens:     totalTokens,
+		TotalDuration:   totalDuration,
+		AvgDuration:     avgDuration,
+		ProviderCounts:  providerCounts,
+		ScenarioCount:   len(scenarioSet),
+		Regions:         regions,
+		Errors:          errors,
+		OutputDir:       outputDir,
+		AssertionTotal:  assertTotal,
+		AssertionFailed: assertFailed,
+	}
+}
+
 // NewModel creates a new TUI model with the specified configuration file and total run count.
 func NewModel(configFile string, totalRuns int) *Model {
 	_, _, supported, reason := CheckTerminalSize()

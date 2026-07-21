@@ -63,7 +63,7 @@ func (v *ResultView) Render(res *statestore.RunResult, status RunStatus) string 
 	content := lipgloss.JoinVertical(lipgloss.Left, lines...)
 	return lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
-		BorderForeground(theme.BorderColorUnfocused()).
+		BorderForeground(theme.Colors().BorderDefault).
 		Padding(resultPaddingVertical, resultPaddingHorizontal).
 		Render(content)
 }

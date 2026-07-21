@@ -80,10 +80,10 @@ func RenderWithChrome(config ChromeConfig, renderBody func(contentHeight int) st
 // for empty-state messages (e.g. a run config with no scenarios).
 func RenderCenteredNotice(width, height int, title, hint string) string {
 	titleStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color(theme.ColorWarning)).
+		Foreground(theme.Colors().StatusPending).
 		Bold(true)
 	hintStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color(theme.ColorGray)).
+		Foreground(theme.Colors().TextMuted).
 		Italic(true)
 	body := lipgloss.JoinVertical(lipgloss.Center, titleStyle.Render(title), "", hintStyle.Render(hint))
 	return lipgloss.Place(width, height, lipgloss.Center, lipgloss.Center, body)
