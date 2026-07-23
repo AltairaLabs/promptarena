@@ -808,7 +808,16 @@ func SummaryFromStore(ctx context.Context, store runResultStorer, runIDs []strin
 		totalTokens += int64(res.Cost.InputTokens + res.Cost.OutputTokens + res.Cost.CachedTokens)
 		totalDuration += res.Duration
 
-		if res.Error != "" {
+		// A run passes only if it completed without a provider error AND its
+		// conversation-level assertions all passed. Counting completion alone as
+		// "success" is the #39 false-green: a clean run with failed assertions
+		// would otherwise read as "Passed: 1 (100%)" above "Assertions Fail: N".
+		// This mirrors results.RunPassed / the --ci gate; turn-level assertion
+		// failures already surface as res.Error, so only the conversation-level
+		// signal needs adding here.
+		assertionsFailed := res.ConversationAssertions.Total > 0 && !res.ConversationAssertions.Passed
+		switch {
+		case res.Error != "":
 			failed++
 			errors = append(errors, ErrorInfo{
 				RunID:    res.RunID,
@@ -817,7 +826,16 @@ func SummaryFromStore(ctx context.Context, store runResultStorer, runIDs []strin
 				Region:   res.Region,
 				Error:    res.Error,
 			})
-		} else {
+		case assertionsFailed:
+			failed++
+			errors = append(errors, ErrorInfo{
+				RunID:    res.RunID,
+				Scenario: res.ScenarioID,
+				Provider: res.ProviderID,
+				Region:   res.Region,
+				Error:    fmt.Sprintf("%d conversation assertion(s) failed", res.ConversationAssertions.Failed),
+			})
+		default:
 			success++
 		}
 

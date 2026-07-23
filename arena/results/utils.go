@@ -72,40 +72,42 @@ func (b *SummaryBuilder) BuildSummary(results []engine.RunResult) *ResultSummary
 	}
 }
 
-// CountResultsByStatus counts successful and failed results.
-// A result is considered successful if:
-//  1. There are no errors AND no violations, OR
-//  2. There are no errors AND violations occurred AND there are assertions AND all assertions passed.
-//     This allows tests that EXPECT guardrails to trigger to pass when they do.
+// RunPassed reports whether a single run passed. It is the one canonical
+// "did this run pass?" predicate: the report counters (CountResultsByStatus,
+// JSON/Markdown/JUnit summaries) and the TUI/console summary all decide pass
+// vs fail from this same rule so they cannot diverge — the false-green in #39
+// came from surfaces that consulted completion (Error == "") without consulting
+// assertion outcomes.
 //
-// A result is considered failed if:
-//  1. There are errors, OR
-//  2. There are violations AND no assertions (violations are unexpected), OR
-//  3. There are violations AND some assertions fail
+// A run passed when it completed without error AND:
+//   - every defined assertion (turn- and conversation-level) passed, AND
+//   - any guardrail violations are accounted for by passing assertions
+//     (a test that EXPECTS a guardrail to trigger); violations with no
+//     assertions to explain them are unexpected and fail the run.
+func RunPassed(result *engine.RunResult) bool {
+	if result.Error != "" {
+		return false
+	}
+	if HasAssertions(result) && !AllAssertionsPassed(result) {
+		return false
+	}
+	// Violations with no assertions to account for them are unexpected.
+	if len(result.Violations) > 0 && !HasAssertions(result) {
+		return false
+	}
+	return true
+}
+
+// CountResultsByStatus counts passed and failed results using the shared
+// RunPassed predicate. Skipped runs are neither passed nor failed — counting
+// them as passed is the false-green that hides aborted runs, so they are
+// surfaced separately (see CountSkipped).
 func CountResultsByStatus(results []engine.RunResult) (passed, failed int) {
-	for _, result := range results {
-		if result.Skipped {
-			// Skipped runs produced no result. They are neither a pass nor a
-			// hard failure — counting them as passed is the false-green that
-			// hides aborted runs. They are surfaced separately as skipped.
+	for i := range results {
+		if results[i].Skipped {
 			continue
 		}
-
-		if result.Error != "" {
-			// Any error = failed
-			failed++
-			continue
-		}
-
-		if len(result.Violations) == 0 {
-			// No violations = passed
-			passed++
-			continue
-		}
-
-		// Has violations - check if assertions account for them
-		// Only consider it a pass if there ARE assertions and ALL of them passed
-		if HasAssertions(&result) && AllAssertionsPassed(&result) {
+		if RunPassed(&results[i]) {
 			passed++
 		} else {
 			failed++
