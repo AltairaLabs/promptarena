@@ -3,6 +3,7 @@ package engine
 import (
 	"context"
 	"encoding/json"
+	"strings"
 	"testing"
 	"time"
 
@@ -14,6 +15,19 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/workflow"
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 )
+
+// toolAdvertisesEvent reports whether the shared transition tool descriptor
+// currently allows `event` — the events are encoded in the descriptor's schema,
+// so a marshal + substring check is a robust proxy for the argument validation
+// the pipeline performs before executing the tool.
+func toolAdvertisesEvent(registry *tools.Registry, event string) bool {
+	d := registry.Get(workflow.TransitionToolName)
+	if d == nil {
+		return false
+	}
+	b, _ := json.Marshal(d)
+	return strings.Contains(string(b), event)
+}
 
 func testWorkflowSpec() *workflow.Spec {
 	return &workflow.Spec{
@@ -154,6 +168,40 @@ func TestWorkflowTransitionExecutor_TerminalKeepsToolForSiblingRuns(t *testing.T
 	// run can drive its own transitions.
 	assert.NotNil(t, registry.Get(workflow.TransitionToolName),
 		"reaching a terminal state must not unregister the shared transition tool")
+}
+
+// TestRegisterRunResetsTransitionToolForStartState guards the fix for a second
+// run in the same engine inheriting the prior run's final-state transition
+// events. The transition tool descriptor lives in a shared registry, and
+// applyPostCommit walks its allowed-event enum forward as the workflow advances.
+// Registering a new run must reset the descriptor to that run's START state's
+// events — otherwise the second run's entry-state event ("More" in the
+// workflow-agent-loops example) is rejected at argument validation before its
+// fresh per-run state machine ever runs, so every run after the first fails.
+func TestRegisterRunResetsTransitionToolForStartState(t *testing.T) {
+	spec := testWorkflowSpec() // entry "intake" (Escalate, Resolve); "specialist" (Resolve)
+	registry := tools.NewRegistry()
+	exec := newWorkflowTransitionExecutor(spec, registry)
+
+	// Mirror initWorkflow: the descriptor starts on the entry state's events.
+	registerTransitionTool(registry, spec.States[spec.Entry])
+	require.True(t, toolAdvertisesEvent(registry, "Escalate"), "entry state allows Escalate")
+
+	// Run 1 advances to "specialist", whose only event is Resolve — after the
+	// commit the shared descriptor no longer advertises the entry's Escalate.
+	exec.RegisterRun("run1", &arenaconfig.Scenario{ID: "run1", TaskType: "intake"})
+	args, _ := json.Marshal(map[string]string{"event": "Escalate"})
+	_, err := exec.Execute(withWorkflowScenarioID(context.Background(), "run1"), nil, args)
+	require.NoError(t, err)
+	require.NoError(t, exec.CommitPendingTransition("run1", nil))
+	require.False(t, toolAdvertisesEvent(registry, "Escalate"),
+		"after advancing to specialist the descriptor should only allow Resolve")
+
+	// Run 2 registers at the entry state; the descriptor must be reset so the
+	// entry event is valid again (the bug: it stayed on specialist's events).
+	exec.RegisterRun("run2", &arenaconfig.Scenario{ID: "run2", TaskType: "intake"})
+	assert.True(t, toolAdvertisesEvent(registry, "Escalate"),
+		"registering a new run must reset the transition tool to its start state's events")
 }
 
 func TestWorkflowTransitionExecutor_ConcurrentRuns(t *testing.T) {
