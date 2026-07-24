@@ -60,7 +60,7 @@ func TestEngine_ExecuteEvalRun_Success(t *testing.T) {
 		EvalID: "test-eval",
 	}
 
-	runID, err := e.executeRun(ctx, combo)
+	runID, err := e.executeRun(ctx, combo, "2026-01-01T00-00-00Z-0001")
 	require.NoError(t, err)
 	assert.NotEmpty(t, runID)
 	assert.Contains(t, runID, "eval")

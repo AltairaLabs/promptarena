@@ -820,6 +820,10 @@ func (e *Engine) ExecuteRuns(ctx context.Context, plan *RunPlan, concurrency int
 	runIDs := make([]string, len(plan.Combinations))
 	errs := make([]error, len(plan.Combinations))
 
+	// One batch id per dispatch: every run in this ExecuteRuns call shares it,
+	// so the whole sweep groups together and repeated sweeps stay distinct.
+	batchID := newBatchID()
+
 	work := make(chan runWorkItem, len(plan.Combinations))
 	for i, combo := range plan.Combinations {
 		work <- runWorkItem{idx: i, combo: combo}
@@ -833,7 +837,7 @@ func (e *Engine) ExecuteRuns(ctx context.Context, plan *RunPlan, concurrency int
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			e.runWorker(ctx, work, runIDs, errs, &mu)
+			e.runWorker(ctx, work, runIDs, errs, &mu, batchID)
 		}()
 	}
 
@@ -869,6 +873,7 @@ func (e *Engine) runWorker(
 	runIDs []string,
 	errs []error,
 	mu *sync.Mutex,
+	batchID string,
 ) {
 	for item := range work {
 		// Check cancellation before starting work.
@@ -880,7 +885,7 @@ func (e *Engine) runWorker(
 			continue
 		}
 
-		runID, err := e.executeRun(ctx, item.combo)
+		runID, err := e.executeRun(ctx, item.combo, batchID)
 
 		mu.Lock()
 		runIDs[item.idx] = runID

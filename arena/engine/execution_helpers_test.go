@@ -23,7 +23,7 @@ func TestGenerateRunID(t *testing.T) {
 			ScenarioID: "test-scenario",
 			ProviderID: "openai",
 		}
-		runID := generateRunID(combo)
+		runID := generateRunID(combo, "2026-01-01T00-00-00Z-0001")
 		assert.NotEmpty(t, runID)
 		assert.Contains(t, runID, "openai")
 		assert.Contains(t, runID, "us-west-1")
@@ -34,7 +34,7 @@ func TestGenerateRunID(t *testing.T) {
 		combo := RunCombination{
 			EvalID: "test-eval",
 		}
-		runID := generateRunID(combo)
+		runID := generateRunID(combo, "2026-01-01T00-00-00Z-0001")
 		assert.NotEmpty(t, runID)
 		assert.Contains(t, runID, "eval")
 		assert.Contains(t, runID, "test-eval")
@@ -46,9 +46,9 @@ func TestGenerateRunID(t *testing.T) {
 			ScenarioID: "test-scenario",
 			ProviderID: "openai",
 		}
-		runID1 := generateRunID(combo)
+		runID1 := generateRunID(combo, "2026-01-01T00-00-00Z-0001")
 		time.Sleep(time.Millisecond)
-		runID2 := generateRunID(combo)
+		runID2 := generateRunID(combo, "2026-01-01T00-00-00Z-0001")
 		// Different timestamps should make them different
 		// But since timestamp resolution is to the minute, they might be same
 		// So we just check they're generated successfully

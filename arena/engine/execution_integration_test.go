@@ -35,7 +35,7 @@ func TestEngine_ExecuteRun_InvalidStateStore(t *testing.T) {
 		Region:     "default",
 	}
 
-	_, err := e.executeRun(ctx, combo)
+	_, err := e.executeRun(ctx, combo, "2026-01-01T00-00-00Z-0001")
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "statestore is not ArenaStateStore")
 }
@@ -58,7 +58,7 @@ func TestEngine_ExecuteRun_ScenarioNotFound(t *testing.T) {
 		Region:     "default",
 	}
 
-	runID, err := e.executeRun(ctx, combo)
+	runID, err := e.executeRun(ctx, combo, "2026-01-01T00-00-00Z-0001")
 	require.NoError(t, err) // Error is saved, not returned
 	assert.NotEmpty(t, runID)
 
@@ -84,7 +84,7 @@ func TestEngine_ExecuteRun_WorkflowBadTaskTypeFailsLoudly(t *testing.T) {
 	}
 
 	combo := RunCombination{ScenarioID: "sc", ProviderID: "p", Region: "default"}
-	runID, err := e.executeRun(ctx, combo)
+	runID, err := e.executeRun(ctx, combo, "2026-01-01T00-00-00Z-0001")
 	require.NoError(t, err) // resolution error is saved as a failed result, not returned
 	assert.NotEmpty(t, runID)
 
@@ -113,7 +113,7 @@ func TestEngine_ExecuteRun_ProviderNotFound(t *testing.T) {
 		Region:     "default",
 	}
 
-	runID, err := e.executeRun(ctx, combo)
+	runID, err := e.executeRun(ctx, combo, "2026-01-01T00-00-00Z-0001")
 	require.NoError(t, err)
 	assert.NotEmpty(t, runID)
 
@@ -140,7 +140,7 @@ func TestEngine_ExecuteRun_EvalNotFound(t *testing.T) {
 		EvalID: "missing-eval",
 	}
 
-	runID, err := e.executeRun(ctx, combo)
+	runID, err := e.executeRun(ctx, combo, "2026-01-01T00-00-00Z-0001")
 	require.NoError(t, err)
 	assert.NotEmpty(t, runID)
 	assert.Contains(t, runID, "eval")

@@ -206,7 +206,7 @@ func TestExecuteRun_Timeout(t *testing.T) {
 
 		ctx := context.Background()
 		start := time.Now()
-		runID, err := e.executeRun(ctx, combo)
+		runID, err := e.executeRun(ctx, combo, "2026-01-01T00-00-00Z-0001")
 		elapsed := time.Since(start)
 
 		// Should complete within a reasonable time (timeout + overhead)
@@ -250,7 +250,7 @@ func TestExecuteRun_Timeout(t *testing.T) {
 		}
 
 		ctx := context.Background()
-		runID, err := e.executeRun(ctx, combo)
+		runID, err := e.executeRun(ctx, combo, "2026-01-01T00-00-00Z-0001")
 		require.NoError(t, err)
 
 		// Verify the run succeeded without timeout error

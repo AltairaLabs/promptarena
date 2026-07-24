@@ -256,7 +256,7 @@ func TestEngineEmitsRunStartedEvent(t *testing.T) {
 		ProviderID: "test-provider",
 		Region:     "us-east",
 	}
-	runID := generateRunID(combo)
+	runID := generateRunID(combo, "2026-01-01T00-00-00Z-0001")
 	emitter := eng.createRunEmitter(context.Background(), runID, &combo)
 
 	// Wait for async event delivery
