@@ -405,14 +405,14 @@ func (e *Engine) ingestArtifacts(ctx context.Context, runID string) {
 //
 // Handles errors gracefully, always returning a RunID (with Error saved in StateStore if failed).
 // Returns the RunID. Results can be retrieved from StateStore using GetResult().
-func (e *Engine) executeRun(ctx context.Context, combo RunCombination) (runID string, err error) {
+func (e *Engine) executeRun(ctx context.Context, combo RunCombination, batchID string) (runID string, err error) {
 	// Defer per-run timeout setup until after scenario lookup so duplex
 	// scenarios can stretch the deadline to their declared
 	// `duplex.timeout` (typically 10m for voice). For the eval-run path
 	// and the no-scenario edge case we fall through to the config /
 	// DefaultRunTimeout ladder.
 	startTime := time.Now()
-	runID = generateRunID(combo)
+	runID = generateRunID(combo, batchID)
 	runEmitter := e.createRunEmitter(ctx, runID, &combo)
 
 	// Get Arena state store
@@ -1124,15 +1124,28 @@ func (e *Engine) resolveRunTimeout(scenario *arenaconfig.Scenario) time.Duration
 // runIDCounter provides a monotonically increasing nonce for run ID uniqueness.
 var runIDCounter atomic.Uint64
 
-// generateRunID creates a unique run ID for a combination.
-// Includes seconds and an atomic counter for guaranteed uniqueness within a process.
-func generateRunID(combo RunCombination) string {
-	timestamp := time.Now().Format("2006-01-02T15-04-05Z")
+// generateRunID creates a unique run ID for a combination, prefixed with the
+// caller's batchID. Every run in one ExecuteRuns dispatch shares that batchID,
+// so all runs of a "sweep" group together (the RunID prefix up to the first
+// "_" is the batch/sweep identifier), while a trailing atomic nonce keeps each
+// individual run unique.
+func generateRunID(combo RunCombination, batchID string) string {
 	nonce := runIDCounter.Add(1)
 	if combo.EvalID != "" {
 		hash := sha256.Sum256([]byte(fmt.Sprintf("eval_%s", combo.EvalID)))
-		return fmt.Sprintf("%s_eval_%s_%x_%04x", timestamp, combo.EvalID, hash[:4], nonce)
+		return fmt.Sprintf("%s_eval_%s_%x_%04x", batchID, combo.EvalID, hash[:4], nonce)
 	}
 	hash := sha256.Sum256([]byte(fmt.Sprintf("%s_%s_%s", combo.Region, combo.ScenarioID, combo.ProviderID)))
-	return fmt.Sprintf("%s_%s_%s_%s_%x_%04x", timestamp, combo.ProviderID, combo.Region, combo.ScenarioID, hash[:4], nonce)
+	return fmt.Sprintf("%s_%s_%s_%s_%x_%04x", batchID, combo.ProviderID, combo.Region, combo.ScenarioID, hash[:4], nonce)
+}
+
+// batchCounter distinguishes ExecuteRuns dispatches within a process so two
+// sweeps in the same clock second still get distinct batch ids.
+var batchCounter atomic.Uint64
+
+// newBatchID mints a batch/sweep identifier: a second-resolution timestamp (so
+// batches sort chronologically) plus an atomic nonce (so same-second dispatches
+// stay distinct). It contains no "_", so it survives as the RunID prefix.
+func newBatchID() string {
+	return fmt.Sprintf("%s-%04x", time.Now().Format("2006-01-02T15-04-05Z"), batchCounter.Add(1))
 }

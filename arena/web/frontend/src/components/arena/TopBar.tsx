@@ -26,8 +26,8 @@ function SunIcon() {
   );
 }
 
-// TopBar — the sticky Atlas top bar: logo + wordmark + studio tag + promptpack
-// context on the left, the connection/live StatusPill + theme toggle on the
+// TopBar — the sticky Atlas top bar: logo + wordmark + promptpack context on
+// the left, the connection/live StatusPill + theme toggle on the
 // right. The gold "Run trial" action lives in CommandStrip instead — TopBar
 // used to duplicate it, but one action surface is enough. The bar follows the
 // theme: a light frosted surface in light mode, dark ink in dark mode, with
@@ -66,19 +66,13 @@ export function TopBar({
           <span style={{ font: "600 17px var(--font-sans)", letterSpacing: "-0.01em", color: "var(--star-100)" }}>
             PromptArena
           </span>
-          <span
-            style={{
-              font: "500 10px var(--font-mono)",
-              letterSpacing: "0.22em",
-              textTransform: "uppercase",
-              color: "var(--star-900)",
-            }}
-          >
-            studio
-          </span>
-          <div style={{ width: 1, height: 22, background: "var(--hairline)", flex: "none" }} />
+          {/* The divider only earns its keep when there's a promptpack context
+              to separate the wordmark from — otherwise it's a dangling rule. */}
           {promptpack && (
-            <span style={{ font: "400 12px var(--font-mono)", color: "var(--star-700)" }}>{promptpack}</span>
+            <>
+              <div style={{ width: 1, height: 22, background: "var(--hairline)", flex: "none" }} />
+              <span style={{ font: "400 12px var(--font-mono)", color: "var(--star-700)" }}>{promptpack}</span>
+            </>
           )}
         </div>
       }

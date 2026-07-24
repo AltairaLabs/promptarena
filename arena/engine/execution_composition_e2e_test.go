@@ -136,7 +136,7 @@ func TestExecuteRun_CompositionState(t *testing.T) {
 		ProviderID: "mock-comp",
 		Region:     "default",
 	}
-	runID, err := e.executeRun(ctx, combo)
+	runID, err := e.executeRun(ctx, combo, "2026-01-01T00-00-00Z-0001")
 	require.NoError(t, err)
 	require.NotEmpty(t, runID)
 

@@ -230,7 +230,14 @@ type RunRequest struct {
 	Providers []string `json:"providers,omitempty"`
 	Scenarios []string `json:"scenarios,omitempty"`
 	Regions   []string `json:"regions,omitempty"`
+	// Runs is how many times to run the field (each a distinct sweep). Defaults
+	// to 1; clamped to [1, maxFieldRuns].
+	Runs int `json:"runs,omitempty"`
 }
+
+// maxFieldRuns caps "Run the field × N" so a fat-fingered count can't fire
+// thousands of billed provider calls.
+const maxFieldRuns = 25
 
 // handleStartRun starts a new Arena run.
 func (s *Server) handleStartRun(w http.ResponseWriter, r *http.Request) {
@@ -256,18 +263,23 @@ func (s *Server) handleStartRun(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Start runs in background
-	s.pending.Add(1)
-	go func() {
-		defer s.pending.Done()
-		ctx, cancel := context.WithTimeout(context.Background(), defaultRunTimeout)
-		defer cancel()
-		runIDs, _ := s.engine.ExecuteRuns(ctx, plan, defaultConcurrency)
-		s.persistRunResults(ctx, runIDs)
-	}()
+	runs := max(1, min(req.Runs, maxFieldRuns))
 
-	writeJSON(w, http.StatusAccepted, map[string]interface{}{
+	// Start runs in background. Each iteration is a distinct sweep (its own batch
+	// id), run sequentially so the sweeps stay separate and providers aren't all
+	// hammered at once.
+	s.pending.Go(func() {
+		for range runs {
+			ctx, cancel := context.WithTimeout(context.Background(), defaultRunTimeout)
+			runIDs, _ := s.engine.ExecuteRuns(ctx, plan, defaultConcurrency)
+			s.persistRunResults(ctx, runIDs)
+			cancel()
+		}
+	})
+
+	writeJSON(w, http.StatusAccepted, map[string]any{
 		"combinations": len(plan.Combinations),
+		"runs":         runs,
 		"status":       "started",
 	})
 }

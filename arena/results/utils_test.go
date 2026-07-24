@@ -190,6 +190,94 @@ func TestCountResultsByStatus_ViolationsWithPassingAssertions(t *testing.T) {
 	assert.Equal(t, 0, failed)
 }
 
+func TestCountResultsByStatus_ConversationAssertionFailureWithoutViolations(t *testing.T) {
+	// Regression for #39: a run that completes cleanly (no Error, no
+	// Violations) but whose conversation-level assertions FAILED must count as
+	// failed, not passed. Previously the len(Violations)==0 short-circuit
+	// returned "passed" without ever consulting the assertion outcome, producing
+	// a false green (e.g. "100% Success" over two failed assertions).
+	testResults := []engine.RunResult{
+		{
+			Error:      "",
+			Violations: nil,
+			ConversationAssertions: engine.AssertionsSummary{
+				Passed: false,
+				Failed: 2,
+				Total:  2,
+			},
+		},
+	}
+
+	passed, failed := results.CountResultsByStatus(testResults)
+
+	assert.Equal(t, 0, passed, "a clean-completing run with failed conversation assertions must not pass")
+	assert.Equal(t, 1, failed)
+}
+
+func TestRunPassed(t *testing.T) {
+	tests := []struct {
+		name   string
+		result engine.RunResult
+		want   bool
+	}{
+		{
+			name:   "clean completion, no assertions",
+			result: engine.RunResult{Error: "", Violations: nil},
+			want:   true,
+		},
+		{
+			name:   "provider error",
+			result: engine.RunResult{Error: "boom"},
+			want:   false,
+		},
+		{
+			name: "failed conversation assertions, no violations (#39)",
+			result: engine.RunResult{
+				ConversationAssertions: engine.AssertionsSummary{Total: 2, Failed: 2, Passed: false},
+			},
+			want: false,
+		},
+		{
+			name: "passing conversation assertions",
+			result: engine.RunResult{
+				ConversationAssertions: engine.AssertionsSummary{Total: 2, Passed: true},
+			},
+			want: true,
+		},
+		{
+			name: "violations with no assertions are unexpected",
+			result: engine.RunResult{
+				Violations: []types.ValidationError{{Type: "banned_words"}},
+			},
+			want: false,
+		},
+		{
+			name: "violations accounted for by passing assertions (expected guardrail)",
+			result: engine.RunResult{
+				Violations:             []types.ValidationError{{Type: "banned_words"}},
+				ConversationAssertions: engine.AssertionsSummary{Total: 1, Passed: true},
+			},
+			want: true,
+		},
+		{
+			name: "failing turn-level assertion in message meta",
+			result: engine.RunResult{
+				Messages: []types.Message{{
+					Meta: map[string]interface{}{
+						"assertions": map[string]interface{}{"passed": false, "total": 1},
+					},
+				}},
+			},
+			want: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.Equal(t, tt.want, results.RunPassed(&tt.result))
+		})
+	}
+}
+
 func TestCalculatePerformanceMetrics(t *testing.T) {
 	testResults := []engine.RunResult{
 		{

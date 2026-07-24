@@ -1,13 +1,27 @@
-import { DataTable, Button, type DataTableColumn } from "@altairalabs/atlas";
+import { useMemo, useState } from "react";
+import { ChevronDown, ChevronRight } from "lucide-react";
+import { Card, Button } from "@altairalabs/atlas";
+import { orderLedgerRows, runOutcome } from "@/lib/arenaView";
 import type { RunResult } from "@/types";
+
+// PAGE_SIZE bounds how many trial rows the ledger renders at once — with
+// hundreds of trials, rendering them all is unusable, so the rest paginate.
+const PAGE_SIZE = 25;
+
+type OutcomeFilter = "all" | "pass" | "fail" | "error";
 
 interface HistoricalResultsProps {
   results: RunResult[];
-  onSelectRun: (id: string) => void;
+  // Open one run's transcript.
+  onSelectRun: (runId: string) => void;
   onClear: () => void | Promise<void>;
+  // When a matrix cell is clicked, the ledger scopes to that scenario×provider.
+  filter?: { scenarioId: string; providerId: string } | null;
+  onClearFilter?: () => void;
+  // The run currently open in the transcript view, if any — its row is
+  // highlighted so returning from a run makes clear where you were.
+  selectedRunId?: string | null;
 }
-
-const PAGE_SIZE = 25;
 
 function timeAgo(dateStr: string): string {
   const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
@@ -21,168 +35,274 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(days / 30)}mo ago`;
 }
 
-// failureBlurb summarises why a run failed in a one-liner suitable for a
-// table cell: prefer assertion counts when available, fall back to the
-// first chunk of the error message.
-function failureBlurb(r: RunResult): string {
-  if (r.ConversationAssertions && r.ConversationAssertions.failed > 0) {
-    const f = r.ConversationAssertions.failed;
-    const total = r.ConversationAssertions.total;
-    return `${f}/${total} assertion${total === 1 ? "" : "s"} failed`;
-  }
-  if (r.Error) {
-    return r.Error.length > 80 ? r.Error.slice(0, 80) + "…" : r.Error;
-  }
-  return "Failed";
+const eyebrowStyle: React.CSSProperties = {
+  fontFamily: "var(--font-mono)",
+  fontSize: "var(--text-size-mono-label)",
+  fontWeight: "var(--fw-medium)",
+  textTransform: "uppercase",
+  letterSpacing: "var(--tracking-eyebrow)",
+  color: "var(--star-900)",
+};
+
+const selectStyle: React.CSSProperties = {
+  cursor: "pointer",
+  borderRadius: "var(--radius-sm)",
+  border: "1px solid var(--hairline)",
+  background: "var(--surface-2)",
+  color: "var(--star-300)",
+  font: "12px var(--font-mono)",
+  padding: "4px 8px",
+};
+
+const OUTCOME: Record<"pass" | "fail" | "error", { label: string; color: string; dot: string }> = {
+  pass: { label: "Pass", color: "var(--status-healthy-text)", dot: "var(--status-healthy)" },
+  fail: { label: "Fail", color: "var(--status-error-text)", dot: "var(--status-error)" },
+  error: { label: "Error", color: "var(--status-error-text)", dot: "var(--signal-red)" },
+};
+
+// A single run (trial) row. The whole row opens that run's transcript. The
+// currently-open run's row is highlighted (a left rule + tint) so returning
+// from the transcript makes clear which row you came from.
+function RunRow({ run, onClick, selected }: { run: RunResult; onClick: () => void; selected: boolean }) {
+  const o = OUTCOME[runOutcome(run)];
+  const when = run.EndTime || run.StartTime;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-current={selected ? "true" : undefined}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 14,
+        width: "100%",
+        textAlign: "left",
+        cursor: "pointer",
+        border: "none",
+        borderTop: "1px solid var(--hairline-faint)",
+        boxShadow: selected ? "inset 3px 0 0 var(--starlight-400)" : "none",
+        padding: "10px 16px",
+        background: selected ? "var(--starlight-tint)" : "transparent",
+      }}
+    >
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 6, width: 64, flex: "none", font: "600 12px var(--font-mono)", color: o.color }}>
+        <span style={{ width: 7, height: 7, borderRadius: "50%", background: o.dot, flex: "none" }} />
+        {o.label}
+      </span>
+      <span style={{ flex: 1, font: "500 13px var(--font-sans)", color: "var(--star-300)" }}>{run.ScenarioID}</span>
+      <span style={{ flex: 1, font: "13px var(--font-sans)", color: "var(--star-600)" }}>{run.ProviderID}</span>
+      <span style={{ font: "12px var(--font-mono)", color: "var(--star-700)", width: 72, textAlign: "right", flex: "none" }}>
+        {run.Cost?.total_cost_usd ? `$${run.Cost.total_cost_usd.toFixed(3)}` : "—"}
+      </span>
+      <span style={{ font: "12px var(--font-mono)", color: "var(--star-800)", width: 64, textAlign: "right", flex: "none" }}>
+        {when ? timeAgo(when) : "—"}
+      </span>
+    </button>
+  );
 }
 
-// runTime returns the canonical timestamp for sorting/display.
-function runTime(r: RunResult): number {
-  return new Date(r.EndTime || r.StartTime).getTime();
-}
+// The ledger — a collapsible, filterable, paginated list of individual runs
+// (trials), newest first. Always present; the chevron just folds the body.
+// Clicking a run opens its transcript. A matrix-cell click scopes it to that
+// scenario×provider; the outcome/scenario/provider dropdowns narrow it further.
+export function HistoricalResults({
+  results,
+  onSelectRun,
+  onClear,
+  filter,
+  onClearFilter,
+  selectedRunId,
+}: HistoricalResultsProps) {
+  const [collapsed, setCollapsed] = useState(false);
+  const [outcome, setOutcome] = useState<OutcomeFilter>("all");
+  const [scenario, setScenario] = useState("");
+  const [provider, setProvider] = useState("");
 
-// runPassed treats Error + failed assertions as Fail; everything else
-// (including missing assertion summary) is Pass.
-function runPassed(r: RunResult): boolean {
-  return !r.Error && (r.ConversationAssertions?.passed ?? true);
-}
+  // Dropdown options come from the whole result set (not the current filtered
+  // view) so narrowing on one axis never hides choices on another.
+  const scenarioOptions = useMemo(
+    () => [...new Set(results.map((r) => r.ScenarioID))].sort((a, b) => a.localeCompare(b)),
+    [results],
+  );
+  const providerOptions = useMemo(
+    () => [...new Set(results.map((r) => r.ProviderID))].sort((a, b) => a.localeCompare(b)),
+    [results],
+  );
 
-// getSearchText backs DataTable's built-in filter — same fields the old
-// hand-rolled filter matched on: scenario, provider, region and error.
-function getSearchText(r: RunResult): string {
-  return [r.ScenarioID, r.ProviderID, r.Region ?? "", r.Error ?? ""].join(" ");
-}
+  // rows = cell-scoped + newest-first (orderLedgerRows), then narrowed by the
+  // outcome/scenario/provider dropdowns.
+  const rows = useMemo(() => {
+    return orderLedgerRows(results, filter).filter(
+      (r) =>
+        (scenario === "" || r.ScenarioID === scenario) &&
+        (provider === "" || r.ProviderID === provider) &&
+        (outcome === "all" || runOutcome(r) === outcome),
+    );
+  }, [results, filter, scenario, provider, outcome]);
 
-// Column config for the package DataTable. Each column carries its own
-// header, sort value and cell renderer so the domain shape (RunResult)
-// never leaks into the shared table. Sort values mirror the old `compare`
-// helper; strings are lower-cased for case-insensitive ordering and the
-// Result column maps pass→0 / fail→1 so passes sort first on ascending.
-const columns: DataTableColumn<RunResult>[] = [
-  {
-    key: "scenario",
-    header: "Scenario",
-    sortable: true,
-    sortValue: (r) => r.ScenarioID.toLowerCase(),
-    render: (r) => <span className="font-medium text-fg">{r.ScenarioID}</span>,
-  },
-  {
-    key: "provider",
-    header: "Provider",
-    sortable: true,
-    sortValue: (r) => r.ProviderID.toLowerCase(),
-    render: (r) => <span className="text-fg-muted">{r.ProviderID}</span>,
-  },
-  {
-    key: "region",
-    header: "Region",
-    sortable: true,
-    sortValue: (r) => (r.Region ?? "").toLowerCase(),
-    render: (r) => <span className="text-fg-muted">{r.Region}</span>,
-  },
-  {
-    key: "result",
-    header: "Result",
-    sortable: true,
-    sortValue: (r) => (runPassed(r) ? 0 : 1),
-    render: (r) => {
-      const passed = runPassed(r);
-      return (
-        <div className="flex flex-col gap-0.5">
-          {/* Atlas splits status fill from status text on purpose — the dot
-              uses the saturated fill, the label the contrast-tuned text
-              variant. Mapping both to one token would lose that tuning. */}
-          <span
-            className="inline-flex items-center gap-1.5"
+  // Start on the page holding the currently-open run so returning from a
+  // transcript lands on its row (the ledger remounts on return). Recomputed
+  // only at mount — user paging afterwards is preserved.
+  const [page, setPage] = useState(() => {
+    if (!selectedRunId) return 0;
+    const idx = orderLedgerRows(results, filter).findIndex((r) => r.RunID === selectedRunId);
+    return idx >= 0 ? Math.floor(idx / PAGE_SIZE) : 0;
+  });
+
+  const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const safePage = Math.min(page, pageCount - 1);
+  const start = safePage * PAGE_SIZE;
+  const pageRows = rows.slice(start, start + PAGE_SIZE);
+
+  // Any filter change collapses back to the first page.
+  const resetPage = () => setPage(0);
+  const Chevron = collapsed ? ChevronRight : ChevronDown;
+
+  return (
+    <Card padding={0} style={{ overflow: "hidden" }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          padding: "12px 16px",
+          borderBottom: collapsed ? "none" : "1px solid var(--hairline)",
+        }}
+      >
+        <button
+          type="button"
+          onClick={() => setCollapsed((c) => !c)}
+          aria-expanded={!collapsed}
+          style={{ display: "flex", alignItems: "center", gap: 8, cursor: "pointer", background: "transparent", border: "none", padding: 0 }}
+        >
+          <Chevron className="h-4 w-4" style={{ color: "var(--star-700)" }} />
+          <span style={eyebrowStyle}>Ledger</span>
+          <span style={{ borderRadius: "999px", background: "var(--surface-2)", color: "var(--star-700)", padding: "1px 8px", font: "10px var(--font-mono)" }}>
+            {rows.length}
+          </span>
+        </button>
+        {filter && (
+          <button
+            type="button"
+            onClick={onClearFilter}
+            style={{ cursor: "pointer", background: "transparent", border: "none", font: "12px var(--font-mono)", color: "var(--text-link)" }}
+          >
+            {filter.scenarioId} × {filter.providerId} · clear
+          </button>
+        )}
+        <span style={{ flex: 1 }} />
+        {results.length > 0 && (
+          <Button variant="danger" size="sm" onClick={onClear}>
+            Clear all
+          </Button>
+        )}
+      </div>
+
+      {!collapsed && (
+        <>
+          <div
             style={{
-              font: "var(--fw-semibold) var(--text-size-mono-xs) var(--font-mono)",
-              color: passed ? "var(--status-healthy-text)" : "var(--status-error-text)",
+              display: "flex",
+              alignItems: "center",
+              gap: 8,
+              flexWrap: "wrap",
+              padding: "10px 16px",
+              borderBottom: "1px solid var(--hairline-faint)",
             }}
           >
-            <span
-              className="h-1.5 w-1.5 rounded-full"
-              style={{ background: passed ? "var(--status-healthy)" : "var(--status-error)" }}
-            />
-            {passed ? "Pass" : "Fail"}
-          </span>
-          {!passed && (
-            <span className="text-[10px] text-fg-muted truncate max-w-[260px]" title={r.Error}>
-              {failureBlurb(r)}
-            </span>
-          )}
-        </div>
-      );
-    },
-  },
-  {
-    key: "cost",
-    header: "Cost",
-    align: "right",
-    sortable: true,
-    sortValue: (r) => r.Cost?.total_cost_usd ?? 0,
-    render: (r) => (
-      <span className="font-mono text-fg-muted">${r.Cost?.total_cost_usd?.toFixed(4) ?? "0.0000"}</span>
-    ),
-  },
-  {
-    key: "msgs",
-    header: "Msgs",
-    align: "right",
-    sortable: true,
-    sortValue: (r) => r.Messages?.length ?? 0,
-    render: (r) => <span className="text-fg-muted">{r.Messages?.length ?? 0}</span>,
-  },
-  {
-    key: "when",
-    header: "When",
-    align: "right",
-    sortable: true,
-    sortValue: (r) => runTime(r),
-    render: (r) => (
-      <span className="text-fg-muted">
-        {r.EndTime ? timeAgo(r.EndTime) : r.StartTime ? timeAgo(r.StartTime) : "—"}
-      </span>
-    ),
-  },
-];
+            <select
+              aria-label="filter by outcome"
+              value={outcome}
+              onChange={(e) => { setOutcome(e.target.value as OutcomeFilter); resetPage(); }}
+              style={selectStyle}
+            >
+              <option value="all">All outcomes</option>
+              <option value="pass">Passed</option>
+              <option value="fail">Failed</option>
+              <option value="error">Errored</option>
+            </select>
+            <select
+              aria-label="filter by scenario"
+              value={scenario}
+              onChange={(e) => { setScenario(e.target.value); resetPage(); }}
+              style={selectStyle}
+            >
+              <option value="">All scenarios</option>
+              {scenarioOptions.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+            <select
+              aria-label="filter by contender"
+              value={provider}
+              onChange={(e) => { setProvider(e.target.value); resetPage(); }}
+              style={selectStyle}
+            >
+              <option value="">All contenders</option>
+              {providerOptions.map((p) => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+          </div>
 
-export function HistoricalResults({ results, onSelectRun, onClear }: HistoricalResultsProps) {
-  // Newest first, seeded into the table's own sort state rather than by
-  // pre-sorting the rows — a pre-sort competes with the table's sorting the
-  // moment a header is clicked.
-  return (
-    <div className="space-y-3">
-      {results.length === 0 ? (
-        <div className="rounded-xl border border-mist bg-surface px-6 py-8 text-center text-xs text-fg-muted">
-          No runs yet.
-        </div>
-      ) : (
-        <DataTable<RunResult>
-          columns={columns}
-          rows={results}
-          rowKey={(r) => r.RunID}
-          pageSize={PAGE_SIZE}
-          searchable
-          getSearchText={getSearchText}
-          onRowClick={(r) => onSelectRun(r.RunID)}
-          empty="No runs match your search."
-          defaultSortKey="when"
-          defaultSortDir="desc"
-          toolbar={
+          {rows.length === 0 ? (
+            <div style={{ padding: "24px 16px", textAlign: "center", font: "12px var(--font-mono)", color: "var(--star-800)" }}>
+              No runs yet.
+            </div>
+          ) : (
             <>
-              <h3 className="text-xs font-semibold text-fg-muted uppercase tracking-wider whitespace-nowrap">
-                Previous Runs
-              </h3>
-              <span className="rounded-full bg-surface-2 text-fg-muted px-2 py-0.5 text-[10px] font-mono">
-                {results.length}
-              </span>
-              <Button variant="danger" size="sm" onClick={onClear}>
-                Clear all
-              </Button>
+              <div>
+                {pageRows.map((r) => (
+                  <RunRow
+                    key={r.RunID}
+                    run={r}
+                    onClick={() => onSelectRun(r.RunID)}
+                    selected={r.RunID === selectedRunId}
+                  />
+                ))}
+              </div>
+
+              {rows.length > PAGE_SIZE && (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    gap: 12,
+                    padding: "10px 16px",
+                    borderTop: "1px solid var(--hairline)",
+                  }}
+                >
+                  <span style={{ font: "12px var(--font-mono)", color: "var(--star-700)" }}>
+                    {start + 1}–{Math.min(start + PAGE_SIZE, rows.length)} of {rows.length}
+                  </span>
+                  <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => setPage(safePage - 1)}
+                      disabled={safePage <= 0}
+                    >
+                      Prev
+                    </Button>
+                    <span style={{ font: "12px var(--font-mono)", color: "var(--star-800)" }}>
+                      {safePage + 1} / {pageCount}
+                    </span>
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => setPage(safePage + 1)}
+                      disabled={safePage >= pageCount - 1}
+                    >
+                      Next
+                    </Button>
+                  </span>
+                </div>
+              )}
             </>
-          }
-        />
+          )}
+        </>
       )}
-    </div>
+    </Card>
   );
 }

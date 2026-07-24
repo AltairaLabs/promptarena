@@ -47,6 +47,17 @@ describe("adaptMessage", () => {
     expect(adaptMessage(msg(), 1, r, 0).error?.message).toBe("provider timeout");
     expect(adaptMessage(msg(), 0, r, 0).error).toBeUndefined();
   });
+
+  it("surfaces a tool-result message's output when content is empty (no blank tool bubble)", () => {
+    const toolMsg = msg({
+      role: "tool",
+      content: "",
+      tool_result: { id: "t1", name: "workflow__transition", parts: [{ type: "text", text: '{"event":"More"}' }], latency_ms: 0 },
+    });
+    const a = adaptMessage(toolMsg, 3, run(), 0);
+    expect(a.role).toBe("tool");
+    expect(a.parts).toEqual([{ type: "text", text: '{"event":"More"}' }]);
+  });
 });
 
 describe("adaptLiveMessages", () => {
@@ -97,6 +108,23 @@ describe("adaptRun", () => {
   it("exposes a recording url when RecordingPath is set", () => {
     const out = adaptRun(run({ RecordingPath: "sessions/abc.wav" } as never));
     expect(out.recording?.src).toBe("/api/media/sessions/abc.wav");
+  });
+
+  it("rewrites zero-time and duplicate timestamps into a strictly increasing sequence (scrubber range)", () => {
+    const r = run({
+      StartTime: "2026-07-03T12:52:15Z",
+      Messages: [
+        msg({ role: "user", content: "q", timestamp: "2026-07-03T12:52:15.100Z" }),
+        msg({ role: "assistant", content: "a", timestamp: "2026-07-03T12:52:15.100Z" }), // duplicate ts
+        msg({ role: "tool", content: "", timestamp: "0001-01-01T00:00:00Z", tool_result: { id: "t", name: "x", parts: [{ type: "text", text: "{}" }], latency_ms: 0 } }), // Go zero time
+        msg({ role: "assistant", content: "b", timestamp: "2026-07-03T12:52:15.200Z" }),
+      ] as Message[],
+    });
+    const ts = adaptRun(r).messages.map((m) => Date.parse(m.timestamp));
+    // Strictly increasing — no collapsed/duplicate points.
+    for (let i = 1; i < ts.length; i++) expect(ts[i]).toBeGreaterThan(ts[i - 1]);
+    // The year-0001 sentinel never survives to poison the range.
+    expect(Math.min(...ts)).toBeGreaterThan(Date.parse("2000-01-01T00:00:00Z"));
   });
 });
 

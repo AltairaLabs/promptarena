@@ -108,6 +108,18 @@ func (e *workflowTransitionExecutor) RegisterRunAtState(
 		emitter:   emitter,
 	}
 	e.runs[runID] = run
+
+	// Reset the shared transition-tool descriptor to THIS run's start state's
+	// events. The descriptor lives in the shared registry and applyPostCommit
+	// mutates its allowed-event enum as the workflow advances; without resetting
+	// it at registration, a later run in the same engine (two "Run the field"
+	// dispatches in one serve session) inherits the prior run's final-state
+	// events. The entry state's event ("More" here) is then rejected at argument
+	// validation ("event must be one of ...") before the per-run executor ever
+	// runs, so the second run fails even though its state machine is fresh.
+	if startStateSpec := e.wfSpec.States[startState]; startStateSpec != nil {
+		registerTransitionTool(e.registry, startStateSpec)
+	}
 	transExec.SetOnCommit(func(tr *workflow.TransitionResult) {
 		e.applyPostCommit(runID, tr)
 	})

@@ -1,5 +1,5 @@
 import { Gauge, InstrumentReadout, StarTrail, Card } from "@altairalabs/atlas";
-import { buildOverallGauge, buildMetrics, buildTrend, buildStandings } from "@/lib/arenaView";
+import { buildOverallGauge, buildMetrics, buildSuiteTrend, buildStandings } from "@/lib/arenaView";
 import { Standings } from "@/components/arena/Standings";
 import type { TrialMatrix, RunResult } from "@/types";
 
@@ -24,7 +24,8 @@ const sectionLabelStyle: React.CSSProperties = {
 export function InstrumentBand({ matrix, results }: InstrumentBandProps) {
   const gauge = buildOverallGauge(matrix);
   const metrics = buildMetrics(results, matrix);
-  const trend = buildTrend(results, 12);
+  // Every full sweep, uncapped — the trend shows the whole history.
+  const trend = buildSuiteTrend(results);
   const standings = buildStandings(matrix);
 
   const delta = trend.length > 0 ? trend[trend.length - 1] - trend[0] : 0;
@@ -39,7 +40,7 @@ export function InstrumentBand({ matrix, results }: InstrumentBandProps) {
         style={{ display: "flex", flexDirection: "column" }}
       >
         <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <Gauge value={gauge.passRate} max={100} unit="converged" label={gauge.caption} />
+          <Gauge value={gauge.passRate} max={100} unit="%" label={gauge.caption} />
         </div>
       </Card>
 
@@ -48,7 +49,7 @@ export function InstrumentBand({ matrix, results }: InstrumentBandProps) {
         {trend.length > 0 && (
           <div style={{ padding: "14px 18px", borderTop: "1px solid var(--hairline)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-              <span style={sectionLabelStyle}>PASS RATE · LAST 12 RUNS</span>
+              <span style={sectionLabelStyle}>SUITE PASS RATE · PER SWEEP</span>
               <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: deltaColor }}>
                 {deltaText}
               </span>

@@ -1,9 +1,13 @@
 export interface HeroProps {
   scenarioCount: number;
   providerCount: number;
+  // chartedAt is the timestamp of the most recent charted run (ISO string).
+  // The eyebrow's dateline reflects real data — when nothing has run yet it's
+  // omitted entirely rather than fibbing "charted today".
+  chartedAt?: string | null;
 }
 
-// dateBadge formats "today" the way the eyebrow wants it: lowercase,
+// dateBadge formats a run date the way the eyebrow wants it: lowercase,
 // abbreviated month + day (e.g. "jul 7") — no year, no leading zero.
 function dateBadge(d: Date): string {
   const month = d.toLocaleString("en-US", { month: "short" }).toLowerCase();
@@ -14,13 +18,18 @@ function pluralize(count: number, noun: string): string {
   return `${count} ${noun}${count === 1 ? "" : "s"}.`;
 }
 
-// Hero — the Atlas redesign's page-top banner: a gold mono eyebrow, an H1
-// whose payoff clause ("N contenders.") is gold, and a muted subhead.
-// Replaces the old EmptyStateLauncher's role as the page's welcome band —
-// it's shown whether or not there are runs yet.
-export function Hero({ scenarioCount, providerCount }: HeroProps) {
+// Hero — the Atlas redesign's page-top banner: a gold mono eyebrow over an H1
+// whose payoff clause ("N contenders.") is gold. Replaces the old
+// EmptyStateLauncher's role as the page's welcome band — it's shown whether or
+// not there are runs yet.
+export function Hero({ scenarioCount, providerCount, chartedAt }: HeroProps) {
+  const chartedDate = chartedAt ? new Date(chartedAt) : null;
+  const eyebrow =
+    chartedDate && !Number.isNaN(chartedDate.getTime())
+      ? `THE ARENA · CHARTED ${dateBadge(chartedDate)}`
+      : "THE ARENA";
   return (
-    <section style={{ padding: "8px 0 24px" }}>
+    <section style={{ padding: "8px 0" }}>
       <div
         style={{
           font: "500 12px var(--font-mono)",
@@ -30,7 +39,7 @@ export function Hero({ scenarioCount, providerCount }: HeroProps) {
           marginBottom: 14,
         }}
       >
-        THE ARENA · CHARTED {dateBadge(new Date())}
+        {eyebrow}
       </div>
       <h1
         style={{
@@ -38,22 +47,12 @@ export function Hero({ scenarioCount, providerCount }: HeroProps) {
           letterSpacing: "-0.025em",
           color: "var(--star-100)",
           maxWidth: 760,
-          margin: "0 0 14px",
+          margin: 0,
         }}
       >
         {pluralize(scenarioCount, "scenario")}{" "}
         <span style={{ color: "var(--gold-500)" }}>{pluralize(providerCount, "contender")}</span>
       </h1>
-      <p
-        style={{
-          font: "400 16px/1.6 var(--font-sans)",
-          color: "var(--star-600)",
-          maxWidth: 600,
-          margin: 0,
-        }}
-      >
-        Every scenario charted against every contender — pass rates, cost, and latency in one view.
-      </p>
     </section>
   );
 }

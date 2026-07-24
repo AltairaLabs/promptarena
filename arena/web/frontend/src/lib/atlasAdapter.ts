@@ -33,7 +33,15 @@ function partOf(p: ContentPart): AtlasContentPart | null {
 
 function partsOf(m: Message): AtlasContentPart[] {
   if (m.parts?.length) return m.parts.map(partOf).filter(Boolean) as AtlasContentPart[];
-  return m.content ? [{ type: "text", text: m.content }] : [];
+  if (m.content) return [{ type: "text", text: m.content }];
+  // A tool-result message carries its output in tool_result.parts, not in
+  // content — without this it renders as an empty "tool" bubble. Surface the
+  // result (e.g. a workflow__transition's {event, target_state}) so the turn
+  // shows what the tool actually returned.
+  if (m.role === "tool" && m.tool_result?.parts?.length) {
+    return m.tool_result.parts.map(partOf).filter(Boolean) as AtlasContentPart[];
+  }
+  return [];
 }
 
 function toolCallsOf(m: Message): AtlasToolCall[] | undefined {
@@ -156,6 +164,27 @@ function tsOf(m: Message, i: number, baseMs: number): string {
   return new Date(baseMs + i * 1000).toISOString();
 }
 
+// enforceMonotonicTimestamps rewrites the adapted messages' timestamps to be
+// strictly increasing. The replay scrubber derives its range from min/max of
+// these timestamps, so a single bad value wrecks it: tool-result messages are
+// persisted with Go's zero time ("0001-01-01T00:00:00Z"), which parses to year
+// 1 and blows the range out to ~2000 years — collapsing every real turn into a
+// sliver and showing a nonsense end time. Any non-increasing (or unparseable)
+// timestamp is bumped to the previous one + 1s, so mock runs whose turns all
+// share a millisecond still spread into a readable, ordered scrubber.
+function enforceMonotonicTimestamps(messages: AtlasMessage[]): AtlasMessage[] {
+  let lastMs = Number.NEGATIVE_INFINITY;
+  for (const m of messages) {
+    let ms = Date.parse(m.timestamp);
+    if (Number.isNaN(ms) || ms <= lastMs) {
+      ms = (lastMs === Number.NEGATIVE_INFINITY ? Date.now() : lastMs) + 1000;
+    }
+    lastMs = ms;
+    m.timestamp = new Date(ms).toISOString();
+  }
+  return messages;
+}
+
 // ---- top-level ----
 
 export function adaptMessage(m: Message, i: number, run: RunResult, baseMs: number): AtlasMessage {
@@ -181,16 +210,18 @@ export function adaptMessage(m: Message, i: number, run: RunResult, baseMs: numb
 // No run context yet (checks stream separately), so this is lighter than adaptRun.
 export function adaptLiveMessages(messages: Message[]): AtlasMessage[] {
   const baseMs = Date.now();
-  return messages.map((m, i) => ({
-    id: `m${i}`,
-    role: toRole(m.role),
-    sequenceNum: i,
-    timestamp: m.timestamp ?? new Date(baseMs + i * 1000).toISOString(),
-    parts: partsOf(m),
-    toolCalls: toolCallsOf(m),
-    metrics: metricsOf(m),
-    meta: m.meta,
-  }));
+  return enforceMonotonicTimestamps(
+    messages.map((m, i) => ({
+      id: `m${i}`,
+      role: toRole(m.role),
+      sequenceNum: i,
+      timestamp: m.timestamp ?? new Date(baseMs + i * 1000).toISOString(),
+      parts: partsOf(m),
+      toolCalls: toolCallsOf(m),
+      metrics: metricsOf(m),
+      meta: m.meta,
+    })),
+  );
 }
 
 export interface AdaptedRun {
@@ -272,7 +303,9 @@ export function adaptAnyRun(run: RunResult | ActiveRun): AdaptedRun {
 
 export function adaptRun(run: RunResult): AdaptedRun {
   const baseMs = Date.parse(run.StartTime) || Date.now();
-  const messages = (run.Messages ?? []).map((m, i) => adaptMessage(m, i, run, baseMs));
+  const messages = enforceMonotonicTimestamps(
+    (run.Messages ?? []).map((m, i) => adaptMessage(m, i, run, baseMs)),
+  );
   const checks = conversationChecks(run);
   return {
     title: `${run.ScenarioID} · ${run.ProviderID}`,

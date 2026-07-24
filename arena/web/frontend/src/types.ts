@@ -86,6 +86,7 @@ export interface RunRequest {
   providers?: string[];
   scenarios?: string[];
   regions?: string[];
+  runs?: number; // how many times to run the field (each a distinct sweep)
 }
 
 export interface RunStartedResponse {
@@ -395,13 +396,17 @@ export interface TrialCell {
   scenarioId: string;
   providerId: string;
   key: string; // `${scenarioId}:${providerId}`
-  passRate: number; // 0-100
-  passed: boolean; // passRate resolves to a pass (assertions all passed)
-  best: boolean; // best provider in this scenario row
-  costUsd: number; // total cost; 0 => rendered "free"
-  latencyMs: number; // run duration in ms
-  runId: string; // the RunResult.RunID backing this cell (latest)
-  hasData: boolean; // false => empty cell (no run yet)
+  passRate: number; // 0-100, AGGREGATE pass rate across all of this cell's runs
+  passedCount: number; // number of runs that passed
+  totalRuns: number; // number of runs aggregated
+  passed: boolean; // passRate === 100 (every run passed — fully reliable)
+  scored: boolean; // has run data (a real aggregate)
+  history: ("pass" | "fail" | "error")[]; // each scored trial's outcome, oldest→newest (capped)
+  best: boolean; // most reliable provider in this scenario row
+  costUsd: number; // average cost per run
+  latencyMs: number; // average latency per run (ms)
+  runId: string; // the latest run's RunID (for reference/drill)
+  hasData: boolean; // false => empty cell (no runs yet)
 }
 
 export interface TrialRow {
@@ -428,4 +433,27 @@ export interface OverallGauge {
   passed: number;
   total: number;
   caption: string; // e.g. "13 / 20 passed"
+}
+
+// FieldEstimate projects the cost and wall-clock time of a "Run the field × N",
+// derived from each target cell's historical per-run averages. covered/total
+// report how many of the target cells actually had history — when covered <
+// total the totals are a lower bound (unrun cells contribute nothing).
+export interface FieldEstimate {
+  costUsd: number; // total estimated spend across all sweeps
+  timeMs: number; // estimated wall-clock time across all sweeps
+  covered: number; // target cells that had historical data to estimate from
+  total: number; // target cells in one sweep (selected scenarios × providers)
+}
+
+// RunBatch is one "Run the field" — every RunResult whose RunID shares the
+// leading timestamp prefix, summarized for the ledger.
+export interface RunBatch {
+  batchId: string; // the shared RunID timestamp prefix, e.g. "2026-07-23T14-50-02Z"
+  startedAt: string; // earliest StartTime in the batch (ISO), for display/sort
+  results: RunResult[]; // the runs in this batch
+  scenarios: string[]; // unique scenario ids covered
+  providers: string[]; // unique provider ids covered
+  passRate: number; // 0-100 across scored runs (0 when none scored)
+  totalCostUsd: number; // summed cost of the batch
 }

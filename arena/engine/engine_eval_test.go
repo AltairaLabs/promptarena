@@ -111,7 +111,7 @@ func TestResolveEvals(t *testing.T) {
 func TestExecuteEvalRun(t *testing.T) {
 	t.Run("generates correct runID format", func(t *testing.T) {
 		combo := RunCombination{EvalID: "test-eval"}
-		runID := generateRunID(combo)
+		runID := generateRunID(combo, "2026-01-01T00-00-00Z-0001")
 
 		assert.Contains(t, runID, "_eval_test-eval_")
 	})

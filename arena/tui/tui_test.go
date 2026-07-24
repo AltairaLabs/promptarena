@@ -229,6 +229,60 @@ func TestModel_BuildSummary_FromStateStoreError(t *testing.T) {
 	assert.Len(t, summary.Errors, 1)
 }
 
+func TestModel_BuildSummary_ConversationAssertionFailureCountsAsFailed(t *testing.T) {
+	// Regression for #39: a run that completes without a provider error but
+	// whose conversation-level assertions failed must count as a FAILED run,
+	// not a successful one. Otherwise the summary headline reads a false
+	// "Passed: 1 (100%)" directly above "Assertions Fail: N".
+	m := NewModel("test.yaml", 1)
+	m.activeRuns = []RunInfo{{RunID: "run-1", Scenario: "scn", Provider: "prov", Region: "us"}}
+	m.stateStore = &mockRunResultStore{
+		result: &statestore.RunResult{
+			RunID:      "run-1",
+			ScenarioID: "scn",
+			ProviderID: "prov",
+			Region:     "us",
+			ConversationAssertions: statestore.AssertionsSummary{
+				Total:  2,
+				Failed: 2,
+				Passed: false,
+			},
+		},
+	}
+
+	summary := m.BuildSummary("out")
+	require.NotNil(t, summary)
+	assert.Equal(t, 0, summary.SuccessCount, "a run with failed conversation assertions must not count as successful")
+	assert.Equal(t, 1, summary.FailedCount)
+	assert.Len(t, summary.Errors, 1, "the failed run should be surfaced in the failures list")
+}
+
+func TestModel_BuildSummary_PassingConversationAssertionsCountAsSuccess(t *testing.T) {
+	// The mirror of the regression: a clean run whose conversation assertions
+	// all passed must still count as successful.
+	m := NewModel("test.yaml", 1)
+	m.activeRuns = []RunInfo{{RunID: "run-1", Scenario: "scn", Provider: "prov", Region: "us"}}
+	m.stateStore = &mockRunResultStore{
+		result: &statestore.RunResult{
+			RunID:      "run-1",
+			ScenarioID: "scn",
+			ProviderID: "prov",
+			Region:     "us",
+			ConversationAssertions: statestore.AssertionsSummary{
+				Total:  2,
+				Failed: 0,
+				Passed: true,
+			},
+		},
+	}
+
+	summary := m.BuildSummary("out")
+	require.NotNil(t, summary)
+	assert.Equal(t, 1, summary.SuccessCount)
+	assert.Equal(t, 0, summary.FailedCount)
+	assert.Empty(t, summary.Errors)
+}
+
 // Tests for old render methods removed - now handled by panels/pages tests
 
 func TestHandleTurnEvents(t *testing.T) {

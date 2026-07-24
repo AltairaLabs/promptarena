@@ -1,4 +1,4 @@
-import { act, render, screen, fireEvent } from "@testing-library/react";
+import { act, render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import type { RunResult, RunOptionsResponse, ActiveRun, WorkflowGraph } from "@/types";
 
@@ -111,7 +111,8 @@ describe("App — Runs view", () => {
   it("renders the trial matrix given seeded historical results", async () => {
     render(<App />);
     expect(await screen.findByText("TRIAL MATRIX · SCENARIO × PROVIDER")).toBeInTheDocument();
-    expect(await screen.findByText("100%")).toBeInTheDocument();
+    // 100% shows in both the matrix cell and the (always-visible) ledger batch.
+    expect((await screen.findAllByText("100%")).length).toBeGreaterThan(0);
   });
 
   it("renders the instrument band above the trial matrix", async () => {
@@ -124,128 +125,144 @@ describe("App — Runs view", () => {
     ).toBeTruthy();
   });
 
-  it("hides HistoricalResults by default and shows it via the ledger toggle", async () => {
+  it("shows the ledger by default, without a show/hide toggle", async () => {
     render(<App />);
     await screen.findByText("TRIAL MATRIX · SCENARIO × PROVIDER");
-    expect(screen.queryByText("Previous Runs")).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: /show ledger/i }));
-    expect(await screen.findByText("Previous Runs")).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole("button", { name: /hide ledger/i }));
-    expect(screen.queryByText("Previous Runs")).not.toBeInTheDocument();
+    expect(await screen.findByText("Ledger")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /show ledger/i })).not.toBeInTheDocument();
   });
 
-  it("opens SessionReview when a populated matrix cell is clicked", async () => {
+  it("opens a run's transcript from the ledger", async () => {
     render(<App />);
-    const rate = await screen.findByText("100%");
-    fireEvent.click(rate);
-    // SessionReview replaces the matrix view; the matrix heading disappears.
+    await screen.findByText("TRIAL MATRIX · SCENARIO × PROVIDER");
+    // Open the seeded run from its ledger row (a passing run reads "Pass").
+    fireEvent.click((await screen.findByText("Pass")).closest("button")!);
+    // SessionReview replaces the dashboard; the matrix heading disappears.
     expect(screen.queryByText("TRIAL MATRIX · SCENARIO × PROVIDER")).not.toBeInTheDocument();
-    // SessionReview's Transcript tab renders instead of the old TrialInspector.
     expect(await screen.findByRole("button", { name: /^transcript$/i })).toBeInTheDocument();
-    await act(async () => {
-      await Promise.resolve();
-    });
+    await act(async () => { await Promise.resolve(); });
   });
 
-  // A live ActiveRun carries lowercase `messages`; a completed RunResult
-  // PascalCase `Messages`. The run-detail view used to branch on that shape
-  // and sent every in-flight run to the pre-migration TrialInspector, so a
-  // running trial showed the old UI for its whole duration. Both shapes must
-  // now render through SessionReview.
-  it("opens SessionReview for a still-running live run, not a legacy inspector", async () => {
-    useArenaEventsMock.mockReturnValue({
-      ...defaultArenaState(),
-      completedRunIds: [],
-      runs: {
-        "live-1": {
-          runId: "live-1",
-          scenario: "checkout",
-          provider: "mock",
-          region: "default",
-          startTime: "2026-07-07T00:00:00Z",
-          turnIndex: 1,
-          messages: [
-            { index: 0, role: "user", content: "live question" },
-            { index: 1, role: "assistant", content: "live answer" },
-          ],
-          costs: { inputTokens: 1, outputTokens: 2, totalCost: 0.01 },
-          status: "running",
-        } as ActiveRun,
-      },
+  it("steps through ledger runs with a position indicator, then highlights the row on return", async () => {
+    const r1 = mk({
+      RunID: "run-1", ScenarioID: "checkout", ProviderID: "claude", EndTime: "2026-07-07T00:00:03Z",
+      ConversationAssertions: { passed: true, failed: 0, total: 1, results: [] },
     });
+    const r2 = mk({
+      RunID: "run-2", ScenarioID: "checkout", ProviderID: "mock", EndTime: "2026-07-07T00:00:02Z",
+      ConversationAssertions: { passed: false, failed: 1, total: 1, results: [] },
+    });
+    const r3 = mk({
+      RunID: "run-3", ScenarioID: "checkout", ProviderID: "claude", EndTime: "2026-07-07T00:00:01Z",
+      Error: "403",
+    });
+    const byId: Record<string, RunResult> = { "run-1": r1, "run-2": r2, "run-3": r3 };
+    getResults.mockResolvedValueOnce(["run-1", "run-2", "run-3"]);
+    getResult
+      .mockImplementationOnce((id: string) => Promise.resolve(byId[id] ?? null))
+      .mockImplementationOnce((id: string) => Promise.resolve(byId[id] ?? null))
+      .mockImplementationOnce((id: string) => Promise.resolve(byId[id] ?? null));
 
     render(<App />);
-    // The live run overlays the checkout×mock cell, which carries its cost.
-    const cell = await screen.findByText("$0.010");
-    fireEvent.click(cell);
+    // Ledger is newest-first: run-1 (Pass), run-2 (Fail), run-3 (Error).
+    // Open the middle row → "2 of 3".
+    fireEvent.click((await screen.findByText("Fail")).closest("button")!);
+    expect(await screen.findByText("2 of 3")).toBeInTheDocument();
 
-    // SessionReview's Transcript tab, and the live turns inside it.
-    expect(await screen.findByRole("button", { name: /^transcript$/i })).toBeInTheDocument();
-    expect(await screen.findByText("live answer")).toBeInTheDocument();
-    await act(async () => {
-      await Promise.resolve();
+    // Next advances to the last run → "3 of 3", and Next is then disabled.
+    fireEvent.click(screen.getByRole("button", { name: /next run/i }));
+    expect(await screen.findByText("3 of 3")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /next run/i })).toBeDisabled();
+
+    // Back returns to the dashboard with that run's ledger row highlighted.
+    fireEvent.click(screen.getByText(/Back to ledger/));
+    const errorRow = (await screen.findByText("Error")).closest("button")!;
+    expect(errorRow).toHaveAttribute("aria-current", "true");
+  });
+
+  it("a stale reload that resolves last does not clobber the full ledger", async () => {
+    // Reproduces the ×N flood race: an early fetch (started when few runs
+    // existed) resolving AFTER a later fetch must not overwrite the ledger.
+    let resolveStale: (r: RunResult | null) => void = () => {};
+    const stalePromise = new Promise<RunResult | null>((res) => { resolveStale = res; });
+    const staleRun = mk({
+      RunID: "stale", ScenarioID: "checkout", ProviderID: "claude",
+      ConversationAssertions: { passed: true, failed: 0, total: 1, results: [] }, // "Pass"
     });
+    const r1 = mk({
+      RunID: "r1", ScenarioID: "checkout", ProviderID: "claude",
+      ConversationAssertions: { passed: false, failed: 1, total: 1, results: [] }, // "Fail"
+    });
+    const r2 = mk({ RunID: "r2", ScenarioID: "checkout", ProviderID: "mock", Error: "403" }); // "Error"
+    const byId: Record<string, RunResult> = { r1, r2 };
+
+    // First reload sees only the stale run (its getResult is deferred); the
+    // second reload sees the real pair and resolves immediately.
+    getResults.mockResolvedValueOnce(["stale"]).mockResolvedValueOnce(["r1", "r2"]);
+    const resolveById = (id: string) =>
+      id === "stale" ? stalePromise : Promise.resolve(byId[id] ?? null);
+    getResult
+      .mockImplementationOnce(resolveById)
+      .mockImplementationOnce(resolveById)
+      .mockImplementationOnce(resolveById);
+
+    const { rerender } = render(<App />);
+    // Let the first (debounced) reload actually fire and go in-flight on the
+    // stale run — only then is there a real in-flight fetch to be superseded.
+    await waitFor(() => expect(getResult).toHaveBeenCalledWith("stale"));
+
+    // More runs complete → a later reload supersedes the first.
+    useArenaEventsMock.mockReturnValue({ ...defaultArenaState(), completedRunIds: ["run-1", "run-2"] });
+    rerender(<App />);
+
+    // The second reload lands: ledger shows the real pair.
+    expect(await screen.findByText("Fail")).toBeInTheDocument();
+    expect(screen.getByText("Error")).toBeInTheDocument();
+
+    // Now the stale first reload finally resolves — it must be ignored.
+    await act(async () => { resolveStale(staleRun); await Promise.resolve(); });
+
+    expect(screen.getByText("Fail")).toBeInTheDocument();
+    expect(screen.getByText("Error")).toBeInTheDocument();
+    expect(screen.queryByText("Pass")).not.toBeInTheDocument(); // stale run did not clobber
+  });
+
+  it("clicking a matrix cell scopes the ledger to that scenario×provider", async () => {
+    render(<App />);
+    // Clicking an aggregate cell filters the ledger to its runs — it does NOT
+    // open a single run, and stays on the dashboard.
+    fireEvent.click((await screen.findAllByText("100%"))[0]);
+    expect(await screen.findByText(/checkout × claude/)).toBeInTheDocument();
+    expect(screen.getByText("TRIAL MATRIX · SCENARIO × PROVIDER")).toBeInTheDocument();
   });
 
   it("fetches the workflow graph on mount and offers it as a Workflow tab", async () => {
     render(<App />);
-    const rate = await screen.findByText("100%");
-    fireEvent.click(rate);
+    await screen.findByText("TRIAL MATRIX · SCENARIO × PROVIDER");
+    fireEvent.click((await screen.findByText("Pass")).closest("button")!);
     await screen.findByRole("button", { name: /^transcript$/i });
-
     expect(getWorkflow).toHaveBeenCalled();
     expect(await screen.findByRole("button", { name: /^workflow$/i })).toBeInTheDocument();
   });
 
-  it("does not let a completed-but-not-yet-refetched live run mask a failing historical result", async () => {
-    // The real, persisted result for run-1 failed one of its two assertions
-    // (50% pass rate). Its EndTime is deliberately earlier than the live
-    // run's startTime below, so a buggy overlay that includes completed
-    // ActiveRuns would pick the synthetic entry as "latest" and read it as
-    // a bare 100% pass (no ConversationAssertions + no Error on the
-    // synthetic RunResult falls through to a full pass).
+  it("a run that failed an assertion aggregates to 0% (a failed run, not its proportion)", async () => {
     const failingResult = mk({
-      RunID: "run-1",
-      ScenarioID: "checkout",
-      ProviderID: "claude",
-      EndTime: "2026-07-07T00:00:01Z",
+      RunID: "run-1", ScenarioID: "checkout", ProviderID: "claude",
       ConversationAssertions: { passed: false, failed: 1, total: 2, results: [] },
     });
     getResult.mockImplementationOnce((id: string) =>
       Promise.resolve(id === "run-1" ? failingResult : null),
     );
-    // Simulate the window between the "completed" SSE event and the async
-    // getResults() refetch: state.runs still holds the completed ActiveRun.
-    useArenaEventsMock.mockReturnValue({
-      ...defaultArenaState(),
-      runs: {
-        "run-1": {
-          runId: "run-1",
-          scenario: "checkout",
-          provider: "claude",
-          region: "default",
-          startTime: "2026-07-07T00:00:05Z",
-          turnIndex: 3,
-          messages: [],
-          costs: { inputTokens: 0, outputTokens: 0, totalCost: 0 },
-          status: "completed",
-        } satisfies ActiveRun,
-      },
-    });
 
     render(<App />);
-
-    expect(await screen.findByText("50%")).toBeInTheDocument();
+    // 0 of 1 runs passed → 0% (never the 50% assertion proportion).
+    expect(await screen.findByText("0%")).toBeInTheDocument();
     expect(screen.queryByText("100%")).not.toBeInTheDocument();
   });
 
   it("clicking a transcript message opens the SessionReview Inspector", async () => {
     const runWithMessages = mk({
-      RunID: "run-1",
-      ScenarioID: "checkout",
-      ProviderID: "claude",
+      RunID: "run-1", ScenarioID: "checkout", ProviderID: "claude",
       Messages: [
         { role: "user", content: "Hi" },
         { role: "assistant", content: "Hello!" },
@@ -257,8 +274,8 @@ describe("App — Runs view", () => {
     );
 
     render(<App />);
-    const rate = await screen.findByText("100%");
-    fireEvent.click(rate);
+    await screen.findByText("TRIAL MATRIX · SCENARIO × PROVIDER");
+    fireEvent.click((await screen.findByText("Pass")).closest("button")!);
     await screen.findByRole("button", { name: /^transcript$/i });
 
     expect(screen.queryByText("Overview")).not.toBeInTheDocument();
@@ -266,54 +283,13 @@ describe("App — Runs view", () => {
     expect(await screen.findByText("Overview")).toBeInTheDocument();
   });
 
-  it("selecting an OLDER run from the ledger shows that run's transcript, not the newer run pinned to the matrix cell", async () => {
-    const olderFailingRun = mk({
-      RunID: "run-old",
-      ScenarioID: "checkout",
-      ProviderID: "claude",
-      StartTime: "2026-07-01T00:00:00Z",
-      EndTime: "2026-07-01T00:00:01Z",
-      Messages: [{ role: "assistant", content: "older-answer" }],
-      Cost: { total_cost_usd: 0.01, input_tokens: 0, output_tokens: 0, input_cost_usd: 0, output_cost_usd: 0 },
-      Duration: 500,
-      ConversationAssertions: { passed: false, failed: 1, total: 2, results: [] },
-    });
-    const newerPassingRun = mk({
-      RunID: "run-new",
-      ScenarioID: "checkout",
-      ProviderID: "claude",
-      StartTime: "2026-07-07T00:00:00Z",
-      EndTime: "2026-07-07T00:00:01Z",
-      Messages: [{ role: "assistant", content: "newer-answer" }],
-      Cost: { total_cost_usd: 0.02, input_tokens: 0, output_tokens: 0, input_cost_usd: 0, output_cost_usd: 0 },
-      Duration: 900,
-      ConversationAssertions: { passed: true, failed: 0, total: 2, results: [] },
-    });
-    getResults.mockResolvedValueOnce(["run-old", "run-new"]);
-    getResult.mockImplementationOnce(() => Promise.resolve(olderFailingRun));
-    getResult.mockImplementationOnce(() => Promise.resolve(newerPassingRun));
-
-    render(<App />);
-    // The matrix cell aggregates to the latest (passing) run — confirm the
-    // dashboard is up before diving into the ledger.
-    await screen.findByText("TRIAL MATRIX · SCENARIO × PROVIDER");
-
-    fireEvent.click(screen.getByRole("button", { name: /show ledger/i }));
-    await screen.findByText("Previous Runs");
-
-    // Only the older run failed, so "Fail" uniquely identifies its row.
-    fireEvent.click(screen.getByText("Fail"));
-
-    expect(await screen.findByText("older-answer")).toBeInTheDocument();
-    expect(screen.queryByText("newer-answer")).not.toBeInTheDocument();
-  });
-
   it("renders Hero + CommandStrip above the instrument band and trial matrix", async () => {
     render(<App />);
     const commandStripLabel = await screen.findByText("CHART A RUN");
     const gaugeLabel = await screen.findByText("PASS RATE · ALL TRIALS");
     const matrixHeading = await screen.findByText("TRIAL MATRIX · SCENARIO × PROVIDER");
-    expect(screen.getByText(/^THE ARENA · CHARTED /)).toBeInTheDocument();
+    // The dateline reflects the latest completed run, which loads async.
+    expect(await screen.findByText(/^THE ARENA · CHARTED /)).toBeInTheDocument();
     expect(
       commandStripLabel.compareDocumentPosition(gaugeLabel) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
@@ -322,7 +298,7 @@ describe("App — Runs view", () => {
     ).toBeTruthy();
   });
 
-  it("selecting a scenario chip updates the CommandStrip provider label to that scenario's best provider", async () => {
+  it("selecting a scenario chip updates the CommandStrip readout to that scenario against the whole field", async () => {
     getRunOptions.mockResolvedValueOnce({
       providers: [
         { id: "claude", type: "anthropic" },
@@ -352,26 +328,24 @@ describe("App — Runs view", () => {
 
     render(<App />);
     await screen.findByText("CHART A RUN");
-    expect(await screen.findByText("claude · checkout")).toBeInTheDocument();
+    // All scenarios are selected by default → the readout counts them.
+    expect(await screen.findByText("2 scenarios · 2 contenders = 4 trials")).toBeInTheDocument();
 
+    // Toggling a pill off drops it from the selection.
     fireEvent.click(screen.getByRole("button", { name: "refund" }));
-    expect(await screen.findByText("mock · refund")).toBeInTheDocument();
+    expect(await screen.findByText("1 scenario · 2 contenders = 2 trials")).toBeInTheDocument();
   });
 
-  it("CommandStrip's Run trial starts the selected scenario across ALL providers", async () => {
+  it("CommandStrip's Run the field runs every selected scenario across ALL providers", async () => {
     render(<App />);
     await screen.findByText("CHART A RUN");
-    // Wait for selectedScenario's async default (set in a useEffect once
-    // scenarios load) to land — otherwise the button is still disabled and
-    // the click is a no-op, same race any other "disabled until ready"
-    // button in this suite has to wait out.
-    await screen.findByText("claude · checkout");
+    // Wait for the all-scenarios default to seed (a useEffect once options
+    // load) — otherwise the button is disabled and the click is a no-op.
+    await screen.findByText("1 scenario · 2 contenders = 2 trials");
 
-    // TopBar no longer renders a Run trial button — CommandStrip is the only
-    // one left, so this is unambiguous.
-    fireEvent.click(screen.getByText(/Run trial/));
+    fireEvent.click(screen.getByText(/Run the field/));
 
-    expect(startRun).toHaveBeenCalledWith({ providers: ["claude", "mock"], scenarios: ["checkout"] });
+    expect(startRun).toHaveBeenCalledWith({ providers: ["claude", "mock"], scenarios: ["checkout"], runs: 1 });
   });
 
   it("clicking an empty matrix cell starts a run for just that scenario+provider", async () => {
@@ -380,6 +354,6 @@ describe("App — Runs view", () => {
     const runCellButton = await screen.findByRole("button", { name: "Run checkout on mock" });
     fireEvent.click(runCellButton);
 
-    expect(startRun).toHaveBeenCalledWith({ providers: ["mock"], scenarios: ["checkout"] });
+    expect(startRun).toHaveBeenCalledWith({ providers: ["mock"], scenarios: ["checkout"], runs: 1 });
   });
 });

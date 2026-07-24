@@ -180,7 +180,7 @@ func TestGenerateRunID_Uniqueness(t *testing.T) {
 	// Generate many IDs and verify they're unique (nonce provides uniqueness)
 	seen := make(map[string]bool)
 	for i := 0; i < 100; i++ {
-		id := generateRunID(combo)
+		id := generateRunID(combo, "2026-01-01T00-00-00Z-0001")
 		if seen[id] {
 			t.Errorf("Duplicate run ID generated: %s", id)
 		}
