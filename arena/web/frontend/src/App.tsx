@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState, Component } from "react";
 import type { ReactNode, ErrorInfo } from "react";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, ArrowRight } from "lucide-react";
 import { TopBar } from "@/components/arena/TopBar";
 import { Hero } from "@/components/arena/Hero";
 import { CommandStrip } from "@/components/arena/CommandStrip";
@@ -15,10 +15,15 @@ import { useArenaEvents } from "@/hooks/useArenaEvents";
 import { useArenaAPI } from "@/hooks/useArenaAPI";
 import { useTheme } from "@/hooks/useTheme";
 import { AudioPlayer } from "@/audio/player";
-import { buildMatrix, overlayWorkflowRun } from "@/lib/arenaView";
+import { buildMatrix, estimateFieldRun, orderLedgerRows, overlayWorkflowRun, runScored } from "@/lib/arenaView";
 import { adaptAnyRun, adaptWorkflow, isRunResult } from "@/lib/atlasAdapter";
 import { arenaInspectorTabs } from "@/lib/arenaInspectorTabs";
 import type { RunResult, ActiveRun, ProviderInfo, ScenarioInfo, WorkflowGraph } from "@/types";
+
+// RELOAD_DEBOUNCE_MS coalesces the burst of run-completion events from a big
+// field run into a single historical-results refetch, instead of one refetch
+// per completed run (which storms the store and collapses the ledger).
+const RELOAD_DEBOUNCE_MS = 250;
 
 // activeRunToResult maps a still-running ActiveRun into a synthetic
 // RunResult-shaped entry so buildMatrix can overlay it onto the trial
@@ -94,10 +99,20 @@ export default function App() {
   const { theme, toggle: toggleTheme } = useTheme();
   const [activeTab, setActiveTab] = useState<"runs" | "chat">("runs");
   const { startRun, getResults, getResult, getConfig, getRunOptions, clearResults, getWorkflow, loading } = useArenaAPI();
+  // selectedRunId is the current / last-viewed run (from a ledger row). It
+  // outlives the transcript view so the ledger keeps that row highlighted after
+  // you return — "here's where you were". transcriptOpen gates the transcript
+  // page itself; closing it (Back) leaves selectedRunId set for the highlight.
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
-  const [selectedKey, setSelectedKey] = useState<string | null>(null);
-  const [showLedger, setShowLedger] = useState(false);
-  const [selectedScenario, setSelectedScenario] = useState<string | null>(null);
+  const [transcriptOpen, setTranscriptOpen] = useState(false);
+  // Scenarios are multi-select (all selected by default once loaded); a field
+  // run covers every selected scenario.
+  const [selectedScenarios, setSelectedScenarios] = useState<string[]>([]);
+  // The ledger's scenario×provider scope, set by clicking an (aggregate) matrix
+  // cell to drill into the individual runs behind it.
+  const [cellFilter, setCellFilter] = useState<{ scenarioId: string; providerId: string } | null>(null);
+  // How many times "Run the field" sweeps the grid (each a distinct sweep).
+  const [runCount, setRunCount] = useState(1);
   const [startError, setStartError] = useState<string | null>(null);
   const [historicalResults, setHistoricalResults] = useState<RunResult[]>([]);
   const [providers, setProviders] = useState<ProviderInfo[]>([]);
@@ -125,14 +140,16 @@ export default function App() {
       .catch(() => {});
   }, [getRunOptions]);
 
-  // CommandStrip's chip selection defaults to the first scenario once
-  // run-options land — mirrors the old pickers' "first scenario by sort
-  // order" default.
+  // Scenario pills default to ALL scenarios once run-options land. Guarded by a
+  // ref so it only seeds once — otherwise deselecting every pill (None) would
+  // immediately re-select them all.
+  const didSeedScenarios = useRef(false);
   useEffect(() => {
-    if (!selectedScenario && scenarios.length > 0) {
-      setSelectedScenario(scenarios[0].id);
+    if (!didSeedScenarios.current && scenarios.length > 0) {
+      setSelectedScenarios(scenarios.map((s) => s.id));
+      didSeedScenarios.current = true;
     }
-  }, [scenarios, selectedScenario]);
+  }, [scenarios]);
 
   // TopBar's promptpack context — "<name> · <version>" when the arena
   // config has a loaded pack, else omitted entirely (TopBar renders nothing
@@ -182,40 +199,27 @@ export default function App() {
     setListeningRunId(runId);
   }, [listeningRunId]);
 
-  // Track runIds we've already seen so a freshly-spawned run can be auto-
-  // selected even when StartRun returns no runId.
-  const knownRunIdsRef = useRef<Set<string>>(new Set(Object.keys(state.runs)));
-  const [pendingAutoSelect, setPendingAutoSelect] = useState(false);
-
-  // Load historical results on mount and after each run completes.
+  // Load historical results on mount and after runs complete. A field run of N
+  // sweeps completes ~N×cells runs in a burst, so completedCount ticks up
+  // rapidly. Refetching the whole store on every tick is an O(N²) request storm
+  // — under it, getResult calls fail and get filtered out, collapsing the ledger
+  // to a stale handful ("5 of 500"). So the reload is DEBOUNCED: rapid
+  // completions coalesce into one refetch after they settle. The `stale` guard
+  // then ensures only the latest refetch writes state (out-of-order responses
+  // can't clobber a fresher one). The live matrix still animates in real time —
+  // it overlays in-flight runs from SSE state, independent of this reload.
   const completedCount = state.completedRunIds.length;
   useEffect(() => {
-    getResults().then(async (ids) => {
-      if (!ids || ids.length === 0) { setHistoricalResults([]); return; }
-      const results = await Promise.all(ids.map((id) => getResult(id).catch(() => null)));
-      setHistoricalResults(results.filter((r): r is RunResult => r !== null));
-    }).catch(() => {});
+    let stale = false;
+    const timer = setTimeout(() => {
+      getResults().then(async (ids) => {
+        if (!ids || ids.length === 0) { if (!stale) setHistoricalResults([]); return; }
+        const results = await Promise.all(ids.map((id) => getResult(id).catch(() => null)));
+        if (!stale) setHistoricalResults(results.filter((r): r is RunResult => r !== null));
+      }).catch(() => {});
+    }, RELOAD_DEBOUNCE_MS);
+    return () => { stale = true; clearTimeout(timer); };
   }, [getResults, getResult, completedCount]);
-
-  // When the user clicks Start Run we set pendingAutoSelect; the next new
-  // runId that lands in state.runs gets auto-selected so the demo flow is
-  // "click Run → page navigates to live conversation."
-  useEffect(() => {
-    const ids = Object.keys(state.runs);
-    if (pendingAutoSelect) {
-      // Skip synthetic interactive-chat runs — they have no RunDetail to show.
-      const newId = ids.find(
-        (id) => !knownRunIdsRef.current.has(id) && state.runs[id]?.scenario !== "interactive"
-      );
-      if (newId) {
-        const newRun = state.runs[newId];
-        if (newRun) setSelectedKey(`${newRun.scenario}:${newRun.provider}`);
-        setSelectedRunId(newId);
-        setPendingAutoSelect(false);
-      }
-    }
-    knownRunIdsRef.current = new Set(ids);
-  }, [state.runs, pendingAutoSelect]);
 
   // Exclude synthetic interactive-chat entries from the runs-tab aggregates.
   const liveRuns = Object.values(state.runs).filter((r) => r.scenario !== "interactive");
@@ -231,117 +235,127 @@ export default function App() {
     () => [...historicalResults, ...liveRuns.filter((r) => r.status === "running").map(activeRunToResult)],
     [historicalResults, liveRuns],
   );
+  // The matrix aggregates every run per scenario×provider — a reliability view
+  // across the model's non-determinism. It always shows all runs; individual
+  // runs live in the ledger.
   const matrix = useMemo(
     () => buildMatrix(matrixResults, providers, scenarios),
     [matrixResults, providers, scenarios],
   );
 
-  // CommandStrip's chip-click contract: clicking a scenario selects that
-  // scenario's best provider (matrix row's `best` cell), falling back to
-  // the row's first provider when nothing's run yet.
-  const bestProviderForScenario = useCallback(
-    (scenarioId: string | null): { id: string; label: string } | undefined => {
-      if (!scenarioId) return undefined;
-      const row = matrix.rows.find((r) => r.scenarioId === scenarioId);
-      const cell = row?.cells.find((c) => c.best) ?? row?.cells[0];
-      if (!cell) return undefined;
-      return matrix.providers.find((p) => p.id === cell.providerId) ?? { id: cell.providerId, label: cell.providerId };
-    },
-    [matrix],
-  );
-  const chartProvider = useMemo(
-    () => bestProviderForScenario(selectedScenario),
-    [bestProviderForScenario, selectedScenario],
+  // fieldEstimate projects the spend + wall-clock of the pending "Run the
+  // field × N" from each target cell's historical averages — null until there's
+  // past data for at least one selected cell.
+  const fieldEstimate = useMemo(
+    () => estimateFieldRun(matrix, selectedScenarios, runCount),
+    [matrix, selectedScenarios, runCount],
   );
 
-  // The Trial Inspector is driven entirely off selectedKey: it looks up the
-  // backing cell in the matrix, then the run behind that cell — the saved
-  // RunResult if one's landed, else the still-running ActiveRun.
-  const selectedCell = useMemo(
-    () => (selectedKey ? matrix.rows.flatMap((row) => row.cells).find((c) => c.key === selectedKey) : undefined),
-    [matrix, selectedKey],
-  );
-  // The inspector's run prefers the SPECIFIC run identified by selectedRunId
-  // (set when a ledger/historical row is clicked) over the cell's latest
-  // run — buildMatrix always pins a cell's runId to the most recent run for
-  // that scenario:provider, so an older ledger row would otherwise be
-  // shadowed by a newer run in the same cell. Falls back to the run behind
-  // selectedCell.runId, then to a matching live ActiveRun.
-  const selectedCellRun: RunResult | ActiveRun | undefined = useMemo(() => {
-    const bySelectedRunId = selectedRunId
-      ? historicalResults.find((r) => r.RunID === selectedRunId)
-      : undefined;
-    if (bySelectedRunId) return bySelectedRunId;
+  // gridResults scopes the instrument band (trial count, spend, suite trend) to
+  // the SAME population as the matrix/gauge: scored trials for the current
+  // config's scenarios × providers. This keeps every number consistent — no
+  // stray off-config runs inflating the count.
+  const gridResults = useMemo(() => {
+    const scen = new Set(scenarios.map((s) => s.id));
+    const prov = new Set(providers.map((p) => p.id));
+    return matrixResults.filter((r) => scen.has(r.ScenarioID) && prov.has(r.ProviderID) && runScored(r));
+  }, [matrixResults, scenarios, providers]);
 
-    const byCell = selectedCell?.runId
-      ? (historicalResults.find((r) => r.RunID === selectedCell.runId) ??
-         liveRuns.find((r) => r.runId === selectedCell.runId))
-      : undefined;
-    if (byCell) return byCell;
+  // The ledger lists individual trials for the current config's grid — same
+  // scope as the matrix, so old off-config runs in the out dir don't show a
+  // contradictory count.
+  const gridHistorical = useMemo(() => {
+    const scen = new Set(scenarios.map((s) => s.id));
+    const prov = new Set(providers.map((p) => p.id));
+    return historicalResults.filter((r) => scen.has(r.ScenarioID) && prov.has(r.ProviderID));
+  }, [historicalResults, scenarios, providers]);
 
-    return selectedRunId ? liveRuns.find((r) => r.runId === selectedRunId) : undefined;
-  }, [selectedRunId, selectedCell, historicalResults, liveRuns]);
-
-
-  // Selecting a matrix cell drives both the matrix's own selection ring and
-  // the run detail view (which reads off selectedKey); selectedRunId is kept
-  // in step so the specific run behind the cell resolves.
-  const handleSelectCell = useCallback((key: string) => {
-    setSelectedKey(key);
-    const cell = matrix.rows.flatMap((row) => row.cells).find((c) => c.key === key);
-    if (cell?.hasData && cell.runId) {
-      setSelectedRunId(cell.runId);
-
+  // chartedAt drives the Hero's dateline: the most recent completed run, else
+  // null (so the eyebrow omits the dateline rather than claiming "charted
+  // today").
+  const chartedAt = useMemo(() => {
+    let latest = 0;
+    for (const r of historicalResults) {
+      const t = Date.parse(r.EndTime || r.StartTime || "");
+      if (!Number.isNaN(t) && t > latest) latest = t;
     }
-  }, [matrix]);
-
-  // Clears the Trial Inspector back to the matrix/empty-hero view.
-  const handleBackFromInspector = useCallback(() => {
-    setSelectedKey(null);
-    setSelectedRunId(null);
-
-  }, []);
-
-  // Rows in the ledger (HistoricalResults) carry a RunResult, not a matrix
-  // key — derive the key so selecting a ledger row opens the same Trial
-  // Inspector a matrix click would.
-  const handleSelectHistoricalRun = useCallback((id: string) => {
-    const r = historicalResults.find((x) => x.RunID === id);
-    if (r) setSelectedKey(`${r.ScenarioID}:${r.ProviderID}`);
-    setSelectedRunId(id);
-
+    return latest > 0 ? new Date(latest).toISOString() : null;
   }, [historicalResults]);
 
-  // handleStartRun kicks off a run for an arbitrary set of provider/scenario
-  // ids — shared by "Run trial" (all providers) and a single matrix-cell run
-  // (one provider × one scenario).
-  const handleStartRun = useCallback(async (providerIds: string[], scenarioIds: string[]) => {
-    setStartError(null);
-    setPendingAutoSelect(true);
-    // If the user is currently viewing a previous run's detail, navigate
-    // them back to the dashboard immediately. Without this they'd stare
-    // at the old run until SSE delivered the first turn of the new one,
-    // which feels like nothing happened. The dashboard shows the live
-    // run appearing, then pendingAutoSelect kicks in and switches to
-    // the new run's detail view when the runId lands.
-    setSelectedRunId(null);
-    setSelectedKey(null);
+  // The open run (from a ledger row): the saved RunResult, else a live one.
+  const selectedCellRun: RunResult | ActiveRun | undefined = useMemo(() => {
+    if (!selectedRunId) return undefined;
+    return (
+      historicalResults.find((r) => r.RunID === selectedRunId) ??
+      liveRuns.find((r) => r.runId === selectedRunId)
+    );
+  }, [selectedRunId, historicalResults, liveRuns]);
 
+  // Clicking a matrix cell (an aggregate) scopes the ledger to that
+  // scenario×provider's individual runs — a drill from the rate to the runs
+  // behind it. It does NOT open a single run.
+  const handleSelectCell = useCallback((key: string) => {
+    const cell = matrix.rows.flatMap((row) => row.cells).find((c) => c.key === key);
+    if (cell?.hasData) setCellFilter({ scenarioId: cell.scenarioId, providerId: cell.providerId });
+  }, [matrix]);
+  const clearCellFilter = useCallback(() => setCellFilter(null), []);
+
+  // Ledger row → open that run's transcript.
+  const handleSelectRun = useCallback((runId: string) => {
+    setSelectedRunId(runId);
+    setTranscriptOpen(true);
+  }, []);
+
+  // Close the transcript, back to the dashboard — but keep selectedRunId so the
+  // ledger still shows which row you were on.
+  const handleBackFromInspector = useCallback(() => setTranscriptOpen(false), []);
+
+  // ledgerRunIds is the run order the ledger shows (scoped by the cell filter,
+  // newest first) — the sequence the run-details back/next stepper walks, so the
+  // stepper and the ledger stay in lockstep.
+  const ledgerRunIds = useMemo(
+    () => orderLedgerRows(gridHistorical, cellFilter).map((r) => r.RunID),
+    [gridHistorical, cellFilter],
+  );
+  const ledgerIndex = selectedRunId ? ledgerRunIds.indexOf(selectedRunId) : -1;
+  const stepRun = useCallback(
+    (delta: number) => {
+      if (ledgerIndex < 0) return;
+      const next = ledgerRunIds[ledgerIndex + delta];
+      if (next) setSelectedRunId(next);
+    },
+    [ledgerIndex, ledgerRunIds],
+  );
+
+  // Scenario pill toggles.
+  const toggleScenario = useCallback((id: string) => {
+    setSelectedScenarios((cur) => (cur.includes(id) ? cur.filter((s) => s !== id) : [...cur, id]));
+  }, []);
+  const selectAllScenarios = useCallback(() => setSelectedScenarios(scenarios.map((s) => s.id)), [scenarios]);
+  const selectNoScenarios = useCallback(() => setSelectedScenarios([]), []);
+
+  // handleStartRun kicks off a run for an arbitrary set of provider/scenario
+  // ids — shared by "Run the field" (all providers) and a single matrix-cell
+  // run (one provider × one scenario). Stays on the dashboard so the new runs
+  // stream into the matrix in place.
+  const handleStartRun = useCallback(async (providerIds: string[], scenarioIds: string[], runs = 1) => {
+    setStartError(null);
+    setTranscriptOpen(false);
+    setSelectedRunId(null);
     try {
-      await startRun({ providers: providerIds, scenarios: scenarioIds });
+      await startRun({ providers: providerIds, scenarios: scenarioIds, runs });
     } catch (err) {
-      setPendingAutoSelect(false);
       setStartError(err instanceof Error ? err.message : "Failed to start run");
     }
   }, [startRun]);
 
-  // Backs the CommandStrip's "Run trial" — runs the selected scenario across
-  // EVERY configured provider so it fills the whole matrix row in one go
-  // (real providers are billed; that's intended).
+  // Backs the CommandStrip's "Run the field" — runs EVERY selected scenario
+  // across EVERY configured provider, runCount times (each a distinct sweep;
+  // real providers are billed, that's intended).
   const handleRunTrial = useCallback(() => {
-    if (!selectedScenario || providers.length === 0) return;
-    void handleStartRun(providers.map((p) => p.id), [selectedScenario]);
-  }, [selectedScenario, providers, handleStartRun]);
+    if (selectedScenarios.length === 0 || providers.length === 0) return;
+    void handleStartRun(providers.map((p) => p.id), selectedScenarios, runCount);
+  }, [selectedScenarios, providers, handleStartRun, runCount]);
 
   // Clicking an empty matrix cell runs just that scenario×provider pair.
   const handleRunCell = useCallback((scenarioId: string, providerId: string) => {
@@ -382,15 +396,44 @@ export default function App() {
         ) : (
           <>
             <div className="transition-[margin] duration-200">
-              {selectedKey && selectedCell ? (
+              {transcriptOpen ? (
                 <div className="space-y-4">
-                  <button
-                    onClick={handleBackFromInspector}
-                    className="flex items-center gap-2 text-sm hover:underline"
-                    style={{ color: "var(--text-link)" }}
-                  >
-                    <ArrowLeft className="h-4 w-4" /> Back
-                  </button>
+                  <div className="flex items-center justify-between">
+                    <button
+                      onClick={handleBackFromInspector}
+                      className="flex items-center gap-2 text-sm hover:underline"
+                      style={{ color: "var(--text-link)" }}
+                    >
+                      <ArrowLeft className="h-4 w-4" /> Back to ledger
+                    </button>
+                    {ledgerIndex >= 0 && ledgerRunIds.length > 1 && (
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={() => stepRun(-1)}
+                          disabled={ledgerIndex <= 0}
+                          aria-label="previous run"
+                          className="flex items-center gap-1 text-sm disabled:opacity-40 disabled:cursor-not-allowed hover:underline"
+                          style={{ color: "var(--text-link)" }}
+                        >
+                          <ArrowLeft className="h-4 w-4" /> Prev
+                        </button>
+                        <span style={{ font: "12px var(--font-mono)", color: "var(--star-700)" }}>
+                          {ledgerIndex + 1} of {ledgerRunIds.length}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => stepRun(1)}
+                          disabled={ledgerIndex >= ledgerRunIds.length - 1}
+                          aria-label="next run"
+                          className="flex items-center gap-1 text-sm disabled:opacity-40 disabled:cursor-not-allowed hover:underline"
+                          style={{ color: "var(--text-link)" }}
+                        >
+                          Next <ArrowRight className="h-4 w-4" />
+                        </button>
+                      </div>
+                    )}
+                  </div>
                   {selectedCellRun ? (
                     (() => {
                       // One path for both shapes. Live and completed runs
@@ -442,14 +485,19 @@ export default function App() {
                 </div>
               ) : (
                 <div className="space-y-8">
-                  <Hero scenarioCount={scenarios.length} providerCount={providers.length} />
+                  <Hero scenarioCount={scenarios.length} providerCount={providers.length} chartedAt={chartedAt} />
                   <CommandStrip
                     scenarios={scenarios}
-                    selectedScenario={selectedScenario}
-                    selectedProviderLabel={chartProvider?.label ?? null}
-                    onSelectScenario={setSelectedScenario}
+                    selected={selectedScenarios}
+                    onToggle={toggleScenario}
+                    onSelectAll={selectAllScenarios}
+                    onSelectNone={selectNoScenarios}
+                    providerCount={providers.length}
+                    runCount={runCount}
+                    onRunCountChange={setRunCount}
                     onRunTrial={handleRunTrial}
-                    runDisabled={!state.connected || loading || !selectedScenario || providers.length === 0}
+                    estimate={fieldEstimate}
+                    runDisabled={!state.connected || loading || selectedScenarios.length === 0 || providers.length === 0}
                   />
                   {startError && (
                     <div
@@ -465,26 +513,26 @@ export default function App() {
                       {startError}
                     </div>
                   )}
-                  <div className="flex justify-end">
-                    <button
-                      onClick={() => setShowLedger((v) => !v)}
-                      className="rounded-lg border border-mist bg-surface px-3 py-1.5 text-xs font-medium text-fg-muted hover:text-fg hover:bg-surface-2 transition-colors"
-                    >
-                      {showLedger ? "Hide ledger" : "Show ledger"}
-                    </button>
-                  </div>
-                  <InstrumentBand matrix={matrix} results={matrixResults} />
-                  <TrialMatrix matrix={matrix} selectedKey={selectedKey} onSelect={handleSelectCell} onRunCell={handleRunCell} />
-                  {showLedger && (
-                    <HistoricalResults
-                      results={historicalResults}
-                      onSelectRun={handleSelectHistoricalRun}
-                      onClear={async () => {
-                        await clearResults();
-                        setHistoricalResults([]);
-                      }}
-                    />
-                  )}
+                  <InstrumentBand matrix={matrix} results={gridResults} />
+                  <TrialMatrix
+                    matrix={matrix}
+                    selectedKey={cellFilter ? `${cellFilter.scenarioId}:${cellFilter.providerId}` : null}
+                    onSelect={handleSelectCell}
+                    onRunCell={handleRunCell}
+                  />
+                  <HistoricalResults
+                    results={gridHistorical}
+                    onSelectRun={handleSelectRun}
+                    selectedRunId={selectedRunId}
+                    filter={cellFilter}
+                    onClearFilter={clearCellFilter}
+                    onClear={async () => {
+                      await clearResults();
+                      setHistoricalResults([]);
+                      setCellFilter(null);
+                      setSelectedRunId(null);
+                    }}
+                  />
                 </div>
               )}
             </div>

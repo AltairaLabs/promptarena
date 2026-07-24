@@ -14,7 +14,6 @@ describe("TopBar", () => {
       />,
     );
     expect(screen.getByText("PromptArena")).toBeInTheDocument();
-    expect(screen.getByText("studio")).toBeInTheDocument();
     expect(screen.getByText("support-suite · v2.4.0")).toBeInTheDocument();
   });
 

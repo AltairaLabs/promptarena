@@ -3,9 +3,15 @@ import { describe, it, expect } from "vitest";
 import { Hero } from "./Hero";
 
 describe("Hero", () => {
-  it("renders the eyebrow with the stable 'THE ARENA · CHARTED ' prefix", () => {
+  it("appends the CHARTED dateline from the latest run date", () => {
+    render(<Hero scenarioCount={4} providerCount={3} chartedAt="2026-07-07T12:00:00Z" />);
+    expect(screen.getByText(/^THE ARENA · CHARTED jul \d+$/)).toBeInTheDocument();
+  });
+
+  it("omits the dateline entirely when nothing has been charted yet", () => {
     render(<Hero scenarioCount={4} providerCount={3} />);
-    expect(screen.getByText(/^THE ARENA · CHARTED /)).toBeInTheDocument();
+    expect(screen.getByText("THE ARENA")).toBeInTheDocument();
+    expect(screen.queryByText(/CHARTED/)).not.toBeInTheDocument();
   });
 
   it("renders the H1 with real counts and pluralizes scenarios/contenders", () => {

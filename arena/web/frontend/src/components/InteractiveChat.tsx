@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, RotateCcw } from "lucide-react";
 import { LiveConsole, Button, Card, Select, Checkbox, Input, Alert } from "@altairalabs/atlas";
 import { useInteractiveChat } from "@/hooks/useInteractiveChat";
 import { useVoiceCall } from "@/hooks/useVoiceCall";
@@ -305,10 +305,10 @@ export function InteractiveChat({ state, registerInteractiveRun, onBack }: Inter
         headerExtra={
           <span style={{ display: "inline-flex", alignItems: "center", gap: 14 }}>
             <button onClick={handleReset} style={ghostLinkStyle}>
-              <ArrowLeft className="h-4 w-4" /> Reset
+              <RotateCcw className="h-4 w-4" /> New chat
             </button>
             <button onClick={onBack} style={ghostLinkStyle}>
-              ← Runs
+              <ArrowLeft className="h-4 w-4" /> Runs
             </button>
           </span>
         }

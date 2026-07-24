@@ -19,7 +19,11 @@ function makeMatrix(): TrialMatrixModel {
             providerId: "claude",
             key: "checkout:claude",
             passRate: 100,
+            passedCount: 2,
+            totalRuns: 2,
             passed: true,
+            scored: true,
+            history: [],
             best: true,
             costUsd: 0.01,
             latencyMs: 633792,
@@ -31,9 +35,13 @@ function makeMatrix(): TrialMatrixModel {
             providerId: "gpt4o",
             key: "checkout:gpt4o",
             passRate: 50,
+            passedCount: 1,
+            totalRuns: 2,
             passed: false,
+            scored: true,
+            history: [],
             best: false,
-            costUsd: 0,
+            costUsd: 0.02,
             latencyMs: 0.634,
             runId: "r2",
             hasData: true,
@@ -49,7 +57,11 @@ function makeMatrix(): TrialMatrixModel {
             providerId: "claude",
             key: "refund:claude",
             passRate: 0,
+            passedCount: 0,
+            totalRuns: 0,
             passed: false,
+            scored: false,
+            history: [],
             best: false,
             costUsd: 0,
             latencyMs: 0,
@@ -61,7 +73,11 @@ function makeMatrix(): TrialMatrixModel {
             providerId: "gpt4o",
             key: "refund:gpt4o",
             passRate: 0,
+            passedCount: 0,
+            totalRuns: 0,
             passed: false,
+            scored: false,
+            history: [],
             best: false,
             costUsd: 0,
             latencyMs: 0,
@@ -106,6 +122,44 @@ describe("TrialMatrix", () => {
     render(<TrialMatrix matrix={makeMatrix()} selectedKey={null} onSelect={() => {}} />);
     const cellButton = screen.getByText("50%").closest("button")!;
     expect(cellButton.querySelector("img")).toBeNull();
+  });
+
+  it("renders a scored data cell as an em-dash, not a percentage, so an unjudged run never reads as a win", () => {
+    const m = makeMatrix();
+    const cell = m.rows[0].cells[1]; // checkout:gpt4o
+    cell.scored = false;
+    cell.passed = false;
+    render(<TrialMatrix matrix={m} selectedKey={null} onSelect={() => {}} />);
+    // Its cost ("$0.020") still renders, but the rate shows "—" and no star.
+    const unscoredButton = screen.getByText("$0.020").closest("button")!;
+    expect(unscoredButton.textContent).toContain("—");
+    expect(unscoredButton.textContent).not.toContain("50%");
+    expect(unscoredButton.querySelector("img")).toBeNull();
+  });
+
+  it("shows the passed/total run count alongside the aggregate rate", () => {
+    render(<TrialMatrix matrix={makeMatrix()} selectedKey={null} onSelect={() => {}} />);
+    // checkout:gpt4o aggregated 1 of 2 runs → "50%" and "1/2".
+    const btn = screen.getByText("50%").closest("button")!;
+    expect(btn.textContent).toContain("1/2");
+  });
+
+  it("renders a flakiness strip — one mark per recent trial — when a cell has history", () => {
+    const m = makeMatrix();
+    m.rows[0].cells[0].history = ["pass", "pass", "fail"];
+    render(<TrialMatrix matrix={m} selectedKey={null} onSelect={() => {}} />);
+    const button = screen.getByText("100%").closest("button")!;
+    const strip = button.querySelector('[title^="Recent trials"]')!;
+    expect(strip).toBeTruthy();
+    expect(strip.children).toHaveLength(3);
+  });
+
+  it("hides the strip for a cell with fewer than two runs", () => {
+    const m = makeMatrix();
+    m.rows[0].cells[0].history = ["pass"];
+    render(<TrialMatrix matrix={m} selectedKey={null} onSelect={() => {}} />);
+    const button = screen.getByText("100%").closest("button")!;
+    expect(button.querySelector('[title^="Recent trials"]')).toBeNull();
   });
 
   it("applies the inset cyan ring to the selected cell", () => {

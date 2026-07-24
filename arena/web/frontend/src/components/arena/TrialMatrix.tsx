@@ -3,6 +3,13 @@ import { Card } from "@altairalabs/atlas";
 import { formatDuration } from "@/lib/utils";
 import type { TrialMatrix as TrialMatrixModel, TrialCell } from "@/types";
 
+// Per-trial marks for a cell's flakiness strip.
+const STRIP_COLOR: Record<"pass" | "fail" | "error", string> = {
+  pass: "var(--pulsar-500)",
+  fail: "var(--signal-red)",
+  error: "var(--gold-500)",
+};
+
 export interface TrialMatrixProps {
   matrix: TrialMatrixModel;
   selectedKey: string | null;
@@ -181,12 +188,26 @@ function MatrixCell({
       ? "var(--gold-tint)"
       : "transparent";
   const boxShadow = selected ? "inset 0 0 0 1.5px var(--ion-cyan)" : "none";
-  const rateColor = cell.best ? "var(--gold-300)" : !cell.passed ? "var(--signal-red-300)" : "var(--star-200)";
+  // The cell is a reliability reading across the cell's runs. Unscored (no
+  // assertions judged any run) is muted "—"; otherwise coloured by rate —
+  // green fully-reliable, gold best, red anything that ever failed.
+  const rateColor = !cell.scored
+    ? "var(--star-800)"
+    : cell.best
+      ? "var(--gold-300)"
+      : !cell.passed
+        ? "var(--signal-red-300)"
+        : "var(--pulsar-300)";
 
   return (
     <button
       type="button"
       onClick={() => onSelect(cell.key)}
+      title={
+        cell.scored
+          ? `${cell.passedCount}/${cell.totalRuns} runs passed`
+          : "Ran, but no assertions scored these runs"
+      }
       style={{
         textAlign: "left",
         border: 0,
@@ -198,27 +219,38 @@ function MatrixCell({
         boxShadow,
       }}
     >
-      <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 8 }}>
-        {cell.best ? (
+      <div style={{ display: "flex", gap: 8, alignItems: "baseline", marginBottom: 8 }}>
+        {cell.best && (
           <img
             src={starGlyphGold}
             alt="best"
-            style={{ width: 15, height: 15, filter: "drop-shadow(0 0 6px rgba(227,179,65,.9))" }}
-          />
-        ) : (
-          <span
-            style={{
-              width: 8,
-              height: 8,
-              borderRadius: "50%",
-              background: cell.passed ? "var(--pulsar-500)" : "var(--signal-red)",
-            }}
+            style={{ width: 14, height: 14, alignSelf: "center" }}
           />
         )}
-        <span style={{ font: "600 16px var(--font-mono)", color: rateColor }}>{cell.passRate}%</span>
+        <span style={{ font: "600 16px var(--font-mono)", color: rateColor }}>
+          {cell.scored ? `${cell.passRate}%` : "—"}
+        </span>
+        {cell.scored && (
+          <span style={{ font: "11px var(--font-mono)", color: "var(--star-800)" }}>
+            {cell.passedCount}/{cell.totalRuns}
+          </span>
+        )}
       </div>
+      {cell.history.length >= 2 && (
+        <div
+          style={{ display: "flex", gap: 2, marginBottom: 8 }}
+          title="Recent trials, oldest → newest (green pass · red fail · amber error)"
+        >
+          {cell.history.map((o, i) => (
+            <span
+              key={i}
+              style={{ width: 7, height: 7, borderRadius: 1, background: STRIP_COLOR[o], flex: "none" }}
+            />
+          ))}
+        </div>
+      )}
       <div style={{ display: "flex", gap: 12, font: "11px var(--font-mono)", color: "var(--star-800)" }}>
-        <span>{cell.costUsd ? `$${cell.costUsd.toFixed(3)}` : "free"}</span>
+        <span>{cell.costUsd > 0 ? `$${cell.costUsd.toFixed(3)}` : "—"}</span>
         <span>{formatDuration(cell.latencyMs)}</span>
       </div>
     </button>
