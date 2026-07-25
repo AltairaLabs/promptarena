@@ -25,6 +25,37 @@ import type { RunResult, ActiveRun, ProviderInfo, ScenarioInfo, WorkflowGraph } 
 // per completed run (which storms the store and collapses the ledger).
 const RELOAD_DEBOUNCE_MS = 250;
 
+// FETCH_CONCURRENCY bounds how many run detail fetches are in flight at once.
+// A store with hundreds of runs would otherwise fire hundreds of parallel
+// requests on load, which (competing with in-flight runs) overwhelm the server,
+// time out, and leave the dashboard empty. Completed runs are immutable, so we
+// only ever fetch a run once (see the cache in App) — this cap just paces the
+// initial backfill.
+const FETCH_CONCURRENCY = 8;
+
+// fetchMissing loads any ids not already in `cache` into it, at most
+// FETCH_CONCURRENCY requests in flight. Runs are immutable once complete, so a
+// cached run is never refetched — after the first load, a reload only pulls the
+// handful of newly-completed runs instead of the whole store.
+async function fetchMissing(
+  ids: string[],
+  cache: Map<string, RunResult>,
+  getResult: (id: string) => Promise<RunResult | undefined>,
+): Promise<void> {
+  const missing = ids.filter((id) => !cache.has(id));
+  let next = 0;
+  const worker = async () => {
+    while (next < missing.length) {
+      const id = missing[next++];
+      const r = await getResult(id).catch(() => null);
+      if (r) cache.set(id, r);
+    }
+  };
+  await Promise.all(
+    Array.from({ length: Math.min(FETCH_CONCURRENCY, missing.length) }, worker),
+  );
+}
+
 // activeRunToResult maps a still-running ActiveRun into a synthetic
 // RunResult-shaped entry so buildMatrix can overlay it onto the trial
 // matrix without any special-casing — it lands in the same scenario×
@@ -199,24 +230,30 @@ export default function App() {
     setListeningRunId(runId);
   }, [listeningRunId]);
 
+  // Cache of fetched runs keyed by RunID. Completed runs are immutable, so once
+  // a run is fetched it never needs refetching — this is what keeps a store of
+  // hundreds of runs from re-fetching everything on every reload.
+  const resultCacheRef = useRef<Map<string, RunResult>>(new Map());
+
   // Load historical results on mount and after runs complete. A field run of N
   // sweeps completes ~N×cells runs in a burst, so completedCount ticks up
-  // rapidly. Refetching the whole store on every tick is an O(N²) request storm
-  // — under it, getResult calls fail and get filtered out, collapsing the ledger
-  // to a stale handful ("5 of 500"). So the reload is DEBOUNCED: rapid
-  // completions coalesce into one refetch after they settle. The `stale` guard
-  // then ensures only the latest refetch writes state (out-of-order responses
-  // can't clobber a fresher one). The live matrix still animates in real time —
-  // it overlays in-flight runs from SSE state, independent of this reload.
+  // rapidly. The reload is DEBOUNCED so those coalesce into one refresh, and it
+  // only fetches runs not already cached (bounded concurrency), so a reload is
+  // cheap no matter how large the store — the first load backfills the cache,
+  // later reloads pull just the new runs. The `stale` guard ensures an
+  // out-of-order response can't clobber a fresher one. The live matrix still
+  // animates in real time from SSE state, independent of this reload.
   const completedCount = state.completedRunIds.length;
   useEffect(() => {
     let stale = false;
-    const timer = setTimeout(() => {
-      getResults().then(async (ids) => {
-        if (!ids || ids.length === 0) { if (!stale) setHistoricalResults([]); return; }
-        const results = await Promise.all(ids.map((id) => getResult(id).catch(() => null)));
-        if (!stale) setHistoricalResults(results.filter((r): r is RunResult => r !== null));
-      }).catch(() => {});
+    const timer = setTimeout(async () => {
+      const ids = await getResults().catch(() => null);
+      if (!ids) return;
+      if (ids.length === 0) { if (!stale) setHistoricalResults([]); return; }
+      const cache = resultCacheRef.current;
+      await fetchMissing(ids, cache, getResult);
+      if (stale) return;
+      setHistoricalResults(ids.map((id) => cache.get(id)).filter((r): r is RunResult => !!r));
     }, RELOAD_DEBOUNCE_MS);
     return () => { stale = true; clearTimeout(timer); };
   }, [getResults, getResult, completedCount]);
@@ -528,6 +565,7 @@ export default function App() {
                     onClearFilter={clearCellFilter}
                     onClear={async () => {
                       await clearResults();
+                      resultCacheRef.current.clear();
                       setHistoricalResults([]);
                       setCellFilter(null);
                       setSelectedRunId(null);

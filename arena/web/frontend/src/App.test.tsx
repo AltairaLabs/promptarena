@@ -227,6 +227,33 @@ describe("App — Runs view", () => {
     expect(screen.queryByText("Pass")).not.toBeInTheDocument(); // stale run did not clobber
   });
 
+  it("only fetches newly-completed runs on reload (immutable cache, no refetch storm)", async () => {
+    const r1 = mk({
+      RunID: "run-1", ScenarioID: "checkout", ProviderID: "claude",
+      ConversationAssertions: { passed: true, failed: 0, total: 1, results: [] },
+    });
+    const r2 = mk({
+      RunID: "run-2", ScenarioID: "checkout", ProviderID: "mock",
+      ConversationAssertions: { passed: true, failed: 0, total: 1, results: [] },
+    });
+    const byId: Record<string, RunResult> = { "run-1": r1, "run-2": r2 };
+    getResults.mockResolvedValueOnce(["run-1"]).mockResolvedValueOnce(["run-1", "run-2"]);
+    getResult
+      .mockImplementationOnce((id: string) => Promise.resolve(byId[id] ?? null))
+      .mockImplementationOnce((id: string) => Promise.resolve(byId[id] ?? null));
+
+    const { rerender } = render(<App />);
+    await waitFor(() => expect(getResult).toHaveBeenCalledWith("run-1"));
+
+    // A new run completes → reload sees ["run-1","run-2"] but only fetches run-2.
+    useArenaEventsMock.mockReturnValue({ ...defaultArenaState(), completedRunIds: ["run-1", "run-2"] });
+    rerender(<App />);
+    await waitFor(() => expect(getResult).toHaveBeenCalledWith("run-2"));
+
+    // run-1 was fetched exactly once — the cache means it's never refetched.
+    expect(getResult.mock.calls.filter((c) => c[0] === "run-1")).toHaveLength(1);
+  });
+
   it("clicking a matrix cell scopes the ledger to that scenario×provider", async () => {
     render(<App />);
     // Clicking an aggregate cell filters the ledger to its runs — it does NOT
