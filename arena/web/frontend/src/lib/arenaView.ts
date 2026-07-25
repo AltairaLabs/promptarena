@@ -450,3 +450,44 @@ export function overlayWorkflowRun(graph: WorkflowGraph, run: RunResult | Active
     }),
   };
 }
+
+// currentWorkflowStateAt returns the state the conversation is in at message
+// `index`: the most recent current_state stamped at or before that message
+// (with the previous_state of that step). Empty when the run carries no
+// workflow-state meta up to that point. Drives the live, scrubber-synced
+// highlight — as the playhead moves, the current state moves with it.
+export function currentWorkflowStateAt(
+  run: RunResult | ActiveRun | undefined,
+  index: number,
+): { current?: string; previous?: string } {
+  if (!run || !isRunResult(run)) return {};
+  let result: { current?: string; previous?: string } = {};
+  const upto = Math.min(index, run.Messages.length - 1);
+  for (let i = 0; i <= upto; i++) {
+    const state = workflowStateFromMeta(run.Messages[i]?.meta);
+    if (!state) continue;
+    const current = typeof state.current_state === "string" ? state.current_state : undefined;
+    const previous = typeof state.previous_state === "string" ? state.previous_state : undefined;
+    if (current) result = { current, previous };
+  }
+  return result;
+}
+
+// overlayWorkflowCurrentState spotlights ONE state on the graph — the current
+// one — dimming the rest, with the edge just taken (previous → current) gold.
+// Unlike overlayWorkflowRun (the whole taken path), this tracks a single moving
+// point, so the highlight follows the scrubber/turn selection. No current state
+// (e.g. a live run with no stamped meta) returns the graph unchanged.
+export function overlayWorkflowCurrentState(
+  graph: WorkflowGraph,
+  current: string | undefined,
+  previous?: string,
+): WorkflowGraph {
+  if (!current) return graph;
+  return {
+    nodes: graph.nodes.map((n) => (n.id === current ? { ...n } : { ...n, dim: true })),
+    edges: graph.edges.map((e) =>
+      previous && e.from === previous && e.to === current ? { ...e, gold: true } : { ...e, dim: true },
+    ),
+  };
+}
