@@ -272,6 +272,19 @@ describe("App — Runs view", () => {
     expect(await screen.findByRole("button", { name: /^workflow$/i })).toBeInTheDocument();
   });
 
+  it("the Workflow tab offers a Live/Path highlight toggle over the graph", async () => {
+    render(<App />);
+    await screen.findByText("TRIAL MATRIX · SCENARIO × PROVIDER");
+    fireEvent.click((await screen.findByText("Pass")).closest("button")!);
+    fireEvent.click(await screen.findByRole("button", { name: /^workflow$/i }));
+    // Defaults to Live; both toggle pills render above the graph.
+    expect(await screen.findByRole("button", { name: "Live" })).toBeInTheDocument();
+    // Switch to Path (the static whole-route overlay) — exercises setWfLive.
+    fireEvent.click(screen.getByRole("button", { name: "Path" }));
+    expect(screen.getByRole("button", { name: "Path" })).toBeInTheDocument();
+    await act(async () => { await Promise.resolve(); });
+  });
+
   it("a run that failed an assertion aggregates to 0% (a failed run, not its proportion)", async () => {
     const failingResult = mk({
       RunID: "run-1", ScenarioID: "checkout", ProviderID: "claude",

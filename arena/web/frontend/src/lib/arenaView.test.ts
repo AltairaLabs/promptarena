@@ -8,6 +8,8 @@ import {
   estimateFieldRun,
   orderLedgerRows,
   overlayWorkflowRun,
+  currentWorkflowStateAt,
+  overlayWorkflowCurrentState,
   batchIdOf,
   groupRunsByBatch,
 } from "./arenaView";
@@ -458,5 +460,57 @@ describe("overlayWorkflowRun", () => {
   it("returns the graph unchanged for an undefined run", () => {
     const out = overlayWorkflowRun(wfGraph, undefined);
     expect(out.nodes.every((n) => n.dim !== true)).toBe(true);
+  });
+});
+
+describe("currentWorkflowStateAt", () => {
+  const run = mk({
+    ScenarioID: "checkout", ProviderID: "claude",
+    Messages: [
+      { role: "user", content: "hi" },
+      { role: "assistant", content: "", meta: { _workflow_state: { current_state: "intake" } } },
+      { role: "assistant", content: "", meta: { _workflow_state: { current_state: "resolve", previous_state: "intake" } } },
+    ],
+  });
+
+  it("returns the most recent state at or before the given index", () => {
+    expect(currentWorkflowStateAt(run, 1)).toEqual({ current: "intake" });
+    expect(currentWorkflowStateAt(run, 2)).toEqual({ current: "resolve", previous: "intake" });
+  });
+
+  it("is empty before any state is stamped, or for an undefined run", () => {
+    expect(currentWorkflowStateAt(run, 0)).toEqual({});
+    expect(currentWorkflowStateAt(undefined, 2)).toEqual({});
+  });
+});
+
+describe("overlayWorkflowCurrentState", () => {
+  const graph: WorkflowGraph = {
+    nodes: [
+      { id: "intake", label: "intake", kind: "entry", entry: true, terminal: false },
+      { id: "resolve", label: "resolve", kind: "output", entry: false, terminal: true },
+      { id: "escalate", label: "escalate", kind: "agent", entry: false, terminal: false },
+    ],
+    edges: [
+      { from: "intake", to: "resolve", label: "done" },
+      { from: "intake", to: "escalate", label: "hard" },
+    ],
+  };
+
+  it("lights the current node, dims the rest, and golds the edge just taken", () => {
+    const out = overlayWorkflowCurrentState(graph, "resolve", "intake");
+    expect(out.nodes.find((n) => n.id === "resolve")!.dim).not.toBe(true);
+    expect(out.nodes.find((n) => n.id === "intake")!.dim).toBe(true);
+    expect(out.nodes.find((n) => n.id === "escalate")!.dim).toBe(true);
+    const taken = out.edges.find((e) => e.from === "intake" && e.to === "resolve")!;
+    const other = out.edges.find((e) => e.from === "intake" && e.to === "escalate")!;
+    expect(taken.gold).toBe(true);
+    expect(other.dim).toBe(true);
+  });
+
+  it("returns the graph unchanged when there is no current state", () => {
+    const out = overlayWorkflowCurrentState(graph, undefined);
+    expect(out.nodes.every((n) => n.dim !== true)).toBe(true);
+    expect(out.edges.every((e) => e.dim !== true)).toBe(true);
   });
 });

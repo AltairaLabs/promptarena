@@ -15,7 +15,7 @@ import { useArenaEvents } from "@/hooks/useArenaEvents";
 import { useArenaAPI } from "@/hooks/useArenaAPI";
 import { useTheme } from "@/hooks/useTheme";
 import { AudioPlayer } from "@/audio/player";
-import { buildMatrix, estimateFieldRun, orderLedgerRows, overlayWorkflowRun, runScored } from "@/lib/arenaView";
+import { buildMatrix, currentWorkflowStateAt, estimateFieldRun, orderLedgerRows, overlayWorkflowCurrentState, overlayWorkflowRun, runScored } from "@/lib/arenaView";
 import { adaptAnyRun, adaptWorkflow, isRunResult } from "@/lib/atlasAdapter";
 import { arenaInspectorTabs } from "@/lib/arenaInspectorTabs";
 import type { RunResult, ActiveRun, ProviderInfo, ScenarioInfo, WorkflowGraph } from "@/types";
@@ -144,6 +144,9 @@ export default function App() {
   const [cellFilter, setCellFilter] = useState<{ scenarioId: string; providerId: string } | null>(null);
   // How many times "Run the field" sweeps the grid (each a distinct sweep).
   const [runCount, setRunCount] = useState(1);
+  // Workflow tab highlight mode: "live" tracks the scrubber (highlights the
+  // state at the current turn); "path" shows the whole route the run took.
+  const [wfLive, setWfLive] = useState(true);
   const [startError, setStartError] = useState<string | null>(null);
   const [historicalResults, setHistoricalResults] = useState<RunResult[]>([]);
   const [providers, setProviders] = useState<ProviderInfo[]>([]);
@@ -477,10 +480,7 @@ export default function App() {
                       // render through the same SessionReview — the adapter
                       // owns the shape difference.
                       const a = adaptAnyRun(selectedCellRun);
-                      const wf =
-                        workflowGraph && workflowGraph.nodes.length
-                          ? adaptWorkflow(overlayWorkflowRun(workflowGraph, selectedCellRun))
-                          : null;
+                      const hasWorkflow = !!(workflowGraph && workflowGraph.nodes.length);
                       // Live audio only exists while a run is in flight; a
                       // completed run has no stream to attach to.
                       const liveRunId =
@@ -506,8 +506,52 @@ export default function App() {
                             recording={a.recording}
                             inspectorTabs={arenaInspectorTabs}
                             tabs={
-                              wf
-                                ? [{ id: "workflow", label: "Workflow", render: () => <ConstellationGraph nodes={wf.nodes} edges={wf.edges} theme={theme} direction="LR" height="100%" /> }]
+                              hasWorkflow
+                                ? [{
+                                    id: "workflow",
+                                    label: "Workflow",
+                                    render: (ctx) => {
+                                      const { current, previous } = currentWorkflowStateAt(selectedCellRun, ctx.activeIndex);
+                                      const overlaid = wfLive
+                                        ? overlayWorkflowCurrentState(workflowGraph!, current, previous)
+                                        : overlayWorkflowRun(workflowGraph!, selectedCellRun);
+                                      const g = adaptWorkflow(overlaid);
+                                      return (
+                                        <div style={{ display: "flex", flexDirection: "column", height: "100%", gap: 8 }}>
+                                          <div style={{ display: "flex", alignItems: "center", gap: 6, flex: "none" }}>
+                                            <span style={{ font: "var(--text-size-mono-label) var(--font-mono)", textTransform: "uppercase", letterSpacing: "var(--tracking-eyebrow)", color: "var(--star-800)" }}>
+                                              Highlight
+                                            </span>
+                                            {([["live", "Live"], ["path", "Path"]] as const).map(([mode, label]) => {
+                                              const active = (mode === "live") === wfLive;
+                                              return (
+                                                <button
+                                                  key={mode}
+                                                  type="button"
+                                                  onClick={() => setWfLive(mode === "live")}
+                                                  title={mode === "live" ? "Highlight the state at the current point in the conversation (follows the scrubber)" : "Highlight the whole path the run took"}
+                                                  style={{
+                                                    cursor: "pointer",
+                                                    padding: "2px 10px",
+                                                    borderRadius: "999px",
+                                                    font: "500 12px var(--font-sans)",
+                                                    background: active ? "var(--starlight-tint)" : "transparent",
+                                                    border: `1px solid ${active ? "var(--starlight-300)" : "var(--hairline)"}`,
+                                                    color: active ? "var(--star-100)" : "var(--star-600)",
+                                                  }}
+                                                >
+                                                  {label}
+                                                </button>
+                                              );
+                                            })}
+                                          </div>
+                                          <div style={{ flex: 1, minHeight: 0 }}>
+                                            <ConstellationGraph nodes={g.nodes} edges={g.edges} theme={theme} direction="LR" height="100%" />
+                                          </div>
+                                        </div>
+                                      );
+                                    },
+                                  }]
                                 : undefined
                             }
                           />
