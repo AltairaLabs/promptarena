@@ -112,7 +112,7 @@ jobs:
       # above — run once here and hand the report to the SonarCloud job.
       # The frontend uses pnpm, and pulls @altairalabs/atlas from GitHub
       # Packages (private), so the install needs a token with read:packages.
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         with:
           version: 9
       - uses: actions/setup-node@v4
