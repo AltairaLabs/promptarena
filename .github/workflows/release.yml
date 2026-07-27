@@ -23,7 +23,7 @@ jobs:
       # Node + pnpm are needed by goreleaser's before-hooks, which build the
       # embedded Arena web UI (arena/web/frontend) so `promptarena serve` isn't
       # a blank page in released binaries.
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '20'
       - name: Install pnpm
@@ -48,7 +48,7 @@ jobs:
         pkg: [promptarena, packc]
     steps:
       - uses: actions/checkout@v7
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
