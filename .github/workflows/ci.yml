@@ -96,7 +96,7 @@ jobs:
       - name: Test (with coverage)
         run: go test ./... -coverprofile=coverage.out -count=1
       - name: Upload coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: go-coverage
           path: coverage.out
@@ -129,7 +129,7 @@ jobs:
       - name: Test frontend (with coverage)
         run: pnpm --dir arena/web/frontend test:ci
       - name: Upload frontend coverage report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: frontend-coverage
           path: arena/web/frontend/coverage/lcov.info
