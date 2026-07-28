@@ -43,30 +43,32 @@ promptarena run --ci --mock-provider --mock-config mock-responses.yaml
 
 Pass `--format` (alias `--formats`) a comma-separated list. When omitted, Arena
 uses `defaults.output.formats` from your config, falling back to `json`. There are
-exactly four supported formats — there is no SARIF, CSV, or TAP output.
+exactly three supported formats — there is no SARIF, CSV, or TAP output.
 
 | Format | Output | Path flag (default) |
 |---|---|---|
 | `json` | Per-run JSON files plus an `index.json` summary in the out dir | `--out` dir (default `out/`) |
 | `junit` | JUnit XML — consumable by most CI test reporters | `--junit-file` (default `out/junit.xml`) |
-| `html` | Self-contained HTML report | `--html-file` (default `out/report-<timestamp>.html`) |
 | `markdown` | Markdown report | `--markdown-file` (default `out/results.md`) |
 
 ```bash
-# JUnit for the CI test reporter, JSON for archival, HTML for humans
-promptarena run --ci --format junit,json,html
+# JUnit for the CI test reporter, JSON for archival, markdown for humans
+promptarena run --ci --format junit,json,markdown
 ```
-
-:::note[📸 Screenshot needed]
-The generated HTML report (`out/report-<timestamp>.html`) open in a browser — the summary cards and per-scenario pass/fail breakdown.
-:::
 
 The output directory defaults to `out/` and is set with `--out`. Per-run JSON is
 written as `<run-id>.json` in that directory, alongside an `index.json` summary
 containing `total_runs`, `successful`, `errors`, `total_cost`, and per-scenario
-metadata. The deprecated `--html` boolean flag still works and simply adds `html`
-to the format list. See the [output formats reference](/arena/reference/output-formats/)
+metadata. See the [output formats reference](/arena/reference/output-formats/)
 for the full schema of each report.
+
+:::note[The HTML report was removed]
+Arena used to emit a self-contained HTML report. It was retired, and the
+markdown report replaces it. The `html` format name, the `--html` flag and the
+`html_report` config key are all still accepted and now produce **markdown**, so
+existing configs and CI scripts keep working — but `--html-file` no longer names
+the output. Use `--markdown-file` instead.
+:::
 
 ## Quality gates: fail the build on regressions
 

@@ -42,8 +42,15 @@ it with `-p`/`--port`:
 promptarena serve --port 3000
 ```
 
-If the port is already in use, Arena exits with a clear error telling you to pick
-another with `-p`.
+If the port is already in use, Arena does **not** fail — it falls back to the next
+free port and tells you which one it picked:
+
+```text
+Port 8080 is in use — serving on 8083 instead
+Arena Web UI: http://localhost:8083
+```
+
+Read the printed URL rather than assuming 8080.
 
 ## The Dashboard
 

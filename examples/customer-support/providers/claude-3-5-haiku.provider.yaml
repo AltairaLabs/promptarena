@@ -5,7 +5,10 @@ metadata:
 spec:
   id: claude-3-5-haiku
   type: claude
-  model: claude-3-5-haiku-20241022
+  # claude-3-5-haiku-20241022 was retired and now 404s (not_found_error). The
+  # provider id is kept so mock-responses.yaml and config.arena.yaml keep
+  # resolving — same pattern as gemini-2-0-flash, which points at gemini-2.5-flash.
+  model: claude-haiku-4-5-20251001
   defaults:
     temperature: 0.7
     max_tokens: 1500

@@ -6,9 +6,7 @@ sidebar:
 ---
 **Comprehensive testing framework for validating LLM prompts across multiple providers**
 
-:::note[📸 Screenshot needed]
-Hero shot of the Arena TUI hub — run `promptarena` with no arguments and capture the View / Run / Chat / Inspect menu. This is the most compelling first impression of the tool.
-:::
+![The PromptArena TUI hub, showing the View, Run, Chat, Inspect and Deploy menu entries with the loaded config named above them.](/screenshots/tui-hub.png)
 
 ---
 

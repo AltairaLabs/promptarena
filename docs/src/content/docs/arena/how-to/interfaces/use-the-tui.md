@@ -24,9 +24,7 @@ No config is required to launch — the hub still opens, but pages that need one
 (Run, Chat, Inspect) stay disabled until a config is present. Results default to
 the `out/` directory beside the config.
 
-:::note[📸 Screenshot needed]
-The TUI hub menu (View / Run / Chat / Inspect / Deploy)
-:::
+![The TUI hub menu with five entries — View, Run, Chat, Inspect and Deploy — each with a one-line description, and the loaded config shown above.](/screenshots/tui-hub.png)
 
 ## Navigate the five pages
 
@@ -63,9 +61,7 @@ The **Inspect** page shows the resolved config and live state (providers, agents
 scenarios, and workflow/memory state) so you can confirm what Arena will actually
 run before you launch it.
 
-:::note[📸 Screenshot needed]
-The Inspect page showing resolved config and state
-:::
+![The Inspect page listing the resolved config: prompt configs, scenarios with task and turn counts, the three registered providers with their models and files, and the declared tools.](/screenshots/tui-inspect.png)
 
 ## Browse results with `view`
 
@@ -85,9 +81,7 @@ the path must exist and be a directory or the command errors out.
 Because `view` deep-links with the results page as the root of the navigation
 stack, `Esc` or `q` **exits the program** rather than returning to the hub menu.
 
-:::note[📸 Screenshot needed]
-The results browser previewing a JSON result and its conversation transcript
-:::
+![The results browser with the conversation transcript open: a numbered turn list on the left showing alternating user and assistant roles, and the selected turn's full message rendered on the right.](/screenshots/tui-results.png)
 
 ## Chat with an agent
 
@@ -134,9 +128,7 @@ promptarena run --config config.arena.yaml
 While scenarios execute you get a live feed of runs as they progress, a log panel,
 and results as they complete. It updates in place until every combination finishes.
 
-:::note[📸 Screenshot needed]
-A live run in progress — the run feed, log panel, and completed results
-:::
+![A run in progress: an Active Runs table listing each provider with status, scenario, region and duration, a live log panel streaming turn and provider-call events, and a results pane awaiting selection.](/screenshots/tui-run.png)
 
 ### Disable the live TUI
 
@@ -158,9 +150,9 @@ The **Deploy** entry walks you through the same deploy lifecycle as
 apply, and status. It's enabled once the loaded config has a `deploy:` section —
 see [Configure Deploy](/arena/how-to/deploy/configure/) to set one up.
 
-:::note[📸 Screenshot needed]
-The Deploy entry on the hub menu, alongside View / Run / Chat / Inspect
-:::
+`Deploy` is the fifth entry on the [hub menu](#launch-the-hub) shown above,
+below `Inspect`. It only appears as selectable when the loaded config has a
+`deploy:` section.
 
 ### Preflight
 
