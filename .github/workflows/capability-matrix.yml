@@ -1,0 +1,193 @@
+name: Provider Capability Matrix
+
+# Weekly probe of every provider in examples/capability-matrix against the
+# capability scenarios (text, streaming, vision, tools, JSON, audio, video).
+# This makes real, paid API calls — it is deliberately NOT run on push/PR.
+#
+# Reinstated from PromptKit, where it lived before PromptArena was split out
+# (PromptKit 487211f7 removed it along with the rest of the arena tooling).
+# The example pack it drives now lives in this repo, so the workflow does too.
+
+on:
+  workflow_dispatch:
+    inputs:
+      providers:
+        description: 'Provider filter (comma-separated, empty = all)'
+        required: false
+        default: ''
+      scenarios:
+        description: 'Scenario filter (comma-separated, empty = all)'
+        required: false
+        default: ''
+      max_errors:
+        description: 'Maximum allowed errors before failing'
+        required: false
+        default: '5'
+  schedule:
+    # Weekly on Sunday at 06:00 UTC
+    - cron: '0 6 * * 0'
+
+permissions:
+  contents: read
+  actions: read
+  # dorny/test-reporter publishes the JUnit results as a check run.
+  checks: write
+
+# A scheduled run and a manual run must not bill for the same matrix twice.
+concurrency:
+  group: capability-matrix
+  cancel-in-progress: false
+
+jobs:
+  capability-matrix:
+    name: Provider Capability Matrix
+    runs-on: ubuntu-latest
+    # The full matrix is ~37 providers x 11 scenarios at concurrency 6, and the
+    # slow reasoning models (o1-pro, gpt-5-pro) dominate. 30m was the inherited
+    # value and left no headroom once the GPT-5.x family was added.
+    timeout-minutes: 60
+
+    env:
+      # Validate against the in-repo schema snapshots rather than the published
+      # remote schemas — matches the test-examples job in ci.yml.
+      PROMPTKIT_SCHEMA_SOURCE: local
+
+    steps:
+      - uses: actions/checkout@v7
+
+      # Fail fast and legibly when the provider keys aren't configured. Without
+      # this every scenario fails one-by-one and the real cause is buried in a
+      # few hundred lines of per-turn errors.
+      - name: Check provider credentials
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          MISSING=""
+          [ -z "$OPENAI_API_KEY" ]    && MISSING="$MISSING OPENAI_API_KEY"
+          [ -z "$ANTHROPIC_API_KEY" ] && MISSING="$MISSING ANTHROPIC_API_KEY"
+          [ -z "$GEMINI_API_KEY" ]    && MISSING="$MISSING GEMINI_API_KEY"
+          if [ -n "$MISSING" ]; then
+            echo "::error::Missing repository secret(s):$MISSING"
+            echo "Add them under Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+          echo "All provider credentials present."
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version: '1.26.0'
+
+      - name: Install ALSA dev headers (for voice CGO)
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev
+
+      - name: Build promptarena
+        run: go build -o bin/promptarena ./arena/cmd/promptarena
+
+      - name: Run capability matrix
+        id: matrix
+        working-directory: examples/capability-matrix
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          PROVIDER_FILTER: ${{ inputs.providers }}
+          SCENARIO_FILTER: ${{ inputs.scenarios }}
+        run: |
+          # Build filter flags as an array, so the empty case expands to
+          # nothing and a value never gets re-split by the shell. The filters
+          # arrive via env rather than direct expression interpolation, so a
+          # value containing shell metacharacters can't break out of the script.
+          FLAGS=()
+          if [ -n "$PROVIDER_FILTER" ]; then
+            FLAGS+=(--provider "$PROVIDER_FILTER")
+          fi
+          if [ -n "$SCENARIO_FILTER" ]; then
+            FLAGS+=(--scenario "$SCENARIO_FILTER")
+          fi
+
+          # A provider failing is the signal we're here to collect, not a
+          # reason to abort — the threshold check below decides pass/fail.
+          set +e
+          ../../bin/promptarena run \
+            --config config.arena.yaml \
+            --ci \
+            --formats json,junit,markdown \
+            "${FLAGS[@]}" 2>&1 | tee run.log
+          set -e
+
+      # Totals come from out/junit.xml, not from grepping run.log. The inherited
+      # version counted "level=ERROR ... Turn execution failed" lines and parsed
+      # a "Generated <n>" line for the total — but `run` no longer emits that
+      # line, so the total silently read 0 and every run looked like a pass.
+      - name: Summarise results
+        id: summary
+        if: always()
+        working-directory: examples/capability-matrix
+        env:
+          MAX_ERRORS: ${{ inputs.max_errors || '5' }}
+        run: |
+          if [ ! -f out/junit.xml ]; then
+            echo "::error::out/junit.xml not produced — the run did not complete."
+            exit 1
+          fi
+
+          read -r TOTAL FAILURES ERRORS < <(python3 - <<'PY'
+          import xml.etree.ElementTree as ET
+          r = ET.parse("out/junit.xml").getroot()
+          print(r.get("tests", "0"), r.get("failures", "0"), r.get("errors", "0"))
+          PY
+          )
+          PASSED=$((TOTAL - FAILURES - ERRORS))
+
+          {
+            echo "total=$TOTAL"
+            echo "passed=$PASSED"
+            echo "failures=$FAILURES"
+            echo "errors=$ERRORS"
+          } >> "$GITHUB_OUTPUT"
+          echo "Total: $TOTAL | Passed: $PASSED | Failed: $FAILURES | Errors: $ERRORS"
+
+          # Build the human-readable matrix from the per-result JSON files.
+          ./scripts/generate-matrix.sh
+
+          {
+            echo "## Provider Capability Matrix"
+            echo ""
+            cat out/CAPABILITY_MATRIX.md
+            echo ""
+            echo "---"
+            echo "**$PASSED / $TOTAL passed** — failed: $FAILURES, errors: $ERRORS (threshold: $MAX_ERRORS)"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "$ERRORS" -gt "$MAX_ERRORS" ]; then
+            echo "::error::Capability matrix has $ERRORS errors (max allowed: $MAX_ERRORS)"
+            exit 1
+          fi
+
+      - name: Publish test results
+        if: always()
+        uses: dorny/test-reporter@v3
+        with:
+          name: Capability Matrix Results
+          path: examples/capability-matrix/out/junit.xml
+          reporter: java-junit
+          fail-on-error: false
+
+      # The standalone HTML report was removed (PR #48), so the markdown report
+      # `run` emits (out/capability-matrix.md, per the config's output block) is
+      # collected instead of the old out/report.html.
+      - name: Upload matrix artifacts
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: capability-matrix-results
+          path: |
+            examples/capability-matrix/out/CAPABILITY_MATRIX.md
+            examples/capability-matrix/out/capability-matrix.md
+            examples/capability-matrix/out/index.json
+            examples/capability-matrix/out/junit.xml
+            examples/capability-matrix/out/*.json
+            examples/capability-matrix/run.log
+          retention-days: 30
