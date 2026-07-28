@@ -199,9 +199,10 @@ vocabulary as the CLI's plan output — see
 [Deploy: Plan and Apply](/arena/how-to/deploy/plan-and-apply/#reading-the-plan)
 for how to read it.
 
-:::note[📸 Screenshot needed]
-The plan page showing a colored diff with a drifted resource
-:::
+![The deploy plan page: a "0 to create, 2 to update, 0 to delete" summary, two adapter warnings, and the changed resources listed with ~ markers — a PromptPack and an AgentRuntime that have drifted from the declared config.](/screenshots/tui-deploy-plan.png)
+
+Resources already matching the config are hidden by default; `space` toggles
+them into the list, and `a` applies the plan.
 
 ### Confirm
 
