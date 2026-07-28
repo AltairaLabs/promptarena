@@ -13,8 +13,9 @@ spec:
     - role: user
       content: "List the files in the /tmp directory"
       assertions:
-        - type: content_not_empty
-          params: {}
+        - type: min_length
+          params:
+            min: 1
           message: "Response should not be empty"
         - type: tool_called
           params:

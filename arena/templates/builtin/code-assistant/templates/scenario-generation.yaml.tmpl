@@ -13,18 +13,19 @@ spec:
     - role: user
       content: "Write a Python function that calculates the factorial of a number using recursion. Include error handling for negative inputs."
       assertions:
-        - type: content_not_empty
-          params: {}
+        - type: min_length
+          params:
+            min: 1
           message: "Response should not be empty"
         - type: contains_any
           params:
-            values: ["def ", "factorial"]
+            patterns: ["def ", "factorial"]
           message: "Response should contain function definition"
         - type: contains_any
           params:
-            values: ["if ", "raise", "ValueError", "assert"]
+            patterns: ["if ", "raise", "ValueError", "assert"]
           message: "Response should include error handling"
-        - type: max_tokens
+        - type: max_length
           params:
-            max: 500
+            max: 2000
           message: "Code should be concise"

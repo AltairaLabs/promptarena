@@ -20,14 +20,15 @@ spec:
                 total += num
             return total / len(numbers)
       assertions:
-        - type: content_not_empty
-          params: {}
+        - type: min_length
+          params:
+            min: 1
           message: "Response should not be empty"
         - type: contains_any
           params:
-            values: ["empty", "zero", "ZeroDivisionError", "length"]
+            patterns: ["empty", "zero", "ZeroDivisionError", "length"]
           message: "Should identify the division by zero issue"
         - type: contains_any
           params:
-            values: ["if ", "check", "validate"]
+            patterns: ["if ", "check", "validate"]
           message: "Should suggest proper validation"

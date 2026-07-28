@@ -13,18 +13,19 @@ spec:
     - role: user
       content: "Create a LinkedIn post announcing our new AI-powered analytics feature. Make it engaging and include a question to encourage comments. Maximum 200 words."
       assertions:
-        - type: content_not_empty
-          params: {}
+        - type: min_length
+          params:
+            min: 1
           message: "Response should not be empty"
         - type: contains_any
           params:
-            values: ["AI", "analytics", "feature"]
+            patterns: ["AI", "analytics", "feature"]
           message: "Should announce the feature"
         - type: contains_any
           params:
-            values: ["?"]
+            patterns: ["?"]
           message: "Should include a question"
-        - type: max_tokens
+        - type: max_length
           params:
-            max: 250
+            max: 1000
           message: "Should respect word limit"

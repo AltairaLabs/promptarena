@@ -19,14 +19,15 @@ spec:
             url: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Cat03.jpg/240px-Cat03.jpg"
             mime_type: image/jpeg
       assertions:
-        - type: content_not_empty
-          params: {}
+        - type: min_length
+          params:
+            min: 1
           message: "Response should not be empty"
         - type: contains_any
           params:
-            values: ["cat", "feline", "animal"]
+            patterns: ["cat", "feline", "animal"]
           message: "Should identify the subject"
-        - type: min_tokens
+        - type: min_length
           params:
-            min: 20
+            min: 80
           message: "Description should be detailed"

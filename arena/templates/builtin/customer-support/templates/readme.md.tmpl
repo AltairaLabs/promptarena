@@ -83,8 +83,9 @@ spec:
     - role: user
       content: "Customer message"
       assertions:
-        - type: content_not_empty
-          params: {}
+        - type: min_length
+          params:
+            min: 1
 ```
 
 ### Modifying the Support Agent
