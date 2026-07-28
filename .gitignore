@@ -168,3 +168,7 @@ benchmarks/results/*.json
 benchmarks/results/*.csv
 benchmarks/results/*.md
 examples/*/out/
+
+# Local deploy state written by `promptarena deploy` (plan + applied state).
+# Per-machine and often endpoint-specific — never belongs in the repo.
+.promptarena/

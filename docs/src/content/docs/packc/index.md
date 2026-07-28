@@ -97,7 +97,7 @@ flowchart LR
 
 ## Documentation by Type
 
-### 📚 Tutorials (Learn by Doing)
+### Tutorials (Learn by Doing)
 
 Step-by-step guides for learning PackC:
 
@@ -107,7 +107,7 @@ Step-by-step guides for learning PackC:
 4. [Pack Management](/packc/tutorials/04-pack-management/) - Organize and version packs
 5. [CI/CD Pipeline](/packc/tutorials/05-ci-cd-pipeline/) - Automate pack builds
 
-### 🔧 How-To Guides (Accomplish Specific Tasks)
+### How-To Guides (Accomplish Specific Tasks)
 
 Focused guides for specific tasks:
 
@@ -117,7 +117,7 @@ Focused guides for specific tasks:
 - [Organize Packs](/packc/how-to/organize-packs/) - Project structure
 - [CI/CD Integration](/packc/how-to/ci-cd-integration/) - Automate builds
 
-### 💡 Explanation (Understand the Concepts)
+### Explanation (Understand the Concepts)
 
 Deep dives into PackC and PromptPack:
 
@@ -125,7 +125,7 @@ Deep dives into PackC and PromptPack:
 - [Compilation](/packc/explanation/compilation/) - How compilation works
 - [Validation](/packc/explanation/validation/) - Schema validation details
 
-### 📖 Reference (Look Up Details)
+### Reference (Look Up Details)
 
 Complete command and format specifications:
 
@@ -158,10 +158,10 @@ packc validate my-app.pack.json
 ```
 
 Checks:
-- ✅ Schema compliance with PromptPack spec
-- ✅ Required fields present
-- ✅ Template syntax valid
-- ✅ Tool definitions complete
+- Schema compliance with PromptPack spec
+- Required fields present
+- Template syntax valid
+- Tool definitions complete
 
 ### Production Optimization
 

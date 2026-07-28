@@ -201,7 +201,7 @@ promptarena run
 Output:
 
 ```
-🚀 PromptArena Starting...
+PromptArena Starting...
 
 Loading configuration...
   ✓ Loaded 1 prompt config
@@ -409,14 +409,14 @@ spec:
 Write assertions that work across all providers:
 
 ```yaml
-# ✅ Good - flexible
+# Good - flexible
 assertions:
   - type: content_includes
     params:
       patterns: ["help"]
       message: "Should offer help"
 
-# ❌ Avoid - too specific to one provider's style
+# Avoid - too specific to one provider's style
 assertions:
       patterns: ["I'd be happy to help you with that!"]
 ```

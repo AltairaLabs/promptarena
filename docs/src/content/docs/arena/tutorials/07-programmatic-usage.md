@@ -151,14 +151,14 @@ Be concise and accurate in your responses.`,
 		fmt.Printf("Turns: %d\n", len(result.Messages))
 	}
 
-	fmt.Println("\n✅ All tests completed!")
+	fmt.Println("\nAll tests completed!")
 }
 
 func getStatus(errMsg string) string {
 	if errMsg == "" {
-		return "✅ Success"
+		return "Success"
 	}
-	return "❌ Failed: " + errMsg
+	return "Failed: " + errMsg
 }
 ```
 
@@ -174,11 +174,11 @@ You should see output like:
 Building Arena engine...
 Generated 1 test combinations
 Test 1: basic-test
-Status: ✅ Success
+Status: Success
 Duration: 2.5ms
 Turns: 5
 
-✅ All tests completed!
+All tests completed!
 ```
 
 ## Step 5: Add Real Provider Testing
@@ -242,11 +242,11 @@ import (
 
 ## What You've Learned
 
-✅ How to create Arena configurations in Go code  
-✅ How to build engine components programmatically  
-✅ How to execute tests and retrieve results  
-✅ How to switch between mock and real providers  
-✅ How to add assertions to scenarios  
+How to create Arena configurations in Go code
+How to build engine components programmatically
+How to execute tests and retrieve results
+How to switch between mock and real providers
+How to add assertions to scenarios
 
 ## Next Steps
 

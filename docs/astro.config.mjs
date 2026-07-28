@@ -75,6 +75,10 @@ export default defineConfig({
         src: './public/atlas/logo-promptarena.svg',
         alt: 'PromptArena',
       },
+      // Without this Starlight falls back to /favicon.svg — the pre-Atlas
+      // indigo/violet gradient mark — so docs pages showed a different icon
+      // from the landing page, which already points at the Atlas logo.
+      favicon: '/atlas/logo-promptarena.svg',
       customCss: ['./src/styles/custom.css'],
       // Atlas-themed code blocks: a distinct ink-void surface, mono code font,
       // hairline frame with a soft shadow, and a cyan active-tab indicator —

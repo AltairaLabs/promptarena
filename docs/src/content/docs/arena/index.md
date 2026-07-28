@@ -6,9 +6,7 @@ sidebar:
 ---
 **Comprehensive testing framework for validating LLM prompts across multiple providers**
 
-:::note[📸 Screenshot needed]
-Hero shot of the Arena TUI hub — run `promptarena` with no arguments and capture the View / Run / Chat / Inspect menu. This is the most compelling first impression of the tool.
-:::
+![The PromptArena TUI hub, showing the View, Run, Chat, Inspect and Deploy menu entries with the loaded config named above them.](/screenshots/tui-hub.png)
 
 ---
 
@@ -59,11 +57,11 @@ promptarena run
 
 That's it! The `init` command creates:
 
-- ✅ Complete Arena configuration
-- ✅ Provider setup (ready to use)
-- ✅ Sample test scenario
-- ✅ Working prompt configuration
-- ✅ README with next steps
+- Complete Arena configuration
+- Provider setup (ready to use)
+- Sample test scenario
+- Working prompt configuration
+- README with next steps
 
 ### Need More Control?
 
@@ -86,7 +84,7 @@ Or skip the wizard and create files manually (see below).
 
 ## Documentation by Type
 
-### 📚 Tutorials (Learn by Doing)
+### Tutorials (Learn by Doing)
 
 Step-by-step guides that teach you Arena through hands-on exercises:
 
@@ -96,7 +94,7 @@ Step-by-step guides that teach you Arena through hands-on exercises:
 4. [MCP Tool Integration](/arena/tutorials/04-mcp-tools/) - Test with tool calling
 5. [CI/CD Integration](/arena/tutorials/05-ci-integration/) - Automate testing
 
-### 🔧 How-To Guides (Accomplish Specific Tasks)
+### How-To Guides (Accomplish Specific Tasks)
 
 Focused guides for specific Arena tasks:
 
@@ -109,7 +107,7 @@ Focused guides for specific Arena tasks:
 - [Integrate CI/CD](/arena/how-to/interfaces/run-in-ci/) - GitHub Actions, GitLab CI
 - [Session Recording](/arena/how-to/scenarios/session-recording/) - Capture and replay sessions
 
-### 💡 Explanation (Understand the Concepts)
+### Explanation (Understand the Concepts)
 
 Deep dives into Arena's design and philosophy:
 
@@ -119,7 +117,7 @@ Deep dives into Arena's design and philosophy:
 - [Validation Strategies](/arena/explanation/validation-strategies/) - Assertion best practices
 - [Session Recording](/arena/explanation/session-recording/) - Recording architecture and replay
 
-### 📖 Reference (Look Up Details)
+### Reference (Look Up Details)
 
 Complete technical specifications:
 

@@ -486,7 +486,7 @@ spec:
 Model actual user interactions:
 
 ```yaml
-# ✅ Good - natural conversation
+# Good - natural conversation
 spec:
   turns:
     - role: user
@@ -496,7 +496,7 @@ spec:
     - role: user
       content: "To California"
 
-# ❌ Avoid - too structured
+# Avoid - too structured
 spec:
   turns:
     - role: user
@@ -606,11 +606,11 @@ promptarena run --verbose --scenario memory-test
 ### Assertions Too Strict
 
 ```yaml
-# ❌ Too strict
+# Too strict
 assertions:
       patterns: ["I understand you mentioned your order number earlier."]
 
-# ✅ Better
+# Better
 assertions:
   - type: content_includes
     params:

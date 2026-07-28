@@ -413,8 +413,8 @@ cp packs/customer-service.pack.json /deployment/packs/
 Group prompts by application or feature:
 
 ```
-✅ Good: customer-service.pack.json contains all customer service prompts
-❌ Avoid: all-prompts.pack.json containing unrelated prompts
+Good: customer-service.pack.json contains all customer service prompts
+Avoid: all-prompts.pack.json containing unrelated prompts
 ```
 
 ### 2. Consistent Naming
@@ -460,11 +460,11 @@ Continue learning about pack management:
 
 You've learned to:
 
-- ✅ Create multiple related prompts
-- ✅ Compile them into a single pack
-- ✅ Organize prompts by feature
-- ✅ Understand multi-prompt pack structure
-- ✅ Use prompts selectively in applications
+- Create multiple related prompts
+- Compile them into a single pack
+- Organize prompts by feature
+- Understand multi-prompt pack structure
+- Use prompts selectively in applications
 
 Multi-prompt packs are ideal for:
 - Complete applications
@@ -472,4 +472,4 @@ Multi-prompt packs are ideal for:
 - Workflow stages
 - Related use cases
 
-Great job! 🎉
+Great job!

@@ -53,11 +53,11 @@ cd my-first-test
 
 That's it! The `init` command created everything you need:
 
-- ✅ Arena configuration (`config.arena.yaml`)
-- ✅ Prompt setup (`prompts/assistant.yaml`)
-- ✅ Provider configuration (`providers/openai.yaml`)
-- ✅ Sample test scenario (`scenarios/basic-test.yaml`)
-- ✅ Environment setup (`.env`)
+- Arena configuration (`config.arena.yaml`)
+- Prompt setup (`prompts/assistant.yaml`)
+- Provider configuration (`providers/openai.yaml`)
+- Sample test scenario (`scenarios/basic-test.yaml`)
+- Environment setup (`.env`)
 
 **The Manual Way: Create Files Step-by-Step**
 
@@ -215,7 +215,7 @@ promptarena run
 You should see output like:
 
 ```
-🚀 PromptArena Starting...
+PromptArena Starting...
 
 Loading configuration...
   ✓ Loaded 1 prompt config

@@ -220,11 +220,11 @@ You'll see a structured JSON file containing your prompt in a format ready for t
 
 Congratulations! You've successfully:
 
-- ✅ Installed packc
-- ✅ Created a prompt configuration
-- ✅ Compiled your first pack
-- ✅ Validated the pack
-- ✅ Inspected pack contents
+- Installed packc
+- Created a prompt configuration
+- Compiled your first pack
+- Validated the pack
+- Inspected pack contents
 
 ## Understanding the Pack
 

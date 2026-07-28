@@ -67,9 +67,9 @@ Test tools that execute on the caller's device, including consent simulation for
 
 **Tutorials** are learning-oriented lessons that guide you through completing projects:
 
-- ✅ "Build your first LLM test from scratch"
-- ✅ "Set up multi-provider testing step-by-step"
-- ✅ "Create a CI/CD pipeline for LLM tests"
+- "Build your first LLM test from scratch"
+- "Set up multi-provider testing step-by-step"
+- "Create a CI/CD pipeline for LLM tests"
 
 Looking for something else?
 
@@ -98,11 +98,11 @@ Stuck on a tutorial?
 
 By completing all tutorials, you'll have:
 
-- ✅ A working LLM test suite
-- ✅ Multi-provider comparison tests
-- ✅ Complex conversation flows
-- ✅ Tool/function calling tests
-- ✅ Automated CI/CD pipeline
-- ✅ Voice/duplex streaming tests
+- A working LLM test suite
+- Multi-provider comparison tests
+- Complex conversation flows
+- Tool/function calling tests
+- Automated CI/CD pipeline
+- Voice/duplex streaming tests
 
 Ready to get started? **[Begin with Tutorial 1 →](/arena/tutorials/01-first-test/)**

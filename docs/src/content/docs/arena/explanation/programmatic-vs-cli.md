@@ -28,18 +28,18 @@ runIDs, _ := eng.ExecuteRuns(ctx, plan, 4)
 
 | Use Case | CLI | Programmatic | Why |
 |----------|-----|--------------|-----|
-| Quick manual testing | ✅ Best | ⚠️ Overkill | CLI is faster for ad-hoc testing |
-| CI/CD pipelines | ✅ Good | ✅ Good | Both work well, CLI is simpler |
-| Integration with apps | ❌ Limited | ✅ Best | Need programmatic control |
-| Dynamic test generation | ❌ Hard | ✅ Best | Can't easily generate YAML |
-| Custom result processing | ⚠️ Via scripts | ✅ Best | Direct access to results |
-| Team collaboration | ✅ Best | ⚠️ Harder | YAML files are git-friendly |
-| Complex workflows | ⚠️ Limited | ✅ Best | Need conditional logic |
-| Learning Arena | ✅ Best | ⚠️ Harder | CLI has gentler learning curve |
+| Quick manual testing | Best | Overkill | CLI is faster for ad-hoc testing |
+| CI/CD pipelines | Good | Good | Both work well, CLI is simpler |
+| Integration with apps | Limited | Best | Need programmatic control |
+| Dynamic test generation | Hard | Best | Can't easily generate YAML |
+| Custom result processing | Via scripts | Best | Direct access to results |
+| Team collaboration | Best | Harder | YAML files are git-friendly |
+| Complex workflows | Limited | Best | Need conditional logic |
+| Learning Arena | Best | Harder | CLI has gentler learning curve |
 
 ## CLI: When to Use
 
-### ✅ Good For:
+### Good For:
 
 #### 1. Manual Testing and Exploration
 
@@ -82,7 +82,7 @@ promptarena run
 
 **Why:** Beautiful terminal UI with progress, logs, and results.
 
-### ❌ Not Good For:
+### Not Good For:
 
 #### Dynamic Test Generation
 
@@ -110,7 +110,7 @@ system("promptarena run ...")
 
 ## Programmatic: When to Use
 
-### ✅ Good For:
+### Good For:
 
 #### 1. Integration with Applications
 
@@ -182,7 +182,7 @@ func (r *TestRunner) GenerateReport(...)
 
 **Why:** Build specialized tools on top of Arena.
 
-### ❌ Not Good For:
+### Not Good For:
 
 #### Quick Iteration
 
@@ -310,27 +310,27 @@ log.Printf("Results: %+v", results)
 
 ### Start with CLI if:
 
-- ✅ You're new to Arena
-- ✅ You have standard testing needs
-- ✅ Your tests are stable and predefined
-- ✅ You want quick results
-- ✅ Your team isn't familiar with Go
+- You're new to Arena
+- You have standard testing needs
+- Your tests are stable and predefined
+- You want quick results
+- Your team isn't familiar with Go
 
 ### Use Programmatic if:
 
-- ✅ You need to integrate with applications
-- ✅ You need dynamic test generation
-- ✅ You need custom result processing
-- ✅ You're building testing tools
-- ✅ You have complex conditional workflows
-- ✅ You need high-frequency testing
+- You need to integrate with applications
+- You need dynamic test generation
+- You need custom result processing
+- You're building testing tools
+- You have complex conditional workflows
+- You need high-frequency testing
 
 ### Use Both if:
 
-- ✅ You want flexibility
-- ✅ You have different use cases
-- ✅ Some tests are standard, some are custom
-- ✅ You want CLI for development, code for production
+- You want flexibility
+- You have different use cases
+- Some tests are standard, some are custom
+- You want CLI for development, code for production
 
 ## Real-World Examples
 
@@ -372,13 +372,13 @@ go run experiments/ablation-study.go
 
 | Aspect | CLI | Programmatic |
 |--------|-----|--------------|
-| **Ease of use** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ |
-| **Flexibility** | ⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
-| **Team collaboration** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ |
-| **Integration** | ⭐⭐ | ⭐⭐⭐⭐⭐ |
-| **Custom logic** | ⭐⭐ | ⭐⭐⭐⭐⭐ |
-| **Learning curve** | ⭐⭐⭐⭐⭐ | ⭐⭐⭐ |
-| **Performance** | ⭐⭐⭐⭐ | ⭐⭐⭐⭐⭐ |
+| **Ease of use** | 5/5 | 3/5 |
+| **Flexibility** | 3/5 | 5/5 |
+| **Team collaboration** | 5/5 | 3/5 |
+| **Integration** | 2/5 | 5/5 |
+| **Custom logic** | 2/5 | 5/5 |
+| **Learning curve** | 5/5 | 3/5 |
+| **Performance** | 4/5 | 5/5 |
 
 **Golden Rule:** Start with CLI. Switch to programmatic when you hit limitations.
 

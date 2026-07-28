@@ -106,9 +106,9 @@ Wire `promptarena run --ci` into GitHub Actions as a hard merge gate. Fork-safe 
 
 **How-to guides** are goal-oriented recipes that show you **how to solve** specific problems:
 
-- ✅ "How do I install Arena?"
-- ✅ "How do I configure multiple providers?"
-- ✅ "How do I integrate with GitHub Actions?"
+- "How do I install Arena?"
+- "How do I configure multiple providers?"
+- "How do I integrate with GitHub Actions?"
 
 Looking for something else?
 

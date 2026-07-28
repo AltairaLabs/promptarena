@@ -54,11 +54,11 @@ my-project/
 For CI/CD, we recommend using npm for PromptArena installation:
 
 **Why npm for CI?**
-- ✅ No Go toolchain required (faster setup)
-- ✅ Works on all platforms (Linux, macOS, Windows)
-- ✅ Simpler workflow (one command)
-- ✅ Node.js typically already in CI environments
-- ✅ Faster installation time
+- No Go toolchain required (faster setup)
+- Works on all platforms (Linux, macOS, Windows)
+- Simpler workflow (one command)
+- Node.js typically already in CI environments
+- Faster installation time
 
 **Alternative: Go Install** (if you prefer):
 ```yaml
@@ -165,11 +165,11 @@ jobs:
           echo "Pass rate: $PASS_RATE"
           
           if (( $(echo "$PASS_RATE < 0.95" | bc -l) )); then
-            echo "❌ Quality gate failed: Pass rate $PASS_RATE < 95%"
+            echo "Quality gate failed: Pass rate $PASS_RATE < 95%"
             exit 1
           fi
           
-          echo "✅ Quality gate passed: $PASS_RATE >= 95%"
+          echo "Quality gate passed: $PASS_RATE >= 95%"
 ```
 
 ## Step 4: Configure API Keys as Secrets
@@ -260,7 +260,7 @@ PASS_RATE=$(jq '.summary.pass_rate' $RESULTS_FILE)
 TOTAL=$(jq '.summary.total' $RESULTS_FILE)
 FAILED=$(jq '.summary.failed' $RESULTS_FILE)
 
-echo "📊 Test Results:"
+echo "Test Results:"
 echo "  Total: $TOTAL"
 echo "  Pass Rate: $PASS_RATE"
 echo "  Failed: $FAILED"
@@ -270,24 +270,24 @@ MIN_PASS_RATE=0.95
 MAX_FAILURES=5
 
 echo ""
-echo "🚦 Quality Gates:"
+echo "Quality Gates:"
 
 # Check pass rate
 if (( $(echo "$PASS_RATE < $MIN_PASS_RATE" | bc -l) )); then
-  echo "❌ Pass rate $PASS_RATE < $MIN_PASS_RATE"
+  echo "Pass rate $PASS_RATE < $MIN_PASS_RATE"
   exit 1
 fi
-echo "✅ Pass rate: $PASS_RATE >= $MIN_PASS_RATE"
+echo "Pass rate: $PASS_RATE >= $MIN_PASS_RATE"
 
 # Check failure count
 if [ "$FAILED" -gt "$MAX_FAILURES" ]; then
-  echo "❌ Too many failures: $FAILED > $MAX_FAILURES"
+  echo "Too many failures: $FAILED > $MAX_FAILURES"
   exit 1
 fi
-echo "✅ Failure count: $FAILED <= $MAX_FAILURES"
+echo "Failure count: $FAILED <= $MAX_FAILURES"
 
 echo ""
-echo "✅ All quality gates passed!"
+echo "All quality gates passed!"
 ```
 
 Use in workflow:
@@ -349,16 +349,16 @@ Add test results to PR comments:
       const passRate = (summary.pass_rate * 100).toFixed(1);
       
       const comment = `
-      ## 🤖 LLM Test Results
+      ## LLM Test Results
       
       | Metric | Value |
       |--------|-------|
       | Total Tests | ${summary.total} |
-      | Passed | ${summary.passed} ✅ |
-      | Failed | ${summary.failed} ❌ |
+      | Passed | ${summary.passed} |
+      | Failed | ${summary.failed} |
       | Pass Rate | ${passRate}% |
       
-      ${passRate >= 95 ? '✅ Quality gate: PASSED' : '❌ Quality gate: FAILED'}
+      ${passRate >= 95 ? 'Quality gate: PASSED' : 'Quality gate: FAILED'}
       
       [View detailed report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
       `;
@@ -422,7 +422,7 @@ jobs:
         with:
           payload: |
             {
-              "text": "🚨 Scheduled LLM tests failed",
+              "text": "Scheduled LLM tests failed",
               "blocks": [
                 {
                   "type": "section",
@@ -542,7 +542,7 @@ jobs:
         run: |
           PASS_RATE=$(jq '.summary.pass_rate' out/results.json)
           if (( $(echo "$PASS_RATE < 0.95" | bc -l) )); then
-            echo "❌ Quality gate failed: $PASS_RATE < 95%"
+            echo "Quality gate failed: $PASS_RATE < 95%"
             exit 1
           fi
       
@@ -606,11 +606,11 @@ timeout-minutes: 10  # Kill hung tests
 ### 3. Secure Secrets
 
 ```yaml
-# ✅ Use GitHub Secrets
+# Use GitHub Secrets
 env:
   OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
 
-# ❌ Never commit keys
+# Never commit keys
 env:
   OPENAI_API_KEY: "sk-..."  # WRONG!
 ```

@@ -225,22 +225,22 @@ Warning: Pack size 2MB exceeds recommended 1MB
 **String fields**:
 
 ```yaml
-task_type: "support"  # ✅ Valid
-task_type: 123        # ❌ Error: must be string
+task_type: "support"  # Valid
+task_type: 123        # Error: must be string
 ```
 
 **Numeric parameters**:
 
 ```yaml
-temperature: 0.7      # ✅ Valid
-temperature: "0.7"    # ❌ Error: must be number
+temperature: 0.7      # Valid
+temperature: "0.7"    # Error: must be number
 ```
 
 **Boolean fields**:
 
 ```yaml
-debug: true          # ✅ Valid
-debug: "true"        # ❌ Error: must be boolean
+debug: true          # Valid
+debug: "true"        # Error: must be boolean
 ```
 
 ### Range Validation
@@ -248,17 +248,17 @@ debug: "true"        # ❌ Error: must be boolean
 **Temperature**: 0.0 to 2.0
 
 ```yaml
-temperature: 0.7     # ✅ Valid
-temperature: -1.0    # ⚠️ Warning: below 0
-temperature: 3.0     # ⚠️ Warning: above 2.0
+temperature: 0.7     # Valid
+temperature: -1.0    # Warning: below 0
+temperature: 3.0     # Warning: above 2.0
 ```
 
 **Max tokens**: 1 to 100,000
 
 ```yaml
-max_tokens: 1000     # ✅ Valid
-max_tokens: 0        # ❌ Error: must be positive
-max_tokens: 200000   # ⚠️ Warning: very large
+max_tokens: 1000     # Valid
+max_tokens: 0        # Error: must be positive
+max_tokens: 200000   # Warning: very large
 ```
 
 ### Pattern Validation
@@ -266,15 +266,15 @@ max_tokens: 200000   # ⚠️ Warning: very large
 **Pack ID**: Alphanumeric with hyphens
 
 ```yaml
-id: "customer-support"     # ✅ Valid
-id: "Customer Support!"    # ❌ Error: invalid characters
+id: "customer-support"     # Valid
+id: "Customer Support!"    # Error: invalid characters
 ```
 
 **Task Type**: Alphanumeric with hyphens/underscores
 
 ```yaml
-task_type: "support-agent"  # ✅ Valid
-task_type: "support agent"  # ❌ Error: no spaces
+task_type: "support-agent"  # Valid
+task_type: "support agent"  # Error: no spaces
 ```
 
 ### Template Validation

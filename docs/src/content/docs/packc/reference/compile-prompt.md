@@ -230,7 +230,7 @@ for file in $(git diff --cached --name-only | grep '^prompts/.*\.yaml$'); do
   packc compile-prompt --prompt "$file" --output "packs/${name}.pack.json"
   
   if [ $? -ne 0 ]; then
-    echo "❌ Failed to compile $file"
+    echo "Failed to compile $file"
     exit 1
   fi
   

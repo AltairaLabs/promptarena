@@ -30,14 +30,14 @@ Each response is valid but different. This requires a fundamentally different te
 Instead of testing for exact outputs, test for desired behaviors:
 
 ```yaml
-# ❌ Brittle: Exact match
+# Brittle: Exact match
 assertions:
   - type: content_matches
     params:
       pattern: "^Thank you for contacting AcmeCorp support\\.$"
       message: "Exact wording required"
 
-# ✅ Robust: Behavior validation
+# Robust: Behavior validation
 assertions:
   - type: content_includes
     params:
@@ -342,7 +342,7 @@ promptarena run --provider openai-gpt4o-mini
 
 ## Anti-Patterns to Avoid
 
-### ❌ Over-Specification
+### Over-Specification
 
 ```yaml
 # Too rigid
@@ -369,7 +369,7 @@ assertions:
       message: "Must be professional"
 ```
 
-### ❌ Under-Specification
+### Under-Specification
 
 ```yaml
 # Too loose
@@ -404,7 +404,7 @@ assertions:
       message: "Must be appropriate"
 ```
 
-### ❌ Flaky Tests
+### Flaky Tests
 
 ```yaml
 # Assumes specific response structure
@@ -431,7 +431,7 @@ assertions:
       message: "Must be welcoming"
 ```
 
-### ❌ Testing Implementation, Not Behavior
+### Testing Implementation, Not Behavior
 
 ```yaml
 # Tests how, not what - too implementation-focused

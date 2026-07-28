@@ -85,13 +85,13 @@ echo "Validating: $PACK_FILE"
 
 # 1. Check file exists
 if [ ! -f "$PACK_FILE" ]; then
-  echo "❌ Pack file not found"
+  echo "Pack file not found"
   exit 1
 fi
 
 # 2. Validate with packc
 if ! packc validate "$PACK_FILE"; then
-  echo "❌ Pack validation failed"
+  echo "Pack validation failed"
   exit 1
 fi
 
@@ -105,22 +105,22 @@ fi
 
 # 4. Verify JSON structure
 if ! jq empty "$PACK_FILE" 2>/dev/null; then
-  echo "❌ Invalid JSON"
+  echo "Invalid JSON"
   exit 1
 fi
 
 # 5. Check required fields
 if ! jq -e '.id' "$PACK_FILE" >/dev/null; then
-  echo "❌ Missing pack ID"
+  echo "Missing pack ID"
   exit 1
 fi
 
 if ! jq -e '.prompts' "$PACK_FILE" >/dev/null; then
-  echo "❌ Missing prompts"
+  echo "Missing prompts"
   exit 1
 fi
 
-echo "✅ Pack validation passed"
+echo "Pack validation passed"
 EOF
 
 chmod +x scripts/validate-pack.sh
@@ -152,7 +152,7 @@ echo "=== Inspecting Pack ==="
 packc inspect packs/assistant.pack.json
 
 echo ""
-echo "✅ Build and validation complete"
+echo "Build and validation complete"
 EOF
 
 chmod +x scripts/build-and-validate.sh
@@ -181,12 +181,12 @@ packc compile --config config/arena.yaml --output packs/assistant.pack.json --id
 # Validate
 if ! packc validate packs/assistant.pack.json; then
   echo ""
-  echo "❌ Pack validation failed!"
+  echo "Pack validation failed!"
   echo "Fix errors or use 'git commit --no-verify' to bypass"
   exit 1
 fi
 
-echo "✅ Pre-commit validation passed"
+echo "Pre-commit validation passed"
 git add packs/assistant.pack.json
 EOF
 
@@ -275,11 +275,11 @@ Run in a separate terminal:
 
 ## What You Learned
 
-- ✅ Created validation scripts
-- ✅ Built automated workflows
-- ✅ Set up pre-commit hooks
-- ✅ Used Makefiles for consistency
-- ✅ Enabled continuous validation
+- Created validation scripts
+- Built automated workflows
+- Set up pre-commit hooks
+- Used Makefiles for consistency
+- Enabled continuous validation
 
 ## Best Practices
 
@@ -326,4 +326,4 @@ You now have:
 - Development validation loop
 - Production-ready validation
 
-Great work! 🎉
+Great work!
