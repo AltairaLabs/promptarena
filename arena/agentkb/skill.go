@@ -56,7 +56,8 @@ const agentsBrief = `<!-- promptarena-authoring -->
 You are in a PromptArena kit. Read the authoring skill first:
 ` + "`.claude/skills/promptarena-authoring/SKILL.md`" + `, and the bundled catalogs in
 ` + "`.claude/skills/promptarena-authoring/reference/`" + ` (evals-and-assertions,
-config-fields, cli) — prefer them over repeatedly calling ` + "`promptarena explain`/`schema`" + `.
+config-fields, mock-responses, cli) — prefer them over repeatedly calling
+` + "`promptarena explain`/`schema`" + `.
 
 Workflow (full detail in SKILL.md): define measurable success → map to concepts → draw
 the tool scope line → scaffold to the canonical layout → build against mocks → run
@@ -65,7 +66,9 @@ real providers last → deploy.
 
 Idiom traps:
 - Mock response keys match the scenario's ` + "`metadata.name`" + `, not ` + "`spec.id`" + `.
-- Thresholds live on the ` + "`type: assertion`" + ` wrapper, never on the inner eval.
+- Mock turn numbers count LLM calls, not user turns — a tool-calling turn consumes two.
+- Thresholds go in the ` + "`type: assertion`" + ` wrapper's ` + "`params`" + ` (` + "`eval_type`" + `,
+  ` + "`eval_params`" + `, ` + "`min_score`" + `) — never as siblings of ` + "`type`" + `, never on the inner eval.
 - A pack ships tool **definitions** + bindings, never tool implementations.
 
 Do not gold-plate: working configs and passing measures first; no fancy docs until the

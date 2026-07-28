@@ -45,3 +45,10 @@ spec:
 
 Ask before you author: "Do you have an API spec, an MCP server, or a sample
 request/response for this?" The answer determines the binding and the schema.
+
+**Unless you cannot be answered.** In a non-interactive run — `claude -p`, a CI job, any
+headless one-shot — there is nobody to reply, so asking ends the session with nothing
+built. Do not stall: take option 4, author `mode: mock` tools from a small, explicit
+fixture set, and put the invented contracts at the top of your final summary as
+assumptions to confirm. A flagged guess that runs is useful; a question nobody will read
+is not.

@@ -10,7 +10,9 @@ import (
 func TestReferenceNamesAndRead(t *testing.T) {
 	names, err := ReferenceNames()
 	require.NoError(t, err)
-	assert.ElementsMatch(t, []string{"cli.md", "config-fields.md", "evals-and-assertions.md"}, names)
+	assert.ElementsMatch(t, []string{
+		"cli.md", "config-fields.md", "evals-and-assertions.md", "mock-responses.md",
+	}, names)
 
 	b, err := Reference("evals-and-assertions.md")
 	require.NoError(t, err)
