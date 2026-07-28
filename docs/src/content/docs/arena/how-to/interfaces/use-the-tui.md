@@ -98,9 +98,10 @@ conversation state between turns. Add `-v` / `--verbose` to tee raw provider eve
 and transcription to `promptarena.log` for debugging. As with `view`, the chat page
 is the stack root, so `Esc` / `q` exits back to the shell.
 
-:::note[📸 Screenshot needed]
-An interactive chat session with an agent, several turns deep
-:::
+`chat` opens on a provider picker — choose one with its number key before
+typing, since the picker reads digits as selections.
+
+![A chat session seven turns deep: the numbered turn list shows the system prompt, two user messages, the assistant's replies, a get_order_status tool call and its result, and the final answer rendered on the right with token and cost totals.](/screenshots/tui-chat.png)
 
 ### Voice mode
 
