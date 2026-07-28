@@ -62,10 +62,13 @@ directory on startup) and shows:
 - A results list of completed runs, each opening a detailed results viewer.
 - Controls to start a new run and to clear stored results.
 
-:::note[📸 Screenshot needed]
-The Arena web dashboard on first load: the config summary, the list of prior run
-results, and the "start a run" controls.
-:::
+![The Arena dashboard: a scenario picker with the run cost and duration estimate, an overall pass-rate dial, trial/spend/latency/token tiles, a provider standings table, and a trial matrix of scenario by provider with per-cell pass rate, cost and duration.](/screenshots/web-dashboard.png)
+
+Selecting a trial opens the detailed results viewer for that run — the transcript
+with any tool calls and their results inline, per-turn token, cost and latency
+figures, and a scrubber that replays the conversation turn by turn.
+
+![A run detail view for one scenario and provider, showing message, tool-call, token, cost and latency totals along the top, a transcript containing a get_order_status tool call with its JSON result and the assistant reply, and a replay timeline along the bottom.](/screenshots/web-run-detail.png)
 
 ## Monitor a Live Run
 
@@ -74,10 +77,10 @@ engine as scenarios execute. Turn-by-turn messages, assertion outcomes, and stat
 updates appear in the browser in real time — no page refresh needed. The stream
 stays open for the life of the page and reconnects automatically if dropped.
 
-:::note[📸 Screenshot needed]
-A run in progress: the live event stream updating turn by turn with assertion
-results as they land.
-:::
+![The dashboard mid-run: the status badge in the header reads Live, and the trial count, spend, latency and pass-rate figures climb as results arrive.](/screenshots/web-run-live.png)
+
+The status badge in the header switches from **Online** to **Live** while a run is
+in flight, and the summary tiles update as each trial lands.
 
 ## Start a Run from the Browser
 
@@ -96,10 +99,13 @@ and provider, supply any required template variables, and start a session
 `POST /api/interactive/message`, and the agent's reply renders live over the same
 SSE stream. You can optionally enable evals to score the conversation as it runs.
 
-:::note[📸 Screenshot needed]
-The interactive chat tab: agent/provider pickers on the left and a live
-conversation with a configured agent on the right.
-:::
+The active agent, provider and connection status sit in a bar above the
+transcript rather than in a side panel. Selecting any message opens an inspector
+on the right with **Overview**, **Checks**, **Raw** and **Tools** tabs — `Raw`
+shows the exact message object, including the resolved tool descriptors sent to
+the provider.
+
+![The Interactive Chat tab: a header bar naming the agent, provider and connection status, the system prompt and a user/assistant exchange in the transcript, and a message inspector open on the right showing the raw JSON for the system message.](/screenshots/web-chat.png)
 
 ## Audio Monitoring
 
