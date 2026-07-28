@@ -8,10 +8,10 @@ PromptArena supports multiple output formats for test results, each optimized fo
 
 | Format | Use Case | File Extension | CI/CD Integration |
 |--------|----------|----------------|-------------------|
-| **JSON** | Programmatic access, APIs | `.json` | ✅ Excellent |
-| **HTML** | Human review, reports | `.html` | ⚠️ Manual review |
-| **Markdown** | Documentation, GitHub | `.md` | ✅ Good |
-| **JUnit XML** | CI/CD systems | `.xml` | ✅ Excellent |
+| **JSON** | Programmatic access, APIs | `.json` | Excellent |
+| **HTML** | Human review, reports | `.html` | Manual review |
+| **Markdown** | Documentation, GitHub | `.md` | Good |
+| **JUnit XML** | CI/CD systems | `.xml` | Excellent |
 
 ## Output Directory Structure
 
@@ -361,8 +361,8 @@ GitHub-friendly markdown format for documentation.
 ## Summary
 
 - **Total Tests**: 15
-- **Passed**: 12 ✅
-- **Failed**: 3 ❌
+- **Passed**: 12
+- **Failed**: 3
 - **Duration**: 45.2s
 - **Cost**: $0.0234
 - **Tokens**: 4,521
@@ -373,7 +373,7 @@ GitHub-friendly markdown format for documentation.
 
 #### Scenario: basic-qa
 
-**Status**: ✅ PASSED
+**Status**: PASSED
 **Duration**: 3.2s
 **Cost**: $0.00003
 
@@ -384,7 +384,7 @@ GitHub-friendly markdown format for documentation.
 **Assistant**: The capital of France is Paris.
 
 **Assertions**:
-- ✅ content_includes: Should mention Paris
+- content_includes: Should mention Paris
 
 **Tokens**: 37 (input: 25, output: 12)
 **Cost**: $0.00001
@@ -463,7 +463,7 @@ Standard format for CI/CD systems (Jenkins, GitLab CI, GitHub Actions, etc.).
         Turn 1:
         User: What is the capital of France?
         Assistant: The capital of France is Paris.
-        Assertions: ✅ content_includes
+        Assertions: content_includes
       </system-out>
     </testcase>
 

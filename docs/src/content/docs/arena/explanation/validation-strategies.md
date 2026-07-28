@@ -8,7 +8,7 @@ Comprehensive guide to designing effective validation and assertion strategies f
 LLM outputs are non-deterministic and variable. Traditional exact-match testing doesn't work:
 
 ```yaml
-# ❌ This will fail - too rigid
+# This will fail - too rigid
 assertions:
   - type: content_matches
     params:
@@ -30,14 +30,14 @@ assertions:
 Focus on what the response achieves, not how it's phrased:
 
 ```yaml
-# ✅ Good: Tests behavior
+# Good: Tests behavior
 assertions:
   - type: content_includes
     params:
       patterns: ["Paris"]
       message: "Should mention Paris"
 
-# ❌ Bad: Tests exact wording
+# Bad: Tests exact wording
 assertions:
   - type: content_matches
     params:
@@ -79,14 +79,14 @@ assertions:
 Build assertions that accept legitimate variation:
 
 ```yaml
-# ✅ Flexible
+# Flexible
 assertions:
   - type: content_matches
     params:
       pattern: "(refund|money back|return funds)"
       message: "Should mention refund option"
   
-# ❌ Too rigid
+# Too rigid
 assertions:
   - type: content_includes
     params:
@@ -861,10 +861,10 @@ assertions:
 ### Over-Specification
 
 ```yaml
-# ❌ Too specific
+# Too specific
 assertions:
 
-# ✅ Appropriately flexible
+# Appropriately flexible
 assertions:
   - type: content_includes
     params:
@@ -874,14 +874,14 @@ assertions:
 ### Under-Specification
 
 ```yaml
-# ❌ Too loose
+# Too loose
 assertions:
   - type: content_matches
     params:
       pattern: ".+"
       message: "Must not be empty"
 
-# ✅ Adequately constrained
+# Adequately constrained
 assertions:
   - type: content_includes
     params:
@@ -896,14 +896,14 @@ assertions:
 ### Brittle Assertions
 
 ```yaml
-# ❌ Breaks with minor changes
+# Breaks with minor changes
 assertions:
   - type: content_matches
     params:
       pattern: "^The answer is"
       message: "Must start with exact phrase"
 
-# ✅ Robust to variation
+# Robust to variation
 assertions:
   - type: content_includes
     params:
@@ -914,7 +914,7 @@ assertions:
 ### Missing Negative Tests
 
 ```yaml
-# ✅ Test both positive and negative
+# Test both positive and negative
 assertions:
   # Must have
   - type: content_includes

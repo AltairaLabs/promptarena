@@ -7,7 +7,7 @@ PromptPack is an **open-source specification** for defining LLM prompts, test sc
 
 For complete specification documentation, please visit:
 
-### **[PromptPack.org](https://promptpack.org)** 📘
+### **[PromptPack.org](https://promptpack.org)**
 
 The official PromptPack specification site includes:
 
@@ -26,12 +26,12 @@ The official PromptPack specification site includes:
 
 ### Supported Features
 
-- ✅ **PromptPack v1.1** with multimodal support (images, audio, video)
-- ✅ Kubernetes-style YAML resources: `Arena`, `PromptConfig`, `Scenario`, `Provider`, `Tool`, `Persona`
-- ✅ Multi-provider testing: OpenAI, Anthropic, Google Gemini, Azure, Bedrock, and Mock
-- ✅ MCP (Model Context Protocol) server integration
-- ✅ Comprehensive assertion framework for validation
-- ✅ HTML, JSON, and Markdown output formats
+- **PromptPack v1.1** with multimodal support (images, audio, video)
+- Kubernetes-style YAML resources: `Arena`, `PromptConfig`, `Scenario`, `Provider`, `Tool`, `Persona`
+- Multi-provider testing: OpenAI, Anthropic, Google Gemini, Azure, Bedrock, and Mock
+- MCP (Model Context Protocol) server integration
+- Comprehensive assertion framework for validation
+- HTML, JSON, and Markdown output formats
 
 ### Quick Start
 
@@ -309,9 +309,9 @@ my-project/
 
 | PromptPack Version | PromptArena Support | Key Features |
 |-------------------|-------------------|--------------|
-| v1.0 | ✅ Full | Core specification |
-| v1.1 | ✅ Full | Multimodal support (images, audio, video) |
-| v1alpha1 | ✅ Full | Kubernetes-style resource format |
+| v1.0 | Full | Core specification |
+| v1.1 | Full | Multimodal support (images, audio, video) |
+| v1alpha1 | Full | Kubernetes-style resource format |
 
 ---
 

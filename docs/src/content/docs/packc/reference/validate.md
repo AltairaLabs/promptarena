@@ -182,7 +182,7 @@ If the pack includes a `workflow` section:
 echo "Validating packs..."
 for pack in packs/*.pack.json; do
   if ! packc validate "$pack"; then
-    echo "❌ Pack validation failed"
+    echo "Pack validation failed"
     exit 1
   fi
 done

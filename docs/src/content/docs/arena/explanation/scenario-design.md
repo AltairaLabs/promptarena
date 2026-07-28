@@ -55,7 +55,7 @@ spec:
 Each test case should validate one specific behavior:
 
 ```yaml
-# ✅ Good: Tests one thing
+# Good: Tests one thing
 apiVersion: promptkit.altairalabs.ai/v1alpha1
 kind: Scenario
 metadata:
@@ -76,7 +76,7 @@ spec:
             pattern: "(?i)(hi|hello|welcome|nice)"
             message: "Should use friendly language"
 
-# ❌ Avoid: Tests multiple unrelated things
+# Avoid: Tests multiple unrelated things
 apiVersion: promptkit.altairalabs.ai/v1alpha1
 kind: Scenario
 metadata:
@@ -751,7 +751,7 @@ turns:
 
 ## Anti-Patterns to Avoid
 
-### ❌ God Scenarios
+### God Scenarios
 
 ```yaml
 # Too much in one scenario
@@ -762,7 +762,7 @@ turns:
 
 **Fix:** Break into focused scenarios
 
-### ❌ Flaky Assertions
+### Flaky Assertions
 
 ```yaml
 # Unreliable tests - too rigid
@@ -788,7 +788,7 @@ assertions:
       message: "Should follow general format"
 ```
 
-### ❌ Missing Context
+### Missing Context
 
 ```yaml
 # Unclear purpose
@@ -800,7 +800,7 @@ turns:
 
 **Fix:** Add descriptive names and tags
 
-### ❌ Hardcoded Data
+### Hardcoded Data
 
 ```yaml
 # Brittle test data

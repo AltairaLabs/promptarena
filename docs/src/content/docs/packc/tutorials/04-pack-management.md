@@ -122,11 +122,11 @@ for env in dev staging prod; do
   # Validate
   packc validate "packs/$env/assistant-v${VERSION}.pack.json"
   
-  echo "✅ Built: packs/$env/assistant-v${VERSION}.pack.json"
+  echo "Built: packs/$env/assistant-v${VERSION}.pack.json"
 done
 
 echo ""
-echo "✅ All environments built: v${VERSION}"
+echo "All environments built: v${VERSION}"
 EOF
 
 chmod +x scripts/build-all.sh
@@ -182,7 +182,7 @@ echo "$NEW_VERSION" > VERSION
 ./scripts/build-all.sh "$NEW_VERSION"
 
 echo ""
-echo "✅ Version bumped to $NEW_VERSION"
+echo "Version bumped to $NEW_VERSION"
 EOF
 
 chmod +x scripts/bump-version.sh
@@ -218,7 +218,7 @@ echo "=== Deploying to $ENVIRONMENT ==="
 
 # 1. Verify pack exists
 if [ ! -f "$PACK_FILE" ]; then
-  echo "❌ Pack not found: $PACK_FILE"
+  echo "Pack not found: $PACK_FILE"
   exit 1
 fi
 
@@ -230,14 +230,14 @@ packc validate "$PACK_FILE"
 if [ -f "/deployment/$ENVIRONMENT/assistant.pack.json" ]; then
   cp "/deployment/$ENVIRONMENT/assistant.pack.json" \
      "/deployment/$ENVIRONMENT/backups/assistant-$(date +%Y%m%d-%H%M%S).pack.json"
-  echo "✅ Backed up current pack"
+  echo "Backed up current pack"
 fi
 
 # 4. Deploy new pack
 mkdir -p "/deployment/$ENVIRONMENT"
 cp "$PACK_FILE" "/deployment/$ENVIRONMENT/assistant.pack.json"
 
-echo "✅ Deployed: $PACK_FILE to $ENVIRONMENT"
+echo "Deployed: $PACK_FILE to $ENVIRONMENT"
 EOF
 
 chmod +x scripts/deploy.sh
@@ -279,7 +279,7 @@ ls -t assistant-v*.pack.json | tail -n +$((KEEP_VERSIONS + 1)) | while read file
   rm "$file"
 done
 
-echo "✅ Cleanup complete"
+echo "Cleanup complete"
 EOF
 
 chmod +x scripts/cleanup-old-versions.sh
@@ -333,11 +333,11 @@ View inventory:
 
 ## What You Learned
 
-- ✅ Organized packs by environment
-- ✅ Implemented versioning strategy
-- ✅ Created deployment workflows
-- ✅ Managed pack lifecycle
-- ✅ Automated cleanup
+- Organized packs by environment
+- Implemented versioning strategy
+- Created deployment workflows
+- Managed pack lifecycle
+- Automated cleanup
 
 ## Best Practices
 
@@ -355,9 +355,9 @@ PATCH: Bug fixes
 ### 2. Environment Isolation
 
 ```
-✅ Separate configs per environment
-✅ Test in dev → staging → prod
-✅ Never skip staging
+Separate configs per environment
+Test in dev → staging → prod
+Never skip staging
 ```
 
 ### 3. Always Backup
@@ -390,4 +390,4 @@ You now can:
 - Track pack inventory
 - Clean up old versions
 
-Excellent progress! 🎉
+Excellent progress!

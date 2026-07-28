@@ -246,27 +246,27 @@ This allows the specification to evolve while maintaining compatibility.
 
 | PromptPack | Framework-Specific |
 |------------|-------------------|
-| ✅ Portable — works anywhere | ❌ Locked to one framework |
-| ✅ Standard format | ❌ Proprietary format |
-| ✅ Versioned | ❌ Often unversioned |
-| ✅ Compiled & validated | ❌ Runtime parsing |
+| Portable — works anywhere | Locked to one framework |
+| Standard format | Proprietary format |
+| Versioned | Often unversioned |
+| Compiled & validated | Runtime parsing |
 
 ### vs. Raw YAML/JSON Files
 
 | PromptPack | Raw Files |
 |------------|-----------|
-| ✅ Compiled, optimized | ❌ Requires parsing at runtime |
-| ✅ Single file | ❌ Multiple files to manage |
-| ✅ Schema validated | ❌ May have errors |
-| ✅ Versioned | ❌ No version info |
+| Compiled, optimized | Requires parsing at runtime |
+| Single file | Multiple files to manage |
+| Schema validated | May have errors |
+| Versioned | No version info |
 
 ### vs. Langchain Templates
 
 | PromptPack | Langchain |
 |------------|-----------|
-| ✅ Language agnostic | ❌ Python-specific |
-| ✅ Multi-prompt bundles | ❌ Single templates |
-| ✅ Self-contained | ❌ Code dependencies |
+| Language agnostic | Python-specific |
+| Multi-prompt bundles | Single templates |
+| Self-contained | Code dependencies |
 
 ## Best Practices
 
@@ -288,10 +288,10 @@ Use the [PromptPack spec](https://promptpack.org) for maximum portability:
 One pack per application or feature:
 
 ```
-✅ customer-support.pack.json
-✅ sales-automation.pack.json
+customer-support.pack.json
+sales-automation.pack.json
 
-❌ all-prompts.pack.json
+all-prompts.pack.json
 ```
 
 ### 3. Use Semantic Versioning

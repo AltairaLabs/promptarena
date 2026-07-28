@@ -635,7 +635,7 @@ spec:
 Write tests that work across providers:
 
 ```yaml
-# ✅ Good: Works for all providers
+# Good: Works for all providers
 assertions:
   - type: content_includes
     params:
@@ -647,7 +647,7 @@ assertions:
       judge_provider: "openai/gpt-4o-mini"
       message: "Must be appropriate"
 
-# ❌ Avoid: Provider-specific expectations
+# Avoid: Provider-specific expectations
 assertions:
   - type: content_matches
     params:

@@ -766,7 +766,7 @@ The command displays styled boxes with:
 │   mock-selfplay: mock-model (temp: 0.80, max: 1000)                          │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 
-  🎭 Self-Play (2 personas, 2 roles)
+  Self-Play (2 personas, 2 roles)
 
 Personas:
 ╭──────────────────────────────────────────────────────────────────────────────╮
@@ -779,17 +779,17 @@ Roles:
 │ operator (plant-operator) → openai-gpt4o                                     │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 
-  ✅ Validation
+  Validation
 
 ╭──────────────────────────────────────────────────────────────────────────────╮
 │ ✓ Configuration is valid                                                     │
 │                                                                              │
 │ Connectivity Checks:                                                         │
-│   ☑ Tools are used by prompts                                                │
-│   ☑ Unique task types per prompt                                             │
-│   ☑ Scenario task types exist                                                │
-│   ☑ Allowed tools are defined                                                │
-│   ☑ Self-play roles have valid providers                                     │
+│   Tools are used by prompts                                                │
+│   Unique task types per prompt                                             │
+│   Scenario task types exist                                                │
+│   Allowed tools are defined                                                │
+│   Self-play roles have valid providers                                     │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 ```
 
@@ -1158,9 +1158,9 @@ Check exit code in scripts:
 
 ```bash
 if promptarena run --ci; then
-  echo "✅ Tests passed"
+  echo "Tests passed"
 else
-  echo "❌ Tests failed"
+  echo "Tests failed"
   exit 1
 fi
 ```
@@ -1337,7 +1337,7 @@ HTML reports include:
 
 **Media Badges**
 ```
-🖼️ x3  🎵 x2  ✅ 5  ❌ 0  💾 1.2 MB
+🖼️ x3  🎵 x2  5  0  💾 1.2 MB
 ```
 
 **Media Items Display**
@@ -1346,7 +1346,7 @@ HTML reports include:
   - Source (file path, URL, or "inline")
   - MIME type
   - File size
-  - Load status (✅ loaded / ❌ error)
+  - Load status (loaded / error)
 
 **Example HTML Output**:
 ```html
@@ -1397,26 +1397,26 @@ These properties are useful for:
 Markdown reports include a media statistics table in the overview section:
 
 ```markdown
-## 📊 Overview
+## Overview
 
 | Metric | Value |
 |--------|-------|
 | Tests Run | 6 |
-| Passed | 5 ✅ |
-| Failed | 1 ❌ |
+| Passed | 5 |
+| Failed | 1 |
 | Success Rate | 83.3% |
 | Total Cost | $0.0245 |
 | Total Duration | 12.5s |
 
-### 🎨 Media Content
+### Media Content
 
 | Type | Count |
 |------|-------|
 | 🖼️  Images | 5 |
 | 🎵 Audio Files | 3 |
 | 🎬 Videos | 0 |
-| ✅ Loaded | 8 |
-| ❌ Errors | 0 |
+| Loaded | 8 |
+| Errors | 0 |
 | 💾 Total Size | 1.2 MB |
 ```
 

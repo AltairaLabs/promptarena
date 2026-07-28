@@ -297,11 +297,11 @@ func main() {
 	results := collectResults(runIDs, eng.GetStateStore())
 	
 	if hasFailures(results) {
-		fmt.Println("❌ Tests failed")
+		fmt.Println("Tests failed")
 		os.Exit(1)
 	}
 	
-	fmt.Println("✅ All tests passed")
+	fmt.Println("All tests passed")
 	os.Exit(0)
 }
 ```
