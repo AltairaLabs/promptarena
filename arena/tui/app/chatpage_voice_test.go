@@ -492,18 +492,31 @@ func TestRunVoice_SetsUpWiringAndGoroutine(t *testing.T) {
 	fake := newFakeAudioIO()
 	fake.startErr = fmt.Errorf("simulated audio open failure")
 
+	// gotEnd is CLOSED when the voiceEndedMsg arrives, rather than signalled on
+	// an unbuffered channel. Two races made the previous version flaky in CI:
+	//
+	//   - A non-blocking send on an unbuffered channel is dropped outright when
+	//     the receiver has not reached its select yet. The driver here fails
+	//     immediately (fake.Start errors), so it routinely wins that race on a
+	//     loaded runner, the signal vanished, and the test sat out its full
+	//     timeout. Closing is a broadcast — a receiver that arrives late still
+	//     observes it.
+	//   - Waking on ANY message was wrong: runVoice's send also carries
+	//     chatRefreshMsg and voiceLevelMsg, so the test could wake on a level
+	//     update and snapshot `received` before voiceEndedMsg was appended.
+	//     Only the message actually asserted on closes the channel.
 	var (
-		mu       sync.Mutex
-		received []tea.Msg
-		gotMsg   = make(chan struct{})
+		mu        sync.Mutex
+		received  []tea.Msg
+		gotEnd    = make(chan struct{})
+		closeOnce sync.Once
 	)
 	send := func(msg tea.Msg) {
 		mu.Lock()
 		received = append(received, msg)
 		mu.Unlock()
-		select {
-		case gotMsg <- struct{}{}:
-		default:
+		if _, ok := msg.(voiceEndedMsg); ok {
+			closeOnce.Do(func() { close(gotEnd) })
 		}
 	}
 
@@ -525,12 +538,12 @@ func TestRunVoice_SetsUpWiringAndGoroutine(t *testing.T) {
 		t.Fatal("expected p.voiceCancel to be set after runVoice")
 	}
 
-	// Goroutine behavior: the driver calls fake.Start, gets an error, the
-	// goroutine calls send(chatErrMsg{...}). Wait up to 2 s.
+	// Goroutine behavior: the driver calls fake.Start, gets an error, and the
+	// goroutine reports it via send(voiceEndedMsg{...}). Wait up to 2 s.
 	select {
-	case <-gotMsg:
+	case <-gotEnd:
 	case <-time.After(2 * time.Second):
-		t.Fatal("timed out waiting for chatErrMsg from runVoice goroutine")
+		t.Fatal("timed out waiting for voiceEndedMsg from runVoice goroutine")
 	}
 
 	mu.Lock()

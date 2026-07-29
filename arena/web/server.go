@@ -314,7 +314,49 @@ func (s *Server) persistOneRun(ctx context.Context, runID string) {
 	if err != nil {
 		return
 	}
-	_ = os.WriteFile(filepath.Join(s.outputDir, runID+".json"), data, resultsFilePerm)
+	_ = writeFileAtomic(filepath.Join(s.outputDir, runID+".json"), data, resultsFilePerm)
+}
+
+// writeFileAtomic writes data to path by staging it in a temp file alongside
+// the target and renaming it into place. Rename is atomic, so a concurrent
+// reader sees either the previous contents or the complete new file.
+//
+// os.WriteFile cannot offer that: it truncates the target and then writes,
+// leaving a window in which a reader observes zero bytes or a prefix. Runs are
+// persisted while readers are scanning the same directory — LoadResultsIntoStore
+// does exactly that when `promptarena serve` starts — so that window produced
+// real "unexpected end of JSON input" failures against a file that plainly
+// existed.
+//
+// The temp file is created in the target's own directory so the rename stays
+// within one filesystem, and its name carries no .json extension so a
+// directory scan racing this write cannot pick it up as a result file.
+func writeFileAtomic(dest string, data []byte, perm os.FileMode) (err error) {
+	f, err := os.CreateTemp(filepath.Dir(dest), ".tmp-*")
+	if err != nil {
+		return err
+	}
+	tmp := f.Name()
+	// Any failure past this point must not strand the staging file in the
+	// results directory. Named return so this sees the error that got us here.
+	defer func() {
+		if err != nil {
+			_ = os.Remove(tmp)
+		}
+	}()
+
+	// CreateTemp makes the file 0600; set the intended mode before it becomes
+	// visible under its real name.
+	if _, err = f.Write(data); err == nil {
+		err = f.Chmod(perm)
+	}
+	if closeErr := f.Close(); err == nil {
+		err = closeErr
+	}
+	if err != nil {
+		return err
+	}
+	return os.Rename(tmp, dest)
 }
 
 // handleGetConfig returns the loaded arena config.
