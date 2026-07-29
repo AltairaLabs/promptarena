@@ -94,7 +94,7 @@ promptarena serve
 Headless / CI:
 
 ```bash
-promptarena run --ci --formats html,json
+promptarena run --ci --formats json,markdown
 ```
 
 Keyless: both the supervisor (mock-assistant) and the A2A agents are mocked.

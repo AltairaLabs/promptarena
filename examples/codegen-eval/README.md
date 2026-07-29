@@ -47,11 +47,11 @@ docker pull ghcr.io/altairalabs/codegen-sandbox:latest
 
 # Bundle A — baseline
 PROMPTKIT_SCHEMA_SOURCE=local ../../bin/promptarena run \
-  --config sonnet-baseline.arena.yaml --ci --formats json,html
+  --config sonnet-baseline.arena.yaml --ci --formats json,markdown
 
 # Bundle D — disciplined
 PROMPTKIT_SCHEMA_SOURCE=local ../../bin/promptarena run \
-  --config sonnet-disciplined.arena.yaml --ci --formats json,html
+  --config sonnet-disciplined.arena.yaml --ci --formats json,markdown
 ```
 
 For variance bands, set `spec.trials: 3` on each scenario before the

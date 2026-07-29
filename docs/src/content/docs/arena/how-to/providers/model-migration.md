@@ -28,8 +28,8 @@ The web UI groups runs by provider; expand a scenario to see each model's output
 Headless / CI:
 
 ```bash
-promptarena run --ci --formats html,json
-open out/report.html
+promptarena run --ci --formats json,markdown
+open out/results.md
 ```
 
 Keyless: both providers are mock. The report shows side-by-side results.
@@ -93,7 +93,7 @@ jobs:
       - run: go build -o bin/promptarena ./arena/cmd/promptarena
       - name: Run migration regression suite
         working-directory: examples/model-migration
-        run: ../../bin/promptarena run --ci --formats html,json
+        run: ../../bin/promptarena run --ci --formats json,markdown
       - name: Upload report
         if: always()
         uses: actions/upload-artifact@v4

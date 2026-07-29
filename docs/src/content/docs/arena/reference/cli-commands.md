@@ -23,11 +23,10 @@ promptarena [command] [flags]
 | `config-inspect` | Inspect and validate configuration |
 | `debug` | Debug configuration and prompt loading |
 | `prompt-debug` | Debug and test prompt generation |
-| `render` | Generate HTML report from existing results |
 | `chat` | Talk live to an agent defined in your Arena config (interactive TUI) |
 | `serve` | Start the live web UI with SSE streaming and REST API |
 | `validate` | Validate configuration files |
-| `view` | View test results |
+| `view` | Browse and view past test results in the TUI |
 | `export` | Export arena config as a PromptPack JSON file |
 | `deploy` | Deploy prompt packs to cloud providers via adapter plugins |
 | `mcp` | Run an MCP server exposing PromptArena authoring knowledge over stdio |
@@ -176,8 +175,8 @@ echo "OPENAI_API_KEY=sk-..." >> .env
 # Run tests
 promptarena run
 
-# View results
-open out/report.html
+# View results in the web UI
+promptarena serve --open
 ```
 
 ---
@@ -427,15 +426,15 @@ promptarena run [flags]
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `-o, --out` | string | `out` | Output directory |
-| `--format` | []string | from config | Output formats: json, junit, html, markdown |
+| `--format` | []string | from config | Output formats: json, junit, markdown |
 | `--formats` | []string | from config | Alias for --format |
 
 #### Legacy Output Flags (Deprecated)
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--html` | bool | `false` | Generate HTML report (use --format html instead) |
-| `--html-file` | string | `out/report-[timestamp].html` | HTML report output file |
+| `--html` | bool | `false` | Deprecated: accepted but produces markdown instead |
+| `--html-file` | string | — | Deprecated: use `--markdown-file` |
 | `--junit-file` | string | `out/junit.xml` | JUnit XML output file |
 | `--markdown-file` | string | `out/results.md` | Markdown report output file |
 
@@ -496,17 +495,17 @@ promptarena run --temperature 0.9 --max-tokens 1000
 #### Output Formats
 
 ```bash
-# Generate JSON and HTML reports
-promptarena run --format json,html
+# Generate JSON and Markdown reports
+promptarena run --format json,markdown
 
 # Generate all available formats
-promptarena run --format json,junit,html,markdown
+promptarena run --format json,junit,markdown
 
 # Custom output directory
 promptarena run --out test-results-2024-01-15
 
-# Specify custom HTML filename (legacy)
-promptarena run --html --html-file custom-report.html
+# Specify custom Markdown filename
+promptarena run --format markdown --markdown-file custom-results.md
 ```
 
 #### Mock Testing
@@ -926,44 +925,6 @@ Validators: 3
 
 ---
 
-## `promptarena render`
-
-Generate an HTML report from existing test results.
-
-### Usage
-
-```bash
-promptarena render [index.json path] [flags]
-```
-
-### Flags
-
-| Flag | Type | Default | Description |
-|------|------|---------|-------------|
-| `-o, --output` | string | `report-[timestamp].html` | Output HTML file path |
-
-### Examples
-
-```bash
-# Render from default location
-promptarena render out/index.json
-
-# Custom output path
-promptarena render out/index.json --output custom-report.html
-
-# Render from archived results
-promptarena render archive/2024-01-15/index.json --output reports/jan-15-report.html
-```
-
-### Use Cases
-
-- Regenerate reports after test runs
-- Create reports with different formatting
-- Archive and view historical results
-- Share results without re-running tests
-
----
-
 ## `promptarena serve`
 
 Start a local web server with the Arena live UI. Streams run events to the browser via Server-Sent Events (SSE) and provides a REST API for starting runs, viewing results, and inspecting configuration.
@@ -1208,24 +1169,27 @@ promptarena run --verbose --scenario failing-test
 promptarena debug
 ```
 
-### Report Generation
+### Reviewing Results Later
 
 ```bash
-# Run tests
-promptarena run --format json
+# Run tests, keeping the JSON results
+promptarena run --format json,markdown
 
-# Later, generate HTML from results
-promptarena render out/index.json --output reports/latest.html
+# Review interactively in the browser (reads the JSON in out/)
+promptarena serve --open
+
+# Or browse past runs in the terminal
+promptarena view
 ```
 
 ### Multi-Provider Comparison
 
 ```bash
-# Test all providers
-promptarena run --format html,json
+# Test all providers and generate a Markdown report
+promptarena run --format markdown,json
 
 # Test specific providers
-promptarena run --provider openai,claude,gemini --format html
+promptarena run --provider openai,claude,gemini --format markdown
 ```
 
 ---
@@ -1255,12 +1219,7 @@ spec:
   defaults:
     output:
       dir: out
-      formats: ["json", "html"]
-```
-
----
-
-## Multimodal Content & Media Rendering
+      formats: ["json", "markdown"]
 
 PromptArena supports multimodal content (images, audio, video) in test scenarios with comprehensive media rendering in all output formats.
 
@@ -1324,9 +1283,9 @@ Media can be loaded from three sources:
 
 All output formats include media statistics and rendering:
 
-#### HTML Reports
+#### Web UI (via `promptarena serve`)
 
-HTML reports include:
+The live web UI includes a media dashboard:
 
 **Media Summary Dashboard**
 - Visual statistics cards showing:
@@ -1347,21 +1306,6 @@ HTML reports include:
   - MIME type
   - File size
   - Load status (loaded / error)
-
-**Example HTML Output**:
-```html
-<div class="media-summary">
-  <div class="stat-card">
-    <div class="stat-value">5</div>
-    <div class="stat-label">🖼️ Images</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-value">3</div>
-    <div class="stat-label">🎵 Audio</div>
-  </div>
-  <!-- ... -->
-</div>
-```
 
 #### JUnit XML Reports
 
@@ -1543,11 +1487,11 @@ spec:
 ### Generate Media-Rich Reports
 
 ```bash
-# Run multimodal tests with all formats
-promptarena run --format html,junit,markdown
+# Run multimodal tests with multiple formats
+promptarena run --format junit,markdown
 
-# HTML report includes interactive media dashboard
-open out/report.html
+# View in the live web UI (includes interactive media dashboard)
+promptarena serve --open
 
 # JUnit XML includes media metrics for CI
 cat out/junit.xml | grep "media\."
@@ -2141,7 +2085,7 @@ promptarena run --provider gpt-3.5-turbo
 promptarena run --seed 42
 
 # Document seed in test reports
-promptarena run --seed 42 --format json,html
+promptarena run --seed 42 --format json,markdown
 ```
 
 ### Debugging Tips

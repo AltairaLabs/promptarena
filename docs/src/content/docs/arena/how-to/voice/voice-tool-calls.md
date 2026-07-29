@@ -125,7 +125,7 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        run: ../../bin/promptarena run --scenario duplex-tools --provider gemini-2-flash --ci --formats html,json
+        run: ../../bin/promptarena run --scenario duplex-tools --provider gemini-2-flash --ci --formats json,markdown
 ```
 
 The fork-aware `if:` check keeps the secret-bearing job from running on PRs from external forks.

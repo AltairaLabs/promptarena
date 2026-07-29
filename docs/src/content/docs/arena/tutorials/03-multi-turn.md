@@ -370,11 +370,11 @@ spec:
 # Run all multi-turn tests
 promptarena run --scenario support-conversation,progressive-disclosure,memory-test
 
-# Generate detailed HTML report
-promptarena run --format html
+# Generate detailed Markdown report
+promptarena run --format markdown
 
 # View conversation flows
-open out/report-*.html
+open out/results.md
 ```
 
 ## Analyzing Multi-Turn Results

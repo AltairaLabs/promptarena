@@ -28,8 +28,8 @@ Both scenarios load — one PII-extraction probe (where the mock agent deliberat
 Headless / CI:
 
 ```bash
-promptarena run --ci --formats html,json
-open out/report.html
+promptarena run --ci --formats json,markdown
+open out/results.md
 ```
 
 The demo is keyless. `pii_leakage`'s regex pre-pass (emails, US-style SSN, 16-digit card-shape numbers) is deterministic and runs without an LLM judge. The LLM-judged second layer is optional and degrades gracefully when no judge is configured (the regex layer still provides coverage; the handler returns "pass" instead of failing closed).

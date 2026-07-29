@@ -230,7 +230,7 @@ The arena pipeline has a 30-second timeout per turn. For cold starts (first requ
 
 ### Token/Cost Metrics Not Available
 Ollama's streaming API does not return token usage information in streaming mode. This means:
-- **Token counts** will show as 0 in the HTML report
+- **Token counts** will show as 0 in the Markdown report
 - **Cost estimates** will show as $0.0000
 - **Per-turn latency** is tracked correctly (measured at the pipeline level)
 

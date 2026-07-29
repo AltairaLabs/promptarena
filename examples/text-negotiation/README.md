@@ -16,8 +16,8 @@ Conversation-level assertions:
 
 ```bash
 cd examples/text-negotiation
-../../bin/promptarena run --ci --formats html,json
-open out/report.html
+../../bin/promptarena run --ci --formats json,markdown
+open out/results.md
 ```
 
 Live dev loop:

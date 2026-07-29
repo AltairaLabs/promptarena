@@ -14,7 +14,7 @@ PromptKit's shell completions include:
   - `--provider` - Lists configured providers
   - `--roles` - Lists self-play role configurations
   - `--region` - Suggests prompt regions
-  - `--format` - Output format options (json, junit, html, markdown)
+  - `--format` - Output format options (json, junit, markdown)
   - `--section` - Config sections for `config-inspect`
   - `--template` - Available project templates for `init`
 

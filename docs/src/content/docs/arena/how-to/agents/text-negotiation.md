@@ -31,8 +31,8 @@ promptarena run
 Headless / CI:
 
 ```bash
-promptarena run --ci --formats html,json
-open out/report.html
+promptarena run --ci --formats json,markdown
+open out/results.md
 ```
 
 Keyless: the default config uses a mock landlord with scripted responses.

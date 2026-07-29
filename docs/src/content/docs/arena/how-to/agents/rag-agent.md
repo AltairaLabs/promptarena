@@ -80,8 +80,8 @@ promptarena serve
 Headless / CI:
 
 ```bash
-promptarena run --ci --formats html,json
-open out/report.html
+promptarena run --ci --formats json,markdown
+open out/results.md
 ```
 
 Keyless: both the RAG assistant and the LLM judge are mock providers. The mock judge returns `{"passed": true, "score": 0.92, "reasoning": "..."}` for every call; all six assertions pass under the scenario's `min_score` thresholds (`0.8` for most, `0.5` for the contextual_precision / contextual_relevancy ratios).

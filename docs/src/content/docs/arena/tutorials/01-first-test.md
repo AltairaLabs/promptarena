@@ -244,13 +244,13 @@ View the JSON results:
 cat out/results.json
 ```
 
-Or generate an HTML report:
+Or generate a Markdown report:
 
 ```bash
-promptarena run --format html
+promptarena run --format markdown
 
-# Open in browser
-open out/report-*.html
+# Open the report
+open out/results.md
 ```
 
 ## Understanding Your First Test
@@ -403,7 +403,7 @@ Congratulations! You've run your first LLM test.
 **Quick wins:**
 - Try different models: `gpt-4o`, `gpt-4o-mini`
 - Add more test cases to your scenario
-- Generate HTML reports: `promptarena run --format html`
+- Generate Markdown reports: `promptarena run --format markdown`
 
 ## What's Next?
 

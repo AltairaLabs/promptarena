@@ -21,8 +21,8 @@ Same code, different roles. The eval primitive is implemented once. Wired into a
 
 ```bash
 cd examples/guardrails-test
-promptarena run --ci --formats html,json
-open out/report.html
+promptarena run --ci --formats json,markdown
+open out/results.md
 ```
 
 Keyless: the example uses a mock provider with scripted responses that exercise each scenario's guardrail behaviour.

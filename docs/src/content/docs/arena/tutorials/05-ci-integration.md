@@ -142,7 +142,7 @@ jobs:
             --scenario integration \
             --ci \
             --concurrency 2 \
-            --format junit,json,html
+            --format junit,json,markdown
       
       - name: Publish test results
         uses: dorny/test-reporter@v1
@@ -414,7 +414,7 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
-          promptarena run --ci --format json,html
+          promptarena run --ci --format json,markdown
       
       - name: Notify on failure
         if: failure()
@@ -535,7 +535,7 @@ jobs:
             --scenario critical \
             --ci \
             --concurrency 2 \
-            --format junit,json,html
+            --format junit,json,markdown
       
       - name: Quality gate
         working-directory: tests
@@ -575,7 +575,7 @@ jobs:
           promptarena run \
             --ci \
             --concurrency 3 \
-            --format junit,json,html
+            --format junit,json,markdown
       
       - name: Upload results
         uses: actions/upload-artifact@v4
@@ -619,7 +619,7 @@ env:
 
 ```bash
 # Generate multiple formats
---format junit,json,html
+--format junit,json,markdown
 
 # Upload for review
 uses: actions/upload-artifact@v4

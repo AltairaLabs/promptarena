@@ -12,11 +12,11 @@ Both providers pass in the default config. The how-to walks through what a regre
 
 ```bash
 cd examples/model-migration
-../../bin/promptarena run --ci --formats html,json
-open out/report.html
+../../bin/promptarena run --ci --formats json,markdown
+open out/results.md
 ```
 
-The HTML report groups runs by provider. Expand each scenario to see the per-model output. A regression shows as a red cell on one model and a green cell on the others.
+The Markdown report (`out/results.md`) lists results grouped by provider. Run `promptarena serve` for the side-by-side interactive view — a regression shows on one model while others pass.
 
 Live dev loop:
 

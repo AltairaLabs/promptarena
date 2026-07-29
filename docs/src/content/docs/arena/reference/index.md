@@ -25,7 +25,7 @@ Built-in validators for checking response quality and compliance.
 Test scenario file structure and specification.
 
 ### [Output Formats](/arena/reference/output-formats/)
-Report generation formats (HTML, JSON, JUnit, Markdown).
+Report generation formats (JSON, Markdown, JUnit) and the interactive web UI.
 
 ### [Duplex Configuration](/arena/reference/duplex-config/)
 Complete duplex streaming configuration for voice testing scenarios.
@@ -55,7 +55,8 @@ Looking for task-oriented guides? See:
 | `promptarena config-inspect` | Validate configuration |
 | `promptarena debug` | Debug configuration loading |
 | `promptarena prompt-debug` | Test prompt rendering |
-| `promptarena render` | Generate reports from results |
+| `promptarena serve` | Review results interactively in the web UI |
+| `promptarena view` | Browse past results in the terminal |
 
 ### Common Assertions
 

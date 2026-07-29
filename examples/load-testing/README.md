@@ -30,7 +30,7 @@ The service must expose an OpenAI-compatible `/chat/completions` endpoint.
 ### Single instance (baseline)
 
 ```bash
-promptarena run --config config.arena.yaml --ci --formats json,html
+promptarena run --config config.arena.yaml --ci --formats json,markdown
 ```
 
 ### Concurrent load (external orchestration)
@@ -49,7 +49,7 @@ wait
 ## Reading results
 
 Each run produces:
-- **`out/report.html`** — visual report with per-turn latency
+- **`out/results.md`** — Markdown report with per-turn latency
 - **`out/*.json`** — machine-parseable results with `latency_ms` per message
 
 ### Key metrics

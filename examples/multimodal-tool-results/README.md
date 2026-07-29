@@ -20,10 +20,10 @@ Demonstrates tools that return **multimodal content** (text + images) alongside 
 
 ```bash
 # From this directory:
-../../bin/promptarena run --ci --formats html,json
+../../bin/promptarena run --ci --formats json,markdown
 
 # Open the report to see media badges on tool results:
-open out/report.html
+open out/results.md
 ```
 
 ## How `mock_parts` Works

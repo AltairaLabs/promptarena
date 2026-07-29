@@ -17,8 +17,8 @@ The default config runs deterministically against a text mock provider — `mock
 
 ```bash
 cd examples/voice-ivr
-../../bin/promptarena run --ci --formats html,json
-open out/report.html
+../../bin/promptarena run --ci --formats json,markdown
+open out/results.md
 ```
 
 For the live dev loop or to play back the report:

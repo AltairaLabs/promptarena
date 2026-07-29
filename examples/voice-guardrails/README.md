@@ -16,8 +16,8 @@ The recording captures the pre-enforcement content with a `validations:` block o
 
 ```bash
 cd examples/voice-guardrails
-../../bin/promptarena run --ci --formats html,json
-open out/report.html
+../../bin/promptarena run --ci --formats json,markdown
+open out/results.md
 ```
 
 Keyless: `pii_leakage`'s regex pre-pass works without an LLM key.

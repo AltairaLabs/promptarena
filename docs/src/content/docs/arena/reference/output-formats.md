@@ -9,9 +9,12 @@ PromptArena supports multiple output formats for test results, each optimized fo
 | Format | Use Case | File Extension | CI/CD Integration |
 |--------|----------|----------------|-------------------|
 | **JSON** | Programmatic access, APIs | `.json` | Excellent |
-| **HTML** | Human review, reports | `.html` | Manual review |
-| **Markdown** | Documentation, GitHub | `.md` | Good |
+| **Markdown** | Human review, documentation, GitHub | `.md` | Good |
 | **JUnit XML** | CI/CD systems | `.xml` | Excellent |
+
+> **There is no HTML report.** Interactive review is served by the web UI — run `promptarena serve` and you get the same content the old `report.html` carried, plus live runs. See [Interactive Web UI](#interactive-web-ui) below. It needs no format flag — it reads the per-run JSON files from your output directory.
+>
+> `html` is still accepted as a format for backwards compatibility: passing `--format html`, or setting `html` in `defaults.output.formats`, silently produces a Markdown report instead. Existing configs keep working — use `markdown` in new ones.
 
 ## Output Directory Structure
 
@@ -20,8 +23,7 @@ After running tests, Arena creates the following structure:
 ```text
 out/
   results.json           # JSON results
-  report.html            # HTML report
-  report.md              # Markdown report
+  results.md             # Markdown report
   junit.xml              # JUnit XML
   media/                 # Media storage (images, audio, video)
     run-20241124-123456/
@@ -50,14 +52,11 @@ Configure output in `arena.yaml`:
 defaults:
   output:
     dir: out                          # Output directory
-    formats: ["json", "html", "markdown", "junit"]
+    formats: ["json", "markdown", "junit"]
 
     # Format-specific options
-    html:
-      file: report.html              # Custom HTML output filename
-
     markdown:
-      file: report.md                # Custom markdown output filename
+      file: results.md               # Custom markdown output filename
       include_details: true          # Include detailed test information
       show_overview: true            # Show executive overview section
       show_results_matrix: true      # Show results matrix table
@@ -230,121 +229,31 @@ interface CostInfo {
 }
 ```
 
-## HTML Format
+## Interactive Web UI
 
-Interactive HTML report for human review.
+Arena has no standalone HTML report. Interactive review lives in the web UI instead — `promptarena serve` starts a local web server that covers the same ground and adds live runs on top:
 
-### Features
-
-- **Summary Dashboard**: Overview with metrics
-- **Provider Comparison**: Side-by-side results
-- **Conversation View**: Full conversation transcripts
-- **Assertion Details**: Pass/fail status with messages
-- **Cost Breakdown**: Token usage and costs
-- **Filtering**: Filter by status, provider, scenario
-- **Theming**: Light and dark modes
-
-### Example Report
-
-```html
-<!DOCTYPE html>
-<html>
-<head>
-  <title>PromptArena Test Report</title>
-  <style>/* Embedded CSS */</style>
-</head>
-<body>
-  <div class="summary-card">
-    <h2>Test Summary</h2>
-    <div class="metrics">
-      <div class="metric">
-        <span class="label">Total</span>
-        <span class="value">15</span>
-      </div>
-      <div class="metric success">
-        <span class="label">Passed</span>
-        <span class="value">12</span>
-      </div>
-      <div class="metric failure">
-        <span class="label">Failed</span>
-        <span class="value">3</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Detailed results -->
-  <div class="results">
-    <!-- ... -->
-  </div>
-</body>
-</html>
-```
-
-### Configuration Options
-
-```yaml
-html:
-  file: report.html           # Custom HTML output filename
-```
-
-The HTML report supports light and dark modes, but the theme is toggled in the
-browser at view time rather than configured here.
-
-### Viewing
+- **Standings**: pass rates ranked across providers
+- **Trial matrix**: a scenario × provider grid; each cell shows pass rate, cost, and latency
+- **Cell scoping**: click a cell to scope the run ledger to that scenario/provider pair
+- **Transcripts**: open any run from the ledger for its full conversation, turn by turn, with assertion outcomes
+- **Cost and latency**: per-cell and per-run, plus a running spend estimate before you start
+- **Historical results**: previous runs load alongside the current one
+- **Live streaming**: run events arrive over SSE as the run executes — the old static report could only show finished runs
+- **Interactive chat**: talk to a configured agent directly in the browser
 
 ```bash
-# Open in browser
-open out/report.html
+# Start the web UI (loads existing results, and can start new runs)
+promptarena serve
 
-# Or use the live web UI (loads existing results + supports starting new runs)
+# Open a browser automatically
 promptarena serve --open
+
+# Serve on a custom port
+promptarena serve -p 3000
 ```
 
-### Sections
-
-#### 1. Summary Dashboard
-
-```
-┌─────────────────────────────────────────┐
-│ PromptArena Test Report                 │
-│                                          │
-│ Total: 15  Passed: 12  Failed: 3        │
-│ Duration: 45.2s  Cost: $0.0234          │
-│ Tokens: 4521 (input: 3200, output: 1321)│
-└─────────────────────────────────────────┘
-```
-
-#### 2. Provider Comparison
-
-```
-┌────────────────┬──────────┬─────────┬────────┐
-│ Provider       │ Tests    │ Pass %  │ Cost   │
-├────────────────┼──────────┼─────────┼────────┤
-│ GPT-4o-mini    │ 5        │ 100%    │ $0.008 │
-│ Claude Sonnet  │ 5        │ 80%     │ $0.015 │
-│ Gemini Flash   │ 5        │ 80%     │ $0.001 │
-└────────────────┴──────────┴─────────┴────────┘
-```
-
-#### 3. Detailed Results
-
-Each test shows:
-- Scenario name and description
-- Provider and model
-- Pass/fail status
-- Full conversation transcript
-- Assertion results
-- Token usage and cost
-- Execution time
-
-### Customization
-
-The HTML report uses embedded CSS. To customize:
-
-1. Generate report
-2. Save HTML file
-3. Edit `<style>` section
-4. Reload in browser
+The web UI is the recommended way to review results locally. For a file you can archive, diff, or paste into a PR, use the Markdown report.
 
 ## Markdown Format
 
@@ -419,7 +328,7 @@ markdown:
   with:
     script: |
       const fs = require('fs');
-      const report = fs.readFileSync('out/report.md', 'utf8');
+      const report = fs.readFileSync('out/results.md', 'utf8');
       github.rest.issues.createComment({
         issue_number: context.issue.number,
         owner: context.repo.owner,
@@ -435,7 +344,7 @@ Include test results in docs:
 ```markdown
 # API Testing Results
 
-[include file="test-results/report.md"]
+[include file="test-results/results.md"]
 ```
 
 **3. Slack/Teams Notifications**
@@ -444,7 +353,7 @@ Send markdown to collaboration tools:
 
 ```bash
 # Convert to Slack format
-cat out/report.md | slack-markdown-converter | \
+cat out/results.md | slack-markdown-converter | \
   slack-cli chat-post-message --channel #testing
 ```
 
@@ -547,15 +456,14 @@ Generate all formats in one run:
 ```yaml
 defaults:
   output:
-    formats: ["json", "html", "markdown", "junit"]
+    formats: ["json", "markdown", "junit"]
 ```
 
 Output structure:
 ```
 out/
 ├── results.json
-├── report.html
-├── report.md
+├── results.md
 └── junit.xml
 ```
 
@@ -658,7 +566,6 @@ Typical sizes for 100 tests:
 | Format | Approx. Size | Notes |
 |--------|--------------|-------|
 | JSON | 500 KB | Can be large with raw responses |
-| HTML | 800 KB | Embedded CSS/JS |
 | Markdown | 300 KB | Most compact |
 | JUnit XML | 200 KB | Minimal data |
 
@@ -669,7 +576,7 @@ is written on every run, so drop the ones you do not consume:
 ```yaml
 defaults:
   output:
-    formats: ["json"]           # Skip HTML/Markdown/JUnit when not needed
+    formats: ["json"]           # Skip Markdown/JUnit when not needed
 ```
 
 **Trim Markdown reports** by disabling sections you do not use:
@@ -685,7 +592,7 @@ markdown:
 
 ```yaml
 # Development
-formats: ["html"]              # Quick visual review
+formats: ["markdown"]          # Quick readable review
 
 # CI/CD
 formats: ["junit", "json"]     # Integration + data
@@ -703,7 +610,6 @@ formats: ["json", "junit"]     # Programmatic + CI
 # .gitignore
 out/
 test-results/
-*.html
 ```
 
 Commit configuration, not results.

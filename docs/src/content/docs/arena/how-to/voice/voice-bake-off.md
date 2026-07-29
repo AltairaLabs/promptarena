@@ -3,7 +3,7 @@ title: Run a Voice Provider Bake-Off
 description: Side-by-side provider comparison without leaving the scenario file. One scenario, N providers, one report — pick the winner on real metrics.
 ---
 
-This how-to walks through `examples/voice-bake-off/` — the same three-turn support call registered twice (`mock-fast`, `mock-slow`), with per-turn `latency_budget` and `max_length` assertions on each. Arena fans the scenario out automatically; the HTML report shows the providers side by side.
+This how-to walks through `examples/voice-bake-off/` — the same three-turn support call registered twice (`mock-fast`, `mock-slow`), with per-turn `latency_budget` and `max_length` assertions on each. Arena fans the scenario out automatically; `promptarena serve` shows the providers side by side in the timeline view.
 
 ## What it proves
 
@@ -23,11 +23,11 @@ The web UI loads the scenario and shows runs grouped by provider. Click each pro
 Headless:
 
 ```bash
-promptarena run --ci --formats html,json
-open out/report.html
+promptarena run --ci --formats json,markdown
+open out/results.md
 ```
 
-The HTML report's run table groups by provider. Expand each turn to see the response and the per-turn `latency_ms` / response length from each provider — the side-by-side comparison.
+The Markdown report lists results grouped by provider. For the side-by-side comparison with per-turn `latency_ms` / response length from each provider, run `promptarena serve` — the timeline view groups runs by provider and expands each turn on demand.
 
 ## The fan-out
 
@@ -104,7 +104,7 @@ jobs:
       - run: go build -o bin/promptarena ./arena/cmd/promptarena
       - name: Run bake-off scenarios
         working-directory: examples/voice-bake-off
-        run: ../../bin/promptarena run --ci --formats html,json
+        run: ../../bin/promptarena run --ci --formats json,markdown
       - name: Upload report
         if: always()
         uses: actions/upload-artifact@v4

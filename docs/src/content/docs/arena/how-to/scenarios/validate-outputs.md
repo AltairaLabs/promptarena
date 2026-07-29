@@ -315,8 +315,8 @@ View validation results:
 # JSON report with detailed assertion results
 promptarena run --format json
 
-# HTML report with visual pass/fail
-promptarena run --format html
+# Markdown report with visual pass/fail
+promptarena run --format markdown
 
 # JUnit XML for CI integration
 promptarena run --format junit

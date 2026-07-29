@@ -52,14 +52,15 @@ exactly three supported formats — there is no SARIF, CSV, or TAP output.
 | `markdown` | Markdown report | `--markdown-file` (default `out/results.md`) |
 
 ```bash
-# JUnit for the CI test reporter, JSON for archival, markdown for humans
+# JUnit for the CI test reporter, JSON for archival, Markdown for humans
 promptarena run --ci --format junit,json,markdown
 ```
 
 The output directory defaults to `out/` and is set with `--out`. Per-run JSON is
 written as `<run-id>.json` in that directory, alongside an `index.json` summary
 containing `total_runs`, `successful`, `errors`, `total_cost`, and per-scenario
-metadata. See the [output formats reference](/arena/reference/output-formats/)
+metadata. The deprecated `--html` flag is still accepted and produces `markdown`
+output. See the [output formats reference](/arena/reference/output-formats/)
 for the full schema of each report.
 
 :::note[The HTML report was removed]
@@ -138,7 +139,7 @@ jobs:
         with:
           config-file: config.arena.yaml
           version: latest
-          formats: json,junit,html
+          formats: json,junit,markdown
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -214,7 +215,7 @@ jobs:
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: ./bin/promptarena run --ci --format html,json
+        run: ./bin/promptarena run --ci --format markdown,json
       - name: Upload report
         if: always()
         uses: actions/upload-artifact@v4

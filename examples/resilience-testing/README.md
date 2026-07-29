@@ -22,10 +22,10 @@ for the complete list of supported assertion types.
 
 ```bash
 make build-arena
-../../bin/promptarena run --ci --formats html,json \
+../../bin/promptarena run --ci --formats json,markdown \
   -c examples/resilience-testing/config.arena.yaml \
   -o examples/resilience-testing/out
-open examples/resilience-testing/out/report.html
+open examples/resilience-testing/out/results.md
 ```
 
 No API keys required — all scenarios use mock providers and tools.

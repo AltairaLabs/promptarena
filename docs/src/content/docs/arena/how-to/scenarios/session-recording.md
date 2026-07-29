@@ -26,7 +26,7 @@ spec:
   defaults:
     output:
       dir: out
-      formats: [json, html]
+      formats: [json, markdown]
       recording:
         enabled: true           # Enable recording
         dir: recordings         # Subdirectory for recordings

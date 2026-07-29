@@ -54,7 +54,7 @@ Pick how you want to see results:
 - **TUI** — run `promptarena run` in a **separate terminal**. The interactive TUI does not
   run inside an agent session.
 - **Web** — `promptarena serve`. The agent can start this as a background task.
-- **Offline** — `promptarena run --ci --formats html,json` for headless reports.
+- **Offline** — `promptarena run --ci --formats json,markdown` for headless reports.
 
 Once the kit is green against mocks, switch to a real provider, use `promptarena chat` to
 play with it conversationally, and `promptarena deploy` (or a CI workflow) to ship it.

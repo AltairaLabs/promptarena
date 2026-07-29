@@ -54,8 +54,8 @@ Requires `ANTHROPIC_API_KEY` and Docker.
 ```bash
 make build-codegen-agent-sandbox
 cd examples/test-a-codegen-agent
-promptarena run -c config.arena.yaml --ci --format html
-open out/report.html
+promptarena run -c config.arena.yaml --ci --format markdown
+open out/results.md
 ```
 
 ## Wiring check (Docker, no API key, no cost)
@@ -68,7 +68,7 @@ calls are made — only the LLM is faked.
 ```bash
 make build-codegen-agent-sandbox
 cd examples/test-a-codegen-agent
-promptarena run -c mock.arena.yaml --ci --format html,json
+promptarena run -c mock.arena.yaml --ci --format json,markdown
 ```
 
 ## Summarizing results
@@ -83,7 +83,7 @@ bash report/summarize.sh out
 (cheaper per token than Claude Haiku). Run it with `GEMINI_API_KEY` set:
 
 ```bash
-promptarena run -c live-gemini.arena.yaml --ci --format html
+promptarena run -c live-gemini.arena.yaml --ci --format markdown
 ```
 
 > **Known limitation (2026-06):** Gemini's function-calling API rejects tool

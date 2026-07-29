@@ -268,7 +268,7 @@ promptarena run --config arena.yaml --mock-provider --mock-config mock-config.ya
 ### View Results
 
 ```bash
-open out/report.html
+open out/results.md
 ```
 
 ---

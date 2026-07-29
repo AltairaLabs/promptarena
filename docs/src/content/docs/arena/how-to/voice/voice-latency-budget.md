@@ -26,7 +26,7 @@ turns:
         message: "Turn must respond within 1000ms"
 ```
 
-`latency_budget` returns a score normalised to the budget: `min(1.0, max_ms / latency_ms)`. A reply within budget scores 1.0; a reply at 2× the budget scores 0.5. The HTML report shows the exact `latency_ms` vs `budget_ms` per turn.
+`latency_budget` returns a score normalised to the budget: `min(1.0, max_ms / latency_ms)`. A reply within budget scores 1.0; a reply at 2× the budget scores 0.5. The Markdown report shows the exact `latency_ms` vs `budget_ms` per turn; the `promptarena serve` timeline view presents the same data interactively.
 
 ## Run it
 
@@ -38,15 +38,15 @@ promptarena serve
 `serve` loads the scenario into the web UI; the timeline view shows the latency assertion alongside the conversation. Headless:
 
 ```bash
-promptarena run --ci --formats html,json
-open out/report.html
+promptarena run --ci --formats json,markdown
+open out/results.md
 ```
 
 The default config runs against a text mock provider — sub-millisecond responses, so the budget passes trivially. The interesting signal comes from real providers.
 
 ## Comparing providers
 
-Add multiple provider files and re-register them in `config.arena.yaml`. Arena fans out the scenario across every registered provider; the HTML report shows the per-provider `latency_ms` distribution side by side. Use this for migration testing ("does Claude Haiku stay inside our 800ms budget on this prompt?") or for cross-provider bake-offs.
+Add multiple provider files and re-register them in `config.arena.yaml`. Arena fans out the scenario across every registered provider; the Markdown report shows per-provider `latency_ms` results, and `promptarena serve` presents them side by side in the timeline view. Use this for migration testing ("does Claude Haiku stay inside our 800ms budget on this prompt?") or for cross-provider bake-offs.
 
 ## What's measured today
 

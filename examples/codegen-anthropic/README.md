@@ -25,8 +25,8 @@ make -C ../.. build-arena
 ## Run
 
 ```bash
-../../bin/promptarena run --ci --format html
-open out/report.html
+../../bin/promptarena run --ci --format markdown
+open out/results.md
 ```
 
 What you should see:
@@ -40,7 +40,7 @@ What you should see:
    `Bash` to `go mod init`, `Write` for the implementation and tests,
    `run_tests` to verify, then a final summary.
 4. Container is stopped and removed when the session ends.
-5. The HTML report shows every tool call with its arguments and
+5. The Markdown report (`out/results.md`) shows every tool call with its arguments and
    results, plus pass/fail status on the two `tools_called` assertions.
 
 The scenario asks for `IsPalindrome(s string) bool` — case-insensitive,

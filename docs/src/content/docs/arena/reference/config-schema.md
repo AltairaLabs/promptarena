@@ -137,17 +137,13 @@ spec:
       dir: out                      # Default: "out"
       formats:                      # Default: ["json"]
         - json
-        - html
         - markdown
         - junit
 
       # Format-specific options (the `json` format has no configurable options;
       # each result is written to <run-id>.json)
-      html:
-        file: report.html           # Default: report.html
-
       markdown:
-        file: report.md             # Default: report.md
+        file: results.md            # Default: results.md
         include_details: true       # Default: true
 
       junit:
@@ -352,9 +348,9 @@ Output configuration for test results.
 - `dir` (string): Output directory path
 - `formats` (array): Output formats to generate
   - `json`: JSON results file
-  - `html`: Interactive HTML report
-  - `markdown`: Markdown report
+  - `markdown`: Markdown report (default output: `out/results.md`)
   - `junit`: JUnit XML (for CI/CD)
+  - `html`: accepted as an alias for `markdown`
 - Format-specific options (see structure above)
 - `recording` (object, optional): Session recording configuration
   - `enabled` (bool): Enable session recording (default: false)

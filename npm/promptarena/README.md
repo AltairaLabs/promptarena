@@ -95,8 +95,8 @@ export OPENAI_API_KEY=your-key-here
 # Run your first test
 npx @altairalabs/promptarena run
 
-# View the HTML report
-open out/report.html
+# View the Markdown report
+open out/results.md
 ```
 
 That's it! The template includes pre-configured scenarios, assertions, and examples to get you started.
@@ -122,7 +122,7 @@ npx @altairalabs/promptarena init
 - 📊 **Conversation Assertions** - Check patterns across entire conversations
 - 🎭 **Template & Persona System** - Dynamic prompts with variables and reusable personas
 - 🛡️ **Guardrail Testing** - Ensure tools and responses follow safety constraints
-- 📈 **HTML Reports** - Beautiful, detailed reports with cost tracking and metrics
+- 📈 **Reports & Web UI** - Markdown reports for archiving, `promptarena serve` for interactive review with cost tracking and metrics
 
 ## Learn More
 

@@ -35,8 +35,8 @@ export OPENAI_API_KEY="your-key-here"
 # Or inspect the configuration
 ./bin/promptarena config-inspect -c examples/mcp-filesystem-test --verbose
 
-# Generate HTML report
-./bin/promptarena run -c examples/mcp-filesystem-test --provider openai-gpt4o-mini --scenario file-operations --html
+# Generate Markdown report
+./bin/promptarena run -c examples/mcp-filesystem-test --provider openai-gpt4o-mini --scenario file-operations --format markdown
 ```
 
 ## Legacy Go Test

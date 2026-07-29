@@ -18,6 +18,6 @@ spec:
     concurrency: 1
     output:
       dir: out/audio-test
-      formats: ["json", "html"]
-      html:
-        file: report.html
+      formats: ["json", "markdown"]
+      markdown:
+        file: results.md

@@ -33,7 +33,7 @@ spec:
     output_formats:
       - json   # Detailed results for debugging and analysis
       - junit  # CI/CD pipeline integration and test reporting
-      - html   # Human-readable reports for review
+      - markdown
     
     # Additional settings
     verbose: true

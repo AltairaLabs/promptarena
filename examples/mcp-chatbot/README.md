@@ -32,8 +32,8 @@ export OPENAI_API_KEY="your-key-here"
 # Or inspect the configuration
 ./bin/promptarena config-inspect -c examples/mcp-chatbot --verbose
 
-# Generate HTML report
-./bin/promptarena run -c examples/mcp-chatbot --provider openai-gpt4o-mini --scenario memory-conversations --html
+# Generate Markdown report
+./bin/promptarena run -c examples/mcp-chatbot --provider openai-gpt4o-mini --scenario memory-conversations --format markdown
 ```
 
 ## How It Works
