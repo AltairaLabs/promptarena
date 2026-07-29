@@ -23,11 +23,10 @@ promptarena [command] [flags]
 | `config-inspect` | Inspect and validate configuration |
 | `debug` | Debug configuration and prompt loading |
 | `prompt-debug` | Debug and test prompt generation |
-| `render` | Re-render a Markdown report from existing JSON results |
 | `chat` | Talk live to an agent defined in your Arena config (interactive TUI) |
 | `serve` | Start the live web UI with SSE streaming and REST API |
 | `validate` | Validate configuration files |
-| `view` | View test results |
+| `view` | Browse and view past test results in the TUI |
 | `export` | Export arena config as a PromptPack JSON file |
 | `deploy` | Deploy prompt packs to cloud providers via adapter plugins |
 | `mcp` | Run an MCP server exposing PromptArena authoring knowledge over stdio |
@@ -926,43 +925,6 @@ Validators: 3
 
 ---
 
-## `promptarena render`
-
-Re-render a Markdown report from existing JSON test results.
-
-### Usage
-
-```bash
-promptarena render [index.json path] [flags]
-```
-
-### Flags
-
-| Flag | Type | Default | Description |
-|------|------|---------|-------------|
-| `-o, --output` | string | `results.md` | Output Markdown file path |
-
-### Examples
-
-```bash
-# Render from default location
-promptarena render out/index.json
-
-# Custom output path
-promptarena render out/index.json --output custom-results.md
-
-# Render from archived results
-promptarena render archive/2024-01-15/index.json --output reports/jan-15-results.md
-```
-
-### Use Cases
-
-- Regenerate reports after test runs
-- Archive and view historical results
-- Share results without re-running tests
-
----
-
 ## `promptarena serve`
 
 Start a local web server with the Arena live UI. Streams run events to the browser via Server-Sent Events (SSE) and provides a REST API for starting runs, viewing results, and inspecting configuration.
@@ -1207,14 +1169,17 @@ promptarena run --verbose --scenario failing-test
 promptarena debug
 ```
 
-### Report Generation
+### Reviewing Results Later
 
 ```bash
-# Run tests
-promptarena run --format json
+# Run tests, keeping the JSON results
+promptarena run --format json,markdown
 
-# Later, re-render a Markdown report from results
-promptarena render out/index.json --output reports/latest.md
+# Review interactively in the browser (reads the JSON in out/)
+promptarena serve --open
+
+# Or browse past runs in the terminal
+promptarena view
 ```
 
 ### Multi-Provider Comparison

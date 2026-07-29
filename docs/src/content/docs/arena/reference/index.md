@@ -55,7 +55,8 @@ Looking for task-oriented guides? See:
 | `promptarena config-inspect` | Validate configuration |
 | `promptarena debug` | Debug configuration loading |
 | `promptarena prompt-debug` | Test prompt rendering |
-| `promptarena render` | Generate reports from results |
+| `promptarena serve` | Review results interactively in the web UI |
+| `promptarena view` | Browse past results in the terminal |
 
 ### Common Assertions
 

@@ -12,9 +12,9 @@ PromptArena supports multiple output formats for test results, each optimized fo
 | **Markdown** | Human review, documentation, GitHub | `.md` | Good |
 | **JUnit XML** | CI/CD systems | `.xml` | Excellent |
 
-> **Interactive web UI**: `promptarena serve` starts a local web server with live streaming, provider comparison, and full conversation detail. It is the recommended way to review results interactively; no additional format flag is needed.
-
-> **`html` format alias**: passing `--format html` or setting `html` in `defaults.output.formats` is accepted and silently produces a Markdown report instead. Use `markdown` in new configs.
+> **There is no HTML report.** Interactive review is served by the web UI — run `promptarena serve` and you get the same content the old `report.html` carried, plus live runs. See [Interactive Web UI](#interactive-web-ui) below. It needs no format flag — it reads the per-run JSON files from your output directory.
+>
+> `html` is still accepted as a format for backwards compatibility: passing `--format html`, or setting `html` in `defaults.output.formats`, silently produces a Markdown report instead. Existing configs keep working — use `markdown` in new ones.
 
 ## Output Directory Structure
 
@@ -231,27 +231,29 @@ interface CostInfo {
 
 ## Interactive Web UI
 
-For interactive review of results, use `promptarena serve`. It starts a local web server that streams run events to the browser via SSE and provides:
+Arena has no standalone HTML report. Interactive review lives in the web UI instead — `promptarena serve` starts a local web server that covers the same ground and adds live runs on top:
 
-- **Summary Dashboard**: overview with pass/fail metrics
-- **Provider Comparison**: side-by-side results across providers
-- **Conversation View**: full conversation transcripts with turn detail
-- **Assertion Details**: pass/fail status with messages
-- **Cost Breakdown**: token usage and costs
-- **Filtering**: filter by status, provider, scenario
+- **Standings**: pass rates ranked across providers
+- **Trial matrix**: a scenario × provider grid; each cell shows pass rate, cost, and latency
+- **Cell scoping**: click a cell to scope the run ledger to that scenario/provider pair
+- **Transcripts**: open any run from the ledger for its full conversation, turn by turn, with assertion outcomes
+- **Cost and latency**: per-cell and per-run, plus a running spend estimate before you start
+- **Historical results**: previous runs load alongside the current one
+- **Live streaming**: run events arrive over SSE as the run executes — the old static report could only show finished runs
+- **Interactive chat**: talk to a configured agent directly in the browser
 
 ```bash
-# Start the live web UI (loads existing results + supports starting new runs)
+# Start the web UI (loads existing results, and can start new runs)
 promptarena serve
 
-# Open browser automatically
+# Open a browser automatically
 promptarena serve --open
 
 # Serve on a custom port
 promptarena serve -p 3000
 ```
 
-The web UI is the recommended way to review results locally. For file-based reports suitable for archiving or sharing, use the Markdown format.
+The web UI is the recommended way to review results locally. For a file you can archive, diff, or paste into a PR, use the Markdown report.
 
 ## Markdown Format
 
