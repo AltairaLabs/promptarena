@@ -3,6 +3,18 @@
 # See: https://docs.github.com/en/code-security/dependabot
 
 version: 2
+
+# @altairalabs/* live in GitHub Packages (private), so Dependabot cannot
+# resolve them without credentials. Dependabot secrets are a SEPARATE store
+# from Actions secrets — the ATLAS_PACKAGES_TOKEN the CI workflow uses is not
+# visible here. It must also be added under
+# Settings > Secrets and variables > Dependabot, with read:packages.
+registries:
+  github-packages:
+    type: npm-registry
+    url: https://npm.pkg.github.com
+    token: ${{secrets.ATLAS_PACKAGES_TOKEN}}
+
 updates:
   # Go module (single module at repo root: arena + packc)
   - package-ecosystem: "gomod"
@@ -79,6 +91,43 @@ updates:
       - "dependencies"
       - "npm"
       - "github-action"
+    commit-message:
+      prefix: "chore(deps)"
+      include: "scope"
+
+  # npm - Arena web UI (the React frontend embedded into the binary)
+  #
+  # This is the only frontend that ships to users: arena/web/embed.go embeds
+  # frontend/dist, which is gitignored and rebuilt by CI and the release, so
+  # whatever is pinned here is what `promptarena serve` runs.
+  - package-ecosystem: "npm"
+    directory: "/arena/web/frontend"
+    registries:
+      - github-packages
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    # The Atlas packages are 0.x, where a caret range stops at the next minor
+    # (^0.5.0 means >=0.5.0 <0.6.0) and that minor IS the breaking bump by
+    # semver convention. Under the default strategy those releases would never
+    # produce a PR — which is exactly the drift this entry exists to catch — so
+    # raise the manifest range rather than only updating within it.
+    versioning-strategy: increase
+    groups:
+      # Not an npm dependency of each other, but they are released together
+      # from one changeset run in atlas-components and the components consume
+      # the tokens at runtime. Reviewing them as one upgrade avoids landing
+      # half of it.
+      atlas:
+        patterns:
+          - "@altairalabs/atlas"
+          - "@altairalabs/atlas-tokens"
+    labels:
+      - "dependencies"
+      - "npm"
+      - "web-ui"
     commit-message:
       prefix: "chore(deps)"
       include: "scope"
