@@ -15,8 +15,8 @@ Both scenarios run keyless: `pii_leakage`'s regex pre-pass (emails, US-style SSN
 
 ```bash
 cd examples/voice-red-team
-../../bin/promptarena run --ci --formats html,json
-open out/report.html
+../../bin/promptarena run --ci --formats json,markdown
+open out/results.md
 ```
 
 Live dev loop:

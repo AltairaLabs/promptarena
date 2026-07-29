@@ -24,6 +24,6 @@ spec:
     concurrency: 4  # Higher concurrency for production cluster
     output:
       dir: out
-      formats: ["json", "html"]
-      html:
-        file: report.html
+      formats: ["json", "markdown"]
+      markdown:
+        file: results.md

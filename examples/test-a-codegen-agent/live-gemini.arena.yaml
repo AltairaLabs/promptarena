@@ -11,7 +11,7 @@ metadata:
         export GEMINI_API_KEY=...   # or source .env
         make build-codegen-agent-sandbox
         cd examples/test-a-codegen-agent
-        promptarena run -c live-gemini.arena.yaml --ci --format html
+        promptarena run -c live-gemini.arena.yaml --ci --format markdown
 spec:
   prompt_configs:
     - id: authoring-agent
@@ -92,6 +92,4 @@ spec:
     max_tokens: 8192
     output:
       dir: out-gemini
-      formats: ["json", "html"]
-      html:
-        file: report.html
+      formats: ["json", "markdown"]

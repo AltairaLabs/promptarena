@@ -239,7 +239,7 @@ spec:
     concurrency: 1
     output:
       dir: out
-      formats: ["json", "html"]
+      formats: ["json", "markdown"]
 ```
 
 Run it:

@@ -199,19 +199,14 @@ spec:
     seed: 42
     output:
       dir: out
-      formats: ["json", "html"]
-    fail_on:
-      - provider_error
-```
-
-The `tools` section references the client-mode tool file. Arena registers the tool with the pipeline and handles consent simulation automatically based on your scenario overrides.
+      formats: ["json", "markdown"] Arena registers the tool with the pipeline and handles consent simulation automatically based on your scenario overrides.
 
 ## Step 5: Run the Tests
 
 Run the tests from your project directory:
 
 ```bash
-promptarena run --ci --format html
+promptarena run --ci --format markdown
 ```
 
 You should see output indicating both scenarios were executed:
@@ -219,7 +214,7 @@ You should see output indicating both scenarios were executed:
 - **consent-grant** -- the tool is called, `mock_result` is returned, and the LLM uses the coordinates in its response.
 - **consent-deny** -- the tool call is attempted, consent is denied, and the LLM responds with a helpful fallback message.
 
-Open `out/report.html` in a browser to view the full results.
+Open `out/results.md` to view the full results, or run `promptarena serve` for the interactive web UI.
 
 ## Summary
 

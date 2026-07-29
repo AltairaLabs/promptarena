@@ -15,7 +15,7 @@ With a real provider (API key required):
 
 ```bash
 cd examples/memory-agent
-../../bin/promptarena run --ci --formats html,json
+../../bin/promptarena run --ci --formats json,markdown
 ```
 
 With mock provider (no API key, assertions will fail since mock doesn't call tools):

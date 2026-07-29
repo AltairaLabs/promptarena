@@ -62,17 +62,17 @@ These observe the workflow metadata directly, so they assert on actual state rat
 
 ```bash
 cd examples/workflow-support
-../../bin/promptarena run --ci --formats html,json
-open out/report.html
+../../bin/promptarena run --ci --formats json,markdown
+open out/results.md
 ```
 
-The HTML report's timeline view shows each transition with its from/to states and the event that triggered it, alongside the assertion results for each turn.
+The Markdown report shows each turn's assertion results alongside the transition path. For the full timeline view with interactive filtering, run `promptarena serve`.
 
 Same shape for the order-processing example:
 
 ```bash
 cd examples/workflow-order-processing
-../../bin/promptarena run --ci --formats html,json
+../../bin/promptarena run --ci --formats json,markdown
 ```
 
 ## What's a regression suite, then?

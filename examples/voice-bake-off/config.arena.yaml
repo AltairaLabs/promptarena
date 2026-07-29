@@ -2,7 +2,7 @@
 #
 # Run the same scenario across multiple providers and compare them
 # side by side. Arena fans out the scenario over every registered
-# provider; the HTML report shows per-provider response, latency, and
+# provider; promptarena serve shows per-provider response, latency, and
 # assertion outcomes on one axis.
 #
 # Default config uses two text mock providers (mock-fast, mock-slow)

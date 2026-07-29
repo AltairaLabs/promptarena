@@ -6,7 +6,7 @@ This directory contains integration tests for the Arena testing framework, desig
 
 The integration tests verify that Arena can:
 - Execute test scenarios with both passing and failing cases
-- Generate multiple output formats (JSON, JUnit XML, HTML) 
+- Generate multiple output formats (JSON, JUnit XML, Markdown)
 - Handle metadata-driven mock provider responses
 - Provide proper error reporting and assertion validation
 
@@ -110,10 +110,10 @@ The tests generate multiple output formats for CI/CD integration:
 - Compatible with Jenkins, GitLab CI, GitHub Actions
 - Provides test suite and individual test case results
 
-### 3. HTML Report (`output/report.html`)
+### 3. Markdown Report (`output/results.md`)
 - Human-readable test report
-- Interactive interface for result analysis
-- Includes charts, timelines, and detailed breakdowns
+- Readable format for result analysis
+- Includes scenario details and assertion results
 
 ## Interpreting Results
 
@@ -121,13 +121,13 @@ The tests generate multiple output formats for CI/CD integration:
 - Exit code: 0
 - All scenarios execute without critical errors
 - Output files generated in specified directory
-- HTML report shows green status indicators
+- Markdown report shows pass/fail status
 
 ### Failed Run  
 - Exit code: 1 (for assertion failures) or 2 (for system errors)
 - Failed assertions clearly marked in output
 - Error messages provide debugging information
-- HTML report highlights failed test cases
+- Markdown report lists failed assertions
 
 ### Expected Behavior
 

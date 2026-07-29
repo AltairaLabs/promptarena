@@ -25,7 +25,7 @@ Built-in validators for checking response quality and compliance.
 Test scenario file structure and specification.
 
 ### [Output Formats](/arena/reference/output-formats/)
-Report generation formats (HTML, JSON, JUnit, Markdown).
+Report generation formats (JSON, Markdown, JUnit) and the interactive web UI.
 
 ### [Duplex Configuration](/arena/reference/duplex-config/)
 Complete duplex streaming configuration for voice testing scenarios.

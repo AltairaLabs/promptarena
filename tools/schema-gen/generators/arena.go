@@ -56,7 +56,7 @@ func addArenaExample(schema *jsonschema.Schema) {
 					"concurrency": defaultConcurrency,
 					"output": map[string]interface{}{
 						"dir":     "out",
-						"formats": []string{"json", "html"},
+						"formats": []string{"json", "markdown"},
 					},
 				},
 			},

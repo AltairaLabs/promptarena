@@ -1,6 +1,6 @@
 # Voice Provider Bake-Off Demo
 
-Run the same scenario across multiple providers side by side. Arena fans out the scenario over every registered provider; the HTML report shows per-provider response, latency, and assertion outcomes on one axis.
+Run the same scenario across multiple providers side by side. Arena fans out the scenario over every registered provider; `promptarena serve` shows per-provider response, latency, and assertion outcomes in the timeline view.
 
 ## What it tests
 
@@ -10,8 +10,8 @@ One three-turn support call, registered twice with different providers (`mock-fa
 
 ```bash
 cd examples/voice-bake-off
-../../bin/promptarena run --ci --formats html,json
-open out/report.html
+../../bin/promptarena run --ci --formats json,markdown
+open out/results.md
 ```
 
 The report's run table groups by provider; expand each turn to see the response and the per-turn metrics from each provider.

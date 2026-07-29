@@ -19,8 +19,8 @@ Each is a thin wrapper over `llm_judge` with a hardened default prompt derived f
 
 ```bash
 cd examples/rag-agent
-../../bin/promptarena run --ci --formats html,json
-open out/report.html
+../../bin/promptarena run --ci --formats json,markdown
+open out/results.md
 ```
 
 Keyless: the agent is a mock provider; the judge is a mock provider too (returns a canned score of 0.92 for every call).

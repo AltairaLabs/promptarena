@@ -24,7 +24,7 @@ tools/arena/
 ├── turnexecutors/                  # Pipeline-based turn execution
 ├── reader/                         # Config file loading
 ├── render/                         # Report generation
-├── results/                        # HTML, JSON, JUnit, Markdown output
+├── results/                        # JSON, JUnit, Markdown output
 ├── tui/                            # Terminal UI
 └── ...
 ```
@@ -166,5 +166,5 @@ go test ./tools/arena/... -count=1    # All Arena tests
 
 # Run examples with mock providers
 cd examples/guardrails-test
-PROMPTKIT_SCHEMA_SOURCE=local ../../bin/promptarena run --mock-provider --ci --formats html,json
+PROMPTKIT_SCHEMA_SOURCE=local ../../bin/promptarena run --mock-provider --ci --formats json,markdown
 ```

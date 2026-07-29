@@ -25,10 +25,10 @@ make build-arena
 
 # Run the example
 cd examples/workflow-agent-loops
-../../bin/promptarena run --ci --formats html,json
+../../bin/promptarena run --ci --formats json,markdown
 
-# Open the HTML report
-open out/report.html
+# Open the Markdown report
+open out/results.md
 ```
 
 The example uses a mock provider so no API keys are needed — the canned LLM responses are in `mock-responses.yaml`.

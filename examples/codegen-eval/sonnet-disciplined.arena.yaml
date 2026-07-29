@@ -62,4 +62,4 @@ spec:
     max_tokens: 4096
     output:
       dir: out/sonnet-disciplined
-      formats: ["json", "html"]
+      formats: ["json", "markdown"]

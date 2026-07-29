@@ -9,8 +9,8 @@ reasoning is surfaced separately from the spoken answer.
 Requires a `GEMINI_API_KEY` (or `GOOGLE_API_KEY`). From this directory:
 
 ```bash
-../../bin/promptarena run --ci --formats html,json
-open out/report.html
+../../bin/promptarena run --ci --formats json,markdown
+open out/results.md
 ```
 
 (Build the CLI first with `make build-arena` from the repo root.)
@@ -33,10 +33,12 @@ jq '.Messages[] | select(.role=="assistant") | {content, reasoning}' out/*.json
 ```
 
 Also visible in:
-- **HTML report** (`out/report.html`): a collapsible `💭 Reasoning` section,
-  rendered *only* when reasoning is present — so its appearance is the proof.
+- **Markdown report** (`out/results.md`): reasoning content is included per turn
+  alongside the assertion results — its presence is the proof.
 - **TUI** (`../../bin/promptarena run` without `--ci`): a `💭 Reasoning` section
   in the turn detail; interactive/voice sessions stream it live.
+- **Web UI** (`promptarena serve`): a collapsible `💭 Reasoning` section,
+  rendered *only* when reasoning is present.
 
 If you instead see the step-by-step working *inside* `content`, the model ignored
 the terse instruction — that's the answer text, not the captured reasoning. The

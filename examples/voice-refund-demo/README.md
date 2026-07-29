@@ -53,8 +53,8 @@ export ELEVENLABS_API_KEY="..." # for anxious-delivery
 ../../bin/promptarena run \
   --provider mock-duplex \
   --ci \
-  --formats html,json
-open out/report.html
+  --formats json,markdown
+open out/results.md
 ```
 
 Mock-mode runs validate that scenarios load, configs parse, the duplex pipeline executes end-to-end, and selfplay personas generate plausible turns. **Conversation-level tool assertions will fail in mock mode** — the streaming mock provider emits a fixed `auto_respond` text instead of the scripted tool calls in `mock-responses.yaml`. This is a known limitation shared by `duplex-streaming/duplex-tools`. Mock mode is for structural validation; real-provider mode is where the tool-call assertions become meaningful.
@@ -66,10 +66,10 @@ cd examples/voice-refund-demo
 # Plus the TTS keys listed above for whichever scenarios you run
 
 # Run against OpenAI GPT-4o Realtime
-../../bin/promptarena run --provider openai-gpt4o-realtime --formats html,json
+../../bin/promptarena run --provider openai-gpt4o-realtime --formats json,markdown
 
 # Or Gemini 2.x Live
-../../bin/promptarena run --provider gemini-2-flash --formats html,json
+../../bin/promptarena run --provider gemini-2-flash --formats json,markdown
 ```
 
 Pass rates against real providers will vary — the agent may sometimes cave to pressure or skip verification steps. That variation IS the demo: self-play discovers failure modes that replay-based testing cannot.
@@ -87,7 +87,7 @@ Tool layer (mock implementations)
     ↓ tool results
 Conversation assertions (tools_called, tools_not_called)
     ↓
-HTML report
+Markdown report / web UI
 ```
 
 The persona LLM acts as the user; TTS makes the conversation indistinguishable from a real call from the realtime LLM's perspective. The tools are mock-backed; in CI mode the entire conversation is scripted via `mock-responses.yaml`.

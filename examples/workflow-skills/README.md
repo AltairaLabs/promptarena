@@ -68,5 +68,5 @@ Skills can only grant tools that the pack declares. The pack is the ceiling.
 
 ```bash
 cd examples/workflow-skills
-promptarena run --ci --format html
+promptarena run --ci --format markdown
 ```

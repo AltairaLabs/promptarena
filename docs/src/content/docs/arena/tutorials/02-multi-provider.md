@@ -227,14 +227,14 @@ Overall: 6/6 passed (100%)
 ## Step 7: Generate Comparison Report
 
 ```bash
-# Generate HTML report with all provider results
-promptarena run --format html
+# Generate a Markdown report with all provider results
+promptarena run --format markdown
 
 # Open the report
-open out/report-*.html
+open out/results.md
 ```
 
-The HTML report shows side-by-side provider responses for easy comparison.
+The Markdown report shows side-by-side provider results. For an interactive view with filtering and conversation detail, run `promptarena serve`.
 
 ## Step 8: Test Specific Providers
 

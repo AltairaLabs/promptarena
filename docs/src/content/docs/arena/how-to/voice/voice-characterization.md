@@ -50,10 +50,10 @@ Pick the `aggressive-refund` scenario. The persona's audio output exercises the 
 Headless / CI:
 
 ```bash
-promptarena run --scenario aggressive-refund --formats html,json
+promptarena run --scenario aggressive-refund --formats json,markdown
 ```
 
-The HTML report shows each persona-side turn with the parsed tags adjacent to the spoken text, so you can see which expressive cues the LLM emitted.
+The Markdown report shows each persona-side turn with the assertion results. For full conversation detail including parsed expressive tags, run `promptarena serve`.
 
 ## Persona-side authoring
 

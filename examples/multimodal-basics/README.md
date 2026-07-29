@@ -31,8 +31,8 @@ promptarena run arena.yaml
 ### 3. View Results
 
 ```bash
-# View HTML report
-open out/multimodal-report.html
+# View Markdown report
+open out/results.md
 
 # Or check JSON results
 cat out/results.json | jq
@@ -130,8 +130,8 @@ promptarena run arena.yaml --prompt image-analyzer
 # Increase concurrency for faster testing
 promptarena run arena.yaml --concurrency 5
 
-# Generate only HTML output
-promptarena run arena.yaml --output-format html
+# Generate only Markdown output
+promptarena run arena.yaml --format markdown
 ```
 
 ## Mock Responses
@@ -231,7 +231,7 @@ promptarena run arena.yaml
 # Run with verbose output
 promptarena run arena.yaml -v
 
-# Generate detailed HTML report
+# Generate detailed Markdown report
 promptarena run arena.yaml --output-dir ./test-results
 ```
 
@@ -263,7 +263,7 @@ Summary:
   Failed: 0
   Success Rate: 100%
 
-Report saved to: out/multimodal-report.html
+Report saved to: out/results.md
 ```
 
 ## Troubleshooting
@@ -284,9 +284,9 @@ Solution: Check that providers/gemini-vision.yaml exists and arena.yaml referenc
 
 ### Assertion Failures
 
-Check the HTML report for detailed failure information:
+Check the Markdown report for detailed failure information:
 ```bash
-open out/multimodal-report.html
+open out/results.md
 # Look for red X marks and click for details
 ```
 

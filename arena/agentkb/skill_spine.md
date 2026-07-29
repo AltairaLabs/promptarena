@@ -39,7 +39,7 @@ catalogs in `reference/` instead of calling `promptarena explain`/`schema` repea
    - **TUI** — does NOT run inside a Claude/Codex/Gemini session. Tell the user to run it
      in a separate terminal: `promptarena run` (no `--ci`).
    - **Web** — `promptarena serve` works as a background task from the session.
-   - **Offline** — `promptarena run --ci --formats html,json`.
+   - **Offline** — `promptarena run --ci --formats json,markdown`.
 7. **Try real providers last.** Swap mock→real only once the kit is green against mocks.
 8. **Let the user play** with `promptarena chat`.
 9. **Deploy.** The pack carries tool definitions/bindings, not backends — deploy any
@@ -78,7 +78,7 @@ spec:
     max_tokens: 1024
     output:
       dir: out
-      formats: ["json", "html"]
+      formats: ["json", "markdown"]
 ```
 
 ### prompts/assistant.prompt.yaml

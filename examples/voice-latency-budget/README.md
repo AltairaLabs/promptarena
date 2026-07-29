@@ -21,8 +21,8 @@ The default config runs deterministically against an in-process text mock provid
 
 ```bash
 cd examples/voice-latency-budget
-../../bin/promptarena run --ci --formats html,json
-open out/report.html
+../../bin/promptarena run --ci --formats json,markdown
+open out/results.md
 ```
 
 For the live dev loop:
@@ -43,7 +43,7 @@ providers:
   - file: providers/gemini-flash.provider.yaml
 ```
 
-Then run with provider keys in your environment. The HTML report shows the per-turn `latency_ms` recorded against each provider so you can compare them side by side.
+Then run with provider keys in your environment. The Markdown report shows the per-turn `latency_ms` recorded against each provider; run `promptarena serve` for the side-by-side comparison view.
 
 ## What `latency_budget` measures today
 

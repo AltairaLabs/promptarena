@@ -179,12 +179,12 @@ Run it:
 
 ```bash
 go build -o bin/promptarena ./arena/cmd/promptarena
-(cd examples/codegen-sandbox && ../../bin/promptarena run --ci --format html)
-open examples/codegen-sandbox/out/report.html
+(cd examples/codegen-sandbox && ../../bin/promptarena run --ci --format markdown)
+open examples/codegen-sandbox/out/results.md
 ```
 
 For a no-Docker variant against the canned LLM responses, run
-`promptarena run --mock-provider --ci --format html` from
+`promptarena run --mock-provider --ci --format markdown` from
 `examples/codegen-sandbox/`.
 
 ---

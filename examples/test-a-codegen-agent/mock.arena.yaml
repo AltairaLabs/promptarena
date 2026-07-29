@@ -16,7 +16,7 @@ metadata:
         make build-codegen-agent-sandbox
         cd examples/test-a-codegen-agent
         PROMPTKIT_SCHEMA_SOURCE=local promptarena run -c mock.arena.yaml --ci --out out-mock
-        open out-mock/report.html
+        open out-mock/results.md
 spec:
   prompt_configs:
     - id: authoring-agent
@@ -112,6 +112,4 @@ spec:
   defaults:
     output:
       dir: out-mock
-      formats: ["html", "json"]
-      html:
-        file: report.html
+      formats: ["json", "markdown"]

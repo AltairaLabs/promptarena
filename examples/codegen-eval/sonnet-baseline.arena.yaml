@@ -60,4 +60,4 @@ spec:
     max_tokens: 4096
     output:
       dir: out/sonnet-baseline
-      formats: ["json", "html"]
+      formats: ["json", "markdown"]

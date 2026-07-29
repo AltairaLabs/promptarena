@@ -31,7 +31,7 @@ The official PromptPack specification site includes:
 - Multi-provider testing: OpenAI, Anthropic, Google Gemini, Azure, Bedrock, and Mock
 - MCP (Model Context Protocol) server integration
 - Comprehensive assertion framework for validation
-- HTML, JSON, and Markdown output formats
+- JSON, Markdown, and JUnit output formats (plus interactive web UI via `promptarena serve`)
 
 ### Quick Start
 
@@ -40,7 +40,7 @@ The official PromptPack specification site includes:
 promptarena run examples/arena-media-test/arena.yaml
 
 # Test across multiple providers
-promptarena run arena.yaml --provider openai,anthropic --format html
+promptarena run arena.yaml --provider openai,anthropic --format markdown
 ```
 
 ### Quick Links
@@ -86,10 +86,7 @@ spec:
   defaults:
     output:
       dir: out
-      formats: ["html", "json"]
-```
-
-### 2. Enhanced Assertions
+      formats: ["markdown", "json"]
 
 PromptArena extends standard assertions with testing-specific validators:
 

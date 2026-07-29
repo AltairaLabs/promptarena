@@ -30,8 +30,8 @@ promptarena serve
 For headless / CI use:
 
 ```bash
-promptarena run --ci --formats html,json
-open out/report.html
+promptarena run --ci --formats json,markdown
+open out/results.md
 ```
 
 For the dev loop (live transcript + tool table updating per turn):
@@ -106,7 +106,7 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           CARTESIA_API_KEY: ${{ secrets.CARTESIA_API_KEY }}
           ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
-        run: ../../bin/promptarena run --ci --formats html,json
+        run: ../../bin/promptarena run --ci --formats json,markdown
       - name: Upload report
         if: always()
         uses: actions/upload-artifact@v4
