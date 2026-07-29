@@ -97,7 +97,7 @@ describe("InstrumentBand", () => {
     expect(document.querySelector("polyline")).toBeInTheDocument();
   });
 
-  it("colors a negative trend delta red and a positive delta gold", () => {
+  it("colors a negative trend delta red and a positive delta healthy", () => {
     // declining: sweep 100% → sweep 0%
     const declining = [...sweep("01", true, true), ...sweep("02", false, false)];
     const { unmount } = render(
@@ -109,6 +109,23 @@ describe("InstrumentBand", () => {
     // improving: sweep 0% → sweep 100%
     const improving = [...sweep("01", false, false), ...sweep("02", true, true)];
     render(<InstrumentBand matrix={buildMatrix(improving, providers, scenarios)} results={improving} />);
-    expect(screen.getByText(/^▲/)).toHaveStyle({ color: "var(--gold-300)" });
+    // Healthy ramp, not gold. Gold means "the one thing that matters on this
+    // view", not "good" — the band spends its single gold on the trail's key
+    // star (see InstrumentBand's StarTrail keyIndex).
+    expect(screen.getByText(/^▲/)).toHaveStyle({ color: "var(--status-healthy-text)" });
+  });
+
+  // Atlas 0.6.0 made gold opt-in so a view spends it once, deliberately. This
+  // band asks for exactly one: the trail's latest-point key star. The gauge
+  // takes no color prop (starlight) and the delta text uses the healthy ramp,
+  // so if a future change re-gilds either, this count catches it.
+  it("spends exactly one gold moment, on the trend trail's key star", () => {
+    const improving = [...sweep("01", false, false), ...sweep("02", true, true)];
+    const { container } = render(
+      <InstrumentBand matrix={buildMatrix(improving, providers, scenarios)} results={improving} />,
+    );
+
+    const keyStars = container.querySelectorAll(".atlas-keystar");
+    expect(keyStars).toHaveLength(1);
   });
 });

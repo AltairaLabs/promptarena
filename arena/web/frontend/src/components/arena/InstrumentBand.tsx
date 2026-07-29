@@ -30,7 +30,9 @@ export function InstrumentBand({ matrix, results }: InstrumentBandProps) {
 
   const delta = trend.length > 0 ? trend[trend.length - 1] - trend[0] : 0;
   const deltaText = delta >= 0 ? `▲ +${delta}` : `▼ ${delta}`;
-  const deltaColor = delta < 0 ? "var(--signal-red-300)" : "var(--gold-300)";
+  // Healthy ramp, not gold: gold means "the one thing that matters on this
+  // view", not "good". The band's single gold moment is the trail's key star.
+  const deltaColor = delta < 0 ? "var(--signal-red-300)" : "var(--status-healthy-text)";
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "0.9fr 1.5fr 1.1fr", gap: 16, marginBottom: 16 }}>
@@ -54,7 +56,11 @@ export function InstrumentBand({ matrix, results }: InstrumentBandProps) {
                 {deltaText}
               </span>
             </div>
-            <StarTrail points={trend} height={64} />
+            {/* keyIndex is opt-in from Atlas 0.6.0 (default null draws no star).
+                -1 marks the latest point, and this star is the band's one gold
+                moment — the gauge stays starlight and the delta text uses the
+                healthy ramp so nothing else competes with it. */}
+            <StarTrail points={trend} height={64} keyIndex={-1} />
           </div>
         )}
       </Card>
