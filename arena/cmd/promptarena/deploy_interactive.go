@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/spf13/cobra"
@@ -99,6 +100,24 @@ func printDeployWarnings(warnings []string) {
 	}
 }
 
+// applyEventTypeResource is the ApplyEvent.Type carrying a per-resource
+// result — the only event type that can carry adapter-supplied links.
+const applyEventTypeResource = "resource"
+
+// printDeployLinks writes the operator-facing links an adapter supplied, and
+// nothing at all when there are none. Links are optional end to end and the
+// CLI never synthesizes one, so no links means no output.
+//
+// Each URL goes on its own line with nothing else on it. This is the headless
+// path — used over SSH and in CI, where no browser can be launched — so the
+// URL is the whole deliverable and must be cleanly copy-pasteable.
+func printDeployLinks(w io.Writer, links []deploy.ResourceLink) {
+	for _, l := range links {
+		// Best-effort: a broken stdout is not worth failing a completed deploy.
+		_, _ = fmt.Fprintf(w, "\n  %s:\n  %s\n", l.Label, l.URL)
+	}
+}
+
 // printPlan displays a deployment plan to the user.
 func printPlan(plan *deploy.PlanResponse) {
 	fmt.Println()
@@ -124,7 +143,7 @@ func printPlan(plan *deploy.PlanResponse) {
 // callbacks delegate here to surface per-resource progress live.
 func printDeployEvent(eventType, message string, res *deploy.ResourceResult) {
 	switch eventType {
-	case "resource":
+	case applyEventTypeResource:
 		if res != nil {
 			line := fmt.Sprintf("  %s %s.%s (%s)",
 				flow.StatusSymbol(res.Status), res.Type, res.Name, res.Status)
@@ -151,6 +170,7 @@ func printStatus(status *deploy.StatusResponse) {
 			fmt.Println(line)
 		}
 	}
+	printDeployLinks(os.Stdout, flow.LinksFromStatus(status))
 	fmt.Println()
 }
 
@@ -191,13 +211,18 @@ func runDeploy(cmd *cobra.Command, args []string) error {
 	// Step 2: Apply.
 	fmt.Println("Step 2: Applying deployment...")
 
+	var applied []*deploy.ResourceResult
 	if err := sess.Apply(ctx, planReq, func(e *deploy.ApplyEvent) error {
 		printDeployEvent(e.Type, e.Message, e.Resource)
+		if e.Type == applyEventTypeResource && e.Resource != nil {
+			applied = append(applied, e.Resource)
+		}
 		return nil
 	}); err != nil {
 		return err
 	}
 
 	fmt.Println("Deployment complete.")
+	printDeployLinks(os.Stdout, flow.LinksFromResults(applied))
 	return nil
 }

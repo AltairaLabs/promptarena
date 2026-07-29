@@ -8,6 +8,7 @@ import (
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/pkg/browser"
 
 	"github.com/AltairaLabs/promptarena/arena/deploy/flow"
 	"github.com/AltairaLabs/promptarena/arena/tui/panels"
@@ -201,6 +202,15 @@ type DeployPage struct {
 	statusCancel   context.CancelFunc
 	statusFetching bool
 	status         *deploy.StatusResponse
+
+	// openURL launches a browser for an adapter-supplied link ([o] on the
+	// apply-result and status screens). It is a field so tests can observe the
+	// URL without launching a real browser; NewDeployPage wires browser.OpenURL,
+	// the same opener flow.LoginHooks defaults to. openLinkErr records a failed
+	// launch — expected over SSH and in containers — so the view can say the
+	// browser could not be opened while keeping the URL on screen to copy.
+	openURL     func(string) error
+	openLinkErr error
 }
 
 // NewDeployPage builds the deploy wizard page for ctx. It is the entry point
@@ -215,6 +225,9 @@ func NewDeployPage(ctx *AppContext) Page {
 		},
 		spinner:   newLoginSpinner(),
 		applyLogs: panels.NewLogsPanel(),
+		// The same opener flow.LoginHooks defaults to, so an operator whose
+		// browser can't be launched gets identical behavior on both paths.
+		openURL: browser.OpenURL,
 	}
 }
 
@@ -784,11 +797,32 @@ func (p *DeployPage) handleApplyEvent(e *deploy.ApplyEvent) {
 // fetch, exactly as handleConfirmKey's 'y' advances to deployStateApplying
 // via startApply; every other key is ignored.
 func (p *DeployPage) handleApplyResultKey(msg tea.KeyMsg) (Page, tea.Cmd) {
-	if msg.Type == tea.KeyRunes && string(msg.Runes) == "s" {
+	if msg.Type != tea.KeyRunes {
+		return p, nil
+	}
+	switch string(msg.Runes) {
+	case "s":
 		p.state = deployStateStatus
 		return p, tea.Batch(p.startStatus(), p.spinner.Tick)
+	case "o":
+		p.openFirstLink()
 	}
 	return p, nil
+}
+
+// openFirstLink launches the operator's browser on the first adapter-supplied
+// link for the current screen. It is a no-op when the adapter supplied none —
+// the client never synthesizes a URL to open.
+//
+// A failed launch is recorded rather than raised: it is the expected outcome
+// over SSH and in containers, where there is no browser to launch, and the URL
+// stays on screen for the operator to copy either way.
+func (p *DeployPage) openFirstLink() {
+	links := p.deployLinks()
+	if len(links) == 0 || p.openURL == nil {
+		return
+	}
+	p.openLinkErr = p.openURL(links[0].URL)
 }
 
 // handleStatusKey handles key input on the status screen. 'q' pops the page.
@@ -798,8 +832,14 @@ func (p *DeployPage) handleApplyResultKey(msg tea.KeyMsg) (Page, tea.Cmd) {
 // stack (see App.Update), so the status screen — a non-root page — must
 // handle it directly to let the operator back out with 'q' too.
 func (p *DeployPage) handleStatusKey(msg tea.KeyMsg) (Page, tea.Cmd) {
-	if msg.Type == tea.KeyRunes && string(msg.Runes) == "q" {
+	if msg.Type != tea.KeyRunes {
+		return p, nil
+	}
+	switch string(msg.Runes) {
+	case "q":
 		return p, func() tea.Msg { return PopPageMsg{} }
+	case "o":
+		p.openFirstLink()
 	}
 	return p, nil
 }
@@ -901,14 +941,44 @@ func (p *DeployPage) keyBindings() []views.KeyBinding {
 		kb = append([]views.KeyBinding{{Keys: keyEnter, Description: keyHintConfirm}}, kb...)
 	case p.state == deployStateApplyResult:
 		kb = append([]views.KeyBinding{{Keys: "s", Description: "status"}}, kb...)
+		kb = append(openLinkKeyBinding(p.deployLinks()), kb...)
 	case p.state == deployStateStatus:
 		kb = append([]views.KeyBinding{{Keys: "q", Description: keyHintBack}}, kb...)
+		kb = append(openLinkKeyBinding(p.deployLinks()), kb...)
 	case p.state == deployStateError:
 		kb = append(errorKeyBindings(p.err, p.pf), kb...)
 	case p.state == deployStatePreflight && p.pf != nil:
 		kb = append(preflightKeyBindings(p.pf), kb...)
 	}
 	return kb
+}
+
+// deployLinks returns the operator-facing links the adapter supplied for the
+// current screen: the applied resources' links on deployStateApplyResult, the
+// status response's on deployStateStatus. Every other state has none.
+//
+// Links are optional throughout — an adapter that supplies none is fully
+// supported, and the CLI never synthesizes one, so an empty result here means
+// the UI shows nothing rather than guessing a URL (see deploy.ResourceLink).
+func (p *DeployPage) deployLinks() []deploy.ResourceLink {
+	switch p.state { //nolint:exhaustive // only the two post-apply screens surface links; every other state has none
+	case deployStateApplyResult:
+		return flow.LinksFromResults(p.applyResults)
+	case deployStateStatus:
+		return flow.LinksFromStatus(p.status)
+	default:
+		return nil
+	}
+}
+
+// openLinkKeyBinding returns the [o] footer hint when there is a link for it
+// to open, and nothing otherwise — the footer must never advertise a key that
+// does nothing, mirroring the guard handleOpenLinkKey applies.
+func openLinkKeyBinding(links []deploy.ResourceLink) []views.KeyBinding {
+	if len(links) == 0 {
+		return nil
+	}
+	return []views.KeyBinding{{Keys: "o", Description: "open " + strings.ToLower(links[0].Label)}}
 }
 
 // errorKeyBindings returns the deployStateError footer key hints, keyed off
@@ -1142,7 +1212,47 @@ func (p *DeployPage) viewApplyProgress(width int) string {
 // viewApplying, plus (via keyBindings) an [s] hint to advance to
 // deployStateStatus.
 func (p *DeployPage) viewApplyResult(width int) string {
-	return lipgloss.JoinVertical(lipgloss.Left, p.applyResultHeadline(), "", p.viewApplyProgress(width))
+	return lipgloss.JoinVertical(lipgloss.Left,
+		p.headlineWithLinks(p.applyResultHeadline()), "", p.viewApplyProgress(width))
+}
+
+// headlineWithLinks stacks a screen's headline above its adapter-supplied
+// links, returning the headline alone when there are none.
+//
+// The links sit directly under the headline and ABOVE the screen's tables and
+// log panels, because those fill whatever height is left and the chrome clips
+// the body to exactly the rows available (views.RenderWithChrome's MaxHeight).
+// Anything rendered after them is pushed off the bottom and never seen — which
+// is precisely what a link the operator is meant to act on must not be.
+func (p *DeployPage) headlineWithLinks(headline string) string {
+	block := p.viewDeployLinks()
+	if block == "" {
+		return headline
+	}
+	return lipgloss.JoinVertical(lipgloss.Left, headline, "", block)
+}
+
+// viewDeployLinks renders the adapter-supplied links for the current screen,
+// and nothing at all when there are none — the feature is optional end to end,
+// so an adapter that supplies no links leaves the screen exactly as it was.
+//
+// Each URL is rendered on its own line with no prefix. The chrome clips lines
+// to the terminal width (views.RenderWithChrome's MaxWidth), so anything
+// sharing the URL's line — a label, an indent — is width the URL loses. A
+// truncated URL is worse than none: it still looks copy-pasteable.
+func (p *DeployPage) viewDeployLinks() string {
+	links := p.deployLinks()
+	if len(links) == 0 {
+		return ""
+	}
+	var parts []string
+	for _, l := range links {
+		parts = append(parts, theme.Active().Muted.Render(l.Label+":"), theme.Active().Value.Render(l.URL))
+	}
+	if p.openLinkErr != nil {
+		parts = append(parts, theme.Active().Muted.Render("Could not open a browser — copy the URL above."))
+	}
+	return lipgloss.JoinVertical(lipgloss.Left, parts...)
 }
 
 // applyResultHeadline summarizes the completed apply: success in
@@ -1178,7 +1288,7 @@ func (p *DeployPage) viewStatus(width int) string {
 		return deployBox(width).Render(line)
 	}
 	table := views.RenderDeployResources(views.DeployRowsFromStatus(p.status.Resources), width)
-	return lipgloss.JoinVertical(lipgloss.Left, p.statusHeadline(), "", table)
+	return lipgloss.JoinVertical(lipgloss.Left, p.headlineWithLinks(p.statusHeadline()), "", table)
 }
 
 // statusHeadline summarizes p.status.Status: "deployed" in

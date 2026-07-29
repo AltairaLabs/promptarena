@@ -73,8 +73,12 @@ func runDeployApply(cmd *cobra.Command, args []string) error {
 	// re-planning. Apply streams resource events but has no Warnings channel.
 	printDeployWarnings(applyWarnings(ctx, sess.Client, usedSavedPlan, savedPlan, planReq))
 
+	var applied []*deploy.ResourceResult
 	if err := sess.Apply(ctx, planReq, func(e *deploy.ApplyEvent) error {
 		printDeployEvent(e.Type, e.Message, e.Resource)
+		if e.Type == applyEventTypeResource && e.Resource != nil {
+			applied = append(applied, e.Resource)
+		}
 		return nil
 	}); err != nil {
 		return err
@@ -82,6 +86,7 @@ func runDeployApply(cmd *cobra.Command, args []string) error {
 
 	fmt.Println()
 	fmt.Println("Apply complete.")
+	printDeployLinks(os.Stdout, flow.LinksFromResults(applied))
 	return nil
 }
 
