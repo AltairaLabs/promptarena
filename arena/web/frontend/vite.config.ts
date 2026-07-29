@@ -66,11 +66,18 @@ function assertAtlasBuildIsFresh() {
   const builtAt = fs.statSync(dist).mtimeMs;
   const src = path.resolve(atlasRoot, "react/src");
   const newer: string[] = [];
+  // Only files that can actually reach the bundle count. tsup's entry is
+  // src/index.ts, so tests and stories are never in it — flagging those would
+  // demand rebuilds that change nothing.
+  const affectsBundle = (name: string) =>
+    /\.(ts|tsx|css)$/.test(name) && !/\.(test|spec|stories)\./.test(name);
   const walk = (dir: string) => {
     for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
       const full = path.join(dir, entry.name);
       if (entry.isDirectory()) walk(full);
-      else if (fs.statSync(full).mtimeMs > builtAt) newer.push(path.relative(src, full));
+      else if (affectsBundle(entry.name) && fs.statSync(full).mtimeMs > builtAt) {
+        newer.push(path.relative(src, full));
+      }
     }
   };
   walk(src);
