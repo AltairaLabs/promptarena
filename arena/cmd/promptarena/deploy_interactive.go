@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -118,11 +119,30 @@ func printDeployLinks(w io.Writer, links []deploy.ResourceLink) {
 	}
 }
 
+// planSummaryLabel prefixes the one-line plan summary.
+const planSummaryLabel = "Plan:"
+
+// formatPlanSummary labels the adapter-authored summary line exactly once.
+//
+// Adapters disagree on whether Summary self-labels: agentcore and omnia build
+// "Plan: 2 to create, 0 to update, 0 to delete", while vertex returns a bare
+// "1 to create, 2 unchanged". Prefixing unconditionally printed "Plan: Plan: 2
+// to create, ..." for the first two; printing verbatim left vertex plans with
+// no heading at all. Normalizing here keeps one label whichever adapter ran.
+func formatPlanSummary(summary string) string {
+	s := strings.TrimSpace(summary)
+	s = strings.TrimSpace(strings.TrimPrefix(s, planSummaryLabel))
+	if s == "" {
+		return planSummaryLabel
+	}
+	return planSummaryLabel + " " + s
+}
+
 // printPlan displays a deployment plan to the user.
 func printPlan(plan *deploy.PlanResponse) {
 	fmt.Println()
 	printDeployWarnings(plan.Warnings)
-	fmt.Printf("Plan: %s\n", plan.Summary)
+	fmt.Println(formatPlanSummary(plan.Summary))
 	fmt.Println()
 	if len(plan.Changes) == 0 {
 		fmt.Println("  No changes required.")
