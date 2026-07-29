@@ -7,6 +7,8 @@ import (
 	"github.com/AltairaLabs/promptarena/arena/deploy/flow"
 	"github.com/AltairaLabs/promptarena/arena/tui/viewmodels"
 	"github.com/AltairaLabs/promptarena/arena/tui/views"
+
+	"github.com/AltairaLabs/PromptKit/runtime/deploy"
 )
 
 // hasKey reports whether kb contains a binding whose Keys field is exactly
@@ -318,5 +320,67 @@ func TestKeyBindings_Error_Generic(t *testing.T) {
 	kb := p.keyBindings()
 	if len(kb) != 1 || kb[0].Keys != "esc" {
 		t.Fatalf("expected only esc for a generic error, got %+v", kb)
+	}
+}
+
+// TestKeyBindings_ApplyResult_NoLinksHidesOpen verifies the footer does not
+// advertise [o] when the adapter returned no links — the key would do nothing,
+// and the whole feature is optional, so an adapter that supplies none must
+// leave the footer exactly as it was before links existed.
+func TestKeyBindings_ApplyResult_NoLinksHidesOpen(t *testing.T) {
+	p := &DeployPage{state: deployStateApplyResult}
+	kb := p.keyBindings()
+	if hasKey(kb, "o") {
+		t.Fatalf("expected no [o] hint when the adapter returned no links, got %+v", kb)
+	}
+	if !hasKey(kb, "s") {
+		t.Fatalf("expected the existing [s] status hint to be unaffected, got %+v", kb)
+	}
+}
+
+// TestKeyBindings_ApplyResult_LinksShowOpen verifies the footer offers [o]
+// once the adapter has attached at least one link to an applied resource,
+// mirroring the guard handleApplyResultKey applies.
+func TestKeyBindings_ApplyResult_LinksShowOpen(t *testing.T) {
+	p := &DeployPage{
+		state: deployStateApplyResult,
+		applyResults: []*deploy.ResourceResult{
+			{Type: "agent_runtime", Name: "support", Links: []deploy.ResourceLink{
+				{Label: "Console", URL: "https://ws.example/agents/support", Rel: "console"},
+			}},
+		},
+	}
+	if kb := p.keyBindings(); !hasKey(kb, "o") {
+		t.Fatalf("expected an [o] hint when the adapter returned a link, got %+v", kb)
+	}
+}
+
+// TestKeyBindings_Status_LinksShowOpen verifies the status screen offers [o]
+// for links carried on a StatusResponse, the same as the apply-result screen.
+func TestKeyBindings_Status_LinksShowOpen(t *testing.T) {
+	p := &DeployPage{
+		state: deployStateStatus,
+		status: &deploy.StatusResponse{
+			Status: "deployed",
+			Links: []deploy.ResourceLink{
+				{Label: "Console", URL: "https://ws.example/agents/support", Rel: "console"},
+			},
+		},
+	}
+	if kb := p.keyBindings(); !hasKey(kb, "o") {
+		t.Fatalf("expected an [o] hint when status carries a link, got %+v", kb)
+	}
+}
+
+// TestKeyBindings_Status_NoLinksHidesOpen verifies the status screen leaves
+// the footer untouched when no links came back.
+func TestKeyBindings_Status_NoLinksHidesOpen(t *testing.T) {
+	p := &DeployPage{state: deployStateStatus, status: &deploy.StatusResponse{Status: "deployed"}}
+	kb := p.keyBindings()
+	if hasKey(kb, "o") {
+		t.Fatalf("expected no [o] hint when status carries no links, got %+v", kb)
+	}
+	if !hasKey(kb, "q") {
+		t.Fatalf("expected the existing [q] back hint to be unaffected, got %+v", kb)
 	}
 }
