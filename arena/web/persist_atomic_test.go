@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"testing"
 
@@ -90,5 +91,97 @@ func TestPersistOneRun_NeverExposesPartialJSON(t *testing.T) {
 		t.Fatalf("reader observed a partially-written %s (%d bytes); "+
 			"the file must be swapped into place atomically so readers never see a prefix",
 			path, len(corrupt))
+	}
+}
+
+// TestWriteFileAtomic_WritesContentAndMode covers the success path: the data
+// lands intact under the destination name, with the requested mode rather than
+// the 0600 os.CreateTemp gives the staging file.
+func TestWriteFileAtomic_WritesContentAndMode(t *testing.T) {
+	dir := t.TempDir()
+	dest := filepath.Join(dir, "result.json")
+	want := []byte(`{"runID":"abc"}`)
+
+	if err := writeFileAtomic(dest, want, 0o640); err != nil {
+		t.Fatalf("writeFileAtomic: %v", err)
+	}
+
+	got, err := os.ReadFile(dest)
+	if err != nil {
+		t.Fatalf("ReadFile: %v", err)
+	}
+	if string(got) != string(want) {
+		t.Errorf("contents = %q, want %q", got, want)
+	}
+	info, err := os.Stat(dest)
+	if err != nil {
+		t.Fatalf("Stat: %v", err)
+	}
+	if info.Mode().Perm() != 0o640 {
+		t.Errorf("mode = %v, want %v (staging file's 0600 must not leak through)",
+			info.Mode().Perm(), os.FileMode(0o640))
+	}
+}
+
+// TestWriteFileAtomic_ReplacesExistingFile covers the overwrite path — the one
+// persistOneRun actually takes on every run after the first.
+func TestWriteFileAtomic_ReplacesExistingFile(t *testing.T) {
+	dir := t.TempDir()
+	dest := filepath.Join(dir, "result.json")
+	if err := os.WriteFile(dest, []byte("stale"), 0o600); err != nil {
+		t.Fatalf("seed: %v", err)
+	}
+
+	if err := writeFileAtomic(dest, []byte("fresh"), 0o600); err != nil {
+		t.Fatalf("writeFileAtomic: %v", err)
+	}
+
+	got, err := os.ReadFile(dest)
+	if err != nil {
+		t.Fatalf("ReadFile: %v", err)
+	}
+	if string(got) != "fresh" {
+		t.Errorf("contents = %q, want %q", got, "fresh")
+	}
+}
+
+// TestWriteFileAtomic_StagingFailureReturnsError covers the branch where the
+// staging file cannot be created at all — here because the destination's
+// directory does not exist.
+func TestWriteFileAtomic_StagingFailureReturnsError(t *testing.T) {
+	dest := filepath.Join(t.TempDir(), "no-such-dir", "result.json")
+
+	if err := writeFileAtomic(dest, []byte("x"), 0o600); err == nil {
+		t.Fatal("expected an error when the destination directory does not exist")
+	}
+}
+
+// TestWriteFileAtomic_RenameFailureLeavesNoStagingFile covers the failure
+// cleanup: when the swap into place fails, the staging file must not be left
+// behind in the results directory, where a later scan would trip over it.
+// A destination that is a directory makes the rename fail.
+func TestWriteFileAtomic_RenameFailureLeavesNoStagingFile(t *testing.T) {
+	dir := t.TempDir()
+	dest := filepath.Join(dir, "result.json")
+	if err := os.Mkdir(dest, 0o750); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	// A non-empty directory cannot be replaced by a rename on any platform.
+	if err := os.WriteFile(filepath.Join(dest, "occupant"), []byte("x"), 0o600); err != nil {
+		t.Fatalf("seed occupant: %v", err)
+	}
+
+	if err := writeFileAtomic(dest, []byte("x"), 0o600); err == nil {
+		t.Fatal("expected an error when the destination cannot be replaced")
+	}
+
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		t.Fatalf("ReadDir: %v", err)
+	}
+	for _, e := range entries {
+		if strings.HasPrefix(e.Name(), ".tmp-") {
+			t.Errorf("staging file %q was left behind after a failed write", e.Name())
+		}
 	}
 }

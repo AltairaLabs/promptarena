@@ -331,34 +331,32 @@ func (s *Server) persistOneRun(ctx context.Context, runID string) {
 // The temp file is created in the target's own directory so the rename stays
 // within one filesystem, and its name carries no .json extension so a
 // directory scan racing this write cannot pick it up as a result file.
-func writeFileAtomic(dest string, data []byte, perm os.FileMode) error {
+func writeFileAtomic(dest string, data []byte, perm os.FileMode) (err error) {
 	f, err := os.CreateTemp(filepath.Dir(dest), ".tmp-*")
 	if err != nil {
 		return err
 	}
 	tmp := f.Name()
+	// Any failure past this point must not strand the staging file in the
+	// results directory. Named return so this sees the error that got us here.
+	defer func() {
+		if err != nil {
+			_ = os.Remove(tmp)
+		}
+	}()
 
-	if _, err = f.Write(data); err != nil {
-		_ = f.Close()
-		_ = os.Remove(tmp)
+	// CreateTemp makes the file 0600; set the intended mode before it becomes
+	// visible under its real name.
+	if _, err = f.Write(data); err == nil {
+		err = f.Chmod(perm)
+	}
+	if closeErr := f.Close(); err == nil {
+		err = closeErr
+	}
+	if err != nil {
 		return err
 	}
-	// CreateTemp makes the file 0600; widen it to the intended mode before it
-	// becomes visible under its real name.
-	if err = f.Chmod(perm); err != nil {
-		_ = f.Close()
-		_ = os.Remove(tmp)
-		return err
-	}
-	if err = f.Close(); err != nil {
-		_ = os.Remove(tmp)
-		return err
-	}
-	if err = os.Rename(tmp, dest); err != nil {
-		_ = os.Remove(tmp)
-		return err
-	}
-	return nil
+	return os.Rename(tmp, dest)
 }
 
 // handleGetConfig returns the loaded arena config.
