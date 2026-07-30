@@ -4,7 +4,7 @@
 // assertions rather than a single field. Covers the historical path; the live
 // SSE camelCase bridge and derived trace events land in later WUs.
 import type { AtlasMessage, AtlasCheck, AtlasContentPart, AtlasToolCall, AtlasCheckViolation, ConstellationNode, ConstellationEdge } from "@altairalabs/atlas";
-import type { ActiveRun, Message, RunResult, ContentPart, EvalResult, WorkflowGraph } from "@/types";
+import type { ActiveRun, Message, RunResult, ContentPart, EvalResult, ValidationResult, WorkflowGraph } from "@/types";
 
 const ROLES = new Set(["user", "assistant", "system", "tool"]);
 const toRole = (r: string): AtlasMessage["role"] => (ROLES.has(r) ? r : "assistant") as AtlasMessage["role"];
@@ -121,12 +121,37 @@ function metaAssertions(m: Message): RawAssertion[] {
   return Array.isArray(a?.results) ? a!.results! : [];
 }
 
+// What a guardrail actually caught is under details.value.violations — a list
+// of human-readable strings ('contains "damn"'). Arena also flattens these onto
+// run.Violations, but stringified through Go's map formatter, so this is the
+// only structured source. Without it a guardrail renders as a bare name and
+// outcome, which says a validator fired but never what tripped it.
+function validatorViolations(v: ValidationResult): string[] {
+  const value = (v.details as { value?: { violations?: unknown } } | undefined)?.value;
+  const list = value?.violations;
+  return Array.isArray(list) ? list.filter((s): s is string => typeof s === "string") : [];
+}
+
+function validationToCheck(v: ValidationResult, i: number): AtlasCheck {
+  const found = validatorViolations(v);
+  return {
+    type: v.validator_type,
+    kind: "guardrail",
+    passed: v.passed,
+    action: v.passed ? "allow" : "block",
+    // turnIndex makes each one a click-through to the turn it fired on.
+    // Deliberately not also set as `explanation`: every surface that renders a
+    // check prints the explanation immediately above the violation list, so the
+    // two would say the same thing twice — and the violation line is the better
+    // of the two, being per-item and clickable.
+    violations: found.length ? found.map((description) => ({ turnIndex: i, description })) : undefined,
+  };
+}
+
 function messageChecks(m: Message, i: number, run: RunResult): AtlasCheck[] {
   const out: AtlasCheck[] = [];
   for (const r of metaAssertions(m)) out.push(assertionToCheck(r));
-  for (const v of m.validations ?? []) {
-    out.push({ type: v.validator_type, kind: "guardrail", passed: v.passed, action: v.passed ? "allow" : "block" });
-  }
+  for (const v of m.validations ?? []) out.push(validationToCheck(v, i));
   for (const e of run.eval_results ?? []) if (e.turn_index === i) out.push(evalToCheck(e));
   return out;
 }

@@ -42,6 +42,35 @@ describe("adaptMessage", () => {
     expect(a.checks![0]).toMatchObject({ type: "pii", kind: "guardrail", passed: false, action: "block" });
   });
 
+  // What the guardrail actually caught lives in details.value.violations. Arena
+  // also flattens it onto run.Violations, but stringified through Go's map
+  // formatter ("map[score:0 value:map[violations:[...]]]"), so the per-message
+  // structure is the only usable source.
+  it("carries what a guardrail caught, so the Inspector can show it", () => {
+    const m = msg({
+      validations: [
+        {
+          validator_type: "banned_words",
+          passed: false,
+          details: { score: 0, validator_type: "banned_words", value: { violations: ['contains "damn"', 'contains "hell"'] } },
+        },
+      ],
+    });
+    const check = adaptMessage(m, 3, run(), 0).checks![0];
+    expect(check.violations).toEqual([
+      { turnIndex: 3, description: 'contains "damn"' },
+      { turnIndex: 3, description: 'contains "hell"' },
+    ]);
+    // Not duplicated into explanation — every surface renders both, adjacent.
+    expect(check.explanation).toBeUndefined();
+  });
+
+  it("leaves a guardrail with no violation detail untouched", () => {
+    const a = adaptMessage(msg({ validations: [{ validator_type: "length", passed: true }] }), 0, run(), 0);
+    expect(a.checks![0].violations).toBeUndefined();
+    expect(a.checks![0].explanation).toBeUndefined();
+  });
+
   it("attaches a run error to the last message", () => {
     const r = run({ Messages: [msg(), msg()] as Message[], Error: "provider timeout" });
     expect(adaptMessage(msg(), 1, r, 0).error?.message).toBe("provider timeout");
