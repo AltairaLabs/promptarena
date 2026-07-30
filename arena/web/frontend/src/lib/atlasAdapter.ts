@@ -212,9 +212,32 @@ function enforceMonotonicTimestamps(messages: AtlasMessage[]): AtlasMessage[] {
 
 // ---- top-level ----
 
+// Atlas's JsonView renders an undefined-valued key as a literal `undefined`
+// line rather than omitting it, so every optional field we leave unset shows up
+// as a row of noise in the Inspector's Raw tab — a sparse turn carries five of
+// them before any real content. Optional fields are cheaper to write as
+// `x: cond ? v : undefined` than to conditionally spread, so drop them here
+// instead of contorting every construction site.
+//
+// `meta` is exempt: it is raw JSON straight off the wire, so it cannot contain
+// `undefined` (JSON has no such literal), and recursing would deep-copy an
+// _llm_trace payload on every adapt for no gain.
+function pruneUndefined<T>(value: T): T {
+  if (Array.isArray(value)) return value.map((v) => pruneUndefined(v)) as unknown as T;
+  if (value && typeof value === "object") {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value)) {
+      if (v === undefined) continue;
+      out[k] = k === "meta" ? v : pruneUndefined(v);
+    }
+    return out as T;
+  }
+  return value;
+}
+
 export function adaptMessage(m: Message, i: number, run: RunResult, baseMs: number): AtlasMessage {
   const checks = messageChecks(m, i, run);
-  return {
+  return pruneUndefined({
     id: `m${i}`,
     role: toRole(m.role),
     sequenceNum: i,
@@ -227,7 +250,7 @@ export function adaptMessage(m: Message, i: number, run: RunResult, baseMs: numb
     // Carry Arena's meta through so the Inspector (Raw tab + future custom tabs)
     // can surface _llm_trace / _llm_raw_request / _llm_raw_response / persona etc.
     meta: m.meta,
-  };
+  });
 }
 
 // Live path: the SSE reducer already normalises camelCase → the snake Message
@@ -236,16 +259,18 @@ export function adaptMessage(m: Message, i: number, run: RunResult, baseMs: numb
 export function adaptLiveMessages(messages: Message[]): AtlasMessage[] {
   const baseMs = Date.now();
   return enforceMonotonicTimestamps(
-    messages.map((m, i) => ({
-      id: `m${i}`,
-      role: toRole(m.role),
-      sequenceNum: i,
-      timestamp: m.timestamp ?? new Date(baseMs + i * 1000).toISOString(),
-      parts: partsOf(m),
-      toolCalls: toolCallsOf(m),
-      metrics: metricsOf(m),
-      meta: m.meta,
-    })),
+    messages.map((m, i) =>
+      pruneUndefined({
+        id: `m${i}`,
+        role: toRole(m.role),
+        sequenceNum: i,
+        timestamp: m.timestamp ?? new Date(baseMs + i * 1000).toISOString(),
+        parts: partsOf(m),
+        toolCalls: toolCallsOf(m),
+        metrics: metricsOf(m),
+        meta: m.meta,
+      }),
+    ),
   );
 }
 
