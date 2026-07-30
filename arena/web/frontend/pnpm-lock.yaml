@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@altairalabs/atlas':
-        specifier: ^0.6.0
-        version: 0.6.0(@dagrejs/dagre@3.0.0)(@types/react@19.2.14)(@xyflow/react@12.11.2(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
+        specifier: ^0.8.0
+        version: 0.8.0(@dagrejs/dagre@3.0.0)(@types/react@19.2.14)(@xyflow/react@12.11.2(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@altairalabs/atlas-tokens':
         specifier: ^0.3.0
         version: 0.3.0
@@ -99,8 +99,8 @@ packages:
   '@altairalabs/atlas-tokens@0.3.0':
     resolution: {integrity: sha512-MKbd6SoBYpBPF3MOiwdxLCBvfwk1n79Dge1CBbRtb+p+dIPW6jTF7i1WPExJbcpN/MRnDPa6Lt/ML6MNoyGxkw==, tarball: https://npm.pkg.github.com/download/@altairalabs/atlas-tokens/0.3.0/adb637d261d4e09d73903b6d51a3f7624b3bbc11}
 
-  '@altairalabs/atlas@0.6.0':
-    resolution: {integrity: sha512-E1q/heKsb1lSJtW0jV8VtLzt7WPXHrtJPT7S4K1q3RvFzEBIulkriRSp7hFfQd6Yg6wfgc6M3sy9qFIe/eq0Ag==, tarball: https://npm.pkg.github.com/download/@altairalabs/atlas/0.6.0/41ef7b1b3cba0123fddee452be52cc48030d8151}
+  '@altairalabs/atlas@0.8.0':
+    resolution: {integrity: sha512-wi8JX7plqG1MlWv7yRo0b7j3mSy57gSjUjw3WssYH7NvH29fuRCMl4r/zUTbQIliQozYz9UmRBg0KQZGt+oxZA==, tarball: https://npm.pkg.github.com/download/@altairalabs/atlas/0.8.0/4cfb2a606e512c47f6ed96e9626aab1ee9631fce}
     peerDependencies:
       '@dagrejs/dagre': ^3.0.0
       '@xyflow/react': ^12.0.0
@@ -2715,7 +2715,7 @@ snapshots:
 
   '@altairalabs/atlas-tokens@0.3.0': {}
 
-  '@altairalabs/atlas@0.6.0(@dagrejs/dagre@3.0.0)(@types/react@19.2.14)(@xyflow/react@12.11.2(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
+  '@altairalabs/atlas@0.8.0(@dagrejs/dagre@3.0.0)(@types/react@19.2.14)(@xyflow/react@12.11.2(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
     dependencies:
       '@dagrejs/dagre': 3.0.0
       '@xyflow/react': 12.11.2(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
