@@ -7,6 +7,17 @@ const run = (over: Partial<RunResult> = {}): RunResult =>
 
 const msg = (over: Partial<Message> = {}): Message => ({ role: "assistant", content: "hi", ...over } as Message);
 
+// Every path holding an explicit `undefined`, so a failure names the field.
+const undefinedKeysIn = (v: unknown, path = "$", out: string[] = []): string[] => {
+  if (Array.isArray(v)) v.forEach((x, i) => undefinedKeysIn(x, `${path}[${i}]`, out));
+  else if (v && typeof v === "object")
+    for (const [k, val] of Object.entries(v)) {
+      if (val === undefined) out.push(`${path}.${k}`);
+      else undefinedKeysIn(val, `${path}.${k}`, out);
+    }
+  return out;
+};
+
 describe("adaptMessage", () => {
   it("maps role, content fallback, and sequence", () => {
     const a = adaptMessage(msg({ role: "weird", content: "yo" }), 2, run(), 0);
@@ -40,6 +51,49 @@ describe("adaptMessage", () => {
   it("maps a message validator to a guardrail check", () => {
     const a = adaptMessage(msg({ validations: [{ validator_type: "pii", passed: false }] }), 0, run(), 0);
     expect(a.checks![0]).toMatchObject({ type: "pii", kind: "guardrail", passed: false, action: "block" });
+  });
+
+  // What the guardrail actually caught lives in details.value.violations. Arena
+  // also flattens it onto run.Violations, but stringified through Go's map
+  // formatter ("map[score:0 value:map[violations:[...]]]"), so the per-message
+  // structure is the only usable source.
+  it("carries what a guardrail caught, so the Inspector can show it", () => {
+    const m = msg({
+      validations: [
+        {
+          validator_type: "banned_words",
+          passed: false,
+          details: { score: 0, validator_type: "banned_words", value: { violations: ['contains "damn"', 'contains "hell"'] } },
+        },
+      ],
+    });
+    const check = adaptMessage(m, 3, run(), 0).checks![0];
+    expect(check.violations).toEqual([
+      { turnIndex: 3, description: 'contains "damn"' },
+      { turnIndex: 3, description: 'contains "hell"' },
+    ]);
+    // Not duplicated into explanation — every surface renders both, adjacent.
+    expect(check.explanation).toBeUndefined();
+  });
+
+  it("leaves a guardrail with no violation detail untouched", () => {
+    const a = adaptMessage(msg({ validations: [{ validator_type: "length", passed: true }] }), 0, run(), 0);
+    expect(a.checks![0].violations).toBeUndefined();
+    expect(a.checks![0].explanation).toBeUndefined();
+  });
+
+  // Atlas's JsonView prints an undefined-valued key as a literal `undefined`
+  // line rather than omitting it, so every optional field left unset becomes a
+  // row of noise in the Inspector's Raw tab.
+  it("emits no undefined-valued keys, at any depth", () => {
+    const a = adaptMessage(msg({ cost_info: { input_tokens: 6, total_cost_usd: 0.1 } as never }), 0, run(), 0);
+    expect(undefinedKeysIn(a)).toEqual([]);
+  });
+
+  it("keeps meta as-is, without deep-copying it", () => {
+    const meta = { _llm_trace: { big: "payload" } };
+    const a = adaptMessage(msg({ meta: meta as never }), 0, run(), 0);
+    expect(a.meta).toBe(meta);
   });
 
   it("attaches a run error to the last message", () => {

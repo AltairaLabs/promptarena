@@ -139,7 +139,7 @@ describe("App — Runs view", () => {
     fireEvent.click((await screen.findByText("Pass")).closest("button")!);
     // SessionReview replaces the dashboard; the matrix heading disappears.
     expect(screen.queryByText("TRIAL MATRIX · SCENARIO × PROVIDER")).not.toBeInTheDocument();
-    expect(await screen.findByRole("button", { name: /^transcript$/i })).toBeInTheDocument();
+    expect(await screen.findByRole("tab", { name: /^transcript$/i })).toBeInTheDocument();
     await act(async () => { await Promise.resolve(); });
   });
 
@@ -267,16 +267,16 @@ describe("App — Runs view", () => {
     render(<App />);
     await screen.findByText("TRIAL MATRIX · SCENARIO × PROVIDER");
     fireEvent.click((await screen.findByText("Pass")).closest("button")!);
-    await screen.findByRole("button", { name: /^transcript$/i });
+    await screen.findByRole("tab", { name: /^transcript$/i });
     expect(getWorkflow).toHaveBeenCalled();
-    expect(await screen.findByRole("button", { name: /^workflow$/i })).toBeInTheDocument();
+    expect(await screen.findByRole("tab", { name: /^workflow$/i })).toBeInTheDocument();
   });
 
   it("the Workflow tab offers a Live/Path highlight toggle over the graph", async () => {
     render(<App />);
     await screen.findByText("TRIAL MATRIX · SCENARIO × PROVIDER");
     fireEvent.click((await screen.findByText("Pass")).closest("button")!);
-    fireEvent.click(await screen.findByRole("button", { name: /^workflow$/i }));
+    fireEvent.click(await screen.findByRole("tab", { name: /^workflow$/i }));
     // Defaults to Live; both toggle pills render above the graph.
     expect(await screen.findByRole("button", { name: "Live" })).toBeInTheDocument();
     // Switch to Path (the static whole-route overlay) — exercises setWfLive.
@@ -316,7 +316,7 @@ describe("App — Runs view", () => {
     render(<App />);
     await screen.findByText("TRIAL MATRIX · SCENARIO × PROVIDER");
     fireEvent.click((await screen.findByText("Pass")).closest("button")!);
-    await screen.findByRole("button", { name: /^transcript$/i });
+    await screen.findByRole("tab", { name: /^transcript$/i });
 
     expect(screen.queryByText("Overview")).not.toBeInTheDocument();
     fireEvent.click(screen.getByText("Hello!"));

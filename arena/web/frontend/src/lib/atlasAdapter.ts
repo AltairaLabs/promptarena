@@ -4,7 +4,7 @@
 // assertions rather than a single field. Covers the historical path; the live
 // SSE camelCase bridge and derived trace events land in later WUs.
 import type { AtlasMessage, AtlasCheck, AtlasContentPart, AtlasToolCall, AtlasCheckViolation, ConstellationNode, ConstellationEdge } from "@altairalabs/atlas";
-import type { ActiveRun, Message, RunResult, ContentPart, EvalResult, WorkflowGraph } from "@/types";
+import type { ActiveRun, Message, RunResult, ContentPart, EvalResult, ValidationResult, WorkflowGraph } from "@/types";
 
 const ROLES = new Set(["user", "assistant", "system", "tool"]);
 const toRole = (r: string): AtlasMessage["role"] => (ROLES.has(r) ? r : "assistant") as AtlasMessage["role"];
@@ -121,12 +121,37 @@ function metaAssertions(m: Message): RawAssertion[] {
   return Array.isArray(a?.results) ? a!.results! : [];
 }
 
+// What a guardrail actually caught is under details.value.violations — a list
+// of human-readable strings ('contains "damn"'). Arena also flattens these onto
+// run.Violations, but stringified through Go's map formatter, so this is the
+// only structured source. Without it a guardrail renders as a bare name and
+// outcome, which says a validator fired but never what tripped it.
+function validatorViolations(v: ValidationResult): string[] {
+  const value = (v.details as { value?: { violations?: unknown } } | undefined)?.value;
+  const list = value?.violations;
+  return Array.isArray(list) ? list.filter((s): s is string => typeof s === "string") : [];
+}
+
+function validationToCheck(v: ValidationResult, i: number): AtlasCheck {
+  const found = validatorViolations(v);
+  return {
+    type: v.validator_type,
+    kind: "guardrail",
+    passed: v.passed,
+    action: v.passed ? "allow" : "block",
+    // turnIndex makes each one a click-through to the turn it fired on.
+    // Deliberately not also set as `explanation`: every surface that renders a
+    // check prints the explanation immediately above the violation list, so the
+    // two would say the same thing twice — and the violation line is the better
+    // of the two, being per-item and clickable.
+    violations: found.length ? found.map((description) => ({ turnIndex: i, description })) : undefined,
+  };
+}
+
 function messageChecks(m: Message, i: number, run: RunResult): AtlasCheck[] {
   const out: AtlasCheck[] = [];
   for (const r of metaAssertions(m)) out.push(assertionToCheck(r));
-  for (const v of m.validations ?? []) {
-    out.push({ type: v.validator_type, kind: "guardrail", passed: v.passed, action: v.passed ? "allow" : "block" });
-  }
+  for (const v of m.validations ?? []) out.push(validationToCheck(v, i));
   for (const e of run.eval_results ?? []) if (e.turn_index === i) out.push(evalToCheck(e));
   return out;
 }
@@ -187,9 +212,32 @@ function enforceMonotonicTimestamps(messages: AtlasMessage[]): AtlasMessage[] {
 
 // ---- top-level ----
 
+// Atlas's JsonView renders an undefined-valued key as a literal `undefined`
+// line rather than omitting it, so every optional field we leave unset shows up
+// as a row of noise in the Inspector's Raw tab — a sparse turn carries five of
+// them before any real content. Optional fields are cheaper to write as
+// `x: cond ? v : undefined` than to conditionally spread, so drop them here
+// instead of contorting every construction site.
+//
+// `meta` is exempt: it is raw JSON straight off the wire, so it cannot contain
+// `undefined` (JSON has no such literal), and recursing would deep-copy an
+// _llm_trace payload on every adapt for no gain.
+function pruneUndefined<T>(value: T): T {
+  if (Array.isArray(value)) return value.map((v) => pruneUndefined(v)) as unknown as T;
+  if (value && typeof value === "object") {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value)) {
+      if (v === undefined) continue;
+      out[k] = k === "meta" ? v : pruneUndefined(v);
+    }
+    return out as T;
+  }
+  return value;
+}
+
 export function adaptMessage(m: Message, i: number, run: RunResult, baseMs: number): AtlasMessage {
   const checks = messageChecks(m, i, run);
-  return {
+  return pruneUndefined({
     id: `m${i}`,
     role: toRole(m.role),
     sequenceNum: i,
@@ -202,7 +250,7 @@ export function adaptMessage(m: Message, i: number, run: RunResult, baseMs: numb
     // Carry Arena's meta through so the Inspector (Raw tab + future custom tabs)
     // can surface _llm_trace / _llm_raw_request / _llm_raw_response / persona etc.
     meta: m.meta,
-  };
+  });
 }
 
 // Live path: the SSE reducer already normalises camelCase → the snake Message
@@ -211,16 +259,18 @@ export function adaptMessage(m: Message, i: number, run: RunResult, baseMs: numb
 export function adaptLiveMessages(messages: Message[]): AtlasMessage[] {
   const baseMs = Date.now();
   return enforceMonotonicTimestamps(
-    messages.map((m, i) => ({
-      id: `m${i}`,
-      role: toRole(m.role),
-      sequenceNum: i,
-      timestamp: m.timestamp ?? new Date(baseMs + i * 1000).toISOString(),
-      parts: partsOf(m),
-      toolCalls: toolCallsOf(m),
-      metrics: metricsOf(m),
-      meta: m.meta,
-    })),
+    messages.map((m, i) =>
+      pruneUndefined({
+        id: `m${i}`,
+        role: toRole(m.role),
+        sequenceNum: i,
+        timestamp: m.timestamp ?? new Date(baseMs + i * 1000).toISOString(),
+        parts: partsOf(m),
+        toolCalls: toolCallsOf(m),
+        metrics: metricsOf(m),
+        meta: m.meta,
+      }),
+    ),
   );
 }
 
