@@ -578,9 +578,10 @@ func buildHookRegistry(req *TurnRequest, guardrailHooks []hooks.ProviderHook) *h
 
 // buildProviderStage creates a provider stage, attaching hooks for consent
 // simulation, chaos injection, and pack-declared guardrails when configured.
-// guardrailHooks are produced by guardrails.ValidatorsToHooks in the caller —
-// passing them here keeps template lookup co-located with the rest of the
-// pipeline construction.
+// guardrailHooks are produced by loadGuardrailHooks in the caller — passing
+// them here keeps template lookup co-located with the rest of the pipeline
+// construction, and keeps the unknown-type error on the caller's path where it
+// can fail the turn.
 func (e *PipelineExecutor) buildProviderStage(
 	req *TurnRequest, providerConfig *stage.ProviderConfig, turnState *stage.TurnState,
 	guardrailHooks []hooks.ProviderHook,
