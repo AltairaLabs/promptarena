@@ -201,10 +201,13 @@ describe("adaptWorkflow", () => {
     expect(nodes.find((n) => n.id === "a1")?.group).toBe(true);
     expect(nodes.find((n) => n.id === "step1")?.parent).toBe("a1");
   });
-  it("bookends the graph with start/end terminators wired to entry/terminal nodes", () => {
+  // Not `terminator` for either: Atlas deprecated that kind because it was
+  // doing double duty, and it now renders as `output` — which would draw our
+  // START as a final state. They were always an entry and an output.
+  it("bookends the graph with an entry and an output wired to entry/terminal nodes", () => {
     const { nodes, edges } = adaptWorkflow(graph);
-    expect(nodes.find((n) => n.id === "__start")).toMatchObject({ kind: "terminator" });
-    expect(nodes.find((n) => n.id === "__end")).toMatchObject({ kind: "terminator" });
+    expect(nodes.find((n) => n.id === "__start")).toMatchObject({ kind: "entry" });
+    expect(nodes.find((n) => n.id === "__end")).toMatchObject({ kind: "output" });
     expect(edges.some((e) => e.source === "__start" && e.target === "s1")).toBe(true);
   });
 });

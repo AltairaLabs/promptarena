@@ -308,18 +308,24 @@ export function adaptWorkflow(graph: WorkflowGraph): { nodes: ConstellationNode[
     dim: e.dim,
   }));
 
-  // Match buildFlowElements: bookend the graph with synthetic start/end
-  // terminators so even a single-node scenario reads as a flow. Wire start into
-  // every entry node and every terminal node into end (fall back to first/last
-  // top-level node when the graph doesn't flag any).
+  // Match buildFlowElements: bookend the graph with synthetic start/end nodes
+  // so even a single-node scenario reads as a flow. Wire start into every entry
+  // node and every terminal node into end (fall back to first/last top-level
+  // node when the graph doesn't flag any).
+  //
+  // Both bookends used to be `terminator`, which Atlas deprecated because it
+  // was doing double duty: a graph could hold two final states spelled two
+  // ways, so it now renders as `output`. That makes the spelling actively
+  // wrong here — our START would draw as a final state. They were always an
+  // entry and an output; say so.
   if (graph.nodes.length) {
     const top = graph.nodes.filter((n) => !n.parent);
     const entries = top.filter((n) => n.entry);
     const terminals = top.filter((n) => n.terminal);
     const starts = entries.length ? entries : top.slice(0, 1);
     const ends = terminals.length ? terminals : top.slice(-1);
-    nodes.unshift({ id: START_ID, kind: "terminator", label: "start" });
-    nodes.push({ id: END_ID, kind: "terminator", label: "end" });
+    nodes.unshift({ id: START_ID, kind: "entry", label: "start" });
+    nodes.push({ id: END_ID, kind: "output", label: "end" });
     for (const n of starts) edges.unshift({ id: `${START_ID}->${n.id}`, source: START_ID, target: n.id });
     for (const n of ends) edges.push({ id: `${n.id}->${END_ID}`, source: n.id, target: END_ID });
   }
