@@ -7,6 +7,89 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/prompt"
 )
 
+// stubPromptRepository serves one Config for any task type, so a test can hand
+// loadGuardrailHooks an arbitrary validator set.
+type stubPromptRepository struct {
+	config *prompt.Config
+}
+
+func (r *stubPromptRepository) LoadPrompt(_ string) (*prompt.Config, error) {
+	return r.config, nil
+}
+
+func (r *stubPromptRepository) LoadFragment(_, _, _ string) (*prompt.Fragment, error) {
+	return nil, nil
+}
+
+func (r *stubPromptRepository) ListPrompts() ([]string, error) { return nil, nil }
+
+func (r *stubPromptRepository) SavePrompt(_ *prompt.Config) error { return nil }
+
+// registryWithValidators builds a prompt registry whose "chat" template carries
+// the given validators.
+func registryWithValidators(validators []prompt.ValidatorConfig) *prompt.Registry {
+	return prompt.NewRegistryWithRepository(&stubPromptRepository{
+		config: &prompt.Config{
+			APIVersion: "promptkit.altairalabs.ai/v1alpha1",
+			Kind:       "PromptConfig",
+			Spec: prompt.Spec{
+				TaskType:       "chat",
+				Version:        "v1.0.0",
+				SystemTemplate: "You are a helpful assistant.",
+				Validators:     validators,
+			},
+		},
+	})
+}
+
+// TestLoadGuardrailHooks_UnknownTypeIsFatal pins that a validator naming an
+// unregistered eval type fails the turn instead of being dropped.
+//
+// This is a safety control, so the two mistakes are not symmetric. A typo'd
+// type has no legitimate reading — it can only mean the author wanted a
+// guardrail that does not exist — and the lenient path used to log a warning
+// and carry on, leaving the conversation unprotected while the run looked
+// healthy. A warning in a CI log is not a substitute for a failed run.
+func TestLoadGuardrailHooks_UnknownTypeIsFatal(t *testing.T) {
+	req := &TurnRequest{
+		PromptRegistry: registryWithValidators([]prompt.ValidatorConfig{
+			{Type: "banned_word", Params: map[string]any{"words": []any{"damn"}}},
+		}),
+		TaskType: "chat",
+	}
+
+	hooks, err := loadGuardrailHooks(req, nil)
+	if err == nil {
+		t.Fatal("expected an error for an unregistered validator type, got nil")
+	}
+	if hooks != nil {
+		t.Fatalf("a fatal validator must yield no hooks, got %d", len(hooks))
+	}
+}
+
+// TestLoadGuardrailHooks_KnownTypesCompile is the positive half: a correctly
+// spelled validator set still produces one hook per validator.
+//
+// Without it, making every validator fatal — or returning an error
+// unconditionally — would satisfy the test above.
+func TestLoadGuardrailHooks_KnownTypesCompile(t *testing.T) {
+	req := &TurnRequest{
+		PromptRegistry: registryWithValidators([]prompt.ValidatorConfig{
+			{Type: "banned_words", Params: map[string]any{"words": []any{"damn"}}},
+			{Type: "length", Params: map[string]any{"max_characters": 100}},
+		}),
+		TaskType: "chat",
+	}
+
+	hooks, err := loadGuardrailHooks(req, nil)
+	if err != nil {
+		t.Fatalf("expected valid validators to compile, got %v", err)
+	}
+	if len(hooks) != 2 {
+		t.Fatalf("expected 2 guardrail hooks, got %d", len(hooks))
+	}
+}
+
 // TestLoadGuardrailHooks_EmptyTaskType covers composition/workflow entry states,
 // which have no prompt_task: guardrail loading must return no hooks quietly,
 // without reaching LoadTemplate (which would fail "prompt not found" on the empty
@@ -17,14 +100,22 @@ func TestLoadGuardrailHooks_EmptyTaskType(t *testing.T) {
 		PromptRegistry: prompt.NewRegistryWithRepository(nil),
 		TaskType:       "",
 	}
-	if got := loadGuardrailHooks(req, nil); got != nil {
+	got, err := loadGuardrailHooks(req, nil)
+	if err != nil {
+		t.Fatalf("an empty task type is a quiet no-op, not an error: %v", err)
+	}
+	if got != nil {
 		t.Fatalf("expected no guardrail hooks for empty task type, got %d", len(got))
 	}
 }
 
 // TestLoadGuardrailHooks_NoRegistry covers the other quiet no-op path.
 func TestLoadGuardrailHooks_NoRegistry(t *testing.T) {
-	if got := loadGuardrailHooks(&TurnRequest{TaskType: "chat"}, nil); got != nil {
+	got, err := loadGuardrailHooks(&TurnRequest{TaskType: "chat"}, nil)
+	if err != nil {
+		t.Fatalf("a missing registry is a quiet no-op, not an error: %v", err)
+	}
+	if got != nil {
 		t.Fatalf("expected no guardrail hooks without a registry, got %d", len(got))
 	}
 }

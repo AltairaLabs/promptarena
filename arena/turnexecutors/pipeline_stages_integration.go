@@ -340,7 +340,10 @@ func (e *PipelineExecutor) buildStagePipeline(
 	stages = appendMonitorTap(stages, req, stage.RecordingPositionInput)
 
 	// 6. Provider (normal turns) or composition (RFC 0010) stage.
-	stages = e.appendProviderOrCompositionStage(stages, req, mergedVars, turnState)
+	stages, err := e.appendProviderOrCompositionStage(stages, req, mergedVars, turnState)
+	if err != nil {
+		return nil, err
+	}
 
 	// 7-10. Output recording/monitor, media externalization, assertions, and
 	// arena state store save.
@@ -406,15 +409,18 @@ func (e *PipelineExecutor) appendPromptContextStages(
 // provider/composition hook chain, identically to the SDK; no separate stage.
 func (e *PipelineExecutor) appendProviderOrCompositionStage(
 	stages []stage.Stage, req *TurnRequest, mergedVars map[string]string, turnState *stage.TurnState,
-) []stage.Stage {
+) ([]stage.Stage, error) {
+	guardrailHooks, err := loadGuardrailHooks(req, mergedVars)
+	if err != nil {
+		return nil, err
+	}
+
 	if req.ActiveComposition == nil {
 		providerConfig := buildProviderConfig(req)
-		guardrailHooks := loadGuardrailHooks(req, mergedVars)
-		return append(stages, e.buildProviderStage(req, providerConfig, turnState, guardrailHooks))
+		return append(stages, e.buildProviderStage(req, providerConfig, turnState, guardrailHooks)), nil
 	}
 
 	emitter := emitterFromRequest(req)
-	guardrailHooks := loadGuardrailHooks(req, mergedVars)
 	hookReg := buildHookRegistry(req, guardrailHooks)
 	// BaseMetadata propagates mock_scenario_id (and future per-turn metadata)
 	// into composition sub-pipelines so the mock provider can key per-step
@@ -439,9 +445,9 @@ func (e *PipelineExecutor) appendProviderOrCompositionStage(
 	if req.CompositionRecorder != nil {
 		return append(stages, stage.NewCompositionStageWithRecorder(
 			"composition", req.ActiveComposition, deps, req.CompositionRecorder,
-		))
+		)), nil
 	}
-	return append(stages, stage.NewCompositionStage("composition", req.ActiveComposition, deps))
+	return append(stages, stage.NewCompositionStage("composition", req.ActiveComposition, deps)), nil
 }
 
 // appendPostProviderStages adds the output recording/monitor, media
@@ -594,26 +600,42 @@ func (e *PipelineExecutor) buildProviderStage(
 // is logged and treated the same as "no validators": the run continues with
 // guardrails disabled rather than failing the entire pipeline construction,
 // matching the previous GuardrailEvalStage's silent-no-op behavior.
-func loadGuardrailHooks(req *TurnRequest, vars map[string]string) []hooks.ProviderHook {
+//
+// A validator naming an unregistered eval type IS an error, and it fails the
+// turn. This used to call the lenient guardrails.ValidatorsToHooks, which logged
+// a warning and dropped the entry, so a typo left the conversation unprotected
+// while the run reported healthy — fail-open on a safety control. Guardrails are
+// the one thing that must not degrade quietly, and a warning buried in a CI log
+// is not a substitute for a failed run. CompileValidators returns no hooks at
+// all on a fatal error, so a caller cannot proceed with a partial set.
+//
+// Unusable *params* remain lenient inside CompileValidators: a pack authored
+// against a newer runtime can legitimately carry params this build does not
+// understand, and refusing to load would make packs forward-incompatible.
+func loadGuardrailHooks(req *TurnRequest, vars map[string]string) ([]hooks.ProviderHook, error) {
 	if req.PromptRegistry == nil {
-		return nil
+		return nil, nil
 	}
 	// A composition/workflow entry state has no prompt_task, so there is no pack
 	// prompt to source guardrails from. Skip quietly — loading a template for an
 	// empty task would fail with "prompt not found" and log a misleading warning.
 	if req.TaskType == "" {
-		return nil
+		return nil, nil
 	}
 	tmpl, err := req.PromptRegistry.LoadTemplate(req.TaskType, vars, "")
 	if err != nil {
 		logger.Warn("Skipping pack guardrails: template load failed",
 			"task_type", req.TaskType, "error", err)
-		return nil
+		return nil, nil
 	}
 	if tmpl == nil || len(tmpl.Validators) == 0 {
-		return nil
+		return nil, nil
 	}
-	return guardrails.ValidatorsToHooks(tmpl.Validators)
+	compiled, err := guardrails.CompileValidators(tmpl.Validators)
+	if err != nil {
+		return nil, fmt.Errorf("task %q: %w", req.TaskType, err)
+	}
+	return compiled, nil
 }
 
 // Execute runs the conversation through the pipeline and returns the new messages generated.
@@ -702,7 +724,10 @@ func (e *PipelineExecutor) buildCommonStreamingStages(
 	stages = appendMonitorTap(stages, req, stage.RecordingPositionInput)
 
 	// Provider stage — pack guardrails run inline as ProviderHooks (same as SDK).
-	stages = e.appendStreamingProviderStage(stages, req, cfg, mergedVars, turnState)
+	stages, err := e.appendStreamingProviderStage(stages, req, cfg, mergedVars, turnState)
+	if err != nil {
+		return nil, err
+	}
 
 	// Output recording stage (opt-in via RecordingConfig)
 	stages = appendRecordingStage(stages, req, stage.RecordingPositionOutput)
@@ -773,16 +798,19 @@ func (e *PipelineExecutor) appendStreamingPromptStages(
 func (e *PipelineExecutor) appendStreamingProviderStage(
 	stages []stage.Stage, req *TurnRequest, cfg StreamingStagesConfig,
 	mergedVars map[string]string, turnState *stage.TurnState,
-) []stage.Stage {
+) ([]stage.Stage, error) {
 	providerConfig := buildProviderConfig(req)
-	guardrailHooks := loadGuardrailHooks(req, mergedVars)
+	guardrailHooks, err := loadGuardrailHooks(req, mergedVars)
+	if err != nil {
+		return nil, err
+	}
 	if cfg.UseHooksProvider || len(guardrailHooks) > 0 {
-		return append(stages, e.buildProviderStage(req, providerConfig, turnState, guardrailHooks))
+		return append(stages, e.buildProviderStage(req, providerConfig, turnState, guardrailHooks)), nil
 	}
 	return append(stages, stage.NewProviderStageWithTurnState(
 		req.Provider, e.toolRegistry, buildToolPolicy(req.Scenario),
 		providerConfig, emitterFromRequest(req), nil, turnState,
-	))
+	)), nil
 }
 
 // appendStreamingFinalizeStages adds the optional media externalization,
