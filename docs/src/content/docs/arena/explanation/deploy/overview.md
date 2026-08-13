@@ -104,6 +104,7 @@ Deep dives into Deploy internals:
 Complete specifications:
 
 - [CLI Commands](/arena/reference/deploy/cli-commands/) - All deploy commands, flags, and examples
+- [Target Capabilities](/arena/reference/deploy/target-capabilities/) - What each target supports, side by side
 - [Adapter SDK](/arena/reference/deploy/adapter-sdk/) - Serve(), ParsePack, ProgressReporter API
 - [Protocol](/arena/reference/deploy/protocol/) - JSON-RPC methods, types, and error codes
 
@@ -113,7 +114,14 @@ Complete specifications:
 
 | Adapter | Provider | Description |
 |---------|----------|-------------|
+| `omnia` | Omnia Kubernetes platform | Deploy to an Altaira Omnia workspace as CRDs |
 | `agentcore` | AWS Bedrock AgentCore | Deploy to AWS Bedrock AgentCore |
+| `vertex` | Google Agent Runtime | Deploy to Agent Runtime, one engine per agent |
+
+They are **not** feature-equivalent — teardown, tool execution, A2A and
+observability all differ. See
+[Target Capabilities](/arena/reference/deploy/target-capabilities/) before
+choosing.
 
 More adapters are coming. You can also [build your own](/arena/reference/deploy/adapter-sdk/).
 

@@ -124,6 +124,11 @@ chmod 755 .promptarena/adapters/promptarena-deploy-myprovider
 | `agentcore` | AWS Bedrock AgentCore | Deploy to AWS Bedrock AgentCore |
 | `vertex` | Google Agent Runtime | Deploy to Agent Runtime, formerly Vertex AI Agent Engine (one engine per agent) |
 
+They are not interchangeable — see
+[Target Capabilities](/arena/reference/deploy/target-capabilities/) for a
+side-by-side comparison of lifecycle support, tool execution, A2A and
+observability.
+
 :::note[`vertex` has no published release yet]
 `promptarena deploy adapter install vertex` will fail until the first release is
 cut. Build it from source and copy the binary into `~/.promptarena/adapters/`
