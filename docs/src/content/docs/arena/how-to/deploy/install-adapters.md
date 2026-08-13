@@ -21,15 +21,26 @@ promptarena deploy adapter install omnia
 Install a specific version:
 
 ```bash
-promptarena deploy adapter install omnia@1.0.0
+promptarena deploy adapter install omnia@1.4.0
 ```
 
-Or install the AWS Bedrock AgentCore adapter instead:
+Or install the Google Agent Runtime adapter instead:
+
+```bash
+promptarena deploy adapter install vertex
+```
+
+The AWS Bedrock AgentCore adapter uses the same command:
 
 ```bash
 promptarena deploy adapter install agentcore
-promptarena deploy adapter install agentcore@0.2.0
 ```
+
+:::caution[`agentcore` has no published release]
+That repository has never cut a `v*` tag, so the install fails with an HTTP 404
+until one exists. Build it from source using the manual steps below. Tracked in
+[promptarena-deploy-agentcore#90](https://github.com/AltairaLabs/promptarena-deploy-agentcore/issues/90).
+:::
 
 **What happens:**
 
@@ -49,7 +60,7 @@ https://github.com/{repo}/releases/download/v{version}/promptarena-deploy-{provi
 For example, on macOS ARM64:
 
 ```
-https://github.com/AltairaLabs/PromptArena-deploy-omnia/releases/download/v1.0.0/promptarena-deploy-omnia_darwin_arm64
+https://github.com/AltairaLabs/PromptArena-deploy-omnia/releases/download/v1.4.0/promptarena-deploy-omnia_darwin_arm64
 ```
 
 ## List Installed Adapters
@@ -129,11 +140,6 @@ They are not interchangeable — see
 side-by-side comparison of lifecycle support, tool execution, A2A and
 observability.
 
-:::note[`vertex` has no published release yet]
-`promptarena deploy adapter install vertex` will fail until the first release is
-cut. Build it from source and copy the binary into `~/.promptarena/adapters/`
-using the manual steps above.
-:::
 
 ## Verification
 

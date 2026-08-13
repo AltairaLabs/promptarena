@@ -33,14 +33,17 @@ Cloud providers each have unique APIs, resource models, and authentication flows
 
 ```bash
 # Install an adapter
-promptarena deploy adapter install agentcore
+promptarena deploy adapter install omnia
 
 # Add deploy config to arena.yaml
 cat >> arena.yaml <<'EOF'
 deploy:
-  provider: agentcore
+  provider: omnia
   config:
-    region: us-west-2
+    api_endpoint: "https://omnia.example.com"
+    workspace: "my-workspace"
+    providers:
+      default: claude-prod
 EOF
 
 # Preview what will change
