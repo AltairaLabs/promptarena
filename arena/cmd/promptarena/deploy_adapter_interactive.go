@@ -39,7 +39,13 @@ var defaultRegistryJSON = `{
     "omnia": {
       "repo": "AltairaLabs/PromptArena-deploy-omnia",
       "description": "Omnia Kubernetes platform",
-      "latest": "1.0.0",
+      "latest": "1.4.0",
+      "maintained_by": "AltairaLabs"
+    },
+    "vertex": {
+      "repo": "AltairaLabs/promptarena-deploy-vertex",
+      "description": "Google Agent Runtime",
+      "latest": "0.1.0",
       "maintained_by": "AltairaLabs"
     }
   }
