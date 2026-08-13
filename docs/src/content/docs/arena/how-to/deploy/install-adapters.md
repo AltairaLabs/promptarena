@@ -122,6 +122,13 @@ chmod 755 .promptarena/adapters/promptarena-deploy-myprovider
 |---------|----------|-------------|
 | `omnia` | Omnia Kubernetes platform | Deploy to the Altaira Omnia workspace (PromptPack, AgentRuntime, ToolRegistry CRDs) |
 | `agentcore` | AWS Bedrock AgentCore | Deploy to AWS Bedrock AgentCore |
+| `vertex` | Google Agent Runtime | Deploy to Agent Runtime, formerly Vertex AI Agent Engine (one engine per agent) |
+
+:::note[`vertex` has no published release yet]
+`promptarena deploy adapter install vertex` will fail until the first release is
+cut. Build it from source and copy the binary into `~/.promptarena/adapters/`
+using the manual steps above.
+:::
 
 ## Verification
 
