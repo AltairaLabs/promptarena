@@ -21,14 +21,15 @@ spec:
                     result.append(data[i] * 2)
             return result
       assertions:
-        - type: content_not_empty
-          params: {}
+        - type: min_length
+          params:
+            min: 1
           message: "Review should not be empty"
         - type: contains_any
           params:
-            values: ["list comprehension", "pythonic", "enumerate"]
+            patterns: ["list comprehension", "pythonic", "enumerate"]
           message: "Should suggest Python best practices"
         - type: contains_any
           params:
-            values: ["improve", "better", "consider", "could"]
+            patterns: ["improve", "better", "consider", "could"]
           message: "Should provide constructive suggestions"

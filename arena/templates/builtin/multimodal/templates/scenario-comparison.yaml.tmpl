@@ -23,14 +23,15 @@ spec:
             url: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Cat_November_2010-1a.jpg/240px-Cat_November_2010-1a.jpg"
             mime_type: image/jpeg
       assertions:
-        - type: content_not_empty
-          params: {}
+        - type: min_length
+          params:
+            min: 1
           message: "Response should not be empty"
         - type: contains_any
           params:
-            values: ["similar", "different", "both", "comparison"]
+            patterns: ["similar", "different", "both", "comparison"]
           message: "Should compare the images"
         - type: contains_any
           params:
-            values: ["cat", "feline"]
+            patterns: ["cat", "feline"]
           message: "Should identify common elements"

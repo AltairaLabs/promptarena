@@ -13,12 +13,13 @@ spec:
     - role: user
       content: "I'm very disappointed! My order is late and customer service hasn't responded."
       assertions:
-        - type: content_not_empty
-          params: {}
+        - type: min_length
+          params:
+            min: 1
           message: "Response should not be empty"
         - type: contains_any
           params:
-            values: ["sorry", "apologize", "understand", "frustrating"]
+            patterns: ["sorry", "apologize", "understand", "frustrating"]
           message: "Response should show empathy"
 {{if .include_tools}}        - type: tool_called
           params:
@@ -28,14 +29,15 @@ spec:
     - role: user
       content: "This is unacceptable! I want a refund."
       assertions:
-        - type: content_not_empty
-          params: {}
+        - type: min_length
+          params:
+            min: 1
           message: "Response should not be empty"
         - type: contains_any
           params:
-            values: ["refund", "resolve", "solution", "help"]
+            patterns: ["refund", "resolve", "solution", "help"]
           message: "Response should address refund request"
-        - type: not_contains
+        - type: content_excludes
           params:
-            values: ["no", "cannot", "impossible"]
+            patterns: ["no", "cannot", "impossible"]
           message: "Response should be solution-oriented, not dismissive"

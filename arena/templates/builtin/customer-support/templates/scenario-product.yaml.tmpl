@@ -13,8 +13,9 @@ spec:
     - role: user
       content: "Do you have information about the premium subscription features?"
       assertions:
-        - type: content_not_empty
-          params: {}
+        - type: min_length
+          params:
+            min: 1
           message: "Response should not be empty"
 {{if .include_tools}}        - type: tool_called
           params:
@@ -24,10 +25,11 @@ spec:
     - role: user
       content: "How much does it cost?"
       assertions:
-        - type: content_not_empty
-          params: {}
+        - type: min_length
+          params:
+            min: 1
           message: "Response should not be empty"
         - type: contains_any
           params:
-            values: ["price", "cost", "subscription", "plan"]
+            patterns: ["price", "cost", "subscription", "plan"]
           message: "Response should address pricing"

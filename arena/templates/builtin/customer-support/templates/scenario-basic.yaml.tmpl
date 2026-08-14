@@ -13,25 +13,27 @@ spec:
     - role: user
       content: "Hello, I need some help with my account."
       assertions:
-        - type: content_not_empty
-          params: {}
+        - type: min_length
+          params:
+            min: 1
           message: "Response should not be empty"
         - type: contains_any
           params:
-            values: ["help", "assist", "support"]
+            patterns: ["help", "assist", "support"]
           message: "Response should acknowledge help request"
         
     - role: user
       content: "I can't log in to my account."
       assertions:
-        - type: content_not_empty
-          params: {}
+        - type: min_length
+          params:
+            min: 1
           message: "Response should not be empty"
         - type: contains_any
           params:
-            values: ["password", "reset", "email", "login"]
+            patterns: ["password", "reset", "email", "login"]
           message: "Response should address login issues"
-        - type: max_tokens
+        - type: max_length
           params:
-            max: 200
+            max: 800
           message: "Response should be concise"
