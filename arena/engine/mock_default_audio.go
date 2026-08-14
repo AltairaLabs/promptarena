@@ -73,7 +73,7 @@ func writeMockAssistantClip() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	clipPath := filepath.Join(dir, "assistant-turn.pcm")
+	clipPath := filepath.Join(dir, "promptarena-mock-assistant-turn.pcm")
 	if writeErr := os.WriteFile(clipPath, arenaaudio.MockAssistantTurnPCM(), mockAssistantClipPerm); writeErr != nil {
 		return "", writeErr
 	}
