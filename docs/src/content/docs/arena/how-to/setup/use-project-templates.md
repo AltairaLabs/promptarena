@@ -360,4 +360,4 @@ echo "OPENAI_API_KEY=sk-your-actual-key" > .env
 
 - **[CLI Reference](/arena/reference/cli-commands/)** - All `promptarena` commands
 - **[Configuration Schema](/arena/reference/config-schema/)** - Full schema documentation
-- **[Examples](https://promptkit.altairalabs.ai/arena/examples/)** - Real-world project examples
+- **[Examples](/arena/examples/)** - Real-world project examples

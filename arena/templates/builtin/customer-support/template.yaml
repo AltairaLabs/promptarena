@@ -89,5 +89,5 @@ spec:
       - "claude"
       
   docs:
-    getting_started: "https://promptkit.altairalabs.ai/arena/tutorials/01-first-test"
-    api_reference: "https://promptkit.altairalabs.ai/arena/reference"
+    getting_started: "https://promptarena.altairalabs.ai/arena/tutorials/01-first-test"
+    api_reference: "https://promptarena.altairalabs.ai/arena/reference"

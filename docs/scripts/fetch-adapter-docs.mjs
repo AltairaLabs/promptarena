@@ -343,6 +343,14 @@ function rewriteFrontmatter(content, order) {
   return content;
 }
 
+// Arena's docs moved off the PromptKit host in the repo extraction, so any
+// absolute link an adapter repo still writes at the retired /arena/ paths on
+// that host 404s (#101). Fold those back to root-relative /arena/ paths — that
+// way an upstream adapter repo carrying stale links can't reintroduce dead URLs
+// into this site, and the ones it does write get covered by the internal link
+// check (which skips external URLs).
+const RETIRED_ARENA_DOCS_PREFIX = /^https?:\/\/promptkit\.altairalabs\.ai\/arena(?=\/|$)/;
+
 /**
  * Rewrite links in markdown content for an adapter's docs.
  */
@@ -350,6 +358,10 @@ function rewriteLinks(content, adapter) {
   return content.replace(
     /\[([^\]]*)\]\(([^)]+)\)/g,
     (match, text, url) => {
+      if (RETIRED_ARENA_DOCS_PREFIX.test(url)) {
+        return `[${text}](${url.replace(RETIRED_ARENA_DOCS_PREFIX, "/arena")})`;
+      }
+
       // Skip external URLs and anchors
       if (url.startsWith("http") || url.startsWith("#") || url.startsWith("//")) {
         return match;

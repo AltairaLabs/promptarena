@@ -218,7 +218,7 @@ func printSuccessMessage(projectName string, result *templates.GenerationResult,
 	fmt.Println("   2. promptarena run")
 	fmt.Println("   3. open out/results.md")
 	fmt.Println()
-	fmt.Println("📖 Need help? Visit https://promptkit.altairalabs.ai/arena/tutorials")
+	fmt.Println("📖 Need help? Visit https://promptarena.altairalabs.ai/arena/tutorials")
 	fmt.Println()
 	fmt.Println("✅ Happy testing!")
 }

@@ -188,6 +188,32 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
+  docs-urls:
+    name: Check Arena doc URLs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: No links to the retired promptkit.altairalabs.ai/arena docs
+        # Arena's docs moved to promptarena.altairalabs.ai in the repo
+        # extraction; the old /arena/ paths on the PromptKit host 404 (#101).
+        # Only the /arena/ prefix moved — promptkit.altairalabs.ai/schemas/...
+        # is deliberately kept for schema URL stability, and PromptKit's own
+        # doc pages are correctly cross-linked — so this pattern is
+        # deliberately narrow. The docs link checker can't catch these because
+        # it skips external URLs in CI.
+        run: |
+          # ci.yml excludes itself — the pattern below is a literal match for
+          # itself. local-backlog holds design docs that record the old URLs
+          # as history.
+          if grep -rn 'promptkit\.altairalabs\.ai/arena' \
+               --exclude-dir=.git --exclude-dir=node_modules --exclude-dir=dist \
+               --exclude-dir=.astro --exclude-dir=local-backlog \
+               --exclude-dir=.superpowers --exclude=ci.yml . ; then
+            echo "::error::Found links to the retired promptkit.altairalabs.ai/arena docs — use https://promptarena.altairalabs.ai/arena/ (or a root-relative /arena/... link inside docs/src)."
+            exit 1
+          fi
+          echo "No retired Arena doc URLs found."
+
   test-actions:
     name: Test GitHub Actions (TypeScript)
     needs: changes

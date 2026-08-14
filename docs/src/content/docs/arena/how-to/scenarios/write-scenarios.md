@@ -422,7 +422,7 @@ scenarios/
 
 ## Examples
 
-See complete working examples in the [examples directory](https://promptkit.altairalabs.ai/arena/examples/).
+See complete working examples in the [examples directory](/arena/examples/).
 
 ## Next Steps
 

@@ -46,7 +46,7 @@ promptarena run arena.yaml --provider openai,anthropic --format markdown
 ### Quick Links
 
 - **Schema**: [v1.1 JSON Schema](https://promptpack.org/schema/v1.1/promptpack.schema.json)
-- **Local Examples**: [`examples/`](https://promptkit.altairalabs.ai/arena/examples/) directory in this repository
+- **Examples**: [Example projects](/arena/examples/) — working Arena configs you can copy
 - **Arena Guides**: [Writing Scenarios](/arena/how-to/scenarios/write-scenarios/) | [Assertions](/arena/reference/assertions/) | [Self-Play](/arena/how-to/scenarios/write-scenarios/)
 - **Community**: [GitHub Discussions](https://github.com/altairalabs/promptpack-spec/discussions)
 
@@ -223,7 +223,7 @@ turns:
           url: "path/to/document.pdf"
 ```
 
-See [`examples/arena-media-test/`](https://promptkit.altairalabs.ai/arena/examples/arena-media-test/) and [`examples/document-analysis/`](https://promptkit.altairalabs.ai/arena/examples/document-analysis/) for complete examples.
+See [`examples/arena-media-test/`](/arena/examples/arena-media-test/) and [`examples/document-analysis/`](/arena/examples/document-analysis/) for complete examples.
 
 ### 5. Mock Provider Support
 
@@ -325,9 +325,9 @@ my-project/
 - **[MCP Integration](/arena/how-to/agents/test-mcp-tools/)** - Model Context Protocol servers
 
 ### Examples
-- [`examples/customer-support/`](https://promptkit.altairalabs.ai/arena/examples/customer-support/) - Basic support bot
-- [`examples/arena-media-test/`](https://promptkit.altairalabs.ai/arena/examples/arena-media-test/) - Multimodal testing
-- [`examples/mcp-chatbot/`](https://promptkit.altairalabs.ai/arena/examples/mcp-chatbot/) - MCP server integration
+- [`examples/customer-support/`](/arena/examples/customer-support/) - Basic support bot
+- [`examples/arena-media-test/`](/arena/examples/arena-media-test/) - Multimodal testing
+- [`examples/mcp-chatbot/`](/arena/examples/mcp-chatbot/) - MCP server integration
 
 ---
 
