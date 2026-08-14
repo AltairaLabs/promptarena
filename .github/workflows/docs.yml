@@ -81,6 +81,12 @@ jobs:
         run: |
           rm -f package-lock.json
           npm install --no-audit --no-fund
+        env:
+          # @altairalabs/brand (the masterbrand family bar) is a private
+          # GitHub Packages dependency; docs/.npmrc reads this. secrets.GITHUB_TOKEN
+          # cannot be used — it is scoped to this repo and cannot read another
+          # repository's packages. Needs `read:packages`.
+          NODE_AUTH_TOKEN: ${{ secrets.PACKAGES_READ_TOKEN }}
 
       # --- Release only: work out whether the minor changed and, if so, build
       # the outgoing minor from its last tag at a /vX-Y/ base path. ---
