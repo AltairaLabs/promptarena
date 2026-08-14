@@ -2,7 +2,21 @@
 
 Generated from the handler registry — do not edit by hand; run the reference generator.
 
-An **eval** emits a raw `Score` (0..1) or a boolean gate. A **`type: assertion`** wrapper applies the pass/fail **threshold** (`min_score`/`max_score`). Never put a threshold on the inner eval.
+An **eval** emits a raw `Score` (0..1) or a boolean gate; a **threshold** turns that score into pass/fail. Thresholds live on the **`type: assertion` wrapper, inside its `params`** — never on the inner eval, which rejects them outright:
+
+```yaml
+- type: assertion
+  params:
+    eval_type: llm_judge      # inner eval (required)
+    eval_params: {...}        # params for the inner eval
+    min_score: 0.8            # optional; defaults to 1.0
+    max_score: 1.0            # optional
+```
+
+Two envelopes carry that entry, and they are **not** the same schema:
+
+- **Scenario turn assertions** (`spec.turns[].assertions[]`) accept only `type`, `params`, `message`, `when`, `pass_threshold`. The schema is closed — `min_score` or `eval` as a *sibling* of `type` is rejected. They belong under `params`. Note `pass_threshold` is a different knob: the minimum pass **rate** across trials, not a score threshold.
+- **Arena pack evals** (`spec.pack_evals[]`) accept `id`, `type`, `trigger`, `params`, `metric`, and a `threshold: {min_score, max_score}` object.
 
 | id | level | score | description |
 |----|-------|-------|-------------|

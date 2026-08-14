@@ -19,7 +19,9 @@ func TestWriteAgentBrief_WritesReferenceDocs(t *testing.T) {
 	require.NoError(t, writeAgentBrief(res))
 
 	base := filepath.Join(dir, ".claude", "skills", "promptarena-authoring", "reference")
-	for _, name := range []string{"evals-and-assertions.md", "config-fields.md", "cli.md"} {
+	for _, name := range []string{
+		"evals-and-assertions.md", "config-fields.md", "cli.md", "mock-responses.md",
+	} {
 		assert.FileExists(t, filepath.Join(base, name))
 		rel := filepath.Join(".claude", "skills", "promptarena-authoring", "reference", name)
 		assert.Contains(t, res.FilesCreated, rel)
