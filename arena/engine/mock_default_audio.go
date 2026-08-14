@@ -61,15 +61,23 @@ func (r *defaultAudioRepository) GetTurn(ctx context.Context, params mock.Respon
 }
 
 // writeMockAssistantClip writes the embedded "mock assistant turn" clip to a
-// stable temp file and returns its absolute path (the runtime mock provider
-// loads audio_file from disk; it honors absolute paths). Overwriting the same
-// path each run is harmless — the bytes are identical.
+// temp file and returns its absolute path (the runtime mock provider loads
+// audio_file from disk; it honors absolute paths).
+//
+// The clip goes in a private directory rather than at a fixed name directly
+// under os.TempDir(): that directory is world-writable, so on a shared host
+// another user could pre-create or symlink a predictable path and have us write
+// through it. os.MkdirTemp gives a 0700 directory with an unguessable name.
 func writeMockAssistantClip() (string, error) {
-	path := filepath.Join(os.TempDir(), "promptarena-mock-assistant-turn.pcm")
-	if err := os.WriteFile(path, arenaaudio.MockAssistantTurnPCM(), mockAssistantClipPerm); err != nil {
+	dir, err := os.MkdirTemp("", "promptarena-mock-audio-")
+	if err != nil {
 		return "", err
 	}
-	return path, nil
+	clipPath := filepath.Join(dir, "promptarena-mock-assistant-turn.pcm")
+	if writeErr := os.WriteFile(clipPath, arenaaudio.MockAssistantTurnPCM(), mockAssistantClipPerm); writeErr != nil {
+		return "", writeErr
+	}
+	return clipPath, nil
 }
 
 // withDefaultMockAudio wraps repo so agent turns without audio default to the

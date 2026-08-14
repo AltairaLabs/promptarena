@@ -24,9 +24,12 @@ function endTimeMs(r: RunResult): number {
 }
 
 // latestByEndTime picks the most recently completed run from a bucket of
-// RunResults that share the same scenario:provider key.
+// RunResults that share the same scenario:provider key. Seeded with the first
+// element: an unseeded reduce() throws on an empty bucket, and while callers
+// only reach this for buckets they've already counted as non-empty, the throw
+// would take the whole view down rather than degrade.
 function latestByEndTime(bucket: RunResult[]): RunResult {
-  return bucket.reduce((latest, r) => (endTimeMs(r) > endTimeMs(latest) ? r : latest));
+  return bucket.reduce((latest, r) => (endTimeMs(r) > endTimeMs(latest) ? r : latest), bucket[0]);
 }
 
 // assertionStats aggregates assertion outcomes across BOTH turn-level
