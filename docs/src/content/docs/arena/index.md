@@ -242,10 +242,10 @@ Run tests in your pipeline:
 
 Real-world Arena testing scenarios:
 
-- [Customer Support Testing](https://promptkit.altairalabs.ai/arena/examples/customer-support/) - Multi-turn support conversations
-- [MCP Chatbot Testing](https://promptkit.altairalabs.ai/arena/examples/mcp-chatbot/) - Tool calling validation
-- [Guardrails Testing](https://promptkit.altairalabs.ai/arena/examples/guardrails-test/) - Safety and compliance checks
-- [Multi-Provider Comparison](https://promptkit.altairalabs.ai/arena/examples/customer-support-integrated/) - Provider evaluation
+- [Customer Support Testing](/arena/examples/customer-support/) - Multi-turn support conversations
+- [MCP Chatbot Testing](/arena/examples/mcp-chatbot/) - Tool calling validation
+- [Guardrails Testing](/arena/examples/guardrails-test/) - Safety and compliance checks
+- [Multi-Provider Comparison](/arena/examples/customer-support-integrated/) - Provider evaluation
 
 ---
 
@@ -270,7 +270,7 @@ Real-world Arena testing scenarios:
 - **Quick Start**: [First Test Tutorial](/arena/tutorials/01-first-test/)
 - **Questions**: [GitHub Discussions](https://github.com/AltairaLabs/promptarena/issues)
 - **Issues**: [Report a Bug](https://github.com/AltairaLabs/promptarena/issues)
-- **Examples**: [Arena Examples](https://promptkit.altairalabs.ai/arena/examples/)
+- **Examples**: [Arena Examples](/arena/examples/)
 
 ---
 

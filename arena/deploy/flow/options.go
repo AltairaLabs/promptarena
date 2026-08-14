@@ -7,7 +7,7 @@ import "os"
 const DefaultEnv = "default"
 
 // ConfigureDocsURL is surfaced when deploy config is missing or invalid.
-const ConfigureDocsURL = "https://promptkit.altairalabs.ai/arena/how-to/deploy/configure/"
+const ConfigureDocsURL = "https://promptarena.altairalabs.ai/arena/how-to/deploy/configure/"
 
 // Options carries what CLI flags or TUI selections resolve to.
 type Options struct {

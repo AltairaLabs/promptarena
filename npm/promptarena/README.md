@@ -65,7 +65,7 @@ promptarena chat
 promptarena chat --voice
 ```
 
-See the [Voice Console guide](https://promptkit.altairalabs.ai/arena/how-to/voice/voice-console/) for setup details.
+See the [Voice Console guide](https://promptarena.altairalabs.ai/arena/how-to/voice/voice-console/) for setup details.
 
 ## What is PromptKit Arena?
 
@@ -131,18 +131,18 @@ npx @altairalabs/promptarena init
 - **Turn-Level**: `content_includes`, `content_matches`, `json_schema`, `jsonpath`, `llm_judge`, `tone`, `length`
 - **Conversation-Level**: `llm_judge_conversation`, `tools_not_called_with_args`, `max_tool_calls`
 
-See the [Assertions Reference](https://promptkit.altairalabs.ai/arena/reference/assertions/) for examples and best practices.
+See the [Assertions Reference](https://promptarena.altairalabs.ai/arena/reference/assertions/) for examples and best practices.
 
 ### Documentation
 
 - **[Full Documentation](https://promptkit.altairalabs.ai/)** - Comprehensive guides and tutorials
-- **[Configuration Reference](https://promptkit.altairalabs.ai/arena/reference/config-schema/)** - Complete schema documentation
+- **[Configuration Reference](https://promptarena.altairalabs.ai/arena/reference/config-schema/)** - Complete schema documentation
 - **[Examples](https://github.com/AltairaLabs/PromptKit/tree/main/examples)** - Working examples:
   - [Assertions Test](https://github.com/AltairaLabs/PromptKit/tree/main/examples/assertions-test) - Turn and conversation-level assertions
   - [Customer Support](https://github.com/AltairaLabs/PromptKit/tree/main/examples/customer-support) - Self-play with personas
   - [Variables Demo](https://github.com/AltairaLabs/PromptKit/tree/main/examples/variables-demo) - Template rendering
   - [LLM Judge](https://github.com/AltairaLabs/PromptKit/tree/main/examples/llm-judge) - AI-powered evaluation
-- **[Multi-Turn Tutorial](https://promptkit.altairalabs.ai/arena/tutorials/03-multi-turn/)** - Self-play patterns
+- **[Multi-Turn Tutorial](https://promptarena.altairalabs.ai/arena/tutorials/03-multi-turn/)** - Self-play patterns
 
 ## License
 
