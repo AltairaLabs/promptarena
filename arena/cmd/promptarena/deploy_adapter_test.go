@@ -1,8 +1,10 @@
 package main
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -214,11 +216,14 @@ func TestResolveInstallVersion(t *testing.T) {
 		t.Cleanup(func() { latestVersionFunc = orig })
 		latestVersionFunc = func(_ string) (string, error) { return "1.1.0", nil }
 
-		got := resolveInstallVersion("omnia", adapterRegistryEntry{
+		got, src := resolveInstallVersion("omnia", adapterRegistryEntry{
 			Repo: "AltairaLabs/PromptArena-deploy-omnia", Latest: "1.0.0",
 		})
 		if got != "1.1.0" {
 			t.Errorf("got %q, want live latest 1.1.0", got)
+		}
+		if src != versionLive {
+			t.Errorf("source = %v, want versionLive", src)
 		}
 	})
 
@@ -229,11 +234,14 @@ func TestResolveInstallVersion(t *testing.T) {
 			return "", errTestNoNetwork
 		}
 
-		got := resolveInstallVersion("omnia", adapterRegistryEntry{
+		got, src := resolveInstallVersion("omnia", adapterRegistryEntry{
 			Repo: "AltairaLabs/PromptArena-deploy-omnia", Latest: "1.0.0",
 		})
 		if got != "1.0.0" {
 			t.Errorf("got %q, want embedded fallback 1.0.0", got)
+		}
+		if src != versionEmbedded {
+			t.Errorf("source = %v, want versionEmbedded", src)
 		}
 	})
 
@@ -244,11 +252,179 @@ func TestResolveInstallVersion(t *testing.T) {
 			return "", errTestNoNetwork
 		}
 
-		got := resolveInstallVersion("omnia", adapterRegistryEntry{
+		got, _ := resolveInstallVersion("omnia", adapterRegistryEntry{
 			Repo: "AltairaLabs/PromptArena-deploy-omnia", Latest: "",
 		})
 		if got != "" {
 			t.Errorf("got %q, want empty string", got)
+		}
+	})
+}
+
+// stubAdapterInstall points the install command at a temp HOME and stubs both
+// network calls, returning the recorded download URLs.
+func stubAdapterInstall(
+	t *testing.T,
+	latest func(string) (string, error),
+	download func(string) ([]byte, error),
+) *[]string {
+	t.Helper()
+	t.Setenv("HOME", t.TempDir())
+
+	origLatest, origDownload := latestVersionFunc, httpDownloadFunc
+	t.Cleanup(func() { latestVersionFunc, httpDownloadFunc = origLatest, origDownload })
+
+	var urls []string
+	latestVersionFunc = latest
+	httpDownloadFunc = func(url string) ([]byte, error) {
+		urls = append(urls, url)
+		return download(url)
+	}
+	return &urls
+}
+
+func TestRunAdapterInstall(t *testing.T) {
+	t.Run("installs the live latest version", func(t *testing.T) {
+		urls := stubAdapterInstall(t,
+			func(string) (string, error) { return "1.4.0", nil },
+			func(string) ([]byte, error) { return []byte("binary"), nil },
+		)
+
+		if err := runAdapterInstall(nil, []string{"omnia"}); err != nil {
+			t.Fatalf("runAdapterInstall() error: %v", err)
+		}
+
+		if len(*urls) != 1 || !strings.Contains((*urls)[0], "/download/v1.4.0/") {
+			t.Errorf("downloaded %v, want a v1.4.0 URL", *urls)
+		}
+
+		home, err := os.UserHomeDir()
+		if err != nil {
+			t.Fatalf("UserHomeDir() error: %v", err)
+		}
+		installed := filepath.Join(home, promptarenaDotDir, adaptersDirName, "promptarena-deploy-omnia")
+		if _, statErr := os.Stat(installed); statErr != nil {
+			t.Errorf("adapter not installed at %s: %v", installed, statErr)
+		}
+	})
+
+	t.Run("a 404 on the live latest names the missing platform asset", func(t *testing.T) {
+		stubAdapterInstall(t,
+			func(string) (string, error) { return "1.4.0", nil },
+			func(url string) ([]byte, error) {
+				return nil, &httpStatusError{Code: 404, URL: url}
+			},
+		)
+
+		err := runAdapterInstall(nil, []string{"omnia"})
+		if err == nil {
+			t.Fatal("expected an error for a 404 download")
+		}
+		if !strings.Contains(err.Error(), "no build for") {
+			t.Errorf("error %q should report a missing platform build", err)
+		}
+	})
+
+	t.Run("a 404 on a registry fallback blames the built-in registry", func(t *testing.T) {
+		stubAdapterInstall(t,
+			func(string) (string, error) { return "", errTestNoNetwork },
+			func(url string) ([]byte, error) {
+				return nil, &httpStatusError{Code: 404, URL: url}
+			},
+		)
+
+		err := runAdapterInstall(nil, []string{"omnia"})
+		if err == nil {
+			t.Fatal("expected an error for a 404 download")
+		}
+		if !strings.Contains(err.Error(), "built-in registry") {
+			t.Errorf("error %q should blame the built-in registry", err)
+		}
+	})
+
+	t.Run("rejects an unknown adapter", func(t *testing.T) {
+		stubAdapterInstall(t,
+			func(string) (string, error) { return "1.0.0", nil },
+			func(string) ([]byte, error) { return []byte("binary"), nil },
+		)
+
+		err := runAdapterInstall(nil, []string{"nope"})
+		if err == nil || !strings.Contains(err.Error(), `unknown adapter "nope"`) {
+			t.Errorf("got %v, want an unknown-adapter error", err)
+		}
+	})
+}
+
+func TestHTTPStatusError(t *testing.T) {
+	err := &httpStatusError{Code: 503, URL: "https://example.invalid/x"}
+	want := "download failed: HTTP 503 from https://example.invalid/x"
+	if err.Error() != want {
+		t.Errorf("Error() = %q, want %q", err.Error(), want)
+	}
+}
+
+func TestAdapterDownloadError(t *testing.T) {
+	const repo = "AltairaLabs/promptarena-deploy-omnia"
+	notFound := &httpStatusError{
+		Code: 404,
+		URL:  "https://github.com/" + repo + "/releases/download/v9.9.9/x",
+	}
+
+	t.Run("pinned version points at the newest release instead", func(t *testing.T) {
+		err := adapterDownloadError(
+			notFound, "omnia", "9.9.9", repo, "darwin", "arm64", versionPinned,
+		)
+		for _, want := range []string{
+			"no release v9.9.9",
+			"promptarena deploy adapter install omnia",
+			"https://github.com/" + repo + "/releases",
+		} {
+			if !strings.Contains(err.Error(), want) {
+				t.Errorf("error %q should mention %q", err, want)
+			}
+		}
+	})
+
+	t.Run("embedded fallback blames the stale registry", func(t *testing.T) {
+		err := adapterDownloadError(
+			notFound, "omnia", "1.0.0", repo, "linux", "amd64", versionEmbedded,
+		)
+		if !strings.Contains(err.Error(), "built-in registry") {
+			t.Errorf("error %q should blame the built-in registry", err)
+		}
+		if !strings.Contains(err.Error(), "install omnia@<version>") {
+			t.Errorf("error %q should suggest pinning a version", err)
+		}
+	})
+
+	t.Run("live latest blames the missing platform asset", func(t *testing.T) {
+		err := adapterDownloadError(
+			notFound, "omnia", "1.4.0", repo, "windows", "amd64", versionLive,
+		)
+		if !strings.Contains(err.Error(), "promptarena-deploy-omnia_windows_amd64") {
+			t.Errorf("error %q should name the missing asset", err)
+		}
+		if !strings.Contains(err.Error(), "no build for windows/amd64") {
+			t.Errorf("error %q should say there is no build for the platform", err)
+		}
+	})
+
+	t.Run("non-404 errors pass through untouched", func(t *testing.T) {
+		orig := &httpStatusError{Code: 500, URL: "https://example.invalid/x"}
+		err := adapterDownloadError(
+			orig, "omnia", "1.4.0", repo, "linux", "amd64", versionLive,
+		)
+		if !errors.Is(err, error(orig)) {
+			t.Errorf("got %v, want the original error unchanged", err)
+		}
+	})
+
+	t.Run("non-HTTP errors pass through untouched", func(t *testing.T) {
+		err := adapterDownloadError(
+			errTestNoNetwork, "omnia", "1.4.0", repo, "linux", "amd64", versionLive,
+		)
+		if !errors.Is(err, errTestNoNetwork) {
+			t.Errorf("got %v, want the original error unchanged", err)
 		}
 	})
 }

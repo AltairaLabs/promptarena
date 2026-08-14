@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -181,6 +182,18 @@ func loadDefaultRegistry() (*adapterRegistry, error) {
 	return parseRegistry([]byte(defaultRegistryJSON))
 }
 
+// httpStatusError reports a non-2xx response from a download. It is a distinct
+// type so callers can react to the status — an adapter install turns a 404 into
+// "no such release" guidance rather than surfacing a bare HTTP code.
+type httpStatusError struct {
+	Code int
+	URL  string
+}
+
+func (e *httpStatusError) Error() string {
+	return fmt.Sprintf("download failed: HTTP %d from %s", e.Code, e.URL)
+}
+
 // httpDownloadFunc is the function used to download files. Replaceable for testing.
 var httpDownloadFunc = httpDownload
 
@@ -200,10 +213,7 @@ func httpDownload(url string) ([]byte, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf(
-			"download failed: HTTP %d from %s",
-			resp.StatusCode, url,
-		)
+		return nil, &httpStatusError{Code: resp.StatusCode, URL: url}
 	}
 
 	data, err := io.ReadAll(resp.Body)
@@ -258,15 +268,29 @@ func githubLatestVersion(repo string) (string, error) {
 	return tag, nil
 }
 
+// versionSource records where the version being installed came from, so a
+// failed download can explain the likely cause.
+type versionSource int
+
+const (
+	// versionPinned means the user asked for this version explicitly.
+	versionPinned versionSource = iota
+	// versionLive means it was resolved from the GitHub Releases API.
+	versionLive
+	// versionEmbedded means the API lookup failed and the CLI's built-in
+	// registry default was used — which can lag behind real releases.
+	versionEmbedded
+)
+
 // resolveInstallVersion picks the version to install when the user did not pin
 // one. It prefers the live latest release from GitHub; if that lookup fails
 // (offline, rate-limited), it falls back to the registry's embedded default so
 // installs still work without network access to the API. Returns "" only when
 // neither source yields a version.
-func resolveInstallVersion(provider string, entry adapterRegistryEntry) string {
+func resolveInstallVersion(provider string, entry adapterRegistryEntry) (string, versionSource) {
 	resolved, err := latestVersionFunc(entry.Repo)
 	if err == nil && resolved != "" {
-		return resolved
+		return resolved, versionLive
 	}
 	if entry.Latest != "" {
 		fmt.Fprintf(os.Stderr,
@@ -274,9 +298,51 @@ func resolveInstallVersion(provider string, entry adapterRegistryEntry) string {
 				"falling back to registry default v%s\n",
 			provider, err, entry.Latest,
 		)
-		return entry.Latest
+		return entry.Latest, versionEmbedded
 	}
-	return ""
+	return "", versionEmbedded
+}
+
+// adapterDownloadError turns a failed adapter download into something the user
+// can act on. A 404 is by far the most common failure and always means one of
+// two things — the release doesn't exist, or it exists but carries no asset for
+// this platform — so say which, and say where the version came from, since a
+// stale embedded registry is a likely cause. Other failures pass through.
+func adapterDownloadError(
+	err error, provider, version, repo, goos, goarch string, src versionSource,
+) error {
+	var status *httpStatusError
+	if !errors.As(err, &status) || status.Code != http.StatusNotFound {
+		return err
+	}
+
+	var cause string
+	switch src {
+	case versionPinned:
+		cause = fmt.Sprintf(
+			"There is no release v%s, or it has no %s asset.\n"+
+				"Omit the version to install the newest release: promptarena deploy adapter install %s",
+			version, adapterBinaryName(provider, goos, goarch), provider,
+		)
+	case versionEmbedded:
+		cause = fmt.Sprintf(
+			"This version came from the CLI's built-in registry because the GitHub "+
+				"Releases API could not be reached, and it may be out of date.\n"+
+				"Check the releases page and pin a version: promptarena deploy adapter install %s@<version>",
+			provider,
+		)
+	case versionLive:
+		cause = fmt.Sprintf(
+			"Release v%s is the newest published release but has no %s asset, "+
+				"so this adapter has no build for %s/%s.",
+			version, adapterBinaryName(provider, goos, goarch), goos, goarch,
+		)
+	}
+
+	return fmt.Errorf(
+		"adapter %q v%s is not available for %s/%s.\n\n%s\n\nReleases: https://github.com/%s/releases",
+		provider, version, goos, goarch, cause, repo,
+	)
 }
 
 func runAdapterInstall(_ *cobra.Command, args []string) error {
@@ -295,8 +361,9 @@ func runAdapterInstall(_ *cobra.Command, args []string) error {
 		)
 	}
 
+	versionFrom := versionPinned
 	if version == "" {
-		version = resolveInstallVersion(provider, entry)
+		version, versionFrom = resolveInstallVersion(provider, entry)
 		if version == "" {
 			return fmt.Errorf(
 				"could not resolve a version for adapter %q; specify one explicitly (e.g. %s@<version>)",
@@ -332,7 +399,9 @@ func runAdapterInstall(_ *cobra.Command, args []string) error {
 
 	data, err := httpDownloadFunc(url)
 	if err != nil {
-		return err
+		return adapterDownloadError(
+			err, provider, version, entry.Repo, goos, goarch, versionFrom,
+		)
 	}
 
 	if writeErr := os.WriteFile(destPath, data, adapterBinaryPerms); writeErr != nil {
