@@ -1,12 +1,16 @@
 ---
 import Terminal from './Terminal.astro';
 import { icon } from './icons';
+import PathNav from '@altairalabs/brand/PathNav.astro';
 ---
 
 <section class="hero">
   <div class="atlas-inner grid">
     <div class="col-left">
-      <p class="eyebrow">PROMPTARENA · THE STUDIO</p>
+      {/* The v5 product path replaces the hand-written eyebrow. It says what
+          the eyebrow said — which product this is and what it does — but from
+          the registry, and it places the product among the other three. */}
+      <div class="eyebrow-slot"><PathNav current="promptarena" /></div>
       <h1>
         Test, evaluate, and ship AI agents
         <span class="payoff">with confidence.</span>
@@ -63,14 +67,10 @@ import { icon } from './icons';
     gap: 52px;
     align-items: center;
   }
-  .eyebrow {
+  /* Spacing only. The component owns its own type and colour — a host that
+     restyled it would be the start of four hosts restyling it differently. */
+  .eyebrow-slot {
     margin: 0 0 20px;
-    font-family: var(--font-mono);
-    font-weight: 600;
-    font-size: 12px;
-    letter-spacing: 0.14em;
-    text-transform: uppercase;
-    color: var(--ion-cyan);
   }
   h1 {
     margin: 0;
@@ -104,7 +104,7 @@ import { icon } from './icons';
     align-items: center;
     gap: 8px;
     font-weight: 600;
-    border-radius: var(--radius-btn);
+    border-radius: var(--radius-md);
     transition: all var(--dur-base) var(--ease-standard);
   }
   .btn-primary {

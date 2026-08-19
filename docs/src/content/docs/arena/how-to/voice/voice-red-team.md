@@ -130,6 +130,6 @@ Add a duplex provider (OpenAI Realtime / Gemini Live), add a `duplex:` block to 
 
 ## Why this matters
 
-The competitor framing for safety primitives is binary: "DeepEval offers `pii_leakage` as a score" or "your runtime has a content filter." Neither approach lets you say "we shipped a guardrail and have tests that confirm it catches what it should."
+Safety primitives usually come one of two ways: as a score computed over a transcript, or as a content filter inside the runtime. A score tells you after the fact; a filter catches in production but leaves nothing to assert against. Neither lets you say "we shipped a guardrail, and we have tests that confirm it catches what it should."
 
-The three-role model collapses that gap: one implementation, production enforcement plus test observation from the same primitive. The demo runs deterministically, the wiring is two YAML blocks, the assertion shape is one type — `guardrail_triggered`.
+The three-role model closes that gap: one implementation, enforcing in production and observable from a test. The demo runs deterministically, the wiring is two YAML blocks, the assertion shape is one type — `guardrail_triggered`.
