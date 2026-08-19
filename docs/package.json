@@ -11,7 +11,8 @@
     "check-links": "node check-links.js"
   },
   "dependencies": {
-    "@altairalabs/brand": "^0.2.0",
+    "@altairalabs/atlas-tokens": "^0.4.1",
+    "@altairalabs/brand": "^0.6.0",
     "@astrojs/mdx": "^6.0.3",
     "@astrojs/sitemap": "^3.7.3",
     "@astrojs/starlight": "~0.40.0",

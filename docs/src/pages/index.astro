@@ -1,4 +1,10 @@
 ---
+// The published token layer FIRST, the site's own overrides after: 42 of the 49
+// tokens the two share are already byte-identical, and loading the package
+// first means the 7 that differ still resolve to this site's values. Purely
+// additive — it supplies the ~130 tokens (semantic aliases, the type and space
+// scales) that the shared brand components need and this site never had.
+import '@altairalabs/atlas-tokens/index.css';
 import '../styles/atlas/tokens.css';
 import '../styles/atlas/semantic.css';
 import '@fontsource/space-grotesk/400.css';
@@ -12,7 +18,7 @@ import ProductNav from '../components/landing/ProductNav.astro';
 import Hero from '../components/landing/Hero.astro';
 import DiataxisMatrix from '../components/landing/DiataxisMatrix.astro';
 import InstallBand from '../components/landing/InstallBand.astro';
-import SiteFooter from '../components/landing/SiteFooter.astro';
+import SiteFooter from '@altairalabs/brand/SiteFooter.astro';
 ---
 
 <!doctype html>
@@ -42,7 +48,29 @@ import SiteFooter from '../components/landing/SiteFooter.astro';
       <DiataxisMatrix />
       <InstallBand />
     </main>
-    <SiteFooter />
+    <SiteFooter
+      current="promptarena"
+      logo="/atlas/logo-promptarena.svg"
+      tagline="Build, test and iterate on PromptPacks before they ship."
+      columns={[
+        {
+          title: 'Product',
+          links: [
+            { text: 'Arena', href: '/arena/' },
+            { text: 'PackC', href: '/packc/' },
+            { text: 'Playground', href: '/arena/' },
+          ],
+        },
+        {
+          title: 'Docs',
+          links: [
+            { text: 'Tutorials', href: '/arena/tutorials/' },
+            { text: 'How-to guides', href: '/arena/how-to/' },
+            { text: 'Reference', href: '/arena/reference/' },
+          ],
+        },
+      ]}
+    />
     <style is:global>
       html {
         background: var(--bg-app);
