@@ -79,7 +79,10 @@ export default defineConfig({
       // indigo/violet gradient mark — so docs pages showed a different icon
       // from the landing page, which already points at the Atlas logo.
       favicon: '/atlas/logo-promptarena.svg',
-      customCss: ['./src/styles/custom.css'],
+      customCss: [
+        '@altairalabs/atlas-tokens/index.css',
+        '@altairalabs/brand/starlight-atlas.css','./src/styles/custom.css',
+      ],
       // Atlas-themed code blocks: a distinct ink-void surface, mono code font,
       // hairline frame with a soft shadow, and a cyan active-tab indicator —
       // so docs code blocks read as first-class, not the plain default.
@@ -90,7 +93,7 @@ export default defineConfig({
         themes: ['tokyo-night', 'github-light'],
         styleOverrides: {
           borderColor: 'var(--hairline)',
-          borderRadius: 'var(--radius-code)',
+          borderRadius: 'var(--radius-lg)',
           codeBackground: 'var(--ink-void)',
           codeFontFamily: 'var(--font-mono)',
           codeFontSize: '13.5px',

@@ -16,7 +16,7 @@ PromptArena makes the conversation a first-class test subject:
 - **Runtime tools** execute for real (mock-backed for the demo) — the agent's `lookup_order`, `check_warranty_status`, `issue_refund`, `escalate_to_human` calls hit real handlers and produce real results that feed back into the conversation.
 - **Conversation-level assertions** check the pattern: which tools fired, with what args, in what order, plus per-turn content checks. These are pass/fail signals, not just LLM-graded scores.
 
-The differentiator: voice + scripted multi-turn user + runtime tools + structured assertions, in a single config. Competitor frameworks either do single-turn text eval, or audio eval without scripted users, or scripted users without tools — none combine all four.
+What makes this one config rather than four tools: voice, a scripted multi-turn user, runtime tools and structured assertions all describe the same scenario. Approaches that evaluate transcripts alone, or audio without a scripted user, or a scripted user without tool execution, each cover part of it.
 
 ## Run it
 

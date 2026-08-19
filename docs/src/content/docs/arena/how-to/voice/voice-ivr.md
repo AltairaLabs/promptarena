@@ -14,7 +14,7 @@ Voice IVRs have structural failure modes that pure single-turn eval can't catch:
 - Tools run for real: `lookup_account`, `check_balance`, `transfer_to_agent` are mock-backed handlers that produce real results that feed back into the conversation.
 - **Conversation-level assertions** check the tool-call pattern (`tools_called`, `tools_not_called`) per scenario. The balance scenario fails if the agent transfers to a human; the handoff scenario fails if the agent fetches a balance.
 
-The differentiator: a workflow state machine plus voice plus runtime tool execution plus structured assertions, all in one config. Competitor frameworks either skip workflow entirely or treat it as opaque execution state with no test-side visibility.
+A workflow state machine, voice, runtime tool execution and structured assertions all live in one config here. Where workflow is treated as opaque execution state, the transitions are not visible from the test side — `workflow__transition` shows up as a tool call, so they are.
 
 ## Run it
 

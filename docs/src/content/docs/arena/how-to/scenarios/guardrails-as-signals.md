@@ -71,10 +71,10 @@ Both shapes matter — catching violations AND not false-positiving on clean inp
 
 ## Why this matters
 
-The competitor framing for content filtering is binary:
+Content filtering usually arrives one of two ways:
 
-- **Guardrails as a runtime feature** (content filters in OpenAI's API, Anthropic's API): the runtime catches bad content, but you can't write tests against the catches without parsing logs.
-- **Guardrails as an eval framework** (DeepEval scoring): you compute scores on transcripts, but in production the agent has already said the bad thing — the eval is post-hoc.
+- **As a runtime feature** — the runtime catches bad content, but you cannot write tests against the catches without parsing logs.
+- **As an eval score over transcripts** — you get a number, but in production the agent has already said the bad thing; the check is post-hoc.
 
 PromptArena's three-role model collapses that: the same primitive enforces in real time AND is observable in tests. One implementation. Production catches in real time AND test observes the catch — from the same code.
 

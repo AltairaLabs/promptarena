@@ -1,11 +1,11 @@
 ---
 title: Why PromptArena
-description: PromptArena is a testing framework for LLM-driven systems — voice, multi-agent, workflow-driven, retrieval-augmented. The product compared to eval-only frameworks like DeepEval, Ragas, Patronus, promptfoo, Braintrust, LangSmith.
+description: PromptArena is a testing framework for LLM-driven systems — voice, multi-agent, workflow-driven, retrieval-augmented. How it differs from frameworks built for single-turn evaluation.
 sidebar:
   order: 2
 ---
 
-PromptArena is a **testing framework** for LLM-driven systems. Eval primitives are inputs; assertions over those primitives are the output. The product covers the surface that eval-only frameworks structurally can't:
+PromptArena is a **testing framework** for LLM-driven systems. Eval primitives are inputs; assertions over those primitives are the output. It covers a surface that frameworks built for single-turn evaluation do not reach:
 
 - **Voice** — duplex audio with self-play personas, runtime tools, and assertions that observe what got spoken and what got blocked.
 - **Multi-turn agents** — scripted or self-play opponents over many turns, with conversation-outcome assertions.
@@ -13,9 +13,9 @@ PromptArena is a **testing framework** for LLM-driven systems. Eval primitives a
 - **Multi-agent (A2A)** — supervisor + specialist delegation, asserted per-turn.
 - **Guardrails as test signals** — production-side primitives observed via `guardrail_triggered`. Same code enforces in production and fires the test signal.
 
-It also ships the **standard eval-primitive catalog** (faithfulness, hallucination, contextual recall, etc.) so buyers fluent in DeepEval / Ragas vocabulary find what they expect — but those primitives are inputs to the testing framework, not the product surface.
+It also ships the **standard eval-primitive catalog** (faithfulness, hallucination, contextual recall, etc.) so if you already work in DeepEval or Ragas vocabulary you will find what you expect — but those primitives are inputs to the testing framework, not the product surface.
 
-This page is a use-case-organized comparison: what PromptArena does that frameworks focused on single-turn eval can't.
+This page is organised by use case: what PromptArena does that frameworks focused on single-turn evaluation do not.
 
 ## Test a voice agent end to end
 
@@ -102,7 +102,7 @@ Demos:
 
 ## Test RAG with the standard primitives
 
-The named RAG primitives every buyer searches for — `faithfulness`, `hallucination`, `contextual_precision`, `contextual_recall`, `contextual_relevancy`, `answer_relevancy` — ship as pure eval handlers and are exercisable as scenario assertions by wrapping each with `type: assertion` and a threshold. PromptArena's framing isn't "we ship the RAG primitives" — it's "we ship the testing framework that consumes them, on a live retrieval agent rather than a fixed transcript."
+The named RAG primitives people look for — `faithfulness`, `hallucination`, `contextual_precision`, `contextual_recall`, `contextual_relevancy`, `answer_relevancy` — ship as pure eval handlers and are exercisable as scenario assertions by wrapping each with `type: assertion` and a threshold. PromptArena's framing isn't "we ship the RAG primitives" — it's "we ship the testing framework that consumes them, on a live retrieval agent rather than a fixed transcript."
 
 Demos:
 
@@ -110,15 +110,15 @@ Demos:
 
 ## Wire it as a CI quality gate
 
-The product is unfinished until the gate works. `promptarena run --ci` exits non-zero on any assertion failure; the fork-safe split pattern keeps secrets out of fork PRs while still gating internal merges on real-provider runs. Report artifacts give reviewers per-scenario / per-provider visibility into what failed.
+The work is unfinished until the gate works. `promptarena run --ci` exits non-zero on any assertion failure; the fork-safe split pattern keeps secrets out of fork PRs while still gating internal merges on real-provider runs. Report artifacts give reviewers per-scenario / per-provider visibility into what failed.
 
 Demos:
 
 - [Arena CI quality gate](/arena/how-to/interfaces/run-in-ci/) — fork-safe split, threshold strategies per gate type, branch-protection wiring.
 - [Integrate with CI/CD](/arena/how-to/interfaces/run-in-ci/) — broader CI integration story across GitHub Actions, GitLab CI, Jenkins.
 
-## Where PromptArena does NOT lead
+## What to use something else for
 
-Where the eval-only frameworks already do well — single-turn text scoring on transcripts, score-and-report dashboards over recorded outputs, formal benchmark suites against named datasets — PromptArena is a peer rather than a leader. The product's value is in the assertion surface that the eval-only frameworks structurally don't cover: voice, multi-turn self-play, workflow, multi-agent, runtime guardrails observed in tests.
+Single-turn text scoring over recorded transcripts, score-and-report dashboards, and formal benchmark suites against named datasets are well served by the eval-only frameworks. PromptArena does them too, and ships a standard eval catalogue so you don't need a second tool for the basics — but on those alone there is no reason to switch.
 
-The standard eval catalog ships so you don't have to leave PromptArena for the commodity primitives — but the catalog isn't the moat. The moat is the testing framework that consumes them.
+Reach for PromptArena when the thing you need to assert doesn't fit a transcript: voice, multi-turn self-play, workflows, multi-agent runs, and runtime guardrails observed while the test executes.
