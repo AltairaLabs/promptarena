@@ -206,6 +206,19 @@ const ADAPTERS = [
     40,
   ),
   buildAdapterConfig(
+    "foundry",
+    "AltairaLabs/promptarena-deploy-foundry",
+    {
+      // Extra files specific to foundry.
+      "how-to/invoke.md": {
+        target: "how-to/deploy/foundry/invoke.md",
+        order: 47,
+      },
+    },
+    // baseOrder 47 sorts foundry between vertex (45) and agentcore (50).
+    47,
+  ),
+  buildAdapterConfig(
     "vertex",
     "AltairaLabs/promptarena-deploy-vertex",
     {
@@ -239,6 +252,8 @@ DEPLOY_LINK_MAP["/deploy/adapters/omnia/"] =
   "/arena/explanation/deploy/omnia/overview/";
 DEPLOY_LINK_MAP["/deploy/adapters/vertex/"] =
   "/arena/explanation/deploy/vertex/overview/";
+DEPLOY_LINK_MAP["/deploy/adapters/foundry/"] =
+  "/arena/explanation/deploy/foundry/overview/";
 
 // Arena deploy configure page — upstream adapter may reference /arena/how-to/configure or /how-to/configure.
 DEPLOY_LINK_MAP["/arena/how-to/configure/"] = "/arena/how-to/deploy/configure/";

@@ -43,6 +43,12 @@ var defaultRegistryJSON = `{
       "latest": "1.4.0",
       "maintained_by": "AltairaLabs"
     },
+    "foundry": {
+      "repo": "AltairaLabs/promptarena-deploy-foundry",
+      "description": "Azure AI Foundry hosted agents",
+      "latest": "0.1.0",
+      "maintained_by": "AltairaLabs"
+    },
     "vertex": {
       "repo": "AltairaLabs/promptarena-deploy-vertex",
       "description": "Google Agent Runtime",

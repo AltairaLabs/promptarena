@@ -45,6 +45,37 @@ func TestDeployAdapterParseRegistry(t *testing.T) {
 	if ac.Repo != "AltairaLabs/promptarena-deploy-agentcore" {
 		t.Errorf("agentcore repo = %q, want AltairaLabs/...", ac.Repo)
 	}
+
+}
+
+// The embedded registry is what `promptarena deploy adapter install <name>`
+// resolves against, so an adapter missing from it cannot be installed at all.
+func TestDeployAdapterDefaultRegistryAdapters(t *testing.T) {
+	reg, err := loadDefaultRegistry()
+	if err != nil {
+		t.Fatalf("loadDefaultRegistry: %v", err)
+	}
+
+	want := map[string]string{
+		"agentcore": "AltairaLabs/promptarena-deploy-agentcore",
+		"foundry":   "AltairaLabs/promptarena-deploy-foundry",
+		"omnia":     "AltairaLabs/PromptArena-deploy-omnia",
+		"vertex":    "AltairaLabs/promptarena-deploy-vertex",
+	}
+
+	for name, repo := range want {
+		entry, ok := reg.Adapters[name]
+		if !ok {
+			t.Errorf("adapter %q is missing from the default registry", name)
+			continue
+		}
+		if entry.Repo != repo {
+			t.Errorf("%s repo = %q, want %q", name, entry.Repo, repo)
+		}
+		if entry.Latest == "" {
+			t.Errorf("%s has no latest version, so install would have nothing to fetch", name)
+		}
+	}
 }
 
 func TestDeployAdapterParseRegistryInvalid(t *testing.T) {
