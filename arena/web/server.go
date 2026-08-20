@@ -6,10 +6,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/fs"
 	"net/http"
 	"os"
-	"path"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -141,26 +139,7 @@ func newServerWithRunner(
 	s.mux.HandleFunc("GET /api/interactive/voice", s.handleInteractiveVoice)
 
 	// SPA fallback: serve embedded frontend
-	sub, subErr := fs.Sub(frontendFS, "frontend/dist")
-	if subErr == nil {
-		fileServer := http.FileServer(http.FS(sub))
-		s.mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-			// Try serving the exact file first
-			urlPath := r.URL.Path
-			if urlPath == "/" {
-				urlPath = "/index.html"
-			}
-			// Check if the file exists in the embedded FS
-			if f, openErr := sub.Open(path.Clean(strings.TrimPrefix(urlPath, "/"))); openErr == nil {
-				_ = f.Close()
-				fileServer.ServeHTTP(w, r)
-				return
-			}
-			// SPA fallback: serve index.html for client-side routing
-			r.URL.Path = "/"
-			fileServer.ServeHTTP(w, r)
-		})
-	}
+	s.registerSPAFallback(frontendFS)
 
 	return s
 }
