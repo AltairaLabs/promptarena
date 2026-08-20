@@ -6,14 +6,17 @@ services:
     container_name: vllm-local
     ports:
       - "8000:8000"
-    # Uncomment if you need GPU support (recommended)
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: nvidia
-    #           count: 1
-    #           capabilities: [gpu]
+    # Required. vllm/vllm-openai is built against CUDA and cannot start without
+    # an NVIDIA GPU. Leaving this out does not fall back to CPU — the container
+    # exits with "Failed to infer device type" after pulling the 22.5GB image.
+    # On a host with no NVIDIA GPU, use examples/ollama-local/ instead.
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
     environment:
       # Optional: Set HuggingFace token for gated models
       # - HUGGING_FACE_HUB_TOKEN=${HUGGING_FACE_HUB_TOKEN}
@@ -26,9 +29,10 @@ services:
       # - mistralai/Mistral-7B-Instruct-v0.1
       - --dtype
       - auto
-      # Uncomment for CPU-only mode (slower)
-      - --device
-      - cpu
+      # There is no CPU mode with this image. `--device cpu` is accepted as a
+      # flag but the CUDA-only build still fails to infer a device and exits 1.
+      # CPU inference needs an image built from upstream's Dockerfile.cpu, and
+      # arm64 CPU support there is still experimental.
       # Uncomment for better GPU utilization
       # - --gpu-memory-utilization
       # - "0.9"

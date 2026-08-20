@@ -2,11 +2,23 @@
 
 This example demonstrates how to use PromptArena with [vLLM](https://docs.vllm.ai/) for high-performance local LLM inference. vLLM is a fast and memory-efficient inference engine that provides OpenAI-compatible API endpoints.
 
+> **Requires an NVIDIA GPU.** The `vllm/vllm-openai` image is built against CUDA
+> and has no CPU fallback. On Apple Silicon, or any host without an NVIDIA GPU,
+> use [`examples/ollama-local/`](../ollama-local/) instead — it runs natively on
+> arm64 and serves the same OpenAI-compatible endpoint.
+>
+> The image publishes an arm64 manifest, so `docker pull` succeeds and nothing
+> warns you until startup. Without a GPU you get a 22.5GB download followed by
+> `RuntimeError: Failed to infer device type` and an immediate exit 1.
+
 ## Prerequisites
 
 - Docker and Docker Compose installed (for local setup) OR vLLM running on Kubernetes
 - PromptArena CLI (`arena`) installed
-- NVIDIA GPU with CUDA support (recommended for performance, CPU mode available but slower)
+- **An NVIDIA GPU with CUDA support and the NVIDIA Container Toolkit.** This is a
+  hard requirement for the local Docker setup, not a performance recommendation
+  — see the note above. The Kubernetes option (B) has the same constraint on
+  whichever node runs vLLM.
 
 ## Quick Start
 
@@ -221,6 +233,22 @@ spec:
 ```
 
 ## Troubleshooting
+
+### `Failed to infer device type`
+
+```
+RuntimeError: Failed to infer device type
+```
+
+The container found no NVIDIA GPU. This image has no CPU path — adding
+`--device cpu` does not help, because the build itself is CUDA-only. Either run
+on a GPU host, or switch to [`examples/ollama-local/`](../ollama-local/).
+
+### `could not select device driver "nvidia" with capabilities: [[gpu]]`
+
+Docker cannot see a GPU. Either the host has none, or the NVIDIA Container
+Toolkit is not installed. This failure is deliberate and arrives before the
+image pull rather than 20 minutes into it.
 
 ### vLLM Not Starting
 
