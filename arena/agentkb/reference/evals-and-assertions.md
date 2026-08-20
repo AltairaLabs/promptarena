@@ -73,6 +73,7 @@ Two envelopes carry that entry, and they are **not** the same schema:
 | `skill_activated` | session | boolean gate | The named skill was activated. |
 | `skill_activation_order` | session | boolean gate | Skills were activated in the specified order. |
 | `skill_not_activated` | session | boolean gate | The named skill was not activated. |
+| `spoke_in_state` | session | boolean gate | The named state actually produced assistant output, not merely being entered. Pairs with transitioned_to, which the state machine satisfies whether or not the destination ever replied. |
 | `state_is` | session | boolean gate | The workflow is in the expected state. |
 | `text_sentiment` | turn | 0..1 raw signal | Classifier sentiment signal for the output. |
 | `text_toxicity` | turn | 0..1 raw signal | Classifier toxicity signal for the output (0 safe … 1 toxic). |

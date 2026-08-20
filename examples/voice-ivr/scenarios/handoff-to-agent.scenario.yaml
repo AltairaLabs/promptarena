@@ -45,3 +45,10 @@ spec:
     - type: workflow_transition_order
       params:
         sequence: ["handoff"]
+    # transitioned_to above only proves the machine advanced. It is satisfied
+    # by a transition that produces no output at all, which is exactly the bug
+    # PromptKit#1747 fixed. This asserts the handoff agent actually replied.
+    - type: spoke_in_state
+      params:
+        state: handoff
+      message: "Handoff state must actually respond, not just be entered"
