@@ -36,12 +36,6 @@ The AWS Bedrock AgentCore adapter uses the same command:
 promptarena deploy adapter install agentcore
 ```
 
-:::caution[`agentcore` has no published release]
-That repository has never cut a `v*` tag, so the install fails with an HTTP 404
-until one exists. Build it from source using the manual steps below. Tracked in
-[promptarena-deploy-agentcore#90](https://github.com/AltairaLabs/promptarena-deploy-agentcore/issues/90).
-:::
-
 **What happens:**
 
 1. The CLI looks up the adapter in the built-in registry

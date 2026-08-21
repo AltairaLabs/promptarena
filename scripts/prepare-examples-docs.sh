@@ -107,30 +107,6 @@ blurb_for() {
 rm -rf "$ARENA_OUTPUT"
 mkdir -p "$ARENA_OUTPUT"
 
-# Examples whose README is not user documentation and must not be published.
-#
-# Every example README here becomes a public docs page verbatim, so an example
-# whose README is an internal working note publishes that note. Excluding it
-# keeps the example in the repo for the team while keeping the research out of
-# the documentation; the fix for anything on this list is to write a README
-# aimed at a reader, then remove it from the list.
-#
-#   codegen-eval — a methodology spike. Cites a proposal by section number that
-#   lives in docs/local-backlog (local-only, so readers cannot follow it),
-#   records single-trial findings, and lists what is "deferred to v1 / v2".
-DOCS_EXCLUDE=(
-    codegen-eval
-)
-
-# is_excluded <dirname>
-is_excluded() {
-    local candidate=$1
-    for excluded in "${DOCS_EXCLUDE[@]}"; do
-        [ "$candidate" = "$excluded" ] && return 0
-    done
-    return 1
-}
-
 # Process examples from a directory into an output collection.
 # Args: source_dir, output_path
 process_examples() {
@@ -145,11 +121,6 @@ process_examples() {
         if [ -f "${example_dir}README.md" ]; then
             dirname=$(basename "$example_dir")
             readme_path="${example_dir}README.md"
-
-            if is_excluded "$dirname"; then
-                echo "  skipping $dirname (DOCS_EXCLUDE: README is not user documentation)"
-                continue
-            fi
 
             # Extract title from the first H1 heading, defaulting to the dir name.
             title=$(grep -m 1 "^# " "$readme_path" | sed 's/^# //' || echo "$dirname")

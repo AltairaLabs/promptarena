@@ -1,11 +1,10 @@
 # Voice Console — ASM (native realtime) mode
 
 > **Status: experimental** — voice runs inside the interactive hub console
-> (`promptarena chat --voice`). ASM (native realtime) is the working path and
-> is what this example exercises. Composed VAD (voice over text agents) is
-> experimental; turn-by-turn conversation and barge-in are tracked in issue
-> [#1469](https://github.com/AltairaLabs/PromptKit/issues/1469) and not yet
-> complete.
+> (`promptarena chat --voice`). ASM (native realtime) is the most mature path
+> and is what this example exercises; composed VAD is covered by the
+> `voice-console-vad` example. Both handle turn-by-turn conversation and
+> barge-in; the rough edge in each is acoustic, and is covered below.
 
 Talk to a native-realtime agent (OpenAI Realtime) by voice from the terminal.
 The provider does STT + LLM + TTS + turn detection server-side, so no STT/TTS
@@ -32,22 +31,24 @@ Speak naturally; the agent replies in voice. Press `q` or `Ctrl-C` to exit.
   back into the mic without them. For laptop speakers add `--echo-guard`
   (best-effort).
 
-## Barge-in
+## Barge-in and echo
 
 `--barge-in` now stops in-flight speaker playback the moment you interrupt: the
 audio sink is flushed so the agent goes quiet immediately instead of finishing
-its buffered sentence ([#1485](https://github.com/AltairaLabs/PromptKit/issues/1485)).
+its buffered sentence.
 
-Genuine open-speaker barge-in (talking over the agent without headphones) still
-needs acoustic echo cancellation so the open mic doesn't hear the agent and
-interrupt it. AEC is in progress — Speex
-([#1506](https://github.com/AltairaLabs/PromptKit/issues/1506)) and WebRTC AEC3
-([#1507](https://github.com/AltairaLabs/PromptKit/issues/1507)) — so until it
-lands, **use headphones for reliable barge-in**.
+Genuine open-speaker barge-in — talking over the agent without headphones —
+needs acoustic echo cancellation so the open mic does not hear the agent and
+interrupt it. There is no AEC in the shipped runtime. `--echo-guard` is the
+stopgap: it gates the mic while the agent speaks, which stops the agent
+interrupting itself but also trades away real interruptions, since a fixed
+threshold cannot tell loud echo from a genuine barge-in.
 
-### Same-device requirement (duplex / AEC)
+**Use headphones for reliable barge-in.**
 
-Low-latency duplex audio and (later) AEC need the microphone and speaker to be
+### Same-device requirement (duplex audio)
+
+Low-latency duplex audio needs the microphone and speaker to be
 the **same device** sharing one clock — e.g. a single headset or the built-in
 mic+speakers. When capture and playback are different devices with no shared
 clock, the single duplex stream can't open, so the console automatically
