@@ -6,6 +6,7 @@ import (
 	"maps"
 	"sync"
 
+	"github.com/AltairaLabs/PromptKit/runtime/logger"
 	"github.com/AltairaLabs/PromptKit/runtime/pipeline/stage"
 	"github.com/AltairaLabs/PromptKit/runtime/template"
 	"github.com/AltairaLabs/PromptKit/runtime/workflow"
@@ -126,13 +127,24 @@ func (r *workflowStateResolver) ResolveCurrentState(_ context.Context) (stage.Ha
 		r.contextSummary = pending.ContextSummary
 		r.mu.Unlock()
 		// CommitPending fires the executor's OnCommit hook, which records the
-		// transition, updates scenario.TaskType, re-registers the transition
-		// tool for the new state and emits the observability events. Committing
-		// here therefore keeps all of that, rather than duplicating it.
+		// transition, updates scenario.TaskType and emits the observability
+		// events. Committing here therefore keeps all of that, rather than
+		// duplicating it.
+		//
+		// A rejected commit must NOT fail the turn. The workflow declines
+		// transitions for ordinary reasons — an event invalid in this state, a
+		// max-visits redirect, an exhausted budget — and the run simply stays
+		// where it is, which the model can see and respond to. Returning the
+		// error here instead ends the provider stage, the turn and the run:
+		// before this resolver existed the same condition was reported by the
+		// post-turn hook and the run continued, and that remains the right
+		// behavior. OnCommitError has already emitted the failure event.
 		if _, err := run.transExec.CommitPending(); err != nil {
-			return stage.Handoff{}, fmt.Errorf("transition commit failed: %w", err)
+			logger.Warn("workflow transition rejected; continuing in current state",
+				"run_id", r.runID, "error", err)
+		} else {
+			justTransitioned = true
 		}
-		justTransitioned = true
 	}
 
 	machine := run.transExec.StateMachine()
