@@ -33,9 +33,9 @@ permissions:
   contents: write   # create tags and GitHub releases
   # The embedded web UI pulls @altairalabs/atlas from GitHub Packages, and
   # goreleaser's before-hook installs it. An explicit permissions block sets
-  # every unlisted scope to none, so this read has to be named. It is necessary
-  # but not sufficient — the install also needs NODE_AUTH_TOKEN below, because
-  # atlas belongs to a different repository than this one.
+  # every unlisted scope to none, so this read is named for completeness — but
+  # the install authenticates with the NODE_AUTH_TOKEN org secret, not
+  # GITHUB_TOKEN, since atlas is published from another repository.
   packages: read
 
 jobs:
@@ -81,6 +81,17 @@ jobs:
           node-version: '20'
       - name: Install pnpm
         run: npm install -g pnpm@10
+      # pnpm 10 refuses to expand ${NODE_AUTH_TOKEN} in a *project* .npmrc: that
+      # file is committed, so a hostile registry line in it could exfiltrate the
+      # secret. It still honours credentials from a trusted source, and the
+      # user-level ~/.npmrc is one. Without this pnpm sends no auth header at
+      # all and GitHub Packages answers 401 — which is what killed v1.5.7 and
+      # every dry run since. The project .npmrc still maps the @altairalabs
+      # scope to the registry; only the credential has to move.
+      - name: Authenticate to GitHub Packages
+        run: printf '//npm.pkg.github.com/:_authToken=%s\n' "$NODE_AUTH_TOKEN" >> ~/.npmrc
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
       - name: Install ALSA dev headers (for voice CGO)
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev
 
@@ -93,7 +104,6 @@ jobs:
           args: release --snapshot --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN || secrets.GITHUB_TOKEN }}
 
       - name: Test
         run: go test ./... -count=1
@@ -136,6 +146,17 @@ jobs:
           node-version: '20'
       - name: Install pnpm
         run: npm install -g pnpm@10
+      # pnpm 10 refuses to expand ${NODE_AUTH_TOKEN} in a *project* .npmrc: that
+      # file is committed, so a hostile registry line in it could exfiltrate the
+      # secret. It still honours credentials from a trusted source, and the
+      # user-level ~/.npmrc is one. Without this pnpm sends no auth header at
+      # all and GitHub Packages answers 401 — which is what killed v1.5.7 and
+      # every dry run since. The project .npmrc still maps the @altairalabs
+      # scope to the registry; only the credential has to move.
+      - name: Authenticate to GitHub Packages
+        run: printf '//npm.pkg.github.com/:_authToken=%s\n' "$NODE_AUTH_TOKEN" >> ~/.npmrc
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
       - name: Install ALSA dev headers (for voice CGO)
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev
       - uses: goreleaser/goreleaser-action@v7
@@ -146,13 +167,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Homebrew cask push to AltairaLabs/homebrew-tap
           HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
-          # goreleaser's before-hook runs `pnpm install` for the embedded web UI,
-          # which resolves @altairalabs/atlas from GitHub Packages. The frontend's
-          # .npmrc reads ${NODE_AUTH_TOKEN}. GITHUB_TOKEN is not enough here:
-          # packages:read only covers packages owned by this repository, and
-          # atlas is published from another one. NODE_AUTH_TOKEN is the
-          # organisation secret that grants the cross-repo read.
-          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN || secrets.GITHUB_TOKEN }}
 
   npm-publish:
     name: npm publish
