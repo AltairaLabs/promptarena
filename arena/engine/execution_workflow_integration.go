@@ -93,8 +93,12 @@ func (e *Engine) initWorkflow() error {
 		return err
 	}
 
-	// Register transition tool executor
+	// Register transition tool executor. The prompt registry is what lets it
+	// hand a turn over to a destination state mid-flight rather than waiting
+	// for the next scripted turn; without one, ResolverForRun returns nil and
+	// the pre-resolver behavior stands.
 	transExec := newWorkflowTransitionExecutor(spec, e.toolRegistry)
+	transExec.setPromptRegistry(e.promptRegistry)
 	e.toolRegistry.RegisterExecutor(transExec)
 
 	// Register the transition tool descriptor for the entry state
@@ -285,9 +289,9 @@ func (e *Engine) buildTransitionMeta(
 		return "", nil
 	}
 	ws := map[string]interface{}{
-		"current_state":  result.NewState,
-		"previous_state": previousState,
-		"transition":     result.Event,
+		currentStateMetaKey: result.NewState,
+		"previous_state":    previousState,
+		"transition":        result.Event,
 	}
 	if state := e.workflowSpec.States[result.NewState]; state != nil {
 		if state.Description != "" {
@@ -300,7 +304,7 @@ func (e *Engine) buildTransitionMeta(
 
 // buildEntryStateMeta builds workflow metadata for the entry state system prompt.
 func (e *Engine) buildEntryStateMeta(stateName string) map[string]interface{} {
-	ws := map[string]interface{}{"current_state": stateName}
+	ws := map[string]interface{}{currentStateMetaKey: stateName}
 	if state := e.workflowSpec.States[stateName]; state != nil {
 		if state.Description != "" {
 			ws["description"] = state.Description
@@ -333,6 +337,11 @@ func (e *Engine) wireWorkflowHooks(req *ConversationRequest, runID string) {
 		}
 		return ctx
 	}
+	// Bind a resolver to this run so the tool loop can advance the turn into a
+	// destination state rather than waiting for the next scripted turn. Bound
+	// here rather than looked up per call because the interface's
+	// CurrentStateMeta takes no context, so the run cannot be recovered later.
+	req.WorkflowStateResolver = e.workflowTransExec.ResolverForRun(runID)
 	req.ActiveCompositionResolver = e.buildCompositionResolver(runID)
 	// RFC 0010 Task 5: thread the per-run composition recorder so that
 	// buildTurnRequest can stamp it onto every TurnRequest, enabling
