@@ -123,7 +123,7 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm --dir arena/web/frontend install --frozen-lockfile
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.ATLAS_PACKAGES_TOKEN || secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN || secrets.GITHUB_TOKEN }}
       - name: Build frontend
         run: pnpm --dir arena/web/frontend build
       - name: Test frontend (with coverage)
