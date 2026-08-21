@@ -3,8 +3,9 @@ package adaptersdk
 import (
 	"testing"
 
-	"github.com/AltairaLabs/PromptKit/runtime/prompt"
 	"github.com/AltairaLabs/promptarena/deploy"
+
+	"github.com/AltairaLabs/PromptKit/runtime/prompt"
 )
 
 // multiAgentPack returns a two-member pack used across several tests.
