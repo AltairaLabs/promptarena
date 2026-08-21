@@ -79,6 +79,10 @@ type TurnRequest struct {
 	Region         string
 	PromptVars     map[string]string // Variable overrides from arena.yaml prompt_configs[].vars
 
+	// WorkflowStateResolver keeps the turn aligned with the workflow's current
+	// state between provider rounds. Nil for non-workflow turns.
+	WorkflowStateResolver stage.WorkflowStateResolver
+
 	// Base directory for resolving relative file paths in media content
 	BaseDir string
 

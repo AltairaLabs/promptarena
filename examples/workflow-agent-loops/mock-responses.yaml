@@ -1,16 +1,29 @@
 # Mock LLM responses for the agent-loops example.
 #
-# Each numbered turn here is one LLM response. Within a single scenario
-# turn (user message → agent reply), the ProviderStage tool loop may
-# consume multiple responses: one that emits tool calls, and a follow-up
-# text response after the tool results come back.
+# Each numbered entry is one LLM response, indexed by response number and NOT by
+# scenario turn. A single scenario turn consumes as many as the tool loop asks
+# for: a response carrying tool calls is followed by another round once the
+# results come back, and the turn ends at the first response with no tool calls.
 #
-# Numbers below are the LLM-response index (not the scenario turn).
+# A workflow__transition now takes effect within the turn that issued it — the
+# destination state renders and answers on the very next round, without waiting
+# for another user message (PromptKit#1747, promptarena#109). Both scenarios
+# below therefore run their whole loop from one opening user turn, and each
+# response must be valid for the state the run will ACTUALLY be in by the time
+# it is consumed. An event belonging to a state the run has already left is
+# rejected by that run's state machine.
 
 scenarios:
+  # Converges: research iterates to its cap of useful work, hands off to
+  # summarize, and completes — all inside the opening turn.
+  #
+  #   R1 research(v1) --More--> research(v2)
+  #   R2 research(v2) --More--> research(v3)
+  #   R3 research(v3) --Done--> summarize
+  #   R4 summarize    --Complete--> done
+  #   R5 done: plain text, no tool calls, so the turn ends here.
   loop-converges:
     turns:
-      # Pipeline turn 1: user asks → LLM does a research step (iteration 1 → 2)
       1:
         response: "Gathering the first piece of information."
         tool_calls:
@@ -22,10 +35,8 @@ scenarios:
             arguments:
               event: More
               context: "Recorded note 1"
-      2: "Noted: the hook registry has four interface types. Continuing."
 
-      # Pipeline turn 2: user prompts next iteration (2 → 3)
-      3:
+      2:
         response: "Gathering a second piece of information."
         tool_calls:
           - name: workflow__set_artifact
@@ -36,10 +47,8 @@ scenarios:
             arguments:
               event: More
               context: "Recorded note 2"
-      4: "Added note 2. One more iteration should cover it."
 
-      # Pipeline turn 3: user prompts final iteration → LLM emits Done
-      5:
+      3:
         response: "I have what I need — moving to summarise."
         tool_calls:
           - name: workflow__set_artifact
@@ -50,24 +59,26 @@ scenarios:
             arguments:
               event: Done
               context: "Recorded note 3 and leaving research"
-      6: "Done. Handing off to the summariser."
 
-      # Pipeline turn 4: summarise state. LLM reads findings and emits Complete.
-      7:
+      # Now in `summarize`: the destination state speaks for itself rather than
+      # waiting for a scripted turn. Complete is summarize's only event.
+      4:
         response: "Summary prepared; marking complete."
         tool_calls:
           - name: workflow__transition
             arguments:
               event: Complete
               context: "Summary written based on the three notes"
-      8: "PromptKit exposes four hook interfaces (Provider, Tool, Session, Eval), registered via the matching sdk.With*Hook options; EvalHook is observational and can mutate its result in place."
 
-      # Pipeline turn 5: done state confirmation.
-      9: "All done — the final summary is above. Let me know if you need anything else."
+      # Terminal `done`. No tool calls, so this response ends the turn.
+      5: "PromptKit exposes four hook interfaces (Provider, Tool, Session, Eval), registered via the matching sdk.With*Hook options; EvalHook is observational and can mutate its result in place."
 
+  # Hits the cap: the agent keeps asking for another iteration until
+  # max_visits on `research` forces a redirect to `summarize`. The redirect is
+  # the runtime's decision, not the agent's — the response that triggers it
+  # still asks for More.
   loop-hits-max-visits:
     turns:
-      # Pipeline turn 1: research iteration 1 → 2
       1:
         response: "Iteration 1 — gathering a note."
         tool_calls:
@@ -79,10 +90,8 @@ scenarios:
             arguments:
               event: More
               context: "it 1"
-      2: "Iteration 1 complete."
 
-      # Pipeline turn 2: research iteration 2 → 3
-      3:
+      2:
         response: "Iteration 2 — gathering a note."
         tool_calls:
           - name: workflow__set_artifact
@@ -93,10 +102,11 @@ scenarios:
             arguments:
               event: More
               context: "it 2"
-      4: "Iteration 2 complete."
 
-      # Pipeline turn 3: research iteration 3 (at cap)
-      5:
+      # This More exceeds max_visits on `research`, so the runtime redirects to
+      # `summarize` and emits workflow.max_visits_exceeded with
+      # redirected=true / original_target=research.
+      3:
         response: "Iteration 3 — gathering a note."
         tool_calls:
           - name: workflow__set_artifact
@@ -106,35 +116,16 @@ scenarios:
           - name: workflow__transition
             arguments:
               event: More
-              context: "it 3"
-      6: "Iteration 3 complete."
+              context: "it 3 — will be redirected"
 
-      # Pipeline turn 4: LLM attempts a 4th iteration. max_visits (3) has been
-      # reached on `research`, so the runtime redirects to `summarize`
-      # regardless of what the LLM chose. A workflow.max_visits_exceeded event
-      # fires.
-      7:
-        response: "Iteration 4 — gathering a note."
-        tool_calls:
-          - name: workflow__set_artifact
-            arguments:
-              name: findings
-              value: "Note 4"
-          - name: workflow__transition
-            arguments:
-              event: More
-              context: "it 4 — will be redirected"
-      8: "Redirected to summariser by the workflow engine after hitting the iteration cap."
-
-      # Pipeline turn 5: summarise state. LLM emits Complete.
-      9:
+      # Redirected into `summarize`, whose only event is Complete. Asking for
+      # More here would be invalid for the state the run is now in.
+      4:
         response: "Summarising with whatever findings accumulated before the cap."
         tool_calls:
           - name: workflow__transition
             arguments:
               event: Complete
               context: "Cap-driven summary"
-      10: "After three research iterations, the workflow engine stopped further attempts and produced this summary."
 
-      # Pipeline turn 6: done confirmation.
-      11: "Workflow complete — the iteration cap successfully bounded the loop."
+      5: "After the research iterations, the workflow engine stopped further attempts and produced this summary."

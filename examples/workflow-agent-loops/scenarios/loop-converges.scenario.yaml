@@ -5,9 +5,20 @@ metadata:
 spec:
   id: loop-converges
   task_type: research
-  description: "Agent loop converges in 3 iterations, summarises, completes"
+  description: "Agent loop iterates, summarises and completes from one user turn"
+
+  # This scenario is the regression test for in-turn workflow state handoff
+  # (PromptKit#1747, promptarena#109).
+  #
+  # It deliberately has ONE user turn. The whole loop — three research
+  # iterations, the handoff to summarize, and the completion into done — has to
+  # happen inside it, driven by the agent's own transitions. It previously had
+  # four further turns ("continue", "wrap up when ready", "summary please",
+  # "thanks") whose only job was to give each state a scripted turn to speak in.
+  # With those present the scenario passed whether or not a transition ever
+  # produced output, which is exactly the bug it is meant to catch: the state
+  # machine advanced and the destination state said nothing.
   turns:
-    # Iteration 1: user kicks off research; LLM emits set_artifact + More.
     - role: user
       content: "Please research the PromptKit hook system and summarise."
       assertions:
@@ -15,19 +26,23 @@ spec:
           params:
             tool_names: ["workflow__set_artifact", "workflow__transition"]
 
-    # Remaining turns drive the loop — each one triggers one LLM pass that
-    # may or may not emit tool calls depending on where we are in the loop.
-    # We keep assertions out of these: the interesting output is in the log
-    # and in the promptarena serve timeline (state transitions, artifact accumulation,
-    # workflow.completed event).
-    - role: user
-      content: "continue"
+  conversation_assertions:
+    # The machine advanced...
+    - type: transitioned_to
+      params:
+        state: summarize
+      message: "Research must hand off to summarize once it has enough"
+    - type: workflow_complete
+      params: {}
 
-    - role: user
-      content: "wrap up when ready"
-
-    - role: user
-      content: "summary please"
-
-    - role: user
-      content: "thanks"
+    # ...and each destination state actually spoke. These are what fail if the
+    # handoff regresses: transitioned_to and workflow_complete are satisfied by
+    # a transition that produces no output at all.
+    - type: spoke_in_state
+      params:
+        state: summarize
+      message: "summarize must answer within the turn, not wait for a scripted turn"
+    - type: spoke_in_state
+      params:
+        state: done
+      message: "done must answer within the turn, not wait for a scripted turn"

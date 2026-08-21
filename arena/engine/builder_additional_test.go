@@ -620,3 +620,43 @@ func TestDiscoverAndRegisterSkillTools_EmptyConfig(t *testing.T) {
 	assert.Empty(t, preloadedInstructions)
 	assert.Empty(t, registry.GetTools())
 }
+
+// A workflow state's skills glob is matched against each skill's path relative
+// to ConfigDir. The loader resolves skill sources to absolute paths, so a
+// relative ConfigDir — "." for the usual `promptarena run` from an example
+// directory — makes filepath.Rel fail, leaves the absolute path in place, and
+// no glob can ever match. Every state-scoped skill then reports "not available
+// in the current state", which is how examples/workflow-skills was failing.
+func TestDiscoverAndRegisterSkillTools_StateGlobMatchesWithRelativeConfigDir(t *testing.T) {
+	dir := t.TempDir()
+	skillDir := filepath.Join(dir, "skills", "billing", "pci-compliance")
+	require.NoError(t, os.MkdirAll(skillDir, 0o755))
+	require.NoError(t, os.WriteFile(
+		filepath.Join(skillDir, "SKILL.md"),
+		[]byte("---\nname: pci-compliance\ndescription: Card data handling\n---\nRules.\n"),
+		0o600,
+	))
+
+	// ConfigDir as ResolveConfigDir yields it for `promptarena run` with the
+	// default config path: relative, while the skill source below is absolute.
+	cfg := &arenaconfig.Config{
+		ConfigDir: ".",
+		LoadedSkillSources: []prompt.SkillSourceConfig{
+			{Path: filepath.Join(dir, "skills")},
+		},
+	}
+
+	// Run from the config directory, which is what makes "." mean dir.
+	t.Chdir(dir)
+
+	exec, _, err := discoverAndRegisterSkillTools(cfg, tools.NewRegistry())
+	require.NoError(t, err)
+	require.NotNil(t, exec)
+
+	// The state's glob must reach the skill. Activation is refused when it does
+	// not, which is the failure this guards.
+	exec.SetFilter("skills/billing/*")
+	_, _, activateErr := exec.Activate("pci-compliance")
+	require.NoError(t, activateErr,
+		"a skills glob must match under a relative ConfigDir")
+}

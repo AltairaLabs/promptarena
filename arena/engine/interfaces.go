@@ -71,6 +71,12 @@ type ConversationRequest struct {
 	// Event bus for runtime/TUI events
 	EventBus events.Bus
 
+	// WorkflowStateResolver lets the provider tool loop hand a turn over to a
+	// workflow state mid-flight: it commits the pending transition and swaps in
+	// the destination state's prompt and tools between rounds. Nil for
+	// non-workflow runs, which the runtime treats as "no workflow" and skips.
+	WorkflowStateResolver stage.WorkflowStateResolver
+
 	// State management
 	StateStoreConfig *StateStoreConfig // Optional state store configuration
 	ConversationID   string            // Conversation identifier for state persistence

@@ -953,8 +953,25 @@ func discoverAndRegisterSkillTools(
 		return nil, "", fmt.Errorf("skills discovery: %w", err)
 	}
 
-	// Create executor (no selector, no pack tool ceiling in arena)
-	executor := skills.NewExecutor(skills.ExecutorConfig{Registry: reg, ConfigDir: cfg.ConfigDir})
+	// Create executor (no selector, no pack tool ceiling in arena).
+	//
+	// ConfigDir must be absolute. The executor decides whether a workflow
+	// state's skills glob matches by taking filepath.Rel(ConfigDir, skill.Path),
+	// and the loader has already resolved every skill source to an absolute
+	// path. ResolveConfigDir returns filepath.Dir of the config path, which is
+	// "." for the usual `promptarena run` from an example directory — and
+	// filepath.Rel cannot relate "." to an absolute path, so it errors, the
+	// executor falls back to the raw absolute skill path, and a glob like
+	// "skills/billing/*" never matches. Every state-scoped skill then reports
+	// "not available in the current state".
+	//
+	// The loader anchors both sides at filepath.Abs for the same reason when it
+	// validates skill source containment; this is the other half of that.
+	skillsConfigDir := cfg.ConfigDir
+	if abs, err := filepath.Abs(skillsConfigDir); err == nil {
+		skillsConfigDir = abs
+	}
+	executor := skills.NewExecutor(skills.ExecutorConfig{Registry: reg, ConfigDir: skillsConfigDir})
 
 	// Register tool descriptors + executor. The skill__activate descriptor
 	// embeds the available-skills index so the LLM can discover which skills

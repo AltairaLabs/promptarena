@@ -10,6 +10,7 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/events"
 	"github.com/AltairaLabs/PromptKit/runtime/logger"
 	"github.com/AltairaLabs/PromptKit/runtime/pipeline/stage"
+	"github.com/AltairaLabs/PromptKit/runtime/prompt"
 	"github.com/AltairaLabs/PromptKit/runtime/tools"
 	"github.com/AltairaLabs/PromptKit/runtime/workflow"
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
@@ -51,11 +52,16 @@ type workflowRunState struct {
 // RegisterRun. The executor defers ProcessEvent until CommitPendingTransition
 // is called after the turn/pipeline completes.
 type workflowTransitionExecutor struct {
-	mu            sync.Mutex
-	wfSpec        *workflow.Spec
-	registry      *tools.Registry
-	runs          map[string]*workflowRunState // keyed by scenario ID
-	skillFilterer SkillFilterer
+	mu     sync.Mutex
+	wfSpec *workflow.Spec
+	// promptRegistry renders a destination state's prompt mid-turn for
+	// ResolverForRun. Nil disables in-turn handoff: the machine still advances
+	// and the destination state speaks on the next scripted turn, which is how
+	// arena behaved before the resolver existed.
+	promptRegistry *prompt.Registry
+	registry       *tools.Registry
+	runs           map[string]*workflowRunState // keyed by scenario ID
+	skillFilterer  SkillFilterer
 }
 
 func newWorkflowTransitionExecutor(
@@ -67,6 +73,16 @@ func newWorkflowTransitionExecutor(
 		registry: registry,
 		runs:     make(map[string]*workflowRunState),
 	}
+}
+
+// setPromptRegistry supplies the registry ResolverForRun renders destination
+// prompts from. Kept off the constructor because it is optional — every test
+// that builds an executor directly is exercising transition bookkeeping rather
+// than in-turn handoff, and would only have a nil to pass.
+func (e *workflowTransitionExecutor) setPromptRegistry(r *prompt.Registry) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	e.promptRegistry = r
 }
 
 // Name implements tools.Executor.

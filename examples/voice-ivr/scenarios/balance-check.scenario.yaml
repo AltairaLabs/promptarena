@@ -42,6 +42,12 @@ spec:
       message: "Agent must NOT transfer the caller — this is self-service"
     - type: workflow_complete
       params: {}
+    # transitioned_to/state_is/workflow_complete all read the state machine, so
+    # a resolution state that never answers satisfies every one of them.
+    - type: spoke_in_state
+      params:
+        state: resolution
+      message: "Resolution state must actually respond, not just be entered"
     - type: workflow_transition_order
       params:
         sequence: ["resolution"]

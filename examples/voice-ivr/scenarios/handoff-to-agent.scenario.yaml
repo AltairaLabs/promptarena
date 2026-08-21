@@ -22,9 +22,6 @@ spec:
           params:
             state: handoff
 
-    - role: user
-      content: "Thank you, I'll hold."
-
   conversation_assertions:
     - type: tools_called
       params:
@@ -45,3 +42,15 @@ spec:
     - type: workflow_transition_order
       params:
         sequence: ["handoff"]
+    # transitioned_to above only proves the machine advanced. It is satisfied
+    # by a transition that produces no output at all, which is exactly the bug
+    # PromptKit#1747 fixed. This asserts the handoff agent actually replied.
+    #
+    # There is deliberately no scripted turn after the transition: the handoff
+    # state has to answer within the transitioning turn. A trailing "Thank you,
+    # I'll hold." used to provide one, and with it present this assertion
+    # passed whether or not the handoff was wired at all.
+    - type: spoke_in_state
+      params:
+        state: handoff
+      message: "Handoff state must actually respond, not just be entered"

@@ -589,9 +589,18 @@ func (e *PipelineExecutor) buildProviderStage(
 	toolPolicy := buildToolPolicy(req.Scenario)
 	emitter := emitterFromRequest(req)
 	hookReg := buildHookRegistry(req, guardrailHooks)
-	return stage.NewProviderStageWithTurnState(
+	ps := stage.NewProviderStageWithTurnState(
 		req.Provider, e.toolRegistry, toolPolicy, providerConfig, emitter, hookReg, turnState,
 	)
+	// Workflow runs only. This is what lets a workflow__transition take effect
+	// within the turn that called it — the tool loop asks the resolver between
+	// rounds, commits the pending transition and continues as the destination
+	// state. Without it the machine still advances, but the destination does
+	// not speak until some later scripted turn arrives.
+	if req.WorkflowStateResolver != nil {
+		ps.SetWorkflowStateResolver(req.WorkflowStateResolver)
+	}
+	return ps
 }
 
 // loadGuardrailHooks resolves pack-declared validators for this turn and

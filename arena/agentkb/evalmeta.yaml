@@ -201,6 +201,13 @@ handlers:
     level: session
     description: The workflow transitioned to the expected state.
     score: boolean gate
+  spoke_in_state:
+    level: session
+    description: >-
+      The named state actually produced assistant output, not merely being
+      entered. Pairs with transitioned_to, which the state machine satisfies
+      whether or not the destination ever replied.
+    score: boolean gate
   workflow_transition_order:
     level: session
     description: Workflow transitions occurred in the specified order.
