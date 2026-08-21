@@ -69,7 +69,7 @@ Arena registers executors directly on the `tools.Registry`, not through a Capabi
 // In initWorkflow():
 transExec := newWorkflowTransitionExecutor(spec, registry)
 registry.RegisterExecutor(transExec)  // Name() = "workflow-transition"
-registerTransitionTool(registry, entryState)  // sets Mode = "workflow-transition"
+registerTransitionToolForSpec(registry, spec)  // once, spec-wide; sets Mode = "workflow-transition"
 ```
 
 The Mode on the tool descriptor routes to the executor via `Registry.getExecutorForTool()`.
@@ -156,7 +156,8 @@ The tools execute for real. Only the LLM's decision-making is mocked.
 
 - **Don't import SDK** — Arena and SDK are peers, both consuming runtime
 - **Don't share state machines across runs** — always use `RegisterRun` for per-run isolation
-- **Don't forget to set `desc.Mode`** — Arena's local `registerTransitionTool` sets Mode to route to the custom executor. Without it, the registry can't find the executor.
+- **Don't forget to set `desc.Mode`** — Arena's local `registerTransitionToolForSpec` sets Mode to route to the custom executor. Without it, the registry can't find the executor.
+- **Never mutate the tool registry during a run** — it is shared by every concurrent scenario, so it must describe what the runtime CAN do, never what one run is currently doing. Per-turn availability comes from the state's allowed-tool list; per-run validity comes from that run's own state machine. `TestToolRegistryIsImmutableAcrossRuns` enforces this.
 - **Don't mutate shared EvalOrchestrator** — always Clone() for concurrent runs
 
 ## Testing
