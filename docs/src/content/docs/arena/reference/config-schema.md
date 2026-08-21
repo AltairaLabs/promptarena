@@ -1303,7 +1303,7 @@ Import conversations from third-party systems (future support via recording adap
 
 ### Integration with Session Recording
 
-Evals work seamlessly with Arena's session recording feature:
+Evals can run against a recorded session:
 
 1. **Record** a conversation:
 ```yaml

@@ -15,11 +15,11 @@ PromptArena is a **testing framework** for LLM-driven systems. Eval primitives a
 
 It also ships the **standard eval-primitive catalog** (faithfulness, hallucination, contextual recall, etc.) so if you already work in DeepEval or Ragas vocabulary you will find what you expect — but those primitives are inputs to the testing framework, not the product surface.
 
-This page is organised by use case: what PromptArena does that frameworks focused on single-turn evaluation do not.
+This page is organised by use case, and each section links to a runnable demo.
 
 ## Test a voice agent end to end
 
-Voice eval has the worst signal-to-noise ratio in the LLM-test world: the only thing single-turn frameworks can measure is the transcript, which misses everything voice-specific — turn-taking, latency, expressiveness, tool calls during audio, guardrail catches before TTS.
+A transcript is a lossy record of a voice call. It does not carry turn-taking, latency, expressiveness, tool calls made during audio, or a guardrail catch that happened before TTS — so scoring the transcript alone leaves the voice-specific behaviour untested.
 
 PromptArena tests voice as a full conversation:
 
@@ -66,10 +66,12 @@ This is the architectural differentiator. PromptArena keeps three roles distinct
 
 Same code, three roles. One implementation. Production catches in real time AND test observes the catch — from the same primitive.
 
-This is the gap competing frameworks structurally can't fill:
-
-- Guardrail-only systems (OpenAI / Anthropic content filters) catch in production but can't be tested without log scraping.
-- Eval-only frameworks (DeepEval, Ragas, Patronus, Galileo) score transcripts post-hoc — by then the agent has already said the bad thing.
+What this buys you is a test signal for enforcement that already exists. If a
+guardrail is only wired into production, the fact that it fired is visible in logs
+and nowhere a test can assert on. If scoring only happens over a finished
+transcript, a control that should have stopped the output cannot be distinguished
+from one that never ran. Here the same primitive does both, so the assertion is
+about the control itself rather than about its side effects.
 
 Demos:
 
@@ -119,6 +121,6 @@ Demos:
 
 ## What to use something else for
 
-Single-turn text scoring over recorded transcripts, score-and-report dashboards, and formal benchmark suites against named datasets are well served by the eval-only frameworks. PromptArena does them too, and ships a standard eval catalogue so you don't need a second tool for the basics — but on those alone there is no reason to switch.
+Single-turn text scoring over recorded transcripts, score-and-report dashboards, and formal benchmark suites against named datasets are well served by existing eval tooling. PromptArena covers those cases and ships a standard eval catalogue, so it can be the only tool in play — but if that is all you need, an eval library is a smaller dependency.
 
 Reach for PromptArena when the thing you need to assert doesn't fit a transcript: voice, multi-turn self-play, workflows, multi-agent runs, and runtime guardrails observed while the test executes.

@@ -1,11 +1,10 @@
 # Voice Console — VAD (composed) mode
 
 > **Status: experimental** — voice runs inside the interactive hub console
-> (`promptarena chat --voice`). Composed VAD (voice over text agents) is
-> experimental: speech detection and transcription work, but turn-by-turn
-> conversation and barge-in are tracked in issue
-> [#1469](https://github.com/AltairaLabs/PromptKit/issues/1469) and not yet
-> complete. For a fully working voice path, see the ASM example.
+> (`promptarena chat --voice`). Speech detection, transcription, turn-by-turn
+> conversation and barge-in all work. The rough edge is acoustic: on open
+> speakers the mic hears the agent, so use headphones or `--echo-guard` — see
+> Requirements below.
 
 Talk to a plain **text** agent (gpt-4o here; swap for Claude, etc.) by voice.
 The console records the mic until silence (voice-activity detection),

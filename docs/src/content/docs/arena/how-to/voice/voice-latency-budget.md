@@ -1,6 +1,6 @@
 ---
 title: Assert Voice Latency Budgets
-description: Gate scenarios on real provider latency. Arena bridges the assistant message's LatencyMs into eval context, so the latency_budget assertion just works.
+description: Gate scenarios on real provider latency. Arena bridges the assistant message's LatencyMs into eval context, so the latency_budget assertion reads a real measurement rather than an estimate.
 ---
 
 This how-to walks through `examples/voice-latency-budget/` — a small scenario that asserts every turn's provider latency against an explicit `max_ms` budget. Useful for gating deploys on regressions, comparing providers on the same scenario, and proving an agent stays inside a real-time budget.

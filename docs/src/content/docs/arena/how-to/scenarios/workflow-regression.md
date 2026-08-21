@@ -7,7 +7,7 @@ This how-to walks through `examples/workflow-support/` and `examples/workflow-or
 
 ## What it proves
 
-Workflow-driven agents fail in ways pure single-turn eval can't catch: the agent reaches the wrong terminal state, skips a required transition, or loops forever. Eval-only frameworks don't have a workflow concept at all — every demo of "agent state" ends up being a custom log scraper. PromptArena ships the state machine as a pack primitive and assertions can observe the transitions directly.
+Workflow-driven agents fail in ways single-turn eval can't catch: the agent reaches the wrong terminal state, skips a required transition, or loops forever. The state machine is a pack primitive here, so assertions read the machine's own state rather than scraping logs or inferring intent from tool calls.
 
 Two examples ship with the runtime:
 
@@ -16,7 +16,15 @@ Two examples ship with the runtime:
 
 ## The assertion shape
 
-Workflow scenarios drive a stateful agent across multiple turns. The agent calls `workflow__transition` to advance the state machine; state-aware assertions observe the machine's state directly, per turn. Four assertion types cover the lifecycle:
+The agent calls `workflow__transition` to advance the state machine, and state-aware assertions observe the machine directly.
+
+A transition takes effect **within the turn that made it**: the destination state's
+prompt and tools are swapped in, and it answers on the next round without waiting
+for another user message. One user turn can therefore span several states. Scenarios
+do not need a scripted turn per state, and a scenario written that way is weaker
+than it looks — see [Asserting that a state spoke](#asserting-that-a-state-spoke).
+
+Five assertion types cover the lifecycle:
 
 ```yaml
 turns:
@@ -55,8 +63,32 @@ turns:
 - `state_is` — assert the current state after the turn (useful when a turn should *not* transition).
 - `workflow_complete` — assert the machine reached a terminal state.
 - `workflow_transition_order` — assert the exact ordered sequence of states the agent drove.
+- `spoke_in_state` — assert a state actually produced assistant output, not merely that it was entered.
 
-These observe the workflow metadata directly, so they assert on actual state rather than on the tool call that drives it. All four pass deterministically against the mock provider's scripted `workflow__transition` responses.
+These observe the workflow metadata directly, so they assert on actual state rather than on the tool call that drives it. All five pass deterministically against the mock provider's scripted `workflow__transition` responses.
+
+### Asserting that a state spoke
+
+The first four all read the state machine's transition history. A transition that
+advances the machine and then produces **no output at all** satisfies every one of
+them — the agent hands off to a specialist and the specialist never speaks, and the
+suite stays green.
+
+`spoke_in_state` is the one that closes that gap:
+
+```yaml
+conversation_assertions:
+  - type: transitioned_to
+    params: { state: handoff }     # the machine advanced
+  - type: spoke_in_state
+    params: { state: handoff }     # ...and the destination actually replied
+```
+
+Pair them wherever a handoff matters. It is worth being deliberate about the turns
+too: if a scenario has a scripted user turn after the transition, that turn gives
+the destination state somewhere to speak regardless, and `spoke_in_state` passes
+whether or not the handoff itself works. `examples/workflow-agent-loops/` runs its
+whole loop from a single opening turn for exactly this reason.
 
 ## Running
 

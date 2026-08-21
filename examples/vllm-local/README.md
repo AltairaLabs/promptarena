@@ -14,7 +14,7 @@ This example demonstrates how to use PromptArena with [vLLM](https://docs.vllm.a
 ## Prerequisites
 
 - Docker and Docker Compose installed (for local setup) OR vLLM running on Kubernetes
-- PromptArena CLI (`arena`) installed
+- PromptArena CLI (`promptarena`) installed
 - **An NVIDIA GPU with CUDA support and the NVIDIA Container Toolkit.** This is a
   hard requirement for the local Docker setup, not a performance recommendation
   — see the note above. The Kubernetes option (B) has the same constraint on
@@ -52,7 +52,7 @@ You should see the model listed in the response.
 #### 3. Run the Arena Tests
 
 ```bash
-arena run config.arena.yaml
+promptarena run config.arena.yaml
 ```
 
 This will:
@@ -75,7 +75,7 @@ export VLLM_BASE_URL=http://vllm.default.svc.cluster.local:8000
 #### 2. Run with Kubernetes config
 
 ```bash
-arena run config.arena.k8s.yaml
+promptarena run config.arena.k8s.yaml
 ```
 
 ## Configuration Files
@@ -218,7 +218,7 @@ services:
 For high-throughput scenarios, PromptKit automatically uses connection pooling. You can run parallel tests:
 
 ```bash
-arena run config.arena.yaml --parallel 10
+promptarena run config.arena.yaml --concurrency 10
 ```
 
 ## Cost Tracking

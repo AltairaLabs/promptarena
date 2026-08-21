@@ -24,7 +24,7 @@ Live dev loop:
 
 ```bash
 ../../bin/promptarena serve
-../../bin/promptarena run --tui
+../../bin/promptarena run
 ```
 
 ## Switching to real self-play

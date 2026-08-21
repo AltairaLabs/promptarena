@@ -20,7 +20,7 @@ Live dev loop:
 
 ```bash
 ../../bin/promptarena serve   # web UI with side-by-side timeline
-../../bin/promptarena run --tui
+../../bin/promptarena run
 ```
 
 ## Adding real providers
