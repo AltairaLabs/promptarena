@@ -3,7 +3,7 @@ package flow
 import (
 	"context"
 
-	"github.com/AltairaLabs/PromptKit/runtime/deploy"
+	"github.com/AltairaLabs/promptarena/deploy"
 )
 
 // Preflight is the deploy readiness snapshot shown before planning.

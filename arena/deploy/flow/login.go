@@ -16,7 +16,7 @@ import (
 	"github.com/pkg/browser"
 	"gopkg.in/yaml.v3"
 
-	"github.com/AltairaLabs/PromptKit/runtime/deploy"
+	"github.com/AltairaLabs/promptarena/deploy"
 )
 
 const (

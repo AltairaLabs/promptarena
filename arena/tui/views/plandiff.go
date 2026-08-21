@@ -9,7 +9,7 @@ import (
 	"github.com/AltairaLabs/promptarena/arena/tui/theme"
 	"github.com/AltairaLabs/promptarena/arena/tui/viewmodels"
 
-	"github.com/AltairaLabs/PromptKit/runtime/deploy"
+	"github.com/AltairaLabs/promptarena/deploy"
 )
 
 var planGroupOrder = []deploy.Action{

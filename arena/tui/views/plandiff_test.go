@@ -4,8 +4,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/AltairaLabs/PromptKit/runtime/deploy"
 	"github.com/AltairaLabs/promptarena/arena/tui/viewmodels"
+	"github.com/AltairaLabs/promptarena/deploy"
 )
 
 func TestRenderPlanDiff_CollapsesNoChange(t *testing.T) {

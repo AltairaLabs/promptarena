@@ -1,6 +1,6 @@
 package flow
 
-import "github.com/AltairaLabs/PromptKit/runtime/deploy"
+import "github.com/AltairaLabs/promptarena/deploy"
 
 // ActionSymbol maps a plan Action to its diff glyph (Terraform-style).
 func ActionSymbol(a deploy.Action) string {

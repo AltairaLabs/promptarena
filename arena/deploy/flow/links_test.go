@@ -3,7 +3,7 @@ package flow
 import (
 	"testing"
 
-	"github.com/AltairaLabs/PromptKit/runtime/deploy"
+	"github.com/AltairaLabs/promptarena/deploy"
 )
 
 func TestLinksFromResults_CollectsInOrder(t *testing.T) {

@@ -9,7 +9,7 @@ import (
 
 	"github.com/AltairaLabs/promptarena/arena/tui/panels"
 
-	"github.com/AltairaLabs/PromptKit/runtime/deploy"
+	"github.com/AltairaLabs/promptarena/deploy"
 )
 
 // consoleLink is the link an adapter typically attaches to a deployed agent.
