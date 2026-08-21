@@ -7,7 +7,7 @@ import (
 	"github.com/AltairaLabs/promptarena/arena/deploy/flow"
 	"github.com/AltairaLabs/promptarena/arena/tui/theme"
 
-	"github.com/AltairaLabs/PromptKit/runtime/deploy"
+	"github.com/AltairaLabs/promptarena/deploy"
 )
 
 const (

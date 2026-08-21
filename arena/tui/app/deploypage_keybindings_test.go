@@ -8,7 +8,7 @@ import (
 	"github.com/AltairaLabs/promptarena/arena/tui/viewmodels"
 	"github.com/AltairaLabs/promptarena/arena/tui/views"
 
-	"github.com/AltairaLabs/PromptKit/runtime/deploy"
+	"github.com/AltairaLabs/promptarena/deploy"
 )
 
 // hasKey reports whether kb contains a binding whose Keys field is exactly

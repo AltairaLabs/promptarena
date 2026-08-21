@@ -5,7 +5,7 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/AltairaLabs/PromptKit/runtime/deploy"
+	"github.com/AltairaLabs/promptarena/deploy"
 )
 
 type fakePlanner struct {

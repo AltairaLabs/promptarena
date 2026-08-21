@@ -10,7 +10,7 @@ import (
 
 	"github.com/AltairaLabs/promptarena/arena/deploy/flow"
 
-	"github.com/AltairaLabs/PromptKit/runtime/deploy"
+	"github.com/AltairaLabs/promptarena/deploy"
 )
 
 var deployRefreshCmd = &cobra.Command{

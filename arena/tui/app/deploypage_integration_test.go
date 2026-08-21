@@ -10,9 +10,9 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/AltairaLabs/PromptKit/runtime/deploy"
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 	"github.com/AltairaLabs/promptarena/arena/deploy/flow"
+	"github.com/AltairaLabs/promptarena/deploy"
 )
 
 // fakeDeployProvider is a deploy.Provider test double modeled on the

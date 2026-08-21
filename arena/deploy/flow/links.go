@@ -1,6 +1,6 @@
 package flow
 
-import "github.com/AltairaLabs/PromptKit/runtime/deploy"
+import "github.com/AltairaLabs/promptarena/deploy"
 
 // LinksFromResults collects the operator-facing links an adapter attached to
 // applied resources, in the order the adapter reported them. An adapter may

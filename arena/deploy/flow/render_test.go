@@ -3,7 +3,7 @@ package flow
 import (
 	"testing"
 
-	"github.com/AltairaLabs/PromptKit/runtime/deploy"
+	"github.com/AltairaLabs/promptarena/deploy"
 )
 
 func TestActionSymbol(t *testing.T) {
