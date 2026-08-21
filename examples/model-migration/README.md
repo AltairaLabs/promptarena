@@ -22,7 +22,7 @@ Live dev loop:
 
 ```bash
 ../../bin/promptarena serve
-../../bin/promptarena run --tui
+../../bin/promptarena run
 ```
 
 ## Adding real models

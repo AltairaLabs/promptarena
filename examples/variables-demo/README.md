@@ -457,7 +457,7 @@ A: No, each prompt file has a unique `task_type`, and you can't have duplicate t
 
 ### Q: Can I override variables at runtime via CLI?
 
-A: Currently, variables must be set in `arena.yaml`. Runtime CLI overrides are planned for future releases.
+A: Variables are set in `arena.yaml`. There is no CLI flag to override them at run time.
 
 ### Q: How do I pass environment variables?
 

@@ -63,16 +63,9 @@ spec:
 - `transcript`: Transcript YAML (`.transcript.yaml`)
 - `generic`: Generic chat export JSON
 
-## Integration with Issue #215
+## Limitations
 
-This implementation provides the foundation for:
-- **Issue #215**: Eval config type support ✅
-- **Issue #216**: Recording adapter system (future)
-- **Issue #217**: Replay provider enhancements (future)
-
-## Next Steps
-
-Future enhancements will add:
-1. Recording adapter registry for multiple formats
-2. Metadata propagation from recordings to judges
-3. Multimodal content pass-through in replay
+- Recordings are read through a fixed set of format readers; there is no registry
+  for plugging in your own.
+- Recording metadata is not propagated to judge prompts.
+- Replay passes text through; multimodal parts in a recording are not replayed.

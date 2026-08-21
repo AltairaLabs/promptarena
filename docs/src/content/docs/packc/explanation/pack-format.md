@@ -240,33 +240,29 @@ The PromptPack format itself is versioned via `$schema` and `compilation.schema`
 
 This allows the specification to evolve while maintaining compatibility.
 
-## Comparison with Other Formats
+## What the format buys you
 
-### vs. Framework-Specific Prompts
+The properties below are the reason for a compiled pack rather than prompts kept
+as loose files or embedded in application code. Whether they matter depends on
+what you are building — a single prompt in one service needs none of them.
 
-| PromptPack | Framework-Specific |
-|------------|-------------------|
-| Portable — works anywhere | Locked to one framework |
-| Standard format | Proprietary format |
-| Versioned | Often unversioned |
-| Compiled & validated | Runtime parsing |
+**A published schema.** Packs validate against
+[the PromptPack spec](https://promptpack.org) before they ship, so a malformed
+prompt is a build failure rather than a runtime one. Anything that can read the
+schema can read the pack; nothing about the format is specific to this toolchain
+or to Go.
 
-### vs. Raw YAML/JSON Files
+**A version on the artifact.** The pack carries its own version, so a deployment
+can name exactly which prompts it is running and a rollback is a version change
+rather than a code change.
 
-| PromptPack | Raw Files |
-|------------|-----------|
-| Compiled, optimized | Requires parsing at runtime |
-| Single file | Multiple files to manage |
-| Schema validated | May have errors |
-| Versioned | No version info |
+**One artifact per bundle.** Related prompts, their variables and their
+validators travel together in a single file, so there is no set of loose files to
+keep in step and no import path to resolve at runtime.
 
-### vs. Langchain Templates
-
-| PromptPack | Langchain |
-|------------|-----------|
-| Language agnostic | Python-specific |
-| Multi-prompt bundles | Single templates |
-| Self-contained | Code dependencies |
+**No code dependency.** A pack is data. Reading one does not require the library
+that produced it, which is what makes it usable from a language this toolchain
+does not ship a client for.
 
 ## Best Practices
 

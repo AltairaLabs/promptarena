@@ -25,7 +25,7 @@ For the live dev loop or to play back the report:
 
 ```bash
 ../../bin/promptarena serve   # web UI
-../../bin/promptarena run --tui   # in-terminal
+../../bin/promptarena run              # in-terminal (TUI is the default)
 ```
 
 ## Switching to live voice

@@ -33,7 +33,7 @@ promptarena run -c config.arena.yaml
 To see streaming tokens in real-time (useful for the streaming demos):
 
 ```bash
-promptarena run -c config.arena.yaml --streaming
+promptarena run -c config.arena.yaml
 ```
 
 ### Running a Specific Scenario
@@ -55,7 +55,7 @@ The `streaming-tools-demo` scenario demonstrates the `PredictStreamWithTools` fe
 3. **Turn 3**: Another order check → LLM calls the tool again
 4. **Turn 4**: General question → Streamed response without tool call
 
-This showcases how streaming and tool calls work together seamlessly.
+This shows streaming and tool calls in the same turn: tokens stream while the tool call is made and its result folded in.
 
 ## Expected Outcomes
 

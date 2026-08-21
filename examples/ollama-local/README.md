@@ -5,7 +5,7 @@ This example demonstrates how to use PromptArena with [Ollama](https://ollama.ai
 ## Prerequisites
 
 - Docker and Docker Compose installed (for local) OR Ollama running on Kubernetes
-- PromptArena CLI (`arena`) installed
+- PromptArena CLI (`promptarena`) installed
 
 ## Quick Start
 
@@ -35,7 +35,7 @@ You should see the `llama3.2:1b` model listed.
 #### 3. Run the Arena Tests
 
 ```bash
-arena run config.arena.yaml
+promptarena run config.arena.yaml
 ```
 
 ### Option B: Kubernetes Setup
@@ -54,7 +54,7 @@ export OLLAMA_BASE_URL=http://ollama.default.svc.cluster.local:11434
 #### 2. Run the Kubernetes config
 
 ```bash
-arena run config.arena.k8s.yaml
+promptarena run config.arena.k8s.yaml
 ```
 
 ## Configuration
@@ -169,7 +169,7 @@ To enable multimodal testing:
 
 3. Run with the vision provider:
    ```bash
-   arena run config.arena.yaml --provider ollama-vision-local
+   promptarena run config.arena.yaml --provider ollama-vision-local
    ```
 
 ## Running Specific Scenarios
@@ -178,10 +178,10 @@ Run individual scenarios:
 
 ```bash
 # Just streaming tests
-arena run config.arena.yaml --scenario streaming-verification
+promptarena run config.arena.yaml --scenario streaming-verification
 
 # Just multimodal tests (requires vision model)
-arena run config.arena.yaml --scenario multimodal-vision --provider ollama-vision-local
+promptarena run config.arena.yaml --scenario multimodal-vision --provider ollama-vision-local
 ```
 
 ## Cleanup

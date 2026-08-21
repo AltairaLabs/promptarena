@@ -235,7 +235,7 @@ Simple verification that tools are being called correctly. Agent should:
 
 ## Mock Tool Implementation
 
-**Note:** Currently, tools return mock data. In Day 2 of the roadmap, these will be replaced with real MCP (Model Context Protocol) server implementations.
+**Note:** The tools here return mock data. To exercise real tools, point the example at an MCP server — see `examples/mcp-chatbot/` for that shape.
 
 Mock responses are defined in the tool registry and return realistic sample data for testing the agent's ability to:
 - Make appropriate tool calls
@@ -243,15 +243,15 @@ Mock responses are defined in the tool registry and return realistic sample data
 - Integrate tool data into conversational responses
 - Handle tool errors gracefully
 
-## Next Steps
+## Where to take it
 
-This example serves as a foundation for:
+This example is a starting point for:
 
-1. **MCP Integration (Day 2)** - Replace mock tools with real MCP servers
-2. **Real Backend Integration** - Connect to actual customer databases and systems
-3. **Tool Chaining** - More complex multi-step workflows
-4. **Error Handling** - Graceful degradation when tools fail
-5. **Tool Policy Configuration** - Control which tools can be used when
+1. **MCP integration** — swap the mock tools for real MCP servers (`examples/mcp-chatbot/`)
+2. **Real backends** — connect the tools to actual customer systems
+3. **Tool chaining** — multi-step flows where one tool's result feeds the next
+4. **Error handling** — assert graceful degradation when a tool fails
+5. **Tool policies** — restrict which tools are available when
 
 ## Metrics
 

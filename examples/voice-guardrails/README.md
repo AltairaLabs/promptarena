@@ -26,7 +26,7 @@ Live dev loop:
 
 ```bash
 ../../bin/promptarena serve
-../../bin/promptarena run --tui
+../../bin/promptarena run
 ```
 
 ## How the bridge works

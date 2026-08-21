@@ -5,7 +5,7 @@ End-to-end demo of [RFC 0009 — Agent Loop Extension](https://promptpack.org/do
 Demonstrates, in a single runnable example:
 
 - **Self-transitioning states** — `research` loops back to itself via `on_event: More → research`.
-- **`max_visits` with `on_max_visits` redirect** — `research` is capped at 3 iterations; the fourth attempted `More` is transparently redirected to `summarize`.
+- **`max_visits` with `on_max_visits` redirect** — `research` is capped at 3 visits; the `More` that would make a fourth is transparently redirected to `summarize`.
 - **Workflow-level budgets** — `engine.budget` caps total visits, tool calls, and wall time.
 - **Artifacts** — the `findings` artifact uses `mode: append`, so successive `workflow__set_artifact` calls accumulate notes across iterations. The summariser state reads them back via `{{artifacts.findings}}`.
 - **Observability events** — PromptKit emits `workflow.transitioned`, `workflow.max_visits_exceeded`, `workflow.budget_exhausted`, and `workflow.completed` on the event bus, so any listener can observe loop progress and termination.
@@ -15,7 +15,7 @@ Demonstrates, in a single runnable example:
 | Scenario | What it shows |
 |---|---|
 | `loop-converges` | LLM gathers three notes and chooses `Done` on its own. Workflow ends via the normal path: `research → summarize → done`. |
-| `loop-hits-max-visits` | LLM keeps asking for `More` past the cap. On the fourth attempt, the state machine redirects to `summarize` regardless of what the LLM decided. A `workflow.max_visits_exceeded` event fires. |
+| `loop-hits-max-visits` | LLM keeps asking for `More` past the cap. On the `More` that would exceed it, the state machine redirects to `summarize` regardless of what the LLM decided. A `workflow.max_visits_exceeded` event fires. |
 
 ## Run
 
@@ -35,18 +35,22 @@ The example uses a mock provider so no API keys are needed — the canned LLM re
 
 ## What to look for in the report
 
+Both scenarios have a **single** user turn. The whole loop — every research
+iteration, the handoff to `summarize` and the completion into `done` — runs
+inside it, driven by the agent's own transitions rather than by scripted turns.
+
 **`loop-converges`**
 
-- Three successive `research → research` transitions, each with `workflow__set_artifact` appending a note.
+- Two `research → research` transitions on `More`, each with `workflow__set_artifact` appending a note (three notes in total, counting the one written alongside `Done`).
 - A `research → summarize` transition on `Done`.
 - A `summarize → done` transition on `Complete`, followed by `workflow.completed`.
 
 **`loop-hits-max-visits`**
 
-- Three `research → research` transitions.
-- A fourth transition attempt that appears as `research → summarize` with `redirected: true` and `original_target: research`.
+- Two `research → research` transitions on `More`.
+- A third `More` that appears as `research → summarize` with `redirected: true` and `original_target: research` — `research` has now been visited three times, which is its cap.
 - A `workflow.max_visits_exceeded` event alongside the redirect.
-- Eventual `workflow.completed`.
+- A `summarize → done` transition on `Complete`, then `workflow.completed`.
 
 ## Anatomy
 
