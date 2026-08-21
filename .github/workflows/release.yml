@@ -8,6 +8,11 @@ on:
 
 permissions:
   contents: write   # create GitHub releases
+  # The embedded web UI pulls @altairalabs/atlas from GitHub Packages (private),
+  # and goreleaser's before-hook installs it. An explicit permissions block sets
+  # every unlisted scope to none, so without this the install 401s and the
+  # release fails before building anything — which is how v1.5.7 failed.
+  packages: read
 
 jobs:
   goreleaser:
@@ -38,6 +43,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Homebrew cask push to AltairaLabs/homebrew-tap
           HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+          # goreleaser's before-hook runs `pnpm install` for the embedded web UI,
+          # which resolves @altairalabs/atlas from GitHub Packages. The frontend's
+          # .npmrc reads ${NODE_AUTH_TOKEN}; unset, pnpm sends no auth header and
+          # the fetch 401s. Same token expression the CI workflow already uses.
+          NODE_AUTH_TOKEN: ${{ secrets.ATLAS_PACKAGES_TOKEN || secrets.GITHUB_TOKEN }}
 
   npm-publish:
     name: npm publish
