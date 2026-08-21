@@ -151,7 +151,7 @@ func TestWorkflowTransitionExecutor_TerminalKeepsToolForSiblingRuns(t *testing.T
 	exec := newWorkflowTransitionExecutor(spec, registry)
 
 	// Register the transition tool for the entry state, mirroring initWorkflow.
-	registerTransitionTool(registry, spec.States[spec.Entry])
+	registerTransitionToolForSpec(registry, spec)
 	require.NotNil(t, registry.Get(workflow.TransitionToolName),
 		"transition tool should be registered after init")
 
@@ -170,38 +170,40 @@ func TestWorkflowTransitionExecutor_TerminalKeepsToolForSiblingRuns(t *testing.T
 		"reaching a terminal state must not unregister the shared transition tool")
 }
 
-// TestRegisterRunResetsTransitionToolForStartState guards the fix for a second
-// run in the same engine inheriting the prior run's final-state transition
-// events. The transition tool descriptor lives in a shared registry, and
-// applyPostCommit walks its allowed-event enum forward as the workflow advances.
-// Registering a new run must reset the descriptor to that run's START state's
-// events — otherwise the second run's entry-state event ("More" in the
-// workflow-agent-loops example) is rejected at argument validation before its
-// fresh per-run state machine ever runs, so every run after the first fails.
-func TestRegisterRunResetsTransitionToolForStartState(t *testing.T) {
+// TestSecondRunIsUnaffectedByFirstRunsTransitions guards issue #1480: a second
+// run in the same engine used to inherit the first run's final-state transition
+// events and fail at argument validation before its own state machine ran.
+//
+// That was originally fixed by resetting the shared descriptor whenever a run
+// registered — patching the symptom of a shared registry holding per-run state.
+// The descriptor is now written once for the whole spec and never narrowed, so
+// there is nothing left to inherit. The guarantee is unchanged and the test
+// asserts it directly: run 1 advances to a state with different events, and
+// run 2 still transitions on its own entry event.
+func TestSecondRunIsUnaffectedByFirstRunsTransitions(t *testing.T) {
 	spec := testWorkflowSpec() // entry "intake" (Escalate, Resolve); "specialist" (Resolve)
 	registry := tools.NewRegistry()
 	exec := newWorkflowTransitionExecutor(spec, registry)
+	registerTransitionToolForSpec(registry, spec)
 
-	// Mirror initWorkflow: the descriptor starts on the entry state's events.
-	registerTransitionTool(registry, spec.States[spec.Entry])
-	require.True(t, toolAdvertisesEvent(registry, "Escalate"), "entry state allows Escalate")
-
-	// Run 1 advances to "specialist", whose only event is Resolve — after the
-	// commit the shared descriptor no longer advertises the entry's Escalate.
+	// Run 1 advances to "specialist", whose only event is Resolve.
 	exec.RegisterRun("run1", &arenaconfig.Scenario{ID: "run1", TaskType: "intake"})
 	args, _ := json.Marshal(map[string]string{"event": "Escalate"})
 	_, err := exec.Execute(withWorkflowScenarioID(context.Background(), "run1"), nil, args)
 	require.NoError(t, err)
 	require.NoError(t, exec.CommitPendingTransition("run1", nil))
-	require.False(t, toolAdvertisesEvent(registry, "Escalate"),
-		"after advancing to specialist the descriptor should only allow Resolve")
 
-	// Run 2 registers at the entry state; the descriptor must be reset so the
-	// entry event is valid again (the bug: it stayed on specialist's events).
-	exec.RegisterRun("run2", &arenaconfig.Scenario{ID: "run2", TaskType: "intake"})
+	// The descriptor is unchanged by that: it describes the spec, not any run.
 	assert.True(t, toolAdvertisesEvent(registry, "Escalate"),
-		"registering a new run must reset the transition tool to its start state's events")
+		"a run advancing must not narrow the shared descriptor")
+
+	// Run 2 starts at the entry and drives the entry's own event. Under the old
+	// behaviour this failed, because the descriptor still held specialist's set.
+	exec.RegisterRun("run2", &arenaconfig.Scenario{ID: "run2", TaskType: "intake"})
+	_, err = exec.Execute(withWorkflowScenarioID(context.Background(), "run2"), nil, args)
+	require.NoError(t, err, "run 2 must be able to use its own entry event")
+	require.NoError(t, exec.CommitPendingTransition("run2", nil))
+	assert.Equal(t, "specialist", exec.StateMachine("run2").CurrentState())
 }
 
 func TestWorkflowTransitionExecutor_ConcurrentRuns(t *testing.T) {
@@ -276,27 +278,34 @@ func TestWorkflowTransitionExecutor_MaxVisitsRedirect(t *testing.T) {
 	assert.Contains(t, lastTransition["redirect_reason"].(string), "max_visits")
 }
 
-func TestRegisterTransitionTool(t *testing.T) {
+func TestRegisterTransitionToolForSpec(t *testing.T) {
 	registry := tools.NewRegistry()
-	state := &workflow.State{
-		OnEvent: map[string]string{"Escalate": "specialist", "Resolve": "closed"},
-	}
+	spec := &workflow.Spec{States: map[string]*workflow.State{
+		"triage":     {OnEvent: map[string]string{"Escalate": "specialist"}},
+		"specialist": {OnEvent: map[string]string{"Resolve": "closed"}},
+		"closed":     {}, // terminal
+	}}
 
-	registerTransitionTool(registry, state)
+	registerTransitionToolForSpec(registry, spec)
 
 	tool := registry.Get(workflow.TransitionToolName)
 	require.NotNil(t, tool)
 	assert.Equal(t, workflow.TransitionExecutorMode, tool.Mode)
+
+	// The enum is the union across every state, not any one state's view. A
+	// per-state enum is what made the shared registry carry per-run state.
+	assert.Contains(t, string(tool.InputSchema), "Escalate")
+	assert.Contains(t, string(tool.InputSchema), "Resolve")
 }
 
-func TestRegisterTransitionTool_TerminalState(t *testing.T) {
+func TestRegisterTransitionToolForSpec_NoEvents(t *testing.T) {
 	registry := tools.NewRegistry()
-	state := &workflow.State{} // no events = terminal
+	spec := &workflow.Spec{States: map[string]*workflow.State{"only": {}}}
 
-	registerTransitionTool(registry, state)
+	registerTransitionToolForSpec(registry, spec)
 
-	tool := registry.Get(workflow.TransitionToolName)
-	assert.Nil(t, tool)
+	assert.Nil(t, registry.Get(workflow.TransitionToolName),
+		"a spec with no transitions should not register the tool at all")
 }
 
 type mockSkillFilterer struct {
