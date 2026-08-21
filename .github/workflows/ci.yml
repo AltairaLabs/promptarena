@@ -120,10 +120,19 @@ jobs:
           node-version: '20'
           cache: 'pnpm'
           cache-dependency-path: arena/web/frontend/pnpm-lock.yaml
+      # pnpm 10 refuses to expand ${NODE_AUTH_TOKEN} in a *project* .npmrc: that
+      # file is committed, so a hostile registry line in it could exfiltrate the
+      # secret. It still honours credentials from a trusted source, and the
+      # user-level ~/.npmrc is one. Without this pnpm sends no auth header at
+      # all and GitHub Packages answers 401 — which is what killed v1.5.7 and
+      # every dry run since. The project .npmrc still maps the @altairalabs
+      # scope to the registry; only the credential has to move.
+      - name: Authenticate to GitHub Packages
+        run: printf '//npm.pkg.github.com/:_authToken=%s\n' "$NODE_AUTH_TOKEN" >> ~/.npmrc
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
       - name: Install frontend dependencies
         run: pnpm --dir arena/web/frontend install --frozen-lockfile
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.ATLAS_PACKAGES_TOKEN || secrets.GITHUB_TOKEN }}
       - name: Build frontend
         run: pnpm --dir arena/web/frontend build
       - name: Test frontend (with coverage)
