@@ -284,3 +284,20 @@ jobs:
           run guardrails-test   --config config.arena.yaml --ci --formats json
           run eval-test         --config config.arena.yaml --ci --formats json
           run document-analysis --config config.arena.yaml --ci --formats json
+
+          # Workflow examples. These were previously schema-validated only, so
+          # nothing executed them and a broken one could land on main — which is
+          # how workflow-skills sat with every skill__activate refused, and how
+          # the agent-loops mocks kept emitting an event invalid for the state
+          # they had reached. They exercise the most intricate machinery in the
+          # repo (state handoff mid-turn, per-state skill filtering, max-visits
+          # redirects), so they are the last examples that should go unrun.
+          #
+          # No --mock-provider: each declares mock_config on its provider, and
+          # the flag replaces the assistant content wholesale, which would
+          # discard the scripted tool calls the workflows are driven by.
+          run voice-ivr                 --config config.arena.yaml --ci --formats json
+          run workflow-agent-loops      --config config.arena.yaml --ci --formats json
+          run workflow-order-processing --config config.arena.yaml --ci --formats json
+          run workflow-skills           --config config.arena.yaml --ci --formats json
+          run workflow-support          --config config.arena.yaml --ci --formats json
