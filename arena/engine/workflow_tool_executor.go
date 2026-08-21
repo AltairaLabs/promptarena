@@ -109,17 +109,6 @@ func (e *workflowTransitionExecutor) RegisterRunAtState(
 	}
 	e.runs[runID] = run
 
-	// Reset the shared transition-tool descriptor to THIS run's start state's
-	// events. The descriptor lives in the shared registry and applyPostCommit
-	// mutates its allowed-event enum as the workflow advances; without resetting
-	// it at registration, a later run in the same engine (two "Run the field"
-	// dispatches in one serve session) inherits the prior run's final-state
-	// events. The entry state's event ("More" here) is then rejected at argument
-	// validation ("event must be one of ...") before the per-run executor ever
-	// runs, so the second run fails even though its state machine is fresh.
-	if startStateSpec := e.wfSpec.States[startState]; startStateSpec != nil {
-		registerTransitionTool(e.registry, startStateSpec)
-	}
 	transExec.SetOnCommit(func(tr *workflow.TransitionResult) {
 		e.applyPostCommit(runID, tr)
 	})
@@ -243,13 +232,6 @@ func (e *workflowTransitionExecutor) applyPostCommit(
 		if run.scenario != nil {
 			run.scenario.TaskType = newState.PromptTask
 		}
-		// Re-register the transition tool for the new state's events, but never
-		// unregister it: e.registry is shared across every scenario run, so the
-		// unregister that runtime's RegisterForState performs on terminal-state
-		// entry would strip workflow__transition from sibling runs that still
-		// need it (issue #1480). registerTransitionTool no-ops on terminal
-		// states, leaving the tool registered for other runs.
-		registerTransitionTool(e.registry, newState)
 		run.skillFilter = newState.Skills
 	}
 }
@@ -360,17 +342,38 @@ func (p *workflowRunMetadataProvider) WorkflowMetadata() map[string]any {
 	return p.exec.RunMetadata(p.scenarioID)
 }
 
-// registerTransitionTool registers the workflow__transition tool with the executor
-// routing mode set so the registry dispatches to workflowTransitionExecutor.
-func registerTransitionTool(registry *tools.Registry, state *workflow.State) {
-	if registry == nil || state == nil || state.Terminal || len(state.OnEvent) == 0 {
+// registerTransitionToolForSpec registers workflow__transition once, with the
+// union of every event the whole spec declares. It is called exactly once, at
+// engine init, and nothing re-registers the descriptor afterwards.
+//
+// The tool registry is shared by every concurrent run, so it must describe what
+// the runtime CAN do and never what one run is currently doing. Which of those
+// tools a given turn MAY use is decided per turn from the state's allowed-tool
+// list, and which events are legal right now is decided by that run's own state
+// machine inside Execute. Narrowing this descriptor per transition put per-run
+// state into shared config: two runs in different states overwrote each other's
+// event enum. Issue #1480 was the same bug in an earlier form.
+//
+// Correctness never depended on the enum. It duplicated a check the state
+// machine already performs, and by rejecting arguments before Execute it also
+// hid genuinely invalid events in scenario mocks rather than surfacing them.
+func registerTransitionToolForSpec(registry *tools.Registry, spec *workflow.Spec) {
+	if registry == nil || spec == nil {
 		return
 	}
-	if state.Orchestration == workflow.OrchestrationExternal {
+	allEvents := map[string]string{}
+	for _, st := range spec.States {
+		if st == nil {
+			continue
+		}
+		for event, target := range st.OnEvent {
+			allEvents[event] = target
+		}
+	}
+	if len(allEvents) == 0 {
 		return
 	}
-	evts := workflow.SortedEvents(state.OnEvent)
-	desc := workflow.BuildTransitionToolDescriptor(evts)
+	desc := workflow.BuildTransitionToolDescriptor(workflow.SortedEvents(allEvents))
 	desc.Mode = workflow.TransitionExecutorMode
 	_ = registry.Register(desc)
 }

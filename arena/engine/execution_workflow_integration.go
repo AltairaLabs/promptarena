@@ -97,10 +97,10 @@ func (e *Engine) initWorkflow() error {
 	transExec := newWorkflowTransitionExecutor(spec, e.toolRegistry)
 	e.toolRegistry.RegisterExecutor(transExec)
 
-	// Register the transition tool descriptor for the entry state
-	if entryState := spec.States[spec.Entry]; entryState != nil {
-		registerTransitionTool(e.toolRegistry, entryState)
-	}
+	// Register the transition tool once, for the whole spec. This is the only
+	// place the descriptor is written; see registerTransitionToolForSpec for why
+	// nothing may narrow it per run.
+	registerTransitionToolForSpec(e.toolRegistry, spec)
 
 	// Register the per-run artifact executor + workflow__set_artifact tool when
 	// any state declares artifacts. The executor dispatches to the per-run
