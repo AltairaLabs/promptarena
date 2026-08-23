@@ -216,3 +216,42 @@ jobs:
           MAJOR="${VERSION%%.*}"   # v1.5.8 -> v1
           git tag -fa "$MAJOR" -m "Release $VERSION"
           git push origin "$MAJOR" --force
+
+  # The adapters depend on this module for the deploy contract — deploy and
+  # deploy/adaptersdk moved here from PromptKit. Each one listens for a
+  # promptarena-release dispatch and opens its own bump PR.
+  #
+  # Without this the listener on the far side never fires: a new adaptersdk
+  # release reaches no adapter, and the contract they implement drifts from the
+  # one they compile against until somebody notices by hand.
+  #
+  # continue-on-error throughout: a release is already published by the time
+  # this runs, so failing to notify one adapter must not fail the release. The
+  # bump can always be raised manually.
+  notify-adapters:
+    name: Notify the deploy adapters
+    needs: major-tag
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        repo:
+          - promptarena-deploy-vertex
+          - promptarena-deploy-foundry
+          - PromptArena-deploy-omnia
+          - promptarena-deploy-agentcore
+    steps:
+      - name: Dispatch to ${{ matrix.repo }}
+        continue-on-error: true
+        env:
+          VERSION: ${{ inputs.version }}
+          REPO: ${{ matrix.repo }}
+          # A cross-repository dispatch cannot use GITHUB_TOKEN: it is scoped to
+          # this repository. Same token PromptKit uses for the same job.
+          GH_TOKEN: ${{ secrets.DOWNSTREAM_DISPATCH_TOKEN }}
+        run: |
+          echo "Notifying $REPO of promptarena/$VERSION..."
+          gh api "repos/AltairaLabs/$REPO/dispatches" \
+            -f event_type=promptarena-release \
+            -f "client_payload[version]=$VERSION"
+          echo "✓ Dispatched to $REPO"
