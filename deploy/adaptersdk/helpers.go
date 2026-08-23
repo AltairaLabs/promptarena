@@ -38,7 +38,20 @@ func NewProgressReporter(callback deploy.ApplyCallback) *ProgressReporter {
 
 // Progress emits a progress event with a human-readable message and a
 // completion percentage (0.0 to 1.0).
+//
+// A nil reporter or a reporter with no callback emits nothing and returns nil.
+// Apply's callback is optional — every adapter's own tests call Apply(ctx, req,
+// nil) — so a reporter built around a nil callback is a normal state, not a
+// programming error. Dereferencing it panicked mid-apply, after resources had
+// already been created, which is the worst possible moment: the caller gets a
+// stack trace instead of the state telling them what exists.
+//
+// Adapters worked around this by only constructing a reporter when the callback
+// was non-nil. That is easy to forget, and one of them did.
 func (pr *ProgressReporter) Progress(message string, pct float64) error {
+	if pr == nil || pr.callback == nil {
+		return nil
+	}
 	return pr.callback(&deploy.ApplyEvent{
 		Type:    "progress",
 		Message: formatProgress(message, pct),
@@ -47,6 +60,9 @@ func (pr *ProgressReporter) Progress(message string, pct float64) error {
 
 // Resource emits a resource result event.
 func (pr *ProgressReporter) Resource(result *deploy.ResourceResult) error {
+	if pr == nil || pr.callback == nil {
+		return nil
+	}
 	return pr.callback(&deploy.ApplyEvent{
 		Type:     "resource",
 		Resource: result,
@@ -55,6 +71,9 @@ func (pr *ProgressReporter) Resource(result *deploy.ResourceResult) error {
 
 // Error emits an error event.
 func (pr *ProgressReporter) Error(err error) error {
+	if pr == nil || pr.callback == nil {
+		return nil
+	}
 	return pr.callback(&deploy.ApplyEvent{
 		Type:    "error",
 		Message: err.Error(),

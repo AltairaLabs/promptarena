@@ -206,3 +206,37 @@ func TestLink_EmptyURLYieldsNoLink(t *testing.T) {
 		t.Errorf("Link = %+v", got)
 	}
 }
+
+// A reporter around a nil callback is a normal state: Apply's callback is
+// optional and every adapter's integration suite passes nil. Dereferencing it
+// panicked mid-apply, after resources had been created — the caller got a stack
+// trace instead of the state saying what already exists.
+func TestProgressReporterToleratesANilCallback(t *testing.T) {
+	pr := NewProgressReporter(nil)
+
+	if err := pr.Progress("working", 0.5); err != nil {
+		t.Errorf("Progress = %v, want nil", err)
+	}
+	if err := pr.Resource(&deploy.ResourceResult{Type: "agent", Name: "a"}); err != nil {
+		t.Errorf("Resource = %v, want nil", err)
+	}
+	if err := pr.Error(errors.New("boom")); err != nil {
+		t.Errorf("Error = %v, want nil", err)
+	}
+}
+
+// A nil reporter is the other half of the same story: adapters that guard by
+// leaving the pointer nil pass it straight through to these methods.
+func TestProgressReporterToleratesANilReceiver(t *testing.T) {
+	var pr *ProgressReporter
+
+	if err := pr.Progress("working", 0.5); err != nil {
+		t.Errorf("Progress = %v, want nil", err)
+	}
+	if err := pr.Resource(&deploy.ResourceResult{Type: "agent", Name: "a"}); err != nil {
+		t.Errorf("Resource = %v, want nil", err)
+	}
+	if err := pr.Error(errors.New("boom")); err != nil {
+		t.Errorf("Error = %v, want nil", err)
+	}
+}
