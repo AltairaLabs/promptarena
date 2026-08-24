@@ -10,7 +10,7 @@ require (
 	github.com/charmbracelet/glamour v1.0.0
 	github.com/charmbracelet/lipgloss v1.1.1-0.20250404203927-76690c660834
 	github.com/charmbracelet/x/exp/teatest v0.0.0-20260621010513-945fab64fd3e
-	github.com/ebitengine/oto/v3 v3.4.0
+	github.com/ebitengine/oto/v3 v3.4.1
 	github.com/ebitengine/purego v0.10.2
 	github.com/google/uuid v1.6.0
 	github.com/invopop/jsonschema v0.14.0
