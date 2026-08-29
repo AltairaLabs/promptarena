@@ -155,9 +155,21 @@ func compilePack(cfg *arenaconfig.Config, configFile string, options compileOpti
 
 	// CompileFromRegistryWithOptions leaves pack.Metadata unset — it has no
 	// CompileOption for it — so the arena config's pack_metadata block is the
-	// only authoring route to the pack's domain/language/tags/governance.
+	// primary authoring route to the pack's domain/language/tags/governance.
 	if cfg.PackMetadata != nil {
 		pack.Metadata = cfg.PackMetadata
+	}
+
+	// Fall back to metadata from a loaded prompt config's spec.metadata when
+	// no arena-level pack_metadata block was authored, so a per-prompt
+	// spec.metadata (#135) is not silently dropped.
+	if pack.Metadata == nil {
+		for _, promptData := range cfg.LoadedPromptConfigs {
+			if promptConfig, ok := promptData.Config.(*prompt.Config); ok && promptConfig != nil && promptConfig.Spec.Metadata != nil {
+				pack.Metadata = promptConfig.Spec.Metadata
+				break
+			}
+		}
 	}
 
 	return pack, warnings, nil
