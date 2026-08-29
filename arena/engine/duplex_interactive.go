@@ -392,8 +392,8 @@ func (de *DuplexConversationExecutor) buildVADComposedPipeline(
 	if req.StateStoreConfig != nil && req.StateStoreConfig.Store != nil {
 		storeConfig := de.buildPipelineStateStoreConfig(req)
 		saveStage := arenastages.NewArenaStateStoreSaveStageWithTurnState(storeConfig, turnState)
-		if emitter != nil {
-			saveStage = saveStage.WithEmitter(emitter)
+		if req.EventBus != nil {
+			saveStage = saveStage.WithLiveMessages(req.EventBus, req.RunID, req.RunID, req.ConversationID)
 		}
 		stages = append(stages, saveStage)
 	}

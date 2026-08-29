@@ -1,0 +1,29 @@
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Provider
+
+metadata:
+  name: gemini-3-flash
+
+spec:
+  id: gemini-3-flash
+  type: gemini
+  model: gemini-3.7-flash
+  capabilities:
+    - text
+    - streaming
+    # Required for the reasoning-tools scenario. Without it the tools are
+    # described in the prompt but never sent as native function definitions,
+    # and the model invents both the calls AND their results in plain text.
+    - tools
+  defaults:
+    temperature: 0.0
+    max_tokens: 2048
+    top_p: 1.0
+  # Gemini 3 controls reasoning depth with thinking_level. This is NOT
+  # interchangeable with Gemini 2.5's thinking_budget: sending thinking_budget
+  # to a Gemini 3 model returns no thought summaries at all (the run still
+  # passes, reasoning is just silently empty), and thinking_level is a hard 400
+  # on Gemini 2.5. See PromptKit issue #1843.
+  additional_config:
+    include_thoughts: true    # return thought summaries
+    thinking_level: high      # Gemini 3 reasoning depth

@@ -127,7 +127,8 @@ spec:
     # LLM parameters
     temperature: 0.7                # Default: 0.7
     max_tokens: 1500                # Default: varies by provider
-    seed: 42                        # Optional: reproducibility seed
+    seed: 42                        # Optional: reproducibility seed.
+                                    # Omit (or 0) to send no seed at all.
     # Execution settings
     concurrency: 3                  # Default: 1 (number of parallel tests)
     run_timeout: 5m                 # Default: 5m (per run)
@@ -455,9 +456,24 @@ spec:
         max_sentences: 8
         message: "Maximum 8 sentences"
 
+  # Optional: tools this prompt is allowed to call, by name.
+  allowed_tools:
+    - get_customer_info
+    - create_support_ticket
+
 ```
 
 ### Field Descriptions
+
+#### `allowed_tools`
+
+The allowlist of tools this prompt may call, naming tools registered under the arena config's `spec.tools` (or, for MCP, `mcp__<server>__<tool>`).
+
+Registering a tool with the arena makes it available; `allowed_tools` is what grants a particular prompt access to it. **A prompt with no `allowed_tools` gets no tools** — that is the intended behaviour, so each prompt reaches only the tools you name.
+
+Keep the allowlist in step with the prompt text. If `system_template` tells the model it can look things up but the allowlist is empty, the model has been given an instruction it cannot carry out, and will typically improvise — writing plausible-looking tool calls and results into its reply as ordinary text. The transcript can look convincing, so confirm there is a real `tool` role in the messages rather than tool-shaped text inside `content`.
+
+The provider must also permit tools. If it declares a `capabilities` list, that list must include `tools`; see [`capabilities`](#capabilities).
 
 #### `task_type`
 
@@ -786,7 +802,42 @@ spec:
     input_per_1k: 0.00015           # Cost per 1K input tokens
     output_per_1k: 0.0006           # Cost per 1K output tokens
     cached_per_1k: 0.00001          # Cost per 1K cached tokens (if supported)
+
+  # Optional: Declared capabilities. See the note below — this list is
+  # exclusive, so omitting it is usually what you want.
+  capabilities:
+    - text
+    - streaming
+    - tools
+
+  # Optional: Parameters this model refuses. Withheld from the request
+  # instead of being sent and rejected.
+  unsupported_params:
+    - top_p
+
+  # Optional: Provider-specific settings passed through to the SDK,
+  # e.g. reasoning/thinking controls.
+  additional_config:
+    reasoning_effort: high
 ```
+
+#### `capabilities`
+
+Declares what the provider supports: `text`, `streaming`, `tools`, `vision`, `audio`, `video`, `json`, `documents`.
+
+**The list is exclusive.** Omit the block entirely — as most examples in this repo do — and everything is permitted. Declare it and you opt out of everything you don't name, so a provider listing only `text` and `streaming` will not be offered tools, and tool calling silently stops working for it.
+
+Declare it when you deliberately want to constrain a provider, or to make a scenario's `required_capabilities` gate meaningful. Otherwise leave it out.
+
+#### `unsupported_params`
+
+Parameters the model rejects, withheld from the request rather than sent and refused. Use it when a model 400s on a parameter the schema still requires you to supply — `top_p` on `gpt-5.2`, for example.
+
+Honoured for sampling parameters (`temperature`, `top_p`) on both the Chat Completions and Responses paths. It does **not** currently suppress `seed` on the OpenAI Responses API ([PromptKit #1870](https://github.com/AltairaLabs/PromptKit/issues/1870)).
+
+#### `additional_config`
+
+Free-form provider-specific settings. This is where thinking and reasoning controls live — `thinking_level`, `thinking_budget`, `reasoning_effort`, `api_mode`. Each provider names these differently and a wrong key usually yields an empty trace rather than an error; see [Enable Model Reasoning](/arena/how-to/providers/enable-reasoning/).
 
 ### Provider Groups and Judges
 
@@ -1392,7 +1443,7 @@ spec:
   # LLM defaults for this persona
   defaults:                          # Optional: Generation parameters
     temperature: 0.8                 # Sampling temperature (default: 0.7)
-    seed: 42                         # Reproducibility seed
+    seed: 42                         # Reproducibility seed (omit/0 sends none)
 ```
 
 ### Turn-Level Control

@@ -3,7 +3,7 @@
 // nanosecond latencies, and checks that live in meta.assertions / conversation_
 // assertions rather than a single field. Covers the historical path; the live
 // SSE camelCase bridge and derived trace events land in later WUs.
-import type { AtlasMessage, AtlasCheck, AtlasContentPart, AtlasToolCall, AtlasCheckViolation, ConstellationNode, ConstellationEdge } from "@altairalabs/atlas";
+import type { AtlasMessage, AtlasReasoning, AtlasCheck, AtlasContentPart, AtlasToolCall, AtlasCheckViolation, ConstellationNode, ConstellationEdge } from "@altairalabs/atlas";
 import type { ActiveRun, Message, RunResult, ContentPart, EvalResult, ValidationResult, WorkflowGraph } from "@/types";
 
 const ROLES = new Set(["user", "assistant", "system", "tool"]);
@@ -235,6 +235,16 @@ function pruneUndefined<T>(value: T): T {
   return value;
 }
 
+// reasoningOf maps a turn's thinking onto the Atlas message so MessageBubble
+// renders its ReasoningDisclosure. Returns undefined for turns without a trace
+// — an empty trace is normal (a one-step answer has nothing to summarise), and
+// pruneUndefined then drops the key rather than showing an empty disclosure.
+function reasoningOf(m: Message): AtlasReasoning | undefined {
+  const r = m.reasoning;
+  if (!r || (!r.text && !r.redacted)) return undefined;
+  return { text: r.text, redacted: r.redacted };
+}
+
 export function adaptMessage(m: Message, i: number, run: RunResult, baseMs: number): AtlasMessage {
   const checks = messageChecks(m, i, run);
   return pruneUndefined({
@@ -245,6 +255,7 @@ export function adaptMessage(m: Message, i: number, run: RunResult, baseMs: numb
     parts: partsOf(m),
     toolCalls: toolCallsOf(m),
     metrics: metricsOf(m),
+    reasoning: reasoningOf(m),
     checks: checks.length ? checks : undefined,
     error: run.Error && i === run.Messages.length - 1 ? { message: run.Error } : undefined,
     // Carry Arena's meta through so the Inspector (Raw tab + future custom tabs)
@@ -268,6 +279,7 @@ export function adaptLiveMessages(messages: Message[]): AtlasMessage[] {
         parts: partsOf(m),
         toolCalls: toolCallsOf(m),
         metrics: metricsOf(m),
+        reasoning: reasoningOf(m),
         meta: m.meta,
       }),
     ),

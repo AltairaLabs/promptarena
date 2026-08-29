@@ -762,7 +762,7 @@ func TestArenaStateStoreSaveStage_LiveIndexSystemInTurn1Stream(t *testing.T) {
 	s := NewArenaStateStoreSaveStageWithTurnState(cfg, turnState)
 
 	bus := &syncBus{}
-	s = s.WithEmitter(events.NewEmitter(bus, "exec", "sess", "live-sys-in-stream"))
+	s = s.WithLiveMessages(bus, "exec", "sess", "live-sys-in-stream")
 
 	// Provider forwards a system element first, then user + assistant.
 	inputs := []stage.StreamElement{
@@ -792,7 +792,7 @@ func TestArenaStateStoreSaveStage_LiveIndexSyntheticSystemTurn1(t *testing.T) {
 	s := NewArenaStateStoreSaveStageWithTurnState(cfg, turnState)
 
 	bus := &syncBus{}
-	s = s.WithEmitter(events.NewEmitter(bus, "exec", "sess", "live-synthetic-sys"))
+	s = s.WithLiveMessages(bus, "exec", "sess", "live-synthetic-sys")
 
 	inputs := []stage.StreamElement{
 		newTestMessageElement("user", "Hello"),
@@ -1422,7 +1422,7 @@ func TestArenaStateStoreSaveStage_LiveIndexToolCallRound(t *testing.T) {
 	s := NewArenaStateStoreSaveStageWithTurnState(cfg, turnState)
 
 	bus := &syncBus{}
-	s = s.WithEmitter(events.NewEmitter(bus, "exec", "sess", "live-tool-round"))
+	s = s.WithLiveMessages(bus, "exec", "sess", "live-tool-round")
 
 	// user turn
 	userElem := stage.NewMessageElement(&types.Message{Role: "user", Content: "run the tool"})

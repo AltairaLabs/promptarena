@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/AltairaLabs/PromptKit/runtime/events"
+	"github.com/AltairaLabs/PromptKit/runtime/types"
 )
 
 func TestAdapter_RegisterAndBroadcast(t *testing.T) {
@@ -700,5 +701,119 @@ func TestAdapter_DropOnFullBuffer(t *testing.T) {
 done:
 	if count != clientBufferSize {
 		t.Errorf("received %d events, want %d (buffer size)", count, clientBufferSize)
+	}
+}
+
+// TestAdapter_MapMessageCreatedReasoning pins that a turn's thinking reaches
+// the browser. Reasoning lives on MessageCreatedData.Reasoning, whose upstream
+// json tag is "-", so it only crosses the wire because the adapter maps it
+// explicitly — a silent regression if that mapping is dropped, since the run
+// still streams and only the disclosure goes missing.
+func TestAdapter_MapMessageCreatedReasoning(t *testing.T) {
+	adapter := NewEventAdapter()
+	ch := adapter.Register()
+
+	adapter.HandleEvent(&events.Event{
+		Type:      events.EventMessageCreated,
+		Timestamp: time.Now(),
+		Data: &events.MessageCreatedData{
+			Role:      "assistant",
+			Content:   "ANSWER: 208",
+			Index:     2,
+			Reasoning: &types.ReasoningTrace{Text: "D=5, C=15, B=11, A=22"},
+		},
+	})
+
+	select {
+	case msg := <-ch:
+		var got SSEEvent
+		if err := json.Unmarshal(msg, &got); err != nil {
+			t.Fatalf("unmarshal: %v", err)
+		}
+		data, ok := got.Data.(map[string]interface{})
+		if !ok {
+			t.Fatalf("data is %T, want map", got.Data)
+		}
+		reasoning, ok := data["reasoning"].(map[string]interface{})
+		if !ok {
+			t.Fatalf("reasoning is %T, want map — the trace never reached the client", data["reasoning"])
+		}
+		if reasoning["text"] != "D=5, C=15, B=11, A=22" {
+			t.Errorf("reasoning text = %v, want the emitted trace", reasoning["text"])
+		}
+	case <-time.After(time.Second):
+		t.Fatal("timed out")
+	}
+}
+
+// TestWithReasoning covers the shaping rules: a turn with no reasoning leaves
+// the key absent rather than sending null or an empty object (either would have
+// the client render an empty disclosure), and opaque provider entries never
+// cross the wire.
+func TestWithReasoning(t *testing.T) {
+	for _, tc := range []struct {
+		name  string
+		trace *types.ReasoningTrace
+	}{
+		{"nil trace", nil},
+		{"empty trace", &types.ReasoningTrace{}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got := withReasoning(map[string]interface{}{"role": "assistant"}, tc.trace)
+			if _, present := got["reasoning"]; present {
+				t.Errorf("reasoning key present for %s, want absent", tc.name)
+			}
+		})
+	}
+
+	got := withReasoning(map[string]interface{}{}, &types.ReasoningTrace{
+		Text:     "thinking",
+		Redacted: true,
+		Opaque:   []types.OpaqueReasoning{{Provider: "claude", Kind: "thinking_signature", Data: "secret"}},
+	})
+	reasoning, ok := got["reasoning"].(map[string]interface{})
+	if !ok {
+		t.Fatalf("reasoning is %T, want map", got["reasoning"])
+	}
+	if reasoning["text"] != "thinking" || reasoning["redacted"] != true {
+		t.Errorf("payload = %v, want text and redacted carried", reasoning)
+	}
+	if _, leaked := reasoning["opaque"]; leaked {
+		t.Error("opaque reasoning must not cross the wire")
+	}
+}
+
+// TestDisplayMessage_StripsOpaqueReasoning pins that the message.full route
+// agrees with message.created about what reaches the browser. Opaque entries
+// are provider signatures and encrypted blocks kept for intra-turn round-trip;
+// they are never displayed and measured larger than the text they accompany, so
+// shipping them to every SSE client is pure waste. The stored message must not
+// be mutated in the process — it is still needed for the next provider call.
+func TestDisplayMessage_StripsOpaqueReasoning(t *testing.T) {
+	stored := &types.Message{
+		Role:    "assistant",
+		Content: "ANSWER: 208",
+		Reasoning: &types.ReasoningTrace{
+			Text:     "D=5, C=15",
+			Redacted: true,
+			Opaque:   []types.OpaqueReasoning{{Provider: "claude", Kind: "thinking_signature", Data: "sig"}},
+		},
+	}
+
+	got := displayMessage(stored)
+	if len(got.Reasoning.Opaque) != 0 {
+		t.Errorf("opaque entries = %d, want 0 on the display path", len(got.Reasoning.Opaque))
+	}
+	if got.Reasoning.Text != "D=5, C=15" || !got.Reasoning.Redacted {
+		t.Errorf("reasoning = %+v, want text and redacted preserved", got.Reasoning)
+	}
+	if len(stored.Reasoning.Opaque) != 1 {
+		t.Error("displayMessage mutated the stored message; the trace is still needed for round-trip")
+	}
+
+	// A message without opaque entries is passed through untouched.
+	plain := &types.Message{Role: "user", Content: "hi"}
+	if displayMessage(plain) != plain {
+		t.Error("message without opaque reasoning should pass through unchanged")
 	}
 }

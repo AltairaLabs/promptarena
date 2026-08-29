@@ -326,7 +326,7 @@ func growSentSet(sent []uint64, n int) []uint64 {
 // hash of the message payload used for per-client change detection. It returns
 // (nil, 0) if the message cannot be marshaled.
 func marshalFullMessage(convID string, index int, msg *types.Message) ([]byte, uint64) {
-	body, err := json.Marshal(msg)
+	body, err := json.Marshal(displayMessage(msg))
 	if err != nil {
 		return nil, 0
 	}
@@ -384,25 +384,25 @@ func (a *EventAdapter) mapEvent(event *events.Event) *SSEEvent {
 			"error":    errorString(data.Error),
 		}
 	case events.MessageCreatedData:
-		sse.Data = map[string]interface{}{
+		sse.Data = withReasoning(map[string]interface{}{
 			"role":       data.Role,
 			"content":    data.Content,
 			jsonKeyIndex: data.Index,
 			"toolCalls":  data.ToolCalls,
 			"toolResult": data.ToolResult,
-		}
+		}, data.Reasoning)
 	case *events.MessageCreatedData:
 		// runtime/events/emitter.go emits a pointer; without this case the
 		// payload was silently dropped (nil data) and the frontend reducer
 		// never aggregated messages into liveRun.messages.
 		if data != nil {
-			sse.Data = map[string]interface{}{
+			sse.Data = withReasoning(map[string]interface{}{
 				"role":       data.Role,
 				"content":    data.Content,
 				jsonKeyIndex: data.Index,
 				"toolCalls":  data.ToolCalls,
 				"toolResult": data.ToolResult,
-			}
+			}, data.Reasoning)
 		}
 	case events.MessageUpdatedData:
 		sse.Data = map[string]interface{}{
@@ -497,4 +497,53 @@ func validationPayload(data *events.ValidationEventData) map[string]interface{} 
 		"enforced":      data.Enforced,
 		"score":         data.Score,
 	}
+}
+
+// withReasoning adds a message's reasoning trace to an SSE payload, leaving the
+// key absent entirely when the turn produced none. Absent rather than null
+// matters: an empty trace is ordinary (a one-step answer has nothing to
+// summarize), and the client renders a disclosure for any reasoning it is
+// handed.
+//
+// Only the displayable text and the redacted flag cross the wire. Opaque
+// entries (provider signatures, encrypted blocks) are deliberately dropped:
+// they exist for intra-turn round-trip, are never displayed, and can be large.
+//
+// ReasoningTrace is carried in-process on MessageCreatedData, whose Reasoning
+// field is `json:"-"` upstream, so it has to be mapped explicitly here rather
+// than riding along with the struct.
+func withReasoning(payload map[string]interface{}, rt *types.ReasoningTrace) map[string]interface{} {
+	if rt == nil || (rt.Text == "" && !rt.Redacted) {
+		return payload
+	}
+	payload["reasoning"] = map[string]interface{}{
+		"text":     rt.Text,
+		"redacted": rt.Redacted,
+	}
+	return payload
+}
+
+// displayMessage returns msg with any opaque reasoning entries removed, so the
+// two routes that feed the same browser message agree on what crosses the wire.
+//
+// message.created maps reasoning field-by-field and carries only text plus the
+// redacted flag. message.full marshals the stored types.Message wholesale, and
+// ReasoningTrace.Opaque serializes with it — provider-native signatures and
+// encrypted blocks that exist for intra-turn round-trip, are never displayed,
+// and in practice run larger than the text they accompany (536-1288 bytes per
+// message against Claude). Without this the display path would ship them to
+// every SSE client.
+//
+// The copy is shallow and only the Reasoning pointer is replaced, so the stored
+// message the caller owns is left untouched.
+func displayMessage(msg *types.Message) *types.Message {
+	if msg == nil || msg.Reasoning == nil || len(msg.Reasoning.Opaque) == 0 {
+		return msg
+	}
+	out := *msg
+	out.Reasoning = &types.ReasoningTrace{
+		Text:     msg.Reasoning.Text,
+		Redacted: msg.Reasoning.Redacted,
+	}
+	return &out
 }

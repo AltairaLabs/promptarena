@@ -3,8 +3,8 @@ module github.com/AltairaLabs/promptarena
 go 1.26.0
 
 require (
-	github.com/AltairaLabs/PromptKit/pkg v1.5.11
-	github.com/AltairaLabs/PromptKit/runtime v1.5.11
+	github.com/AltairaLabs/PromptKit/pkg v1.6.0
+	github.com/AltairaLabs/PromptKit/runtime v1.6.0
 	github.com/charmbracelet/bubbles v1.0.0
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/glamour v1.0.0
@@ -28,14 +28,14 @@ require (
 
 require (
 	cloud.google.com/go/compute/metadata v0.9.0 // indirect
-	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.22.0 // indirect
+	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.23.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.14.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.12.0 // indirect
 	github.com/AzureAD/microsoft-authentication-library-for-go v1.7.2 // indirect
 	github.com/alecthomas/chroma/v2 v2.20.0 // indirect
 	github.com/atotto/clipboard v0.1.4 // indirect
-	github.com/aws/aws-sdk-go-v2 v1.43.5 // indirect
-	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.17 // indirect
+	github.com/aws/aws-sdk-go-v2 v1.43.7 // indirect
+	github.com/aws/aws-sdk-go-v2/aws/protocol/eventstream v1.7.18 // indirect
 	github.com/aws/aws-sdk-go-v2/config v1.32.36 // indirect
 	github.com/aws/aws-sdk-go-v2/credentials v1.19.35 // indirect
 	github.com/aws/aws-sdk-go-v2/feature/ec2/imds v1.18.36 // indirect
@@ -48,7 +48,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/sso v1.33.5 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.38.5 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sts v1.45.5 // indirect
-	github.com/aws/smithy-go v1.27.7 // indirect
+	github.com/aws/smithy-go v1.27.8 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/aymanbagabas/go-udiff v0.3.1 // indirect
 	github.com/aymerick/douceur v0.2.0 // indirect
@@ -98,11 +98,11 @@ require (
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.70.0 // indirect
 	go.opentelemetry.io/contrib/propagators/aws v1.44.0 // indirect
 	go.opentelemetry.io/otel v1.45.0 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.44.0 // indirect
-	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.44.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.45.0 // indirect
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.45.0 // indirect
 	go.opentelemetry.io/otel/metric v1.45.0 // indirect
 	go.opentelemetry.io/otel/sdk v1.45.0 // indirect
-	go.opentelemetry.io/proto/otlp v1.10.0 // indirect
+	go.opentelemetry.io/proto/otlp v1.11.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	go.yaml.in/yaml/v4 v4.0.0-rc.2 // indirect
 	golang.org/x/crypto v0.54.0 // indirect
@@ -110,9 +110,9 @@ require (
 	golang.org/x/oauth2 v0.36.0 // indirect
 	golang.org/x/sync v0.22.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20260526163538-3dc84a4a5aaa // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20260526163538-3dc84a4a5aaa // indirect
-	google.golang.org/grpc v1.81.1 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20260803160001-6ac0973c030d // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20260803160001-6ac0973c030d // indirect
+	google.golang.org/grpc v1.83.0 // indirect
 	google.golang.org/protobuf v1.36.12-0.20260120151049-f2248ac996af // indirect
 	k8s.io/kube-openapi v0.0.0-20260317180543-43fb72c5454a // indirect
 )

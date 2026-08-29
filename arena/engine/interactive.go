@@ -198,13 +198,12 @@ func (s *InteractiveSession) SendUserMessage(
 	ctx context.Context,
 	text string,
 ) (<-chan turnexecutors.MessageStreamChunk, error) {
-	seed := s.engine.config.Defaults.Seed
 	req := turnexecutors.TurnRequest{
 		Provider:       s.provider,
 		Scenario:       s.scenario,
 		Temperature:    float64(s.engine.config.Defaults.Temperature),
 		MaxTokens:      s.engine.config.Defaults.MaxTokens,
-		Seed:           &seed,
+		Seed:           seedOrNil(s.engine.config.Defaults.Seed),
 		PromptRegistry: s.engine.promptRegistry,
 		TaskType:       s.taskType,
 		PromptVars:     s.promptVars,

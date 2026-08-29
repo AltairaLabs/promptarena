@@ -479,8 +479,8 @@ func (e *PipelineExecutor) appendPostProviderStages(
 	if req.StateStoreConfig != nil && req.ConversationID != "" {
 		storeConfig := buildStateStoreConfig(req)
 		saveStage := arenastages.NewArenaStateStoreSaveStageWithTurnState(storeConfig, turnState)
-		if emitter := emitterFromRequest(req); emitter != nil {
-			saveStage = saveStage.WithEmitter(emitter)
+		if req.EventBus != nil {
+			saveStage = saveStage.WithLiveMessages(req.EventBus, req.RunID, req.RunID, req.ConversationID)
 		}
 		stages = append(stages, saveStage)
 	}
@@ -848,8 +848,8 @@ func (e *PipelineExecutor) appendStreamingFinalizeStages(
 		storeConfig := buildStateStoreConfig(req)
 		if cfg.UseArenaStateStoreSave {
 			saveStage := arenastages.NewArenaStateStoreSaveStageWithTurnState(storeConfig, turnState)
-			if emitter := emitterFromRequest(req); emitter != nil {
-				saveStage = saveStage.WithEmitter(emitter)
+			if req.EventBus != nil {
+				saveStage = saveStage.WithLiveMessages(req.EventBus, req.RunID, req.RunID, req.ConversationID)
 			}
 			stages = append(stages, saveStage)
 		} else {

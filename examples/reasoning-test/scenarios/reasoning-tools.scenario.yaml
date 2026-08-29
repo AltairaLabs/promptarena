@@ -1,0 +1,50 @@
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Scenario
+
+metadata:
+  name: reasoning-tools
+
+spec:
+  id: reasoning-tools
+  task_type: reasoning-tools
+  description: >-
+    The same throughput problem, but the facts live behind two tools. The model
+    has to reason about what it needs, call the tools, then reason again over
+    what came back — deriving the rates from relationships and the run times
+    from stoppages. Reasoning is captured on both sides of the tool loop.
+  required_capabilities:
+    - text
+
+  # Both tools are needed and neither answers the question on its own, so the
+  # model must make at least two calls before it can compute anything.
+  tool_policy:
+    tool_choice: auto
+    max_tool_calls_per_turn: 4
+    max_total_tool_calls: 8
+
+  turns:
+    # Turn 1 — nothing is given inline; every fact must come from a tool.
+    - role: user
+      content: |
+        For workshop WS-1, how many widgets were produced in total during
+        Monday's shift?
+
+        You have tools available for the machine specifications and the shift
+        log. Nothing is given to you here — look up whatever you need.
+      assertions:
+        - type: content_includes
+          message: "Monday is 208 (derive A=22,B=11,C=15,D=5; A runs 2h, B runs 4h, C and D run 6h)"
+          params:
+            patterns: ["208"]
+
+    # Turn 2 — a follow-up that needs the tool results reasoned over again,
+    # from a different angle, without re-fetching.
+    - role: user
+      content: |
+        If Machine A had NOT been stopped early and had run the full shift
+        instead, how many widgets would Monday's total have been?
+      assertions:
+        - type: content_includes
+          message: "296 (A gains 4 more hours at 22/h = +88, so 208 + 88)"
+          params:
+            patterns: ["296"]

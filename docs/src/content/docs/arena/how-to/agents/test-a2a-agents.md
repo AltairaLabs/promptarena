@@ -84,6 +84,13 @@ Each agent produces a tool named `a2a__{name}__{skillId}` — in this case, `a2a
 
 Enable the A2A tool in your prompt config with `allowed_tools`:
 
+:::note[allowed_tools is an allowlist]
+A prompt only reaches the tools it names here — no entry, no tools. Keep it in step with your system prompt: if the prompt says the model can look things up but the allowlist is empty, the model has an instruction it cannot carry out and will usually improvise, writing convincing-looking tool calls and results into its reply as plain text. Check for a real `tool` role in the messages, not tool-shaped text in `content`.
+
+The provider must allow tools too: if it declares a `capabilities` list, that list must include `tools`.
+:::
+
+
 ```yaml
 # prompts/assistant.yaml
 apiVersion: promptkit.altairalabs.ai/v1alpha1
