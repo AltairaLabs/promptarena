@@ -1,0 +1,33 @@
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Provider
+
+metadata:
+  name: claude-sonnet
+
+spec:
+  id: claude-sonnet
+  type: claude
+  model: claude-sonnet-4-6
+  capabilities:
+    - text
+    - streaming
+    # Required for the reasoning-tools scenario. Without it the tools are
+    # described in the prompt but never sent as native function definitions,
+    # and the model invents both the calls AND their results in plain text.
+    - tools
+  defaults:
+    temperature: 0.0   # dropped from the request while thinking is on (see below)
+    max_tokens: 4096
+    top_p: 1.0
+  # Claude extended thinking. PromptKit picks the wire shape from the model:
+  # 4.5-and-older take enabled+budget_tokens, 4.6 takes either, and the
+  # 5-series takes adaptive (and rejects enabled). thinking_budget drives both
+  # — you do not choose the shape yourself.
+  #
+  # Two knock-on effects, both handled by PromptKit rather than this file:
+  # the API rejects a custom temperature when thinking is on (so temperature is
+  # omitted, even though the arena defaults set it), and reasoning tokens count
+  # toward max_tokens (so max_tokens is raised if it would leave no headroom
+  # for the answer).
+  additional_config:
+    thinking_budget: 2048   # reasoning-token budget, must be >= 1024

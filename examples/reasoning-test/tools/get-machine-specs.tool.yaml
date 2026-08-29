@@ -1,0 +1,40 @@
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Tool
+metadata:
+  name: get_machine_specs
+spec:
+  name: get_machine_specs
+  description: >-
+    Look up the workshop's machine specification sheet. Returns machine D's
+    absolute hourly rate plus the RELATIONSHIPS that define the other three
+    machines. The rates for A, B and C are not stored directly and must be
+    derived from these relationships.
+  input_schema:
+    type: object
+    properties:
+      workshop_id:
+        type: string
+        description: Workshop identifier, e.g. "WS-1"
+    required:
+      - workshop_id
+  output_schema:
+    type: object
+    properties:
+      d_rate_per_hour:
+        type: integer
+      c_multiple_of_d:
+        type: integer
+      b_offset_from_c:
+        type: integer
+      a_multiple_of_b:
+        type: integer
+  mode: mock
+  timeout_ms: 1000
+  # Deliberately relational, not a rate table: the model has to chain
+  # D -> C -> B -> A itself rather than read four numbers off a sheet. That
+  # chaining is what shows up in the reasoning trace after the tool returns.
+  mock_result:
+    d_rate_per_hour: 5
+    c_multiple_of_d: 3
+    b_offset_from_c: -4
+    a_multiple_of_b: 2

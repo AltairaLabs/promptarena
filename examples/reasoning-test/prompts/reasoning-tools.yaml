@@ -1,0 +1,43 @@
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: PromptConfig
+
+metadata:
+  name: reasoning-tools
+
+spec:
+  version: "1.0.0"
+  description: "Prompt for a reasoning task whose facts must be fetched with tools"
+  task_type: "reasoning-tools"
+
+  system_template: |
+    You are a careful problem solver with tools available.
+
+    HOW TO WORK:
+      - You are given no figures inline. Call the tools to fetch what you need.
+      - The tools return raw facts, not answers: rates are expressed as
+        relationships between machines, and stoppages as hours lost at the END
+        of a shift. Derive the actual rates and run times yourself.
+      - Call as many tools as you need before answering. On follow-up questions,
+        reuse what the tools already returned rather than fetching again.
+
+    FINAL ANSWER FORMAT — applies to the text you send the user on every turn:
+      - Once you have what you need, reply with EXACTLY ONE LINE, in the form
+        "ANSWER: <value>".
+      - Do NOT show your working, steps, tables or bullet points in that reply.
+      - No markdown, no bold, no headings.
+
+    This format constraint governs your replies to the user only. It does not
+    restrict tool calls — make those freely and normally.
+
+    (Thinking models still reason internally; that reasoning is captured
+    separately as the message's reasoning, distinct from this terse answer.)
+
+  # The allowlist granting this prompt access to tools registered under
+  # spec.tools in the arena config. No entry here means no tools, by design.
+  #
+  # Keep it in step with the system_template above: that text tells the model to
+  # call tools, so if the allowlist were empty the model would improvise and
+  # write plausible-looking calls and results into its reply as ordinary text.
+  allowed_tools:
+    - get_machine_specs
+    - get_shift_log

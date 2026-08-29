@@ -1,0 +1,47 @@
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Tool
+metadata:
+  name: get_shift_log
+spec:
+  name: get_shift_log
+  description: >-
+    Look up a shift log for the workshop. Returns the shift length, plus the
+    hours each machine lost at the END of the shift. A machine's actual run
+    time is the shift length minus its stopped hours; zero means it ran the
+    full shift.
+  input_schema:
+    type: object
+    properties:
+      workshop_id:
+        type: string
+        description: Workshop identifier, e.g. "WS-1"
+      day:
+        type: string
+        description: Day of the shift, e.g. "Monday"
+    required:
+      - workshop_id
+      - day
+  output_schema:
+    type: object
+    properties:
+      shift_hours:
+        type: integer
+      a_final_hours_stopped:
+        type: integer
+      b_final_hours_stopped:
+        type: integer
+      c_final_hours_stopped:
+        type: integer
+      d_final_hours_stopped:
+        type: integer
+  mode: mock
+  timeout_ms: 1000
+  # Stoppages are given as hours lost at the end of the shift, so run time is
+  # shift_hours minus the stoppage — another small derivation rather than a
+  # value the model can quote directly.
+  mock_result:
+    shift_hours: 6
+    a_final_hours_stopped: 4
+    b_final_hours_stopped: 2
+    c_final_hours_stopped: 0
+    d_final_hours_stopped: 0

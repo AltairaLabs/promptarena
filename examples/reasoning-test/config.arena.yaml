@@ -5,20 +5,32 @@ metadata:
   name: reasoning-test
 
 spec:
+  # Tools for the reasoning-tools scenario. mode: mock means the tool RESULT is
+  # canned, but the tool genuinely executes and the LLM deciding to call it is
+  # real — which is the part being demonstrated.
+  tools:
+    - file: tools/get-machine-specs.tool.yaml
+    - file: tools/get-shift-log.tool.yaml
+
   prompt_configs:
     - id: reasoning
       file: prompts/reasoning.yaml
+    - id: reasoning-tools
+      file: prompts/reasoning-tools.yaml
 
   providers:
-    - file: providers/gemini-25-flash.provider.yaml
+    - file: providers/gemini-3-flash.provider.yaml
+    - file: providers/claude-sonnet.provider.yaml
+    - file: providers/openai-gpt5.provider.yaml
 
   scenarios:
     - file: scenarios/reasoning.scenario.yaml
+    - file: scenarios/reasoning-tools.scenario.yaml
 
   defaults:
     temperature: 0.0
     max_tokens: 2048   # generous: reasoning tokens count toward the output cap
-    concurrency: 1
+    concurrency: 3
     output:
       dir: out
       formats: ["json", "markdown"]

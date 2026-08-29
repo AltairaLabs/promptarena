@@ -7,7 +7,11 @@ metadata:
 spec:
   id: reasoning
   task_type: reasoning
-  description: "A multi-step word problem that makes the model reason before answering"
+  description: >-
+    A four-turn workshop-throughput problem. Each turn depends on the one
+    before, so the model must re-derive the machine rates and carry earlier
+    totals forward — producing substantial reasoning on every turn while the
+    spoken answer stays a single line.
   required_capabilities:
     - text
   tool_policy:
@@ -16,13 +20,56 @@ spec:
     max_total_tool_calls: 0
 
   turns:
+    # Turn 1 — establish the rates and apply two different stop times.
     - role: user
       content: |
-        Alice, Bob, and Carol have ages in a strict descending order: Alice is
-        the oldest, then Bob, then Carol. Each person is exactly 3 years older
-        than the next-youngest. Carol is 10 years old. How old is Alice?
+        A workshop has four machines. Machine D produces 5 widgets per hour.
+        Machine C produces three times as many per hour as D. Machine B
+        produces 4 fewer per hour than C. Machine A produces twice as many per
+        hour as B.
+
+        On Monday all four start together for a 6-hour shift, but Machine B is
+        stopped for the final 2 hours and Machine A is stopped for the final 4
+        hours. How many widgets are produced on Monday in total?
       assertions:
         - type: content_includes
-          message: "Alice should be 16 (Carol 10, Bob 13, Alice 16)"
+          message: "Monday is 208 (A=22/h x 2h=44, B=11/h x 4h=44, C=15/h x 6h=90, D=5/h x 6h=30)"
           params:
-            patterns: ["16"]
+            patterns: ["208"]
+
+    # Turn 2 — same rates, a mid-shift replacement at a derived rate.
+    - role: user
+      content: |
+        On Tuesday every machine runs the full 6-hour shift with no stoppages,
+        except that Machine C breaks down after exactly 90 minutes and is
+        immediately replaced by a different machine producing 40% more per hour
+        than C did. That replacement runs for the remaining 4.5 hours.
+
+        How many widgets are produced on Tuesday in total?
+      assertions:
+        - type: content_includes
+          message: "Tuesday is 345 (A=132, B=66, C=22.5, replacement=21/h x 4.5h=94.5, D=30)"
+          params:
+            patterns: ["345"]
+
+    # Turn 3 — carry both prior totals forward.
+    - role: user
+      content: |
+        What is the combined total across Monday and Tuesday?
+      assertions:
+        - type: content_includes
+          message: "Combined is 553 (208 + 345)"
+          params:
+            patterns: ["553"]
+
+    # Turn 4 — per-machine attribution across both days.
+    - role: user
+      content: |
+        Counting the Tuesday replacement as a separate machine, which of the
+        four ORIGINAL machines (A, B, C or D) produced the most widgets across
+        the two days combined, and how many did it produce?
+      assertions:
+        - type: content_includes
+          message: "Machine A with 176 (44 Monday + 132 Tuesday); B=110, C=112.5, D=60"
+          params:
+            patterns: ["176"]

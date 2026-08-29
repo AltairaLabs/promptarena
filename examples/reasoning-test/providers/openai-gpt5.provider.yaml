@@ -1,0 +1,49 @@
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Provider
+
+metadata:
+  name: openai-gpt5
+
+spec:
+  id: openai-gpt5
+  type: openai
+  model: gpt-5.2
+  capabilities:
+    - text
+    - streaming
+    # Required for the reasoning-tools scenario. Without it the tools are
+    # described in the prompt but never sent as native function definitions,
+    # and the model invents both the calls AND their results in plain text.
+    - tools
+  # gpt-5.2 rejects top_p outright ("not supported with this model"). The
+  # provider schema still requires a value under defaults, so it is declared
+  # unsupported here and withheld from the request.
+  #
+  # `seed` needs no entry: PromptKit's Responses builder sends it unguarded, so
+  # unsupported_params cannot suppress it. Arena instead omits the seed entirely
+  # when none is configured (see seedOrNil).
+  unsupported_params:
+    - top_p
+  defaults:
+    temperature: 0.0
+    max_tokens: 2048
+    top_p: 1.0
+  # OpenAI reasoning models always reason; what is configurable is how hard
+  # (reasoning_effort) and whether you are allowed to SEE it
+  # (reasoning_summary).
+  #
+  # reasoning_summary is the interesting one for this example: requesting
+  # summaries requires a verified OpenAI org, so PromptKit leaves it off by
+  # default rather than 400-ing every unverified caller. Without it the model
+  # still reasons and you are still billed reasoning tokens — the trace just
+  # never reaches you, and `reasoning` comes back empty. That is a provider
+  # policy difference, not a PromptKit capture failure. Comment the line out to
+  # see the difference.
+  additional_config:
+    # Reasoning summaries are a RESPONSES API feature. PromptKit defaults to
+    # Chat Completions for every model that isn't "-pro", and on that path the
+    # trace never comes back however you set reasoning_summary. This line is
+    # what makes OpenAI reasoning visible at all.
+    api_mode: responses
+    reasoning_effort: high   # minimal | low | medium | high
+    reasoning_summary: auto    # auto | concise | detailed (verified orgs only)

@@ -123,6 +123,13 @@ When the source's `Open()` returns, Arena:
 
 Reference these tools in your prompt config's `allowed_tools`:
 
+:::note[allowed_tools is an allowlist]
+A prompt only reaches the tools it names here — no entry, no tools. Keep it in step with your system prompt: if the prompt says the model can look things up but the allowlist is empty, the model has an instruction it cannot carry out and will usually improvise, writing convincing-looking tool calls and results into its reply as plain text. Check for a real `tool` role in the messages, not tool-shaped text in `content`.
+
+The provider must allow tools too: if it declares a `capabilities` list, that list must include `tools`.
+:::
+
+
 ```yaml
 allowed_tools:
   - Read
