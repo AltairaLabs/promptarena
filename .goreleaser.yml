@@ -91,6 +91,12 @@ checksum:
   name_template: 'checksums.txt'
   algorithm: sha256
 
+# Software Bill of Materials (SBOM)
+sboms:
+  - artifacts: archive
+    id: default
+
+
 # Snapshot configuration (for non-tagged builds)
 snapshot:
   version_template: "{{ incpatch .Version }}-next"
