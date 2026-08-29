@@ -54,6 +54,7 @@ function liveMessageFromCreated(d: MessageCreatedData): LiveMessage {
     content: d.content,
     tool_calls: d.toolCalls,
     tool_result: d.toolResult ?? undefined,
+    reasoning: d.reasoning ?? undefined,
   };
 }
 

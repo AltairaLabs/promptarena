@@ -211,3 +211,25 @@ describe("adaptWorkflow", () => {
     expect(edges.some((e) => e.source === "__start" && e.target === "s1")).toBe(true);
   });
 });
+
+describe("reasoning", () => {
+  it("maps a turn's thinking onto the Atlas message so the disclosure renders", () => {
+    const a = adaptMessage(msg({ reasoning: { text: "D=5, C=15, B=11, A=22" } }), 0, run(), 0);
+    expect(a.reasoning).toEqual({ text: "D=5, C=15, B=11, A=22", redacted: undefined });
+  });
+
+  it("omits reasoning when a turn produced none, rather than an empty disclosure", () => {
+    expect(adaptMessage(msg(), 0, run(), 0).reasoning).toBeUndefined();
+    expect(adaptMessage(msg({ reasoning: { text: "" } }), 0, run(), 0).reasoning).toBeUndefined();
+  });
+
+  it("carries reasoning on the live path too, not just historical results", () => {
+    const [a] = adaptLiveMessages([msg({ reasoning: { text: "live thinking" } })]);
+    expect(a.reasoning?.text).toBe("live thinking");
+  });
+
+  it("keeps a redacted trace, which has no text but must still surface", () => {
+    const a = adaptMessage(msg({ reasoning: { redacted: true } }), 0, run(), 0);
+    expect(a.reasoning?.redacted).toBe(true);
+  });
+});

@@ -46,6 +46,15 @@ export interface MessageCreatedData {
   index: number;
   toolCalls?: MessageToolCall[];
   toolResult?: MessageToolResult | null;
+  reasoning?: MessageReasoning | null;
+}
+
+// MessageReasoning is a model's "thinking" for a turn — a sibling of content,
+// never part of the answer. Only the displayable text and the redacted flag
+// reach the browser; provider-native opaque entries stay server-side.
+export interface MessageReasoning {
+  text?: string;
+  redacted?: boolean;
 }
 
 // MessageFullData is the payload of the `message.full` SSE event: the same
@@ -211,6 +220,7 @@ export interface Message {
   latency_ms?: number;
   cost_info?: CostInfo;
   finish_reason?: string;
+  reasoning?: MessageReasoning;
   meta?: Record<string, unknown>;
   validations?: ValidationResult[];
 }
