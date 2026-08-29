@@ -172,6 +172,9 @@ jobs:
     name: npm publish
     needs: goreleaser
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     strategy:
       matrix:
         pkg: [promptarena, packc]
@@ -190,7 +193,7 @@ jobs:
           npm version "${VERSION#v}" --no-git-tag-version --allow-same-version
       - name: Publish
         working-directory: npm/${{ matrix.pkg }}
-        run: npm publish --access public
+        run: npm publish --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
