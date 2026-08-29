@@ -313,7 +313,7 @@ func (de *DuplexConversationExecutor) buildDuplexPipeline(
 	}
 	stages = append(stages, duplexStage)
 
-	stages = de.appendDuplexOutputStages(stages, req, turnState, emitter)
+	stages = de.appendDuplexOutputStages(stages, req, turnState)
 
 	return builder.Chain(stages...).Build()
 }
@@ -400,13 +400,12 @@ func (de *DuplexConversationExecutor) appendDuplexInputStages(
 
 // appendDuplexOutputStages appends the output-side stages (output audio pacing,
 // output monitor tap, media externalizer, arena state-store save) in order.
-// Each is gated on its enabling condition; the save stage wires the emitter when
-// one is available so message elements are broadcast to the live TUI.
+// Each is gated on its enabling condition; the save stage wires Arena's event
+// bus when one is available so message elements are broadcast to the live TUI.
 func (de *DuplexConversationExecutor) appendDuplexOutputStages(
 	stages []stage.Stage,
 	req *ConversationRequest,
 	turnState *stage.TurnState,
-	emitter *events.Emitter,
 ) []stage.Stage {
 	// 2a-pre. Output audio pacing. Realtime providers stream assistant audio
 	// faster than playback rate; without output pacing the LocalSink queue fills
@@ -439,13 +438,13 @@ func (de *DuplexConversationExecutor) appendDuplexOutputStages(
 
 	// 5. Arena state store save stage to capture conversation messages. Handles
 	// system_prompt in metadata and prepends it as a system message. When an
-	// event bus is available we wire an emitter so each Message element is also
-	// broadcast on the bus — that feeds the live TUI conversation panel.
+	// event bus is available the stage publishes each Message element on it —
+	// that feeds the live TUI conversation panel.
 	if req.StateStoreConfig != nil && req.StateStoreConfig.Store != nil {
 		saveStage := arenastages.NewArenaStateStoreSaveStageWithTurnState(
 			de.buildPipelineStateStoreConfig(req), turnState)
-		if emitter != nil {
-			saveStage = saveStage.WithEmitter(emitter)
+		if req.EventBus != nil {
+			saveStage = saveStage.WithLiveMessages(req.EventBus, req.RunID, req.RunID, req.ConversationID)
 		}
 		stages = append(stages, saveStage)
 	}

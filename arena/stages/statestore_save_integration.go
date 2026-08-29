@@ -26,9 +26,22 @@ type ArenaStateStoreSaveStage struct {
 	stage.BaseStage
 	config    *pipeline.StateStoreConfig
 	turnState *stage.TurnState
-	emitter   *events.Emitter
+	// liveBus, executionID and conversationID publish message.created for
+	// live UIs. Arena publishes the event itself rather than calling
+	// events.Emitter.MessageCreated, which PromptKit deprecated in v1.6.0:
+	// there message.created is produced only by RecordingStage, written
+	// straight to an EventStore with no bus hop, so PromptKit has no bus
+	// producer for it. Arena owns this bus and both consumers (TUI
+	// conversation panel, web SSE relay) and is the component holding the
+	// message, so it emits its own. The wire shape is identical to the
+	// deprecated helper's, so consumers are unaffected. Revisit when
+	// PromptKit offers a supported live route carrying a message index.
+	liveBus        events.Bus
+	executionID    string
+	sessionID      string
+	conversationID string
 	// baseTranscriptLen is the persisted transcript length captured at build
-	// time (in WithEmitter, before the pipeline runs). Live broadcasts use it
+	// time (in WithLiveMessages, before the pipeline runs). Live broadcasts use it
 	// as the transcript-absolute base for this turn's new messages. Capturing
 	// at build time is race-free: the runtime ProviderStage write-through that
 	// appends this turn's messages only runs once the pipeline executes, so a
@@ -55,19 +68,60 @@ func NewArenaStateStoreSaveStageWithTurnState(
 	}
 }
 
-// WithEmitter wires an events.Emitter so the stage broadcasts each message
-// to the event bus the moment it arrives. Live UIs (TUI conversation panel,
-// web SSE relay) can then render turns as they happen instead of waiting
-// for run completion. Stage-level state save remains the source of truth
-// for replay and post-run results.
-func (s *ArenaStateStoreSaveStage) WithEmitter(emitter *events.Emitter) *ArenaStateStoreSaveStage {
-	s.emitter = emitter
+// WithLiveMessages wires Arena's event bus so the stage broadcasts each
+// message to it the moment the message arrives. Live UIs (TUI conversation
+// panel, web SSE relay) can then render turns as they happen instead of
+// waiting for run completion. Stage-level state save remains the source of
+// truth for replay and post-run results.
+//
+// executionID, sessionID and conversationID stamp the published events,
+// matching the identifiers events.NewEmitter took in the same order.
+func (s *ArenaStateStoreSaveStage) WithLiveMessages(
+	bus events.Bus, executionID, sessionID, conversationID string,
+) *ArenaStateStoreSaveStage {
+	s.liveBus = bus
+	s.executionID = executionID
+	s.sessionID = sessionID
+	s.conversationID = conversationID
 	s.baseTranscriptLen = s.captureBaseTranscriptLen()
 	return s
 }
 
+// publishMessageCreated puts one message.created on Arena's bus. It mirrors
+// what events.Emitter.MessageCreated built before that helper was deprecated,
+// including stripping binary payloads from content parts so large blobs stay
+// out of observability events.
+func (s *ArenaStateStoreSaveStage) publishMessageCreated(
+	role, content string,
+	index int,
+	parts []types.ContentPart,
+	toolCalls []events.MessageToolCall,
+	toolResult *events.MessageToolResult,
+	reasoning *types.ReasoningTrace,
+) {
+	if s.liveBus == nil {
+		return
+	}
+	s.liveBus.Publish(&events.Event{
+		Type:           events.EventMessageCreated,
+		Timestamp:      time.Now(),
+		ExecutionID:    s.executionID,
+		SessionID:      s.sessionID,
+		ConversationID: s.conversationID,
+		Data: &events.MessageCreatedData{
+			Role:       role,
+			Content:    content,
+			Index:      index,
+			Parts:      types.MetadataOnlyParts(parts),
+			ToolCalls:  toolCalls,
+			ToolResult: toolResult,
+			Reasoning:  reasoning,
+		},
+	})
+}
+
 // captureBaseTranscriptLen reads the already-persisted transcript length for
-// this conversation. Called synchronously from WithEmitter at pipeline-build
+// this conversation. Called synchronously from WithLiveMessages at pipeline-build
 // time — before Execute — so it sees only prior turns, never this turn's own
 // write-through. Returns 0 when no store is wired or the load fails (a fresh
 // conversation reads as 0). Used as the transcript-absolute base for live
@@ -293,9 +347,9 @@ func (s *ArenaStateStoreSaveStage) Process(
 	// liveBroadcaster derives each message's transcript-absolute index from the
 	// stream content itself (whether or not a system element appears), so the
 	// emitted index always matches the persisted transcript regardless of which
-	// provider supplies the elements. Created only when an emitter is wired.
+	// provider supplies the elements. Created only when a live bus is wired.
 	var caster *liveBroadcaster
-	if s.emitter != nil {
+	if s.liveBus != nil {
 		caster = s.newLiveBroadcaster(prevLen)
 	}
 
@@ -428,7 +482,7 @@ func (b *liveBroadcaster) emitSystem(content string) {
 		return
 	}
 	b.systemEmitted = true
-	b.stage.emitter.MessageCreated(roleSystem, content, 0, nil, nil, nil, nil)
+	b.stage.publishMessageCreated(roleSystem, content, 0, nil, nil, nil, nil)
 }
 
 // resolveSystemPrompt returns the rendered system prompt for this turn,
@@ -449,13 +503,13 @@ func (s *ArenaStateStoreSaveStage) resolveSystemPrompt() string {
 }
 
 // broadcastMessage publishes the just-arrived message to the event bus when
-// an emitter is configured. Skipped when the element carries no Message, when
+// a live bus is configured. Skipped when the element carries no Message, when
 // the index is out of range, or when the message is the system prompt (system
 // is broadcast once by broadcastSystemPromptIfNeeded). idx is the message's
 // transcript-absolute position. Live UI consumers (TUI, web SSE) subscribe to
 // the bus and update their views in real time.
 func (s *ArenaStateStoreSaveStage) broadcastMessage(elem *stage.StreamElement, idx int) {
-	if s.emitter == nil || elem.Message == nil || idx < 0 || elem.Message.Role == roleSystem {
+	if s.liveBus == nil || elem.Message == nil || idx < 0 || elem.Message.Role == roleSystem {
 		return
 	}
 	// Diagnostic: every non-system message the save stage broadcasts live. If a
@@ -465,7 +519,7 @@ func (s *ArenaStateStoreSaveStage) broadcastMessage(elem *stage.StreamElement, i
 	logger.Debug("save-stage: broadcasting message",
 		"role", elem.Message.Role, "index", idx,
 		"content_len", len(elem.Message.Content))
-	s.emitter.MessageCreated(
+	s.publishMessageCreated(
 		elem.Message.Role,
 		elem.Message.Content,
 		idx,
