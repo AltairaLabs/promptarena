@@ -25,3 +25,30 @@ func TestEchoGuard_AllowsLoudBargeInWhileAgentSpeaks(t *testing.T) {
 		t.Fatal("expected loud barge-in to pass the gate")
 	}
 }
+
+func TestEchoGuard_AdaptivePlaybackFloor(t *testing.T) {
+	// Base threshold is 0.01. With loud playback (RMS ~ 1.0) and CouplingFactor 0.5,
+	// effective threshold dynamically rises to ~ 0.5.
+	g := NewEchoGuardWithOptions(EchoGuardOptions{
+		Threshold:      0.01,
+		CouplingFactor: 0.5,
+		DecayRate:      0.5,
+	})
+	g.SetAgentSpeaking(true)
+
+	loudPlayback := []byte{0xff, 0x7f, 0xff, 0x7f}
+	g.RecordPlayback(loudPlayback)
+
+	// A moderate mic frame (approx amplitude 0.2) should now be gated
+	// because it's quieter than the dynamic echo floor (0.5).
+	mediumMic := []byte{0x00, 0x20, 0x00, 0x20}
+	if g.Allow(mediumMic) {
+		t.Fatal("expected medium mic to be gated during loud playback")
+	}
+
+	// But a very loud barge-in (approx amplitude 0.9) must still pass.
+	shoutingUser := []byte{0x00, 0x75, 0x00, 0x75}
+	if !g.Allow(shoutingUser) {
+		t.Fatal("expected loud shouting barge-in to pass dynamic gate")
+	}
+}

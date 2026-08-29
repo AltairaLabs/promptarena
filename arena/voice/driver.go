@@ -45,11 +45,7 @@ func (d *Driver) Run(ctx context.Context) error {
 
 	play := func(frame []byte) {
 		if d.guard != nil {
-			// TODO(voice): hold SetAgentSpeaking for the audible playback duration, not just
-			// the Play call. Buffered hardware drivers return from Play before audio is emitted,
-			// so the guard window closes before the mic can pick up the echo. A future wiring
-			// should accept a playback-duration hint (e.g. frame length / sample rate) and
-			// defer SetAgentSpeaking(false) until after the audio is audible.
+			d.guard.RecordPlayback(frame)
 			d.guard.SetAgentSpeaking(true)
 		}
 		d.io.Play(frame)
