@@ -559,7 +559,7 @@ func TestCompileOptions(t *testing.T) {
 }
 
 // TestCompile_WithPackMetadata covers the arena config's pack_metadata block,
-// the only authoring route to the compiled pack's metadata: the registry
+// the primary authoring route to the compiled pack's metadata: the registry
 // compiler has no CompileOption for it and leaves pack.Metadata nil, so
 // governance could travel in a pack that no author could write.
 func TestCompile_WithPackMetadata(t *testing.T) {
@@ -600,4 +600,53 @@ spec:
 	assert.Equal(t, "customer-support", result.Pack.Metadata.Domain)
 	assert.Equal(t, "en", result.Pack.Metadata.Language)
 	assert.Equal(t, []string{"support"}, result.Pack.Metadata.Tags)
+}
+
+// TestCompile_MetadataPropagation covers the fallback route (#134, #135):
+// when the arena config has no pack_metadata block, a loaded prompt config's
+// own spec.metadata should still reach the compiled pack — including its
+// JSON serialization — instead of being silently dropped.
+func TestCompile_MetadataPropagation(t *testing.T) {
+	t.Setenv("PROMPTKIT_SCHEMA_SOURCE", "local")
+	dir := t.TempDir()
+	promptWithMetadata := `apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: PromptConfig
+metadata:
+  name: support-bot
+spec:
+  task_type: "support"
+  version: "v1.0.0"
+  description: "Customer support assistant"
+  system_template: "You are a helpful assistant."
+  metadata:
+    domain: "financial-services"
+    tags:
+      - "underwriting"
+      - "mortgage"
+`
+	writeFixture(t, dir, "prompts/support-bot.yaml", promptWithMetadata)
+	configFile := writeFixture(t, dir, "config.arena.yaml", minimalArenaConfig("prompts/support-bot.yaml"))
+
+	result, err := Compile(configFile,
+		WithPackID("support-pack"),
+		WithCompilerVersion("test-v1"),
+		WithSkipSchemaValidation(),
+	)
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	require.NotNil(t, result.Pack)
+	require.NotNil(t, result.Pack.Metadata, "compiled pack must carry metadata from prompt config")
+
+	assert.Equal(t, "financial-services", result.Pack.Metadata.Domain)
+	assert.Equal(t, []string{"underwriting", "mortgage"}, result.Pack.Metadata.Tags)
+	// PackMetadata (PromptKit v1.9.0, packspec RFC 0012) no longer carries a
+	// changelog field, so that assertion was dropped along with it here.
+
+	// Verify metadata is serialized into JSON
+	var parsed struct {
+		Metadata *prompt.Metadata `json:"metadata"`
+	}
+	require.NoError(t, json.Unmarshal(result.JSON, &parsed))
+	require.NotNil(t, parsed.Metadata)
+	assert.Equal(t, "financial-services", parsed.Metadata.Domain)
 }

@@ -45,6 +45,24 @@ func buildMemoryRepo(cfg *arenaconfig.Config) (*memory.PromptRepository, error) 
 	return memRepo, nil
 }
 
+// extractMetadataFromConfigs extracts pack-level metadata from the loaded prompt configurations.
+func extractMetadataFromConfigs(cfg *arenaconfig.Config) *prompt.Metadata {
+	for _, promptData := range cfg.LoadedPromptConfigs {
+		if promptData.Config == nil {
+			continue
+		}
+
+		promptConfig, ok := promptData.Config.(*prompt.Config)
+		if !ok || promptConfig.Spec.Metadata == nil {
+			continue
+		}
+
+		return promptConfig.Spec.Metadata
+	}
+
+	return nil
+}
+
 // collectMediaWarnings validates media references across all loaded prompts
 // and returns any warnings found.
 func collectMediaWarnings(cfg *arenaconfig.Config, configDir string) []string {

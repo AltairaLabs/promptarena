@@ -200,7 +200,7 @@
           "type": "object"
         }
       },
-      "additionalProperties": false,
+      "additionalProperties": true,
       "type": "object"
     },
     "ImageConfig": {
