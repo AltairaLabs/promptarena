@@ -367,7 +367,7 @@ func (ce *DefaultConversationExecutor) buildTurnRequest(
 		BaseDir:               baseDir,
 		Temperature:           temperature,
 		MaxTokens:             maxTokens,
-		Seed:                  &req.Config.Defaults.Seed,
+		Seed:                  seedOrNil(req.Config.Defaults.Seed),
 		StateStoreConfig:      convertStateStoreConfig(req.StateStoreConfig),
 		ConversationID:        req.ConversationID,
 		RunID:                 req.RunID,
@@ -1166,4 +1166,20 @@ func convertStateStoreConfig(cfg *StateStoreConfig) *turnexecutors.StateStoreCon
 		UserID:   cfg.UserID,
 		Metadata: cfg.Metadata,
 	}
+}
+
+// seedOrNil returns a pointer to seed, or nil when no seed was configured.
+//
+// Defaults.Seed is a plain int whose YAML tag is omitempty, so "unset" and
+// "zero" are the same value. Taking its address unconditionally turned an
+// absent seed into an explicit seed=0 on every request — meaningless as a seed,
+// and a hard 400 on OpenAI's Responses API, which rejects the parameter
+// outright ("Unknown parameter: 'seed'"). Sending nothing when nothing was
+// asked for is both the intent of omitempty and what lets reasoning models on
+// that API run at all.
+func seedOrNil(seed int) *int {
+	if seed == 0 {
+		return nil
+	}
+	return &seed
 }
