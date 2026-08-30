@@ -1,0 +1,33 @@
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Provider
+metadata:
+  name: anthropic-sonnet5
+spec:
+  id: anthropic-sonnet5
+  type: claude
+  # Bare alias, not a dated snapshot — see the note in config.arena.yaml.
+  model: claude-sonnet-5
+  capabilities:
+    - text
+    - streaming
+    - vision
+    - tools
+    - json
+    - documents
+  # Claude Opus 4.7+ and the 5 series deprecated the temperature parameter
+  # (the API returns 400 if sent). The Claude provider drops params listed
+  # here before the request.
+  unsupported_params:
+    - temperature
+  defaults:
+    # temperature is required by the schema; unsupported_params strips it from
+    # the request so the model never receives it.
+    temperature: 0.1
+    top_p: 1.0
+    max_tokens: 100
+  pricing:
+    input_cost_per_1k: 0.003
+    output_cost_per_1k: 0.015
+  stream_retry:
+    enabled: true
+    max_attempts: 3
