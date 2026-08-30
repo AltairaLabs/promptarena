@@ -78,6 +78,10 @@ spec:
     # Anthropic Models
     # ==========================================================================
 
+    # Claude 5
+    - file: providers/anthropic-opus5.provider.yaml
+      group: text,streaming,vision,tools,json
+
     # Claude 4.x latest
     - file: providers/anthropic-opus48.provider.yaml
       group: text,streaming,vision,tools,json
@@ -98,12 +102,15 @@ spec:
     - file: providers/anthropic-haiku45.provider.yaml
       group: text,streaming,vision,tools,json
 
-    # Claude 4.1
-    - file: providers/anthropic-opus41.provider.yaml
-      group: text,streaming,vision,tools,json
     # Note: claude-opus-4 and claude-sonnet-4 (the 20250514 base 4.0 models)
-    # retired 2026-06-15 and were removed. Opus 4.1/4.5/4.6/4.7/4.8 and
-    # Sonnet 4.5/4.6 above cover the lineage.
+    # retired 2026-06-15 and were removed. claude-opus-4-1-20250805 retired
+    # likewise and was removed on 2026-08-30 — it had been 404ing every run
+    # since 2026-08-09, tipping the matrix past MAX_ERRORS on its own while
+    # still billing for the attempts. Opus 5/4.5/4.6/4.7/4.8 and Sonnet 4.5/4.6
+    # cover the lineage.
+    #
+    # Prefer bare aliases (claude-opus-5) over dated snapshots for exactly this
+    # reason: a snapshot is retired out from under the matrix, an alias is not.
 
     # ==========================================================================
     # Google Gemini Models (uses v1beta API endpoint)
@@ -163,6 +170,11 @@ spec:
   defaults:
     temperature: 0.1
     max_tokens: 500
+    # Pinned so reruns are comparable. This was previously getting seed 0 by
+    # accident — Defaults.Seed is an int, and an unset value was still sent —
+    # so the matrix had determinism it never asked for. Arena now omits an
+    # unconfigured seed, which would have left this example unpinned.
+    seed: 42
     concurrency: 6
     output:
       dir: out
