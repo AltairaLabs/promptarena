@@ -27,15 +27,20 @@ type ArenaStateStoreSaveStage struct {
 	config    *pipeline.StateStoreConfig
 	turnState *stage.TurnState
 	// liveBus, executionID and conversationID publish message.created for
-	// live UIs. Arena publishes the event itself rather than calling
-	// events.Emitter.MessageCreated, which PromptKit deprecated in v1.6.0:
-	// there message.created is produced only by RecordingStage, written
-	// straight to an EventStore with no bus hop, so PromptKit has no bus
-	// producer for it. Arena owns this bus and both consumers (TUI
-	// conversation panel, web SSE relay) and is the component holding the
-	// message, so it emits its own. The wire shape is identical to the
-	// deprecated helper's, so consumers are unaffected. Revisit when
-	// PromptKit offers a supported live route carrying a message index.
+	// live UIs (TUI conversation panel, web SSE relay).
+	//
+	// Arena publishes the event itself rather than using PromptKit's
+	// MessageBroadcastStage, and that is deliberate rather than historical:
+	// the stage numbers messages with a counter local to one Process call,
+	// while Arena needs the TRANSCRIPT-ABSOLUTE index (baseTranscriptLen plus
+	// this turn's offset) and also emits a synthetic system message at index 0
+	// that the stream never carries. Adopting the stage would renumber every
+	// message in the live UI.
+	//
+	// The PAYLOAD is built by events.NewMessageCreatedData, so there is
+	// exactly one definition of the wire shape. An earlier hand-rolled copy
+	// drifted: it stripped msg.Parts but passed ToolResult.Parts through
+	// untouched, putting a tool's image or audio blob straight onto this bus.
 	liveBus        events.Bus
 	executionID    string
 	sessionID      string
@@ -87,19 +92,13 @@ func (s *ArenaStateStoreSaveStage) WithLiveMessages(
 	return s
 }
 
-// publishMessageCreated puts one message.created on Arena's bus. It mirrors
-// what events.Emitter.MessageCreated built before that helper was deprecated,
-// including stripping binary payloads from content parts so large blobs stay
-// out of observability events.
-func (s *ArenaStateStoreSaveStage) publishMessageCreated(
-	role, content string,
-	index int,
-	parts []types.ContentPart,
-	toolCalls []events.MessageToolCall,
-	toolResult *events.MessageToolResult,
-	reasoning *types.ReasoningTrace,
-) {
-	if s.liveBus == nil {
+// publishMessageCreated puts one message.created on Arena's bus.
+//
+// The payload comes from events.NewMessageCreatedData with stripBinary set, so
+// Arena's live route carries exactly what PromptKit's does — including the
+// strip of ToolResult.Parts, which a hand-rolled copy of this function missed.
+func (s *ArenaStateStoreSaveStage) publishMessageCreated(msg *types.Message, index int) {
+	if s.liveBus == nil || msg == nil {
 		return
 	}
 	s.liveBus.Publish(&events.Event{
@@ -108,15 +107,7 @@ func (s *ArenaStateStoreSaveStage) publishMessageCreated(
 		ExecutionID:    s.executionID,
 		SessionID:      s.sessionID,
 		ConversationID: s.conversationID,
-		Data: &events.MessageCreatedData{
-			Role:       role,
-			Content:    content,
-			Index:      index,
-			Parts:      types.MetadataOnlyParts(parts),
-			ToolCalls:  toolCalls,
-			ToolResult: toolResult,
-			Reasoning:  reasoning,
-		},
+		Data:           events.NewMessageCreatedData(msg, index, true),
 	})
 }
 
@@ -482,7 +473,7 @@ func (b *liveBroadcaster) emitSystem(content string) {
 		return
 	}
 	b.systemEmitted = true
-	b.stage.publishMessageCreated(roleSystem, content, 0, nil, nil, nil, nil)
+	b.stage.publishMessageCreated(&types.Message{Role: roleSystem, Content: content}, 0)
 }
 
 // resolveSystemPrompt returns the rendered system prompt for this turn,
@@ -519,50 +510,7 @@ func (s *ArenaStateStoreSaveStage) broadcastMessage(elem *stage.StreamElement, i
 	logger.Debug("save-stage: broadcasting message",
 		"role", elem.Message.Role, "index", idx,
 		"content_len", len(elem.Message.Content))
-	s.publishMessageCreated(
-		elem.Message.Role,
-		elem.Message.Content,
-		idx,
-		elem.Message.Parts,
-		convertToolCalls(elem.Message.ToolCalls),
-		convertToolResult(elem.Message.ToolResult),
-		elem.Message.Reasoning,
-	)
-}
-
-// convertToolCalls converts runtime tool calls to the wire-shaped events
-// type. Without this, assistant turns whose content IS a tool invocation
-// (i.e., empty Content + populated ToolCalls) arrive in the live UI as
-// empty bubbles — the conversation looks like turns are missing.
-func convertToolCalls(in []types.MessageToolCall) []events.MessageToolCall {
-	if len(in) == 0 {
-		return nil
-	}
-	out := make([]events.MessageToolCall, len(in))
-	for i, c := range in {
-		out[i] = events.MessageToolCall{
-			ID:   c.ID,
-			Name: c.Name,
-			Args: string(c.Args),
-		}
-	}
-	return out
-}
-
-// convertToolResult converts a runtime tool result to the wire-shaped events
-// type. Tool result messages with no top-level Content are otherwise rendered
-// as blank turns in the live UI — the actual result lives in Parts/Error.
-func convertToolResult(in *types.MessageToolResult) *events.MessageToolResult {
-	if in == nil {
-		return nil
-	}
-	return &events.MessageToolResult{
-		ID:        in.ID,
-		Name:      in.Name,
-		Parts:     in.Parts,
-		Error:     in.Error,
-		LatencyMs: in.LatencyMs,
-	}
+	s.publishMessageCreated(elem.Message, idx)
 }
 
 // ctxOrBackground returns context.Background when the upstream context has

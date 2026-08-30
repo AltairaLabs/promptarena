@@ -193,12 +193,15 @@ func (a *EventAdapter) handleMessageCreated(event *events.Event) tea.Msg {
 	return MessageCreatedMsg{
 		ConversationID: event.ConversationID,
 		Role:           data.Role,
-		Content:        data.Content,
-		Index:          data.Index,
-		ToolCalls:      data.ToolCalls,
-		ToolResult:     data.ToolResult,
-		Reasoning:      data.Reasoning,
-		Time:           event.Timestamp,
+		// GetContent, not .Content: a message's text is in Content for an
+		// assistant turn and in Parts for a user turn, so reading the field
+		// directly renders every Parts-carrying message as an empty bubble.
+		Content:    data.GetContent(),
+		Index:      data.Index,
+		ToolCalls:  data.ToolCalls,
+		ToolResult: data.ToolResult,
+		Reasoning:  data.Reasoning,
+		Time:       event.Timestamp,
 	}
 }
 

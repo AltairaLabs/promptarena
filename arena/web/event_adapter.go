@@ -427,25 +427,13 @@ func (a *EventAdapter) mapEvent(event *events.Event) *SSEEvent {
 			"error":    errorString(data.Error),
 		}
 	case events.MessageCreatedData:
-		sse.Data = withReasoning(map[string]interface{}{
-			"role":       data.Role,
-			"content":    data.Content,
-			jsonKeyIndex: data.Index,
-			"toolCalls":  data.ToolCalls,
-			"toolResult": data.ToolResult,
-		}, data.Reasoning)
+		sse.Data = messageCreatedPayload(&data)
 	case *events.MessageCreatedData:
 		// runtime/events/emitter.go emits a pointer; without this case the
 		// payload was silently dropped (nil data) and the frontend reducer
 		// never aggregated messages into liveRun.messages.
 		if data != nil {
-			sse.Data = withReasoning(map[string]interface{}{
-				"role":       data.Role,
-				"content":    data.Content,
-				jsonKeyIndex: data.Index,
-				"toolCalls":  data.ToolCalls,
-				"toolResult": data.ToolResult,
-			}, data.Reasoning)
+			sse.Data = messageCreatedPayload(data)
 		}
 	case *events.ReasoningDeltaData:
 		if data != nil {
@@ -613,4 +601,23 @@ func reasoningDeltaPayload(d *events.ReasoningDeltaData) map[string]interface{} 
 		"round":          d.Round,
 		"providerCallId": d.ProviderCallID,
 	}
+}
+
+// messageCreatedPayload renders one message.created for the SSE stream.
+//
+// Both the value and pointer forms of the payload arrive here — the emitter
+// sends a pointer, older producers a value — and they built the same map
+// separately, so a field added to one silently went missing from the other.
+//
+// GetContent, not .Content: a message's text is in Content for an assistant
+// turn and in Parts for a user turn, so reading the field directly streams an
+// empty message and the run reads as though the user said nothing.
+func messageCreatedPayload(data *events.MessageCreatedData) map[string]interface{} {
+	return withReasoning(map[string]interface{}{
+		"role":         data.Role,
+		jsonKeyContent: data.GetContent(),
+		jsonKeyIndex:   data.Index,
+		"toolCalls":    data.ToolCalls,
+		"toolResult":   data.ToolResult,
+	}, data.Reasoning)
 }

@@ -17,6 +17,7 @@ const (
 	jsonKeyTaskType = "taskType"
 	jsonKeyType     = "type"
 	jsonKeyIndex    = "index"
+	jsonKeyContent  = "content"
 	jsonKeyMessage  = "message"
 	jsonKeyState    = "state"
 	// jsonKeySystemPrompt is shared with the conversation.started SSE payload in
