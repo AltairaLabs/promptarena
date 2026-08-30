@@ -17,6 +17,8 @@ spec:
     # ==========================================================================
 
     # GPT-5.x family
+    - file: providers/openai-gpt56-luna.provider.yaml
+      group: text,streaming,vision,tools,json
     - file: providers/openai-gpt55.provider.yaml
       group: text,streaming,vision,tools,json
     - file: providers/openai-gpt54.provider.yaml
@@ -46,11 +48,10 @@ spec:
     - file: providers/openai-gpt41-nano.provider.yaml
       group: text,streaming,vision,tools,json
 
-    # GPT-4o family
-    - file: providers/openai-gpt4o.provider.yaml
-      group: text,streaming,vision,tools,json
-    - file: providers/openai-gpt4o-mini.provider.yaml
-      group: text,streaming,vision,tools,json
+    # Note: the GPT-4o family (gpt-4o 2024-05-10, gpt-4o-mini 2024-07-16) and o1
+    # (2024-12-16) were removed on 2026-08-30 — the three oldest models in the
+    # matrix — to make room for current ones without growing the weekly bill.
+    # GPT-4.1 above and the o3/o4 series below still cover those lineages.
 
     # OpenAI audio models are intentionally not in the matrix. The retired
     # gpt-4o-audio-preview line was replaced by the GA gpt-audio models, but
@@ -62,8 +63,6 @@ spec:
     # is added.
 
     # o-series reasoning models (use max_completion_tokens, no temperature/top_p)
-    - file: providers/openai-o1.provider.yaml
-      group: text,streaming,json
     # o1-pro uses v1/responses API (automatically selected)
     - file: providers/openai-o1-pro.provider.yaml
       group: text,streaming,json
@@ -80,6 +79,8 @@ spec:
 
     # Claude 5
     - file: providers/anthropic-opus5.provider.yaml
+      group: text,streaming,vision,tools,json
+    - file: providers/anthropic-sonnet5.provider.yaml
       group: text,streaming,vision,tools,json
 
     # Claude 4.x latest
@@ -119,6 +120,8 @@ spec:
     # Gemini 3.x family
     # gemini-3-pro-preview retired (replaced by 3.1 Pro); gemini-3-flash-preview
     # superseded by 3.5 Flash.
+    - file: providers/gemini-37-flash.provider.yaml
+      group: text,streaming,vision,tools,json,audio,video
     - file: providers/gemini-31-pro.provider.yaml
       group: text,streaming,vision,tools,json,audio,video
     - file: providers/gemini-35-flash.provider.yaml
@@ -170,11 +173,15 @@ spec:
   defaults:
     temperature: 0.1
     max_tokens: 500
-    # Pinned so reruns are comparable. This was previously getting seed 0 by
-    # accident — Defaults.Seed is an int, and an unset value was still sent —
-    # so the matrix had determinism it never asked for. Arena now omits an
-    # unconfigured seed, which would have left this example unpinned.
-    seed: 42
+    # NO SEED, deliberately. Pinning one 400s every provider that uses OpenAI's
+    # Responses API — gpt-5-pro, gpt-5.2-pro, o1-pro and anything with
+    # api_mode: responses — because that API rejects `seed` outright and
+    # unsupported_params cannot suppress it (AltairaLabs/PromptKit#1870).
+    # Verified: seed: 42 here took gpt-5-pro from passing to 400 on every call.
+    #
+    # Reruns are therefore not seed-comparable. That is the lesser cost: the
+    # matrix measures which capabilities a provider supports, not whether two
+    # runs produce identical bytes. Revisit once #1870 lands.
     concurrency: 6
     output:
       dir: out

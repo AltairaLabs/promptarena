@@ -59,7 +59,8 @@ HEADER
 PROVIDER_CONFIG='{
   "OpenAI": {
     "providers": [
-      {"id": "openai-gpt55", "name": "GPT-5.5", "note": "Current frontier"},
+      {"id": "openai-gpt56-luna", "name": "GPT-5.6 Luna", "note": "Current frontier"},
+      {"id": "openai-gpt55", "name": "GPT-5.5"},
       {"id": "openai-gpt54", "name": "GPT-5.4"},
       {"id": "openai-gpt54-mini", "name": "GPT-5.4 Mini"},
       {"id": "openai-gpt52", "name": "GPT-5.2"},
@@ -72,9 +73,6 @@ PROVIDER_CONFIG='{
       {"id": "openai-gpt41", "name": "GPT-4.1"},
       {"id": "openai-gpt41-mini", "name": "GPT-4.1 Mini"},
       {"id": "openai-gpt41-nano", "name": "GPT-4.1 Nano"},
-      {"id": "openai-gpt4o", "name": "GPT-4o"},
-      {"id": "openai-gpt4o-mini", "name": "GPT-4o Mini"},
-      {"id": "openai-o1", "name": "o1", "note": "Deprecated — retires 2026-10-23"},
       {"id": "openai-o1-pro", "name": "o1-pro", "note": "Deprecated — retires 2026-10-23"},
       {"id": "openai-o3", "name": "o3", "note": "Deprecated — retires 2026-10-23"},
       {"id": "openai-o3-mini", "name": "o3-mini", "note": "Deprecated — retires 2026-10-23"},
@@ -84,6 +82,7 @@ PROVIDER_CONFIG='{
   "Anthropic": {
     "providers": [
       {"id": "anthropic-opus5", "name": "Claude Opus 5", "note": "Latest"},
+      {"id": "anthropic-sonnet5", "name": "Claude Sonnet 5"},
       {"id": "anthropic-opus48", "name": "Claude Opus 4.8"},
       {"id": "anthropic-opus47", "name": "Claude Opus 4.7"},
       {"id": "anthropic-opus46", "name": "Claude Opus 4.6"},
@@ -95,6 +94,7 @@ PROVIDER_CONFIG='{
   },
   "Google": {
     "providers": [
+      {"id": "gemini-37-flash", "name": "Gemini 3.7 Flash", "note": "Latest"},
       {"id": "gemini-31-pro", "name": "Gemini 3.1 Pro", "note": "Replaces gemini-3-pro-preview (retired)"},
       {"id": "gemini-35-flash", "name": "Gemini 3.5 Flash", "note": "Replaces gemini-3-flash-preview"},
       {"id": "gemini-31-flash-lite", "name": "Gemini 3.1 Flash Lite", "note": "Replaces gemini-2.0-flash-lite (retired)"},
