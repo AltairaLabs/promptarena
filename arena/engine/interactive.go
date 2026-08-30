@@ -174,6 +174,30 @@ func (e *Engine) NewInteractiveSession(opts InteractiveSessionOptions) (*Interac
 	}, nil
 }
 
+// SystemPrompt returns this session's rendered system prompt, or "" if it
+// cannot be resolved.
+//
+// This exists so the console can show the system turn when the session opens
+// rather than when the first turn completes — everything in a turn is persisted
+// and broadcast together at the end, measured at ~5s after send.
+//
+// It deliberately goes through the same registry call the pipeline uses
+// (LoadTemplate + render, via LoadWithVars) with the same task type, the same
+// merged promptVars and the same empty model, rather than re-rendering the
+// template separately. A second render path could drift, and showing a system
+// prompt that differs from the one the model received would be worse than
+// showing it late.
+func (s *InteractiveSession) SystemPrompt() string {
+	if s == nil || s.engine == nil || s.engine.promptRegistry == nil {
+		return ""
+	}
+	assembled := s.engine.promptRegistry.LoadWithVars(s.taskType, s.promptVars, "")
+	if assembled == nil {
+		return ""
+	}
+	return assembled.SystemPrompt
+}
+
 // ConversationID returns this session's persistence key.
 func (s *InteractiveSession) ConversationID() string { return s.conversationID }
 

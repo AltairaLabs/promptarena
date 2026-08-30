@@ -99,6 +99,7 @@ export function InteractiveChat({ state, registerInteractiveRun, onBack }: Inter
         } else if (result.sessionId) {
           registerInteractiveRun(result.sessionId);
           setSessionId(result.sessionId);
+          setSystemPrompt(result.systemPrompt ?? null);
         }
       } finally {
         setSessionCreating(false);
@@ -117,13 +118,30 @@ export function InteractiveChat({ state, registerInteractiveRun, onBack }: Inter
     await doCreateSession(pendingParams.agent, pendingParams.provider, varValues, pendingParams.evals);
   }, [pendingParams, varValues, doCreateSession]);
 
+  // The turn's messages — user included — are only persisted and broadcast when
+  // the turn completes, so without this the sender's own message is invisible
+  // for the whole generation (measured at ~5s). Hold it locally and render it
+  // immediately; the authoritative message.created replaces it on arrival.
+  const [pendingUser, setPendingUser] = useState<string | null>(null);
+  // The session's rendered system prompt, returned when the session opens. The
+  // real system message only arrives when the first turn completes, so this
+  // stands in until then.
+  const [systemPrompt, setSystemPrompt] = useState<string | null>(null);
+
   const handleSend = useCallback(
     (text: string) => {
       if (!sessionId || !text.trim() || busy) return;
+      setPendingUser(text.trim());
       void sendMessage(sessionId, text.trim());
     },
     [sessionId, busy, sendMessage],
   );
+
+  useEffect(() => {
+    if (!pendingUser || !sessionId) return;
+    const msgs = state.runs[sessionId]?.messages ?? [];
+    if (msgs.some((m) => m.role === "user" && m.content === pendingUser)) setPendingUser(null);
+  }, [state.runs, sessionId, pendingUser]);
 
   const handleReset = useCallback(() => {
     setSessionId(null);
@@ -131,6 +149,8 @@ export function InteractiveChat({ state, registerInteractiveRun, onBack }: Inter
     setPendingParams(null);
     setVarValues({});
     setSessionError(null);
+    setPendingUser(null);
+    setSystemPrompt(null);
   }, []);
 
   // Messages for the active session, sorted by index (upsert already sorts,
@@ -141,11 +161,82 @@ export function InteractiveChat({ state, registerInteractiveRun, onBack }: Inter
   // fields with no extra mapping once the full event lands.
   const liveMessages = useMemo(() => {
     if (!sessionId) return [];
+    // Do not bail when the run is absent. The system prompt and the just-sent
+    // user turn are known to the console itself, and are the whole point of
+    // showing something before the server has persisted anything — a run only
+    // appears in state once its first event arrives.
     const run = state.runs[sessionId];
-    if (!run?.messages?.length) return [];
-    const msgs = [...run.messages].sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
-    return adaptLiveMessages(msgs);
-  }, [sessionId, state.runs]);
+    const msgs = [...(run?.messages ?? [])].sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
+    const adapted = adaptLiveMessages(msgs);
+
+    // Stand in for the system turn until the real one is persisted at the end
+    // of the first turn. Prepended so it keeps position 0, where the server
+    // will also place it.
+    if (systemPrompt && !msgs.some((m) => m.role === "system")) {
+      adapted.unshift({
+        id: "pending-system",
+        role: "system",
+        sequenceNum: -1,
+        timestamp: new Date().toISOString(),
+        parts: [{ type: "text", text: systemPrompt }],
+      } as (typeof adapted)[number]);
+    }
+
+    // Show the just-sent user turn until the real one lands. Matching on
+    // content rather than index because the server assigns the index (the
+    // system prompt takes 0 on the first turn) and we do not know it yet.
+    if (pendingUser && !msgs.some((m) => m.role === "user" && m.content === pendingUser)) {
+      adapted.push({
+        id: "pending-user",
+        role: "user",
+        sequenceNum: msgs.length,
+        timestamp: new Date().toISOString(),
+        parts: [{ type: "text", text: pendingUser }],
+      } as (typeof adapted)[number]);
+    }
+
+    // Append the turn currently being generated. Reasoning starts streaming
+    // before message.created exists, so this is a synthetic bubble rather than
+    // an update to a real message; the reducer drops `streaming` the moment the
+    // authoritative message lands, and this row is replaced by it.
+    // The in-flight assistant turn. Rendered from the moment the request is
+    // sent rather than when the first token lands: there is a real gap before
+    // anything arrives (measured ~2.5s to the first reasoning fragment), and an
+    // empty pane in that window looks like nothing happened.
+    //
+    // `streaming: true` is what draws Atlas's cursor, so the bubble reads as
+    // working even while it has no text yet.
+    //
+    // Dropped once the real assistant message exists, so the placeholder never
+    // trails a finished turn while the request is still settling.
+    const s = run?.streaming;
+    const streamedReasoning = s ? s.reasoningParts.map((p) => p.text).join("") : "";
+    // In flight for as long as the sent message has not been persisted. Do NOT
+    // test "last message is an assistant" — after the first turn that is the
+    // PREVIOUS turn's reply, which suppressed the indicator on every turn but
+    // the first. pendingUser clears at the same moment the real messages land,
+    // because a turn's messages are all broadcast together.
+    const turnInFlight = busy && pendingUser !== null;
+    if (turnInFlight) {
+      // Atlas draws a streaming cursor, but only for the message whose id
+      // matches MessageStream's `streamingId` prop — it ignores the message's
+      // own `streaming` field, and LiveConsole does not accept or forward a
+      // streamingId. So the cursor is unreachable from here and an empty
+      // bubble renders as a blank assistant turn. Until Atlas forwards it
+      // (AltairaLabs/atlas-components), stand in with visible text.
+      const placeholder = streamedReasoning ? "Thinking…" : "…";
+      adapted.push({
+        id: "streaming",
+        role: "assistant",
+        sequenceNum: msgs.length,
+        timestamp: new Date().toISOString(),
+        streaming: true,
+        parts: [{ type: "text", text: s?.content || placeholder }],
+        ...(streamedReasoning ? { reasoning: { text: streamedReasoning } } : {}),
+      } as (typeof adapted)[number]);
+    }
+    return adapted;
+  }, [sessionId, state.runs, pendingUser, systemPrompt, busy]);
 
   if (loadingOptions) {
     return (

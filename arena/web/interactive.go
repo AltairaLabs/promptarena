@@ -19,7 +19,10 @@ const (
 	jsonKeyIndex    = "index"
 	jsonKeyMessage  = "message"
 	jsonKeyState    = "state"
-	msgBadRequest   = "bad request"
+	// jsonKeySystemPrompt is shared with the conversation.started SSE payload in
+	// event_adapter.go — the same field, so the same key.
+	jsonKeySystemPrompt = "systemPrompt"
+	msgBadRequest       = "bad request"
 	// msgEngineNotConfigured is returned when an interactive handler is hit but no
 	// interactive engine was wired into the server.
 	msgEngineNotConfigured = "engine not configured"
@@ -107,7 +110,13 @@ func (s *Server) handleInteractiveSession(w http.ResponseWriter, r *http.Request
 		return
 	}
 	s.interactive.put(sess)
-	writeJSON(w, http.StatusOK, map[string]any{"sessionId": sess.ConversationID()})
+	// systemPrompt lets the console render the system turn immediately. Without
+	// it the first turn's system message only appears when the whole turn
+	// completes, alongside the user and assistant messages.
+	writeJSON(w, http.StatusOK, map[string]any{
+		"sessionId":         sess.ConversationID(),
+		jsonKeySystemPrompt: sess.SystemPrompt(),
+	})
 }
 
 func (s *Server) handleInteractiveMessage(w http.ResponseWriter, r *http.Request) {
@@ -133,11 +142,20 @@ func (s *Server) handleInteractiveMessage(w http.ResponseWriter, r *http.Request
 		writeJSON(w, http.StatusBadGateway, map[string]any{jsonKeyError: err.Error()})
 		return
 	}
-	for chunk := range ch { // messages render live via SSE; drain + surface first error
+	// Relay each chunk as it arrives so the browser renders the answer as it is
+	// generated. Completed messages still arrive via message.created /
+	// message.full and remain authoritative — these deltas are a preview, and a
+	// consumer replaces the streamed text with the finished message rather than
+	// appending to it.
+	//
+	// The loop must still drain to completion and surface the first error; that
+	// behavior predates the streaming and the turn does not finish without it.
+	for chunk := range ch {
 		if chunk.Error != nil {
 			writeJSON(w, http.StatusBadGateway, map[string]any{jsonKeyError: chunk.Error.Error()})
 			return
 		}
+		s.adapter.BroadcastContentDelta(sess.ConversationID(), chunk.MessageIndex, chunk.Delta)
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true})
 }

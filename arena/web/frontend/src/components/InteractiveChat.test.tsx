@@ -6,13 +6,18 @@ import type { LiveConsoleProps } from "@altairalabs/atlas";
 const fetchOptions = vi.fn();
 const createSession = vi.fn();
 const sendMessage = vi.fn();
+// Mutable so a test can put the component in the mid-turn state, which is when
+// the pending user turn and the working indicator are rendered.
+let busy = false;
 
 vi.mock("@/hooks/useInteractiveChat", () => ({
   useInteractiveChat: () => ({
     fetchOptions,
     createSession,
     sendMessage,
-    busy: false,
+    get busy() {
+      return busy;
+    },
     error: null,
   }),
 }));
@@ -81,6 +86,7 @@ describe("InteractiveChat", () => {
     sendMessage.mockReset();
     useVoiceCallSpy.mockClear();
     liveConsoleSpy.mockClear();
+    busy = false;
   });
 
   it("renders the setup card once options load, gating Start Chat until agent + provider are chosen", async () => {
@@ -304,6 +310,123 @@ describe("InteractiveChat", () => {
       fetchOptions.mockRejectedValue(new Error("options endpoint down"));
       render(<InteractiveChat state={emptyState()} registerInteractiveRun={vi.fn()} onBack={vi.fn()} />);
       expect(await screen.findByRole("alert")).toHaveTextContent("options endpoint down");
+    });
+  });
+});
+
+// A turn's messages — system, user and assistant alike — are persisted and
+// broadcast together when the turn completes, measured at ~5s after send. The
+// console therefore has to stand in for what it already knows, or the sender
+// stares at an unchanged pane for the whole generation.
+describe("InteractiveChat in-flight turn", () => {
+  // Scoped per describe: without this, `busy` leaks from the previous test and
+  // handleSend refuses to send, which looks like a rendering bug.
+  beforeEach(() => {
+    fetchOptions.mockReset();
+    createSession.mockReset();
+    sendMessage.mockReset();
+    liveConsoleSpy.mockClear();
+    busy = false;
+  });
+
+  // Indexed rather than Array.prototype.at: the build's tsc lib target predates
+  // es2022, so `.at` typechecks locally with --noEmit and fails the build.
+  const lastProps = () => {
+    const calls = liveConsoleSpy.mock.calls;
+    return calls[calls.length - 1][0] as { onSend: (t: string, f: File[]) => void };
+  };
+
+  const lastMessages = () => {
+    const calls = liveConsoleSpy.mock.calls;
+    return (calls[calls.length - 1][0] as { messages: Array<Record<string, unknown>> }).messages;
+  };
+
+  const startChat = async (session: Record<string, unknown> = { sessionId: "s1" }) => {
+    fetchOptions.mockResolvedValue({
+      agents: [{ taskType: "support", description: "" }],
+      providers: ["claude"],
+      hasEvals: false,
+    });
+    createSession.mockResolvedValue(session);
+    const view = render(
+      <InteractiveChat state={emptyState()} registerInteractiveRun={vi.fn()} onBack={vi.fn()} />,
+    );
+    fireEvent.click(await screen.findByText("Start Chat"));
+    await waitFor(() => expect(screen.getByPlaceholderText(/Type a message/)).toBeInTheDocument());
+    return view;
+  };
+
+  const textOf = (m: Record<string, unknown>) =>
+    ((m.parts as Array<{ text?: string }>) ?? []).map((p) => p.text ?? "").join("");
+
+  it("shows the system prompt as soon as the session opens", async () => {
+    // It cannot be rendered from the client's own knowledge — the server
+    // returns the prompt it actually assembled.
+    await startChat({ sessionId: "s1", systemPrompt: "You are a careful problem solver." });
+    const system = lastMessages().find((m) => m.role === "system");
+    expect(system).toBeDefined();
+    expect(textOf(system!)).toBe("You are a careful problem solver.");
+  });
+
+  it("renders no system turn when the server supplies no prompt", async () => {
+    await startChat({ sessionId: "s1" });
+    expect(lastMessages().some((m) => m.role === "system")).toBe(false);
+  });
+
+  it("shows the sent message immediately, and a working indicator with it", async () => {
+    await startChat();
+    busy = true;
+    fireEvent.change(screen.getByPlaceholderText(/Type a message/), { target: { value: "" } });
+
+    const composerProps = lastProps();
+    composerProps.onSend("how many widgets?", []);
+
+    await waitFor(() => {
+      const msgs = lastMessages();
+      const user = msgs.find((m) => m.role === "user");
+      expect(user).toBeDefined();
+      expect(textOf(user!)).toBe("how many widgets?");
+    });
+
+    // An empty assistant bubble reads as broken rather than busy, so the
+    // in-flight turn carries visible text until tokens arrive.
+    const assistant = lastMessages().find((m) => m.role === "assistant");
+    expect(assistant).toBeDefined();
+    expect(assistant!.streaming).toBe(true);
+    expect(textOf(assistant!)).not.toBe("");
+  });
+
+  it("drops the stand-ins once the real messages arrive", async () => {
+    // Otherwise a partial trails the finished turn and the message shows twice.
+    const { rerender } = await startChat({ sessionId: "s1", systemPrompt: "sys" });
+    busy = true;
+    const props = lastProps();
+    props.onSend("hello", []);
+    await waitFor(() => expect(lastMessages().some((m) => m.role === "user")).toBe(true));
+
+    busy = false;
+    const settled = emptyState({
+      runs: {
+        s1: {
+          runId: "s1", scenario: "", provider: "", region: "", startTime: "", turnIndex: 0,
+          messages: [
+            { index: 0, role: "system", content: "sys" },
+            { index: 1, role: "user", content: "hello" },
+            { index: 2, role: "assistant", content: "hi back" },
+          ],
+          costs: { inputTokens: 0, outputTokens: 0, totalCost: 0 },
+          status: "completed",
+        },
+      },
+    } as Partial<ArenaState>);
+
+    // Same component instance — a fresh render would start back at setup with
+    // no session, and assert nothing about the transition.
+    rerender(<InteractiveChat state={settled} registerInteractiveRun={vi.fn()} onBack={vi.fn()} />);
+    await waitFor(() => {
+      const msgs = lastMessages();
+      expect(msgs.filter((m) => m.role === "user")).toHaveLength(1);
+      expect(msgs.filter((m) => m.role === "system")).toHaveLength(1);
     });
   });
 });

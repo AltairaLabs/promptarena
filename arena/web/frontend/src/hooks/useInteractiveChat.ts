@@ -11,6 +11,10 @@ export interface InteractiveOptions {
 }
 
 export interface CreateSessionResult {
+  // Rendered by the server via the same registry call the pipeline uses, so the
+  // console can show the system turn on open rather than when the first turn
+  // completes.
+  systemPrompt?: string;
   sessionId?: string;
   missingVars?: string[];
   error?: string;
@@ -40,7 +44,9 @@ export function useInteractiveChat() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(params),
     });
-    const body = await resp.json() as { sessionId?: string; missingVars?: string[]; error?: string };
+    const body = await resp.json() as {
+      sessionId?: string; missingVars?: string[]; error?: string; systemPrompt?: string;
+    };
     if (!resp.ok) {
       return { error: body.error ?? `Session creation failed: ${resp.status}` };
     }
