@@ -15,8 +15,15 @@ import (
 
 // SSEEvent is the JSON structure sent to SSE clients.
 type SSEEvent struct {
-	Type           string      `json:"type"`
-	Timestamp      time.Time   `json:"timestamp"`
+	Type      string    `json:"type"`
+	Timestamp time.Time `json:"timestamp"`
+	// Sequence is the bus's monotonic publish counter. It matters because the
+	// bus dispatches through a fixed-size worker pool, so listeners do NOT see
+	// events in publish order — verified live: concatenating reasoning
+	// fragments in arrival order produced "C = = 3" where the model wrote
+	// "C = 3", one fragment having overtaken another. Anything a consumer
+	// reassembles from multiple frames must sort on this first.
+	Sequence       int64       `json:"sequence,omitempty"`
 	ExecutionID    string      `json:"executionId,omitempty"`
 	ConversationID string      `json:"conversationId,omitempty"`
 	Data           interface{} `json:"data,omitempty"`
@@ -395,6 +402,7 @@ func (a *EventAdapter) mapEvent(event *events.Event) *SSEEvent {
 	sse := &SSEEvent{
 		Type:           string(event.Type),
 		Timestamp:      event.Timestamp,
+		Sequence:       event.Sequence,
 		ExecutionID:    event.ExecutionID,
 		ConversationID: event.ConversationID,
 	}

@@ -117,13 +117,26 @@ export function InteractiveChat({ state, registerInteractiveRun, onBack }: Inter
     await doCreateSession(pendingParams.agent, pendingParams.provider, varValues, pendingParams.evals);
   }, [pendingParams, varValues, doCreateSession]);
 
+  // The turn's messages — user included — are only persisted and broadcast when
+  // the turn completes, so without this the sender's own message is invisible
+  // for the whole generation (measured at ~5s). Hold it locally and render it
+  // immediately; the authoritative message.created replaces it on arrival.
+  const [pendingUser, setPendingUser] = useState<string | null>(null);
+
   const handleSend = useCallback(
     (text: string) => {
       if (!sessionId || !text.trim() || busy) return;
+      setPendingUser(text.trim());
       void sendMessage(sessionId, text.trim());
     },
     [sessionId, busy, sendMessage],
   );
+
+  useEffect(() => {
+    if (!pendingUser || !sessionId) return;
+    const msgs = state.runs[sessionId]?.messages ?? [];
+    if (msgs.some((m) => m.role === "user" && m.content === pendingUser)) setPendingUser(null);
+  }, [state.runs, sessionId, pendingUser]);
 
   const handleReset = useCallback(() => {
     setSessionId(null);
@@ -131,6 +144,7 @@ export function InteractiveChat({ state, registerInteractiveRun, onBack }: Inter
     setPendingParams(null);
     setVarValues({});
     setSessionError(null);
+    setPendingUser(null);
   }, []);
 
   // Messages for the active session, sorted by index (upsert already sorts,
@@ -146,23 +160,37 @@ export function InteractiveChat({ state, registerInteractiveRun, onBack }: Inter
     const msgs = [...(run.messages ?? [])].sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
     const adapted = adaptLiveMessages(msgs);
 
+    // Show the just-sent user turn until the real one lands. Matching on
+    // content rather than index because the server assigns the index (the
+    // system prompt takes 0 on the first turn) and we do not know it yet.
+    if (pendingUser && !msgs.some((m) => m.role === "user" && m.content === pendingUser)) {
+      adapted.push({
+        id: "pending-user",
+        role: "user",
+        sequenceNum: msgs.length,
+        timestamp: new Date().toISOString(),
+        parts: [{ type: "text", text: pendingUser }],
+      } as (typeof adapted)[number]);
+    }
+
     // Append the turn currently being generated. Reasoning starts streaming
     // before message.created exists, so this is a synthetic bubble rather than
     // an update to a real message; the reducer drops `streaming` the moment the
     // authoritative message lands, and this row is replaced by it.
     const s = run.streaming;
-    if (s && (s.content || s.reasoning)) {
+    const streamedReasoning = s ? s.reasoningParts.map((p) => p.text).join("") : "";
+    if (s && (s.content || streamedReasoning)) {
       adapted.push({
         id: "streaming",
         role: "assistant",
         sequenceNum: msgs.length,
         timestamp: new Date().toISOString(),
         parts: s.content ? [{ type: "text", text: s.content }] : [],
-        ...(s.reasoning ? { reasoning: { text: s.reasoning } } : {}),
+        ...(streamedReasoning ? { reasoning: { text: streamedReasoning } } : {}),
       } as (typeof adapted)[number]);
     }
     return adapted;
-  }, [sessionId, state.runs]);
+  }, [sessionId, state.runs, pendingUser]);
 
   if (loadingOptions) {
     return (

@@ -9,6 +9,7 @@ import type {
   ArenaTurnData,
   LiveMessage,
   MessageCreatedData,
+  StreamingTurn,
   ReasoningDeltaData,
   ContentDeltaData,
   MessageFullData,
@@ -39,7 +40,7 @@ type Action =
   | { type: "MESSAGE_FULL"; runId: string; data: MessageFullData; timestamp: string }
   | { type: "MESSAGE_UPDATED"; runId: string; data: MessageUpdatedData; timestamp: string }
   | { type: "PROVIDER_CALL_COMPLETED"; runId: string; data: ProviderCallData; timestamp: string }
-  | { type: "REASONING_DELTA"; runId: string; data: ReasoningDeltaData; timestamp: string }
+  | { type: "REASONING_DELTA"; runId: string; data: ReasoningDeltaData; seq: number; timestamp: string }
   | { type: "CONTENT_DELTA"; runId: string; data: ContentDeltaData; timestamp: string }
   | { type: "LOG"; entry: LogEntry };
 
@@ -177,22 +178,25 @@ function reducer(state: ArenaState, action: Action): ArenaState {
     // attach it to.
     case "REASONING_DELTA": {
       const existing = ensureRun(state, action.runId, action.timestamp);
-      const cur = existing.streaming ?? { index: -1, content: "", reasoning: "" };
+      const cur = existing.streaming ?? emptyStreamingTurn();
+      // Insert by sequence rather than appending. The bus is worker-pooled, so
+      // a later fragment can arrive first; appending scrambles the text.
+      const parts = [...cur.reasoningParts, { seq: action.seq, text: action.data.text }]
+        .sort((a, b) => a.seq - b.seq);
       return {
         ...state,
         runs: {
           ...state.runs,
-          [action.runId]: {
-            ...existing,
-            streaming: { ...cur, reasoning: cur.reasoning + action.data.text },
-          },
+          [action.runId]: { ...existing, streaming: { ...cur, reasoningParts: parts } },
         },
       };
     }
 
     case "CONTENT_DELTA": {
       const existing = ensureRun(state, action.runId, action.timestamp);
-      const cur = existing.streaming ?? { index: -1, content: "", reasoning: "" };
+      // Content deltas are broadcast directly from the interactive handler's
+      // chunk loop, not via the bus, so they do arrive in order and can append.
+      const cur = existing.streaming ?? emptyStreamingTurn();
       return {
         ...state,
         runs: {
@@ -277,6 +281,12 @@ function reducer(state: ArenaState, action: Action): ArenaState {
   }
 }
 
+// emptyStreamingTurn is the initial in-flight turn. index is -1 until a content
+// delta names one; reasoning can start before any text exists.
+function emptyStreamingTurn(): StreamingTurn {
+  return { index: -1, content: "", reasoningParts: [] };
+}
+
 function mapSSEToAction(event: SSEEvent): Action | null {
   const runId = event.executionId || event.conversationId || "";
   const ts = event.timestamp;
@@ -301,7 +311,10 @@ function mapSSEToAction(event: SSEEvent): Action | null {
     case "arena.duplex.turn.failed":
       return { type: "TURN_COMPLETED", runId, data: d as unknown as ArenaTurnData, timestamp: ts };
     case "reasoning.delta":
-      return { type: "REASONING_DELTA", runId, data: d as unknown as ReasoningDeltaData, timestamp: ts };
+      return {
+        type: "REASONING_DELTA", runId, data: d as unknown as ReasoningDeltaData,
+        seq: event.sequence ?? 0, timestamp: ts,
+      };
     case "content.delta":
       return { type: "CONTENT_DELTA", runId, data: d as unknown as ContentDeltaData, timestamp: ts };
     case "message.created":

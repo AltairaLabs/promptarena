@@ -3,6 +3,9 @@
 // === SSE Events ===
 
 export interface SSEEvent {
+  // Bus publish order. Required to reassemble anything split across frames —
+  // arrival order is not publish order.
+  sequence?: number;
   type: string;
   timestamp: string;
   executionId?: string;
@@ -400,7 +403,16 @@ export interface StreamingTurn {
   // content delta arrives (reasoning can start before any text does).
   index: number;
   content: string;
-  reasoning: string;
+  // Reasoning fragments keyed by the bus sequence number, NOT a concatenated
+  // string. The event bus dispatches through a worker pool, so fragments do not
+  // arrive in publish order — joining them as they land produced "C = = 3"
+  // where the model wrote "C = 3". Sort on seq before display.
+  reasoningParts: ReasoningPart[];
+}
+
+export interface ReasoningPart {
+  seq: number;
+  text: string;
 }
 
 export interface ActiveRun {
