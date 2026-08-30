@@ -473,7 +473,7 @@ func (a *EventAdapter) mapEvent(event *events.Event) *SSEEvent {
 		}
 	case events.ConversationStartedData:
 		sse.Data = map[string]interface{}{
-			"systemPrompt": data.SystemPrompt,
+			jsonKeySystemPrompt: data.SystemPrompt,
 		}
 	case events.MiddlewareCompletedData:
 		sse.Data = map[string]interface{}{

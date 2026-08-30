@@ -19,7 +19,10 @@ const (
 	jsonKeyIndex    = "index"
 	jsonKeyMessage  = "message"
 	jsonKeyState    = "state"
-	msgBadRequest   = "bad request"
+	// jsonKeySystemPrompt is shared with the conversation.started SSE payload in
+	// event_adapter.go — the same field, so the same key.
+	jsonKeySystemPrompt = "systemPrompt"
+	msgBadRequest       = "bad request"
 	// msgEngineNotConfigured is returned when an interactive handler is hit but no
 	// interactive engine was wired into the server.
 	msgEngineNotConfigured = "engine not configured"
@@ -111,8 +114,8 @@ func (s *Server) handleInteractiveSession(w http.ResponseWriter, r *http.Request
 	// it the first turn's system message only appears when the whole turn
 	// completes, alongside the user and assistant messages.
 	writeJSON(w, http.StatusOK, map[string]any{
-		"sessionId":    sess.ConversationID(),
-		"systemPrompt": sess.SystemPrompt(),
+		"sessionId":         sess.ConversationID(),
+		jsonKeySystemPrompt: sess.SystemPrompt(),
 	})
 }
 

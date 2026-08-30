@@ -161,9 +161,12 @@ export function InteractiveChat({ state, registerInteractiveRun, onBack }: Inter
   // fields with no extra mapping once the full event lands.
   const liveMessages = useMemo(() => {
     if (!sessionId) return [];
+    // Do not bail when the run is absent. The system prompt and the just-sent
+    // user turn are known to the console itself, and are the whole point of
+    // showing something before the server has persisted anything — a run only
+    // appears in state once its first event arrives.
     const run = state.runs[sessionId];
-    if (!run) return [];
-    const msgs = [...(run.messages ?? [])].sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
+    const msgs = [...(run?.messages ?? [])].sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
     const adapted = adaptLiveMessages(msgs);
 
     // Stand in for the system turn until the real one is persisted at the end
@@ -206,7 +209,7 @@ export function InteractiveChat({ state, registerInteractiveRun, onBack }: Inter
     //
     // Dropped once the real assistant message exists, so the placeholder never
     // trails a finished turn while the request is still settling.
-    const s = run.streaming;
+    const s = run?.streaming;
     const streamedReasoning = s ? s.reasoningParts.map((p) => p.text).join("") : "";
     // In flight for as long as the sent message has not been persisted. Do NOT
     // test "last message is an assistant" — after the first turn that is the
