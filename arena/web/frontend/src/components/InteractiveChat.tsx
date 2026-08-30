@@ -215,13 +215,20 @@ export function InteractiveChat({ state, registerInteractiveRun, onBack }: Inter
     // because a turn's messages are all broadcast together.
     const turnInFlight = busy && pendingUser !== null;
     if (turnInFlight) {
+      // Atlas draws a streaming cursor, but only for the message whose id
+      // matches MessageStream's `streamingId` prop — it ignores the message's
+      // own `streaming` field, and LiveConsole does not accept or forward a
+      // streamingId. So the cursor is unreachable from here and an empty
+      // bubble renders as a blank assistant turn. Until Atlas forwards it
+      // (AltairaLabs/atlas-components), stand in with visible text.
+      const placeholder = streamedReasoning ? "Thinking…" : "…";
       adapted.push({
         id: "streaming",
         role: "assistant",
         sequenceNum: msgs.length,
         timestamp: new Date().toISOString(),
         streaming: true,
-        parts: s?.content ? [{ type: "text", text: s.content }] : [],
+        parts: [{ type: "text", text: s?.content || placeholder }],
         ...(streamedReasoning ? { reasoning: { text: streamedReasoning } } : {}),
       } as (typeof adapted)[number]);
     }
