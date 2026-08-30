@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/AltairaLabs/PromptKit/runtime/evals"
+	"github.com/AltairaLabs/promptarena/arena/assertions"
 	"github.com/AltairaLabs/promptarena/arena/engine"
 )
 
@@ -149,8 +150,10 @@ func AllAssertionsPassed(result *engine.RunResult) bool {
 			// Also check eval results (Phase 3 dual-write)
 			if evalResults, ok := meta["eval_results"].([]evals.EvalResult); ok {
 				for j := range evalResults {
-					passed, _ := evalResults[j].Value.(bool)
-					if !passed {
+					// Not Value.(bool): a plain eval's Value is its structured
+					// measurement, which type-asserts to false and used to fail
+					// the whole conversation for every non-asserted eval.
+					if !assertions.EvalResultPassed(&evalResults[j]) {
 						return false
 					}
 				}
