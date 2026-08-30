@@ -112,18 +112,7 @@ func ConvertEvalResults(results []evals.EvalResult) []ConversationValidationResu
 
 // convertOneEvalResult converts a single EvalResult to ConversationValidationResult.
 func convertOneEvalResult(r *evals.EvalResult) ConversationValidationResult {
-	// AssertionEvalHandler wraps inner evals as assertions and sets
-	// r.Value = passed (bool). Direct (non-asserted) eval results
-	// keep their handler's structured Value, in which case "passed"
-	// derives from score and error state. Score >= 1.0 with no error
-	// means success for non-gating measurement evals.
-	var passed bool
-	switch v := r.Value.(type) {
-	case bool:
-		passed = v
-	default:
-		passed = r.Error == "" && r.Score != nil && *r.Score >= 1.0
-	}
+	passed := EvalResultPassed(r)
 
 	msg := r.Explanation
 	if !passed && r.Error != "" {
@@ -166,4 +155,34 @@ func convertOneEvalResult(r *evals.EvalResult) ConversationValidationResult {
 		Message: msg,
 		Details: details,
 	}
+}
+
+// EvalResultPassed reports a result's pass/fail, preferring the one the result
+// STATES over anything derived from it.
+//
+// PromptKit distinguishes three roles. An assertion and a guardrail coerce a
+// measurement to a boolean and state it in Passed. An eval MEASURES: it returns
+// a value and a score and states no pass or fail at all.
+//
+// This used to read r.Value.(bool), because the promptkit assertion wrapper
+// overwrote Value with its boolean. It no longer does — Value now carries the
+// inner eval's own output, which is what a report most wants to show — so that
+// read fell through to the score branch for every assertion, and an llm_judge
+// scoring 0.9 under min_score 0.8 was reported as FAILED. That `>= 1.0` is an
+// assertion's DEFAULT threshold; applying it to a result carrying its own
+// threshold is the same bug promptkit removed from its event path in #1861.
+//
+// The score fallback stays for results that state nothing — a plain eval, or a
+// result deserialized from a run predating Passed. Arena's report needs a
+// boolean in that column either way, and how it should present a measurement
+// that nobody asserted on is a separate question from this one.
+func EvalResultPassed(r *evals.EvalResult) bool {
+	if r.Passed != nil {
+		return *r.Passed
+	}
+	// An assertion's boolean lived in Value before Passed existed.
+	if v, ok := r.Value.(bool); ok {
+		return v
+	}
+	return r.Error == "" && r.Score != nil && *r.Score >= 1.0
 }

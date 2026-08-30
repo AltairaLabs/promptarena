@@ -894,3 +894,43 @@ func TestBroadcastContentDelta(t *testing.T) {
 		t.Fatal("timed out")
 	}
 }
+
+// TestAdapter_MapMessageCreated_TextInParts is the SSE half of the same
+// contract as the TUI's TestEventAdapter_MessageCreated_TextInParts.
+//
+// A user turn carries its text in Parts with Content empty, so reading
+// .Content directly streams an empty message to the frontend and the run reads
+// as though the user said nothing.
+func TestAdapter_MapMessageCreated_TextInParts(t *testing.T) {
+	text := "where is my order"
+	adapter := NewEventAdapter()
+	ch := adapter.Register()
+
+	adapter.HandleEvent(&events.Event{
+		Type:           events.EventMessageCreated,
+		Timestamp:      time.Now(),
+		ConversationID: "conv-parts",
+		Data: &events.MessageCreatedData{
+			Role:  "user",
+			Parts: []types.ContentPart{{Type: "text", Text: &text}},
+		},
+	})
+
+	select {
+	case msg := <-ch:
+		var got SSEEvent
+		if err := json.Unmarshal(msg, &got); err != nil {
+			t.Fatalf("unmarshal: %v", err)
+		}
+		data, ok := got.Data.(map[string]interface{})
+		if !ok {
+			t.Fatalf("data is %T, want map", got.Data)
+		}
+		if data["content"] != text {
+			t.Errorf("content = %v, want %q — the user's text was dropped on the way "+
+				"to the frontend", data["content"], text)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("timed out")
+	}
+}

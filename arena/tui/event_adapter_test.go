@@ -996,3 +996,34 @@ func TestEventAdapter_ReasoningDelta(t *testing.T) {
 		t.Fatalf("Text = %q, want %q", rd.Text, "thinking out loud")
 	}
 }
+
+// TestEventAdapter_MessageCreated_TextInParts pins the other half of the
+// payload contract.
+//
+// A message's text is in Content for an assistant turn and in Parts for a user
+// turn — the runtime's own live testing found user turns arriving with Content
+// empty. Reading .Content directly therefore renders every Parts-carrying
+// message as an empty bubble, which is what the conversation panel was doing.
+// MessageCreatedData.GetContent is the canonical rule for which field wins.
+func TestEventAdapter_MessageCreated_TextInParts(t *testing.T) {
+	t.Parallel()
+
+	text := "where is my order"
+	adapter := NewEventAdapter(nil)
+	msg := adapter.handleMessageCreated(&events.Event{
+		Type:           events.EventMessageCreated,
+		ConversationID: "conv-parts",
+		Timestamp:      time.Now(),
+		Data: &events.MessageCreatedData{
+			Role:  "user",
+			Parts: []types.ContentPart{{Type: "text", Text: &text}},
+		},
+	})
+
+	require.NotNil(t, msg)
+	got, ok := msg.(MessageCreatedMsg)
+	require.True(t, ok)
+	assert.Equal(t, text, got.Content,
+		"the user's text was dropped: the panel renders an empty bubble for any "+
+			"message that carries its text in Parts")
+}
