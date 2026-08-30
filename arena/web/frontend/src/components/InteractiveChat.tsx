@@ -99,6 +99,7 @@ export function InteractiveChat({ state, registerInteractiveRun, onBack }: Inter
         } else if (result.sessionId) {
           registerInteractiveRun(result.sessionId);
           setSessionId(result.sessionId);
+          setSystemPrompt(result.systemPrompt ?? null);
         }
       } finally {
         setSessionCreating(false);
@@ -122,6 +123,10 @@ export function InteractiveChat({ state, registerInteractiveRun, onBack }: Inter
   // for the whole generation (measured at ~5s). Hold it locally and render it
   // immediately; the authoritative message.created replaces it on arrival.
   const [pendingUser, setPendingUser] = useState<string | null>(null);
+  // The session's rendered system prompt, returned when the session opens. The
+  // real system message only arrives when the first turn completes, so this
+  // stands in until then.
+  const [systemPrompt, setSystemPrompt] = useState<string | null>(null);
 
   const handleSend = useCallback(
     (text: string) => {
@@ -145,6 +150,7 @@ export function InteractiveChat({ state, registerInteractiveRun, onBack }: Inter
     setVarValues({});
     setSessionError(null);
     setPendingUser(null);
+    setSystemPrompt(null);
   }, []);
 
   // Messages for the active session, sorted by index (upsert already sorts,
@@ -159,6 +165,19 @@ export function InteractiveChat({ state, registerInteractiveRun, onBack }: Inter
     if (!run) return [];
     const msgs = [...(run.messages ?? [])].sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
     const adapted = adaptLiveMessages(msgs);
+
+    // Stand in for the system turn until the real one is persisted at the end
+    // of the first turn. Prepended so it keeps position 0, where the server
+    // will also place it.
+    if (systemPrompt && !msgs.some((m) => m.role === "system")) {
+      adapted.unshift({
+        id: "pending-system",
+        role: "system",
+        sequenceNum: -1,
+        timestamp: new Date().toISOString(),
+        parts: [{ type: "text", text: systemPrompt }],
+      } as (typeof adapted)[number]);
+    }
 
     // Show the just-sent user turn until the real one lands. Matching on
     // content rather than index because the server assigns the index (the
@@ -190,7 +209,7 @@ export function InteractiveChat({ state, registerInteractiveRun, onBack }: Inter
       } as (typeof adapted)[number]);
     }
     return adapted;
-  }, [sessionId, state.runs, pendingUser]);
+  }, [sessionId, state.runs, pendingUser, systemPrompt]);
 
   if (loadingOptions) {
     return (

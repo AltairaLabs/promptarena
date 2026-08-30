@@ -107,7 +107,13 @@ func (s *Server) handleInteractiveSession(w http.ResponseWriter, r *http.Request
 		return
 	}
 	s.interactive.put(sess)
-	writeJSON(w, http.StatusOK, map[string]any{"sessionId": sess.ConversationID()})
+	// systemPrompt lets the console render the system turn immediately. Without
+	// it the first turn's system message only appears when the whole turn
+	// completes, alongside the user and assistant messages.
+	writeJSON(w, http.StatusOK, map[string]any{
+		"sessionId":    sess.ConversationID(),
+		"systemPrompt": sess.SystemPrompt(),
+	})
 }
 
 func (s *Server) handleInteractiveMessage(w http.ResponseWriter, r *http.Request) {
