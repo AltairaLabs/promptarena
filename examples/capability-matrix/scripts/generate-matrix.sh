@@ -83,16 +83,14 @@ PROVIDER_CONFIG='{
   },
   "Anthropic": {
     "providers": [
-      {"id": "anthropic-opus48", "name": "Claude Opus 4.8", "note": "Latest"},
+      {"id": "anthropic-opus5", "name": "Claude Opus 5", "note": "Latest"},
+      {"id": "anthropic-opus48", "name": "Claude Opus 4.8"},
       {"id": "anthropic-opus47", "name": "Claude Opus 4.7"},
       {"id": "anthropic-opus46", "name": "Claude Opus 4.6"},
       {"id": "anthropic-sonnet46", "name": "Claude Sonnet 4.6"},
       {"id": "anthropic-opus45", "name": "Claude Opus 4.5"},
       {"id": "anthropic-sonnet45", "name": "Claude Sonnet 4.5"},
-      {"id": "anthropic-haiku45", "name": "Claude Haiku 4.5"},
-      {"id": "anthropic-opus41", "name": "Claude Opus 4.1"},
-      {"id": "anthropic-opus4", "name": "Claude Opus 4", "note": "Deprecated — retires 2026-06-15"},
-      {"id": "anthropic-sonnet4", "name": "Claude Sonnet 4", "note": "Deprecated — retires 2026-06-15"}
+      {"id": "anthropic-haiku45", "name": "Claude Haiku 4.5"}
     ]
   },
   "Google": {
