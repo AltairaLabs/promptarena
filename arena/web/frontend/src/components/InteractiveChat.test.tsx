@@ -329,6 +329,13 @@ describe("InteractiveChat in-flight turn", () => {
     busy = false;
   });
 
+  // Indexed rather than Array.prototype.at: the build's tsc lib target predates
+  // es2022, so `.at` typechecks locally with --noEmit and fails the build.
+  const lastProps = () => {
+    const calls = liveConsoleSpy.mock.calls;
+    return calls[calls.length - 1][0] as { onSend: (t: string, f: File[]) => void };
+  };
+
   const lastMessages = () => {
     const calls = liveConsoleSpy.mock.calls;
     return (calls[calls.length - 1][0] as { messages: Array<Record<string, unknown>> }).messages;
@@ -371,7 +378,7 @@ describe("InteractiveChat in-flight turn", () => {
     busy = true;
     fireEvent.change(screen.getByPlaceholderText(/Type a message/), { target: { value: "" } });
 
-    const composerProps = liveConsoleSpy.mock.calls.at(-1)![0] as { onSend: (t: string, f: File[]) => void };
+    const composerProps = lastProps();
     composerProps.onSend("how many widgets?", []);
 
     await waitFor(() => {
@@ -393,7 +400,7 @@ describe("InteractiveChat in-flight turn", () => {
     // Otherwise a partial trails the finished turn and the message shows twice.
     const { rerender } = await startChat({ sessionId: "s1", systemPrompt: "sys" });
     busy = true;
-    const props = liveConsoleSpy.mock.calls.at(-1)![0] as { onSend: (t: string, f: File[]) => void };
+    const props = lastProps();
     props.onSend("hello", []);
     await waitFor(() => expect(lastMessages().some((m) => m.role === "user")).toBe(true));
 
