@@ -133,11 +133,20 @@ func (s *Server) handleInteractiveMessage(w http.ResponseWriter, r *http.Request
 		writeJSON(w, http.StatusBadGateway, map[string]any{jsonKeyError: err.Error()})
 		return
 	}
-	for chunk := range ch { // messages render live via SSE; drain + surface first error
+	// Relay each chunk as it arrives so the browser renders the answer as it is
+	// generated. Completed messages still arrive via message.created /
+	// message.full and remain authoritative — these deltas are a preview, and a
+	// consumer replaces the streamed text with the finished message rather than
+	// appending to it.
+	//
+	// The loop must still drain to completion and surface the first error; that
+	// behavior predates the streaming and the turn does not finish without it.
+	for chunk := range ch {
 		if chunk.Error != nil {
 			writeJSON(w, http.StatusBadGateway, map[string]any{jsonKeyError: chunk.Error.Error()})
 			return
 		}
+		s.adapter.BroadcastContentDelta(sess.ConversationID(), chunk.MessageIndex, chunk.Delta)
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"ok": true})
 }

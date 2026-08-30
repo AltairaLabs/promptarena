@@ -324,3 +324,52 @@ describe("reducer", () => {
     expect(state.runs["run-order"].messages[1].index).toBe(1);
   });
 });
+
+describe("streaming deltas", () => {
+  const run = "r1";
+  const start = () => __reducer(__initialState, {
+    type: "RUN_STARTED", runId: run, timestamp: "t0",
+    data: { scenarioId: "s", providerId: "p", region: "default" } as never,
+  });
+
+  it("accumulates reasoning before any message exists", () => {
+    // The ordering that forces `streaming` to live on the run rather than on a
+    // message: reasoning arrives first, with no message.created yet.
+    let s = start();
+    s = __reducer(s, { type: "REASONING_DELTA", runId: run, timestamp: "t1", data: { text: "D = 5" } });
+    s = __reducer(s, { type: "REASONING_DELTA", runId: run, timestamp: "t2", data: { text: ", C = 15" } });
+    expect(s.runs[run].messages).toHaveLength(0);
+    expect(s.runs[run].streaming?.reasoning).toBe("D = 5, C = 15");
+  });
+
+  it("accumulates content deltas and records the message index", () => {
+    let s = start();
+    s = __reducer(s, { type: "CONTENT_DELTA", runId: run, timestamp: "t1", data: { index: 2, delta: "ANS" } });
+    s = __reducer(s, { type: "CONTENT_DELTA", runId: run, timestamp: "t2", data: { index: 2, delta: "WER: 208" } });
+    expect(s.runs[run].streaming).toMatchObject({ index: 2, content: "ANSWER: 208" });
+  });
+
+  it("drops the preview when the authoritative message lands", () => {
+    // Otherwise a partial trails the finished turn, showing it twice.
+    let s = start();
+    s = __reducer(s, { type: "REASONING_DELTA", runId: run, timestamp: "t1", data: { text: "thinking" } });
+    s = __reducer(s, { type: "CONTENT_DELTA", runId: run, timestamp: "t2", data: { index: 0, delta: "ANSW" } });
+    expect(s.runs[run].streaming).toBeDefined();
+
+    s = __reducer(s, {
+      type: "MESSAGE_CREATED", runId: run, timestamp: "t3",
+      data: { role: "assistant", content: "ANSWER: 208", index: 0 } as never,
+    });
+    expect(s.runs[run].streaming).toBeUndefined();
+    expect(s.runs[run].messages[0].content).toBe("ANSWER: 208");
+  });
+
+  it("maps both delta events off the wire", () => {
+    expect(__mapSSEToAction({
+      type: "reasoning.delta", timestamp: "t", conversationId: run, data: { text: "x" },
+    } as never)).toMatchObject({ type: "REASONING_DELTA" });
+    expect(__mapSSEToAction({
+      type: "content.delta", timestamp: "t", conversationId: run, data: { index: 1, delta: "y" },
+    } as never)).toMatchObject({ type: "CONTENT_DELTA" });
+  });
+});

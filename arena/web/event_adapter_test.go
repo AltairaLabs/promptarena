@@ -817,3 +817,80 @@ func TestDisplayMessage_StripsOpaqueReasoning(t *testing.T) {
 		t.Error("message without opaque reasoning should pass through unchanged")
 	}
 }
+
+// TestAdapter_MapReasoningDelta pins that thinking fragments reach the browser
+// as they are produced. The payload switch previously had no case for
+// ReasoningDeltaData, so the frame went out with nil data and the frontend
+// dropped it — the web UI showed nothing until the turn completed while the TUI
+// streamed. Round and providerCallId travel with the text because they are the
+// join key that says which tool-loop round is being watched.
+func TestAdapter_MapReasoningDelta(t *testing.T) {
+	adapter := NewEventAdapter()
+	ch := adapter.Register()
+
+	adapter.HandleEvent(&events.Event{
+		Type:      events.EventReasoningDelta,
+		Timestamp: time.Now(),
+		Data:      &events.ReasoningDeltaData{Text: "D = 5/hr", Round: 2, ProviderCallID: "pc-7"},
+	})
+
+	select {
+	case msg := <-ch:
+		var got SSEEvent
+		if err := json.Unmarshal(msg, &got); err != nil {
+			t.Fatalf("unmarshal: %v", err)
+		}
+		if got.Type != "reasoning.delta" {
+			t.Errorf("type = %q, want reasoning.delta", got.Type)
+		}
+		d, ok := got.Data.(map[string]interface{})
+		if !ok {
+			t.Fatalf("data is %T, want map — the fragment never reached the client", got.Data)
+		}
+		if d["text"] != "D = 5/hr" {
+			t.Errorf("text = %v, want the emitted fragment", d["text"])
+		}
+		if d["round"] != float64(2) || d["providerCallId"] != "pc-7" {
+			t.Errorf("round/providerCallId = %v/%v, want 2/pc-7", d["round"], d["providerCallId"])
+		}
+	case <-time.After(time.Second):
+		t.Fatal("timed out")
+	}
+}
+
+// TestBroadcastContentDelta covers the answer half. There is no content delta on
+// the event bus, so this is an explicit broadcast from the interactive handler's
+// chunk stream — which previously drained the stream and discarded every chunk.
+func TestBroadcastContentDelta(t *testing.T) {
+	adapter := NewEventAdapter()
+	ch := adapter.Register()
+
+	// An empty delta carries nothing to render and must not produce a frame.
+	adapter.BroadcastContentDelta("conv-1", 3, "")
+	select {
+	case <-ch:
+		t.Fatal("empty delta produced a frame")
+	default:
+	}
+
+	adapter.BroadcastContentDelta("conv-1", 3, "ANSWER")
+	select {
+	case msg := <-ch:
+		var got SSEEvent
+		if err := json.Unmarshal(msg, &got); err != nil {
+			t.Fatalf("unmarshal: %v", err)
+		}
+		if got.Type != "content.delta" || got.ConversationID != "conv-1" {
+			t.Errorf("type/conv = %q/%q, want content.delta/conv-1", got.Type, got.ConversationID)
+		}
+		d, ok := got.Data.(map[string]interface{})
+		if !ok {
+			t.Fatalf("data is %T, want map", got.Data)
+		}
+		if d["delta"] != "ANSWER" || d["index"] != float64(3) {
+			t.Errorf("delta/index = %v/%v, want ANSWER/3", d["delta"], d["index"])
+		}
+	case <-time.After(time.Second):
+		t.Fatal("timed out")
+	}
+}

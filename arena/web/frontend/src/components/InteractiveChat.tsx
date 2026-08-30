@@ -142,9 +142,26 @@ export function InteractiveChat({ state, registerInteractiveRun, onBack }: Inter
   const liveMessages = useMemo(() => {
     if (!sessionId) return [];
     const run = state.runs[sessionId];
-    if (!run?.messages?.length) return [];
-    const msgs = [...run.messages].sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
-    return adaptLiveMessages(msgs);
+    if (!run) return [];
+    const msgs = [...(run.messages ?? [])].sort((a, b) => (a.index ?? 0) - (b.index ?? 0));
+    const adapted = adaptLiveMessages(msgs);
+
+    // Append the turn currently being generated. Reasoning starts streaming
+    // before message.created exists, so this is a synthetic bubble rather than
+    // an update to a real message; the reducer drops `streaming` the moment the
+    // authoritative message lands, and this row is replaced by it.
+    const s = run.streaming;
+    if (s && (s.content || s.reasoning)) {
+      adapted.push({
+        id: "streaming",
+        role: "assistant",
+        sequenceNum: msgs.length,
+        timestamp: new Date().toISOString(),
+        parts: s.content ? [{ type: "text", text: s.content }] : [],
+        ...(s.reasoning ? { reasoning: { text: s.reasoning } } : {}),
+      } as (typeof adapted)[number]);
+    }
+    return adapted;
   }, [sessionId, state.runs]);
 
   if (loadingOptions) {

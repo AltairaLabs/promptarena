@@ -355,6 +355,41 @@ func hashMessage(body []byte) uint64 {
 	return 1
 }
 
+// BroadcastContentDelta emits a "content.delta" SSE frame carrying one chunk of
+// assistant text as it is generated.
+//
+// This exists because there is no content delta on the event bus. The runtime
+// publishes reasoning.delta but nothing equivalent for the answer itself —
+// assistant text lives only on the MessageStreamChunk channel the interactive
+// handler consumes, so streaming it has to be an explicit broadcast rather than
+// a mapped event.
+//
+// Only the delta and its message index travel. MessageStreamChunk also carries
+// the whole accumulated Messages slice per chunk, which would mean re-sending
+// the conversation on every token.
+//
+// Like the bus route this is a preview and may be dropped for a slow client:
+// message.created and message.full remain authoritative for the finished turn,
+// and a consumer must replace the streamed text rather than append to it.
+func (a *EventAdapter) BroadcastContentDelta(convID string, index int, delta string) {
+	if delta == "" {
+		return
+	}
+	data, err := json.Marshal(&SSEEvent{
+		Type:           "content.delta",
+		Timestamp:      time.Now(),
+		ConversationID: convID,
+		Data: map[string]interface{}{
+			jsonKeyIndex: index,
+			"delta":      delta,
+		},
+	})
+	if err != nil {
+		return
+	}
+	a.broadcast(data)
+}
+
 // mapEvent converts a runtime event to an SSEEvent.
 func (a *EventAdapter) mapEvent(event *events.Event) *SSEEvent {
 	sse := &SSEEvent{
@@ -404,6 +439,12 @@ func (a *EventAdapter) mapEvent(event *events.Event) *SSEEvent {
 				"toolResult": data.ToolResult,
 			}, data.Reasoning)
 		}
+	case *events.ReasoningDeltaData:
+		if data != nil {
+			sse.Data = reasoningDeltaPayload(data)
+		}
+	case events.ReasoningDeltaData:
+		sse.Data = reasoningDeltaPayload(&data)
 	case events.MessageUpdatedData:
 		sse.Data = map[string]interface{}{
 			jsonKeyIndex:   data.Index,
@@ -546,4 +587,22 @@ func displayMessage(msg *types.Message) *types.Message {
 		Redacted: msg.Reasoning.Redacted,
 	}
 	return &out
+}
+
+// reasoningDeltaPayload shapes one reasoning fragment for the browser.
+//
+// Round and providerCallId are carried alongside the text because they are the
+// same join key the round's tool and provider events use. Without them a
+// streaming consumer watching a tool loop cannot tell which model turn it is
+// watching think, and fragments from two rounds are indistinguishable.
+//
+// This route is the lossy one: the bus drops events under burst, so a consumer
+// must treat these as a preview. The authoritative trace arrives whole on
+// message.created once the turn completes.
+func reasoningDeltaPayload(d *events.ReasoningDeltaData) map[string]interface{} {
+	return map[string]interface{}{
+		"text":           d.Text,
+		"round":          d.Round,
+		"providerCallId": d.ProviderCallID,
+	}
 }

@@ -40,6 +40,24 @@ export interface ProviderCallData {
   error?: string;
 }
 
+// ReasoningDeltaData is one fragment of a model's thinking, streamed as it is
+// produced. round and providerCallId are the join key shared with that round's
+// tool and provider events — without them, fragments from two tool-loop rounds
+// are indistinguishable.
+export interface ReasoningDeltaData {
+  text: string;
+  round?: number;
+  providerCallId?: string;
+}
+
+// ContentDeltaData is one chunk of assistant text. There is no content delta on
+// the event bus; the server broadcasts these explicitly from the interactive
+// chunk stream.
+export interface ContentDeltaData {
+  index: number;
+  delta: string;
+}
+
 export interface MessageCreatedData {
   role: string;
   content: string;
@@ -370,6 +388,21 @@ export interface LiveMessage extends Message {
   index: number;
 }
 
+// StreamingTurn is the assistant turn currently being generated, before any
+// message exists to hang it on. Reasoning deltas in particular arrive *before*
+// message.created, so this cannot be stored on a LiveMessage.
+//
+// Both fields are previews from lossy routes. When the finished message lands
+// (message.created / message.full) it is authoritative and this is cleared —
+// the streamed text is replaced, never appended to.
+export interface StreamingTurn {
+  // index of the message being generated, from the content delta; -1 until a
+  // content delta arrives (reasoning can start before any text does).
+  index: number;
+  content: string;
+  reasoning: string;
+}
+
 export interface ActiveRun {
   runId: string;
   scenario: string;
@@ -378,6 +411,8 @@ export interface ActiveRun {
   startTime: string;
   turnIndex: number;
   messages: LiveMessage[];
+  // Present only while a turn is mid-flight.
+  streaming?: StreamingTurn;
   costs: { inputTokens: number; outputTokens: number; totalCost: number };
   status: "running" | "completed" | "failed";
   duration?: number;
