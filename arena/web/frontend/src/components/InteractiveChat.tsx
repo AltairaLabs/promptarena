@@ -196,20 +196,37 @@ export function InteractiveChat({ state, registerInteractiveRun, onBack }: Inter
     // before message.created exists, so this is a synthetic bubble rather than
     // an update to a real message; the reducer drops `streaming` the moment the
     // authoritative message lands, and this row is replaced by it.
+    // The in-flight assistant turn. Rendered from the moment the request is
+    // sent rather than when the first token lands: there is a real gap before
+    // anything arrives (measured ~2.5s to the first reasoning fragment), and an
+    // empty pane in that window looks like nothing happened.
+    //
+    // `streaming: true` is what draws Atlas's cursor, so the bubble reads as
+    // working even while it has no text yet.
+    //
+    // Dropped once the real assistant message exists, so the placeholder never
+    // trails a finished turn while the request is still settling.
     const s = run.streaming;
     const streamedReasoning = s ? s.reasoningParts.map((p) => p.text).join("") : "";
-    if (s && (s.content || streamedReasoning)) {
+    // In flight for as long as the sent message has not been persisted. Do NOT
+    // test "last message is an assistant" — after the first turn that is the
+    // PREVIOUS turn's reply, which suppressed the indicator on every turn but
+    // the first. pendingUser clears at the same moment the real messages land,
+    // because a turn's messages are all broadcast together.
+    const turnInFlight = busy && pendingUser !== null;
+    if (turnInFlight) {
       adapted.push({
         id: "streaming",
         role: "assistant",
         sequenceNum: msgs.length,
         timestamp: new Date().toISOString(),
-        parts: s.content ? [{ type: "text", text: s.content }] : [],
+        streaming: true,
+        parts: s?.content ? [{ type: "text", text: s.content }] : [],
         ...(streamedReasoning ? { reasoning: { text: streamedReasoning } } : {}),
       } as (typeof adapted)[number]);
     }
     return adapted;
-  }, [sessionId, state.runs, pendingUser, systemPrompt]);
+  }, [sessionId, state.runs, pendingUser, systemPrompt, busy]);
 
   if (loadingOptions) {
     return (
