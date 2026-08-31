@@ -1,0 +1,151 @@
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Arena
+metadata:
+  name: mortgage-underwriting-arena
+spec:
+  prompt_configs:
+    - id: intake
+      file: prompts/intake.prompt.yaml
+    - id: verification
+      file: prompts/verification.prompt.yaml
+    - id: assessment
+      file: prompts/assessment.prompt.yaml
+    - id: referral
+      file: prompts/referral.prompt.yaml
+
+  providers:
+    - file: providers/mock-provider.yaml
+
+  scenarios:
+    - file: scenarios/clean-application.scenario.yaml
+    - file: scenarios/thin-file-referral.scenario.yaml
+
+  tools:
+    - file: tools/pull-credit-report.tool.yaml
+    - file: tools/verify-income.tool.yaml
+    - file: tools/get-property-valuation.tool.yaml
+    - file: tools/compute-ratios.tool.yaml
+
+  # Governance for the pack this config compiles to (RFC 0013).
+  #
+  # This is the block the example exists to demonstrate. Evaluating someone's
+  # creditworthiness is high-risk under the EU AI Act, and the facts that make
+  # it deployable — who is accountable, how far it acts on its own, what it is
+  # for, and what it must never be used for — belong with the pack rather than
+  # in a document beside it. `packc compile` carries them into the pack JSON,
+  # where an auditor or a deployment gate can read them.
+  #
+  # Everything here is fictional: Northwind Home Loans is not a real lender and
+  # these are not real lending guidelines.
+  pack_metadata:
+    domain: mortgage-lending
+    language: en
+    tags:
+      - underwriting
+      - regulated
+      - human-in-the-loop
+    governance:
+      accountable_owner: Head of Credit Risk, Northwind Home Loans
+      operator_role: eu-aiact:AIDeployer
+      risk_classification: eu-aiact:HighRiskAI
+      # acts_with_approval, not acts_autonomously: the assistant assembles a
+      # file and recommends. Every state that touches the outcome hands to a
+      # human, and the terminal state is the hand-off itself.
+      autonomy_level: acts_with_approval
+      requires_ai_disclosure: true
+      intended_purpose: >-
+        Assembles verified evidence for a residential mortgage application and
+        recommends an outcome to the human underwriter who decides it.
+      intended_deployment_contexts:
+        - eu-aiact:CreditworthinessAssessment
+      capabilities:
+        - credit_report_retrieval
+        - income_verification
+        - ratio_calculation
+      # The uses that would make this a different, and unapproved, system.
+      foreseeable_misuse:
+        - Issuing an approval or decline without underwriter review
+        - Generating or wording an adverse action notice
+        - Communicating an outcome directly to an applicant
+        - Pricing, or setting terms, from the recommendation
+      approved_environments:
+        - staging
+      extensions:
+        northwind.example/control-set: CREDIT-RISK-2026-Q1
+        northwind.example/review-cadence: quarterly
+
+  # intake → verification → assessment → referral (terminal).
+  #
+  # The terminal state is the hand-off to a human, which is the same claim
+  # autonomy_level makes above — the workflow is where that claim is kept.
+  workflow:
+    version: 2
+    entry: intake
+    engine:
+      budget:
+        max_total_visits: 10
+        max_tool_calls: 20
+        max_wall_time_sec: 60
+    states:
+      intake:
+        prompt_task: intake
+        description: "Normalise the application into underwriting fields"
+        on_event:
+          Verify: verification
+
+      verification:
+        prompt_task: verification
+        description: "Gather credit, income and valuation evidence"
+        on_event:
+          Assess: assessment
+
+      assessment:
+        prompt_task: assessment
+        description: "Compute ratios and recommend an outcome"
+        on_event:
+          Refer: referral
+
+      referral:
+        prompt_task: referral
+        description: "Hand the file to a human underwriter"
+        terminal: true
+
+  # Per-agent governance overrides the pack block by per-field replacement:
+  # a field set here replaces the pack value, a field left out inherits it
+  # (arrays and extensions replace whole, they do not merge).
+  agents:
+    entry: intake
+    members:
+      intake:
+        description: "Restates an application into underwriting fields"
+        tags: [intake]
+        governance:
+          # Restating stated facts changes no outcome, so this step runs with
+          # oversight rather than per-item approval. Everything else — owner,
+          # risk classification, misuse — inherits from the pack.
+          autonomy_level: acts_with_oversight
+
+      verification:
+        description: "Gathers third-party evidence"
+        tags: [verification]
+        governance:
+          capabilities:
+            - credit_report_retrieval
+            - income_verification
+          extensions:
+            northwind.example/fcra-permissible-purpose: written-consent
+
+      assessment:
+        description: "Recommends an outcome to a human underwriter"
+        tags: [assessment, recommendation]
+        governance:
+          # The step that shapes the outcome, so it only ever suggests.
+          autonomy_level: suggests
+
+  defaults:
+    temperature: 0.1
+    max_tokens: 512
+    concurrency: 1
+    output:
+      dir: out
+      formats: ["json", "markdown"]

@@ -715,7 +715,7 @@ func (c *Config) loadSkills(configPath string) error {
 	}
 
 	for _, src := range c.Skills {
-		dir := src.EffectiveDir()
+		dir := prompt.SkillPath(&src)
 		if dir == "" {
 			// Inline skill — pass through as-is.
 			c.LoadedSkillSources = append(c.LoadedSkillSources, src)
@@ -741,7 +741,7 @@ func (c *Config) loadSkills(configPath string) error {
 		}
 
 		resolved := src
-		resolved.Dir = ""
+		resolved.Shorthand = ""
 		resolved.Path = absDir
 		c.LoadedSkillSources = append(c.LoadedSkillSources, resolved)
 	}

@@ -1,0 +1,48 @@
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Tool
+metadata:
+  name: get_property_valuation
+spec:
+  name: get_property_valuation
+  description: >-
+    Returns the lender's valuation of the subject property. An automated
+    valuation carries a confidence band; a low band is a reason to ask for a
+    full appraisal, not a reason to lower the value and proceed.
+  input_schema:
+    type: object
+    properties:
+      property_id:
+        type: string
+        description: Internal subject-property identifier
+      purchase_price:
+        type: number
+        description: Agreed purchase price, in whole currency units
+    required:
+      - property_id
+      - purchase_price
+  output_schema:
+    type: object
+    properties:
+      appraised_value:
+        type: number
+        description: Valuation of the subject property, in whole currency units
+      valuation_method:
+        type: string
+        enum:
+          - full_appraisal
+          - desktop_appraisal
+          - automated_valuation
+        description: How the valuation was produced
+      confidence:
+        type: string
+        enum:
+          - high
+          - medium
+          - low
+        description: Confidence band; low means the valuation should not be relied on alone
+  mode: mock
+  timeout_ms: 4000
+  mock_result:
+    appraised_value: 415000
+    valuation_method: full_appraisal
+    confidence: high

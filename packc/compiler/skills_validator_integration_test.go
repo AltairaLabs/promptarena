@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/AltairaLabs/PromptKit/runtime/packspec"
 	"github.com/AltairaLabs/PromptKit/runtime/prompt"
 )
 
@@ -33,19 +34,19 @@ func TestValidateSkillErrors_Directory(t *testing.T) {
 	t.Run("valid directory", func(t *testing.T) {
 		dir := t.TempDir()
 		writeSkill(t, filepath.Join(dir, "skills", "my-skill"), "my-skill", "A skill")
-		pack := &prompt.Pack{
-			Skills:  []prompt.SkillSourceConfig{{Dir: "skills"}},
+		pack := &prompt.Pack{Pack: packspec.Pack{
+			Skills:  []*prompt.SkillSourceConfig{{Path: "skills"}},
 			Prompts: map[string]*prompt.PackPrompt{"p": {ID: "p"}},
-		}
+		}}
 		assert.Empty(t, ValidateSkillErrors(pack, dir))
 	})
 
 	t.Run("missing directory errors", func(t *testing.T) {
 		dir := t.TempDir()
-		pack := &prompt.Pack{
-			Skills:  []prompt.SkillSourceConfig{{Dir: "nope"}},
+		pack := &prompt.Pack{Pack: packspec.Pack{
+			Skills:  []*prompt.SkillSourceConfig{{Path: "nope"}},
 			Prompts: map[string]*prompt.PackPrompt{"p": {ID: "p"}},
-		}
+		}}
 		errs := ValidateSkillErrors(pack, dir)
 		require.Len(t, errs, 1)
 		assert.Contains(t, errs[0], "does not exist")
@@ -53,10 +54,10 @@ func TestValidateSkillErrors_Directory(t *testing.T) {
 
 	t.Run("path traversal errors", func(t *testing.T) {
 		dir := t.TempDir()
-		pack := &prompt.Pack{
-			Skills:  []prompt.SkillSourceConfig{{Dir: "../../etc"}},
+		pack := &prompt.Pack{Pack: packspec.Pack{
+			Skills:  []*prompt.SkillSourceConfig{{Path: "../../etc"}},
 			Prompts: map[string]*prompt.PackPrompt{"p": {ID: "p"}},
-		}
+		}}
 		errs := ValidateSkillErrors(pack, dir)
 		require.Len(t, errs, 1)
 		assert.Contains(t, errs[0], "path traversal detected")
@@ -66,10 +67,10 @@ func TestValidateSkillErrors_Directory(t *testing.T) {
 		dir := t.TempDir()
 		writeSkill(t, filepath.Join(dir, "a", "sk"), "dupe", "A")
 		writeSkill(t, filepath.Join(dir, "b", "sk"), "dupe", "B")
-		pack := &prompt.Pack{
-			Skills:  []prompt.SkillSourceConfig{{Dir: "a"}, {Dir: "b"}},
+		pack := &prompt.Pack{Pack: packspec.Pack{
+			Skills:  []*prompt.SkillSourceConfig{{Path: "a"}, {Path: "b"}},
 			Prompts: map[string]*prompt.PackPrompt{"p": {ID: "p"}},
-		}
+		}}
 		errs := ValidateSkillErrors(pack, dir)
 		require.Len(t, errs, 1)
 		assert.Contains(t, errs[0], "duplicate skill name")
@@ -82,10 +83,10 @@ func TestValidateSkillErrors_Directory(t *testing.T) {
 		// Missing required frontmatter fields.
 		require.NoError(t, os.WriteFile(
 			filepath.Join(skillDir, "SKILL.md"), []byte("---\ndescription: no name\n---\nbody"), 0o644))
-		pack := &prompt.Pack{
-			Skills:  []prompt.SkillSourceConfig{{Dir: "skills"}},
+		pack := &prompt.Pack{Pack: packspec.Pack{
+			Skills:  []*prompt.SkillSourceConfig{{Path: "skills"}},
 			Prompts: map[string]*prompt.PackPrompt{"p": {ID: "p"}},
-		}
+		}}
 		errs := ValidateSkillErrors(pack, dir)
 		require.Len(t, errs, 1)
 		assert.Contains(t, errs[0], "skills[0]")
@@ -94,20 +95,20 @@ func TestValidateSkillErrors_Directory(t *testing.T) {
 
 func TestValidateSkillErrors_Inline(t *testing.T) {
 	t.Run("complete inline skill", func(t *testing.T) {
-		pack := &prompt.Pack{
-			Skills: []prompt.SkillSourceConfig{
+		pack := &prompt.Pack{Pack: packspec.Pack{
+			Skills: []*prompt.SkillSourceConfig{
 				{Name: "inline", Description: "desc", Instructions: "do it"},
 			},
 			Prompts: map[string]*prompt.PackPrompt{"p": {ID: "p"}},
-		}
+		}}
 		assert.Empty(t, ValidateSkillErrors(pack, "/tmp"))
 	})
 
 	t.Run("incomplete inline skill", func(t *testing.T) {
-		pack := &prompt.Pack{
-			Skills:  []prompt.SkillSourceConfig{{Name: "incomplete"}},
+		pack := &prompt.Pack{Pack: packspec.Pack{
+			Skills:  []*prompt.SkillSourceConfig{{Name: "incomplete"}},
 			Prompts: map[string]*prompt.PackPrompt{"p": {ID: "p"}},
-		}
+		}}
 		errs := ValidateSkillErrors(pack, "/tmp")
 		require.Len(t, errs, 2)
 		assert.Contains(t, errs[0], "missing required field: description")
@@ -115,13 +116,13 @@ func TestValidateSkillErrors_Inline(t *testing.T) {
 	})
 
 	t.Run("duplicate inline names error", func(t *testing.T) {
-		pack := &prompt.Pack{
-			Skills: []prompt.SkillSourceConfig{
+		pack := &prompt.Pack{Pack: packspec.Pack{
+			Skills: []*prompt.SkillSourceConfig{
 				{Name: "shared", Description: "d1", Instructions: "i1"},
 				{Name: "shared", Description: "d2", Instructions: "i2"},
 			},
 			Prompts: map[string]*prompt.PackPrompt{"p": {ID: "p"}},
-		}
+		}}
 		errs := ValidateSkillErrors(pack, "/tmp")
 		require.Len(t, errs, 1)
 		assert.Contains(t, errs[0], "duplicate skill name")
@@ -132,7 +133,7 @@ func TestValidateSkillErrors_WorkflowState(t *testing.T) {
 	t.Run("valid state skills dir", func(t *testing.T) {
 		dir := t.TempDir()
 		require.NoError(t, os.MkdirAll(filepath.Join(dir, "state-skills"), 0o755))
-		pack := &prompt.Pack{
+		pack := &prompt.Pack{Pack: packspec.Pack{
 			Workflow: &prompt.WorkflowConfig{
 				Version: 1, Entry: "start",
 				States: map[string]*prompt.WorkflowState{
@@ -140,12 +141,12 @@ func TestValidateSkillErrors_WorkflowState(t *testing.T) {
 				},
 			},
 			Prompts: map[string]*prompt.PackPrompt{"p": {ID: "p"}},
-		}
+		}}
 		assert.Empty(t, ValidateSkillErrors(pack, dir))
 	})
 
 	t.Run("skills none is skipped", func(t *testing.T) {
-		pack := &prompt.Pack{
+		pack := &prompt.Pack{Pack: packspec.Pack{
 			Workflow: &prompt.WorkflowConfig{
 				Version: 1, Entry: "start",
 				States: map[string]*prompt.WorkflowState{
@@ -153,12 +154,12 @@ func TestValidateSkillErrors_WorkflowState(t *testing.T) {
 				},
 			},
 			Prompts: map[string]*prompt.PackPrompt{"p": {ID: "p"}},
-		}
+		}}
 		assert.Empty(t, ValidateSkillErrors(pack, "/tmp"))
 	})
 
 	t.Run("empty skills is skipped", func(t *testing.T) {
-		pack := &prompt.Pack{
+		pack := &prompt.Pack{Pack: packspec.Pack{
 			Workflow: &prompt.WorkflowConfig{
 				Version: 1, Entry: "start",
 				States: map[string]*prompt.WorkflowState{
@@ -166,12 +167,12 @@ func TestValidateSkillErrors_WorkflowState(t *testing.T) {
 				},
 			},
 			Prompts: map[string]*prompt.PackPrompt{"p": {ID: "p"}},
-		}
+		}}
 		assert.Empty(t, ValidateSkillErrors(pack, "/tmp"))
 	})
 
 	t.Run("glob pattern is skipped", func(t *testing.T) {
-		pack := &prompt.Pack{
+		pack := &prompt.Pack{Pack: packspec.Pack{
 			Workflow: &prompt.WorkflowConfig{
 				Version: 1, Entry: "start",
 				States: map[string]*prompt.WorkflowState{
@@ -179,13 +180,13 @@ func TestValidateSkillErrors_WorkflowState(t *testing.T) {
 				},
 			},
 			Prompts: map[string]*prompt.PackPrompt{"p": {ID: "p"}},
-		}
+		}}
 		assert.Empty(t, ValidateSkillErrors(pack, "/tmp"))
 	})
 
 	t.Run("missing state skills dir errors", func(t *testing.T) {
 		dir := t.TempDir()
-		pack := &prompt.Pack{
+		pack := &prompt.Pack{Pack: packspec.Pack{
 			Workflow: &prompt.WorkflowConfig{
 				Version: 1, Entry: "start",
 				States: map[string]*prompt.WorkflowState{
@@ -193,7 +194,7 @@ func TestValidateSkillErrors_WorkflowState(t *testing.T) {
 				},
 			},
 			Prompts: map[string]*prompt.PackPrompt{"p": {ID: "p"}},
-		}
+		}}
 		errs := ValidateSkillErrors(pack, dir)
 		require.Len(t, errs, 1)
 		assert.Contains(t, errs[0], "does not exist")
@@ -201,7 +202,7 @@ func TestValidateSkillErrors_WorkflowState(t *testing.T) {
 
 	t.Run("state skills traversal errors", func(t *testing.T) {
 		dir := t.TempDir()
-		pack := &prompt.Pack{
+		pack := &prompt.Pack{Pack: packspec.Pack{
 			Workflow: &prompt.WorkflowConfig{
 				Version: 1, Entry: "start",
 				States: map[string]*prompt.WorkflowState{
@@ -209,7 +210,7 @@ func TestValidateSkillErrors_WorkflowState(t *testing.T) {
 				},
 			},
 			Prompts: map[string]*prompt.PackPrompt{"p": {ID: "p"}},
-		}
+		}}
 		errs := ValidateSkillErrors(pack, dir)
 		require.Len(t, errs, 1)
 		assert.Contains(t, errs[0], "path traversal detected")
@@ -220,11 +221,11 @@ func TestValidateSkills_CrossRef(t *testing.T) {
 	t.Run("missing tool warns", func(t *testing.T) {
 		dir := t.TempDir()
 		writeSkillWithTools(t, filepath.Join(dir, "skills", "sk"), "sk", "desc", []string{"known", "unknown"})
-		pack := &prompt.Pack{
-			Skills:  []prompt.SkillSourceConfig{{Dir: "skills"}},
+		pack := &prompt.Pack{Pack: packspec.Pack{
+			Skills:  []*prompt.SkillSourceConfig{{Path: "skills"}},
 			Tools:   map[string]*prompt.PackTool{"known": {Name: "known"}},
 			Prompts: map[string]*prompt.PackPrompt{"p": {ID: "p"}},
-		}
+		}}
 		warnings := ValidateSkills(pack, dir)
 		require.Len(t, warnings, 1)
 		assert.Contains(t, warnings[0], "unknown")
@@ -234,30 +235,30 @@ func TestValidateSkills_CrossRef(t *testing.T) {
 	t.Run("all tools known no warnings", func(t *testing.T) {
 		dir := t.TempDir()
 		writeSkillWithTools(t, filepath.Join(dir, "skills", "sk"), "sk", "desc", []string{"known"})
-		pack := &prompt.Pack{
-			Skills:  []prompt.SkillSourceConfig{{Dir: "skills"}},
+		pack := &prompt.Pack{Pack: packspec.Pack{
+			Skills:  []*prompt.SkillSourceConfig{{Path: "skills"}},
 			Tools:   map[string]*prompt.PackTool{"known": {Name: "known"}},
 			Prompts: map[string]*prompt.PackPrompt{"p": {ID: "p"}},
-		}
+		}}
 		assert.Empty(t, ValidateSkills(pack, dir))
 	})
 
 	t.Run("inline skills skipped by cross-ref", func(t *testing.T) {
-		pack := &prompt.Pack{
-			Skills: []prompt.SkillSourceConfig{
+		pack := &prompt.Pack{Pack: packspec.Pack{
+			Skills: []*prompt.SkillSourceConfig{
 				{Name: "inline", Description: "d", Instructions: "i"},
 			},
 			Prompts: map[string]*prompt.PackPrompt{"p": {ID: "p"}},
-		}
+		}}
 		assert.Empty(t, ValidateSkills(pack, "/tmp"))
 	})
 
 	t.Run("traversal dir skipped by cross-ref", func(t *testing.T) {
 		dir := t.TempDir()
-		pack := &prompt.Pack{
-			Skills:  []prompt.SkillSourceConfig{{Dir: "../../etc"}},
+		pack := &prompt.Pack{Pack: packspec.Pack{
+			Skills:  []*prompt.SkillSourceConfig{{Path: "../../etc"}},
 			Prompts: map[string]*prompt.PackPrompt{"p": {ID: "p"}},
-		}
+		}}
 		assert.Empty(t, ValidateSkills(pack, dir))
 	})
 }

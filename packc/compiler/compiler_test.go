@@ -415,7 +415,7 @@ spec:
 	assert.Equal(t, "skills-pack", result.Pack.ID)
 	require.Len(t, result.Pack.Skills, 1)
 	// Path should be relative (converted back from absolute)
-	assert.Equal(t, "skills", result.Pack.Skills[0].EffectiveDir())
+	assert.Equal(t, "skills", prompt.SkillPath(result.Pack.Skills[0]))
 }
 
 const echoToolYAML = `apiVersion: promptkit.altairalabs.ai/v1alpha1
@@ -556,4 +556,48 @@ func TestCompileOptions(t *testing.T) {
 		WithSkipSchemaValidation()(&opts)
 		assert.True(t, opts.skipSchemaValidation)
 	})
+}
+
+// TestCompile_WithPackMetadata covers the arena config's pack_metadata block,
+// the only authoring route to the compiled pack's metadata: the registry
+// compiler has no CompileOption for it and leaves pack.Metadata nil, so
+// governance could travel in a pack that no author could write.
+func TestCompile_WithPackMetadata(t *testing.T) {
+	// pack_metadata is new, so validate against the in-repo schema rather than
+	// the published one, which has not shipped this field yet.
+	t.Setenv("PROMPTKIT_SCHEMA_SOURCE", "local")
+	dir := t.TempDir()
+	writeFixture(t, dir, "prompts/greeting.yaml", minimalPromptYAML)
+
+	arenaConfig := `apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Arena
+metadata:
+  name: test
+spec:
+  prompt_configs:
+    - id: prompt0
+      file: prompts/greeting.yaml
+  providers: []
+  pack_metadata:
+    domain: customer-support
+    language: en
+    tags:
+      - support
+  defaults:
+    temperature: 0.7
+`
+	configFile := writeFixture(t, dir, "config.arena.yaml", arenaConfig)
+
+	result, err := Compile(configFile,
+		WithPackID("metadata-pack"),
+		WithCompilerVersion("test-v1"),
+		WithSkipSchemaValidation(),
+	)
+	require.NoError(t, err)
+	require.NotNil(t, result.Pack)
+	require.NotNil(t, result.Pack.Metadata, "pack_metadata must reach the compiled pack")
+
+	assert.Equal(t, "customer-support", result.Pack.Metadata.Domain)
+	assert.Equal(t, "en", result.Pack.Metadata.Language)
+	assert.Equal(t, []string{"support"}, result.Pack.Metadata.Tags)
 }

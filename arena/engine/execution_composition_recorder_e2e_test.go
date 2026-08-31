@@ -30,6 +30,7 @@ import (
 	"github.com/AltairaLabs/PromptKit/pkg/config"
 	"github.com/AltairaLabs/PromptKit/runtime/composition"
 	"github.com/AltairaLabs/PromptKit/runtime/evals"
+	"github.com/AltairaLabs/PromptKit/runtime/packspec"
 	"github.com/AltairaLabs/PromptKit/runtime/prompt"
 	"github.com/AltairaLabs/PromptKit/runtime/providers"
 	"github.com/AltairaLabs/PromptKit/runtime/providers/mock"
@@ -137,7 +138,7 @@ func TestExecuteRun_CompositionRecorder(t *testing.T) {
 		States: map[string]*workflow.State{
 			"compose": {
 				PromptTask:    "compose-rec-task",
-				Orchestration: workflow.OrchestrationComposition,
+				Orchestration: packspec.Ptr(workflow.OrchestrationComposition),
 				Composition:   "rec-comp",
 			},
 		},
@@ -153,13 +154,13 @@ func TestExecuteRun_CompositionRecorder(t *testing.T) {
 	reg.RegisterExecutor(&echoRecorderExecutor{name: "echo-rec"})
 
 	// --- 4. Pack carrying the composition.
-	pack := &prompt.Pack{
+	pack := &prompt.Pack{Pack: packspec.Pack{
 		ID:       "recorder-test-pack",
 		Workflow: wfSpec,
 		Compositions: map[string]*composition.Composition{
 			"rec-comp": comp,
 		},
-	}
+	}}
 
 	// --- 5. EvalOrchestrator with the full default registry (includes
 	//        composition_* handlers, assertion wrapper, etc.).

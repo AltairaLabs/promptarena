@@ -228,7 +228,7 @@ func (h *EvalOrchestrator) RunAssertionsAsEvals(
 	defs := make([]evals.EvalDef, len(assertionConfigs))
 	for i, cfg := range assertionConfigs {
 		defs[i] = assertions.ToEvalDef(cfg, i)
-		defs[i].Trigger = trigger
+		defs[i].Trigger = string(trigger)
 	}
 
 	evalCtx := h.buildEvalContext(messages, turnIndex, sessionID)

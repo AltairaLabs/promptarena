@@ -1,7 +1,6 @@
 package compiler
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -84,11 +83,15 @@ func validateMediaReferences(cfg *prompt.Config, baseDir string) []string {
 }
 
 // validateExampleMediaReferences validates media references in a single example.
-func validateExampleMediaReferences(example prompt.MultimodalExample, baseDir string) []string {
+func validateExampleMediaReferences(example *prompt.MultimodalExample, baseDir string) []string {
 	var warnings []string
 
+	if example == nil {
+		return warnings
+	}
+
 	for i, part := range example.Parts {
-		if part.Media == nil || part.Media.FilePath == "" {
+		if part == nil || part.Media == nil || part.Media.FilePath == "" {
 			continue
 		}
 
@@ -148,19 +151,11 @@ func parseWorkflowFromConfig(cfg *arenaconfig.Config) (*prompt.WorkflowConfig, e
 
 // parseAgentsFromConfig parses agents config from arena config.
 // Returns nil, nil when no agents are configured.
+// Agents is the generated PromptPack type on the config now, so this is a
+// pass-through: the JSON round-trip it used to do existed only to turn an
+// interface{} into this same type.
 func parseAgentsFromConfig(cfg *arenaconfig.Config) (*prompt.AgentsConfig, error) {
-	if cfg.Agents == nil {
-		return nil, nil
-	}
-	data, err := json.Marshal(cfg.Agents)
-	if err != nil {
-		return nil, fmt.Errorf("marshaling agents: %w", err)
-	}
-	var ag prompt.AgentsConfig
-	if err := json.Unmarshal(data, &ag); err != nil {
-		return nil, fmt.Errorf("parsing agents: %w", err)
-	}
-	return &ag, nil
+	return cfg.Agents, nil
 }
 
 // parseSkillsFromConfig returns skill source configs from the loaded arena config.
@@ -174,9 +169,9 @@ func parseSkillsFromConfig(cfg *arenaconfig.Config) []prompt.SkillSourceConfig {
 	for i, src := range cfg.LoadedSkillSources {
 		result[i] = src
 		// Convert paths back to relative (to config dir) for pack portability.
-		if dir := src.EffectiveDir(); dir != "" && cfg.ConfigDir != "" {
+		if dir := prompt.SkillPath(&src); dir != "" && cfg.ConfigDir != "" {
 			if rel, err := filepath.Rel(cfg.ConfigDir, dir); err == nil {
-				result[i].Dir = ""
+				result[i].Shorthand = ""
 				result[i].Path = rel
 			}
 		}

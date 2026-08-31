@@ -1658,7 +1658,7 @@ func TestLoadConfig_Skills(t *testing.T) {
 	cfg, err := LoadConfig(configPath)
 	require.NoError(t, err)
 	require.Len(t, cfg.LoadedSkillSources, 1)
-	assert.Equal(t, filepath.Join(dir, "skills"), cfg.LoadedSkillSources[0].EffectiveDir())
+	assert.Equal(t, filepath.Join(dir, "skills"), prompt.SkillPath(&cfg.LoadedSkillSources[0]))
 }
 
 func TestLoadConfig_SkillsInline(t *testing.T) {

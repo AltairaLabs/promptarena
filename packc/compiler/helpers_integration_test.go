@@ -32,11 +32,11 @@ func TestValidateMediaReferences_Integration(t *testing.T) {
 			TaskType: "t",
 			MediaConfig: &prompt.MediaConfig{
 				Enabled: true,
-				Examples: []prompt.MultimodalExample{{
+				Examples: []*prompt.MultimodalExample{{
 					Name: "ex",
 					Role: "user",
-					Parts: []prompt.ExampleContentPart{{
-						Media: &prompt.ExampleMedia{FilePath: "gone.jpg", MIMEType: "image/jpeg"},
+					Parts: []*prompt.ExampleContentPart{{
+						Media: &prompt.ExampleMedia{FilePath: "gone.jpg", MimeType: "image/jpeg"},
 					}},
 				}},
 			},
@@ -53,11 +53,11 @@ func TestValidateMediaReferences_Integration(t *testing.T) {
 			TaskType: "t",
 			MediaConfig: &prompt.MediaConfig{
 				Enabled: true,
-				Examples: []prompt.MultimodalExample{{
+				Examples: []*prompt.MultimodalExample{{
 					Name: "ex",
 					Role: "user",
-					Parts: []prompt.ExampleContentPart{{
-						Media: &prompt.ExampleMedia{FilePath: "ok.jpg", MIMEType: "image/jpeg"},
+					Parts: []*prompt.ExampleContentPart{{
+						Media: &prompt.ExampleMedia{FilePath: "ok.jpg", MimeType: "image/jpeg"},
 					}},
 				}},
 			},
@@ -68,24 +68,24 @@ func TestValidateMediaReferences_Integration(t *testing.T) {
 
 func TestValidateExampleMediaReferences_Integration(t *testing.T) {
 	t.Run("text only part skipped", func(t *testing.T) {
-		ex := prompt.MultimodalExample{Name: "e", Role: "user", Parts: []prompt.ExampleContentPart{
+		ex := prompt.MultimodalExample{Name: "e", Role: "user", Parts: []*prompt.ExampleContentPart{
 			{Text: "hi"},
 		}}
-		assert.Empty(t, validateExampleMediaReferences(ex, "/tmp"))
+		assert.Empty(t, validateExampleMediaReferences(&ex, "/tmp"))
 	})
 
 	t.Run("empty file path skipped", func(t *testing.T) {
-		ex := prompt.MultimodalExample{Name: "e", Role: "user", Parts: []prompt.ExampleContentPart{
-			{Media: &prompt.ExampleMedia{URL: "https://x/y.jpg", MIMEType: "image/jpeg"}},
+		ex := prompt.MultimodalExample{Name: "e", Role: "user", Parts: []*prompt.ExampleContentPart{
+			{Media: &prompt.ExampleMedia{URL: "https://x/y.jpg", MimeType: "image/jpeg"}},
 		}}
-		assert.Empty(t, validateExampleMediaReferences(ex, "/tmp"))
+		assert.Empty(t, validateExampleMediaReferences(&ex, "/tmp"))
 	})
 
 	t.Run("absolute missing path warns", func(t *testing.T) {
-		ex := prompt.MultimodalExample{Name: "e", Role: "user", Parts: []prompt.ExampleContentPart{
-			{Media: &prompt.ExampleMedia{FilePath: "/no/such/x.jpg", MIMEType: "image/jpeg"}},
+		ex := prompt.MultimodalExample{Name: "e", Role: "user", Parts: []*prompt.ExampleContentPart{
+			{Media: &prompt.ExampleMedia{FilePath: "/no/such/x.jpg", MimeType: "image/jpeg"}},
 		}}
-		w := validateExampleMediaReferences(ex, "/tmp")
+		w := validateExampleMediaReferences(&ex, "/tmp")
 		require.Len(t, w, 1)
 		assert.Contains(t, w[0], "/no/such/x.jpg")
 		assert.Contains(t, w[0], "part 0")
@@ -106,10 +106,10 @@ func TestCollectMediaWarnings(t *testing.T) {
 				TaskType: "greet",
 				MediaConfig: &prompt.MediaConfig{
 					Enabled: true,
-					Examples: []prompt.MultimodalExample{{
+					Examples: []*prompt.MultimodalExample{{
 						Name: "ex", Role: "user",
-						Parts: []prompt.ExampleContentPart{{
-							Media: &prompt.ExampleMedia{FilePath: "missing.png", MIMEType: "image/png"},
+						Parts: []*prompt.ExampleContentPart{{
+							Media: &prompt.ExampleMedia{FilePath: "missing.png", MimeType: "image/png"},
 						}},
 					}},
 				},
@@ -166,11 +166,11 @@ func TestParseAgentsFromConfig_Integration(t *testing.T) {
 		assert.Nil(t, ag)
 	})
 
-	t.Run("parses agents block", func(t *testing.T) {
-		cfg := &arenaconfig.Config{Agents: map[string]any{
-			"entry": "triage",
-			"members": map[string]any{
-				"triage": map[string]any{"description": "Triage agent"},
+	t.Run("passes the agents block through", func(t *testing.T) {
+		cfg := &arenaconfig.Config{Agents: &prompt.AgentsConfig{
+			Entry: "triage",
+			Members: map[string]*prompt.AgentDef{
+				"triage": {Description: "Triage agent"},
 			},
 		}}
 		ag, err := parseAgentsFromConfig(cfg)

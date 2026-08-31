@@ -335,7 +335,7 @@ func buildSkillMounts(sources []prompt.SkillSourceConfig) []map[string]any {
 	out := make([]map[string]any, 0, len(sources))
 	for i := range sources {
 		s := sources[i]
-		dir := s.EffectiveDir()
+		dir := prompt.SkillPath(&s)
 		if dir == "" || s.Name == "" {
 			continue
 		}

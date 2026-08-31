@@ -3,6 +3,7 @@ package engine
 import (
 	"testing"
 
+	"github.com/AltairaLabs/PromptKit/runtime/packspec"
 	"github.com/AltairaLabs/PromptKit/runtime/prompt"
 	"github.com/AltairaLabs/PromptKit/runtime/tools"
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
@@ -134,9 +135,9 @@ func TestInitWorkflow_MergesIntoExistingLoadedPack(t *testing.T) {
 		},
 	}
 
-	existingPack := &prompt.Pack{
+	existingPack := &prompt.Pack{Pack: packspec.Pack{
 		ID: "pre-existing",
-	}
+	}}
 
 	cfg := &arenaconfig.Config{
 		Workflow:     workflowRaw,

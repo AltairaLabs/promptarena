@@ -237,8 +237,7 @@ func (e *workflowTransitionExecutor) applyPostCommit(
 			})
 		}
 		run.emitter.WorkflowTransitioned(tr.From, tr.To, tr.Event, "")
-		if newState := e.wfSpec.States[tr.To]; newState != nil &&
-			(newState.Terminal || len(newState.OnEvent) == 0) {
+		if newState := e.wfSpec.States[tr.To]; newState != nil && workflow.IsTerminal(newState) {
 			run.emitter.WorkflowCompleted(
 				tr.To, run.transExec.StateMachine().Context().TransitionCount())
 		}

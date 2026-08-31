@@ -118,8 +118,30 @@ type Config struct {
 	Compositions interface{} `yaml:"compositions,omitempty" json:"compositions,omitempty"`
 	// Memory configures the memory capability (auto-registers the memory tools).
 	Memory interface{} `yaml:"memory,omitempty" json:"memory,omitempty"`
-	// Agents configures named agents.
-	Agents interface{} `yaml:"agents,omitempty" json:"agents,omitempty"`
+	// Typed as the generated PromptPack type rather than interface{}: it was a
+	// passthrough, which parseAgentsFromConfig then round-tripped through JSON
+	// into exactly this type anyway. The data always arrived; what was missing
+	// was the SCHEMA — an interface{} tells the arena schema generator nothing,
+	// so an editor could not complete `governance:` under a member and a typo in
+	// `autonomy_level` was not caught until pack validation, if at all.
+	//
+	// The blank line matters: schema field descriptions come from the doc
+	// comment, and rationale like the above is for readers of this file, not
+	// for authors completing YAML.
+
+	// Agents configures named agents: the entry agent and each member's
+	// description, tags and delegation rules.
+	Agents *prompt.AgentsConfig `yaml:"agents,omitempty" json:"agents,omitempty"`
+
+	// Distinct from the Kubernetes-style ObjectMeta on the resource wrappers in
+	// this file, which names the arena config itself. This describes the PACK
+	// the config compiles to, and until now it had no authoring route at all:
+	// metadata.governance could be carried in a compiled pack and never written
+	// by an author.
+
+	// PackMetadata describes the pack this config compiles to: domain,
+	// language, tags, cost_estimate and governance.
+	PackMetadata *prompt.Metadata `yaml:"pack_metadata,omitempty" json:"pack_metadata,omitempty"`
 	// Deploy configures `promptarena deploy`: the target provider plus base and
 	// per-environment adapter config.
 	Deploy *DeployConfig `yaml:"deploy,omitempty" json:"deploy,omitempty"`

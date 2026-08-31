@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/AltairaLabs/PromptKit/runtime/events"
+	"github.com/AltairaLabs/PromptKit/runtime/packspec"
 	"github.com/AltairaLabs/PromptKit/runtime/tools"
 	"github.com/AltairaLabs/PromptKit/runtime/workflow"
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
@@ -243,7 +244,7 @@ func TestWorkflowTransitionExecutor_MaxVisitsRedirect(t *testing.T) {
 			},
 			"loop": {
 				PromptTask:  "loop",
-				MaxVisits:   1,
+				MaxVisits:   packspec.Ptr(1),
 				OnMaxVisits: "done",
 				OnEvent:     map[string]string{"Again": "loop"},
 			},
@@ -631,7 +632,7 @@ func TestWorkflowArtifactExecutor_DispatchesToRun(t *testing.T) {
 			"s": {
 				PromptTask: "s",
 				Artifacts: map[string]*workflow.ArtifactDef{
-					"notes": {Type: "text/plain", Mode: "append"},
+					"notes": {Type: "text/plain", Mode: packspec.Ptr("append")},
 				},
 			},
 		},
@@ -719,7 +720,7 @@ func TestCommitPendingTransition_EmitsRedirectedEvent(t *testing.T) {
 		States: map[string]*workflow.State{
 			"loop": {
 				PromptTask:  "loop",
-				MaxVisits:   2,
+				MaxVisits:   packspec.Ptr(2),
 				OnMaxVisits: "exit",
 				OnEvent:     map[string]string{"Again": "loop"},
 			},

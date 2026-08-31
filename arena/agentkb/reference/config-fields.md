@@ -9,7 +9,7 @@ Fields under `spec`:
 | field | type | required | description |
 |-------|------|----------|-------------|
 | `a2a_agents` | array |  | A2AAgents configures agent-to-agent (A2A) endpoints. |
-| `agents` | — |  | Agents configures named agents. |
+| `agents` | object |  | Agents configures named agents: the entry agent and each member's description, tags and delegation rules. |
 | `compositions` | — |  | Compositions configures composed multi-agent pipelines. |
 | `defaults` | object | ✓ | Defaults holds global defaults applied when a scenario does not specify its own (temperature, max_tokens, concurrency, output, fail_on, …). |
 | `deploy` | object |  | Deploy configures `promptarena deploy`: the target provider plus base and per-environment adapter config. |
@@ -25,6 +25,7 @@ Fields under `spec`:
 | `memory` | — |  | Memory configures the memory capability (auto-registers the memory tools). |
 | `pack_evals` | array |  | PackEvals lists pack-level eval definitions. |
 | `pack_file` | string |  | PackFile is the path to a pre-compiled pack (*.pack.json) to deploy instead of compiling from this config. |
+| `pack_metadata` | object |  | PackMetadata describes the pack this config compiles to: domain, language, tags, cost_estimate and governance. |
 | `prompt_configs` | array |  | PromptConfigs references prompt configuration files, each binding an id to a PromptConfig file (with optional per-file variable overrides). |
 | `prompt_specs` | object |  | — |
 | `provider_specs` | object |  | Inline resource specs (alternative to file refs, merged into LoadedX during load) |
