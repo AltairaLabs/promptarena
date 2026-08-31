@@ -213,8 +213,16 @@ jobs:
       # the main package is published.
       - name: Publish platform packages
         run: |
+          VERSION="${{ inputs.version }}"
           for dir in dist/npm/*/; do
-            echo "publishing $dir"
+            name=$(node -p "require('./$dir/package.json').name")
+            # Versions are immutable on npm, so a retry after a partial failure
+            # must skip what already landed rather than dying on EPUBLISHCONFLICT.
+            if npm view "$name@${VERSION#v}" version >/dev/null 2>&1; then
+              echo "skip $name@${VERSION#v} (already published)"
+              continue
+            fi
+            echo "publishing $name"
             npm publish "$dir" --access public
           done
         env:
@@ -237,7 +245,7 @@ jobs:
               }
               fs.writeFileSync(p, JSON.stringify(d, null, 2) + "\n");
             ' "npm/$pkg/package.json" "${VERSION#v}"
-            npm publish "npm/$pkg" --access public
+            npm publish "./npm/$pkg" --access public
           done
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
