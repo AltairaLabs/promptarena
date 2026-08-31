@@ -3,8 +3,8 @@ module github.com/AltairaLabs/promptarena
 go 1.26.0
 
 require (
-	github.com/AltairaLabs/PromptKit/pkg v1.8.0
-	github.com/AltairaLabs/PromptKit/runtime v1.8.0
+	github.com/AltairaLabs/PromptKit/pkg v1.9.0
+	github.com/AltairaLabs/PromptKit/runtime v1.9.0
 	github.com/charmbracelet/bubbles v1.0.0
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/glamour v1.0.0
@@ -95,7 +95,7 @@ require (
 	github.com/yuin/goldmark v1.7.13 // indirect
 	github.com/yuin/goldmark-emoji v1.0.6 // indirect
 	go.opentelemetry.io/auto/sdk v1.2.1 // indirect
-	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.70.0 // indirect
+	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.71.0 // indirect
 	go.opentelemetry.io/contrib/propagators/aws v1.46.0 // indirect
 	go.opentelemetry.io/otel v1.46.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.45.0 // indirect
