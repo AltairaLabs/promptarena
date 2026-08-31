@@ -54,16 +54,34 @@ func applyOpenTypeEnum(def *jsonschema.Schema, prop string, knownTypes []string,
 const typeEnumDescription = "Handler type. PromptKit-known types are suggested, " +
 	"but values are not restricted to this list — a different runtime may define additional types."
 
+// evalDefNames are the $defs keys promptkit's eval definition can land under.
+// It used to be the hand-written evals.EvalDef; PromptPack 1.6 made it an alias
+// for packspec.Eval, so qualifyingNamer files it as "Eval" where nothing
+// contests the name and "PackspecEval" in arena.json, where arena's own replay
+// Eval type holds the plain one. The shape check below keeps the arena type
+// from being decorated by mistake.
+var evalDefNames = []string{"EvalDef", "Eval", "PackspecEval"}
+
 // applyKnownTypeSuggestions decorates every definition in the schema that
-// carries an eval-handler `type` field (AssertionConfig, EvalDef) with the open
-// type enum. Assertions, evals and guardrails all resolve against the same
-// registry, so a single suggestion set applies uniformly.
+// carries an eval-handler `type` field (AssertionConfig, the eval definition)
+// with the open type enum. Assertions, evals and guardrails all resolve against
+// the same registry, so a single suggestion set applies uniformly.
 func applyKnownTypeSuggestions(schema *jsonschema.Schema) {
 	if schema == nil || schema.Definitions == nil {
 		return
 	}
 	known := knownEvalTypes()
-	for _, defName := range []string{"AssertionConfig", "EvalDef"} {
-		applyOpenTypeEnum(schema.Definitions[defName], "type", known, typeEnumDescription)
+	applyOpenTypeEnum(schema.Definitions["AssertionConfig"], "type", known, typeEnumDescription)
+	for _, defName := range evalDefNames {
+		def := schema.Definitions[defName]
+		if def == nil || def.Properties == nil {
+			continue
+		}
+		// `trigger` is what tells an eval definition apart from arena's replay
+		// Eval config, which also has a `type`-less spec but no trigger.
+		if _, isEvalDef := def.Properties.Get("trigger"); !isEvalDef {
+			continue
+		}
+		applyOpenTypeEnum(def, "type", known, typeEnumDescription)
 	}
 }

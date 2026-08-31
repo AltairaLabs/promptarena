@@ -20,6 +20,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/AltairaLabs/PromptKit/pkg/config"
+	"github.com/AltairaLabs/PromptKit/runtime/packspec"
 	"github.com/AltairaLabs/PromptKit/runtime/prompt"
 	"github.com/AltairaLabs/PromptKit/runtime/tools"
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
@@ -248,41 +249,33 @@ spec:
 	// Verify parameters is valid JSON Schema
 	assert.NotNil(t, packTool.Parameters, "Parameters must not be nil")
 
-	// Check parameters structure
-	params, ok := packTool.Parameters.(map[string]interface{})
-	require.True(t, ok, "Parameters should be a map")
+	// Check parameters structure. PromptPack 1.6 gives $defs/Tool.parameters a
+	// shape (type/properties/required), so this is a typed struct rather than
+	// the interface{} the hand-written type used.
+	params := packTool.Parameters
 
-	assert.Equal(t, "object", params["type"], "Parameters should have type: object")
-	props, hasProps := params["properties"]
-	assert.True(t, hasProps, "Parameters should have properties")
+	assert.Equal(t, "object", params.Type, "Parameters should have type: object")
+	require.NotEmpty(t, params.Properties, "Parameters should have properties")
 
-	if propsMap, ok := props.(map[string]interface{}); ok {
-		deviceID, hasDeviceID := propsMap["device_id"]
-		assert.True(t, hasDeviceID, "Should have device_id property")
-		if didMap, ok := deviceID.(map[string]interface{}); ok {
-			assert.Equal(t, "string", didMap["type"])
-		}
+	deviceID, hasDeviceID := params.Properties["device_id"]
+	assert.True(t, hasDeviceID, "Should have device_id property")
+	assert.Equal(t, "string", deviceID["type"])
 
-		metric, hasMetric := propsMap["metric"]
-		assert.True(t, hasMetric, "Should have metric property")
-		if metricMap, ok := metric.(map[string]interface{}); ok {
-			assert.Equal(t, "string", metricMap["type"])
-			// Enum should be preserved
-			enumVal, hasEnum := metricMap["enum"]
-			assert.True(t, hasEnum, "metric should have enum constraint")
-			if enumSlice, ok := enumVal.([]interface{}); ok {
-				assert.Len(t, enumSlice, 3, "enum should have 3 values")
-			}
+	metric, hasMetric := params.Properties["metric"]
+	assert.True(t, hasMetric, "Should have metric property")
+	if hasMetric {
+		assert.Equal(t, "string", metric["type"])
+		// Enum should be preserved
+		enumVal, hasEnum := metric["enum"]
+		assert.True(t, hasEnum, "metric should have enum constraint")
+		if enumSlice, ok := enumVal.([]interface{}); ok {
+			assert.Len(t, enumSlice, 3, "enum should have 3 values")
 		}
 	}
 
 	// Check required array
-	required, hasRequired := params["required"]
-	assert.True(t, hasRequired, "Parameters should have required array")
-	if reqSlice, ok := required.([]interface{}); ok {
-		assert.Contains(t, reqSlice, "device_id")
-		assert.Contains(t, reqSlice, "metric")
-	}
+	assert.Contains(t, params.Required, "device_id")
+	assert.Contains(t, params.Required, "metric")
 }
 
 // TestSpecCompliance_MultipleTools tests pack with multiple tools
@@ -718,9 +711,9 @@ spec:
 	promptPack := pack.Prompts["policy-task"]
 	require.NotNil(t, promptPack)
 	require.NotNil(t, promptPack.ToolPolicy, "Compiled prompt must have tool_policy")
-	assert.Equal(t, "auto", promptPack.ToolPolicy.ToolChoice)
-	assert.Equal(t, 5, promptPack.ToolPolicy.MaxRounds)
-	assert.Equal(t, 3, promptPack.ToolPolicy.MaxToolCallsPerTurn)
+	assert.Equal(t, "auto", packspec.Deref(promptPack.ToolPolicy.ToolChoice, ""))
+	assert.Equal(t, 5, packspec.Deref(promptPack.ToolPolicy.MaxRounds, 0))
+	assert.Equal(t, 3, packspec.Deref(promptPack.ToolPolicy.MaxToolCallsPerTurn, 0))
 	assert.Equal(t, []string{"dangerous_tool", "admin_tool"}, promptPack.ToolPolicy.Blocklist)
 
 	// Verify JSON contains tool_policy

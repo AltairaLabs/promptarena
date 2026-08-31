@@ -12,6 +12,7 @@ import (
 	"github.com/AltairaLabs/PromptKit/pkg/config"
 	"github.com/AltairaLabs/PromptKit/runtime/evals"
 	"github.com/AltairaLabs/PromptKit/runtime/mcp"
+	"github.com/AltairaLabs/PromptKit/runtime/packspec"
 	"github.com/AltairaLabs/PromptKit/runtime/prompt"
 	"github.com/AltairaLabs/PromptKit/runtime/providers"
 	"github.com/AltairaLabs/PromptKit/runtime/providers/mock"
@@ -328,13 +329,13 @@ func TestNewConversationExecutor_WithSelfPlay(t *testing.T) {
 
 func TestBuildEvalOrchestrator_UnknownEvalType(t *testing.T) {
 	cfg := &arenaconfig.Config{
-		LoadedPack: &prompt.Pack{
+		LoadedPack: &prompt.Pack{Pack: packspec.Pack{
 			ID: "test-pack",
-			Evals: []evals.EvalDef{
+			Evals: []*evals.EvalDef{
 				{ID: "good", Type: "contains", Trigger: evals.TriggerEveryTurn},
 				{ID: "bad", Type: "contians", Trigger: evals.TriggerEveryTurn},
 			},
-		},
+		}},
 	}
 
 	hook, err := buildEvalOrchestrator(cfg, false, nil)
@@ -346,12 +347,12 @@ func TestBuildEvalOrchestrator_UnknownEvalType(t *testing.T) {
 
 func TestBuildEvalOrchestrator_AllKnownTypes(t *testing.T) {
 	cfg := &arenaconfig.Config{
-		LoadedPack: &prompt.Pack{
+		LoadedPack: &prompt.Pack{Pack: packspec.Pack{
 			ID: "test-pack",
-			Evals: []evals.EvalDef{
+			Evals: []*evals.EvalDef{
 				{ID: "check", Type: "contains", Trigger: evals.TriggerEveryTurn},
 			},
-		},
+		}},
 	}
 
 	hook, err := buildEvalOrchestrator(cfg, false, nil)
@@ -361,9 +362,9 @@ func TestBuildEvalOrchestrator_AllKnownTypes(t *testing.T) {
 
 func TestBuildEvalOrchestrator_EmptyEvalsReturnsNil(t *testing.T) {
 	cfg := &arenaconfig.Config{
-		LoadedPack: &prompt.Pack{
+		LoadedPack: &prompt.Pack{Pack: packspec.Pack{
 			ID: "test-pack",
-		},
+		}},
 	}
 
 	hook, err := buildEvalOrchestrator(cfg, false, nil)
@@ -385,12 +386,12 @@ func TestNewEngineFromConfig_UnknownEvalTypeError(t *testing.T) {
 				},
 			},
 		},
-		LoadedPack: &prompt.Pack{
+		LoadedPack: &prompt.Pack{Pack: packspec.Pack{
 			ID: "test-pack",
-			Evals: []evals.EvalDef{
+			Evals: []*evals.EvalDef{
 				{ID: "bad", Type: "nonexistent_type", Trigger: evals.TriggerEveryTurn},
 			},
-		},
+		}},
 	}
 
 	eng, err := NewEngineFromConfig(cfg)
@@ -414,12 +415,12 @@ func TestBuildEngineComponents_UnknownEvalTypeError(t *testing.T) {
 				},
 			},
 		},
-		LoadedPack: &prompt.Pack{
+		LoadedPack: &prompt.Pack{Pack: packspec.Pack{
 			ID: "test-pack",
-			Evals: []evals.EvalDef{
+			Evals: []*evals.EvalDef{
 				{ID: "bad", Type: "nonexistent_type", Trigger: evals.TriggerEveryTurn},
 			},
-		},
+		}},
 	}
 
 	_, _, _, _, _, _, _, _, err := BuildEngineComponents(cfg, nil)
@@ -596,7 +597,7 @@ func TestDiscoverAndRegisterSkillTools_PreloadedInstructions(t *testing.T) {
 
 	cfg := &arenaconfig.Config{
 		LoadedSkillSources: []prompt.SkillSourceConfig{
-			{Path: filepath.Join(dir, "skills", "memory-protocol"), Preload: true},
+			{Path: filepath.Join(dir, "skills", "memory-protocol"), Preload: packspec.Ptr(true)},
 		},
 	}
 

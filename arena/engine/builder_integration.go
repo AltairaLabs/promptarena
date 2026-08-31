@@ -18,6 +18,7 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/logger"
 	"github.com/AltairaLabs/PromptKit/runtime/mcp"
 	"github.com/AltairaLabs/PromptKit/runtime/mediagen"
+	"github.com/AltairaLabs/PromptKit/runtime/packspec"
 	"github.com/AltairaLabs/PromptKit/runtime/persistence/memory"
 	"github.com/AltairaLabs/PromptKit/runtime/prompt"
 	"github.com/AltairaLabs/PromptKit/runtime/providers"
@@ -784,11 +785,13 @@ func buildEvalOrchestrator(
 func collectAllEvalDefs(cfg *arenaconfig.Config) (defs []evals.EvalDef, packID string) {
 	if cfg.LoadedPack != nil {
 		pack := cfg.LoadedPack
-		defs = pack.Evals
+		// The generated pack types hold evals as pointers; ResolveEvals works
+		// on values, so flatten both sides through evals.Values.
+		defs = evals.Values(pack.Evals)
 		// Prompt-level evals override pack-level by ID.
 		for _, pp := range pack.Prompts {
 			if len(pp.Evals) > 0 {
-				defs = evals.ResolveEvals(defs, pp.Evals)
+				defs = evals.ResolveEvals(defs, evals.Values(pp.Evals))
 			}
 		}
 		packID = pack.ID
@@ -939,11 +942,11 @@ func discoverAndRegisterSkillTools(
 	sources := make([]skills.SkillSource, len(cfg.LoadedSkillSources))
 	for i, s := range cfg.LoadedSkillSources {
 		sources[i] = skills.SkillSource{
-			Dir:          s.EffectiveDir(),
+			Dir:          prompt.SkillPath(&s),
 			Name:         s.Name,
 			Description:  s.Description,
 			Instructions: s.Instructions,
-			Preload:      s.Preload,
+			Preload:      packspec.Deref(s.Preload, false),
 		}
 	}
 

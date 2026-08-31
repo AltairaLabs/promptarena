@@ -168,7 +168,7 @@ func TestExpandArgs_NonStringValuesPassThrough(t *testing.T) {
 func TestBuildSkillMounts_FromSkillSources(t *testing.T) {
 	sources := []prompt.SkillSourceConfig{
 		{Name: "codegen", Path: "/abs/host/codegen"},
-		{Name: "review", Dir: "/abs/host/review"},
+		{Name: "review", Path: "/abs/host/review"},
 	}
 	mounts := buildSkillMounts(sources)
 	require.Len(t, mounts, 2)

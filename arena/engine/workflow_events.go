@@ -82,9 +82,5 @@ func maxVisitsForWorkflowState(spec *workflow.Spec, name string) int {
 	if spec == nil {
 		return 0
 	}
-	s := spec.States[name]
-	if s == nil {
-		return 0
-	}
-	return s.MaxVisits
+	return workflow.MaxVisitsOf(spec.States[name])
 }

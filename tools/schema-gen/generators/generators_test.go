@@ -2,6 +2,7 @@ package generators
 
 import (
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/invopop/jsonschema"
@@ -461,5 +462,104 @@ func TestGenerateHelperAddsSchemaField(t *testing.T) {
 
 	if schemaProp == nil {
 		t.Error("$schema property is nil")
+	}
+}
+
+// TestArenaSchema_EvalSpecsKeepsReplayShape guards the $defs name collision
+// between arena's own Eval type (a replay-eval spec) and promptkit's
+// packspec.Eval (a pack eval definition). invopop keys $defs by base type name,
+// so before qualifyingNamer both landed on "#/$defs/Eval" and the second
+// reflected silently replaced the first — `eval_specs` then validated against
+// the pack eval definition and rejected every real eval config, with nothing
+// failing loudly.
+func TestArenaSchema_EvalSpecsKeepsReplayShape(t *testing.T) {
+	schema, err := GenerateArenaSchema()
+	if err != nil {
+		t.Fatalf("GenerateArenaSchema() error = %v", err)
+	}
+	js, ok := schema.(*jsonschema.Schema)
+	if !ok {
+		t.Fatal("GenerateArenaSchema() did not return *jsonschema.Schema")
+	}
+
+	config, ok := js.Definitions["Config"]
+	if !ok {
+		t.Fatal("Config definition not found in arena schema")
+	}
+	evalSpecs, ok := config.Properties.Get("eval_specs")
+	if !ok {
+		t.Fatal("Config.eval_specs property not found")
+	}
+	if evalSpecs.AdditionalProperties == nil {
+		t.Fatal("eval_specs has no value schema")
+	}
+
+	ref := evalSpecs.AdditionalProperties.Ref
+	name, found := strings.CutPrefix(ref, "#/$defs/")
+	if !found {
+		t.Fatalf("eval_specs value schema is not a $defs ref, got %q", ref)
+	}
+	def, ok := js.Definitions[name]
+	if !ok {
+		t.Fatalf("eval_specs refers to %q, which is not defined", name)
+	}
+
+	// The replay-eval spec's own fields. A pack eval definition has none of
+	// them, so their absence means the wrong type claimed this $defs entry.
+	for _, prop := range []string{"recording", "turns", "conversation_assertions"} {
+		if _, has := def.Properties.Get(prop); !has {
+			t.Errorf("eval_specs value schema (%s) is missing %q — "+
+				"a colliding type has replaced arena's Eval definition", name, prop)
+		}
+	}
+}
+
+// TestArenaSchema_PackEvalsKeepsPackShape is the other half of the collision:
+// the pack eval definition must survive under its own name, with the open
+// handler-type enum still applied to it.
+func TestArenaSchema_PackEvalsKeepsPackShape(t *testing.T) {
+	schema, err := GenerateArenaSchema()
+	if err != nil {
+		t.Fatalf("GenerateArenaSchema() error = %v", err)
+	}
+	js, ok := schema.(*jsonschema.Schema)
+	if !ok {
+		t.Fatal("GenerateArenaSchema() did not return *jsonschema.Schema")
+	}
+
+	config, ok := js.Definitions["Config"]
+	if !ok {
+		t.Fatal("Config definition not found in arena schema")
+	}
+	packEvals, ok := config.Properties.Get("pack_evals")
+	if !ok {
+		t.Fatal("Config.pack_evals property not found")
+	}
+	if packEvals.Items == nil {
+		t.Fatal("pack_evals has no item schema")
+	}
+
+	name, found := strings.CutPrefix(packEvals.Items.Ref, "#/$defs/")
+	if !found {
+		t.Fatalf("pack_evals item schema is not a $defs ref, got %q", packEvals.Items.Ref)
+	}
+	def, ok := js.Definitions[name]
+	if !ok {
+		t.Fatalf("pack_evals refers to %q, which is not defined", name)
+	}
+
+	if _, has := def.Properties.Get("trigger"); !has {
+		t.Errorf("pack_evals item schema (%s) is missing 'trigger' — "+
+			"a colliding type has replaced the pack eval definition", name)
+	}
+	typeProp, has := def.Properties.Get("type")
+	if !has {
+		t.Fatalf("pack_evals item schema (%s) is missing 'type'", name)
+	}
+	// applyKnownTypeSuggestions looks the eval definition up by name, so a
+	// rename silently drops the handler-type suggestions unless it is followed.
+	if len(typeProp.AnyOf) != 2 {
+		t.Errorf("pack_evals item 'type' should be an open enum (anyOf with 2 branches), got %d — "+
+			"applyKnownTypeSuggestions no longer finds the def under %q", len(typeProp.AnyOf), name)
 	}
 }

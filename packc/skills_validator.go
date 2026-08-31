@@ -52,8 +52,11 @@ func ValidateSkillErrors(pack *prompt.Pack, packDir string) []string {
 	seen := make(map[string]string)
 
 	for i := range pack.Skills {
-		src := &pack.Skills[i]
-		dir := src.EffectiveDir()
+		src := pack.Skills[i]
+		if src == nil {
+			continue
+		}
+		dir := prompt.SkillPath(src)
 		if dir != "" {
 			errs = append(errs, validateSkillDirectory(dir, packDir, i, seen)...)
 		} else if src.Name != "" {
@@ -81,7 +84,7 @@ func ValidateSkills(pack *prompt.Pack, packDir string) []string {
 
 	// Check allowed-tools cross-references
 	for i := range pack.Skills {
-		dir := pack.Skills[i].EffectiveDir()
+		dir := prompt.SkillPath(pack.Skills[i])
 		if dir == "" {
 			continue
 		}

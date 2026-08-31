@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/AltairaLabs/PromptKit/runtime/packspec"
 	"github.com/AltairaLabs/PromptKit/runtime/persistence/memory"
 	"github.com/AltairaLabs/PromptKit/runtime/prompt"
 	"github.com/AltairaLabs/PromptKit/runtime/tools"
@@ -49,7 +50,7 @@ func resolverSpec() *workflow.Spec {
 				Description: "Handles escalations",
 				OnEvent:     map[string]string{"Resolve": "closed"},
 			},
-			"closed": {PromptTask: "closed", Terminal: true},
+			"closed": {PromptTask: "closed", Terminal: packspec.Ptr(true)},
 		},
 	}
 }
@@ -196,7 +197,7 @@ func TestResolveCurrentState_NoPromptTaskLeavesPromptAlone(t *testing.T) {
 // stop rather than run on into them — but only when we just transitioned.
 func TestResolveCurrentState_StopsOnExternalDestination(t *testing.T) {
 	spec := resolverSpec()
-	spec.States["specialist"].Orchestration = workflow.OrchestrationExternal
+	spec.States["specialist"].Orchestration = packspec.Ptr(workflow.OrchestrationExternal)
 	registry := tools.NewRegistry()
 	registerTransitionToolForSpec(registry, spec)
 
@@ -217,7 +218,7 @@ func TestResolveCurrentState_StopsOnExternalDestination(t *testing.T) {
 // scripted turn, which must still be answered.
 func TestResolveCurrentState_ExternalStateStillAnswersWithoutTransition(t *testing.T) {
 	spec := resolverSpec()
-	spec.States["specialist"].Orchestration = workflow.OrchestrationExternal
+	spec.States["specialist"].Orchestration = packspec.Ptr(workflow.OrchestrationExternal)
 	registry := tools.NewRegistry()
 	registerTransitionToolForSpec(registry, spec)
 

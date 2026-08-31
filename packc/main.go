@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"sort"
 
+	"github.com/AltairaLabs/PromptKit/runtime/packspec"
 	"github.com/AltairaLabs/PromptKit/runtime/persistence/memory"
 	"github.com/AltairaLabs/PromptKit/runtime/prompt"
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
@@ -124,11 +125,11 @@ func printPromptValidators(p *prompt.PackPrompt) {
 	if len(p.Validators) > 0 {
 		fmt.Printf("  Validators (%d):\n", len(p.Validators))
 		for _, v := range p.Validators {
-			// PromptKit 1.5.5 changed Validator.Enabled from *bool to bool, so
-			// "unset" and "false" are no longer distinguishable — both read as
-			// disabled here, which is what the pointer form displayed anyway.
+			// Validator.Enabled is *bool again in PromptKit 1.8.0. The schema
+			// defaults it to true, so an unset flag reads as enabled — the same
+			// default the prompt registry applies when it loads a config.
 			enabled := "disabled"
-			if v.Enabled {
+			if packspec.Deref(v.Enabled, true) {
 				enabled = "enabled"
 			}
 			fmt.Printf("    - %s (%s)\n", v.Type, enabled)
@@ -136,12 +137,17 @@ func printPromptValidators(p *prompt.PackPrompt) {
 	}
 }
 
+// successRateAsPercent scales the spec's 0-1 success rate for display.
+const successRateAsPercent = 100
+
 func printPromptTestedModels(p *prompt.PackPrompt) {
 	if len(p.TestedModels) > 0 {
 		fmt.Printf("  Tested Models (%d):\n", len(p.TestedModels))
 		for _, tm := range p.TestedModels {
-			fmt.Printf("    - %s/%s: %.1f%% success, avg %d tokens\n",
-				tm.Provider, tm.Model, tm.SuccessRate*100, tm.AvgTokens)
+			fmt.Printf("    - %s/%s: %.1f%% success, avg %.0f tokens\n",
+				tm.Provider, tm.Model,
+				packspec.Deref(tm.SuccessRate, 0)*successRateAsPercent,
+				packspec.Deref(tm.AvgTokens, 0))
 		}
 	}
 }
@@ -187,8 +193,8 @@ func printWorkflowState(name string, state *prompt.WorkflowState) {
 	if state.Persistence != "" {
 		fmt.Printf("    Persistence: %s\n", state.Persistence)
 	}
-	if state.Orchestration != "" {
-		fmt.Printf("    Orchestration: %s\n", state.Orchestration)
+	if state.Orchestration != nil && *state.Orchestration != "" {
+		fmt.Printf("    Orchestration: %s\n", *state.Orchestration)
 	}
 }
 
@@ -302,11 +308,15 @@ func validateMediaReferences(config *prompt.Config, baseDir string) []string {
 }
 
 // validateExampleMediaReferences validates media references in a single example
-func validateExampleMediaReferences(example prompt.MultimodalExample, baseDir string) []string {
+func validateExampleMediaReferences(example *prompt.MultimodalExample, baseDir string) []string {
 	var warnings []string
 
+	if example == nil {
+		return warnings
+	}
+
 	for i, part := range example.Parts {
-		if part.Media == nil || part.Media.FilePath == "" {
+		if part == nil || part.Media == nil || part.Media.FilePath == "" {
 			continue
 		}
 

@@ -118,7 +118,7 @@ func sortedStateNames(states map[string]*workflow.State) []string {
 
 // stateNode builds the WorkflowGraphNode for a single workflow state.
 func stateNode(name string, state *workflow.State, entry string) WorkflowGraphNode {
-	terminal := state.Terminal || len(state.OnEvent) == 0
+	terminal := workflow.IsTerminal(state)
 	kind := kindAgent
 	switch {
 	case name == entry:
@@ -172,7 +172,7 @@ func stateEdges(name string, state *workflow.State) []WorkflowGraphEdge {
 func compositionStepsFor(
 	name string, state *workflow.State, comps map[string]*composition.Composition,
 ) ([]WorkflowGraphNode, []WorkflowGraphEdge) {
-	if state.Orchestration != workflow.OrchestrationComposition || state.Composition == "" {
+	if workflow.OrchestrationOf(state) != workflow.OrchestrationComposition || state.Composition == "" {
 		return nil, nil
 	}
 	comp := comps[state.Composition]

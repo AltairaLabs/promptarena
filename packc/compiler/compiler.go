@@ -153,6 +153,13 @@ func compilePack(cfg *arenaconfig.Config, configFile string, options compileOpti
 		return nil, nil, fmt.Errorf("compilation failed: %w", err)
 	}
 
+	// CompileFromRegistryWithOptions leaves pack.Metadata unset — it has no
+	// CompileOption for it — so the arena config's pack_metadata block is the
+	// only authoring route to the pack's domain/language/tags/governance.
+	if cfg.PackMetadata != nil {
+		pack.Metadata = cfg.PackMetadata
+	}
+
 	return pack, warnings, nil
 }
 

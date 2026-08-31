@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/AltairaLabs/PromptKit/runtime/evals"
+	"github.com/AltairaLabs/PromptKit/runtime/packspec"
 	"github.com/AltairaLabs/PromptKit/runtime/prompt"
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 )
@@ -66,15 +67,15 @@ func TestValidateMediaReferences(t *testing.T) {
 				MediaConfig: &prompt.MediaConfig{
 					Enabled:        true,
 					SupportedTypes: []string{"image"},
-					Examples: []prompt.MultimodalExample{
+					Examples: []*prompt.MultimodalExample{
 						{
 							Name: "url-example",
 							Role: "user",
-							Parts: []prompt.ExampleContentPart{
+							Parts: []*prompt.ExampleContentPart{
 								{
 									Media: &prompt.ExampleMedia{
 										URL:      "https://example.com/image.jpg",
-										MIMEType: "image/jpeg",
+										MimeType: "image/jpeg",
 									},
 								},
 							},
@@ -95,15 +96,15 @@ func TestValidateMediaReferences(t *testing.T) {
 				MediaConfig: &prompt.MediaConfig{
 					Enabled:        true,
 					SupportedTypes: []string{"image"},
-					Examples: []prompt.MultimodalExample{
+					Examples: []*prompt.MultimodalExample{
 						{
 							Name: "file-example",
 							Role: "user",
-							Parts: []prompt.ExampleContentPart{
+							Parts: []*prompt.ExampleContentPart{
 								{
 									Media: &prompt.ExampleMedia{
 										FilePath: "nonexistent.jpg",
-										MIMEType: "image/jpeg",
+										MimeType: "image/jpeg",
 									},
 								},
 							},
@@ -131,15 +132,15 @@ func TestValidateMediaReferences(t *testing.T) {
 				MediaConfig: &prompt.MediaConfig{
 					Enabled:        true,
 					SupportedTypes: []string{"image"},
-					Examples: []prompt.MultimodalExample{
+					Examples: []*prompt.MultimodalExample{
 						{
 							Name: "file-example",
 							Role: "user",
-							Parts: []prompt.ExampleContentPart{
+							Parts: []*prompt.ExampleContentPart{
 								{
 									Media: &prompt.ExampleMedia{
 										FilePath: "test.jpg",
-										MIMEType: "image/jpeg",
+										MimeType: "image/jpeg",
 									},
 								},
 							},
@@ -158,13 +159,13 @@ func TestValidateExampleMediaReferences(t *testing.T) {
 		example := prompt.MultimodalExample{
 			Name: "text-only",
 			Role: "user",
-			Parts: []prompt.ExampleContentPart{
+			Parts: []*prompt.ExampleContentPart{
 				{
 					Text: "Hello world",
 				},
 			},
 		}
-		warnings := validateExampleMediaReferences(example, "/tmp")
+		warnings := validateExampleMediaReferences(&example, "/tmp")
 		assert.Empty(t, warnings)
 	})
 
@@ -172,17 +173,17 @@ func TestValidateExampleMediaReferences(t *testing.T) {
 		example := prompt.MultimodalExample{
 			Name: "empty-path",
 			Role: "user",
-			Parts: []prompt.ExampleContentPart{
+			Parts: []*prompt.ExampleContentPart{
 				{
 					Media: &prompt.ExampleMedia{
 						FilePath: "",
 						URL:      "https://example.com/image.jpg",
-						MIMEType: "image/jpeg",
+						MimeType: "image/jpeg",
 					},
 				},
 			},
 		}
-		warnings := validateExampleMediaReferences(example, "/tmp")
+		warnings := validateExampleMediaReferences(&example, "/tmp")
 		assert.Empty(t, warnings)
 	})
 
@@ -196,16 +197,16 @@ func TestValidateExampleMediaReferences(t *testing.T) {
 		example := prompt.MultimodalExample{
 			Name: "absolute-path",
 			Role: "user",
-			Parts: []prompt.ExampleContentPart{
+			Parts: []*prompt.ExampleContentPart{
 				{
 					Media: &prompt.ExampleMedia{
 						FilePath: testFile,
-						MIMEType: "image/jpeg",
+						MimeType: "image/jpeg",
 					},
 				},
 			},
 		}
-		warnings := validateExampleMediaReferences(example, "/tmp")
+		warnings := validateExampleMediaReferences(&example, "/tmp")
 		assert.Empty(t, warnings)
 	})
 
@@ -213,16 +214,16 @@ func TestValidateExampleMediaReferences(t *testing.T) {
 		example := prompt.MultimodalExample{
 			Name: "missing-abs",
 			Role: "user",
-			Parts: []prompt.ExampleContentPart{
+			Parts: []*prompt.ExampleContentPart{
 				{
 					Media: &prompt.ExampleMedia{
 						FilePath: "/nonexistent/path/image.jpg",
-						MIMEType: "image/jpeg",
+						MimeType: "image/jpeg",
 					},
 				},
 			},
 		}
-		warnings := validateExampleMediaReferences(example, "/tmp")
+		warnings := validateExampleMediaReferences(&example, "/tmp")
 		assert.Len(t, warnings, 1)
 		assert.Contains(t, warnings[0], "Media file not found")
 		assert.Contains(t, warnings[0], "/nonexistent/path/image.jpg")
@@ -237,22 +238,22 @@ func TestValidateExampleMediaReferences(t *testing.T) {
 		example := prompt.MultimodalExample{
 			Name: "mixed",
 			Role: "user",
-			Parts: []prompt.ExampleContentPart{
+			Parts: []*prompt.ExampleContentPart{
 				{
 					Media: &prompt.ExampleMedia{
 						FilePath: "exists.jpg",
-						MIMEType: "image/jpeg",
+						MimeType: "image/jpeg",
 					},
 				},
 				{
 					Media: &prompt.ExampleMedia{
 						FilePath: "missing.jpg",
-						MIMEType: "image/jpeg",
+						MimeType: "image/jpeg",
 					},
 				},
 			},
 		}
-		warnings := validateExampleMediaReferences(example, tmpDir)
+		warnings := validateExampleMediaReferences(&example, tmpDir)
 		assert.Len(t, warnings, 1)
 		assert.Contains(t, warnings[0], "missing.jpg")
 		assert.Contains(t, warnings[0], "part 1")
@@ -261,12 +262,12 @@ func TestValidateExampleMediaReferences(t *testing.T) {
 
 func TestPrintPackInfo(t *testing.T) {
 	// This is mainly for coverage - just ensure it doesn't panic
-	pack := &prompt.Pack{
+	pack := &prompt.Pack{Pack: packspec.Pack{
 		ID:          "test-pack",
 		Name:        "Test Pack",
 		Version:     "1.0.0",
 		Description: "Test description",
-	}
+	}}
 
 	// Call the function - it prints to stdout but shouldn't panic
 	printPackInfo(pack)
@@ -274,13 +275,13 @@ func TestPrintPackInfo(t *testing.T) {
 
 func TestPrintTemplateEngine(t *testing.T) {
 	t.Run("with template engine", func(t *testing.T) {
-		pack := &prompt.Pack{
+		pack := &prompt.Pack{Pack: packspec.Pack{
 			TemplateEngine: &prompt.TemplateEngineInfo{
 				Version:  "v1",
 				Syntax:   "handlebars",
 				Features: []string{"loops", "conditionals"},
 			},
-		}
+		}}
 		printTemplateEngine(pack)
 	})
 
@@ -292,12 +293,12 @@ func TestPrintTemplateEngine(t *testing.T) {
 
 func TestPrintFragments(t *testing.T) {
 	t.Run("with fragments", func(t *testing.T) {
-		pack := &prompt.Pack{
+		pack := &prompt.Pack{Pack: packspec.Pack{
 			Fragments: map[string]string{
 				"intro": "{{intro}}",
 				"outro": "{{outro}}",
 			},
-		}
+		}}
 		printFragments(pack)
 	})
 
@@ -309,13 +310,13 @@ func TestPrintFragments(t *testing.T) {
 
 func TestPrintMetadata(t *testing.T) {
 	t.Run("with metadata", func(t *testing.T) {
-		pack := &prompt.Pack{
+		pack := &prompt.Pack{Pack: packspec.Pack{
 			Metadata: &prompt.Metadata{
 				Domain:   "customer-support",
 				Language: "en",
 				Tags:     []string{"support", "predict"},
 			},
-		}
+		}}
 		printMetadata(pack)
 	})
 
@@ -327,13 +328,13 @@ func TestPrintMetadata(t *testing.T) {
 
 func TestPrintCompilationInfo(t *testing.T) {
 	t.Run("with compilation info", func(t *testing.T) {
-		pack := &prompt.Pack{
+		pack := &prompt.Pack{Pack: packspec.Pack{
 			Compilation: &prompt.CompilationInfo{
 				CompiledWith: "packc-v0.1.0",
 				CreatedAt:    "2025-11-06T12:00:00Z",
 				Schema:       "v1",
 			},
-		}
+		}}
 		printCompilationInfo(pack)
 	})
 
@@ -346,7 +347,7 @@ func TestPrintCompilationInfo(t *testing.T) {
 func TestPrintPromptVariables(t *testing.T) {
 	t.Run("with mixed variables", func(t *testing.T) {
 		p := &prompt.PackPrompt{
-			Variables: []prompt.Variable{
+			Variables: []*prompt.Variable{
 				{Name: "required1", Required: true},
 				{Name: "optional1", Required: false},
 				{Name: "required2", Required: true},
@@ -376,12 +377,12 @@ func TestPrintPromptTools(t *testing.T) {
 }
 
 func TestPrintPromptValidators(t *testing.T) {
-	enabled := true
-	disabled := false
+	enabled := packspec.Ptr(true)
+	disabled := packspec.Ptr(false)
 
 	t.Run("with validators", func(t *testing.T) {
 		p := &prompt.PackPrompt{
-			Validators: []prompt.Validator{
+			Validators: []*prompt.Validator{
 				{
 					Type:    "length",
 					Enabled: enabled,
@@ -403,7 +404,7 @@ func TestPrintPromptValidators(t *testing.T) {
 
 func TestPrintPromptsFunction(t *testing.T) {
 	t.Run("with prompts", func(t *testing.T) {
-		pack := &prompt.Pack{
+		pack := &prompt.Pack{Pack: packspec.Pack{
 			Prompts: map[string]*prompt.PackPrompt{
 				"task1": {
 					ID:          "task1",
@@ -416,7 +417,7 @@ func TestPrintPromptsFunction(t *testing.T) {
 					Description: "Second task",
 				},
 			},
-		}
+		}}
 		printPrompts(pack)
 	})
 
@@ -491,15 +492,15 @@ func TestValidateLoadedMedia(t *testing.T) {
 						MediaConfig: &prompt.MediaConfig{
 							Enabled:        true,
 							SupportedTypes: []string{"image"},
-							Examples: []prompt.MultimodalExample{
+							Examples: []*prompt.MultimodalExample{
 								{
 									Name: "example",
 									Role: "user",
-									Parts: []prompt.ExampleContentPart{
+									Parts: []*prompt.ExampleContentPart{
 										{
 											Media: &prompt.ExampleMedia{
 												FilePath: "test.jpg",
-												MIMEType: "image/jpeg",
+												MimeType: "image/jpeg",
 											},
 										},
 									},
@@ -519,12 +520,12 @@ func TestValidateLoadedMedia(t *testing.T) {
 func TestPrintPromptTestedModels(t *testing.T) {
 	t.Run("with tested models", func(t *testing.T) {
 		p := &prompt.PackPrompt{
-			TestedModels: []prompt.ModelTestResultRef{
+			TestedModels: []*prompt.ModelTestResultRef{
 				{
 					Provider:    "openai",
 					Model:       "gpt-4",
-					SuccessRate: 0.95,
-					AvgTokens:   150,
+					SuccessRate: packspec.Ptr(0.95),
+					AvgTokens:   packspec.Ptr(150.0),
 				},
 			},
 		}
@@ -538,24 +539,24 @@ func TestPrintPromptTestedModels(t *testing.T) {
 }
 
 func TestPrintPromptDetails(t *testing.T) {
-	enabled := true
+	enabled := packspec.Ptr(true)
 	p := &prompt.PackPrompt{
 		ID:          "test-prompt",
 		Name:        "Test Prompt",
 		Description: "A test prompt",
 		Version:     "1.0.0",
-		Variables: []prompt.Variable{
+		Variables: []*prompt.Variable{
 			{Name: "var1", Required: true},
 		},
 		Tools: []string{"tool1"},
-		Validators: []prompt.Validator{
+		Validators: []*prompt.Validator{
 			{
 				Type:    "length",
 				Enabled: enabled,
 			},
 		},
-		TestedModels: []prompt.ModelTestResultRef{
-			{Provider: "openai", Model: "gpt-4", SuccessRate: 0.95, AvgTokens: 100},
+		TestedModels: []*prompt.ModelTestResultRef{
+			{Provider: "openai", Model: "gpt-4", SuccessRate: packspec.Ptr(0.95), AvgTokens: packspec.Ptr(100.0)},
 		},
 	}
 
@@ -563,7 +564,7 @@ func TestPrintPromptDetails(t *testing.T) {
 }
 
 func TestPrintPrompts(t *testing.T) {
-	pack := &prompt.Pack{
+	pack := &prompt.Pack{Pack: packspec.Pack{
 		Prompts: map[string]*prompt.PackPrompt{
 			"task1": {
 				ID:      "task1",
@@ -571,13 +572,13 @@ func TestPrintPrompts(t *testing.T) {
 				Version: "1.0.0",
 			},
 		},
-	}
+	}}
 	printPrompts(pack)
 }
 
 func TestValidateWorkflowInPack(t *testing.T) {
 	t.Run("valid workflow no errors", func(t *testing.T) {
-		p := &prompt.Pack{
+		p := &prompt.Pack{Pack: packspec.Pack{
 			Prompts: map[string]*prompt.PackPrompt{
 				"greeting": {ID: "greeting"},
 				"farewell": {ID: "farewell"},
@@ -590,13 +591,13 @@ func TestValidateWorkflowInPack(t *testing.T) {
 					"end":   {PromptTask: "farewell"},
 				},
 			},
-		}
+		}}
 		result := p.ValidateWorkflow()
 		assert.False(t, result.HasErrors())
 	})
 
 	t.Run("workflow errors are blocking", func(t *testing.T) {
-		p := &prompt.Pack{
+		p := &prompt.Pack{Pack: packspec.Pack{
 			Prompts: map[string]*prompt.PackPrompt{
 				"greeting": {ID: "greeting"},
 			},
@@ -607,13 +608,13 @@ func TestValidateWorkflowInPack(t *testing.T) {
 					"start": {PromptTask: "greeting", OnEvent: map[string]string{"Done": "ghost"}},
 				},
 			},
-		}
+		}}
 		result := p.ValidateWorkflow()
 		assert.True(t, result.HasErrors())
 	})
 
 	t.Run("workflow warnings are non-blocking", func(t *testing.T) {
-		p := &prompt.Pack{
+		p := &prompt.Pack{Pack: packspec.Pack{
 			Prompts: map[string]*prompt.PackPrompt{
 				"greeting": {ID: "greeting"},
 				"farewell": {ID: "farewell"},
@@ -629,7 +630,7 @@ func TestValidateWorkflowInPack(t *testing.T) {
 					"end": {PromptTask: "farewell"},
 				},
 			},
-		}
+		}}
 		result := p.ValidateWorkflow()
 		assert.False(t, result.HasErrors())
 		assert.NotEmpty(t, result.Warnings)
@@ -645,7 +646,7 @@ func TestValidateWorkflowInPack(t *testing.T) {
 
 func TestPrintWorkflow(t *testing.T) {
 	t.Run("with workflow", func(t *testing.T) {
-		pack := &prompt.Pack{
+		pack := &prompt.Pack{Pack: packspec.Pack{
 			Workflow: &prompt.WorkflowConfig{
 				Version: 1,
 				Entry:   "start",
@@ -657,7 +658,7 @@ func TestPrintWorkflow(t *testing.T) {
 							"next": "end",
 						},
 						Persistence:   "persistent",
-						Orchestration: "internal",
+						Orchestration: packspec.Ptr("internal"),
 					},
 					"end": {
 						PromptTask: "farewell",
@@ -665,7 +666,7 @@ func TestPrintWorkflow(t *testing.T) {
 					},
 				},
 			},
-		}
+		}}
 		printWorkflow(pack)
 	})
 
@@ -677,7 +678,7 @@ func TestPrintWorkflow(t *testing.T) {
 
 func TestPrintAgents(t *testing.T) {
 	t.Run("with agents", func(t *testing.T) {
-		pack := &prompt.Pack{
+		pack := &prompt.Pack{Pack: packspec.Pack{
 			Agents: &prompt.AgentsConfig{
 				Entry: "triage",
 				Members: map[string]*prompt.AgentDef{
@@ -693,7 +694,7 @@ func TestPrintAgents(t *testing.T) {
 					},
 				},
 			},
-		}
+		}}
 		printAgents(pack)
 	})
 
@@ -798,7 +799,7 @@ func TestGetFragmentNames_Deterministic(t *testing.T) {
 }
 
 func TestPrintPrompts_Deterministic(t *testing.T) {
-	pack := &prompt.Pack{
+	pack := &prompt.Pack{Pack: packspec.Pack{
 		Prompts: map[string]*prompt.PackPrompt{
 			"zebra":   {ID: "zebra", Name: "Zebra", Version: "1.0"},
 			"alpha":   {ID: "alpha", Name: "Alpha", Version: "1.0"},
@@ -808,7 +809,7 @@ func TestPrintPrompts_Deterministic(t *testing.T) {
 			"gamma":   {ID: "gamma", Name: "Gamma", Version: "1.0"},
 			"epsilon": {ID: "epsilon", Name: "Epsilon", Version: "1.0"},
 		},
-	}
+	}}
 
 	const iterations = 20
 	captureOutput := func() string {
@@ -842,7 +843,7 @@ func TestVersionIsOverridable(t *testing.T) {
 }
 
 func TestPrintWorkflow_Deterministic(t *testing.T) {
-	pack := &prompt.Pack{
+	pack := &prompt.Pack{Pack: packspec.Pack{
 		Workflow: &prompt.WorkflowConfig{
 			Version: 1,
 			Entry:   "start",
@@ -854,7 +855,7 @@ func TestPrintWorkflow_Deterministic(t *testing.T) {
 				"zebra":  {PromptTask: "z"},
 			},
 		},
-	}
+	}}
 
 	const iterations = 20
 	captureOutput := func() string {
@@ -883,7 +884,7 @@ func TestPrintWorkflowState(t *testing.T) {
 			Description:   "Initial state",
 			OnEvent:       map[string]string{"Done": "end", "Error": "fallback"},
 			Persistence:   "persistent",
-			Orchestration: "internal",
+			Orchestration: packspec.Ptr("internal"),
 		}
 		// Should not panic
 		printWorkflowState("start", state)
@@ -907,11 +908,11 @@ func TestPrintWorkflowState(t *testing.T) {
 
 func TestRunSkillValidation(t *testing.T) {
 	t.Run("no skills", func(t *testing.T) {
-		pack := &prompt.Pack{
+		pack := &prompt.Pack{Pack: packspec.Pack{
 			Prompts: map[string]*prompt.PackPrompt{
 				"test": {ID: "test"},
 			},
-		}
+		}}
 		errs, warnings := runSkillValidation(pack, t.TempDir())
 		assert.Empty(t, errs)
 		assert.Empty(t, warnings)
@@ -927,14 +928,14 @@ func TestRunSkillValidation(t *testing.T) {
 			0o644,
 		))
 
-		pack := &prompt.Pack{
+		pack := &prompt.Pack{Pack: packspec.Pack{
 			Prompts: map[string]*prompt.PackPrompt{
 				"test": {ID: "test"},
 			},
-			Skills: []prompt.SkillSourceConfig{
-				{Dir: "skills"},
+			Skills: []*prompt.SkillSourceConfig{
+				{Path: "skills"},
 			},
-		}
+		}}
 		errs, warnings := runSkillValidation(pack, tmpDir)
 		assert.Empty(t, errs)
 		assert.Empty(t, warnings)
@@ -943,16 +944,16 @@ func TestRunSkillValidation(t *testing.T) {
 
 func TestPrintPackSummary(t *testing.T) {
 	t.Run("minimal pack", func(t *testing.T) {
-		pack := &prompt.Pack{
+		pack := &prompt.Pack{Pack: packspec.Pack{
 			Prompts: map[string]*prompt.PackPrompt{
 				"test": {ID: "test"},
 			},
-		}
+		}}
 		printPackSummary(pack, "test.pack.json")
 	})
 
 	t.Run("full pack", func(t *testing.T) {
-		pack := &prompt.Pack{
+		pack := &prompt.Pack{Pack: packspec.Pack{
 			Prompts: map[string]*prompt.PackPrompt{
 				"test": {ID: "test"},
 			},
@@ -960,7 +961,7 @@ func TestPrintPackSummary(t *testing.T) {
 				"search":     {Name: "search", Description: "Search"},
 				"calculator": {Name: "calculator", Description: "Calc"},
 			},
-			Evals: []evals.EvalDef{{ID: "eval1", Type: "contains"}},
+			Evals: []*evals.EvalDef{{ID: "eval1", Type: "contains"}},
 			Workflow: &prompt.WorkflowConfig{
 				Version: 1,
 				Entry:   "start",
@@ -974,7 +975,7 @@ func TestPrintPackSummary(t *testing.T) {
 					"agent1": {Description: "Agent 1"},
 				},
 			},
-		}
+		}}
 		printPackSummary(pack, "full.pack.json")
 	})
 }
@@ -1004,7 +1005,7 @@ func TestWritePackFile_ExistingDir(t *testing.T) {
 }
 
 func TestPrintAgents_Deterministic(t *testing.T) {
-	pack := &prompt.Pack{
+	pack := &prompt.Pack{Pack: packspec.Pack{
 		Agents: &prompt.AgentsConfig{
 			Entry: "triage",
 			Members: map[string]*prompt.AgentDef{
@@ -1015,7 +1016,7 @@ func TestPrintAgents_Deterministic(t *testing.T) {
 				"zebra":   {Description: "Zebra"},
 			},
 		},
-	}
+	}}
 
 	const iterations = 20
 	captureOutput := func() string {

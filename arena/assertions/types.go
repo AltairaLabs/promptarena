@@ -37,12 +37,14 @@ func ToEvalDef(a AssertionConfig, index int) evals.EvalDef {
 		Message: a.Message,
 	}
 	if a.When != nil {
-		def.When = &evals.EvalWhen{
+		// EvalDef.When is the spec's open `when` object (map[string]any); encode
+		// promptkit's reading of it rather than assigning the struct directly.
+		def.When = evals.EncodeEvalWhen(&evals.EvalWhen{
 			ToolCalled:        a.When.ToolCalled,
 			ToolCalledPattern: a.When.ToolCalledPattern,
 			AnyToolCalled:     a.When.AnyToolCalled,
 			MinToolCalls:      a.When.MinToolCalls,
-		}
+		})
 	}
 	return def
 }

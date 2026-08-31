@@ -5,6 +5,7 @@ import (
 	"sort"
 	"testing"
 
+	"github.com/AltairaLabs/PromptKit/runtime/packspec"
 	"github.com/AltairaLabs/PromptKit/runtime/tools"
 	"github.com/AltairaLabs/PromptKit/runtime/workflow"
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
@@ -34,7 +35,7 @@ func twoStateSpec() *workflow.Spec {
 		States: map[string]*workflow.State{
 			"triage":     {PromptTask: "triage", OnEvent: map[string]string{"Escalate": "specialist"}},
 			"specialist": {PromptTask: "specialist", OnEvent: map[string]string{"Resolve": "closed"}},
-			"closed":     {PromptTask: "closed", Terminal: true},
+			"closed":     {PromptTask: "closed", Terminal: packspec.Ptr(true)},
 		},
 	}
 }

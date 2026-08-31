@@ -74,11 +74,12 @@ func TestAssertionConfig_ToEvalDef_WithWhen(t *testing.T) {
 	def := ToEvalDef(cfg, 3)
 
 	assert.Equal(t, "assertion_3_tools_called", def.ID)
-	assert.NotNil(t, def.When)
-	assert.Equal(t, "search", def.When.ToolCalled)
-	assert.Equal(t, "search_.*", def.When.ToolCalledPattern)
-	assert.True(t, def.When.AnyToolCalled)
-	assert.Equal(t, 2, def.When.MinToolCalls)
+	when := evals.DecodeEvalWhen(def.When)
+	assert.NotNil(t, when)
+	assert.Equal(t, "search", when.ToolCalled)
+	assert.Equal(t, "search_.*", when.ToolCalledPattern)
+	assert.True(t, when.AnyToolCalled)
+	assert.Equal(t, 2, when.MinToolCalls)
 }
 
 func TestAssertionConfig_ToEvalDef_IndexInID(t *testing.T) {

@@ -422,7 +422,7 @@ func (e *Engine) buildCompositionResolver(runID string) func() *composition.Comp
 		}
 		stateName := sm.CurrentState()
 		state, ok := e.workflowSpec.States[stateName]
-		if !ok || state == nil || state.Orchestration != workflow.OrchestrationComposition {
+		if !ok || state == nil || workflow.OrchestrationOf(state) != workflow.OrchestrationComposition {
 			return nil
 		}
 		compName := state.Composition

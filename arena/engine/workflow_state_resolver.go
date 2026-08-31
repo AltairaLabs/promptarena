@@ -165,12 +165,13 @@ func (r *workflowStateResolver) ResolveCurrentState(_ context.Context) (stage.Ha
 	//	external    — waits for an injected event rather than continuing.
 	//	composition — CompositionStage runs the state itself.
 	if justTransitioned {
-		switch current.Orchestration {
+		switch workflow.OrchestrationOf(current) {
 		case workflow.OrchestrationExternal, workflow.OrchestrationComposition:
 			return stage.Handoff{Stop: true}, nil
 		case workflow.OrchestrationInternal, workflow.OrchestrationHybrid:
-			// Runtime-driven; continue the turn as this state. The zero value
-			// also lands here, which means internal.
+			// Runtime-driven; continue the turn as this state. An unset
+			// orchestration also lands here — OrchestrationOf defaults it
+			// to internal.
 		}
 	}
 
@@ -250,7 +251,7 @@ func (r *workflowStateResolver) CurrentStateMeta() map[string]any {
 		if state.Description != "" {
 			meta["description"] = state.Description
 		}
-		meta["terminal"] = state.Terminal || len(state.OnEvent) == 0
+		meta["terminal"] = workflow.IsTerminal(state)
 	}
 	return meta
 }

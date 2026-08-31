@@ -19,6 +19,7 @@ import (
 
 	"github.com/AltairaLabs/PromptKit/pkg/config"
 	"github.com/AltairaLabs/PromptKit/runtime/composition"
+	"github.com/AltairaLabs/PromptKit/runtime/packspec"
 	"github.com/AltairaLabs/PromptKit/runtime/prompt"
 	"github.com/AltairaLabs/PromptKit/runtime/providers"
 	"github.com/AltairaLabs/PromptKit/runtime/providers/mock"
@@ -68,7 +69,7 @@ func TestExecuteRun_CompositionState(t *testing.T) {
 		States: map[string]*workflow.State{
 			"compose": {
 				PromptTask:    "compose-task",
-				Orchestration: workflow.OrchestrationComposition,
+				Orchestration: packspec.Ptr(workflow.OrchestrationComposition),
 				Composition:   "my-comp",
 			},
 		},
@@ -84,13 +85,13 @@ func TestExecuteRun_CompositionState(t *testing.T) {
 	reg.RegisterExecutor(&echoE2EExecutor{})
 
 	// --- 4. Build a LoadedPack carrying the composition.
-	pack := &prompt.Pack{
+	pack := &prompt.Pack{Pack: packspec.Pack{
 		ID:       "composition-test-pack",
 		Workflow: wfSpec,
 		Compositions: map[string]*composition.Composition{
 			"my-comp": comp,
 		},
-	}
+	}}
 
 	// --- 5. Wire the Arena engine manually.
 	//        We use a mock provider for registration (it is never called because
