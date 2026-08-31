@@ -1,0 +1,40 @@
+name: Dependabot auto-merge
+
+# pull_request_target, not pull_request: on a Dependabot PR the pull_request
+# GITHUB_TOKEN is read-only, so it cannot enable auto-merge. pull_request_target
+# runs this file from the default branch with a write token.
+#
+# That combination is only safe because NOTHING here touches the PR's contents:
+# there is no actions/checkout, no build, no script from the branch. The job
+# reads metadata and calls the GitHub API. Do not add a checkout step.
+on:
+  pull_request_target:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    name: Enable auto-merge
+    if: github.event.pull_request.user.login == 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      # SHA-pinned deliberately: this job holds a write token, so a moved tag on
+      # a third-party action would run with permission to merge to main.
+      - name: Fetch Dependabot metadata
+        id: meta
+        uses: dependabot/fetch-metadata@25dd0e34f4fe68f24cc83900b1fe3fe149efef98 # v3.1.0
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Majors stay manual. A green pipeline does not prove a major bump is
+      # behaviour-compatible — PromptKit 1.5.5 shipped three breaking API changes
+      # in a PATCH release, and that is the class of thing review catches and CI
+      # does not.
+      - name: Enable auto-merge (patch and minor only)
+        if: steps.meta.outputs.update-type == 'version-update:semver-patch' || steps.meta.outputs.update-type == 'version-update:semver-minor'
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
