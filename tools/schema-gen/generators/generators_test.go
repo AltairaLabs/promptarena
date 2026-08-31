@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/invopop/jsonschema"
+
+	"github.com/AltairaLabs/PromptKit/runtime/prompt"
 )
 
 func TestGenerateArenaSchema(t *testing.T) {
@@ -561,5 +563,48 @@ func TestArenaSchema_PackEvalsKeepsPackShape(t *testing.T) {
 	if len(typeProp.AnyOf) != 2 {
 		t.Errorf("pack_evals item 'type' should be an open enum (anyOf with 2 branches), got %d — "+
 			"applyKnownTypeSuggestions no longer finds the def under %q", len(typeProp.AnyOf), name)
+	}
+}
+
+// TestArenaSchema_GovernanceAutonomyLevelIsClosed guards the enum RFC 0013
+// closes on autonomy_level. packspec.Governance is a read-only generated type
+// with no jsonschema tags, so without applyGovernanceEnums the reflector emits
+// a bare string and `autonomy_level: reviewed` passes arena validation only to
+// fail three steps later at pack compile.
+func TestArenaSchema_GovernanceAutonomyLevelIsClosed(t *testing.T) {
+	schema, err := GenerateArenaSchema()
+	if err != nil {
+		t.Fatalf("GenerateArenaSchema() error = %v", err)
+	}
+	js, ok := schema.(*jsonschema.Schema)
+	if !ok {
+		t.Fatal("GenerateArenaSchema() did not return *jsonschema.Schema")
+	}
+
+	def, ok := js.Definitions["Governance"]
+	if !ok {
+		t.Fatal("Governance definition not found in arena schema")
+	}
+	prop, ok := def.Properties.Get("autonomy_level")
+	if !ok {
+		t.Fatal("Governance.autonomy_level property not found")
+	}
+
+	got := make([]string, 0, len(prop.Enum))
+	for _, v := range prop.Enum {
+		s, isString := v.(string)
+		if !isString {
+			t.Fatalf("autonomy_level enum holds a non-string value %v", v)
+		}
+		got = append(got, s)
+	}
+	want := []string{
+		prompt.AutonomyLevelSuggests,
+		prompt.AutonomyLevelActsWithApproval,
+		prompt.AutonomyLevelActsWithOversight,
+		prompt.AutonomyLevelActsAutonomously,
+	}
+	if !slices.Equal(got, want) {
+		t.Errorf("autonomy_level enum = %v, want %v", got, want)
 	}
 }

@@ -6,6 +6,8 @@ import (
 	"github.com/invopop/jsonschema"
 
 	"github.com/AltairaLabs/PromptKit/runtime/evals"
+	"github.com/AltairaLabs/PromptKit/runtime/prompt"
+
 	// Blank import populates the default eval handler registry (handlers
 	// self-register via init), so knownEvalTypes reflects exactly the set this
 	// PromptKit build supports.
@@ -84,4 +86,42 @@ func applyKnownTypeSuggestions(schema *jsonschema.Schema) {
 		}
 		applyOpenTypeEnum(def, "type", known, typeEnumDescription)
 	}
+}
+
+// applyGovernanceEnums closes the enums RFC 0013 defines on a governance
+// declaration.
+//
+// Unlike the handler-type enums above, these are genuinely closed: the
+// PromptPack schema rejects a value outside them, so `autonomy_level: reviewed`
+// fails at pack compile. Arena's schema could not say so on its own —
+// packspec.Governance is a read-only generated type, so it carries no
+// jsonschema:"enum=..." tags and the reflector emits a bare string. Typing the
+// config's agents and pack_metadata blocks bought structure and completion but
+// still let a bad level through arena validation, which is the error this is
+// meant to catch at authoring time rather than three steps later.
+//
+// The values come from promptkit's own constants, so the two cannot drift.
+func applyGovernanceEnums(schema *jsonschema.Schema) {
+	if schema == nil || schema.Definitions == nil {
+		return
+	}
+	def := schema.Definitions["Governance"]
+	if def == nil || def.Properties == nil {
+		return
+	}
+	prop, ok := def.Properties.Get("autonomy_level")
+	if !ok {
+		return
+	}
+	levels := []string{
+		prompt.AutonomyLevelSuggests,
+		prompt.AutonomyLevelActsWithApproval,
+		prompt.AutonomyLevelActsWithOversight,
+		prompt.AutonomyLevelActsAutonomously,
+	}
+	enum := make([]interface{}, len(levels))
+	for i, l := range levels {
+		enum[i] = l
+	}
+	prop.Enum = enum
 }

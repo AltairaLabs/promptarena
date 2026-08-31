@@ -1293,7 +1293,13 @@
           "type": "array"
         },
         "autonomy_level": {
-          "type": "string"
+          "type": "string",
+          "enum": [
+            "suggests",
+            "acts_with_approval",
+            "acts_with_oversight",
+            "acts_autonomously"
+          ]
         },
         "capabilities": {
           "items": {
