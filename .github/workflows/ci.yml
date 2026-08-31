@@ -48,6 +48,14 @@ jobs:
               - '.golangci.yml'
               - 'sonar-project.properties'
               - 'npm/**'
+              # The generated JSON schemas. Build & Test is the only job that
+              # runs `schema-gen --check`, so without this a schema-only PR
+              # skips the one check that verifies the files were generated
+              # rather than hand-edited -- and a skipped required job counts as
+              # a pass. #140 got a green tick that way on a hand-edit that
+              # fails the check.
+              - 'schemas/**'
+              - 'arena/agentkb/schemas/**'
               # The web UI is built and tested inside Build & Test (tsc, vite,
               # vitest) and embedded into the Go binary, so a frontend-only
               # change must run that job. Without this a pure frontend PR — a
@@ -213,8 +221,18 @@ jobs:
     # whole suite: the SonarGo analyzer parses sources directly and only needs
     # coverage.out, so no Go toolchain / build / test step is required here.
     needs: [changes, build-test, npm-wrappers]
-    # dependabot PRs cannot access secrets
-    if: needs.changes.outputs.code == 'true' && github.actor != 'dependabot[bot]'
+    # Neither dependabot PRs nor PRs from forks can access secrets, so the scan
+    # has no SONAR_TOKEN and fails at auth ("Not authorized or project not
+    # found"). That is a GitHub restriction, not something Sonar can be
+    # configured around, and it made SonarCloud -- a required check -- literally
+    # unsatisfiable for every external contribution. Build & Test and
+    # Lint (new code) need no secrets and are required in its place; Sonar still
+    # runs on push to main, so a regression from a merged fork PR surfaces
+    # there. `github.event.pull_request` is null on push, so main still scans.
+    if: >-
+      needs.changes.outputs.code == 'true'
+      && github.actor != 'dependabot[bot]'
+      && github.event.pull_request.head.repo.fork != true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
