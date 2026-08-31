@@ -157,12 +157,17 @@ jobs:
           node-version: '22'
           cache: 'npm'
           cache-dependency-path: npm/${{ matrix.pkg }}/package-lock.json
-      # --omit=optional deliberately: the per-platform binary packages are
-      # optionalDependencies of these wrappers, and the unit tests exercise the
-      # resolver with an injected stub rather than a real binary. Skipping them
-      # keeps the job off a ~46MB download it would never execute.
+      # No --omit=optional. It used to be set to keep the job off the ~46MB of
+      # per-platform binary packages, but those are pinned at a version that was
+      # never published, so npm skips them and they are absent from both
+      # lockfiles -- `npm ci` never downloads them either way. What the flag
+      # DID strip is unrs-resolver's native binding (also an optional dep),
+      # which jest-resolve >= 30.5.0 needs: without it module resolution returns
+      # null and jest dies resolving its own default testRunner. The unit tests
+      # inject a stub binary rather than exec a real one, so nothing here
+      # depends on the platform packages staying uninstalled.
       - name: Install
-        run: npm ci --omit=optional --prefix npm/${{ matrix.pkg }}
+        run: npm ci --prefix npm/${{ matrix.pkg }}
       - name: Lint
         run: npm run lint --prefix npm/${{ matrix.pkg }}
       - name: Test (with coverage)
