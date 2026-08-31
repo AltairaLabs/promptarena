@@ -144,6 +144,39 @@ jobs:
           path: arena/web/frontend/coverage/lcov.info
           retention-days: 1
 
+  npm-wrappers:
+    name: Test npm wrappers
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        pkg: [promptarena, packc]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: npm/${{ matrix.pkg }}/package-lock.json
+      # --omit=optional deliberately: the per-platform binary packages are
+      # optionalDependencies of these wrappers, and the unit tests exercise the
+      # resolver with an injected stub rather than a real binary. Skipping them
+      # keeps the job off a ~46MB download it would never execute.
+      - name: Install
+        run: npm ci --omit=optional --prefix npm/${{ matrix.pkg }}
+      - name: Lint
+        run: npm run lint --prefix npm/${{ matrix.pkg }}
+      - name: Test (with coverage)
+        run: npm run test:ci --prefix npm/${{ matrix.pkg }}
+      # sonar-project.properties points sonar.javascript.lcov.reportPaths at
+      # npm/*/coverage/lcov.info. Nothing used to generate those files, so the
+      # wrapper code was reported to SonarCloud as entirely uncovered.
+      - name: Upload wrapper coverage report
+        uses: actions/upload-artifact@v7
+        with:
+          name: npm-${{ matrix.pkg }}-coverage
+          path: npm/${{ matrix.pkg }}/coverage/lcov.info
+          retention-days: 1
+
   lint:
     name: Lint (new code)
     # Inherited baseline: lint only NEW code on PRs. The extracted arena/packc
@@ -174,7 +207,7 @@ jobs:
     # Reuse the coverage report produced by build-test rather than re-running the
     # whole suite: the SonarGo analyzer parses sources directly and only needs
     # coverage.out, so no Go toolchain / build / test step is required here.
-    needs: [changes, build-test]
+    needs: [changes, build-test, npm-wrappers]
     # dependabot PRs cannot access secrets
     if: needs.changes.outputs.code == 'true' && github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
@@ -191,6 +224,16 @@ jobs:
         with:
           name: frontend-coverage
           path: arena/web/frontend/coverage/
+      - name: Download npm wrapper coverage reports
+        uses: actions/download-artifact@v8
+        with:
+          name: npm-promptarena-coverage
+          path: npm/promptarena/coverage/
+      - name: Download npm packc coverage report
+        uses: actions/download-artifact@v8
+        with:
+          name: npm-packc-coverage
+          path: npm/packc/coverage/
       - name: SonarCloud Scan
         uses: SonarSource/sonarqube-scan-action@v8
         env:
