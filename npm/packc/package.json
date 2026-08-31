@@ -7,11 +7,18 @@
     "packc": "./bin/packc.js"
   },
   "scripts": {
-    "postinstall": "node postinstall.js",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
     "test:ci": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage --ci",
     "test:binary": "node bin/packc.js version",
     "lint": "eslint *.js bin/*.js lib/*.js"
+  },
+  "optionalDependencies": {
+    "@altairalabs/packc-darwin-arm64": "1.1.0",
+    "@altairalabs/packc-darwin-x64": "1.1.0",
+    "@altairalabs/packc-linux-arm64": "1.1.0",
+    "@altairalabs/packc-linux-x64": "1.1.0",
+    "@altairalabs/packc-win32-arm64": "1.1.0",
+    "@altairalabs/packc-win32-x64": "1.1.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -45,19 +52,9 @@
   "engines": {
     "node": ">=18.0.0"
   },
-  "os": [
-    "darwin",
-    "linux",
-    "win32"
-  ],
-  "cpu": [
-    "x64",
-    "arm64"
-  ],
   "files": [
     "bin/",
     "lib/",
-    "postinstall.js",
     "README.md"
   ],
   "publishConfig": {

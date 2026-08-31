@@ -166,40 +166,39 @@ npx @altairalabs/promptarena run -c tests/edge-cases.yaml
 
 ## 🛠️ Troubleshooting
 
-### Binary Download Fails
+### Binary Not Found
 
 **Symptoms:**
-- Installation hangs or fails
-- `postinstall` script errors
+- `Error: <tool> could not find its platform binary package @altairalabs/<tool>-<platform>-<arch>`
+
+The binaries ship as per-platform packages (`@altairalabs/promptarena-darwin-arm64`
+and friends) that the main package pulls in as **optionalDependencies**. Your
+package manager picks the one matching your machine via its `os`/`cpu` fields.
+Nothing is downloaded at install time by a script, so a blocked lifecycle script
+can no longer break the install.
 
 **Solutions:**
 
-1. **Check internet connection and GitHub access**
+1. **Do not opt out of optional dependencies.** This is by far the most common
+   cause — the binary *is* an optional dependency:
    ```bash
-   curl -I https://github.com
+   npm install @altairalabs/promptarena          # correct
+   npm install --omit=optional ...               # binary will be missing
    ```
 
-2. **Verify release exists**
-   - Visit [GitHub Releases](https://github.com/AltairaLabs/PromptKit/releases)
-   - Confirm the version exists
-
-3. **Check npm proxy settings**
+2. **Reinstall from a clean tree** if a lockfile was created on a different
+   OS/architecture (a common CI and Docker problem):
    ```bash
-   npm config get proxy
-   npm config get https-proxy
+   rm -rf node_modules package-lock.json
+   npm install
    ```
 
-4. **Try with verbose logging**
-   ```bash
-   npm install @altairalabs/promptarena --loglevel verbose
-   ```
+3. **Check your platform is supported.** Prebuilt binaries exist for
+   darwin/linux/win32 on x64 and arm64. Anything else must build from source.
 
-5. **Manual installation**
+4. **Verify the platform package resolved:**
    ```bash
-   # Download and extract manually
-   curl -L https://github.com/AltairaLabs/PromptKit/releases/download/v0.0.1/PromptKit_v0.0.1_Darwin_arm64.tar.gz -o promptkit.tar.gz
-   tar -xzf promptkit.tar.gz
-   chmod +x promptarena packc
+   ls node_modules/@altairalabs/
    ```
 
 ### Permission Denied Errors

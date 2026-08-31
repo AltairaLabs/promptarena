@@ -7,12 +7,19 @@
     "promptarena": "./bin/promptarena.js"
   },
   "scripts": {
-    "postinstall": "node postinstall.js",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage",
     "test:ci": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage --ci",
     "test:binary": "node bin/promptarena.js --version",
     "test:init": "node test-init.js",
     "lint": "eslint *.js bin/*.js"
+  },
+  "optionalDependencies": {
+    "@altairalabs/promptarena-darwin-arm64": "1.1.0",
+    "@altairalabs/promptarena-darwin-x64": "1.1.0",
+    "@altairalabs/promptarena-linux-arm64": "1.1.0",
+    "@altairalabs/promptarena-linux-x64": "1.1.0",
+    "@altairalabs/promptarena-win32-arm64": "1.1.0",
+    "@altairalabs/promptarena-win32-x64": "1.1.0"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -48,19 +55,9 @@
   "engines": {
     "node": ">=18.0.0"
   },
-  "os": [
-    "darwin",
-    "linux",
-    "win32"
-  ],
-  "cpu": [
-    "x64",
-    "arm64"
-  ],
   "files": [
     "bin/",
     "lib/",
-    "postinstall.js",
     "README.md",
     "schemas/",
     "schema-map.json"

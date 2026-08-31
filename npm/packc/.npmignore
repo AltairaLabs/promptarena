@@ -1,4 +1,6 @@
-# Ignore downloaded binaries
+# Never pack a binary into the main package. The real binaries ship in the
+# per-platform @altairalabs/<tool>-<platform>-<arch> packages; a stray local
+# build sitting here would otherwise be published to every consumer.
 packc
 packc.exe
 

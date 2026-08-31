@@ -209,21 +209,19 @@ No Go toolchain is required on your machine.
 
 ## Troubleshooting
 
-### Binary Download Fails
+### Binary Not Found
 
-If the postinstall script fails:
+`packc` ships its Go binary in a per-platform package
+(`@altairalabs/packc-linux-x64` and friends) that this package declares as an
+**optionalDependency**. npm, pnpm, yarn and bun each select the one matching
+your `os`/`cpu`. No install script runs, so nothing has to be allowlisted.
 
-1. Check your internet connection
-2. Verify the version exists in [GitHub Releases](https://github.com/AltairaLabs/PromptKit/releases)
-3. Check npm proxy/registry settings
-4. Try manual installation:
+If you see `could not find its platform binary package`:
 
-```bash
-# Download binary directly
-curl -L https://github.com/AltairaLabs/PromptKit/releases/download/v0.0.1/PromptKit_v0.0.1_Darwin_arm64.tar.gz -o packc.tar.gz
-tar -xzf packc.tar.gz packc
-chmod +x packc
-```
+1. Make sure the install did not run with `--omit=optional` / `--no-optional`.
+2. Delete `node_modules` and the lockfile and reinstall — a lockfile generated
+   on a different platform will not carry your binary.
+3. Confirm your platform is one of darwin/linux/win32 on x64 or arm64.
 
 ### Permission Denied
 

@@ -204,6 +204,18 @@ homebrew_casks:
       email: bot@goreleaser.com
     binaries:
       - promptarena
+    # Homebrew casks set com.apple.quarantine on downloaded payloads. Our
+    # binaries are ad-hoc/linker-signed only (not Developer ID + notarized), so
+    # Gatekeeper SIGKILLs them on first exec (exit 137). Strip the attribute at
+    # install time until we have a notarization identity.
+    hooks:
+      post:
+        install: |
+          if OS.mac?
+            system_command "/usr/bin/xattr",
+                           args: ["-dr", "com.apple.quarantine", "#{staged_path}/promptarena"],
+                           sudo: false
+          end
   - name: packc
     ids:
       - packc
@@ -220,6 +232,18 @@ homebrew_casks:
       email: bot@goreleaser.com
     binaries:
       - packc
+    # Homebrew casks set com.apple.quarantine on downloaded payloads. Our
+    # binaries are ad-hoc/linker-signed only (not Developer ID + notarized), so
+    # Gatekeeper SIGKILLs them on first exec (exit 137). Strip the attribute at
+    # install time until we have a notarization identity.
+    hooks:
+      post:
+        install: |
+          if OS.mac?
+            system_command "/usr/bin/xattr",
+                           args: ["-dr", "com.apple.quarantine", "#{staged_path}/packc"],
+                           sudo: false
+          end
 
 # Docker images (disabled for now - will migrate to dockers_v2 after testing basic releases)
 # dockers:

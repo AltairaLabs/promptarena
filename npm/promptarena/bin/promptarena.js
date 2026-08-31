@@ -1,27 +1,25 @@
 #!/usr/bin/env node
 
 import { spawn } from 'node:child_process';
-import path from 'node:path';
-import fs from 'node:fs';
-import { fileURLToPath } from 'node:url';
+import { createRequire } from 'node:module';
+import { resolveBinary } from '../lib/resolve.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const require = createRequire(import.meta.url);
 
-const binaryName = process.platform === 'win32' ? 'promptarena.exe' : 'promptarena';
-const binaryPath = path.join(__dirname, '..', binaryName);
-
-// Check if binary exists
-if (!fs.existsSync(binaryPath)) {
-  console.error('Error: promptarena binary not found.');
-  console.error('Please try reinstalling: npm install @altairalabs/promptarena');
+let binaryPath;
+try {
+  // Bind through an arrow so require.resolve keeps its receiver.
+  binaryPath = resolveBinary('promptarena', {
+    resolve: (id) => require.resolve(id),
+  });
+} catch (err) {
+  console.error(`Error: ${err.message}`);
   process.exit(1);
 }
 
-// Spawn the Go binary with all arguments
 const child = spawn(binaryPath, process.argv.slice(2), {
   stdio: 'inherit',
-  windowsHide: false
+  windowsHide: false,
 });
 
 child.on('error', (err) => {
