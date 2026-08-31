@@ -1,0 +1,47 @@
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Tool
+metadata:
+  name: pull_credit_report
+spec:
+  name: pull_credit_report
+  description: >-
+    Retrieves a consumer credit report for an applicant who has already given
+    written consent. A permissible-purpose reference is required: the tool
+    refuses to run without one, so a report is never pulled speculatively.
+  input_schema:
+    type: object
+    properties:
+      applicant_id:
+        type: string
+        description: Internal applicant identifier (never an SSN or full account number)
+      consent_reference:
+        type: string
+        description: Reference for the applicant's recorded written consent to a credit pull
+    required:
+      - applicant_id
+      - consent_reference
+  output_schema:
+    type: object
+    properties:
+      score:
+        type: integer
+        description: Credit score, or omitted entirely when the file is too thin to score
+      file_depth:
+        type: string
+        enum:
+          - thin
+          - established
+        description: Whether the file carries enough history to score
+      oldest_tradeline_months:
+        type: integer
+        description: Age of the oldest open tradeline, in months
+      derogatory_marks:
+        type: integer
+        description: Count of derogatory marks in the reporting window
+  mode: mock
+  timeout_ms: 4000
+  mock_result:
+    score: 742
+    file_depth: established
+    oldest_tradeline_months: 146
+    derogatory_marks: 0

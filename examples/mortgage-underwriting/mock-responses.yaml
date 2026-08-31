@@ -1,0 +1,182 @@
+# Mock LLM responses for the mortgage-underwriting example.
+#
+# Each numbered entry is one LLM response, indexed by response number and NOT by
+# scenario turn. A single scenario turn consumes as many as the tool loop asks
+# for: a response carrying tool calls is followed by another round once the
+# results come back, and the turn ends at the first response with no tool calls.
+#
+# A workflow__transition takes effect within the turn that issued it, so the
+# destination state renders and answers on the very next round without waiting
+# for another user message. Both scenarios below therefore run the whole
+# intake → verification → assessment → referral path from one opening turn, and
+# each response has to be valid for the state the run will ACTUALLY be in by the
+# time it is consumed.
+#
+# Scenario keys match the scenario's metadata.name.
+
+scenarios:
+  # A well-documented file. Everything verifies, the ratios sit inside
+  # guidelines — and it still ends at a human underwriter, because that is what
+  # the pack's autonomy_level claims and what the assertions check.
+  #
+  #   R1 intake        --Verify--> verification
+  #   R2 verification: three evidence tool calls
+  #   R3 verification  --Assess--> assessment
+  #   R4 assessment:   compute_ratios
+  #   R5 assessment    --Refer--> referral
+  #   R6 referral:     plain text, no tool calls, so the turn ends here.
+  clean-application:
+    turns:
+      1:
+        response: |
+          Application restated for underwriting:
+          - Applicant: APP-40182 (consent CONSENT-40182-A)
+          - Stated annual income: 96,000
+          - Existing monthly debts: 640
+          - Requested loan: 325,000
+          - Subject property: PROP-7741, agreed price 415,000
+          No fields missing. Handing off to verification.
+        tool_calls:
+          - name: workflow__transition
+            arguments:
+              event: Verify
+              context: "Application fields restated; no gaps in what was supplied"
+      2:
+        response: "Gathering credit, income and valuation evidence."
+        tool_calls:
+          - name: pull_credit_report
+            arguments:
+              applicant_id: APP-40182
+              consent_reference: CONSENT-40182-A
+          - name: verify_income
+            arguments:
+              applicant_id: APP-40182
+              stated_annual_income: 96000
+          - name: get_property_valuation
+            arguments:
+              property_id: PROP-7741
+              purchase_price: 415000
+      3:
+        response: |
+          Evidence gathered:
+          - Credit: score 742, established file, 146 months of history, no derogatory marks.
+          - Income: 96,000 verified via payroll provider over 38 months — matches the stated figure.
+          - Valuation: 415,000 by full appraisal, high confidence.
+          No gaps. Handing off to assessment.
+        tool_calls:
+          - name: workflow__transition
+            arguments:
+              event: Assess
+              context: "Evidence gathered from all three sources"
+      4:
+        response: "Computing the ratios from the verified figures."
+        tool_calls:
+          - name: compute_ratios
+            arguments:
+              verified_annual_income: 96000
+              monthly_debt_payments: 640
+              loan_amount: 325000
+              appraised_value: 415000
+      5:
+        response: |
+          Assessment for underwriter review:
+          - DTI 31.4%, LTV 78.3% — both inside the published guideline bands.
+          - Evidence: payroll-verified income over 38 months, established credit
+            file with no derogatory marks, full appraisal at high confidence.
+          - No gaps in the file.
+
+          I recommend approval subject to underwriter review. The decision is
+          the underwriter's.
+        tool_calls:
+          - name: workflow__transition
+            arguments:
+              event: Refer
+              context: "Recommendation written for underwriter review"
+      6: |
+        Referring APP-40182 to a human underwriter for decision.
+
+        Look first at the DTI of 31.4% against the current guideline band, and
+        confirm the appraisal is the one on file for PROP-7741. The applicant
+        has not been contacted and no outcome has been communicated.
+
+  # The file the governance block is really about. The credit file is too thin
+  # to score, the payroll provider could not confirm income, and the valuation
+  # is a low-confidence automated one. The assistant names each gap and refers.
+  # It does not decline: that is an adverse action and it belongs to a human.
+  thin-file-referral:
+    turns:
+      1:
+        response: |
+          Application restated for underwriting:
+          - Applicant: APP-51993 (consent CONSENT-51993-B)
+          - Stated annual income: 71,000
+          - Existing monthly debts: 1,180
+          - Requested loan: 298,000
+          - Subject property: PROP-3120, agreed price 315,000
+          No fields missing. Handing off to verification.
+        tool_calls:
+          - name: workflow__transition
+            arguments:
+              event: Verify
+              context: "Application fields restated; file flagged as light"
+      2:
+        response: "Gathering credit, income and valuation evidence."
+        tool_calls:
+          - name: pull_credit_report
+            arguments:
+              applicant_id: APP-51993
+              consent_reference: CONSENT-51993-B
+          - name: verify_income
+            arguments:
+              applicant_id: APP-51993
+              stated_annual_income: 71000
+          - name: get_property_valuation
+            arguments:
+              property_id: PROP-3120
+              purchase_price: 315000
+      3:
+        response: |
+          Evidence gathered, with gaps to flag:
+          - Credit: thin file — too little history to return a score.
+          - Income: unverified — the payroll provider returned no record, so the
+            stated 71,000 is not supported by evidence.
+          - Valuation: automated valuation at low confidence; a full appraisal
+            should be requested before this is relied on.
+          Three gaps, all material. Handing off to assessment.
+        tool_calls:
+          - name: workflow__transition
+            arguments:
+              event: Assess
+              context: "Evidence gathered; three material gaps recorded"
+      4:
+        response: "Computing the ratios so the underwriter has them, on the figures available."
+        tool_calls:
+          - name: compute_ratios
+            arguments:
+              verified_annual_income: 71000
+              monthly_debt_payments: 1180
+              loan_amount: 298000
+              appraised_value: 315000
+      5:
+        response: |
+          Assessment for underwriter review:
+          - Ratios computed, but on an unverified income figure, so treat them
+            as indicative rather than decisive.
+          - Credit file is thin and could not be scored.
+          - Valuation is low confidence and automated.
+
+          The evidence is insufficient to support a recommendation either way.
+          I recommend referral for manual review, and further documentation:
+          a tax transcript or bank statements for income, and a full appraisal
+          for PROP-3120. I am not stating an outcome on this file.
+        tool_calls:
+          - name: workflow__transition
+            arguments:
+              event: Refer
+              context: "Referral written; evidence insufficient to recommend an outcome"
+      6: |
+        Referring APP-51993 to a human underwriter for decision.
+
+        Three gaps need resolving before this file can be decided: unverified
+        income, a thin credit file, and a low-confidence valuation. Nothing has
+        been communicated to the applicant and no outcome has been reached.

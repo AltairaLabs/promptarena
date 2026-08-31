@@ -1,0 +1,45 @@
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Tool
+metadata:
+  name: verify_income
+spec:
+  name: verify_income
+  description: >-
+    Verifies stated income against payroll and tax records. Returns what the
+    records support, which may be lower than the figure on the application —
+    the verified number is the one underwriting uses.
+  input_schema:
+    type: object
+    properties:
+      applicant_id:
+        type: string
+        description: Internal applicant identifier
+      stated_annual_income:
+        type: number
+        description: Annual income as stated by the applicant, in whole currency units
+    required:
+      - applicant_id
+      - stated_annual_income
+  output_schema:
+    type: object
+    properties:
+      verified_annual_income:
+        type: number
+        description: Annual income the records support, in whole currency units
+      method:
+        type: string
+        enum:
+          - payroll_provider
+          - tax_transcript
+          - bank_statement
+          - unverified
+        description: How the figure was established; unverified means no record was found
+      months_of_history:
+        type: integer
+        description: Length of the verified earnings history, in months
+  mode: mock
+  timeout_ms: 4000
+  mock_result:
+    verified_annual_income: 96000
+    method: payroll_provider
+    months_of_history: 38

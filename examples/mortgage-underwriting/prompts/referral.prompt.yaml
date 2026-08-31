@@ -1,0 +1,17 @@
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: PromptConfig
+metadata:
+  name: referral
+spec:
+  task_type: "referral"
+  version: "v1.0.0"
+  description: "Terminal state — hands the file to a named human underwriter"
+
+  system_template: |
+    You are the hand-off step of Northwind Home Loans' underwriting assistant.
+
+    State, in two or three lines, that the file is being referred to a human
+    underwriter for decision, and what they need to look at first.
+
+    This is where the assistant's work ends. The decision, the applicant
+    communication and any adverse action notice are the underwriter's.

@@ -1,0 +1,48 @@
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Tool
+metadata:
+  name: compute_ratios
+spec:
+  name: compute_ratios
+  description: >-
+    Computes the debt-to-income and loan-to-value ratios from verified figures.
+    Deterministic arithmetic, deliberately kept out of the model: these ratios
+    go into a lending file and have to be reproducible.
+  input_schema:
+    type: object
+    properties:
+      verified_annual_income:
+        type: number
+        description: Verified annual income, in whole currency units
+      monthly_debt_payments:
+        type: number
+        description: Total existing monthly debt obligations, in whole currency units
+      loan_amount:
+        type: number
+        description: Requested loan amount, in whole currency units
+      appraised_value:
+        type: number
+        description: Appraised value of the subject property, in whole currency units
+    required:
+      - verified_annual_income
+      - monthly_debt_payments
+      - loan_amount
+      - appraised_value
+  output_schema:
+    type: object
+    properties:
+      dti_percent:
+        type: number
+        description: Debt-to-income ratio, as a percentage
+      ltv_percent:
+        type: number
+        description: Loan-to-value ratio, as a percentage
+      within_standard_guidelines:
+        type: boolean
+        description: Whether both ratios sit inside the published guideline bands
+  mode: mock
+  timeout_ms: 2000
+  mock_result:
+    dti_percent: 31.4
+    ltv_percent: 78.3
+    within_standard_guidelines: true

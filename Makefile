@@ -106,7 +106,13 @@ test-examples: build-go ## Validate every example config and mock-run the showca
 	run llm-judge         --config config.arena.yaml --ci --formats json; \
 	run guardrails-test   --config config.arena.yaml --ci --formats json; \
 	run eval-test         --config config.arena.yaml --ci --formats json; \
-	run document-analysis --config config.arena.yaml --ci --formats json
+	run document-analysis --config config.arena.yaml --ci --formats json; \
+	run mortgage-underwriting --config config.arena.yaml --ci --formats json
+	@echo "Compiling the governance showcase to a pack…"
+	@env PROMPTKIT_SCHEMA_SOURCE=local ./bin/packc compile \
+		-c examples/mortgage-underwriting/config.arena.yaml \
+		-o bin/mortgage-underwriting.pack.json >/dev/null
+	@env PROMPTKIT_SCHEMA_SOURCE=local ./bin/packc validate bin/mortgage-underwriting.pack.json
 
 # ── Lint & format ───────────────────────────────────────────────────────────
 
