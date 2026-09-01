@@ -59,7 +59,7 @@ PromptArena implements several security measures to protect users:
 - **Dependency Scanning**: Automated vulnerability scanning with [Dependabot](https://github.com/dependabot) for Go modules, npm packages, Docker images, and GitHub Actions
 - **Code Quality**: Comprehensive linting with golangci-lint and SonarQube integration
 - **Code Review**: All changes require review before merging
-- **Signed Releases**: All releases are signed and checksummed
+- **Release Integrity**: Every release carries a checksum file, an SBOM and a signed build provenance attestation — see [Verifying a release](#verifying-a-release)
 
 ### Runtime Security
 
@@ -75,6 +75,27 @@ PromptArena implements several security measures to protect users:
 - **Access Controls**: Multi-factor authentication and role-based access controls
 - **Automated Updates**: Dependabot automatically creates PRs for dependency updates weekly
 - **Regular Reviews**: Security updates are prioritized and reviewed promptly
+
+## Verifying a release
+
+Each GitHub release publishes, alongside the binaries:
+
+- `checksums.txt` — SHA-256 for every archive.
+- `<archive>.spdx.json` — an SPDX SBOM per archive, cataloged from the same build.
+- A build provenance attestation over every archive and the checksum file, signed
+  through GitHub's OIDC identity for the release workflow.
+
+To verify a download came from this repository's release workflow, at the commit
+the release was cut from:
+
+```bash
+gh attestation verify promptarena_<version>_<os>_<arch>.tar.gz \
+  --repo AltairaLabs/promptarena
+```
+
+The npm packages (`@altairalabs/promptarena`, `@altairalabs/packc`) publish with
+npm provenance, so the same guarantee shows as a "Provenance" badge on their npm
+listing and is checkable with `npm audit signatures`.
 
 ## Security Considerations for Users
 
