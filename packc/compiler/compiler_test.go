@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/AltairaLabs/PromptKit/runtime/prompt"
@@ -640,4 +641,100 @@ spec:
 	assert.Equal(t, []string{"underwriting", "mortgage"}, res.Pack.Metadata.Tags)
 	// PackMetadata (PromptKit v1.9.0, packspec RFC 0012) no longer carries a
 	// changelog field, so that assertion was dropped along with it here.
+
+	// Promoting a prompt's metadata to the whole pack is a guess, so it has to
+	// be visible: a silent promotion is the same class of surprise as #135's
+	// silent drop.
+	assert.True(t, hasWarning(res.Warnings, `taken from prompt "prompt0"`),
+		"promoting spec.metadata must be reported, got %v", res.Warnings)
+}
+
+// promptWithMetadataYAML is a prompt config declaring its own spec.metadata.
+func promptWithMetadataYAML(name, domain string) string {
+	return `apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: PromptConfig
+metadata:
+  name: ` + name + `
+spec:
+  task_type: "` + name + `"
+  version: "v1.0.0"
+  description: "` + name + ` prompt"
+  system_template: "You are ` + name + `."
+  metadata:
+    domain: "` + domain + `"
+`
+}
+
+func hasWarning(warnings []string, substr string) bool {
+	for _, w := range warnings {
+		if strings.Contains(w, substr) {
+			return true
+		}
+	}
+	return false
+}
+
+// TestCompile_SpecMetadataChoiceIsDeterministic pins the choice made when more
+// than one prompt declares spec.metadata. The candidates come out of a map, so
+// picking "the first one found" would compile the same config into different
+// packs on different runs — and quietly, since only one of them can win.
+func TestCompile_SpecMetadataChoiceIsDeterministic(t *testing.T) {
+	t.Setenv("PROMPTKIT_SCHEMA_SOURCE", "local")
+	dir := t.TempDir()
+	writeFixture(t, dir, "prompts/alpha.yaml", promptWithMetadataYAML("alpha", "aviation"))
+	writeFixture(t, dir, "prompts/beta.yaml", promptWithMetadataYAML("beta", "banking"))
+	configFile := writeFixture(t, dir, "config.arena.yaml",
+		minimalArenaConfig("prompts/alpha.yaml", "prompts/beta.yaml"))
+
+	// Go randomizes map iteration per range, so a single compile would agree
+	// with an arbitrary pick about half the time.
+	for i := 0; i < 20; i++ {
+		res, err := Compile(configFile,
+			WithPackID("multi-pack"),
+			WithCompilerVersion("test-v1"),
+			WithSkipSchemaValidation(),
+		)
+		require.NoError(t, err)
+		require.NotNil(t, res.Pack.Metadata)
+		assert.Equal(t, "aviation", res.Pack.Metadata.Domain,
+			"the first prompt in sorted order must win on every run")
+		assert.True(t, hasWarning(res.Warnings, "only \"prompt0\" was used"),
+			"the prompts passed over must be named, got %v", res.Warnings)
+	}
+}
+
+// TestCompile_PackMetadataBeatsSpecMetadata covers the precedence: pack_metadata
+// is the pack-level authoring route, so it wins — but the spec.metadata it
+// displaced is reported rather than dropped on the floor.
+func TestCompile_PackMetadataBeatsSpecMetadata(t *testing.T) {
+	t.Setenv("PROMPTKIT_SCHEMA_SOURCE", "local")
+	dir := t.TempDir()
+	writeFixture(t, dir, "prompts/alpha.yaml", promptWithMetadataYAML("alpha", "aviation"))
+
+	arenaConfig := `apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Arena
+metadata:
+  name: test
+spec:
+  prompt_configs:
+    - id: prompt0
+      file: prompts/alpha.yaml
+  providers: []
+  pack_metadata:
+    domain: customer-support
+  defaults:
+    temperature: 0.7
+`
+	configFile := writeFixture(t, dir, "config.arena.yaml", arenaConfig)
+
+	res, err := Compile(configFile,
+		WithPackID("precedence-pack"),
+		WithCompilerVersion("test-v1"),
+		WithSkipSchemaValidation(),
+	)
+	require.NoError(t, err)
+	require.NotNil(t, res.Pack.Metadata)
+	assert.Equal(t, "customer-support", res.Pack.Metadata.Domain)
+	assert.True(t, hasWarning(res.Warnings, "was ignored"),
+		"the ignored spec.metadata must be reported, got %v", res.Warnings)
 }

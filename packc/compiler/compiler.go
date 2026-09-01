@@ -7,6 +7,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
+	"sort"
+	"strings"
 
 	"github.com/AltairaLabs/PromptKit/runtime/prompt"
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
@@ -154,25 +156,75 @@ func compilePack(cfg *arenaconfig.Config, configFile string, options compileOpti
 	}
 
 	// CompileFromRegistryWithOptions leaves pack.Metadata unset — it has no
-	// CompileOption for it — so the arena config's pack_metadata block is the
-	// primary authoring route to the pack's domain/language/tags/governance.
-	if cfg.PackMetadata != nil {
-		pack.Metadata = cfg.PackMetadata
-	}
-
-	// Fall back to metadata from a loaded prompt config's spec.metadata when
-	// no arena-level pack_metadata block was authored, so a per-prompt
-	// spec.metadata (#135) is not silently dropped.
-	if pack.Metadata == nil {
-		for _, promptData := range cfg.LoadedPromptConfigs {
-			if promptConfig, ok := promptData.Config.(*prompt.Config); ok && promptConfig != nil && promptConfig.Spec.Metadata != nil {
-				pack.Metadata = promptConfig.Spec.Metadata
-				break
-			}
-		}
-	}
+	// CompileOption for it — so the block has to be settled here.
+	warnings = append(warnings, resolvePackMetadata(cfg, pack)...)
 
 	return pack, warnings, nil
+}
+
+// specMetadata is one prompt config's spec.metadata, kept with the name it was
+// declared under so the choice between several can be reported.
+type specMetadata struct {
+	prompt string
+	meta   *prompt.Metadata
+}
+
+// resolvePackMetadata settles the compiled pack's metadata block, returning
+// warnings for anything it had to choose between.
+//
+// The arena config's pack_metadata block is the pack-level authoring route and
+// wins outright. A prompt config's own spec.metadata is prompt-level, but it is
+// schema-legal and PromptKit's single-config compile path carries it, so
+// dropping it here would leave the same field working through the SDK and
+// vanishing through packc (#135).
+//
+// So it is promoted when nothing else set the block — but never silently, and
+// never arbitrarily: promoting one prompt's metadata to the whole pack is a
+// guess, so the compiler says which prompt it took it from and what it passed
+// over.
+func resolvePackMetadata(cfg *arenaconfig.Config, pack *prompt.Pack) []string {
+	declared := make([]specMetadata, 0, len(cfg.LoadedPromptConfigs))
+	for name, promptData := range cfg.LoadedPromptConfigs {
+		promptConfig, ok := promptData.Config.(*prompt.Config)
+		if !ok || promptConfig == nil || promptConfig.Spec.Metadata == nil {
+			continue
+		}
+		declared = append(declared, specMetadata{prompt: name, meta: promptConfig.Spec.Metadata})
+	}
+	// LoadedPromptConfigs is a map, so without this the same config could
+	// compile to a different pack on every run.
+	sort.Slice(declared, func(i, j int) bool { return declared[i].prompt < declared[j].prompt })
+
+	names := make([]string, 0, len(declared))
+	for _, d := range declared {
+		names = append(names, d.prompt)
+	}
+
+	if cfg.PackMetadata != nil {
+		pack.Metadata = cfg.PackMetadata
+		if len(declared) > 0 {
+			return []string{fmt.Sprintf(
+				"metadata: pack_metadata was used; spec.metadata on %s was ignored",
+				strings.Join(names, ", "))}
+		}
+		return nil
+	}
+
+	if len(declared) == 0 {
+		return nil
+	}
+
+	pack.Metadata = declared[0].meta
+	warnings := []string{fmt.Sprintf(
+		"metadata: no pack_metadata block, so the pack's metadata was taken from prompt %q; "+
+			"author pack_metadata in the arena config to set it explicitly",
+		declared[0].prompt)}
+	if len(declared) > 1 {
+		warnings = append(warnings, fmt.Sprintf(
+			"metadata: %s each declare spec.metadata; only %q was used",
+			strings.Join(names, ", "), declared[0].prompt))
+	}
+	return warnings
 }
 
 // buildCompileOptions parses workflow and agents from config into compile options.
