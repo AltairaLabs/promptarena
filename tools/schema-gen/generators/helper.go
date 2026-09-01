@@ -156,5 +156,14 @@ func Generate(cfg *SchemaConfig) (interface{}, error) {
 		cfg.Customize(schema)
 	}
 
+	// Applied to every schema, after Customize, because mirroring the spec's
+	// openness is a correctness invariant rather than a per-schema choice: any
+	// schema projecting a packspec type inherits the same reflector default and
+	// the same gap. Running last also means a Customize hook cannot leave a
+	// spec-open object closed by accident.
+	if err := applySpecOpenObjects(schema); err != nil {
+		return nil, fmt.Errorf("apply spec-declared open objects to %s: %w", cfg.Filename, err)
+	}
+
 	return schema, nil
 }

@@ -302,7 +302,7 @@
           "type": "string"
         }
       },
-      "additionalProperties": false,
+      "additionalProperties": true,
       "type": "object",
       "required": [
         "name",
@@ -441,7 +441,7 @@
           "type": "array"
         }
       },
-      "additionalProperties": false,
+      "additionalProperties": true,
       "type": "object"
     },
     "PackMetadataCostEstimate": {
