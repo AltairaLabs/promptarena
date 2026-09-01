@@ -256,10 +256,32 @@ jobs:
       - name: Smoke test the published packages
         run: |
           VERSION="${{ inputs.version }}"
+          BARE="${VERSION#v}"
           mkdir -p /tmp/npm-smoke && cd /tmp/npm-smoke
           npm init -y >/dev/null
-          npm install "@altairalabs/promptarena@${VERSION#v}" \
-                      "@altairalabs/packc@${VERSION#v}" --no-audit --no-fund
+
+          # Wait for the registry to serve what we just published. `npm publish`
+          # returning success does not mean the version is resolvable yet, and
+          # installing immediately gets ETARGET "No matching version found" --
+          # which reads as a failed publish when the publish was fine. It failed
+          # v1.6.3 exactly this way, after both packages had in fact landed.
+          for attempt in $(seq 1 30); do
+            if npm view "@altairalabs/promptarena@${BARE}" version >/dev/null 2>&1 \
+               && npm view "@altairalabs/packc@${BARE}" version >/dev/null 2>&1; then
+              echo "Both packages resolvable after ${attempt} attempt(s)."
+              break
+            fi
+            if [ "$attempt" -eq 30 ]; then
+              echo "::error::@altairalabs/promptarena@${BARE} and/or packc did not"
+              echo "::error::become resolvable within 5 minutes. Check whether the"
+              echo "::error::publish step actually succeeded before assuming lag."
+              exit 1
+            fi
+            sleep 10
+          done
+
+          npm install "@altairalabs/promptarena@${BARE}" \
+                      "@altairalabs/packc@${BARE}" --no-audit --no-fund
           ./node_modules/.bin/promptarena --version
           ./node_modules/.bin/packc version
 
