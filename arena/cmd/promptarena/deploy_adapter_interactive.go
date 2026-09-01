@@ -34,25 +34,25 @@ var defaultRegistryJSON = `{
     "agentcore": {
       "repo": "AltairaLabs/promptarena-deploy-agentcore",
       "description": "AWS Bedrock AgentCore",
-      "latest": "0.2.0",
+      "latest": "0.3.0",
       "maintained_by": "AltairaLabs"
     },
     "omnia": {
       "repo": "AltairaLabs/PromptArena-deploy-omnia",
       "description": "Omnia Kubernetes platform",
-      "latest": "1.4.0",
+      "latest": "1.5.0",
       "maintained_by": "AltairaLabs"
     },
     "foundry": {
       "repo": "AltairaLabs/promptarena-deploy-foundry",
       "description": "Azure AI Foundry hosted agents",
-      "latest": "0.1.0",
+      "latest": "0.2.0",
       "maintained_by": "AltairaLabs"
     },
     "vertex": {
       "repo": "AltairaLabs/promptarena-deploy-vertex",
       "description": "Google Agent Runtime",
-      "latest": "0.1.0",
+      "latest": "0.2.0",
       "maintained_by": "AltairaLabs"
     }
   }
