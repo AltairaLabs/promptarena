@@ -42,13 +42,13 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/AltairaLabs/PromptKit.git",
+    "url": "https://github.com/AltairaLabs/promptarena.git",
     "directory": "npm/packc"
   },
   "bugs": {
-    "url": "https://github.com/AltairaLabs/PromptKit/issues"
+    "url": "https://github.com/AltairaLabs/promptarena/issues"
   },
-  "homepage": "https://github.com/AltairaLabs/PromptKit#readme",
+  "homepage": "https://github.com/AltairaLabs/promptarena#readme",
   "engines": {
     "node": ">=18.0.0"
   },

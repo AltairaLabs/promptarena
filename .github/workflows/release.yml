@@ -95,6 +95,9 @@ jobs:
       - name: Install ALSA dev headers (for voice CGO)
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev
 
+      # goreleaser's `sboms` block shells out to syft, and goreleaser-action
+      # does not install it: without this the release fails at the SBOM step.
+      - uses: anchore/sbom-action/download-syft@v0
       # The real release path with publishing switched off: before-hooks, every
       # cross-compile, archives. Anything that would fail the release fails here,
       # while the version is still unspent.
@@ -159,6 +162,9 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
       - name: Install ALSA dev headers (for voice CGO)
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev
+      # goreleaser's `sboms` block shells out to syft, and goreleaser-action
+      # does not install it: without this the release fails at the SBOM step.
+      - uses: anchore/sbom-action/download-syft@v0
       - uses: goreleaser/goreleaser-action@v7
         with:
           version: latest
@@ -172,6 +178,9 @@ jobs:
     name: npm publish
     needs: goreleaser
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write   # Required for npm provenance (OIDC attestation)
     steps:
       - uses: actions/checkout@v7
         with:
@@ -223,7 +232,7 @@ jobs:
               continue
             fi
             echo "publishing $name"
-            npm publish "$dir" --access public
+            npm publish "$dir" --access public --provenance
           done
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -245,7 +254,7 @@ jobs:
               }
               fs.writeFileSync(p, JSON.stringify(d, null, 2) + "\n");
             ' "npm/$pkg/package.json" "${VERSION#v}"
-            npm publish "./npm/$pkg" --access public
+            npm publish "./npm/$pkg" --access public --provenance
           done
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

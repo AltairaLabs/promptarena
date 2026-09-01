@@ -91,6 +91,15 @@ checksum:
   name_template: 'checksums.txt'
   algorithm: sha256
 
+# Software Bill of Materials (SBOM) for release archives.
+# Deterministic document names (from #138) so downstream consumers can
+# derive the SBOM path from the artifact name instead of goreleaser's default.
+sboms:
+  - artifacts: archive
+    id: default
+    documents:
+      - "${artifact}.spdx.json"
+
 # Snapshot configuration (for non-tagged builds)
 snapshot:
   version_template: "{{ incpatch .Version }}-next"
