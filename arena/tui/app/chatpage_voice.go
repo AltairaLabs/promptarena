@@ -29,8 +29,9 @@ type voiceLevelMsg struct {
 type chatRefreshMsg struct{}
 
 // echoGuardThreshold is the RMS floor below which mic frames are dropped while
-// the agent is speaking (≈ −34 dBFS, comfortably above silence).
-// See voice.NewDriverWithGuard for the v1 limitation note on buffered drivers.
+// the agent is speaking (≈ −34 dBFS, comfortably above silence). The dynamic
+// floor above this base rises with the actual playback level; see
+// voice.NewEchoGuard and voice.NewDriverWithGuard.
 const echoGuardThreshold = 0.02
 
 // startVoice wires the voice backend and launches the driver goroutine.
