@@ -345,9 +345,12 @@ jobs:
   # release reaches no adapter, and the contract they implement drifts from the
   # one they compile against until somebody notices by hand.
   #
-  # continue-on-error throughout: a release is already published by the time
-  # this runs, so failing to notify one adapter must not fail the release. The
-  # bump can always be raised manually.
+  # A failure here is reported, not swallowed. This step spent every release
+  # since it was added printing "Notifying ..." and dispatching nothing: the
+  # token below was a PromptKit repo secret, so it resolved to empty here and
+  # gh refused, while continue-on-error painted the job green. Four adapters sat
+  # on promptarena v1.5.9 with nobody seeing a red tick. The release is already
+  # published by the time this runs, so a red leg costs nothing but the truth.
   notify-adapters:
     name: Notify the deploy adapters
     needs: major-tag
@@ -362,13 +365,16 @@ jobs:
           - promptarena-deploy-agentcore
     steps:
       - name: Dispatch to ${{ matrix.repo }}
-        continue-on-error: true
         env:
           VERSION: ${{ inputs.version }}
           REPO: ${{ matrix.repo }}
           # A cross-repository dispatch cannot use GITHUB_TOKEN: it is scoped to
-          # this repository. Same token PromptKit uses for the same job.
-          GH_TOKEN: ${{ secrets.DOWNSTREAM_DISPATCH_TOKEN }}
+          # this repository. PERSONAL_ACCESS_TOKEN is an organization secret
+          # visible to every repo — including the four adapters, which already
+          # use it to push their bump branches. DOWNSTREAM_DISPATCH_TOKEN, which
+          # this used before, is a PromptKit *repo* secret and does not exist
+          # here.
+          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
         run: |
           echo "Notifying $REPO of promptarena/$VERSION..."
           gh api "repos/AltairaLabs/$REPO/dispatches" \
