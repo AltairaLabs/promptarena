@@ -423,6 +423,37 @@ func TestAllAssertionsPassed_WithEvalResults(t *testing.T) {
 		}
 		assert.False(t, results.AllAssertionsPassed(result))
 	})
+
+	t.Run("a when-skipped eval does not fail the run", func(t *testing.T) {
+		// PromptKit skips an eval whose `when` precondition is unmet, leaving
+		// Passed/Score/Value zero. Reading that as a failure meant a `when`
+		// gate failed the run it was written to exempt (PromptKit #1931).
+		result := &engine.RunResult{
+			Messages: []types.Message{{
+				Meta: map[string]interface{}{
+					"eval_results": []evals.EvalResult{
+						{EvalID: "e1", Value: true},
+						{EvalID: "e2", Skipped: true, SkipReason: "tool not called"},
+					},
+				},
+			}},
+		}
+		assert.True(t, results.AllAssertionsPassed(result))
+	})
+
+	t.Run("a skipped eval alongside a real failure still fails", func(t *testing.T) {
+		result := &engine.RunResult{
+			Messages: []types.Message{{
+				Meta: map[string]interface{}{
+					"eval_results": []evals.EvalResult{
+						{EvalID: "e1", Skipped: true, SkipReason: "tool not called"},
+						{EvalID: "e2", Value: false},
+					},
+				},
+			}},
+		}
+		assert.False(t, results.AllAssertionsPassed(result))
+	})
 }
 
 func TestHasAssertions_WithEvalResults(t *testing.T) {

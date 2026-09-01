@@ -131,6 +131,67 @@ func TestConvertEvalResults_SkippedResult(t *testing.T) {
 	c := converted[0]
 	assert.Equal(t, true, c.Details["skipped"])
 	assert.Equal(t, "when condition not met", c.Details["skip_reason"])
+	// A skipped eval never ran, so it cannot have failed. Reporting it as
+	// Passed:false made a `when` gate fail the very run it was meant to
+	// exempt (PromptKit #1931).
+	assert.True(t, c.Passed, "a skipped eval must not be reported as a failure")
+}
+
+func TestEvalResultPassed_Skipped(t *testing.T) {
+	no := false
+	zero := 0.0
+
+	tests := []struct {
+		name string
+		r    evals.EvalResult
+	}{
+		{
+			// What PromptKit's runner actually emits for an unmet `when`:
+			// Skipped set, and Passed/Score/Value all left zero.
+			"skipped, nothing else stated",
+			evals.EvalResult{EvalID: "e1", Type: "contains", Skipped: true, SkipReason: "tool not called"},
+		},
+		{
+			// A skip is not a measurement, so a zero score carried alongside
+			// it must not be read as a failing one.
+			"skipped with a zero score",
+			evals.EvalResult{EvalID: "e2", Type: "contains", Skipped: true, Score: &zero},
+		},
+		{
+			// Nothing sets both today, but "never ran" outranks any pass/fail
+			// the result claims to state.
+			"skipped outranks a stated Passed:false",
+			evals.EvalResult{EvalID: "e3", Type: "contains", Skipped: true, Passed: &no},
+		},
+		{
+			"skipped with a false Value",
+			evals.EvalResult{EvalID: "e4", Type: "contains", Skipped: true, Value: false},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			assert.True(t, assertions.EvalResultPassed(&tt.r),
+				"a skipped eval must not be reported as a failure")
+		})
+	}
+}
+
+func TestEvalResultPassed_NotSkipped(t *testing.T) {
+	// The skip branch must not swallow real failures: Skipped:false leaves
+	// every existing rule intact.
+	no := false
+	yes := true
+	zero := 0.0
+	one := 1.0
+
+	assert.False(t, assertions.EvalResultPassed(&evals.EvalResult{Passed: &no}))
+	assert.True(t, assertions.EvalResultPassed(&evals.EvalResult{Passed: &yes}))
+	assert.False(t, assertions.EvalResultPassed(&evals.EvalResult{Value: false}))
+	assert.True(t, assertions.EvalResultPassed(&evals.EvalResult{Value: true}))
+	assert.False(t, assertions.EvalResultPassed(&evals.EvalResult{Score: &zero}))
+	assert.True(t, assertions.EvalResultPassed(&evals.EvalResult{Score: &one}))
+	assert.False(t, assertions.EvalResultPassed(&evals.EvalResult{Score: &one, Error: "boom"}))
 }
 
 func TestExtractScore(t *testing.T) {
