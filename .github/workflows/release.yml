@@ -131,6 +131,11 @@ jobs:
     name: GoReleaser (binaries + GitHub release + Homebrew)
     needs: tag
     runs-on: ubuntu-latest
+    permissions:
+      contents: write       # goreleaser creates the GitHub release
+      packages: read        # the before-hook installs @altairalabs/atlas
+      id-token: write       # OIDC token the attestation is signed against
+      attestations: write   # store the provenance attestation on the repo
     steps:
       # Check out the tag itself: goreleaser derives the version from the git
       # state, so it has to be standing on the tag it is releasing.
@@ -173,6 +178,21 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           # Homebrew cask push to AltairaLabs/homebrew-tap
           HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+
+      # Build provenance for the published binaries. #128 asked for this on
+      # image builds, copying the Omnia pattern; this repo publishes archives
+      # rather than images (the `dockers:` block in .goreleaser.yml is still
+      # disabled), so the archives and their checksum file are the subjects.
+      #
+      # A downloader can then prove where a binary came from:
+      #   gh attestation verify promptarena_1.6.3_Darwin_arm64.tar.gz \
+      #     --repo AltairaLabs/promptarena
+      - name: Attest the release archives
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-path: |
+            dist/*.tar.gz
+            dist/checksums.txt
 
   npm-publish:
     name: npm publish
