@@ -438,6 +438,23 @@ func TestBuildAssertionResults_PrependsSkipped(t *testing.T) {
 	assert.Contains(t, errs[0].Error(), "fail")
 }
 
+func TestBuildAssertionResults_SkippedPackEvalRaisesNoError(t *testing.T) {
+	// The seam the bug actually crossed: a pack eval skipped by its `when`
+	// precondition travels through ConvertEvalResults into buildAssertionResults,
+	// where a false Passed became a validation error and failed the turn
+	// (PromptKit #1931).
+	convResults := assertions.ConvertEvalResults([]evals.EvalResult{
+		{EvalID: "gated", Type: "contains", Skipped: true, SkipReason: "tool not called"},
+	})
+	filtered := []assertions.AssertionConfig{{Type: "contains", Message: "must pass"}}
+
+	results, errs := buildAssertionResults(convResults, filtered, nil)
+
+	require.Len(t, results, 1)
+	assert.Empty(t, errs, "a skipped pack eval must not raise a validation error")
+	assert.Equal(t, true, results[0].(map[string]interface{})["passed"])
+}
+
 func TestArenaAssertionStage_HandleMissingEvalRunner_NoConfigs(t *testing.T) {
 	s := NewArenaAssertionStage(nil)
 	msg := &types.Message{Role: "assistant", Content: "hi"}

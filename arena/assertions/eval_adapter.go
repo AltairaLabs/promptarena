@@ -176,7 +176,20 @@ func convertOneEvalResult(r *evals.EvalResult) ConversationValidationResult {
 // result deserialized from a run predating Passed. Arena's report needs a
 // boolean in that column either way, and how it should present a measurement
 // that nobody asserted on is a separate question from this one.
+//
+// A skipped result is answered before any of that. PromptKit skips an eval
+// whose `when` precondition is unmet and leaves Passed, Score and Value zero,
+// which fell through to the score branch and reported FAILED — so a `when`
+// gate failed the very run it was written to exempt, and gating was unusable
+// (PromptKit #1931). "Never ran" is not "failed", and it outranks anything the
+// result states about pass/fail, so the check comes first. Callers that need to
+// tell a skip from a pass read Details["skipped"] via IsSkipped; this mirrors
+// what the turn-assertion path already does for its own skips, marking them
+// passed and skipped together.
 func EvalResultPassed(r *evals.EvalResult) bool {
+	if r.Skipped {
+		return true
+	}
 	if r.Passed != nil {
 		return *r.Passed
 	}
