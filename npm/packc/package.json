@@ -13,7 +13,7 @@
     "lint": "eslint *.js bin/*.js lib/*.js"
   },
   "optionalDependencies": {
-    "@altairalabs/packc-darwin-arm64": "1.1.0",
+    "@altairalabs/packc-darwin-arm64": "1.6.5",
     "@altairalabs/packc-darwin-x64": "1.6.5",
     "@altairalabs/packc-linux-arm64": "1.1.0",
     "@altairalabs/packc-linux-x64": "1.1.0",
