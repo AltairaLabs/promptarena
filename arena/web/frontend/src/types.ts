@@ -140,6 +140,16 @@ export interface RunOptionsResponse {
   scenarios: ScenarioInfo[];
 }
 
+// RunRef mirrors GET /api/results — a run's ID plus the scenario × provider
+// cell it belongs to, and nothing else. The coordinates let the UI fetch full
+// results for only the slice it is charting, instead of pulling every
+// transcript in the store to find out which cells have data.
+export interface RunRef {
+  run_id: string;
+  scenario_id: string;
+  provider_id: string;
+}
+
 // === Workflow Graph ===
 // Mirrors the Go backend's GET /api/workflow response exactly (no x/y —
 // layout is a frontend concern, see src/lib/workflowFlow.ts's dagre pass).

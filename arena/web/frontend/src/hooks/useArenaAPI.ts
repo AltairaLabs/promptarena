@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import type { RunOptionsResponse, RunResult, RunRequest, WorkflowGraph } from "@/types";
+import type { RunOptionsResponse, RunRef, RunResult, RunRequest, WorkflowGraph } from "@/types";
 
 export function useArenaAPI() {
   const [loading, setLoading] = useState(false);
@@ -18,7 +18,9 @@ export function useArenaAPI() {
     }
   }, []);
 
-  const getResults = useCallback(async (): Promise<string[]> => {
+  // Locators only — id plus the scenario × provider cell. Callers fetch the
+  // full result for just the runs they need via getResult.
+  const getResults = useCallback(async (): Promise<RunRef[]> => {
     const resp = await fetch("/api/results");
     return resp.json();
   }, []);

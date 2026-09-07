@@ -128,12 +128,12 @@ func TestListResultsNilStore(t *testing.T) {
 		t.Errorf("status = %d, want %d", resp.StatusCode, http.StatusOK)
 	}
 
-	var ids []string
-	if err := json.NewDecoder(resp.Body).Decode(&ids); err != nil {
+	var refs []statestore.RunRef
+	if err := json.NewDecoder(resp.Body).Decode(&refs); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
-	if len(ids) != 0 {
-		t.Errorf("got %d results, want 0", len(ids))
+	if len(refs) != 0 {
+		t.Errorf("got %d results, want 0", len(refs))
 	}
 }
 
@@ -155,12 +155,12 @@ func TestListResultsEmpty(t *testing.T) {
 		t.Errorf("status = %d, want %d", resp.StatusCode, http.StatusOK)
 	}
 
-	var ids []string
-	if err := json.NewDecoder(resp.Body).Decode(&ids); err != nil {
+	var refs []statestore.RunRef
+	if err := json.NewDecoder(resp.Body).Decode(&refs); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
-	if len(ids) != 0 {
-		t.Errorf("got %d results, want 0", len(ids))
+	if len(refs) != 0 {
+		t.Errorf("got %d results, want 0", len(refs))
 	}
 }
 
@@ -530,12 +530,15 @@ func TestListResultsWithData(t *testing.T) {
 		t.Errorf("status = %d, want %d", resp.StatusCode, http.StatusOK)
 	}
 
-	var ids []string
-	if err := json.NewDecoder(resp.Body).Decode(&ids); err != nil {
+	var refs []statestore.RunRef
+	if err := json.NewDecoder(resp.Body).Decode(&refs); err != nil {
 		t.Fatalf("decode: %v", err)
 	}
-	if len(ids) != 1 || ids[0] != "run-abc" {
-		t.Errorf("got ids %v, want [run-abc]", ids)
+	// The cell coordinates ride along, so a client can decide which runs it
+	// needs without fetching each one's transcript to find out.
+	want := statestore.RunRef{RunID: "run-abc", ScenarioID: "greeting", ProviderID: "openai"}
+	if len(refs) != 1 || refs[0] != want {
+		t.Errorf("got refs %+v, want [%+v]", refs, want)
 	}
 }
 

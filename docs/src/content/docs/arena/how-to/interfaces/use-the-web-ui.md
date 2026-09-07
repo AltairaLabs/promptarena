@@ -149,7 +149,7 @@ endpoints directly (for scripts or your own tooling):
 | `GET` | `/api/events` | SSE stream of live run events; add `?audio=1` for audio relay |
 | `GET` | `/api/config` | Return the loaded Arena config |
 | `GET` | `/api/run-options` | List available providers, scenarios, and regions |
-| `GET` | `/api/results` | List completed run IDs |
+| `GET` | `/api/results` | List completed runs as `{run_id, scenario_id, provider_id}` locators |
 | `GET` | `/api/results/{id}` | Fetch a single run result |
 | `DELETE` | `/api/results` | Clear stored results (memory + disk) |
 | `GET` | `/api/media/{path...}` | Serve a media artifact (e.g. recorded audio) |

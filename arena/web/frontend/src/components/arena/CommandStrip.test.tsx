@@ -7,14 +7,22 @@ const scenarios = [
   { id: "refund" },
 ];
 
+const providers = [{ id: "claude" }, { id: "gpt4o" }];
+
+// providerCount is now derived from the contender picker's selection, so tests
+// that used to set it directly pass that many selected providers instead.
+function pickProviders(n: number) {
+  return Array.from({ length: n }, (_, i) => ({ id: `p${i + 1}` }));
+}
+
 function setup(overrides: Partial<React.ComponentProps<typeof CommandStrip>> = {}) {
   const props = {
     scenarios,
     selected: ["checkout", "refund"],
-    onToggle: vi.fn(),
-    onSelectAll: vi.fn(),
-    onSelectNone: vi.fn(),
-    providerCount: 2,
+    onSelectScenarios: vi.fn(),
+    providers,
+    selectedProviders: providers.map((p) => p.id),
+    onSelectProviders: vi.fn(),
     runCount: 1,
     onRunCountChange: vi.fn(),
     onRunTrial: vi.fn(),
@@ -37,33 +45,38 @@ describe("CommandStrip", () => {
     expect(screen.getByText("refund").closest("button")).not.toHaveStyle({ background: "var(--starlight-tint)" });
   });
 
-  it("toggles a scenario when its pill is clicked", () => {
+  it("emits the narrowed scenario selection when a pill is clicked", () => {
     const p = setup();
     fireEvent.click(screen.getByText("refund"));
-    expect(p.onToggle).toHaveBeenCalledWith("refund");
+    expect(p.onSelectScenarios).toHaveBeenCalledWith(["checkout"]);
   });
 
-  it("selects all or none via the quick toggles", () => {
+  it("offers a contender picker as well as a scenario one", () => {
     const p = setup();
-    fireEvent.click(screen.getByText("All"));
-    expect(p.onSelectAll).toHaveBeenCalledTimes(1);
-    fireEvent.click(screen.getByText("None"));
-    expect(p.onSelectNone).toHaveBeenCalledTimes(1);
+    fireEvent.click(screen.getByText("gpt4o"));
+    expect(p.onSelectProviders).toHaveBeenCalledWith(["claude"]);
+  });
+
+  it("selects all or none per axis via the quick toggles", () => {
+    const p = setup();
+    const [scenarioNone] = screen.getAllByText("None");
+    fireEvent.click(scenarioNone);
+    expect(p.onSelectScenarios).toHaveBeenCalledWith([]);
   });
 
   it("reads out the blast radius: scenarios × contenders × sweeps = trials", () => {
-    setup({ selected: ["checkout", "refund"], providerCount: 3 });
+    setup({ selected: ["checkout", "refund"], providers: pickProviders(3), selectedProviders: ["p1", "p2", "p3"] });
     // 1 sweep · 2 scenarios × 3 contenders = 6 trials
     expect(screen.getByText("2 scenarios · 3 contenders = 6 trials")).toBeInTheDocument();
   });
 
   it("uses singular nouns and counts sweeps into the trial total", () => {
-    setup({ selected: ["checkout"], providerCount: 1, runCount: 1 });
+    setup({ selected: ["checkout"], providers: pickProviders(1), selectedProviders: ["p1"], runCount: 1 });
     expect(screen.getByText("1 scenario · 1 contender = 1 trial")).toBeInTheDocument();
   });
 
   it("multiplies the trial total by the sweep count", () => {
-    setup({ selected: ["checkout", "refund"], providerCount: 3, runCount: 4 });
+    setup({ selected: ["checkout", "refund"], providers: pickProviders(3), selectedProviders: ["p1", "p2", "p3"], runCount: 4 });
     expect(screen.getByText("4 sweeps · 2 scenarios · 3 contenders = 24 trials")).toBeInTheDocument();
   });
 
