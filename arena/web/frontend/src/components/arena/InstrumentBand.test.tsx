@@ -82,9 +82,10 @@ describe("InstrumentBand", () => {
     expect(screen.getByText("claude")).toBeInTheDocument();
     expect(screen.getByText("gpt4o")).toBeInTheDocument();
 
-    // Trend sub-block absent: no header, no polyline.
-    expect(screen.queryByText("SUITE PASS RATE · LAST 12 RUNS")).not.toBeInTheDocument();
+    // No trail yet — but the block says why rather than leaving the card blank.
     expect(document.querySelector("polyline")).toBeNull();
+    expect(screen.getByText("SUITE PASS RATE · PER SWEEP")).toBeInTheDocument();
+    expect(screen.getByText(/two full sweeps/i)).toBeInTheDocument();
   });
 
   it("shows the star-trail sub-block once there are ≥2 full sweeps", () => {
@@ -95,6 +96,18 @@ describe("InstrumentBand", () => {
 
     expect(screen.getByText("SUITE PASS RATE · PER SWEEP")).toBeInTheDocument();
     expect(document.querySelector("polyline")).toBeInTheDocument();
+    expect(screen.queryByText(/two full sweeps/i)).not.toBeInTheDocument();
+  });
+
+  it("caps the standings so a wide field cannot stretch the band", () => {
+    const wide = Array.from({ length: 20 }, (_, i) => ({ id: `p${i + 1}`, label: `p${i + 1}` }));
+    const matrix = buildMatrix([], wide, scenarios);
+
+    render(<InstrumentBand matrix={matrix} results={[]} />);
+
+    expect(screen.getByText("p8")).toBeInTheDocument();
+    expect(screen.queryByText("p9")).not.toBeInTheDocument();
+    expect(screen.getByText("and 12 more contenders")).toBeInTheDocument();
   });
 
   it("colors a negative trend delta red and a positive delta healthy", () => {

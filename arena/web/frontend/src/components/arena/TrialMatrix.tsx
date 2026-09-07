@@ -24,8 +24,51 @@ export interface TrialMatrixProps {
 // where each cell is a clickable trial readout (pass rate, cost, latency).
 // Purely presentational — the matrix viewmodel is built upstream by
 // `buildMatrix` in `lib/arenaView.ts`.
+// The widest a cell's two lines get is "★ 100% 10/10" over "$12.345 10m 34s"
+// — 105px of content plus the 28px of horizontal padding. Below that a cell
+// starts wrapping, so the columns overflow into the scroller instead.
+const MIN_COLUMN_WIDTH = 136;
+const SCENARIO_COLUMN_WIDTH = 180;
+
+// The scenario labels stay pinned while the contenders scroll past them —
+// without this a wide field scrolls the row's identity off the left edge.
+const stickyColumnStyle: React.CSSProperties = {
+  position: "sticky",
+  left: 0,
+  zIndex: 1,
+  background: "var(--surface-card)",
+  borderRight: "1px solid var(--hairline)",
+};
+
+// The header row stays pinned as the scenarios scroll under it — a deep field
+// otherwise leaves you looking at unlabelled columns of run glyphs from about
+// row twelve down.
+const stickyHeaderStyle: React.CSSProperties = {
+  position: "sticky",
+  top: 0,
+  zIndex: 2,
+  background: "var(--surface-card)",
+};
+
+// The corner is where the two sticky axes cross, so it has to outrank both.
+const stickyCornerStyle: React.CSSProperties = {
+  ...stickyColumnStyle,
+  zIndex: 3,
+};
+
 export function TrialMatrix({ matrix, selectedKey, onSelect, onRunCell }: TrialMatrixProps) {
-  const gridTemplateColumns = `180px repeat(${Math.max(1, matrix.providers.length)}, 1fr)`;
+  // `minmax(MIN, 1fr)` rather than a bare `1fr`: fr has no floor, so a wide
+  // field used to collapse every column past the point of legibility and the
+  // card's `overflow: hidden` clipped the remainder away silently.
+  const columnCount = Math.max(1, matrix.providers.length);
+  const gridTemplateColumns = `${SCENARIO_COLUMN_WIDTH}px repeat(${columnCount}, minmax(${MIN_COLUMN_WIDTH}px, 1fr))`;
+  // The grid box has to span the whole scrollable width, not just the visible
+  // scrollport: a sticky item can only travel inside its containing block, so
+  // without this the pinned scenario column slides away once you scroll past
+  // one screen. Below the threshold this is under 100% and the fr tracks
+  // stretch to fill as before.
+  const gridMinWidth = SCENARIO_COLUMN_WIDTH + columnCount * MIN_COLUMN_WIDTH;
+  const gridStyle: React.CSSProperties = { display: "grid", gridTemplateColumns, minWidth: gridMinWidth };
 
   return (
     <Card padding={0} style={{ overflow: "hidden" }}>
@@ -76,59 +119,81 @@ export function TrialMatrix({ matrix, selectedKey, onSelect, onRunCell }: TrialM
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns, borderBottom: "1px solid var(--hairline)" }}>
+      {/* One scroller around the header grid and every row grid: they are
+          separate grids sharing one template, so they only stay in step if
+          they scroll together. */}
+      {/* The pane scrolls in both axes and is height-bounded, so its horizontal
+          scrollbar stays on screen. Left unbounded, a 300-scenario matrix puts
+          that scrollbar ~18,000px down the page where nobody finds it. */}
+      <div
+        data-matrix-scroll="true"
+        style={{ overflowX: "auto", overflowY: "auto", maxHeight: "70vh" }}
+      >
         <div
-          style={{
-            padding: "11px 14px",
-            fontFamily: "var(--font-mono)",
-            fontSize: 10,
-            textTransform: "uppercase",
-            letterSpacing: "0.1em",
-            color: "var(--star-950)",
-          }}
+          data-matrix-grid="true"
+          data-matrix-header="true"
+          style={{ ...gridStyle, ...stickyHeaderStyle, borderBottom: "1px solid var(--hairline)" }}
         >
-          SCENARIO
-        </div>
-        {matrix.providers.map((p) => (
           <div
-            key={p.id}
+            data-matrix-corner="true"
             style={{
+              ...stickyCornerStyle,
               padding: "11px 14px",
-              font: "600 12px var(--font-sans)",
-              color: "var(--star-300)",
-              borderLeft: "1px solid var(--hairline-faint)",
+              fontFamily: "var(--font-mono)",
+              fontSize: 10,
+              textTransform: "uppercase",
+              letterSpacing: "0.1em",
+              color: "var(--star-950)",
             }}
           >
-            {p.label}
+            SCENARIO
+          </div>
+          {matrix.providers.map((p) => (
+            <div
+              key={p.id}
+              title={p.label}
+              style={{
+                padding: "11px 14px",
+                font: "600 12px var(--font-sans)",
+                color: "var(--star-300)",
+                borderLeft: "1px solid var(--hairline-faint)",
+                overflowWrap: "anywhere",
+              }}
+            >
+              {p.label}
+            </div>
+          ))}
+        </div>
+
+        {matrix.rows.map((row) => (
+          <div
+            key={row.scenarioId}
+            data-matrix-grid="true"
+            style={{ ...gridStyle, borderTop: "1px solid var(--hairline-faint)" }}
+          >
+            <div
+              data-matrix-rowlabel="true"
+              style={{
+                ...stickyColumnStyle,
+                padding: "14px 18px",
+                font: "500 13px/1.3 var(--font-mono)",
+                color: "var(--star-400)",
+              }}
+            >
+              {row.label}
+            </div>
+            {row.cells.map((cell) => (
+              <MatrixCell
+                key={cell.key}
+                cell={cell}
+                selected={cell.key === selectedKey}
+                onSelect={onSelect}
+                onRunCell={onRunCell}
+              />
+            ))}
           </div>
         ))}
       </div>
-
-      {matrix.rows.map((row) => (
-        <div
-          key={row.scenarioId}
-          style={{ display: "grid", gridTemplateColumns, borderTop: "1px solid var(--hairline-faint)" }}
-        >
-          <div
-            style={{
-              padding: "14px 18px",
-              font: "500 13px/1.3 var(--font-mono)",
-              color: "var(--star-400)",
-            }}
-          >
-            {row.label}
-          </div>
-          {row.cells.map((cell) => (
-            <MatrixCell
-              key={cell.key}
-              cell={cell}
-              selected={cell.key === selectedKey}
-              onSelect={onSelect}
-              onRunCell={onRunCell}
-            />
-          ))}
-        </div>
-      ))}
     </Card>
   );
 }

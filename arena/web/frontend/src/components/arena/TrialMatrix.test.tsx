@@ -90,6 +90,40 @@ function makeMatrix(): TrialMatrixModel {
   };
 }
 
+// A wide field — the shape `examples/capability-matrix` demonstrates, and the
+// one that used to collapse every column to an illegible sliver.
+function makeWideMatrix(providerCount: number): TrialMatrixModel {
+  const providers = Array.from({ length: providerCount }, (_, i) => ({
+    id: `p${i + 1}`,
+    label: `provider-${i + 1}`,
+  }));
+  return {
+    providers,
+    rows: [
+      {
+        scenarioId: "checkout",
+        label: "checkout",
+        cells: providers.map((p) => ({
+          scenarioId: "checkout",
+          providerId: p.id,
+          key: `checkout:${p.id}`,
+          passRate: 0,
+          passedCount: 0,
+          totalRuns: 0,
+          passed: false,
+          scored: false,
+          history: [],
+          best: false,
+          costUsd: 0,
+          latencyMs: 0,
+          runId: "",
+          hasData: false,
+        })),
+      },
+    ],
+  };
+}
+
 describe("TrialMatrix", () => {
   it("renders one header cell per provider and one row per scenario", () => {
     render(<TrialMatrix matrix={makeMatrix()} selectedKey={null} onSelect={() => {}} />);
@@ -191,5 +225,74 @@ describe("TrialMatrix", () => {
     fireEvent.click(screen.getByText("100%"));
     expect(onSelect).toHaveBeenCalledWith("checkout:claude");
     expect(onRunCell).not.toHaveBeenCalled();
+  });
+
+  it("gives every column a legible floor instead of an unbounded 1fr", () => {
+    const { container } = render(
+      <TrialMatrix matrix={makeWideMatrix(35)} selectedKey={null} onSelect={() => {}} />,
+    );
+    const grids = container.querySelectorAll<HTMLElement>('[data-matrix-grid="true"]');
+    expect(grids.length).toBeGreaterThan(0);
+    grids.forEach((g) => {
+      expect(g.style.gridTemplateColumns).toContain("minmax(");
+      // A bare `1fr` repeat has no floor, so the columns clip instead of
+      // overflowing where a scrollbar can appear.
+      expect(g.style.gridTemplateColumns).not.toMatch(/repeat\(\d+, 1fr\)/);
+    });
+  });
+
+  it("scrolls the header and the body together, so they cannot disagree on column count", () => {
+    const { container } = render(
+      <TrialMatrix matrix={makeWideMatrix(35)} selectedKey={null} onSelect={() => {}} />,
+    );
+    const scroller = container.querySelector<HTMLElement>('[data-matrix-scroll="true"]')!;
+    expect(scroller).toBeTruthy();
+    expect(scroller.style.overflowX).toBe("auto");
+    // Both grids live inside the one scroller and share one template.
+    const grids = scroller.querySelectorAll<HTMLElement>('[data-matrix-grid="true"]');
+    expect(grids).toHaveLength(2); // header + one scenario row
+    expect(grids[0].style.gridTemplateColumns).toBe(grids[1].style.gridTemplateColumns);
+  });
+
+  it("pins the header row so a deep field never shows unlabelled columns", () => {
+    const { container } = render(
+      <TrialMatrix matrix={makeWideMatrix(35)} selectedKey={null} onSelect={() => {}} />,
+    );
+    const header = container.querySelector<HTMLElement>('[data-matrix-header="true"]')!;
+    expect(header).toBeTruthy();
+    expect(header.style.position).toBe("sticky");
+    expect(header.style.top).toBe("0px");
+    // Opaque, or the cells scrolling under it show through.
+    expect(header.style.background).toBeTruthy();
+  });
+
+  it("pins the scenario column, and the corner cell outranks both", () => {
+    const { container } = render(
+      <TrialMatrix matrix={makeWideMatrix(35)} selectedKey={null} onSelect={() => {}} />,
+    );
+    const corner = container.querySelector<HTMLElement>('[data-matrix-corner="true"]')!;
+    const rowLabel = container.querySelector<HTMLElement>('[data-matrix-rowlabel="true"]')!;
+    expect(corner.style.position).toBe("sticky");
+    expect(corner.style.left).toBe("0px");
+    expect(rowLabel.style.position).toBe("sticky");
+    expect(rowLabel.style.left).toBe("0px");
+    // The corner sits where both sticky axes meet, so it must paint over them.
+    expect(Number(corner.style.zIndex)).toBeGreaterThan(Number(rowLabel.style.zIndex));
+  });
+
+  it("bounds the pane's height so the horizontal scrollbar stays reachable", () => {
+    const { container } = render(
+      <TrialMatrix matrix={makeWideMatrix(35)} selectedKey={null} onSelect={() => {}} />,
+    );
+    const scroller = container.querySelector<HTMLElement>('[data-matrix-scroll="true"]')!;
+    expect(scroller.style.maxHeight).toBe("70vh");
+    expect(scroller.style.overflowY).toBe("auto");
+  });
+
+  it("keeps a header cell and a body cell for every provider in a wide field", () => {
+    render(<TrialMatrix matrix={makeWideMatrix(35)} selectedKey={null} onSelect={() => {}} />);
+    expect(screen.getByText("provider-35")).toBeInTheDocument();
+    // One inert dash per provider on the single (empty) scenario row.
+    expect(screen.getAllByText("—")).toHaveLength(35);
   });
 });
