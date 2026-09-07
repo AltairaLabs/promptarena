@@ -19,7 +19,7 @@
     "@altairalabs/promptarena-linux-arm64": "1.6.5",
     "@altairalabs/promptarena-linux-x64": "1.6.5",
     "@altairalabs/promptarena-win32-arm64": "1.1.0",
-    "@altairalabs/promptarena-win32-x64": "1.1.0"
+    "@altairalabs/promptarena-win32-x64": "1.6.5"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
