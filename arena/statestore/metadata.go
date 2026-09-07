@@ -211,6 +211,38 @@ func (s *ArenaStateStore) DumpToJSON(ctx context.Context, conversationID string)
 	return json.MarshalIndent(result, "", "  ")
 }
 
+// RunRef locates a stored run in the scenario x provider grid without carrying
+// any of its transcript. The web UI lists these to decide which runs it needs
+// to fetch in full — a matrix cell is drawn from aggregates, so pulling every
+// transcript just to know which cells exist does not scale with the field.
+type RunRef struct {
+	RunID      string `json:"run_id"`
+	ScenarioID string `json:"scenario_id"`
+	ProviderID string `json:"provider_id"`
+}
+
+// ListRunRefs returns a locator for every stored run, cheaply — the metadata it
+// projects is already in memory alongside the conversation.
+func (s *ArenaStateStore) ListRunRefs(ctx context.Context) ([]RunRef, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	refs := make([]RunRef, 0, len(s.conversations))
+	for id, state := range s.conversations {
+		// Only include conversations with run metadata, matching ListRunIDs.
+		if state.RunMetadata == nil {
+			continue
+		}
+		refs = append(refs, RunRef{
+			RunID:      id,
+			ScenarioID: state.RunMetadata.ScenarioID,
+			ProviderID: state.RunMetadata.ProviderID,
+		})
+	}
+
+	return refs, nil
+}
+
 // ListRunIDs returns all stored run IDs (for batch operations)
 func (s *ArenaStateStore) ListRunIDs(ctx context.Context) ([]string, error) {
 	s.mu.RLock()

@@ -608,6 +608,49 @@ func TestArenaStateStore_ListRunIDs(t *testing.T) {
 	}
 }
 
+// TestArenaStateStore_ListRunRefs tests that run locators carry the grid
+// coordinates, so a caller can tell which cell a run belongs to without
+// fetching the run itself.
+func TestArenaStateStore_ListRunRefs(t *testing.T) {
+	store := NewArenaStateStore()
+	ctx := context.Background()
+
+	save := func(runID, scenario, provider string, withMetadata bool) {
+		state := &statestore.ConversationState{
+			ID:       runID,
+			Messages: []types.Message{{Role: "user", Content: "test"}},
+		}
+		require.NoError(t, store.Save(ctx, state))
+		if !withMetadata {
+			return
+		}
+		require.NoError(t, store.SaveMetadata(ctx, runID, &RunMetadata{
+			RunID:      runID,
+			ScenarioID: scenario,
+			ProviderID: provider,
+		}))
+	}
+
+	save("run-1", "checkout", "claude", true)
+	save("run-2", "checkout", "gpt4o", true)
+	save("run-3", "refund", "claude", true)
+	// An interactive-chat conversation has no run metadata and must not appear.
+	save("run-4", "", "", false)
+
+	refs, err := store.ListRunRefs(ctx)
+	require.NoError(t, err)
+	require.Len(t, refs, 3)
+
+	byID := make(map[string]RunRef, len(refs))
+	for _, ref := range refs {
+		byID[ref.RunID] = ref
+	}
+	assert.Equal(t, RunRef{RunID: "run-1", ScenarioID: "checkout", ProviderID: "claude"}, byID["run-1"])
+	assert.Equal(t, RunRef{RunID: "run-2", ScenarioID: "checkout", ProviderID: "gpt4o"}, byID["run-2"])
+	assert.Equal(t, RunRef{RunID: "run-3", ScenarioID: "refund", ProviderID: "claude"}, byID["run-3"])
+	assert.NotContains(t, byID, "run-4")
+}
+
 // TestArenaStateStore_DumpToJSON_WithMetadata tests JSON export with metadata
 func TestArenaStateStore_DumpToJSON_WithMetadata(t *testing.T) {
 	store := NewArenaStateStore()

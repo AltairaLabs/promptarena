@@ -23,7 +23,7 @@ cd examples/model-migration
 promptarena serve
 ```
 
-The web UI groups runs by provider; expand a scenario to see each model's output and assertion results.
+The web UI lays the suite out as a scenario × provider matrix, one column per model. Click a cell to filter the run ledger below it to that scenario/model pair, then open a run to read the output and its assertion results. A wide field — a bake-off across a dozen or more models — scrolls sideways with the scenario column pinned, so every contender stays reachable.
 
 Headless / CI:
 

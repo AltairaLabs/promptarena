@@ -362,18 +362,22 @@ func (s *Server) handleWorkflow(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, graph)
 }
 
-// handleListResults returns all completed run IDs.
+// handleListResults returns a locator for every completed run: its ID plus the
+// scenario x provider cell it belongs to. The cell coordinates matter because
+// the web UI draws a matrix from a *slice* of the field — with bare IDs it
+// would have to fetch every run's full transcript just to learn which cells
+// exist, which does not scale past a few hundred runs.
 func (s *Server) handleListResults(w http.ResponseWriter, r *http.Request) {
 	if s.stateStore == nil {
-		writeJSON(w, http.StatusOK, []string{})
+		writeJSON(w, http.StatusOK, []statestore.RunRef{})
 		return
 	}
-	runIDs, err := s.stateStore.ListRunIDs(r.Context())
+	refs, err := s.stateStore.ListRunRefs(r.Context())
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
 		return
 	}
-	writeJSON(w, http.StatusOK, runIDs)
+	writeJSON(w, http.StatusOK, refs)
 }
 
 // handleGetResult returns a single run result.

@@ -48,21 +48,39 @@ export function InstrumentBand({ matrix, results }: InstrumentBandProps) {
 
       <Card padding={0} style={{ overflow: "hidden", display: "flex", flexDirection: "column" }}>
         <InstrumentReadout metrics={metrics} columns={4} />
-        {trend.length > 0 && (
-          <div style={{ padding: "14px 18px", borderTop: "1px solid var(--hairline)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-              <span style={sectionLabelStyle}>SUITE PASS RATE · PER SWEEP</span>
+        <div style={{ padding: "14px 18px", borderTop: "1px solid var(--hairline)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+            <span style={sectionLabelStyle}>SUITE PASS RATE · PER SWEEP</span>
+            {trend.length > 0 && (
               <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: deltaColor }}>
                 {deltaText}
               </span>
-            </div>
-            {/* keyIndex is opt-in from Atlas 0.6.0 (default null draws no star).
-                -1 marks the latest point, and this star is the band's one gold
-                moment — the gauge stays starlight and the delta text uses the
-                healthy ramp so nothing else competes with it. */}
-            <StarTrail points={trend} height={64} keyIndex={-1} />
+            )}
           </div>
-        )}
+          {/* keyIndex is opt-in from Atlas 0.6.0 (default null draws no star).
+              -1 marks the latest point, and this star is the band's one gold
+              moment — the gauge stays starlight and the delta text uses the
+              healthy ramp so nothing else competes with it. */}
+          {trend.length > 0 ? (
+            <StarTrail points={trend} height={64} keyIndex={-1} />
+          ) : (
+            // A blank half-card reads as a bug. Say what the trail is waiting
+            // for: buildSuiteTrend needs two batches that each covered every
+            // populated scenario × provider cell.
+            <div
+              style={{
+                height: 64,
+                display: "flex",
+                alignItems: "center",
+                fontFamily: "var(--font-mono)",
+                fontSize: 11,
+                color: "var(--star-800)",
+              }}
+            >
+              two full sweeps of the field needed before a trend appears
+            </div>
+          )}
+        </div>
       </Card>
 
       <Standings standings={standings} />

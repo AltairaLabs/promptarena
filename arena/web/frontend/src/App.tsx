@@ -16,6 +16,7 @@ import { useArenaAPI } from "@/hooks/useArenaAPI";
 import { useTheme } from "@/hooks/useTheme";
 import { AudioPlayer } from "@/audio/player";
 import { buildMatrix, currentWorkflowStateAt, estimateFieldRun, orderLedgerRows, overlayWorkflowCurrentState, overlayWorkflowRun, runScored } from "@/lib/arenaView";
+import { MAX_SLICE_PROVIDERS, MAX_SLICE_SCENARIOS, refsInSlice, seedSlice } from "@/lib/fieldSlice";
 import { adaptAnyRun, adaptWorkflow, isRunResult } from "@/lib/atlasAdapter";
 import { arenaInspectorTabs } from "@/lib/arenaInspectorTabs";
 import type { RunResult, ActiveRun, ProviderInfo, ScenarioInfo, WorkflowGraph } from "@/types";
@@ -139,6 +140,9 @@ export default function App() {
   // Scenarios are multi-select (all selected by default once loaded); a field
   // run covers every selected scenario.
   const [selectedScenarios, setSelectedScenarios] = useState<string[]>([]);
+  // The contender axis of the same slice. Both are double-duty: what the matrix
+  // draws and what "Run the field" runs.
+  const [selectedProviders, setSelectedProviders] = useState<string[]>([]);
   // The ledger's scenario×provider scope, set by clicking an (aggregate) matrix
   // cell to drill into the individual runs behind it.
   const [cellFilter, setCellFilter] = useState<{ scenarioId: string; providerId: string } | null>(null);
@@ -174,16 +178,19 @@ export default function App() {
       .catch(() => {});
   }, [getRunOptions]);
 
-  // Scenario pills default to ALL scenarios once run-options land. Guarded by a
-  // ref so it only seeds once — otherwise deselecting every pill (None) would
-  // immediately re-select them all.
-  const didSeedScenarios = useRef(false);
+  // Both pickers seed from config order once run-options land, capped: a field
+  // under the caps seeds fully selected exactly as it always did, and a huge one
+  // seeds a legible, affordable slice rather than a 100,000-cell grid. Guarded
+  // by a ref so it only seeds once — otherwise clearing a picker (None) would
+  // immediately re-seed it.
+  const didSeedSlice = useRef(false);
   useEffect(() => {
-    if (!didSeedScenarios.current && scenarios.length > 0) {
-      setSelectedScenarios(scenarios.map((s) => s.id));
-      didSeedScenarios.current = true;
-    }
-  }, [scenarios]);
+    if (didSeedSlice.current) return;
+    if (scenarios.length === 0 && providers.length === 0) return;
+    setSelectedScenarios(seedSlice(scenarios, MAX_SLICE_SCENARIOS));
+    setSelectedProviders(seedSlice(providers, MAX_SLICE_PROVIDERS));
+    didSeedSlice.current = true;
+  }, [scenarios, providers]);
 
   // TopBar's promptpack context — "<name> · <version>" when the arena
   // config has a loaded pack, else omitted entirely (TopBar renders nothing
@@ -248,18 +255,28 @@ export default function App() {
   // animates in real time from SSE state, independent of this reload.
   const completedCount = state.completedRunIds.length;
   useEffect(() => {
+    // Nothing to scope a fetch to until the slice has seeded — without this
+    // the first reload fires against an empty selection, fetches nothing, and
+    // is immediately superseded once seeding lands.
+    if (!didSeedSlice.current) return;
     let stale = false;
     const timer = setTimeout(async () => {
-      const ids = await getResults().catch(() => null);
-      if (!ids) return;
-      if (ids.length === 0) { if (!stale) setHistoricalResults([]); return; }
+      const refs = await getResults().catch(() => null);
+      if (!refs) return;
+      // /api/results carries each run's scenario×provider cell, so the slice is
+      // applied BEFORE any transcript is fetched. This is what keeps a
+      // thousand-scenario store from pulling hundreds of megabytes to draw a
+      // grid that only needs pass counts, cost and latency.
+      const inSlice = refsInSlice(refs, selectedScenarios, selectedProviders);
+      if (inSlice.length === 0) { if (!stale) setHistoricalResults([]); return; }
+      const ids = inSlice.map((r) => r.run_id);
       const cache = resultCacheRef.current;
       await fetchMissing(ids, cache, getResult);
       if (stale) return;
       setHistoricalResults(ids.map((id) => cache.get(id)).filter((r): r is RunResult => !!r));
     }, RELOAD_DEBOUNCE_MS);
     return () => { stale = true; clearTimeout(timer); };
-  }, [getResults, getResult, completedCount]);
+  }, [getResults, getResult, completedCount, selectedScenarios, selectedProviders]);
 
   // Exclude synthetic interactive-chat entries from the runs-tab aggregates.
   const liveRuns = Object.values(state.runs).filter((r) => r.scenario !== "interactive");
@@ -275,12 +292,24 @@ export default function App() {
     () => [...historicalResults, ...liveRuns.filter((r) => r.status === "running").map(activeRunToResult)],
     [historicalResults, liveRuns],
   );
+  // The picked slice, in config order. Everything downstream — the matrix, the
+  // instrument band, the ledger — scopes to this, so every number on the page
+  // describes the same population the grid is showing.
+  const slicedScenarios = useMemo(() => {
+    const picked = new Set(selectedScenarios);
+    return scenarios.filter((s) => picked.has(s.id));
+  }, [scenarios, selectedScenarios]);
+  const slicedProviders = useMemo(() => {
+    const picked = new Set(selectedProviders);
+    return providers.filter((p) => picked.has(p.id));
+  }, [providers, selectedProviders]);
+
   // The matrix aggregates every run per scenario×provider — a reliability view
-  // across the model's non-determinism. It always shows all runs; individual
-  // runs live in the ledger.
+  // across the model's non-determinism. It shows every run for the cells in the
+  // slice; individual runs live in the ledger.
   const matrix = useMemo(
-    () => buildMatrix(matrixResults, providers, scenarios),
-    [matrixResults, providers, scenarios],
+    () => buildMatrix(matrixResults, slicedProviders, slicedScenarios),
+    [matrixResults, slicedProviders, slicedScenarios],
   );
 
   // fieldEstimate projects the spend + wall-clock of the pending "Run the
@@ -296,19 +325,19 @@ export default function App() {
   // config's scenarios × providers. This keeps every number consistent — no
   // stray off-config runs inflating the count.
   const gridResults = useMemo(() => {
-    const scen = new Set(scenarios.map((s) => s.id));
-    const prov = new Set(providers.map((p) => p.id));
+    const scen = new Set(selectedScenarios);
+    const prov = new Set(selectedProviders);
     return matrixResults.filter((r) => scen.has(r.ScenarioID) && prov.has(r.ProviderID) && runScored(r));
-  }, [matrixResults, scenarios, providers]);
+  }, [matrixResults, selectedScenarios, selectedProviders]);
 
   // The ledger lists individual trials for the current config's grid — same
   // scope as the matrix, so old off-config runs in the out dir don't show a
   // contradictory count.
   const gridHistorical = useMemo(() => {
-    const scen = new Set(scenarios.map((s) => s.id));
-    const prov = new Set(providers.map((p) => p.id));
+    const scen = new Set(selectedScenarios);
+    const prov = new Set(selectedProviders);
     return historicalResults.filter((r) => scen.has(r.ScenarioID) && prov.has(r.ProviderID));
-  }, [historicalResults, scenarios, providers]);
+  }, [historicalResults, selectedScenarios, selectedProviders]);
 
   // chartedAt drives the Hero's dateline: the most recent completed run, else
   // null (so the eyebrow omits the dateline rather than claiming "charted
@@ -368,11 +397,6 @@ export default function App() {
   );
 
   // Scenario pill toggles.
-  const toggleScenario = useCallback((id: string) => {
-    setSelectedScenarios((cur) => (cur.includes(id) ? cur.filter((s) => s !== id) : [...cur, id]));
-  }, []);
-  const selectAllScenarios = useCallback(() => setSelectedScenarios(scenarios.map((s) => s.id)), [scenarios]);
-  const selectNoScenarios = useCallback(() => setSelectedScenarios([]), []);
 
   // handleStartRun kicks off a run for an arbitrary set of provider/scenario
   // ids — shared by "Run the field" (all providers) and a single matrix-cell
@@ -393,9 +417,9 @@ export default function App() {
   // across EVERY configured provider, runCount times (each a distinct sweep;
   // real providers are billed, that's intended).
   const handleRunTrial = useCallback(() => {
-    if (selectedScenarios.length === 0 || providers.length === 0) return;
-    void handleStartRun(providers.map((p) => p.id), selectedScenarios, runCount);
-  }, [selectedScenarios, providers, handleStartRun, runCount]);
+    if (selectedScenarios.length === 0 || selectedProviders.length === 0) return;
+    void handleStartRun(selectedProviders, selectedScenarios, runCount);
+  }, [selectedScenarios, selectedProviders, handleStartRun, runCount]);
 
   // Clicking an empty matrix cell runs just that scenario×provider pair.
   const handleRunCell = useCallback((scenarioId: string, providerId: string) => {
@@ -570,15 +594,15 @@ export default function App() {
                   <CommandStrip
                     scenarios={scenarios}
                     selected={selectedScenarios}
-                    onToggle={toggleScenario}
-                    onSelectAll={selectAllScenarios}
-                    onSelectNone={selectNoScenarios}
-                    providerCount={providers.length}
+                    onSelectScenarios={setSelectedScenarios}
+                    providers={providers}
+                    selectedProviders={selectedProviders}
+                    onSelectProviders={setSelectedProviders}
                     runCount={runCount}
                     onRunCountChange={setRunCount}
                     onRunTrial={handleRunTrial}
                     estimate={fieldEstimate}
-                    runDisabled={!state.connected || loading || selectedScenarios.length === 0 || providers.length === 0}
+                    runDisabled={!state.connected || loading || selectedScenarios.length === 0 || selectedProviders.length === 0}
                   />
                   {startError && (
                     <div

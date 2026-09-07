@@ -1,6 +1,8 @@
 import { Button } from "@altairalabs/atlas";
 import type { FieldEstimate } from "@/types";
 import { formatDuration } from "@/lib/utils";
+import { FieldPicker } from "@/components/arena/FieldPicker";
+import { MAX_SLICE_PROVIDERS, MAX_SLICE_SCENARIOS } from "@/lib/fieldSlice";
 
 // MAX_RUNS mirrors the backend cap (maxFieldRuns) on "Run the field × N".
 export const MAX_RUNS = 25;
@@ -8,10 +10,12 @@ export const MAX_RUNS = 25;
 export interface CommandStripProps {
   scenarios: { id: string; label?: string }[];
   selected: string[];
-  onToggle: (scenarioId: string) => void;
-  onSelectAll: () => void;
-  onSelectNone: () => void;
-  providerCount: number;
+  onSelectScenarios: (ids: string[]) => void;
+  // The contender axis. There was no provider picker at all before, which
+  // mattered because columns are the axis that overflows.
+  providers: { id: string; label?: string }[];
+  selectedProviders: string[];
+  onSelectProviders: (ids: string[]) => void;
   runCount: number;
   onRunCountChange: (n: number) => void;
   onRunTrial: () => void;
@@ -30,25 +34,27 @@ function formatCost(usd: number): string {
 }
 
 // CommandStrip — Arena's "chart a run" strip. The Atlas CommandStrip is
-// single-select, but a field run covers MANY scenarios at once, so this is a
-// custom multi-select pill row: every scenario is a toggle (all selected by
-// default upstream), plus All/None shortcuts, a readout of the blast radius,
-// and the gold "Run the field" action that runs every selected scenario across
-// every provider.
+// single-select, but a field run covers MANY scenarios against MANY contenders,
+// so this composes two FieldPickers (scenarios, contenders), a readout of the
+// blast radius, and the gold "Run the field" action.
+//
+// The two selections are double-duty: they are both what the trial matrix draws
+// and what a field run covers. That is why the pickers cap — a slice is what
+// keeps a thousand-scenario field renderable AND keeps a run affordable.
 export function CommandStrip({
   scenarios,
   selected,
-  onToggle,
-  onSelectAll,
-  onSelectNone,
-  providerCount,
+  onSelectScenarios,
+  providers,
+  selectedProviders,
+  onSelectProviders,
   runCount,
   onRunCountChange,
   onRunTrial,
   runDisabled,
   estimate,
 }: CommandStripProps) {
-  const selectedSet = new Set(selected);
+  const providerCount = selectedProviders.length;
   const scenarioLabel = selected.length === 1 ? "1 scenario" : `${selected.length} scenarios`;
   const contenderLabel = providerCount === 1 ? "1 contender" : `${providerCount} contenders`;
   const totalTrials = runCount * selected.length * providerCount;
@@ -61,102 +67,91 @@ export function CommandStrip({
     <div
       style={{
         display: "flex",
-        alignItems: "center",
-        gap: 16,
-        flexWrap: "wrap",
+        flexDirection: "column",
+        gap: 14,
         padding: "14px 18px",
         borderRadius: "var(--radius-xl)",
         border: "1px solid var(--hairline)",
         background: "var(--surface)",
       }}
     >
-      <span
-        style={{
-          fontFamily: "var(--font-mono)",
-          fontSize: "var(--text-size-mono-label)",
-          fontWeight: "var(--fw-medium)",
-          textTransform: "uppercase",
-          letterSpacing: "var(--tracking-eyebrow)",
-          color: "var(--star-900)",
-          flex: "none",
-        }}
-      >
-        CHART A RUN
-      </span>
+      {/* Control bar: the blast radius and the action. The pickers sit below it
+          at full width — squeezed into a column beside these they wrap one chip
+          per line, which is unreadable at any real field size. */}
+      <div style={{ display: "flex", alignItems: "center", gap: 16, flexWrap: "wrap" }}>
+        <span
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: "var(--text-size-mono-label)",
+            fontWeight: "var(--fw-medium)",
+            textTransform: "uppercase",
+            letterSpacing: "var(--tracking-eyebrow)",
+            color: "var(--star-900)",
+            flex: "none",
+          }}
+        >
+          CHART A RUN
+        </span>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", flex: 1, minWidth: 0 }}>
-        {scenarios.map((s) => {
-          const active = selectedSet.has(s.id);
-          return (
-            <button
-              key={s.id}
-              type="button"
-              onClick={() => onToggle(s.id)}
-              aria-pressed={active}
-              style={{
-                cursor: "pointer",
-                padding: "5px 12px",
-                borderRadius: "999px",
-                font: "500 13px var(--font-sans)",
-                background: active ? "var(--starlight-tint)" : "transparent",
-                border: `1px solid ${active ? "var(--starlight-300)" : "var(--hairline)"}`,
-                color: active ? "var(--star-100)" : "var(--star-600)",
-                transition: "background .12s ease, color .12s ease",
-              }}
+        <span style={{ font: "12px var(--font-mono)", color: "var(--star-700)", marginLeft: "auto" }}>
+          {sweepPrefix}{scenarioLabel} · {contenderLabel} = {totalTrials} trial{totalTrials === 1 ? "" : "s"}
+          {estimate && (
+            <span
+              style={{ color: "var(--star-500)", marginLeft: 8 }}
+              title={
+                partial
+                  ? `estimated from ${estimate.covered} of ${estimate.total} cells with history — actual will be higher`
+                  : `estimated from past runs of all ${estimate.total} cells`
+              }
             >
-              {s.label ?? s.id}
-            </button>
-          );
-        })}
-        <span style={{ display: "inline-flex", gap: 8, marginLeft: 4 }}>
-          <button type="button" onClick={onSelectAll} style={quickToggleStyle}>All</button>
-          <button type="button" onClick={onSelectNone} style={quickToggleStyle}>None</button>
+              {partial ? "≥" : "≈"} {formatCost(estimate.costUsd)} · ~{formatDuration(estimate.timeMs)}
+            </span>
+          )}
         </span>
-      </div>
 
-      <span style={{ font: "12px var(--font-mono)", color: "var(--star-700)", flex: "none" }}>
-        {sweepPrefix}{scenarioLabel} · {contenderLabel} = {totalTrials} trial{totalTrials === 1 ? "" : "s"}
-        {estimate && (
-          <span
-            style={{ color: "var(--star-500)", marginLeft: 8 }}
-            title={
-              partial
-                ? `estimated from ${estimate.covered} of ${estimate.total} cells with history — actual will be higher`
-                : `estimated from past runs of all ${estimate.total} cells`
-            }
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 4, flex: "none" }}>
+          <button
+            type="button"
+            onClick={() => onRunCountChange(Math.max(1, runCount - 1))}
+            disabled={runCount <= 1}
+            aria-label="fewer sweeps"
+            style={stepBtnStyle}
           >
-            {partial ? "≥" : "≈"} {formatCost(estimate.costUsd)} · ~{formatDuration(estimate.timeMs)}
+            −
+          </button>
+          <span style={{ font: "600 13px var(--font-mono)", color: "var(--star-200)", minWidth: 24, textAlign: "center" }}>
+            ×{runCount}
           </span>
-        )}
-      </span>
+          <button
+            type="button"
+            onClick={() => onRunCountChange(Math.min(MAX_RUNS, runCount + 1))}
+            disabled={runCount >= MAX_RUNS}
+            aria-label="more sweeps"
+            style={stepBtnStyle}
+          >
+            +
+          </button>
+        </div>
 
-      <div style={{ display: "inline-flex", alignItems: "center", gap: 4, flex: "none" }}>
-        <button
-          type="button"
-          onClick={() => onRunCountChange(Math.max(1, runCount - 1))}
-          disabled={runCount <= 1}
-          aria-label="fewer sweeps"
-          style={stepBtnStyle}
-        >
-          −
-        </button>
-        <span style={{ font: "600 13px var(--font-mono)", color: "var(--star-200)", minWidth: 24, textAlign: "center" }}>
-          ×{runCount}
-        </span>
-        <button
-          type="button"
-          onClick={() => onRunCountChange(Math.min(MAX_RUNS, runCount + 1))}
-          disabled={runCount >= MAX_RUNS}
-          aria-label="more sweeps"
-          style={stepBtnStyle}
-        >
-          +
-        </button>
+        <Button variant="primary" onClick={onRunTrial} disabled={runDisabled}>
+          ▶ Run the field
+        </Button>
       </div>
 
-      <Button variant="primary" onClick={onRunTrial} disabled={runDisabled}>
-        ▶ Run the field
-      </Button>
+      <FieldPicker
+        label="Scenarios"
+        items={scenarios}
+        selected={selected}
+        onChange={onSelectScenarios}
+        cap={MAX_SLICE_SCENARIOS}
+      />
+      <FieldPicker
+        label="Contenders"
+        items={providers}
+        selected={selectedProviders}
+        onChange={onSelectProviders}
+        cap={MAX_SLICE_PROVIDERS}
+      />
     </div>
   );
 }
@@ -171,15 +166,4 @@ const stepBtnStyle: React.CSSProperties = {
   color: "var(--star-300)",
   font: "600 14px var(--font-mono)",
   lineHeight: 1,
-};
-
-const quickToggleStyle: React.CSSProperties = {
-  cursor: "pointer",
-  background: "transparent",
-  border: "none",
-  padding: "2px 4px",
-  font: "500 11px var(--font-mono)",
-  textTransform: "uppercase",
-  letterSpacing: "0.08em",
-  color: "var(--text-link)",
 };

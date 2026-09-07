@@ -47,7 +47,12 @@ const seededResults: RunResult[] = [
   }),
 ];
 
-const getResults = vi.fn().mockResolvedValue(["run-1"]);
+// GET /api/results returns cell locators now, so App can apply the picked
+// slice before fetching any transcript. Tests stub it from the runs they seed.
+const refs = (...runs: RunResult[]) =>
+  runs.map((r) => ({ run_id: r.RunID, scenario_id: r.ScenarioID, provider_id: r.ProviderID }));
+
+const getResults = vi.fn().mockResolvedValue(refs(...seededResults));
 const getResult = vi.fn().mockImplementation((id: string) =>
   Promise.resolve(seededResults.find((r) => r.RunID === id)),
 );
@@ -96,13 +101,19 @@ const defaultArenaState = () => ({
   logs: [],
 });
 
+import { MAX_SLICE_PROVIDERS, MAX_SLICE_SCENARIOS } from "@/lib/fieldSlice";
+
 // Imported after the mocks above so App picks up the mocked hooks.
 const { default: App } = await import("@/App");
 
 describe("App — Runs view", () => {
   beforeEach(() => {
-    getResults.mockClear();
-    getResult.mockClear();
+    // mockReset, not mockClear: mockClear leaves queued *Once implementations
+    // behind, so a test that queues more than it consumes leaks into the next.
+    getResults.mockReset().mockResolvedValue(refs(...seededResults));
+    getResult.mockReset().mockImplementation((id: string) =>
+      Promise.resolve(seededResults.find((r) => r.RunID === id)),
+    );
     getWorkflow.mockClear();
     useArenaEventsMock.mockReset();
     useArenaEventsMock.mockReturnValue(defaultArenaState());
@@ -157,7 +168,7 @@ describe("App — Runs view", () => {
       Error: "403",
     });
     const byId: Record<string, RunResult> = { "run-1": r1, "run-2": r2, "run-3": r3 };
-    getResults.mockResolvedValueOnce(["run-1", "run-2", "run-3"]);
+    getResults.mockResolvedValueOnce(refs(r1, r2, r3));
     getResult
       .mockImplementationOnce((id: string) => Promise.resolve(byId[id] ?? null))
       .mockImplementationOnce((id: string) => Promise.resolve(byId[id] ?? null))
@@ -198,7 +209,7 @@ describe("App — Runs view", () => {
 
     // First reload sees only the stale run (its getResult is deferred); the
     // second reload sees the real pair and resolves immediately.
-    getResults.mockResolvedValueOnce(["stale"]).mockResolvedValueOnce(["r1", "r2"]);
+    getResults.mockResolvedValueOnce(refs(staleRun)).mockResolvedValueOnce(refs(r1, r2));
     const resolveById = (id: string) =>
       id === "stale" ? stalePromise : Promise.resolve(byId[id] ?? null);
     getResult
@@ -237,7 +248,7 @@ describe("App — Runs view", () => {
       ConversationAssertions: { passed: true, failed: 0, total: 1, results: [] },
     });
     const byId: Record<string, RunResult> = { "run-1": r1, "run-2": r2 };
-    getResults.mockResolvedValueOnce(["run-1"]).mockResolvedValueOnce(["run-1", "run-2"]);
+    getResults.mockResolvedValueOnce(refs(r1)).mockResolvedValueOnce(refs(r1, r2));
     getResult
       .mockImplementationOnce((id: string) => Promise.resolve(byId[id] ?? null))
       .mockImplementationOnce((id: string) => Promise.resolve(byId[id] ?? null));
@@ -358,7 +369,7 @@ describe("App — Runs view", () => {
       ProviderID: "mock",
       ConversationAssertions: { passed: true, failed: 0, total: 1, results: [] },
     });
-    getResults.mockResolvedValueOnce(["run-checkout", "run-refund"]);
+    getResults.mockResolvedValueOnce(refs(checkoutRun, refundRun));
     getResult.mockImplementationOnce((id: string) =>
       Promise.resolve(id === "run-checkout" ? checkoutRun : null),
     );
@@ -395,5 +406,44 @@ describe("App — Runs view", () => {
     fireEvent.click(runCellButton);
 
     expect(startRun).toHaveBeenCalledWith({ providers: ["mock"], scenarios: ["checkout"], runs: 1 });
+  });
+
+  it("seeds a capped slice, in config order, when the field is bigger than the caps", async () => {
+    getRunOptions.mockResolvedValueOnce({
+      providers: Array.from({ length: 300 }, (_, i) => ({ id: `p${i + 1}`, type: "mock" })),
+      scenarios: Array.from({ length: 1204 }, (_, i) => ({ id: `s${i + 1}` })),
+    });
+    getResults.mockResolvedValueOnce([]);
+
+    render(<App />);
+
+    // 50 x 25, not 1,204 x 300 — the caps bound both the grid and the run.
+    expect(
+      await screen.findByText(`${MAX_SLICE_SCENARIOS} scenarios · ${MAX_SLICE_PROVIDERS} contenders = 1250 trials`),
+    ).toBeInTheDocument();
+    // Config order, so the slice is the head of the field, and the truncation
+    // is stated rather than silent.
+    expect(await screen.findByText(/showing the first 50 of 1204/)).toBeInTheDocument();
+    expect(await screen.findByText(/showing the first 25 of 300/)).toBeInTheDocument();
+  });
+
+  it("fetches full results only for runs inside the picked slice", async () => {
+    getRunOptions.mockResolvedValueOnce({
+      providers: [{ id: "claude", type: "anthropic" }, { id: "mock", type: "mock" }],
+      scenarios: Array.from({ length: 60 }, (_, i) => ({ id: `s${i + 1}` })),
+    });
+    const inside = mk({ RunID: "inside", ScenarioID: "s1", ProviderID: "claude" });
+    // s60 is past MAX_SLICE_SCENARIOS, so this run's cell is not on the grid.
+    const outside = mk({ RunID: "outside", ScenarioID: "s60", ProviderID: "claude" });
+    getResults.mockResolvedValueOnce(refs(inside, outside));
+    getResult.mockImplementation((id: string) =>
+      Promise.resolve(id === "inside" ? inside : outside),
+    );
+
+    render(<App />);
+
+    await waitFor(() => expect(getResult).toHaveBeenCalledWith("inside"));
+    // Pulling the out-of-slice run's transcript is exactly what does not scale.
+    expect(getResult).not.toHaveBeenCalledWith("outside");
   });
 });
