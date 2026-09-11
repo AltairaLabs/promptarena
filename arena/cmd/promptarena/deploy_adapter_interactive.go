@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	_ "embed"
+	_ "embed" // registers go:embed for adapter_registry.json below
 	"encoding/json"
 	"errors"
 	"fmt"
