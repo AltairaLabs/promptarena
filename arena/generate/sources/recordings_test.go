@@ -57,7 +57,7 @@ func runOutputFixture(t *testing.T, dir, name string, failed bool) string {
 		return map[string]any{
 			"type": typ, "passed": !failed, "message": msg,
 			"config":  map[string]any{"type": typ, "params": params},
-			"details": map[string]any{"score": 0},
+			"details": map[string]any{"score": 0, "eval_id": "assertion_0_" + typ},
 		}
 	}
 	out := map[string]any{
@@ -87,6 +87,9 @@ func runOutputFixture(t *testing.T, dir, name string, failed bool) string {
 			"results": []map[string]any{
 				assertion("tools_called", "refund tool must be called", map[string]any{"tools": []string{"issue_refund"}}),
 			},
+		},
+		"eval_results": []map[string]any{
+			{"eval_id": "faith", "type": "faithfulness", "kind": "eval", "score": 0.42},
 		},
 	}
 	data, err := json.Marshal(out)
@@ -217,3 +220,112 @@ func TestRecordingsAdapter_GetMissingFile(t *testing.T) {
 	_, err := NewRecordingsAdapter("*.json").Get(context.Background(), "/nonexistent/file.json")
 	require.Error(t, err)
 }
+
+func TestRecordingsAdapter_GetRunOutputFillsModel(t *testing.T) {
+	dir := t.TempDir()
+	path := runOutputFixture(t, dir, "failing", true)
+
+	detail, err := NewRecordingsAdapter(filepath.Join(dir, "*.json")).Get(context.Background(), path)
+	require.NoError(t, err)
+
+	require.NotNil(t, detail.Pack)
+	assert.Equal(t, "support", detail.Pack.Name)
+	assert.Nil(t, detail.Workflow, "run output records no transitions")
+
+	// Two judged results (conversation + turn) and one measurement.
+	require.Len(t, detail.Evals, 3)
+	byID := map[string]generate.EvalResult{}
+	for _, e := range detail.Evals {
+		byID[e.ID] = e
+	}
+
+	turn := byID["assertion_0_content_includes"]
+	assert.Equal(t, "assertion", turn.Kind)
+	require.NotNil(t, turn.Passed)
+	assert.False(t, *turn.Passed)
+	require.NotNil(t, turn.Turn)
+	assert.Equal(t, 1, *turn.Turn, "message index 4 answers the second user turn")
+	assert.Equal(t, map[string]any{"patterns": []any{"policy"}}, turn.Params)
+
+	faith := byID["faith"]
+	assert.Equal(t, "eval", faith.Kind)
+	assert.Nil(t, faith.Passed)
+	require.NotNil(t, faith.Score)
+	assert.Equal(t, 0.42, *faith.Score)
+	assert.Nil(t, faith.Turn)
+
+	conv := byID["assertion_0_tools_called"]
+	assert.Nil(t, conv.Turn)
+	assert.True(t, conv.Failed())
+	assert.True(t, detail.HasFailures)
+}
+
+// Run output records template variables under Params; only string values are
+// variables (numbers there are provider params).
+func TestRecordingsAdapter_GetVariables(t *testing.T) {
+	dir := t.TempDir()
+	out := map[string]any{
+		"RunID":    "run-vars",
+		"Params":   map[string]any{"customer_tier": "gold", "temperature": 0.1},
+		"Messages": []map[string]any{{"role": "user", "content": "hi"}},
+	}
+	data, err := json.Marshal(out)
+	require.NoError(t, err)
+	path := filepath.Join(dir, "run-vars.json")
+	require.NoError(t, os.WriteFile(path, data, 0o600))
+
+	detail, err := NewRecordingsAdapter(filepath.Join(dir, "*.json")).Get(context.Background(), path)
+	require.NoError(t, err)
+	assert.Equal(t, map[string]string{"customer_tier": "gold"}, detail.Variables)
+}
+
+// An expectation selects sessions whose measurement fell outside it, and a
+// session with no such measurement is excluded too: it cannot satisfy it.
+func TestRecordingsAdapter_ListExpectations(t *testing.T) {
+	dir := t.TempDir()
+	runOutputFixture(t, dir, "low", true)   // faith 0.42
+	runOutputFixture(t, dir, "high", false) // faith 0.42 too: same fixture score
+	adapter := NewRecordingsAdapter(filepath.Join(dir, "*.json"))
+
+	summaries, err := adapter.List(context.Background(), generate.ListOptions{
+		Expectations: []generate.Expectation{{EvalID: "faith", Min: f(0.8)}},
+	})
+	require.NoError(t, err)
+	assert.Len(t, summaries, 2, "both fixtures score 0.42 < 0.8")
+	for _, s := range summaries {
+		assert.True(t, s.HasFailures, "an expectation violation counts as a failure")
+	}
+
+	summaries, err = adapter.List(context.Background(), generate.ListOptions{
+		Expectations: []generate.Expectation{{EvalID: "faith", Min: f(0.4)}},
+	})
+	require.NoError(t, err)
+	assert.Empty(t, summaries, "0.42 satisfies >= 0.4")
+}
+
+func TestRecordingsAdapter_GetWorkflowFromSessionRecording(t *testing.T) {
+	dir := t.TempDir()
+	rec := &recording.SessionRecording{
+		Metadata: recording.Metadata{SessionID: "wf", Version: "1.0", StartTime: fixtureStart, EndTime: fixtureStart},
+	}
+	user, err := json.Marshal(events.MessageCreatedData{Role: "user", Content: "refund"})
+	require.NoError(t, err)
+	tr, err := json.Marshal(events.WorkflowTransitionedData{FromState: "triage", ToState: "refunds", Event: "Escalate", PromptTask: "refunds_prompt"})
+	require.NoError(t, err)
+	rec.Events = []recording.RecordedEvent{
+		{Sequence: 1, Type: events.EventMessageCreated, Timestamp: fixtureStart, SessionID: "wf", Data: user},
+		{Sequence: 2, Type: events.EventWorkflowTransitioned, Timestamp: fixtureStart, SessionID: "wf", Data: tr},
+	}
+	path := filepath.Join(dir, "wf.recording.json")
+	require.NoError(t, rec.SaveTo(path, recording.FormatJSON))
+
+	detail, err := NewRecordingsAdapter(filepath.Join(dir, "*.recording.json")).Get(context.Background(), path)
+	require.NoError(t, err)
+	require.NotNil(t, detail.Workflow)
+	assert.Equal(t, "triage", detail.Workflow.EntryState)
+	assert.Empty(t, detail.Workflow.EntryPromptTask, "the event carries the destination's prompt task, not the origin's")
+	require.Len(t, detail.Workflow.Transitions, 1)
+	assert.Equal(t, generate.WorkflowTransition{From: "triage", To: "refunds", Event: "Escalate", PromptTask: "refunds_prompt", MessageIndex: 0}, detail.Workflow.Transitions[0])
+}
+
+func f(v float64) *float64 { return &v }

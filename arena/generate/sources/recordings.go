@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"sort"
 	"sync"
 
 	"github.com/AltairaLabs/promptarena/arena/adapters"
@@ -58,9 +59,12 @@ func (a *RecordingsAdapter) List(
 			continue // skip unloadable recordings
 		}
 
-		summary := buildSummary(ref.ID, msgs, meta)
+		summary := buildSummary(ref.ID, msgs, meta, opts.Expectations)
 		a.remember(summary.ID, ref.ID)
 		if opts.FilterPassed != nil && summary.HasFailures == *opts.FilterPassed {
+			continue
+		}
+		if len(opts.Expectations) > 0 && !violatesAny(evalsFrom(msgs, meta), opts.Expectations) {
 			continue
 		}
 		summaries = append(summaries, summary)
@@ -93,9 +97,12 @@ func (a *RecordingsAdapter) Get(ctx context.Context, sessionID string) (*generat
 	}
 
 	return &generate.SessionDetail{
-		SessionSummary: buildSummary(path, msgs, meta),
+		SessionSummary: buildSummary(path, msgs, meta, nil),
 		Messages:       msgs,
-		Evals:          nil, // filled in the sources task
+		Pack:           packRef(meta),
+		Variables:      variables(meta),
+		Workflow:       workflowTrace(meta),
+		Evals:          evalsFrom(msgs, meta),
 	}, nil
 }
 
@@ -133,13 +140,12 @@ func (a *RecordingsAdapter) resolve(ctx context.Context, sessionID string) (stri
 }
 
 // buildSummary lifts the summary fields out of the loaded recording. The path
-// stands in for the session ID when the recording names none.
-func buildSummary(path string, msgs []types.Message, meta *adapters.RecordingMetadata) generate.SessionSummary {
-	summary := generate.SessionSummary{
-		ID:        path,
-		Source:    path,
-		TurnCount: len(msgs),
-	}
+// stands in for the session ID when the recording names none. HasFailures is
+// true for a failed verdict or a violated expectation.
+func buildSummary(
+	path string, msgs []types.Message, meta *adapters.RecordingMetadata, expectations []generate.Expectation,
+) generate.SessionSummary {
+	summary := generate.SessionSummary{ID: path, Source: path, TurnCount: len(msgs)}
 	if meta == nil {
 		return summary
 	}
@@ -157,22 +163,138 @@ func buildSummary(path string, msgs []types.Message, meta *adapters.RecordingMet
 	if id, ok := meta.ProviderInfo["provider_id"].(string); ok {
 		summary.ProviderID = id
 	}
-	summary.HasFailures = hasFailures(meta)
+	evals := evalsFrom(msgs, meta)
+	summary.HasFailures = hasFailedVerdict(evals) || violatesAny(evals, expectations)
 	return summary
 }
 
-func hasFailures(meta *adapters.RecordingMetadata) bool {
-	for _, r := range meta.ConversationAssertions {
-		if r.Passed != nil && !*r.Passed {
+func hasFailedVerdict(evals []generate.EvalResult) bool {
+	for i := range evals {
+		if evals[i].Failed() {
 			return true
 		}
 	}
-	for _, results := range meta.TurnAssertions {
-		for _, r := range results {
-			if r.Passed != nil && !*r.Passed {
-				return true
+	return false
+}
+
+// violatesAny reports whether any expectation is violated by the session's
+// measurement of that eval. A session that never measured the eval violates
+// it: it cannot satisfy a range it has no value for.
+func violatesAny(evals []generate.EvalResult, expectations []generate.Expectation) bool {
+	for _, e := range expectations {
+		var score *float64
+		found := false
+		for i := range evals {
+			if evals[i].ID == e.EvalID {
+				score, found = evals[i].Score, true
+				break
 			}
+		}
+		if !found || e.Violated(score) {
+			return true
 		}
 	}
 	return false
+}
+
+func packRef(meta *adapters.RecordingMetadata) *generate.PackRef {
+	if meta == nil {
+		return nil
+	}
+	name, _ := meta.Extras["prompt_pack"].(string)
+	if name == "" {
+		return nil
+	}
+	return &generate.PackRef{Name: name}
+}
+
+// variables are the string-valued entries of the run's Params; numbers there
+// are provider parameters, not template variables.
+func variables(meta *adapters.RecordingMetadata) map[string]string {
+	if meta == nil {
+		return nil
+	}
+	params, _ := meta.Extras["params"].(map[string]interface{})
+	var out map[string]string
+	for k, v := range params {
+		if str, ok := v.(string); ok {
+			if out == nil {
+				out = make(map[string]string)
+			}
+			out[k] = str
+		}
+	}
+	return out
+}
+
+func workflowTrace(meta *adapters.RecordingMetadata) *generate.WorkflowTrace {
+	if meta == nil || len(meta.WorkflowTransitions) == 0 {
+		return nil
+	}
+	trace := &generate.WorkflowTrace{EntryState: meta.WorkflowTransitions[0].From}
+	for _, t := range meta.WorkflowTransitions {
+		trace.Transitions = append(trace.Transitions, generate.WorkflowTransition{
+			From: t.From, To: t.To, Event: t.Event, PromptTask: t.PromptTask, MessageIndex: t.MessageIndex,
+		})
+	}
+	return trace
+}
+
+// evalsFrom assembles every recorded eval: conversation-level judged results,
+// pack measurements, and per-turn judged results re-keyed by the user turn
+// they answer. Recordings key per-turn results by message index (the
+// assistant message evaluated); the converter indexes scenario turns, which
+// are user messages, so an assistant message maps to the most recent user
+// message before it.
+func evalsFrom(msgs []types.Message, meta *adapters.RecordingMetadata) []generate.EvalResult {
+	if meta == nil {
+		return nil
+	}
+	var out []generate.EvalResult
+	for _, r := range meta.ConversationAssertions {
+		out = append(out, toEval(r, nil))
+	}
+	for _, r := range meta.EvalResults {
+		out = append(out, toEval(r, nil))
+	}
+	if len(meta.TurnAssertions) == 0 {
+		return out
+	}
+	userTurnBefore := make([]int, len(msgs))
+	turn := -1
+	for i := range msgs {
+		if msgs[i].Role == "user" {
+			turn++
+		}
+		userTurnBefore[i] = turn
+	}
+	// Map iteration is unordered; sort so Evals, and therefore the generated
+	// assertion order, is stable run to run.
+	msgIdxs := make([]int, 0, len(meta.TurnAssertions))
+	for msgIdx := range meta.TurnAssertions {
+		msgIdxs = append(msgIdxs, msgIdx)
+	}
+	sort.Ints(msgIdxs)
+	for _, msgIdx := range msgIdxs {
+		if msgIdx < 0 || msgIdx >= len(msgs) || userTurnBefore[msgIdx] < 0 {
+			continue
+		}
+		t := userTurnBefore[msgIdx]
+		for _, r := range meta.TurnAssertions[msgIdx] {
+			out = append(out, toEval(r, &t))
+		}
+	}
+	return out
+}
+
+func toEval(r adapters.RecordedEval, turn *int) generate.EvalResult {
+	var t *int
+	if turn != nil {
+		v := *turn
+		t = &v
+	}
+	return generate.EvalResult{
+		ID: r.ID, Type: r.Type, Kind: r.Kind, Score: r.Score, Passed: r.Passed,
+		Params: r.Params, Message: r.Message, Details: r.Details, Turn: t,
+	}
 }
