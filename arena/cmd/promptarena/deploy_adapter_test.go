@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -465,3 +466,20 @@ var errTestNoNetwork = errTestErr("network unavailable")
 type errTestErr string
 
 func (e errTestErr) Error() string { return string(e) }
+
+// The embedded registry is rewritten by scripts/sync-adapter-registry.sh with
+// jq, and is what an offline install falls back to. Every adapter must carry
+// a plain X.Y.Z (no leading v — the installer adds it), or the fallback URL
+// it builds will 404.
+func TestDeployAdapterDefaultRegistryLatestIsSemver(t *testing.T) {
+	reg, err := loadDefaultRegistry()
+	if err != nil {
+		t.Fatalf("loadDefaultRegistry: %v", err)
+	}
+	semver := regexp.MustCompile(`^[0-9]+\.[0-9]+\.[0-9]+$`)
+	for name, entry := range reg.Adapters {
+		if !semver.MatchString(entry.Latest) {
+			t.Errorf("adapter %q latest = %q, want X.Y.Z", name, entry.Latest)
+		}
+	}
+}

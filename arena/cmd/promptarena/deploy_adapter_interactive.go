@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	_ "embed"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -28,35 +29,14 @@ type adapterRegistry struct {
 	Adapters map[string]adapterRegistryEntry `json:"adapters"`
 }
 
-// Embedded default registry JSON.
-var defaultRegistryJSON = `{
-  "adapters": {
-    "agentcore": {
-      "repo": "AltairaLabs/promptarena-deploy-agentcore",
-      "description": "AWS Bedrock AgentCore",
-      "latest": "0.3.0",
-      "maintained_by": "AltairaLabs"
-    },
-    "omnia": {
-      "repo": "AltairaLabs/PromptArena-deploy-omnia",
-      "description": "Omnia Kubernetes platform",
-      "latest": "1.5.0",
-      "maintained_by": "AltairaLabs"
-    },
-    "foundry": {
-      "repo": "AltairaLabs/promptarena-deploy-foundry",
-      "description": "Azure AI Foundry hosted agents",
-      "latest": "0.2.0",
-      "maintained_by": "AltairaLabs"
-    },
-    "vertex": {
-      "repo": "AltairaLabs/promptarena-deploy-vertex",
-      "description": "Google Agent Runtime",
-      "latest": "0.2.0",
-      "maintained_by": "AltairaLabs"
-    }
-  }
-}`
+// defaultRegistryJSON is the embedded fallback registry. It lives in its own
+// JSON file rather than a Go string so the sync-adapter-registry workflow can
+// rewrite the `latest` values with jq when an adapter releases (#173); the
+// live GitHub Releases API is still preferred at install time, this is only
+// what an offline or rate-limited install falls back to.
+//
+//go:embed adapter_registry.json
+var defaultRegistryJSON string
 
 // adapterBinaryPerms is the file permission mode for installed adapter binaries.
 const adapterBinaryPerms = 0o755
