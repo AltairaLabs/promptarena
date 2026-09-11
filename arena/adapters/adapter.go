@@ -79,7 +79,38 @@ type RecordingMetadata struct {
 
 	// Extras holds any additional metadata from the recording.
 	Extras map[string]interface{} `json:"extras,omitempty" yaml:"extras,omitempty"`
+
+	// ConversationAssertions are the conversation-level assertion results the
+	// recording carries, if the source ran any. Arena run output does; a
+	// PromptKit session recording or a transcript does not, and leaves this nil.
+	ConversationAssertions []RecordedAssertion `json:"conversation_assertions,omitempty" yaml:"conversation_assertions,omitempty"` //nolint:lll
+
+	// TurnAssertions are per-turn assertion results keyed by the index of the
+	// message they were evaluated against (an assistant message, for arena run
+	// output). Nil when the source carries none.
+	TurnAssertions map[int][]RecordedAssertion `json:"turn_assertions,omitempty" yaml:"turn_assertions,omitempty"`
 }
+
+// RecordedAssertion is one assertion result as a recording carries it, kept
+// free of the assertions package so that package can depend on this one.
+//
+// Params are the assertion's original configuration, when the recording kept
+// it (arena run output does, under each result's "config"). They are what
+// lets a regression scenario be regenerated with the same check rather than a
+// guess at it.
+type RecordedAssertion struct {
+	Type    string                 `json:"type" yaml:"type"`
+	Passed  bool                   `json:"passed" yaml:"passed"`
+	Message string                 `json:"message,omitempty" yaml:"message,omitempty"`
+	Params  map[string]interface{} `json:"params,omitempty" yaml:"params,omitempty"`
+	Details map[string]interface{} `json:"details,omitempty" yaml:"details,omitempty"`
+}
+
+// Keys used in RecordingMetadata.ProviderInfo by every built-in adapter.
+const (
+	providerInfoIDKey    = "provider_id"
+	providerInfoModelKey = "model"
+)
 
 // ProviderSpec describes a provider configuration for judge targets.
 type ProviderSpec struct {

@@ -79,14 +79,16 @@ func fetchSessions(
 }
 
 func writeScenarios(cmd *cobra.Command, sessions []*generate.SessionDetail) error {
-	packFile, _ := cmd.Flags().GetString("pack")
+	taskType, _ := cmd.Flags().GetString("task-type")
+	if taskType == "" {
+		taskType, _ = cmd.Flags().GetString("pack") // deprecated alias
+	}
 	outputDir, _ := cmd.Flags().GetString("output")
 
 	if err := os.MkdirAll(outputDir, dirPerms); err != nil {
 		return fmt.Errorf("creating output directory: %w", err)
 	}
 
-	taskType := packFile // --pack flag repurposed as task_type override
 	opts := generate.ConvertOptions{TaskType: taskType}
 
 	for _, session := range sessions {

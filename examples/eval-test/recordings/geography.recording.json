@@ -1,41 +1,64 @@
 {
   "metadata": {
     "session_id": "geography-eval-001",
-    "provider_id": "openai",
+    "start_time": "2024-01-15T10:00:00Z",
+    "end_time": "2024-01-15T10:00:33Z",
+    "duration": 33000000000,
+    "event_count": 4,
+    "provider_name": "openai",
     "model": "gpt-4o",
-    "tags": ["geography", "test"]
+    "version": "1.0",
+    "custom": {
+      "tags": [
+        "geography",
+        "test"
+      ],
+      "description": "Geography Q&A session for eval testing"
+    }
   },
   "events": [
     {
-      "type": "message",
+      "sequence": 1,
+      "type": "message.created",
       "timestamp": "2024-01-15T10:00:00Z",
-      "message": {
+      "offset": 0,
+      "session_id": "geography-eval-001",
+      "data": {
         "role": "user",
         "content": "What is the capital of France?"
       }
     },
     {
-      "type": "message",
+      "sequence": 2,
+      "type": "message.created",
       "timestamp": "2024-01-15T10:00:02Z",
-      "message": {
+      "offset": 2000000000,
+      "session_id": "geography-eval-001",
+      "data": {
         "role": "assistant",
         "content": "The capital of France is Paris. Paris is not only the capital but also the largest city in France, located in the north-central part of the country along the Seine River. It serves as France's political, economic, and cultural center."
       }
     },
     {
-      "type": "message",
+      "sequence": 3,
+      "type": "message.created",
       "timestamp": "2024-01-15T10:00:30Z",
-      "message": {
+      "offset": 30000000000,
+      "session_id": "geography-eval-001",
+      "data": {
         "role": "user",
         "content": "What is the population of Paris?"
       }
     },
     {
-      "type": "message",
+      "sequence": 4,
+      "type": "message.created",
       "timestamp": "2024-01-15T10:00:33Z",
-      "message": {
+      "offset": 33000000000,
+      "session_id": "geography-eval-001",
+      "data": {
         "role": "assistant",
-        "content": "The city of Paris has a population of approximately 2.2 million people within its administrative limits. However, the Paris metropolitan area (Île-de-France region) has a much larger population of around 12-13 million people, making it one of the largest metropolitan areas in Europe."
+        "content": "The city of Paris has a population of approximately 2.2 million people within its administrative limits. However, the Paris metropolitan area (\u00cele-de-France region) has a much larger population of around 12-13 million people, making it one of the largest metropolitan areas in Europe."
       }
     }
   ]

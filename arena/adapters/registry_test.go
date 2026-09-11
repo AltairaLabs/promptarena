@@ -1,6 +1,7 @@
 package adapters
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -357,5 +358,55 @@ func TestProviderSpec(t *testing.T) {
 	}
 	if spec.ID != "gpt-4-judge" {
 		t.Errorf("ID = %s, want gpt-4-judge", spec.ID)
+	}
+}
+
+// The default registry must route what people actually have on disk: run
+// output from `promptarena run` (plain .json), PromptKit session recordings
+// (.recording.json or the event store's .jsonl) and transcripts.
+func TestNewRegistry_RoutesRealFileShapes(t *testing.T) {
+	r := NewRegistry()
+	tests := []struct {
+		source string
+		want   RecordingAdapter
+	}{
+		{"out/2026-08-31T19-48-12Z-0001_gemini_default_tool-usage_3a7b0b83_000b.json", &ArenaOutputAdapter{}},
+		{"out/*.json", &ArenaOutputAdapter{}},
+		{"recordings/customer-support.arena.json", &ArenaOutputAdapter{}},
+		{"recordings/geography.recording.json", &SessionRecordingAdapter{}},
+		{"out/recordings/run-123.jsonl", &SessionRecordingAdapter{}},
+		{"conv.transcript.yaml", &TranscriptAdapter{}},
+	}
+	for _, tt := range tests {
+		got := r.FindAdapter(tt.source, "")
+		if got == nil {
+			t.Errorf("FindAdapter(%q) = nil", tt.source)
+			continue
+		}
+		if fmt.Sprintf("%T", got) != fmt.Sprintf("%T", tt.want) {
+			t.Errorf("FindAdapter(%q) = %T, want %T", tt.source, got, tt.want)
+		}
+	}
+}
+
+// An eval that names its recording format (type: mock, say, for a custom
+// adapter) must reach that adapter even when the file's extension would
+// otherwise route to a built-in. Built-ins only auto-detect when no hint is
+// given.
+func TestNewRegistry_ExplicitHintBeatsExtension(t *testing.T) {
+	r := NewRegistry()
+	custom := &mockAdapter{
+		canHandleFunc: func(_ string, hint string) bool { return hint == "mock" },
+	}
+	r.Register(custom)
+
+	if got := r.FindAdapter("test.json", "mock"); got != custom {
+		t.Errorf("FindAdapter(test.json, mock) = %T, want the custom adapter", got)
+	}
+	if got := r.FindAdapter("test.json", "session"); fmt.Sprintf("%T", got) != "*adapters.SessionRecordingAdapter" {
+		t.Errorf("FindAdapter(test.json, session) = %T, want SessionRecordingAdapter", got)
+	}
+	if got := r.FindAdapter("test.json", ""); fmt.Sprintf("%T", got) != "*adapters.ArenaOutputAdapter" {
+		t.Errorf("FindAdapter(test.json, \"\") = %T, want ArenaOutputAdapter by extension", got)
 	}
 }

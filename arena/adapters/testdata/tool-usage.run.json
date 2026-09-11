@@ -1,0 +1,352 @@
+{
+  "RunID": "2026-08-31T19-48-12Z-0001_gemini-flash_default_tool-usage_3a7b0b83_000b",
+  "PromptPack": "",
+  "Region": "default",
+  "ScenarioID": "tool-usage",
+  "ProviderID": "gemini-flash",
+  "Params": {},
+  "Messages": [
+    {
+      "role": "system",
+      "parts": [
+        {
+          "type": "text",
+          "text": "You are a helpful AI assistant. Be concise and direct in your responses."
+        }
+      ],
+      "timestamp": "2026-08-31T19:48:12.895833+01:00",
+      "meta": {
+        "_available_tools": [
+          "search",
+          "calculate"
+        ],
+        "_tool_descriptors": [
+          {
+            "description": "Search for information on the internet",
+            "input_schema": {
+              "properties": {
+                "query": {
+                  "description": "The search query",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "query"
+              ],
+              "type": "object"
+            },
+            "name": "search"
+          },
+          {
+            "description": "Perform mathematical calculations",
+            "input_schema": {
+              "properties": {
+                "expression": {
+                  "description": "Mathematical expression to evaluate",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "expression"
+              ],
+              "type": "object"
+            },
+            "name": "calculate"
+          }
+        ]
+      },
+      "media_summary": {
+        "total_parts": 1,
+        "text_parts": 1,
+        "image_parts": 0,
+        "audio_parts": 0,
+        "video_parts": 0,
+        "document_parts": 0
+      },
+      "content": "You are a helpful AI assistant. Be concise and direct in your responses."
+    },
+    {
+      "role": "user",
+      "timestamp": "2026-08-31T19:48:12.895833+01:00",
+      "content": "Search for information about AI and calculate 15 * 3"
+    },
+    {
+      "role": "assistant",
+      "tool_calls": [
+        {
+          "id": "call_0_search",
+          "name": "search",
+          "args": {
+            "query": "AI artificial intelligence"
+          }
+        },
+        {
+          "id": "call_1_calculate",
+          "name": "calculate",
+          "args": {
+            "expression": "15 * 3"
+          }
+        }
+      ],
+      "timestamp": "2026-08-31T19:48:12.896028+01:00",
+      "cost_info": {
+        "input_tokens": 13,
+        "output_tokens": 20,
+        "input_cost_usd": 0.00013000000000000002,
+        "output_cost_usd": 0.0002,
+        "total_cost_usd": 0.00033000000000000005,
+        "provider_name": "gemini-flash",
+        "capability": "inference",
+        "latency_ns": 12084
+      }
+    },
+    {
+      "role": "tool",
+      "tool_result": {
+        "id": "call_0_search",
+        "name": "search",
+        "parts": [
+          {
+            "type": "text",
+            "text": "Found 3 results for your query"
+          }
+        ],
+        "latency_ms": 0
+      },
+      "timestamp": "0001-01-01T00:00:00Z"
+    },
+    {
+      "role": "tool",
+      "tool_result": {
+        "id": "call_1_calculate",
+        "name": "calculate",
+        "parts": [
+          {
+            "type": "text",
+            "text": "42"
+          }
+        ],
+        "latency_ms": 0
+      },
+      "timestamp": "0001-01-01T00:00:00Z"
+    },
+    {
+      "role": "assistant",
+      "timestamp": "2026-08-31T19:48:12.896305+01:00",
+      "cost_info": {
+        "input_tokens": 20,
+        "output_tokens": 36,
+        "input_cost_usd": 0.0002,
+        "output_cost_usd": 0.00036,
+        "total_cost_usd": 0.0005600000000000001,
+        "provider_name": "gemini-flash",
+        "capability": "inference",
+        "latency_ns": 28375
+      },
+      "meta": {
+        "assertions": {
+          "failed": 0,
+          "passed": true,
+          "results": [
+            {
+              "config": {
+                "params": {
+                  "tools": [
+                    "search",
+                    "calculate"
+                  ]
+                },
+                "type": "tools_called"
+              },
+              "details": {
+                "duration_ms": 0,
+                "eval_id": "assertion_0_tools_called",
+                "score": 1,
+                "value": {
+                  "expected": 2,
+                  "found": 2,
+                  "missing": [],
+                  "over_limit": []
+                }
+              },
+              "message": "all expected tools were called within bounds",
+              "passed": true,
+              "type": "tools_called"
+            },
+            {
+              "config": {
+                "params": {
+                  "message": "Should mention results or information about AI.",
+                  "pattern": "(?i)(results|information about AI)"
+                },
+                "type": "content_matches"
+              },
+              "details": {
+                "duration_ms": 0,
+                "eval_id": "assertion_1_content_matches",
+                "score": 1,
+                "value": {
+                  "matched": true
+                }
+              },
+              "message": "pattern \"(?i)(results|information about AI)\" matched: true (expect_match: true)",
+              "passed": true,
+              "type": "content_matches"
+            },
+            {
+              "config": {
+                "params": {
+                  "message": "Should mention the result of 15 * 3.",
+                  "pattern": "(?i)42"
+                },
+                "type": "content_matches"
+              },
+              "details": {
+                "duration_ms": 0,
+                "eval_id": "assertion_2_content_matches",
+                "score": 1,
+                "value": {
+                  "matched": true
+                }
+              },
+              "message": "pattern \"(?i)42\" matched: true (expect_match: true)",
+              "passed": true,
+              "type": "content_matches"
+            }
+          ],
+          "total": 3
+        }
+      },
+      "content": "Based on the search results, I found information about AI - artificial intelligence is transforming many industries. I also calculated 15 * 3 = 42."
+    },
+    {
+      "role": "user",
+      "timestamp": "2026-08-31T19:48:12.896495+01:00",
+      "content": "What's 2 + 2? Don't use any tools, just answer directly."
+    },
+    {
+      "role": "assistant",
+      "timestamp": "2026-08-31T19:48:12.896946+01:00",
+      "cost_info": {
+        "input_tokens": 70,
+        "output_tokens": 26,
+        "input_cost_usd": 0.0007000000000000001,
+        "output_cost_usd": 0.00026000000000000003,
+        "total_cost_usd": 0.0009600000000000001,
+        "provider_name": "gemini-flash",
+        "capability": "inference",
+        "latency_ns": 10458
+      },
+      "meta": {
+        "assertions": {
+          "failed": 0,
+          "passed": true,
+          "results": [
+            {
+              "config": {
+                "params": {
+                  "patterns": [
+                    "4"
+                  ]
+                },
+                "type": "content_includes"
+              },
+              "details": {
+                "duration_ms": 0,
+                "eval_id": "assertion_0_content_includes",
+                "explanation": "all patterns found in output",
+                "score": 1,
+                "value": {
+                  "found": 1,
+                  "missing": [],
+                  "total": 1
+                }
+              },
+              "message": "Should include the answer to 2 + 2.",
+              "passed": true,
+              "type": "content_includes"
+            }
+          ],
+          "total": 1
+        }
+      },
+      "content": "2 + 2 equals 4. That's a simple arithmetic calculation that I can answer directly without using any tools."
+    }
+  ],
+  "Commit": null,
+  "Cost": {
+    "input_tokens": 103,
+    "output_tokens": 82,
+    "input_cost_usd": 0.00103,
+    "output_cost_usd": 0.0008200000000000001,
+    "total_cost_usd": 0.0018500000000000003,
+    "breakdown": [
+      {
+        "provider": "gemini-flash",
+        "capability": "inference",
+        "unit": "input_token",
+        "quantity": 13,
+        "usd": 0.00013000000000000002
+      },
+      {
+        "provider": "gemini-flash",
+        "capability": "inference",
+        "unit": "output_token",
+        "quantity": 20,
+        "usd": 0.0002
+      },
+      {
+        "provider": "gemini-flash",
+        "capability": "inference",
+        "unit": "input_token",
+        "quantity": 20,
+        "usd": 0.0002
+      },
+      {
+        "provider": "gemini-flash",
+        "capability": "inference",
+        "unit": "output_token",
+        "quantity": 36,
+        "usd": 0.00036
+      },
+      {
+        "provider": "gemini-flash",
+        "capability": "inference",
+        "unit": "input_token",
+        "quantity": 70,
+        "usd": 0.0007000000000000001
+      },
+      {
+        "provider": "gemini-flash",
+        "capability": "inference",
+        "unit": "output_token",
+        "quantity": 26,
+        "usd": 0.00026000000000000003
+      }
+    ]
+  },
+  "ToolStats": {
+    "total_calls": 2,
+    "by_tool": {
+      "calculate": 1,
+      "search": 1
+    }
+  },
+  "Violations": null,
+  "StartTime": "2026-08-31T19:48:12.89578+01:00",
+  "EndTime": "2026-08-31T19:48:12.897138+01:00",
+  "Duration": 1357917,
+  "Error": "",
+  "SelfPlay": false,
+  "PersonaID": "",
+  "UserFeedback": null,
+  "SessionTags": null,
+  "AssistantRole": null,
+  "UserRole": null,
+  "conversation_assertions": {
+    "failed": 0,
+    "passed": true,
+    "results": null,
+    "total": 0
+  }
+}

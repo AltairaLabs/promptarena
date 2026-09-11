@@ -17,6 +17,7 @@ func newGenerateTestCmd() *cobra.Command {
 	cmd.Flags().String("from-recordings", "", "")
 	cmd.Flags().String("filter-eval-type", "", "")
 	cmd.Flags().Bool("filter-passed", false, "")
+	cmd.Flags().String("task-type", "", "")
 	cmd.Flags().String("pack", "", "")
 	cmd.Flags().String("output", ".", "")
 	cmd.Flags().Bool("dedup", true, "")

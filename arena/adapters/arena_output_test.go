@@ -7,342 +7,211 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AltairaLabs/PromptKit/pkg/testutil"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
 	"github.com/AltairaLabs/PromptKit/runtime/types"
 )
 
+// Two real run outputs: one shipped as an eval fixture, one captured from an
+// actual `promptarena run` of the assertions-test example's tool-usage
+// scenario (a tool loop, so it carries tool calls, tool results and per-turn
+// assertions). The example's own out/ directory is gitignored, hence the copy.
+const (
+	exampleArenaEvalFixture = "../../examples/eval-test/recordings/customer-support.arena.json"
+	toolLoopRunOutput       = "testdata/tool-usage.run.json"
+)
+
 func TestArenaOutputAdapter_CanHandle(t *testing.T) {
-	adapter := NewArenaOutputAdapter()
-
+	a := NewArenaOutputAdapter()
 	tests := []struct {
-		name     string
-		path     string
-		typeHint string
-		want     bool
+		source, hint string
+		want         bool
 	}{
-		{
-			name: "handles .arena-output.json extension",
-			path: "output.arena-output.json",
-			want: true,
-		},
-		{
-			name: "handles .arena.json extension",
-			path: "scenario.arena.json",
-			want: true,
-		},
-		{
-			name:     "handles arena type hint",
-			path:     "some-file.json",
-			typeHint: "arena",
-			want:     true,
-		},
-		{
-			name:     "handles arena_output type hint",
-			path:     "some-file.json",
-			typeHint: "arena_output",
-			want:     true,
-		},
-		{
-			name:     "handles scenario_output type hint",
-			path:     "some-file.json",
-			typeHint: "scenario_output",
-			want:     true,
-		},
-		{
-			name: "does not handle other extensions",
-			path: "file.txt",
-			want: false,
-		},
-		{
-			name:     "does not handle other type hints",
-			path:     "file.json",
-			typeHint: "other",
-			want:     false,
-		},
+		// What `promptarena run` actually writes.
+		{"out/2026-08-31T19-48-12Z-0001_gemini_default_tool-usage_3a7b0b83_000b.json", "", true},
+		{"out/*.json", "", true},
+		{"recordings/customer-support.arena.json", "", true},
+		{"whatever.txt", "arena_output", true},
+		{"whatever.txt", "arena", true},
+		// PromptKit session recordings are the other adapter's.
+		{"session.recording.json", "", false},
+		{"out/recordings/run.jsonl", "", false},
+		{"conv.transcript.yaml", "", false},
+		// A hint for another adapter must not be overridden by the extension.
+		{"out/run.json", "session", false},
+		{"out/run.json", "mock", false},
 	}
-
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := adapter.CanHandle(tt.path, tt.typeHint)
-			if got != tt.want {
-				t.Errorf("CanHandle() = %v, want %v", got, tt.want)
+		assert.Equal(t, tt.want, a.CanHandle(tt.source, tt.hint), "%s / %q", tt.source, tt.hint)
+	}
+}
+
+func TestArenaOutputAdapter_Load_EvalFixture(t *testing.T) {
+	msgs, meta, err := NewArenaOutputAdapter().Load(RecordingReference{ID: exampleArenaEvalFixture})
+	require.NoError(t, err)
+
+	require.Len(t, msgs, 15)
+	assert.Equal(t, "system", msgs[0].Role)
+	assert.Equal(t, "user", msgs[1].Role)
+
+	require.NotNil(t, meta)
+	assert.Equal(t, "2025-12-21T14-24Z_claude-3-5-haiku_default_customer-support-scenarios_b47dd679", meta.SessionID)
+	assert.Equal(t, "customer-support-scenarios", meta.Extras["scenario_id"])
+	assert.Equal(t, "claude-3-5-haiku", meta.ProviderInfo["provider_id"])
+
+	// Seven assistant messages each carry one content_matches assertion in
+	// meta.assertions; they surface keyed by message index.
+	require.Len(t, meta.TurnAssertions, 7)
+	got := meta.TurnAssertions[2]
+	require.Len(t, got, 1)
+	assert.Equal(t, "content_matches", got[0].Type)
+	assert.True(t, got[0].Passed)
+	assert.Empty(t, meta.ConversationAssertions, "the fixture ran no conversation-level assertions")
+}
+
+func TestArenaOutputAdapter_Load_RealRunWithToolLoop(t *testing.T) {
+	msgs, meta, err := NewArenaOutputAdapter().Load(RecordingReference{ID: toolLoopRunOutput})
+	require.NoError(t, err)
+
+	var toolCalls, toolResults int
+	for _, m := range msgs {
+		toolCalls += len(m.ToolCalls)
+		if m.ToolResult != nil {
+			toolResults++
+		}
+	}
+	assert.Positive(t, toolCalls, "tool-loop run output keeps the assistant's tool calls")
+	assert.Positive(t, toolResults, "tool-loop run output keeps the tool results")
+
+	assert.Equal(t, "tool-usage", meta.Extras["scenario_id"])
+	assert.Len(t, meta.Timestamps, len(msgs))
+
+	var sawToolsCalled bool
+	for _, results := range meta.TurnAssertions {
+		for _, r := range results {
+			if r.Type == "tools_called" {
+				sawToolsCalled = true
+				assert.Equal(t, map[string]any{"tools": []any{"search", "calculate"}}, r.Params,
+					"the original assertion params ride along so a regression can be regenerated from them")
 			}
-		})
+		}
 	}
+	assert.True(t, sawToolsCalled)
 }
 
-func TestArenaOutputAdapter_Load(t *testing.T) {
-	adapter := NewArenaOutputAdapter()
-
-	arenaOutput := ArenaOutputFile{
-		ScenarioID: "test-scenario",
-		ProviderID: "provider-1",
-		Metadata: ArenaOutputMetadata{
-			Tags: []string{"test", "arena"},
-		},
-		Turns: []ArenaOutputTurn{
+// runOutputFixture writes a minimal run output in the shape engine.RunResult
+// marshals to, with one failed turn assertion and one failed conversation
+// assertion.
+func runOutputFixture(t *testing.T, dir string) string {
+	t.Helper()
+	start := time.Date(2026, 9, 1, 10, 0, 0, 0, time.UTC)
+	out := map[string]any{
+		"RunID":       "run-1",
+		"PromptPack":  "support-pack",
+		"Region":      "default",
+		"ScenarioID":  "refund",
+		"ProviderID":  "mock",
+		"Params":      map[string]any{"temperature": 0.1},
+		"SessionTags": []string{"nightly"},
+		"StartTime":   start,
+		"EndTime":     start.Add(2 * time.Second),
+		"Duration":    int64(2 * time.Second),
+		"Messages": []map[string]any{
+			{"role": "user", "content": "I want a refund", "timestamp": start},
 			{
-				TurnIndex: 0,
-				Timestamp: time.Now(),
-				UserMessage: ArenaMessage{
-					Content: "What is the weather?",
-				},
-				Response: ArenaResponse{
-					Message: types.Message{
-						Role:    "assistant",
-						Content: "It's sunny today.",
+				"role": "assistant", "content": "No.", "timestamp": start.Add(time.Second),
+				"meta": map[string]any{
+					"assertions": map[string]any{
+						"failed": 1, "passed": false, "total": 1,
+						"results": []map[string]any{{
+							"type":    "content_includes",
+							"passed":  false,
+							"message": "Should acknowledge the refund policy.",
+							"config":  map[string]any{"type": "content_includes", "params": map[string]any{"patterns": []string{"policy"}}},
+							"details": map[string]any{"missing": []string{"policy"}},
+						}},
 					},
 				},
 			},
 		},
-		Summary: ArenaOutputSummary{
-			TotalTurns:  1,
-			PassedTurns: 1,
-			TotalCost:   0.001,
+		"conversation_assertions": map[string]any{
+			"failed": 1, "passed": false, "total": 1,
+			"results": []map[string]any{{
+				"type": "tools_called", "passed": false, "message": "refund tool was never called",
+				"details": map[string]any{"missing": []string{"issue_refund"}},
+			}},
 		},
 	}
-
-	// Write to temp file
-	tmpDir := t.TempDir()
-	tmpFile := filepath.Join(tmpDir, "test.arena-output.json")
-	data, err := json.Marshal(arenaOutput)
-	if err != nil {
-		t.Fatalf("Failed to marshal arena output: %v", err)
-	}
-	if err := os.WriteFile(tmpFile, data, 0644); err != nil {
-		t.Fatalf("Failed to write temp file: %v", err)
-	}
-
-	messages, metadata, err := adapter.Load(RecordingReference{ID: tmpFile, Source: tmpFile})
-	if err != nil {
-		t.Fatalf("Load() error = %v", err)
-	}
-
-	if len(messages) != 2 {
-		t.Fatalf("Load() got %d messages, want 2", len(messages))
-	}
-
-	// Check user message
-	if messages[0].Role != "user" {
-		t.Errorf("messages[0].Role = %s, want user", messages[0].Role)
-	}
-	if messages[0].Content != "What is the weather?" {
-		t.Errorf("messages[0].Content = %s, want 'What is the weather?'", messages[0].Content)
-	}
-
-	// Check assistant message
-	if messages[1].Role != "assistant" {
-		t.Errorf("messages[1].Role = %s, want assistant", messages[1].Role)
-	}
-	if messages[1].Content != "It's sunny today." {
-		t.Errorf("messages[1].Content = %s, want 'It's sunny today.'", messages[1].Content)
-	}
-
-	// Check metadata
-	if metadata == nil {
-		t.Fatal("metadata is nil")
-	}
-	if len(metadata.Tags) != 2 {
-		t.Errorf("metadata.Tags length = %d, want 2", len(metadata.Tags))
-	}
-	if metadata.Extras["scenario_id"] != "test-scenario" {
-		t.Errorf("metadata.Extras[scenario_id] = %v, want test-scenario", metadata.Extras["scenario_id"])
-	}
+	data, err := json.Marshal(out)
+	require.NoError(t, err)
+	path := filepath.Join(dir, "run-1.json")
+	require.NoError(t, os.WriteFile(path, data, 0o600))
+	return path
 }
 
-func TestArenaOutputAdapter_Load_WithToolResults(t *testing.T) {
-	adapter := NewArenaOutputAdapter()
+func TestArenaOutputAdapter_Load_FailedAssertions(t *testing.T) {
+	path := runOutputFixture(t, t.TempDir())
 
-	arenaOutput := ArenaOutputFile{
-		ScenarioID: "test-tools",
-		Turns: []ArenaOutputTurn{
-			{
-				TurnIndex: 0,
-				Timestamp: time.Now(),
-				UserMessage: ArenaMessage{
-					Content: "Get weather for NYC",
-				},
-				Response: ArenaResponse{
-					Message: types.Message{
-						Role: "assistant",
-						ToolCalls: []types.MessageToolCall{
-							{
-								ID:   "call_123",
-								Name: "get_weather",
-								Args: json.RawMessage(`{"location":"NYC"}`),
-							},
-						},
-					},
-				},
-				ToolResults: []ArenaToolResult{
-					{
-						ToolCallID: "call_123",
-						Content:    "Sunny, 72°F",
-					},
-				},
-			},
-		},
-	}
+	msgs, meta, err := NewArenaOutputAdapter().Load(RecordingReference{ID: path})
+	require.NoError(t, err)
+	require.Len(t, msgs, 2)
 
-	tmpDir := t.TempDir()
-	tmpFile := filepath.Join(tmpDir, "test-tools.arena.json")
-	data, err := json.Marshal(arenaOutput)
-	if err != nil {
-		t.Fatalf("Failed to marshal: %v", err)
-	}
-	if err := os.WriteFile(tmpFile, data, 0644); err != nil {
-		t.Fatalf("Failed to write: %v", err)
-	}
+	assert.Equal(t, "run-1", meta.SessionID)
+	assert.Equal(t, []string{"nightly"}, meta.Tags)
+	assert.Equal(t, 2*time.Second, meta.Duration)
+	assert.Equal(t, "refund", meta.Extras["scenario_id"])
+	assert.Equal(t, "support-pack", meta.Extras["prompt_pack"])
+	assert.Equal(t, "default", meta.Extras["region"])
+	assert.Equal(t, map[string]any{"temperature": 0.1}, meta.Extras["params"])
 
-	messages, _, err := adapter.Load(RecordingReference{ID: tmpFile, Source: tmpFile})
-	if err != nil {
-		t.Fatalf("Load() error = %v", err)
-	}
+	require.Len(t, meta.ConversationAssertions, 1)
+	conv := meta.ConversationAssertions[0]
+	assert.Equal(t, "tools_called", conv.Type)
+	assert.False(t, conv.Passed)
+	assert.Equal(t, "refund tool was never called", conv.Message)
+	assert.Equal(t, []any{"issue_refund"}, conv.Details["missing"])
 
-	// Should have: user message, assistant with tool call, tool result
-	if len(messages) != 3 {
-		t.Fatalf("Load() got %d messages, want 3", len(messages))
-	}
-
-	// Check tool call in assistant message
-	if len(messages[1].ToolCalls) != 1 {
-		t.Errorf("messages[1].ToolCalls length = %d, want 1", len(messages[1].ToolCalls))
-	}
-
-	// Check tool result message
-	if messages[2].Role != "tool" {
-		t.Errorf("messages[2].Role = %s, want tool", messages[2].Role)
-	}
-	if messages[2].ToolResult == nil || messages[2].ToolResult.ID != "call_123" {
-		t.Errorf("messages[2].ToolResult.ID = %v, want call_123", messages[2].ToolResult)
-	}
-	if messages[2].ToolResult.GetTextContent() != "Sunny, 72°F" {
-		t.Errorf("messages[2].ToolResult.GetTextContent() = %s, want 'Sunny, 72°F'", messages[2].ToolResult.GetTextContent())
-	}
+	require.Len(t, meta.TurnAssertions[1], 1)
+	turn := meta.TurnAssertions[1][0]
+	assert.Equal(t, "content_includes", turn.Type)
+	assert.False(t, turn.Passed)
+	assert.Equal(t, map[string]any{"patterns": []any{"policy"}}, turn.Params)
+	assert.Equal(t, "Should acknowledge the refund policy.", turn.Message)
 }
 
-func TestArenaOutputAdapter_Load_InvalidFile(t *testing.T) {
-	adapter := NewArenaOutputAdapter()
+func TestArenaOutputAdapter_Load_RejectsOtherJSON(t *testing.T) {
+	dir := t.TempDir()
+	a := NewArenaOutputAdapter()
 
-	_, _, err := adapter.Load(RecordingReference{ID: "/nonexistent/file.arena.json", Source: "/nonexistent/file.arena.json"})
-	if err == nil {
-		t.Error("Load() should return error for nonexistent file")
-	}
+	// Valid JSON, but not a run output: say so rather than return nothing.
+	other := filepath.Join(dir, "other.json")
+	require.NoError(t, os.WriteFile(other, []byte(`{"scenarios":{"x":{}}}`), 0o600))
+	_, _, err := a.Load(RecordingReference{ID: other})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "RunID")
+
+	bad := filepath.Join(dir, "bad.json")
+	require.NoError(t, os.WriteFile(bad, []byte("{not json"), 0o600))
+	_, _, err = a.Load(RecordingReference{ID: bad})
+	require.Error(t, err)
+
+	_, _, err = a.Load(RecordingReference{ID: filepath.Join(dir, "missing.json")})
+	require.Error(t, err)
 }
 
-func TestArenaOutputAdapter_Load_InvalidJSON(t *testing.T) {
-	adapter := NewArenaOutputAdapter()
+// A run output whose Messages carry parts survives the round trip as
+// types.Message, since the file is that type's own JSON.
+func TestArenaOutputAdapter_Load_MessagesAreNative(t *testing.T) {
+	msg := types.Message{Role: "user", Parts: []types.ContentPart{types.NewTextPart("hello")}}
+	out := map[string]any{"RunID": "run-2", "Messages": []types.Message{msg}}
+	data, err := json.Marshal(out)
+	require.NoError(t, err)
+	path := filepath.Join(t.TempDir(), "run-2.json")
+	require.NoError(t, os.WriteFile(path, data, 0o600))
 
-	tmpDir := t.TempDir()
-	tmpFile := filepath.Join(tmpDir, "invalid.arena.json")
-	if err := os.WriteFile(tmpFile, []byte("not json"), 0644); err != nil {
-		t.Fatalf("Failed to write temp file: %v", err)
-	}
-
-	_, _, err := adapter.Load(RecordingReference{ID: tmpFile, Source: tmpFile})
-	if err == nil {
-		t.Error("Load() should return error for invalid JSON")
-	}
-}
-
-func TestArenaOutputAdapter_Load_SimpleFormat(t *testing.T) {
-	adapter := NewArenaOutputAdapter()
-
-	// Test the simple format (Messages array + RunID)
-	simpleFormat := struct {
-		Messages []types.Message `json:"Messages"`
-		RunID    string          `json:"RunID"`
-	}{
-		Messages: []types.Message{
-			{Role: "user", Content: "Hello"},
-			{Role: "assistant", Content: "Hi there!"},
-			{Role: "user", Content: "How are you?"},
-		},
-		RunID: "test-run-123",
-	}
-
-	tmpDir := t.TempDir()
-	tmpFile := filepath.Join(tmpDir, "simple.arena.json")
-	data, err := json.Marshal(simpleFormat)
-	if err != nil {
-		t.Fatalf("Failed to marshal: %v", err)
-	}
-	if err := os.WriteFile(tmpFile, data, 0644); err != nil {
-		t.Fatalf("Failed to write: %v", err)
-	}
-
-	messages, metadata, err := adapter.Load(RecordingReference{ID: tmpFile, Source: tmpFile})
-	if err != nil {
-		t.Fatalf("Load() error = %v", err)
-	}
-
-	// Check messages
-	if len(messages) != 3 {
-		t.Fatalf("Load() got %d messages, want 3", len(messages))
-	}
-	if messages[0].Role != "user" || messages[0].Content != "Hello" {
-		t.Errorf("messages[0] = %+v, want user: Hello", messages[0])
-	}
-	if messages[1].Role != "assistant" || messages[1].Content != "Hi there!" {
-		t.Errorf("messages[1] = %+v, want assistant: Hi there!", messages[1])
-	}
-
-	// Check metadata
-	if metadata == nil {
-		t.Fatal("metadata is nil")
-	}
-	if metadata.SessionID != "test-run-123" {
-		t.Errorf("metadata.SessionID = %s, want test-run-123", metadata.SessionID)
-	}
-}
-
-func TestConvertParts(t *testing.T) {
-	adapter := NewArenaOutputAdapter()
-
-	tests := []struct {
-		name  string
-		parts []ArenaContentPart
-		want  int
-	}{
-		{
-			name: "text part",
-			parts: []ArenaContentPart{
-				{
-					Type: "text",
-					Text: testutil.Ptr("Hello"),
-				},
-			},
-			want: 1,
-		},
-		{
-			name: "mixed parts",
-			parts: []ArenaContentPart{
-				{
-					Type: "text",
-					Text: testutil.Ptr("Check this image:"),
-				},
-				{
-					Type: "image",
-					Media: &types.MediaContent{
-						MIMEType: "image/png",
-					},
-				},
-			},
-			want: 2,
-		},
-		{
-			name:  "empty parts",
-			parts: []ArenaContentPart{},
-			want:  0,
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := adapter.convertParts(tt.parts)
-			if len(got) != tt.want {
-				t.Errorf("convertParts() length = %d, want %d", len(got), tt.want)
-			}
-		})
-	}
+	msgs, _, err := NewArenaOutputAdapter().Load(RecordingReference{ID: path})
+	require.NoError(t, err)
+	require.Len(t, msgs, 1)
+	assert.Equal(t, "hello", msgs[0].GetContent())
 }

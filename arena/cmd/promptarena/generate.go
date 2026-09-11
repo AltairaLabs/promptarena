@@ -39,13 +39,17 @@ Examples:
 func init() {
 	rootCmd.AddCommand(generateCmd)
 
-	generateCmd.Flags().String("source", "", "Named session source adapter (e.g., omnia)")          // NOSONAR
-	generateCmd.Flags().String("from-recordings", "", "Glob path to local recording files")         // NOSONAR
-	generateCmd.Flags().String("filter-eval-type", "", "Filter sessions by assertion failure type") // NOSONAR
-	generateCmd.Flags().Bool("filter-passed", false, "Filter by pass/fail status")                  // NOSONAR
-	generateCmd.Flags().String("pack", "", "Pack file path (generates workflow scenarios)")         // NOSONAR
-	generateCmd.Flags().String("output", ".", "Output directory for generated scenario files")      // NOSONAR
-	generateCmd.Flags().Bool("dedup", true, "Deduplicate sessions by failure pattern")              // NOSONAR
+	f := generateCmd.Flags()
+	f.String("source", "", "Named session source adapter (e.g., omnia)") // NOSONAR
+	f.String("from-recordings", "", "Glob of local recordings: arena run output (out/*.json), "+
+		"PromptKit session recordings (*.recording.json, *.jsonl) or transcripts") // NOSONAR
+	f.String("filter-eval-type", "", "Filter sessions by assertion failure type")                // NOSONAR
+	f.Bool("filter-passed", false, "Filter by pass/fail status")                                 // NOSONAR
+	f.String("task-type", "", "task_type to set on generated scenarios (default: conversation)") // NOSONAR
+	f.String("pack", "", "Deprecated alias for --task-type")                                     // NOSONAR
+	_ = f.MarkDeprecated("pack", "it only ever set task_type; use --task-type")
+	f.String("output", ".", "Output directory for generated scenario files") // NOSONAR
+	f.Bool("dedup", true, "Deduplicate sessions by failure pattern")         // NOSONAR
 }
 
 func resolveAdapter(cmd *cobra.Command) (generate.SessionSourceAdapter, error) {

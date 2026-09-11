@@ -61,7 +61,7 @@ Flags: `--config`, `--id`, `--output`
 
 Generate scenario files from session data
 
-Flags: `--dedup`, `--filter-eval-type`, `--filter-passed`, `--from-recordings`, `--output`, `--pack`, `--source`
+Flags: `--dedup`, `--filter-eval-type`, `--filter-passed`, `--from-recordings`, `--output`, `--source`, `--task-type`
 
 ## promptarena init
 

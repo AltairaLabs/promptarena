@@ -58,8 +58,8 @@ spec:
 
 ## Recording Types
 
-- `session`: Session recording JSON (`.recording.json`)
-- `arena_output`: Arena output JSON from previous runs
+- `session`: PromptKit session recording, as exported by the recording middleware (`.recording.json`) or left in the event store (`.jsonl`)
+- `arena_output`: Arena run output, one `.json` file per run as written by `promptarena run` into `out/`
 - `transcript`: Transcript YAML (`.transcript.yaml`)
 - `generic`: Generic chat export JSON
 
