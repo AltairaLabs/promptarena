@@ -833,7 +833,7 @@ Declare it when you deliberately want to constrain a provider, or to make a scen
 
 Parameters the model rejects, withheld from the request rather than sent and refused. Use it when a model 400s on a parameter the schema still requires you to supply — `top_p` on `gpt-5.2`, for example.
 
-Honoured for sampling parameters (`temperature`, `top_p`) on both the Chat Completions and Responses paths. It does **not** currently suppress `seed` on the OpenAI Responses API ([PromptKit #1870](https://github.com/AltairaLabs/PromptKit/issues/1870)).
+Honoured for sampling parameters (`temperature`, `top_p`) on both the Chat Completions and Responses paths. `seed` needs no entry here: the Responses API has no such parameter, so the runtime never sends it on that path (and warns when a configured seed is dropped); Chat Completions supports it and still sends it.
 
 #### `additional_config`
 

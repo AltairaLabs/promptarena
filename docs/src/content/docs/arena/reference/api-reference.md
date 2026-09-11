@@ -14,35 +14,41 @@ The main package for programmatic Arena usage.
 #### `BuildEngineComponents`
 
 ```go
-func BuildEngineComponents(cfg *config.Config) (
+func BuildEngineComponents(cfg *arenaconfig.Config, providerFilter []string) (
     providerRegistry *providers.Registry,
     promptRegistry *prompt.Registry,
     mcpRegistry *mcp.RegistryImpl,
     convExecutor ConversationExecutor,
+    adapterRegistry *adapters.Registry,
+    a2aCleanup func(),
+    toolRegistry *tools.Registry,
+    skillExecutor *skills.Executor,
     err error,
 )
 ```
 
-Builds all engine components from a loaded Config object.
-
-**Parameters:**
-- `cfg` - Fully constructed `*config.Config` with loaded providers, scenarios, and prompts
+Builds all engine components from a loaded config. `providerFilter` limits which
+providers have credentials resolved; `nil` or empty initializes all of them.
 
 **Returns:**
 - `providerRegistry` - Registry containing all configured LLM providers
-- `promptRegistry` - Registry containing all prompt configurations
-- `mcpRegistry` - Registry for Model Context Protocol servers
-- `convExecutor` - Executor for running conversations
+- `promptRegistry` - Registry containing all prompt configurations (`nil` when the config loads none)
+- `mcpRegistry` - Registry for Model Context Protocol servers (`nil` when none are configured)
+- `convExecutor` - Executor for running conversations, with the eval orchestrator already injected
+- `adapterRegistry` - Recording-format readers used by eval scenarios
+- `a2aCleanup` - Releases any A2A agent connections; call it if you do not go on to build an engine (`nil` when there are none)
+- `toolRegistry` - Registry of tools the runtime can execute
+- `skillExecutor` - Executor for skill activation (`nil` when the config has no skills)
 - `err` - Error if component building fails
 
 **Example:**
 ```go
-cfg := &config.Config{
-    LoadedProviders: map[string]*config.Provider{...},
-    LoadedScenarios: map[string]*config.Scenario{...},
+cfg, err := arenaconfig.LoadConfig("config.arena.yaml")
+if err != nil {
+    log.Fatal(err)
 }
 
-providerReg, promptReg, mcpReg, executor, err := engine.BuildEngineComponents(cfg)
+providerReg, promptReg, mcpReg, executor, adapterReg, cleanup, toolReg, _, err := engine.BuildEngineComponents(cfg, nil)
 if err != nil {
     log.Fatal(err)
 }
@@ -54,11 +60,13 @@ if err != nil {
 
 ```go
 func NewEngine(
-    cfg *config.Config,
+    cfg *arenaconfig.Config,
     providerRegistry *providers.Registry,
     promptRegistry *prompt.Registry,
     mcpRegistry *mcp.RegistryImpl,
     convExecutor ConversationExecutor,
+    adapterRegistry *adapters.Registry,
+    toolRegistry *tools.Registry,
 ) (*Engine, error)
 ```
 
@@ -68,16 +76,29 @@ engine built this way wires evals identically to `NewEngineFromConfig`:
 calling `SetEventBus` forwards the bus to the evals and `eval.completed`
 events reach subscribers.
 
+`NewEngine` does not initialize the workflow state machine, the memory
+subsystem or runtime hooks from the config; `NewEngineFromConfig` does. Prefer
+`NewEngineFromConfig` unless you are substituting components.
+
 **Parameters:**
 - `cfg` - Configuration object
-- `providerRegistry` - Provider registry from `BuildEngineComponents`
-- `promptRegistry` - Prompt registry from `BuildEngineComponents`
-- `mcpRegistry` - MCP registry from `BuildEngineComponents`
-- `convExecutor` - Conversation executor from `BuildEngineComponents`
+- `providerRegistry`, `promptRegistry`, `mcpRegistry`, `convExecutor`, `adapterRegistry`, `toolRegistry` - The components returned by `BuildEngineComponents`
 
 **Returns:**
 - `*Engine` - Initialized engine ready for execution
-- `error` - Error if engine creation fails
+
+---
+
+#### `NewEngineFromConfig`
+
+```go
+func NewEngineFromConfig(cfg *arenaconfig.Config, providerFilter ...string) (*Engine, error)
+```
+
+Builds the components and the engine from a pre-loaded config in one call, then
+initializes the workflow state machine, the memory subsystem and runtime hooks
+the config declares. This is the constructor the CLI uses. Modify `cfg` before
+calling it to override what was loaded from disk.
 
 ---
 
@@ -497,25 +518,97 @@ promptConfig := &prompt.Config{
 
 ---
 
+## Generate Package
+
+### `github.com/AltairaLabs/promptarena/arena/generate`
+
+Turns recorded sessions into regression scenarios. This is what `promptarena
+generate` runs; it is exposed so a platform can run it in-process.
+
+#### `Generate`
+
+```go
+func Generate(ctx context.Context, req Request) (*Result, error)
+
+type Request struct {
+    Source  SessionSourceAdapter // required: where sessions come from
+    List    ListOptions          // FilterPassed, FilterEvalType, Expectations, Limit
+    Convert ConvertOptions       // TaskType, Expectations
+    Dedup   bool                 // drop sessions with the same failure fingerprint
+    Pack    *packspec.Pack       // supplies eval params and declared thresholds the source did not record
+}
+
+type Result struct {
+    Scenarios    []*arenaconfig.ScenarioConfig
+    Skipped      []Skipped   // sessions that failed to load or convert, with reasons
+    Warnings     []string    // e.g. a multi-turn session whose replay may not behave as recorded
+    Decisions    []Decision  // one per recorded eval: what it became and why
+    Deduplicated int
+}
+```
+
+Lists sessions from the source, fetches each, optionally deduplicates, and
+converts each into a scenario. Nothing is printed and nothing is written to
+disk. A session that fails to load or convert is recorded in `Skipped`; a
+failure to list is fatal.
+
+Every recorded eval produces one `Decision`: a failed recorded verdict is
+asserted with its params; a measurement bounded by the pack's declared
+`threshold` or by an `Expectation` is asserted with that bound; a measurement
+with no known range is reported, never asserted against an invented bound.
+
+#### `WriteScenarios`
+
+```go
+func WriteScenarios(dir string, scenarios []*arenaconfig.ScenarioConfig) ([]string, error)
+```
+
+Writes each scenario to `<dir>/<name>.scenario.yaml` and returns the paths.
+
+#### `SessionSourceAdapter`
+
+```go
+type SessionSourceAdapter interface {
+    Name() string
+    List(ctx context.Context, opts ListOptions) ([]SessionSummary, error)
+    Get(ctx context.Context, sessionID string) (*SessionDetail, error)
+}
+```
+
+Implement this to serve sessions from your own store. `SessionDetail` carries
+the messages (PromptKit `types.Message`, tool calls inline), pack identity,
+variables, the workflow trace and every recorded eval with its kind, score and
+verdict. Two implementations ship: `sources.NewRecordingsAdapter(glob)` reads
+local run output and session recordings, and `flow.OpenSessionSource` (package
+`arena/deploy/flow`) wraps an installed deploy adapter that advertises the
+`sessions` capability.
+
+#### `Expectation`
+
+```go
+type Expectation struct{ EvalID string; Min, Max *float64 }
+func ParseExpectation(s string) (Expectation, error) // "faithfulness>=0.8"
+```
+
+A stated range for a measured eval. On `ListOptions` it selects sessions whose
+score fell outside the range; on `ConvertOptions` it becomes the generated
+assertion's `min_score` / `max_score`. `Generate` copies `List.Expectations`
+to `Convert.Expectations` when the latter is empty.
+
 ## Common Patterns
 
 ### Complete Workflow
 
 ```go
-// 1. Create configuration
-cfg := &config.Config{
-    LoadedProviders: map[string]*config.Provider{...},
-    LoadedScenarios: map[string]*config.Scenario{...},
-}
-
-// 2. Build components
-providerReg, promptReg, mcpReg, executor, err := engine.BuildEngineComponents(cfg)
+// 1. Load configuration (or construct an arenaconfig.Config yourself)
+cfg, err := arenaconfig.LoadConfig("config.arena.yaml")
 if err != nil {
     return err
 }
 
-// 3. Create engine
-eng, err := engine.NewEngine(cfg, providerReg, promptReg, mcpReg, executor)
+// 2. Build the engine. NewEngineFromConfig builds the components, the engine,
+//    and the workflow, memory and hook subsystems the config declares.
+eng, err := engine.NewEngineFromConfig(cfg)
 if err != nil {
     return err
 }

@@ -127,5 +127,5 @@ Remember that the prompt config's `allowed_tools` is an allowlist: a prompt with
 
 ## Compatibility notes
 
-- **Seed.** A seed is only sent when you configure a non-zero one under `defaults.seed`. This matters for OpenAI: the Responses API rejects `seed` outright, and `unsupported_params` cannot suppress it (see [PromptKit #1870](https://github.com/AltairaLabs/PromptKit/issues/1870)). If you need both a fixed seed and OpenAI reasoning, you are blocked until that is fixed upstream.
+- **Seed.** A seed is only sent when you configure a non-zero one under `defaults.seed`, and only on API paths that accept it. The OpenAI Responses API has no `seed` parameter, so the runtime never sends one there and logs a warning that the request is not reproducible when you had configured one. If you need a fixed seed, use `api_mode: completions` on a model that supports it; reasoning summaries are only returned by the Responses path, so you cannot have both at once.
 - **Model-specific rejections.** Use `unsupported_params` to withhold a parameter a model refuses — `top_p` on `gpt-5.2`, for example. It is honoured for sampling parameters on both API paths.
