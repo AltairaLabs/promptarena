@@ -6,9 +6,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+
 	"github.com/AltairaLabs/PromptKit/pkg/config"
 	"github.com/AltairaLabs/PromptKit/runtime/types"
-	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 )
 
 const (
