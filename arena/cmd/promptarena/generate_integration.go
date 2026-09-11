@@ -4,127 +4,48 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v3"
 
 	"github.com/AltairaLabs/promptarena/arena/generate"
 )
 
-const (
-	dirPerms  = 0o700
-	filePerms = 0o600
-)
-
 func runGenerate(cmd *cobra.Command, _ []string) error {
-	adapter, err := resolveAdapter(cmd)
+	req, err := buildRequest(cmd)
 	if err != nil {
 		return err
 	}
 
-	listOpts, err := buildListOptions(cmd)
+	res, err := generate.Generate(context.Background(), req)
 	if err != nil {
 		return err
 	}
 
-	sessions, err := fetchSessions(cmd, adapter, listOpts)
-	if err != nil {
-		return err
+	for _, s := range res.Skipped {
+		fmt.Fprintf(os.Stderr, "warning: skipping session %s: %s\n", s.SessionID, s.Reason)
 	}
-	if sessions == nil {
+	for _, w := range res.Warnings {
+		fmt.Fprintf(os.Stderr, "warning: %s\n", w)
+	}
+	for _, d := range res.Decisions {
+		fmt.Println(d.String())
+	}
+	if res.Deduplicated > 0 {
+		fmt.Printf("Deduplicated: removed %d duplicate(s), %d session(s) remaining.\n", res.Deduplicated, len(res.Scenarios))
+	}
+	if len(res.Scenarios) == 0 {
+		fmt.Println("No sessions produced a scenario.")
 		return nil
 	}
 
-	return writeScenarios(cmd, sessions)
-}
-
-func fetchSessions(
-	cmd *cobra.Command,
-	adapter generate.SessionSourceAdapter,
-	listOpts generate.ListOptions,
-) ([]*generate.SessionDetail, error) {
-	ctx := context.Background()
-
-	summaries, err := adapter.List(ctx, listOpts)
-	if err != nil {
-		return nil, fmt.Errorf("listing sessions: %w", err)
-	}
-
-	if len(summaries) == 0 {
-		fmt.Println("No sessions found matching the given filters.")
-		return nil, nil
-	}
-
-	var sessions []*generate.SessionDetail
-	for i := range summaries {
-		detail, getErr := adapter.Get(ctx, summaries[i].ID)
-		if getErr != nil {
-			fmt.Fprintf(os.Stderr, "warning: skipping session %s: %v\n", summaries[i].ID, getErr)
-			continue
-		}
-		sessions = append(sessions, detail)
-	}
-
-	dedup, _ := cmd.Flags().GetBool("dedup")
-	if dedup {
-		before := len(sessions)
-		sessions = generate.DeduplicateSessions(sessions)
-		if removed := before - len(sessions); removed > 0 {
-			fmt.Printf("Deduplicated: removed %d duplicate(s), %d session(s) remaining.\n", removed, len(sessions))
-		}
-	}
-
-	return sessions, nil
-}
-
-func writeScenarios(cmd *cobra.Command, sessions []*generate.SessionDetail) error {
-	taskType, _ := cmd.Flags().GetString("task-type")
-	if taskType == "" {
-		taskType, _ = cmd.Flags().GetString("pack") // deprecated alias
-	}
 	outputDir, _ := cmd.Flags().GetString("output")
-
-	if err := os.MkdirAll(outputDir, dirPerms); err != nil {
-		return fmt.Errorf("creating output directory: %w", err)
+	paths, err := generate.WriteScenarios(outputDir, res.Scenarios)
+	for _, p := range paths {
+		fmt.Printf("Generated: %s\n", p)
 	}
-
-	opts := generate.ConvertOptions{TaskType: taskType}
-
-	for _, session := range sessions {
-		if err := writeSessionScenario(session, opts, outputDir); err != nil {
-			return err
-		}
-	}
-
-	fmt.Printf("\nGenerated %d scenario file(s).\n", len(sessions))
-	return nil
-}
-
-func writeSessionScenario(
-	session *generate.SessionDetail,
-	opts generate.ConvertOptions,
-	outputDir string,
-) error {
-	sc, err := generate.ConvertSessionToScenario(session, opts)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "warning: skipping session %s: %v\n", session.ID, err)
-		return nil
+		return err
 	}
-
-	data, err := yaml.Marshal(sc)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "warning: skipping session %s: marshal error: %v\n", session.ID, err)
-		return nil
-	}
-
-	filename := sc.Metadata.Name + ".scenario.yaml"
-	outPath := filepath.Join(outputDir, filename)
-
-	if err := os.WriteFile(outPath, data, filePerms); err != nil {
-		return fmt.Errorf("writing %s: %w", outPath, err)
-	}
-
-	fmt.Printf("Generated: %s\n", outPath)
+	fmt.Printf("\nGenerated %d scenario file(s).\n", len(paths))
 	return nil
 }

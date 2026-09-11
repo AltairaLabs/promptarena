@@ -1,101 +1,105 @@
 package main
 
 import (
-	"context"
+	"path/filepath"
 	"testing"
 
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-
-	"github.com/AltairaLabs/promptarena/arena/generate"
 )
 
 func newGenerateTestCmd() *cobra.Command {
 	cmd := &cobra.Command{Use: "generate", RunE: runGenerate}
-	cmd.Flags().String("source", "", "")
-	cmd.Flags().String("from-recordings", "", "")
-	cmd.Flags().String("filter-eval-type", "", "")
-	cmd.Flags().Bool("filter-passed", false, "")
-	cmd.Flags().String("task-type", "", "")
-	cmd.Flags().String("pack", "", "")
-	cmd.Flags().String("output", ".", "")
-	cmd.Flags().Bool("dedup", true, "")
+	registerGenerateFlags(cmd.Flags())
 	return cmd
 }
 
 func TestResolveAdapter_FromRecordings(t *testing.T) {
 	cmd := newGenerateTestCmd()
-	require.NoError(t, cmd.Flags().Set("from-recordings", "*.recording.json"))
-
+	require.NoError(t, cmd.Flags().Set("from-recordings", "*.json"))
 	adapter, err := resolveAdapter(cmd)
 	require.NoError(t, err)
 	assert.Equal(t, "recordings", adapter.Name())
 }
 
 func TestResolveAdapter_FromSource(t *testing.T) {
-	// Register a test adapter in the global registry.
-	generateRegistry.Register(&testSourceAdapter{name: "test-source"})
-
 	cmd := newGenerateTestCmd()
-	require.NoError(t, cmd.Flags().Set("source", "test-source"))
-
-	adapter, err := resolveAdapter(cmd)
-	require.NoError(t, err)
-	assert.Equal(t, "test-source", adapter.Name())
+	require.NoError(t, cmd.Flags().Set("source", "nonexistent"))
+	_, err := resolveAdapter(cmd)
+	require.Error(t, err)
 }
 
 func TestResolveAdapter_NeitherFlag(t *testing.T) {
-	cmd := newGenerateTestCmd()
-	_, err := resolveAdapter(cmd)
+	_, err := resolveAdapter(newGenerateTestCmd())
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "specify either --source or --from-recordings")
 }
 
-func TestBuildListOptions_Default(t *testing.T) {
+func TestBuildRequest_Defaults(t *testing.T) {
 	cmd := newGenerateTestCmd()
-	opts, err := buildListOptions(cmd)
+	require.NoError(t, cmd.Flags().Set("from-recordings", "*.json"))
+	req, err := buildRequest(cmd)
 	require.NoError(t, err)
-	assert.Nil(t, opts.FilterPassed, "FilterPassed should be nil when flag not changed")
-	assert.Empty(t, opts.FilterEvalType)
+	assert.Nil(t, req.List.FilterPassed)
+	assert.Empty(t, req.List.Expectations)
+	assert.True(t, req.Dedup)
+	assert.Equal(t, "", req.Convert.TaskType)
+	assert.Nil(t, req.Pack)
 }
 
-func TestBuildListOptions_WithFilterPassed(t *testing.T) {
+func TestBuildRequest_Flags(t *testing.T) {
 	cmd := newGenerateTestCmd()
+	require.NoError(t, cmd.Flags().Set("from-recordings", "*.json"))
 	require.NoError(t, cmd.Flags().Set("filter-passed", "false"))
-
-	opts, err := buildListOptions(cmd)
-	require.NoError(t, err)
-	require.NotNil(t, opts.FilterPassed)
-	assert.False(t, *opts.FilterPassed)
-}
-
-func TestBuildListOptions_WithFilterEvalType(t *testing.T) {
-	cmd := newGenerateTestCmd()
 	require.NoError(t, cmd.Flags().Set("filter-eval-type", "content_matches"))
+	require.NoError(t, cmd.Flags().Set("task-type", "intake"))
+	require.NoError(t, cmd.Flags().Set("dedup", "false"))
+	require.NoError(t, cmd.Flags().Set("expect", "faithfulness>=0.8"))
+	require.NoError(t, cmd.Flags().Set("expect", "toxicity<=0.2"))
 
-	opts, err := buildListOptions(cmd)
+	req, err := buildRequest(cmd)
 	require.NoError(t, err)
-	assert.Equal(t, "content_matches", opts.FilterEvalType)
+	require.NotNil(t, req.List.FilterPassed)
+	assert.False(t, *req.List.FilterPassed)
+	assert.Equal(t, "content_matches", req.List.FilterEvalType)
+	assert.Equal(t, "intake", req.Convert.TaskType)
+	assert.False(t, req.Dedup)
+	require.Len(t, req.List.Expectations, 2)
+	assert.Equal(t, "faithfulness", req.List.Expectations[0].EvalID)
+	assert.Equal(t, 0.8, *req.List.Expectations[0].Min)
+	assert.Equal(t, 0.2, *req.List.Expectations[1].Max)
 }
 
-// testSourceAdapter is a minimal test double for the generate command tests.
-type testSourceAdapter struct {
-	name string
+func TestBuildRequest_BadExpectation(t *testing.T) {
+	cmd := newGenerateTestCmd()
+	require.NoError(t, cmd.Flags().Set("from-recordings", "*.json"))
+	require.NoError(t, cmd.Flags().Set("expect", "faithfulness"))
+	_, err := buildRequest(cmd)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "faithfulness")
 }
 
-func (a *testSourceAdapter) Name() string { return a.name }
-
-func (a *testSourceAdapter) List(
-	_ context.Context,
-	_ generate.ListOptions,
-) ([]generate.SessionSummary, error) {
-	return nil, nil
+func TestBuildRequest_DeprecatedPackAlias(t *testing.T) {
+	cmd := newGenerateTestCmd()
+	require.NoError(t, cmd.Flags().Set("from-recordings", "*.json"))
+	require.NoError(t, cmd.Flags().Set("pack", "legacy"))
+	req, err := buildRequest(cmd)
+	require.NoError(t, err)
+	assert.Equal(t, "legacy", req.Convert.TaskType)
 }
 
-func (a *testSourceAdapter) Get(
-	_ context.Context,
-	_ string,
-) (*generate.SessionDetail, error) {
-	return nil, nil
+// End to end over the tracked run-output fixture: the CLI body produces a
+// scenario file and prints the decisions.
+func TestRunGenerate_WritesScenarios(t *testing.T) {
+	out := t.TempDir()
+	cmd := newGenerateTestCmd()
+	require.NoError(t, cmd.Flags().Set("from-recordings", filepath.Join("..", "..", "adapters", "testdata", "tool-usage.run.json")))
+	require.NoError(t, cmd.Flags().Set("output", out))
+
+	require.NoError(t, runGenerate(cmd, nil))
+
+	matches, err := filepath.Glob(filepath.Join(out, "*.scenario.yaml"))
+	require.NoError(t, err)
+	require.Len(t, matches, 1)
 }

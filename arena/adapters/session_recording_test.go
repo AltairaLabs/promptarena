@@ -180,3 +180,32 @@ func TestSessionRecordingAdapter_Load_Errors(t *testing.T) {
 	_, _, err = a.Load(RecordingReference{ID: bad})
 	require.Error(t, err)
 }
+
+// workflow.transitioned events become the recording's transitions, placed by
+// the number of messages seen when they happened.
+func TestSessionRecordingAdapter_Load_WorkflowTransitions(t *testing.T) {
+	start := time.Date(2026, 9, 1, 10, 0, 0, 0, time.UTC)
+	transition := func(seq int64, from, to, event, task string) recording.RecordedEvent {
+		raw, err := json.Marshal(events.WorkflowTransitionedData{FromState: from, ToState: to, Event: event, PromptTask: task})
+		require.NoError(t, err)
+		return recording.RecordedEvent{Sequence: seq, Type: events.EventWorkflowTransitioned, Timestamp: start, SessionID: "wf", Data: raw}
+	}
+	rec := &recording.SessionRecording{
+		Metadata: recording.Metadata{SessionID: "wf", Version: "1.0", StartTime: start, EndTime: start},
+		Events: []recording.RecordedEvent{
+			messageEvent(t, 1, start, events.MessageCreatedData{Role: "user", Content: "I want a refund"}),
+			messageEvent(t, 2, start, events.MessageCreatedData{Role: "assistant", Content: "Routing you."}),
+			transition(3, "triage", "refunds", "Escalate", "refunds_prompt"),
+			messageEvent(t, 4, start, events.MessageCreatedData{Role: "assistant", Content: "Refund issued."}),
+			transition(5, "refunds", "closed", "Resolve", "closed_prompt"),
+		},
+	}
+	path := writeSessionRecording(t, t.TempDir(), rec)
+
+	msgs, meta, err := NewSessionRecordingAdapter().Load(RecordingReference{ID: path})
+	require.NoError(t, err)
+	require.Len(t, msgs, 3)
+	require.Len(t, meta.WorkflowTransitions, 2)
+	assert.Equal(t, RecordedTransition{From: "triage", To: "refunds", Event: "Escalate", PromptTask: "refunds_prompt", MessageIndex: 1}, meta.WorkflowTransitions[0])
+	assert.Equal(t, 2, meta.WorkflowTransitions[1].MessageIndex)
+}
