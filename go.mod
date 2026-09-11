@@ -4,7 +4,7 @@ go 1.26.0
 
 require (
 	github.com/AltairaLabs/PromptKit/pkg v1.9.0
-	github.com/AltairaLabs/PromptKit/runtime v1.9.0
+	github.com/AltairaLabs/PromptKit/runtime v1.9.1-0.20260906201930-7c6d41179087
 	github.com/charmbracelet/bubbles v1.0.0
 	github.com/charmbracelet/bubbletea v1.3.10
 	github.com/charmbracelet/glamour v1.0.0
