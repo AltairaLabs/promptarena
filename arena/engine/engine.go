@@ -321,11 +321,6 @@ func NewEngineFromConfig(cfg *arenaconfig.Config, providerFilter ...string) (*En
 		return nil, fmt.Errorf("failed to apply runtime hooks: %w", err)
 	}
 
-	// Use the eval orchestrator from the conversation executor — it already
-	// has judge metadata, prompt_registry, and other config injected by
-	// BuildEngineComponents. Creating a separate orchestrator here would
-	// lose that metadata.
-	eng.evalOrchestrator = evalOrchestratorFrom(convExecutor)
 	return eng, nil
 }
 
@@ -408,6 +403,12 @@ func NewEngine(
 		personas:             cfg.LoadedPersonas,
 		mcpConfig:            cfg.MCPServers,
 		mcpSkillSources:      cfg.LoadedSkillSources,
+		// Adopt the eval orchestrator already injected into the conversation
+		// executor — it carries judge metadata, prompt_registry and the
+		// classify registry from BuildEngineComponents. Wiring it here, not
+		// only in NewEngineFromConfig, means a DI-built engine also forwards
+		// its event bus to the evals so eval.completed reaches the bus (#190).
+		evalOrchestrator: evalOrchestratorFrom(convExecutor),
 	}
 
 	// Wire the source-backed MCP scope manager when a registry is available.

@@ -62,7 +62,11 @@ func NewEngine(
 ) (*Engine, error)
 ```
 
-Creates a new Engine from pre-built components.
+Creates a new Engine from pre-built components. The engine adopts the eval
+orchestrator that `BuildEngineComponents` injected into `convExecutor`, so an
+engine built this way wires evals identically to `NewEngineFromConfig`:
+calling `SetEventBus` forwards the bus to the evals and `eval.completed`
+events reach subscribers.
 
 **Parameters:**
 - `cfg` - Configuration object
