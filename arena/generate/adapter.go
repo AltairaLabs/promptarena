@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/AltairaLabs/PromptKit/runtime/types"
-	"github.com/AltairaLabs/promptarena/arena/assertions"
 )
 
 // SessionSourceAdapter provides session data for scenario generation.
@@ -73,21 +72,6 @@ type SessionDetail struct {
 	// (kind "eval"), judged assertions and guardrails. Nil when the source
 	// ran none.
 	Evals []EvalResult
-
-	// Deprecated: superseded by Evals. Removed once the converter reads Evals.
-	EvalResults []assertions.ConversationValidationResult
-	// Deprecated: superseded by Evals. Removed once the converter reads Evals.
-	TurnEvalResults map[int][]TurnEvalResult
-}
-
-// TurnEvalResult represents the result of a single turn-level assertion.
-//
-// Deprecated: superseded by EvalResult with Turn set.
-type TurnEvalResult struct {
-	Type    string
-	Passed  bool
-	Message string
-	Params  map[string]interface{}
 }
 
 // EvalResult is one recorded eval observation.

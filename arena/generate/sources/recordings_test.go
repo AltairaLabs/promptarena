@@ -188,44 +188,9 @@ func TestRecordingsAdapter_GetSessionRecording(t *testing.T) {
 	assert.Equal(t, "user", detail.Messages[0].Role)
 	assert.Equal(t, []string{"test"}, detail.Tags)
 	assert.Equal(t, fixtureStart, detail.Timestamp)
-	assert.Empty(t, detail.EvalResults)
-	assert.Empty(t, detail.TurnEvalResults)
+	assert.Empty(t, detail.Evals, "a session recording carries no assertion results")
 }
 
-// Assertion results from run output land where the converter reads them:
-// conversation-level as EvalResults, per-turn keyed by the USER turn they
-// answer (the converter indexes scenario turns, which are user turns), with
-// the original params so the regenerated scenario asserts the same thing.
-func TestRecordingsAdapter_GetRunOutputCarriesAssertions(t *testing.T) {
-	dir := t.TempDir()
-	path := runOutputFixture(t, dir, "failing", true)
-
-	detail, err := NewRecordingsAdapter(filepath.Join(dir, "*.json")).Get(context.Background(), path)
-	require.NoError(t, err)
-
-	assert.Equal(t, "run-failing", detail.ID)
-	assert.Equal(t, "refund", detail.ScenarioID)
-	assert.True(t, detail.HasFailures)
-	assert.Len(t, detail.Messages, 5)
-
-	require.Len(t, detail.EvalResults, 1)
-	assert.Equal(t, "tools_called", detail.EvalResults[0].Type)
-	assert.False(t, detail.EvalResults[0].Passed)
-	assert.Equal(t, "refund tool must be called", detail.EvalResults[0].Message)
-
-	// Message index 4 is the assistant reply to the second user turn.
-	require.Len(t, detail.TurnEvalResults, 1)
-	turn, ok := detail.TurnEvalResults[1]
-	require.True(t, ok, "turn assertions keyed by user-turn ordinal, got %v", detail.TurnEvalResults)
-	require.Len(t, turn, 1)
-	assert.Equal(t, "content_includes", turn[0].Type)
-	assert.False(t, turn[0].Passed)
-	assert.Equal(t, map[string]any{"patterns": []any{"policy"}}, turn[0].Params)
-}
-
-// The CLI lists, then calls Get with each summary's ID. For run output that ID
-// is the RunID, not the path, so Get must resolve it; and a fresh adapter that
-// never listed must still find it.
 func TestRecordingsAdapter_GetBySessionID(t *testing.T) {
 	dir := t.TempDir()
 	runOutputFixture(t, dir, "failing", true)

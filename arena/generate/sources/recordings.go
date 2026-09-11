@@ -8,7 +8,6 @@ import (
 	"sync"
 
 	"github.com/AltairaLabs/promptarena/arena/adapters"
-	"github.com/AltairaLabs/promptarena/arena/assertions"
 	"github.com/AltairaLabs/promptarena/arena/generate"
 
 	"github.com/AltairaLabs/PromptKit/runtime/types"
@@ -94,10 +93,9 @@ func (a *RecordingsAdapter) Get(ctx context.Context, sessionID string) (*generat
 	}
 
 	return &generate.SessionDetail{
-		SessionSummary:  buildSummary(path, msgs, meta),
-		Messages:        msgs,
-		EvalResults:     conversationResults(meta),
-		TurnEvalResults: turnResults(msgs, meta),
+		SessionSummary: buildSummary(path, msgs, meta),
+		Messages:       msgs,
+		Evals:          nil, // filled in the sources task
 	}, nil
 }
 
@@ -177,56 +175,4 @@ func hasFailures(meta *adapters.RecordingMetadata) bool {
 		}
 	}
 	return false
-}
-
-func conversationResults(meta *adapters.RecordingMetadata) []assertions.ConversationValidationResult {
-	if meta == nil || len(meta.ConversationAssertions) == 0 {
-		return nil
-	}
-	out := make([]assertions.ConversationValidationResult, len(meta.ConversationAssertions))
-	for i, r := range meta.ConversationAssertions {
-		out[i] = assertions.ConversationValidationResult{
-			Type:    r.Type,
-			Passed:  r.Passed,
-			Message: r.Message,
-			Details: r.Details,
-		}
-	}
-	return out
-}
-
-// turnResults re-keys per-message assertion results by the user turn they
-// answer. Recordings key them by message index (the assistant message they
-// were evaluated against); the converter indexes scenario turns, which are the
-// user messages, so an assistant message maps to the most recent user message
-// before it.
-func turnResults(msgs []types.Message, meta *adapters.RecordingMetadata) map[int][]generate.TurnEvalResult {
-	if meta == nil || len(meta.TurnAssertions) == 0 {
-		return nil
-	}
-	userTurnBefore := make([]int, len(msgs))
-	turn := -1
-	for i := range msgs {
-		if msgs[i].Role == "user" {
-			turn++
-		}
-		userTurnBefore[i] = turn
-	}
-
-	out := make(map[int][]generate.TurnEvalResult)
-	for msgIdx, results := range meta.TurnAssertions {
-		if msgIdx < 0 || msgIdx >= len(msgs) || userTurnBefore[msgIdx] < 0 {
-			continue
-		}
-		key := userTurnBefore[msgIdx]
-		for _, r := range results {
-			out[key] = append(out[key], generate.TurnEvalResult{
-				Type:    r.Type,
-				Passed:  r.Passed,
-				Message: r.Message,
-				Params:  r.Params,
-			})
-		}
-	}
-	return out
 }

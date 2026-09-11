@@ -4,132 +4,69 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
 
 	"github.com/AltairaLabs/PromptKit/runtime/types"
-	"github.com/AltairaLabs/promptarena/arena/assertions"
 )
 
+func failed(id, typ string, turn *int, details map[string]any) EvalResult {
+	no := false
+	return EvalResult{ID: id, Type: typ, Kind: "assertion", Passed: &no, Turn: turn, Details: details}
+}
+
 func TestFingerprint_Stability(t *testing.T) {
-	session := &SessionDetail{
-		SessionSummary: SessionSummary{ID: "s1"},
-		Messages: []types.Message{
-			{Role: "user", Content: "Hello"},
-			{Role: "assistant", Content: "Hi"},
-		},
-		EvalResults: []assertions.ConversationValidationResult{
-			{Type: "content_matches", Passed: false, Details: map[string]interface{}{"pattern": "x"}},
-		},
+	s := &SessionDetail{
+		Messages: []types.Message{{Role: "user", Content: "hello"}},
+		Evals:    []EvalResult{failed("a", "content_matches", nil, map[string]any{"pattern": "x"})},
 	}
-
-	fp1 := Fingerprint(session)
-	fp2 := Fingerprint(session)
-	assert.Equal(t, fp1, fp2, "same input should produce same fingerprint")
-	assert.Len(t, fp1, fingerprintLength)
+	assert.Equal(t, Fingerprint(s), Fingerprint(s))
+	assert.Len(t, Fingerprint(s), fingerprintLength)
 }
 
-func TestFingerprint_DifferentFailures(t *testing.T) {
-	base := SessionDetail{
-		SessionSummary: SessionSummary{ID: "s1"},
-		Messages: []types.Message{
-			{Role: "user", Content: "Hello"},
-		},
-	}
-
-	s1 := base
-	s1.EvalResults = []assertions.ConversationValidationResult{
-		{Type: "content_matches", Passed: false},
-	}
-
-	s2 := base
-	s2.EvalResults = []assertions.ConversationValidationResult{
-		{Type: "tools_called", Passed: false},
-	}
-
-	assert.NotEqual(t, Fingerprint(&s1), Fingerprint(&s2))
+func TestFingerprint_DifferentFailuresDiffer(t *testing.T) {
+	a := &SessionDetail{Messages: []types.Message{{Role: "user", Content: "hello"}},
+		Evals: []EvalResult{failed("a", "content_matches", nil, nil)}}
+	b := &SessionDetail{Messages: []types.Message{{Role: "user", Content: "hello"}},
+		Evals: []EvalResult{failed("a", "tools_called", nil, nil)}}
+	assert.NotEqual(t, Fingerprint(a), Fingerprint(b))
 }
 
-func TestFingerprint_ContentOnly(t *testing.T) {
-	s1 := &SessionDetail{
-		SessionSummary: SessionSummary{ID: "s1"},
-		Messages:       []types.Message{{Role: "user", Content: "Hello"}},
-	}
-	s2 := &SessionDetail{
-		SessionSummary: SessionSummary{ID: "s2"},
-		Messages:       []types.Message{{Role: "user", Content: "Goodbye"}},
-	}
-
-	assert.NotEqual(t, Fingerprint(s1), Fingerprint(s2))
+func TestFingerprint_TurnMatters(t *testing.T) {
+	a := &SessionDetail{Messages: []types.Message{{Role: "user", Content: "hello"}},
+		Evals: []EvalResult{failed("a", "content_matches", intp(0), nil)}}
+	b := &SessionDetail{Messages: []types.Message{{Role: "user", Content: "hello"}},
+		Evals: []EvalResult{failed("a", "content_matches", intp(1), nil)}}
+	assert.NotEqual(t, Fingerprint(a), Fingerprint(b))
 }
 
-func TestFingerprint_EmptySession(t *testing.T) {
-	session := &SessionDetail{
-		SessionSummary: SessionSummary{ID: "empty"},
-	}
-	fp := Fingerprint(session)
-	assert.Len(t, fp, fingerprintLength)
+// A passed verdict and a bare measurement say nothing about how the session
+// failed, so neither changes the fingerprint.
+func TestFingerprint_IgnoresPassedAndMeasurements(t *testing.T) {
+	yes := true
+	base := &SessionDetail{Messages: []types.Message{{Role: "user", Content: "hello"}}}
+	with := &SessionDetail{Messages: []types.Message{{Role: "user", Content: "hello"}},
+		Evals: []EvalResult{
+			{ID: "p", Type: "x", Kind: "assertion", Passed: &yes},
+			{ID: "m", Type: "faithfulness", Kind: "eval", Score: f(0.4)},
+		}}
+	assert.Equal(t, Fingerprint(base), Fingerprint(with))
+}
+
+func TestFingerprint_ContentMatters(t *testing.T) {
+	a := &SessionDetail{Messages: []types.Message{{Role: "user", Content: "hello"}}}
+	b := &SessionDetail{Messages: []types.Message{{Role: "user", Content: "goodbye"}}}
+	assert.NotEqual(t, Fingerprint(a), Fingerprint(b))
 }
 
 func TestDeduplicateSessions(t *testing.T) {
-	// Two sessions with identical content and failures should deduplicate.
-	makeSession := func(id string) *SessionDetail {
-		return &SessionDetail{
-			SessionSummary: SessionSummary{ID: id},
-			Messages:       []types.Message{{Role: "user", Content: "same message"}},
-			EvalResults: []assertions.ConversationValidationResult{
-				{Type: "content_matches", Passed: false},
-			},
-		}
+	dup := func(id string) *SessionDetail {
+		return &SessionDetail{SessionSummary: SessionSummary{ID: id},
+			Messages: []types.Message{{Role: "user", Content: "same"}},
+			Evals:    []EvalResult{failed("a", "content_matches", nil, nil)}}
 	}
-
-	sessions := []*SessionDetail{
-		makeSession("s1"),
-		makeSession("s2"),
-		makeSession("s3"),
-	}
-
-	result := DeduplicateSessions(sessions)
-	require.Len(t, result, 1, "duplicates should be removed")
-	assert.Equal(t, "s1", result[0].ID, "first session should be kept")
-}
-
-func TestDeduplicateSessions_Unique(t *testing.T) {
-	sessions := []*SessionDetail{
-		{
-			SessionSummary: SessionSummary{ID: "s1"},
-			Messages:       []types.Message{{Role: "user", Content: "message A"}},
-		},
-		{
-			SessionSummary: SessionSummary{ID: "s2"},
-			Messages:       []types.Message{{Role: "user", Content: "message B"}},
-		},
-	}
-
-	result := DeduplicateSessions(sessions)
-	assert.Len(t, result, 2, "unique sessions should all be kept")
-}
-
-func TestDeduplicateSessions_Empty(t *testing.T) {
-	result := DeduplicateSessions(nil)
-	assert.Nil(t, result)
-}
-
-func TestDeduplicateSessions_WithTurnEvalResults(t *testing.T) {
-	s1 := &SessionDetail{
-		SessionSummary: SessionSummary{ID: "s1"},
-		Messages:       []types.Message{{Role: "user", Content: "same"}},
-		TurnEvalResults: map[int][]TurnEvalResult{
-			0: {{Type: "content_includes", Passed: false}},
-		},
-	}
-	s2 := &SessionDetail{
-		SessionSummary: SessionSummary{ID: "s2"},
-		Messages:       []types.Message{{Role: "user", Content: "same"}},
-		TurnEvalResults: map[int][]TurnEvalResult{
-			0: {{Type: "content_includes", Passed: false}},
-		},
-	}
-
-	result := DeduplicateSessions([]*SessionDetail{s1, s2})
-	assert.Len(t, result, 1)
+	other := &SessionDetail{SessionSummary: SessionSummary{ID: "c"}, Messages: []types.Message{{Role: "user", Content: "different"}}}
+	out := DeduplicateSessions([]*SessionDetail{dup("a"), dup("b"), other})
+	assert.Len(t, out, 2)
+	assert.Equal(t, "a", out[0].ID, "first occurrence is kept")
+	assert.Equal(t, "c", out[1].ID)
+	assert.Empty(t, DeduplicateSessions(nil))
 }
