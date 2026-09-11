@@ -106,6 +106,12 @@ type RecordedAssertion struct {
 	Details map[string]interface{} `json:"details,omitempty" yaml:"details,omitempty"`
 }
 
+// Keys used in RecordingMetadata.ProviderInfo by every built-in adapter.
+const (
+	providerInfoIDKey    = "provider_id"
+	providerInfoModelKey = "model"
+)
+
 // ProviderSpec describes a provider configuration for judge targets.
 type ProviderSpec struct {
 	Type  string `json:"type" yaml:"type"`

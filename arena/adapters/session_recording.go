@@ -114,8 +114,8 @@ func metadataFromRecording(m *recording.Metadata, timestamps []time.Time) *Recor
 	}
 	if m.ProviderName != "" || m.Model != "" {
 		meta.ProviderInfo = map[string]interface{}{
-			"provider_id": m.ProviderName,
-			"model":       m.Model,
+			providerInfoIDKey:    m.ProviderName,
+			providerInfoModelKey: m.Model,
 		}
 	}
 	if m.ConversationID != "" {

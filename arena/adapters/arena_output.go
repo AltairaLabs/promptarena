@@ -108,7 +108,7 @@ func metadataFromRun(run *runOutputFile) *RecordingMetadata {
 		meta.Duration = run.EndTime.Sub(run.StartTime)
 	}
 	if run.ProviderID != "" {
-		meta.ProviderInfo = map[string]interface{}{"provider_id": run.ProviderID}
+		meta.ProviderInfo = map[string]interface{}{providerInfoIDKey: run.ProviderID}
 	}
 	putExtra(meta.Extras, "scenario_id", run.ScenarioID)
 	putExtra(meta.Extras, "prompt_pack", run.PromptPack)

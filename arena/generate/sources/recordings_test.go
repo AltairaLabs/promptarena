@@ -11,9 +11,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/AltairaLabs/promptarena/arena/generate"
+
 	"github.com/AltairaLabs/PromptKit/runtime/events"
 	"github.com/AltairaLabs/PromptKit/runtime/recording"
-	"github.com/AltairaLabs/promptarena/arena/generate"
 )
 
 var fixtureStart = time.Date(2026, 9, 1, 10, 0, 0, 0, time.UTC)

@@ -13,12 +13,13 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/types"
 )
 
-// Two real run outputs: one shipped as an eval fixture, one written by an
-// actual `promptarena run` of the assertions-test example (a tool-loop
-// scenario, so it carries tool calls, tool results and per-turn assertions).
+// Two real run outputs: one shipped as an eval fixture, one captured from an
+// actual `promptarena run` of the assertions-test example's tool-usage
+// scenario (a tool loop, so it carries tool calls, tool results and per-turn
+// assertions). The example's own out/ directory is gitignored, hence the copy.
 const (
 	exampleArenaEvalFixture = "../../examples/eval-test/recordings/customer-support.arena.json"
-	exampleArenaRunGlob     = "../../examples/assertions-test/out/*_tool-usage_*.json"
+	toolLoopRunOutput       = "testdata/tool-usage.run.json"
 )
 
 func TestArenaOutputAdapter_CanHandle(t *testing.T) {
@@ -70,11 +71,7 @@ func TestArenaOutputAdapter_Load_EvalFixture(t *testing.T) {
 }
 
 func TestArenaOutputAdapter_Load_RealRunWithToolLoop(t *testing.T) {
-	matches, err := filepath.Glob(exampleArenaRunGlob)
-	require.NoError(t, err)
-	require.NotEmpty(t, matches, "assertions-test example output must be present")
-
-	msgs, meta, err := NewArenaOutputAdapter().Load(RecordingReference{ID: matches[0]})
+	msgs, meta, err := NewArenaOutputAdapter().Load(RecordingReference{ID: toolLoopRunOutput})
 	require.NoError(t, err)
 
 	var toolCalls, toolResults int
