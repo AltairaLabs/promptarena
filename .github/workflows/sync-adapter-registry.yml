@@ -1,0 +1,120 @@
+name: Sync adapter registry
+
+# The CLI embeds a fallback `latest` version per deploy adapter
+# (arena/cmd/promptarena/adapter_registry.json). Installs prefer the live
+# GitHub Releases API and only use these when it is unreachable — offline,
+# rate-limited, firewalled — which is precisely when a user cannot check for
+# themselves. Nothing kept them current: they drifted within the hour of the
+# last manual bump (#172), which is the case for a mechanism (#173).
+#
+# Three ways in, one job:
+#   - repository_dispatch adapter-release: an adapter's release workflow can
+#     notify us the moment it publishes, mirroring the promptarena-release
+#     dispatch this repo already sends the other way.
+#   - schedule: the safety net, so a release that forgot to dispatch is
+#     picked up within a day.
+#   - workflow_dispatch: run it by hand.
+on:
+  repository_dispatch:
+    types: [adapter-release]
+  schedule:
+    - cron: '17 6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+# One sync PR at a time. A second run while one is open updates that branch
+# rather than opening a sibling.
+concurrency:
+  group: sync-adapter-registry
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    name: Refresh embedded latest versions
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # The PAT, not GITHUB_TOKEN: GitHub does not start workflow runs for
+          # events raised by GITHUB_TOKEN, so a PR it opened would never get
+          # CI and would sit BLOCKED. Same reason the adapters' update-deps
+          # workflows use it. It is an organization secret.
+          token: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+
+      - name: Resolve latest releases
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: ./scripts/sync-adapter-registry.sh
+
+      - name: Detect drift
+        id: drift
+        run: |
+          if git diff --quiet -- arena/cmd/promptarena/adapter_registry.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Registry is current."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            git --no-pager diff -- arena/cmd/promptarena/adapter_registry.json
+          fi
+
+      - uses: actions/setup-go@v6
+        if: steps.drift.outputs.changed == 'true'
+        with:
+          go-version: '1.26.0'
+
+      # The registry is embedded at compile time, so a malformed rewrite
+      # would break the binary, not just the file. Prove it still parses.
+      - name: Verify the registry still loads
+        if: steps.drift.outputs.changed == 'true'
+        run: go test ./arena/cmd/promptarena/ -run 'Registry' -count=1
+
+      - name: Open or update the sync PR
+        if: steps.drift.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.PERSONAL_ACCESS_TOKEN }}
+        run: |
+          BRANCH="chore/sync-adapter-registry"
+          SUMMARY="$(git --no-pager diff -U0 -- arena/cmd/promptarena/adapter_registry.json \
+            | grep '^[-+] ' | sed 's/^\([-+]\) *"latest": "\(.*\)",*$/\1 \2/' | paste -sd' ' -)"
+
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git checkout -B "$BRANCH"
+          git add arena/cmd/promptarena/adapter_registry.json
+          git commit -s -m "chore(deploy): sync embedded adapter registry with latest releases" \
+            -m "Refreshed from each adapter's newest GitHub release by the sync-adapter-registry workflow." \
+            -m "Refs #173"
+          # Force: the branch is owned by this workflow and only ever carries
+          # the current drift, so a rerun replaces the previous attempt.
+          git push --force origin "$BRANCH"
+
+          cat <<'PREOF' > /tmp/pr-body.md
+          ## Summary
+
+          Refresh the embedded adapter registry's `latest` versions from each adapter's newest GitHub release.
+
+          ```
+          __SUMMARY__
+          ```
+
+          `promptarena deploy adapter install <name>` prefers the live Releases API; these are what an offline or rate-limited install falls back to, so they should not lag.
+
+          Refs #173
+
+          🤖 Generated automatically by the sync-adapter-registry workflow
+          PREOF
+          sed -i "s|__SUMMARY__|$SUMMARY|" /tmp/pr-body.md
+
+          if gh pr view "$BRANCH" --json state --jq '.state' 2>/dev/null | grep -q OPEN; then
+            gh pr edit "$BRANCH" --body-file /tmp/pr-body.md
+            echo "✓ Updated the open sync PR"
+          else
+            gh pr create --base main --head "$BRANCH" \
+              --title "chore(deploy): sync embedded adapter registry with latest releases" \
+              --body-file /tmp/pr-body.md
+            echo "✓ Opened a sync PR"
+          fi

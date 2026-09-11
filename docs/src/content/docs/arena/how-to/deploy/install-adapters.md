@@ -39,9 +39,10 @@ promptarena deploy adapter install agentcore
 **What happens:**
 
 1. The CLI looks up the adapter in the built-in registry
-2. Downloads the binary from the adapter's GitHub Releases for your OS and architecture
-3. Installs it to `~/.promptarena/adapters/promptarena-deploy-{provider}` (e.g. `promptarena-deploy-omnia`)
-4. Sets executable permissions (0755)
+2. Resolves the version to install: the one you pinned with `@version`, otherwise the newest GitHub release. If the Releases API is unreachable (offline, rate-limited), it falls back to the version recorded in the built-in registry and says so, and that fallback is refreshed automatically whenever an adapter releases
+3. Downloads the binary from the adapter's GitHub Releases for your OS and architecture
+4. Installs it to `~/.promptarena/adapters/promptarena-deploy-{provider}` (e.g. `promptarena-deploy-omnia`)
+5. Sets executable permissions (0755)
 
 ### Download URL Format
 

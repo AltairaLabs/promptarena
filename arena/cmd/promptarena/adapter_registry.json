@@ -1,0 +1,28 @@
+{
+  "adapters": {
+    "agentcore": {
+      "repo": "AltairaLabs/promptarena-deploy-agentcore",
+      "description": "AWS Bedrock AgentCore",
+      "latest": "0.3.1",
+      "maintained_by": "AltairaLabs"
+    },
+    "omnia": {
+      "repo": "AltairaLabs/PromptArena-deploy-omnia",
+      "description": "Omnia Kubernetes platform",
+      "latest": "1.5.1",
+      "maintained_by": "AltairaLabs"
+    },
+    "foundry": {
+      "repo": "AltairaLabs/promptarena-deploy-foundry",
+      "description": "Azure AI Foundry hosted agents",
+      "latest": "0.2.1",
+      "maintained_by": "AltairaLabs"
+    },
+    "vertex": {
+      "repo": "AltairaLabs/promptarena-deploy-vertex",
+      "description": "Google Agent Runtime",
+      "latest": "0.2.1",
+      "maintained_by": "AltairaLabs"
+    }
+  }
+}
