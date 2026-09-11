@@ -61,7 +61,7 @@ Flags: `--config`, `--id`, `--output`
 
 Generate Arena scenarios from recorded sessions
 
-Flags: `--config`, `--dedup`, `--expect`, `--filter-eval-type`, `--filter-passed`, `--from-recordings`, `--output`, `--source`, `--task-type`
+Flags: `--config`, `--dedup`, `--expect`, `--filter-eval-type`, `--filter-passed`, `--from-recordings`, `--output`, `--source`, `--task-type`, `--workspace`
 
 ## promptarena init
 

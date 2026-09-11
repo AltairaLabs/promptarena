@@ -1,12 +1,15 @@
 package main
 
 import (
+	"context"
 	"path/filepath"
 	"testing"
 
 	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/AltairaLabs/promptarena/arena/generate"
 )
 
 func newGenerateTestCmd() *cobra.Command {
@@ -15,23 +18,61 @@ func newGenerateTestCmd() *cobra.Command {
 	return cmd
 }
 
-func TestResolveAdapter_FromRecordings(t *testing.T) {
+// buildRequestFromFlags resolves the source the way runGenerate does, then
+// builds the request. Tests below only ever use --from-recordings here.
+func buildRequestFromFlags(t *testing.T, cmd *cobra.Command) (generate.Request, error) {
+	t.Helper()
+	source, closer, err := resolveSource(context.Background(), cmd)
+	require.NoError(t, err)
+	t.Cleanup(func() { _ = closer() })
+	return buildRequest(cmd, source)
+}
+
+func TestResolveSource_FromRecordings(t *testing.T) {
 	cmd := newGenerateTestCmd()
 	require.NoError(t, cmd.Flags().Set("from-recordings", "*.json"))
-	adapter, err := resolveAdapter(cmd)
+	adapter, closer, err := resolveSource(context.Background(), cmd)
 	require.NoError(t, err)
 	assert.Equal(t, "recordings", adapter.Name())
+	assert.NoError(t, closer())
 }
 
-func TestResolveAdapter_FromSource(t *testing.T) {
+// An unknown --source falls through the registry to the deploy adapters, and
+// a missing adapter is explained with the install command. The workspace flag
+// rides along and must not change that outcome.
+func TestResolveSource_UnknownAdapterExplainsInstall(t *testing.T) {
+	dir := t.TempDir()
+	t.Setenv("PATH", dir)
+	t.Chdir(dir)
 	cmd := newGenerateTestCmd()
 	require.NoError(t, cmd.Flags().Set("source", "nonexistent"))
-	_, err := resolveAdapter(cmd)
+	require.NoError(t, cmd.Flags().Set("workspace", "demo"))
+	_, _, err := resolveSource(context.Background(), cmd)
 	require.Error(t, err)
+	assert.Contains(t, err.Error(), "promptarena deploy adapter install nonexistent")
 }
 
-func TestResolveAdapter_NeitherFlag(t *testing.T) {
-	_, err := resolveAdapter(newGenerateTestCmd())
+type inprocSource struct{}
+
+func (inprocSource) Name() string { return "inproc" }
+func (inprocSource) List(context.Context, generate.ListOptions) ([]generate.SessionSummary, error) {
+	return nil, nil
+}
+func (inprocSource) Get(context.Context, string) (*generate.SessionDetail, error) { return nil, nil }
+
+// A source registered in-process by a Go caller wins over the deploy adapters.
+func TestResolveSource_RegistryWins(t *testing.T) {
+	generateRegistry.Register(inprocSource{})
+	cmd := newGenerateTestCmd()
+	require.NoError(t, cmd.Flags().Set("source", "inproc"))
+	adapter, closer, err := resolveSource(context.Background(), cmd)
+	require.NoError(t, err)
+	assert.Equal(t, "inproc", adapter.Name())
+	assert.NoError(t, closer())
+}
+
+func TestResolveSource_NeitherFlag(t *testing.T) {
+	_, _, err := resolveSource(context.Background(), newGenerateTestCmd())
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "specify either --source or --from-recordings")
 }
@@ -39,7 +80,7 @@ func TestResolveAdapter_NeitherFlag(t *testing.T) {
 func TestBuildRequest_Defaults(t *testing.T) {
 	cmd := newGenerateTestCmd()
 	require.NoError(t, cmd.Flags().Set("from-recordings", "*.json"))
-	req, err := buildRequest(cmd)
+	req, err := buildRequestFromFlags(t, cmd)
 	require.NoError(t, err)
 	assert.Nil(t, req.List.FilterPassed)
 	assert.Empty(t, req.List.Expectations)
@@ -58,7 +99,7 @@ func TestBuildRequest_Flags(t *testing.T) {
 	require.NoError(t, cmd.Flags().Set("expect", "faithfulness>=0.8"))
 	require.NoError(t, cmd.Flags().Set("expect", "toxicity<=0.2"))
 
-	req, err := buildRequest(cmd)
+	req, err := buildRequestFromFlags(t, cmd)
 	require.NoError(t, err)
 	require.NotNil(t, req.List.FilterPassed)
 	assert.False(t, *req.List.FilterPassed)
@@ -75,7 +116,7 @@ func TestBuildRequest_BadExpectation(t *testing.T) {
 	cmd := newGenerateTestCmd()
 	require.NoError(t, cmd.Flags().Set("from-recordings", "*.json"))
 	require.NoError(t, cmd.Flags().Set("expect", "faithfulness"))
-	_, err := buildRequest(cmd)
+	_, err := buildRequestFromFlags(t, cmd)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "faithfulness")
 }
@@ -84,7 +125,7 @@ func TestBuildRequest_DeprecatedPackAlias(t *testing.T) {
 	cmd := newGenerateTestCmd()
 	require.NoError(t, cmd.Flags().Set("from-recordings", "*.json"))
 	require.NoError(t, cmd.Flags().Set("pack", "legacy"))
-	req, err := buildRequest(cmd)
+	req, err := buildRequestFromFlags(t, cmd)
 	require.NoError(t, err)
 	assert.Equal(t, "legacy", req.Convert.TaskType)
 }

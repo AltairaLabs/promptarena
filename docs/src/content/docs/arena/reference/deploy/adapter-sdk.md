@@ -399,6 +399,37 @@ the identity provider. `LoginURLRequest`/`CompleteLoginRequest` both carry the
 current deploy `Config` (JSON, possibly partial) so the adapter can read
 provider coordinates such as an endpoint.
 
+## Optional: SessionSourceProvider
+
+Adapters may implement `SessionSourceProvider` so `promptarena generate --source
+<adapter>` can turn recorded production sessions into regression scenarios.
+Advertise `deploy.SessionsCapability` (`"sessions"`) in `ProviderInfo.Capabilities`;
+the SDK then dispatches `list_sessions` / `get_session` to your provider. Adapters
+that don't implement it are unaffected — the CLI reports session sourcing as
+unsupported and tells the user to upgrade the adapter.
+
+```go
+type SessionSourceProvider interface {
+    // ListSessions returns one page of session summaries. Filters may be applied
+    // server-side; the CLI re-checks them client-side either way.
+    ListSessions(ctx context.Context, req *ListSessionsRequest) (*ListSessionsResponse, error)
+
+    // GetSession returns one session in full: messages, pack identity,
+    // variables, workflow trace and every recorded eval.
+    GetSession(ctx context.Context, req *GetSessionRequest) (*GetSessionResponse, error)
+}
+```
+
+Both requests carry the merged deploy `Config` (JSON) — endpoint, workspace,
+`api_token` — so the adapter reaches the platform the same way `Plan`/`Apply` do.
+`SessionDetail.Messages` is a `json.RawMessage` holding a JSON array of PromptKit
+`types.Message`, so the `deploy` package stays free of runtime types.
+
+Report evals as the platform recorded them: a measurement has a `Score` and a nil
+`Passed`; a judged assertion or guardrail has a verdict. Do not invent verdicts.
+Include the pack's declared `threshold` when the platform knows it. Redaction is
+the platform's job before it serves session data; the adapter does none of its own.
+
 ## Types
 
 ### ProviderInfo
@@ -423,6 +454,44 @@ type ValidateResponse struct {
     Valid    bool     `json:"valid"`
     Errors   []string `json:"errors,omitempty"`
     Warnings []string `json:"warnings,omitempty"` // non-blocking advisories
+}
+```
+
+### Session Types
+
+```go
+type ListSessionsRequest struct {
+    DeployConfig   string               `json:"deploy_config"`
+    Environment    string               `json:"environment"`
+    FilterPassed   *bool                `json:"filter_passed,omitempty"`
+    FilterEvalType string               `json:"filter_eval_type,omitempty"`
+    Expectations   []SessionExpectation `json:"expectations,omitempty"` // {eval_id, min?, max?}
+    Limit          int                  `json:"limit,omitempty"`
+    Cursor         string               `json:"cursor,omitempty"`
+}
+
+type ListSessionsResponse struct {
+    Sessions   []SessionSummary `json:"sessions"`
+    NextCursor string           `json:"next_cursor,omitempty"`
+}
+
+type GetSessionRequest struct {
+    DeployConfig string `json:"deploy_config"`
+    Environment  string `json:"environment"`
+    SessionID    string `json:"session_id"`
+}
+
+type GetSessionResponse struct {
+    Session SessionDetail `json:"session"`
+}
+
+type SessionDetail struct {
+    SessionSummary                       // id, scenario_id, provider_id, timestamp, turn_count, has_failures, tags, metadata
+    Messages  json.RawMessage   `json:"messages"`            // JSON array of PromptKit types.Message
+    Pack      *SessionPack      `json:"pack,omitempty"`      // {name, version, digest}
+    Variables map[string]string `json:"variables,omitempty"`
+    Workflow  *SessionWorkflow  `json:"workflow,omitempty"`  // {entry_state, entry_prompt_task, transitions}
+    Evals     []SessionEval     `json:"evals,omitempty"`     // {id, type, kind, score?, passed?, params, threshold?, message, details, turn?}
 }
 ```
 

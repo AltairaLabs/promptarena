@@ -11,12 +11,19 @@ import (
 )
 
 func runGenerate(cmd *cobra.Command, _ []string) error {
-	req, err := buildRequest(cmd)
+	ctx := context.Background()
+	source, closeSource, err := resolveSource(ctx, cmd)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = closeSource() }()
+
+	req, err := buildRequest(cmd, source)
 	if err != nil {
 		return err
 	}
 
-	res, err := generate.Generate(context.Background(), req)
+	res, err := generate.Generate(ctx, req)
 	if err != nil {
 		return err
 	}
