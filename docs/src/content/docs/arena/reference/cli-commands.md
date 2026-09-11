@@ -255,7 +255,9 @@ promptarena generate [flags]
 | `--source` | string | - | Named session source adapter (e.g., `omnia`) |
 | `--filter-passed` | bool | - | Filter by pass/fail status (tri-state: omit for all, `true` for passed, `false` for failed) |
 | `--filter-eval-type` | string | - | Filter sessions by assertion failure type (e.g., `content_matches`) |
-| `--task-type` | string | `conversation` | `task_type` to set on the generated scenarios |
+| `--expect` | string (repeatable) | - | Expected range for a measured eval, e.g. `faithfulness>=0.8`. Selects sessions whose score fell outside it, and becomes the generated assertion's `min_score`/`max_score`. |
+| `--config` | string | - | Arena config whose pack supplies eval params and declared thresholds for recorded measurements |
+| `--task-type` | string | `conversation` | `task_type` to set on the generated scenarios (a recorded workflow entry state's `prompt_task` wins over it) |
 | `--output` | string | `.` | Output directory for generated scenario files |
 | `--dedup` | bool | `true` | Deduplicate sessions by failure pattern fingerprint |
 
@@ -276,6 +278,34 @@ You must specify either `--from-recordings` or `--source`. The `--from-recording
 | Transcript | `*.transcript.yaml` | Messages only. |
 
 Run output is the everyday input: point the command at the `out/` directory of a run that had failures and it produces one scenario per failing run.
+
+Every user turn in a session becomes a scenario turn, with any attached images, documents or audio. A session with several user turns is generated in full, with a warning in the output and the scenario description: later turns were written against the recorded answers, and the model will not give the same answers twice, so the replay may not behave as recorded. The recorded pack identity and template variables are carried into the scenario, and a recorded workflow entry state becomes the scenario's `task_type`.
+
+### How recorded evals become assertions
+
+Real sessions record measurements, not verdicts: an eval such as `faithfulness`
+produces a score, and whether that score is acceptable is a threshold the pack
+author or you decide. A scenario assertion is the same eval type and params
+plus `min_score` / `max_score`. `generate` makes one decision per recorded
+eval and prints it:
+
+| Situation | Result |
+|-----------|--------|
+| The eval carried a verdict (an assertion or guardrail) and it failed | Asserted with its recorded params |
+| The eval carried a verdict and it passed | Dropped; nothing to regress against |
+| The pack (via `--config`) declares a `threshold` for the eval | Asserted with that bound |
+| You passed `--expect <id><op><value>` for the eval | Asserted with that bound |
+| None of the above | Reported with its score and the `--expect` to pass. Never asserted against an invented bound. |
+
+`>=` and `>` become `min_score`; `<=` and `<` become `max_score`; `==` sets both.
+Bounds are inclusive, so a strict operator is widened and the decision says so.
+`--expect` also selects: only sessions whose measurement fell outside the range
+(or never produced one) are generated.
+
+```
+session run-1 eval faithfulness (faithfulness) scored 0.42: asserted-threshold min_score 0.8 — pack threshold gte 0.8 (recorded score 0.42)
+session run-1 eval answer_relevancy (answer_relevancy) scored 0.9: reported — scored 0.9 in session run-1; no threshold known — pass --expect answer_relevancy>=<value> (or <=) or declare threshold on the eval in the pack
+```
 
 ### Examples
 
@@ -303,6 +333,16 @@ promptarena generate \
   --from-recordings "out/*.json" \
   --filter-eval-type content_matches \
   --output scenarios/content-failures
+```
+
+Turn sessions where `faithfulness` fell below 0.8 into scenarios that assert it, lending the pack's eval params from the arena config:
+
+```bash
+promptarena generate \
+  --from-recordings "out/*.json" \
+  --config config.arena.yaml \
+  --expect faithfulness>=0.8 \
+  --output scenarios/faithfulness-regressions
 ```
 
 Set the task type the generated scenarios run against:
