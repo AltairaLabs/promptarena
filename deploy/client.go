@@ -36,6 +36,8 @@ const (
 	methodImport       = "import"
 	methodGetLoginURL  = "get_login_url"
 	methodCompleteLgin = "complete_login"
+	methodListSessions = "list_sessions"
+	methodGetSession   = "get_session"
 )
 
 // rpcRequest is a JSON-RPC 2.0 request envelope.
@@ -381,8 +383,32 @@ func (c *AdapterClient) CompleteLogin(ctx context.Context, req *CompleteLoginReq
 	return &resp, nil
 }
 
-// Verify AdapterClient implements Provider and LoginProvider at compile time.
+// ListSessions asks the adapter for a page of recorded sessions.
+//
+// An adapter that does not implement session sourcing answers method-not-found,
+// which matches errors.Is(err, ErrMethodNotSupported). Prefer checking
+// ProviderInfo.Capabilities for SessionsCapability first.
+func (c *AdapterClient) ListSessions(ctx context.Context, req *ListSessionsRequest) (*ListSessionsResponse, error) {
+	var resp ListSessionsResponse
+	if err := c.callCtx(ctx, methodListSessions, req, &resp); err != nil {
+		return nil, err
+	}
+	return &resp, nil
+}
+
+// GetSession fetches one recorded session in full.
+func (c *AdapterClient) GetSession(ctx context.Context, req *GetSessionRequest) (*GetSessionResponse, error) {
+	var resp GetSessionResponse
+	if err := c.callCtx(ctx, methodGetSession, req, &resp); err != nil {
+		return nil, err
+	}
+	return &resp, nil
+}
+
+// Verify AdapterClient implements Provider and the optional capabilities at
+// compile time.
 var (
-	_ Provider      = (*AdapterClient)(nil)
-	_ LoginProvider = (*AdapterClient)(nil)
+	_ Provider              = (*AdapterClient)(nil)
+	_ LoginProvider         = (*AdapterClient)(nil)
+	_ SessionSourceProvider = (*AdapterClient)(nil)
 )
