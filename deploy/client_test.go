@@ -123,6 +123,26 @@ func defaultHandler(method string, params json.RawMessage) (any, *rpcError) {
 			Token:   "omnia_sk_tok",
 		}, nil
 
+	case methodListSessions:
+		var req ListSessionsRequest
+		if err := json.Unmarshal(params, &req); err != nil {
+			return nil, &rpcError{Code: -32700, Message: err.Error()}
+		}
+		return &ListSessionsResponse{
+			Sessions:   []SessionSummary{{ID: "s-" + req.Cursor, HasFailures: true}},
+			NextCursor: "",
+		}, nil
+
+	case methodGetSession:
+		var req GetSessionRequest
+		if err := json.Unmarshal(params, &req); err != nil {
+			return nil, &rpcError{Code: -32700, Message: err.Error()}
+		}
+		return &GetSessionResponse{Session: SessionDetail{
+			SessionSummary: SessionSummary{ID: req.SessionID},
+			Messages:       json.RawMessage(`[{"role":"user","content":"hi"}]`),
+		}}, nil
+
 	default:
 		return nil, &rpcError{Code: -32601, Message: "method not found: " + method}
 	}
@@ -541,5 +561,43 @@ func TestRPCError_Error(t *testing.T) {
 	want := "adapter error -32601: method not found"
 	if got != want {
 		t.Errorf("Error() = %q, want %q", got, want)
+	}
+}
+
+func TestClientListSessions(t *testing.T) {
+	client := startTestClient(t, defaultHandler)
+	resp, err := client.ListSessions(context.Background(), &ListSessionsRequest{DeployConfig: "{}", Cursor: "p2"})
+	if err != nil {
+		t.Fatalf("ListSessions: %v", err)
+	}
+	if len(resp.Sessions) != 1 || resp.Sessions[0].ID != "s-p2" || !resp.Sessions[0].HasFailures {
+		t.Errorf("unexpected sessions: %+v", resp.Sessions)
+	}
+}
+
+func TestClientGetSession(t *testing.T) {
+	client := startTestClient(t, defaultHandler)
+	resp, err := client.GetSession(context.Background(), &GetSessionRequest{DeployConfig: "{}", SessionID: "s-9"})
+	if err != nil {
+		t.Fatalf("GetSession: %v", err)
+	}
+	if resp.Session.ID != "s-9" || string(resp.Session.Messages) != `[{"role":"user","content":"hi"}]` {
+		t.Errorf("unexpected session: %+v", resp.Session)
+	}
+}
+
+// An adapter built before the capability existed answers method-not-found;
+// callers must be able to branch on that rather than on the message.
+func TestClientSessions_Unsupported(t *testing.T) {
+	client := startTestClient(t, func(method string, _ json.RawMessage) (any, *rpcError) {
+		return nil, &rpcError{Code: -32601, Message: "method not found: " + method}
+	})
+	_, err := client.ListSessions(context.Background(), &ListSessionsRequest{})
+	if !errors.Is(err, ErrMethodNotSupported) {
+		t.Errorf("ListSessions: want ErrMethodNotSupported, got %v", err)
+	}
+	_, err = client.GetSession(context.Background(), &GetSessionRequest{})
+	if !errors.Is(err, ErrMethodNotSupported) {
+		t.Errorf("GetSession: want ErrMethodNotSupported, got %v", err)
 	}
 }

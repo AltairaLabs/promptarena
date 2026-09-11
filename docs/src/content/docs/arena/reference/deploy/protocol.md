@@ -546,6 +546,82 @@ a scoped token.
 | `profile` | object | The deploy profile to merge into the config (endpoint, workspace, providers, skills) |
 | `token` | string | The scoped secret token (stored in the credentials file, never in the config) |
 
+### list_sessions
+
+**Optional.** Served only by adapters that advertise the `sessions` capability and
+implement the `SessionSourceProvider` interface; others return method-not-found.
+Returns one page of recorded sessions from the platform the adapter deploys to,
+for `promptarena generate --source <adapter>`.
+
+**Request:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 10,
+  "method": "list_sessions",
+  "params": {
+    "deploy_config": "{\"api_endpoint\":\"https://omnia.example.com\",\"workspace\":\"demo\",\"api_token\":\"omnia_sk_…\"}",
+    "environment": "default",
+    "filter_passed": false,
+    "expectations": [{ "eval_id": "faithfulness", "min": 0.8 }],
+    "limit": 50,
+    "cursor": ""
+  }
+}
+```
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `deploy_config` | string | JSON-encoded merged deploy config: endpoint, workspace, `api_token` and whatever else the profile carries — the same document `plan`/`apply` receive |
+| `environment` | string | The deploy environment the config was merged for |
+| `filter_passed` | bool | Optional. `true` = passed only, `false` = failed only (a failed recorded verdict or a violated expectation); absent = all |
+| `filter_eval_type` | string | Optional. Only sessions that recorded an eval of this type |
+| `expectations` | object[] | Optional. `{eval_id, min?, max?}`: sessions whose score fell outside the range, or never measured the eval |
+| `limit` | int | Optional page size; 0 = adapter default |
+| `cursor` | string | Optional; continues a previous page |
+
+| Result Field | Type | Description |
+|--------------|------|-------------|
+| `sessions` | object[] | Summaries: `id`, `scenario_id`, `provider_id`, `timestamp`, `turn_count`, `has_failures`, `tags`, `metadata` |
+| `next_cursor` | string | Non-empty when more pages follow |
+
+Whether a filter is applied server-side is the adapter's choice; the CLI re-checks
+client-side, so the result is the same either way.
+
+---
+
+### get_session
+
+**Optional.** Returns one session in full.
+
+**Request:**
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 11,
+  "method": "get_session",
+  "params": {
+    "deploy_config": "{\"api_endpoint\":\"https://omnia.example.com\",\"workspace\":\"demo\"}",
+    "environment": "default",
+    "session_id": "01J9…"
+  }
+}
+```
+
+| Result Field | Type | Description |
+|--------------|------|-------------|
+| `session.id` … | | The summary fields above |
+| `session.messages` | array | The conversation as a JSON array of PromptKit `types.Message` — tool calls and tool results inline, multimodal parts inline or by URI |
+| `session.pack` | object | Optional `{name, version, digest}` of the pack the session ran against |
+| `session.variables` | object | Optional template variables the run was invoked with |
+| `session.workflow` | object | Optional `{entry_state, entry_prompt_task, transitions[{from, to, event, prompt_task, message_index}]}` |
+| `session.evals` | object[] | Every recorded eval: `id`, `type`, `kind` (`eval` / `assertion` / `guardrail`), `score`, `passed` (absent for a measurement), `params`, `threshold` (`{operator, value}` from the pack, when known), `message`, `details`, `turn` (absent for conversation-level) |
+
+Redaction is the platform's responsibility before it serves session data; an
+adapter performs none of its own.
+
 ## Error Codes
 
 Standard JSON-RPC 2.0 error codes:

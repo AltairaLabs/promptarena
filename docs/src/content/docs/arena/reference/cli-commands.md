@@ -252,7 +252,8 @@ promptarena generate [flags]
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `--from-recordings` | string | - | Glob of local recordings (see input formats below) |
-| `--source` | string | - | Named session source adapter (e.g., `omnia`) |
+| `--source` | string | - | Installed deploy adapter to pull sessions from (e.g. `omnia`). Needs the adapter's `sessions` capability and a `deploy:` section in `--config` for endpoint, workspace and token |
+| `--workspace` | string | - | Override the deploy profile's workspace when using `--source` |
 | `--filter-passed` | bool | - | Filter by pass/fail status (tri-state: omit for all, `true` for passed, `false` for failed) |
 | `--filter-eval-type` | string | - | Filter sessions by assertion failure type (e.g., `content_matches`) |
 | `--expect` | string (repeatable) | - | Expected range for a measured eval, e.g. `faithfulness>=0.8`. Selects sessions whose score fell outside it, and becomes the generated assertion's `min_score`/`max_score`. |
@@ -264,7 +265,7 @@ promptarena generate [flags]
 `--pack` is a deprecated alias for `--task-type`; it only ever set the task type.
 
 :::note
-You must specify either `--from-recordings` or `--source`. The `--from-recordings` flag uses the built-in recordings adapter, while `--source` looks up a named adapter from the plugin registry.
+You must specify either `--from-recordings` or `--source`. `--from-recordings` reads local files. `--source <name>` resolves the installed deploy adapter of that name (`~/.promptarena/adapters/promptarena-deploy-<name>`, or project-local), checks it advertises the `sessions` capability, and hands it the merged deploy config from `--config`, including the token stored by `promptarena deploy login`. An adapter without the capability is reported with the upgrade command.
 :::
 
 ### Input formats
@@ -354,14 +355,18 @@ promptarena generate \
   --output scenarios/support
 ```
 
-Generate from a named external source adapter:
+Pull failing production sessions through the installed Omnia deploy adapter:
 
 ```bash
 promptarena generate \
   --source omnia \
+  --config arena.yaml \
   --filter-passed=false \
+  --expect faithfulness>=0.8 \
   --output scenarios/production-failures
 ```
+
+See [Generate regression scenarios from production sessions](/arena/how-to/scenarios/generate-from-production-sessions/).
 
 ### Output
 

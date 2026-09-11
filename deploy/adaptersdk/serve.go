@@ -25,6 +25,8 @@ const (
 	MethodImport          = "import"
 	MethodGetLoginURL     = "get_login_url"
 	MethodCompleteLogin   = "complete_login"
+	MethodListSessions    = "list_sessions"
+	MethodGetSession      = "get_session"
 )
 
 // Standard JSON-RPC 2.0 error codes.
@@ -161,6 +163,10 @@ func dispatch(provider deploy.Provider, req *request) response {
 		return handleGetLoginURL(ctx, provider, req)
 	case MethodCompleteLogin:
 		return handleCompleteLogin(ctx, provider, req)
+	case MethodListSessions:
+		return handleListSessions(ctx, provider, req)
+	case MethodGetSession:
+		return handleGetSession(ctx, provider, req)
 	default:
 		return response{
 			JSONRPC: jsonRPCVersion,
@@ -364,4 +370,50 @@ func errResponse(id json.RawMessage, code int, message string) response {
 		},
 		ID: id,
 	}
+}
+
+// handleListSessions handles the list_sessions method. It is served only when
+// the provider implements the optional deploy.SessionSourceProvider; otherwise
+// the caller receives method-not-found and treats session sourcing as
+// unsupported.
+func handleListSessions(
+	ctx context.Context,
+	provider deploy.Provider,
+	req *request,
+) response {
+	sp, ok := provider.(deploy.SessionSourceProvider)
+	if !ok {
+		return errResponse(req.ID, CodeMethodNotFound, "method not found: "+req.Method)
+	}
+	var params deploy.ListSessionsRequest
+	if err := json.Unmarshal(req.Params, &params); err != nil {
+		return errResponse(req.ID, CodeParseError, invalidParamsPrefix+err.Error())
+	}
+	result, err := sp.ListSessions(ctx, &params)
+	if err != nil {
+		return errResponse(req.ID, CodeInternalError, err.Error())
+	}
+	return okResponse(req.ID, result)
+}
+
+// handleGetSession handles the get_session method. Like list_sessions it is
+// served only when the provider implements deploy.SessionSourceProvider.
+func handleGetSession(
+	ctx context.Context,
+	provider deploy.Provider,
+	req *request,
+) response {
+	sp, ok := provider.(deploy.SessionSourceProvider)
+	if !ok {
+		return errResponse(req.ID, CodeMethodNotFound, "method not found: "+req.Method)
+	}
+	var params deploy.GetSessionRequest
+	if err := json.Unmarshal(req.Params, &params); err != nil {
+		return errResponse(req.ID, CodeParseError, invalidParamsPrefix+err.Error())
+	}
+	result, err := sp.GetSession(ctx, &params)
+	if err != nil {
+		return errResponse(req.ID, CodeInternalError, err.Error())
+	}
+	return okResponse(req.ID, result)
 }

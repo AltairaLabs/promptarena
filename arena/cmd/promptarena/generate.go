@@ -1,12 +1,14 @@
 package main
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/arena/deploy/flow"
 	"github.com/AltairaLabs/promptarena/arena/generate"
 	"github.com/AltairaLabs/promptarena/arena/generate/sources"
 )
@@ -25,7 +27,11 @@ recorded verdict, the pack's declared threshold (with --config), or an
 asserted. Each decision is printed.
 
   promptarena generate --from-recordings "out/*.json" --filter-passed=false --output scenarios/
-  promptarena generate --from-recordings "out/*.json" --expect faithfulness>=0.8 --config config.arena.yaml`,
+  promptarena generate --from-recordings "out/*.json" --expect faithfulness>=0.8 --config config.arena.yaml
+  promptarena generate --source omnia --config arena.yaml --filter-passed=false --output scenarios/prod
+
+--source names an installed deploy adapter with the sessions capability; the
+deploy: section of --config supplies the endpoint, workspace and token.`,
 	RunE: runGenerate,
 }
 
@@ -37,7 +43,9 @@ func init() {
 // registerGenerateFlags is shared with the tests so they exercise the real
 // flag set.
 func registerGenerateFlags(f *pflag.FlagSet) {
-	f.String("source", "", "Named session source adapter (e.g., omnia)") // NOSONAR
+	f.String("source", "", "Installed deploy adapter to pull sessions from (e.g., omnia); "+
+		"needs its sessions capability and a deploy: section in --config") // NOSONAR
+	f.String("workspace", "", "Override the deploy profile's workspace when using --source") // NOSONAR
 	f.String("from-recordings", "", "Glob of local recordings: arena run output (out/*.json), "+
 		"PromptKit session recordings (*.recording.json, *.jsonl) or transcripts") // NOSONAR
 	f.String("filter-eval-type", "", "Filter sessions by assertion failure type") // NOSONAR
@@ -52,26 +60,39 @@ func registerGenerateFlags(f *pflag.FlagSet) {
 	f.Bool("dedup", true, "Deduplicate sessions by failure pattern")         // NOSONAR
 }
 
-func resolveAdapter(cmd *cobra.Command) (generate.SessionSourceAdapter, error) {
+// resolveSource returns the session source the flags name and a closer that
+// releases it (a no-op for sources with nothing to release).
+//
+// --from-recordings reads local files. --source <name> is first looked up in
+// the in-process registry (a Go caller may have registered one), then resolved
+// as an installed deploy adapter with the sessions capability, using the
+// deploy: section of --config for endpoint, workspace and token.
+func resolveSource(ctx context.Context, cmd *cobra.Command) (generate.SessionSourceAdapter, func() error, error) {
+	noop := func() error { return nil }
 	sourceName, _ := cmd.Flags().GetString("source")
 	fromRecordings, _ := cmd.Flags().GetString("from-recordings")
 
 	switch {
 	case fromRecordings != "":
-		return sources.NewRecordingsAdapter(fromRecordings), nil
+		return sources.NewRecordingsAdapter(fromRecordings), noop, nil
 	case sourceName != "":
-		return generateRegistry.Get(sourceName)
+		if adapter, err := generateRegistry.Get(sourceName); err == nil {
+			return adapter, noop, nil
+		}
+		configPath, _ := cmd.Flags().GetString("config")
+		workspace, _ := cmd.Flags().GetString("workspace")
+		src, err := flow.OpenSessionSource(ctx, sourceName, flow.Options{ConfigPath: configPath}, workspace)
+		if err != nil {
+			return nil, nil, err
+		}
+		return src, src.Close, nil
 	default:
-		return nil, fmt.Errorf("specify either --source or --from-recordings")
+		return nil, nil, fmt.Errorf("specify either --source or --from-recordings")
 	}
 }
 
-// buildRequest turns the flags into a generate.Request.
-func buildRequest(cmd *cobra.Command) (generate.Request, error) {
-	source, err := resolveAdapter(cmd)
-	if err != nil {
-		return generate.Request{}, err
-	}
+// buildRequest turns the flags into a generate.Request for the resolved source.
+func buildRequest(cmd *cobra.Command, source generate.SessionSourceAdapter) (generate.Request, error) {
 	req := generate.Request{Source: source}
 
 	if cmd.Flags().Changed("filter-passed") {
