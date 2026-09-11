@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/AltairaLabs/PromptKit/pkg/config"
+	"github.com/AltairaLabs/PromptKit/runtime/workflow"
 )
 
 // ValidationCheck represents a single validation check result
@@ -57,6 +58,7 @@ func (v *ConfigValidator) Validate() error {
 	v.validateToolUsage()
 	v.validateAllowedToolsResolve()
 	v.validateTaskTypeUsage()
+	v.validateWorkflow()
 
 	if len(v.errors) > 0 {
 		return fmt.Errorf("configuration validation failed with %d errors: %v", len(v.errors), v.errors)
@@ -310,6 +312,38 @@ func (v *ConfigValidator) validateCrossReferences() {
 			v.errors = append(v.errors, err)
 		}
 	}
+}
+
+// validateWorkflow runs the shared PromptKit workflow validator over the
+// config's workflow, so the rules the runtime enforces — including RFC 0014's
+// `control` (an unrecognized value is an error; `control: agent` on a
+// terminal state, or an agent-controlled cycle with nothing to yield, is a
+// warning) — reach authors at validate time rather than at run time (#175).
+//
+// prompt_task references resolve against the loaded prompt configs' task
+// types, which is what the engine binds workflow states to.
+func (v *ConfigValidator) validateWorkflow() {
+	if v.config.Workflow == nil {
+		return
+	}
+	spec, err := workflow.ParseConfig(v.config.Workflow)
+	if err != nil {
+		v.errors = append(v.errors, fmt.Errorf("workflow: %w", err))
+		return
+	}
+	if spec == nil {
+		return
+	}
+	taskTypes := v.getPromptTaskTypes()
+	promptKeys := make([]string, 0, len(taskTypes))
+	for k := range taskTypes {
+		promptKeys = append(promptKeys, k)
+	}
+	result := workflow.Validate(spec, promptKeys)
+	for _, e := range result.Errors {
+		v.errors = append(v.errors, fmt.Errorf("%s", e))
+	}
+	v.warns = append(v.warns, result.Warnings...)
 }
 
 // Helper methods to build ID sets
