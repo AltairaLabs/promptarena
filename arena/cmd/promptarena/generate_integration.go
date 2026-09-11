@@ -106,10 +106,14 @@ func writeSessionScenario(
 	opts generate.ConvertOptions,
 	outputDir string,
 ) error {
-	sc, err := generate.ConvertSessionToScenario(session, opts)
+	c, err := generate.Convert(session, opts)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "warning: skipping session %s: %v\n", session.ID, err)
 		return nil
+	}
+	sc := c.Scenario
+	for _, w := range c.Warnings {
+		fmt.Fprintf(os.Stderr, "warning: %s\n", w)
 	}
 
 	data, err := yaml.Marshal(sc)

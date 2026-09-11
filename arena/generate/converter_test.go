@@ -8,149 +8,151 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/AltairaLabs/PromptKit/runtime/types"
-	"github.com/AltairaLabs/promptarena/arena/assertions"
 )
 
-func TestConvertSessionToScenario_Conversation(t *testing.T) {
+func TestConvert_UserTurnsBecomeScenarioTurns(t *testing.T) {
 	session := &SessionDetail{
-		SessionSummary: SessionSummary{
-			ID:        "session-123",
-			Timestamp: time.Date(2025, 1, 15, 10, 0, 0, 0, time.UTC),
-		},
+		SessionSummary: SessionSummary{ID: "session-123", Timestamp: time.Date(2025, 1, 15, 10, 0, 0, 0, time.UTC)},
 		Messages: []types.Message{
+			{Role: "system", Content: "You are helpful."},
 			{Role: "user", Content: "Hello"},
 			{Role: "assistant", Content: "Hi there!"},
 			{Role: "user", Content: "How are you?"},
-			{Role: "assistant", Content: "I'm doing well!"},
+			{Role: "assistant", Content: "Well!"},
 		},
 	}
 
-	sc, err := ConvertSessionToScenario(session, ConvertOptions{})
+	c, err := Convert(session, ConvertOptions{})
 	require.NoError(t, err)
+	sc := c.Scenario
 
 	assert.Equal(t, "promptkit.altairalabs.ai/v1alpha1", sc.APIVersion)
 	assert.Equal(t, "Scenario", sc.Kind)
 	assert.Equal(t, "session-123", sc.Metadata.Name)
 	assert.Equal(t, "conversation", sc.Spec.TaskType)
-	assert.Len(t, sc.Spec.Turns, 2)
+	require.Len(t, sc.Spec.Turns, 2)
 	assert.Equal(t, "Hello", sc.Spec.Turns[0].Content)
 	assert.Equal(t, "How are you?", sc.Spec.Turns[1].Content)
+	assert.Contains(t, sc.Spec.Description, "Generated from session session-123")
+	assert.Contains(t, sc.Spec.Description, "2025-01-15T10:00:00Z")
 }
 
-func TestConvertSessionToScenario_WithTaskType(t *testing.T) {
+// Every user turn is kept. A session with more than one is warned about, in
+// the result and in the scenario itself, because the model will not answer the
+// same way twice and later turns were written against the recorded answers.
+func TestConvert_MultiTurnWarns(t *testing.T) {
 	session := &SessionDetail{
-		SessionSummary: SessionSummary{ID: "wf-session"},
+		SessionSummary: SessionSummary{ID: "multi"},
 		Messages: []types.Message{
-			{Role: "user", Content: "Start order"},
-			{Role: "assistant", Content: "Order started"},
-			{Role: "user", Content: "Add item"},
+			{Role: "user", Content: "one"}, {Role: "assistant", Content: "a"},
+			{Role: "user", Content: "two"}, {Role: "assistant", Content: "b"},
+			{Role: "user", Content: "three"},
 		},
 	}
-
-	sc, err := ConvertSessionToScenario(session, ConvertOptions{TaskType: "intake"})
+	c, err := Convert(session, ConvertOptions{})
 	require.NoError(t, err)
+	assert.Len(t, c.Scenario.Spec.Turns, 3)
+	require.Len(t, c.Warnings, 1)
+	assert.Contains(t, c.Warnings[0], "3 user turns")
+	assert.Contains(t, c.Scenario.Spec.Description, "3 user turns")
 
-	assert.Equal(t, "intake", sc.Spec.TaskType)
-	assert.Len(t, sc.Spec.Turns, 2)
-	assert.Equal(t, "Start order", sc.Spec.Turns[0].Content)
+	single := &SessionDetail{SessionSummary: SessionSummary{ID: "one"}, Messages: []types.Message{{Role: "user", Content: "x"}}}
+	c, err = Convert(single, ConvertOptions{})
+	require.NoError(t, err)
+	assert.Empty(t, c.Warnings)
 }
 
-func TestConvertSessionToScenario_WithConversationAssertions(t *testing.T) {
+// Multimodal parts on a user message survive: text as text, media by URL,
+// file path or inline data, with the MIME type.
+func TestConvert_PartsSurvive(t *testing.T) {
+	url := "https://example.com/receipt.png"
+	data := "AAAA"
 	session := &SessionDetail{
-		SessionSummary: SessionSummary{ID: "eval-session", HasFailures: true},
-		Messages: []types.Message{
-			{Role: "user", Content: "Test"},
-			{Role: "assistant", Content: "Response"},
-		},
-		EvalResults: []assertions.ConversationValidationResult{
-			{
-				Type:    "content_matches",
-				Passed:  false,
-				Message: "Content did not match pattern",
-				Details: map[string]interface{}{"pattern": "expected.*"},
+		SessionSummary: SessionSummary{ID: "parts"},
+		Messages: []types.Message{{
+			Role: "user",
+			Parts: []types.ContentPart{
+				types.NewTextPart("What is on this receipt?"),
+				{Type: types.ContentTypeImage, Media: &types.MediaContent{MIMEType: "image/png", URL: &url}},
+				{Type: "document", Media: &types.MediaContent{MIMEType: "application/pdf", Data: &data}},
 			},
-			{
-				Type:    "tools_called",
-				Passed:  true,
-				Message: "Tools were called correctly",
-			},
-		},
+		}},
 	}
-
-	sc, err := ConvertSessionToScenario(session, ConvertOptions{})
+	c, err := Convert(session, ConvertOptions{})
 	require.NoError(t, err)
-
-	// Only failed assertions should be included.
-	require.Len(t, sc.Spec.ConversationAssertions, 1)
-	assert.Equal(t, "content_matches", sc.Spec.ConversationAssertions[0].Type)
-	assert.Equal(t, "Content did not match pattern", sc.Spec.ConversationAssertions[0].Message)
-	assert.Equal(t, "expected.*", sc.Spec.ConversationAssertions[0].Params["pattern"])
+	turn := c.Scenario.Spec.Turns[0]
+	assert.Equal(t, "What is on this receipt?", turn.Content, "text is kept as content for readability")
+	require.Len(t, turn.Parts, 3)
+	assert.Equal(t, "text", turn.Parts[0].Type)
+	assert.Equal(t, "What is on this receipt?", turn.Parts[0].Text)
+	assert.Equal(t, "image", turn.Parts[1].Type)
+	require.NotNil(t, turn.Parts[1].Media)
+	assert.Equal(t, url, turn.Parts[1].Media.URL)
+	assert.Equal(t, "image/png", turn.Parts[1].Media.MIMEType)
+	assert.Equal(t, data, turn.Parts[2].Media.Data)
 }
 
-func TestConvertSessionToScenario_WithTurnAssertions(t *testing.T) {
+func TestConvert_TextOnlyMessageHasNoParts(t *testing.T) {
+	session := &SessionDetail{SessionSummary: SessionSummary{ID: "plain"}, Messages: []types.Message{{Role: "user", Content: "hi"}}}
+	c, err := Convert(session, ConvertOptions{})
+	require.NoError(t, err)
+	assert.Empty(t, c.Scenario.Spec.Turns[0].Parts)
+}
+
+func TestConvert_VariablesAndPack(t *testing.T) {
 	session := &SessionDetail{
-		SessionSummary: SessionSummary{ID: "turn-eval-session"},
-		Messages: []types.Message{
-			{Role: "user", Content: "Q1"},
-			{Role: "assistant", Content: "A1"},
-			{Role: "user", Content: "Q2"},
-			{Role: "assistant", Content: "A2"},
-		},
-		TurnEvalResults: map[int][]TurnEvalResult{
-			0: {
-				{Type: "content_includes", Passed: false, Message: "Missing keyword", Params: map[string]interface{}{"text": "hello"}},
-			},
-			1: {
-				{Type: "content_includes", Passed: true, Message: "OK"},
-			},
-		},
+		SessionSummary: SessionSummary{ID: "vars"},
+		Messages:       []types.Message{{Role: "user", Content: "hi"}},
+		Variables:      map[string]string{"customer_tier": "gold"},
+		Pack:           &PackRef{Name: "support", Version: "1.4.2", Digest: "sha256:abc"},
 	}
-
-	sc, err := ConvertSessionToScenario(session, ConvertOptions{})
+	c, err := Convert(session, ConvertOptions{})
 	require.NoError(t, err)
-
-	// Turn 0 should have the failed assertion.
-	require.Len(t, sc.Spec.Turns, 2)
-	require.Len(t, sc.Spec.Turns[0].Assertions, 1)
-	assert.Equal(t, "content_includes", sc.Spec.Turns[0].Assertions[0].Type)
-
-	// Turn 1 should have no assertions (the one present passed).
-	assert.Empty(t, sc.Spec.Turns[1].Assertions)
+	assert.Equal(t, map[string]string{"customer_tier": "gold"}, c.Scenario.Spec.Variables)
+	assert.Contains(t, c.Scenario.Spec.Description, "pack support 1.4.2 (sha256:abc)")
 }
 
-func TestConvertSessionToScenario_NilSession(t *testing.T) {
-	_, err := ConvertSessionToScenario(nil, ConvertOptions{})
+// task_type selects the workflow start state, so the recorded entry state's
+// prompt_task wins over the option, which wins over the default.
+func TestConvert_TaskTypePrecedence(t *testing.T) {
+	base := func() *SessionDetail {
+		return &SessionDetail{SessionSummary: SessionSummary{ID: "tt"}, Messages: []types.Message{{Role: "user", Content: "hi"}}}
+	}
+	c, err := Convert(base(), ConvertOptions{})
+	require.NoError(t, err)
+	assert.Equal(t, "conversation", c.Scenario.Spec.TaskType)
+
+	c, err = Convert(base(), ConvertOptions{TaskType: "intake"})
+	require.NoError(t, err)
+	assert.Equal(t, "intake", c.Scenario.Spec.TaskType)
+
+	s := base()
+	s.Workflow = &WorkflowTrace{EntryState: "triage", EntryPromptTask: "triage_prompt"}
+	c, err = Convert(s, ConvertOptions{TaskType: "intake"})
+	require.NoError(t, err)
+	assert.Equal(t, "triage_prompt", c.Scenario.Spec.TaskType)
+
+	s.Workflow = &WorkflowTrace{EntryState: "triage"} // prompt task unknown
+	c, err = Convert(s, ConvertOptions{TaskType: "intake"})
+	require.NoError(t, err)
+	assert.Equal(t, "intake", c.Scenario.Spec.TaskType)
+}
+
+func TestConvert_NilSession(t *testing.T) {
+	_, err := Convert(nil, ConvertOptions{})
 	require.Error(t, err)
 }
 
 func TestSanitizeID(t *testing.T) {
-	tests := []struct {
-		input    string
-		expected string
-	}{
-		{"simple", "simple"},
-		{"Hello World!", "hello-world"},
-		{"UPPER_CASE", "upper-case"},
-		{"---leading-trailing---", "leading-trailing"},
+	tests := []struct{ in, want string }{
+		{"session-123", "session-123"},
+		{"Session_ABC 456", "session-abc-456"},
+		{"---weird---", "weird"},
 		{"", "generated"},
-		{"a" + string(make([]byte, 100)), "a"},
-		{"special@#$chars", "special-chars"},
+		{"2026-08-31T19-48-12Z-0001_gemini-flash_default_tool-usage_3a7b0b83_000b",
+			"2026-08-31t19-48-12z-0001-gemini-flash-default-tool-usage-3a7b0"},
 	}
-
 	for _, tt := range tests {
-		t.Run(tt.input, func(t *testing.T) {
-			got := sanitizeID(tt.input)
-			assert.Equal(t, tt.expected, got)
-			assert.LessOrEqual(t, len(got), maxIDLength)
-		})
+		assert.Equal(t, tt.want, sanitizeID(tt.in), tt.in)
 	}
-}
-
-func TestSanitizeID_LongInput(t *testing.T) {
-	long := ""
-	for i := 0; i < 100; i++ {
-		long += "abcd"
-	}
-	got := sanitizeID(long)
-	assert.LessOrEqual(t, len(got), maxIDLength)
 }
