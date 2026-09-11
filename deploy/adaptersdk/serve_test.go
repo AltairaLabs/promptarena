@@ -609,3 +609,90 @@ func TestServe_ReturnsErrorForNilIO(t *testing.T) {
 		t.Fatal("expected error for nil reader")
 	}
 }
+
+// fakeSessionsProvider is a fakeProvider that also implements
+// deploy.SessionSourceProvider.
+type fakeSessionsProvider struct {
+	*fakeProvider
+	gotList *deploy.ListSessionsRequest
+}
+
+func (f *fakeSessionsProvider) ListSessions(
+	_ context.Context, req *deploy.ListSessionsRequest,
+) (*deploy.ListSessionsResponse, error) {
+	f.gotList = req
+	return &deploy.ListSessionsResponse{
+		Sessions:   []deploy.SessionSummary{{ID: "s-1", HasFailures: true}, {ID: "s-2"}},
+		NextCursor: "page-2",
+	}, nil
+}
+
+func (f *fakeSessionsProvider) GetSession(
+	_ context.Context, req *deploy.GetSessionRequest,
+) (*deploy.GetSessionResponse, error) {
+	return &deploy.GetSessionResponse{Session: deploy.SessionDetail{
+		SessionSummary: deploy.SessionSummary{ID: req.SessionID},
+		Messages:       json.RawMessage(`[{"role":"user","content":"hi"}]`),
+	}}, nil
+}
+
+func TestServeIO_Sessions_Supported(t *testing.T) {
+	provider := &fakeSessionsProvider{fakeProvider: newFakeProvider()}
+
+	no := false
+	listIn := makeRequest("list_sessions",
+		deploy.ListSessionsRequest{DeployConfig: "{}", Environment: "default", FilterPassed: &no, Limit: 2}, 11) + "\n"
+	var listOut bytes.Buffer
+	if err := ServeIO(provider, strings.NewReader(listIn), &listOut); err != nil {
+		t.Fatalf("ServeIO list_sessions: %v", err)
+	}
+	if !strings.Contains(listOut.String(), `"s-1"`) || !strings.Contains(listOut.String(), `"next_cursor":"page-2"`) {
+		t.Errorf("expected two summaries and a cursor, got %s", listOut.String())
+	}
+	if provider.gotList == nil || provider.gotList.FilterPassed == nil || *provider.gotList.FilterPassed || provider.gotList.Limit != 2 {
+		t.Errorf("filters did not reach the provider: %+v", provider.gotList)
+	}
+
+	getIn := makeRequest("get_session", deploy.GetSessionRequest{DeployConfig: "{}", SessionID: "s-1"}, 12) + "\n"
+	var getOut bytes.Buffer
+	if err := ServeIO(provider, strings.NewReader(getIn), &getOut); err != nil {
+		t.Fatalf("ServeIO get_session: %v", err)
+	}
+	if !strings.Contains(getOut.String(), `"id":"s-1"`) || !strings.Contains(getOut.String(), `"content":"hi"`) {
+		t.Errorf("expected the session with its raw messages, got %s", getOut.String())
+	}
+}
+
+func TestServeIO_Sessions_Unsupported(t *testing.T) {
+	provider := newFakeProvider() // no SessionSourceProvider
+	for _, method := range []string{"list_sessions", "get_session"} {
+		in := makeRequest(method, map[string]any{}, 13) + "\n"
+		var out bytes.Buffer
+		if err := ServeIO(provider, strings.NewReader(in), &out); err != nil {
+			t.Fatalf("ServeIO %s: %v", method, err)
+		}
+		var resp response
+		if err := json.Unmarshal(out.Bytes(), &resp); err != nil {
+			t.Fatalf("unmarshal: %v", err)
+		}
+		if resp.Error == nil || resp.Error.Code != CodeMethodNotFound {
+			t.Errorf("%s: expected method-not-found for a sessions-less provider, got %+v", method, resp.Error)
+		}
+	}
+}
+
+func TestServeIO_Sessions_InvalidParams(t *testing.T) {
+	provider := &fakeSessionsProvider{fakeProvider: newFakeProvider()}
+	in := `{"jsonrpc":"2.0","id":14,"method":"list_sessions","params":"not-an-object"}` + "\n"
+	var out bytes.Buffer
+	if err := ServeIO(provider, strings.NewReader(in), &out); err != nil {
+		t.Fatalf("ServeIO: %v", err)
+	}
+	var resp response
+	if err := json.Unmarshal(out.Bytes(), &resp); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	if resp.Error == nil || resp.Error.Code != CodeParseError || !strings.HasPrefix(resp.Error.Message, invalidParamsPrefix) {
+		t.Errorf("expected invalid-params parse error, got %+v", resp.Error)
+	}
+}
