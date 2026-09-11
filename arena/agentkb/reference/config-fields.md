@@ -200,9 +200,11 @@ Fields under `spec`:
 
 | field | type | required | description |
 |-------|------|----------|-------------|
+| `action_scope` | object |  | — |
 | `client` | object |  | — |
 | `description` | string | ✓ | — |
 | `exec` | object |  | — |
+| `extensions` | object |  | — |
 | `http` | object |  | — |
 | `input_schema` | — | ✓ | — |
 | `mock_parts` | array |  | — |
