@@ -180,9 +180,3 @@ func deref(s *string) string {
 	}
 	return *s
 }
-
-// Decision is replaced by decision.go in the next task.
-type Decision struct{}
-
-// applyEvalDecisions is implemented in decision.go in the next task.
-func applyEvalDecisions(*arenaconfig.Scenario, *SessionDetail, ConvertOptions, *Conversion) {}
