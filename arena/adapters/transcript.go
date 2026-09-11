@@ -28,8 +28,10 @@ func NewTranscriptAdapter() *TranscriptAdapter {
 
 // CanHandle returns true for *.transcript.yaml files or "transcript" type hint.
 func (a *TranscriptAdapter) CanHandle(source, typeHint string) bool {
-	if matchesTypeHint(typeHint, "transcript", "yaml") {
-		return true
+	if typeHint != "" {
+		// An explicit hint names the format; never steal a hinted source by
+		// extension from the adapter the hint was meant for.
+		return matchesTypeHint(typeHint, "transcript", "yaml")
 	}
 	return hasExtension(source, ".transcript.yaml", ".transcript.yml")
 }

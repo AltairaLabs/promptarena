@@ -53,9 +53,13 @@ type SessionDetail struct {
 	SessionSummary
 	// Messages is the complete conversation history.
 	Messages []types.Message
-	// EvalResults contains conversation-level assertion results (nil for recordings).
+	// EvalResults are the conversation-level assertion results the source
+	// recorded. Nil when the source ran none (a bare session recording or a
+	// transcript); arena run output and production session stores carry them.
 	EvalResults []assertions.ConversationValidationResult
-	// TurnEvalResults contains per-turn assertion results keyed by turn index.
+	// TurnEvalResults are per-turn assertion results keyed by the index of
+	// the USER turn they answer, which is how the converter indexes scenario
+	// turns. Nil when the source ran none.
 	TurnEvalResults map[int][]TurnEvalResult
 }
 

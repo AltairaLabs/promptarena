@@ -9,7 +9,12 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/types"
 )
 
-// ArenaOutputAdapter loads Arena output JSON files (from completed scenario runs).
+// ArenaOutputAdapter loads the per-run JSON that `promptarena run` writes into
+// its output directory, one file per scenario/provider combination. That file
+// is engine.RunResult marshalled: the run's identity, its full message list as
+// PromptKit messages (tool calls and results inline), and both levels of
+// assertion result — conversation-level at the top, per-turn on each assistant
+// message under meta.assertions.
 type ArenaOutputAdapter struct{}
 
 // NewArenaOutputAdapter creates a new arena output adapter.
@@ -17,12 +22,17 @@ func NewArenaOutputAdapter() *ArenaOutputAdapter {
 	return &ArenaOutputAdapter{}
 }
 
-// CanHandle returns true for *.arena-output.json files or "arena_output" type hint.
+// CanHandle returns true for .json files that are not PromptKit session
+// recordings, or for an "arena_output" type hint. Run output has no special
+// extension — it is whatever `promptarena run` wrote — so the check is by
+// content at Load time; here only the session-recording suffix is excluded.
 func (a *ArenaOutputAdapter) CanHandle(source, typeHint string) bool {
-	if matchesTypeHint(typeHint, "arena", "arena_output", "scenario_output") {
-		return true
+	if typeHint != "" {
+		// An explicit hint names the format; never steal a hinted source by
+		// extension from the adapter the hint was meant for.
+		return matchesTypeHint(typeHint, "arena", "arena_output", "scenario_output")
 	}
-	return hasExtension(source, ".arena-output.json", ".arena.json")
+	return hasExtension(source, ".json") && !hasExtension(source, ".recording.json")
 }
 
 // Enumerate expands a source into individual recording references.
@@ -31,182 +41,143 @@ func (a *ArenaOutputAdapter) Enumerate(source string) ([]RecordingReference, err
 	return EnumerateFiles(source, "arena_output")
 }
 
-// Load reads an arena output file and converts it to Arena messages.
+// runOutputFile is the subset of engine.RunResult's JSON this adapter reads.
+// Declared locally because engine imports this package.
+type runOutputFile struct {
+	RunID       string                 `json:"RunID"`
+	PromptPack  string                 `json:"PromptPack"`
+	Region      string                 `json:"Region"`
+	ScenarioID  string                 `json:"ScenarioID"`
+	ProviderID  string                 `json:"ProviderID"`
+	Params      map[string]interface{} `json:"Params"`
+	Messages    []types.Message        `json:"Messages"`
+	StartTime   time.Time              `json:"StartTime"`
+	EndTime     time.Time              `json:"EndTime"`
+	Duration    time.Duration          `json:"Duration"`
+	Error       string                 `json:"Error"`
+	SessionTags []string               `json:"SessionTags"`
+
+	ConversationAssertions assertionsSummary `json:"conversation_assertions"`
+}
+
+// assertionsSummary mirrors engine.AssertionsSummary, which is also the shape
+// of an assistant message's meta.assertions. Each result additionally carries
+// the assertion's original config, which the engine's typed result drops.
+type assertionsSummary struct {
+	Results []recordedAssertionResult `json:"results"`
+}
+
+type recordedAssertionResult struct {
+	Type    string                 `json:"type"`
+	Passed  bool                   `json:"passed"`
+	Message string                 `json:"message"`
+	Details map[string]interface{} `json:"details"`
+	Config  struct {
+		Params map[string]interface{} `json:"params"`
+	} `json:"config"`
+}
+
+// Load reads a run output file and returns its messages and metadata.
 func (a *ArenaOutputAdapter) Load(ref RecordingReference) ([]types.Message, *RecordingMetadata, error) {
-	data, err := os.ReadFile(ref.ID)
+	data, err := os.ReadFile(ref.ID) //nolint:gosec // path comes from the user's config or CLI
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to read arena output: %w", err)
 	}
 
-	// Try to unmarshal as a simple run result first (with Messages array)
-	var simpleResult struct {
-		Messages []types.Message `json:"Messages"`
-		RunID    string          `json:"RunID"`
+	var run runOutputFile
+	if err := json.Unmarshal(data, &run); err != nil {
+		return nil, nil, fmt.Errorf("failed to parse arena output JSON %s: %w", ref.ID, err)
 	}
-	if err := json.Unmarshal(data, &simpleResult); err == nil && len(simpleResult.Messages) > 0 {
-		// Simple format with direct Messages array
-		metadata := &RecordingMetadata{
-			SessionID: simpleResult.RunID,
-			Extras:    make(map[string]interface{}),
-		}
-		return simpleResult.Messages, metadata, nil
+	if run.RunID == "" {
+		return nil, nil, fmt.Errorf(
+			"%s is not arena run output (no RunID); expected a file written by `promptarena run`", ref.ID)
 	}
 
-	// Fall back to turn-based format
-	var output ArenaOutputFile
-	if err := json.Unmarshal(data, &output); err != nil {
-		return nil, nil, fmt.Errorf("failed to parse arena output JSON: %w", err)
-	}
-
-	messages, metadata := a.convertToMessages(&output)
-	return messages, metadata, nil
+	return run.Messages, metadataFromRun(&run), nil
 }
 
-// convertToMessages transforms arena output to Arena messages and metadata.
-func (a *ArenaOutputAdapter) convertToMessages(output *ArenaOutputFile) ([]types.Message, *RecordingMetadata) {
-	messages := make([]types.Message, 0)
-	timestamps := make([]time.Time, 0)
+// metadataFromRun lifts the run's identity, timing and assertion results.
+func metadataFromRun(run *runOutputFile) *RecordingMetadata {
+	meta := &RecordingMetadata{
+		SessionID: run.RunID,
+		Tags:      run.SessionTags,
+		Duration:  run.Duration,
+		Extras:    make(map[string]interface{}),
+	}
+	if meta.Duration == 0 && !run.EndTime.IsZero() && !run.StartTime.IsZero() {
+		meta.Duration = run.EndTime.Sub(run.StartTime)
+	}
+	if run.ProviderID != "" {
+		meta.ProviderInfo = map[string]interface{}{"provider_id": run.ProviderID}
+	}
+	putExtra(meta.Extras, "scenario_id", run.ScenarioID)
+	putExtra(meta.Extras, "prompt_pack", run.PromptPack)
+	putExtra(meta.Extras, "region", run.Region)
+	putExtra(meta.Extras, "error", run.Error)
+	if len(run.Params) > 0 {
+		meta.Extras["params"] = run.Params
+	}
 
-	// Extract messages from turn results
-	for _, turn := range output.Turns {
-		// Add user message
-		if turn.UserMessage.Content != "" || len(turn.UserMessage.Parts) > 0 {
-			msg := types.Message{
-				Role:    "user",
-				Content: turn.UserMessage.Content,
-			}
-			if len(turn.UserMessage.Parts) > 0 {
-				msg.Parts = a.convertParts(turn.UserMessage.Parts)
-			}
-			messages = append(messages, msg)
-			timestamps = append(timestamps, turn.Timestamp)
+	meta.Timestamps = make([]time.Time, len(run.Messages))
+	for i := range run.Messages {
+		ts := run.Messages[i].Timestamp
+		if ts.IsZero() {
+			ts = run.StartTime
 		}
+		meta.Timestamps[i] = ts
+	}
 
-		// Add assistant message
-		if turn.Response.Message.Content != "" || len(turn.Response.Message.Parts) > 0 || len(turn.Response.Message.ToolCalls) > 0 {
-			msg := turn.Response.Message // Use message directly
-			messages = append(messages, msg)
-			timestamps = append(timestamps, turn.Timestamp)
+	meta.ConversationAssertions = recordedAssertions(run.ConversationAssertions.Results)
+	for i := range run.Messages {
+		turn := turnAssertions(&run.Messages[i])
+		if len(turn) == 0 {
+			continue
 		}
-
-		// Add tool result messages
-		for _, toolResult := range turn.ToolResults {
-			result := types.NewTextToolResult(toolResult.ToolCallID, "", toolResult.Content)
-			msg := types.NewToolResultMessage(result)
-			messages = append(messages, msg)
-			timestamps = append(timestamps, turn.Timestamp)
+		if meta.TurnAssertions == nil {
+			meta.TurnAssertions = make(map[int][]RecordedAssertion)
 		}
+		meta.TurnAssertions[i] = turn
 	}
-
-	metadata := &RecordingMetadata{
-		Timestamps: timestamps,
-		Tags:       output.Metadata.Tags,
-		Extras:     make(map[string]interface{}),
-	}
-
-	// Extract provider info
-	if output.ScenarioID != "" {
-		metadata.Extras["scenario_id"] = output.ScenarioID
-	}
-	if output.ProviderID != "" {
-		metadata.ProviderInfo = map[string]interface{}{
-			"provider_id": output.ProviderID,
-		}
-	}
-
-	// Calculate duration
-	if len(timestamps) > 1 {
-		metadata.Duration = timestamps[len(timestamps)-1].Sub(timestamps[0])
-	}
-
-	return messages, metadata
+	return meta
 }
 
-// convertParts converts arena output parts to types.ContentPart.
-func (a *ArenaOutputAdapter) convertParts(parts []ArenaContentPart) []types.ContentPart {
-	result := make([]types.ContentPart, len(parts))
-	for i, part := range parts {
-		result[i] = types.ContentPart{
-			Type: part.Type,
-		}
-		if part.Text != nil && *part.Text != "" {
-			result[i].Text = part.Text
-		}
-		if part.Media != nil {
-			result[i].Media = part.Media
+// turnAssertions decodes meta.assertions off an assistant message. The engine
+// stores it as a generic map, so it goes through JSON to reach the typed shape.
+func turnAssertions(msg *types.Message) []RecordedAssertion {
+	raw, ok := msg.Meta["assertions"]
+	if !ok {
+		return nil
+	}
+	data, err := json.Marshal(raw)
+	if err != nil {
+		return nil
+	}
+	var summary assertionsSummary
+	if err := json.Unmarshal(data, &summary); err != nil {
+		return nil
+	}
+	return recordedAssertions(summary.Results)
+}
+
+func recordedAssertions(results []recordedAssertionResult) []RecordedAssertion {
+	if len(results) == 0 {
+		return nil
+	}
+	out := make([]RecordedAssertion, len(results))
+	for i, r := range results {
+		out[i] = RecordedAssertion{
+			Type:    r.Type,
+			Passed:  r.Passed,
+			Message: r.Message,
+			Params:  r.Config.Params,
+			Details: r.Details,
 		}
 	}
-	return result
+	return out
 }
 
-// ArenaOutputFile represents the structure of an arena output JSON file.
-type ArenaOutputFile struct {
-	ScenarioID string              `json:"scenario_id"`
-	ProviderID string              `json:"provider_id"`
-	Metadata   ArenaOutputMetadata `json:"metadata"`
-	Turns      []ArenaOutputTurn   `json:"turns"`
-	Summary    ArenaOutputSummary  `json:"summary"`
-}
-
-// ArenaOutputMetadata contains metadata about the scenario run.
-type ArenaOutputMetadata struct {
-	Tags   []string               `json:"tags,omitempty"`
-	Extras map[string]interface{} `json:"extras,omitempty"`
-}
-
-// ArenaOutputTurn represents a single turn in the arena output.
-type ArenaOutputTurn struct {
-	TurnIndex   int                    `json:"turn_index"`
-	Timestamp   time.Time              `json:"timestamp"`
-	UserMessage ArenaMessage           `json:"user_message"`
-	Response    ArenaResponse          `json:"response"`
-	ToolResults []ArenaToolResult      `json:"tool_results,omitempty"`
-	Assertions  []ArenaAssertionResult `json:"assertions,omitempty"`
-}
-
-// ArenaMessage represents a message in the arena output.
-type ArenaMessage struct {
-	Content string             `json:"content"`
-	Parts   []ArenaContentPart `json:"parts,omitempty"`
-}
-
-// ArenaContentPart represents a content part in arena output.
-type ArenaContentPart struct {
-	Type  string              `json:"type"`
-	Text  *string             `json:"text,omitempty"`
-	Media *types.MediaContent `json:"media,omitempty"`
-}
-
-// ArenaResponse represents a provider response in arena output.
-type ArenaResponse struct {
-	Message types.Message `json:"message"`
-	Cost    *ArenaCost    `json:"cost,omitempty"`
-}
-
-// ArenaCost represents cost information.
-type ArenaCost struct {
-	InputTokens  int     `json:"input_tokens"`
-	OutputTokens int     `json:"output_tokens"`
-	TotalCost    float64 `json:"total_cost"`
-}
-
-// ArenaToolResult represents a tool execution result.
-type ArenaToolResult struct {
-	ToolCallID string `json:"tool_call_id"`
-	Content    string `json:"content"`
-}
-
-// ArenaAssertionResult represents an assertion result.
-type ArenaAssertionResult struct {
-	Type    string `json:"type"`
-	Passed  bool   `json:"passed"`
-	Message string `json:"message,omitempty"`
-}
-
-// ArenaOutputSummary contains summary statistics.
-type ArenaOutputSummary struct {
-	TotalTurns  int     `json:"total_turns"`
-	PassedTurns int     `json:"passed_turns"`
-	FailedTurns int     `json:"failed_turns"`
-	TotalCost   float64 `json:"total_cost"`
+func putExtra(extras map[string]interface{}, key, value string) {
+	if value != "" {
+		extras[key] = value
+	}
 }

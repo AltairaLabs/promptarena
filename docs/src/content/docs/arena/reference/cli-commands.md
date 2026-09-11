@@ -251,21 +251,44 @@ promptarena generate [flags]
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--from-recordings` | string | - | Glob path to local recording files |
+| `--from-recordings` | string | - | Glob of local recordings (see input formats below) |
 | `--source` | string | - | Named session source adapter (e.g., `omnia`) |
 | `--filter-passed` | bool | - | Filter by pass/fail status (tri-state: omit for all, `true` for passed, `false` for failed) |
 | `--filter-eval-type` | string | - | Filter sessions by assertion failure type (e.g., `content_matches`) |
-| `--pack` | string | - | Pack file path; when set, generates workflow scenarios with steps instead of conversation turns |
+| `--task-type` | string | `conversation` | `task_type` to set on the generated scenarios |
 | `--output` | string | `.` | Output directory for generated scenario files |
 | `--dedup` | bool | `true` | Deduplicate sessions by failure pattern fingerprint |
+
+`--pack` is a deprecated alias for `--task-type`; it only ever set the task type.
 
 :::note
 You must specify either `--from-recordings` or `--source`. The `--from-recordings` flag uses the built-in recordings adapter, while `--source` looks up a named adapter from the plugin registry.
 :::
 
+### Input formats
+
+`--from-recordings` accepts a glob and picks a reader per file:
+
+| Input | Files | What it carries |
+|-------|-------|-----------------|
+| Arena run output | `out/*.json`, one file per run as written by `promptarena run` | Messages with tool calls and results, scenario and provider, and both conversation-level and per-turn assertion results. Failed assertions become the generated scenario's assertions, with their original parameters. |
+| PromptKit session recording | `*.recording.json`, or the event store's `*.jsonl` (see [Session Recording](/arena/how-to/scenarios/session-recording/)) | Messages, including tool calls and multimodal parts. No assertion results, so `--filter-passed` treats every session as passing. |
+| Transcript | `*.transcript.yaml` | Messages only. |
+
+Run output is the everyday input: point the command at the `out/` directory of a run that had failures and it produces one scenario per failing run.
+
 ### Examples
 
-Generate scenarios from local recording files:
+Turn the failing runs in an arena output directory into scenarios:
+
+```bash
+promptarena generate \
+  --from-recordings "out/*.json" \
+  --filter-passed=false \
+  --output scenarios/generated
+```
+
+Generate from PromptKit session recordings:
 
 ```bash
 promptarena generate \
@@ -273,30 +296,22 @@ promptarena generate \
   --output scenarios/generated
 ```
 
-Generate only from sessions with failing assertions:
-
-```bash
-promptarena generate \
-  --from-recordings "recordings/*.recording.json" \
-  --filter-passed=false
-```
-
 Filter by a specific assertion failure type:
 
 ```bash
 promptarena generate \
-  --from-recordings "recordings/*.recording.json" \
+  --from-recordings "out/*.json" \
   --filter-eval-type content_matches \
   --output scenarios/content-failures
 ```
 
-Generate workflow scenarios using a pack file:
+Set the task type the generated scenarios run against:
 
 ```bash
 promptarena generate \
-  --from-recordings "recordings/*.recording.json" \
-  --pack prompts/support.pack.json \
-  --output scenarios/workflow
+  --from-recordings "out/*.json" \
+  --task-type support \
+  --output scenarios/support
 ```
 
 Generate from a named external source adapter:

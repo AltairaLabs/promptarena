@@ -7,483 +7,176 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AltairaLabs/PromptKit/pkg/testutil"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+
+	"github.com/AltairaLabs/PromptKit/runtime/events"
+	"github.com/AltairaLabs/PromptKit/runtime/recording"
 	"github.com/AltairaLabs/PromptKit/runtime/types"
 )
 
+// The shipped example is a PromptKit SessionRecording exported by the
+// recording middleware. Before this adapter read that shape it returned zero
+// messages from it (every event was skipped as a non-message), so the
+// session-replay example was documented against a reader that could not read
+// it.
+const exampleSessionRecording = "../../examples/session-replay/recordings/geography-session.recording.json"
+
 func TestSessionRecordingAdapter_CanHandle(t *testing.T) {
-	adapter := NewSessionRecordingAdapter()
-
+	a := NewSessionRecordingAdapter()
 	tests := []struct {
-		name     string
-		path     string
-		typeHint string
-		want     bool
+		source, hint string
+		want         bool
 	}{
-		{
-			name:     "handles .recording.json extension",
-			path:     "session.recording.json",
-			typeHint: "",
-			want:     true,
-		},
-		{
-			name:     "handles session type hint",
-			path:     "anyfile.json",
-			typeHint: "session",
-			want:     true,
-		},
-		{
-			name:     "handles recording type hint",
-			path:     "anyfile.json",
-			typeHint: "recording",
-			want:     true,
-		},
-		{
-			name:     "handles session_recording type hint",
-			path:     "anyfile.json",
-			typeHint: "session_recording",
-			want:     true,
-		},
-		{
-			name:     "does not handle other extensions",
-			path:     "file.json",
-			typeHint: "",
-			want:     false,
-		},
-		{
-			name:     "does not handle other type hints",
-			path:     "file.json",
-			typeHint: "arena",
-			want:     false,
-		},
+		{"session.recording.json", "", true},
+		{"recordings/*.recording.json", "", true},
+		{"out/recordings/run-123.jsonl", "", true},
+		{"anything.json", "session", true},
+		{"anything.json", "recording", true},
+		{"out/run-123.json", "", false},
+		{"session.transcript.yaml", "", false},
+		// A hint for another adapter must not be overridden by the extension.
+		{"session.recording.json", "arena_output", false},
+		{"session.recording.json", "mock", false},
 	}
-
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := adapter.CanHandle(tt.path, tt.typeHint)
-			if got != tt.want {
-				t.Errorf("CanHandle() = %v, want %v", got, tt.want)
-			}
-		})
+		assert.Equal(t, tt.want, a.CanHandle(tt.source, tt.hint), "%s / %q", tt.source, tt.hint)
 	}
 }
 
-func TestSessionRecordingAdapter_Load(t *testing.T) {
-	adapter := NewSessionRecordingAdapter()
+func TestSessionRecordingAdapter_Load_ShippedExample(t *testing.T) {
+	msgs, meta, err := NewSessionRecordingAdapter().Load(RecordingReference{ID: exampleSessionRecording})
+	require.NoError(t, err)
 
-	// Create a test recording file
-	recording := SessionRecordingFile{
-		Metadata: RecordingMetadataFile{
-			SessionID:  "test-session-123",
-			ProviderID: "test-provider",
-			Model:      "gpt-4",
-			Tags:       []string{"test", "customer-support"},
-		},
-		Events: []RecordingEvent{
-			{
-				Type:      "message",
-				Timestamp: time.Now(),
-				Message: RecordedMsg{
-					Role:    "user",
-					Content: "Hello, I need help",
-				},
-			},
-			{
-				Type:      "message",
-				Timestamp: time.Now().Add(time.Second),
-				Message: RecordedMsg{
-					Role:    "assistant",
-					Content: "Hello! How can I assist you today?",
-				},
-			},
-			{
-				Type:      "message",
-				Timestamp: time.Now().Add(2 * time.Second),
-				Message: RecordedMsg{
-					Role:    "user",
-					Content: "I have a billing question",
-					Parts: []RecordedContentPart{
-						{
-							Type: "text",
-							Text: testutil.Ptr("I have a billing question"),
-						},
-					},
-				},
-			},
-		},
-	}
+	require.Len(t, msgs, 6, "every message.created event becomes a message")
+	assert.Equal(t, "user", msgs[0].Role)
+	assert.Equal(t, "What is the capital of France?", msgs[0].GetContent())
+	assert.Equal(t, "assistant", msgs[1].Role)
 
-	// Write to temp file
-	tmpDir := t.TempDir()
-	tmpFile := filepath.Join(tmpDir, "test.recording.json")
-	data, err := json.Marshal(recording)
-	if err != nil {
-		t.Fatalf("Failed to marshal recording: %v", err)
-	}
-	if err := os.WriteFile(tmpFile, data, 0644); err != nil {
-		t.Fatalf("Failed to write temp file: %v", err)
-	}
+	require.NotNil(t, meta)
+	assert.Equal(t, "geo-session-001", meta.SessionID)
+	assert.Len(t, meta.Timestamps, 6)
+	assert.Equal(t, 90*time.Second, meta.Duration)
+}
 
-	// Load the recording
-	messages, metadata, err := adapter.Load(RecordingReference{ID: tmpFile, Source: tmpFile})
-	if err != nil {
-		t.Fatalf("Load() error = %v", err)
-	}
+// writeSessionRecording marshals a SessionRecording the way recording.Export
+// does, so the fixture is the shape the middleware actually produces.
+func writeSessionRecording(t *testing.T, dir string, rec *recording.SessionRecording) string {
+	t.Helper()
+	data, err := json.Marshal(rec)
+	require.NoError(t, err)
+	path := filepath.Join(dir, rec.Metadata.SessionID+".recording.json")
+	require.NoError(t, os.WriteFile(path, data, 0o600))
+	return path
+}
 
-	// Verify messages
-	if len(messages) != 3 {
-		t.Errorf("Load() got %d messages, want 3", len(messages))
-	}
-
-	if messages[0].Role != "user" {
-		t.Errorf("messages[0].Role = %s, want user", messages[0].Role)
-	}
-	if messages[0].Content != "Hello, I need help" {
-		t.Errorf("messages[0].Content = %s, want 'Hello, I need help'", messages[0].Content)
-	}
-
-	if messages[1].Role != "assistant" {
-		t.Errorf("messages[1].Role = %s, want assistant", messages[1].Role)
-	}
-
-	if messages[2].Role != "user" {
-		t.Errorf("messages[2].Role = %s, want user", messages[2].Role)
-	}
-	if len(messages[2].Parts) != 1 {
-		t.Errorf("messages[2].Parts length = %d, want 1", len(messages[2].Parts))
-	}
-
-	// Verify metadata
-	if metadata.SessionID != "test-session-123" {
-		t.Errorf("metadata.SessionID = %s, want test-session-123", metadata.SessionID)
-	}
-
-	if len(metadata.Tags) != 2 {
-		t.Errorf("metadata.Tags length = %d, want 2", len(metadata.Tags))
-	}
-
-	if len(metadata.Timestamps) != 3 {
-		t.Errorf("metadata.Timestamps length = %d, want 3", len(metadata.Timestamps))
-	}
-
-	if metadata.ProviderInfo["provider_id"] != "test-provider" {
-		t.Errorf("metadata.ProviderInfo[provider_id] = %v, want test-provider", metadata.ProviderInfo["provider_id"])
-	}
-
-	if metadata.Duration == 0 {
-		t.Error("metadata.Duration should be > 0")
+func messageEvent(t *testing.T, seq int64, at time.Time, data events.MessageCreatedData) recording.RecordedEvent {
+	t.Helper()
+	raw, err := json.Marshal(data)
+	require.NoError(t, err)
+	return recording.RecordedEvent{
+		Sequence:  seq,
+		Type:      events.EventMessageCreated,
+		Timestamp: at,
+		SessionID: "sess-1",
+		DataType:  "MessageCreatedData",
+		Data:      raw,
 	}
 }
 
-func TestSessionRecordingAdapter_Load_WithToolCalls(t *testing.T) {
-	adapter := NewSessionRecordingAdapter()
-
-	recording := SessionRecordingFile{
-		Metadata: RecordingMetadataFile{
-			SessionID: "test-tools",
+func TestSessionRecordingAdapter_Load_ToolCallsAndParts(t *testing.T) {
+	start := time.Date(2026, 9, 1, 10, 0, 0, 0, time.UTC)
+	rec := &recording.SessionRecording{
+		Metadata: recording.Metadata{
+			SessionID:    "sess-1",
+			StartTime:    start,
+			EndTime:      start.Add(3 * time.Second),
+			Duration:     3 * time.Second,
+			ProviderName: "openai",
+			Model:        "gpt-4o",
+			Version:      "1.0",
+			Custom:       map[string]any{"tags": []any{"regression", "tools"}},
 		},
-		Events: []RecordingEvent{
-			{
-				Type:      "message",
-				Timestamp: time.Now(),
-				Message: RecordedMsg{
-					Role:    "assistant",
-					Content: "",
-					ToolCalls: []RecordedToolCall{
-						{
-							ID:   "call_123",
-							Type: "function",
-							Function: RecordedToolCallFunction{
-								Name:      "get_weather",
-								Arguments: `{"location":"SF"}`,
-							},
-						},
-					},
+		Events: []recording.RecordedEvent{
+			messageEvent(t, 1, start, events.MessageCreatedData{
+				Role: "user",
+				Parts: []types.ContentPart{
+					types.NewTextPart("What is in this image?"),
+					{Type: types.ContentTypeImage, Media: &types.MediaContent{MIMEType: "image/png"}},
 				},
-			},
-			{
-				Type:      "message",
-				Timestamp: time.Now().Add(time.Second),
-				Message: RecordedMsg{
-					Role:       "tool",
-					Content:    `{"temperature":72}`,
-					ToolCallID: "call_123",
+			}),
+			// Not a message: must be skipped, not turned into an empty message.
+			{Sequence: 2, Type: events.EventToolCallStarted, Timestamp: start.Add(time.Second), SessionID: "sess-1", Data: json.RawMessage(`{"tool_name":"lookup"}`)},
+			messageEvent(t, 3, start.Add(2*time.Second), events.MessageCreatedData{
+				Role:      "assistant",
+				ToolCalls: []events.MessageToolCall{{ID: "call-1", Name: "lookup", Args: `{"q":"paris"}`}},
+			}),
+			messageEvent(t, 4, start.Add(3*time.Second), events.MessageCreatedData{
+				Role: "tool",
+				ToolResult: &events.MessageToolResult{
+					ID: "call-1", Name: "lookup",
+					Parts: []types.ContentPart{types.NewTextPart("Eiffel Tower")},
 				},
-			},
+			}),
 		},
 	}
+	path := writeSessionRecording(t, t.TempDir(), rec)
 
-	tmpDir := t.TempDir()
-	tmpFile := filepath.Join(tmpDir, "test.recording.json")
-	data, err := json.Marshal(recording)
-	if err != nil {
-		t.Fatalf("Failed to marshal recording: %v", err)
-	}
-	if err := os.WriteFile(tmpFile, data, 0644); err != nil {
-		t.Fatalf("Failed to write temp file: %v", err)
-	}
+	msgs, meta, err := NewSessionRecordingAdapter().Load(RecordingReference{ID: path})
+	require.NoError(t, err)
+	require.Len(t, msgs, 3)
 
-	messages, _, err := adapter.Load(RecordingReference{ID: tmpFile, Source: tmpFile})
-	if err != nil {
-		t.Fatalf("Load() error = %v", err)
-	}
+	require.Len(t, msgs[0].Parts, 2)
+	assert.Equal(t, "What is in this image?", msgs[0].GetContent())
+	assert.Equal(t, types.ContentTypeImage, msgs[0].Parts[1].Type)
 
-	if len(messages) != 2 {
-		t.Fatalf("Load() got %d messages, want 2", len(messages))
-	}
+	require.Len(t, msgs[1].ToolCalls, 1)
+	assert.Equal(t, "call-1", msgs[1].ToolCalls[0].ID)
+	assert.Equal(t, "lookup", msgs[1].ToolCalls[0].Name)
+	assert.JSONEq(t, `{"q":"paris"}`, string(msgs[1].ToolCalls[0].Args))
 
-	// Check tool call
-	if len(messages[0].ToolCalls) != 1 {
-		t.Errorf("messages[0].ToolCalls length = %d, want 1", len(messages[0].ToolCalls))
-	}
-	if messages[0].ToolCalls[0].ID != "call_123" {
-		t.Errorf("ToolCall ID = %s, want call_123", messages[0].ToolCalls[0].ID)
-	}
-	if messages[0].ToolCalls[0].Name != "get_weather" {
-		t.Errorf("Function name = %s, want get_weather", messages[0].ToolCalls[0].Name)
-	}
+	require.NotNil(t, msgs[2].ToolResult)
+	assert.Equal(t, "call-1", msgs[2].ToolResult.ID)
+	assert.Equal(t, "Eiffel Tower", msgs[2].GetContent())
 
-	// Check tool result
-	if messages[1].Role != "tool" {
-		t.Errorf("messages[1].Role = %s, want tool", messages[1].Role)
-	}
-	if messages[1].ToolResult == nil || messages[1].ToolResult.ID != "call_123" {
-		t.Errorf("messages[1].ToolResult.ID = %v, want call_123", messages[1].ToolResult)
-	}
+	assert.Equal(t, "sess-1", meta.SessionID)
+	assert.Equal(t, []string{"regression", "tools"}, meta.Tags)
+	assert.Equal(t, "openai", meta.ProviderInfo["provider_id"])
+	assert.Equal(t, "gpt-4o", meta.ProviderInfo["model"])
+	assert.Equal(t, 3*time.Second, meta.Duration)
+	assert.Len(t, meta.Timestamps, 3)
 }
 
-func TestSessionRecordingAdapter_Load_WithMultimodal(t *testing.T) {
-	adapter := NewSessionRecordingAdapter()
-
-	recording := SessionRecordingFile{
-		Metadata: RecordingMetadataFile{
-			SessionID: "test-multimodal",
-		},
-		Events: []RecordingEvent{
-			{
-				Type:      "message",
-				Timestamp: time.Now(),
-				Message: RecordedMsg{
-					Role:    "user",
-					Content: "What's in this image?",
-					Parts: []RecordedContentPart{
-						{
-							Type: "text",
-							Text: testutil.Ptr("What's in this image?"),
-						},
-						{
-							Type: "image",
-							Media: &RecordedMediaPart{
-								MIMEType: "image/jpeg",
-								Data:     "base64encodeddata",
-								Size:     1024,
-								Width:    800,
-								Height:   600,
-							},
-						},
-					},
-				},
-			},
+// Recordings are also written as JSONL (the event store keeps one file per
+// session, and SaveTo can export the same). recording.Load reads both, so the
+// adapter must accept the extension.
+func TestSessionRecordingAdapter_Load_JSONL(t *testing.T) {
+	start := time.Date(2026, 9, 1, 10, 0, 0, 0, time.UTC)
+	rec := &recording.SessionRecording{
+		Metadata: recording.Metadata{SessionID: "sess-jsonl", Version: "1.0", StartTime: start, EndTime: start},
+		Events: []recording.RecordedEvent{
+			messageEvent(t, 1, start, events.MessageCreatedData{Role: "user", Content: "hi"}),
+			messageEvent(t, 2, start, events.MessageCreatedData{Role: "assistant", Content: "hello"}),
 		},
 	}
+	path := filepath.Join(t.TempDir(), "sess-jsonl.jsonl")
+	require.NoError(t, rec.SaveTo(path, recording.FormatJSONLines))
 
-	tmpDir := t.TempDir()
-	tmpFile := filepath.Join(tmpDir, "test.recording.json")
-	data, err := json.Marshal(recording)
-	if err != nil {
-		t.Fatalf("Failed to marshal recording: %v", err)
-	}
-	if err := os.WriteFile(tmpFile, data, 0644); err != nil {
-		t.Fatalf("Failed to write temp file: %v", err)
-	}
-
-	messages, _, err := adapter.Load(RecordingReference{ID: tmpFile, Source: tmpFile})
-	if err != nil {
-		t.Fatalf("Load() error = %v", err)
-	}
-
-	if len(messages) != 1 {
-		t.Fatalf("Load() got %d messages, want 1", len(messages))
-	}
-
-	if len(messages[0].Parts) != 2 {
-		t.Fatalf("messages[0].Parts length = %d, want 2", len(messages[0].Parts))
-	}
-
-	// Check text part
-	if messages[0].Parts[0].Type != "text" {
-		t.Errorf("Part 0 type = %s, want text", messages[0].Parts[0].Type)
-	}
-
-	// Check image part
-	if messages[0].Parts[1].Type != "image" {
-		t.Errorf("Part 1 type = %s, want image", messages[0].Parts[1].Type)
-	}
-	if messages[0].Parts[1].Media == nil {
-		t.Fatal("Part 1 media is nil")
-	}
-	if messages[0].Parts[1].Media.MIMEType != "image/jpeg" {
-		t.Errorf("Media MIMEType = %s, want image/jpeg", messages[0].Parts[1].Media.MIMEType)
-	}
-	if messages[0].Parts[1].Media.Width == nil || *messages[0].Parts[1].Media.Width != 800 {
-		width := 0
-		if messages[0].Parts[1].Media.Width != nil {
-			width = *messages[0].Parts[1].Media.Width
-		}
-		t.Errorf("Media Width = %d, want 800", width)
-	}
+	msgs, meta, err := NewSessionRecordingAdapter().Load(RecordingReference{ID: path})
+	require.NoError(t, err)
+	require.Len(t, msgs, 2)
+	assert.Equal(t, "hello", msgs[1].GetContent())
+	assert.Equal(t, "sess-jsonl", meta.SessionID)
 }
 
-func TestSessionRecordingAdapter_Load_InvalidFile(t *testing.T) {
-	adapter := NewSessionRecordingAdapter()
+func TestSessionRecordingAdapter_Load_Errors(t *testing.T) {
+	a := NewSessionRecordingAdapter()
 
-	_, _, err := adapter.Load(RecordingReference{ID: "nonexistent.recording.json", Source: "nonexistent.recording.json"})
-	if err == nil {
-		t.Error("Load() should return error for nonexistent file")
-	}
-}
+	_, _, err := a.Load(RecordingReference{ID: "/nonexistent/file.recording.json"})
+	require.Error(t, err)
 
-func TestSessionRecordingAdapter_Load_InvalidJSON(t *testing.T) {
-	adapter := NewSessionRecordingAdapter()
-
-	tmpDir := t.TempDir()
-	tmpFile := filepath.Join(tmpDir, "invalid.recording.json")
-	if err := os.WriteFile(tmpFile, []byte("invalid json"), 0644); err != nil {
-		t.Fatalf("Failed to write temp file: %v", err)
-	}
-
-	_, _, err := adapter.Load(RecordingReference{ID: tmpFile, Source: tmpFile})
-	if err == nil {
-		t.Error("Load() should return error for invalid JSON")
-	}
-}
-
-func TestConvertContentPart(t *testing.T) {
-	adapter := NewSessionRecordingAdapter()
-
-	tests := []struct {
-		name  string
-		part  RecordedContentPart
-		check func(t *testing.T, cp types.ContentPart)
-	}{
-		{
-			name: "text part",
-			part: RecordedContentPart{
-				Type: "text",
-				Text: testutil.Ptr("Hello"),
-			},
-			check: func(t *testing.T, cp types.ContentPart) {
-				if cp.Type != "text" {
-					t.Errorf("Type = %s, want text", cp.Type)
-				}
-				if cp.Text == nil || *cp.Text != "Hello" {
-					text := ""
-					if cp.Text != nil {
-						text = *cp.Text
-					}
-					t.Errorf("Text = %s, want Hello", text)
-				}
-			},
-		},
-		{
-			name: "image part with base64 data",
-			part: RecordedContentPart{
-				Type: "image",
-				Media: &RecordedMediaPart{
-					MIMEType: "image/png",
-					Data:     "base64data",
-					Size:     2048,
-				},
-			},
-			check: func(t *testing.T, cp types.ContentPart) {
-				if cp.Type != "image" {
-					t.Errorf("Type = %s, want image", cp.Type)
-				}
-				if cp.Media == nil {
-					t.Fatal("Media is nil")
-				}
-				if cp.Media.Data == nil || *cp.Media.Data != "base64data" {
-					data := ""
-					if cp.Media.Data != nil {
-						data = *cp.Media.Data
-					}
-					t.Errorf("Data = %s, want base64data", data)
-				}
-			},
-		},
-		{
-			name: "image part with URI",
-			part: RecordedContentPart{
-				Type: "image",
-				Media: &RecordedMediaPart{
-					MIMEType: "image/jpeg",
-					URI:      "https://example.com/image.jpg",
-				},
-			},
-			check: func(t *testing.T, cp types.ContentPart) {
-				if cp.Media == nil {
-					t.Fatal("Media is nil")
-				}
-				if cp.Media.URL == nil || *cp.Media.URL != "https://example.com/image.jpg" {
-					url := ""
-					if cp.Media.URL != nil {
-						url = *cp.Media.URL
-					}
-					t.Errorf("URL = %s, want https://example.com/image.jpg", url)
-				}
-			},
-		},
-		{
-			name: "image part with file path",
-			part: RecordedContentPart{
-				Type: "image",
-				Media: &RecordedMediaPart{
-					MIMEType: "image/png",
-					Path:     "/path/to/image.png",
-				},
-			},
-			check: func(t *testing.T, cp types.ContentPart) {
-				if cp.Media == nil {
-					t.Fatal("Media is nil")
-				}
-				if cp.Media.FilePath == nil || *cp.Media.FilePath != "/path/to/image.png" {
-					path := ""
-					if cp.Media.FilePath != nil {
-						path = *cp.Media.FilePath
-					}
-					t.Errorf("FilePath = %s, want /path/to/image.png", path)
-				}
-			},
-		},
-		{
-			name: "video part with duration",
-			part: RecordedContentPart{
-				Type: "video",
-				Media: &RecordedMediaPart{
-					MIMEType: "video/mp4",
-					Duration: 5000, // 5 seconds in milliseconds
-				},
-			},
-			check: func(t *testing.T, cp types.ContentPart) {
-				if cp.Media == nil {
-					t.Fatal("Media is nil")
-				}
-				expected := 5 // 5 seconds
-				if cp.Media.Duration == nil || *cp.Media.Duration != expected {
-					duration := 0
-					if cp.Media.Duration != nil {
-						duration = *cp.Media.Duration
-					}
-					t.Errorf("Duration = %v seconds, want %v seconds", duration, expected)
-				}
-			},
-		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got := adapter.convertContentPart(tt.part)
-			tt.check(t, got)
-		})
-	}
+	bad := filepath.Join(t.TempDir(), "bad.recording.json")
+	require.NoError(t, os.WriteFile(bad, []byte("{not json"), 0o600))
+	_, _, err = a.Load(RecordingReference{ID: bad})
+	require.Error(t, err)
 }
