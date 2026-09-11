@@ -275,3 +275,78 @@ func TestRecordToolCalls_IgnoresNonPositiveAndMissingRun(t *testing.T) {
 	exec.UnregisterRun("run-1")
 	res.RecordToolCalls(5) // must not panic once the run is gone
 }
+
+// RFC 0014: a destination declaring control: user hands the turn back instead
+// of speaking, and one declaring control: agent (or declaring nothing) runs on.
+// Mirrors PromptKit's TestWorkflowStateResolver_ControlDecidesWhoHoldsTheTurn
+// so the same pack takes turns the same way under both consumers (#175).
+func TestResolveCurrentState_ControlDecidesWhoHoldsTheTurn(t *testing.T) {
+	cases := []struct {
+		name     string
+		control  *string
+		wantStop bool
+		why      string
+	}{
+		{
+			name:     "control user yields the turn",
+			control:  packspec.Ptr(workflow.ControlUser),
+			wantStop: true,
+			why:      "RFC 0014: control user must end the turn rather than run the destination state",
+		},
+		{
+			name:     "control agent runs on",
+			control:  packspec.Ptr(workflow.ControlAgent),
+			wantStop: false,
+			why:      "RFC 0014: control agent takes another round in the destination state",
+		},
+		{
+			// The documented divergence from the RFC's default, and the
+			// behavior every pack written before v1.7.0 relies on.
+			name:     "absent control runs on, as it did before RFC 0014",
+			control:  nil,
+			wantStop: false,
+			why:      "an undeclared control must not silently start yielding",
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			spec := resolverSpec()
+			spec.States["specialist"].Control = tc.control
+			registry := tools.NewRegistry()
+			registerTransitionToolForSpec(registry, spec)
+
+			exec := newWorkflowTransitionExecutor(spec, registry)
+			// A real registry either way: running on renders the destination
+			// prompt, and stopping must stop before it gets that far.
+			exec.setPromptRegistry(resolverPromptRegistry(t, map[string]string{
+				"triage": "triage", "specialist": "spec",
+			}))
+			exec.RegisterRunAtState("run-1", &arenaconfig.Scenario{ID: "s1"}, nil, "triage")
+			deferEvent(t, exec, "run-1", "Escalate")
+
+			h, err := exec.ResolverForRun("run-1").ResolveCurrentState(context.Background())
+			require.NoError(t, err)
+			assert.Equal(t, tc.wantStop, h.Stop, tc.why)
+			assert.Equal(t, !tc.wantStop, h.Valid, "a stopped handoff renders nothing")
+		})
+	}
+}
+
+// Sitting in a control: user state without having just transitioned is an
+// ordinary scripted turn: the user has spoken, so the agent answers.
+func TestResolveCurrentState_ControlUserStillAnswersWithoutTransition(t *testing.T) {
+	spec := resolverSpec()
+	spec.States["specialist"].Control = packspec.Ptr(workflow.ControlUser)
+	registry := tools.NewRegistry()
+	registerTransitionToolForSpec(registry, spec)
+
+	exec := newWorkflowTransitionExecutor(spec, registry)
+	exec.setPromptRegistry(resolverPromptRegistry(t, map[string]string{"specialist": "You are the specialist."}))
+	exec.RegisterRunAtState("run-1", &arenaconfig.Scenario{ID: "s1"}, nil, "specialist")
+
+	h, err := exec.ResolverForRun("run-1").ResolveCurrentState(context.Background())
+	require.NoError(t, err)
+	assert.False(t, h.Stop)
+	assert.True(t, h.Valid)
+}

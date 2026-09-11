@@ -173,6 +173,19 @@ func (r *workflowStateResolver) ResolveCurrentState(_ context.Context) (stage.Ha
 			// orchestration also lands here — OrchestrationOf defaults it
 			// to internal.
 		}
+		// RFC 0014: the destination may hand the turn straight back to the
+		// user instead of speaking. Checked after orchestration because those
+		// two stop for structural reasons that outrank an author's preference,
+		// and `control` is inert on an externally orchestrated state anyway —
+		// there is no floor to hold when the runtime is not mid-turn.
+		//
+		// HoldsFloor, not a direct read of current.Control: an absent value
+		// deliberately runs on rather than resolving to the RFC's `user`
+		// default, and that decision lives in one place shared with the SDK
+		// resolver so the two cannot drift (#175).
+		if !workflow.HoldsFloor(current) {
+			return stage.Handoff{Stop: true}, nil
+		}
 	}
 
 	// Nothing to render: leave the turn on the prompt it already has rather
