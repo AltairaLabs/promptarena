@@ -49,20 +49,35 @@ func (a *SessionRecordingAdapter) Load(ref RecordingReference) ([]types.Message,
 
 	messages := make([]types.Message, 0, len(rec.Events))
 	timestamps := make([]time.Time, 0, len(rec.Events))
+	var transitions []RecordedTransition
 	for i := range rec.Events {
 		ev := &rec.Events[i]
-		if ev.Type != events.EventMessageCreated {
+		// Every event type other than these two (tool calls, provider calls,
+		// audio, ...) is telemetry about the conversation, not part of it.
+		if ev.Type == events.EventMessageCreated {
+			msg, mErr := messageFromEvent(ev)
+			if mErr != nil {
+				return nil, nil, fmt.Errorf("event %d in %s: %w", ev.Sequence, ref.ID, mErr)
+			}
+			messages = append(messages, msg)
+			timestamps = append(timestamps, ev.Timestamp)
 			continue
 		}
-		msg, mErr := messageFromEvent(ev)
-		if mErr != nil {
-			return nil, nil, fmt.Errorf("event %d in %s: %w", ev.Sequence, ref.ID, mErr)
+		if ev.Type == events.EventWorkflowTransitioned {
+			var data events.WorkflowTransitionedData
+			if err := json.Unmarshal(ev.Data, &data); err != nil {
+				return nil, nil, fmt.Errorf("event %d in %s: decoding workflow.transitioned: %w", ev.Sequence, ref.ID, err)
+			}
+			transitions = append(transitions, RecordedTransition{
+				From: data.FromState, To: data.ToState, Event: data.Event, PromptTask: data.PromptTask,
+				MessageIndex: len(messages) - 1,
+			})
 		}
-		messages = append(messages, msg)
-		timestamps = append(timestamps, ev.Timestamp)
 	}
 
-	return messages, metadataFromRecording(&rec.Metadata, timestamps), nil
+	meta := metadataFromRecording(&rec.Metadata, timestamps)
+	meta.WorkflowTransitions = transitions
+	return messages, meta, nil
 }
 
 // messageFromEvent decodes a message.created payload into a types.Message.

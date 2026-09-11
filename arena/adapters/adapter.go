@@ -80,30 +80,54 @@ type RecordingMetadata struct {
 	// Extras holds any additional metadata from the recording.
 	Extras map[string]interface{} `json:"extras,omitempty" yaml:"extras,omitempty"`
 
-	// ConversationAssertions are the conversation-level assertion results the
-	// recording carries, if the source ran any. Arena run output does; a
-	// PromptKit session recording or a transcript does not, and leaves this nil.
-	ConversationAssertions []RecordedAssertion `json:"conversation_assertions,omitempty" yaml:"conversation_assertions,omitempty"` //nolint:lll
+	// ConversationAssertions are the conversation-level judged results the
+	// recording carries (kind "assertion" or "guardrail"). Nil when the source
+	// ran none.
+	ConversationAssertions []RecordedEval `json:"conversation_assertions,omitempty" yaml:"conversation_assertions,omitempty"` //nolint:lll
 
-	// TurnAssertions are per-turn assertion results keyed by the index of the
-	// message they were evaluated against (an assistant message, for arena run
-	// output). Nil when the source carries none.
-	TurnAssertions map[int][]RecordedAssertion `json:"turn_assertions,omitempty" yaml:"turn_assertions,omitempty"`
+	// TurnAssertions are per-turn judged results keyed by the index of the
+	// message they were evaluated against (an assistant message, for arena
+	// run output). Nil when the source carries none.
+	TurnAssertions map[int][]RecordedEval `json:"turn_assertions,omitempty" yaml:"turn_assertions,omitempty"`
+
+	// EvalResults are the pack-level eval observations the session produced:
+	// measurements (kind "eval") with a score and no verdict, and any
+	// guardrail outcomes recorded at session level. Conversation-level. Nil
+	// when the source carries none.
+	EvalResults []RecordedEval `json:"eval_results,omitempty" yaml:"eval_results,omitempty"`
+
+	// WorkflowTransitions are the recorded workflow state changes, in order.
+	// Nil when the session ran no workflow or the source does not record them.
+	WorkflowTransitions []RecordedTransition `json:"workflow_transitions,omitempty" yaml:"workflow_transitions,omitempty"`
 }
 
-// RecordedAssertion is one assertion result as a recording carries it, kept
-// free of the assertions package so that package can depend on this one.
+// RecordedEval is one eval observation as a recording carries it, kept free
+// of the assertions and evals packages so those can depend on this one.
 //
-// Params are the assertion's original configuration, when the recording kept
-// it (arena run output does, under each result's "config"). They are what
-// lets a regression scenario be regenerated with the same check rather than a
-// guess at it.
-type RecordedAssertion struct {
+// Kind mirrors events.EvalKind: "eval" measures (Score set, Passed nil);
+// "assertion" and "guardrail" carry a verdict in Passed. Params are the
+// eval's original configuration when the recording kept it (arena run output
+// does, under each result's "config"); they let a regression scenario assert
+// the same thing rather than a guess at it.
+type RecordedEval struct {
+	ID      string                 `json:"id,omitempty" yaml:"id,omitempty"`
 	Type    string                 `json:"type" yaml:"type"`
-	Passed  bool                   `json:"passed" yaml:"passed"`
+	Kind    string                 `json:"kind,omitempty" yaml:"kind,omitempty"`
+	Score   *float64               `json:"score,omitempty" yaml:"score,omitempty"`
+	Passed  *bool                  `json:"passed,omitempty" yaml:"passed,omitempty"`
 	Message string                 `json:"message,omitempty" yaml:"message,omitempty"`
 	Params  map[string]interface{} `json:"params,omitempty" yaml:"params,omitempty"`
 	Details map[string]interface{} `json:"details,omitempty" yaml:"details,omitempty"`
+}
+
+// RecordedTransition is one workflow state change, placed by the index of the
+// last message recorded before it (-1 when it preceded every message).
+type RecordedTransition struct {
+	From         string `json:"from" yaml:"from"`
+	To           string `json:"to" yaml:"to"`
+	Event        string `json:"event,omitempty" yaml:"event,omitempty"`
+	PromptTask   string `json:"prompt_task,omitempty" yaml:"prompt_task,omitempty"`
+	MessageIndex int    `json:"message_index" yaml:"message_index"`
 }
 
 // Keys used in RecordingMetadata.ProviderInfo by every built-in adapter.

@@ -58,6 +58,19 @@ type runOutputFile struct {
 	SessionTags []string               `json:"SessionTags"`
 
 	ConversationAssertions assertionsSummary `json:"conversation_assertions"`
+	EvalResults            []runEvalResult   `json:"eval_results"`
+}
+
+// runEvalResult is the subset of evals.EvalResult's JSON this reads: the
+// pack-level measurements and guardrail outcomes a run produced.
+type runEvalResult struct {
+	EvalID      string   `json:"eval_id"`
+	Type        string   `json:"type"`
+	Kind        string   `json:"kind"`
+	Passed      *bool    `json:"passed"`
+	Score       *float64 `json:"score"`
+	Explanation string   `json:"explanation"`
+	Error       string   `json:"error"`
 }
 
 // assertionsSummary mirrors engine.AssertionsSummary, which is also the shape
@@ -128,13 +141,14 @@ func metadataFromRun(run *runOutputFile) *RecordingMetadata {
 	}
 
 	meta.ConversationAssertions = recordedAssertions(run.ConversationAssertions.Results)
+	meta.EvalResults = recordedEvals(run.EvalResults)
 	for i := range run.Messages {
 		turn := turnAssertions(&run.Messages[i])
 		if len(turn) == 0 {
 			continue
 		}
 		if meta.TurnAssertions == nil {
-			meta.TurnAssertions = make(map[int][]RecordedAssertion)
+			meta.TurnAssertions = make(map[int][]RecordedEval)
 		}
 		meta.TurnAssertions[i] = turn
 	}
@@ -143,7 +157,7 @@ func metadataFromRun(run *runOutputFile) *RecordingMetadata {
 
 // turnAssertions decodes meta.assertions off an assistant message. The engine
 // stores it as a generic map, so it goes through JSON to reach the typed shape.
-func turnAssertions(msg *types.Message) []RecordedAssertion {
+func turnAssertions(msg *types.Message) []RecordedEval {
 	raw, ok := msg.Meta["assertions"]
 	if !ok {
 		return nil
@@ -159,21 +173,70 @@ func turnAssertions(msg *types.Message) []RecordedAssertion {
 	return recordedAssertions(summary.Results)
 }
 
-func recordedAssertions(results []recordedAssertionResult) []RecordedAssertion {
+// recordedAssertions lifts judged results (kind assertion) out of a summary.
+// The engine's summary stores the verdict as a plain bool because these were
+// judged by construction; eval_id and score live in details when present.
+func recordedAssertions(results []recordedAssertionResult) []RecordedEval {
 	if len(results) == 0 {
 		return nil
 	}
-	out := make([]RecordedAssertion, len(results))
+	out := make([]RecordedEval, len(results))
 	for i, r := range results {
-		out[i] = RecordedAssertion{
+		passed := r.Passed
+		out[i] = RecordedEval{
+			ID:      detailString(r.Details, "eval_id"),
 			Type:    r.Type,
-			Passed:  r.Passed,
+			Kind:    evalKindAssertion,
+			Score:   detailFloat(r.Details, "score"),
+			Passed:  &passed,
 			Message: r.Message,
 			Params:  r.Config.Params,
 			Details: r.Details,
 		}
 	}
 	return out
+}
+
+// recordedEvals lifts pack eval observations. Kind is what the runtime said;
+// an unlabelled result is a measurement.
+func recordedEvals(results []runEvalResult) []RecordedEval {
+	if len(results) == 0 {
+		return nil
+	}
+	out := make([]RecordedEval, len(results))
+	for i, r := range results {
+		kind := r.Kind
+		if kind == "" {
+			kind = evalKindEval
+		}
+		msg := r.Explanation
+		if r.Error != "" {
+			msg = r.Error
+		}
+		out[i] = RecordedEval{ID: r.EvalID, Type: r.Type, Kind: kind, Score: r.Score, Passed: r.Passed, Message: msg}
+	}
+	return out
+}
+
+// Eval kinds as events.EvalKind spells them, declared here so this package
+// stays off the events package.
+const (
+	evalKindEval      = "eval"
+	evalKindAssertion = "assertion"
+)
+
+func detailString(details map[string]interface{}, key string) string {
+	if s, ok := details[key].(string); ok {
+		return s
+	}
+	return ""
+}
+
+func detailFloat(details map[string]interface{}, key string) *float64 {
+	if f, ok := details[key].(float64); ok {
+		return &f
+	}
+	return nil
 }
 
 func putExtra(extras map[string]interface{}, key, value string) {

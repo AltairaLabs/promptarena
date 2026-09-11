@@ -66,7 +66,8 @@ func TestArenaOutputAdapter_Load_EvalFixture(t *testing.T) {
 	got := meta.TurnAssertions[2]
 	require.Len(t, got, 1)
 	assert.Equal(t, "content_matches", got[0].Type)
-	assert.True(t, got[0].Passed)
+	require.NotNil(t, got[0].Passed)
+	assert.True(t, *got[0].Passed)
 	assert.Empty(t, meta.ConversationAssertions, "the fixture ran no conversation-level assertions")
 }
 
@@ -129,7 +130,7 @@ func runOutputFixture(t *testing.T, dir string) string {
 							"passed":  false,
 							"message": "Should acknowledge the refund policy.",
 							"config":  map[string]any{"type": "content_includes", "params": map[string]any{"patterns": []string{"policy"}}},
-							"details": map[string]any{"missing": []string{"policy"}},
+							"details": map[string]any{"missing": []string{"policy"}, "eval_id": "assertion_0_content_includes"},
 						}},
 					},
 				},
@@ -168,14 +169,16 @@ func TestArenaOutputAdapter_Load_FailedAssertions(t *testing.T) {
 	require.Len(t, meta.ConversationAssertions, 1)
 	conv := meta.ConversationAssertions[0]
 	assert.Equal(t, "tools_called", conv.Type)
-	assert.False(t, conv.Passed)
+	require.NotNil(t, conv.Passed)
+	assert.False(t, *conv.Passed)
 	assert.Equal(t, "refund tool was never called", conv.Message)
 	assert.Equal(t, []any{"issue_refund"}, conv.Details["missing"])
 
 	require.Len(t, meta.TurnAssertions[1], 1)
 	turn := meta.TurnAssertions[1][0]
 	assert.Equal(t, "content_includes", turn.Type)
-	assert.False(t, turn.Passed)
+	require.NotNil(t, turn.Passed)
+	assert.False(t, *turn.Passed)
 	assert.Equal(t, map[string]any{"patterns": []any{"policy"}}, turn.Params)
 	assert.Equal(t, "Should acknowledge the refund policy.", turn.Message)
 }
@@ -214,4 +217,52 @@ func TestArenaOutputAdapter_Load_MessagesAreNative(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, msgs, 1)
 	assert.Equal(t, "hello", msgs[0].GetContent())
+}
+
+// Top-level eval_results are pack evals: measurements with a score and no
+// verdict. They surface as kind "eval" at conversation level.
+func TestArenaOutputAdapter_Load_PackEvalResults(t *testing.T) {
+	out := map[string]any{
+		"RunID":    "run-ev",
+		"Messages": []map[string]any{{"role": "user", "content": "hi"}, {"role": "assistant", "content": "yo"}},
+		"eval_results": []map[string]any{
+			{"eval_id": "faith", "type": "faithfulness", "kind": "eval", "score": 0.42, "explanation": "drifted"},
+			{"eval_id": "gate", "type": "toxicity", "kind": "guardrail", "passed": false},
+		},
+	}
+	data, err := json.Marshal(out)
+	require.NoError(t, err)
+	path := filepath.Join(t.TempDir(), "run-ev.json")
+	require.NoError(t, os.WriteFile(path, data, 0o600))
+
+	_, meta, err := NewArenaOutputAdapter().Load(RecordingReference{ID: path})
+	require.NoError(t, err)
+	require.Len(t, meta.EvalResults, 2)
+
+	faith := meta.EvalResults[0]
+	assert.Equal(t, "faith", faith.ID)
+	assert.Equal(t, "faithfulness", faith.Type)
+	assert.Equal(t, "eval", faith.Kind)
+	require.NotNil(t, faith.Score)
+	assert.Equal(t, 0.42, *faith.Score)
+	assert.Nil(t, faith.Passed)
+	assert.Equal(t, "drifted", faith.Message)
+
+	gate := meta.EvalResults[1]
+	assert.Equal(t, "guardrail", gate.Kind)
+	require.NotNil(t, gate.Passed)
+	assert.False(t, *gate.Passed)
+}
+
+// Assertions recorded on messages and at conversation level carry their eval
+// id and kind so the generate layer can tell a judged result from a measurement.
+func TestArenaOutputAdapter_Load_AssertionKindAndID(t *testing.T) {
+	path := runOutputFixture(t, t.TempDir())
+	_, meta, err := NewArenaOutputAdapter().Load(RecordingReference{ID: path})
+	require.NoError(t, err)
+	conv := meta.ConversationAssertions[0]
+	assert.Equal(t, "assertion", conv.Kind)
+	turn := meta.TurnAssertions[1][0]
+	assert.Equal(t, "assertion", turn.Kind)
+	assert.Equal(t, "assertion_0_content_includes", turn.ID, "eval_id from details when the summary carries it")
 }

@@ -163,13 +163,13 @@ func buildSummary(path string, msgs []types.Message, meta *adapters.RecordingMet
 
 func hasFailures(meta *adapters.RecordingMetadata) bool {
 	for _, r := range meta.ConversationAssertions {
-		if !r.Passed {
+		if r.Passed != nil && !*r.Passed {
 			return true
 		}
 	}
 	for _, results := range meta.TurnAssertions {
 		for _, r := range results {
-			if !r.Passed {
+			if r.Passed != nil && !*r.Passed {
 				return true
 			}
 		}
