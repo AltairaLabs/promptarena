@@ -10,6 +10,18 @@ import (
 // be picking up once the frame itself has stopped sounding.
 const defaultHangover = 200 * time.Millisecond
 
+// defaultCouplingFactor is the fraction of the current playback RMS taken as
+// the dynamic echo floor: an estimate of how much speaker output reaches the
+// mic on an open-speaker laptop. A guess until measured on real hardware.
+const defaultCouplingFactor = 0.5
+
+// defaultDecayRate is the EMA weight kept on the previous playback estimate,
+// so the floor follows the speaker envelope without chasing a single frame.
+const defaultDecayRate = 0.8
+
+// defaultThreshold is the base RMS floor used when a caller supplies none.
+const defaultThreshold = 0.02
+
 // EchoGuardOptions configures the adaptive half-duplex echo gate.
 type EchoGuardOptions struct {
 	// Threshold is the minimum/base RMS floor (0..1) below which mic audio is gated.
@@ -56,21 +68,21 @@ type EchoGuard struct {
 func NewEchoGuard(threshold float32) *EchoGuard {
 	return NewEchoGuardWithOptions(EchoGuardOptions{
 		Threshold:      threshold,
-		CouplingFactor: 0.5,
-		DecayRate:      0.8,
+		CouplingFactor: defaultCouplingFactor,
+		DecayRate:      defaultDecayRate,
 	})
 }
 
 // NewEchoGuardWithOptions constructs an EchoGuard with custom adaptive parameters.
 func NewEchoGuardWithOptions(opts EchoGuardOptions) *EchoGuard {
 	if opts.Threshold <= 0 {
-		opts.Threshold = 0.02
+		opts.Threshold = defaultThreshold
 	}
 	if opts.CouplingFactor < 0 {
-		opts.CouplingFactor = 0.5
+		opts.CouplingFactor = defaultCouplingFactor
 	}
 	if opts.DecayRate <= 0 || opts.DecayRate >= 1.0 {
-		opts.DecayRate = 0.8
+		opts.DecayRate = defaultDecayRate
 	}
 	if opts.Hangover <= 0 {
 		opts.Hangover = defaultHangover
