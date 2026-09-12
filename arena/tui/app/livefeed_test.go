@@ -7,10 +7,11 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/AltairaLabs/PromptKit/runtime/types"
 	"github.com/AltairaLabs/promptarena/arena/statestore"
 	"github.com/AltairaLabs/promptarena/arena/tui"
 	"github.com/AltairaLabs/promptarena/arena/tui/panels"
+
+	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )
 
 // fakeConvStore returns a canned transcript per conversation, standing in for

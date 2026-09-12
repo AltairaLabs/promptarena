@@ -6,9 +6,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/AltairaLabs/PromptKit/pkg/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
 )
 
 func captureStdout(t *testing.T, fn func()) string {

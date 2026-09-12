@@ -14,10 +14,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AltairaLabs/PromptKit/runtime/events"
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 	"github.com/AltairaLabs/promptarena/arena/engine"
 	"github.com/AltairaLabs/promptarena/arena/statestore"
+
+	"github.com/AltairaLabs/PromptKit/runtime/v2/events"
 )
 
 // mockEngine implements engineRunner for unit tests.

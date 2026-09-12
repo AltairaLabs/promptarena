@@ -3,8 +3,9 @@ package assertions
 import (
 	"fmt"
 
-	"github.com/AltairaLabs/PromptKit/runtime/evals"
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+
+	"github.com/AltairaLabs/PromptKit/runtime/v2/evals"
 )
 
 // AssertionConfig is an alias for arenaconfig.AssertionConfig. The canonical type

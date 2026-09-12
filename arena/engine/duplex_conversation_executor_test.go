@@ -9,14 +9,15 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/AltairaLabs/PromptKit/pkg/testutil"
-	"github.com/AltairaLabs/PromptKit/runtime/pipeline/stage"
-	"github.com/AltairaLabs/PromptKit/runtime/providers"
-	"github.com/AltairaLabs/PromptKit/runtime/providers/base"
-	"github.com/AltairaLabs/PromptKit/runtime/streaming"
-	"github.com/AltairaLabs/PromptKit/runtime/tools"
-	"github.com/AltairaLabs/PromptKit/runtime/types"
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+
+	"github.com/AltairaLabs/PromptKit/pkg/v2/testutil"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/pipeline/stage"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/providers"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/providers/base"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/streaming"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/tools"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )
 
 func TestDuplexConversationExecutor_RequiresDuplexConfig(t *testing.T) {
@@ -740,4 +741,80 @@ func TestProcessResponseElement(t *testing.T) {
 			}
 		})
 	}
+}
+
+// erroringToolExecutor returns a Go error from Execute, so the registry
+// surfaces a ToolResult carrying Error rather than failing the call — the
+// second of arenaToolExecutor's two error paths, which differ in what the
+// model is told and were both uncovered.
+type erroringToolExecutor struct{ msg string }
+
+func (e *erroringToolExecutor) Name() string { return "erroring" }
+
+func (e *erroringToolExecutor) Execute(
+	_ context.Context, _ *tools.ToolDescriptor, _ json.RawMessage,
+) (json.RawMessage, error) {
+	return nil, errors.New(e.msg)
+}
+
+// TestArenaToolExecutor_ReportsFailuresToTheModel covers both failure paths in
+// Execute. A duplex turn cannot stop to raise an error: whatever happens has to
+// come back as a tool result the model can read, flagged IsError so it does not
+// mistake the failure text for data. Silently dropping the call instead leaves
+// the model waiting on a response that never arrives.
+func TestArenaToolExecutor_ReportsFailuresToTheModel(t *testing.T) {
+	t.Run("an unregistered tool still yields an error result, not a dropped call", func(t *testing.T) {
+		executor := newArenaToolExecutor(tools.NewRegistry())
+		require.NotNil(t, executor)
+
+		result, err := executor.Execute(context.Background(), []types.MessageToolCall{
+			{ID: "call-1", Name: "no_such_tool", Args: json.RawMessage(`{}`)},
+		})
+		require.NoError(t, err, "a failing tool must not fail the turn")
+		require.Len(t, result.ProviderResponses, 1)
+		require.Len(t, result.ResultMessages, 1)
+
+		assert.True(t, result.ProviderResponses[0].IsError)
+		assert.Equal(t, "call-1", result.ProviderResponses[0].ToolCallID)
+		assert.Contains(t, result.ProviderResponses[0].Result, "tool execution failed")
+	})
+
+	t.Run("a tool that fails mid-execution reports its own message", func(t *testing.T) {
+		registry := tools.NewRegistry()
+		registry.RegisterExecutor(&erroringToolExecutor{msg: "upstream refused the request"})
+		require.NoError(t, registry.Register(&tools.ToolDescriptor{
+			Name: "flaky_tool",
+			Mode: "erroring",
+		}))
+
+		executor := newArenaToolExecutor(registry)
+		result, err := executor.Execute(context.Background(), []types.MessageToolCall{
+			{ID: "call-2", Name: "flaky_tool", Args: json.RawMessage(`{}`)},
+		})
+		require.NoError(t, err)
+		require.Len(t, result.ProviderResponses, 1)
+
+		assert.True(t, result.ProviderResponses[0].IsError)
+		assert.Contains(t, result.ProviderResponses[0].Result, "upstream refused the request")
+		require.Len(t, result.ResultMessages, 1)
+	})
+
+	t.Run("a failing call does not abandon the ones after it", func(t *testing.T) {
+		registry := tools.NewRegistry()
+		require.NoError(t, registry.Register(&tools.ToolDescriptor{
+			Name:       "good_tool",
+			Mode:       "mock",
+			MockResult: json.RawMessage(`{"ok":true}`),
+		}))
+
+		executor := newArenaToolExecutor(registry)
+		result, err := executor.Execute(context.Background(), []types.MessageToolCall{
+			{ID: "bad", Name: "missing_tool", Args: json.RawMessage(`{}`)},
+			{ID: "good", Name: "good_tool", Args: json.RawMessage(`{}`)},
+		})
+		require.NoError(t, err)
+		require.Len(t, result.ProviderResponses, 2, "the second call must still run")
+		assert.True(t, result.ProviderResponses[0].IsError)
+		assert.False(t, result.ProviderResponses[1].IsError)
+	})
 }

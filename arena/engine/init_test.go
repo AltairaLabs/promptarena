@@ -3,7 +3,7 @@ package engine
 import (
 	"testing"
 
-	"github.com/AltairaLabs/PromptKit/pkg/config"
+	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
 )
 
 // init is called before any tests run in this package

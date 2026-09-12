@@ -6,7 +6,7 @@ import (
 
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 
-	"github.com/AltairaLabs/PromptKit/pkg/config"
+	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
 )
 
 const (

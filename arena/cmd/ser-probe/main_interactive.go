@@ -27,8 +27,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/AltairaLabs/PromptKit/runtime/classify"
-	classifyhf "github.com/AltairaLabs/PromptKit/runtime/classify/backends/hf"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/classify"
+	classifyhf "github.com/AltairaLabs/PromptKit/runtime/v2/classify/backends/hf"
 )
 
 // Standard exit codes per BSD sysexits convention.

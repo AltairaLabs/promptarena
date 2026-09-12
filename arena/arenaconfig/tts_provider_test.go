@@ -5,7 +5,7 @@ import (
 
 	"gopkg.in/yaml.v3"
 
-	"github.com/AltairaLabs/PromptKit/pkg/config"
+	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
 )
 
 func TestProvider_TTSFieldsRoundTrip(t *testing.T) {

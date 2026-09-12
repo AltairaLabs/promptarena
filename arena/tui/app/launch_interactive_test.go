@@ -7,8 +7,9 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/stretchr/testify/require"
 
-	"github.com/AltairaLabs/PromptKit/runtime/logger"
 	"github.com/AltairaLabs/promptarena/arena/tui/logging"
+
+	"github.com/AltairaLabs/PromptKit/runtime/v2/logger"
 )
 
 // fakeProgram is a test double for *tea.Program satisfying the Program seam.

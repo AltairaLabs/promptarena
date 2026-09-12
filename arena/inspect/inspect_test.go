@@ -4,9 +4,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/AltairaLabs/PromptKit/pkg/config"
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 	"github.com/AltairaLabs/promptarena/arena/inspect"
+
+	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
 )
 
 // minimalCfg returns a *arenaconfig.Config with enough populated fields to exercise

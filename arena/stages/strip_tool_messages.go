@@ -4,7 +4,7 @@ import (
 	"context"
 	"strings"
 
-	"github.com/AltairaLabs/PromptKit/runtime/pipeline/stage"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/pipeline/stage"
 )
 
 // StripToolMessagesStage removes tool role messages from the stream.

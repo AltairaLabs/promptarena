@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AltairaLabs/PromptKit/runtime/audio"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/audio"
 )
 
 // fakeSource is an in-memory audio.Source whose frames the test drives.
@@ -143,4 +143,48 @@ func TestStartSessionBridge_BridgesCaptureAndPlayback(t *testing.T) {
 	case <-time.After(2 * time.Second):
 		t.Fatal("mic channel not closed after Source closed")
 	}
+}
+
+// TestRunRealtimeSession_RejectsAnUnusableSession covers RunRealtimeSession,
+// which was 0%. It is the CGO-free entrypoint, so its validation is the only
+// thing standing between a misconfigured Session and a duplex conversation
+// that starts, captures nothing, and looks like the model went silent.
+func TestRunRealtimeSession_RejectsAnUnusableSession(t *testing.T) {
+	de := &DuplexConversationExecutor{}
+	ctx := context.Background()
+
+	t.Run("a nil session is refused before anything starts", func(t *testing.T) {
+		err := de.RunRealtimeSession(ctx, &ConversationRequest{}, nil)
+		if err == nil {
+			t.Fatal("expected an error for a nil session")
+		}
+	})
+
+	t.Run("a session with no capture Source is refused", func(t *testing.T) {
+		sess := &fakeSession{sinks: []audio.Sink{&fakeSink{}}}
+		if err := de.RunRealtimeSession(ctx, &ConversationRequest{}, sess); err == nil {
+			t.Fatal("expected an error for a session with no Source")
+		}
+		if sess.started {
+			t.Error("validation must reject before Start, not after")
+		}
+	})
+
+	t.Run("a session with no playback Sink is refused", func(t *testing.T) {
+		sess := &fakeSession{sources: []audio.Source{&fakeSource{ch: make(chan audio.MediaFrame)}}}
+		if err := de.RunRealtimeSession(ctx, &ConversationRequest{}, sess); err == nil {
+			t.Fatal("expected an error for a session with no Sink")
+		}
+	})
+
+	t.Run("a Start failure propagates rather than proceeding", func(t *testing.T) {
+		sess := &fakeSession{
+			sources:  []audio.Source{&fakeSource{ch: make(chan audio.MediaFrame)}},
+			sinks:    []audio.Sink{&fakeSink{}},
+			startErr: context.DeadlineExceeded,
+		}
+		if err := de.RunRealtimeSession(ctx, &ConversationRequest{}, sess); err == nil {
+			t.Fatal("expected the Start error to reach the caller")
+		}
+	})
 }

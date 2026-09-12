@@ -7,8 +7,9 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/AltairaLabs/PromptKit/runtime/types"
 	"github.com/AltairaLabs/promptarena/arena/statestore"
+
+	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )
 
 func TestNewConversationPage(t *testing.T) {

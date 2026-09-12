@@ -3,7 +3,7 @@ package inspect
 import (
 	"testing"
 
-	"github.com/AltairaLabs/PromptKit/pkg/config"
+	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
 )
 
 func init() {

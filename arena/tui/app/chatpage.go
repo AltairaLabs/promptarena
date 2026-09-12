@@ -11,12 +11,13 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/AltairaLabs/PromptKit/runtime/evals"
 	"github.com/AltairaLabs/promptarena/arena/engine"
 	"github.com/AltairaLabs/promptarena/arena/statestore"
 	"github.com/AltairaLabs/promptarena/arena/tui/logging"
 	"github.com/AltairaLabs/promptarena/arena/tui/panels"
 	"github.com/AltairaLabs/promptarena/arena/tui/views"
+
+	"github.com/AltairaLabs/PromptKit/runtime/v2/evals"
 )
 
 // chatSetupState tracks which step of the interactive setup flow ChatPage is in.

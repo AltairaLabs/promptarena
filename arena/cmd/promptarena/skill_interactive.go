@@ -6,7 +6,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/AltairaLabs/PromptKit/runtime/skills"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/skills"
 )
 
 func runSkillInstall(_ *cobra.Command, args []string) error {

@@ -3,7 +3,7 @@ package assertions
 import (
 	"testing"
 
-	"github.com/AltairaLabs/PromptKit/runtime/types"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )
 
 // stubEntry is a minimal toolCallEntry implementation for testing matchResult.

@@ -12,8 +12,8 @@ import (
 
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 
-	"github.com/AltairaLabs/PromptKit/runtime/packspec"
-	"github.com/AltairaLabs/PromptKit/runtime/types"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/packspec"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )
 
 // fakeSource is an in-process SessionSourceAdapter.

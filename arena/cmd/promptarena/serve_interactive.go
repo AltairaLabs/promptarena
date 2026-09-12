@@ -15,12 +15,13 @@ import (
 
 	"log"
 
-	"github.com/AltairaLabs/PromptKit/runtime/events"
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 	arenaaudio "github.com/AltairaLabs/promptarena/arena/audio"
 	"github.com/AltairaLabs/promptarena/arena/engine"
 	"github.com/AltairaLabs/promptarena/arena/statestore"
 	"github.com/AltairaLabs/promptarena/arena/web"
+
+	"github.com/AltairaLabs/PromptKit/runtime/v2/events"
 )
 
 const (

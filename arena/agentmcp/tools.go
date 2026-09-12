@@ -7,9 +7,10 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/AltairaLabs/PromptKit/runtime/mcp"
 	"github.com/AltairaLabs/promptarena/arena/agentkb"
 	"github.com/AltairaLabs/promptarena/arena/templates"
+
+	"github.com/AltairaLabs/PromptKit/runtime/v2/mcp"
 )
 
 // registerTools wires the agentkb-backed MCP tools. Additional tools are added

@@ -1,6 +1,6 @@
 package assertions
 
-import "github.com/AltairaLabs/PromptKit/runtime/types"
+import "github.com/AltairaLabs/PromptKit/runtime/v2/types"
 
 // toolCallEntry abstracts a tool call record so the ID-first / name-fallback
 // matching algorithm can be shared between context_builder.go (ToolCallRecord)

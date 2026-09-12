@@ -5,9 +5,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AltairaLabs/PromptKit/runtime/pipeline/stage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/AltairaLabs/PromptKit/runtime/v2/pipeline/stage"
 )
 
 func TestCompletionInstructionStage_AppendsToTurnStateSystemPrompt(t *testing.T) {

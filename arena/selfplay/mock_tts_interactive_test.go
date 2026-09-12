@@ -7,8 +7,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/AltairaLabs/PromptKit/runtime/tts"
 	arenaaudio "github.com/AltairaLabs/promptarena/arena/audio"
+
+	"github.com/AltairaLabs/PromptKit/runtime/v2/tts"
 )
 
 // TestMockTTS_DefaultsToBuiltInUserClip verifies that with no fixture audio

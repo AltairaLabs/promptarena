@@ -11,9 +11,10 @@ import (
 	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/AltairaLabs/PromptKit/runtime/types"
 	"github.com/AltairaLabs/promptarena/arena/statestore"
 	"github.com/AltairaLabs/promptarena/arena/tui/theme"
+
+	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )
 
 type conversationFocus int

@@ -8,7 +8,7 @@ import (
 	"github.com/AltairaLabs/promptarena/arena/engine"
 	"github.com/gorilla/websocket"
 
-	pkgconfig "github.com/AltairaLabs/PromptKit/pkg/config"
+	pkgconfig "github.com/AltairaLabs/PromptKit/pkg/v2/config"
 )
 
 // voiceUpgrader upgrades /api/interactive/voice connections. CheckOrigin

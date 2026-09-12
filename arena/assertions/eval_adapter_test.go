@@ -6,8 +6,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/AltairaLabs/PromptKit/runtime/evals"
 	"github.com/AltairaLabs/promptarena/arena/assertions"
+
+	"github.com/AltairaLabs/PromptKit/runtime/v2/evals"
 )
 
 func TestConvertEvalResults_Empty(t *testing.T) {

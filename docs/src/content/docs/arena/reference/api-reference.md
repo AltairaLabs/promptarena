@@ -474,7 +474,7 @@ fmt.Printf("Cost: $%.6f\n", result.Cost.TotalCost)
 
 ## Prompt Package
 
-### `github.com/AltairaLabs/PromptKit/runtime/prompt`
+### `github.com/AltairaLabs/PromptKit/runtime/v2/prompt`
 
 #### `Config`
 

@@ -3,9 +3,10 @@ package stages
 import (
 	"testing"
 
-	"github.com/AltairaLabs/PromptKit/runtime/pipeline/stage"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/AltairaLabs/PromptKit/runtime/v2/pipeline/stage"
 )
 
 // textElem builds a Text-only stream element (as the STT stage emits).

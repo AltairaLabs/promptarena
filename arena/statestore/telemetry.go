@@ -3,7 +3,7 @@ package statestore
 import (
 	"fmt"
 
-	"github.com/AltairaLabs/PromptKit/runtime/types"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )
 
 // extractValidations extracts all validations from messages with turn indices

@@ -3,7 +3,7 @@ package stages
 import (
 	"context"
 
-	"github.com/AltairaLabs/PromptKit/runtime/pipeline/stage"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/pipeline/stage"
 )
 
 // SkillInstructionStage appends preloaded skill instructions to the system

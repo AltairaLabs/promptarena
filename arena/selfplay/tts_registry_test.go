@@ -6,9 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/AltairaLabs/PromptKit/pkg/config"
-	"github.com/AltairaLabs/PromptKit/runtime/providers/base"
-	"github.com/AltairaLabs/PromptKit/runtime/tts"
+	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/providers/base"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/tts"
 )
 
 // mockTTSService is a minimal base.TTSProvider for testing TTSRegistry.
@@ -201,7 +201,7 @@ func TestTTSRegistry_GetForProvider_Mock(t *testing.T) {
 	p := &config.Provider{
 		ID:         "mock-tts",
 		Type:       TTSProviderMock,
-		Role: config.RoleTTS,
+		Role:       config.RoleTTS,
 		AudioFiles: []string{"a.pcm", "b.pcm"},
 	}
 	r := NewTTSRegistry()
@@ -241,11 +241,11 @@ func TestTTSRegistry_GetForProvider_ModelOverride(t *testing.T) {
 	}
 
 	override, err := r.GetForProvider(&config.Provider{
-		ID:         "openai-mini",
-		Type:       TTSProviderOpenAI,
-		Role: config.RoleTTS,
-		Voice:      "alloy",
-		Model:      tts.ModelGPT4oMiniTTS,
+		ID:    "openai-mini",
+		Type:  TTSProviderOpenAI,
+		Role:  config.RoleTTS,
+		Voice: "alloy",
+		Model: tts.ModelGPT4oMiniTTS,
 	})
 	if err != nil {
 		t.Fatalf("GetForProvider override: %v", err)
