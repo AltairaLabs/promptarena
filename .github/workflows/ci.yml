@@ -210,10 +210,18 @@ jobs:
       # v7 installs golangci-lint v2, matching the repo's `version: "2"`
       # .golangci.yml. v6 pins golangci-lint v1 (1.64.x), which rejects the v2
       # config and refused to run against go.mod's `go 1.26.0`.
+      # --new-from-rev rather than the action's only-new-issues. The latter
+      # asks GitHub for the PR diff, which is capped, so on a large PR it
+      # cannot compute the new-issue set and falls back to reporting the
+      # repo's whole inherited backlog — 379 changed files on the PromptKit
+      # /v2 path rewrite turned a clean bump into ~80 pre-existing findings.
+      # Computing the diff from the checkout has no such cap and is what
+      # `make verify` already does locally, so the two now agree.
+      # Needs the fetch-depth: 0 checkout above to resolve the base SHA.
       - uses: golangci/golangci-lint-action@v9
         with:
           version: latest
-          only-new-issues: true
+          args: --new-from-rev=${{ github.event.pull_request.base.sha }} --timeout=5m
 
   sonarcloud:
     name: SonarCloud

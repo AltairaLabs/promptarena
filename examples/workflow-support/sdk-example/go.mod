@@ -4,12 +4,12 @@ go 1.26.0
 
 
 
-require github.com/AltairaLabs/PromptKit/sdk/v2 v2.0.0
+require github.com/AltairaLabs/PromptKit/sdk/v2 v2.1.0
 
 require (
 	cloud.google.com/go/compute/metadata v0.9.0 // indirect
-	github.com/AltairaLabs/PromptKit/pkg/v2 v2.0.0 // indirect
-	github.com/AltairaLabs/PromptKit/runtime/v2 v2.0.0 // indirect
+	github.com/AltairaLabs/PromptKit/pkg/v2 v2.1.0 // indirect
+	github.com/AltairaLabs/PromptKit/runtime/v2 v2.1.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azcore v1.21.0 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/azidentity v1.13.1 // indirect
 	github.com/Azure/azure-sdk-for-go/sdk/internal v1.11.2 // indirect
