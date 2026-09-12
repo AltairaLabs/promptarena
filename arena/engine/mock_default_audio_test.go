@@ -7,9 +7,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/AltairaLabs/PromptKit/runtime/providers"
-	"github.com/AltairaLabs/PromptKit/runtime/providers/mock"
 	arenaaudio "github.com/AltairaLabs/promptarena/arena/audio"
+
+	"github.com/AltairaLabs/PromptKit/runtime/v2/providers"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/providers/mock"
 )
 
 // writeMockResponses writes a minimal mock-responses.yaml with one agent turn

@@ -296,7 +296,7 @@ Error: Pack compiled with packc v0.2.0 but SDK expects v0.1.0
 packc inspect packs/app.pack.json | grep "Pack Format"
 
 # Check SDK compatibility
-go list -m github.com/AltairaLabs/PromptKit/sdk
+go list -m github.com/AltairaLabs/PromptKit/sdk/v2
 ```
 
 ### Upgrading

@@ -4,13 +4,14 @@ import (
 	"context"
 	"testing"
 
-	"github.com/AltairaLabs/PromptKit/pkg/testutil"
-	"github.com/AltairaLabs/PromptKit/runtime/evals"
-	"github.com/AltairaLabs/PromptKit/runtime/pipeline/stage"
-	"github.com/AltairaLabs/PromptKit/runtime/types"
 	"github.com/AltairaLabs/promptarena/arena/assertions"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/AltairaLabs/PromptKit/pkg/v2/testutil"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/evals"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/pipeline/stage"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )
 
 // mockTurnEvalRunner implements TurnEvalRunner for testing.

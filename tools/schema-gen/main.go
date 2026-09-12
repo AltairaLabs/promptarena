@@ -11,7 +11,7 @@ import (
 
 	"github.com/AltairaLabs/promptarena/tools/schema-gen/generators"
 
-	"github.com/AltairaLabs/PromptKit/pkg/config"
+	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
 )
 
 const (

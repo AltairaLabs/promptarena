@@ -4,12 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/AltairaLabs/PromptKit/pkg/config"
-	"github.com/AltairaLabs/PromptKit/runtime/classify"
-	_ "github.com/AltairaLabs/PromptKit/runtime/classify/backends/all" // registers classify backend factories via init()
-	"github.com/AltairaLabs/PromptKit/runtime/credentials"
-	"github.com/AltairaLabs/PromptKit/runtime/providers/base"
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+
+	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/classify"
+	_ "github.com/AltairaLabs/PromptKit/runtime/v2/classify/backends/all" // registers classify backend factories via init()
+	"github.com/AltairaLabs/PromptKit/runtime/v2/credentials"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/providers/base"
 )
 
 // buildClassifyRegistry maps cfg.LoadedInferenceProviders (every

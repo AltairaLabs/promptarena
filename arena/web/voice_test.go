@@ -5,11 +5,15 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
+	"strings"
 	"testing"
+	"time"
 
-	"github.com/AltairaLabs/PromptKit/runtime/events"
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 	"github.com/AltairaLabs/promptarena/arena/engine"
+	"github.com/gorilla/websocket"
+
+	"github.com/AltairaLabs/PromptKit/runtime/v2/events"
 )
 
 const (
@@ -219,5 +223,105 @@ func TestHandleVoiceUnknownSession(t *testing.T) {
 	s.handleInteractiveVoice(rec, req)
 	if rec.Code != http.StatusNotFound {
 		t.Fatalf("want 404, got %d", rec.Code)
+	}
+}
+
+// TestHandleVoiceEngineNotConfigured covers the first pre-upgrade guard in
+// handleInteractiveVoice. These checks exist precisely so failures arrive as
+// HTTP status codes rather than as a completed WebSocket handshake followed by
+// an error frame the browser has to interpret — a 503 is actionable, a socket
+// that opens and immediately dies is not.
+func TestHandleVoiceEngineNotConfigured(t *testing.T) {
+	s := newServerWithRunner(nil, nil, nil, "")
+	req := httptest.NewRequest(http.MethodGet, "/api/interactive/voice?session=any", nil)
+	rec := httptest.NewRecorder()
+
+	s.handleInteractiveVoice(rec, req)
+
+	if rec.Code != http.StatusServiceUnavailable {
+		t.Fatalf("want 503 when no interactive engine is configured, got %d", rec.Code)
+	}
+}
+
+// TestHandleVoiceUnknownSTTIsRejectedBeforeUpgrade covers the third guard: a
+// bad stt query param must fail the request outright. Reaching the upgrade
+// first would leave the caller holding a live socket for a run that can never
+// start.
+func TestHandleVoiceUnknownSTTIsRejectedBeforeUpgrade(t *testing.T) {
+	s := newTestServerWithVoiceEngine(t)
+	sess := newVoiceTestSession(t, s.interactiveEngine)
+	s.interactive.put(sess)
+
+	req := httptest.NewRequest(http.MethodGet,
+		"/api/interactive/voice?session="+sess.ConversationID()+"&stt=no-such-stt", nil)
+	rec := httptest.NewRecorder()
+
+	s.handleInteractiveVoice(rec, req)
+
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("want 400 for an unresolvable stt provider, got %d", rec.Code)
+	}
+	if body := rec.Body.String(); !strings.Contains(body, "stt provider not found") {
+		t.Errorf("the response should name the failure, got %q", body)
+	}
+}
+
+// TestHandleVoiceRejectsANonWebSocketRequest pins what happens past the
+// pre-upgrade checks: a plain GET is a valid session with a buildable request,
+// so it reaches Upgrade, which fails and writes its own response. The handler
+// must return quietly rather than carrying on to RunRealtimeSession with a
+// connection it does not have.
+func TestHandleVoiceRejectsANonWebSocketRequest(t *testing.T) {
+	s := newTestServerWithVoiceEngine(t)
+	sess := newVoiceTestSession(t, s.interactiveEngine)
+	s.interactive.put(sess)
+
+	req := httptest.NewRequest(http.MethodGet,
+		"/api/interactive/voice?session="+sess.ConversationID(), nil)
+	rec := httptest.NewRecorder()
+
+	s.handleInteractiveVoice(rec, req)
+
+	if rec.Code == http.StatusOK {
+		t.Fatalf("a non-WebSocket request must not be treated as a successful upgrade, got %d", rec.Code)
+	}
+}
+
+// TestHandleVoiceUpgradesAndAnnouncesLive covers the post-upgrade half of
+// handleInteractiveVoice with a real WebSocket client. The "live" state frame
+// is written before RunRealtimeSession starts the session precisely so it can
+// never race the sink's own writes — if it moved after, a client could receive
+// audio before being told the session had begun.
+func TestHandleVoiceUpgradesAndAnnouncesLive(t *testing.T) {
+	s := newTestServerWithVoiceEngine(t)
+	sess := newVoiceTestSession(t, s.interactiveEngine)
+	s.interactive.put(sess)
+
+	srv := httptest.NewServer(http.HandlerFunc(s.handleInteractiveVoice))
+	defer srv.Close()
+
+	wsURL := "ws" + strings.TrimPrefix(srv.URL, "http") +
+		"?session=" + sess.ConversationID()
+	conn, resp, err := websocket.DefaultDialer.Dial(wsURL, nil)
+	if err != nil {
+		t.Fatalf("dial: %v", err)
+	}
+	if resp != nil {
+		_ = resp.Body.Close()
+	}
+	defer func() { _ = conn.Close() }()
+
+	_ = conn.SetReadDeadline(time.Now().Add(10 * time.Second))
+	_, data, err := conn.ReadMessage()
+	if err != nil {
+		t.Fatalf("reading the first frame: %v", err)
+	}
+
+	var got map[string]string
+	if err := json.Unmarshal(data, &got); err != nil {
+		t.Fatalf("first frame is not JSON: %v (%q)", err, data)
+	}
+	if got["type"] != "state" || got["state"] != voiceStateLive {
+		t.Fatalf("want a live state frame first, got %v", got)
 	}
 }

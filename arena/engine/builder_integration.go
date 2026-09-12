@@ -9,42 +9,42 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AltairaLabs/PromptKit/pkg/config"
-	"github.com/AltairaLabs/PromptKit/runtime/a2a"
-	a2amock "github.com/AltairaLabs/PromptKit/runtime/a2a/mock"
-	"github.com/AltairaLabs/PromptKit/runtime/credentials"
-	"github.com/AltairaLabs/PromptKit/runtime/evals"
-	_ "github.com/AltairaLabs/PromptKit/runtime/evals/handlers" // register default eval handlers
-	"github.com/AltairaLabs/PromptKit/runtime/logger"
-	"github.com/AltairaLabs/PromptKit/runtime/mcp"
-	"github.com/AltairaLabs/PromptKit/runtime/mediagen"
-	"github.com/AltairaLabs/PromptKit/runtime/packspec"
-	"github.com/AltairaLabs/PromptKit/runtime/persistence/memory"
-	"github.com/AltairaLabs/PromptKit/runtime/prompt"
-	"github.com/AltairaLabs/PromptKit/runtime/providers"
-	"github.com/AltairaLabs/PromptKit/runtime/providers/base"
-	"github.com/AltairaLabs/PromptKit/runtime/skills"
+	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/a2a"
+	a2amock "github.com/AltairaLabs/PromptKit/runtime/v2/a2a/mock"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/credentials"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/evals"
+	_ "github.com/AltairaLabs/PromptKit/runtime/v2/evals/handlers" // register default eval handlers
+	"github.com/AltairaLabs/PromptKit/runtime/v2/logger"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/mcp"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/mediagen"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/packspec"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/persistence/memory"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/prompt"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/providers"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/providers/base"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/skills"
 
-	// Import provider subpackages to register their factories
 	"github.com/redis/go-redis/v9"
 
-	_ "github.com/AltairaLabs/PromptKit/runtime/providers/claude"
-	_ "github.com/AltairaLabs/PromptKit/runtime/providers/gemini"
-	_ "github.com/AltairaLabs/PromptKit/runtime/providers/imagen"
-	_ "github.com/AltairaLabs/PromptKit/runtime/providers/mock"
-	_ "github.com/AltairaLabs/PromptKit/runtime/providers/ollama"
-	_ "github.com/AltairaLabs/PromptKit/runtime/providers/openai"
-	_ "github.com/AltairaLabs/PromptKit/runtime/providers/replay"
-	_ "github.com/AltairaLabs/PromptKit/runtime/providers/vllm"
-	runtimestore "github.com/AltairaLabs/PromptKit/runtime/statestore"
-	"github.com/AltairaLabs/PromptKit/runtime/storage"
-	"github.com/AltairaLabs/PromptKit/runtime/tools"
 	"github.com/AltairaLabs/promptarena/arena/adapters"
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 	_ "github.com/AltairaLabs/promptarena/arena/mcpsource/docker/register" // register docker MCPSource
 	"github.com/AltairaLabs/promptarena/arena/selfplay"
 	"github.com/AltairaLabs/promptarena/arena/statestore"
 	"github.com/AltairaLabs/promptarena/arena/turnexecutors"
+
+	_ "github.com/AltairaLabs/PromptKit/runtime/v2/providers/claude" // registers the claude provider factory
+	_ "github.com/AltairaLabs/PromptKit/runtime/v2/providers/gemini" // registers the gemini provider factory
+	_ "github.com/AltairaLabs/PromptKit/runtime/v2/providers/imagen" // registers the imagen provider factory
+	_ "github.com/AltairaLabs/PromptKit/runtime/v2/providers/mock"   // registers the mock provider factory
+	_ "github.com/AltairaLabs/PromptKit/runtime/v2/providers/ollama" // registers the ollama provider factory
+	_ "github.com/AltairaLabs/PromptKit/runtime/v2/providers/openai" // registers the openai provider factory
+	_ "github.com/AltairaLabs/PromptKit/runtime/v2/providers/replay" // registers the replay provider factory
+	_ "github.com/AltairaLabs/PromptKit/runtime/v2/providers/vllm"   // registers the vllm provider factory
+	runtimestore "github.com/AltairaLabs/PromptKit/runtime/v2/statestore"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/storage"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/tools"
 )
 
 // BuildEngineComponents builds all engine components from a loaded Config object.

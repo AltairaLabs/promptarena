@@ -8,9 +8,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/AltairaLabs/PromptKit/runtime/events"
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 	"github.com/AltairaLabs/promptarena/arena/tui"
+
+	"github.com/AltairaLabs/PromptKit/runtime/v2/events"
 )
 
 func TestEventBus_PushesRunLifecycleToTUI(t *testing.T) {

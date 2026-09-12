@@ -8,7 +8,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/AltairaLabs/PromptKit/runtime/mcp"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/mcp"
 )
 
 func callTool(t *testing.T, s *Server, name, argsJSON string) mcp.ToolCallResponse {

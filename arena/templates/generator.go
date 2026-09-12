@@ -12,7 +12,7 @@ import (
 	"text/template"
 	"time"
 
-	"github.com/AltairaLabs/PromptKit/runtime/version"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/version"
 )
 
 // Generator handles template generation and file creation

@@ -6,7 +6,7 @@ import (
 
 	"github.com/AltairaLabs/promptarena/deploy"
 
-	"github.com/AltairaLabs/PromptKit/runtime/prompt"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/prompt"
 )
 
 // percentMultiplier converts a 0.0-1.0 fraction to a 0-100 percentage.

@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AltairaLabs/PromptKit/runtime/audio"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/audio"
 )
 
 // fakeSession is an audio.Session backed by MemSource/MemSink so the adapter can

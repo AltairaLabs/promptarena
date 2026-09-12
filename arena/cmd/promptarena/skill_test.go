@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/AltairaLabs/PromptKit/runtime/skills"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/skills"
 )
 
 func TestSkillCmdRegistered(t *testing.T) {

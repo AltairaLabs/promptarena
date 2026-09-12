@@ -7,7 +7,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/AltairaLabs/PromptKit/runtime/types"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )
 
 // SessionSourceAdapter provides session data for scenario generation.

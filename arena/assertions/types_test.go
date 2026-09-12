@@ -3,8 +3,9 @@ package assertions
 import (
 	"testing"
 
-	"github.com/AltairaLabs/PromptKit/runtime/evals"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/AltairaLabs/PromptKit/runtime/v2/evals"
 )
 
 func TestAssertionResult(t *testing.T) {

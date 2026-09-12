@@ -22,8 +22,8 @@ import (
 	"github.com/AltairaLabs/promptarena/arena/tui/console"
 	"github.com/AltairaLabs/promptarena/arena/tui/theme"
 
-	"github.com/AltairaLabs/PromptKit/runtime/events"
-	"github.com/AltairaLabs/PromptKit/runtime/logger"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/events"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/logger"
 )
 
 const (

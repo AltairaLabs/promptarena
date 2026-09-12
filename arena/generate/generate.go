@@ -10,7 +10,7 @@ import (
 
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 
-	"github.com/AltairaLabs/PromptKit/runtime/packspec"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/packspec"
 )
 
 const (

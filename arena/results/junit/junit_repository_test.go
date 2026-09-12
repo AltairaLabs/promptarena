@@ -11,10 +11,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/AltairaLabs/PromptKit/runtime/types"
 	"github.com/AltairaLabs/promptarena/arena/engine"
 	"github.com/AltairaLabs/promptarena/arena/results"
 	"github.com/AltairaLabs/promptarena/arena/results/junit"
+
+	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )
 
 // Test helpers

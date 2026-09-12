@@ -13,8 +13,8 @@ import (
 
 	"github.com/AltairaLabs/promptarena/arena/generate"
 
-	"github.com/AltairaLabs/PromptKit/runtime/events"
-	"github.com/AltairaLabs/PromptKit/runtime/recording"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/events"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/recording"
 )
 
 var fixtureStart = time.Date(2026, 9, 1, 10, 0, 0, 0, time.UTC)

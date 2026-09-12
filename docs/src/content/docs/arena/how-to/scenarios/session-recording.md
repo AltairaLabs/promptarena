@@ -122,7 +122,7 @@ package main
 
 import (
     "fmt"
-    "github.com/AltairaLabs/PromptKit/runtime/recording"
+    "github.com/AltairaLabs/PromptKit/runtime/v2/recording"
 )
 
 func main() {
@@ -211,7 +211,7 @@ for {
 Attach annotations to recordings for review and analysis:
 
 ```go
-import "github.com/AltairaLabs/PromptKit/runtime/annotations"
+import "github.com/AltairaLabs/PromptKit/runtime/v2/annotations"
 
 // Create annotations
 anns := []*annotations.Annotation{
@@ -248,7 +248,7 @@ for _, ann := range state.ActiveAnnotations {
 Use recordings for deterministic test replay:
 
 ```go
-import "github.com/AltairaLabs/PromptKit/runtime/providers/replay"
+import "github.com/AltairaLabs/PromptKit/runtime/v2/providers/replay"
 
 // Create replay provider from recording
 provider, err := replay.NewProviderFromRecording(rec)

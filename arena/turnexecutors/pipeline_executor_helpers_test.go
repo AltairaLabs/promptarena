@@ -3,16 +3,22 @@ package turnexecutors
 import (
 	"context"
 	"testing"
+
 	"time"
 
-	"github.com/AltairaLabs/PromptKit/runtime/pipeline"
-	"github.com/AltairaLabs/PromptKit/runtime/pipeline/stage"
-	"github.com/AltairaLabs/PromptKit/runtime/providers"
-	"github.com/AltairaLabs/PromptKit/runtime/providers/base"
-	"github.com/AltairaLabs/PromptKit/runtime/providers/mock"
-	"github.com/AltairaLabs/PromptKit/runtime/storage"
-	"github.com/AltairaLabs/PromptKit/runtime/types"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+
+	"github.com/AltairaLabs/PromptKit/runtime/v2/events"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/hooks"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/pipeline"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/pipeline/stage"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/providers"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/providers/base"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/providers/mock"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/storage"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )
 
 func TestBuildContextPolicy(t *testing.T) {
@@ -744,4 +750,68 @@ func TestBuildMediaConvertConfig(t *testing.T) {
 			t.Errorf("TargetVideoFormats = %v, want 1 format", got.TargetVideoFormats)
 		}
 	})
+}
+
+// TestBuildHookRegistry_NilWhenNothingToHook covers buildHookRegistry, which
+// sat at 38.5%. nil is the contract: ProviderStage and CompositionStage read it
+// as "no hooks", so returning an empty registry instead would put a hook
+// dispatch on every provider call for no reason.
+func TestBuildHookRegistry_NilWhenNothingToHook(t *testing.T) {
+	t.Run("no consent, no chaos, no guardrails yields nil", func(t *testing.T) {
+		assert.Nil(t, buildHookRegistry(&TurnRequest{}, nil))
+	})
+
+	t.Run("consent overrides alone produce a registry", func(t *testing.T) {
+		req := &TurnRequest{ConsentOverrides: map[string]string{"tool_a": "deny"}}
+		assert.NotNil(t, buildHookRegistry(req, nil))
+	})
+
+	t.Run("a chaos config alone produces a registry", func(t *testing.T) {
+		req := &TurnRequest{ChaosConfig: &arenaconfig.ChaosConfig{}}
+		assert.NotNil(t, buildHookRegistry(req, nil))
+	})
+
+	t.Run("guardrail hooks alone produce a registry", func(t *testing.T) {
+		assert.NotNil(t, buildHookRegistry(&TurnRequest{}, []hooks.ProviderHook{noopProviderHook{}}))
+	})
+}
+
+// noopProviderHook is a minimal ProviderHook so buildHookRegistry can be given
+// a guardrail hook without pulling in the guardrail machinery.
+type noopProviderHook struct{}
+
+func (noopProviderHook) Name() string { return "noop" }
+
+func (noopProviderHook) BeforeCall(context.Context, *hooks.ProviderRequest) hooks.Decision {
+	return hooks.Decision{}
+}
+
+func (noopProviderHook) AfterCall(
+	context.Context, *hooks.ProviderRequest, *hooks.ProviderResponse,
+) hooks.Decision {
+	return hooks.Decision{}
+}
+
+// TestEmitterFromRequest_NilBusMeansNoEmitter covers emitterFromRequest. A nil
+// event bus has to yield a nil emitter rather than one wrapping nil, because
+// every stage checks the emitter for nil before publishing and would otherwise
+// panic on the first event of the run.
+func TestEmitterFromRequest_NilBusMeansNoEmitter(t *testing.T) {
+	assert.Nil(t, emitterFromRequest(&TurnRequest{}))
+
+	req := &TurnRequest{
+		EventBus:       events.NewEventBus(),
+		RunID:          "run-1",
+		ConversationID: "conv-1",
+	}
+	assert.NotNil(t, emitterFromRequest(req))
+}
+
+// TestSetPreloadedSkillInstructions_RoundTrips covers the 0% setter. The string
+// it stores is appended to the system prompt so preload: true skills are active
+// from turn 1; dropping it makes those skills silently inert.
+func TestSetPreloadedSkillInstructions_RoundTrips(t *testing.T) {
+	e := &PipelineExecutor{}
+	e.SetPreloadedSkillInstructions("always greet in French")
+	assert.Equal(t, "always greet in French", e.preloadedSkillInstructions)
 }

@@ -3,9 +3,10 @@ package app
 import (
 	"os"
 
-	"github.com/AltairaLabs/PromptKit/runtime/logger"
 	arenaaudio "github.com/AltairaLabs/promptarena/arena/audio"
 	"github.com/AltairaLabs/promptarena/arena/tui"
+
+	"github.com/AltairaLabs/PromptKit/runtime/v2/logger"
 )
 
 // attachAudioMonitor wires a process-wide host-playback Monitor for

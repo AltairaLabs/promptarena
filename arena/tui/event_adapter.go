@@ -6,9 +6,10 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/AltairaLabs/PromptKit/runtime/events"
 	arenaaudio "github.com/AltairaLabs/promptarena/arena/audio"
 	"github.com/AltairaLabs/promptarena/arena/tui/logging"
+
+	"github.com/AltairaLabs/PromptKit/runtime/v2/events"
 )
 
 // audioRMSSubscribeBuffer is the per-consumer buffer requested from the
