@@ -7,7 +7,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/AltairaLabs/PromptKit/pkg/config"
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 	arenaaudio "github.com/AltairaLabs/promptarena/arena/audio"
 	"github.com/AltairaLabs/promptarena/arena/engine"
@@ -16,6 +15,8 @@ import (
 	"github.com/AltairaLabs/promptarena/arena/results/junit"
 	"github.com/AltairaLabs/promptarena/arena/results/markdown"
 	"github.com/AltairaLabs/promptarena/arena/statestore"
+
+	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
 )
 
 // Flag name constants to avoid duplication

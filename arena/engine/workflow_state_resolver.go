@@ -6,10 +6,10 @@ import (
 	"maps"
 	"sync"
 
-	"github.com/AltairaLabs/PromptKit/runtime/logger"
-	"github.com/AltairaLabs/PromptKit/runtime/pipeline/stage"
-	"github.com/AltairaLabs/PromptKit/runtime/template"
-	"github.com/AltairaLabs/PromptKit/runtime/workflow"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/logger"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/pipeline/stage"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/template"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/workflow"
 )
 
 // workflowContextVar is the template variable carrying the brief the outgoing

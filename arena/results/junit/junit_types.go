@@ -3,7 +3,7 @@ package junit
 import (
 	"encoding/xml"
 
-	"github.com/AltairaLabs/PromptKit/runtime/types"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )
 
 // JUnit XML structures following the standard schema

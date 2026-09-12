@@ -6,9 +6,10 @@ import (
 	"sync"
 	"testing"
 
-	runtimestore "github.com/AltairaLabs/PromptKit/runtime/statestore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	runtimestore "github.com/AltairaLabs/PromptKit/runtime/v2/statestore"
 )
 
 // ArenaStateStore mirrors MemoryStore's ListAccessor semantics for use

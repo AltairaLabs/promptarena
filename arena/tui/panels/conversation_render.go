@@ -11,10 +11,11 @@ import (
 	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/AltairaLabs/PromptKit/runtime/types"
 	"github.com/AltairaLabs/promptarena/arena/statestore"
 	"github.com/AltairaLabs/promptarena/arena/tui/layout"
 	"github.com/AltairaLabs/promptarena/arena/tui/theme"
+
+	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )
 
 // View renders the conversation panel.

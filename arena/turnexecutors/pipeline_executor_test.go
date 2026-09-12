@@ -3,8 +3,8 @@ package turnexecutors
 import (
 	"testing"
 
-	"github.com/AltairaLabs/PromptKit/runtime/pipeline/stage"
-	"github.com/AltairaLabs/PromptKit/runtime/prompt"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/pipeline/stage"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/prompt"
 )
 
 // stubPromptRepository serves one Config for any task type, so a test can hand

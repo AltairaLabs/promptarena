@@ -8,9 +8,10 @@ import (
 
 	"go.opentelemetry.io/otel/trace/noop"
 
-	"github.com/AltairaLabs/PromptKit/runtime/events"
-	"github.com/AltairaLabs/PromptKit/runtime/pipeline/stage"
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+
+	"github.com/AltairaLabs/PromptKit/runtime/v2/events"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/pipeline/stage"
 )
 
 func TestConversationExecutorEmitsTurnEventsToBus(t *testing.T) {

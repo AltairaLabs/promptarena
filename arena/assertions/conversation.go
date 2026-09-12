@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	"github.com/AltairaLabs/PromptKit/runtime/types"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )
 
 // ConversationAssertion defines an assertion to evaluate across an entire conversation.

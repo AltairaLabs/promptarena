@@ -11,8 +11,9 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/x/exp/teatest"
 
-	"github.com/AltairaLabs/PromptKit/runtime/evals"
 	"github.com/AltairaLabs/promptarena/arena/engine"
+
+	"github.com/AltairaLabs/PromptKit/runtime/v2/evals"
 )
 
 // TestChatPage_Title verifies Title returns "Chat".

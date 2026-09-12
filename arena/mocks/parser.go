@@ -5,9 +5,10 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/AltairaLabs/PromptKit/runtime/providers/mock"
-	"github.com/AltairaLabs/PromptKit/runtime/types"
 	"github.com/AltairaLabs/promptarena/arena/engine"
+
+	"github.com/AltairaLabs/PromptKit/runtime/v2/providers/mock"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )
 
 // File represents a mock response YAML document compatible with the mock provider.

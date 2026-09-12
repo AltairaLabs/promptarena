@@ -10,7 +10,7 @@ import (
 	"gopkg.in/yaml.v3"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/AltairaLabs/PromptKit/runtime/template"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/template"
 )
 
 // Default values for persona configuration

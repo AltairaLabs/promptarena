@@ -5,9 +5,10 @@ import (
 	"math"
 	"testing"
 
-	runtimestore "github.com/AltairaLabs/PromptKit/runtime/statestore"
 	"github.com/AltairaLabs/promptarena/arena/assertions"
 	"github.com/AltairaLabs/promptarena/arena/statestore"
+
+	runtimestore "github.com/AltairaLabs/PromptKit/runtime/v2/statestore"
 )
 
 func TestGroupTrialRuns(t *testing.T) {

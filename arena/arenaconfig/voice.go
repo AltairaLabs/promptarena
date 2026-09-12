@@ -3,7 +3,7 @@ package arenaconfig
 import (
 	"fmt"
 
-	"github.com/AltairaLabs/PromptKit/pkg/config"
+	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
 )
 
 // ResolveVoice returns the TTS provider config bound to the given voice id.

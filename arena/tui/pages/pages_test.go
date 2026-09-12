@@ -5,9 +5,10 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/AltairaLabs/PromptKit/runtime/types"
 	"github.com/AltairaLabs/promptarena/arena/statestore"
 	"github.com/AltairaLabs/promptarena/arena/tui/panels"
+
+	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )
 
 func TestMainPage_Basic(t *testing.T) {

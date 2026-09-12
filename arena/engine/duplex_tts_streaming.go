@@ -6,8 +6,9 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/AltairaLabs/PromptKit/pkg/config"
 	"github.com/AltairaLabs/promptarena/arena/selfplay"
+
+	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
 )
 
 // openTextSynthesisStream returns the TTS stream for pre-known text using the

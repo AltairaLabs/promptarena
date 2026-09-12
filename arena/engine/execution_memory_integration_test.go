@@ -1,13 +1,16 @@
 package engine
 
 import (
+	"encoding/json"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/AltairaLabs/PromptKit/runtime/memory"
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+
+	"github.com/AltairaLabs/PromptKit/runtime/v2/memory"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/tools"
 )
 
 func TestSeedMemoriesForRun(t *testing.T) {
@@ -86,4 +89,80 @@ func TestSeedMemoriesForRun_EmptyContent(t *testing.T) {
 	err := eng.seedMemoriesForRun(scenario, map[string]string{"run": "1"})
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "empty content")
+}
+
+// TestInitMemory_RegistersToolsAndStore covers initMemory, which was 22.2%.
+// It is the only thing that puts the four memory__* tools in front of the
+// model, so a silent no-op here produces a scenario where the assistant
+// simply never recalls anything and nothing reports why.
+func TestInitMemory_RegistersToolsAndStore(t *testing.T) {
+	eng := &Engine{
+		config:       &arenaconfig.Config{Memory: map[string]any{"enabled": true}},
+		toolRegistry: tools.NewRegistry(),
+	}
+
+	require.NoError(t, eng.initMemory())
+	require.NotNil(t, eng.memoryStore, "a configured memory section must leave a store behind")
+
+	for _, name := range []string{
+		memory.RecallToolName, memory.RememberToolName,
+		memory.ListToolName, memory.ForgetToolName,
+	} {
+		assert.NotNil(t, eng.toolRegistry.Get(name), "tool %s must be registered", name)
+	}
+}
+
+// TestInitMemory_NoConfigLeavesEverythingAlone pins the opposite branch: with
+// no memory section the tools must NOT appear, or every scenario would offer
+// the model memory it was never asked to have.
+func TestInitMemory_NoConfigLeavesEverythingAlone(t *testing.T) {
+	eng := &Engine{
+		config:       &arenaconfig.Config{},
+		toolRegistry: tools.NewRegistry(),
+	}
+
+	require.NoError(t, eng.initMemory())
+	assert.Nil(t, eng.memoryStore)
+	assert.Nil(t, eng.toolRegistry.Get(memory.RecallToolName))
+}
+
+// TestRegisterMemoryForRun_ScopesToScenarioAndRun covers registerMemoryForRun,
+// which was 0%. The scope it builds is the isolation boundary between runs —
+// get it wrong and one scenario recalls another's memories, which shows up as
+// a passing assertion rather than an error.
+func TestRegisterMemoryForRun_ScopesToScenarioAndRun(t *testing.T) {
+	eng := &Engine{
+		config:       &arenaconfig.Config{Memory: map[string]any{"enabled": true}},
+		toolRegistry: tools.NewRegistry(),
+	}
+	require.NoError(t, eng.initMemory())
+
+	scope := eng.registerMemoryForRun("scenario-a", "run-1")
+	require.Equal(t, map[string]string{"scenario": "scenario-a", "run": "run-1"}, scope)
+
+	// The executor registered for this run must write under that scope.
+	ctx := t.Context()
+	desc := eng.toolRegistry.Get(memory.RememberToolName)
+	require.NotNil(t, desc)
+	_, err := eng.toolRegistry.Execute(ctx, memory.RememberToolName,
+		json.RawMessage(`{"content":"scoped to run-1"}`))
+	require.NoError(t, err)
+
+	got, err := eng.memoryStore.List(ctx, scope, memory.ListOptions{Limit: 10})
+	require.NoError(t, err)
+	require.Len(t, got, 1)
+	assert.Equal(t, "scoped to run-1", got[0].Content)
+
+	// A different run must not see it.
+	other := eng.registerMemoryForRun("scenario-a", "run-2")
+	got, err = eng.memoryStore.List(ctx, other, memory.ListOptions{Limit: 10})
+	require.NoError(t, err)
+	assert.Empty(t, got, "run-2 must not see run-1's memories")
+}
+
+// TestRegisterMemoryForRun_NoStoreReturnsNil pins the guard: without initMemory
+// there is no store, and the caller relies on a nil scope to mean "memory off".
+func TestRegisterMemoryForRun_NoStoreReturnsNil(t *testing.T) {
+	eng := &Engine{toolRegistry: tools.NewRegistry()}
+	assert.Nil(t, eng.registerMemoryForRun("s", "r"))
 }

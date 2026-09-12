@@ -5,9 +5,9 @@ import (
 	"encoding/binary"
 	"sync/atomic"
 
-	runtimeaudio "github.com/AltairaLabs/PromptKit/runtime/audio"
-	"github.com/AltairaLabs/PromptKit/runtime/logger"
-	"github.com/AltairaLabs/PromptKit/runtime/pipeline/stage"
+	runtimeaudio "github.com/AltairaLabs/PromptKit/runtime/v2/audio"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/logger"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/pipeline/stage"
 )
 
 // bytesPerInt16Sample is the byte size of a single s16le PCM sample.

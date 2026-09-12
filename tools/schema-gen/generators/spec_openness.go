@@ -7,7 +7,7 @@ import (
 
 	"github.com/invopop/jsonschema"
 
-	packschema "github.com/AltairaLabs/PromptKit/runtime/prompt/schema"
+	packschema "github.com/AltairaLabs/PromptKit/runtime/v2/prompt/schema"
 )
 
 // The reflector runs with AllowAdditionalProperties:false, so every object it

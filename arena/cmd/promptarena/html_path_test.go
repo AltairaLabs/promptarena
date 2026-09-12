@@ -3,7 +3,7 @@ package main
 import (
 	"testing"
 
-	"github.com/AltairaLabs/PromptKit/pkg/config"
+	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
 )
 
 // TestHTMLReportPathResolution tests how HTML report paths should be resolved

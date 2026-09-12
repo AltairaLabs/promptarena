@@ -8,9 +8,10 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/AltairaLabs/PromptKit/runtime/types"
 	"github.com/AltairaLabs/promptarena/arena/statestore"
 	"github.com/AltairaLabs/promptarena/arena/tui"
+
+	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )
 
 // fakeDrillStore mimics the arena store mid-run: GetResult fails (the run's

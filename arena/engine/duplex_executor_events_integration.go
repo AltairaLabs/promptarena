@@ -3,7 +3,7 @@ package engine
 import (
 	"fmt"
 
-	"github.com/AltairaLabs/PromptKit/runtime/events"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/events"
 )
 
 // Event name constants

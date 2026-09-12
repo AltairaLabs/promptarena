@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -10,8 +11,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/AltairaLabs/PromptKit/runtime/logger"
 	"github.com/AltairaLabs/promptarena/arena/tui/app"
+
+	"github.com/AltairaLabs/PromptKit/runtime/v2/logger"
 )
 
 var rootCmd = &cobra.Command{
@@ -33,27 +35,8 @@ conversation flows for various task types (customer support, code assistance, et
 		if err != nil {
 			return fmt.Errorf("could not determine working directory: %w", err)
 		}
-
-		ctx := &app.AppContext{
-			Version:    GetVersion(),
-			ResultsDir: filepath.Join(cwd, "out"),
-		}
-
-		if cfgPath, found := app.DiscoverConfig(cwd); found {
-			if loadErr := ctx.LoadConfig(cfgPath); loadErr != nil {
-				// Non-fatal: launch hub without a config rather than aborting.
-				fmt.Fprintf(os.Stderr, "warning: could not load config %s: %v\n", cfgPath, loadErr)
-			} else {
-				// LoadConfig sets ResultsDir relative to the config file;
-				// override only if it is still empty (defensive fallback — LoadConfig
-				// always sets it in practice, but guard against future refactors).
-				if ctx.ResultsDir == "" {
-					ctx.ResultsDir = filepath.Join(cwd, "out")
-				}
-			}
-		}
-
-		return app.Run(ctx, app.NewHome(ctx, app.DefaultMenu(ctx)))
+		ctx := buildHubContext(cwd, os.Stderr)
+		return runHub(ctx, app.NewHome(ctx, app.DefaultMenu(ctx)))
 	},
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		// Initialize logger based on verbose flag if present
@@ -67,6 +50,46 @@ conversation flows for various task types (customer support, code assistance, et
 			logger.SetVerbose(verbose)
 		}
 	},
+}
+
+// runHub starts the interactive hub. It is a variable rather than a direct call
+// to app.Run so the bare-`promptarena` path is reachable from a test: app.Run
+// hands control to a Bubble Tea program that owns the terminal and does not
+// return, which no test can call.
+var runHub = app.Run
+
+// buildHubContext assembles the AppContext for a bare `promptarena` hub launch:
+// version, a default results directory, and whatever config is discoverable
+// from cwd. Split out of RunE so it is reachable from a test — RunE's remaining
+// statement hands control to the Bubble Tea program, which never returns under
+// `go test`.
+//
+// A config that is present but unloadable is a warning, not a failure: the hub
+// is how you find out what is wrong with your kit, so refusing to open it over
+// a malformed config is the least useful thing it could do.
+func buildHubContext(cwd string, warnTo io.Writer) *app.AppContext {
+	ctx := &app.AppContext{
+		Version:    GetVersion(),
+		ResultsDir: filepath.Join(cwd, "out"),
+	}
+
+	cfgPath, found := app.DiscoverConfig(cwd)
+	if !found {
+		return ctx
+	}
+
+	if loadErr := ctx.LoadConfig(cfgPath); loadErr != nil {
+		_, _ = fmt.Fprintf(warnTo, "warning: could not load config %s: %v\n", cfgPath, loadErr)
+		return ctx
+	}
+
+	// LoadConfig sets ResultsDir relative to the config file; override only if
+	// it is still empty (defensive fallback — LoadConfig always sets it in
+	// practice, but guard against future refactors).
+	if ctx.ResultsDir == "" {
+		ctx.ResultsDir = filepath.Join(cwd, "out")
+	}
+	return ctx
 }
 
 // setupVersion configures the version display
@@ -131,24 +154,35 @@ const (
 	exitCodeSIGINT = 130
 )
 
+// terminalRestoreSeq shows the cursor, leaves the alternate screen, leaves
+// bracketed paste mode and resets attributes — the usual things a TUI puts the
+// terminal into and the only ones worth undoing blind.
+const terminalRestoreSeq = "\x1b[?25h\x1b[?1049l\x1b[?2004l\x1b[0m"
+
+// awaitForceExit blocks until the escape hatch should fire, writing its running
+// commentary to out, and returns without exiting. Split from
+// installCtrlCEscapeHatch so both arms — a second signal, and the watchdog
+// expiring — are reachable from a test; the os.Exit stays in the caller, which
+// is the one statement that cannot run under `go test`.
+func awaitForceExit(sigCh <-chan os.Signal, timeout time.Duration, out io.Writer) {
+	<-sigCh // first signal
+	_, _ = fmt.Fprintln(out,
+		"\n[promptarena] shutdown requested. Press Ctrl-C again or wait 5s to force-exit.")
+	select {
+	case <-sigCh:
+		_, _ = fmt.Fprintln(out, "[promptarena] force-exiting (second signal received)")
+	case <-time.After(timeout):
+		_, _ = fmt.Fprintln(out,
+			"[promptarena] force-exiting (graceful shutdown did not complete within 5s)")
+	}
+	_, _ = io.WriteString(out, terminalRestoreSeq)
+}
+
 func installCtrlCEscapeHatch() {
 	sigCh := make(chan os.Signal, sigChanBuf)
 	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
 	go func() {
-		<-sigCh // first signal
-		fmt.Fprintln(os.Stderr,
-			"\n[promptarena] shutdown requested. Press Ctrl-C again or wait 5s to force-exit.")
-		select {
-		case <-sigCh:
-			fmt.Fprintln(os.Stderr, "[promptarena] force-exiting (second signal received)")
-		case <-time.After(ctrlCWatchdogTimeout):
-			fmt.Fprintln(os.Stderr,
-				"[promptarena] force-exiting (graceful shutdown did not complete within 5s)")
-		}
-		// Best-effort terminal restore: show cursor, leave alt screen,
-		// reset attributes, leave bracketed paste mode. These are the
-		// usual things a TUI puts the terminal into.
-		_, _ = os.Stderr.WriteString("\x1b[?25h\x1b[?1049l\x1b[?2004l\x1b[0m")
+		awaitForceExit(sigCh, ctrlCWatchdogTimeout, os.Stderr)
 		os.Exit(exitCodeSIGINT)
 	}()
 }

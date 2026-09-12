@@ -11,7 +11,7 @@ import (
 	"github.com/AltairaLabs/promptarena/arena/adapters"
 	"github.com/AltairaLabs/promptarena/arena/generate"
 
-	"github.com/AltairaLabs/PromptKit/runtime/types"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )
 
 // RecordingsAdapter serves sessions from files on disk through the recording

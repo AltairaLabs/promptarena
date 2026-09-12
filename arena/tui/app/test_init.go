@@ -3,7 +3,7 @@ package app
 import (
 	"testing"
 
-	"github.com/AltairaLabs/PromptKit/pkg/config"
+	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
 )
 
 // init disables schema validation when running tests so that unit tests do not

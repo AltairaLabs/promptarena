@@ -5,10 +5,11 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/AltairaLabs/PromptKit/runtime/types"
 	"github.com/AltairaLabs/promptarena/arena/statestore"
 	"github.com/AltairaLabs/promptarena/arena/tui"
 	"github.com/AltairaLabs/promptarena/arena/tui/panels"
+
+	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )
 
 // roleSystemMessage is the message role for the system prompt.

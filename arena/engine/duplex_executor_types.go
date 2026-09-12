@@ -3,7 +3,7 @@ package engine
 import (
 	"errors"
 
-	"github.com/AltairaLabs/PromptKit/runtime/streaming"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/streaming"
 )
 
 const (

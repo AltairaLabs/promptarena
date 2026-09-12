@@ -113,7 +113,7 @@ Same input always produces same output:
 For SDK usage or unit tests, use the in-memory repository:
 
 ```go
-import "github.com/AltairaLabs/PromptKit/runtime/providers"
+import "github.com/AltairaLabs/PromptKit/runtime/v2/providers"
 
 // Create in-memory repository
 repo := providers.NewInMemoryMockRepository("default response")

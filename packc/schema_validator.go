@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/AltairaLabs/PromptKit/runtime/prompt/schema"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/prompt/schema"
 )
 
 // PackSchemaValidationResult contains the result of schema validation

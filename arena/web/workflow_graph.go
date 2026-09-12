@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"sort"
 
-	"github.com/AltairaLabs/PromptKit/runtime/composition"
-	"github.com/AltairaLabs/PromptKit/runtime/workflow"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/composition"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/workflow"
 
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 )
@@ -214,7 +214,7 @@ func dedupeEdges(edges []WorkflowGraphEdge) []WorkflowGraphEdge {
 // including nested parallel.branches, so the prefix alone is enough).
 //
 // Edges follow how the runtime's composition engine actually executes the
-// step list (github.com/AltairaLabs/PromptKit/runtime/composition/engine):
+// step list (github.com/AltairaLabs/PromptKit/runtime/v2/composition/engine):
 // top-level steps run in list order, so a step with no explicit DependsOn
 // implicitly follows whatever ran immediately before it in the flow —
 // *not* necessarily the literal previous list entry:

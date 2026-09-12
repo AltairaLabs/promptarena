@@ -4,7 +4,7 @@ import (
 	"context"
 	"sync"
 
-	"github.com/AltairaLabs/PromptKit/runtime/audio"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/audio"
 )
 
 // captureChanBuffer bounds the mic forwarding channel. It matches the buffer the

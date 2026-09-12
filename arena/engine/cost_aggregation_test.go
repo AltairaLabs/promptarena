@@ -3,7 +3,7 @@ package engine
 import (
 	"testing"
 
-	"github.com/AltairaLabs/PromptKit/runtime/types"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )
 
 func TestAddSelfPlayCostFromMeta_FloatJSONShape(t *testing.T) {

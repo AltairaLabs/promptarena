@@ -5,8 +5,8 @@ import (
 
 	"github.com/AltairaLabs/promptarena/deploy"
 
-	"github.com/AltairaLabs/PromptKit/runtime/packspec"
-	"github.com/AltairaLabs/PromptKit/runtime/prompt"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/packspec"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/prompt"
 )
 
 // multiAgentPack returns a two-member pack used across several tests.

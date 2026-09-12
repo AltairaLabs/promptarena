@@ -158,7 +158,7 @@ release:
     
     **SDK Library:**
     ```bash
-    go get github.com/AltairaLabs/PromptKit/sdk@{{.Version}}
+    go get github.com/AltairaLabs/PromptKit/sdk/v2@{{.Version}}
     ```
     
     **Or download pre-built binaries below** ⬇️

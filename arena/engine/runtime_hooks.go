@@ -3,7 +3,7 @@ package engine
 import (
 	"fmt"
 
-	"github.com/AltairaLabs/PromptKit/runtime/hooks"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/hooks"
 )
 
 // applyRuntimeHooks wires the pass-through runtime config (config.Runtime) into

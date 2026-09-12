@@ -3,7 +3,7 @@ package engine
 import (
 	"context"
 
-	"github.com/AltairaLabs/PromptKit/runtime/hooks"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/hooks"
 )
 
 // sessionHookContextKey is a private type used to key session-hook data in a context.

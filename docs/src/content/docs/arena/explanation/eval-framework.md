@@ -211,8 +211,8 @@ Eval results can be recorded as Prometheus metrics using the unified `metrics.Co
 ```go
 import (
     "github.com/prometheus/client_golang/prometheus"
-    "github.com/AltairaLabs/PromptKit/runtime/metrics"
-    "github.com/AltairaLabs/PromptKit/sdk"
+    "github.com/AltairaLabs/PromptKit/runtime/v2/metrics"
+    "github.com/AltairaLabs/PromptKit/sdk/v2"
 )
 
 reg := prometheus.NewRegistry()

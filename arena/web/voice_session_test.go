@@ -7,8 +7,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AltairaLabs/PromptKit/runtime/audio"
 	"github.com/gorilla/websocket"
+
+	"github.com/AltairaLabs/PromptKit/runtime/v2/audio"
 )
 
 // fakeConn implements wsConn for tests. reads is a queue of (messageType, data).

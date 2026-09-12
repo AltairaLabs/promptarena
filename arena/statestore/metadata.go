@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"fmt"
 
-	runtimestore "github.com/AltairaLabs/PromptKit/runtime/statestore"
-	"github.com/AltairaLabs/PromptKit/runtime/types"
+	runtimestore "github.com/AltairaLabs/PromptKit/runtime/v2/statestore"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )
 
 // SaveMetadata stores Arena-specific metadata for a run

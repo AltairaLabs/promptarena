@@ -1,6 +1,6 @@
 package engine
 
-import "github.com/AltairaLabs/PromptKit/runtime/types"
+import "github.com/AltairaLabs/PromptKit/runtime/v2/types"
 
 // selfPlayCostMetaKey is the Meta key under which duplex's
 // streamSelfPlayUserAudio records the persona LLM call's CostInfo.

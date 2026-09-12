@@ -9,9 +9,10 @@ import (
 
 	"github.com/spf13/pflag"
 
-	"github.com/AltairaLabs/PromptKit/runtime/prompt"
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 	"github.com/AltairaLabs/promptarena/packc/compiler"
+
+	"github.com/AltairaLabs/PromptKit/runtime/v2/prompt"
 )
 
 const (

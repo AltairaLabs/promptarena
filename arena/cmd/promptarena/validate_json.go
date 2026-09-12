@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"io"
 
-	"github.com/AltairaLabs/PromptKit/pkg/config"
+	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
 )
 
 // validateJSONError is the machine-readable form of one schema error.

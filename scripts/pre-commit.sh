@@ -115,7 +115,24 @@ MERGED_COVERAGE="$TEMP_COVERAGE_DIR/coverage.out"
 # rather than the whole (single-module) suite. `-coverpkg` on those same
 # packages captures cross-file coverage within each. The authoritative
 # whole-repo gate is CI/SonarCloud.
-CHANGED_PKGS=$(for f in $STAGED_GO_FILES; do d=$(dirname "$f"); printf './%s\n' "$d"; done | sort -u)
+# Skip directories owned by a NESTED module. examples/*/sdk-example each
+# carry their own go.mod, so `go test ./examples/.../sdk-example` from the
+# root fails with "main module does not contain package". They are built and
+# tested by their own module; this loop only covers the root one.
+in_nested_module() {
+    local dir="$1"
+    while [ "$dir" != "." ] && [ "$dir" != "/" ]; do
+        [ -f "$dir/go.mod" ] && return 0
+        dir=$(dirname "$dir")
+    done
+    return 1
+}
+
+CHANGED_PKGS=$(for f in $STAGED_GO_FILES; do
+    d=$(dirname "$f")
+    in_nested_module "$d" && continue
+    printf './%s\n' "$d"
+done | sort -u)
 print_info "Testing changed packages:"
 echo "$CHANGED_PKGS" | sed 's/^/    /'
 
@@ -145,6 +162,11 @@ elif [ -f "$MERGED_COVERAGE" ]; then
             *_test.go|*_interactive.go) continue ;;
             *_windows.go|*_darwin.go) continue ;;
             */testdata/*|testdata/*) continue ;;
+            # examples/ is outside sonar.sources ("arena,packc,npm"), so the CI
+            # gate this hook mirrors never scores it. Two of those directories
+            # are also their own modules, whose files can only ever report "no
+            # coverage data" from a root-module test run.
+            examples/*) continue ;;
         esac
 
         FILE_COV_PERCENT=$(grep "/$file:" "$MERGED_COVERAGE" 2>/dev/null | awk '

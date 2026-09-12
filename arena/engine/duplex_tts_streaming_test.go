@@ -8,9 +8,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/AltairaLabs/PromptKit/pkg/config"
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 	"github.com/AltairaLabs/promptarena/arena/selfplay"
+
+	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
 )
 
 func TestTurnAudioMirror_WriteFinalizeCleanup(t *testing.T) {

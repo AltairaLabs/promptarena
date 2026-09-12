@@ -7,7 +7,7 @@ import (
 
 	"github.com/invopop/jsonschema"
 
-	"github.com/AltairaLabs/PromptKit/runtime/prompt"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/prompt"
 )
 
 func TestGenerateArenaSchema(t *testing.T) {

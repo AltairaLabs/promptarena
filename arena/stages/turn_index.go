@@ -3,7 +3,7 @@ package stages
 import (
 	"context"
 
-	"github.com/AltairaLabs/PromptKit/runtime/pipeline/stage"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/pipeline/stage"
 )
 
 // TurnIndexStage computes role-specific turn counters from accumulated messages.

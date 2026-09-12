@@ -21,8 +21,8 @@ Add Arena to your Go project:
 
 ```bash
 go get github.com/AltairaLabs/promptarena/arena/engine
-go get github.com/AltairaLabs/PromptKit/pkg/config
-go get github.com/AltairaLabs/PromptKit/runtime/prompt
+go get github.com/AltairaLabs/PromptKit/pkg/v2/config
+go get github.com/AltairaLabs/PromptKit/runtime/v2/prompt
 ```
 
 ## Basic Usage
@@ -31,8 +31,8 @@ go get github.com/AltairaLabs/PromptKit/runtime/prompt
 
 ```go
 import (
-	"github.com/AltairaLabs/PromptKit/pkg/config"
-	"github.com/AltairaLabs/PromptKit/runtime/prompt"
+	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/prompt"
 	"github.com/AltairaLabs/promptarena/arena/engine"
 )
 

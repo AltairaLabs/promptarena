@@ -8,9 +8,10 @@ import (
 	"github.com/charmbracelet/x/exp/teatest"
 	"github.com/stretchr/testify/require"
 
-	"github.com/AltairaLabs/PromptKit/runtime/types"
 	"github.com/AltairaLabs/promptarena/arena/tui"
 	"github.com/AltairaLabs/promptarena/arena/tui/logging"
+
+	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )
 
 // goldenLiveStore is the transcript the golden live drill-in reconciles against.

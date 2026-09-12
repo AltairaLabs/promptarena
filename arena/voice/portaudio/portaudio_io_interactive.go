@@ -21,7 +21,7 @@ import (
 
 	"github.com/ebitengine/purego"
 
-	"github.com/AltairaLabs/PromptKit/runtime/audio"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/audio"
 )
 
 const (

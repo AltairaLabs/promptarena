@@ -3,7 +3,7 @@ package turnexecutors
 import (
 	"testing"
 
-	"github.com/AltairaLabs/PromptKit/runtime/types"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )
 
 func TestMergeStringMaps(t *testing.T) {

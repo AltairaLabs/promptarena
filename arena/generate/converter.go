@@ -8,8 +8,8 @@ import (
 
 	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
 
-	"github.com/AltairaLabs/PromptKit/pkg/config"
-	"github.com/AltairaLabs/PromptKit/runtime/types"
+	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )
 
 const (

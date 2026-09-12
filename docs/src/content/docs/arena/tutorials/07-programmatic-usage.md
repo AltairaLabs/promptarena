@@ -34,8 +34,8 @@ go mod init arena-lib-demo
 Add PromptKit as a dependency:
 
 ```bash
-go get github.com/AltairaLabs/PromptKit/pkg/config
-go get github.com/AltairaLabs/PromptKit/runtime/prompt
+go get github.com/AltairaLabs/PromptKit/pkg/v2/config
+go get github.com/AltairaLabs/PromptKit/runtime/v2/prompt
 go get github.com/AltairaLabs/promptarena/arena/engine
 go get github.com/AltairaLabs/promptarena/arena/statestore
 ```
@@ -52,8 +52,8 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/AltairaLabs/PromptKit/pkg/config"
-	"github.com/AltairaLabs/PromptKit/runtime/prompt"
+	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/prompt"
 	"github.com/AltairaLabs/promptarena/arena/engine"
 	"github.com/AltairaLabs/promptarena/arena/statestore"
 )

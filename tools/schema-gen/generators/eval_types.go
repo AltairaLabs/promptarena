@@ -5,13 +5,13 @@ import (
 
 	"github.com/invopop/jsonschema"
 
-	"github.com/AltairaLabs/PromptKit/runtime/evals"
-	"github.com/AltairaLabs/PromptKit/runtime/prompt"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/evals"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/prompt"
 
 	// Blank import populates the default eval handler registry (handlers
 	// self-register via init), so knownEvalTypes reflects exactly the set this
 	// PromptKit build supports.
-	_ "github.com/AltairaLabs/PromptKit/runtime/evals/handlers"
+	_ "github.com/AltairaLabs/PromptKit/runtime/v2/evals/handlers"
 )
 
 // knownEvalTypes returns the sorted list of eval/assertion handler types this

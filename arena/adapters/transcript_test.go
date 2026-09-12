@@ -6,8 +6,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AltairaLabs/PromptKit/pkg/testutil"
 	"gopkg.in/yaml.v3"
+
+	"github.com/AltairaLabs/PromptKit/pkg/v2/testutil"
 )
 
 func TestTranscriptAdapter_CanHandle(t *testing.T) {

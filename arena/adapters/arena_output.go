@@ -6,7 +6,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/AltairaLabs/PromptKit/runtime/types"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )
 
 // ArenaOutputAdapter loads the per-run JSON that `promptarena run` writes into
