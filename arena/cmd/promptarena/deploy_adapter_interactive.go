@@ -18,8 +18,17 @@ import (
 
 // adapterRegistryEntry describes a single deploy adapter in the registry.
 type adapterRegistryEntry struct {
-	Repo         string `json:"repo"`
-	Description  string `json:"description"`
+	Repo        string `json:"repo"`
+	Description string `json:"description"`
+	// Latest is a FALLBACK, not the version installs normally use.
+	// resolveInstallVersion asks the GitHub Releases API first and only reads
+	// this when that call fails — offline, rate-limited, firewalled.
+	//
+	// Releasing an adapter therefore needs no change here and no promptarena
+	// release: the live lookup picks it up immediately. This field only
+	// decides how stale a degraded install is, and the daily
+	// sync-adapter-registry workflow refreshes it. It is not part of the
+	// release chain.
 	Latest       string `json:"latest"`
 	MaintainedBy string `json:"maintained_by"`
 }
@@ -221,9 +230,12 @@ type githubLatestRelease struct {
 
 // githubLatestVersion queries the GitHub Releases API for the newest published
 // release of repo and returns its version with any leading "v" stripped
-// (e.g. "v1.2.0" -> "1.2.0"). Resolving the version live means a newly
-// published adapter release is installable WITHOUT rebuilding the CLI: the
-// embedded registry only supplies the repo, never a frozen version.
+// (e.g. "v1.2.0" -> "1.2.0").
+//
+// This is the normal path, and it is why a newly published adapter release is
+// installable WITHOUT rebuilding or re-releasing the CLI. It is NOT the only
+// path: see resolveInstallVersion, which falls back to the registry's embedded
+// version when this call fails.
 func githubLatestVersion(repo string) (string, error) {
 	url := fmt.Sprintf("https://api.github.com/repos/%s/releases/latest", repo)
 	req, err := http.NewRequestWithContext(context.Background(), http.MethodGet, url, http.NoBody)

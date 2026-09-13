@@ -386,11 +386,26 @@ promptarena deploy adapter install agentcore@0.2.0
 
 **Process:**
 
-1. Look up provider in the built-in adapter registry
-2. Determine version (specified or latest from registry)
+1. Look up provider in the built-in adapter registry, which supplies its GitHub repo
+2. Determine the version: the one you pinned, or otherwise the newest release
+   from the GitHub Releases API
 3. Download binary from GitHub Releases for current OS/architecture
 4. Install to `~/.promptarena/adapters/promptarena-deploy-{provider}`
 5. Set executable permissions (0755)
+
+A newly released adapter is installable straight away — the version is resolved
+live, so nothing needs rebuilding or re-releasing on the PromptArena side.
+
+If the GitHub API cannot be reached (offline, rate-limited, behind a firewall),
+the install falls back to the version recorded in the built-in registry and
+says so:
+
+```
+warning: could not resolve latest agentcore from GitHub (...);
+falling back to registry default v0.3.1
+```
+
+That recorded version is refreshed daily and only affects this offline path.
 
 **Download URL format:**
 
