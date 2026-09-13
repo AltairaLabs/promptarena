@@ -8,10 +8,10 @@ import (
 	"github.com/charmbracelet/bubbles/viewport"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/AltairaLabs/promptarena/arena/assertions"
-	"github.com/AltairaLabs/promptarena/arena/statestore"
-	"github.com/AltairaLabs/promptarena/arena/tui/theme"
-	"github.com/AltairaLabs/promptarena/arena/tui/views"
+	"github.com/AltairaLabs/promptarena/v2/arena/assertions"
+	"github.com/AltairaLabs/promptarena/v2/arena/statestore"
+	"github.com/AltairaLabs/promptarena/v2/arena/tui/theme"
+	"github.com/AltairaLabs/promptarena/v2/arena/tui/views"
 )
 
 const (

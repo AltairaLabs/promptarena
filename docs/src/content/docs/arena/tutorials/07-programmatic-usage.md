@@ -36,8 +36,8 @@ Add PromptKit as a dependency:
 ```bash
 go get github.com/AltairaLabs/PromptKit/pkg/v2/config
 go get github.com/AltairaLabs/PromptKit/runtime/v2/prompt
-go get github.com/AltairaLabs/promptarena/arena/engine
-go get github.com/AltairaLabs/promptarena/arena/statestore
+go get github.com/AltairaLabs/promptarena/v2/arena/engine
+go get github.com/AltairaLabs/promptarena/v2/arena/statestore
 ```
 
 ## Step 3: Create Your First Programmatic Test
@@ -54,8 +54,8 @@ import (
 
 	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/prompt"
-	"github.com/AltairaLabs/promptarena/arena/engine"
-	"github.com/AltairaLabs/promptarena/arena/statestore"
+	"github.com/AltairaLabs/promptarena/v2/arena/engine"
+	"github.com/AltairaLabs/promptarena/v2/arena/statestore"
 )
 
 func main() {
@@ -236,7 +236,7 @@ Don't forget to import the assertions package:
 ```go
 import (
 	// ... other imports
-	asrt "github.com/AltairaLabs/promptarena/arena/assertions"
+	asrt "github.com/AltairaLabs/promptarena/v2/arena/assertions"
 )
 ```
 

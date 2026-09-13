@@ -6,8 +6,8 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
-	"github.com/AltairaLabs/promptarena/arena/inspect"
+	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/v2/arena/inspect"
 
 	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
 )

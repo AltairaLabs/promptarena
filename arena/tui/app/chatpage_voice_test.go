@@ -11,8 +11,8 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	arenastore "github.com/AltairaLabs/promptarena/arena/statestore"
-	"github.com/AltairaLabs/promptarena/arena/voice"
+	arenastore "github.com/AltairaLabs/promptarena/v2/arena/statestore"
+	"github.com/AltairaLabs/promptarena/v2/arena/voice"
 
 	runtimestore "github.com/AltairaLabs/PromptKit/runtime/v2/statestore"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/types"

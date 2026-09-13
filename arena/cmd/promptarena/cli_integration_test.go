@@ -9,7 +9,7 @@ import (
 
 	"testing"
 
-	"github.com/AltairaLabs/promptarena/arena/tui/app"
+	"github.com/AltairaLabs/promptarena/v2/arena/tui/app"
 	"github.com/spf13/cobra"
 
 	"github.com/stretchr/testify/assert"

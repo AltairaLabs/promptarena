@@ -9,10 +9,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
-	"github.com/AltairaLabs/promptarena/arena/deploy/flow"
+	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/v2/arena/deploy/flow"
 
-	"github.com/AltairaLabs/promptarena/deploy"
+	"github.com/AltairaLabs/promptarena/v2/deploy"
 )
 
 var deployCmd = &cobra.Command{

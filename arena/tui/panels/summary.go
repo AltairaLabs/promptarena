@@ -1,8 +1,8 @@
 package panels
 
 import (
-	"github.com/AltairaLabs/promptarena/arena/tui/viewmodels"
-	"github.com/AltairaLabs/promptarena/arena/tui/views"
+	"github.com/AltairaLabs/promptarena/v2/arena/tui/viewmodels"
+	"github.com/AltairaLabs/promptarena/v2/arena/tui/views"
 )
 
 // SummaryPanel manages the summary display

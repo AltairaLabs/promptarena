@@ -135,7 +135,7 @@ jobs:
 
       - name: Run Arena tests
         id: arena
-        uses: AltairaLabs/promptarena/.github/actions/promptarena-action@v1
+        uses: AltairaLabs/promptarena/v2/.github/actions/promptarena-action@v1
         with:
           config-file: config.arena.yaml
           version: latest
@@ -169,7 +169,7 @@ instead of failing the job automatically:
 ```yaml
       - name: Run Arena tests (advisory)
         id: arena
-        uses: AltairaLabs/promptarena/.github/actions/promptarena-action@v1
+        uses: AltairaLabs/promptarena/v2/.github/actions/promptarena-action@v1
         with:
           config-file: config.arena.yaml
           fail-on-error: 'false'
@@ -242,7 +242,7 @@ arena-tests:
     OPENAI_API_KEY: $OPENAI_API_KEY
     ANTHROPIC_API_KEY: $ANTHROPIC_API_KEY
   before_script:
-    - go install github.com/AltairaLabs/promptarena/arena/cmd/promptarena@latest
+    - go install github.com/AltairaLabs/promptarena/v2/arena/cmd/promptarena@latest
   script:
     - promptarena run --ci --format junit,json
   artifacts:
@@ -269,7 +269,7 @@ pipeline {
     stages {
         stage('Install') {
             steps {
-                sh 'go install github.com/AltairaLabs/promptarena/arena/cmd/promptarena@latest'
+                sh 'go install github.com/AltairaLabs/promptarena/v2/arena/cmd/promptarena@latest'
             }
         }
         stage('Mock validation') {

@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/AltairaLabs/promptarena/arena/engine"
+	"github.com/AltairaLabs/promptarena/v2/arena/engine"
 )
 
 const interactiveFixtureConfig = "../engine/testdata/interactive/config.arena.yaml"

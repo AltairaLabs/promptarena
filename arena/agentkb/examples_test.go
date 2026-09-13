@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/AltairaLabs/promptarena/arena/templates"
+	"github.com/AltairaLabs/promptarena/v2/arena/templates"
 )
 
 func TestRenderExample_Builtin(t *testing.T) {

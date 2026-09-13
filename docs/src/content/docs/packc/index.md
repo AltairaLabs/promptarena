@@ -38,7 +38,7 @@ PackC is the reference compiler for this standard.
 
 ```bash
 # Install with Go
-go install github.com/AltairaLabs/promptarena/packc@latest
+go install github.com/AltairaLabs/promptarena/v2/packc@latest
 
 # Create a prompt source file
 cat > greeting.yaml <<EOF
@@ -270,8 +270,8 @@ validate-packs:
 ## Resources
 
 - **PromptPack Specification**: [promptpack.org](https://promptpack.org)
-- **Questions**: [GitHub Discussions](https://github.com/AltairaLabs/promptarena/issues)
-- **Issues**: [Report a Bug](https://github.com/AltairaLabs/promptarena/issues)
+- **Questions**: [GitHub Discussions](https://github.com/AltairaLabs/promptarena/v2/issues)
+- **Issues**: [Report a Bug](https://github.com/AltairaLabs/promptarena/v2/issues)
 
 ---
 

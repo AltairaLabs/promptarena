@@ -287,7 +287,7 @@ jobs:
       - uses: actions/checkout@v3
       
       - name: Install packc
-        run: go install github.com/AltairaLabs/promptarena/packc@latest
+        run: go install github.com/AltairaLabs/promptarena/v2/packc@latest
       
       - name: Detect modified prompts
         id: changed-files

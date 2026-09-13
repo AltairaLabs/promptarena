@@ -6,7 +6,7 @@ Compile and publish prompt packs to OCI-compliant registries in your CI/CD pipel
 
 ```yaml
 - name: Build and publish pack
-  uses: AltairaLabs/promptarena/.github/actions/packc-action@v1
+  uses: AltairaLabs/promptarena/v2/.github/actions/packc-action@v1
   with:
     config-file: config.arena.yaml
     registry: ghcr.io
@@ -57,7 +57,7 @@ Compile and publish prompt packs to OCI-compliant registries in your CI/CD pipel
 ### Compile Only
 
 ```yaml
-- uses: AltairaLabs/promptarena/.github/actions/packc-action@v1
+- uses: AltairaLabs/promptarena/v2/.github/actions/packc-action@v1
   with:
     config-file: config.arena.yaml
     pack-id: my-prompts
@@ -71,7 +71,7 @@ Compile and publish prompt packs to OCI-compliant registries in your CI/CD pipel
 ### Publish to GitHub Container Registry
 
 ```yaml
-- uses: AltairaLabs/promptarena/.github/actions/packc-action@v1
+- uses: AltairaLabs/promptarena/v2/.github/actions/packc-action@v1
   with:
     config-file: config.arena.yaml
     registry: ghcr.io
@@ -84,7 +84,7 @@ Compile and publish prompt packs to OCI-compliant registries in your CI/CD pipel
 ### Sign with Cosign
 
 ```yaml
-- uses: AltairaLabs/promptarena/.github/actions/packc-action@v1
+- uses: AltairaLabs/promptarena/v2/.github/actions/packc-action@v1
   with:
     config-file: config.arena.yaml
     registry: ghcr.io
@@ -99,7 +99,7 @@ Compile and publish prompt packs to OCI-compliant registries in your CI/CD pipel
 ### Use Outputs
 
 ```yaml
-- uses: AltairaLabs/promptarena/.github/actions/packc-action@v1
+- uses: AltairaLabs/promptarena/v2/.github/actions/packc-action@v1
   id: packc
   with:
     config-file: config.arena.yaml

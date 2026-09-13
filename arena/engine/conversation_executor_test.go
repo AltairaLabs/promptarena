@@ -10,10 +10,10 @@ import (
 	"github.com/stretchr/testify/require"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
-	arenaassertions "github.com/AltairaLabs/promptarena/arena/assertions"
-	"github.com/AltairaLabs/promptarena/arena/selfplay"
-	"github.com/AltairaLabs/promptarena/arena/turnexecutors"
+	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
+	arenaassertions "github.com/AltairaLabs/promptarena/v2/arena/assertions"
+	"github.com/AltairaLabs/promptarena/v2/arena/selfplay"
+	"github.com/AltairaLabs/promptarena/v2/arena/turnexecutors"
 
 	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/persistence/memory"

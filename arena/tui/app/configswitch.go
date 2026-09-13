@@ -6,9 +6,9 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/AltairaLabs/promptarena/arena/tui/pages"
-	"github.com/AltairaLabs/promptarena/arena/tui/theme"
-	"github.com/AltairaLabs/promptarena/arena/tui/views"
+	"github.com/AltairaLabs/promptarena/v2/arena/tui/pages"
+	"github.com/AltairaLabs/promptarena/v2/arena/tui/theme"
+	"github.com/AltairaLabs/promptarena/v2/arena/tui/views"
 )
 
 // ConfigSwitchPage wraps the file browser to let the user pick an arena config

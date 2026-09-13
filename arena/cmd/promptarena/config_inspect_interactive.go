@@ -7,9 +7,9 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
-	"github.com/AltairaLabs/promptarena/arena/inspect"
-	"github.com/AltairaLabs/promptarena/arena/tui/app"
+	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/v2/arena/inspect"
+	"github.com/AltairaLabs/promptarena/v2/arena/tui/app"
 )
 
 var configInspectCmd = &cobra.Command{

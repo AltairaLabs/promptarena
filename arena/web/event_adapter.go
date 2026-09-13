@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	arenaaudio "github.com/AltairaLabs/promptarena/arena/audio"
+	arenaaudio "github.com/AltairaLabs/promptarena/v2/arena/audio"
 
 	"github.com/AltairaLabs/PromptKit/runtime/v2/events"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/types"

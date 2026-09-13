@@ -9,7 +9,7 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/AltairaLabs/promptarena/arena/statestore"
+	"github.com/AltairaLabs/promptarena/v2/arena/statestore"
 )
 
 // TestPersistOneRun_NeverExposesPartialJSON locks in the invariant that a run's

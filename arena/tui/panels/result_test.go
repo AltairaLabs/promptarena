@@ -6,9 +6,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/AltairaLabs/promptarena/arena/assertions"
-	"github.com/AltairaLabs/promptarena/arena/statestore"
-	"github.com/AltairaLabs/promptarena/arena/tui/views"
+	"github.com/AltairaLabs/promptarena/v2/arena/assertions"
+	"github.com/AltairaLabs/promptarena/v2/arena/statestore"
+	"github.com/AltairaLabs/promptarena/v2/arena/tui/views"
 )
 
 func TestBuildAssertionRow_WithScore(t *testing.T) {

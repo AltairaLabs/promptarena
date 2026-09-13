@@ -13,10 +13,10 @@ import (
 	"sync"
 	"time"
 
-	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
-	arenaaudio "github.com/AltairaLabs/promptarena/arena/audio"
-	"github.com/AltairaLabs/promptarena/arena/engine"
-	"github.com/AltairaLabs/promptarena/arena/statestore"
+	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
+	arenaaudio "github.com/AltairaLabs/promptarena/v2/arena/audio"
+	"github.com/AltairaLabs/promptarena/v2/arena/engine"
+	"github.com/AltairaLabs/promptarena/v2/arena/statestore"
 
 	runtimestore "github.com/AltairaLabs/PromptKit/runtime/v2/statestore"
 )

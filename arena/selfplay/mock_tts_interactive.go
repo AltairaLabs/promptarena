@@ -10,7 +10,7 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/v2/providers/base"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/tts"
 
-	arenaaudio "github.com/AltairaLabs/promptarena/arena/audio"
+	arenaaudio "github.com/AltairaLabs/promptarena/v2/arena/audio"
 )
 
 // Compile-time check: MockTTSService must satisfy base.TTSProvider.

@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
 
 	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
 )

@@ -3,8 +3,8 @@ package app
 import (
 	"os"
 
-	arenaaudio "github.com/AltairaLabs/promptarena/arena/audio"
-	"github.com/AltairaLabs/promptarena/arena/tui"
+	arenaaudio "github.com/AltairaLabs/promptarena/v2/arena/audio"
+	"github.com/AltairaLabs/promptarena/v2/arena/tui"
 
 	"github.com/AltairaLabs/PromptKit/runtime/v2/logger"
 )

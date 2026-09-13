@@ -21,9 +21,9 @@ package turnexecutors
 import (
 	"context"
 
-	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
-	"github.com/AltairaLabs/promptarena/arena/assertions"
-	arenaaudio "github.com/AltairaLabs/promptarena/arena/audio"
+	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/v2/arena/assertions"
+	arenaaudio "github.com/AltairaLabs/promptarena/v2/arena/audio"
 
 	"github.com/AltairaLabs/PromptKit/runtime/v2/composition"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/events"

@@ -9,8 +9,8 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/AltairaLabs/promptarena/arena/engine"
-	"github.com/AltairaLabs/promptarena/arena/mocks"
+	"github.com/AltairaLabs/promptarena/v2/arena/engine"
+	"github.com/AltairaLabs/promptarena/v2/arena/mocks"
 )
 
 var (

@@ -10,9 +10,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
-	arenaaudio "github.com/AltairaLabs/promptarena/arena/audio"
-	"github.com/AltairaLabs/promptarena/arena/statestore"
+	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
+	arenaaudio "github.com/AltairaLabs/promptarena/v2/arena/audio"
+	"github.com/AltairaLabs/promptarena/v2/arena/statestore"
 
 	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/events"

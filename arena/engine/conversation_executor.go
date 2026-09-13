@@ -7,10 +7,10 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
-	asrt "github.com/AltairaLabs/promptarena/arena/assertions"
-	"github.com/AltairaLabs/promptarena/arena/selfplay"
-	"github.com/AltairaLabs/promptarena/arena/turnexecutors"
+	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
+	asrt "github.com/AltairaLabs/promptarena/v2/arena/assertions"
+	"github.com/AltairaLabs/promptarena/v2/arena/selfplay"
+	"github.com/AltairaLabs/promptarena/v2/arena/turnexecutors"
 
 	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/composition"

@@ -9,7 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/AltairaLabs/promptarena/tools/schema-gen/generators"
+	"github.com/AltairaLabs/promptarena/v2/tools/schema-gen/generators"
 
 	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
 )

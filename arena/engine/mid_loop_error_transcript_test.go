@@ -29,8 +29,8 @@ import (
 	"strings"
 	"testing"
 
-	arenastages "github.com/AltairaLabs/promptarena/arena/stages"
-	arenastatestore "github.com/AltairaLabs/promptarena/arena/statestore"
+	arenastages "github.com/AltairaLabs/promptarena/v2/arena/stages"
+	arenastatestore "github.com/AltairaLabs/promptarena/v2/arena/statestore"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 

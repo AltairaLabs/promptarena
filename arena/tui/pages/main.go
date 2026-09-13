@@ -3,8 +3,8 @@ package pages
 import (
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/AltairaLabs/promptarena/arena/tui/layout"
-	"github.com/AltairaLabs/promptarena/arena/tui/panels"
+	"github.com/AltairaLabs/promptarena/v2/arena/tui/layout"
+	"github.com/AltairaLabs/promptarena/v2/arena/tui/panels"
 )
 
 // Pane IDs for the main page layout tree; these match the focusedPanel values

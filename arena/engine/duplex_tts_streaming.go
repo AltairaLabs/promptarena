@@ -6,7 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/AltairaLabs/promptarena/arena/selfplay"
+	"github.com/AltairaLabs/promptarena/v2/arena/selfplay"
 
 	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
 )

@@ -9,9 +9,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/AltairaLabs/promptarena/arena/assertions"
-	"github.com/AltairaLabs/promptarena/arena/engine"
-	"github.com/AltairaLabs/promptarena/arena/results/junit"
+	"github.com/AltairaLabs/promptarena/v2/arena/assertions"
+	"github.com/AltairaLabs/promptarena/v2/arena/engine"
+	"github.com/AltairaLabs/promptarena/v2/arena/results/junit"
 )
 
 func TestJUnit_ConversationAssertions_PropertiesAndFailure(t *testing.T) {

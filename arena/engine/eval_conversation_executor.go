@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/AltairaLabs/promptarena/arena/adapters"
-	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
-	"github.com/AltairaLabs/promptarena/arena/assertions"
+	"github.com/AltairaLabs/promptarena/v2/arena/adapters"
+	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/v2/arena/assertions"
 
 	"github.com/AltairaLabs/PromptKit/runtime/v2/evals"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/logger"

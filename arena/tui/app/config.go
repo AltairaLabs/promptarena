@@ -4,7 +4,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
 )
 
 const arenaConfigFilename = "config.arena.yaml"

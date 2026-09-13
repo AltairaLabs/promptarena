@@ -11,7 +11,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/AltairaLabs/promptarena/arena/tui/app"
+	"github.com/AltairaLabs/promptarena/v2/arena/tui/app"
 
 	"github.com/AltairaLabs/PromptKit/runtime/v2/logger"
 )

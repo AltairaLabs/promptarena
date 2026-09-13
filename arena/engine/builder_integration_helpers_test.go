@@ -9,7 +9,7 @@ import (
 
 	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/providers"
-	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
 )
 
 func TestBuildProviderFilterSet(t *testing.T) {

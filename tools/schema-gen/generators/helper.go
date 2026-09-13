@@ -16,7 +16,7 @@ import (
 // full import path, and the generator must run from the repo root for the
 // relative dir to resolve.
 var goCommentDirs = []struct{ base, dir string }{
-	{"github.com/AltairaLabs/promptarena", "arena/arenaconfig"},
+	{"github.com/AltairaLabs/promptarena/v2", "arena/arenaconfig"},
 }
 
 // draftSchemaVersion is the JSON Schema draft all generated schemas declare.
@@ -45,7 +45,7 @@ type SchemaConfig struct {
 
 // arenaModulePath is this module's import path. Types under it keep the plain
 // $defs name when a name is contested; see qualifyingNamer.
-const arenaModulePath = "github.com/AltairaLabs/promptarena"
+const arenaModulePath = "github.com/AltairaLabs/promptarena/v2"
 
 // newReflector creates a jsonschema.Reflector with the standard configuration
 // used across all schema generators.

@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
 )
 
 // writeArenaConfig writes a minimal but schema-valid arena manifest (the

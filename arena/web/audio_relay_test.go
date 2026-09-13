@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	arenaaudio "github.com/AltairaLabs/promptarena/arena/audio"
+	arenaaudio "github.com/AltairaLabs/promptarena/v2/arena/audio"
 )
 
 func TestEventAdapter_AttachAudioRouter_BroadcastsToAudioClients(t *testing.T) {

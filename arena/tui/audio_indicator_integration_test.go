@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	arenaaudio "github.com/AltairaLabs/promptarena/arena/audio"
+	arenaaudio "github.com/AltairaLabs/promptarena/v2/arena/audio"
 )
 
 // TestRunsPane_ShowsAudioGlyph_WithRealMonitor drives the full model render

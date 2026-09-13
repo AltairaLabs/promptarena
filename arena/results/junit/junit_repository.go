@@ -12,9 +12,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AltairaLabs/promptarena/arena/assertions"
-	"github.com/AltairaLabs/promptarena/arena/engine"
-	"github.com/AltairaLabs/promptarena/arena/results"
+	"github.com/AltairaLabs/promptarena/v2/arena/assertions"
+	"github.com/AltairaLabs/promptarena/v2/arena/engine"
+	"github.com/AltairaLabs/promptarena/v2/arena/results"
 
 	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )

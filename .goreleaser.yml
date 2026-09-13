@@ -150,10 +150,10 @@ release:
     **CLI Tools:**
     ```bash
     # Arena
-    go install github.com/AltairaLabs/promptarena/arena/cmd/promptarena@{{.Version}}
+    go install github.com/AltairaLabs/promptarena/v2/arena/cmd/promptarena@{{.Version}}
     
     # PackC
-    go install github.com/AltairaLabs/promptarena/packc@{{.Version}}
+    go install github.com/AltairaLabs/promptarena/v2/packc@{{.Version}}
     ```
     
     **SDK Library:**
@@ -193,7 +193,7 @@ release:
     
     ---
     
-    **Full Changelog**: https://github.com/AltairaLabs/promptarena/compare/{{.PreviousTag}}...{{.Tag}}
+    **Full Changelog**: https://github.com/AltairaLabs/promptarena/v2/compare/{{.PreviousTag}}...{{.Tag}}
 
 # Homebrew casks (replaces deprecated brews)
 homebrew_casks:

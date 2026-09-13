@@ -9,7 +9,7 @@ import (
 	"testing"
 	"time"
 
-	arenaaudio "github.com/AltairaLabs/promptarena/arena/audio"
+	arenaaudio "github.com/AltairaLabs/promptarena/v2/arena/audio"
 )
 
 // TestSSELatency_PublishToWrite is a diagnostic probe. It measures the gap

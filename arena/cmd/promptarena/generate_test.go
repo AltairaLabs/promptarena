@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/AltairaLabs/promptarena/arena/generate"
+	"github.com/AltairaLabs/promptarena/v2/arena/generate"
 )
 
 func newGenerateTestCmd() *cobra.Command {
@@ -143,4 +143,35 @@ func TestRunGenerate_WritesScenarios(t *testing.T) {
 	matches, err := filepath.Glob(filepath.Join(out, "*.scenario.yaml"))
 	require.NoError(t, err)
 	require.Len(t, matches, 1)
+}
+
+// TestRunGenerate_UnmatchedGlobFailsLoudly pins that a recordings glob
+// matching nothing is an error naming the pattern, not a silent empty run.
+// A typo in --from-recordings would otherwise look identical to "these
+// recordings genuinely produced no scenarios", and the pipeline would go
+// green having generated nothing.
+func TestRunGenerate_UnmatchedGlobFailsLoudly(t *testing.T) {
+	pattern := filepath.Join(t.TempDir(), "*.json")
+	cmd := newGenerateTestCmd()
+	require.NoError(t, cmd.Flags().Set("from-recordings", pattern))
+	require.NoError(t, cmd.Flags().Set("output", t.TempDir()))
+
+	err := runGenerate(cmd, nil)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "no files matched",
+		"the error must say the glob matched nothing")
+	assert.Contains(t, err.Error(), pattern,
+		"the error must name the pattern so a typo is visible")
+}
+
+// TestRunGenerate_UnresolvableSourceFails pins the opposite: a source that
+// cannot be resolved is an error, not an empty run. Treating it as empty would
+// let a typo in --source pass silently as "no sessions found".
+func TestRunGenerate_UnresolvableSourceFails(t *testing.T) {
+	cmd := newGenerateTestCmd()
+	require.NoError(t, cmd.Flags().Set("source", "no-such-adapter-xyz"))
+	require.NoError(t, cmd.Flags().Set("output", t.TempDir()))
+
+	err := runGenerate(cmd, nil)
+	require.Error(t, err, "an unknown source must fail rather than produce nothing")
 }

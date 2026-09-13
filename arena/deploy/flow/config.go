@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
-	"github.com/AltairaLabs/promptarena/packc/compiler"
+	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/v2/packc/compiler"
 )
 
 // LoadConfig loads the arena config and its deploy section, erroring (with the

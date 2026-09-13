@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/AltairaLabs/promptarena/deploy"
+	"github.com/AltairaLabs/promptarena/v2/deploy"
 )
 
 func TestPrintDeployLinks_PrintsLabelAndURL(t *testing.T) {

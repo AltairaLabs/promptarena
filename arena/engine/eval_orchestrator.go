@@ -3,7 +3,7 @@ package engine
 import (
 	"context"
 
-	"github.com/AltairaLabs/promptarena/arena/assertions"
+	"github.com/AltairaLabs/promptarena/v2/arena/assertions"
 
 	"github.com/AltairaLabs/PromptKit/runtime/v2/classify"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/evals"

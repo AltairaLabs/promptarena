@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/AltairaLabs/promptarena/arena/templates"
+	"github.com/AltairaLabs/promptarena/v2/arena/templates"
 )
 
 // Test listing templates from a local index file.

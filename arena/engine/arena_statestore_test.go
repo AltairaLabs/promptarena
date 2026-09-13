@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
-	"github.com/AltairaLabs/promptarena/arena/statestore"
-	"github.com/AltairaLabs/promptarena/arena/turnexecutors"
+	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/v2/arena/statestore"
+	"github.com/AltairaLabs/promptarena/v2/arena/turnexecutors"
 
 	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/providers"

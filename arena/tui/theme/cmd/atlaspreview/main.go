@@ -9,9 +9,11 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
+	"os"
 	"strings"
 
-	"github.com/AltairaLabs/promptarena/arena/tui/theme"
+	"github.com/AltairaLabs/promptarena/v2/arena/tui/theme"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/muesli/termenv"
 )
@@ -32,20 +34,42 @@ func main() {
 	// Default to truecolor so the full Atlas ramp shows. -p256 forces the
 	// 256-color profile instead, so the pinned surface/border fallbacks can be
 	// eyeballed (unpinned surfaces would collapse to one index here).
-	profile := termenv.TrueColor
-	if *p256 {
-		profile = termenv.ANSI256
-	}
-	lipgloss.SetColorProfile(profile)
+	lipgloss.SetColorProfile(profileFor(*p256))
 
+	run(os.Stdout, *light, *dark)
+}
+
+// profileFor picks the color profile to render under.
+//
+// Truecolor by default so the full Atlas ramp shows; -p256 forces ANSI256 to
+// preview the pinned degradation, which is the whole reason the flag exists —
+// unpinned surfaces collapse to a single index at 256 colors, and that is
+// what a reviewer needs to see before shipping a palette change.
+func profileFor(p256 bool) termenv.Profile {
+	if p256 {
+		return termenv.ANSI256
+	}
+	return termenv.TrueColor
+}
+
+// run writes the requested theme previews to out.
+//
+// Split from main so the selection is testable: which themes render for a
+// given flag combination is the tool's entire behavior, and main itself is
+// unreachable from a test. Writing to an io.Writer rather than calling
+// fmt.Println keeps the output assertable.
+//
+// Neither flag renders both, dark first — the default the tool is usually run
+// with, and the order the two are meant to be compared in.
+func run(out io.Writer, light, dark bool) {
 	switch {
-	case *light:
-		fmt.Println(render(theme.Light()))
-	case *dark:
-		fmt.Println(render(theme.Dark()))
+	case light:
+		_, _ = fmt.Fprintln(out, render(theme.Light()))
+	case dark:
+		_, _ = fmt.Fprintln(out, render(theme.Dark()))
 	default:
-		fmt.Println(render(theme.Dark()))
-		fmt.Println(render(theme.Light()))
+		_, _ = fmt.Fprintln(out, render(theme.Dark()))
+		_, _ = fmt.Fprintln(out, render(theme.Light()))
 	}
 }
 

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
 
 	"github.com/AltairaLabs/PromptKit/runtime/v2/pipeline/stage"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/types"

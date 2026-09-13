@@ -405,7 +405,7 @@ type SessionSourceAdapter interface {
 }
 ```
 
-External adapters register themselves with the global registry in `init()` functions and are selected via `--source <name>`. See the [generate package](https://github.com/AltairaLabs/promptarena/tree/main/arena/generate) for the full interface definition.
+External adapters register themselves with the global registry in `init()` functions and are selected via `--source <name>`. See the [generate package](https://github.com/AltairaLabs/promptarena/v2/tree/main/arena/generate) for the full interface definition.
 
 ---
 

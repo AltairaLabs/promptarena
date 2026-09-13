@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/AltairaLabs/promptarena/arena/engine"
+	"github.com/AltairaLabs/promptarena/v2/arena/engine"
 )
 
 // jsonKeyError and jsonKeyTaskType are map keys used in JSON responses across

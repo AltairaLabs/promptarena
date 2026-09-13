@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"os"
 
-	"github.com/AltairaLabs/promptarena/arena/inspect"
+	"github.com/AltairaLabs/promptarena/v2/arena/inspect"
 )
 
 // outputJSON encodes inspection data as indented JSON to stdout.

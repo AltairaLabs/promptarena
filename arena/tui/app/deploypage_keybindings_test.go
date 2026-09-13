@@ -4,11 +4,11 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/AltairaLabs/promptarena/arena/deploy/flow"
-	"github.com/AltairaLabs/promptarena/arena/tui/viewmodels"
-	"github.com/AltairaLabs/promptarena/arena/tui/views"
+	"github.com/AltairaLabs/promptarena/v2/arena/deploy/flow"
+	"github.com/AltairaLabs/promptarena/v2/arena/tui/viewmodels"
+	"github.com/AltairaLabs/promptarena/v2/arena/tui/views"
 
-	"github.com/AltairaLabs/promptarena/deploy"
+	"github.com/AltairaLabs/promptarena/v2/deploy"
 )
 
 // hasKey reports whether kb contains a binding whose Keys field is exactly

@@ -7,7 +7,7 @@ package results
 import (
 	"time"
 
-	"github.com/AltairaLabs/promptarena/arena/engine"
+	"github.com/AltairaLabs/promptarena/v2/arena/engine"
 )
 
 // ResultRepository provides abstract access to test result storage

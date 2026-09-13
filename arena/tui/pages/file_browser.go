@@ -13,9 +13,9 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/AltairaLabs/promptarena/arena/tui/layout"
-	"github.com/AltairaLabs/promptarena/arena/tui/theme"
-	"github.com/AltairaLabs/promptarena/arena/tui/views"
+	"github.com/AltairaLabs/promptarena/v2/arena/tui/layout"
+	"github.com/AltairaLabs/promptarena/v2/arena/tui/theme"
+	"github.com/AltairaLabs/promptarena/v2/arena/tui/views"
 )
 
 const (

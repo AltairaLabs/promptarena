@@ -27,12 +27,12 @@ import (
 
 	"github.com/redis/go-redis/v9"
 
-	"github.com/AltairaLabs/promptarena/arena/adapters"
-	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
-	_ "github.com/AltairaLabs/promptarena/arena/mcpsource/docker/register" // register docker MCPSource
-	"github.com/AltairaLabs/promptarena/arena/selfplay"
-	"github.com/AltairaLabs/promptarena/arena/statestore"
-	"github.com/AltairaLabs/promptarena/arena/turnexecutors"
+	"github.com/AltairaLabs/promptarena/v2/arena/adapters"
+	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
+	_ "github.com/AltairaLabs/promptarena/v2/arena/mcpsource/docker/register" // register docker MCPSource
+	"github.com/AltairaLabs/promptarena/v2/arena/selfplay"
+	"github.com/AltairaLabs/promptarena/v2/arena/statestore"
+	"github.com/AltairaLabs/promptarena/v2/arena/turnexecutors"
 
 	_ "github.com/AltairaLabs/PromptKit/runtime/v2/providers/claude" // registers the claude provider factory
 	_ "github.com/AltairaLabs/PromptKit/runtime/v2/providers/gemini" // registers the gemini provider factory

@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/AltairaLabs/promptarena/deploy"
+	"github.com/AltairaLabs/promptarena/v2/deploy"
 )
 
 var errGetInfoBoom = errors.New("provider info unavailable")
@@ -133,7 +133,11 @@ func TestRunLoginFlow_Timeout(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Millisecond)
 	defer cancel()
 
-	err := runLoginFlow(ctx, fl, "omnia", "arena.yaml", "{}", LoginHooks{}, writeTokenOnly)
+	// Stub the browser: this case reaches the authorize step, and an unstubbed
+	// hook opens a real window (see TestMain).
+	hooks := LoginHooks{OpenBrowser: func(string) error { return nil }}
+
+	err := runLoginFlow(ctx, fl, "omnia", "arena.yaml", "{}", hooks, writeTokenOnly)
 	if err == nil || !strings.Contains(err.Error(), "timed out") {
 		t.Fatalf("expected a timeout error, got %v", err)
 	}

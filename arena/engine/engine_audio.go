@@ -3,8 +3,8 @@ package engine
 import (
 	"os"
 
-	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
-	arenaaudio "github.com/AltairaLabs/promptarena/arena/audio"
+	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
+	arenaaudio "github.com/AltairaLabs/promptarena/v2/arena/audio"
 )
 
 // buildAudioMonitor returns a per-run AudioRouter when audio monitoring is

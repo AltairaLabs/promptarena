@@ -5,8 +5,8 @@
 package register
 
 import (
-	"github.com/AltairaLabs/promptarena/arena/mcpsource"
-	"github.com/AltairaLabs/promptarena/arena/mcpsource/docker"
+	"github.com/AltairaLabs/promptarena/v2/arena/mcpsource"
+	"github.com/AltairaLabs/promptarena/v2/arena/mcpsource/docker"
 )
 
 //nolint:gochecknoinits // registration-by-blank-import requires init()

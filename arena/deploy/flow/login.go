@@ -16,7 +16,7 @@ import (
 	"github.com/pkg/browser"
 	"gopkg.in/yaml.v3"
 
-	"github.com/AltairaLabs/promptarena/deploy"
+	"github.com/AltairaLabs/promptarena/v2/deploy"
 )
 
 const (
@@ -50,11 +50,18 @@ func (h LoginHooks) status(msg string) {
 	}
 }
 
+// defaultOpenBrowser is the fallback when LoginHooks.OpenBrowser is nil. It is
+// a variable, not a direct call, so the package's TestMain can neutralize it:
+// a test that forgets to stub the hook otherwise launches a real browser on
+// the developer's machine, which is how the suite ended up opening Chrome at
+// the fake authorize URL on every run.
+var defaultOpenBrowser = browser.OpenURL
+
 func (h LoginHooks) openBrowser(url string) error {
 	if h.OpenBrowser != nil {
 		return h.OpenBrowser(url)
 	}
-	return browser.OpenURL(url)
+	return defaultOpenBrowser(url)
 }
 
 // loginClient is the slice of the adapter login needs.

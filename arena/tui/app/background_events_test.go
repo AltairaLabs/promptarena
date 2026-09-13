@@ -6,7 +6,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/stretchr/testify/assert"
 
-	"github.com/AltairaLabs/promptarena/arena/tui"
+	"github.com/AltairaLabs/promptarena/v2/arena/tui"
 )
 
 // recordingPage counts the lifecycle events and key presses it receives.

@@ -92,7 +92,7 @@ Stuck on a tutorial?
 
 1. Check the **[How-To Guides](/arena/how-to/)** for specific solutions
 2. Review the **[Reference Documentation](/arena/reference/)** for complete specs
-3. Open an issue on **[GitHub](https://github.com/AltairaLabs/promptarena/issues)**
+3. Open an issue on **[GitHub](https://github.com/AltairaLabs/promptarena/v2/issues)**
 
 ## What You'll Build
 

@@ -9,15 +9,15 @@ The Adapter SDK (`runtime/deploy/adaptersdk`) provides Go functions for building
 ## Installation
 
 ```bash
-go get github.com/AltairaLabs/promptarena/deploy
+go get github.com/AltairaLabs/promptarena/v2/deploy
 ```
 
 Import the packages:
 
 ```go
 import (
-    "github.com/AltairaLabs/promptarena/deploy"
-    "github.com/AltairaLabs/promptarena/deploy/adaptersdk"
+    "github.com/AltairaLabs/promptarena/v2/deploy"
+    "github.com/AltairaLabs/promptarena/v2/deploy/adaptersdk"
 )
 ```
 
@@ -32,8 +32,8 @@ import (
     "context"
     "log"
 
-    "github.com/AltairaLabs/promptarena/deploy"
-    "github.com/AltairaLabs/promptarena/deploy/adaptersdk"
+    "github.com/AltairaLabs/promptarena/v2/deploy"
+    "github.com/AltairaLabs/promptarena/v2/deploy/adaptersdk"
 )
 
 type myProvider struct{}

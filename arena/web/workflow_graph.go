@@ -7,7 +7,7 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/v2/composition"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/workflow"
 
-	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
 )
 
 const (

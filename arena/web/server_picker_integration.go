@@ -5,7 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/AltairaLabs/promptarena/arena/engine"
+	"github.com/AltairaLabs/promptarena/v2/arena/engine"
 )
 
 // runOptionsResponse is the GET /api/run-options payload — a slim view of
