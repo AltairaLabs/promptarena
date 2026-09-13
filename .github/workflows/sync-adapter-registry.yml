@@ -7,16 +7,19 @@ name: Sync adapter registry
 # themselves. Nothing kept them current: they drifted within the hour of the
 # last manual bump (#172), which is the case for a mechanism (#173).
 #
-# Three ways in, one job:
-#   - repository_dispatch adapter-release: an adapter's release workflow can
-#     notify us the moment it publishes, mirroring the promptarena-release
-#     dispatch this repo already sends the other way.
-#   - schedule: the safety net, so a release that forgot to dispatch is
-#     picked up within a day.
-#   - workflow_dispatch: run it by hand.
+# This job keeps ONLY that fallback current. Releasing an adapter needs no
+# change here and no promptarena release — the live lookup finds a new release
+# immediately, so nothing downstream waits on this workflow. Daily is
+# therefore fine: the value it maintains is a degraded-mode default, and being
+# a day behind only affects an install that already has no network.
+#
+# It previously also declared `repository_dispatch: [adapter-release]`, on the
+# idea that an adapter would notify us at release time. Nothing ever sent it,
+# and nothing could without a cross-repo token the adapter repos do not have
+# (GITHUB_TOKEN cannot dispatch to another repo). Removed rather than left
+# declared: a trigger with no producer reads as a working notification path
+# and sends the next reader looking for the sender.
 on:
-  repository_dispatch:
-    types: [adapter-release]
   schedule:
     - cron: '17 6 * * *'
   workflow_dispatch:
