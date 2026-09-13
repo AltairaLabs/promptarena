@@ -1,6 +1,6 @@
 package main
 
-import "github.com/AltairaLabs/promptarena/arena/templates"
+import "github.com/AltairaLabs/promptarena/v2/arena/templates"
 
 // Test helper: resolveIndexPath mimics old behavior for backward compatibility in tests
 func resolveIndexPath() (path string, repoName string, err error) {

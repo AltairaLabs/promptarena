@@ -10,7 +10,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/AltairaLabs/promptarena/packc/compiler"
+	"github.com/AltairaLabs/promptarena/v2/packc/compiler"
 )
 
 const testPromptYAML = `apiVersion: promptkit.altairalabs.ai/v1alpha1

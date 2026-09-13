@@ -12,8 +12,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/AltairaLabs/promptarena/arena/generate"
-	"github.com/AltairaLabs/promptarena/deploy"
+	"github.com/AltairaLabs/promptarena/v2/arena/generate"
+	"github.com/AltairaLabs/promptarena/v2/deploy"
 )
 
 // fakeSessions is an in-process sessionsClient.

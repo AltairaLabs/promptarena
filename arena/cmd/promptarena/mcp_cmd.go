@@ -3,7 +3,7 @@ package main
 import (
 	"github.com/spf13/cobra"
 
-	"github.com/AltairaLabs/promptarena/arena/agentmcp"
+	"github.com/AltairaLabs/promptarena/v2/arena/agentmcp"
 )
 
 var mcpCmd = &cobra.Command{

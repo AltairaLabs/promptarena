@@ -12,7 +12,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/AltairaLabs/promptarena/arena/agentkb"
+	"github.com/AltairaLabs/promptarena/v2/arena/agentkb"
 )
 
 func main() {

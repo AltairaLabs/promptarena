@@ -7,7 +7,7 @@ Reference documentation for the Arena Go API, covering all exported types, funct
 
 ## Core Packages
 
-### `github.com/AltairaLabs/promptarena/arena/engine`
+### `github.com/AltairaLabs/promptarena/v2/arena/engine`
 
 The main package for programmatic Arena usage.
 
@@ -337,7 +337,7 @@ Contains complete results of a test execution.
 
 ## Configuration Package
 
-### `github.com/AltairaLabs/promptarena/arena/arenaconfig`
+### `github.com/AltairaLabs/promptarena/v2/arena/arenaconfig`
 
 #### `Config`
 
@@ -424,7 +424,7 @@ Default execution parameters.
 
 ## State Store Package
 
-### `github.com/AltairaLabs/promptarena/arena/statestore`
+### `github.com/AltairaLabs/promptarena/v2/arena/statestore`
 
 #### `ArenaStateStore`
 
@@ -520,7 +520,7 @@ promptConfig := &prompt.Config{
 
 ## Generate Package
 
-### `github.com/AltairaLabs/promptarena/arena/generate`
+### `github.com/AltairaLabs/promptarena/v2/arena/generate`
 
 Turns recorded sessions into regression scenarios. This is what `promptarena
 generate` runs; it is exposed so a platform can run it in-process.

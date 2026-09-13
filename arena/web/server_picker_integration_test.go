@@ -10,8 +10,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/AltairaLabs/promptarena/arena/engine"
-	"github.com/AltairaLabs/promptarena/arena/statestore"
+	"github.com/AltairaLabs/promptarena/v2/arena/engine"
+	"github.com/AltairaLabs/promptarena/v2/arena/statestore"
 )
 
 func TestHandleRunOptions_NoEngine(t *testing.T) {

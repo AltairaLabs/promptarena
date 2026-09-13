@@ -11,11 +11,11 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/AltairaLabs/promptarena/arena/engine"
-	"github.com/AltairaLabs/promptarena/arena/statestore"
-	"github.com/AltairaLabs/promptarena/arena/tui/logging"
-	"github.com/AltairaLabs/promptarena/arena/tui/panels"
-	"github.com/AltairaLabs/promptarena/arena/tui/views"
+	"github.com/AltairaLabs/promptarena/v2/arena/engine"
+	"github.com/AltairaLabs/promptarena/v2/arena/statestore"
+	"github.com/AltairaLabs/promptarena/v2/arena/tui/logging"
+	"github.com/AltairaLabs/promptarena/v2/arena/tui/panels"
+	"github.com/AltairaLabs/promptarena/v2/arena/tui/views"
 
 	"github.com/AltairaLabs/PromptKit/runtime/v2/evals"
 )

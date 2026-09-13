@@ -20,7 +20,7 @@ Use Arena programmatically when you need to:
 Add Arena to your Go project:
 
 ```bash
-go get github.com/AltairaLabs/promptarena/arena/engine
+go get github.com/AltairaLabs/promptarena/v2/arena/engine
 go get github.com/AltairaLabs/PromptKit/pkg/v2/config
 go get github.com/AltairaLabs/PromptKit/runtime/v2/prompt
 ```
@@ -33,7 +33,7 @@ go get github.com/AltairaLabs/PromptKit/runtime/v2/prompt
 import (
 	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/prompt"
-	"github.com/AltairaLabs/promptarena/arena/engine"
+	"github.com/AltairaLabs/promptarena/v2/arena/engine"
 )
 
 // Create prompt configuration
@@ -112,7 +112,7 @@ if err != nil {
 ### 4. Retrieve Results
 
 ```go
-import "github.com/AltairaLabs/promptarena/arena/statestore"
+import "github.com/AltairaLabs/promptarena/v2/arena/statestore"
 
 arenaStore := eng.GetStateStore().(*statestore.ArenaStateStore)
 
@@ -380,7 +380,7 @@ If you see "package not found" errors:
 
 ```bash
 go mod tidy
-go get github.com/AltairaLabs/promptarena/arena/engine@latest
+go get github.com/AltairaLabs/promptarena/v2/arena/engine@latest
 ```
 
 ### Type Assertion Failures

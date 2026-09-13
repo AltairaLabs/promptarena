@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Run Arena tests
-        uses: AltairaLabs/promptarena/.github/actions/promptarena-action@v1
+        uses: AltairaLabs/promptarena/v2/.github/actions/promptarena-action@v1
         with:
           config-file: config.arena.yaml
           version: 'latest'
@@ -63,7 +63,7 @@ jobs:
 
 ```yaml
 - name: Run Arena tests
-  uses: AltairaLabs/promptarena/.github/actions/promptarena-action@v1
+  uses: AltairaLabs/promptarena/v2/.github/actions/promptarena-action@v1
   with:
     config-file: arena.yaml
 ```
@@ -72,7 +72,7 @@ jobs:
 
 ```yaml
 - name: Run specific scenarios
-  uses: AltairaLabs/promptarena/.github/actions/promptarena-action@v1
+  uses: AltairaLabs/promptarena/v2/.github/actions/promptarena-action@v1
   with:
     config-file: arena.yaml
     scenarios: 'scenario1,scenario2'
@@ -84,7 +84,7 @@ jobs:
 ```yaml
 - name: Run Arena tests (continue on failure)
   id: arena
-  uses: AltairaLabs/promptarena/.github/actions/promptarena-action@v1
+  uses: AltairaLabs/promptarena/v2/.github/actions/promptarena-action@v1
   with:
     config-file: arena.yaml
     fail-on-error: 'false'
@@ -101,7 +101,7 @@ jobs:
 ```yaml
 - name: Run Arena tests
   id: arena
-  uses: AltairaLabs/promptarena/.github/actions/promptarena-action@v1
+  uses: AltairaLabs/promptarena/v2/.github/actions/promptarena-action@v1
   with:
     config-file: arena.yaml
 
@@ -116,7 +116,7 @@ jobs:
 
 ```yaml
 - name: Run Arena tests
-  uses: AltairaLabs/promptarena/.github/actions/promptarena-action@v1
+  uses: AltairaLabs/promptarena/v2/.github/actions/promptarena-action@v1
   with:
     config-file: arena.yaml
     junit-output: test-results/junit.xml
@@ -133,7 +133,7 @@ jobs:
 
 ```yaml
 - name: Run Arena tests
-  uses: AltairaLabs/promptarena/.github/actions/promptarena-action@v1
+  uses: AltairaLabs/promptarena/v2/.github/actions/promptarena-action@v1
   with:
     config-file: arena.yaml
     version: 'v1.1.6'

@@ -12,8 +12,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
-	arenastore "github.com/AltairaLabs/promptarena/arena/statestore"
+	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
+	arenastore "github.com/AltairaLabs/promptarena/v2/arena/statestore"
 )
 
 // TestExamplesIntegration_VariablesDemo runs the variables-demo example end-to-end

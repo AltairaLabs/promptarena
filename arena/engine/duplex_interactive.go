@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/AltairaLabs/promptarena/arena/selfplay"
-	arenastages "github.com/AltairaLabs/promptarena/arena/stages"
+	"github.com/AltairaLabs/promptarena/v2/arena/selfplay"
+	arenastages "github.com/AltairaLabs/promptarena/v2/arena/stages"
 
 	"github.com/AltairaLabs/PromptKit/runtime/v2/audio"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/events"

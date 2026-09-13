@@ -6,8 +6,8 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
-	arenastages "github.com/AltairaLabs/promptarena/arena/stages"
+	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
+	arenastages "github.com/AltairaLabs/promptarena/v2/arena/stages"
 
 	"github.com/AltairaLabs/PromptKit/runtime/v2/events"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/logger"

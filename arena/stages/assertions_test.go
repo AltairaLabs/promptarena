@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/AltairaLabs/promptarena/arena/assertions"
+	"github.com/AltairaLabs/promptarena/v2/arena/assertions"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 

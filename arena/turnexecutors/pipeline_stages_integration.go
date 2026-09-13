@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
-	arenaaudio "github.com/AltairaLabs/promptarena/arena/audio"
-	"github.com/AltairaLabs/promptarena/arena/chaos"
-	"github.com/AltairaLabs/promptarena/arena/consent"
-	arenastages "github.com/AltairaLabs/promptarena/arena/stages"
+	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
+	arenaaudio "github.com/AltairaLabs/promptarena/v2/arena/audio"
+	"github.com/AltairaLabs/promptarena/v2/arena/chaos"
+	"github.com/AltairaLabs/promptarena/v2/arena/consent"
+	arenastages "github.com/AltairaLabs/promptarena/v2/arena/stages"
 
 	_ "github.com/AltairaLabs/PromptKit/runtime/v2/evals/handlers" // register default eval handlers
 	"github.com/AltairaLabs/PromptKit/runtime/v2/events"

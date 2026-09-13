@@ -11,9 +11,9 @@ import (
 	"github.com/charmbracelet/glamour"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/AltairaLabs/promptarena/arena/statestore"
-	"github.com/AltairaLabs/promptarena/arena/tui/layout"
-	"github.com/AltairaLabs/promptarena/arena/tui/theme"
+	"github.com/AltairaLabs/promptarena/v2/arena/statestore"
+	"github.com/AltairaLabs/promptarena/v2/arena/tui/layout"
+	"github.com/AltairaLabs/promptarena/v2/arena/tui/theme"
 
 	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )

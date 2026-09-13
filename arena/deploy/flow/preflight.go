@@ -3,7 +3,7 @@ package flow
 import (
 	"context"
 
-	"github.com/AltairaLabs/promptarena/deploy"
+	"github.com/AltairaLabs/promptarena/v2/deploy"
 )
 
 // Preflight is the deploy readiness snapshot shown before planning.
@@ -29,6 +29,21 @@ func (p *Preflight) Ready() bool {
 // CheckPreflight resolves config, adapter presence/version, capabilities, and auth
 // state. It never returns an error — failures are captured in the struct so the UI
 // can render a partial gate.
+// adapterProbe is the slice of the adapter connection preflight needs: ask
+// what it is, then hang up.
+type adapterProbe interface {
+	GetProviderInfo(ctx context.Context) (*deploy.ProviderInfo, error)
+	Close() error
+}
+
+// probeAdapter connects to the provider's adapter. It is a variable so the
+// probe half of CheckPreflight is reachable from a test — the real Connect
+// discovers and executes an adapter binary, so without this seam everything
+// past "is the adapter installed" could only be exercised by installing one.
+var probeAdapter = func(ctx context.Context, provider, dir string) (adapterProbe, error) {
+	return Connect(ctx, provider, dir)
+}
+
 func CheckPreflight(ctx context.Context, opts Options) *Preflight {
 	pf := &Preflight{Env: ResolveEnv(opts)}
 
@@ -51,7 +66,7 @@ func CheckPreflight(ctx context.Context, opts Options) *Preflight {
 		return pf // no point probing a missing adapter
 	}
 
-	client, err := Connect(ctx, dep.Provider, dir)
+	client, err := probeAdapter(ctx, dep.Provider, dir)
 	if err != nil {
 		pf.ProbeErr = err
 		return pf

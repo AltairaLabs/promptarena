@@ -22,7 +22,7 @@ assignees: ''
 Please provide the specific file(s) or section(s) that need improvement:
 - File: `path/to/file.md`
 - Section: "Section Name"
-- URL: https://github.com/AltairaLabs/promptarena/...
+- URL: https://github.com/AltairaLabs/promptarena/v2/...
 
 ## Issue Description
 

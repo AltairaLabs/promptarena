@@ -7,7 +7,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 
-	"github.com/AltairaLabs/promptarena/arena/tui/theme"
+	"github.com/AltairaLabs/promptarena/v2/arena/tui/theme"
 )
 
 // splashDoneMsg is sent by the timer started in Init() to auto-dismiss the

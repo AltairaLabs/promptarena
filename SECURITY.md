@@ -159,7 +159,7 @@ Once a vulnerability is fixed:
 
 ## Security Resources
 
-- **Security Advisories**: [GitHub Security Advisories](https://github.com/AltairaLabs/promptarena/security/advisories)
+- **Security Advisories**: [GitHub Security Advisories](https://github.com/AltairaLabs/promptarena/v2/security/advisories)
 - **Security Contact**: [security@altairalabs.ai](mailto:security@altairalabs.ai)
 - **General Contact**: [conduct@altairalabs.ai](mailto:conduct@altairalabs.ai)
 

@@ -5,7 +5,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/AltairaLabs/promptarena/arena/tui/theme"
+	"github.com/AltairaLabs/promptarena/v2/arena/tui/theme"
 )
 
 // SummaryData contains the raw summary statistics

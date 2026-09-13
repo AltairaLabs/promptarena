@@ -324,7 +324,7 @@ jobs:
           ref: ${{ inputs.version }}
           fetch-depth: 0
       # Consumers reference the composite actions as
-      # AltairaLabs/promptarena/.github/actions/<name>@v1. Move the floating
+      # AltairaLabs/promptarena/v2/.github/actions/<name>@v1. Move the floating
       # major tag (v1) to this release so that ref keeps resolving. This tag is
       # co-located with the latest vX.Y.Z release commit, so Go ignores it
       # (not a complete semver version) and GoReleaser changelogs are unaffected.

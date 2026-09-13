@@ -35,7 +35,7 @@ Choose your preferred installation method:
 
 **Go Install**
 ```bash
-go install github.com/AltairaLabs/promptarena/packc@latest
+go install github.com/AltairaLabs/promptarena/v2/packc@latest
 ```
 
 **Verify installation:**

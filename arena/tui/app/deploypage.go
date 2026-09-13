@@ -10,13 +10,13 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/pkg/browser"
 
-	"github.com/AltairaLabs/promptarena/arena/deploy/flow"
-	"github.com/AltairaLabs/promptarena/arena/tui/panels"
-	"github.com/AltairaLabs/promptarena/arena/tui/theme"
-	"github.com/AltairaLabs/promptarena/arena/tui/viewmodels"
-	"github.com/AltairaLabs/promptarena/arena/tui/views"
+	"github.com/AltairaLabs/promptarena/v2/arena/deploy/flow"
+	"github.com/AltairaLabs/promptarena/v2/arena/tui/panels"
+	"github.com/AltairaLabs/promptarena/v2/arena/tui/theme"
+	"github.com/AltairaLabs/promptarena/v2/arena/tui/viewmodels"
+	"github.com/AltairaLabs/promptarena/v2/arena/tui/views"
 
-	"github.com/AltairaLabs/promptarena/deploy"
+	"github.com/AltairaLabs/promptarena/v2/deploy"
 )
 
 // Shared label/status literals (satisfies goconst: repeated string literals

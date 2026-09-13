@@ -2,8 +2,8 @@
 package app
 
 import (
-	"github.com/AltairaLabs/promptarena/arena/tui"
-	"github.com/AltairaLabs/promptarena/arena/tui/logging"
+	"github.com/AltairaLabs/promptarena/v2/arena/tui"
+	"github.com/AltairaLabs/promptarena/v2/arena/tui/logging"
 	tea "github.com/charmbracelet/bubbletea"
 )
 

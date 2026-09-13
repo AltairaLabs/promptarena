@@ -31,7 +31,7 @@ Get up and running in 60 seconds with the interactive project generator:
 brew install altairalabs/tap/promptarena
 
 # Or build from source with Go (needs a C compiler + audio dev headers)
-go install github.com/AltairaLabs/promptarena/arena/cmd/promptarena@latest
+go install github.com/AltairaLabs/promptarena/v2/arena/cmd/promptarena@latest
 
 # Create a new test project instantly
 promptarena init my-test --quick
@@ -268,8 +268,8 @@ Real-world Arena testing scenarios:
 ## Getting Help
 
 - **Quick Start**: [First Test Tutorial](/arena/tutorials/01-first-test/)
-- **Questions**: [GitHub Discussions](https://github.com/AltairaLabs/promptarena/issues)
-- **Issues**: [Report a Bug](https://github.com/AltairaLabs/promptarena/issues)
+- **Questions**: [GitHub Discussions](https://github.com/AltairaLabs/promptarena/v2/issues)
+- **Issues**: [Report a Bug](https://github.com/AltairaLabs/promptarena/v2/issues)
 - **Examples**: [Arena Examples](/arena/examples/)
 
 ---

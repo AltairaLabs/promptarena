@@ -8,10 +8,10 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
-	arenaaudio "github.com/AltairaLabs/promptarena/arena/audio"
-	arenastages "github.com/AltairaLabs/promptarena/arena/stages"
-	arenastore "github.com/AltairaLabs/promptarena/arena/statestore"
+	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
+	arenaaudio "github.com/AltairaLabs/promptarena/v2/arena/audio"
+	arenastages "github.com/AltairaLabs/promptarena/v2/arena/stages"
+	arenastore "github.com/AltairaLabs/promptarena/v2/arena/statestore"
 
 	"github.com/AltairaLabs/PromptKit/runtime/v2/events"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/logger"

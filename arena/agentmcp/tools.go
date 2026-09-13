@@ -7,8 +7,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/AltairaLabs/promptarena/arena/agentkb"
-	"github.com/AltairaLabs/promptarena/arena/templates"
+	"github.com/AltairaLabs/promptarena/v2/arena/agentkb"
+	"github.com/AltairaLabs/promptarena/v2/arena/templates"
 
 	"github.com/AltairaLabs/PromptKit/runtime/v2/mcp"
 )

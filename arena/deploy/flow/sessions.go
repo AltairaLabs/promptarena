@@ -6,8 +6,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/AltairaLabs/promptarena/arena/generate"
-	"github.com/AltairaLabs/promptarena/deploy"
+	"github.com/AltairaLabs/promptarena/v2/arena/generate"
+	"github.com/AltairaLabs/promptarena/v2/deploy"
 )
 
 // sessionsClient is the slice of the adapter session sourcing needs.

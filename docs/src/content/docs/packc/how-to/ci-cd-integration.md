@@ -47,7 +47,7 @@ jobs:
           go-version: '1.26'
       
       - name: Install packc
-        run: go install github.com/AltairaLabs/promptarena/packc@latest
+        run: go install github.com/AltairaLabs/promptarena/v2/packc@latest
       
       - name: Compile packs
         run: |
@@ -89,7 +89,7 @@ jobs:
           go-version: '1.26'
       
       - name: Install packc
-        run: go install github.com/AltairaLabs/promptarena/packc@latest
+        run: go install github.com/AltairaLabs/promptarena/v2/packc@latest
       
       - name: Compile $ pack
         run: |
@@ -132,7 +132,7 @@ jobs:
           go-version: '1.26'
       
       - name: Install packc
-        run: go install github.com/AltairaLabs/promptarena/packc@latest
+        run: go install github.com/AltairaLabs/promptarena/v2/packc@latest
       
       - name: Get version
         id: version
@@ -178,7 +178,7 @@ variables:
 
 before_script:
   - apt-get update && apt-get install -y golang-$GO_VERSION
-  - go install github.com/AltairaLabs/promptarena/packc@latest
+  - go install github.com/AltairaLabs/promptarena/v2/packc@latest
   - export PATH=$PATH:$(go env GOPATH)/bin
 
 build:packs:
@@ -264,7 +264,7 @@ pipeline {
         stage('Setup') {
             steps {
                 sh 'go version'
-                sh 'go install github.com/AltairaLabs/promptarena/packc@latest'
+                sh 'go install github.com/AltairaLabs/promptarena/v2/packc@latest'
                 sh 'packc version'
             }
         }
@@ -350,7 +350,7 @@ jobs:
       
       - run:
           name: Install packc
-          command: go install github.com/AltairaLabs/promptarena/packc@latest
+          command: go install github.com/AltairaLabs/promptarena/v2/packc@latest
       
       - run:
           name: Compile packs
@@ -403,7 +403,7 @@ workflows:
 FROM golang:1.26 AS builder
 
 # Install packc
-RUN go install github.com/AltairaLabs/promptarena/packc@latest
+RUN go install github.com/AltairaLabs/promptarena/v2/packc@latest
 
 # Copy source files
 WORKDIR /workspace
@@ -452,7 +452,7 @@ ci-build: clean install compile validate
 .PHONY: install
 install:
 	@echo "Installing packc..."
-	@go install github.com/AltairaLabs/promptarena/packc@latest
+	@go install github.com/AltairaLabs/promptarena/v2/packc@latest
 	@packc version
 
 .PHONY: compile
@@ -517,7 +517,7 @@ Pin packc version for reproducible builds:
 
 ```yaml
 - name: Install packc
-  run: go install github.com/AltairaLabs/promptarena/packc@v0.1.0
+  run: go install github.com/AltairaLabs/promptarena/v2/packc@v0.1.0
 ```
 
 ### 3. Fail Fast

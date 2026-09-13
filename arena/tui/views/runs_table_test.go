@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/AltairaLabs/promptarena/arena/tui/viewmodels"
+	"github.com/AltairaLabs/promptarena/v2/arena/tui/viewmodels"
 )
 
 func TestNewRunsTableView(t *testing.T) {

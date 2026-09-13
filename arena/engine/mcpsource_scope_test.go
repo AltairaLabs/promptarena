@@ -7,7 +7,7 @@ import (
 	"sync/atomic"
 	"testing"
 
-	"github.com/AltairaLabs/promptarena/arena/mcpsource"
+	"github.com/AltairaLabs/promptarena/v2/arena/mcpsource"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 

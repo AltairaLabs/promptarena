@@ -8,8 +8,8 @@ import (
 	"sort"
 	"sync"
 
-	"github.com/AltairaLabs/promptarena/arena/adapters"
-	"github.com/AltairaLabs/promptarena/arena/generate"
+	"github.com/AltairaLabs/promptarena/v2/arena/adapters"
+	"github.com/AltairaLabs/promptarena/v2/arena/generate"
 
 	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )

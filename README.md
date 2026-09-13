@@ -1,6 +1,6 @@
 # PromptArena
 
-[![CI](https://github.com/AltairaLabs/promptarena/actions/workflows/ci.yml/badge.svg)](https://github.com/AltairaLabs/promptarena/actions/workflows/ci.yml)
+[![CI](https://github.com/AltairaLabs/promptarena/v2/actions/workflows/ci.yml/badge.svg)](https://github.com/AltairaLabs/promptarena/v2/actions/workflows/ci.yml)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=AltairaLabs_promptarena&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=AltairaLabs_promptarena)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=AltairaLabs_promptarena&metric=coverage)](https://sonarcloud.io/summary/new_code?id=AltairaLabs_promptarena)
 [![Go Report Card](https://goreportcard.com/badge/github.com/AltairaLabs/promptarena)](https://goreportcard.com/report/github.com/AltairaLabs/promptarena)
@@ -34,8 +34,8 @@ npm install -g @altairalabs/promptarena @altairalabs/packc
 Or with Go:
 
 ```bash
-go install github.com/AltairaLabs/promptarena/arena/cmd/promptarena@latest
-go install github.com/AltairaLabs/promptarena/packc@latest
+go install github.com/AltairaLabs/promptarena/v2/arena/cmd/promptarena@latest
+go install github.com/AltairaLabs/promptarena/v2/packc@latest
 ```
 
 Building from source: see [CONTRIBUTING.md](./CONTRIBUTING.md).
@@ -126,7 +126,7 @@ PromptArena ships GitHub Actions for CI/CD. Run prompt tests:
 
 ```yaml
 - name: Run prompt tests
-  uses: AltairaLabs/promptarena/.github/actions/promptarena-action@v1
+  uses: AltairaLabs/promptarena/v2/.github/actions/promptarena-action@v1
   with:
     config-file: config.arena.yaml
   env:
@@ -137,7 +137,7 @@ Compile and publish packs to OCI registries:
 
 ```yaml
 - name: Build and publish pack
-  uses: AltairaLabs/promptarena/.github/actions/packc-action@v1
+  uses: AltairaLabs/promptarena/v2/.github/actions/packc-action@v1
   with:
     config-file: config.arena.yaml
     registry: ghcr.io

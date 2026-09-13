@@ -13,12 +13,12 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/charmbracelet/x/exp/teatest"
 
-	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
-	"github.com/AltairaLabs/promptarena/arena/deploy/flow"
-	"github.com/AltairaLabs/promptarena/arena/tui/panels"
-	"github.com/AltairaLabs/promptarena/arena/tui/viewmodels"
-	"github.com/AltairaLabs/promptarena/arena/tui/views"
-	"github.com/AltairaLabs/promptarena/deploy"
+	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/v2/arena/deploy/flow"
+	"github.com/AltairaLabs/promptarena/v2/arena/tui/panels"
+	"github.com/AltairaLabs/promptarena/v2/arena/tui/viewmodels"
+	"github.com/AltairaLabs/promptarena/v2/arena/tui/views"
+	"github.com/AltairaLabs/promptarena/v2/deploy"
 )
 
 // loginMsgSink is a thread-safe collector for the messages a DeployPage

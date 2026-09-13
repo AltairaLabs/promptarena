@@ -7,10 +7,10 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
 
-	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
-	"github.com/AltairaLabs/promptarena/arena/deploy/flow"
-	"github.com/AltairaLabs/promptarena/arena/generate"
-	"github.com/AltairaLabs/promptarena/arena/generate/sources"
+	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/v2/arena/deploy/flow"
+	"github.com/AltairaLabs/promptarena/v2/arena/generate"
+	"github.com/AltairaLabs/promptarena/v2/arena/generate/sources"
 )
 
 var generateRegistry = generate.NewRegistry()

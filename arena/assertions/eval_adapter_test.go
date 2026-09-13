@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/AltairaLabs/promptarena/arena/assertions"
+	"github.com/AltairaLabs/promptarena/v2/arena/assertions"
 
 	"github.com/AltairaLabs/PromptKit/runtime/v2/evals"
 )

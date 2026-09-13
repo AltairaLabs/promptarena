@@ -3,8 +3,8 @@ package app
 import (
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/AltairaLabs/promptarena/arena/tui/logging"
-	"github.com/AltairaLabs/promptarena/arena/tui/panels"
+	"github.com/AltairaLabs/promptarena/v2/arena/tui/logging"
+	"github.com/AltairaLabs/promptarena/v2/arena/tui/panels"
 )
 
 // logsOverlayMaxLines bounds the in-memory log buffer so a long-running

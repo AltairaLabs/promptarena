@@ -90,7 +90,7 @@ jobs:
           go-version: '1.26'
       
       - name: Install packc
-        run: go install github.com/AltairaLabs/promptarena/packc@latest
+        run: go install github.com/AltairaLabs/promptarena/v2/packc@latest
       
       - name: Compile packs
         run: |
@@ -137,7 +137,7 @@ jobs:
           go-version: '1.26'
       
       - name: Install packc
-        run: go install github.com/AltairaLabs/promptarena/packc@latest
+        run: go install github.com/AltairaLabs/promptarena/v2/packc@latest
       
       - name: Determine environment
         id: env
@@ -192,7 +192,7 @@ jobs:
           go-version: '1.26'
       
       - name: Install packc
-        run: go install github.com/AltairaLabs/promptarena/packc@latest
+        run: go install github.com/AltairaLabs/promptarena/v2/packc@latest
       
       - name: Get version
         id: version

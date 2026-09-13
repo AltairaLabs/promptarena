@@ -7,8 +7,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
-	arenastore "github.com/AltairaLabs/promptarena/arena/statestore"
+	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
+	arenastore "github.com/AltairaLabs/promptarena/v2/arena/statestore"
 
 	"github.com/AltairaLabs/PromptKit/runtime/v2/composition"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/events"

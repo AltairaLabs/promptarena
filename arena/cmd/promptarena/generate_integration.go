@@ -7,7 +7,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/AltairaLabs/promptarena/arena/generate"
+	"github.com/AltairaLabs/promptarena/v2/arena/generate"
 )
 
 func runGenerate(cmd *cobra.Command, _ []string) error {

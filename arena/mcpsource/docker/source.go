@@ -10,7 +10,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/AltairaLabs/promptarena/arena/mcpsource"
+	"github.com/AltairaLabs/promptarena/v2/arena/mcpsource"
 )
 
 const (

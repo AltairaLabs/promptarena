@@ -1,4 +1,4 @@
-module github.com/AltairaLabs/promptarena
+module github.com/AltairaLabs/promptarena/v2
 
 go 1.26.0
 

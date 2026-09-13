@@ -4,7 +4,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
 )
 
 // PerturbationVariant represents a single set of variable substitutions.

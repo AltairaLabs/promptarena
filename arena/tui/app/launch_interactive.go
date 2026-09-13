@@ -8,8 +8,8 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
-	"github.com/AltairaLabs/promptarena/arena/tui/logging"
-	"github.com/AltairaLabs/promptarena/arena/tui/theme"
+	"github.com/AltairaLabs/promptarena/v2/arena/tui/logging"
+	"github.com/AltairaLabs/promptarena/v2/arena/tui/theme"
 
 	"github.com/AltairaLabs/PromptKit/runtime/v2/logger"
 )

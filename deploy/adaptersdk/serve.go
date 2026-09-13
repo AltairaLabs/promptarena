@@ -11,7 +11,7 @@ import (
 	"io"
 	"os"
 
-	"github.com/AltairaLabs/promptarena/deploy"
+	"github.com/AltairaLabs/promptarena/v2/deploy"
 )
 
 // JSON-RPC method names recognized by the adapter protocol.

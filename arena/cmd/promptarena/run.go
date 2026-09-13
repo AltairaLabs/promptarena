@@ -7,14 +7,14 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/AltairaLabs/promptarena/arena/arenaconfig"
-	arenaaudio "github.com/AltairaLabs/promptarena/arena/audio"
-	"github.com/AltairaLabs/promptarena/arena/engine"
-	"github.com/AltairaLabs/promptarena/arena/results"
-	jsonrepo "github.com/AltairaLabs/promptarena/arena/results/json"
-	"github.com/AltairaLabs/promptarena/arena/results/junit"
-	"github.com/AltairaLabs/promptarena/arena/results/markdown"
-	"github.com/AltairaLabs/promptarena/arena/statestore"
+	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
+	arenaaudio "github.com/AltairaLabs/promptarena/v2/arena/audio"
+	"github.com/AltairaLabs/promptarena/v2/arena/engine"
+	"github.com/AltairaLabs/promptarena/v2/arena/results"
+	jsonrepo "github.com/AltairaLabs/promptarena/v2/arena/results/json"
+	"github.com/AltairaLabs/promptarena/v2/arena/results/junit"
+	"github.com/AltairaLabs/promptarena/v2/arena/results/markdown"
+	"github.com/AltairaLabs/promptarena/v2/arena/statestore"
 
 	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
 )

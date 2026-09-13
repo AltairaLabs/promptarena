@@ -3,7 +3,7 @@ package viewmodels
 import (
 	"testing"
 
-	"github.com/AltairaLabs/promptarena/deploy"
+	"github.com/AltairaLabs/promptarena/v2/deploy"
 )
 
 func TestBuildPlanDiff_CountsAndSymbols(t *testing.T) {

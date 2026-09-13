@@ -195,5 +195,5 @@ flowchart TD
 ## See also
 
 - [Configuration Schema → Tool](/arena/reference/config-schema/#tool) — full field reference
-- [`examples/voice-refund-demo`](https://github.com/AltairaLabs/promptarena/tree/main/examples/voice-refund-demo) — `mock_template` branching across three personas
-- [`examples/customer-support`](https://github.com/AltairaLabs/promptarena/tree/main/examples/customer-support) — `mode: mock` with static results
+- [`examples/voice-refund-demo`](https://github.com/AltairaLabs/promptarena/v2/tree/main/examples/voice-refund-demo) — `mock_template` branching across three personas
+- [`examples/customer-support`](https://github.com/AltairaLabs/promptarena/v2/tree/main/examples/customer-support) — `mode: mock` with static results
