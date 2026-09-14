@@ -63,7 +63,7 @@ jobs:
             git --no-pager diff -- arena/cmd/promptarena/adapter_registry.json
           fi
 
-      - uses: actions/setup-go@v6
+      - uses: actions/setup-go@v7
         if: steps.drift.outputs.changed == 'true'
         with:
           go-version: '1.26.0'
