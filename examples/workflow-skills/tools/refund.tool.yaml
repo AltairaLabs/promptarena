@@ -1,0 +1,29 @@
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Tool
+metadata:
+  name: refund
+spec:
+  description: "Issue a refund against an order"
+  mode: mock
+  timeout_ms: 5000
+  input_schema:
+    type: object
+    properties:
+      order_id:
+        type: string
+        description: "The order to refund"
+      amount:
+        type: number
+        description: "Amount to refund, in the order's currency"
+    required:
+      - order_id
+  output_schema:
+    type: object
+    properties:
+      status:
+        type: string
+      refund_id:
+        type: string
+  mock_result:
+    status: refunded
+    refund_id: rf_10231
