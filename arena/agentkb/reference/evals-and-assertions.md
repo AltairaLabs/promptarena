@@ -96,6 +96,7 @@ Two envelopes carry that entry, and they are **not** the same schema:
 | `tools_called_session` | session | boolean gate | The named tool(s) were called somewhere in the session. |
 | `tools_not_called` | turn | boolean gate | The named tool(s) were not called this turn. |
 | `tools_not_called_session` | session | boolean gate | The named tool(s) were never called in the session. |
+| `topic_policy` | turn | 1.0 allow / 0.0 deny | Confines the conversation to a declared subject scope, judged by a topic classifier rather than the model being governed. Declared as a pack validator, not a scenario assertion; gates the user's message before the agent is called, and is default-deny — a missing classifier blocks every turn. Needs a provider with role: inference. |
 | `toxicity` | turn | 0..1 raw signal | Safety toxicity signal for the output. LLM judge required. |
 | `transitioned_to` | session | boolean gate | The workflow transitioned to the expected state. |
 | `video_duration` | turn | boolean gate | Video duration falls within the expected range. |

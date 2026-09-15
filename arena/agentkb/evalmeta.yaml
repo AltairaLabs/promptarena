@@ -187,6 +187,15 @@ handlers:
     level: session
     description: Skills were activated in the specified order.
     score: boolean gate
+  topic_policy:
+    level: turn
+    description: >-
+      Confines the conversation to a declared subject scope, judged by a topic
+      classifier rather than the model being governed. Declared as a pack
+      validator, not a scenario assertion; gates the user's message before the
+      agent is called, and is default-deny — a missing classifier blocks every
+      turn. Needs a provider with role: inference.
+    score: 1.0 allow / 0.0 deny
 
   # --- workflow / composition ---
   workflow_complete:
