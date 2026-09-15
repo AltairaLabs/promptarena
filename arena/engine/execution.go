@@ -490,6 +490,13 @@ func (e *Engine) executeScenarioRun(
 		defer e.memoryToolExec.unregisterRun(runID)
 	}
 
+	// Give this run its own active-skill set. Shared, it would grant one run's
+	// activated tools to every other run in flight.
+	if e.skillsToolExec != nil {
+		e.skillsToolExec.RegisterRun(runID)
+		defer e.skillsToolExec.UnregisterRun(runID)
+	}
+
 	var workflowOrch *EvalOrchestrator
 	if e.workflowSpec != nil {
 		wfScenario := *scenario

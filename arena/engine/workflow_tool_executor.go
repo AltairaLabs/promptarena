@@ -17,11 +17,6 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/v2/workflow"
 )
 
-// SkillFilterer controls which skills are available based on workflow state.
-type SkillFilterer interface {
-	SetFilter(glob string) []string
-}
-
 type workflowScenarioIDKey struct{}
 
 // withWorkflowScenarioID stores the workflow scenario ID in context for per-run dispatch.
@@ -62,7 +57,6 @@ type workflowTransitionExecutor struct {
 	promptRegistry *prompt.Registry
 	registry       *tools.Registry
 	runs           map[string]*workflowRunState // keyed by scenario ID
-	skillFilterer  SkillFilterer
 }
 
 func newWorkflowTransitionExecutor(
