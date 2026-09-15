@@ -27,7 +27,7 @@ func (a *workflowArtifactExecutor) Name() string { return workflow.ArtifactExecu
 func (a *workflowArtifactExecutor) Execute(
 	ctx context.Context, desc *tools.ToolDescriptor, args json.RawMessage,
 ) (json.RawMessage, error) {
-	scenarioID := workflowScenarioIDFromCtx(ctx)
+	scenarioID := runIDFromContext(ctx)
 	a.transExec.mu.Lock()
 	run := a.transExec.runs[scenarioID]
 	a.transExec.mu.Unlock()

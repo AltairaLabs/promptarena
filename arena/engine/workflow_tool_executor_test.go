@@ -61,7 +61,7 @@ func TestWorkflowTransitionExecutor_Execute(t *testing.T) {
 
 	// Execute stores pending (deferred)
 	args, _ := json.Marshal(map[string]string{"event": "Escalate", "context": "test"})
-	result, err := exec.Execute(withWorkflowScenarioID(context.Background(), "test"), nil, args)
+	result, err := exec.Execute(withRunID(context.Background(), "test"), nil, args)
 	require.NoError(t, err)
 
 	var res map[string]string
@@ -86,7 +86,7 @@ func TestWorkflowTransitionExecutor_InvalidEvent(t *testing.T) {
 
 	// Execute succeeds (stores pending), commit fails
 	args, _ := json.Marshal(map[string]string{"event": "NonExistent"})
-	_, err := exec.Execute(withWorkflowScenarioID(context.Background(), "test"), nil, args)
+	_, err := exec.Execute(withRunID(context.Background(), "test"), nil, args)
 	require.NoError(t, err) // Execute always succeeds (just stores pending)
 
 	err = exec.CommitPendingTransition("test", nil)
@@ -109,7 +109,7 @@ func TestWorkflowTransitionExecutor_WorkflowMetadata(t *testing.T) {
 
 	// After transition (execute + commit)
 	args, _ := json.Marshal(map[string]string{"event": "Escalate"})
-	_, err := exec.Execute(withWorkflowScenarioID(context.Background(), "test"), nil, args)
+	_, err := exec.Execute(withRunID(context.Background(), "test"), nil, args)
 	require.NoError(t, err)
 	require.NoError(t, exec.CommitPendingTransition("test", nil))
 
@@ -132,7 +132,7 @@ func TestWorkflowTransitionExecutor_TerminalState(t *testing.T) {
 	exec.RegisterRun("test", scenario)
 
 	args, _ := json.Marshal(map[string]string{"event": "Resolve"})
-	_, err := exec.Execute(withWorkflowScenarioID(context.Background(), "test"), nil, args)
+	_, err := exec.Execute(withRunID(context.Background(), "test"), nil, args)
 	require.NoError(t, err)
 	require.NoError(t, exec.CommitPendingTransition("test", nil))
 
@@ -161,7 +161,7 @@ func TestWorkflowTransitionExecutor_TerminalKeepsToolForSiblingRuns(t *testing.T
 	scenario := &arenaconfig.Scenario{ID: "s1", TaskType: "intake"}
 	exec.RegisterRun("s1", scenario)
 	args, _ := json.Marshal(map[string]string{"event": "Resolve"})
-	_, err := exec.Execute(withWorkflowScenarioID(context.Background(), "s1"), nil, args)
+	_, err := exec.Execute(withRunID(context.Background(), "s1"), nil, args)
 	require.NoError(t, err)
 	require.NoError(t, exec.CommitPendingTransition("s1", nil))
 	require.Equal(t, true, exec.RunMetadata("s1")["workflow_complete"])
@@ -191,7 +191,7 @@ func TestSecondRunIsUnaffectedByFirstRunsTransitions(t *testing.T) {
 	// Run 1 advances to "specialist", whose only event is Resolve.
 	exec.RegisterRun("run1", &arenaconfig.Scenario{ID: "run1", TaskType: "intake"})
 	args, _ := json.Marshal(map[string]string{"event": "Escalate"})
-	_, err := exec.Execute(withWorkflowScenarioID(context.Background(), "run1"), nil, args)
+	_, err := exec.Execute(withRunID(context.Background(), "run1"), nil, args)
 	require.NoError(t, err)
 	require.NoError(t, exec.CommitPendingTransition("run1", nil))
 
@@ -202,7 +202,7 @@ func TestSecondRunIsUnaffectedByFirstRunsTransitions(t *testing.T) {
 	// Run 2 starts at the entry and drives the entry's own event. Under the old
 	// behaviour this failed, because the descriptor still held specialist's set.
 	exec.RegisterRun("run2", &arenaconfig.Scenario{ID: "run2", TaskType: "intake"})
-	_, err = exec.Execute(withWorkflowScenarioID(context.Background(), "run2"), nil, args)
+	_, err = exec.Execute(withRunID(context.Background(), "run2"), nil, args)
 	require.NoError(t, err, "run 2 must be able to use its own entry event")
 	require.NoError(t, exec.CommitPendingTransition("run2", nil))
 	assert.Equal(t, "specialist", exec.StateMachine("run2").CurrentState())
@@ -219,7 +219,7 @@ func TestWorkflowTransitionExecutor_ConcurrentRuns(t *testing.T) {
 	exec.RegisterRun("s2", s2)
 
 	// Transition s1 to specialist (using s1's context)
-	ctx1 := withWorkflowScenarioID(context.Background(), "s1")
+	ctx1 := withRunID(context.Background(), "s1")
 	args, _ := json.Marshal(map[string]string{"event": "Escalate"})
 	_, err := exec.Execute(ctx1, nil, args)
 	require.NoError(t, err)
@@ -227,7 +227,7 @@ func TestWorkflowTransitionExecutor_ConcurrentRuns(t *testing.T) {
 	assert.Equal(t, "specialist", s1.TaskType)
 
 	// s2 should still be able to Escalate (its own state machine)
-	ctx2 := withWorkflowScenarioID(context.Background(), "s2")
+	ctx2 := withRunID(context.Background(), "s2")
 	_, err = exec.Execute(ctx2, nil, args)
 	require.NoError(t, err)
 	require.NoError(t, exec.CommitPendingTransition("s2", nil))
@@ -260,14 +260,14 @@ func TestWorkflowTransitionExecutor_MaxVisitsRedirect(t *testing.T) {
 
 	// First transition: start -> loop (visit 1)
 	args, _ := json.Marshal(map[string]string{"event": "Go", "context": "test"})
-	_, err := exec.Execute(withWorkflowScenarioID(context.Background(), "test"), nil, args)
+	_, err := exec.Execute(withRunID(context.Background(), "test"), nil, args)
 	require.NoError(t, err)
 	require.NoError(t, exec.CommitPendingTransition("test", nil))
 	assert.Equal(t, "loop", scenario.TaskType)
 
 	// Second transition: loop -> loop, but max_visits=1 so redirect to done
 	args2, _ := json.Marshal(map[string]string{"event": "Again", "context": "test"})
-	_, err = exec.Execute(withWorkflowScenarioID(context.Background(), "test"), nil, args2)
+	_, err = exec.Execute(withRunID(context.Background(), "test"), nil, args2)
 	require.NoError(t, err)
 	require.NoError(t, exec.CommitPendingTransition("test", nil))
 	assert.Equal(t, "done", scenario.TaskType, "should redirect to on_max_visits target")
@@ -384,7 +384,7 @@ func TestWorkflowRunMetadataProvider_CommitsPendingAtMetadataRead(t *testing.T) 
 	exec.RegisterRunWithEmitter("test", scenario, emitter)
 
 	args, _ := json.Marshal(map[string]string{"event": "Escalate"})
-	_, err := exec.Execute(withWorkflowScenarioID(context.Background(), "test"), nil, args)
+	_, err := exec.Execute(withRunID(context.Background(), "test"), nil, args)
 	require.NoError(t, err)
 
 	// Pre-commit: pending transition queued, state still intake on the SM.
@@ -452,7 +452,7 @@ func TestWorkflowRunMetadataProvider_CommitErrorIsLoggedNotPanicked(t *testing.T
 
 	// Execute an invalid event — Execute succeeds (stores pending) but commit will fail.
 	args, _ := json.Marshal(map[string]string{"event": "NonExistent"})
-	_, err := exec.Execute(withWorkflowScenarioID(context.Background(), "test"), nil, args)
+	_, err := exec.Execute(withRunID(context.Background(), "test"), nil, args)
 	require.NoError(t, err)
 
 	provider := &workflowRunMetadataProvider{exec: exec, scenarioID: "test"}
@@ -515,7 +515,7 @@ func TestPrepareWorkflowScenario(t *testing.T) {
 		bus.Subscribe(events.EventWorkflowTransitioned, func(e *events.Event) { transitioned <- e })
 
 		args, _ := json.Marshal(map[string]string{"event": "Escalate"})
-		_, err := transExec.Execute(withWorkflowScenarioID(context.Background(), "r"), nil, args)
+		_, err := transExec.Execute(withRunID(context.Background(), "r"), nil, args)
 		require.NoError(t, err)
 
 		require.NotNil(t, runOrch.workflowMetaProvider, "provider must be set on the clone")
@@ -583,7 +583,7 @@ func TestCommitPendingTransition_SetsSkillFilter(t *testing.T) {
 
 	// Execute a transition
 	args, _ := json.Marshal(map[string]string{"event": "RouteBilling"})
-	_, err := exec.Execute(withWorkflowScenarioID(context.Background(), "run1"), nil, args)
+	_, err := exec.Execute(withRunID(context.Background(), "run1"), nil, args)
 	require.NoError(t, err)
 
 	// Commit should store the skill filter on the per-run state
@@ -616,7 +616,7 @@ func TestCommitPendingTransition_NilSkillFilterer(t *testing.T) {
 	exec.RegisterRun("run1", scenario)
 
 	args, _ := json.Marshal(map[string]string{"event": "RouteBilling"})
-	_, err := exec.Execute(withWorkflowScenarioID(context.Background(), "run1"), nil, args)
+	_, err := exec.Execute(withRunID(context.Background(), "run1"), nil, args)
 	require.NoError(t, err)
 
 	err = exec.CommitPendingTransition("run1", nil)
@@ -647,11 +647,11 @@ func TestWorkflowArtifactExecutor_DispatchesToRun(t *testing.T) {
 	assert.Equal(t, workflow.ArtifactExecutorMode, artExec.Name())
 
 	args, _ := json.Marshal(map[string]string{"name": "notes", "value": "first"})
-	_, err := artExec.Execute(withWorkflowScenarioID(context.Background(), "r1"), nil, args)
+	_, err := artExec.Execute(withRunID(context.Background(), "r1"), nil, args)
 	require.NoError(t, err)
 
 	args2, _ := json.Marshal(map[string]string{"name": "notes", "value": "second"})
-	_, err = artExec.Execute(withWorkflowScenarioID(context.Background(), "r1"), nil, args2)
+	_, err = artExec.Execute(withRunID(context.Background(), "r1"), nil, args2)
 	require.NoError(t, err)
 
 	// r1's artifact has both appended values; r2's artifact is untouched.
@@ -662,7 +662,7 @@ func TestWorkflowArtifactExecutor_DispatchesToRun(t *testing.T) {
 	assert.Empty(t, r2Notes)
 
 	// Unknown scenario errors out.
-	_, err = artExec.Execute(withWorkflowScenarioID(context.Background(), "missing"), nil, args)
+	_, err = artExec.Execute(withRunID(context.Background(), "missing"), nil, args)
 	assert.Error(t, err)
 }
 
@@ -744,12 +744,12 @@ func TestCommitPendingTransition_EmitsRedirectedEvent(t *testing.T) {
 
 	// First transition: 0 visits → no redirect, visits[loop]=1
 	args, _ := json.Marshal(map[string]string{"event": "Again"})
-	_, err := exec.Execute(withWorkflowScenarioID(context.Background(), "r"), nil, args)
+	_, err := exec.Execute(withRunID(context.Background(), "r"), nil, args)
 	require.NoError(t, err)
 	require.NoError(t, exec.CommitPendingTransition("r", nil))
 
 	// Second transition: visits[loop]=1 == MaxVisits, should redirect to exit.
-	_, err = exec.Execute(withWorkflowScenarioID(context.Background(), "r"), nil, args)
+	_, err = exec.Execute(withRunID(context.Background(), "r"), nil, args)
 	require.NoError(t, err)
 	require.NoError(t, exec.CommitPendingTransition("r", nil))
 

@@ -506,7 +506,6 @@ func (e *Engine) executeScenarioRun(
 		if prepErr != nil {
 			return saveError(prepErr.Error())
 		}
-		runCtx = withWorkflowScenarioID(runCtx, runID)
 		defer e.workflowTransExec.UnregisterRun(runID)
 	}
 

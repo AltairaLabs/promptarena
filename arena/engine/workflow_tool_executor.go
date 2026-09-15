@@ -17,21 +17,6 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/v2/workflow"
 )
 
-type workflowScenarioIDKey struct{}
-
-// withWorkflowScenarioID stores the workflow scenario ID in context for per-run dispatch.
-func withWorkflowScenarioID(ctx context.Context, scenarioID string) context.Context {
-	return context.WithValue(ctx, workflowScenarioIDKey{}, scenarioID)
-}
-
-// workflowScenarioIDFromCtx retrieves the workflow scenario ID from context.
-func workflowScenarioIDFromCtx(ctx context.Context) string {
-	if v, ok := ctx.Value(workflowScenarioIDKey{}).(string); ok {
-		return v
-	}
-	return ""
-}
-
 // workflowRunState holds per-run workflow state for concurrent scenario execution.
 type workflowRunState struct {
 	transExec   *workflow.TransitionExecutor
@@ -141,7 +126,7 @@ func (e *workflowTransitionExecutor) RegisterRunAtState(
 func (e *workflowTransitionExecutor) Execute(
 	ctx context.Context, desc *tools.ToolDescriptor, args json.RawMessage,
 ) (json.RawMessage, error) {
-	scenarioID := workflowScenarioIDFromCtx(ctx)
+	scenarioID := runIDFromContext(ctx)
 
 	e.mu.Lock()
 	run := e.runs[scenarioID]
