@@ -673,6 +673,13 @@ func (e *Engine) buildConversationRequest(
 		e.wireWorkflowHooks(&req, runID)
 	}
 
+	// Hand the turn this run's live skill tool grants. Bound to the run here
+	// rather than looked up per turn because the provider stage's accessor
+	// takes no arguments.
+	if e.skillsToolExec != nil {
+		req.SkillToolGrants = e.skillsToolExec.GrantsFor(runID)
+	}
+
 	// Always configure StateStore (always enabled now)
 	req.StateStoreConfig = &StateStoreConfig{
 		Store: e.stateStore,
