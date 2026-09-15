@@ -140,13 +140,16 @@ func TestRegisterMemoryForRun_ScopesToScenarioAndRun(t *testing.T) {
 	scope := eng.registerMemoryForRun("scenario-a", "run-1")
 	require.Equal(t, map[string]string{"scenario": "scenario-a", "run": "run-1"}, scope)
 
-	// The executor registered for this run must write under that scope.
+	// A tool call made as this run must write under that scope. The run
+	// identity on the context is what binds the two; without it the shared
+	// executor has no way to tell which run is calling.
 	ctx := t.Context()
 	desc := eng.toolRegistry.Get(memory.RememberToolName)
 	require.NotNil(t, desc)
-	_, err := eng.toolRegistry.Execute(ctx, memory.RememberToolName,
+	res, err := eng.toolRegistry.Execute(withRunID(ctx, "run-1"), memory.RememberToolName,
 		json.RawMessage(`{"content":"scoped to run-1"}`))
 	require.NoError(t, err)
+	require.Empty(t, res.Error)
 
 	got, err := eng.memoryStore.List(ctx, scope, memory.ListOptions{Limit: 10})
 	require.NoError(t, err)

@@ -93,6 +93,7 @@ type Engine struct {
 	workflowTransExec    *workflowTransitionExecutor  // Optional transition executor (set if config.Workflow != nil)
 	skillExecutor        SkillFilterer                // Optional — set when skills are configured
 	memoryStore          *memory.InMemoryStore        // Optional memory store (set if config.Memory != nil)
+	memoryToolExec       *memoryToolExecutor          // Registry-resident memory executor; resolves per-run scope
 	recordingConfig      *stage.RecordingStageConfig  // Optional — enables RecordingStage in pipelines
 	audioMonitorOpts     *arenaaudio.Options          // Optional — enables audio monitoring on duplex runs
 	audioMonitorHooks    []AudioMonitorHook           // Subscribers fired when a per-run AudioRouter is built
