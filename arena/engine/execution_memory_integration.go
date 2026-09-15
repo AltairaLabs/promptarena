@@ -21,9 +21,13 @@ func (e *Engine) initMemory() error {
 
 	store := memory.NewInMemoryStore()
 
-	// Register executor with nil scope — per-run scope is set in executeRun
-	exec := memory.NewExecutor(store, nil)
-	e.toolRegistry.RegisterExecutor(exec)
+	// One executor for the whole engine, registered once. Per-run scope is
+	// resolved inside Execute from the run identity on the context — see
+	// memoryToolExecutor. Registering a per-run executor here (or anywhere on
+	// the concurrent run path) would clobber the registry's single "memory"
+	// slot for every run in flight.
+	e.memoryToolExec = newMemoryToolExecutor(store)
+	e.toolRegistry.RegisterExecutor(e.memoryToolExec)
 	memory.RegisterMemoryTools(e.toolRegistry)
 
 	e.memoryStore = store
@@ -31,8 +35,9 @@ func (e *Engine) initMemory() error {
 	return nil
 }
 
-// registerMemoryForRun creates a per-run memory executor with scope isolation.
-// Called before each scenario execution to ensure memory is scoped to the run.
+// registerMemoryForRun binds this run's memory scope to its run ID so the
+// shared memory executor can resolve it at execute time. Returns the scope so
+// seed memories can be written against it.
 func (e *Engine) registerMemoryForRun(scenarioID, runID string) map[string]string {
 	if e.memoryStore == nil {
 		return nil
@@ -41,8 +46,9 @@ func (e *Engine) registerMemoryForRun(scenarioID, runID string) map[string]strin
 		"scenario": scenarioID,
 		"run":      runID,
 	}
-	exec := memory.NewExecutor(e.memoryStore, scope)
-	e.toolRegistry.RegisterExecutor(exec)
+	if e.memoryToolExec != nil {
+		e.memoryToolExec.registerRun(runID, scope)
+	}
 	return scope
 }
 

@@ -191,6 +191,11 @@ func buildProviderConfig(req *TurnRequest) *stage.ProviderConfig {
 			cfg.MessageLogConvID = req.ConversationID
 		}
 	}
+	// Skill allowed-tools grants. Left nil when the run has no skills, so the
+	// provider stage skips the merge entirely.
+	if req.SkillToolGrants != nil {
+		cfg.ToolGrants = req.SkillToolGrants
+	}
 	return cfg
 }
 

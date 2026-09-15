@@ -158,6 +158,8 @@ The tools execute for real. Only the LLM's decision-making is mocked.
 - **Don't share state machines across runs** — always use `RegisterRun` for per-run isolation
 - **Don't forget to set `desc.Mode`** — Arena's local `registerTransitionToolForSpec` sets Mode to route to the custom executor. Without it, the registry can't find the executor.
 - **Never mutate the tool registry during a run** — it is shared by every concurrent scenario, so it must describe what the runtime CAN do, never what one run is currently doing. Per-turn availability comes from the state's allowed-tool list; per-run validity comes from that run's own state machine. `TestToolRegistryIsImmutableAcrossRuns` enforces this.
+- **This covers executors, not just descriptors.** `RegisterExecutor` keys by `Name()`, so registering a per-run executor replaces the one every other in-flight run is using. Memory did exactly this and wrote one run's memories into another's scope. Register once at init; hold per-run state in a run-keyed map inside the registered executor and resolve it from `runIDFromContext(ctx)` at execute time — see `memoryToolExecutor` and `skillsToolExecutor`. `TestExecutorRegistrationIsConfinedToInit` and `TestPerRunFunctionsDoNotRegisterExecutors` enforce this.
+- **`runIDFromContext` is the single answer to "which run is asking".** Don't add a second context key carrying the same identity; the workflow scenario-ID key was one and has been collapsed into it.
 - **Don't mutate shared EvalOrchestrator** — always Clone() for concurrent runs
 
 ## Testing

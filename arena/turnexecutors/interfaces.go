@@ -129,6 +129,14 @@ type TurnRequest struct {
 	// assertion handlers. Reset() is called per turn before pipeline execution.
 	// Only set on workflow composition turns; nil on non-composition turns.
 	CompositionRecorder *stage.CompositionRecorder
+
+	// SkillToolGrants, when non-nil, returns the pack tools currently granted
+	// by this run's active skills. The provider stage merges the result into
+	// allowedTools on every build and re-reads it after each tool round, so a
+	// skill activated mid-turn takes effect on the next round. It must be the
+	// run's live accessor, not a snapshot. Nil when the run has no skills
+	// configured.
+	SkillToolGrants func() []string
 }
 
 // StateStoreConfig wraps the state store configuration for turn executors

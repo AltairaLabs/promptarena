@@ -83,7 +83,7 @@ func deferEvent(t *testing.T, exec *workflowTransitionExecutor, runID, event str
 	desc := exec.registry.Get(workflow.TransitionToolName)
 	require.NotNil(t, desc)
 	_, err := exec.Execute(
-		withWorkflowScenarioID(context.Background(), runID),
+		withRunID(context.Background(), runID),
 		desc,
 		[]byte(`{"event":"`+event+`","context":"brief for the next state"}`),
 	)

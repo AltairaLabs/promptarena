@@ -385,6 +385,7 @@ func (ce *DefaultConversationExecutor) buildTurnRequest(
 		Metadata:              metadata,
 		ActiveComposition:     activeComposition,
 		CompositionRecorder:   req.CompositionRecorder,
+		SkillToolGrants:       req.SkillToolGrants,
 	}
 }
 

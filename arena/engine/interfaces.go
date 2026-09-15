@@ -120,6 +120,12 @@ type ConversationRequest struct {
 	// engine to commit deferred transitions after the pipeline finishes.
 	PostTurnHook func() error
 
+	// SkillToolGrants, when non-nil, returns the pack tools this run's active
+	// skills currently grant. Set by buildConversationRequest from the run's
+	// skills executor and threaded onto every TurnRequest, where the provider
+	// stage merges it into the tools array.
+	SkillToolGrants func() []string
+
 	// ContextEnricher is called before each turn to enrich the pipeline context.
 	// Used to inject per-run state (e.g., skill filters) into context for tool execution.
 	ContextEnricher func(ctx context.Context) context.Context

@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
@@ -18,6 +19,7 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/v2/prompt"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/providers"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/providers/mock"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/skills"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/tools"
 )
 
@@ -651,14 +653,21 @@ func TestDiscoverAndRegisterSkillTools_StateGlobMatchesWithRelativeConfigDir(t *
 	// Run from the config directory, which is what makes "." mean dir.
 	t.Chdir(dir)
 
-	exec, _, err := discoverAndRegisterSkillTools(cfg, tools.NewRegistry())
+	registry := tools.NewRegistry()
+	exec, _, err := discoverAndRegisterSkillTools(cfg, registry)
 	require.NoError(t, err)
 	require.NotNil(t, exec)
 
 	// The state's glob must reach the skill. Activation is refused when it does
-	// not, which is the failure this guards.
-	exec.SetFilter("skills/billing/*")
-	_, _, activateErr := exec.Activate("pci-compliance")
-	require.NoError(t, activateErr,
+	// not, which is the failure this guards. Driven through the live path: the
+	// run's own executor, with the workflow state's glob on the context, which
+	// is how a state-scoped skill is actually activated.
+	exec.RegisterRun("run-x")
+	ctx := skills.WithSkillFilter(withRunID(t.Context(), "run-x"), "skills/billing/*")
+
+	args := json.RawMessage(`{"name":"pci-compliance"}`)
+	res, execErr := registry.Execute(ctx, skills.SkillActivateTool, args)
+	require.NoError(t, execErr)
+	require.Empty(t, res.Error,
 		"a skills glob must match under a relative ConfigDir")
 }

@@ -476,9 +476,25 @@ func (e *Engine) executeScenarioRun(
 	runCtx, cancel := context.WithTimeout(ctx, runTimeout)
 	defer cancel()
 
+	// Thread the run identity into the run context. Executors registered in the
+	// engine-wide tool registry are shared by every concurrent run; this is how
+	// they resolve which run's state to act on. Stamped here, before any
+	// subsystem registers per-run state, so everything below inherits it.
+	runCtx = withRunID(runCtx, runID)
+
 	// Register per-run memory scope and seed memories if configured.
 	if err := e.seedRunMemory(scenario, combo.ScenarioID, runID); err != nil {
 		return saveError(fmt.Sprintf("failed to seed memories: %v", err))
+	}
+	if e.memoryToolExec != nil {
+		defer e.memoryToolExec.unregisterRun(runID)
+	}
+
+	// Give this run its own active-skill set. Shared, it would grant one run's
+	// activated tools to every other run in flight.
+	if e.skillsToolExec != nil {
+		e.skillsToolExec.RegisterRun(runID)
+		defer e.skillsToolExec.UnregisterRun(runID)
 	}
 
 	var workflowOrch *EvalOrchestrator
@@ -490,7 +506,6 @@ func (e *Engine) executeScenarioRun(
 		if prepErr != nil {
 			return saveError(prepErr.Error())
 		}
-		runCtx = withWorkflowScenarioID(runCtx, runID)
 		defer e.workflowTransExec.UnregisterRun(runID)
 	}
 
@@ -655,6 +670,13 @@ func (e *Engine) buildConversationRequest(
 	// Wire deferred workflow transition commit and per-run skill filtering
 	if e.workflowTransExec != nil {
 		e.wireWorkflowHooks(&req, runID)
+	}
+
+	// Hand the turn this run's live skill tool grants. Bound to the run here
+	// rather than looked up per turn because the provider stage's accessor
+	// takes no arguments.
+	if e.skillsToolExec != nil {
+		req.SkillToolGrants = e.skillsToolExec.GrantsFor(runID)
 	}
 
 	// Always configure StateStore (always enabled now)
@@ -997,7 +1019,7 @@ func (e *Engine) executeEvalRun(
 		ConversationID: runID,
 	}
 
-	convResult := e.conversationExecutor.ExecuteConversation(ctx, req)
+	convResult := e.conversationExecutor.ExecuteConversation(withRunID(ctx, runID), req)
 
 	// Calculate duration and cost
 	duration := time.Since(startTime)

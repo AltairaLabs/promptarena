@@ -116,11 +116,6 @@ func (e *Engine) initWorkflow() error {
 	e.workflowSpec = spec
 	e.workflowTransExec = transExec
 
-	// Wire skill filtering so transitions update skill availability
-	if e.skillExecutor != nil {
-		transExec.skillFilterer = e.skillExecutor
-	}
-
 	// RFC 0010: parse inline compositions from the arena config and merge
 	// them into LoadedPack.Compositions so buildCompositionResolver can find
 	// them at turn time. This mirrors the packc compile-time path but avoids

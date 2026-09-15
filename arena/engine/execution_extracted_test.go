@@ -12,6 +12,7 @@ import (
 
 	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
 
+	"github.com/AltairaLabs/PromptKit/runtime/v2/skills"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )
 
@@ -170,4 +171,37 @@ func TestBuildConversationRequest(t *testing.T) {
 	assert.Equal(t, "openai", req.StateStoreConfig.Metadata["provider"])
 	assert.Equal(t, "s1", req.StateStoreConfig.Metadata["scenario"])
 	assert.Equal(t, "us", req.StateStoreConfig.Metadata["region"])
+	assert.Nil(t, req.SkillToolGrants, "no skills configured means no grants accessor")
+}
+
+// The run's skill tool grants must reach the conversation request, bound to
+// this run. Without this thread the provider never learns what a skill
+// activation granted, which is the inert behavior issue #195 describes.
+func TestBuildConversationRequest_BindsSkillToolGrantsToTheRun(t *testing.T) {
+	dir := writeSkill(t, billingSkillDoc)
+	reg := skills.NewRegistry()
+	require.NoError(t, reg.Discover([]skills.SkillSource{{Dir: dir}}))
+
+	ste := newSkillsToolExecutor(skills.ExecutorConfig{
+		Registry:  reg,
+		PackTools: []string{"issue_refund"},
+		ConfigDir: dir,
+	}, reg.PreloadedSkills())
+
+	e := &Engine{skillsToolExec: ste}
+	combo := RunCombination{Region: "us", ProviderID: "openai", ScenarioID: "s1"}
+	req := e.buildConversationRequest(combo, &arenaconfig.Scenario{ID: "s1"}, nil, nil, nil, "run-1", time.Now())
+
+	require.NotNil(t, req.SkillToolGrants)
+	assert.Empty(t, req.SkillToolGrants(), "nothing activated yet")
+
+	// Activate in this run: the accessor is live, so the same closure now
+	// reports the grant.
+	ste.RegisterRun("run-1")
+	exec := ste.executorFor("run-1")
+	require.NotNil(t, exec)
+	_, _, activateErr := exec.Activate("billing")
+	require.NoError(t, activateErr)
+
+	assert.Equal(t, []string{"issue_refund"}, req.SkillToolGrants())
 }

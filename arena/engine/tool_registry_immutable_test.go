@@ -94,7 +94,7 @@ func commit(t *testing.T, exec *workflowTransitionExecutor, runID, event string)
 	desc := exec.registry.Get(workflow.TransitionToolName)
 	require.NotNil(t, desc, "transition tool should be registered")
 
-	ctx := withWorkflowScenarioID(context.Background(), runID)
+	ctx := withRunID(context.Background(), runID)
 	args := []byte(`{"event":"` + event + `","context":"test"}`)
 	_, err := exec.Execute(ctx, desc, args)
 	require.NoError(t, err, "deferring event %q for run %q", event, runID)

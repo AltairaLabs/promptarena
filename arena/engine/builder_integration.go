@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 	"time"
 
@@ -74,7 +75,7 @@ func BuildEngineComponents(cfg *arenaconfig.Config, providerFilter []string) (
 	adapterReg *adapters.Registry,
 	a2aCleanup func(),
 	toolReg *tools.Registry,
-	skillExec *skills.Executor,
+	skillExec SkillsExecutor,
 	err error,
 ) {
 	// Initialize core registries
@@ -145,7 +146,13 @@ func BuildEngineComponents(cfg *arenaconfig.Config, providerFilter []string) (
 	// conversation executor so preload: true skills are active from turn 1.
 	var skillErr error
 	var preloadedSkillInstructions string
-	skillExec, preloadedSkillInstructions, skillErr = discoverAndRegisterSkillTools(cfg, toolRegistry)
+	skillsExec, preloadedSkillInstructions, skillErr := discoverAndRegisterSkillTools(cfg, toolRegistry)
+	// Assigned through the nil check so that "no skills configured" leaves
+	// skillExec a genuinely nil interface rather than an interface holding a
+	// nil *skillsToolExecutor, which would pass every != nil guard downstream.
+	if skillsExec != nil {
+		skillExec = skillsExec
+	}
 	if skillErr != nil {
 		if a2aCleanupFn != nil {
 			a2aCleanupFn()
@@ -933,7 +940,7 @@ func buildStateStore(cfg *arenaconfig.Config) (runtimestore.Store, error) {
 // turn 1 without the model having to call skill__activate.
 func discoverAndRegisterSkillTools(
 	cfg *arenaconfig.Config, toolRegistry *tools.Registry,
-) (*skills.Executor, string, error) {
+) (*skillsToolExecutor, string, error) {
 	if len(cfg.LoadedSkillSources) == 0 {
 		return nil, "", nil
 	}
@@ -974,27 +981,49 @@ func discoverAndRegisterSkillTools(
 	if abs, err := filepath.Abs(skillsConfigDir); err == nil {
 		skillsConfigDir = abs
 	}
-	executor := skills.NewExecutor(skills.ExecutorConfig{Registry: reg, ConfigDir: skillsConfigDir})
-
-	// Register tool descriptors + executor. The skill__activate descriptor
-	// embeds the available-skills index so the LLM can discover which skills
-	// exist and choose which to activate.
-	_ = toolRegistry.Register(skills.BuildSkillActivateDescriptorWithIndex(executor.SkillIndex("")))
-	_ = toolRegistry.Register(skills.BuildSkillDeactivateDescriptor())
-	_ = toolRegistry.Register(skills.BuildSkillReadResourceDescriptor())
-	toolRegistry.RegisterExecutor(skills.NewToolExecutor(executor))
-
-	// Preload skills marked with preload: true. Activating registers their
-	// tools in the registry; instructions are threaded into the system prompt
-	// via the returned preloadedInstructions block.
-	preloaded := reg.PreloadedSkills()
-	preloadedInstructions := buildPreloadedSkillInstructions(preloaded)
-	for _, sk := range preloaded {
-		_, _, _ = executor.Activate(sk.Name)
+	// The pack's tools are the ceiling: a skill can only be granted a tool the
+	// pack already declares. Mirrors SkillsCapability.Init in the SDK. Without
+	// it intersectPackTools returns nil for every skill and no allowed-tools
+	// entry can ever be granted.
+	var packTools []string
+	if cfg.LoadedPack != nil {
+		packTools = make([]string, 0, len(cfg.LoadedPack.Tools))
+		for name := range cfg.LoadedPack.Tools {
+			packTools = append(packTools, name)
+		}
+		sort.Strings(packTools)
 	}
 
+	execCfg := skills.ExecutorConfig{
+		Registry:  reg,
+		ConfigDir: skillsConfigDir,
+		PackTools: packTools,
+	}
+
+	// A prototype executor, used only to materialize the available-skills index
+	// embedded in the skill__activate description. The index is derived from the
+	// registry, not from active state, so it is identical for every run.
+	prototype := skills.NewExecutor(execCfg)
+
+	// Register tool descriptors. The skill__activate descriptor embeds the
+	// available-skills index so the LLM can discover which skills exist and
+	// choose which to activate.
+	_ = toolRegistry.Register(skills.BuildSkillActivateDescriptorWithIndex(prototype.SkillIndex("")))
+	_ = toolRegistry.Register(skills.BuildSkillDeactivateDescriptor())
+	_ = toolRegistry.Register(skills.BuildSkillReadResourceDescriptor())
+
+	// Skills marked preload: true are replayed into each run's executor rather
+	// than activated once here, because the active set is now per run. Their
+	// instructions are threaded into the system prompt via preloadedInstructions.
+	preloaded := reg.PreloadedSkills()
+	preloadedInstructions := buildPreloadedSkillInstructions(preloaded)
+
+	// One registry-resident executor holding one skills.Executor per run.
+	skillsExec := newSkillsToolExecutor(execCfg, preloaded)
+	toolRegistry.RegisterExecutor(skillsExec)
+
 	logger.Info("Discovered skills", "count", len(reg.List()), "preloaded", len(preloaded))
-	return executor, preloadedInstructions, nil
+	return skillsExec, preloadedInstructions, nil
 }
 
 // buildPreloadedSkillInstructions formats preloaded skill instructions into a
