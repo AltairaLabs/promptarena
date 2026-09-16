@@ -91,9 +91,8 @@ type Engine struct {
 	evalOrchestrator     *EvalOrchestrator            // Orchestrates eval and assertion execution during runs
 	workflowSpec         *workflow.Spec               // Optional workflow spec (set if config.Workflow != nil)
 	workflowTransExec    *workflowTransitionExecutor  // Optional transition executor (set if config.Workflow != nil)
-	skillsToolExec       SkillsExecutor               // Optional — set when skills are configured
+	skillsFactory        *SkillsFactory               // Optional — set when skills are configured
 	memoryStore          *memory.InMemoryStore        // Optional memory store (set if config.Memory != nil)
-	memoryToolExec       *memoryToolExecutor          // Registry-resident memory executor; resolves per-run scope
 	recordingConfig      *stage.RecordingStageConfig  // Optional — enables RecordingStage in pipelines
 	audioMonitorOpts     *arenaaudio.Options          // Optional — enables audio monitoring on duplex runs
 	audioMonitorHooks    []AudioMonitorHook           // Subscribers fired when a per-run AudioRouter is built
@@ -282,7 +281,7 @@ func NewEngineFromConfigFile(configPath string) (*Engine, error) {
 func NewEngineFromConfig(cfg *arenaconfig.Config, providerFilter ...string) (*Engine, error) {
 	// Build registries and executors from the config
 	providerRegistry, promptRegistry, mcpRegistry, convExecutor,
-		adapterRegistry, a2aCleanup, toolRegistry, skillExec, err := BuildEngineComponents(cfg, providerFilter)
+		adapterRegistry, a2aCleanup, toolRegistry, skillFactory, err := BuildEngineComponents(cfg, providerFilter)
 	if err != nil {
 		return nil, err
 	}
@@ -296,7 +295,7 @@ func NewEngineFromConfig(cfg *arenaconfig.Config, providerFilter ...string) (*En
 		return nil, err
 	}
 	eng.a2aCleanup = a2aCleanup
-	eng.skillsToolExec = skillExec
+	eng.skillsFactory = skillFactory
 
 	// Initialize workflow state machine and register transition tool if configured
 	if err := eng.initWorkflow(); err != nil {

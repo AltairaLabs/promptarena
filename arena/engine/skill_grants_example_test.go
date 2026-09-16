@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/AltairaLabs/PromptKit/runtime/v2/skills"
 	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
 )
 
@@ -35,22 +36,19 @@ func TestSkillGrants_CeilingCoversArenaDeclaredTools(t *testing.T) {
 	require.Contains(t, toolRegistry.GetTools(), "refund",
 		"the example declares a refund tool")
 
-	ste, _, err := discoverAndRegisterSkillTools(cfg, toolRegistry)
+	factory, _, err := discoverAndRegisterSkillTools(cfg, toolRegistry)
 	require.NoError(t, err)
-	require.NotNil(t, ste)
+	require.NotNil(t, factory)
 
 	// refund-processing declares allowed-tools: [refund]. Activating it in a
 	// run must grant that tool.
-	ste.RegisterRun("run-1")
-	exec := ste.executorFor("run-1")
-	require.NotNil(t, exec)
-
-	_, added, activateErr := exec.Activate("refund-processing")
+	set := skills.NewActiveSet()
+	activation, activateErr := factory.executor.ActivateIn(set, "refund-processing")
 	require.NoError(t, activateErr)
 
-	assert.Equal(t, []string{"refund"}, added,
+	assert.Equal(t, []string{"refund"}, activation.AddedTools,
 		"activating refund-processing must grant the refund tool")
-	assert.Equal(t, []string{"refund"}, ste.GrantsFor("run-1")())
+	assert.Equal(t, []string{"refund"}, factory.executor.ToolsFor(set))
 }
 
 // A skill must never grant a tool the runtime cannot execute, however the
@@ -64,31 +62,25 @@ func TestSkillGrants_CeilingExcludesUndeclaredTools(t *testing.T) {
 	toolRegistry, err := buildToolRegistry(cfg)
 	require.NoError(t, err)
 
-	ste, _, err := discoverAndRegisterSkillTools(cfg, toolRegistry)
+	factory, _, err := discoverAndRegisterSkillTools(cfg, toolRegistry)
 	require.NoError(t, err)
-	ste.RegisterRun("run-1")
-
-	granted := ste.GrantsFor("run-1")()
+	granted := factory.executor.ToolsFor(skills.NewActiveSet())
 	registered := toolRegistry.GetTools()
 	for _, name := range granted {
 		assert.Contains(t, registered, name,
 			"granted tool %q is not registered, so the model could never call it", name)
 	}
 
-	assert.NotContains(t, allGrantableNames(t, ste), "definitely_not_a_real_tool")
+	assert.NotContains(t, allGrantableNames(t, factory), "definitely_not_a_real_tool")
 }
 
-// allGrantableNames activates every discovered skill in a throwaway run and
-// returns the union of what they granted.
-func allGrantableNames(t *testing.T, ste *skillsToolExecutor) []string {
+// allGrantableNames activates every discovered skill in a throwaway executor
+// and returns the union of what they granted.
+func allGrantableNames(t *testing.T, factory *SkillsFactory) []string {
 	t.Helper()
-	ste.RegisterRun("probe")
-	defer ste.UnregisterRun("probe")
-
-	exec := ste.executorFor("probe")
-	require.NotNil(t, exec)
-	for _, meta := range ste.cfg.Registry.List() {
-		_, _, _ = exec.Activate(meta.Name)
+	set := skills.NewActiveSet()
+	for _, meta := range factory.catalog.List() {
+		_, _ = factory.executor.ActivateIn(set, meta.Name)
 	}
-	return exec.ActiveTools()
+	return factory.executor.ToolsFor(set)
 }

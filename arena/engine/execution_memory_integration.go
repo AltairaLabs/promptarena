@@ -21,13 +21,13 @@ func (e *Engine) initMemory() error {
 
 	store := memory.NewInMemoryStore()
 
-	// One executor for the whole engine, registered once. Per-run scope is
-	// resolved inside Execute from the run identity on the context — see
-	// memoryToolExecutor. Registering a per-run executor here (or anywhere on
-	// the concurrent run path) would clobber the registry's single "memory"
-	// slot for every run in flight.
-	e.memoryToolExec = newMemoryToolExecutor(store)
-	e.toolRegistry.RegisterExecutor(e.memoryToolExec)
+	// One executor for the whole engine, constructed with no scope of its own.
+	// From v2.3.0 it reads the conversation's scope from the context, which
+	// each run binds via runTools.bindContext — so a single registration is
+	// safe even though the registry holds exactly one executor per name.
+	// Capturing a run's scope on the executor is what used to make one run's
+	// memories answer another's reads.
+	e.toolRegistry.RegisterExecutor(memory.NewExecutor(store, nil))
 	memory.RegisterMemoryTools(e.toolRegistry)
 
 	e.memoryStore = store
@@ -35,25 +35,9 @@ func (e *Engine) initMemory() error {
 	return nil
 }
 
-// registerMemoryForRun binds this run's memory scope to its run ID so the
-// shared memory executor can resolve it at execute time. Returns the scope so
-// seed memories can be written against it.
-func (e *Engine) registerMemoryForRun(scenarioID, runID string) map[string]string {
-	if e.memoryStore == nil {
-		return nil
-	}
-	scope := map[string]string{
-		"scenario": scenarioID,
-		"run":      runID,
-	}
-	if e.memoryToolExec != nil {
-		e.memoryToolExec.registerRun(runID, scope)
-	}
-	return scope
-}
-
 // seedMemoriesForRun pre-populates the memory store with seed entries from the
-// scenario config. Called after registerMemoryForRun and before the first turn.
+// scenario config. Called with the scope buildRunTools bound to this run,
+// before the first turn.
 func (e *Engine) seedMemoriesForRun(scenario *arenaconfig.Scenario, scope map[string]string) error {
 	if e.memoryStore == nil || len(scenario.SeedMemories) == 0 {
 		return nil

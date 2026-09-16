@@ -126,46 +126,44 @@ func TestInitMemory_NoConfigLeavesEverythingAlone(t *testing.T) {
 	assert.Nil(t, eng.toolRegistry.Get(memory.RecallToolName))
 }
 
-// TestRegisterMemoryForRun_ScopesToScenarioAndRun covers registerMemoryForRun,
-// which was 0%. The scope it builds is the isolation boundary between runs —
-// get it wrong and one scenario recalls another's memories, which shows up as
-// a passing assertion rather than an error.
-func TestRegisterMemoryForRun_ScopesToScenarioAndRun(t *testing.T) {
+// The scope a run writes under is the isolation boundary between runs — get it
+// wrong and one scenario recalls another's memories, which surfaces as a
+// passing assertion rather than an error. buildRunTools builds the scope and
+// registers the executor carrying it into the run's own child registry.
+func TestBuildRunTools_ScopesMemoryToScenarioAndRun(t *testing.T) {
 	eng := &Engine{
 		config:       &arenaconfig.Config{Memory: map[string]any{"enabled": true}},
 		toolRegistry: tools.NewRegistry(),
 	}
 	require.NoError(t, eng.initMemory())
 
-	scope := eng.registerMemoryForRun("scenario-a", "run-1")
-	require.Equal(t, map[string]string{"scenario": "scenario-a", "run": "run-1"}, scope)
+	runA := eng.buildRunTools("scenario-a", "run-1")
+	require.Equal(t, map[string]string{"scenario": "scenario-a", "run": "run-1"}, runA.memoryScope)
 
-	// A tool call made as this run must write under that scope. The run
-	// identity on the context is what binds the two; without it the shared
-	// executor has no way to tell which run is calling.
 	ctx := t.Context()
-	desc := eng.toolRegistry.Get(memory.RememberToolName)
-	require.NotNil(t, desc)
-	res, err := eng.toolRegistry.Execute(withRunID(ctx, "run-1"), memory.RememberToolName,
+	require.NotNil(t, eng.toolRegistry.Get(memory.RememberToolName),
+		"the descriptors stay engine-wide; only the executor is per run")
+
+	res, err := runA.registry.Execute(runA.bindContext(ctx), memory.RememberToolName,
 		json.RawMessage(`{"content":"scoped to run-1"}`))
 	require.NoError(t, err)
 	require.Empty(t, res.Error)
 
-	got, err := eng.memoryStore.List(ctx, scope, memory.ListOptions{Limit: 10})
+	got, err := eng.memoryStore.List(ctx, runA.memoryScope, memory.ListOptions{Limit: 10})
 	require.NoError(t, err)
 	require.Len(t, got, 1)
 	assert.Equal(t, "scoped to run-1", got[0].Content)
 
 	// A different run must not see it.
-	other := eng.registerMemoryForRun("scenario-a", "run-2")
-	got, err = eng.memoryStore.List(ctx, other, memory.ListOptions{Limit: 10})
+	runB := eng.buildRunTools("scenario-a", "run-2")
+	got, err = eng.memoryStore.List(ctx, runB.memoryScope, memory.ListOptions{Limit: 10})
 	require.NoError(t, err)
 	assert.Empty(t, got, "run-2 must not see run-1's memories")
 }
 
-// TestRegisterMemoryForRun_NoStoreReturnsNil pins the guard: without initMemory
-// there is no store, and the caller relies on a nil scope to mean "memory off".
-func TestRegisterMemoryForRun_NoStoreReturnsNil(t *testing.T) {
+// Without initMemory there is no store, and the caller relies on a nil scope to
+// mean "memory off".
+func TestBuildRunTools_NoStoreLeavesScopeNil(t *testing.T) {
 	eng := &Engine{toolRegistry: tools.NewRegistry()}
-	assert.Nil(t, eng.registerMemoryForRun("s", "r"))
+	assert.Nil(t, eng.buildRunTools("s", "r").memoryScope)
 }

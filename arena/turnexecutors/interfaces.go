@@ -30,6 +30,7 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/v2/pipeline/stage"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/prompt"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/providers"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/tools"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )
 
@@ -129,6 +130,13 @@ type TurnRequest struct {
 	// assertion handlers. Reset() is called per turn before pipeline execution.
 	// Only set on workflow composition turns; nil on non-composition turns.
 	CompositionRecorder *stage.CompositionRecorder
+
+	// ToolRegistry, when non-nil, is this run's own registry: a child of the
+	// engine's, sharing its tool descriptors but owning its executors. Per-run
+	// executor state — the memory scope, the active skill set, the HTTP
+	// response budget — lives there, so a concurrent run cannot overwrite it.
+	// Nil falls back to the engine-wide registry.
+	ToolRegistry *tools.Registry
 
 	// SkillToolGrants, when non-nil, returns the pack tools currently granted
 	// by this run's active skills. The provider stage merges the result into

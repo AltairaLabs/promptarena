@@ -66,7 +66,7 @@ func TestConcurrentRuns_MemoryIsIsolatedPerRun(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			res, err := eng.toolRegistry.Execute(ctx, memory.RememberToolName, args)
+			res, err := req.ToolRegistry.Execute(ctx, memory.RememberToolName, args)
 			if err != nil {
 				return err
 			}
@@ -81,7 +81,7 @@ func TestConcurrentRuns_MemoryIsIsolatedPerRun(t *testing.T) {
 			if err != nil {
 				return err
 			}
-			listRes, err := eng.toolRegistry.Execute(ctx, memory.ListToolName, listArgs)
+			listRes, err := req.ToolRegistry.Execute(ctx, memory.ListToolName, listArgs)
 			if err != nil {
 				return err
 			}
@@ -105,7 +105,7 @@ func TestConcurrentRuns_MemoryIsIsolatedPerRun(t *testing.T) {
 	// NewEngineFromConfig runs this as part of construction; NewEngine does not,
 	// so call the same initializer the production path does.
 	require.NoError(t, eng.initMemory())
-	require.NotNil(t, eng.memoryToolExec, "initMemory must register the shared memory executor")
+	require.NotNil(t, eng.memoryStore, "initMemory must build the store")
 
 	plan := &RunPlan{
 		Combinations: []RunCombination{

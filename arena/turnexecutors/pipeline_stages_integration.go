@@ -39,6 +39,18 @@ type PipelineExecutor struct {
 
 // NewPipelineExecutor creates a new pipeline executor with the specified tool registry and media storage.
 // The mediaStorage parameter enables automatic externalization of large media content to file storage.
+// registryFor returns the registry this turn must use. A run owns a child of
+// the engine's registry — it shares the engine's tool descriptors but holds its
+// own executors, so per-run executor state (memory scope, active skills, the
+// HTTP response budget) cannot be overwritten by a concurrent run. Falls back
+// to the engine-wide registry for callers that do not set one.
+func (e *PipelineExecutor) registryFor(req *TurnRequest) *tools.Registry {
+	if req != nil && req.ToolRegistry != nil {
+		return req.ToolRegistry
+	}
+	return e.toolRegistry
+}
+
 func NewPipelineExecutor(toolRegistry *tools.Registry, mediaStorage storage.MediaStorageService) *PipelineExecutor {
 	return &PipelineExecutor{
 		toolRegistry: toolRegistry,
@@ -438,7 +450,7 @@ func (e *PipelineExecutor) appendProviderOrCompositionStage(
 	deps := stage.CompositionExecutorDeps{
 		PromptRegistry: req.PromptRegistry,
 		Provider:       req.Provider,
-		ToolRegistry:   e.toolRegistry,
+		ToolRegistry:   e.registryFor(req),
 		Emitter:        emitter,
 		HookRegistry:   hookReg,
 		BaseVariables:  mergedVars,
@@ -596,7 +608,7 @@ func (e *PipelineExecutor) buildProviderStage(
 	emitter := emitterFromRequest(req)
 	hookReg := buildHookRegistry(req, guardrailHooks)
 	ps := stage.NewProviderStageWithTurnState(
-		req.Provider, e.toolRegistry, toolPolicy, providerConfig, emitter, hookReg, turnState,
+		req.Provider, e.registryFor(req), toolPolicy, providerConfig, emitter, hookReg, turnState,
 	)
 	// Workflow runs only. This is what lets a workflow__transition take effect
 	// within the turn that called it — the tool loop asks the resolver between
@@ -667,7 +679,7 @@ func (e *PipelineExecutor) Execute(
 	// Inject consent overrides into context if present
 	if len(req.ConsentOverrides) > 0 {
 		ctx = consent.WithConsentOverrides(ctx, req.ConsentOverrides)
-		ctx = consent.WithToolRegistry(ctx, e.toolRegistry)
+		ctx = consent.WithToolRegistry(ctx, e.registryFor(req))
 	}
 
 	// Inject chaos config into context if present
@@ -824,7 +836,7 @@ func (e *PipelineExecutor) appendStreamingProviderStage(
 		return append(stages, e.buildProviderStage(req, providerConfig, turnState, guardrailHooks)), nil
 	}
 	return append(stages, stage.NewProviderStageWithTurnState(
-		req.Provider, e.toolRegistry, buildToolPolicy(req.Scenario),
+		req.Provider, e.registryFor(req), buildToolPolicy(req.Scenario),
 		providerConfig, emitterFromRequest(req), nil, turnState,
 	)), nil
 }

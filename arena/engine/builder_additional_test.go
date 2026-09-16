@@ -654,19 +654,20 @@ func TestDiscoverAndRegisterSkillTools_StateGlobMatchesWithRelativeConfigDir(t *
 	t.Chdir(dir)
 
 	registry := tools.NewRegistry()
-	exec, _, err := discoverAndRegisterSkillTools(cfg, registry)
+	factory, _, err := discoverAndRegisterSkillTools(cfg, registry)
 	require.NoError(t, err)
-	require.NotNil(t, exec)
+	require.NotNil(t, factory)
 
 	// The state's glob must reach the skill. Activation is refused when it does
-	// not, which is the failure this guards. Driven through the live path: the
-	// run's own executor, with the workflow state's glob on the context, which
-	// is how a state-scoped skill is actually activated.
-	exec.RegisterRun("run-x")
-	ctx := skills.WithSkillFilter(withRunID(t.Context(), "run-x"), "skills/billing/*")
+	// not, which is the failure this guards. Driven through the live path: a
+	// run's own registry and executor, with the workflow state's glob on the
+	// context, which is how a state-scoped skill is actually activated.
+	eng := &Engine{toolRegistry: registry, skillsFactory: factory}
+	rt := eng.buildRunTools("scenario-x", "run-x")
+	ctx := skills.WithSkillFilter(t.Context(), "skills/billing/*")
 
 	args := json.RawMessage(`{"name":"pci-compliance"}`)
-	res, execErr := registry.Execute(ctx, skills.SkillActivateTool, args)
+	res, execErr := rt.registry.Execute(ctx, skills.SkillActivateTool, args)
 	require.NoError(t, execErr)
 	require.Empty(t, res.Error,
 		"a skills glob must match under a relative ConfigDir")
