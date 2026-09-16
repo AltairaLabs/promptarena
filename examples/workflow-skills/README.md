@@ -55,14 +55,35 @@ intake ──RouteBilling──→ billing ──Resolve──→ closed
 ## Three-Level Tool Scoping
 
 ```
-Pack tools (ceiling):     get_order, refund, search_orders, escalate_ticket
+Ceiling (declared tools):  refund
                               │
-Billing prompt (baseline): get_order, refund
+Prompt baseline:           skill__activate, skill__deactivate,
+                           skill__read_resource, workflow__transition
                               │
-PCI skill (extension):     + refund (already available via prompt)
+Skill extension:           + refund  ← only reachable once a skill
+                                       naming it in allowed-tools is active
 ```
 
-Skills can only grant tools that the pack declares. The pack is the ceiling.
+Two rules, and the example is built so that both are visible:
+
+1. **A skill can only grant a tool the runtime declares.** The ceiling is the
+   union of a compiled pack's tools and the tools this config declares under
+   `tools:`. `escalation-policy` asks for `escalate_ticket` and
+   `order-troubleshooting` asks for `search_orders`; neither tool is declared,
+   so neither is ever granted — asking is not enough.
+2. **The grant has to matter.** `refund` is deliberately left out of the prompt
+   baselines, so the only route to it is activating `refund-processing` or
+   `pci-compliance`. A baseline that already contained `refund` would make the
+   grant a no-op and the example would prove nothing.
+
+Verified against a live model: with the grants in place the model activates a
+skill and then calls `refund`; with `refund` removed from both skills'
+`allowed-tools` and nothing else changed, it activates the same skills and never
+calls `refund`, because it was never offered.
+
+Note that the mock provider cannot show this. A mock emits whatever tool calls
+its response file names, regardless of the tools array it was handed, so
+`promptarena run` against the mock exercises activation but not gating.
 
 ## Running
 
