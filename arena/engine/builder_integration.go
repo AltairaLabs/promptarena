@@ -103,8 +103,11 @@ func BuildEngineComponents(cfg *arenaconfig.Config, providerFilter []string) (
 		return nil, nil, nil, nil, nil, nil, nil, nil, provErr
 	}
 
-	// Register HTTP executor for live HTTP tool calls (mode: "live")
-	toolRegistry.RegisterExecutor(tools.NewHTTPExecutor())
+	// Register HTTP executor for live HTTP tool calls (mode: "live"). The
+	// response-size budget is metered per run rather than per engine — see
+	// httpToolExecutor.
+	httpExec := newHTTPToolExecutor(tools.DefaultMaxAggregateSize)
+	toolRegistry.RegisterExecutor(httpExec)
 
 	// Register mediagen image/video tools when matching providers are pooled.
 	// Arena's analog of the SDK's registerMediaGenTools.
