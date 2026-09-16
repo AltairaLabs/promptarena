@@ -6,6 +6,15 @@ spec:
   task_type: "intake"
   version: "v1.0.0"
   description: "Initial customer contact - triage and route to the correct specialist"
+  # The baseline tools this agent starts with. `refund` is deliberately absent:
+  # it becomes callable only once a skill that declares it in allowed-tools is
+  # activated. Verified against a live model — with the grant the model calls
+  # refund, and with the grant removed and nothing else changed it cannot.
+  allowed_tools:
+    - skill__activate
+    - skill__deactivate
+    - skill__read_resource
+    - workflow__transition
   system_template: |
     You are an intake agent for ShopCo customer support. Your job is to greet the customer, understand their issue, and route them to the appropriate specialist.
 

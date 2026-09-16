@@ -20,6 +20,12 @@ spec:
     - file: scenarios/billing-flow.scenario.yaml
     - file: scenarios/orders-flow.scenario.yaml
 
+  tools:
+    # The grant ceiling. A skill's allowed-tools can only name a tool declared
+    # here — refund-processing asks for `refund`, so activating it extends the
+    # provider's tools array with this one.
+    - file: tools/refund.tool.yaml
+
   skills:
     # Load everything under skills/ as on-demand. The LLM can discover these
     # from the skill__activate tool description (which includes the

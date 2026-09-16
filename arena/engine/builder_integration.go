@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"sort"
 	"strings"
 	"time"
 
@@ -981,18 +980,7 @@ func discoverAndRegisterSkillTools(
 	if abs, err := filepath.Abs(skillsConfigDir); err == nil {
 		skillsConfigDir = abs
 	}
-	// The pack's tools are the ceiling: a skill can only be granted a tool the
-	// pack already declares. Mirrors SkillsCapability.Init in the SDK. Without
-	// it intersectPackTools returns nil for every skill and no allowed-tools
-	// entry can ever be granted.
-	var packTools []string
-	if cfg.LoadedPack != nil {
-		packTools = make([]string, 0, len(cfg.LoadedPack.Tools))
-		for name := range cfg.LoadedPack.Tools {
-			packTools = append(packTools, name)
-		}
-		sort.Strings(packTools)
-	}
+	packTools := skillGrantCeiling(cfg, toolRegistry)
 
 	execCfg := skills.ExecutorConfig{
 		Registry:  reg,

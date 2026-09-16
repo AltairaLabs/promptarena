@@ -6,6 +6,14 @@ spec:
   task_type: "billing"
   version: "v1.0.0"
   description: "Billing specialist handling disputes, refunds, and payment issues"
+  # Same baseline as intake: `refund` is absent, and only a skill grant makes it
+  # callable. The billing specialist cannot issue a refund until it has loaded
+  # the refund procedures — that is the whole point of skill tool grants.
+  allowed_tools:
+    - skill__activate
+    - skill__deactivate
+    - skill__read_resource
+    - workflow__transition
   system_template: |
     You are a billing specialist at ShopCo. The customer has been routed to you for a billing-related issue.
 
