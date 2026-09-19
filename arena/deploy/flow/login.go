@@ -160,6 +160,16 @@ func newLoginState() (string, error) {
 	return hex.EncodeToString(b), nil
 }
 
+// startLoopbackServer runs the OAuth redirect endpoint for the duration of a
+// login.
+//
+// The listener is bound to 127.0.0.1 on an ephemeral port and the callback URL
+// is plain http, which is what RFC 8252 §7.3 specifies for a native app: the
+// redirect never leaves the loopback interface, so there is no transport to
+// intercept, and an app cannot hold a valid certificate for
+// 127.0.0.1:<random-port> anyway. The authorization code is bound to the
+// `state` this function was handed and checked below before anything is
+// accepted.
 func startLoopbackServer(ctx context.Context, state string) (string, <-chan map[string]string, func(), error) {
 	ln, err := (&net.ListenConfig{}).Listen(ctx, "tcp", "127.0.0.1:0")
 	if err != nil {
@@ -184,8 +194,8 @@ func startLoopbackServer(ctx context.Context, state string) (string, <-chan map[
 		}
 	})
 	srv := &http.Server{Handler: mux, ReadHeaderTimeout: loopbackReadHeaderTimeout}
-	go srv.Serve(ln) //nolint:errcheck
-	callbackURL := fmt.Sprintf("http://%s/callback", ln.Addr().String())
+	go srv.Serve(ln)                                                     //nolint:errcheck
+	callbackURL := fmt.Sprintf("http://%s/callback", ln.Addr().String()) // NOSONAR: loopback, see above
 	return callbackURL, resultCh, func() { _ = srv.Close() }, nil
 }
 
