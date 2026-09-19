@@ -97,6 +97,13 @@ test-examples: build-go ## Validate every example config and mock-run the showca
 	echo "  Validated $$TOTAL config(s); $$FAILED failed."; \
 	[ $$FAILED -eq 0 ]
 	@echo "Mock-running the showcase examples…"
+# Schema validation above covers every example; this list is the subset that
+# actually RUNS. Guardrails and skill grants are invisible to a schema check —
+# a pack that parses can still fail to build its pipeline — so an example
+# demonstrating one earns a place here. voice-guardrails and voice-red-team
+# were both broken by the PromptKit v2.5.0 bump (a judge-backed guardrail that
+# names no provider is now refused at load) while build, test, lint and the
+# schema sweep all stayed green.
 	@set -e; \
 	run() { ex="$$1"; shift; echo "=== $$ex ==="; ( cd "examples/$$ex" && env PROMPTKIT_SCHEMA_SOURCE=local ../../bin/promptarena run "$$@" </dev/null ); }; \
 	run customer-support  --config config.arena.yaml --ci --mock-provider --mock-config mock-responses.yaml --scenario customer-support-scenarios --formats json; \
@@ -107,7 +114,9 @@ test-examples: build-go ## Validate every example config and mock-run the showca
 	run guardrails-test   --config config.arena.yaml --ci --formats json; \
 	run eval-test         --config config.arena.yaml --ci --formats json; \
 	run document-analysis --config config.arena.yaml --ci --formats json; \
-	run mortgage-underwriting --config config.arena.yaml --ci --formats json
+	run mortgage-underwriting --config config.arena.yaml --ci --formats json; \
+	run voice-guardrails  --config config.arena.yaml --ci --formats json; \
+	run voice-red-team    --config config.arena.yaml --ci --formats json
 	@echo "Compiling the governance showcase to a pack…"
 	@env PROMPTKIT_SCHEMA_SOURCE=local ./bin/packc compile \
 		-c examples/mortgage-underwriting/config.arena.yaml \
