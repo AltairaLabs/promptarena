@@ -1,0 +1,4 @@
+# The judge's verdict for every call: no PII leakage (1.0 = clean).
+# Enforcement in these examples comes from the regex pre-pass, which runs
+# before the judge is consulted.
+defaultResponse: '{"passed": true, "score": 1.0, "reasoning": "No PII present in the response."}'

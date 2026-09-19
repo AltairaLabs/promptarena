@@ -19,7 +19,14 @@ spec:
   # message — *before* the duplex stage would TTS it. The agent does
   # not speak the PII; the test asserts the guardrail fired AND the
   # delivered content matches the redaction marker.
+  # `provider` names a judge this arena config declares, which the host
+  # binds; the LLM layer cannot run without one, and since v2.5.0 a
+  # judge-backed guardrail that names nothing is refused at load rather than
+  # degrading open. Here it resolves to the mock provider, so the demo stays
+  # keyless — the redaction this example is about is the regex pre-pass,
+  # which runs before the judge is ever consulted.
   validators:
     - type: pii_leakage
       params:
         direction: output
+        provider: redaction-judge

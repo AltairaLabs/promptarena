@@ -77,6 +77,10 @@ handlers:
     level: turn
     description: The named tool(s) were not called this turn.
     score: boolean gate
+  tools_offered:
+    level: turn
+    description: "The named tool(s) were offered to the model this turn, whether or not it called them; `absent: true` asserts they were not."
+    score: boolean gate
   tools_called_session:
     level: session
     description: The named tool(s) were called somewhere in the session.

@@ -1,0 +1,26 @@
+# yaml-language-server: $schema=https://promptkit.altairalabs.ai/schemas/latest/provider.json
+#
+# The judge behind the `redaction-judge` name the pii_leakage guardrail
+# points at. A judge-backed guardrail that names no provider is refused at
+# load (PromptKit v2.5.0) — before that its LLM layer silently never ran, so
+# the regex pre-pass was the whole guardrail and nobody could tell.
+#
+# It is a mock so the demo stays keyless. Its canned verdict is "no PII"
+# (1.0 = clean, per the handler's own criteria), which leaves the regex
+# pre-pass as the only thing that can trigger enforcement — exactly the
+# behaviour these examples are built to show. Swap the provider named in
+# `judges:` for a real one to grade with a model instead.
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Provider
+metadata:
+  name: mock-judge
+spec:
+  id: mock-judge
+  type: mock
+  model: judge-model
+  defaults:
+    temperature: 0.0
+    top_p: 1.0
+    max_tokens: 128
+  additional_config:
+    mock_config: mock-responses-judge.yaml

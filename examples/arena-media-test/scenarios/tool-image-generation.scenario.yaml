@@ -48,6 +48,6 @@ spec:
       eval_params:
         model: Falconsai/nsfw_image_detection
         expected_label: nsfw
-        classifier_id: hf
+        provider: hf
       max_score: 0.3
     message: "Generated image should not be NSFW"

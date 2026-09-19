@@ -10,6 +10,7 @@ import (
 	"github.com/AltairaLabs/promptarena/v2/arena/consent"
 	arenastages "github.com/AltairaLabs/promptarena/v2/arena/stages"
 
+	"github.com/AltairaLabs/PromptKit/runtime/v2/evals"
 	_ "github.com/AltairaLabs/PromptKit/runtime/v2/evals/handlers" // register default eval handlers
 	"github.com/AltairaLabs/PromptKit/runtime/v2/events"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/hooks"
@@ -35,6 +36,13 @@ type PipelineExecutor struct {
 	toolRegistry               *tools.Registry
 	mediaStorage               storage.MediaStorageService // Media storage service for externalization
 	preloadedSkillInstructions string                      // Appended to system_prompt when non-empty
+	// providerBinding answers the LOGICAL provider names a pack's checks
+	// declare — the judge a `pii_leakage` guardrail grades with, say. It is
+	// attached to every pipeline's execution context, where handlers read it
+	// back with evals.BindingFromContext. Nil is fine: a check that names no
+	// provider never asks, and one that does gets told no binding is wired
+	// rather than silently scoring nothing.
+	providerBinding evals.ProviderBinding
 }
 
 // NewPipelineExecutor creates a new pipeline executor with the specified tool registry and media storage.
@@ -63,6 +71,23 @@ func NewPipelineExecutor(toolRegistry *tools.Registry, mediaStorage storage.Medi
 // disables the stage.
 func (e *PipelineExecutor) SetPreloadedSkillInstructions(instructions string) {
 	e.preloadedSkillInstructions = instructions
+}
+
+// SetProviderBinding sets the binding used to resolve the logical provider
+// names a pack's checks declare. Engine-wide, like the tool registry: what
+// sits behind a name is a property of the config, not of a run.
+func (e *PipelineExecutor) SetProviderBinding(b evals.ProviderBinding) {
+	e.providerBinding = b
+}
+
+// pipelineConfig returns the pipeline configuration for a turn: the defaults,
+// plus the provider binding when one is wired. The binding is the only thing
+// Arena varies here, so an unbound run builds exactly the pipeline it did
+// before.
+func (e *PipelineExecutor) pipelineConfig() *stage.PipelineConfig {
+	cfg := stage.DefaultPipelineConfig()
+	cfg.ProviderBinding = e.providerBinding
+	return cfg
 }
 
 // buildBaseVariables creates base variables map from request
@@ -331,7 +356,7 @@ func (e *PipelineExecutor) buildStagePipeline(
 	req *TurnRequest, baseVariables map[string]string,
 ) (*stage.StreamPipeline, error) {
 	logger.Debug("Building stage pipeline", "provider_type", fmt.Sprintf("%T", req.Provider))
-	builder := stage.NewPipelineBuilder()
+	builder := stage.NewPipelineBuilderWithConfig(e.pipelineConfig())
 	turnState := stage.NewTurnState()
 
 	// Merge prompt vars into base variables
@@ -739,7 +764,7 @@ func (e *PipelineExecutor) buildCommonStreamingStages(
 	cfg StreamingStagesConfig,
 ) (*stage.StreamPipeline, error) {
 	mergedVars := mergePromptVars(req)
-	builder := stage.NewPipelineBuilder()
+	builder := stage.NewPipelineBuilderWithConfig(e.pipelineConfig())
 	turnState := stage.NewTurnState()
 	var stages []stage.Stage
 

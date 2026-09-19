@@ -421,7 +421,7 @@ spec:
 
   defaults:
     inference:
-      audio_classifier: hf       # used when an assertion omits classifier_id
+      audio_classifier: hf       # used when an assertion omits `provider`
       text_classifier: hf
       image_classifier: hf
       embedder: hf
