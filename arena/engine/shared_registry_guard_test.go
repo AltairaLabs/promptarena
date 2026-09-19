@@ -11,25 +11,23 @@ import (
 )
 
 // registrationAllowlist names the engine files permitted to call
-// RegisterExecutor. All three do it at engine-init time only.
+// RegisterExecutor.
 //
-// The tool registry is shared by every concurrent run and keys executors by
-// name, so a registration made once a run is underway silently takes ownership
-// of that tool for every run in flight. That is how the memory subsystem came
-// to write one run's memories into another run's scope: it built a per-run
-// executor carrying that run's scope and registered it from the run path.
+// The engine-wide registry is shared by every concurrent run and keys executors
+// by name, holding exactly one per name. An executor registered into it once a
+// run is underway silently takes ownership of that tool for every run in
+// flight. That is how the memory subsystem came to write one run's memories
+// into another run's scope.
 //
-// Registration belongs at init, describing what the runtime CAN do. Per-run
-// state belongs in a run-keyed map inside the registered executor, resolved
-// from runIDFromContext at execute time — see memoryToolExecutor and
-// skillsToolExecutor.
-//
-// If you are adding a subsystem that needs per-run state, follow those two
-// rather than adding a file here.
+// The first three register at engine-init time only. run_tools.go is the
+// exception that proves the rule: it registers per run, but into that run's own
+// child registry — TestRunToolsRegistersOnlyIntoTheChildRegistry below pins
+// that it never touches the engine-wide one.
 var registrationAllowlist = map[string]bool{
 	"builder_integration.go":            true,
 	"execution_memory_integration.go":   true,
 	"execution_workflow_integration.go": true,
+	"run_tools.go":                      true,
 }
 
 func TestExecutorRegistrationIsConfinedToInit(t *testing.T) {
@@ -49,18 +47,34 @@ func TestExecutorRegistrationIsConfinedToInit(t *testing.T) {
 		require.NoError(t, readErr)
 
 		assert.NotContains(t, string(src), "RegisterExecutor(",
-			"%s registers a tool executor outside engine init; the registry is shared by every "+
-				"concurrent run, so per-run state must be resolved at execute time instead", name)
+			"%s registers a tool executor outside engine init; the engine registry is shared by "+
+				"every concurrent run, so per-run executors belong in the run's child registry "+
+				"(see run_tools.go)", name)
 	}
 }
 
-// The allowlisted files may register at init, but must not do so from the
-// per-run functions. This pins the specific regression: registerMemoryForRun
-// used to call RegisterExecutor.
+// The per-run builder may register freely, but only into the run's own child.
+// A single `e.toolRegistry.RegisterExecutor` here would reintroduce the exact
+// bug the child registry was adopted to make unrepresentable.
+func TestRunToolsRegistersOnlyIntoTheChildRegistry(t *testing.T) {
+	src, err := os.ReadFile(filepath.Clean("run_tools.go"))
+	require.NoError(t, err)
+
+	body, found := functionBody(string(src), "func (e *Engine) buildRunTools(")
+	require.True(t, found, "could not locate buildRunTools — update this test if it was renamed")
+
+	assert.NotContains(t, body, "e.toolRegistry.RegisterExecutor(",
+		"buildRunTools must register into the run's child registry, never the engine-wide one")
+	assert.Contains(t, body, "e.toolRegistry.Child()",
+		"buildRunTools must take a child of the engine registry")
+}
+
+// The run path itself must not register: it delegates to buildRunTools, which
+// owns the child. This pins the specific regression — registerMemoryForRun used
+// to call RegisterExecutor on the shared registry from inside a run.
 func TestPerRunFunctionsDoNotRegisterExecutors(t *testing.T) {
 	perRunFunctions := map[string]string{
-		"execution_memory_integration.go": "func (e *Engine) registerMemoryForRun(",
-		"execution.go":                    "func (e *Engine) executeScenarioRun(",
+		"execution.go": "func (e *Engine) executeScenarioRun(",
 	}
 
 	for file, signature := range perRunFunctions {
@@ -71,7 +85,7 @@ func TestPerRunFunctionsDoNotRegisterExecutors(t *testing.T) {
 		require.True(t, found, "could not locate %q in %s — update this test if it was renamed", signature, file)
 
 		assert.NotContains(t, body, "RegisterExecutor(",
-			"%s registers a tool executor per run, which clobbers the shared registry slot", signature)
+			"%s registers a tool executor per run; that belongs in buildRunTools, on the child", signature)
 	}
 }
 

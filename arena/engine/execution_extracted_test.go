@@ -12,13 +12,12 @@ import (
 
 	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
 
-	"github.com/AltairaLabs/PromptKit/runtime/v2/skills"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )
 
-func TestSeedRunMemory_NilStoreIsNoOp(t *testing.T) {
+func TestSeedMemoriesForRun_NilStoreIsNoOp(t *testing.T) {
 	e := &Engine{}
-	err := e.seedRunMemory(&arenaconfig.Scenario{ID: "s"}, "s", "run-1")
+	err := e.seedMemoriesForRun(&arenaconfig.Scenario{ID: "s"}, nil)
 	assert.NoError(t, err)
 }
 
@@ -161,7 +160,7 @@ func TestBuildConversationRequest(t *testing.T) {
 	combo := RunCombination{Region: "us", ProviderID: "openai", ScenarioID: "s1"}
 	start := time.Now()
 
-	req := e.buildConversationRequest(combo, scenario, nil, nil, nil, "run-1", start)
+	req := e.buildConversationRequest(combo, scenario, nil, nil, nil, "run-1", start, nil)
 
 	assert.Same(t, scenario, req.Scenario)
 	assert.Equal(t, "us", req.Region)
@@ -178,29 +177,20 @@ func TestBuildConversationRequest(t *testing.T) {
 // this run. Without this thread the provider never learns what a skill
 // activation granted, which is the inert behavior issue #195 describes.
 func TestBuildConversationRequest_BindsSkillToolGrantsToTheRun(t *testing.T) {
-	dir := writeSkill(t, billingSkillDoc)
-	reg := skills.NewRegistry()
-	require.NoError(t, reg.Discover([]skills.SkillSource{{Dir: dir}}))
+	eng := newSkillsEngine(t, billingSkillDoc, []string{"issue_refund"})
+	rt := eng.buildRunTools("s1", "run-1")
 
-	ste := newSkillsToolExecutor(skills.ExecutorConfig{
-		Registry:  reg,
-		PackTools: []string{"issue_refund"},
-		ConfigDir: dir,
-	}, reg.PreloadedSkills())
-
-	e := &Engine{skillsToolExec: ste}
 	combo := RunCombination{Region: "us", ProviderID: "openai", ScenarioID: "s1"}
-	req := e.buildConversationRequest(combo, &arenaconfig.Scenario{ID: "s1"}, nil, nil, nil, "run-1", time.Now())
+	req := eng.buildConversationRequest(
+		combo, &arenaconfig.Scenario{ID: "s1"}, nil, nil, nil, "run-1", time.Now(), rt)
 
+	require.NotNil(t, req.ToolRegistry, "the run's own registry must reach the turn")
 	require.NotNil(t, req.SkillToolGrants)
 	assert.Empty(t, req.SkillToolGrants(), "nothing activated yet")
 
 	// Activate in this run: the accessor is live, so the same closure now
 	// reports the grant.
-	ste.RegisterRun("run-1")
-	exec := ste.executorFor("run-1")
-	require.NotNil(t, exec)
-	_, _, activateErr := exec.Activate("billing")
+	_, activateErr := eng.skillsFactory.executor.ActivateIn(rt.activeSet, "billing")
 	require.NoError(t, activateErr)
 
 	assert.Equal(t, []string{"issue_refund"}, req.SkillToolGrants())

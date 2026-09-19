@@ -14,6 +14,7 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/v2/events"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/pipeline/stage"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/providers"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/tools"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )
 
@@ -119,6 +120,12 @@ type ConversationRequest struct {
 	// PostTurnHook is called after each turn completes. Used by the workflow
 	// engine to commit deferred transitions after the pipeline finishes.
 	PostTurnHook func() error
+
+	// ToolRegistry is this run's own registry: a child of the engine's, sharing
+	// its tool descriptors but owning its executors, so per-run executor state
+	// cannot be overwritten by a concurrent run. Threaded onto every
+	// TurnRequest.
+	ToolRegistry *tools.Registry
 
 	// SkillToolGrants, when non-nil, returns the pack tools this run's active
 	// skills currently grant. Set by buildConversationRequest from the run's

@@ -15,7 +15,6 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/v2/logger"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/pipeline/stage"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/prompt"
-	"github.com/AltairaLabs/PromptKit/runtime/v2/skills"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/workflow"
 )
@@ -318,7 +317,7 @@ func (e *Engine) buildEntryStateMeta(stateName string) map[string]interface{} {
 // ActiveCompositionResolver resolves the active composition for the
 // current workflow state (RFC 0010), and CompositionRecorder threads the
 // per-run recorder so buildStagePipeline can wire it into CompositionStage.
-func (e *Engine) wireWorkflowHooks(req *ConversationRequest, runID string) {
+func (e *Engine) wireWorkflowHooks(req *ConversationRequest, runID string, rt *runTools) {
 	req.PostTurnHook = func() error {
 		var emitter *events.Emitter
 		if req.EventBus != nil {
@@ -326,10 +325,13 @@ func (e *Engine) wireWorkflowHooks(req *ConversationRequest, runID string) {
 		}
 		return e.workflowTransExec.CommitPendingTransition(runID, emitter)
 	}
+	// Apply the current state's skills glob to this run's own active set. The
+	// set deactivates anything that no longer matches and refuses activations
+	// outside the glob, and because the set belongs to the run, a state
+	// narrowing one conversation's skills cannot narrow another's.
 	req.ContextEnricher = func(ctx context.Context) context.Context {
-		filter := e.workflowTransExec.SkillFilter(runID)
-		if filter != "" {
-			return skills.WithSkillFilter(ctx, filter)
+		if rt != nil && rt.activeSet != nil {
+			rt.activeSet.SetFilter(e.workflowTransExec.SkillFilter(runID))
 		}
 		return ctx
 	}

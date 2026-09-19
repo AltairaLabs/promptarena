@@ -476,25 +476,25 @@ func (e *Engine) executeScenarioRun(
 	runCtx, cancel := context.WithTimeout(ctx, runTimeout)
 	defer cancel()
 
-	// Thread the run identity into the run context. Executors registered in the
-	// engine-wide tool registry are shared by every concurrent run; this is how
-	// they resolve which run's state to act on. Stamped here, before any
-	// subsystem registers per-run state, so everything below inherits it.
+	// Thread the run identity into the run context. The workflow transition
+	// executor is registered once, engine-wide, and keeps its per-run state in
+	// a run-keyed map; this is how it resolves which run is asking.
 	runCtx = withRunID(runCtx, runID)
 
-	// Register per-run memory scope and seed memories if configured.
-	if err := e.seedRunMemory(scenario, combo.ScenarioID, runID); err != nil {
-		return saveError(fmt.Sprintf("failed to seed memories: %v", err))
-	}
-	if e.memoryToolExec != nil {
-		defer e.memoryToolExec.unregisterRun(runID)
-	}
+	// Give this run its own child registry and the executors that carry per-run
+	// state — memory scope, active skills, HTTP response budget. The child
+	// shares the engine's tool descriptors and owns its executors, so none of
+	// that state can be overwritten by a concurrent run.
+	runTools := e.buildRunTools(combo.ScenarioID, runID)
 
-	// Give this run its own active-skill set. Shared, it would grant one run's
-	// activated tools to every other run in flight.
-	if e.skillsToolExec != nil {
-		e.skillsToolExec.RegisterRun(runID)
-		defer e.skillsToolExec.UnregisterRun(runID)
+	// Bind this run's skill ActiveSet and memory scope to the run context. The
+	// engine-wide executors read them from there; without this they fall back
+	// to their own state, which every run would share.
+	runCtx = runTools.bindContext(runCtx)
+
+	// Seed memories into the same scope the run's tool calls will use.
+	if err := e.seedMemoriesForRun(scenario, runTools.memoryScope); err != nil {
+		return saveError(fmt.Sprintf("failed to seed memories: %v", err))
 	}
 
 	var workflowOrch *EvalOrchestrator
@@ -569,7 +569,7 @@ func (e *Engine) executeScenarioRun(
 	defer endSession()
 
 	// Execute conversation
-	req := e.buildConversationRequest(combo, execScenario, provider, runOrch, audioRouter, runID, startTime)
+	req := e.buildConversationRequest(combo, execScenario, provider, runOrch, audioRouter, runID, startTime, runTools)
 
 	convResult = e.conversationExecutor.ExecuteConversation(runCtx, req)
 
@@ -602,16 +602,6 @@ func (e *Engine) executeScenarioRun(
 	e.notifyRunCompletion(runEmitter, convResult, runID, duration, cost)
 
 	return runID, nil
-}
-
-// seedRunMemory registers a per-run memory scope and seeds any configured
-// memories for the scenario. It is a no-op when the engine has no memory store.
-func (e *Engine) seedRunMemory(scenario *arenaconfig.Scenario, scenarioID, runID string) error {
-	if e.memoryStore == nil {
-		return nil
-	}
-	scope := e.registerMemoryForRun(scenarioID, runID)
-	return e.seedMemoriesForRun(scenario, scope)
 }
 
 // perturbedScenario returns a copy of the scenario with perturbation
@@ -654,6 +644,7 @@ func (e *Engine) buildConversationRequest(
 	audioRouter *arenaaudio.AudioRouter,
 	runID string,
 	startTime time.Time,
+	runTools *runTools,
 ) ConversationRequest {
 	req := ConversationRequest{
 		Provider:         provider,
@@ -669,14 +660,16 @@ func (e *Engine) buildConversationRequest(
 	}
 	// Wire deferred workflow transition commit and per-run skill filtering
 	if e.workflowTransExec != nil {
-		e.wireWorkflowHooks(&req, runID)
+		e.wireWorkflowHooks(&req, runID, runTools)
 	}
 
-	// Hand the turn this run's live skill tool grants. Bound to the run here
-	// rather than looked up per turn because the provider stage's accessor
-	// takes no arguments.
-	if e.skillsToolExec != nil {
-		req.SkillToolGrants = e.skillsToolExec.GrantsFor(runID)
+	// Hand the turn this run's own registry and, when skills are configured,
+	// the live accessor for what they currently grant. The provider stage
+	// re-reads the accessor after every tool round, so a skill activated
+	// mid-turn takes effect on the next one.
+	if runTools != nil {
+		req.ToolRegistry = runTools.registry
+		req.SkillToolGrants = e.toolGrants(runTools)
 	}
 
 	// Always configure StateStore (always enabled now)
