@@ -43,6 +43,12 @@ type EvalOrchestrator struct {
 	// classify.WithRegistry/FromContext are nil-safe and handlers that
 	// require one surface an explanatory error.
 	classifyRegistry *classify.Registry
+	// providerBinding, when non-nil, is attached alongside the classify
+	// registry so a check that names a LOGICAL provider from its pack's
+	// requires block resolves the same way here as it does inside the
+	// pipeline. Nil is fine — the runtime reports "no binding configured",
+	// which is a different fix from "you named something unbound".
+	providerBinding evals.ProviderBinding
 }
 
 // NewEvalOrchestrator creates a hook for executing pack evals during Arena runs.
@@ -117,15 +123,28 @@ func (h *EvalOrchestrator) SetClassifyRegistry(r *classify.Registry) {
 	h.classifyRegistry = r
 }
 
-// withClassify returns ctx wrapped with the orchestrator's classify.Registry,
-// or the original ctx when no registry is configured. Called from every Run*
-// entry point so a handler's classify.FromContext lookup succeeds without
-// each caller plumbing the registry through manually.
+// SetProviderBinding sets the binding that resolves the logical provider names
+// a pack's checks declare. Safe to call with nil.
+func (h *EvalOrchestrator) SetProviderBinding(b evals.ProviderBinding) {
+	if h == nil {
+		return
+	}
+	h.providerBinding = b
+}
+
+// withClassify returns ctx wrapped with the orchestrator's classify.Registry
+// and provider binding, or the original ctx when neither is configured. Called
+// from every Run* entry point so a handler's classify.FromContext and
+// evals.BindingFromContext lookups succeed without each caller plumbing them
+// through manually.
 func (h *EvalOrchestrator) withClassify(ctx context.Context) context.Context {
-	if h == nil || h.classifyRegistry == nil {
+	if h == nil {
 		return ctx
 	}
-	return classify.WithRegistry(ctx, h.classifyRegistry)
+	if h.classifyRegistry != nil {
+		ctx = classify.WithRegistry(ctx, h.classifyRegistry)
+	}
+	return evals.WithProviderBinding(ctx, h.providerBinding)
 }
 
 // SetEventBus configures the event bus for provider call telemetry in eval handlers.

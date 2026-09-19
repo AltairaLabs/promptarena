@@ -25,6 +25,18 @@ spec:
 
   providers:
     - file: providers/mock-provider.yaml
+      group: default
+    # group: judge keeps the judge out of the agent matrix — it grades
+    # turns, it does not take them.
+    - file: providers/mock-judge.yaml
+      group: judge
+
+  # The judge the pii_leakage guardrail names. Pointing it at the mock
+  # provider keeps the demo keyless; swap the provider here to grade with a
+  # real model without touching the pack.
+  judges:
+    - name: redaction-judge
+      provider: mock-judge
 
   scenarios:
     - file: scenarios/pii-redaction.scenario.yaml

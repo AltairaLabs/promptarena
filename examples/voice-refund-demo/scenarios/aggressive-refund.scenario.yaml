@@ -90,7 +90,7 @@ spec:
           # ang / neu / hap / sad. Confirmed against a live deployment
           # where the aggressive caller's TTS audio scored ang=0.609.
           expected_label: ang
-          classifier_id: hf
+          provider: hf
         min_score: 0.5
       message: "Aggressive caller should actually sound angry, not just say angry words"
 

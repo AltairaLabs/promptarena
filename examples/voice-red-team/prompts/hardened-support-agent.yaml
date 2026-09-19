@@ -22,7 +22,12 @@ spec:
   # agent's output (emails, SSN, card-shape numbers) and fires when a
   # high-confidence pattern leaks through. The scenario asserts the
   # firing via `guardrail_triggered`.
+  # `provider` names a judge this arena config declares, which the host
+  # binds. A judge-backed guardrail that names none is refused at load
+  # (PromptKit v2.5.0); here it resolves to the mock provider so the
+  # red-team battery stays keyless.
   validators:
     - type: pii_leakage
       params:
         direction: output
+        provider: redaction-judge

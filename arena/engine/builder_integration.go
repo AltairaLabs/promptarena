@@ -12,6 +12,7 @@ import (
 	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/a2a"
 	a2amock "github.com/AltairaLabs/PromptKit/runtime/v2/a2a/mock"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/classify"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/credentials"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/evals"
 	_ "github.com/AltairaLabs/PromptKit/runtime/v2/evals/handlers" // register default eval handlers
@@ -29,6 +30,7 @@ import (
 
 	"github.com/AltairaLabs/promptarena/v2/arena/adapters"
 	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/v2/arena/binding"
 	_ "github.com/AltairaLabs/promptarena/v2/arena/mcpsource/docker/register" // register docker MCPSource
 	"github.com/AltairaLabs/promptarena/v2/arena/selfplay"
 	"github.com/AltairaLabs/promptarena/v2/arena/statestore"
@@ -153,12 +155,18 @@ func BuildEngineComponents(cfg *arenaconfig.Config, providerFilter []string) (
 
 	// Inject judge metadata + classify registry so eval handlers can resolve
 	// judge providers, tools, and classifiers from config.
-	configureOrchestratorMetadata(evalOrchestrator, cfg, promptRegistry, toolRegistry)
+	classifyRegistry := configureOrchestratorMetadata(evalOrchestrator, cfg, promptRegistry, toolRegistry)
+
+	// Resolve the logical provider names a pack's checks declare against what
+	// this config actually wired. Shared by the eval path and the pipeline,
+	// so a name means the same thing to an assertion and to a guardrail.
+	providerBinding := buildProviderBinding(cfg, providerRegistry, classifyRegistry)
+	evalOrchestrator.SetProviderBinding(providerBinding)
 
 	// Build conversation executor (engine-specific, stays here)
 	conversationExecutor, adapterRegistry, err := newConversationExecutor(
 		cfg, toolRegistry, promptRegistry, mediaStorage, providerRegistry, evalOrchestrator,
-		preloadedSkillInstructions)
+		preloadedSkillInstructions, providerBinding)
 	if err != nil {
 		if a2aCleanupFn != nil {
 			a2aCleanupFn()
@@ -183,9 +191,14 @@ func configureOrchestratorMetadata(
 	cfg *arenaconfig.Config,
 	promptRegistry *prompt.Registry,
 	toolRegistry *tools.Registry,
-) {
+) *classify.Registry {
+	classifyReg, classifyErr := buildClassifyRegistry(cfg)
+	if classifyErr != nil {
+		logger.Warn("classify registry build failed; classify-backed handlers unavailable",
+			"error", classifyErr)
+	}
 	if evalOrchestrator == nil {
-		return
+		return classifyReg
 	}
 	metadata := make(map[string]any)
 	attachJudgeMetadata(metadata, cfg)
@@ -196,13 +209,30 @@ func configureOrchestratorMetadata(
 		metadata["tool_registry"] = toolRegistry
 	}
 	evalOrchestrator.SetMetadata(metadata)
-
-	classifyReg, classifyErr := buildClassifyRegistry(cfg)
-	if classifyErr != nil {
-		logger.Warn("classify registry build failed; classify-backed handlers unavailable",
-			"error", classifyErr)
-	}
 	evalOrchestrator.SetClassifyRegistry(classifyReg)
+	return classifyReg
+}
+
+// buildProviderBinding assembles the answer to "what is behind this logical
+// provider name" for the whole run: the initialized providers, the classify
+// backends, and the `judges:` block as a set of aliases onto provider ids so a
+// check may name either the judge or the provider under it.
+func buildProviderBinding(
+	cfg *arenaconfig.Config,
+	providerRegistry *providers.Registry,
+	classifyRegistry *classify.Registry,
+) evals.ProviderBinding {
+	var aliases map[string]string
+	if cfg != nil && len(cfg.LoadedJudges) > 0 {
+		aliases = make(map[string]string, len(cfg.LoadedJudges))
+		for name, jt := range cfg.LoadedJudges {
+			if jt == nil || jt.Provider == nil {
+				continue
+			}
+			aliases[name] = jt.Provider.ID
+		}
+	}
+	return binding.New(providerRegistry, classifyRegistry, aliases)
 }
 
 // registerMediaGenTools wires the built-in image__generate / video__generate
@@ -697,10 +727,12 @@ func newConversationExecutor(
 	providerRegistry *providers.Registry,
 	evalOrchestrator *EvalOrchestrator,
 	preloadedSkillInstructions string,
+	providerBinding evals.ProviderBinding,
 ) (ConversationExecutor, *adapters.Registry, error) {
 	// Build turn executors (always needed, even without self-play)
 	pipelineExecutor := turnexecutors.NewPipelineExecutor(toolRegistry, mediaStorage)
 	pipelineExecutor.SetPreloadedSkillInstructions(preloadedSkillInstructions)
+	pipelineExecutor.SetProviderBinding(providerBinding)
 	scriptedExecutor := turnexecutors.NewScriptedExecutor(pipelineExecutor)
 
 	// Build self-play components if enabled
