@@ -337,6 +337,28 @@ jobs:
           git tag -fa "$MAJOR" -m "Release $VERSION"
           git push origin "$MAJOR" --force
 
+  # docs.yml has a tag trigger, but the tag above is pushed with GITHUB_TOKEN,
+  # and pushes made with GITHUB_TOKEN never start other workflows. So from the
+  # moment releases moved to workflow_dispatch the docs site stopped hearing
+  # about them, and kept labelling itself v1.5 through v2.0.0. A
+  # workflow_dispatch IS allowed from GITHUB_TOKEN; dispatching on the tag ref
+  # makes github.ref refs/tags/vX.Y.Z, so docs.yml runs its release path
+  # (archive the outgoing minor, update versions.json) unchanged.
+  docs:
+    name: Publish versioned docs
+    needs: goreleaser
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - name: Dispatch docs.yml on ${{ inputs.version }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run docs.yml --repo "${{ github.repository }}" \
+            --ref "${{ inputs.version }}" \
+            -f reason="release ${{ inputs.version }}"
+
   # The adapters depend on this module for the deploy contract — deploy and
   # deploy/adaptersdk moved here from PromptKit. Each one listens for a
   # promptarena-release dispatch and opens its own bump PR.

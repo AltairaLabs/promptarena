@@ -99,6 +99,7 @@ Step-by-step guides that teach you Arena through hands-on exercises:
 Focused guides for specific Arena tasks:
 
 - [Installation](/arena/how-to/setup/installation/) - Get Arena running
+- [Build with an AI coding agent](/arena/how-to/agents/build-with-an-ai-agent/) - Have Claude Code or Codex author and test a kit
 - [Write Test Scenarios](/arena/how-to/scenarios/write-scenarios/) - Effective scenario design
 - [Configure Providers](/arena/how-to/providers/configure-providers/) - Provider setup
 - [Use Mock Providers](/arena/how-to/providers/use-mock-providers/) - Test without API calls

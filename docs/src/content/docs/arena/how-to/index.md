@@ -16,6 +16,9 @@ Enable tab completion for commands, flags, and dynamic values like scenarios and
 ### [Use Project Templates](/arena/how-to/setup/use-project-templates/)
 Quickly scaffold new test projects with the `promptarena init` command. Includes 6 built-in templates for common use cases like customer support, code generation, content creation, multimodal AI, and MCP integration.
 
+### [Build a PromptPack with an AI coding agent](/arena/how-to/agents/build-with-an-ai-agent/)
+Brief Claude Code, Codex, or another coding agent so it can author, validate, and test a kit for you.
+
 ### [Write Test Scenarios](/arena/how-to/scenarios/write-scenarios/)
 Create and structure test scenarios for LLM testing with the PromptPack format.
 

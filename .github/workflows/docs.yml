@@ -141,6 +141,32 @@ jobs:
             wget -q -r -np -nH --cut-dirs=1 -P "existing-archives/$p" "${SITE_URL}/$p/" || true
           done
 
+      # The committed versions.json is only a seed: release builds update it
+      # inside the runner and never commit it back. Without this, every push to
+      # main redeployed the seed (v1.5.6, no archives) over whatever the last
+      # release had published. Start from the live copy so the archive list
+      # survives, and on non-release builds point "current" at the latest
+      # stable tag.
+      - name: Sync versions.json from the live site
+        if: github.event_name != 'pull_request'
+        run: |
+          LIVE=$(curl -sf "${SITE_URL}/versions.json" || true)
+          if [ -n "$LIVE" ] && echo "$LIVE" | jq -e '.current' >/dev/null; then
+            echo "$LIVE" | jq '.["$schema"] = "./versions.schema.json"' > docs/versions.json
+          fi
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            exit 0
+          fi
+          LATEST=$(git tag -l 'v*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)
+          CURRENT=$(jq -r '.current.fullVersion // empty' docs/versions.json)
+          if [ -n "$LATEST" ] && [ "${LATEST#v}" != "$CURRENT" ]; then
+            echo "Live site says ${CURRENT:-nothing}; latest release is $LATEST"
+            node docs/scripts/update-versions.js "$LATEST" false
+          else
+            jq '.["$schema"] = "https://promptarena.altairalabs.ai/versions.schema.json"' \
+              docs/versions.json > docs/public/versions.json
+          fi
+
       - name: Update versions.json (release only)
         if: startsWith(github.ref, 'refs/tags/v')
         working-directory: docs
