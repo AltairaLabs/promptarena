@@ -20,7 +20,7 @@ interface Props {
 const { class: className } = Astro.props;
 
 const currentPath = Astro.url.pathname;
-// Archived builds are served under /vX-Y/ (hyphen — see update-versions.js).
+// Archived builds are served under /vX-Y/ (hyphen — see update-versions.cjs).
 const pathMatch = currentPath.match(/^\/v(\d+)-(\d+)\//);
 const archivedVersion = pathMatch ? `${pathMatch[1]}.${pathMatch[2]}` : null;
 
