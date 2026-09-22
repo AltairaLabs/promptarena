@@ -128,6 +128,13 @@ jobs:
           ( cd ../archive-src/docs && BASE_PATH="$BASE" npm run build )
           mv ../archive-src/docs/dist "archive-${{ steps.archive-check.outputs.archive_path }}"
           echo "Archived docs for $TAG at ${BASE}/"
+        # The outgoing minor's docs install the same private @altairalabs
+        # packages and fetch the same adapter docs as the current build, so
+        # they need the same credentials. This step never ran until v2.1.0
+        # (releases never reached this workflow before), and failed 401.
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
 
       - name: Download existing archives from live site
         if: github.event_name != 'pull_request'
