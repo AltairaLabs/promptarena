@@ -5,11 +5,8 @@ MCP (Model Context Protocol) integration testing project created with PromptAren
 ## Overview
 
 This project tests AI agent capabilities with MCP server integration:
-- File system operations
-- Memory/state management
-- Web fetching and scraping
-- Tool chaining and workflows
-- Error handling
+- Single tool usage (listing a directory with the filesystem server)
+- Tool chaining (writing a file, then reading it back)
 
 ## What is MCP?
 
@@ -26,12 +23,24 @@ Model Context Protocol (MCP) is an open protocol that enables AI models to secur
 ### Prerequisites
 
 - PromptArena CLI installed
-- Node.js and npm (for MCP servers)
-{{range .providers}}{{if ne . "mock"}}- {{if eq . "openai"}}OpenAI{{else if eq . "claude"}}Claude{{else if eq . "gemini"}}Gemini{{end}} API key
+{{if and (eq (len .providers) 1) (eq (index .providers 0) "mock")}}{{else}}- Node.js and npm (for MCP servers)
+{{end}}{{range .providers}}{{if ne . "mock"}}- {{if eq . "openai"}}OpenAI{{else if eq . "claude"}}Claude{{else if eq . "gemini"}}Gemini{{end}} API key
 {{end}}{{end}}
 ### Setup
 
-1. Configure your API keys in `.env` file:
+{{if and (eq (len .providers) 1) (eq (index .providers 0) "mock")}}This kit uses the mock provider only. Replies come from `mock-responses.yaml`
+and the filesystem tools are offline stand-ins in `tools/` with the same names
+and input schemas as the filesystem MCP server's tools (`mcp__filesystem__*`).
+No API key, Node.js or network access is needed:
+
+```bash
+promptarena run
+```
+
+To test against the real MCP server, replace the `tools:` block in
+`config.arena.yaml` with the `mcp_servers:` block shown in its comment, and
+delete the `tools/` directory.
+{{else}}1. Configure your API keys in `.env` file:
 {{range .providers}}{{if eq . "openai"}}   - Get OpenAI key from: https://platform.openai.com/api-keys
 {{else if eq . "claude"}}   - Get Anthropic (Claude) key from: https://console.anthropic.com/
 {{else if eq . "gemini"}}   - Get Google (Gemini) key from: https://aistudio.google.com/app/apikey
@@ -42,29 +51,46 @@ Model Context Protocol (MCP) is an open protocol that enables AI models to secur
    ```bash
    promptarena run
    ```
-
+{{range .providers}}{{if eq . "mock"}}
+The mock provider's replies come from `mock-responses.yaml`. Its scripted tool
+calls run against the real filesystem MCP server, so they need Node.js too.
+{{end}}{{end}}{{end}}
 ## Project Structure
 
 ```
 .
-├── config.arena.yaml          # Main configuration with MCP servers
+├── config.arena.yaml                   # Main configuration{{if and (eq (len .providers) 1) (eq (index .providers 0) "mock")}}
+├── tools/                              # Offline stand-ins for the MCP tools
+│   ├── list-directory.tool.yaml
+│   ├── write-file.tool.yaml
+│   └── read-text-file.tool.yaml{{else}} with MCP servers{{end}}
 ├── prompts/
-│   └── mcp-assistant.yaml     # MCP-aware assistant prompt
-├── providers/                 # LLM provider configs
-{{range .providers}}│   ├── {{.}}.yaml
-{{end}}├── scenarios/                 # Test scenarios
-│   ├── mcp-basic.yaml
-│   └── mcp-multi-tool.yaml
-└── out/                       # Test results (generated)
+│   └── mcp-assistant.prompt.yaml       # MCP-aware assistant prompt
+├── providers/                          # LLM provider configs
+{{range .providers}}│   ├── {{.}}.provider.yaml
+{{end}}├── scenarios/                          # Test scenarios
+│   ├── mcp-basic.scenario.yaml
+│   └── mcp-multi-tool.scenario.yaml
+{{range .providers}}{{if eq . "mock"}}├── mock-responses.yaml                 # Scripted mock provider replies
+{{end}}{{end}}└── out/                                # Test results (generated)
 ```
 
 ## Scenarios
 
-### Basic MCP Usage (`scenarios/mcp-basic.yaml`)
-Tests single tool usage with filesystem operations.
+### Basic MCP Usage (`scenarios/mcp-basic.scenario.yaml`)
+Tests single tool usage: listing `/tmp` with `mcp__filesystem__list_directory`.
 
-### Multi-Tool Workflow (`scenarios/mcp-multi-tool.yaml`)
-Tests chaining multiple tool calls to accomplish complex tasks.
+### Multi-Tool Workflow (`scenarios/mcp-multi-tool.scenario.yaml`)
+Tests chaining: writing `/tmp/test.txt` with `mcp__filesystem__write_file`, then
+reading it back with `mcp__filesystem__read_text_file`.
+
+## Tool Names
+
+MCP tools are registered as `mcp__<server>__<tool>`, so the filesystem server's
+`list_directory` becomes `mcp__filesystem__list_directory`. Use that full name in
+assertions. MCP tools are only offered to the model when the prompt lists them
+in `allowed_tools`; this kit's prompt uses the wildcard `mcp__filesystem__*`.
+Add an entry such as `mcp__memory__*` for each server you add.
 
 ## MCP Server Configuration
 
@@ -122,7 +148,7 @@ turns:
     assertions:
       - type: tool_called
         params:
-          tool_names: ["read_file"]
+          tool_names: ["mcp__filesystem__read_text_file"]
 ```
 
 ### Test Tool Chaining
@@ -134,7 +160,7 @@ turns:
     assertions:
       - type: tool_called
         params:
-          tool_names: ["write_file", "read_file"]
+          tool_names: ["mcp__filesystem__write_file", "mcp__filesystem__read_text_file"]
 ```
 
 ### Test Error Handling
@@ -158,8 +184,8 @@ promptarena run
 # Run specific scenario
 promptarena run --scenario mcp-basic
 
-# Run with specific provider
-promptarena run --provider openai-gpt4
+# Run with specific provider (use the provider's spec.id)
+promptarena run --provider {{index .providers 0}}{{if eq (index .providers 0) "mock"}}-provider{{else if eq (index .providers 0) "openai"}}-gpt4o-mini{{else if eq (index .providers 0) "claude"}}-3-5-haiku{{else if eq (index .providers 0) "gemini"}}-2-0-flash{{end}}
 
 # Verbose output to see tool calls
 promptarena run --verbose

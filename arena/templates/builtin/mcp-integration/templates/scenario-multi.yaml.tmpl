@@ -19,8 +19,8 @@ spec:
           message: "Response should not be empty"
         - type: tool_called
           params:
-            tool_names: ["write_file", "create_file"]
-          message: "Should use file creation tool"
+            tool_names: ["mcp__filesystem__write_file", "mcp__filesystem__read_text_file"]
+          message: "Should write the file, then read it back"
         - type: contains_any
           params:
             patterns: ["Hello from MCP", "created", "written"]

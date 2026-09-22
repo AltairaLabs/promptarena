@@ -8,7 +8,7 @@ spec:
   id: compare-images
   task_type: vision
   description: "Test image comparison capabilities"
-  
+
   turns:
     - role: user
       parts:
@@ -16,12 +16,13 @@ spec:
           text: "Compare these two images. What are the similarities and differences?"
         - type: image
           media:
-            url: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Cat03.jpg/240px-Cat03.jpg"
-            mime_type: image/jpeg
+            # Resolved relative to config.arena.yaml
+            file_path: media/red-square.png
+            mime_type: image/png
         - type: image
           media:
-            url: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4d/Cat_November_2010-1a.jpg/240px-Cat_November_2010-1a.jpg"
-            mime_type: image/jpeg
+            file_path: media/blue-circle.png
+            mime_type: image/png
       assertions:
         - type: min_length
           params:
@@ -29,9 +30,13 @@ spec:
           message: "Response should not be empty"
         - type: contains_any
           params:
-            patterns: ["similar", "different", "both", "comparison"]
+            patterns: ["similar", "different", "both", "comparison", "Both"]
           message: "Should compare the images"
         - type: contains_any
           params:
-            patterns: ["cat", "feline"]
-          message: "Should identify common elements"
+            patterns: ["circle", "Circle", "round"]
+          message: "Should identify the circle"
+        - type: contains_any
+          params:
+            patterns: ["square", "Square"]
+          message: "Should identify the square"

@@ -8,16 +8,17 @@ spec:
   id: analyze-image
   task_type: vision
   description: "Test image analysis and description capabilities"
-  
+
   turns:
     - role: user
       parts:
         - type: text
-          text: "Describe this image in detail."
+          text: "Describe this image in detail. What shape is shown, and what colour is it?"
         - type: image
           media:
-            url: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3a/Cat03.jpg/240px-Cat03.jpg"
-            mime_type: image/jpeg
+            # Resolved relative to config.arena.yaml
+            file_path: media/red-square.png
+            mime_type: image/png
       assertions:
         - type: min_length
           params:
@@ -25,8 +26,12 @@ spec:
           message: "Response should not be empty"
         - type: contains_any
           params:
-            patterns: ["cat", "feline", "animal"]
-          message: "Should identify the subject"
+            patterns: ["square", "Square"]
+          message: "Should identify the shape"
+        - type: contains_any
+          params:
+            patterns: ["red", "Red"]
+          message: "Should identify the colour"
         - type: min_length
           params:
             min: 80

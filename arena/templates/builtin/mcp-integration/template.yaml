@@ -53,6 +53,24 @@ spec:
       
     - path: "scenarios/mcp-multi-tool.scenario.yaml"
       template: "templates/scenario-multi.yaml.tmpl"
+
+    - path: "mock-responses.yaml"
+      template: "templates/mock-responses.yaml.tmpl"
+      condition: "{{range .providers}}{{if eq . \"mock\"}}true{{end}}{{end}}"
+
+    # Offline stand-ins for the filesystem MCP server's tools, used only when
+    # mock is the sole provider. Any real provider gets the real MCP server.
+    - path: "tools/list-directory.tool.yaml"
+      template: "templates/tool-list-directory.yaml.tmpl"
+      condition: "{{if and (eq (len .providers) 1) (eq (index .providers 0) \"mock\")}}true{{end}}"
+
+    - path: "tools/write-file.tool.yaml"
+      template: "templates/tool-write-file.yaml.tmpl"
+      condition: "{{if and (eq (len .providers) 1) (eq (index .providers 0) \"mock\")}}true{{end}}"
+
+    - path: "tools/read-text-file.tool.yaml"
+      template: "templates/tool-read-text-file.yaml.tmpl"
+      condition: "{{if and (eq (len .providers) 1) (eq (index .providers 0) \"mock\")}}true{{end}}"
       
     - path: ".env"
       template: "templates/env.tmpl"

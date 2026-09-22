@@ -16,10 +16,11 @@ This project tests code assistant capabilities including:
 
 - PromptArena CLI installed
 {{range .providers}}{{if ne . "mock"}}- {{if eq . "openai"}}OpenAI{{else if eq . "claude"}}Claude{{else if eq . "gemini"}}Gemini{{end}} API key
+{{end}}{{end}}{{range .providers}}{{if eq . "mock"}}- No API key needed for the `mock` provider: it replays the scripted replies in `mock-responses.yaml`
 {{end}}{{end}}
 ### Setup
 
-1. Configure your API keys in `.env` file:
+1. Configure API keys for any real providers in `.env`:
 {{range .providers}}{{if eq . "openai"}}   - Get OpenAI key from: https://platform.openai.com/api-keys
 {{else if eq . "claude"}}   - Get Anthropic (Claude) key from: https://console.anthropic.com/
 {{else if eq . "gemini"}}   - Get Google (Gemini) key from: https://aistudio.google.com/app/apikey
@@ -35,35 +36,36 @@ This project tests code assistant capabilities including:
 
 ```
 .
-├── arena.yaml                 # Main configuration
+├── config.arena.yaml                     # Main configuration
 ├── prompts/
-│   ├── code-generator.yaml    # Code generation prompt
-│   └── code-reviewer.yaml     # Code review prompt
-├── providers/                 # LLM provider configs
-{{range .providers}}│   ├── {{.}}.yaml
-{{end}}├── scenarios/                 # Test scenarios
-│   ├── code-generation.yaml
-│   ├── code-review.yaml
-│   └── bug-fixing.yaml
-└── out/                       # Test results (generated)
+│   ├── code-generator.prompt.yaml        # Code generation prompt
+│   └── code-reviewer.prompt.yaml         # Code review prompt
+├── providers/                            # LLM provider configs
+{{range .providers}}│   ├── {{.}}.provider.yaml
+{{end}}├── scenarios/                            # Test scenarios
+│   ├── code-generation.scenario.yaml
+│   ├── code-review.scenario.yaml
+│   └── bug-fixing.scenario.yaml
+{{range .providers}}{{if eq . "mock"}}├── mock-responses.yaml                   # Scripted replies for the mock provider
+{{end}}{{end}}└── out/                                  # Test results (generated)
 ```
 
 ## Scenarios
 
-### Code Generation (`scenarios/code-generation.yaml`)
+### Code Generation (`scenarios/code-generation.scenario.yaml`)
 Tests the ability to generate well-structured, documented code with error handling.
 
-### Code Review (`scenarios/code-review.yaml`)
+### Code Review (`scenarios/code-review.scenario.yaml`)
 Tests code review capabilities, identifying issues and suggesting improvements.
 
-### Bug Fixing (`scenarios/bug-fixing.yaml`)
+### Bug Fixing (`scenarios/bug-fixing.scenario.yaml`)
 Tests bug identification and fixing with proper validation.
 
 ## Customization
 
 ### Adding Language-Specific Tests
 
-Create new scenario files for specific languages:
+Create new scenario files for specific languages, then list them under `scenarios:` in `config.arena.yaml`:
 
 ```yaml
 # yaml-language-server: $schema=https://promptkit.altairalabs.ai/schemas/v1alpha1/scenario.json
@@ -74,7 +76,7 @@ metadata:
 
 spec:
   id: js-async-test
-  task_type: code
+  task_type: code-generation
   description: "Test async/await in JavaScript"
   
   turns:
@@ -89,8 +91,8 @@ spec:
 ### Adjusting Code Style
 
 Edit the prompt configurations to enforce specific style guidelines:
-- `prompts/code-generator.yaml` - Generation preferences
-- `prompts/code-reviewer.yaml` - Review criteria
+- `prompts/code-generator.prompt.yaml` - Generation preferences
+- `prompts/code-reviewer.prompt.yaml` - Review criteria
 
 ## Running Tests
 
@@ -102,7 +104,7 @@ promptarena run
 promptarena run --scenario code-generation
 
 # Run with specific provider
-promptarena run --provider openai-gpt4
+promptarena run --provider {{range $i, $p := .providers}}{{if eq $i 0}}{{$p}}{{end}}{{end}}
 
 # Test with lower temperature for more deterministic code
 promptarena run --temperature 0.1
@@ -111,7 +113,7 @@ promptarena run --temperature 0.1
 ## Results
 
 Test results are saved to `out/`:
-- `results.json` - Detailed test results
+- `index.json` and one JSON file per run - Detailed test results
 - `results.md` - Markdown report
 
 ## Next Steps

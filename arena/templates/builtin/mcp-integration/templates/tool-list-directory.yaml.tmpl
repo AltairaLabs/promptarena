@@ -1,0 +1,35 @@
+# yaml-language-server: $schema=https://promptkit.altairalabs.ai/schemas/v1alpha1/tool.json
+# Offline stand-in for the filesystem MCP server's list_directory tool. The name
+# and input schema match what the real server registers, so the scenarios and
+# mock replies work unchanged when you switch to mcp_servers.
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Tool
+metadata:
+  name: mcp__filesystem__list_directory
+
+spec:
+  name: mcp__filesystem__list_directory
+  description: "List the files and directories at a path. Entries are prefixed with [FILE] or [DIR]."
+
+  input_schema:
+    type: object
+    properties:
+      path:
+        type: string
+        description: "Directory to list"
+    required:
+      - path
+
+  output_schema:
+    type: object
+    properties:
+      content:
+        type: array
+        items:
+          type: object
+
+  mode: mock
+  mock_result:
+    content:
+      - type: text
+        text: "[FILE] notes.txt\n[FILE] report.csv\n[DIR] cache"

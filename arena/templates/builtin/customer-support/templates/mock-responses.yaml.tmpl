@@ -1,0 +1,43 @@
+# Scripted replies for the mock provider, so this kit runs green with no API
+# key. Scenario keys match each scenario's metadata.name; turn numbers count
+# model calls, so a user turn that calls a tool uses two entries (the call,
+# then the reply after the tool result). Switch to a real provider to test a
+# real model.
+defaultResponse: "Thank you for contacting support. I'm here to help you with your issue."
+
+scenarios:
+  basic-support:
+    turns:
+      1: "Hello, and thanks for reaching out! I'd be glad to help with your account. What seems to be the trouble?"
+      2: "Sorry you're locked out. Please try the \"Forgot password\" link on the login page: we'll email you a link to reset your password. If the email doesn't arrive within a few minutes, check your spam folder or let me know and I can look into it further."
+
+  product-inquiry:
+    turns:
+{{- if .include_tools}}
+      1:
+        content: "Let me look that up for you."
+        tool_calls:
+          - name: search_knowledge_base
+            arguments:
+              query: "premium subscription features"
+      2: "Premium includes unlimited access, priority support, advanced analytics, and API access. Would you like details on any of these?"
+      3: "The Premium plan costs $29/month, or $290/year if you pay annually (about 16% off). Enterprise plans are available on request."
+{{- else}}
+      1: "Yes! Premium adds unlimited access, priority support, advanced analytics, and API access. Would you like details on any of these?"
+      2: "Pricing depends on the plan you choose. I can share the current subscription options and help you pick the one that fits best."
+{{- end}}
+
+  complaint-handling:
+    turns:
+{{- if .include_tools}}
+      1:
+        content: "I'm really sorry about the delay. Let me check your order right away."
+        tool_calls:
+          - name: check_order_status
+            arguments:
+              email: "customer@example.com"
+      2: "I'm sorry for the delay, and I understand how frustrating this is. Your order ORD-12345 is in transit and was held up by weather; it's due to arrive on the 28th."
+{{- else}}
+      1: "I'm really sorry, and I understand how frustrating a late order is. Could you share your order email so I can check where it is?"
+{{- end}}
+      {{if .include_tools}}3{{else}}2{{end}}: "I completely understand. I'll start a full refund for this order right away, and you'll get a confirmation email once it's processed. Is there anything else I can help with?"

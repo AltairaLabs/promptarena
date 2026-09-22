@@ -495,6 +495,37 @@ spec:
 	assert.Equal(t, blob, got, "raw source must be copied byte-for-byte")
 }
 
+// Built-in templates have no BaseDir, so binary fixtures ship through
+// `template:` + `raw: true` and must come out byte-identical to the embed.
+func TestGenerator_RawBuiltInTemplateFile(t *testing.T) {
+	loader := NewLoader("")
+	tmpl, err := loader.LoadBuiltIn("multimodal")
+	require.NoError(t, err)
+
+	dir := t.TempDir()
+	result, err := NewGenerator(tmpl, loader).Generate(&TemplateConfig{
+		ProjectName: "proj",
+		OutputDir:   dir,
+		Variables: map[string]interface{}{
+			"project_name": "proj",
+			"providers":    []interface{}{"mock"},
+			"include_env":  false,
+		},
+		Template: tmpl,
+	})
+	require.NoError(t, err)
+	require.True(t, result.Success, "errors: %v", result.Errors)
+
+	for _, name := range []string{"red-square.png", "blue-circle.png"} {
+		want, err := loader.ReadTemplateFile("multimodal", "media/"+name)
+		require.NoError(t, err)
+		got, err := os.ReadFile(filepath.Join(dir, "proj", "media", name))
+		require.NoError(t, err)
+		assert.Equal(t, want, got, "%s must be copied byte-for-byte", name)
+		assert.True(t, strings.HasPrefix(string(got), "\x89PNG"), "%s must be a PNG", name)
+	}
+}
+
 func TestGenerator_Hooks(t *testing.T) {
 	tmpl := &Template{
 		APIVersion: "promptkit.altairalabs.ai/v1alpha1",

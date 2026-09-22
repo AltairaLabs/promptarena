@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"slices"
+	"strings"
 
 	"github.com/manifoldco/promptui"
 	"github.com/spf13/cobra"
@@ -36,7 +38,11 @@ Examples:
 	RunE: runInit,
 }
 
-const projectNameVar = "project_name"
+const (
+	projectNameVar = "project_name"
+	providerVar    = "provider"
+	providersVar   = "providers"
+)
 
 var (
 	initTemplate      string
@@ -59,7 +65,7 @@ func init() {
 	initCmd.Flags().BoolVar(&initQuick, "quick", false, "Use defaults, skip interactive prompts")
 	initCmd.Flags().BoolVar(&initNoGit, "no-git", false, "Skip git initialization")
 	initCmd.Flags().BoolVar(&initNoEnv, "no-env", false, "Skip .env file creation")
-	initCmd.Flags().StringVar(&initProvider, "provider", "", "Provider to configure (openai, anthropic, google, mock)")
+	initCmd.Flags().StringVar(&initProvider, "provider", "", "Provider to configure (mock, openai, claude, gemini)")
 	initCmd.Flags().StringVar(&initOutputDir, "output", ".", "Output directory")
 	initCmd.Flags().BoolVar(&initVerbose, "verbose", false, "Show detailed generation progress")
 	initCmd.Flags().StringVar(&initTemplateIndex, "template-index", templates.DefaultRepoName,
@@ -173,13 +179,41 @@ func collectQuickModeVariables(config *templates.TemplateConfig, tmpl *templates
 		}
 	}
 
+	if err := validateProviderFlag(tmpl); err != nil {
+		return nil, err
+	}
 	applyCommandLineOverrides(config)
 	return config, nil
 }
 
+// validateProviderFlag rejects a --provider the template does not offer. The
+// provider templates branch on the value, so an unknown one (say "anthropic"
+// where the template says "claude") renders an empty provider file and a kit
+// that fails on first run, with nothing pointing back at the flag.
+func validateProviderFlag(tmpl *templates.Template) error {
+	if initProvider == "" {
+		return nil
+	}
+	for i := range tmpl.Spec.Variables {
+		v := &tmpl.Spec.Variables[i]
+		if (v.Name != providerVar && v.Name != providersVar) || len(v.Options) == 0 {
+			continue
+		}
+		if !slices.Contains(v.Options, initProvider) {
+			return fmt.Errorf("--provider %q is not offered by template %s (choose one of: %s)",
+				initProvider, tmpl.Metadata.Name, strings.Join(v.Options, ", "))
+		}
+	}
+	return nil
+}
+
 func applyCommandLineOverrides(config *templates.TemplateConfig) {
 	if initProvider != "" {
-		config.Variables["provider"] = initProvider
+		// Single-provider templates read "provider"; multi-provider ones read the
+		// "providers" list. Set both, or --provider is silently ignored by half
+		// the built-in templates.
+		config.Variables[providerVar] = initProvider
+		config.Variables[providersVar] = []any{initProvider}
 	}
 	if initNoEnv {
 		config.Variables["include_env"] = false

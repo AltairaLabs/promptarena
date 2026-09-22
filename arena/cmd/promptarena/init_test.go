@@ -729,3 +729,43 @@ func TestGetProjectName_WithArgs(t *testing.T) {
 		})
 	}
 }
+
+func TestApplyCommandLineOverrides_SetsProvidersList(t *testing.T) {
+	saved := initProvider
+	t.Cleanup(func() { initProvider = saved })
+	initProvider = "mock"
+
+	config := &templates.TemplateConfig{Variables: map[string]interface{}{"providers": []interface{}{"openai"}}}
+	applyCommandLineOverrides(config)
+
+	assert.Equal(t, "mock", config.Variables["provider"])
+	assert.Equal(t, []any{"mock"}, config.Variables["providers"])
+}
+
+func TestValidateProviderFlag(t *testing.T) {
+	saved := initProvider
+	t.Cleanup(func() { initProvider = saved })
+
+	tmpl := &templates.Template{
+		Metadata: templates.TemplateMetadata{Name: "customer-support"},
+		Spec: templates.TemplateSpec{Variables: []templates.Variable{
+			{Name: "project_name"},
+			{Name: "providers", Options: []string{"mock", "openai", "claude", "gemini"}},
+		}},
+	}
+
+	initProvider = ""
+	assert.NoError(t, validateProviderFlag(tmpl), "no flag, nothing to check")
+
+	initProvider = "claude"
+	assert.NoError(t, validateProviderFlag(tmpl))
+
+	initProvider = "anthropic"
+	err := validateProviderFlag(tmpl)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), `"anthropic"`)
+	assert.Contains(t, err.Error(), "mock, openai, claude, gemini")
+
+	noOptions := &templates.Template{Spec: templates.TemplateSpec{Variables: []templates.Variable{{Name: "provider"}}}}
+	assert.NoError(t, validateProviderFlag(noOptions), "a free-form provider variable accepts anything")
+}

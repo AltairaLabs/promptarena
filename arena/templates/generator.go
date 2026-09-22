@@ -364,6 +364,12 @@ func (g *Generator) resolveTemplateContent(fileSpec *FileSpec, vars map[string]i
 		return "", fmt.Errorf("failed to read template file %s: %w", fileSpec.Template, err)
 	}
 
+	// Raw template files (binary fixtures shipped inside a built-in template)
+	// are copied byte-for-byte, same as raw sources.
+	if fileSpec.Raw {
+		return string(templateData), nil
+	}
+
 	content, err := g.renderTemplate(fileSpec.Template, string(templateData), vars)
 	if err != nil {
 		return "", fmt.Errorf("failed to render template %s: %w", fileSpec.Template, err)

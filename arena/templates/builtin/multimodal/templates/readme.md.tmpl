@@ -4,105 +4,91 @@ Multimodal AI testing project created with PromptArena.
 
 ## Overview
 
-This project tests multimodal AI capabilities including:
+This project tests a model's vision capabilities with two starter scenarios:
 - Image analysis and description
-- Object detection and identification
 - Image comparison
-- OCR and text extraction
-- Visual question answering
+
+Extend it with your own images for object detection, OCR, or visual question
+answering.
 
 ## Getting Started
 
 ### Prerequisites
 
 - PromptArena CLI installed
-- Multimodal-capable LLM API access:
-{{range .providers}}{{if eq . "openai"}}  - OpenAI GPT-4o (vision enabled)
-{{else if eq . "claude"}}  - Anthropic Claude 3+ (vision enabled)
-{{else if eq . "gemini"}}  - Google Gemini (vision enabled)
+{{range .providers}}{{if eq . "mock"}}- Nothing else for the mock provider: it replays scripted replies from `mock-responses.yaml`, so the kit runs with no API key
+{{else if eq . "openai"}}- OpenAI API access to a vision-capable model (GPT-4o family)
+{{else if eq . "claude"}}- Anthropic API access to a vision-capable Claude model
+{{else if eq . "gemini"}}- Google Gemini API access (vision enabled)
 {{end}}{{end}}
 ### Setup
 
-1. Configure your API keys in `.env` file:
-{{range .providers}}{{if eq . "openai"}}   - Get OpenAI key from: https://platform.openai.com/api-keys
-{{else if eq . "claude"}}   - Get Anthropic (Claude) key from: https://console.anthropic.com/
-{{else if eq . "gemini"}}   - Get Google (Gemini) key from: https://aistudio.google.com/app/apikey
+{{range .providers}}{{if eq . "openai"}}- Set `OPENAI_API_KEY` (in `.env` or your shell). Get a key from: https://platform.openai.com/api-keys
+{{else if eq . "claude"}}- Set `CLAUDE_API_KEY` or `ANTHROPIC_API_KEY` (in `.env` or your shell). Get a key from: https://console.anthropic.com/
+{{else if eq . "gemini"}}- Set `GEMINI_API_KEY` (in `.env` or your shell). Get a key from: https://aistudio.google.com/app/apikey
 {{end}}{{end}}
-2. Add test images to the `media/` directory
+Run the tests:
 
-3. Run the tests:
-   ```bash
-   promptarena run
-   ```
+```bash
+promptarena run
+```
 
 ## Project Structure
 
 ```
 .
-├── config.arena.yaml          # Main configuration
+├── config.arena.yaml                   # Main configuration
 ├── prompts/
-│   └── vision-analyst.yaml    # Vision analysis prompt
-├── providers/                 # LLM provider configs
-{{range .providers}}│   ├── {{.}}.yaml
-{{end}}├── scenarios/                 # Test scenarios
-│   ├── image-analysis.yaml
-│   └── image-comparison.yaml
-├── media/                     # Test media files (add your images here)
+│   └── vision-analyst.prompt.yaml      # Vision analysis prompt
+├── providers/                          # LLM provider configs
+{{range .providers}}│   ├── {{.}}.provider.yaml
+{{end}}├── scenarios/                          # Test scenarios
+│   ├── image-analysis.scenario.yaml
+│   └── image-comparison.scenario.yaml
+├── media/                              # Test images used by the scenarios
+│   ├── red-square.png
+│   ├── blue-circle.png
 │   └── README.md
-└── out/                       # Test results (generated)
+{{range .providers}}{{if eq . "mock"}}├── mock-responses.yaml                 # Scripted mock replies (no API key needed)
+{{end}}{{end}}└── out/                                # Test results (generated)
 ```
 
 ## Scenarios
 
-### Image Analysis (`scenarios/image-analysis.yaml`)
-Tests detailed image description and object identification using a sample image.
+### Image Analysis (`scenarios/image-analysis.scenario.yaml`)
+Sends `media/red-square.png` and checks the model names the shape and colour
+in a reasonably detailed description.
 
-### Image Comparison (`scenarios/image-comparison.yaml`)
-Tests the ability to compare multiple images and identify similarities/differences.
-
+### Image Comparison (`scenarios/image-comparison.scenario.yaml`)
+Sends `media/red-square.png` and `media/blue-circle.png` together and checks
+the model compares them and identifies both shapes.
+{{range .providers}}{{if eq . "mock"}}
+### Mock replies (`mock-responses.yaml`)
+The mock provider answers each scenario with the scripted reply keyed by the
+scenario's `metadata.name`. The replies describe the shipped images, so the
+kit passes offline. They prove the configuration and assertions are wired up,
+not that any model can see; switch to a real provider for that.
+{{end}}{{end}}
 ## Adding Your Own Images
 
-### From Local Files
-
-Update scenario to use local images:
-
-```yaml
-turns:
-  - role: user
-    content: "Describe this image."
-    media:
-      - type: image
-        source: file
-        path: "media/your-image.jpg"
-```
-
-### From URLs
-
-Use publicly accessible image URLs:
+Put the file in `media/` and reference it from a scenario turn. `file_path`
+resolves relative to `config.arena.yaml`:
 
 ```yaml
 turns:
   - role: user
-    content: "Describe this image."
-    media:
+    parts:
+      - type: text
+        text: "Describe this image."
       - type: image
-        source: url
-        url: "https://example.com/image.jpg"
+        media:
+          file_path: media/your-image.jpg
+          mime_type: image/jpeg
 ```
 
-### From Base64
-
-Embed small images directly:
-
-```yaml
-turns:
-  - role: user
-    content: "Describe this image."
-    media:
-      - type: image
-        source: base64
-        data: "iVBORw0KGgoAAAANSUhEUg..."
-```
+A publicly reachable image can be referenced with `url:` in place of
+`file_path:`, and a small image can be embedded as base64 with `data:`.
+Local files keep the tests reproducible and offline.
 
 ## Customization
 
@@ -124,11 +110,13 @@ spec:
   
   turns:
     - role: user
-      content: "Is this product photo suitable for e-commerce? Check lighting, focus, and composition."
-      media:
+      parts:
+        - type: text
+          text: "Is this product photo suitable for e-commerce? Check lighting, focus, and composition."
         - type: image
-          source: file
-          path: "media/product.jpg"
+          media:
+            file_path: media/product.jpg
+            mime_type: image/jpeg
       assertions:
         - type: contains_any
           params:
@@ -145,7 +133,7 @@ promptarena run
 promptarena run --scenario image-analysis
 
 # Run with specific provider
-promptarena run --provider openai-gpt4-vision
+promptarena run --provider <provider-id>   # spec.id from providers/*.provider.yaml
 
 # Use lower temperature for more consistent analysis
 promptarena run --temperature 0.3
@@ -174,7 +162,7 @@ promptarena run --temperature 0.3
 
 Test results are saved to `out/`:
 - `results.json` - Detailed test results
-- `results.md` - Markdown report with image statistics
+- `results.md` - Markdown report
 
 ## Next Steps
 

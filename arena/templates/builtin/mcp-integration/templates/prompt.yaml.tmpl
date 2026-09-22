@@ -27,6 +27,11 @@ spec:
     - Handle missing or failed tool calls appropriately
     - Chain tools together for complex tasks
   
+  # MCP tools are only offered to the model when listed here. The wildcard
+  # covers every tool the filesystem server registers (mcp__filesystem__*).
+  allowed_tools:
+    - "mcp__filesystem__*"
+
   variables: []
   
   metadata:
