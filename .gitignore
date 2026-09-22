@@ -180,3 +180,6 @@ examples/*/out/
 # Local deploy state written by `promptarena deploy` (plan + applied state).
 # Per-machine and often endpoint-specific — never belongs in the repo.
 .promptarena/
+
+# Stray `go build` output of arena/tui/theme/cmd/atlaspreview at the repo root
+/atlaspreview
