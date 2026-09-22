@@ -13,7 +13,7 @@ spec:
     max_tokens: 2000
     top_p: 1.0
   additional_config:
-    response: "Discover the power of AI-driven content creation. Transform your ideas into engaging content that resonates with your audience."
+    mock_config: mock-responses.yaml
     delay_ms: 100
 {{else if eq .provider "openai"}}# yaml-language-server: $schema=https://promptkit.altairalabs.ai/schemas/v1alpha1/provider.json
 apiVersion: promptkit.altairalabs.ai/v1alpha1

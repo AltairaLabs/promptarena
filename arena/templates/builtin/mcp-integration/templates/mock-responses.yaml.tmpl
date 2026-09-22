@@ -1,0 +1,36 @@
+# Scripted replies for the mock provider, so this kit runs green with no API
+# key. Scenario keys match each scenario's metadata.name; turn numbers count
+# model calls, so a user turn that calls a tool uses one entry for the call and
+# one for the reply after the tool result. The tool calls execute for real
+# against whatever implements mcp__filesystem__* (the offline stand-ins in a
+# mock-only kit, the MCP server otherwise). Switch to a real provider to test a
+# real model.
+defaultResponse: "This is a mock response for testing."
+
+scenarios:
+  mcp-basic:
+    turns:
+      1:
+        content: "I'll list the contents of /tmp."
+        tool_calls:
+          - name: mcp__filesystem__list_directory
+            arguments:
+              path: "/tmp"
+      2: "/tmp contains two files, notes.txt and report.csv, and one directory, cache."
+
+  mcp-multi-tool:
+    turns:
+      1:
+        content: "I'll create /tmp/test.txt first."
+        tool_calls:
+          - name: mcp__filesystem__write_file
+            arguments:
+              path: "/tmp/test.txt"
+              content: "Hello from MCP"
+      2:
+        content: "The file is written. Now I'll read it back to confirm."
+        tool_calls:
+          - name: mcp__filesystem__read_text_file
+            arguments:
+              path: "/tmp/test.txt"
+      3: "Done. I created /tmp/test.txt and read it back; it contains \"Hello from MCP\"."

@@ -1,0 +1,13 @@
+# Scripted replies for the mock provider, so this kit runs green with no API
+# key. Scenario keys match each scenario's metadata.name; turn numbers count
+# model calls. The replies describe the shipped fixtures in media/. Switch to
+# a real provider to test a real model's vision.
+defaultResponse: "This is a mock response for testing."
+
+scenarios:
+  image-analysis:
+    turns:
+      1: "The image shows a single solid red square centred on a plain white background. The square has sharp, straight edges and fills most of the frame, with an even white margin on every side. There is no text and there are no other objects."
+  image-comparison:
+    turns:
+      1: "Both images are simple flat graphics on a plain white background, each with a single centred shape and no text. The main differences are shape and colour: the first image is a red square with sharp corners, while the second is a blue circle with a smooth round edge."

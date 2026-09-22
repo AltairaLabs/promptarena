@@ -61,7 +61,7 @@ promptarena init [directory] [flags]
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `--quick` | bool | `false` | Skip interactive prompts, use defaults |
-| `--provider` | string | - | Provider to configure (openai, anthropic, google, mock) |
+| `--provider` | string | - | Provider to configure (`mock`, `openai`, `claude`, `gemini`) |
 | `--template` | string | `quick-start` | Template to use for initialization |
 | `--template-index` | string | `community` | Template repo name or index URL/path for remote templates |
 | `--repo-config` | string | user config | Template repo config file |

@@ -17,9 +17,24 @@ spec:
   scenarios:
     - file: scenarios/mcp-basic.scenario.yaml
     - file: scenarios/mcp-multi-tool.scenario.yaml
-
-  # Example MCP server configurations
-  # Uncomment and configure based on your needs
+{{if and (eq (len .providers) 1) (eq (index .providers 0) "mock")}}
+  # Mock-only kit: these stand-ins carry the same names and input schemas as
+  # the filesystem MCP server's tools (mcp__filesystem__*), so the scenarios run
+  # offline with no Node.js. To test against the real server, delete this block
+  # and the tools/ directory, and add:
+  #
+  #   mcp_servers:
+  #     - name: filesystem
+  #       command: npx
+  #       args: ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"]
+  tools:
+    - file: tools/list-directory.tool.yaml
+    - file: tools/write-file.tool.yaml
+    - file: tools/read-text-file.tool.yaml
+{{else}}
+  # MCP servers are started when the run begins; their tools are registered as
+  # mcp__<server>__<tool>. Requires Node.js (npx) and network access to fetch
+  # the server package on first use.
   mcp_servers:
     - name: filesystem
       command: npx
@@ -27,13 +42,13 @@ spec:
         - "-y"
         - "@modelcontextprotocol/server-filesystem"
         - "/tmp"
-      
+
     # - name: memory
     #   command: npx
     #   args:
     #     - "-y"
     #     - "@modelcontextprotocol/server-memory"
-
+{{end}}
   defaults:
     temperature: 0.7
     max_tokens: 2000

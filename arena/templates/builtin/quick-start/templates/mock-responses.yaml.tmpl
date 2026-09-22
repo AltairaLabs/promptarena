@@ -1,0 +1,10 @@
+# Scripted replies for the mock provider, so this kit runs green with no API
+# key. Scenario keys match each scenario's metadata.name; turn numbers count
+# model calls. Switch to a real provider to test a real model.
+defaultResponse: "This is a mock response for testing."
+
+scenarios:
+  basic-test:
+    turns:
+      1: "Hello! I'm doing well, thanks for asking. How can I help you today?"
+      2: "The capital of France is Paris."

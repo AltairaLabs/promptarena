@@ -26,7 +26,11 @@ spec:
     - End conversations positively
   
   variables: []
-  
+{{if .include_tools}}
+  allowed_tools:
+    - search_knowledge_base
+    - check_order_status
+{{end}}
   metadata:
     domain: "customer-support"
     language: "en"

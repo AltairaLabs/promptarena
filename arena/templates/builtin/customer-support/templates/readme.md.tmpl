@@ -18,15 +18,17 @@ This project tests customer support interactions including:
 {{range .providers}}{{if ne . "mock"}}- {{if eq . "openai"}}OpenAI{{else if eq . "claude"}}Claude{{else if eq . "gemini"}}Gemini{{end}} API key
 {{end}}{{end}}
 ### Setup
+{{$real := false}}{{range .providers}}{{if ne . "mock"}}{{$real = true}}{{end}}{{end}}
+{{range .providers}}{{if eq . "mock"}}The mock provider replays scripted replies from `mock-responses.yaml`, so it runs with no API key.
 
-1. Configure your API keys in `.env` file:
+{{end}}{{end}}{{if $real}}1. Configure your API keys in `.env`:
 {{range .providers}}{{if eq . "openai"}}   - Get OpenAI key from: https://platform.openai.com/api-keys
 {{else if eq . "claude"}}   - Get Anthropic (Claude) key from: https://console.anthropic.com/
 {{else if eq . "gemini"}}   - Get Google (Gemini) key from: https://aistudio.google.com/app/apikey
 {{end}}{{end}}
-2. Review and customize the scenarios in `scenarios/`
+{{end}}{{if $real}}2{{else}}1{{end}}. Review and customize the scenarios in `scenarios/`
 
-3. Run the tests:
+{{if $real}}3{{else}}2{{end}}. Run the tests:
    ```bash
    promptarena run
    ```
@@ -35,37 +37,38 @@ This project tests customer support interactions including:
 
 ```
 .
-├── config.arena.yaml       # Main configuration
-├── prompts/
-│   └── support-agent.yaml  # Support agent prompt
-├── providers/              # LLM provider configs
-{{range .providers}}│   ├── {{.}}.yaml
-{{end}}├── scenarios/              # Test scenarios
-│   ├── basic-support.yaml
-│   ├── product-inquiry.yaml
-│   └── complaint-handling.yaml
-{{if .include_tools}}├── tools/                  # Tool definitions
-│   ├── search-knowledge-base.yaml
-│   └── check-order-status.yaml
-{{end}}└── out/                    # Test results (generated)
+├── config.arena.yaml                 # Main configuration
+{{range .providers}}{{if eq . "mock"}}├── mock-responses.yaml               # Scripted replies for the mock provider
+{{end}}{{end}}├── prompts/
+│   └── support-agent.prompt.yaml     # Support agent prompt
+├── providers/                        # LLM provider configs
+{{range .providers}}│   ├── {{.}}.provider.yaml
+{{end}}├── scenarios/                        # Test scenarios
+│   ├── basic-support.scenario.yaml
+│   ├── product-inquiry.scenario.yaml
+│   └── complaint-handling.scenario.yaml
+{{if .include_tools}}├── tools/                            # Tool definitions
+│   ├── search-knowledge-base.tool.yaml
+│   └── check-order-status.tool.yaml
+{{end}}└── out/                              # Test results (generated)
 ```
 
 ## Scenarios
 
-### Basic Support (`scenarios/basic-support.yaml`)
+### Basic Support (`scenarios/basic-support.scenario.yaml`)
 Tests fundamental support interactions like greetings and login help.
 
-### Product Inquiry (`scenarios/product-inquiry.yaml`)
+### Product Inquiry (`scenarios/product-inquiry.scenario.yaml`)
 Tests how the agent handles product questions{{if .include_tools}} using knowledge base search{{end}}.
 
-### Complaint Handling (`scenarios/complaint-handling.yaml`)
+### Complaint Handling (`scenarios/complaint-handling.scenario.yaml`)
 Tests empathy and problem-solving with upset customers{{if .include_tools}}, including order status checks{{end}}.
 
 ## Customization
 
 ### Adding New Scenarios
 
-Create a new file in `scenarios/` following this structure:
+Create a new `*.scenario.yaml` file in `scenarios/`, add it to `config.arena.yaml`, following this structure:
 
 ```yaml
 # yaml-language-server: $schema=https://promptkit.altairalabs.ai/schemas/v1alpha1/scenario.json
@@ -90,7 +93,7 @@ spec:
 
 ### Modifying the Support Agent
 
-Edit `prompts/support-agent.yaml` to adjust:
+Edit `prompts/support-agent.prompt.yaml` to adjust:
 - Tone and personality
 - Specific guidelines
 - Domain knowledge
@@ -106,7 +109,7 @@ promptarena run
 promptarena run --scenario basic-support
 
 # Run with specific provider
-promptarena run --provider openai-gpt4
+promptarena run --provider {{index .providers 0}}
 
 # Generate Markdown report
 promptarena run --format markdown
@@ -115,7 +118,7 @@ promptarena run --format markdown
 ## Results
 
 Test results are saved to `out/`:
-- `results.json` - Detailed test results
+- `index.json` and one JSON file per run - Detailed test results
 - `results.md` - Markdown report
 
 ## Next Steps

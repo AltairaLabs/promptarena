@@ -95,9 +95,10 @@ type FileSpec struct {
 	ForEach    string            `yaml:"foreach,omitempty" json:"foreach,omitempty"`
 	Variables  map[string]string `yaml:"variables,omitempty" json:"variables,omitempty"`
 	Executable bool              `yaml:"executable,omitempty" json:"executable,omitempty"`
-	// Raw copies the Source file's bytes verbatim, skipping Go-template
-	// rendering. Use for binary fixtures (audio, images) that text templating
-	// would corrupt.
+	// Raw copies the Source or Template file's bytes verbatim, skipping
+	// Go-template rendering. Use for binary fixtures (audio, images) that text
+	// templating would corrupt. With Template it works for built-in templates,
+	// which have no base directory for Source to resolve against.
 	Raw bool `yaml:"raw,omitempty" json:"raw,omitempty"`
 }
 

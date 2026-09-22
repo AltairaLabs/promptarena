@@ -1,0 +1,35 @@
+# yaml-language-server: $schema=https://promptkit.altairalabs.ai/schemas/v1alpha1/tool.json
+# Offline stand-in for the filesystem MCP server's read_text_file tool. The name
+# and input schema match what the real server registers, so the scenarios and
+# mock replies work unchanged when you switch to mcp_servers.
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Tool
+metadata:
+  name: mcp__filesystem__read_text_file
+
+spec:
+  name: mcp__filesystem__read_text_file
+  description: "Read the complete contents of a file as text."
+
+  input_schema:
+    type: object
+    properties:
+      path:
+        type: string
+        description: "File to read"
+    required:
+      - path
+
+  output_schema:
+    type: object
+    properties:
+      content:
+        type: array
+        items:
+          type: object
+
+  mode: mock
+  mock_result:
+    content:
+      - type: text
+        text: "Hello from MCP"

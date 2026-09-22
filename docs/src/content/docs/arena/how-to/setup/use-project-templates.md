@@ -87,10 +87,10 @@ promptarena init my-test --quick --provider mock
 promptarena init my-test --quick --provider openai
 
 # Anthropic (Claude models)
-promptarena init my-test --quick --provider anthropic
+promptarena init my-test --quick --provider claude
 
 # Google (Gemini models)
-promptarena init my-test --quick --provider google
+promptarena init my-test --quick --provider gemini
 ```
 
 ## Interactive Mode
@@ -290,7 +290,7 @@ git commit -m "Initial project setup"
 ```bash
 # Create separate projects for different use cases
 promptarena init customer-support --quick --provider openai
-promptarena init content-generation --quick --provider anthropic
+promptarena init content-generation --quick --provider claude
 promptarena init qa-testing --quick --provider mock
 ```
 
@@ -334,7 +334,7 @@ promptarena init my-test --quick --provider openai
 
 ### "Provider not recognized"
 
-Valid providers are: `mock`, `openai`, `anthropic`, `google`
+Valid providers are: `mock`, `openai`, `claude`, `gemini`
 
 ```bash
 # Use a valid provider

@@ -19,5 +19,5 @@ spec:
           message: "Response should not be empty"
         - type: tool_called
           params:
-            tool_names: ["list_directory", "read_file"]
-          message: "Should use filesystem tools"
+            tool_names: ["mcp__filesystem__list_directory"]
+          message: "Should list the directory with the filesystem MCP tool"

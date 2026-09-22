@@ -1,0 +1,69 @@
+# Scripted replies for the mock provider, so this kit runs green with no API
+# key. Scenario keys match each scenario's metadata.name; turn numbers count
+# model calls. Switch to a real provider to test a real model.
+defaultResponse: "This is a mock response for testing."
+
+scenarios:
+  code-generation:
+    turns:
+      1: |
+        Here is a recursive factorial with validation for negative inputs:
+
+        ```python
+        def factorial(n: int) -> int:
+            """Return n! computed recursively.
+
+            Raises:
+                TypeError: if n is not an integer.
+                ValueError: if n is negative.
+            """
+            if not isinstance(n, int):
+                raise TypeError("factorial() only accepts integers")
+            if n < 0:
+                raise ValueError("factorial() is not defined for negative numbers")
+            if n in (0, 1):
+                return 1
+            return n * factorial(n - 1)
+        ```
+
+        The base case stops the recursion at 0 and 1. For very large n, Python's
+        recursion limit applies; an iterative version avoids that.
+
+  code-review:
+    turns:
+      1: |
+        The function is correct and easy to follow. A few suggestions:
+
+        1. **Iterate directly instead of by index.** `range(len(data))` with
+           `data[i]` is not idiomatic; loop over the items, or use `enumerate`
+           if you also need the index.
+        2. **Consider a list comprehension.** The whole body collapses to one
+           more pythonic line:
+
+           ```python
+           def process_data(data):
+               """Return each positive value in data, doubled."""
+               return [x * 2 for x in data if x > 0]
+           ```
+
+        3. **Document the intent.** A docstring and a more descriptive name
+           (for example `double_positives`) would make the purpose clearer.
+
+  bug-fixing:
+    turns:
+      1: |
+        The bug: when `numbers` is empty, `len(numbers)` is zero, so the
+        division raises `ZeroDivisionError`.
+
+        Fix it by checking for an empty input before dividing:
+
+        ```python
+        def find_average(numbers):
+            """Return the arithmetic mean of numbers."""
+            if not numbers:
+                raise ValueError("cannot average an empty sequence")
+            return sum(numbers) / len(numbers)
+        ```
+
+        If an empty input should instead yield a default, return `0` (or
+        `None`) from that check rather than raising.

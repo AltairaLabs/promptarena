@@ -59,6 +59,10 @@ spec:
       
     - path: "scenarios/social-media.scenario.yaml"
       template: "templates/scenario-social.yaml.tmpl"
+
+    - path: "mock-responses.yaml"
+      template: "templates/mock-responses.yaml.tmpl"
+      condition: "{{range .providers}}{{if eq . \"mock\"}}true{{end}}{{end}}"
       
     - path: ".env"
       template: "templates/env.tmpl"

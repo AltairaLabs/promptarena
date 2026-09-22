@@ -1,0 +1,34 @@
+# Scripted replies for the mock provider, so this kit runs green with no API
+# key. Scenario keys match each scenario's metadata.name; turn numbers count
+# model calls. Switch to a real provider to test a real model.
+defaultResponse: "This is a mock response for testing."
+
+scenarios:
+  blog-post:
+    turns:
+      1: |
+        Remember the Sunday-night dread of a Monday commute? For millions of mid-career professionals, that feeling has quietly faded. Remote work has moved from a temporary experiment to a lasting way of working, and the benefits go well beyond skipping traffic.
+
+        In this post, we'll look at how working remotely gives you back time, deepens your focus, and opens doors to opportunities that were once limited by geography. Whether you're weighing a remote role or already working from home, here's what the shift can mean for your career and your life.
+
+  product-description:
+    turns:
+      1: |
+        Step into your own world of calm. Our wireless noise-cancelling headphones quiet the rumble of the train, the chatter of the open office, and the hum of the plane cabin, so you can hear every detail of the music, podcasts, and calls that matter to you.
+
+        With all-day battery life and a soft, lightweight fit, they stay comfortable from your morning commute to your late-night playlist. Pair them in seconds and move freely without a cable holding you back.
+
+        Reclaim your focus and rediscover your favourite songs. Order yours today and hear the difference for yourself.
+
+  social-media:
+    turns:
+      1: |
+        We're excited to announce our new AI-powered analytics feature!
+
+        It turns raw data into clear, actionable insights in seconds. Spot trends before they happen, get plain-language explanations of what changed, and share dashboards with your team in a single click.
+
+        We built it for the people who spend hours wrangling spreadsheets, so they can spend that time making better decisions instead.
+
+        What's the one question you wish your data could answer for you? Tell us in the comments.
+
+        #AI #Analytics #DataDriven

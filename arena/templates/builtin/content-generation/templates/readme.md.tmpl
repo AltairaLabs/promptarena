@@ -20,44 +20,46 @@ This project tests content creation capabilities including:
 {{end}}{{end}}
 ### Setup
 
-1. Configure your API keys in `.env` file:
-{{range .providers}}{{if eq . "openai"}}   - Get OpenAI key from: https://platform.openai.com/api-keys
-{{else if eq . "claude"}}   - Get Anthropic (Claude) key from: https://console.anthropic.com/
-{{else if eq . "gemini"}}   - Get Gemini key from: https://aistudio.google.com/app/apikey
-{{end}}{{end}}
-2. Review and customize the scenarios in `scenarios/`
+{{range .providers}}{{if eq . "mock"}}The `mock` provider replays scripted replies from `mock-responses.yaml`, so it runs with no API key.
 
-3. Run the tests:
-   ```bash
-   promptarena run
-   ```
+{{end}}{{end}}{{$needKeys := false}}{{range .providers}}{{if ne . "mock"}}{{$needKeys = true}}{{end}}{{end}}{{if $needKeys}}- Configure your API keys in `.env`:
+{{range .providers}}{{if eq . "openai"}}  - Get OpenAI key from: https://platform.openai.com/api-keys
+{{else if eq . "claude"}}  - Get Anthropic (Claude) key from: https://console.anthropic.com/
+{{else if eq . "gemini"}}  - Get Gemini key from: https://aistudio.google.com/app/apikey
+{{end}}{{end}}
+{{end}}- Review and customize the scenarios in `scenarios/`
+- Run the tests:
+  ```bash
+  promptarena run
+  ```
 
 ## Project Structure
 
 ```
 .
-├── arena.yaml                 # Main configuration
+├── config.arena.yaml                      # Main configuration
 ├── prompts/
-│   ├── blog-writer.yaml       # Blog writing prompt
-│   └── marketing-copy.yaml    # Marketing copywriting prompt
-├── providers/                 # LLM provider configs
-{{range .providers}}│   ├── {{.}}.yaml
-{{end}}├── scenarios/                 # Test scenarios
-│   ├── blog-post.yaml
-│   ├── product-description.yaml
-│   └── social-media.yaml
-└── out/                       # Test results (generated)
+│   ├── blog-writer.prompt.yaml            # Blog writing prompt
+│   └── marketing-copy.prompt.yaml         # Marketing copywriting prompt
+├── providers/                             # LLM provider configs
+{{range .providers}}│   ├── {{.}}.provider.yaml
+{{end}}├── scenarios/                             # Test scenarios
+│   ├── blog-post.scenario.yaml
+│   ├── product-description.scenario.yaml
+│   └── social-media.scenario.yaml
+{{range .providers}}{{if eq . "mock"}}├── mock-responses.yaml                    # Scripted replies for the mock provider
+{{end}}{{end}}└── out/                                   # Test results (generated)
 ```
 
 ## Scenarios
 
-### Blog Post (`scenarios/blog-post.yaml`)
+### Blog Post (`scenarios/blog-post.scenario.yaml`)
 Tests engaging blog post creation with proper narrative structure.
 
-### Product Description (`scenarios/product-description.yaml`)
+### Product Description (`scenarios/product-description.scenario.yaml`)
 Tests benefit-focused product copy with effective CTAs.
 
-### Social Media (`scenarios/social-media.yaml`)
+### Social Media (`scenarios/social-media.scenario.yaml`)
 Tests concise, engaging social media content creation.
 
 ## Customization
@@ -90,8 +92,8 @@ spec:
 ### Adjusting Tone and Style
 
 Edit prompt configurations to set specific:
-- `prompts/blog-writer.yaml` - Blog style and voice
-- `prompts/marketing-copy.yaml` - Marketing tone and approach
+- `prompts/blog-writer.prompt.yaml` - Blog style and voice
+- `prompts/marketing-copy.prompt.yaml` - Marketing tone and approach
 
 ## Running Tests
 
@@ -103,7 +105,7 @@ promptarena run
 promptarena run --scenario blog-post
 
 # Run with specific provider
-promptarena run --provider openai-gpt4
+promptarena run --provider {{if .providers}}{{index .providers 0}}{{else}}openai{{end}}
 
 # Use higher temperature for more creative output
 promptarena run --temperature 0.9
