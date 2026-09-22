@@ -4,11 +4,11 @@
  * release version, and optionally archives the previous minor.
  *
  * Usage:
- *   node scripts/update-versions.js <version> <is_prerelease> [needs_archive] [archive_minor] [archive_path]
+ *   node scripts/update-versions.cjs <version> <is_prerelease> [needs_archive] [archive_minor] [archive_path]
  *
  * Examples:
- *   node scripts/update-versions.js 1.6.0 false                    # release, no archive
- *   node scripts/update-versions.js 1.6.0 false true 1.5 v1-5      # archive 1.5 when releasing 1.6
+ *   node scripts/update-versions.cjs 1.6.0 false                    # release, no archive
+ *   node scripts/update-versions.cjs 1.6.0 false true 1.5 v1-5      # archive 1.5 when releasing 1.6
  */
 
 const fs = require('fs');
@@ -35,7 +35,7 @@ function parseVersion(version) {
 function main() {
   const args = process.argv.slice(2);
   if (args.length < 2) {
-    console.error('Usage: node update-versions.js <version> <is_prerelease> [needs_archive] [archive_minor] [archive_path]');
+    console.error('Usage: node update-versions.cjs <version> <is_prerelease> [needs_archive] [archive_minor] [archive_path]');
     process.exit(1);
   }
 

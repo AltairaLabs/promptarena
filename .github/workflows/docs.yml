@@ -161,7 +161,7 @@ jobs:
           CURRENT=$(jq -r '.current.fullVersion // empty' docs/versions.json)
           if [ -n "$LATEST" ] && [ "${LATEST#v}" != "$CURRENT" ]; then
             echo "Live site says ${CURRENT:-nothing}; latest release is $LATEST"
-            node docs/scripts/update-versions.js "$LATEST" false
+            node docs/scripts/update-versions.cjs "$LATEST" false
           else
             jq '.["$schema"] = "https://promptarena.altairalabs.ai/versions.schema.json"' \
               docs/versions.json > docs/public/versions.json
@@ -174,7 +174,7 @@ jobs:
           NEW_VERSION="${GITHUB_REF_NAME#v}"
           IS_PRERELEASE=false
           [[ "$NEW_VERSION" == *-* ]] && IS_PRERELEASE=true
-          node scripts/update-versions.js \
+          node scripts/update-versions.cjs \
             "$NEW_VERSION" "$IS_PRERELEASE" \
             "${{ steps.archive-check.outputs.needs_archive }}" \
             "${{ steps.archive-check.outputs.archive_minor }}" \

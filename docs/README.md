@@ -45,7 +45,7 @@ served at the site root; archived minor versions live under `/vX-Y/` (e.g.
 `/v1-5/`) with a version switcher in the header and a banner on non-latest pages.
 Version metadata lives in [`versions.json`](./versions.json); the release
 workflow archives the outgoing minor and updates it automatically. See
-[`scripts/update-versions.js`](./scripts/update-versions.js).
+[`scripts/update-versions.cjs`](./scripts/update-versions.cjs).
 
 ## Notes
 
