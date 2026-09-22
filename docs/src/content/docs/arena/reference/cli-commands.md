@@ -16,6 +16,7 @@ promptarena [command] [flags]
 | Command | Description |
 |---------|-------------|
 | `init` | Initialize a new Arena test project from template (built-in or remote) |
+| `agent-brief` | Write the AI coding-agent brief (`AGENTS.md` + `.claude/skills/`) into a project |
 | `templates` | Manage PromptArena templates (list, fetch, update, render, repo) |
 | `run` | Run conversation simulations (main command) |
 | `generate` | Generate scenario files from session data or external sources |
@@ -30,6 +31,9 @@ promptarena [command] [flags]
 | `export` | Export arena config as a PromptPack JSON file |
 | `deploy` | Deploy prompt packs to cloud providers via adapter plugins |
 | `mcp` | Run an MCP server exposing PromptArena authoring knowledge over stdio |
+| `explain` | Explain a PromptArena authoring concept |
+| `schema` | Print the embedded JSON schema for a config type |
+| `examples` | List and print the example kits embedded in the binary |
 | `skill` | Manage shared AgentSkills.io skills (install, list, remove) |
 | `completion` | Generate shell autocompletion script |
 | `help` | Help about any command |
@@ -62,6 +66,11 @@ promptarena init [directory] [flags]
 | `--template-index` | string | `community` | Template repo name or index URL/path for remote templates |
 | `--repo-config` | string | user config | Template repo config file |
 | `--template-cache` | string | temp dir | Cache directory for remote templates |
+| `--output` | string | `.` | Output directory |
+| `--no-agent` | bool | `false` | Skip writing the AI-agent brief (`AGENTS.md` + `.claude/skills/`) |
+| `--no-env` | bool | `false` | Skip `.env` file creation |
+| `--no-git` | bool | `false` | Skip git initialization |
+| `--verbose` | bool | `false` | Show detailed generation progress |
 
 ### Built-In Templates
 
@@ -128,6 +137,7 @@ Depending on the template, `init` creates:
 - `.env` - Environment variables with API key placeholders
 - `.gitignore` - Ignores .env and output files
 - `README.md` - Project documentation and usage instructions
+- `AGENTS.md` and `.claude/skills/promptarena-authoring/` - The AI coding-agent brief (skip with `--no-agent`; see [`agent-brief`](#promptarena-agent-brief))
 
 ### Template Comparison
 
@@ -1112,6 +1122,147 @@ promptarena chat --mock-provider
 ### Guardrails and evals
 
 Guardrails are enforced on every turn exactly as they are in `promptarena run`. Assertions (test-only checks that compare model output against expected values) do not apply in a live chat session — they require a fixed expected output. If your config declares evals, the setup flow offers an optional toggle to display live scores after each reply.
+
+---
+
+## `promptarena agent-brief`
+
+Write the PromptArena authoring brief into a project so an AI coding agent (Claude Code, Codex, and others that read `AGENTS.md`) knows the config format and idioms before it edits anything. `init` writes the same files; `agent-brief` writes only the brief, with no sample kit, so it is safe to run in an existing project.
+
+### Usage
+
+```bash
+promptarena agent-brief [dir]
+```
+
+`dir` defaults to the current directory.
+
+### What Gets Written
+
+| File | Purpose |
+|------|---------|
+| `AGENTS.md` | Short pointer to the skill, the workflow, and common mistakes. If the file exists, the brief is appended once and existing content is kept. |
+| `.claude/skills/promptarena-authoring/SKILL.md` | The authoring skill: workflow and minimal valid skeletons for each config kind. |
+| `.claude/skills/promptarena-authoring/reference/` | Catalogs generated from the binary: `evals-and-assertions.md`, `config-fields.md`, `mock-responses.md`, `cli.md`. |
+
+The skill and reference files are overwritten on every run. Re-run `agent-brief` after upgrading PromptArena to keep them in step with the binary.
+
+### Examples
+
+```bash
+promptarena agent-brief            # brief the current directory
+promptarena agent-brief ./my-kit   # brief ./my-kit
+```
+
+See [Build a PromptPack with an AI coding agent](/arena/how-to/agents/build-with-an-ai-agent/).
+
+---
+
+## `promptarena mcp`
+
+Run a stdio MCP server that exposes PromptArena's authoring knowledge (concepts, the example catalog, and the JSON schemas embedded in this binary) to any MCP client.
+
+### Usage
+
+```bash
+promptarena mcp
+```
+
+**Tools:** `explain`, `get_schema`, `list_examples`, `show_example`
+
+**Resources:** `promptarena://concepts/<id>`, `promptarena://schemas/<type>`, `promptarena://catalog`
+
+### Client Configuration
+
+Claude Code (`.mcp.json` in the project):
+
+```json
+{
+  "mcpServers": {
+    "promptarena": { "command": "promptarena", "args": ["mcp"] }
+  }
+}
+```
+
+---
+
+## `promptarena explain`
+
+Print an authoring idiom from the embedded knowledge base, such as how mock providers behave or where assertion thresholds go.
+
+### Usage
+
+```bash
+promptarena explain [concept-id] [flags]
+```
+
+### Flags
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--list` | bool | `false` | List available concepts |
+
+### Examples
+
+```bash
+promptarena explain --list
+promptarena explain mock-providers
+```
+
+---
+
+## `promptarena schema`
+
+Print the JSON schema for a config type. The schema is embedded in the binary and is the exact version `promptarena validate` enforces, which may differ from the copy published on the web.
+
+### Usage
+
+```bash
+promptarena schema [type] [flags]
+```
+
+Types: `arena`, `eval`, `logging`, `persona`, `promptconfig`, `provider`, `runtime-config`, `scenario`, `tool`.
+
+### Flags
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--list` | bool | `false` | List available schema types |
+
+### Examples
+
+```bash
+promptarena schema --list
+promptarena schema scenario
+```
+
+---
+
+## `promptarena examples`
+
+Discover the example kits embedded in the binary. These are the same kits `init --template` scaffolds from.
+
+### Usage
+
+```bash
+promptarena examples list [flags]
+promptarena examples show <name>
+```
+
+### Flags (`list`)
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--tag` | string | - | Filter by tag |
+| `--json` | bool | `false` | Output JSON |
+
+### Examples
+
+```bash
+promptarena examples list
+promptarena examples list --tag tools
+promptarena examples show customer-support
+```
 
 ---
 
