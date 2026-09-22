@@ -5,10 +5,12 @@ PromptArena test project created from the **quick-start** template.
 ## Getting Started
 
 This project includes:
-- ✅ Basic prompt configuration (`prompts/assistant.yaml`)
-- ✅ Provider configuration (`providers/{{.provider}}.yaml`)
-- ✅ Sample test scenario (`scenarios/basic-test.yaml`)
-- ✅ Arena configuration (`arena.yaml`)
+- ✅ Basic prompt configuration (`prompts/assistant.prompt.yaml`)
+- ✅ Provider configuration (`providers/{{.provider}}.provider.yaml`)
+- ✅ Sample test scenario (`scenarios/basic-test.scenario.yaml`)
+- ✅ Arena configuration (`config.arena.yaml`)
+{{if eq .provider "mock"}}- ✅ Scripted mock replies (`mock-responses.yaml`), so the kit runs with no API key
+{{end}}
 
 ## Run Your First Test
 
@@ -22,15 +24,14 @@ open out/results.md
 
 {{if ne .provider "mock"}}## Configure API Keys
 
-1. Copy `.env.example` to `.env`
-2. Add your API key
-3. Run the tests
+1. Add your API key to `.env`
+2. Run the tests
 
 {{end}}## Next Steps
 
-- Modify `prompts/assistant.yaml` to customize the assistant behavior
+- Modify `prompts/assistant.prompt.yaml` to customize the assistant behavior
 - Add more scenarios in the `scenarios/` directory
-- Adjust provider settings in `providers/{{.provider}}.yaml`
+- Adjust provider settings in `providers/{{.provider}}.provider.yaml`
 
 ## Documentation
 

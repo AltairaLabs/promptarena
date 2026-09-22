@@ -12,8 +12,8 @@ import (
 // TestQuickStartScaffold_RunsAgainstMock scaffolds the quick-start template with
 // the mock provider and runs it headlessly. The mock provider never contacts a
 // real LLM, so this is safe for CI at zero API cost. It proves the scaffold
-// executes end-to-end and produces a report (content assertions may or may not
-// pass against the generic mock response — that is not what this guards).
+// executes end-to-end, produces a report, and passes: the scaffold ships scripted
+// mock replies, so a fresh `init` followed by `run` must be green.
 func TestQuickStartScaffold_RunsAgainstMock(t *testing.T) {
 	// init binds these package globals via cobra StringVar/BoolVar; Execute mutates
 	// them, so save and restore to keep the test hermetic for sibling tests.
@@ -38,9 +38,7 @@ func TestQuickStartScaffold_RunsAgainstMock(t *testing.T) {
 
 	outDir := filepath.Join(projectDir, "out")
 	rootCmd.SetArgs([]string{"run", "--config", cfg, "--ci", "--out", outDir, "--formats", "json"})
-	// The run may report assertion failures (generic mock response); what matters
-	// is that the pipeline executed and wrote a report.
-	_ = rootCmd.Execute()
+	require.NoError(t, rootCmd.Execute(), "a fresh quick-start kit must pass against its mock")
 
 	require.DirExists(t, outDir)
 	entries, err := os.ReadDir(outDir)
