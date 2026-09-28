@@ -144,7 +144,7 @@ jobs:
           packc compile \
             --config config/arena.prod.yaml \
             --output packs/prod/app-v$.pack.json \
-            --id app-v$
+            --id app
       
       - name: Validate pack
         run: packc validate packs/prod/app-v$.pack.json
