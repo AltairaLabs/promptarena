@@ -76,6 +76,13 @@ jobs:
       - uses: actions/setup-go@v7
         with:
           go-version: '1.26.0'
+
+      # Cheap, so it runs before the snapshot build. gorelease compares the
+      # exported API against the previous release and fails when the claimed
+      # version cannot carry the changes, e.g. a removed symbol in a minor.
+      - name: Check the API changes fit the version
+        run: ./scripts/check-api-compatibility.sh "$VERSION"
+
       - uses: actions/setup-node@v7
         with:
           node-version: '20'
