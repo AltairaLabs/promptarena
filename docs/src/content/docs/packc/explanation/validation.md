@@ -277,12 +277,18 @@ normalizes it to this pattern: `My Project` becomes `my-project`, and a name
 that doesn't start with a letter gets a `pack-` prefix (`2024-demo` becomes
 `pack-2024-demo`).
 
-**Task Type**: Alphanumeric with hyphens/underscores
+**Task Type**: starts with a lowercase letter, then lowercase letters, digits, hyphens and underscores (`^[a-z][a-z0-9_-]*$`). The task type becomes the prompt's ID in the pack.
 
 ```yaml
-task_type: "support-agent"  # Valid
-task_type: "support agent"  # Error: no spaces
+task_type: "support-agent"    # Valid
+task_type: "support_agent"    # Valid
+task_type: "support agent"    # Error: no spaces
+task_type: "CustomerSupport"  # Error: lowercase only
 ```
+
+`promptarena validate` checks these patterns, along with prompt `version`
+(semver, e.g. `1.0.0`), variable names, `metadata.language` (two lowercase
+letters) and tool names, so a value the pack would reject fails before you compile.
 
 ### Template Validation
 
