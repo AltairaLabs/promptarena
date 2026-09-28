@@ -184,14 +184,19 @@ func TestParseAgentsFromConfig_Integration(t *testing.T) {
 
 func TestParseToolsFromConfig_Integration(t *testing.T) {
 	t.Run("no tools returns empty", func(t *testing.T) {
-		assert.Empty(t, parseToolsFromConfig(&arenaconfig.Config{}))
+		got, err := parseToolsFromConfig(&arenaconfig.Config{})
+		require.NoError(t, err)
+		assert.Empty(t, got)
 	})
 
-	t.Run("invalid tool bytes skipped", func(t *testing.T) {
+	t.Run("invalid tool bytes fail", func(t *testing.T) {
 		cfg := &arenaconfig.Config{LoadedTools: []config.ToolData{
 			{FilePath: "broken.yaml", Data: []byte("not: [valid")},
 		}}
-		assert.Empty(t, parseToolsFromConfig(cfg))
+		got, err := parseToolsFromConfig(cfg)
+		require.Error(t, err)
+		assert.Contains(t, err.Error(), "broken.yaml")
+		assert.Nil(t, got)
 	})
 
 	t.Run("valid tool parsed", func(t *testing.T) {
@@ -220,7 +225,8 @@ spec:
 		cfg := &arenaconfig.Config{LoadedTools: []config.ToolData{
 			{FilePath: "search.yaml", Data: toolYAML},
 		}}
-		got := parseToolsFromConfig(cfg)
+		got, err := parseToolsFromConfig(cfg)
+		require.NoError(t, err)
 		require.Len(t, got, 1)
 		assert.Equal(t, "search", got[0].Name)
 		assert.Equal(t, "Search the web", got[0].Description)

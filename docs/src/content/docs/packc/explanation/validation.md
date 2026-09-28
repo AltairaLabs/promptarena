@@ -263,12 +263,19 @@ max_tokens: 200000   # Warning: very large
 
 ### Pattern Validation
 
-**Pack ID**: Alphanumeric with hyphens
+**Pack ID**: starts with a lowercase letter, then lowercase letters, digits and hyphens (`^[a-z][a-z0-9-]*$`)
 
 ```yaml
 id: "customer-support"     # Valid
 id: "Customer Support!"    # Error: invalid characters
+id: "app-v1.2.0"           # Error: no dots
+id: "2024-demo"            # Error: must start with a letter
 ```
+
+When no `--id` is given, packc derives one from the config's directory name and
+normalizes it to this pattern: `My Project` becomes `my-project`, and a name
+that doesn't start with a letter gets a `pack-` prefix (`2024-demo` becomes
+`pack-2024-demo`).
 
 **Task Type**: Alphanumeric with hyphens/underscores
 

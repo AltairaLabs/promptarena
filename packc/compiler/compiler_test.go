@@ -166,9 +166,87 @@ spec:
 
 	assert.Equal(t, "tools-pack", result.Pack.ID)
 	assert.Contains(t, result.Pack.Prompts, "greeting")
+	assert.Contains(t, result.Pack.Tools, "search")
+}
 
-	// Tools may or may not be present depending on how the tool loader works
-	// with the Kind: Tool format; verify pack compiled without error.
+// TestCompile_InlineSpecs: prompt_specs and tool_specs compile to a pack that
+// passes the PromptPack schema. Inline tools used to fail the tool loader
+// (no metadata.name, no .yaml extension) and were dropped; inline prompts had
+// no name, which the pack schema rejects.
+func TestCompile_InlineSpecs(t *testing.T) {
+	dir := t.TempDir()
+	configFile := writeFixture(t, dir, "config.arena.yaml", `apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Arena
+metadata:
+  name: inline
+spec:
+  prompt_specs:
+    chat:
+      task_type: chat
+      version: "1.0.0"
+      description: chat
+      system_template: "You are helpful."
+      allowed_tools: [get_weather]
+  tool_specs:
+    get_weather:
+      description: "Get weather"
+      mode: mock
+      mock_result: {temp: 20}
+      input_schema: {type: object, properties: {city: {type: string}}}
+      output_schema: {type: object}
+  providers: []
+  defaults:
+    temperature: 0.7
+    max_tokens: 100
+`)
+
+	result, err := Compile(configFile, WithPackID("inline-pack"))
+	require.NoError(t, err)
+	assert.Contains(t, result.Pack.Tools, "get_weather")
+	require.Contains(t, result.Pack.Prompts, "chat")
+	assert.Equal(t, "chat", result.Pack.Prompts["chat"].Name)
+}
+
+func TestCompile_BrokenToolFailsCompile(t *testing.T) {
+	dir := t.TempDir()
+	writeFixture(t, dir, "prompts/greeting.yaml", minimalPromptYAML)
+	// Passes the tool schema (mode is free-form there), so the arena config loads
+	// it; the tool loader rejects the unknown mode. packc used to drop it silently.
+	writeFixture(t, dir, "tools/broken.yaml", `apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Tool
+metadata:
+  name: broken
+spec:
+  description: "Broken tool"
+  mode: no-such-mode
+  input_schema:
+    type: object
+  output_schema:
+    type: object
+`)
+
+	arenaConfig := `apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Arena
+metadata:
+  name: test
+spec:
+  prompt_configs:
+    - id: prompt0
+      file: prompts/greeting.yaml
+  tools:
+    - file: tools/broken.yaml
+  providers: []
+  defaults:
+    temperature: 0.7
+    max_tokens: 100
+`
+	configFile := writeFixture(t, dir, "config.arena.yaml", arenaConfig)
+
+	result, err := Compile(configFile, WithPackID("broken-tool-pack"), WithSkipSchemaValidation())
+	require.Error(t, err)
+	assert.Nil(t, result)
+	assert.Contains(t, err.Error(), "loading tool")
+	assert.Contains(t, err.Error(), "broken.yaml")
 }
 
 func TestCompile_WithWorkflow(t *testing.T) {
@@ -368,11 +446,45 @@ func TestSanitizePackID(t *testing.T) {
 		{"-my-project-", "my-project"},
 		{"customer-support", "customer-support"},
 		{"project123", "project123"},
+		{"  My Cool Project (v2.0)  ", "my-cool-project-v20"},
+		{"2024-demo", "pack-2024-demo"},
+		{"-2024-", "pack-2024"},
+		{"___", "pack"},
+		{"", "pack"},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
-			assert.Equal(t, tt.expected, sanitizePackID(tt.input))
+			got := SanitizePackID(tt.input)
+			assert.Equal(t, tt.expected, got)
+			assert.NoError(t, validatePackID(got))
+		})
+	}
+}
+
+func TestCompile_DefaultPackIDFromDigitDirectory(t *testing.T) {
+	dir := t.TempDir()
+	subDir := filepath.Join(dir, "2024-demo")
+	require.NoError(t, os.MkdirAll(filepath.Join(subDir, "prompts"), 0o755))
+	writeFixture(t, subDir, "prompts/greeting.yaml", minimalPromptYAML)
+	configFile := writeFixture(t, subDir, "config.arena.yaml", minimalArenaConfig("prompts/greeting.yaml"))
+
+	result, err := Compile(configFile)
+	require.NoError(t, err)
+	assert.Equal(t, "pack-2024-demo", result.Pack.ID)
+}
+
+func TestCompile_InvalidExplicitPackID(t *testing.T) {
+	dir := t.TempDir()
+	writeFixture(t, dir, "prompts/greeting.yaml", minimalPromptYAML)
+	configFile := writeFixture(t, dir, "config.arena.yaml", minimalArenaConfig("prompts/greeting.yaml"))
+
+	for _, id := range []string{"2024-demo", "My-Pack", "my_pack", "-pack"} {
+		t.Run(id, func(t *testing.T) {
+			result, err := Compile(configFile, WithPackID(id), WithSkipSchemaValidation())
+			require.Error(t, err)
+			assert.Nil(t, result)
+			assert.Contains(t, err.Error(), "invalid pack ID")
 		})
 	}
 }

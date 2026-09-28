@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"regexp"
-	"strings"
 
 	"github.com/spf13/pflag"
 
@@ -108,35 +106,13 @@ type compileFlags struct {
 	packID     string
 }
 
-// Pre-compiled regexes for sanitizePackID to avoid recompilation on every call.
-var (
-	reNonAlphanumDash = regexp.MustCompile(`[^a-z0-9-]`)
-	reMultipleDashes  = regexp.MustCompile(`-+`)
-)
-
-// sanitizePackID converts a folder name to a valid pack ID.
-// It converts to lowercase, replaces spaces with dashes, and removes special characters.
-func sanitizePackID(name string) string {
-	// Convert to lowercase
-	result := strings.ToLower(name)
-	// Replace spaces with dashes
-	result = strings.ReplaceAll(result, " ", "-")
-	// Remove all characters except alphanumeric and dashes
-	result = reNonAlphanumDash.ReplaceAllString(result, "")
-	// Clean up multiple consecutive dashes
-	result = reMultipleDashes.ReplaceAllString(result, "-")
-	// Trim leading/trailing dashes
-	result = strings.Trim(result, "-")
-	return result
-}
-
 // getDefaultPackID returns a default pack ID based on the current directory name.
 func getDefaultPackID() string {
 	cwd, err := os.Getwd()
 	if err != nil {
 		return "pack"
 	}
-	return sanitizePackID(filepath.Base(cwd))
+	return compiler.SanitizePackID(filepath.Base(cwd))
 }
 
 // parseCompileFlags parses and validates compile command flags.

@@ -107,7 +107,7 @@ mkdir -p "packs/v${VERSION}"
 
 # Compile to versioned location
 packc compile --config arena.yaml \
-  --output "packs/v${VERSION}/app.pack.json" --id "app-v${VERSION}"
+  --output "packs/v${VERSION}/app.pack.json" --id app
 
 # Update latest symlink
 ln -sf "v${VERSION}" packs/latest
@@ -175,8 +175,13 @@ Match IDs to purpose and environment:
 --id customer-support-prod
 
 # Versioned
---id customer-support-v1.2.0
+--id customer-support-v1
 ```
+
+A pack ID must start with a lowercase letter and contain only lowercase
+letters, digits and hyphens. Dots are not allowed, so keep a semantic version
+like `1.2.0` in the output path rather than the ID. `packc compile` rejects an
+invalid `--id` before compiling.
 
 ## Build Scripts
 
