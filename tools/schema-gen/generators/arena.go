@@ -28,6 +28,7 @@ func GenerateArenaSchema() (interface{}, error) {
 			addArenaExample(schema)
 			applyKnownTypeSuggestions(schema)
 			applyGovernanceEnums(schema)
+			applyInlineToolNamePattern(schema)
 		},
 	})
 }

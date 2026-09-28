@@ -685,7 +685,8 @@
             "embedding",
             "image",
             "video",
-            "inference"
+            "inference",
+            "rerank"
           ]
         },
         "base_url": {

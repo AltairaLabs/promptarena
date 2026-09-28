@@ -1020,7 +1020,8 @@ metadata:
   name: get-weather
 
 spec:
-  name: get_weather                 # Required: Function name
+  name: get_weather                 # Function name the model calls; defaults to metadata.name.
+                                    # Letters, digits and underscores only (^[a-zA-Z_][a-zA-Z0-9_]*$)
   description: |                    # Required: Function description
     Get current weather for a location
 

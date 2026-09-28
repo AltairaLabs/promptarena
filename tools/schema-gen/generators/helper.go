@@ -164,6 +164,9 @@ func Generate(cfg *SchemaConfig) (interface{}, error) {
 	if err := applySpecOpenObjects(schema); err != nil {
 		return nil, fmt.Errorf("apply spec-declared open objects to %s: %w", cfg.Filename, err)
 	}
+	if err := applySpecPatterns(schema); err != nil {
+		return nil, fmt.Errorf("apply spec-declared patterns to %s: %w", cfg.Filename, err)
+	}
 
 	return schema, nil
 }
