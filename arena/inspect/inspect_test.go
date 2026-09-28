@@ -532,6 +532,35 @@ func TestCollectInspectionData_SelfPlayProviderUsage(t *testing.T) {
 	t.Error("expected shared-prov to have UsedBy entries")
 }
 
+// TestCollectInspectionData_ToolSpecNameWins: inspect must show the name the
+// pack exposes, which is spec.name when set, not metadata.name.
+func TestCollectInspectionData_ToolSpecNameWins(t *testing.T) {
+	toolYAML := []byte(`
+metadata:
+  name: weather-tool
+spec:
+  name: get_weather
+  description: gets weather
+`)
+	cfg := &arenaconfig.Config{
+		LoadedPromptConfigs: map[string]*arenaconfig.PromptConfigData{},
+		LoadedProviders:     map[string]*config.Provider{},
+		LoadedScenarios:     map[string]*arenaconfig.Scenario{},
+		LoadedPersonas:      map[string]*arenaconfig.UserPersonaPack{},
+		LoadedJudges:        map[string]*arenaconfig.JudgeTarget{},
+		LoadedTools: []config.ToolData{
+			{FilePath: "weather.yaml", Data: toolYAML},
+		},
+	}
+	data := inspect.CollectInspectionData(cfg, "/tmp/arena.yaml")
+	if len(data.Tools) != 1 {
+		t.Fatalf("expected 1 tool, got %d", len(data.Tools))
+	}
+	if data.Tools[0].Name != "get_weather" {
+		t.Errorf("Tool.Name = %q, want %q", data.Tools[0].Name, "get_weather")
+	}
+}
+
 // TestCollectInspectionData_ToolEmptyData exercises parseToolManifest with empty data.
 func TestCollectInspectionData_ToolEmptyData(t *testing.T) {
 	cfg := &arenaconfig.Config{

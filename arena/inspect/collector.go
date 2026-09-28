@@ -296,10 +296,12 @@ func parseToolManifest(toolData *ToolInspectData, data []byte) {
 	if err := yaml.Unmarshal(data, &manifest); err != nil {
 		return
 	}
-	if manifest.Metadata.Name != "" {
-		toolData.Name = manifest.Metadata.Name
-	} else if manifest.Spec.Name != "" {
+	// Same precedence as the runtime's tools.ToolConfig.FunctionName: spec.name
+	// is the name the pack exposes, metadata.name only the fallback.
+	if manifest.Spec.Name != "" {
 		toolData.Name = manifest.Spec.Name
+	} else {
+		toolData.Name = manifest.Metadata.Name
 	}
 	toolData.Description = manifest.Spec.Description
 	toolData.Mode = manifest.Spec.Mode
