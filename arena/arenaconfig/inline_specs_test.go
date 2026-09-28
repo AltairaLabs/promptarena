@@ -217,7 +217,7 @@ func TestInlinePromptSpecs(t *testing.T) {
   prompt_specs:
     chat:
       task_type: chat
-      version: "1.0"
+      version: "1.0.0"
       description: "Chat prompt"
       system_template: "You are a helpful assistant."
   defaults:
