@@ -170,7 +170,7 @@ func TestInlineToolSpecs(t *testing.T) {
 	require.NotEmpty(t, cfg.LoadedTools)
 	found := false
 	for _, td := range cfg.LoadedTools {
-		if td.FilePath == "<inline:lookup_order>" {
+		if td.FilePath == "<inline:lookup_order>.yaml" {
 			found = true
 			assert.NotEmpty(t, td.Data)
 		}
@@ -429,7 +429,7 @@ func TestMergeToolSpecs_Unit(t *testing.T) {
 
 	require.NoError(t, cfg.mergeToolSpecs())
 	require.Len(t, cfg.LoadedTools, 1)
-	assert.Equal(t, "<inline:my-tool>", cfg.LoadedTools[0].FilePath)
+	assert.Equal(t, "<inline:my-tool>.yaml", cfg.LoadedTools[0].FilePath)
 	assert.Contains(t, string(cfg.LoadedTools[0].Data), "my-tool")
 }
 

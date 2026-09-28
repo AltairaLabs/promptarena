@@ -106,12 +106,17 @@ func (c *Config) mergeEvalSpecs() error {
 }
 
 // mergeToolSpecs merges inline tool specs into LoadedTools as marshaled YAML manifests.
+//
+// The manifest must be one the tool loader accepts: it requires metadata.name,
+// and it picks the parser from the file extension, so the synthetic path ends
+// in .yaml to match the data.
 func (c *Config) mergeToolSpecs() error {
 	for name, spec := range c.ToolSpecs {
 		spec.Name = name
 		manifest := ToolConfigSchema{
 			APIVersion: "promptkit.altairalabs.ai/v1alpha1",
 			Kind:       "Tool",
+			Metadata:   config.ObjectMeta{Name: name},
 			Spec:       *spec,
 		}
 		data, err := yaml.Marshal(manifest)
@@ -119,7 +124,7 @@ func (c *Config) mergeToolSpecs() error {
 			return fmt.Errorf("failed to marshal inline tool spec %q: %w", name, err)
 		}
 		c.LoadedTools = append(c.LoadedTools, config.ToolData{
-			FilePath: fmt.Sprintf("<inline:%s>", name),
+			FilePath: fmt.Sprintf("<inline:%s>.yaml", name),
 			Data:     data,
 		})
 	}
@@ -153,9 +158,13 @@ func (c *Config) mergePromptSpecs() error {
 				taskType,
 			)
 		}
+		promptConfig := &prompt.Config{Spec: *spec}
+		// The compiled pack requires a prompt name, which a file-based config
+		// takes from metadata.name. An inline spec has no metadata, so its key names it.
+		promptConfig.Metadata.Name = taskType
 		c.LoadedPromptConfigs[taskType] = &PromptConfigData{
 			FilePath: fmt.Sprintf("<inline:%s>", taskType),
-			Config:   &prompt.Config{Spec: *spec},
+			Config:   promptConfig,
 			TaskType: spec.TaskType,
 		}
 	}

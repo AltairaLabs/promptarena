@@ -169,6 +169,44 @@ spec:
 	assert.Contains(t, result.Pack.Tools, "search")
 }
 
+// TestCompile_InlineSpecs: prompt_specs and tool_specs compile to a pack that
+// passes the PromptPack schema. Inline tools used to fail the tool loader
+// (no metadata.name, no .yaml extension) and were dropped; inline prompts had
+// no name, which the pack schema rejects.
+func TestCompile_InlineSpecs(t *testing.T) {
+	dir := t.TempDir()
+	configFile := writeFixture(t, dir, "config.arena.yaml", `apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Arena
+metadata:
+  name: inline
+spec:
+  prompt_specs:
+    chat:
+      task_type: chat
+      version: "1.0.0"
+      description: chat
+      system_template: "You are helpful."
+      allowed_tools: [get_weather]
+  tool_specs:
+    get_weather:
+      description: "Get weather"
+      mode: mock
+      mock_result: {temp: 20}
+      input_schema: {type: object, properties: {city: {type: string}}}
+      output_schema: {type: object}
+  providers: []
+  defaults:
+    temperature: 0.7
+    max_tokens: 100
+`)
+
+	result, err := Compile(configFile, WithPackID("inline-pack"))
+	require.NoError(t, err)
+	assert.Contains(t, result.Pack.Tools, "get_weather")
+	require.Contains(t, result.Pack.Prompts, "chat")
+	assert.Equal(t, "chat", result.Pack.Prompts["chat"].Name)
+}
+
 func TestCompile_BrokenToolFailsCompile(t *testing.T) {
 	dir := t.TempDir()
 	writeFixture(t, dir, "prompts/greeting.yaml", minimalPromptYAML)
