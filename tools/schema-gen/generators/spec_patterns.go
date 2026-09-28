@@ -108,3 +108,55 @@ func patternTarget(def *jsonschema.Schema, sp specPattern) (*jsonschema.Schema, 
 	}
 	return prop.Items, nil
 }
+
+// toolNamePointer is the spec's pattern for a pack tool's name.
+const toolNamePointer = "/$defs/Tool/properties/name/pattern"
+
+// mustSpecPattern reads a pattern from the embedded spec for a Customize hook,
+// which cannot return an error. A pointer that stops resolving is a generator
+// bug, pinned by TestToolNamePatterns; panicking fails generation the same way.
+func mustSpecPattern(pointer string) string {
+	spec, err := parseEmbeddedSpec()
+	if err != nil {
+		panic(err)
+	}
+	pattern, err := specPatternValue(spec, specPattern{def: "-", property: "-", pointer: pointer})
+	if err != nil {
+		panic(err)
+	}
+	return pattern
+}
+
+// applyToolManifestNamePattern constrains the name a Tool manifest exposes,
+// which is spec.name, or metadata.name when spec.name is absent (the runtime's
+// ToolConfig.FunctionName). metadata.name is only checked in that fallback
+// case: `metadata.name: weather-tool` with `spec.name: get_weather` is valid.
+func applyToolManifestNamePattern(schema *jsonschema.Schema) {
+	pattern := mustSpecPattern(toolNamePointer)
+	for _, def := range definitionsNamed(schema, "ToolSpec") {
+		if prop, ok := def.Properties.Get("name"); ok && prop != nil {
+			prop.Pattern = pattern
+		}
+	}
+
+	metadata := jsonschema.NewProperties()
+	metadata.Set("name", &jsonschema.Schema{Pattern: pattern})
+	properties := jsonschema.NewProperties()
+	properties.Set("metadata", &jsonschema.Schema{Properties: metadata})
+	specProps := jsonschema.NewProperties()
+	specProps.Set("spec", &jsonschema.Schema{Required: []string{"name"}})
+	schema.If = &jsonschema.Schema{Properties: specProps}
+	schema.Else = &jsonschema.Schema{Properties: properties}
+}
+
+// applyInlineToolNamePattern constrains the keys of an arena config's
+// tool_specs: an inline tool's key becomes its name, overriding any spec.name.
+func applyInlineToolNamePattern(schema *jsonschema.Schema) {
+	def, ok := schema.Definitions["Config"]
+	if !ok || def == nil || def.Properties == nil {
+		return
+	}
+	if prop, ok := def.Properties.Get("tool_specs"); ok && prop != nil {
+		prop.PropertyNames = &jsonschema.Schema{Pattern: mustSpecPattern(toolNamePointer)}
+	}
+}

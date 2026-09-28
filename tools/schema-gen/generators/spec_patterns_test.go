@@ -136,3 +136,49 @@ func TestSpecPatternErrorsFailGeneration(t *testing.T) {
 		t.Errorf("definition without properties should be skipped, got %v, %v", got, err)
 	}
 }
+
+// TestToolNamePatterns: the tool name a pack exposes is constrained wherever
+// it is authored — a Tool manifest's spec.name (or metadata.name when spec.name
+// is absent) and an arena config's tool_specs keys — and nowhere else. The SDK
+// runtime-config's tools never become a pack, so their names stay free.
+func TestToolNamePatterns(t *testing.T) {
+	want := mustSpecPattern(toolNamePointer)
+	schemas := generatedSchemas(t)
+
+	tool := schemas["tool.json"]
+	if got := generatedProperty(tool, specPattern{def: "ToolSpec", property: "name"}); got["pattern"] != want {
+		t.Errorf("tool.json ToolSpec.name pattern = %v, want %v", got["pattern"], want)
+	}
+	cond, _ := tool["if"].(map[string]interface{})
+	fallback, _ := tool["else"].(map[string]interface{})
+	if cond == nil || fallback == nil {
+		t.Fatal("tool.json should constrain metadata.name only when spec.name is absent (if/else)")
+	}
+	meta, _ := fallback["properties"].(map[string]interface{})["metadata"].(map[string]interface{})
+	name, _ := meta["properties"].(map[string]interface{})["name"].(map[string]interface{})
+	if name["pattern"] != want {
+		t.Errorf("tool.json fallback metadata.name pattern = %v, want %v", name["pattern"], want)
+	}
+
+	cfg, _ := defsOf(schemas["arena.json"])["Config"].(map[string]interface{})
+	toolSpecs, _ := cfg["properties"].(map[string]interface{})["tool_specs"].(map[string]interface{})
+	keys, _ := toolSpecs["propertyNames"].(map[string]interface{})
+	if keys["pattern"] != want {
+		t.Errorf("arena.json tool_specs key pattern = %v, want %v", keys["pattern"], want)
+	}
+
+	for _, file := range []string{"arena.json", "runtime-config.json"} {
+		if got := generatedProperty(schemas[file], specPattern{def: "ToolSpec", property: "name"}); got["pattern"] != nil {
+			t.Errorf("%s ToolSpec.name should carry no pattern, got %v", file, got["pattern"])
+		}
+	}
+}
+
+func TestMustSpecPatternPanicsOnDrift(t *testing.T) {
+	defer func() {
+		if recover() == nil {
+			t.Error("an unresolvable pointer should panic")
+		}
+	}()
+	mustSpecPattern("/$defs/NoSuchDef/pattern")
+}

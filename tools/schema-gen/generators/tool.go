@@ -13,7 +13,10 @@ func GenerateToolSchema() (interface{}, error) {
 		Filename:    "tool.json",
 		Title:       "PromptKit Tool Configuration",
 		Description: "Tool/function configuration for PromptKit",
-		Customize:   addToolExample,
+		Customize: func(schema *jsonschema.Schema) {
+			addToolExample(schema)
+			applyToolManifestNamePattern(schema)
+		},
 	})
 }
 
