@@ -112,16 +112,17 @@ func applyOptions(opts []Option) compileOptions {
 	return options
 }
 
-// resolvePackID derives the pack ID from the config file path if not explicitly set.
+// resolvePackID derives the pack ID from the config file path if not explicitly
+// set, and validates an explicit one.
 func resolvePackID(options *compileOptions, configFile string) error {
 	if options.packID != "" {
-		return nil
+		return validatePackID(options.packID)
 	}
 	absPath, err := filepath.Abs(configFile)
 	if err != nil {
 		return fmt.Errorf("resolving config path: %w", err)
 	}
-	options.packID = sanitizePackID(filepath.Base(filepath.Dir(absPath)))
+	options.packID = SanitizePackID(filepath.Base(filepath.Dir(absPath)))
 	return nil
 }
 
@@ -146,10 +147,15 @@ func compilePack(cfg *arenaconfig.Config, configFile string, options compileOpti
 		return nil, nil, err
 	}
 
+	parsedTools, err := parseToolsFromConfig(cfg)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	compiler := prompt.NewPackCompiler(registry)
 	pack, err := compiler.CompileFromRegistryWithOptions(
 		options.packID, options.compilerVersion,
-		parseToolsFromConfig(cfg), parsePackEvalsFromConfig(cfg),
+		parsedTools, parsePackEvalsFromConfig(cfg),
 		compileOpts...,
 	)
 	if err != nil {

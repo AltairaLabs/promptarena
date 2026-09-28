@@ -112,19 +112,20 @@ func validateExampleMediaReferences(example *prompt.MultimodalExample, baseDir s
 }
 
 // parseToolsFromConfig parses raw tool YAML data from config into ParsedTool structs.
-func parseToolsFromConfig(cfg *arenaconfig.Config) []prompt.ParsedTool {
+// A tool that fails to load fails the compile: dropping it would only move the
+// error to run time, as "tool not found".
+func parseToolsFromConfig(cfg *arenaconfig.Config) ([]prompt.ParsedTool, error) {
 	var result []prompt.ParsedTool
 
 	if len(cfg.LoadedTools) == 0 {
-		return result
+		return result, nil
 	}
 
 	registry := tools.NewRegistry()
 
 	for _, td := range cfg.LoadedTools {
 		if err := registry.LoadToolFromBytes(td.FilePath, td.Data); err != nil {
-			// Skip invalid tools — caller can't do much about them.
-			continue
+			return nil, fmt.Errorf("loading tool %s: %w", td.FilePath, err)
 		}
 	}
 
@@ -136,7 +137,7 @@ func parseToolsFromConfig(cfg *arenaconfig.Config) []prompt.ParsedTool {
 		})
 	}
 
-	return result
+	return result, nil
 }
 
 // parsePackEvalsFromConfig returns pack-level eval definitions from arena config.
@@ -213,18 +214,41 @@ func validateSchema(packJSON []byte) error {
 	return nil
 }
 
-// Pre-compiled regexes for sanitizePackID.
+// Pre-compiled regexes for SanitizePackID and validatePackID.
 var (
 	reNonAlphanumDash = regexp.MustCompile(`[^a-z0-9-]`)
 	reMultipleDashes  = regexp.MustCompile(`-+`)
+	// rePackID is the PromptPack schema's pattern for the pack id.
+	rePackID = regexp.MustCompile(`^[a-z][a-z0-9-]*$`)
 )
 
-// sanitizePackID converts a folder name to a valid pack ID.
-func sanitizePackID(name string) string {
+// defaultPackID is used when a name sanitizes to nothing.
+const defaultPackID = "pack"
+
+// SanitizePackID converts a folder name to a valid pack ID. The result always
+// matches the PromptPack schema's id pattern: a name that doesn't start with a
+// letter is prefixed with "pack-", and one with no usable characters becomes "pack".
+func SanitizePackID(name string) string {
 	result := strings.ToLower(name)
 	result = strings.ReplaceAll(result, " ", "-")
 	result = reNonAlphanumDash.ReplaceAllString(result, "")
 	result = reMultipleDashes.ReplaceAllString(result, "-")
 	result = strings.Trim(result, "-")
+	if result == "" {
+		return defaultPackID
+	}
+	if result[0] < 'a' || result[0] > 'z' {
+		result = defaultPackID + "-" + result
+	}
 	return result
+}
+
+// validatePackID rejects an ID the PromptPack schema would reject, so an
+// explicit --id fails before compiling rather than at schema validation.
+func validatePackID(id string) error {
+	if !rePackID.MatchString(id) {
+		return fmt.Errorf("invalid pack ID %q: must start with a lowercase letter and "+
+			"contain only lowercase letters, digits and dashes (pattern %s)", id, rePackID)
+	}
+	return nil
 }
