@@ -273,17 +273,22 @@ jobs:
       - name: Wait for every platform package to resolve
         run: |
           VERSION="${{ inputs.version }}"
+          # --prefer-online: the registry serves packuments with
+          # Cache-Control max-age=300 and npm caches them locally, so a plain
+          # `npm view` keeps answering from the copy fetched before publish for
+          # five minutes -- exactly this loop's old budget, which is why it
+          # timed out on releases whose packages had in fact landed.
           missing=()
           for dir in dist/npm/*/; do
             name=$(node -p "require('./$dir/package.json').name")
-            for attempt in $(seq 1 30); do
-              npm view "$name@${VERSION#v}" version >/dev/null 2>&1 && break
-              if [ "$attempt" -eq 30 ]; then missing+=("$name"); break; fi
-              sleep 10
+            for attempt in $(seq 1 60); do
+              npm view --prefer-online "$name@${VERSION#v}" version >/dev/null 2>&1 && break
+              if [ "$attempt" -eq 60 ]; then missing+=("$name"); break; fi
+              sleep 15
             done
           done
           if [ ${#missing[@]} -gt 0 ]; then
-            echo "::error::published but not served after 5 minutes: ${missing[*]}"
+            echo "::error::published but not served after 15 minutes: ${missing[*]}"
             echo "::error::The main packages were NOT published. Re-run this job."
             exit 1
           fi
@@ -294,7 +299,7 @@ jobs:
           VERSION="${{ inputs.version }}"
           for pkg in promptarena packc; do
             # Skip on a re-run, as the platform step does: versions are immutable.
-            if npm view "@altairalabs/$pkg@${VERSION#v}" version >/dev/null 2>&1; then
+            if npm view --prefer-online "@altairalabs/$pkg@${VERSION#v}" version >/dev/null 2>&1; then
               echo "skip @altairalabs/$pkg@${VERSION#v} (already published)"
               continue
             fi
@@ -331,22 +336,23 @@ jobs:
           # installing immediately gets ETARGET "No matching version found" --
           # which reads as a failed publish when the publish was fine. It failed
           # v1.6.3 exactly this way, after both packages had in fact landed.
-          for attempt in $(seq 1 30); do
-            if npm view "@altairalabs/promptarena@${BARE}" version >/dev/null 2>&1 \
-               && npm view "@altairalabs/packc@${BARE}" version >/dev/null 2>&1; then
+          # --prefer-online for the same reason as the platform wait above.
+          for attempt in $(seq 1 60); do
+            if npm view --prefer-online "@altairalabs/promptarena@${BARE}" version >/dev/null 2>&1 \
+               && npm view --prefer-online "@altairalabs/packc@${BARE}" version >/dev/null 2>&1; then
               echo "Both packages resolvable after ${attempt} attempt(s)."
               break
             fi
-            if [ "$attempt" -eq 30 ]; then
+            if [ "$attempt" -eq 60 ]; then
               echo "::error::@altairalabs/promptarena@${BARE} and/or packc did not"
-              echo "::error::become resolvable within 5 minutes. Check whether the"
+              echo "::error::become resolvable within 15 minutes. Check whether the"
               echo "::error::publish step actually succeeded before assuming lag."
               exit 1
             fi
-            sleep 10
+            sleep 15
           done
 
-          npm install "@altairalabs/promptarena@${BARE}" \
+          npm install --prefer-online "@altairalabs/promptarena@${BARE}" \
                       "@altairalabs/packc@${BARE}" --no-audit --no-fund
           ./node_modules/.bin/promptarena --version
           ./node_modules/.bin/packc version
@@ -423,6 +429,34 @@ jobs:
           - PromptArena-deploy-omnia
           - promptarena-deploy-agentcore
     steps:
+      - uses: actions/setup-go@v7
+        with:
+          go-version: '1.26.0'
+          cache: false
+
+      # The adapters' bump runs `go get github.com/AltairaLabs/promptarena/v2@VERSION`
+      # through proxy.golang.org and verifies it against sum.golang.org, and
+      # both lag a fresh tag: v2.3.0's bumps all failed on a sumdb 404. Wait
+      # until the module downloads and verifies the same way (bounded at 20
+      # minutes) before dispatching. Fresh caches each attempt.
+      - name: Wait until promptarena ${{ inputs.version }} resolves through the Go proxy
+        env:
+          VERSION: ${{ inputs.version }}
+        run: |
+          mod="github.com/AltairaLabs/promptarena/v2@$VERSION"
+          deadline=$(( $(date +%s) + 20 * 60 ))
+          until GOMODCACHE="$(mktemp -d)" GOFLAGS=-modcacherw \
+                GOPROXY=https://proxy.golang.org GOSUMDB=sum.golang.org \
+                go mod download -json "$mod" >/dev/null 2>&1; do
+            if [ "$(date +%s)" -ge "$deadline" ]; then
+              echo "::error::$mod still does not resolve through proxy.golang.org + sum.golang.org after 20 minutes"
+              exit 1
+            fi
+            echo "waiting for $mod ..."
+            sleep 20
+          done
+          echo "✓ $mod resolves"
+
       - name: Dispatch to ${{ matrix.repo }}
         env:
           VERSION: ${{ inputs.version }}
