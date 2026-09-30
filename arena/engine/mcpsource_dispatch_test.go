@@ -36,6 +36,15 @@ type fakeSSEMCPServer struct {
 	calls         []recordedCall
 	callResp      mcp.ToolCallResponse
 	failListTools atomic.Bool // when true, tools/list returns a JSON-RPC error
+	sseHeadersMu  sync.Mutex
+	sseHeaders    []http.Header // request headers of every /sse connection
+}
+
+// sseRequestHeaders returns the request headers of every /sse connection.
+func (s *fakeSSEMCPServer) sseRequestHeaders() []http.Header {
+	s.sseHeadersMu.Lock()
+	defer s.sseHeadersMu.Unlock()
+	return append([]http.Header(nil), s.sseHeaders...)
 }
 
 type recordedCall struct {
@@ -58,6 +67,10 @@ func newFakeSSEMCPServer(t *testing.T, tool mcp.Tool, callResp mcp.ToolCallRespo
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/sse", func(w http.ResponseWriter, r *http.Request) {
+		srv.sseHeadersMu.Lock()
+		srv.sseHeaders = append(srv.sseHeaders, r.Header.Clone())
+		srv.sseHeadersMu.Unlock()
+
 		id := fmt.Sprintf("s%d", sessionCounter.Add(1))
 		s := &session{events: make(chan []byte, 32)}
 		sessionsMu.Lock()
