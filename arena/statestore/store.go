@@ -465,6 +465,9 @@ func (s *ArenaStateStore) deepCloneMessage(msg *types.Message) types.Message {
 		Timestamp: msg.Timestamp,
 		LatencyMs: msg.LatencyMs,
 		Source:    msg.Source,
+		// Without it every loaded message lost why it stopped: max_output_tokens,
+		// a safety block, an interrupted stream all read back as unreported.
+		FinishReason: msg.FinishReason,
 	}
 
 	s.cloneMessageParts(&cloned, msg)
