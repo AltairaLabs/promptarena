@@ -294,19 +294,40 @@ mcp_servers:
       NODE_ENV: production
 ```
 
-**Transport — `url` (HTTP+SSE)**
+**Transport — `url` (HTTP)**
 
-PromptArena connects to an already-running server.
+PromptArena connects to an already-running server over one of the two MCP
+HTTP transports, chosen with `transport`.
 
-- `url` (string, required): Base URL. The server must serve `GET /sse` and
-  `POST /message?sessionID=...` per the MCP HTTP+SSE transport.
+- `url` (string, required): Where the server listens. What it points at
+  depends on the transport — see below.
+- `transport` (string, optional): `sse` (the default for a `url` server) or
+  `streamable_http`.
 - `headers` (string→string map, optional): Headers added to every request
   (e.g. `Authorization`).
+
+With `transport: sse` (or no `transport`), `url` is the **base URL**: the
+server must serve `GET /sse` and `POST /message?sessionId=...` per the MCP
+HTTP+SSE transport (spec 2024-11-05), and PromptArena appends `/sse` itself.
+Pointing `url` at `.../sse` makes it request `.../sse/sse`.
 
 ```yaml
 mcp_servers:
   - name: hosted-tools
     url: https://mcp.example.com
+    headers:
+      Authorization: "Bearer ${MCP_TOKEN}"
+```
+
+With `transport: streamable_http`, `url` is the **full endpoint URL**
+(usually ending in `/mcp`), used as-is for the MCP Streamable HTTP transport
+(spec 2025-03-26):
+
+```yaml
+mcp_servers:
+  - name: hosted-tools
+    url: https://mcp.example.com/mcp
+    transport: streamable_http
     headers:
       Authorization: "Bearer ${MCP_TOKEN}"
 ```
