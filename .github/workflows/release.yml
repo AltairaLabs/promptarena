@@ -264,10 +264,40 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
+      # `npm publish` succeeding is not the registry serving the package. v2.2.0
+      # published all twelve platform packages cleanly, and promptarena-linux-x64
+      # never appeared; the main package went out anyway, pinned to it, and every
+      # Linux x64 install got a CLI with no binary. Don't publish a main package
+      # until every platform package it pins resolves. If one never does, re-run
+      # the job: the platform step republishes only what is missing.
+      - name: Wait for every platform package to resolve
+        run: |
+          VERSION="${{ inputs.version }}"
+          missing=()
+          for dir in dist/npm/*/; do
+            name=$(node -p "require('./$dir/package.json').name")
+            for attempt in $(seq 1 30); do
+              npm view "$name@${VERSION#v}" version >/dev/null 2>&1 && break
+              if [ "$attempt" -eq 30 ]; then missing+=("$name"); break; fi
+              sleep 10
+            done
+          done
+          if [ ${#missing[@]} -gt 0 ]; then
+            echo "::error::published but not served after 5 minutes: ${missing[*]}"
+            echo "::error::The main packages were NOT published. Re-run this job."
+            exit 1
+          fi
+          echo "All platform packages resolve."
+
       - name: Publish main packages
         run: |
           VERSION="${{ inputs.version }}"
           for pkg in promptarena packc; do
+            # Skip on a re-run, as the platform step does: versions are immutable.
+            if npm view "@altairalabs/$pkg@${VERSION#v}" version >/dev/null 2>&1; then
+              echo "skip @altairalabs/$pkg@${VERSION#v} (already published)"
+              continue
+            fi
             npm version "${VERSION#v}" --no-git-tag-version --allow-same-version \
               --prefix "npm/$pkg"
             # Pin the optionalDependency range to the version just published.
