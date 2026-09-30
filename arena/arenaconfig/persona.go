@@ -156,8 +156,10 @@ func loadK8sManifest(tempMap map[string]interface{}, filename string) (*UserPers
 		return nil, err
 	}
 
-	// Use metadata.name as persona ID
-	personaConfig.Spec.ID = personaConfig.Metadata.Name
+	// An explicit spec.id is the persona ID; metadata.name is only the fallback.
+	if personaConfig.Spec.ID == "" {
+		personaConfig.Spec.ID = personaConfig.Metadata.Name
+	}
 
 	return validateAndReturnPersona(&personaConfig.Spec, filename)
 }
