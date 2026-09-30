@@ -9,11 +9,11 @@ importers:
   .:
     dependencies:
       '@altairalabs/atlas':
-        specifier: ^0.19.1
-        version: 0.19.1(@dagrejs/dagre@3.0.0)(@types/react@19.2.14)(@xyflow/react@12.12.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(supports-color@7.2.0)
+        specifier: ^0.26.0
+        version: 0.26.0(@dagrejs/dagre@3.0.0)(@types/react@19.2.14)(@xyflow/react@12.12.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(supports-color@7.2.0)
       '@altairalabs/atlas-tokens':
-        specifier: ^0.6.0
-        version: 0.6.0
+        specifier: ^0.7.0
+        version: 0.7.0
       '@dagrejs/dagre':
         specifier: ^3.0.0
         version: 3.0.0
@@ -96,11 +96,11 @@ packages:
   '@adobe/css-tools@4.5.0':
     resolution: {integrity: sha512-6OzddxPio9UiWTCemp4N8cYLV2ZN1ncRnV1cVGtve7dhPOtRkleRyx32GQCYSwDYgaHU3USMm84tNsvKzRCa1Q==}
 
-  '@altairalabs/atlas-tokens@0.6.0':
-    resolution: {integrity: sha512-z5tizy+U5db7Yq+1dFPrauG9UdmrknjpgM8QSvHtbQVeeNo+pICYDqpNU39zte2HtE8mQru8CjZauYyhnpsaCQ==, tarball: https://npm.pkg.github.com/download/@altairalabs/atlas-tokens/0.6.0/a1630ac4fb5742372016983dbf8a98967eb5f83e}
+  '@altairalabs/atlas-tokens@0.7.0':
+    resolution: {integrity: sha512-VL1+nwZbOiI3OeX2QXEF7nkk4gBqSmUK42y3pt4/f+PynM3TlexIWJLr2C8dXENXDd8DLStLYelQ+AED70zn3Q==, tarball: https://npm.pkg.github.com/download/@altairalabs/atlas-tokens/0.7.0/d7f1088fdf4a2857d3208df8943b9f9f8ce684a5}
 
-  '@altairalabs/atlas@0.19.1':
-    resolution: {integrity: sha512-I3uy5vIVxdv/wfmiM0zZ/JkphlKYvNCtaV2FHov71kr/i/HuuDDa7ZkVuhRnerjyn3hT/pOxYkoJfIcnQkfRBw==, tarball: https://npm.pkg.github.com/download/@altairalabs/atlas/0.19.1/bc1533fbed3c526351a70289f506f963da1e576f}
+  '@altairalabs/atlas@0.26.0':
+    resolution: {integrity: sha512-i45n1nQdNL/YJNuEpRgxDoqV+fh7sJXII7AjolJI5eZp0oxsvn5ewFdT+2mX+Dk1b6pQzZ6QM9MgK+ODWlhlow==, tarball: https://npm.pkg.github.com/download/@altairalabs/atlas/0.26.0/03fbd856edcd7f05380435373a00ba90da9b1a29}
     peerDependencies:
       '@dagrejs/dagre': ^3.0.0
       '@xyflow/react': ^12.0.0
@@ -2739,9 +2739,9 @@ snapshots:
 
   '@adobe/css-tools@4.5.0': {}
 
-  '@altairalabs/atlas-tokens@0.6.0': {}
+  '@altairalabs/atlas-tokens@0.7.0': {}
 
-  '@altairalabs/atlas@0.19.1(@dagrejs/dagre@3.0.0)(@types/react@19.2.14)(@xyflow/react@12.12.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(supports-color@7.2.0)':
+  '@altairalabs/atlas@0.26.0(@dagrejs/dagre@3.0.0)(@types/react@19.2.14)(@xyflow/react@12.12.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5))(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(supports-color@7.2.0)':
     dependencies:
       '@dagrejs/dagre': 3.0.0
       '@xyflow/react': 12.12.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
