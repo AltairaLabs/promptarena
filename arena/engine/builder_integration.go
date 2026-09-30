@@ -31,6 +31,7 @@ import (
 	"github.com/AltairaLabs/promptarena/v2/arena/adapters"
 	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
 	"github.com/AltairaLabs/promptarena/v2/arena/binding"
+	arenamcp "github.com/AltairaLabs/promptarena/v2/arena/mcp"
 	_ "github.com/AltairaLabs/promptarena/v2/arena/mcpsource/docker/register" // register docker MCPSource
 	"github.com/AltairaLabs/promptarena/v2/arena/selfplay"
 	"github.com/AltairaLabs/promptarena/v2/arena/statestore"
@@ -671,43 +672,15 @@ func resolveMockPartsPaths(tool *tools.ToolDescriptor, configDir string) {
 	}
 }
 
-// buildMCPRegistry creates an MCP registry from config and registers all MCP servers.
+// buildMCPRegistry creates an MCP registry from config and registers all static
+// MCP servers. Source-backed entries are opened dynamically by mcpSourceScope at
+// run/scenario/session boundaries, not registered here.
 // Returns nil if no MCP servers are configured.
 func buildMCPRegistry(cfg *arenaconfig.Config) (*mcp.RegistryImpl, error) {
 	if len(cfg.MCPServers) == 0 {
 		return nil, nil
 	}
-
-	registry := mcp.NewRegistry()
-
-	for _, serverCfg := range cfg.MCPServers {
-		if serverCfg.Source != "" {
-			// Source-backed entries are opened dynamically by mcpSourceScope
-			// at run/scenario/session boundaries — not registered statically.
-			continue
-		}
-		mcpServerConfig := mcp.ServerConfig{
-			Name:       serverCfg.Name,
-			Command:    serverCfg.Command,
-			Args:       serverCfg.Args,
-			Env:        serverCfg.Env,
-			WorkingDir: serverCfg.WorkingDir,
-			URL:        serverCfg.URL,
-			Headers:    serverCfg.Headers,
-			TimeoutMs:  serverCfg.TimeoutMs,
-		}
-		if serverCfg.ToolFilter != nil {
-			mcpServerConfig.ToolFilter = &mcp.ToolFilter{
-				Allowlist: serverCfg.ToolFilter.Allowlist,
-				Blocklist: serverCfg.ToolFilter.Blocklist,
-			}
-		}
-		if err := registry.RegisterServer(mcpServerConfig); err != nil {
-			return nil, fmt.Errorf("failed to register MCP server %s: %w", serverCfg.Name, err)
-		}
-	}
-
-	return registry, nil
+	return arenamcp.NewRegistryFromConfig(cfg)
 }
 
 // newConversationExecutor creates the conversation executor with self-play support if enabled.

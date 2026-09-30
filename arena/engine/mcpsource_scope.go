@@ -134,10 +134,11 @@ func (m *mcpSourceScope) openOne(ctx context.Context, entry *config.MCPServerCon
 		return openEntry{}, fmt.Errorf("mcp server %q: source %q Open failed: %w", entry.Name, entry.Source, err)
 	}
 	serverCfg := mcp.ServerConfig{
-		Name:      entry.Name,
-		URL:       conn.URL,
-		Headers:   conn.Headers,
-		TimeoutMs: entry.TimeoutMs,
+		Name:          entry.Name,
+		URL:           conn.URL,
+		Headers:       conn.Headers,
+		TransportName: mcp.Transport(entry.Transport),
+		TimeoutMs:     entry.TimeoutMs,
 	}
 	if entry.ToolFilter != nil {
 		serverCfg.ToolFilter = &mcp.ToolFilter{
