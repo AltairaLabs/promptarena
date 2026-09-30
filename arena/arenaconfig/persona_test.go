@@ -658,3 +658,40 @@ spec:
 		t.Errorf("Expected fragment rejection error, got: %v", err)
 	}
 }
+
+// An explicit spec.id is the persona's identity; metadata.name only fills it in
+// when spec.id is absent. Scenarios reference personas by this ID, so a
+// clobbered spec.id makes `persona: <spec.id>` miss the lookup.
+func TestLoadPersona_SpecIDPrecedence(t *testing.T) {
+	tests := []struct {
+		name   string
+		specID string
+		wantID string
+	}{
+		{name: "explicit spec.id wins over metadata.name", specID: "  id: customer\n", wantID: "customer"},
+		{name: "metadata.name is the fallback when spec.id is empty", specID: "", wantID: "customer-persona"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			personaFile := filepath.Join(t.TempDir(), "customer.persona.yaml")
+			content := "apiVersion: promptkit.altairalabs.ai/v1alpha1\n" +
+				"kind: Persona\n" +
+				"metadata:\n" +
+				"  name: customer-persona\n" +
+				"spec:\n" +
+				tt.specID +
+				"  system_prompt: \"You are a customer\"\n"
+			if err := os.WriteFile(personaFile, []byte(content), 0o600); err != nil {
+				t.Fatal(err)
+			}
+
+			persona, err := LoadPersona(personaFile)
+			if err != nil {
+				t.Fatalf("LoadPersona: %v", err)
+			}
+			if persona.ID != tt.wantID {
+				t.Errorf("persona.ID = %q, want %q", persona.ID, tt.wantID)
+			}
+		})
+	}
+}
