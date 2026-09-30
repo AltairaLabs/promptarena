@@ -15,6 +15,15 @@ registries:
     type: npm-registry
     url: https://npm.pkg.github.com
     token: ${{secrets.NODE_AUTH_TOKEN}}
+    # Only @altairalabs lives here. Without a scope Dependabot infers this is
+    # the GLOBAL registry: a pnpm lockfile records tarball URLs only for
+    # non-default registries, so every URL it sees is on npm.pkg.github.com
+    # (dependabot-core npmrc_builder#global_registry), and pnpm then looked up
+    # react, @types/react-dom and the rest here and failed with
+    # ERR_PNPM_NO_MATCHING_VERSION. A scoped credential makes Dependabot write
+    # only `@altairalabs:registry=` for it. Reproduced and verified with the
+    # Dependabot CLI against arena/web/frontend.
+    scope: "@altairalabs"
 
 updates:
   # Go module (single module at repo root: arena + packc)
@@ -76,37 +85,12 @@ updates:
       prefix: "chore(deps)"
       include: "scope"
 
-  # npm - promptarena GitHub Action
-  - package-ecosystem: "npm"
-    directory: "/.github/actions/promptarena-action"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-    open-pull-requests-limit: 5
-    labels:
-      - "dependencies"
-      - "npm"
-      - "github-action"
-    commit-message:
-      prefix: "chore(deps)"
-      include: "scope"
-
-  # npm - packc GitHub Action
-  - package-ecosystem: "npm"
-    directory: "/.github/actions/packc-action"
-    schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-    open-pull-requests-limit: 5
-    labels:
-      - "dependencies"
-      - "npm"
-      - "github-action"
-    commit-message:
-      prefix: "chore(deps)"
-      include: "scope"
+  # The two TypeScript actions under .github/actions/ are not listed. Their
+  # npm updates always failed: the updater builds a valid change (verified
+  # with the Dependabot CLI), but GitHub rejects Dependabot's PR for files
+  # under .github/ ("The request contains invalid or unauthorized changes",
+  # reported as dependency_file_not_supported for every dependency). Bump
+  # their package.json by hand.
 
   # npm - Arena web UI (the React frontend embedded into the binary)
   #
