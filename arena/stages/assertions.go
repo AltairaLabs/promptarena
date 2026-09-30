@@ -74,16 +74,18 @@ func (s *ArenaAssertionStage) Process(
 ) error {
 	defer close(output)
 
+	// A canceled turn still ends with the reply the model had started and its
+	// error, emitted after the cancellation. They must reach the save stage
+	// and the result, so this stage reads its input to the end and forwards
+	// with a bounded wait rather than returning on ctx.Done.
+	var fwd cancelForwarder
+
 	// Skip if no assertions configured
 	if len(s.assertionConfigs) == 0 {
 		for elem := range input {
-			select {
-			case output <- elem:
-			case <-ctx.Done():
-				return ctx.Err()
-			}
+			fwd.forward(ctx, output, elem)
 		}
-		return nil
+		return ctx.Err()
 	}
 
 	// Collect all elements. Per-element metadata is typed (elem.Meta);
@@ -94,6 +96,16 @@ func (s *ArenaAssertionStage) Process(
 
 	for elem := range input {
 		elements = append(elements, elem)
+	}
+
+	// A turn that failed has no reply to judge — at most a fragment of one,
+	// marked interrupted. Judging it would replace the turn's real error
+	// with an assertion failure, so its elements pass through unjudged.
+	if turnFailed(elements) {
+		for i := range elements {
+			fwd.forward(ctx, output, elements[i])
+		}
+		return ctx.Err()
 	}
 
 	// Build messages list from elements for assertion execution
@@ -107,25 +119,31 @@ func (s *ArenaAssertionStage) Process(
 
 	// Forward all elements (now with assertions attached to assistant message)
 	for i := range elements {
-		select {
-		case output <- elements[i]:
-		case <-ctx.Done():
-			return ctx.Err()
-		}
+		fwd.forward(ctx, output, elements[i])
 	}
 
 	// Emit error element if validation failed (pipeline collects errors from elements)
 	if len(validationErrors) > 0 {
 		validationErr := fmt.Errorf("validation failed: %v", validationErrors)
-		select {
-		case output <- stage.NewErrorElement(validationErr):
-		case <-ctx.Done():
-			return ctx.Err()
-		}
+		fwd.forward(ctx, output, stage.NewErrorElement(validationErr))
 		return validationErr
 	}
 
-	return nil
+	return ctx.Err()
+}
+
+// turnFailed reports whether a turn's elements carry its failure: an error
+// element, or a reply kept from a stream that died partway.
+func turnFailed(elements []stage.StreamElement) bool {
+	for i := range elements {
+		if elements[i].Error != nil {
+			return true
+		}
+		if m := elements[i].Message; m != nil && m.FinishReason == types.FinishReasonInterrupted {
+			return true
+		}
+	}
+	return false
 }
 
 // extractMessagesFromElements extracts messages from elements for assertion validation.
@@ -411,11 +429,12 @@ func deepCloneMessages(messages []types.Message) []types.Message {
 	for i := range messages {
 		msg := &messages[i]
 		cloned[i] = types.Message{
-			Role:      msg.Role,
-			Content:   msg.Content,
-			Timestamp: msg.Timestamp,
-			LatencyMs: msg.LatencyMs,
-			Source:    msg.Source,
+			Role:         msg.Role,
+			Content:      msg.Content,
+			Timestamp:    msg.Timestamp,
+			LatencyMs:    msg.LatencyMs,
+			Source:       msg.Source,
+			FinishReason: msg.FinishReason,
 		}
 
 		if len(msg.ToolCalls) > 0 {

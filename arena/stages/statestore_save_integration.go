@@ -272,16 +272,15 @@ func (d *collectedData) applyTranscriptionToMessage(msgIdx int, transcript strin
 	}
 }
 
-// forwardElements just forwards elements without collecting.
+// forwardElements just forwards elements without collecting. It reads to the
+// end even after cancellation, so a canceled turn's error still reaches the
+// result (see cancelForwarder).
 func forwardElements(ctx context.Context, input <-chan stage.StreamElement, output chan<- stage.StreamElement) error {
+	var fwd cancelForwarder
 	for elem := range input {
-		select {
-		case output <- elem:
-		case <-ctx.Done():
-			return ctx.Err()
-		}
+		fwd.forward(ctx, output, elem)
 	}
-	return nil
+	return ctx.Err()
 }
 
 // arenaSaveStore is the subset of *statestore.ArenaStateStore that this
@@ -345,24 +344,23 @@ func (s *ArenaStateStoreSaveStage) Process(
 		caster = s.newLiveBroadcaster(prevLen)
 	}
 
+	// A canceled turn's partial reply and its error arrive after the
+	// cancellation. Keep reading so they are saved, and keep forwarding
+	// (bounded) so the error reaches the turn's result — dropping it would
+	// make a canceled turn look like a success.
+	var fwd cancelForwarder
 	for elem := range input {
 		data.collectFromElement(&elem)
 		pos := len(data.messages) - 1
 		if caster != nil && elem.Message != nil {
 			caster.observe(&elem, pos)
 		}
-		cachedState = s.maybeIncrementalSave(ctx, arenaStore, &elem, data, cachedState, ctxCanceled)
-
-		// Try to forward element, but if context is canceled, just drain remaining input
-		// so we still capture trailing messages (including partial responses) on timeout.
-		select {
-		case output <- elem:
-		case <-ctx.Done():
-			if !ctxCanceled {
-				logger.Debug("ArenaStateStoreSaveStage: context canceled, will drain remaining elements")
-				ctxCanceled = true
-			}
+		if !ctxCanceled && ctx.Err() != nil {
+			logger.Debug("ArenaStateStoreSaveStage: context canceled, will drain remaining elements")
+			ctxCanceled = true
 		}
+		cachedState = s.maybeIncrementalSave(ctx, arenaStore, &elem, data, cachedState, ctxCanceled)
+		fwd.forward(ctx, output, elem)
 	}
 
 	logger.Debug("ArenaStateStoreSaveStage: final save",
@@ -381,7 +379,7 @@ func (s *ArenaStateStoreSaveStage) Process(
 		return fmt.Errorf("arena state store save: %w", err)
 	}
 
-	return nil
+	return ctx.Err()
 }
 
 // liveBroadcaster derives the transcript-absolute index of each streamed
