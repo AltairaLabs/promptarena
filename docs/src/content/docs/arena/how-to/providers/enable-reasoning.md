@@ -79,7 +79,7 @@ spec:
 
 Without `api_mode: responses`, `reasoning_summary` does nothing whatever you set it to, and `reasoning` comes back empty.
 
-`reasoning_summary` is separately gated: requesting summaries requires a **verified OpenAI org**. Unverified, the model still reasons and you are still billed reasoning tokens — the trace just never reaches you. An empty `reasoning` on OpenAI therefore has two quite different causes worth distinguishing: wrong API mode (fixable in config) or an unverified org (not).
+`reasoning_summary` is separately gated: requesting summaries requires a **verified OpenAI org**. Unverified, the model still reasons and you are still billed reasoning tokens — the trace never reaches you. An empty `reasoning` on OpenAI therefore has two quite different causes worth distinguishing: wrong API mode (fixable in config) or an unverified org (not).
 
 ## Verify capture
 
@@ -96,7 +96,7 @@ Reasoning is visible in:
 
 - **JSON results** — the check above.
 - **TUI** (`promptarena run` without `--ci`) — a `💭 Reasoning` section in the turn detail; interactive and voice sessions stream it live.
-- **Web UI** (`promptarena serve`) — a collapsible reasoning disclosure on the message, for both live runs and historical results, including on either side of a tool call. Note that unlike the TUI it does not stream token-by-token: the trace appears once, when the message lands.
+- **Web UI** (`promptarena serve`) — a collapsible reasoning disclosure on the message, for both live runs and historical results, including on either side of a tool call. Unlike the TUI, it does not stream token-by-token: the trace appears once, when the message lands.
 
 One surface does **not** show it: the **markdown report** (`out/results.md`) carries the summary, per-run and cost tables only. It does print a `reasoning` value against assertions, but that is an LLM judge's reasoning for its verdict — unrelated to model thinking.
 
@@ -117,7 +117,7 @@ Trace length tracks problem difficulty, and this surprises people more than the 
 
 A one-step question yields little or nothing to summarise — models frequently return an **empty** trace for it while producing hundreds of characters on either side of it in the same conversation. That is not a capture failure.
 
-If you are building a reasoning test, give it something to chew on: several chained derivations, or a follow-up that has to combine earlier results. `examples/reasoning-test/` does this deliberately, and its turn 3 (a single addition) reliably returns an empty trace between two turns that don't — a useful calibration point when you are deciding whether your own empty trace is a bug or the expected result.
+If you are building a reasoning test, give it something to chew on: several chained derivations, or a follow-up that has to combine earlier results. `examples/reasoning-test/` does this, and its turn 3 (a single addition) reliably returns an empty trace between two turns that don't — a useful calibration point when you are deciding whether your own empty trace is a bug or the expected result.
 
 ## Reasoning with tools
 

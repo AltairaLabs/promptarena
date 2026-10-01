@@ -116,8 +116,8 @@ When the source's `Open()` returns, Arena:
    tool as a `ToolDescriptor` in the tools registry under its **raw**
    MCP name (`Read`, `Edit`, …) — not the namespaced
    `mcp__server__tool` form used by static MCP entries. This keeps
-   pack-author ergonomics simple: the sandbox is "just another set of
-   tools".
+   pack-author ergonomics simple: the sandbox is another set of
+   tools.
 3. Routing is unchanged — `MCPExecutor` looks up the owning server via
    the registry's tool index, regardless of namespace.
 
@@ -240,7 +240,7 @@ spec:
 
 The session-scoped MCP source keeps the container alive across both
 the agent's tool calls and the `tool_exec` gate's call — the gate
-just runs `run_tests` one more time after the agent declares done,
+runs `run_tests` one more time after the agent declares done,
 and the test result drives the hard gate.
 
 ---

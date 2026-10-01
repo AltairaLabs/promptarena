@@ -238,7 +238,7 @@ The Markdown report shows side-by-side provider results. For an interactive view
 
 ## Step 8: Test Specific Providers
 
-Sometimes you want to test just one or two providers:
+Sometimes you want to test only one or two providers:
 
 ```bash
 # Test only OpenAI

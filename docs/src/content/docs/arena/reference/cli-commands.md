@@ -669,7 +669,7 @@ promptarena export | jq '.prompts | keys'
 ### Notes
 
 - The config must contain `prompt_configs` (inline prompts). Configs that reference pre-built pack files cannot be exported.
-- Schema validation is performed against the embedded PromptPack schema. The `PROMPTKIT_SCHEMA_SOURCE=local` environment variable can be used to validate against in-repo schemas when developing new fields that have not yet been published to the hosted schema location.
+- Schema validation is performed against the embedded PromptPack schema. The `PROMPTKIT_SCHEMA_SOURCE=local` environment variable validates against in-repo schemas when developing new fields that are not published to the hosted schema location.
 - Skill validation and workflow validation are run automatically. Errors are fatal; warnings are printed to stderr.
 
 ---
@@ -1431,6 +1431,7 @@ spec:
     output:
       dir: out
       formats: ["json", "markdown"]
+```
 
 PromptArena supports multimodal content (images, audio, video) in test scenarios with comprehensive media rendering in all output formats.
 
@@ -1756,7 +1757,7 @@ project/
 
 ---
 
-## Media Assertions (Phase 1)
+## Media Assertions
 
 Arena provides six specialized media validators to test media content in LLM responses. These assertions validate format, dimensions, duration, and resolution of images, audio, and video outputs.
 

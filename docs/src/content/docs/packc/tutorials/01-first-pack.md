@@ -8,7 +8,7 @@ Create your first [PromptPack](https://promptpack.org)-compliant prompt package 
 
 ## What You'll Build
 
-A `.pack.json` file that conforms to the [PromptPack open standard](https://promptpack.org)—a vendor-neutral format that works with any AI framework, not just PromptKit.
+A `.pack.json` file that conforms to the [PromptPack open standard](https://promptpack.org)—a vendor-neutral format that works with any AI framework, not only PromptKit.
 
 ## Learning Objectives
 
@@ -361,7 +361,7 @@ Congratulations on completing your first pack!
 
 You've created a [PromptPack](https://promptpack.org)-compliant package that:
 
-- **Is portable** — Works with any PromptPack-compatible runtime, not just PromptKit
+- **Is portable** — Works with any PromptPack-compatible runtime, not only PromptKit
 - **Is validated** — Conforms to the open specification
 - **Is production-ready** — Can be versioned, deployed, and shared
 

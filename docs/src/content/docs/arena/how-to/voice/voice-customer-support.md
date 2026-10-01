@@ -11,10 +11,10 @@ Voice agents are hard to evaluate because the failure modes are conversational, 
 
 PromptArena makes the conversation a first-class test subject:
 
-- A scripted **persona** (driven by a text LLM) initiates and sustains the call. Four personas ship with the example — aggressive, impersonator, anxious, patient — exercising hostile and cooperative paths.
+- A scripted **persona** (driven by a text LLM) initiates and sustains the call. Four personas ship with the example (aggressive, impersonator, anxious, patient), exercising hostile and cooperative paths.
 - A **realtime voice agent** (OpenAI GPT-4o Realtime, Gemini Live) receives the persona's audio and responds with audio and tool calls.
 - **Runtime tools** execute for real (mock-backed for the demo) — the agent's `lookup_order`, `check_warranty_status`, `issue_refund`, `escalate_to_human` calls hit real handlers and produce real results that feed back into the conversation.
-- **Conversation-level assertions** check the pattern: which tools fired, with what args, in what order, plus per-turn content checks. These are pass/fail signals, not just LLM-graded scores.
+- **Conversation-level assertions** check the pattern: which tools fired, with what args, in what order, plus per-turn content checks. These are pass/fail signals, not only LLM-graded scores.
 
 What makes this one config rather than four tools: voice, a scripted multi-turn user, runtime tools and structured assertions all describe the same scenario. Approaches that evaluate transcripts alone, or audio without a scripted user, or a scripted user without tool execution, each cover part of it.
 
@@ -49,7 +49,7 @@ Per scenario:
 - **Patient (baseline)** — genuine in-warranty defect. Pass = full happy path, refund issued.
 - **Anxious delivery** — anxious customer can't find a delivered parcel. Pass = agent looks up the order, sees it was delivered with tracking, reassures.
 
-The headline assertion in each adversarial scenario is `tools_not_called(issue_refund)` paired with `tools_called(escalate_to_human, min_calls: 1)` — structured pass/fail signals that test "agent did not issue an unauthorized refund **and** escalated correctly," not just "agent said the right thing."
+The headline assertion in each adversarial scenario is `tools_not_called(issue_refund)` paired with `tools_called(escalate_to_human, min_calls: 1)` — structured pass/fail signals that test "agent did not issue an unauthorized refund **and** escalated correctly," not only "agent said the right thing."
 
 ## Required API keys
 
@@ -62,7 +62,7 @@ Selfplay drives the persona via a real text LLM, so a fully-mocked end-to-end ru
 | `CARTESIA_API_KEY` | Cartesia TTS for two of the personas |
 | `ELEVENLABS_API_KEY` | ElevenLabs v3 TTS for the anxious-delivery persona |
 
-The patient-baseline scenario uses OpenAI's `nova` voice, so it works with just `OPENAI_API_KEY` + `GEMINI_API_KEY` (no Cartesia / ElevenLabs).
+The patient-baseline scenario uses OpenAI's `nova` voice, so it works with only `OPENAI_API_KEY` + `GEMINI_API_KEY` (no Cartesia / ElevenLabs).
 
 ## CI gate
 

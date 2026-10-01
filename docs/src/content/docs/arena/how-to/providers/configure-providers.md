@@ -445,7 +445,7 @@ conversation_assertions:
 (See [Classify-backed Checks](https://promptkit.altairalabs.ai/reference/checks/#classify-backed-checks) for the full convention.)
 
 When HuggingFace returns a 503 "model is loading" the assertion is
-recorded as **skipped**, not failed — the model isn't broken, it just
+recorded as **skipped**, not failed — the model isn't broken, it
 hasn't initialized. Reruns after the model warms up will score normally.
 
 ### Dedicated endpoints
@@ -566,7 +566,7 @@ spec:
 
 ### How It Works
 
-Any provider can declare `headers`, not just OpenAI-compatible gateways. The headers are applied after the provider sets its own built-in headers (auth, content type, etc.), so collision detection kicks in before any bytes leave the client. If you need to override a built-in header — don't. Use the `credential` field for auth instead.
+Any provider can declare `headers`, not only OpenAI-compatible gateways. The headers are applied after the provider sets its own built-in headers (auth, content type, etc.), so collision detection kicks in before any bytes leave the client. If you need to override a built-in header — don't. Use the `credential` field for auth instead.
 
 ## Streaming and Reliability
 

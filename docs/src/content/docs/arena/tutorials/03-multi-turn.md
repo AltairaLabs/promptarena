@@ -18,7 +18,7 @@ Learn how to test complex multi-turn conversations that maintain context across 
 
 ## Why Multi-Turn Testing?
 
-Real LLM applications involve conversations, not just single Q&A:
+Real LLM applications involve conversations as well as single Q&A:
 - **Customer support**: Back-and-forth troubleshooting
 - **Chatbots**: Building rapport over multiple exchanges
 - **Assistants**: Following complex instructions step-by-step

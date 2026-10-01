@@ -23,7 +23,7 @@ cd examples/model-migration
 promptarena serve
 ```
 
-The web UI lays the suite out as a scenario × provider matrix, one column per model. Click a cell to filter the run ledger below it to that scenario/model pair, then open a run to read the output and its assertion results. A wide field — a bake-off across a dozen or more models — scrolls sideways with the scenario column pinned, so every contender stays reachable.
+The web UI lays the suite out as a scenario × provider matrix, one column per model. Click a cell to filter the run ledger below it to that scenario/model pair, then open a run to read the output and its assertion results. A wide field (a bake-off across a dozen or more models) scrolls sideways with the scenario column pinned, so every contender stays reachable.
 
 Headless / CI:
 
@@ -102,7 +102,7 @@ jobs:
           path: examples/model-migration/out/
 ```
 
-Uploading the report as an artifact lets reviewers eyeball the per-model output on the PR — useful when the question is "did this prompt regress on the new model?" rather than just "did anything fail?"
+Uploading the report as an artifact lets reviewers eyeball the per-model output on the PR — useful when the question is "did this prompt regress on the new model?" rather than only "did anything fail?"
 
 ## Extending it
 

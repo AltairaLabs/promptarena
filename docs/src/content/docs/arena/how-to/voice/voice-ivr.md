@@ -98,7 +98,7 @@ jobs:
 
 ## Switching to live voice
 
-The scenarios are voice-agnostic by design — to drive the same workflow through a duplex provider:
+The scenarios are voice-agnostic. To drive the same workflow through a duplex provider:
 
 1. Add a duplex provider (e.g., `providers/openai-realtime.provider.yaml`) and register it in `config.arena.yaml` under `providers:`.
 2. Add a `duplex:` block to each scenario (see `examples/voice-refund-demo/scenarios/*.yaml` for the shape).

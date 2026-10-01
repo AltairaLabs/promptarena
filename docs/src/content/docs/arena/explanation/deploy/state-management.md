@@ -49,7 +49,7 @@ The `.promptarena/` directory is created automatically when state is first saved
 
 | Field | Description |
 |-------|-------------|
-| `version` | State file format version (currently `1`) |
+| `version` | State file format version (`1`) |
 | `provider` | Name of the adapter that created this state |
 | `environment` | Target environment name |
 | `last_deployed` | RFC 3339 timestamp of last successful deployment |

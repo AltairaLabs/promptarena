@@ -479,7 +479,7 @@ description: "Handles customer support inquiries"
 
 ## Validation Capabilities
 
-PackC's validation currently covers:
+PackC's validation covers:
 
 - Schema validation
 - Template syntax checking

@@ -172,7 +172,7 @@ Summary: 0 to create, 1 to update, 0 to delete
 
 ## Step 7: Clean Up Environments
 
-Tear down environments you no longer need:
+Tear down environments you do not need:
 
 ```bash
 # Destroy dev

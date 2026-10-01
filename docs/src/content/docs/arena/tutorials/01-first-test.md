@@ -255,7 +255,7 @@ open out/results.md
 
 ## Understanding Your First Test
 
-Let's break down what just happened:
+Let's break down what happened:
 
 ### 1. Configuration Loading
 Arena loaded your prompt, provider, and scenario files.

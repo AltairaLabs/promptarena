@@ -18,14 +18,14 @@ This mirrors how real voice assistants work, making it essential for testing voi
 
 ### Traditional Audio Testing
 
-```
-┌──────────────────────────────────────────────────┐
-│ 1. Load entire audio file                        │
-│ 2. Send as single blob to provider               │
-│ 3. Wait for complete transcription               │
-│ 4. Get text response                             │
-│ 5. Move to next turn                             │
-└──────────────────────────────────────────────────┘
+Each turn runs these steps in sequence:
+
+```mermaid
+flowchart LR
+    A["1. Load entire audio file"] --> B["2. Send as single blob to provider"]
+    B --> C["3. Wait for complete transcription"]
+    C --> D["4. Get text response"]
+    D --> E["5. Move to next turn"]
 ```
 
 **Limitations:**
@@ -36,14 +36,14 @@ This mirrors how real voice assistants work, making it essential for testing voi
 
 ### Duplex Audio Testing
 
-```
-┌──────────────────────────────────────────────────┐
-│ 1. Open WebSocket session                        │
-│ 2. Stream audio chunks (640 bytes = 20ms)        │
-│ 3. Provider detects speech/silence boundaries    │
-│ 4. Receive audio/text response in real-time      │
-│ 5. Continue streaming more input                 │
-└──────────────────────────────────────────────────┘
+A duplex session runs these steps:
+
+```mermaid
+flowchart LR
+    A["1. Open WebSocket session"] --> B["2. Stream audio chunks (640 bytes = 20ms)"]
+    B --> C["3. Provider detects speech/silence boundaries"]
+    C --> D["4. Receive audio/text response in real-time"]
+    D --> E["5. Continue streaming more input"]
 ```
 
 **Benefits:**

@@ -199,7 +199,10 @@ spec:
     seed: 42
     output:
       dir: out
-      formats: ["json", "markdown"] Arena registers the tool with the pipeline and handles consent simulation automatically based on your scenario overrides.
+      formats: ["json", "markdown"]
+```
+
+Arena registers the tool with the pipeline and handles consent simulation automatically based on your scenario overrides.
 
 ## Step 5: Run the Tests
 

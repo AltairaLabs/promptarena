@@ -55,7 +55,7 @@ Read the printed URL rather than assuming 8080.
 ## The Dashboard
 
 Opening the UI lands you on the dashboard. It reads the loaded config and any
-previously saved results (Arena hydrates `*.json` files from the config's output
+saved results (Arena hydrates `*.json` files from the config's output
 directory on startup) and shows:
 
 - The loaded configuration — providers, scenarios, and regions.
@@ -125,8 +125,8 @@ promptarena serve --audio-monitor on --audio-rate 24000
 
 ## Free Demos with Mock Providers
 
-Add `--mock-provider` to replace **every** configured provider — the assistant, the
-self-play user role, and any TTS path — with mocks, so a demo makes **zero real API
+Add `--mock-provider` to replace **every** configured provider (the assistant, the
+self-play user role, and any TTS path) with mocks, so a demo makes **zero real API
 calls** and costs nothing. Pair it with `--mock-config` to serve canned scenario
 responses:
 

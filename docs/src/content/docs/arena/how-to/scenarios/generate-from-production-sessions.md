@@ -4,7 +4,7 @@ description: Turn a session that went wrong in production into an arena scenario
 ---
 
 A production session that scored badly on an eval, tripped a guardrail, or
-simply did the wrong thing is the best regression test you will ever write, if
+did the wrong thing is the best regression test you will ever write, if
 it becomes a scenario before anyone forgets it. `promptarena generate --source
 <adapter>` pulls sessions from the platform your deploy adapter targets and
 writes one scenario per session.

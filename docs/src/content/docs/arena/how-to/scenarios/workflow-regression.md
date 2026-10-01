@@ -150,8 +150,8 @@ Keyless: both examples use mock providers with scripted `workflow__transition` c
 ## Unit-testing a single stage
 
 The scenarios above drive the whole lifecycle from the entry state. To exercise
-**one** stage in isolation — without first walking the agent through every earlier
-transition — pin the scenario's `task_type` to that stage's `prompt_task`:
+**one** stage in isolation, without first walking the agent through every earlier
+transition, pin the scenario's `task_type` to that stage's `prompt_task`:
 
 ```yaml
 spec:

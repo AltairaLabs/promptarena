@@ -24,7 +24,7 @@ Cloud providers each have unique APIs, resource models, and authentication flows
 - **Plans** deployments before applying them (like `terraform plan`)
 - **Applies** changes with streaming progress feedback
 - **Tracks** deployment state with checksums and versioning
-- **Destroys** resources cleanly when no longer needed
+- **Destroys** resources cleanly when they are not needed
 - **Manages** adapter installation and discovery
 
 ---

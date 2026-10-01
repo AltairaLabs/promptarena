@@ -161,7 +161,7 @@ promptarena run --scenario customer-support
 ## Substituting a Single Provider
 
 `--mock-provider` replaces *every* provider with a generic mock. When you need to
-swap just one configured provider for another at run time — without editing config —
+swap one configured provider for another at run time without editing config,
 use `--override-provider from=to` (repeatable). It rewrites the `from` provider with
 the spec of the `to` provider, so every reference to `from` (candidate selection,
 self-play roles, **and judges**) picks up the new implementation.
@@ -186,21 +186,21 @@ hard-errors rather than silently leaving the original provider in place:
 
 ## Development Workflow
 
-### Phase 1: Build with Mocks
+### Step 1: Build with Mocks
 
 ```bash
 # Fast iteration with mock responses
 promptarena run --mock-provider --mock-config dev-mocks.yaml
 ```
 
-### Phase 2: Validate Structure
+### Step 2: Validate Structure
 
 ```bash
 # Verify assertions work with mock data
 promptarena run --mock-provider --format junit
 ```
 
-### Phase 3: Real Provider Testing
+### Step 3: Real Provider Testing
 
 ```bash
 # Test with actual providers

@@ -149,7 +149,7 @@ turns:
 
 ### 5. Failure is Data
 
-In LLM testing, failures aren't just bugs—they're learning opportunities:
+In LLM testing, failures are learning opportunities as well as bugs:
 
 - **Pattern detection**: What types of queries fail?
 - **Edge case discovery**: Where do models struggle?
@@ -160,20 +160,15 @@ In LLM testing, failures aren't just bugs—they're learning opportunities:
 
 ### Layered Testing Pyramid
 
-```
-         ┌─────────────┐
-         │  Exploratory │  Manual testing, edge cases
-         │   Testing    │
-         ├─────────────┤
-         │ Integration  │  Multi-turn, complex scenarios
-         │    Tests     │
-         ├─────────────┤
-         │  Scenario    │  Single-turn, common patterns
-         │   Tests      │
-         ├─────────────┤
-         │   Smoke      │  Basic functionality, mock providers
-         │   Tests      │
-         └─────────────┘
+The pyramid runs from exploratory testing at the top down to smoke tests at the base:
+
+```mermaid
+flowchart TB
+    A["Exploratory Testing: manual testing, edge cases"]
+    B["Integration Tests: multi-turn, complex scenarios"]
+    C["Scenario Tests: single-turn, common patterns"]
+    D["Smoke Tests: basic functionality, mock providers"]
+    A --> B --> C --> D
 ```
 
 **Implementation:**

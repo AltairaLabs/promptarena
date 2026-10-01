@@ -86,7 +86,7 @@ conversation_assertions:
 
 ## What's not covered
 
-`expressive: true` flows persona-side tags through to TTS. The reverse direction — asserting on the *agent's* audio output for warmth / professionalism / emotional appropriateness — needs richer audio-side metric capture. The only audio-side assertions are structural (`audio_duration`, `audio_format`); content-of-audio assertions go through the LLM-judged path operating on the text representation of the agent's speech.
+`expressive: true` flows persona-side tags through to TTS. The reverse direction (asserting on the *agent's* audio output for warmth / professionalism / emotional appropriateness) needs richer audio-side metric capture. The only audio-side assertions are structural (`audio_duration`, `audio_format`); content-of-audio assertions go through the LLM-judged path operating on the text representation of the agent's speech.
 
 The reference list of supported tags per provider lives in PromptKit's `runtime/tts/markup/` — see the package doc for the canonical dialect and what each TTS adapter recognizes.
 
