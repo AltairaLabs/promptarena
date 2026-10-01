@@ -27,7 +27,7 @@ Complete reference for configuring [duplex](https://promptkit.altairalabs.ai/glo
 
 Duplex mode streams audio in chunks and detects turn boundaries dynamically with [VAD](https://promptkit.altairalabs.ai/glossary#vad) or [ASM](https://promptkit.altairalabs.ai/glossary#asm).
 
-The duplex executor requires only that the provider implement `providers.StreamInputSupport` (`arena/engine/duplex_conversation_executor.go:104`). Gemini (type `gemini`) is one implementation; OpenAI realtime models (model name containing `realtime`), the replay provider and the mock provider also implement it. Gemini Live is not the only option; `gemini` is a registered provider type.
+Duplex runs need a provider that supports stream input (`providers.StreamInputSupport`). Gemini (type `gemini`), OpenAI realtime models (model name containing `realtime`), the replay provider and the mock provider support it.
 
 ---
 
@@ -53,8 +53,6 @@ spec:
       max_retries: 2
       partial_success_min_turns: 2
 ```
-
-`streaming: true` is not required for duplex. Duplex execution is selected solely by `scenario.duplex` being non-nil (`composite_conversation_executor.go:129`), and the duplex executor never reads `Scenario.Streaming`; the field only affects the non-duplex `DefaultConversationExecutor` (`conversation_executor.go:80`, `ShouldStreamTurn`).
 
 ---
 
@@ -97,10 +95,10 @@ Configures how turn boundaries are detected during duplex streaming.
 
 | Mode | Name | Description |
 |------|------|-------------|
-| `asm` | Provider-Native | The provider (Gemini) handles turn detection internally using its automatic speech detection. The arena adds no `AudioTurnStage`. |
+| `asm` | Provider-Native | The provider handles turn detection internally with its own automatic speech detection (for example Gemini's `automaticActivityDetection`). The arena adds no `AudioTurnStage`. |
 | `vad` | Voice Activity Detection | Client-side VAD with configurable silence thresholds. The arena adds an `AudioTurnStage`. |
 
-When the `turn_detection` block is omitted, the executor uses client-side VAD (`shouldUseClientVAD` returns true when `TurnDetection == nil`, `duplex_conversation_executor.go:119-121`). ASM is used only when `turn_detection` is present and `mode` is not `vad` (including an empty `mode`). There is no default of `mode: asm` for the `turn_detection` object.
+Turn detection defaults to client-side VAD when the `turn_detection` block is omitted. A `turn_detection` block whose `mode` is empty or `asm` uses ASM.
 
 ```yaml
 duplex:
@@ -170,8 +168,6 @@ duplex:
     partial_success_min_turns: 3
     ignore_last_turn_session_end: true
 ```
-
-`inter_turn_delay_ms` is not a field of `DuplexResilienceConfig`. The schema's `DuplexResilienceConfig` lists only `max_retries`, `retry_delay_ms`, `partial_success_min_turns`, `ignore_last_turn_session_end`, with `additionalProperties: false`, so the key is rejected by schema validation. Nothing in `arena/` or the pinned runtime reads it. `selfplay_inter_turn_delay_ms` is likewise not a field; the schema rejects it and nothing reads it.
 
 ### Partial Success
 
@@ -277,12 +273,12 @@ turns:
 | Parameter | Value | Description |
 |-----------|-------|-------------|
 | Format | `.wav`, `.pcm` or `.raw` | `AudioFileSource` parses the WAV header and extracts the data chunk; raw files carry no header. Other extensions are rejected with `unsupported audio format: ... (supported: .wav, .pcm, .raw)`. |
-| Sample Rate | 16000 Hz | Chunks read from a file are labelled 16000 Hz regardless of the WAV header; the Gemini encoder rejects any other rate |
-| Bit Depth | 16-bit | Required only for raw `.pcm`/`.raw` files. WAV files with 24-bit, 32-bit or float32 samples are accepted and converted to 16-bit PCM by `AudioFileSource` |
-| Channels | Mono | Every chunk is labelled one channel; there is no downmix |
-| MIME Type | any `audio/` type | `mime_type` must be present (schema) and, where validated, needs only an `audio/` prefix. Decoding follows the file extension, not `mime_type`; the arena labels raw PCM `audio/pcm` (`media_loader.go:543`) |
+| Sample Rate | 16000 Hz | Every chunk read from a file, WAV or raw, is labelled 16000 Hz; the WAV header's rate is not used. The Gemini encoder accepts only 16000 Hz |
+| Bit Depth | 16-bit | Raw `.pcm`/`.raw` files hold 16-bit samples. WAV files with 24-bit, 32-bit or float32 samples are converted to 16-bit PCM by `AudioFileSource` |
+| Channels | Mono | Every chunk is labelled one channel, WAV or raw; audio is not downmixed |
+| MIME Type | any `audio/` type | `mime_type` is required by the schema and needs an `audio/` prefix where validated. Decoding follows the file extension; `mime_type` labels the stored audio |
 
-Only raw PCM files are assumed to be 16 kHz mono 16-bit.
+Source files are 16 kHz mono: 16-bit for raw files, 16/24/32-bit or float32 for WAV.
 
 ### Converting Audio Files
 
@@ -394,7 +390,7 @@ spec:
           - "support"
 ```
 
-`selfplay-user` is not a built-in role value. A turn is self-play only if its role equals the id of a role declared in the arena's `self_play.roles` list (`Registry.IsValidRole`). `selfplay-user` works only when the arena config declares a role with that id (as `examples/voice-refund-demo/config.arena.yaml:67` does).
+A self-play turn's `role` is the `id` of an entry in the arena's `self_play.roles` list. This example assumes the arena config declares a role with the id `selfplay-user`, as `examples/voice-refund-demo/config.arena.yaml` does.
 
 ---
 
@@ -412,8 +408,6 @@ The duplex executor builds the pipeline from these stages, in order. `AudioTurnS
 | `DuplexProviderStage` | Opens a `StreamInputSupport` session over WebSocket, reading `TurnState.SystemPrompt` at session creation |
 | `MediaExternalizerStage` | Externalizes media to storage; added only when media storage is set |
 | `ArenaStateStoreSaveStage` | Saves messages to the state store; added only when a state store is configured |
-
-No `ValidationStage` exists in the duplex pipeline, and no type named `ValidationStage` exists in `arena/` or the pinned runtime. Assertions are not run by a pipeline stage here. Optional audio pacing and monitor-tap stages also appear on the output side.
 
 ---
 

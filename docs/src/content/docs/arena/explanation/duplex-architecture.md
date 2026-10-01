@@ -103,17 +103,17 @@ The session is created lazily when the first element arrives. `PromptAssemblySta
 
 ### Turn Detection
 
-Two modes are available for detecting when a speaker has finished: [ASM](https://promptkit.altairalabs.ai/glossary#asm) (provider-native) and [VAD](https://promptkit.altairalabs.ai/glossary#vad) (client-side).
+Two modes are available for detecting when a speaker has finished: [ASM](https://promptkit.altairalabs.ai/glossary#asm) (provider-native) and [VAD](https://promptkit.altairalabs.ai/glossary#vad) (client-side). If a scenario omits `turn_detection`, Arena uses client-side VAD, which is why `AudioTurnStage` usually appears in the pipeline. ASM applies only when `turn_detection` is present and its mode is not `vad`.
 
 #### ASM Mode (Provider-Native)
 
-The provider (e.g., Gemini Live API) handles turn detection internally:
-
-See [Duplex Configuration Reference](/arena/reference/duplex-config/) for the `turn_detection` settings.
+The provider (for example, the Gemini Live API) handles turn detection internally. Arena adds no `AudioTurnStage`, so the provider's server-side detection decides where a turn ends.
 
 - Provider signals when user stops speaking
 - Simpler configuration
 - Provider-specific behavior
+
+Choose ASM when you want the provider's own turn behavior, as a production client would get. See [Duplex Configuration Reference](/arena/reference/duplex-config/) for the `turn_detection` settings.
 
 #### VAD Mode (Voice Activity Detection)
 
@@ -123,11 +123,15 @@ Client-side VAD with configurable thresholds. See [Duplex Configuration Referenc
 - Consistent across providers
 - Requires threshold tuning
 
+Choose VAD when you need the same turn boundaries across providers, or when you want to tune how long a silence ends a turn.
+
 ## Audio Processing
 
 ### Input Audio Format
 
-Audio must be raw 16 kHz, 16-bit, mono PCM. See [Duplex Configuration Reference](/arena/reference/duplex-config/) for the format parameters.
+Input audio should be 16 kHz mono, supplied as a WAV file or as raw PCM. Arena reads WAV files and converts 24-bit, 32-bit and float samples to 16-bit PCM, but it treats raw PCM files as 16 kHz mono 16-bit.
+
+The rate and channel count matter because Arena does not read them from the file. It labels every chunk as 16 kHz mono, and `AudioResampleStage` then converts that audio to the rate the provider expects. A file recorded at another rate or in stereo is mislabelled rather than converted, so it plays back at the wrong speed or garbled. See [Duplex Configuration Reference](/arena/reference/duplex-config/) for the format parameters.
 
 ### Chunk Streaming
 
@@ -199,7 +203,7 @@ See [Duplex Configuration Reference](/arena/reference/duplex-config/) for the `r
 
 ### Partial Success
 
-Not all tests need to complete every turn. For exploratory testing:
+Not all tests need to complete every turn. Voice sessions can end early for reasons outside the scenario, so a strict pass/fail hides how far a session got. Counting a session as a success after a minimum number of turns suits exploratory testing, where you want to see how the provider behaves up to that point:
 
 ```yaml
 resilience:
