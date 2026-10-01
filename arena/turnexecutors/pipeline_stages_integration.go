@@ -241,17 +241,25 @@ func buildProviderConfig(req *TurnRequest) *stage.ProviderConfig {
 // this value — Arena never allows unlimited cost runs.
 const defaultArenaMaxCostUSD = 2.00
 
-// buildToolPolicy constructs tool policy from scenario config.
+// buildToolPolicy constructs the scenario's tool policy. It is not the whole
+// policy a turn runs under: the runtime's provider stage merges it with the
+// tool_policy of the prompt under test (pipeline.MergeToolPolicy), and that
+// merge only narrows. So a scenario can tighten the pack's limits for a test but
+// never loosen them, and Arena tests the limits the pack ships with.
+//
 // It always returns a non-nil *pipeline.ToolPolicy with finite safety caps:
-//   - MaxRounds: scenario value if >0, else 50
+//   - MaxRounds: scenario value if >0, else unset, so the prompt's
+//     tool_policy.max_rounds applies and the runtime default (50) only when the
+//     prompt sets none. A hard-coded 50 here would cap every prompt at 50.
 //   - MaxCostUSD: scenario value if >0, else defaultArenaMaxCostUSD ($2.00)
 //   - MaxIdenticalToolCalls: scenario value if >0, else 3
+//
+// MaxCostUSD and MaxIdenticalToolCalls are runtime-only safety caps with no
+// pack equivalent, so Arena's defaults for them stand.
 func buildToolPolicy(scenario *arenaconfig.Scenario) *pipeline.ToolPolicy {
-	const defaultRounds = 50
 	const defaultIdentical = 3
 
 	policy := &pipeline.ToolPolicy{
-		MaxRounds:             defaultRounds,
 		MaxCostUSD:            defaultArenaMaxCostUSD,
 		MaxIdenticalToolCalls: defaultIdentical,
 	}

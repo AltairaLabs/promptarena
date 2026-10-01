@@ -32,4 +32,3 @@ spec:
   tool_policy:
     tool_choice: auto
     max_tool_calls_per_turn: 2
-    max_total_tool_calls: 5

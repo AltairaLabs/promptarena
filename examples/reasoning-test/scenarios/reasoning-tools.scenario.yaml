@@ -20,7 +20,6 @@ spec:
   tool_policy:
     tool_choice: auto
     max_tool_calls_per_turn: 4
-    max_total_tool_calls: 8
 
   turns:
     # Turn 1 — nothing is given inline; every fact must come from a tool.
