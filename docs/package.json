@@ -8,7 +8,8 @@
     "build": "astro build",
     "preview": "astro preview",
     "astro": "astro",
-    "check-links": "node check-links.js"
+    "check-links": "node check-links.js",
+    "check:mermaid": "node check-mermaid.mjs"
   },
   "dependencies": {
     "@altairalabs/atlas-tokens": "^0.4.1",
@@ -21,6 +22,7 @@
     "mermaid": "^11.16.0"
   },
   "devDependencies": {
+    "jsdom": "^29.1.1",
     "linkinator": "^7.6.1",
     "playwright": "^1.61.1"
   }

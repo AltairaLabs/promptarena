@@ -48,6 +48,8 @@ being published. Write them for someone outside the project:
   itself; a reader needs to know what does not work, not who is working on it.
 
 The same applies to anything under `docs/src/content/docs/`.
+`docs/STYLE.md` governs those pages; the `/docs-review` skill applies it, and
+`make docs-voice` runs the mechanical subset.
 
 **The other half of this rule lives on the issue.** If closing an issue would make a
 statement in the docs untrue — a documented limitation, a "not supported yet", a
