@@ -15,7 +15,7 @@ PromptArena keeps these distinct:
 | **Guardrail** | An eval applied as production enforcement. | Pack `validators:` block → `runtime/hooks/guardrails/factory.go` → `ProviderHook` | Yes (blocks / replaces) |
 | **Assertion** | An eval or query applied as a test predicate. | Scenario `assertions:` block | Never |
 
-Same code, different roles. The eval primitive is implemented once. Wired into a pack's `validators:` block, it becomes a guardrail — fires in production, mutates content. Observed via `guardrail_triggered` in a scenario, it becomes a test signal — confirms the production primitive caught what it should have.
+Same code, different roles. The eval primitive is implemented once. Wired into a pack's `validators:` block, it becomes a guardrail: it fires in production and mutates content. Observed via `guardrail_triggered` in a scenario, it becomes a test signal that confirms the production primitive caught what it should have.
 
 ## Run it
 
@@ -73,10 +73,10 @@ Both shapes matter — catching violations AND not false-positiving on clean inp
 
 Content filtering usually arrives one of two ways:
 
-- **As a runtime feature** — the runtime catches bad content, but you cannot write tests against the catches without parsing logs.
+- **As a runtime feature** — the runtime catches bad content, but you cannot write tests against what it catches without parsing logs.
 - **As an eval score over transcripts** — you get a number, but in production the agent has already said the bad thing; the check is post-hoc.
 
-PromptArena's three-role model collapses that: the same primitive enforces in real time AND is observable in tests. One implementation. Production catches in real time AND test observes the catch — from the same code.
+PromptArena's three-role model collapses that: the same primitive enforces in real time AND is observable in tests. One implementation. Production catches in real time AND the test observes the firing, from the same code.
 
 Worth pairing with the [voice red-team how-to](/arena/how-to/voice/voice-red-team/) which applies the same three-role pattern under voice with the safety primitives (`bias`, `toxicity`, `pii_leakage`, `role_violation`).
 

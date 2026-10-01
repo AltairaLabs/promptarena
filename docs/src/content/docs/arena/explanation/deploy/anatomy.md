@@ -32,7 +32,7 @@ flowchart LR
 
 ## The pack is the portable contract
 
-The pack is **what the agent is**, expressed independently of where it runs. It is environment-agnostic on purpose: the same pack can be tested locally, deployed to staging, and promoted to production unchanged. It carries:
+The pack is **what the agent is**, expressed independently of where it runs. It is environment-agnostic, so the same pack can be tested locally, deployed to staging, and promoted to production unchanged. It carries:
 
 - **Prompts and system templates** — the agent's behavior.
 - **Tool contracts** — the *schemas* the model sees (name, description, input/output shape). This is what the model is allowed to call.
@@ -48,7 +48,7 @@ If a fact about your agent is true *no matter where it runs*, it belongs in the 
 
 ## The deploy config is the environment binding
 
-`deploy.config` supplies what is **inherently specific to one environment** — and therefore deliberately *not* in the pack:
+`deploy.config` supplies what is **inherently specific to one environment**, and therefore *not* in the pack:
 
 - Which concrete model/provider actually serves the agent.
 - How tools actually execute here (real endpoints, handlers, infrastructure).
@@ -65,7 +65,7 @@ The line between pack and config follows one rule: **the pack declares a capabil
 
 **Contract vs handler.** A pack carries a tool's *contract* — the schema the model can call against. It does **not** carry how that tool executes in production. The execution binding (an HTTP endpoint, an MCP server, a gRPC target, …) is environment-specific and is supplied at deploy time by the adapter. So a tool the model can *call* and a tool the platform can *run* are two halves bound from two different inputs.
 
-**Role vs instance.** A pack is written against a *role* — "this agent needs an LLM," "this step needs an embedder" — not against a specific hosted model. The deployment binds those roles to concrete providers. The pack stays portable across providers precisely because it never names one.
+**Role vs instance.** A pack is written against a *role* ("this agent needs an LLM," "this step needs an embedder"), not against a specific hosted model. The deployment binds those roles to concrete providers. The pack stays portable across providers precisely because it never names one.
 
 ### Corollary: test-time config is not deploy-time config
 

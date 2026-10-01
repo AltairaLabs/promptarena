@@ -130,7 +130,7 @@ Setting `groups` on an eval definition overrides the automatic classification en
 }
 ```
 
-This eval will only match when filtering for `compliance` or `safety` — it will no longer match `default`, `long-running`, or `external`.
+This eval matches only when filtering for `compliance` or `safety`. It does not match `default`, `long-running`, or `external`.
 
 ### Filtering by group
 

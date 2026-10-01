@@ -63,7 +63,7 @@ packc compile-prompt --prompt greeting.yaml --output greeting.pack.json
 packc validate greeting.pack.json
 ```
 
-The resulting `.pack.json` can be used with **any** PromptPack-compatible runtime—not just PromptKit.
+The resulting `.pack.json` can be used with **any** PromptPack-compatible runtime, not only PromptKit.
 
 **Next**: [Your First Pack Tutorial](/packc/tutorials/01-first-pack/)
 

@@ -64,7 +64,7 @@ This is the architectural differentiator. PromptArena keeps three roles distinct
 - **Guardrail** — eval applied as production enforcement. Wired in the pack's `validators:` block, runs in production AND in tests, mutates content.
 - **Assertion** — eval or query applied as a test predicate. Observes guardrail firings via `guardrail_triggered`. Never mutates.
 
-Same code, three roles. One implementation. Production catches in real time AND test observes the catch — from the same primitive.
+Same code, three roles. One implementation. Production catches in real time AND the test observes the firing, from the same primitive.
 
 What this buys you is a test signal for enforcement that already exists. If a
 guardrail is only wired into production, the fact that it fired is visible in logs
@@ -81,7 +81,7 @@ Demos:
 
 ## Run a real agent runtime under mock LLMs
 
-Mock-LLM testing usually means mocked everything — tools, state machines, downstream services — which makes it impossible to catch integration bugs. PromptArena runs the **real runtime** (real tools, real workflow state machine, real guardrails) with the LLM mocked. The result: a deterministic test environment where the agent's structural behaviour gets exercised even without provider keys.
+Mock-LLM testing usually means mocked everything (tools, state machines, downstream services), which makes it impossible to catch integration bugs. PromptArena runs the **real runtime** (real tools, real workflow state machine, real guardrails) with the LLM mocked. The result: a deterministic test environment where the agent's structural behaviour gets exercised even without provider keys.
 
 Every demo in this catalog uses this pattern. The CI snippets exit deterministically; the agent's tool-call patterns, workflow transitions, and guardrail firings are real.
 
@@ -104,7 +104,7 @@ Demos:
 
 ## Test RAG with the standard primitives
 
-The named RAG primitives people look for — `faithfulness`, `hallucination`, `contextual_precision`, `contextual_recall`, `contextual_relevancy`, `answer_relevancy` — ship as pure eval handlers and are exercisable as scenario assertions by wrapping each with `type: assertion` and a threshold. PromptArena's framing isn't "we ship the RAG primitives" — it's "we ship the testing framework that consumes them, on a live retrieval agent rather than a fixed transcript."
+The named RAG primitives people look for (`faithfulness`, `hallucination`, `contextual_precision`, `contextual_recall`, `contextual_relevancy`, `answer_relevancy`) ship as pure eval handlers and are exercisable as scenario assertions by wrapping each with `type: assertion` and a threshold. PromptArena's framing isn't "we ship the RAG primitives" — it's "we ship the testing framework that consumes them, on a live retrieval agent rather than a fixed transcript."
 
 Demos:
 

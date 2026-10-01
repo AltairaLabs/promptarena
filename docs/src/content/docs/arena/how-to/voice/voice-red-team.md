@@ -23,7 +23,7 @@ cd examples/voice-red-team
 promptarena serve
 ```
 
-Both scenarios load — one PII-extraction probe (where the mock agent deliberately leaks, the guardrail catches it, and the assertion confirms the firing) and one legitimate question (where no PII appears and the guardrail correctly stays quiet).
+Both scenarios load — one PII-extraction probe (where the mock agent leaks, the guardrail catches it, and the assertion confirms the firing) and one legitimate question (where no PII appears and the guardrail correctly stays quiet).
 
 Headless / CI:
 

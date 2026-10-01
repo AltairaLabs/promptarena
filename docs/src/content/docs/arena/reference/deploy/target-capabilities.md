@@ -32,7 +32,7 @@ Cells marked *unverified* are stated as such rather than guessed.
 | `status` | Yes | Yes | **No** |
 | `import` | No | No | No |
 
-All three return an explicit "not yet supported" error for `import`. Vertex is
+All three reject `import` with an error saying it is unsupported. Vertex is
 the only one where tearing a deployment down is a manual step.
 
 ## What gets created
@@ -71,12 +71,12 @@ Two consequences worth knowing before you pick:
 **Only Vertex runs mock tools.** Neither the Omnia nor the AgentCore adapter
 carries `mock_result` or `mock_template` anywhere, and the AgentCore runtime has
 no mock handling either — a `mock` tool on those targets has nothing behind it.
-If your pack leans on mocked tools, Vertex is currently the only target that
+If your pack leans on mocked tools, Vertex is the only target that
 reproduces `promptarena run` behaviour.
 
 **Only Omnia and AgentCore authenticate live tools.** Vertex forwards URL and
-method and nothing else — no headers, timeouts, redaction or request/response
-mapping — so a live tool needing an auth header cannot work there yet.
+method and nothing else (no headers, timeouts, redaction or request/response
+mapping), so a live tool needing an auth header cannot work there.
 
 On every target, if `tool_specs` never reaches the adapter, tools are advertised
 to the model with nothing able to run them, and the model apologises instead of

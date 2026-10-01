@@ -7,7 +7,7 @@ This how-to walks through `examples/voice-latency-budget/` — a small scenario 
 
 ## What it proves
 
-LLM-driven systems silently slow down: a small prompt change adds a hidden retrieval step, a provider quietly degrades, a tool call gets retried, an agent loops one extra round. Pure single-turn eval misses this — the response looks right, it's just slow. PromptArena makes latency a first-class signal:
+LLM-driven systems silently slow down: a small prompt change adds a hidden retrieval step, a provider quietly degrades, a tool call gets retried, an agent loops one extra round. Pure single-turn eval misses this — the response looks right, but it's slow. PromptArena makes latency a first-class signal:
 
 - The provider stage records `LatencyMs` on every assistant message (LLM round-trip including any in-turn tool-call rounds).
 - Arena bridges `LatencyMs` into the eval context metadata as `latency_ms` so the standard `latency_budget` assertion reads it without any custom plumbing.

@@ -170,7 +170,7 @@ spec:
 Array of prompt configuration references.
 
 **Fields**:
-- `id` (string, required): Internal ID used to reference this prompt in scenarios
+- `id` (string, required): ID that scenarios use to reference this prompt
 - `file` (string, required): Path to PromptConfig YAML file (relative to arena.yaml)
 - `vars` (object, optional): Override template variables defined in the prompt's `variables` with `required: false`
 
@@ -846,9 +846,9 @@ spec:
 
 Declares what the provider supports: `text`, `streaming`, `tools`, `vision`, `audio`, `video`, `json`, `documents`.
 
-**The list is exclusive.** Omit the block entirely — as most examples in this repo do — and everything is permitted. Declare it and you opt out of everything you don't name, so a provider listing only `text` and `streaming` will not be offered tools, and tool calling silently stops working for it.
+**The list is exclusive.** Omit the block entirely (as most examples in this repo do) and everything is permitted. Declare it and you opt out of everything you don't name, so a provider listing only `text` and `streaming` will not be offered tools, and tool calling silently stops working for it.
 
-Declare it when you deliberately want to constrain a provider, or to make a scenario's `required_capabilities` gate meaningful. Otherwise leave it out.
+Declare it when you want to constrain a provider, or to make a scenario's `required_capabilities` gate meaningful. Otherwise leave it out.
 
 #### `unsupported_params`
 

@@ -24,7 +24,7 @@ No config is required to launch — the hub still opens, but pages that need one
 (Run, Chat, Inspect) stay disabled until a config is present. Results default to
 the `out/` directory beside the config.
 
-![The TUI hub menu with five entries — View, Run, Chat, Inspect and Deploy — each with a one-line description, and the loaded config shown above.](/screenshots/tui-hub.png)
+![The TUI hub menu with five entries (View, Run, Chat, Inspect and Deploy), each with a one-line description, and the loaded config shown above.](/screenshots/tui-hub.png)
 
 ## Navigate the five pages
 
@@ -48,7 +48,7 @@ Navigation keys are consistent across the whole hub:
 | `q` | Quit — only at the root menu; inside a page, use `Esc` to go back |
 | `Ctrl-C` | Quit from anywhere |
 
-**View** is always available — it only needs a results directory. **Run**, **Chat**,
+**View** is always available, because it only needs a results directory. **Run**, **Chat**,
 and **Inspect** require a loaded config; if none was discovered, opening one shows
 a notice explaining why. **Deploy** additionally requires the loaded config to have
 a `deploy:` section — see [Deploy from the TUI](#deploy-from-the-tui) below. Switching
@@ -235,7 +235,7 @@ for adapter management.
 ## Recover a wedged terminal
 
 If a session ever hangs, `Ctrl-C` starts a 5-second watchdog and prints a hint.
-Press `Ctrl-C` again — or wait out the 5 seconds — and Arena force-exits, restoring
+Press `Ctrl-C` again (or wait out the 5 seconds) and Arena force-exits, restoring
 the cursor, primary screen buffer, and terminal attributes on the way out. If the
 terminal is still off afterward, `reset` or `stty sane` will finish the cleanup.
 

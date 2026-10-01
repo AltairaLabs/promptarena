@@ -322,8 +322,8 @@ CI should supply the token via the provider's environment variable.
 ### deploy config import
 
 Merge an exported deploy profile into the deploy config and validate it. The
-profile is a JSON or YAML mapping — typically exported by your deploy provider
-(e.g. Omnia) — containing connection details, a scoped token, and discovered
+profile is a JSON or YAML mapping, typically exported by your deploy provider
+(e.g. Omnia), containing connection details, a scoped token, and discovered
 providers/skills. The merge is surgical: only `deploy.config` is touched, and the
 rest of the config file (comments, key order, other sections) is preserved.
 

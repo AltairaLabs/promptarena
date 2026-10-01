@@ -8,8 +8,8 @@ sidebar:
 Arena is built to run unattended. In CI you want headless output, machine-readable
 reports, and a non-zero exit code when something regresses so the pipeline fails
 loudly. This page is the definitive recipe for wiring `promptarena run` into any
-CI/CD system — GitHub Actions (raw binary or the packaged Action), GitLab CI, and
-Jenkins — plus how to make runs deterministic and zero-cost with mock providers.
+CI/CD system: GitHub Actions (raw binary or the packaged Action), GitLab CI, and
+Jenkins. It also covers how to make runs deterministic and zero-cost with mock providers.
 
 For the interactive alternatives, see [Use the TUI](/arena/how-to/interfaces/use-the-tui/)
 and [Use the web UI](/arena/how-to/interfaces/use-the-web-ui/).
@@ -63,12 +63,11 @@ metadata. The deprecated `--html` flag is still accepted and produces `markdown`
 output. See the [output formats reference](/arena/reference/output-formats/)
 for the full schema of each report.
 
-:::note[The HTML report was removed]
-Arena used to emit a self-contained HTML report. It was retired, and the
-markdown report replaces it. The `html` format name, the `--html` flag and the
-`html_report` config key are all still accepted and now produce **markdown**, so
-existing configs and CI scripts keep working — but `--html-file` no longer names
-the output. Use `--markdown-file` instead.
+:::note[There is no HTML report]
+Arena does not emit an HTML report; the markdown report covers it. The `html`
+format name, the `--html` flag and the `html_report` config key are accepted and
+produce **markdown**, so existing configs and CI scripts keep working. `--html-file`
+does not name the output; use `--markdown-file` instead.
 :::
 
 ## Quality gates: fail the build on regressions
@@ -76,7 +75,7 @@ the output. Use `--markdown-file` instead.
 A quality gate is a CI check that exits non-zero on the regressions you want to
 catch before merge — behavioural drift, tool-call regressions, safety guardrails
 that stopped firing, or a latency budget breach. Because `promptarena run --ci`
-already exits non-zero on any assertion failure, wiring the gate is usually just
+already exits non-zero on any assertion failure, wiring the gate is usually
 "make this step a required check."
 
 For noisier real-provider runs, tune the assertions themselves rather than the CI

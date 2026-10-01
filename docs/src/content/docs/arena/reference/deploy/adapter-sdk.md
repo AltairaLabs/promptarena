@@ -420,8 +420,8 @@ type SessionSourceProvider interface {
 }
 ```
 
-Both requests carry the merged deploy `Config` (JSON) — endpoint, workspace,
-`api_token` — so the adapter reaches the platform the same way `Plan`/`Apply` do.
+Both requests carry the merged deploy `Config` (JSON): endpoint, workspace,
+`api_token`. That way the adapter reaches the platform the same way `Plan`/`Apply` do.
 `SessionDetail.Messages` is a `json.RawMessage` holding a JSON array of PromptKit
 `types.Message`, so the `deploy` package stays free of runtime types.
 

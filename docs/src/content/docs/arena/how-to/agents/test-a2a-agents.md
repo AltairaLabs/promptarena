@@ -24,7 +24,7 @@ sequenceDiagram
     ML->>U: "Found 3 papers..."
 ```
 
-Arena spins up mock A2A servers from your config, registers their skills as tools via the Tool Bridge, and connects them to the mock LLM provider. You control both sides — the LLM responses and the A2A agent responses — for fully deterministic tests.
+Arena spins up mock A2A servers from your config, registers their skills as tools via the Tool Bridge, and connects them to the mock LLM provider. You control both sides (the LLM responses and the A2A agent responses) for fully deterministic tests.
 
 ---
 

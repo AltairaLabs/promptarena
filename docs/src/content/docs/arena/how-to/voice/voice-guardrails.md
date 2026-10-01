@@ -50,10 +50,10 @@ conversation_assertions:
 
 Most safety frameworks force a choice:
 
-- **Guardrail-only** (content filters): the runtime catches PII, but you can't write tests against the catches without parsing logs or building a parallel eval pipeline.
+- **Guardrail-only** (content filters): the runtime catches PII, but you can't write tests against what it catches without parsing logs or building a parallel eval pipeline.
 - **Eval-only** (DeepEval `pii_leakage` as a score): you can compute scores on transcripts, but in production the agent has already spoken the PII — the eval is a post-hoc grade, not a defence.
 
-PromptArena's three-role model collapses that: the eval primitive IS the guardrail IS the test signal. One implementation. Production catches in real time AND test observes the catch — from the same code.
+PromptArena's three-role model collapses that: the eval primitive IS the guardrail IS the test signal. One implementation. Production catches in real time AND the test observes the firing, from the same code.
 
 ## Side-by-side with red-team
 

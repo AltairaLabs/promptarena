@@ -139,7 +139,7 @@ spec:
 
 ## MCP — discovered tools (`mode: mcp`)
 
-The tool is provided by an MCP server configured at the arena level. The arena auto-discovers tools from configured servers; the Tool YAML just declares the contract.
+The tool is provided by an MCP server configured at the arena level. The arena auto-discovers tools from configured servers; the Tool YAML only declares the contract.
 
 ```yaml
 spec:

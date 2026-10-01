@@ -127,7 +127,7 @@ Packs can include a `workflow` section that defines an event-driven state machin
 
 | Field | Description |
 |-------|-------------|
-| `version` | Workflow spec version (currently `1`) |
+| `version` | Workflow spec version (`1`) |
 | `entry` | Name of the initial state |
 | `states` | Map of state definitions |
 

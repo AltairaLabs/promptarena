@@ -12,7 +12,7 @@ PromptArena supports multiple output formats for test results, each optimized fo
 | **Markdown** | Human review, documentation, GitHub | `.md` | Good |
 | **JUnit XML** | CI/CD systems | `.xml` | Excellent |
 
-> **There is no HTML report.** Interactive review is served by the web UI — run `promptarena serve` and you get the same content the old `report.html` carried, plus live runs. See [Interactive Web UI](#interactive-web-ui) below. It needs no format flag — it reads the per-run JSON files from your output directory.
+> **There is no HTML report.** Interactive review is served by the web UI: run `promptarena serve` and you get the same content the old `report.html` carried, plus live runs. See [Interactive Web UI](#interactive-web-ui) below. It needs no format flag, because it reads the per-run JSON files from your output directory.
 >
 > `html` is still accepted as a format for backwards compatibility: passing `--format html`, or setting `html` in `defaults.output.formats`, silently produces a Markdown report instead. Existing configs keep working — use `markdown` in new ones.
 
@@ -132,7 +132,7 @@ Machine-readable format for programmatic access and integrations.
 
 ### Configuration Options
 
-JSON output currently has no format-specific options. It is enabled by adding
+JSON output has no format-specific options. It is enabled by adding
 `json` to `defaults.output.formats`, and written to `<dir>/index.json` (with
 per-run files) in the configured output directory.
 

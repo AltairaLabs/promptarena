@@ -87,6 +87,7 @@ spec:
     output:
       dir: out
       formats: ["markdown", "json"]
+```
 
 PromptArena extends standard assertions with testing-specific validators:
 
