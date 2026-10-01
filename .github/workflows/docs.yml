@@ -88,6 +88,12 @@ jobs:
           # repository's packages. Needs `read:packages`.
           NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
 
+      - name: Check Mermaid diagrams
+        # Mermaid renders in the browser, so the build cannot catch a broken
+        # diagram. See docs/STYLE.md "Diagrams".
+        working-directory: docs
+        run: npm run check:mermaid
+
       # --- Release only: work out whether the minor changed and, if so, build
       # the outgoing minor from its last tag at a /vX-Y/ base path. ---
       - name: Determine archive

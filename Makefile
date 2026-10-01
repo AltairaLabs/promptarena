@@ -153,6 +153,21 @@ schemas-check: ## Fail if committed schemas are out of date (CI guard)
 schemas-format: ## Reformat the committed schemas without regenerating them
 	@$(GO) run ./tools/schema-gen/ --format
 
+# ── Docs ────────────────────────────────────────────────────────────────────
+
+docs-voice: ## Check docs prose against docs/STYLE.md (fails only in enforced dirs)
+	@bash scripts/check-docs-voice.sh
+
+docs-stale: ## List docs pages whose verified sources changed (warn-only)
+	@bash scripts/docs-stale.sh
+
+docs-coverage: ## List public-surface files no docs page cites (warn-only)
+	@bash scripts/docs-coverage.sh
+
+docs-scripts-test: ## Test the docs-review scripts (voice, stale, provenance, coverage)
+	@for t in scripts/check-docs-voice_test.sh scripts/docs-stale_test.sh \
+		scripts/docs-provenance_test.sh scripts/docs-coverage_test.sh; do bash $$t || exit 1; done
+
 # ── Meta ────────────────────────────────────────────────────────────────────
 
 verify: ## Reproduce the CI gates locally: build, test+coverage, schemas, lint, frontend
