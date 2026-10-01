@@ -4,23 +4,26 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/spf13/cobra"
 
-	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
-	"github.com/AltairaLabs/promptarena/v2/arena/assertions"
-
 	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
-	"github.com/AltairaLabs/PromptKit/runtime/v2/evals"
 	_ "github.com/AltairaLabs/PromptKit/runtime/v2/evals/handlers" // register built-in eval handlers
 )
 
 var validateCmd = &cobra.Command{
 	Use:   "validate [file]",
-	Short: "Validate configuration files against JSON schemas",
+	Short: "Validate configuration files, and that an arena config builds a valid pack",
 	Long: `Validates Arena configs, scenarios, providers, and other YAML files against their JSON schemas.
-	
+
+For an arena config it also runs the arena's consistency checks and then every
+check packc runs: it builds the pack in memory and validates it as
+'packc compile' and 'packc validate' would. A config that passes here compiles
+with packc. Every problem is reported, not just the first; use --json for a
+machine-readable report that names the file to edit for each.
+
 Automatically detects file type based on the 'kind' field in the YAML file.
 Can also explicitly specify the type with --type flag.
 
@@ -54,11 +57,18 @@ func runValidate(cmd *cobra.Command, args []string) error {
 
 	filePath := args[0]
 	if validateJSONFlag {
-		return writeValidateJSON(cmd.OutOrStdout(), filePath, validateType)
+		return writeValidateJSON(cmd.OutOrStdout(), filePath, validateType, validateSchemaOnly)
 	}
 
-	if err := runValidationChecks(filePath, validateType, validateVerbose, validateSchemaOnly); err != nil {
+	report, err := collectValidation(filePath, validateType, validateSchemaOnly)
+	if err != nil {
 		return err
+	}
+	printValidateReport(report, validateVerbose)
+	if !report.Valid {
+		// The problems are printed above; the full list in the returned error
+		// would print it twice.
+		return fmt.Errorf("validation failed with %d error(s)", len(report.Errors))
 	}
 
 	fmt.Printf("\n✅ %s is valid\n", filepath.Base(filePath))
@@ -66,24 +76,51 @@ func runValidate(cmd *cobra.Command, args []string) error {
 }
 
 func runValidationChecks(filePath, typeOption string, verbose, schemaOnly bool) error {
-	data, configType, err := prepareValidationWithType(filePath, typeOption)
+	report, err := collectValidation(filePath, typeOption, schemaOnly)
 	if err != nil {
 		return err
 	}
+	printValidateReport(report, verbose)
+	return report.err()
+}
 
-	// Schema validation
-	if err := performSchemaValidationWithVerbose(data, configType, filePath, verbose); err != nil {
-		return err
+// printValidateReport renders a report as text: schema errors with their
+// suggestions, then every later finding with the file to edit.
+func printValidateReport(r *validateJSONReport, verbose bool) {
+	fmt.Printf("Validating %s as type '%s'...\n", filepath.Base(r.File), r.Type)
+	if len(r.schemaErrors) > 0 {
+		fmt.Printf("❌ Schema validation failed for %s:\n", r.File)
+		displayErrors(r.schemaErrors, verbose)
+		return
 	}
+	fmt.Printf("✅ Schema validation passed for %s\n", r.File)
+	printStageFindings(r)
+}
 
-	// Business logic validation (if requested)
-	if !schemaOnly && configType == "arena" {
-		if err := performBusinessLogicValidation(filePath); err != nil {
-			return err
+// printStageFindings renders everything after the schema stage.
+func printStageFindings(r *validateJSONReport) {
+	if !slices.Contains(r.Stages, stageLoad) {
+		return
+	}
+	fmt.Println("\nRunning business logic validation...")
+	if len(r.Errors) > 0 {
+		fmt.Printf("\n❌ %d problem(s):\n", len(r.Errors))
+		for _, f := range r.Errors {
+			fmt.Printf("  - %s\n", f)
 		}
 	}
-
-	return nil
+	if len(r.Warnings) > 0 {
+		fmt.Printf("\n⚠️  Validation warnings (%d):\n", len(r.Warnings))
+		for _, f := range r.Warnings {
+			fmt.Printf("  - %s\n", f)
+		}
+	}
+	for _, n := range r.Notes {
+		fmt.Printf("\nℹ️  %s\n", n)
+	}
+	if len(r.Errors) == 0 && slices.Contains(r.Stages, stagePack) {
+		fmt.Println("\n✅ Pack builds and validates (packc compile would succeed)")
+	}
 }
 
 func prepareValidationWithType(filePath, typeOption string) ([]byte, string, error) {
@@ -129,45 +166,15 @@ func performSchemaValidationWithVerbose(data []byte, configType string, filePath
 	return nil
 }
 
+// performBusinessLogicValidation runs the checks that need the arena config
+// loaded — its consistency checks, assertion types and the packc checks — and
+// prints them. Schema validation is the caller's.
 func performBusinessLogicValidation(filePath string) error {
-	fmt.Println("\nRunning business logic validation...")
-	cfg, err := arenaconfig.LoadConfig(filePath)
-	if err != nil {
-		return fmt.Errorf("config loading failed: %w", err)
-	}
-
-	validator := arenaconfig.NewConfigValidatorWithPath(cfg, filePath)
-	if err := validator.Validate(); err != nil {
-		fmt.Printf("❌ Business logic validation failed:\n")
-		fmt.Printf("  %s\n", err.Error())
-		return err
-	}
-
-	warnings := validator.GetWarnings()
-	if len(warnings) > 0 {
-		fmt.Printf("\n⚠️  Validation warnings (%d):\n", len(warnings))
-		for _, w := range warnings {
-			fmt.Printf("  - %s\n", w)
-		}
-	} else {
-		fmt.Println("✅ Business logic validation passed")
-	}
-
-	// Validate assertion types against the eval handler registry
-	if len(cfg.LoadedScenarios) > 0 {
-		registry := evals.NewEvalTypeRegistry()
-		typeErrs := assertions.ValidateAssertionTypes(cfg.LoadedScenarios, registry)
-		if len(typeErrs) > 0 {
-			fmt.Printf("\n❌ Unknown assertion types (%d):\n", len(typeErrs))
-			for _, e := range typeErrs {
-				fmt.Printf("  - %s\n", e)
-			}
-			return fmt.Errorf("found %d unknown assertion type(s)", len(typeErrs))
-		}
-		fmt.Println("✅ Assertion type validation passed")
-	}
-
-	return nil
+	r := &validateJSONReport{File: filePath, Errors: []validateFinding{}, Warnings: []validateFinding{}}
+	r.addArenaStages(filePath)
+	r.Valid = len(r.Errors) == 0
+	printStageFindings(r)
+	return r.err()
 }
 
 func validateWithSchema(data []byte, configType config.ConfigType) (*config.SchemaValidationResult, error) {
@@ -195,12 +202,20 @@ func displayErrors(errors []config.SchemaValidationError, verbose bool) {
 	}
 }
 
-func displayError(err config.SchemaValidationError) {
-	field := err.Field
+// rootField is how a finding about the whole document names its field.
+const rootField = "root"
+
+// displayField trims the schema validator's "(root)." prefix from a field path.
+func displayField(field string) string {
 	field = strings.TrimPrefix(field, "(root).")
 	if field == "(root)" {
-		field = "root"
+		return rootField
 	}
+	return field
+}
+
+func displayError(err config.SchemaValidationError) {
+	field := displayField(err.Field)
 
 	switch {
 	case err.Keyword == "additional_property_not_allowed" && len(err.ValidValues) > 0:

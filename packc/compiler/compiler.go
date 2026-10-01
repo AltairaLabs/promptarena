@@ -4,7 +4,6 @@
 package compiler
 
 import (
-	"encoding/json"
 	"fmt"
 	"path/filepath"
 	"sort"
@@ -58,46 +57,19 @@ func WithSkipSchemaValidation() Option {
 }
 
 // Compile loads an arena config file and compiles all prompts into a single pack.
-// It performs media validation, skill validation, workflow validation, and
-// schema validation (unless skipped). Errors are returned rather than printed
-// or causing os.Exit.
+// It is Check plus the compiled output: the same media, skill, workflow,
+// composition, agent, pack-structure and schema validation (schema unless
+// skipped), failing on any error Check reports. Errors are returned rather than
+// printed or causing os.Exit.
 func Compile(configFile string, opts ...Option) (*CompileResult, error) {
-	options := applyOptions(opts)
-
-	if err := resolvePackID(&options, configFile); err != nil {
+	r := Check(configFile, opts...)
+	if err := r.Err(); err != nil {
 		return nil, err
 	}
-
-	cfg, err := arenaconfig.LoadConfig(configFile)
-	if err != nil {
-		return nil, fmt.Errorf("loading arena config: %w", err)
-	}
-
-	pack, warnings, err := compilePack(cfg, configFile, options)
-	if err != nil {
-		return nil, err
-	}
-
-	configDir := filepath.Dir(configFile)
-	if valErr := validatePack(pack, configDir, &warnings); valErr != nil {
-		return nil, valErr
-	}
-
-	data, err := json.MarshalIndent(pack, "", "  ")
-	if err != nil {
-		return nil, fmt.Errorf("marshaling pack: %w", err)
-	}
-
-	if !options.skipSchemaValidation {
-		if err := validateSchema(data); err != nil {
-			return nil, err
-		}
-	}
-
 	return &CompileResult{
-		Pack:     pack,
-		JSON:     data,
-		Warnings: warnings,
+		Pack:     r.Pack,
+		JSON:     r.JSON,
+		Warnings: r.WarningMessages(),
 	}, nil
 }
 
@@ -267,36 +239,4 @@ func buildCompileOptions(cfg *arenaconfig.Config) ([]prompt.CompileOption, error
 	}
 
 	return opts, nil
-}
-
-// validatePack runs skill and workflow validation, appending warnings and
-// returning an error for any blocking issues.
-func validatePack(pack *prompt.Pack, configDir string, warnings *[]string) error {
-	skillErrs, skillWarnings := runSkillValidation(pack, configDir)
-	if len(skillErrs) > 0 {
-		return fmt.Errorf("skill validation errors: %v", skillErrs)
-	}
-	*warnings = append(*warnings, skillWarnings...)
-
-	if pack.Workflow != nil {
-		wfResult := pack.ValidateWorkflow()
-		if wfResult.HasErrors() {
-			return fmt.Errorf("workflow validation errors: %v", wfResult.Errors)
-		}
-		for _, w := range wfResult.Warnings {
-			*warnings = append(*warnings, "workflow: "+w)
-		}
-	}
-
-	if len(pack.Compositions) > 0 {
-		cResult := pack.ValidateCompositions()
-		if cResult.HasErrors() {
-			return fmt.Errorf("composition validation errors: %v", cResult.Errors)
-		}
-		for _, w := range cResult.Warnings {
-			*warnings = append(*warnings, "composition: "+w)
-		}
-	}
-
-	return nil
 }

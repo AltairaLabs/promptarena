@@ -309,10 +309,10 @@ spec:
       file: prompts/greeting.yaml
   providers: []
   agents:
-    entry: triage
+    entry: greeting
     members:
-      triage:
-        description: "Triage agent"
+      greeting:
+        description: "Greeting agent"
         tags:
           - router
   defaults:
@@ -331,7 +331,41 @@ spec:
 
 	assert.Equal(t, "agents-pack", result.Pack.ID)
 	assert.NotNil(t, result.Pack.Agents)
-	assert.Equal(t, "triage", result.Pack.Agents.Entry)
+	assert.Equal(t, "greeting", result.Pack.Agents.Entry)
+}
+
+// An agent member that names no prompt compiled to a pack `packc validate`
+// then rejected. Compile now runs the same agent check, so it fails here.
+func TestCompile_RejectsAgentMemberWithoutPrompt(t *testing.T) {
+	dir := t.TempDir()
+	writeFixture(t, dir, "prompts/greeting.yaml", minimalPromptYAML)
+	configFile := writeFixture(t, dir, "config.arena.yaml", `apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Arena
+metadata:
+  name: test
+spec:
+  prompt_configs:
+    - id: prompt0
+      file: prompts/greeting.yaml
+  providers: []
+  agents:
+    entry: triage
+    members:
+      triage:
+        description: "Triage agent"
+  defaults:
+    temperature: 0.7
+    max_tokens: 100
+`)
+
+	_, err := Compile(configFile, WithPackID("agents-pack"), WithSkipSchemaValidation())
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), `member "triage" does not reference a valid prompt`)
+
+	r := Check(configFile, WithPackID("agents-pack"), WithSkipSchemaValidation())
+	require.NotNil(t, r.Pack, "the pack still compiled; the agent check is what failed")
+	require.NotEmpty(t, r.Errors)
+	assert.Equal(t, StageAgents, r.Errors[0].Stage)
 }
 
 func TestCompile_CustomPackID(t *testing.T) {

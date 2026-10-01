@@ -13,7 +13,6 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/v2/evals"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/persistence/memory"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/prompt"
-	"github.com/AltairaLabs/PromptKit/runtime/v2/prompt/schema"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/tools"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/workflow"
 )
@@ -186,32 +185,6 @@ func runSkillValidation(pack *prompt.Pack, dir string) (fatalErrors, warnings []
 	fatalErrors = ValidateSkillErrors(pack, dir)
 	warnings = ValidateSkills(pack, dir)
 	return fatalErrors, warnings
-}
-
-// validateSchema validates the compiled pack JSON against the PromptPack schema.
-func validateSchema(packJSON []byte) error {
-	packSchemaURL := schema.ExtractSchemaURL(packJSON)
-
-	schemaLoader, err := schema.GetSchemaLoader(packSchemaURL)
-	if err != nil {
-		// Schema might not be available — treat as non-fatal but return error
-		return fmt.Errorf("schema validation could not be performed: %w", err)
-	}
-
-	result, err := schema.ValidateJSONAgainstLoader(packJSON, schemaLoader)
-	if err != nil {
-		return fmt.Errorf("schema validation failed: %w", err)
-	}
-
-	if !result.Valid {
-		var errs []string
-		for _, e := range result.Errors {
-			errs = append(errs, e.Error())
-		}
-		return fmt.Errorf("pack failed schema validation: %v", errs)
-	}
-
-	return nil
 }
 
 // Pre-compiled regexes for SanitizePackID and validatePackID.
