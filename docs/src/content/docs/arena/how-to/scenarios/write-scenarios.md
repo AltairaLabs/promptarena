@@ -157,6 +157,14 @@ This is useful when:
 - Forcing tool usage for tool-specific tests
 - Limiting tool calls to prevent runaway loops
 
+**How it combines with the prompt's `tool_policy`**: the prompt under test can declare its own `tool_policy` (for example `max_rounds: 200` for a long-running agent), and that policy ships in the pack. A scenario's `tool_policy` is applied on top of it and can only make it stricter:
+
+- `max_rounds` and `max_tool_calls_per_turn`: the lower of the scenario's and the prompt's value applies. Leave them unset to test the prompt's own limits. With neither set, `max_rounds` defaults to 50.
+- `blocklist`: the scenario's and the prompt's lists are combined.
+- `tool_choice`: the scenario's value is used when it sets one.
+
+So Arena always tests a prompt within the limits it ships with. A scenario can lower them, but can't raise them.
+
 ### Conversation Turns
 
 Define user messages and expected responses:

@@ -190,8 +190,8 @@ func TestBuildToolPolicy(t *testing.T) {
 		if got == nil {
 			t.Fatal("buildToolPolicy(nil) returned nil, want non-nil policy with defaults")
 		}
-		if got.MaxRounds != 50 {
-			t.Errorf("MaxRounds = %d, want 50 (default)", got.MaxRounds)
+		if got.MaxRounds != 0 {
+			t.Errorf("MaxRounds = %d, want 0 (unset, so the prompt's max_rounds applies)", got.MaxRounds)
 		}
 		if got.MaxCostUSD != defaultArenaMaxCostUSD {
 			t.Errorf("MaxCostUSD = %f, want %f (default)", got.MaxCostUSD, defaultArenaMaxCostUSD)
@@ -206,8 +206,8 @@ func TestBuildToolPolicy(t *testing.T) {
 		if got == nil {
 			t.Fatal("buildToolPolicy() returned nil, want non-nil policy with defaults")
 		}
-		if got.MaxRounds != 50 {
-			t.Errorf("MaxRounds = %d, want 50 (default)", got.MaxRounds)
+		if got.MaxRounds != 0 {
+			t.Errorf("MaxRounds = %d, want 0 (unset, so the prompt's max_rounds applies)", got.MaxRounds)
 		}
 		if got.MaxCostUSD != defaultArenaMaxCostUSD {
 			t.Errorf("MaxCostUSD = %f, want %f (default)", got.MaxCostUSD, defaultArenaMaxCostUSD)
