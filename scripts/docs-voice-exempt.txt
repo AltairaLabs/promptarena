@@ -1,0 +1,2 @@
+# Pages exempt from some docs voice rules: "<page under docs/src/content/docs><TAB><rule>[,<rule>...]",
+# or "*" for every rule. Use only where a rule contradicts the page's purpose.
