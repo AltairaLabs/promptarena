@@ -1,0 +1,702 @@
+{
+ "page": "docs/src/content/docs/arena/reference/duplex-config.md",
+ "commit": "c67065389ccbc6e76babad54b4345e1c76bb633e",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "Requires Gemini Live API with provider type 'gemini'",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/duplex_conversation_executor.go:103"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "Model 'gemini-2.0-flash-exp' or similar supports duplex",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 3,
+   "claim": "apiVersion 'promptkit.altairalabs.ai/v1alpha1' for Scenario kind",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:117",
+    "schemas/v1alpha1/scenario.json"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "kind 'Scenario' in YAML spec",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:344"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "streaming: true field is required for duplex",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:686",
+    "arena/engine/composite_conversation_executor.go:129",
+    "arena/engine/conversation_executor.go:80",
+    "arena/engine/duplex_executor_pipeline_integration.go:54"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "duplex field on Scenario spec",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:692",
+    "schemas/v1alpha1/scenario.json"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "duplex.timeout field (string, Go duration format)",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:891",
+    "arena/engine/duplex_conversation_executor.go:96"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "duplex.turn_detection field (TurnDetectionConfig)",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:893",
+    "arena/engine/duplex_conversation_executor.go:118"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "turn_detection.mode field with value 'asm'",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1015",
+    "arena/arenaconfig/types.go:916",
+    "arena/engine/duplex_conversation_executor.go:118"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "duplex.resilience field (DuplexResilienceConfig)",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:895",
+    "arena/engine/duplex_executor_pipeline_integration.go:54"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "resilience.max_retries field with value 2 (int)",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:903",
+    "arena/engine/duplex_executor_pipeline_integration.go:57"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "resilience.partial_success_min_turns field with value 2 (int)",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:908",
+    "arena/engine/duplex_executor_turns_integration.go:106"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "duplex.timeout default value is '10m'",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_conversation_executor.go:23",
+    "arena/engine/duplex_conversation_executor.go:96"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "turn_detection default is mode: asm",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/duplex_conversation_executor.go:118",
+    "arena/engine/duplex_conversation_executor.go:119-122",
+    "arena/engine/duplex_executor_pipeline_integration.go:392"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "turn_detection.mode field with value 'vad'",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1015",
+    "arena/arenaconfig/types.go:882"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "turn_detection.vad field (VADConfig) when mode is vad",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:920",
+    "arena/engine/duplex_conversation_executor.go:129"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "vad.silence_threshold_ms field (int)",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:926",
+    "arena/engine/duplex_conversation_executor.go:131"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "vad.min_speech_ms field (int)",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:928",
+    "arena/engine/duplex_conversation_executor.go:134"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "resilience.inter_turn_delay_ms field (int)",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:900-912",
+    "schemas/v1alpha1/scenario.json"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "turn_detection.mode default value is 'asm'",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:918",
+    "arena/engine/duplex_conversation_executor.go:118"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "turn_detection.mode enum values are 'vad' or 'asm'",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1015",
+    "arena/arenaconfig/types.go:881-884"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "asm mode: Gemini handles turn detection internally using automatic speech detection",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_executor_pipeline_integration.go:392"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "vad.silence_threshold_ms field in VADConfig",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:926",
+    "arena/engine/duplex_conversation_executor.go:131"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "vad.min_speech_ms field in VADConfig",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:928",
+    "arena/engine/duplex_conversation_executor.go:134"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "vad.max_turn_duration_s field (int)",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:930",
+    "arena/engine/duplex_conversation_executor.go:137"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "vad.silence_threshold_ms default value is 500",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:925",
+    "arena/engine/duplex_conversation_executor.go:127",
+    "arena/engine/duplex_conversation_executor.go:131-133"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "vad.min_speech_ms default value is 1000",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:927",
+    "arena/engine/duplex_conversation_executor.go:127",
+    "arena/engine/duplex_conversation_executor.go:134-136"
+   ]
+  },
+  {
+   "id": 28,
+   "claim": "vad.max_turn_duration_s default value is 60",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:929",
+    "arena/engine/duplex_conversation_executor.go:127",
+    "arena/engine/duplex_conversation_executor.go:137-139"
+   ]
+  },
+  {
+   "id": 29,
+   "claim": "resilience.max_retries default value is 0",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_executor_pipeline_integration.go:57",
+    "arena/engine/duplex_executor_types.go:15"
+   ]
+  },
+  {
+   "id": 30,
+   "claim": "resilience.retry_delay_ms default value is 1000",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_executor_pipeline_integration.go:58",
+    "arena/engine/duplex_executor_types.go:14"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "resilience.inter_turn_delay_ms default value is 500",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:900-912",
+    "schemas/v1alpha1/scenario.json"
+   ]
+  },
+  {
+   "id": 32,
+   "claim": "resilience.selfplay_inter_turn_delay_ms default value is 1000",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:900-912",
+    "schemas/v1alpha1/scenario.json"
+   ]
+  },
+  {
+   "id": 33,
+   "claim": "resilience.partial_success_min_turns default value is 1",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_executor_turns_integration.go:106",
+    "arena/engine/duplex_executor_types.go:16"
+   ]
+  },
+  {
+   "id": 34,
+   "claim": "resilience.ignore_last_turn_session_end default value is true",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_executor_turns_integration.go:107",
+    "arena/engine/duplex_executor_types.go:17"
+   ]
+  },
+  {
+   "id": 35,
+   "claim": "resilience.max_retries field (int)",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:903",
+    "schemas/v1alpha1/scenario.json"
+   ]
+  },
+  {
+   "id": 36,
+   "claim": "resilience.retry_delay_ms field (int)",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:905",
+    "schemas/v1alpha1/scenario.json"
+   ]
+  },
+  {
+   "id": 37,
+   "claim": "resilience.selfplay_inter_turn_delay_ms field (int)",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:900-912",
+    "schemas/v1alpha1/scenario.json"
+   ]
+  },
+  {
+   "id": 38,
+   "claim": "resilience.partial_success_min_turns field (int)",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:908",
+    "schemas/v1alpha1/scenario.json"
+   ]
+  },
+  {
+   "id": 39,
+   "claim": "resilience.ignore_last_turn_session_end field (bool)",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:912",
+    "schemas/v1alpha1/scenario.json"
+   ]
+  },
+  {
+   "id": 40,
+   "claim": "When partial_success_min_turns is set, sessions ending after completing at least that many turns are treated as successful",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_executor_turns_integration.go:189-195",
+    "arena/engine/duplex_executor_types.go:16"
+   ]
+  },
+  {
+   "id": 41,
+   "claim": "By default, session end on final turn is treated as success (ignore_last_turn_session_end: true)",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_executor_turns_integration.go:182",
+    "arena/engine/duplex_executor_types.go:17"
+   ]
+  },
+  {
+   "id": 42,
+   "claim": "tts_providers field in arena spec",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:637",
+    "arena/arenaconfig/types.go:196-206"
+   ]
+  },
+  {
+   "id": 43,
+   "claim": "voices array in arena spec with id and provider fields",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:637",
+    "arena/arenaconfig/types.go:206"
+   ]
+  },
+  {
+   "id": 44,
+   "claim": "voice field on persona spec",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:672",
+    "arena/arenaconfig/persona.go:52"
+   ]
+  },
+  {
+   "id": 45,
+   "claim": "system_template field on persona spec",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/persona.go:38",
+    "arena/arenaconfig/persona.go:382"
+   ]
+  },
+  {
+   "id": 46,
+   "claim": "voice field at scenario spec level for scripted-text scenarios",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:657",
+    "arena/arenaconfig/types.go:700"
+   ]
+  },
+  {
+   "id": 47,
+   "claim": "Audio turn parts with type 'audio'",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1107",
+    "arena/engine/duplex_executor_turns_integration.go:32",
+    "arena/engine/duplex_executor_turns_integration.go:399"
+   ]
+  },
+  {
+   "id": 48,
+   "claim": "Audio media field with file_path property",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1116",
+    "arena/engine/duplex_executor_turns_integration.go:413"
+   ]
+  },
+  {
+   "id": 49,
+   "claim": "Audio media field with mime_type property",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1120",
+    "arena/engine/duplex_executor_turns_integration.go:426"
+   ]
+  },
+  {
+   "id": 50,
+   "claim": "Audio sample rate must be 16000 Hz for Gemini Live API",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_executor_turns_integration.go:538",
+    "arena/turnexecutors/audio_file_source.go:29"
+   ]
+  },
+  {
+   "id": 51,
+   "claim": "Audio bit depth must be 16-bit",
+   "verdict": "false",
+   "evidence": [
+    "arena/turnexecutors/audio_file_source.go:285-345",
+    "arena/turnexecutors/audio_file_source.go:98-110"
+   ]
+  },
+  {
+   "id": 52,
+   "claim": "Audio channels must be mono (single channel)",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_executor_turns_integration.go:539",
+    "arena/turnexecutors/audio_file_source.go:206"
+   ]
+  },
+  {
+   "id": 53,
+   "claim": "Audio MIME type must be 'audio/L16'",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/duplex_executor_turns_integration.go:426",
+    "arena/turnexecutors/audio_file_source.go:98-110",
+    "arena/turnexecutors/media_validator.go:205-225"
+   ]
+  },
+  {
+   "id": 54,
+   "claim": "Audio format must be raw PCM (no headers, not WAV)",
+   "verdict": "false",
+   "evidence": [
+    "arena/turnexecutors/audio_file_source.go:116-157",
+    "arena/turnexecutors/audio_file_source.go:98-110"
+   ]
+  },
+  {
+   "id": 55,
+   "claim": "Provider id field value 'gemini-live'",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/provider.json"
+   ]
+  },
+  {
+   "id": 56,
+   "claim": "Provider type field value 'gemini'",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 57,
+   "claim": "Model field value 'gemini-2.0-flash-exp'",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 58,
+   "claim": "defaults.temperature field on provider spec",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/provider.json"
+   ]
+  },
+  {
+   "id": 59,
+   "claim": "defaults.max_tokens field on provider spec",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/provider.json"
+   ]
+  },
+  {
+   "id": 60,
+   "claim": "additional_config.audio_enabled field on provider spec",
+   "verdict": "dead",
+   "evidence": [
+    "arena/engine/duplex_executor_pipeline_integration.go:517",
+    "schemas/v1alpha1/provider.json"
+   ]
+  },
+  {
+   "id": 61,
+   "claim": "additional_config.response_modalities field (array)",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_executor_pipeline_integration.go:516-518"
+   ]
+  },
+  {
+   "id": 62,
+   "claim": "response_modalities enum value 'AUDIO'",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 63,
+   "claim": "response_modalities enum value 'TEXT'",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 64,
+   "claim": "Gemini Live API supports only ONE modality at a time",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 65,
+   "claim": "AUDIO mode includes text transcription via outputAudioTranscription",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 66,
+   "claim": "task_type field value 'voice-assistant'",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:667",
+    "schemas/v1alpha1/scenario.json"
+   ]
+  },
+  {
+   "id": 67,
+   "claim": "role value 'selfplay-user' for self-play turns",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:698",
+    "arena/engine/duplex_conversation_executor.go:178-183",
+    "arena/selfplay/registry.go:169-176"
+   ]
+  },
+  {
+   "id": 68,
+   "claim": "persona field on selfplay-user turn",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1059",
+    "arena/engine/duplex_conversation_executor.go:186-194"
+   ]
+  },
+  {
+   "id": 69,
+   "claim": "turns field on selfplay-user turn (int, value 3)",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1061",
+    "arena/engine/duplex_executor_turns_integration.go:132"
+   ]
+  },
+  {
+   "id": 70,
+   "claim": "assertions field on turn (array)",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1084",
+    "schemas/v1alpha1/scenario.json"
+   ]
+  },
+  {
+   "id": 71,
+   "claim": "assertion type 'content_matches'",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 72,
+   "claim": "content_matches assertion with pattern parameter",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 73,
+   "claim": "assertion type 'content_includes_any'",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 74,
+   "claim": "conversation_assertions field on scenario spec (array)",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:690",
+    "arena/engine/duplex_executor_assertions_integration.go"
+   ]
+  },
+  {
+   "id": 75,
+   "claim": "assertion type 'content_includes_any' in conversation_assertions",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 76,
+   "claim": "content_includes_any assertion with patterns parameter",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 77,
+   "claim": "Validation error: 'invalid duplex timeout format' when timeout not in Go duration format",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:942",
+    "arena/engine/duplex_conversation_executor.go:82"
+   ]
+  },
+  {
+   "id": 78,
+   "claim": "Validation error: 'invalid turn detection mode' when mode not 'vad' or 'asm'",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1015-1017",
+    "arena/engine/duplex_conversation_executor.go:82"
+   ]
+  },
+  {
+   "id": 79,
+   "claim": "Validation error: 'silence_threshold_ms must be non-negative' when threshold is negative",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1022",
+    "arena/arenaconfig/types.go:1037"
+   ]
+  },
+  {
+   "id": 80,
+   "claim": "Validation error: voice provider reference validation against tts_providers",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/loader.go:637",
+    "arena/arenaconfig/loader.go:647-648"
+   ]
+  },
+  {
+   "id": 81,
+   "claim": "Validation error: persona voice reference validation against voices catalog",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/loader.go:672-682",
+    "arena/arenaconfig/voice.go:27"
+   ]
+  }
+ ]
+}
