@@ -9,6 +9,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/AltairaLabs/promptarena/v2/arena/agentkb"
+
 	"github.com/spf13/cobra"
 
 	"github.com/AltairaLabs/promptarena/v2/arena/tui/app"
@@ -188,6 +190,7 @@ func installCtrlCEscapeHatch() {
 }
 
 func main() {
+	agentkb.UseEmbeddedSchemas()
 	installCtrlCEscapeHatch()
 	Execute()
 }
