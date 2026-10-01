@@ -1,6 +1,7 @@
 package compiler
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"testing"
@@ -233,34 +234,59 @@ spec:
 	})
 }
 
-func TestValidateSchema(t *testing.T) {
+func TestCheckSchema(t *testing.T) {
 	// Build a valid pack JSON to validate against the embedded schema.
 	dir := t.TempDir()
 	writeFixture(t, dir, "prompts/greeting.yaml", minimalPromptYAML)
 	configFile := writeFixture(t, dir, "config.arena.yaml", minimalArenaConfig("prompts/greeting.yaml"))
 	res, err := Compile(configFile, WithPackID("schema-test"), WithSkipSchemaValidation())
 	require.NoError(t, err)
+	src := sourceMap{arenaConfig: "arena.yaml", prompts: map[string]string{"greeting": "prompts/greeting.yaml"}}
+
+	check := func(data []byte) *CheckResult {
+		r := &CheckResult{}
+		r.checkSchema(data, src)
+		return r
+	}
 
 	t.Run("valid pack passes", func(t *testing.T) {
-		assert.NoError(t, validateSchema(res.JSON))
+		assert.Empty(t, check(res.JSON).Errors)
 	})
 
 	t.Run("malformed json errors", func(t *testing.T) {
-		err := validateSchema([]byte("this is not json"))
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "schema validation failed")
+		r := check([]byte("this is not json"))
+		require.Len(t, r.Errors, 1)
+		assert.Equal(t, StagePackSchema, r.Errors[0].Stage)
+		assert.Contains(t, r.Errors[0].Message, "schema validation failed")
 	})
 
-	t.Run("schema-invalid pack errors", func(t *testing.T) {
-		err := validateSchema([]byte(`{"id": 123}`))
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "failed schema validation")
+	t.Run("each violation is its own problem, pointed at its source", func(t *testing.T) {
+		var pack map[string]any
+		require.NoError(t, json.Unmarshal(res.JSON, &pack))
+		pack["id"] = 123
+		greeting := pack["prompts"].(map[string]any)["greeting"].(map[string]any)
+		greeting["not_a_spec_field"] = true
+		data, err := json.Marshal(pack)
+		require.NoError(t, err)
+
+		r := check(data)
+		require.Len(t, r.Errors, 2)
+		byPath := map[string]Problem{}
+		for _, p := range r.Errors {
+			byPath[p.Path] = p
+		}
+		require.Contains(t, byPath, "id")
+		assert.Equal(t, "arena.yaml", byPath["id"].Source)
+		require.Contains(t, byPath, "prompts.greeting")
+		assert.Equal(t, "prompts/greeting.yaml", byPath["prompts.greeting"].Source,
+			"a prompt-level violation points at the prompt config file")
+		assert.Contains(t, byPath["prompts.greeting"].Message, "not_a_spec_field")
 	})
 
 	t.Run("unreadable schema source errors", func(t *testing.T) {
 		t.Setenv("PROMPTKIT_SCHEMA_SOURCE", "/nonexistent/schema/file.json")
-		err := validateSchema(res.JSON)
-		require.Error(t, err)
-		assert.Contains(t, err.Error(), "could not be performed")
+		r := check(res.JSON)
+		require.Len(t, r.Errors, 1)
+		assert.Contains(t, r.Errors[0].Message, "could not be performed")
 	})
 }

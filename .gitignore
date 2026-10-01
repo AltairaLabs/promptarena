@@ -118,9 +118,12 @@ packs/
 
 /promptpack-spec/
 
-# Ignore tools' built binaries (but not the source directories)
+# Ignore tools' built binaries (but not the source directories). /packc on its
+# own also matched the packc/ source directory, so any NEW file there was
+# silently left out of commits; the negation re-includes the directory.
 /evaluate
 /packc
+!/packc/
 /promptarena
 bin/packc
 bin/promptarena

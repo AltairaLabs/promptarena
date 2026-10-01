@@ -107,9 +107,12 @@ promptarena validate config.arena.yaml
 promptarena run --ci --formats json,markdown
 ```
 
-`validate` checks each file against the JSON schema embedded in the binary and checks that
-every assertion type exists. `run --ci` runs every scenario headless and writes results
-to `out/`. The agent reads `out/results.md` for the summary and the per-run JSON files for
+`validate` checks each file against the JSON schema embedded in the binary, checks that
+every assertion type exists, and then builds the pack in memory and runs every check
+`packc` runs, so a config that passes `validate` compiles with `packc`. It reports every
+problem in one pass rather than stopping at the first. `validate --json` gives the same
+report as JSON, and each problem names the stage that found it and the file to edit.
+`run --ci` runs every scenario headless and writes results to `out/`. The agent reads `out/results.md` for the summary and the per-run JSON files for
 detail, fixes what failed, and runs again.
 
 Things the agent will set up along the way:

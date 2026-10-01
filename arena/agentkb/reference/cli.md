@@ -123,7 +123,7 @@ Manage PromptArena templates (list, fetch, render)
 
 ## promptarena validate
 
-Validate configuration files against JSON schemas
+Validate configuration files, and that an arena config builds a valid pack
 
 Flags: `--json`, `--schema-only`, `--type`, `--verbose`
 

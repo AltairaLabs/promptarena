@@ -32,6 +32,15 @@ func TestBuildValidateReport_MapsErrors(t *testing.T) {
 
 func TestWriteValidateJSON_ValidFile(t *testing.T) {
 	dir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "test.yaml"), []byte(`apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Scenario
+metadata:
+  name: s
+spec:
+  turns:
+    - role: user
+      content: hi
+`), 0o600))
 	file := filepath.Join(dir, "arena.yaml")
 	require.NoError(t, os.WriteFile(file, []byte(`apiVersion: promptkit.altairalabs.ai/v1alpha1
 kind: Arena
@@ -43,7 +52,7 @@ spec:
 `), 0o600))
 
 	var buf bytes.Buffer
-	require.NoError(t, writeValidateJSON(&buf, file, "auto"))
+	require.NoError(t, writeValidateJSON(&buf, file, "auto", false))
 
 	var report validateJSONReport
 	require.NoError(t, json.Unmarshal(buf.Bytes(), &report))
@@ -53,5 +62,5 @@ spec:
 
 func TestWriteValidateJSON_FileNotFound(t *testing.T) {
 	var buf bytes.Buffer
-	require.Error(t, writeValidateJSON(&buf, "/no/such/file.yaml", "auto"))
+	require.Error(t, writeValidateJSON(&buf, "/no/such/file.yaml", "auto", false))
 }
