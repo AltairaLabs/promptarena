@@ -843,9 +843,13 @@ func (r *RelevanceConfig) Validate() error {
 // lower max_rounds / max_tool_calls_per_turn wins, blocklists combine, and the
 // scenario's tool_choice wins when set.
 type ToolPolicy struct {
-	ToolChoice          string   `json:"tool_choice" yaml:"tool_choice"` // "auto" | "required" | "none"
-	MaxToolCallsPerTurn int      `json:"max_tool_calls_per_turn" yaml:"max_tool_calls_per_turn"`
-	MaxTotalToolCalls   int      `json:"max_total_tool_calls" yaml:"max_total_tool_calls"`
+	// ToolChoice is "auto", "required", "none" or a tool name. Unset means the
+	// prompt's tool_choice, or "auto".
+	ToolChoice string `json:"tool_choice,omitempty" yaml:"tool_choice,omitempty"`
+	// MaxToolCallsPerTurn caps tool calls across all of a turn's rounds.
+	// 0/unset means the prompt's tool_policy.max_tool_calls_per_turn, if any.
+	// There is no scenario-wide total: per-turn is the only call cap.
+	MaxToolCallsPerTurn int      `json:"max_tool_calls_per_turn,omitempty" yaml:"max_tool_calls_per_turn,omitempty"`
 	Blocklist           []string `json:"blocklist,omitempty" yaml:"blocklist,omitempty"`
 	// MaxRounds is the maximum number of tool-call rounds per turn.
 	// 0/unset means the prompt's tool_policy.max_rounds, or 50 when it sets

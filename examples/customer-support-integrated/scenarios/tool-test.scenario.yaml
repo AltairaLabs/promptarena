@@ -11,7 +11,6 @@ spec:
   tool_policy:
     tool_choice: auto
     max_tool_calls_per_turn: 3
-    max_total_tool_calls: 10
   
   # Single turn with a clear need to call tools
   turns:

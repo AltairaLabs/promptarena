@@ -129,8 +129,6 @@ spec:
   description: "Text-only test without tools"
   tool_policy:
     tool_choice: none           # Disable tool calling
-    max_tool_calls_per_turn: 0
-    max_total_tool_calls: 0
 
   turns:
     - role: user
@@ -149,7 +147,6 @@ spec:
   tool_policy:
     tool_choice: required
     max_tool_calls_per_turn: 3
-    max_total_tool_calls: 10
 ```
 
 This is useful when:

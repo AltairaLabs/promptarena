@@ -134,7 +134,6 @@ The scenario requires tool usage:
 tool_policy:
   tool_choice: required
   max_tool_calls_per_turn: 5
-  max_total_tool_calls: 30
 ```
 
 ## File Structure
