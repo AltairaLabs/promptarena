@@ -88,10 +88,7 @@ func (e *Engine) initWorkflow() error {
 		return nil
 	}
 
-	spec, err := workflow.ParseConfig(e.config.Workflow)
-	if err != nil {
-		return err
-	}
+	spec := e.config.Workflow
 
 	// Register transition tool executor. The prompt registry is what lets it
 	// hand a turn over to a destination state mid-flight rather than waiting
@@ -122,17 +119,11 @@ func (e *Engine) initWorkflow() error {
 	return e.mergeInlineCompositions()
 }
 
-// mergeInlineCompositions parses inline compositions declared on the arena
-// config and merges them into LoadedPack.Compositions so buildCompositionResolver
-// can find them at turn time (RFC 0010). No-op when none are declared.
+// mergeInlineCompositions merges inline compositions declared on the arena
+// config into LoadedPack.Compositions so buildCompositionResolver can find them
+// at turn time (RFC 0010). No-op when none are declared.
 func (e *Engine) mergeInlineCompositions() error {
-	if e.config.Compositions == nil {
-		return nil
-	}
-	comps, compErr := composition.ParseConfig(e.config.Compositions)
-	if compErr != nil {
-		return fmt.Errorf("parsing compositions: %w", compErr)
-	}
+	comps := e.config.Compositions
 	if len(comps) == 0 {
 		return nil
 	}

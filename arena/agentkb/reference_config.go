@@ -69,8 +69,51 @@ func GenerateConfigFieldsReference() ([]byte, error) {
 			}
 		}
 		writeFieldTable(&b, &node, root.Defs)
+		if err := writeNestedSections(&b, name, root.Defs); err != nil {
+			return nil, err
+		}
 	}
 	return b.Bytes(), nil
+}
+
+// nestedSection documents a block below `spec` whose fields the top-level
+// table can only call "object".
+type nestedSection struct {
+	path string // the YAML path an author writes, for the heading
+	def  string // the $defs entry holding its fields
+}
+
+// nestedSections lists, per schema, the nested blocks worth their own table.
+// The workflow and composition blocks are deep and typo-prone, and their fields
+// are what an agent brief needs to describe; one level of `object` says nothing.
+var nestedSections = map[string][]nestedSection{
+	"arena": {
+		{"spec.workflow", "WorkflowConfig"},
+		{"spec.workflow.engine.budget", "WorkflowBudget"},
+		{"spec.workflow.states.<state>", "WorkflowState"},
+		{"spec.workflow.states.<state>.artifacts.<name>", "ArtifactDef"},
+		{"spec.compositions.<name>", "Composition"},
+		{"spec.compositions.<name>.steps[]", "Step"},
+		{"steps[].termination", "TerminationPredicate"},
+		{"steps[].predicate", "Predicate"},
+		{"steps[].reduce", "Reducer"},
+		{"steps[].modifiers", "StepModifiers"},
+	},
+}
+
+// writeNestedSections writes a field table for each nested block of schema. A
+// listed definition missing from the schema is an error: the section would
+// otherwise vanish from the reference without anyone noticing.
+func writeNestedSections(b *bytes.Buffer, schema string, defs map[string]jsonSchemaNode) error {
+	for _, sec := range nestedSections[schema] {
+		def, ok := defs[sec.def]
+		if !ok {
+			return fmt.Errorf("schema %q: $defs/%s (for %s) not found", schema, sec.def, sec.path)
+		}
+		fmt.Fprintf(b, "\n### `%s`\n\n", sec.path)
+		writeFieldTable(b, &def, defs)
+	}
+	return nil
 }
 
 // resolveRef follows a single "#/$defs/Name" reference into defs. Non-ref nodes

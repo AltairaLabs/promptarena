@@ -59,13 +59,13 @@ func TestHandleWorkflow_DefaultGraph(t *testing.T) {
 
 func TestHandleWorkflow_StateMachineGraph(t *testing.T) {
 	adapter := NewEventAdapter()
-	cfg := &arenaconfig.Config{Workflow: map[string]any{
+	cfg := &arenaconfig.Config{Workflow: testWorkflow(map[string]any{
 		"version": 2, "entry": "intake",
 		"states": map[string]any{
 			"intake":  map[string]any{"on_event": map[string]any{"classified": "resolve"}},
 			"resolve": map[string]any{},
 		},
-	}}
+	})}
 	mock := &mockEngine{cfg: cfg}
 	srv := newServerWithRunner(adapter, mock, nil, "")
 
@@ -88,24 +88,5 @@ func TestHandleWorkflow_StateMachineGraph(t *testing.T) {
 	}
 	if len(g.Nodes) != 2 || len(g.Edges) != 1 {
 		t.Fatalf("want 2 nodes and 1 edge, got %+v", g)
-	}
-}
-
-func TestHandleWorkflow_ParseError(t *testing.T) {
-	adapter := NewEventAdapter()
-	mock := &mockEngine{cfg: &arenaconfig.Config{Workflow: func() {}}}
-	srv := newServerWithRunner(adapter, mock, nil, "")
-
-	ts := httptest.NewServer(srv.Handler())
-	defer ts.Close()
-
-	resp, err := http.Get(ts.URL + "/api/workflow") //nolint:noctx
-	if err != nil {
-		t.Fatalf("GET: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusInternalServerError {
-		t.Errorf("status = %d, want %d", resp.StatusCode, http.StatusInternalServerError)
 	}
 }

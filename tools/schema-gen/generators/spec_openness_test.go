@@ -122,6 +122,11 @@ func TestApplySpecOpenObjectsFollowsSpecClosed(t *testing.T) {
 		},
 		"$defs": map[string]interface{}{
 			"MetricDef": map[string]interface{}{"additionalProperties": false},
+			"WorkflowConfig": map[string]interface{}{
+				"properties": map[string]interface{}{
+					"engine": map[string]interface{}{"additionalProperties": false},
+				},
+			},
 		},
 	}
 	for defName, pointer := range specOpenObjects {

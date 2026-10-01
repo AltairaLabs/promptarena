@@ -1,7 +1,6 @@
 package web
 
 import (
-	"fmt"
 	"sort"
 
 	"github.com/AltairaLabs/PromptKit/runtime/v2/composition"
@@ -56,20 +55,12 @@ type WorkflowGraph struct {
 // cfg == nil or cfg.Workflow == nil produces a single "default" node with no
 // edges (Arena's implicit single-state workflow). Node and edge ordering is
 // deterministic (sorted by state name, then event name).
-func BuildWorkflowGraph(cfg *arenaconfig.Config) (WorkflowGraph, error) {
+func BuildWorkflowGraph(cfg *arenaconfig.Config) WorkflowGraph {
 	if cfg == nil || cfg.Workflow == nil {
-		return defaultWorkflowGraph(), nil
+		return defaultWorkflowGraph()
 	}
 
-	spec, err := workflow.ParseConfig(cfg.Workflow)
-	if err != nil {
-		return WorkflowGraph{}, fmt.Errorf("parsing workflow config: %w", err)
-	}
-
-	comps, err := composition.ParseConfig(cfg.Compositions)
-	if err != nil {
-		return WorkflowGraph{}, fmt.Errorf("parsing compositions config: %w", err)
-	}
+	spec, comps := cfg.Workflow, cfg.Compositions
 
 	names := sortedStateNames(spec.States)
 
@@ -91,7 +82,7 @@ func BuildWorkflowGraph(cfg *arenaconfig.Config) (WorkflowGraph, error) {
 
 	graph.Edges = dedupeEdges(graph.Edges)
 
-	return graph, nil
+	return graph
 }
 
 // defaultWorkflowGraph is Arena's implicit single-state workflow, used when a

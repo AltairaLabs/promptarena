@@ -6,22 +6,34 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v3"
+
+	"github.com/AltairaLabs/PromptKit/runtime/v2/workflow"
 )
 
+// workflowFromMap decodes a raw workflow document into the typed spec the
+// config carries, so tests can keep writing states as literal maps.
+func workflowFromMap(raw map[string]any) *workflow.Spec {
+	spec, err := workflow.ParseConfig(raw)
+	if err != nil {
+		panic(err)
+	}
+	return spec
+}
+
 // workflowValidatorConfig returns a config whose loaded prompts cover the
-// task types the workflow references, with the workflow supplied raw the way
-// the YAML loader leaves it.
+// task types the workflow references.
 func workflowValidatorConfig(states map[string]any) *Config {
 	return &Config{
 		LoadedPromptConfigs: map[string]*PromptConfigData{
 			"route":   {TaskType: "route"},
 			"confirm": {TaskType: "confirm"},
 		},
-		Workflow: map[string]any{
+		Workflow: workflowFromMap(map[string]any{
 			"version": 2,
 			"entry":   "route",
 			"states":  states,
-		},
+		}),
 	}
 }
 
@@ -45,12 +57,13 @@ func TestConfigValidator_Workflow_AbsentIsNoop(t *testing.T) {
 	}
 }
 
-func TestConfigValidator_Workflow_MalformedIsAnError(t *testing.T) {
-	cfg := &Config{Workflow: map[string]any{"states": "not-a-map"}}
-	v := NewConfigValidatorWithPath(cfg, "")
-	err := v.Validate()
+// The workflow is typed, so a malformed shape no longer reaches the validator:
+// it fails decoding the config, before any business-logic check runs.
+func TestConfig_Workflow_MalformedFailsDecoding(t *testing.T) {
+	var cfg Config
+	err := yaml.Unmarshal([]byte("workflow:\n  states: not-a-map\n"), &cfg)
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "workflow")
+	assert.Contains(t, err.Error(), "not-a-map")
 }
 
 // RFC 0014: both spec values validate cleanly; a typo is an error rather than
