@@ -1,12 +1,12 @@
 ---
 title: Set Up Voice Testing with Self-Play
 ---
-Configure automated voice testing using self-play mode with TTS for multi-turn conversations.
+Run automated multi-turn voice tests, where a self-play persona speaks through TTS.
 
 ## Prerequisites
 
 - Gemini API key (for duplex streaming)
-- OpenAI API key (for TTS, or use mock TTS)
+- OpenAI API key (for TTS and the self-play text model, or use mock providers)
 - Audio files in PCM format (16kHz, 16-bit, mono)
 
 ## Quick Setup
@@ -15,13 +15,14 @@ Configure automated voice testing using self-play mode with TTS for multi-turn c
 
 TTS is configured at the arena level. Declare one or more TTS provider files under
 `tts_providers:`, then bind voice IDs in `voices:`. Personas and scenarios reference
-those IDs — a single edit to `voices:` swaps between a real vendor and mock TTS for CI.
+those IDs, so one edit to `voices:` swaps between a real vendor and mock TTS for CI.
 
 ```yaml
 # config.arena.yaml
 spec:
   providers:
     - file: providers/gemini-live.provider.yaml
+    - file: providers/openai-gpt4o-mini-text.provider.yaml  # text LLM for the self-play user
 
   tts_providers:
     - file: providers/openai-alloy.provider.yaml  # real TTS
@@ -32,7 +33,17 @@ spec:
     # CI / keyless mode: change provider to mock-tts.
     - id: test-voice
       provider: openai-alloy
+
+  self_play:
+    personas:
+      - file: personas/test-user.persona.yaml
+    roles:
+      - id: selfplay-user
+        provider: openai-gpt4o-mini-text
 ```
+
+The `self_play.roles` entry defines the `selfplay-user` role that the scenario in step 4 uses. Its
+`provider` must be a text LLM provider from `providers:`.
 
 The provider files themselves declare the vendor details:
 
@@ -63,7 +74,6 @@ spec:
   type: gemini
   model: gemini-2.0-flash-exp
   additional_config:
-    audio_enabled: true
     response_modalities:
       - AUDIO
 ```
@@ -91,7 +101,7 @@ spec:
 
 ### 4. Create the Self-Play Scenario
 
-The scenario references the persona by ID. No inline `tts:` block is needed — the
+The scenario references the persona by ID. No inline `tts:` block is needed: the
 voice is resolved through the catalog.
 
 ```yaml
@@ -141,7 +151,7 @@ promptarena run --scenario voice-selfplay --provider gemini-live
 
 ## CI vs Recording Mode
 
-Because voice IDs are declared in one place (`voices:` in the arena config), switching
+Voice IDs are declared in one place (`voices:` in the arena config), so switching
 between real TTS and a mock is a single-line change:
 
 ```yaml
@@ -150,7 +160,7 @@ voices:
   - id: test-voice
     provider: openai-alloy
 
-  # CI / keyless mode — swap to:
+  # CI / keyless mode, swap to:
   # - id: test-voice
   #   provider: mock-tts
 ```
@@ -167,23 +177,7 @@ If turns are cutting off early or late, adjust VAD settings:
 
 ## Adding Assertions
 
-Validate responses with turn-level assertions:
-
-```yaml
-turns:
-  - role: selfplay-user
-    persona: test-user
-    turns: 3
-    assertions:
-      - type: content_matches
-        params:
-          pattern: ".{20,}"  # At least 20 characters
-      - type: content_includes
-        params:
-          patterns:
-            - "help"
-            - "assist"
-```
+See [Assertions](/arena/reference/assertions/) for turn-level assertions on self-play turns.
 
 ## See Also
 

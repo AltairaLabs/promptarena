@@ -1,11 +1,12 @@
 ---
 title: Duplex Streaming Architecture
+description: How PromptArena streams bidirectional audio to a provider, from pipeline stages and session creation to turn detection and resilience.
 ---
 Understanding how PromptArena handles bidirectional audio streaming for voice assistant testing.
 
 ## What is Duplex Streaming?
 
-**[Duplex](https://promptkit.altairalabs.ai/glossary#duplex) streaming** enables real-time bidirectional communication between your test scenario and an LLM provider. Unlike traditional request-response patterns, duplex streaming:
+[Duplex](https://promptkit.altairalabs.ai/glossary#duplex) streaming enables real-time bidirectional communication between your test scenario and an LLM provider. A traditional request-response test sends a whole turn and waits. Duplex streaming:
 
 - Sends audio in small chunks as it's being "spoken"
 - Receives responses while still sending input
@@ -28,7 +29,8 @@ flowchart LR
     D --> E["5. Move to next turn"]
 ```
 
-**Limitations:**
+Limitations:
+
 - No real-time interaction
 - Can't test interruption handling
 - Doesn't reflect actual voice UX
@@ -46,7 +48,8 @@ flowchart LR
     D --> E["5. Continue streaming more input"]
 ```
 
-**Benefits:**
+Benefits:
+
 - Tests real-time voice interaction
 - Validates turn detection behavior
 - Can test interruption scenarios
@@ -54,28 +57,23 @@ flowchart LR
 
 ## Pipeline Architecture
 
-Duplex testing uses the same pipeline architecture as non-duplex, with specialized stages:
+Duplex testing uses the same pipeline architecture as non-duplex, with specialized stages. This diagram shows the stage order; `AudioTurnStage` runs only with client-side VAD, and the last two stages run only when media storage and a state store are configured.
 
 ```mermaid
 flowchart TD
-    ats["AudioTurnStage<br/>(VAD)"] --> pas["PromptAssemblyStage<br/>(system prompt)"]
-    pas --> dps["DuplexProviderStage"]
-    dps -->|WebSocket to Gemini| vs["ValidationStage<br/>(guardrails)"]
-    vs --> mes["MediaExternalizerStage"]
+    rs["AudioResampleStage"] --> ats["AudioTurnStage<br/>(client-side VAD)"]
+    ats --> vps["VariableProviderStage"]
+    vps --> pas["PromptAssemblyStage"]
+    pas --> ts["TemplateStage<br/>(renders system prompt)"]
+    ts --> dps["DuplexProviderStage"]
+    dps -->|WebSocket session| mes["MediaExternalizerStage"]
     mes --> ass["ArenaStateStoreSaveStage"]
     ass --> res["Results"]
 ```
 
 ### Key Pipeline Stages
 
-| Stage | Purpose |
-|-------|---------|
-| **AudioTurnStage** | Optional client-side VAD for turn detection |
-| **PromptAssemblyStage** | Loads prompt config, adds system instruction to metadata |
-| **DuplexProviderStage** | Creates WebSocket session, handles bidirectional I/O |
-| **MediaExternalizerStage** | Saves audio responses to files |
-| **ValidationStage** | Runs assertions and guardrails on responses |
-| **ArenaStateStoreSaveStage** | Persists messages for reporting |
+See [Duplex Configuration Reference](/arena/reference/duplex-config/) for every stage and option.
 
 ## Session Lifecycle
 
@@ -85,12 +83,12 @@ Unlike traditional pipelines where each turn creates a new request, duplex maint
 
 ```mermaid
 flowchart TD
-    start["First Audio Chunk Arrives"] --> extract["Extract system_prompt<br/>from element metadata"]
+    start["First Audio Chunk Arrives"] --> extract["Read SystemPrompt<br/>from TurnState"]
     extract --> create["Create WebSocket session<br/>with system instruction"]
     create --> process["Process audio chunks<br/>in real-time loop"]
 ```
 
-The session is created **lazily** when the first element arrives, using configuration from the pipeline metadata.
+The session is created lazily when the first element arrives. `PromptAssemblyStage` loads the prompt template into the shared `TurnState`, `TemplateStage` renders the system prompt into it, and `DuplexProviderStage` reads it at session creation.
 
 ### Turn Detection
 
@@ -100,11 +98,7 @@ Two modes are available for detecting when a speaker has finished: [ASM](https:/
 
 The provider (e.g., Gemini Live API) handles turn detection internally:
 
-```yaml
-duplex:
-  turn_detection:
-    mode: asm
-```
+See [Duplex Configuration Reference](/arena/reference/duplex-config/) for the `turn_detection` settings.
 
 - Provider signals when user stops speaking
 - Simpler configuration
@@ -112,16 +106,7 @@ duplex:
 
 #### VAD Mode (Voice Activity Detection)
 
-Client-side VAD with configurable thresholds:
-
-```yaml
-duplex:
-  turn_detection:
-    mode: vad
-    vad:
-      silence_threshold_ms: 600
-      min_speech_ms: 200
-```
+Client-side VAD with configurable thresholds. See [Duplex Configuration Reference](/arena/reference/duplex-config/) for the `vad` settings.
 
 - Precise control over turn boundaries
 - Consistent across providers
@@ -131,14 +116,7 @@ duplex:
 
 ### Input Audio Format
 
-Audio must be in raw PCM format:
-
-| Parameter | Value | Reason |
-|-----------|-------|--------|
-| Format | Raw PCM (no headers) | Direct streaming |
-| Sample Rate | 16000 Hz | Gemini requirement |
-| Bit Depth | 16-bit | Standard voice quality |
-| Channels | Mono | Voice doesn't need stereo |
+Audio must be raw 16 kHz, 16-bit, mono PCM. See [Duplex Configuration Reference](/arena/reference/duplex-config/) for the format parameters.
 
 ### Chunk Streaming
 
@@ -165,7 +143,7 @@ flowchart LR
     provider --> response["Response"]
 ```
 
-**Best for:** Pre-recorded audio, avoiding false turn detections from natural pauses.
+Best for pre-recorded audio, avoiding false turn detections from natural pauses.
 
 #### Real-time Mode
 
@@ -178,7 +156,7 @@ flowchart LR
     c3 --> more["..."]
 ```
 
-**Best for:** Testing real-time interaction, interruption handling.
+Best for testing real-time interaction, interruption handling.
 
 ## Self-Play with TTS
 
@@ -206,15 +184,7 @@ Voice sessions are inherently less stable than text sessions due to:
 
 ### Resilience Configuration
 
-```yaml
-duplex:
-  resilience:
-    max_retries: 2              # Retry failed sessions
-    retry_delay_ms: 2000        # Wait between retries
-    inter_turn_delay_ms: 500    # Pause between turns
-    partial_success_min_turns: 2 # Accept if N turns succeed
-    ignore_last_turn_session_end: true
-```
+See [Duplex Configuration Reference](/arena/reference/duplex-config/) for the `resilience` settings and their defaults.
 
 ### Partial Success
 
@@ -244,20 +214,19 @@ The `runtime/streaming` package provides shared utilities for both.
 
 ### Why Pipeline-First Architecture?
 
-The pipeline runs **before** session creation because:
+The pipeline runs before session creation, for these reasons:
 
-1. **Consistency**: Same pattern as non-duplex pipelines
-2. **Flexibility**: Prompt assembly can vary per scenario
-3. **Validation**: Guardrails apply to all response types
-4. **Debugging**: Each stage can be inspected independently
+- Consistency: the pattern matches non-duplex pipelines.
+- Flexibility: prompt assembly can vary per scenario.
+- Debugging: you can inspect each stage independently.
 
 ### Why Lazy Session Creation?
 
-Sessions are created when the first audio arrives because:
+Sessions are created when the first audio arrives, for these reasons:
 
-1. **Configuration**: System prompt comes from pipeline metadata
-2. **Resource efficiency**: Don't create sessions that won't be used
-3. **Error handling**: Pipeline errors caught before session cost
+- Configuration: the system prompt comes from the pipeline's `TurnState`.
+- Resource efficiency: no session is created that goes unused.
+- Error handling: pipeline errors surface before the session costs anything.
 
 ### Why Burst Mode for Pre-recorded Audio?
 
