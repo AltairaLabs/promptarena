@@ -3,8 +3,11 @@ package agentkb
 import (
 	"embed"
 	"fmt"
+	"io/fs"
 	"sort"
 	"strings"
+
+	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
 )
 
 // The embedded schemas are a generated mirror of schemas/v1alpha1 (the source of
@@ -32,6 +35,27 @@ func SchemaNames() ([]string, error) {
 	}
 	sort.Strings(names)
 	return names, nil
+}
+
+// SchemaFS returns the embedded schemas as a filesystem with <type>.json at its
+// root, the layout config.UseSchemaFS expects.
+func SchemaFS() fs.FS {
+	sub, err := fs.Sub(schemasFS, "schemas")
+	if err != nil {
+		// fs.Sub fails only for an invalid path, and "schemas" is a constant.
+		panic(fmt.Sprintf("agentkb: embedded schemas: %v", err))
+	}
+	return sub
+}
+
+// UseEmbeddedSchemas makes every config validation in this process use the
+// schemas embedded in the binary — the ones `promptarena schema` prints —
+// instead of fetching the hosted copy or finding a schemas/ directory relative
+// to the working directory. Without it the same binary could accept a config
+// in one directory and reject it in another, and validate against a newer
+// schema than it was built with. Both CLIs call it first thing in main.
+func UseEmbeddedSchemas() {
+	config.UseSchemaFS(SchemaFS())
 }
 
 // Schema returns the raw JSON schema bytes for a config type (e.g. "scenario").
