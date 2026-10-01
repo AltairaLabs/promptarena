@@ -65,9 +65,11 @@ func TestNewRegistryFromConfig_CarriesEveryServerField(t *testing.T) {
 	}, local)
 }
 
-// TestNewRegistryFromConfig_URLWithoutTransportDefaultsToSSE pins the
-// back-compat default: a url with no explicit transport resolves to SSE.
-func TestNewRegistryFromConfig_URLWithoutTransportDefaultsToSSE(t *testing.T) {
+// A URL with no transport is Streamable HTTP, the current MCP transport. Since
+// PromptKit v2.10.0 the registry falls back to the deprecated HTTP+SSE
+// transport only when the server does not host Streamable HTTP; before, a
+// URL-only config went straight to SSE.
+func TestNewRegistryFromConfig_URLWithoutTransportDefaultsToStreamableHTTP(t *testing.T) {
 	cfg := &arenaconfig.Config{
 		MCPServers: []config.MCPServerConfig{{Name: "legacy", URL: "http://localhost:9000"}},
 	}
@@ -78,7 +80,7 @@ func TestNewRegistryFromConfig_URLWithoutTransportDefaultsToSSE(t *testing.T) {
 	sc, ok := registry.GetServerConfig("legacy")
 	require.True(t, ok)
 	assert.Equal(t, "http://localhost:9000", sc.URL)
-	assert.Equal(t, mcp.TransportSSE, sc.Transport())
+	assert.Equal(t, mcp.TransportStreamableHTTP, sc.Transport())
 }
 
 // TestNewRegistryFromConfig_SkipsSourceBackedServers checks that a
