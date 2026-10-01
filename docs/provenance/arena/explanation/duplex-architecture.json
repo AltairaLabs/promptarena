@@ -1,0 +1,253 @@
+{
+ "page": "docs/src/content/docs/arena/explanation/duplex-architecture.md",
+ "commit": "c67065389ccbc6e76babad54b4345e1c76bb633e",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "Duplex glossary entry exists at promptkit.altairalabs.ai",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 2,
+   "claim": "DuplexProviderStage communicates to provider via WebSocket to Gemini",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_executor_pipeline_integration.go:307"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "DuplexProviderStage creates WebSocket session and handles bidirectional I/O",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_executor_pipeline_integration.go:307"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "duplex.turn_detection.mode field can be set to 'asm'",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1015",
+    "arena/arenaconfig/types.go:884",
+    "arena/engine/duplex_conversation_executor.go:117"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "duplex.turn_detection.mode field can be set to 'vad'",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1015",
+    "arena/arenaconfig/types.go:882",
+    "arena/engine/duplex_conversation_executor.go:117"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "duplex.turn_detection.vad.silence_threshold_ms field exists with example value 600",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:926",
+    "arena/engine/duplex_conversation_executor.go:131"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "duplex.turn_detection.vad.min_speech_ms field exists with example value 200",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:928",
+    "arena/engine/duplex_conversation_executor.go:134"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "Audio sample rate requirement is 16000 Hz",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_conversation_executor.go:29",
+    "arena/engine/duplex_executor_pipeline_integration.go:386",
+    "arena/engine/duplex_executor_turns_integration.go:539"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "Audio bit depth requirement is 16-bit",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_executor_turns_integration.go:540",
+    "arena/turnexecutors/audio_file_source.go:276"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "Audio must be mono (single channel)",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_executor_turns_integration.go:539",
+    "arena/turnexecutors/audio_file_source.go:45"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "Chunk size calculation: 16000 samples/second \u00d7 2 bytes/sample \u00d7 0.02 seconds = 640 bytes per 20ms chunk",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_conversation_executor.go:25",
+    "arena/engine/duplex_executor_turns_integration.go:525"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "duplex.resilience.max_retries field exists with default value 2",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:903",
+    "arena/engine/duplex_executor_pipeline_integration.go:57",
+    "arena/engine/duplex_executor_types.go:15"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "duplex.resilience.retry_delay_ms field exists with value 2000",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:905",
+    "arena/engine/duplex_executor_pipeline_integration.go:58"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "duplex.resilience.inter_turn_delay_ms field exists with value 500",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:898",
+    "schemas/v1alpha1/scenario.json:265"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "duplex.resilience.partial_success_min_turns field exists with value 2",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:908",
+    "arena/engine/duplex_executor_turns_integration.go:106"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "duplex.resilience.ignore_last_turn_session_end field exists with value true",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:912",
+    "arena/engine/duplex_executor_turns_integration.go:107"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "resilience.partial_success_min_turns can be set to 3",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:908",
+    "arena/engine/duplex_executor_turns_integration.go:106"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "runtime/streaming package provides shared utilities for duplex streaming",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_executor_turns_integration.go:512"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "ASM glossary entry exists at promptkit.altairalabs.ai",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 20,
+   "claim": "VAD glossary entry exists at promptkit.altairalabs.ai",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 21,
+   "claim": "TTS glossary entry exists at promptkit.altairalabs.ai",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 22,
+   "claim": "Pipeline stage 'AudioTurnStage' with purpose: Optional client-side VAD for turn detection",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_conversation_executor.go:117",
+    "arena/engine/duplex_executor_pipeline_integration.go:392"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "Pipeline stage 'PromptAssemblyStage' with purpose: Loads prompt config, adds system instruction",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/duplex_executor_pipeline_integration.go:281"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "Pipeline stage 'DuplexProviderStage' with purpose: Creates WebSocket session, handles bidirectional I/O",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_executor_pipeline_integration.go:307"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "Pipeline stage 'MediaExternalizerStage' saves audio responses to files",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_executor_pipeline_integration.go:430"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "Pipeline stage 'ValidationStage' runs assertions and guardrails on responses",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/duplex_executor_pipeline_integration.go:262",
+    "arena/engine/duplex_executor_pipeline_integration.go:408"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "Pipeline stage 'ArenaStateStoreSaveStage' persists messages for reporting",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_executor_pipeline_integration.go:445",
+    "arena/stages/statestore_save_integration.go:23"
+   ]
+  },
+  {
+   "id": 28,
+   "claim": "Document reference: /arena/tutorials/06-duplex-testing/ exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 29,
+   "claim": "Document reference: /arena/reference/duplex-config/ exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 30,
+   "claim": "Document reference: /arena/explanation/testing-philosophy/ exists",
+   "verdict": "true",
+   "evidence": []
+  }
+ ]
+}

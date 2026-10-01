@@ -1,5 +1,24 @@
 ---
 title: Set Up Voice Testing with Self-Play
+verified:
+  commit: c67065389ccbc6e76babad54b4345e1c76bb633e
+  sources:
+    - arena/arenaconfig/loader.go
+    - arena/arenaconfig/persona.go
+    - arena/arenaconfig/types.go
+    - arena/arenaconfig/voice.go
+    - arena/cmd/promptarena/run.go
+    - arena/engine/composite_conversation_executor.go
+    - arena/engine/conversation_executor.go
+    - arena/engine/duplex_conversation_executor.go
+    - arena/engine/duplex_executor_pipeline_integration.go
+    - arena/engine/duplex_executor_turns_integration.go
+    - arena/selfplay/audio_generator.go
+    - arena/selfplay/registry.go
+    - arena/selfplay/tts_registry.go
+    - examples/duplex-streaming/providers/gemini-2-flash.provider.yaml
+    - examples/duplex-streaming/scenarios/duplex-selfplay.scenario.yaml
+    - schemas/v1alpha1/provider.json
 ---
 Run automated multi-turn voice tests, where a self-play persona speaks through TTS.
 

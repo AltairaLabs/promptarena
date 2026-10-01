@@ -1,6 +1,17 @@
 ---
 title: Duplex Streaming Architecture
 description: How PromptArena streams bidirectional audio to a provider, from pipeline stages and session creation to turn detection and resilience.
+verified:
+  commit: c67065389ccbc6e76babad54b4345e1c76bb633e
+  sources:
+    - arena/arenaconfig/types.go
+    - arena/engine/duplex_conversation_executor.go
+    - arena/engine/duplex_executor_pipeline_integration.go
+    - arena/engine/duplex_executor_turns_integration.go
+    - arena/engine/duplex_executor_types.go
+    - arena/stages/statestore_save_integration.go
+    - arena/turnexecutors/audio_file_source.go
+    - schemas/v1alpha1/scenario.json
 ---
 Understanding how PromptArena handles bidirectional audio streaming for voice assistant testing.
 

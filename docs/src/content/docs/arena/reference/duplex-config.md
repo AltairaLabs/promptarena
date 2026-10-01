@@ -1,6 +1,25 @@
 ---
 title: Duplex Configuration Reference
 description: Scenario fields, voice catalog, audio input format and pipeline stages for duplex (bidirectional) streaming runs.
+verified:
+  commit: c67065389ccbc6e76babad54b4345e1c76bb633e
+  sources:
+    - arena/arenaconfig/loader.go
+    - arena/arenaconfig/persona.go
+    - arena/arenaconfig/types.go
+    - arena/arenaconfig/voice.go
+    - arena/engine/composite_conversation_executor.go
+    - arena/engine/conversation_executor.go
+    - arena/engine/duplex_conversation_executor.go
+    - arena/engine/duplex_executor_assertions_integration.go
+    - arena/engine/duplex_executor_pipeline_integration.go
+    - arena/engine/duplex_executor_turns_integration.go
+    - arena/engine/duplex_executor_types.go
+    - arena/selfplay/registry.go
+    - arena/turnexecutors/audio_file_source.go
+    - arena/turnexecutors/media_validator.go
+    - schemas/v1alpha1/provider.json
+    - schemas/v1alpha1/scenario.json
 ---
 Complete reference for configuring [duplex](https://promptkit.altairalabs.ai/glossary#duplex) (bidirectional) streaming scenarios in PromptArena.
 
