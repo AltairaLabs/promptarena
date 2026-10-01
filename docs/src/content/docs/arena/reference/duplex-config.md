@@ -1,19 +1,20 @@
 ---
 title: Duplex Configuration Reference
+description: Scenario fields, voice catalog, audio input format and pipeline stages for duplex (bidirectional) streaming runs.
 ---
 Complete reference for configuring [duplex](https://promptkit.altairalabs.ai/glossary#duplex) (bidirectional) streaming scenarios in PromptArena.
 
 ## Overview
 
-Duplex mode enables real-time bidirectional audio streaming for testing voice assistants and conversational AI. When enabled, audio is streamed in chunks and turn boundaries are detected dynamically using either [VAD](https://promptkit.altairalabs.ai/glossary#vad) or [ASM](https://promptkit.altairalabs.ai/glossary#asm) mode.
+Duplex mode streams audio in chunks and detects turn boundaries dynamically with [VAD](https://promptkit.altairalabs.ai/glossary#vad) or [ASM](https://promptkit.altairalabs.ai/glossary#asm).
 
-**Requires**: Gemini Live API (provider type: `gemini`, model: `gemini-2.0-flash-exp` or similar)
+The duplex executor requires only that the provider implement `providers.StreamInputSupport` (`arena/engine/duplex_conversation_executor.go:104`). Gemini (type `gemini`) is one implementation; OpenAI realtime models (model name containing `realtime`), the replay provider and the mock provider also implement it. Gemini Live is not the only option; `gemini` is a registered provider type.
 
 ---
 
 ## Scenario Configuration
 
-Enable duplex mode by adding the `duplex` field to your scenario spec:
+The `duplex` field of the scenario spec enables duplex mode:
 
 ```yaml
 apiVersion: promptkit.altairalabs.ai/v1alpha1
@@ -23,7 +24,7 @@ metadata:
 spec:
   id: voice-assistant-test
   task_type: voice-assistant
-  streaming: true  # Required for duplex
+  description: "Voice assistant duplex test"
 
   duplex:
     timeout: "5m"
@@ -34,6 +35,8 @@ spec:
       partial_success_min_turns: 2
 ```
 
+`streaming: true` is not required for duplex. Duplex execution is selected solely by `scenario.duplex` being non-nil (`composite_conversation_executor.go:129`), and the duplex executor never reads `Scenario.Streaming`; the field only affects the non-duplex `DefaultConversationExecutor` (`conversation_executor.go:80`, `ShouldStreamTurn`).
+
 ---
 
 ## DuplexConfig
@@ -43,7 +46,7 @@ The main duplex configuration object.
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
 | `timeout` | string | `"10m"` | Maximum session duration (Go duration format) |
-| `turn_detection` | [TurnDetectionConfig](#turndetectionconfig) | `mode: asm` | Turn boundary detection settings |
+| `turn_detection` | [TurnDetectionConfig](#turndetectionconfig) | Omitted: client-side VAD | Turn boundary detection settings |
 | `resilience` | [DuplexResilienceConfig](#duplexresilienceconfig) | See below | Error handling and retry behavior |
 
 ### Example
@@ -58,7 +61,6 @@ duplex:
       min_speech_ms: 200
   resilience:
     max_retries: 2
-    inter_turn_delay_ms: 500
 ```
 
 ---
@@ -69,29 +71,17 @@ Configures how turn boundaries are detected during duplex streaming.
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `mode` | string | `"asm"` | Detection mode: `"vad"` or `"asm"` |
+| `mode` | string | `"asm"` | Detection mode: `"vad"` or `"asm"` (applies when the `turn_detection` block is present) |
 | `vad` | [VADConfig](#vadconfig) | - | Voice activity detection settings (when mode is `vad`) |
 
 ### Turn Detection Modes
 
 | Mode | Name | Description |
 |------|------|-------------|
-| `asm` | Provider-Native | The provider (Gemini) handles turn detection internally using its automatic speech detection |
-| `vad` | Voice Activity Detection | Client-side VAD with configurable silence thresholds |
+| `asm` | Provider-Native | The provider (Gemini) handles turn detection internally using its automatic speech detection. The arena adds no `AudioTurnStage`. |
+| `vad` | Voice Activity Detection | Client-side VAD with configurable silence thresholds. The arena adds an `AudioTurnStage`. |
 
-### ASM Mode (Provider-Native)
-
-```yaml
-duplex:
-  turn_detection:
-    mode: asm
-```
-
-**Best for**: Simple tests, trusting provider behavior, less configuration.
-
-**How it works**: The Gemini Live API automatically detects when the speaker stops talking and triggers a response.
-
-### VAD Mode (Client-Side)
+When the `turn_detection` block is omitted, the executor uses client-side VAD (`shouldUseClientVAD` returns true when `TurnDetection == nil`, `duplex_conversation_executor.go:119-121`). ASM is used only when `turn_detection` is present and `mode` is not `vad` (including an empty `mode`). There is no default of `mode: asm` for the `turn_detection` object.
 
 ```yaml
 duplex:
@@ -103,7 +93,7 @@ duplex:
       max_turn_duration_s: 60
 ```
 
-**Best for**: Precise control over turn boundaries, testing interruption handling, consistent behavior across providers.
+See [Duplex Architecture](/arena/explanation/duplex-architecture/) for how each mode works.
 
 ---
 
@@ -113,9 +103,9 @@ Voice Activity Detection configuration (used when `turn_detection.mode` is `"vad
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `silence_threshold_ms` | int | `500` | Silence duration (ms) to trigger turn end |
-| `min_speech_ms` | int | `1000` | Minimum speech duration before silence counts |
-| `max_turn_duration_s` | int | `60` | Force turn end after this duration (seconds) |
+| `silence_threshold_ms` | int | `800` | Silence duration (ms) to trigger turn end |
+| `min_speech_ms` | int | `200` | Minimum speech duration before silence counts |
+| `max_turn_duration_s` | int | `30` | Force turn end after this duration (seconds) |
 
 ### Example
 
@@ -148,8 +138,6 @@ Error handling and retry behavior for duplex sessions.
 |-------|------|---------|-------------|
 | `max_retries` | int | `0` | Retry attempts for failed turns |
 | `retry_delay_ms` | int | `1000` | Delay between retries (ms) |
-| `inter_turn_delay_ms` | int | `500` | Delay between turns (ms) |
-| `selfplay_inter_turn_delay_ms` | int | `1000` | Delay after self-play turns (ms) |
 | `partial_success_min_turns` | int | `1` | Minimum completed turns for partial success |
 | `ignore_last_turn_session_end` | bool | `true` | Treat session end on final turn as success |
 
@@ -160,11 +148,11 @@ duplex:
   resilience:
     max_retries: 2
     retry_delay_ms: 2000
-    inter_turn_delay_ms: 500
-    selfplay_inter_turn_delay_ms: 1500
     partial_success_min_turns: 3
     ignore_last_turn_session_end: true
 ```
+
+`inter_turn_delay_ms` is not a field of `DuplexResilienceConfig`. The schema's `DuplexResilienceConfig` lists only `max_retries`, `retry_delay_ms`, `partial_success_min_turns`, `ignore_last_turn_session_end`, with `additionalProperties: false`, so the key is rejected by schema validation. Nothing in `arena/` or the pinned runtime reads it. `selfplay_inter_turn_delay_ms` is likewise not a field; the schema rejects it and nothing reads it.
 
 ### Partial Success
 
@@ -175,27 +163,24 @@ resilience:
   partial_success_min_turns: 2  # Accept if 2+ turns complete
 ```
 
-This is useful for exploratory testing where completing all turns isn't critical.
-
 ### Session End Handling
 
-By default, if the session ends on the final expected turn, it's treated as success:
+With `ignore_last_turn_session_end: true` (the default), a session that ends on the final expected turn is treated as success:
 
 ```yaml
 resilience:
   ignore_last_turn_session_end: true   # Default
 ```
 
-Set to `false` if you need the final turn to complete normally without session termination.
+With `false`, the final turn must complete without session termination.
 
 ---
 
 ## Voice Catalog
 
-[Text-to-speech (TTS)](https://promptkit.altairalabs.ai/glossary#tts) for self-play audio generation is configured through the
-arena voice catalog rather than inline on individual turns. TTS providers are declared in
-`tts_providers:` and bound to voice IDs in `voices:`. Personas and scripted-text scenarios
-reference those IDs.
+[Text-to-speech (TTS)](https://promptkit.altairalabs.ai/glossary#tts) for self-play audio generation comes from the
+arena voice catalog. TTS providers are declared in `tts_providers:` and bound to voice IDs in
+`voices:`. Personas and scripted-text scenarios reference those IDs.
 
 ### Arena-Level Declaration
 
@@ -207,15 +192,13 @@ spec:
     - file: providers/mock-tts.provider.yaml
 
   voices:
-    # Real TTS (requires OPENAI_API_KEY). For CI: change provider to mock-tts.
     - id: alloy
       provider: openai-alloy
 ```
 
 ### Persona Voice Assignment
 
-Assign a voice ID to a persona. All selfplay turns using that persona will use the
-corresponding TTS provider.
+A persona's `voice` field holds a voice ID. Self-play turns using that persona use the corresponding TTS provider.
 
 ```yaml
 # personas/curious-customer.persona.yaml
@@ -228,8 +211,7 @@ spec:
 
 ### Scripted-Text Scenario Voice Assignment
 
-For scripted-text duplex scenarios (turns with `content:` instead of audio `parts:`),
-declare `voice:` at the scenario level:
+Scripted-text duplex scenarios (turns with `content:` instead of audio `parts:`) declare `voice:` at the scenario level:
 
 ```yaml
 spec:
@@ -242,16 +224,15 @@ spec:
 
 ### CI vs Recording Mode
 
-A single edit to the `voices:` block in the arena config switches between real vendor
-TTS and mock TTS, with no changes required to personas or scenarios:
+The `provider` of a `voices:` entry selects real vendor TTS or mock TTS. Personas and scenarios reference the voice ID only:
 
 ```yaml
 voices:
-  # Recording mode (requires API key):
+  # Real vendor TTS:
   - id: alloy
     provider: openai-alloy
 
-  # CI / keyless mode — swap to:
+  # Mock TTS:
   # - id: alloy
   #   provider: mock-tts
 ```
@@ -276,16 +257,18 @@ turns:
 
 | Parameter | Value | Description |
 |-----------|-------|-------------|
-| Format | Raw PCM | No headers (not WAV) |
-| Sample Rate | 16000 Hz | Required by Gemini Live API |
-| Bit Depth | 16-bit | Signed integer |
-| Channels | Mono | Single channel |
-| MIME Type | `audio/L16` | Linear PCM |
+| Format | `.wav`, `.pcm` or `.raw` | `AudioFileSource` parses the WAV header and extracts the data chunk; raw files carry no header. Other extensions are rejected with `unsupported audio format: ... (supported: .wav, .pcm, .raw)`. |
+| Sample Rate | 16000 Hz | Chunks read from a file are labelled 16000 Hz regardless of the WAV header; the Gemini encoder rejects any other rate |
+| Bit Depth | 16-bit | Required only for raw `.pcm`/`.raw` files. WAV files with 24-bit, 32-bit or float32 samples are accepted and converted to 16-bit PCM by `AudioFileSource` |
+| Channels | Mono | Every chunk is labelled one channel; there is no downmix |
+| MIME Type | any `audio/` type | `mime_type` must be present (schema) and, where validated, needs only an `audio/` prefix. Decoding follows the file extension, not `mime_type`; the arena labels raw PCM `audio/pcm` (`media_loader.go:543`) |
+
+Only raw PCM files are assumed to be 16 kHz mono 16-bit.
 
 ### Converting Audio Files
 
 ```bash
-# WAV to PCM
+# WAV to raw PCM
 ffmpeg -i input.wav -f s16le -ar 16000 -ac 1 output.pcm
 
 # MP3 to PCM
@@ -299,7 +282,7 @@ ffprobe -show_format -show_streams output.pcm
 
 ## Provider Configuration
 
-Duplex requires a Gemini provider with streaming enabled:
+A Gemini provider for duplex:
 
 ```yaml
 # providers/gemini-live.provider.yaml
@@ -319,7 +302,6 @@ spec:
 
   # Gemini-specific configuration
   additional_config:
-    audio_enabled: true
     response_modalities:
       - AUDIO   # Returns audio + text transcription
 ```
@@ -331,7 +313,7 @@ spec:
 | `AUDIO` | Returns audio response with text transcription |
 | `TEXT` | Returns text-only response (no audio) |
 
-**Note**: Gemini Live API supports only ONE modality at a time. `AUDIO` mode includes text transcription via `outputAudioTranscription`.
+The Gemini Live API supports only one modality at a time; requesting both `TEXT` and `AUDIO` returns an error at setup. `AUDIO` mode includes text transcription via `outputAudioTranscription`. `TEXT` is the default when nothing is set.
 
 ---
 
@@ -347,7 +329,6 @@ spec:
   id: voice-assistant-comprehensive
   task_type: voice-assistant
   description: "Full duplex voice assistant test with self-play"
-  streaming: true
 
   duplex:
     timeout: "5m"
@@ -360,8 +341,6 @@ spec:
     resilience:
       max_retries: 2
       retry_delay_ms: 2000
-      inter_turn_delay_ms: 500
-      selfplay_inter_turn_delay_ms: 1200
       partial_success_min_turns: 3
       ignore_last_turn_session_end: true
 
@@ -396,6 +375,27 @@ spec:
           - "support"
 ```
 
+`selfplay-user` is not a built-in role value. A turn is self-play only if its role equals the id of a role declared in the arena's `self_play.roles` list (`Registry.IsValidRole`). `selfplay-user` works only when the arena config declares a role with that id (as `examples/voice-refund-demo/config.arena.yaml:67` does).
+
+---
+
+## Pipeline Stages
+
+The duplex executor builds the pipeline from these stages, in order. `AudioTurnStage` runs only with client-side VAD. `MediaExternalizerStage` and `ArenaStateStoreSaveStage` run only when media storage and a state store are configured.
+
+| Stage | Role |
+|-------|------|
+| `AudioResampleStage` | Resamples input audio to the provider's preferred sample rate (Gemini 16000 Hz, OpenAI realtime 24000 Hz) |
+| `AudioTurnStage` | Detects turn boundaries with client-side VAD; added only when [`turn_detection.mode`](#turndetectionconfig) is `vad` or the block is omitted |
+| `VariableProviderStage` | Supplies the merged scenario variables |
+| `PromptAssemblyStage` | Loads the prompt template into the shared `TurnState` (`Template`, `AllowedTools`, `Validators`) |
+| `TemplateStage` | Renders the system prompt into `TurnState.SystemPrompt` |
+| `DuplexProviderStage` | Opens a `StreamInputSupport` session over WebSocket, reading `TurnState.SystemPrompt` at session creation |
+| `MediaExternalizerStage` | Externalizes media to storage; added only when media storage is set |
+| `ArenaStateStoreSaveStage` | Saves messages to the state store; added only when a state store is configured |
+
+No `ValidationStage` exists in the duplex pipeline, and no type named `ValidationStage` exists in `arena/` or the pinned runtime. Assertions are not run by a pipeline stage here. Optional audio pacing and monitor-tap stages also appear on the output side.
+
 ---
 
 ## Validation Errors
@@ -407,8 +407,12 @@ Common configuration errors and solutions:
 | `invalid duplex timeout format` | Timeout not in Go duration format | Use format like `"5m"`, `"30s"`, `"1h30m"` |
 | `invalid turn detection mode` | Mode not `vad` or `asm` | Use `mode: vad` or `mode: asm` |
 | `silence_threshold_ms must be non-negative` | Negative VAD threshold | Use positive values |
-| `voices[N]: provider "X" not found` | Voice references an unknown TTS provider ID | Check that `tts_providers:` lists the provider file and the `id:` matches |
-| `persona "X": voice "Y" not found in catalog` | Persona references a voice ID not declared in `voices:` | Add the voice binding to the arena `voices:` list |
+| `voices[<voice id>]: provider id "<provider>" not found in tts_providers` | Voice references an unknown TTS provider ID | Check that `tts_providers:` lists the provider file and the `id:` matches |
+| `voices[N]: id is required` | A `voices:` entry has no `id` | Set `id` |
+| `voices[<id>]: provider is required` | A `voices:` entry has no `provider` | Set `provider` |
+| `persona <name>: voice id "<id>" not found in spec.voices` | Persona references a voice ID not declared in `voices:` | Add the voice binding to the arena `voices:` list |
+| `scenario <name>: voice id "X" not found in spec.voices` | Scenario references an undeclared voice ID | Add the voice binding to the arena `voices:` list |
+| `voice "X" binds to provider "Y" which is not loaded in spec.tts_providers` | Scenario voice binds to a provider that is not loaded | List the provider file in `tts_providers:` |
 
 ---
 
