@@ -24,8 +24,9 @@ Run automated multi-turn voice tests, where a self-play persona speaks through T
 
 ## Prerequisites
 
-- Gemini API key (for duplex streaming)
-- OpenAI API key (for TTS and the self-play text model, or use mock providers)
+- For a run against real providers: a Gemini API key (the duplex model) and an OpenAI API key
+  (the self-play text model and TTS)
+- For a keyless run, for example in CI: no API keys; the project includes mock providers
 - Audio files in PCM format (16kHz, 16-bit, mono)
 
 ## Quick Setup
@@ -42,6 +43,7 @@ providers/gemini-live.provider.yaml
 providers/openai-gpt4o-mini-text.provider.yaml
 providers/openai-alloy.provider.yaml
 providers/mock-tts.provider.yaml
+providers/mock-duplex.provider.yaml
 personas/test-user.persona.yaml
 scenarios/voice-selfplay.scenario.yaml
 ```
@@ -53,7 +55,7 @@ above.
 
 TTS is configured at the arena level. Declare one or more TTS provider files under
 `tts_providers:`, then bind voice IDs in `voices:`. Personas and scenarios reference
-those IDs, so one edit to `voices:` swaps between a real vendor and mock TTS for CI.
+those IDs, so one edit to `voices:` swaps between a real vendor and mock TTS.
 
 The `prompt_configs:` entry supplies the prompt whose `task_type` the scenario names, and
 `scenarios:` lists the file that `--scenario voice-selfplay` resolves.
@@ -72,14 +74,14 @@ spec:
   providers:
     - file: providers/gemini-live.provider.yaml
     - file: providers/openai-gpt4o-mini-text.provider.yaml  # text LLM for the self-play user
+    - file: providers/mock-duplex.provider.yaml              # keyless runs
 
   tts_providers:
     - file: providers/openai-alloy.provider.yaml  # real TTS
-    - file: providers/mock-tts.provider.yaml       # for CI
+    - file: providers/mock-tts.provider.yaml       # keyless runs
 
   voices:
-    # Real-vendor mode: point to openai-alloy.
-    # CI / keyless mode: change provider to mock-tts.
+    # Keyless runs: change provider to mock-tts (step 6).
     - id: test-voice
       provider: openai-alloy
 
@@ -91,7 +93,7 @@ spec:
       - file: personas/test-user.persona.yaml
     roles:
       - id: selfplay-user
-        provider: openai-gpt4o-mini-text
+        provider: openai-gpt4o-mini-text  # keyless runs: mock-duplex (step 6)
 
   defaults:
     temperature: 0.7
@@ -156,7 +158,8 @@ spec:
   sample_rate: 24000
 ```
 
-The mock TTS for CI:
+The mock TTS and the mock duplex model for keyless runs. With `auto_respond: true`, the mock
+duplex model answers each user turn with `response_text`:
 
 ```yaml
 # providers/mock-tts.provider.yaml
@@ -169,6 +172,21 @@ spec:
   type: mock
   role: tts
   sample_rate: 24000
+```
+
+```yaml
+# providers/mock-duplex.provider.yaml
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Provider
+metadata:
+  name: mock-duplex
+spec:
+  id: mock-duplex
+  type: mock
+  model: mock-duplex-model
+  additional_config:
+    auto_respond: true
+    response_text: "Hello, I'm your voice assistant. How can I help you today?"
 ```
 
 ### 3. Create the Prompt Configuration
@@ -187,7 +205,8 @@ spec:
   description: "Voice assistant"
   system_template: |
     You are a helpful voice assistant. Keep answers to one to three
-    short sentences, suitable for speech.
+    short sentences, suitable for speech. End each answer by asking
+    what else you can help with.
 ```
 
 ### 4. Create a Persona for Self-Play
@@ -214,7 +233,9 @@ spec:
 ### 5. Create the Self-Play Scenario
 
 The scenario references the persona by ID. No inline `tts:` block is needed: the
-voice is resolved through the catalog.
+voice is resolved through the catalog. The `conversation_assertions:` entry is the check
+step 7 reads: `content_includes` passes when the assistant's final reply contains `help`,
+which the prompt in step 3 asks for.
 
 ```yaml
 # scenarios/voice-selfplay.scenario.yaml
@@ -236,6 +257,11 @@ spec:
     resilience:
       partial_success_min_turns: 2
       ignore_last_turn_session_end: true
+  conversation_assertions:
+    - type: content_includes
+      params:
+        patterns: ["help"]
+      message: "The final reply should offer more help"
   turns:
     - role: user
       parts:
@@ -259,27 +285,29 @@ promptarena run --scenario voice-selfplay --provider gemini-live
 
 `promptarena validate` checks the config and its files before you spend API calls.
 
+To run without API keys, for example in CI, make two edits to `config.arena.yaml`:
+
+- under `voices:`, change `test-voice` to `provider: mock-tts`
+- under `self_play.roles`, change `selfplay-user` to `provider: mock-duplex`
+
+Then run against the mock duplex model, with `--ci` for plain log output:
+
+```bash
+promptarena run --scenario voice-selfplay --provider mock-duplex --ci
+```
+
+Use these mock provider files rather than `--mock-provider`. That flag's mocks do not
+answer duplex audio, so the run waits until `duplex.timeout` and fails.
+
 ### 7. Check the Result
 
-The run writes to `out/`, the `defaults.output.dir` from step 1. Open `out/results.md` for the
-markdown report, and `out/index.json` for the machine-readable results. Look for the
-`voice-selfplay` run against `gemini-live` and check that its assertions passed.
+The run writes to `out/`, the `defaults.output.dir` from step 1. Open `out/results.md`: the
+`voice-selfplay` row should show `Pass`, and its Conversation Assertions table should show
+`content_includes` passed. The per-run JSON file in `out/` holds the same result under
+`conversation_assertions`. A failed assertion fails the run, and `promptarena run` exits non-zero.
 
-## CI vs Recording Mode
-
-Voice IDs are declared in one place (`voices:` in the arena config), so switching
-between real TTS and a mock is a one-line change:
-
-```yaml
-voices:
-  # Recording mode (requires OPENAI_API_KEY):
-  - id: test-voice
-    provider: openai-alloy
-
-  # CI / keyless mode, swap to:
-  # - id: test-voice
-  #   provider: mock-tts
-```
+To add more checks, append entries to `conversation_assertions:` in the scenario. See
+[Assertions](/arena/reference/assertions/) for every assertion type.
 
 ## Tuning Turn Detection
 
@@ -290,23 +318,6 @@ If turns are cutting off early or late, adjust VAD settings:
 | Cuts off mid-sentence | Increase `silence_threshold_ms` to 1500-2000 |
 | Long pauses before response | Decrease `silence_threshold_ms` to 800-1000 |
 | Short utterances ignored | Decrease `min_speech_ms` to 200-300 |
-
-## Adding Assertions
-
-Add `assertions:` to the self-play turn in `scenarios/voice-selfplay.scenario.yaml`:
-
-```yaml
-    - role: selfplay-user
-      persona: test-user
-      turns: 3
-      assertions:
-        - type: content_matches
-          params:
-            pattern: ".{10,}"   # regex; the turn output must contain 10 or more characters
-```
-
-`content_includes` takes `params.patterns`, a list in which every entry must appear. See
-[Assertions](/arena/reference/assertions/) for every assertion type.
 
 ## See Also
 

@@ -68,19 +68,24 @@ Benefits:
 
 ## Pipeline Architecture
 
-Duplex testing uses the same pipeline architecture as non-duplex, with specialized stages. This diagram shows the stage order; `AudioTurnStage` runs only with client-side VAD, and the last two stages run only when media storage and a state store are configured.
+Duplex testing uses the same pipeline architecture as non-duplex, with specialized stages. This diagram shows the stage order, with each conditional stage labelled with the condition that adds it.
 
 ```mermaid
 flowchart TD
-    rs["AudioResampleStage"] --> ats["AudioTurnStage<br/>(client-side VAD)"]
+    pin["AudioPacingStage<br/>(when paced)"] --> tin["MonitorTap, input<br/>(when an audio monitor is attached)"]
+    tin --> rs["AudioResampleStage"]
+    rs --> ats["AudioTurnStage<br/>(client-side VAD only)"]
     ats --> vps["VariableProviderStage"]
     vps --> pas["PromptAssemblyStage"]
     pas --> ts["TemplateStage<br/>(renders system prompt)"]
     ts --> dps["DuplexProviderStage"]
-    dps -->|WebSocket session| mes["MediaExternalizerStage"]
-    mes --> ass["ArenaStateStoreSaveStage"]
-    ass --> res["Results"]
+    dps -->|WebSocket session| pout["audio-pacing-output<br/>(when paced)"]
+    pout --> tout["MonitorTap, output<br/>(when an audio monitor is attached)"]
+    tout --> mes["MediaExternalizerStage<br/>(when media storage is configured)"]
+    mes --> ass["ArenaStateStoreSaveStage<br/>(when a state store is configured)"]
 ```
+
+[Audio Pacing](#audio-pacing) explains when a run is paced.
 
 ### Key Pipeline Stages
 
@@ -146,32 +151,15 @@ flowchart TD
 **Chunk size calculation:**
 - 16000 samples/second × 2 bytes/sample × 0.02 seconds = 640 bytes per 20ms chunk
 
-### Burst Mode vs Real-time Mode
+### Audio Pacing
 
-#### Burst Mode (Default for Testing)
+Arena reads an audio file, or receives TTS audio, far faster than it would play. `AudioPacingStage` holds each chunk back until the time it would reach a listener, worked out from the chunk's length and sample rate, so the audio leaves the stage at playback rate. The first five chunks of each utterance go through at once, as a small buffer against scheduling jitter. Pacing is not a setting. Arena decides per run whether anything downstream depends on when audio arrives.
 
-Sends all audio as fast as possible:
+The provider's VAD does. A provider times the silence at the end of a turn by when audio arrives, not by what the audio contains. If a 10-second recording arrives in a few milliseconds, the provider sees almost no speech, and it can end the turn at once. Pacing scripted, pre-recorded audio to real time lets the provider time silence the way it would with a live caller. Arena therefore paces every run unless the arena config enables `self_play`.
 
-```mermaid
-flowchart LR
-    chunks["[Chunk 1][Chunk 2][Chunk 3]...[Chunk N]"] --> provider["Provider"]
-    provider --> response["Response"]
-```
+A live audio monitor also depends on arrival time. When one is attached, through `--audio-monitor on` or `auto` with a terminal on stdout, Arena paces the run so playback drains smoothly, whether or not self-play is enabled. A second pacing stage, `audio-pacing-output`, does the same for the provider's audio. Realtime providers stream their reply faster than it plays, and without output pacing the reply would still be playing when the next turn starts.
 
-Best for pre-recorded audio, avoiding false turn detections from natural pauses.
-
-#### Real-time Mode
-
-Paces audio to match actual speech timing:
-
-```mermaid
-flowchart LR
-    c1["Chunk 1"] -->|20ms| c2["Chunk 2"]
-    c2 -->|20ms| c3["Chunk 3"]
-    c3 --> more["..."]
-```
-
-Best for testing real-time interaction, interruption handling.
+Audio goes unpaced only when self-play is enabled and no audio monitor is attached, which is the usual headless CI self-play run. With self-play enabled, Arena turns off the provider's VAD for any scenario with persona-driven turns, so in those scenarios nothing reads arrival time and pacing would only add wall-clock time. The decision covers the whole run, so a scripted scenario in an arena config that enables self-play is also unpaced when no monitor is attached.
 
 ## Self-Play with TTS
 
@@ -243,9 +231,9 @@ Sessions are created when the first audio arrives, for these reasons:
 - Resource efficiency: no session is created that goes unused.
 - Error handling: pipeline errors surface before the session costs anything.
 
-### Why Burst Mode for Pre-recorded Audio?
+### Why Pace Pre-recorded Audio?
 
-Provider turn detection can trigger mid-utterance with natural speech pauses. Burst mode sends all audio before any turn detection occurs, preventing "user interrupted" false positives.
+A provider's VAD times turn-end silence by arrival, so audio that arrives faster than it plays tells the provider the user spoke for less time than they did. Pacing at playback rate keeps a test's turn boundaries the same as a live caller's. It costs the audio's own duration in wall-clock time, which is why Arena skips it only where nothing reads that timing. See [Audio Pacing](#audio-pacing).
 
 ## See Also
 

@@ -289,8 +289,8 @@ ffmpeg -i input.wav -f s16le -ar 16000 -ac 1 output.pcm
 # MP3 to PCM
 ffmpeg -i input.mp3 -f s16le -ar 16000 -ac 1 output.pcm
 
-# Verify format
-ffprobe -show_format -show_streams output.pcm
+# Check a WAV file's sample rate, channels and sample format
+ffprobe -show_streams input.wav
 ```
 
 ---
@@ -396,18 +396,24 @@ A self-play turn's `role` is the `id` of an entry in the arena's `self_play.role
 
 ## Pipeline Stages
 
-The duplex executor builds the pipeline from these stages, in order. `AudioTurnStage` runs only with client-side VAD. `MediaExternalizerStage` and `ArenaStateStoreSaveStage` run only when media storage and a state store are configured.
+The duplex executor builds the pipeline from these stages, in this order. A stage with a condition is added only when that condition holds.
 
-| Stage | Role |
-|-------|------|
-| `AudioResampleStage` | Resamples input audio to the provider's preferred sample rate (Gemini 16000 Hz, OpenAI realtime 24000 Hz) |
-| `AudioTurnStage` | Detects turn boundaries with client-side VAD; added only when [`turn_detection.mode`](#turndetectionconfig) is `vad` or the block is omitted |
-| `VariableProviderStage` | Supplies the merged scenario variables |
-| `PromptAssemblyStage` | Loads the prompt template into the shared `TurnState` (`Template`, `AllowedTools`, `Validators`) |
-| `TemplateStage` | Renders the system prompt into `TurnState.SystemPrompt` |
-| `DuplexProviderStage` | Opens a `StreamInputSupport` session over WebSocket, reading `TurnState.SystemPrompt` at session creation |
-| `MediaExternalizerStage` | Externalizes media to storage; added only when media storage is set |
-| `ArenaStateStoreSaveStage` | Saves messages to the state store; added only when a state store is configured |
+| Stage | Added when | Role |
+|-------|------------|------|
+| `AudioPacingStage` (`audio-pacing`) | The arena config has no enabled `self_play` section, or an audio monitor is attached | Emits each input audio chunk at the real-time cadence implied by its size and sample rate |
+| `MonitorTap` (input) | An audio monitor is attached | Copies input audio to the audio monitor |
+| `AudioResampleStage` | Always | Resamples input audio to the provider's preferred sample rate (Gemini 16000 Hz, OpenAI realtime 24000 Hz); passes audio through when the rates match |
+| `AudioTurnStage` | Client-side VAD: [`turn_detection.mode`](#turndetectionconfig) is `vad`, or the `turn_detection` block is omitted | Detects turn boundaries with the [VAD settings](#vadconfig) |
+| `VariableProviderStage` | Always | Supplies the merged scenario variables |
+| `PromptAssemblyStage` | Always | Loads the prompt template into the shared `TurnState` (`Template`, `AllowedTools`, `Validators`) |
+| `TemplateStage` | Always | Renders the system prompt into `TurnState.SystemPrompt` |
+| `DuplexProviderStage` | Always | Opens a `StreamInputSupport` session, reading `TurnState.SystemPrompt` at session creation |
+| `AudioPacingStage` (`audio-pacing-output`) | Same condition as the input `AudioPacingStage` | Emits each response audio chunk at real-time cadence |
+| `MonitorTap` (output) | An audio monitor is attached | Copies response audio to the audio monitor |
+| `MediaExternalizerStage` | Media storage is set | Writes all media to storage, retained |
+| `ArenaStateStoreSaveStage` | A state store is configured | Saves the conversation messages to the state store |
+
+An audio monitor is attached when `promptarena run` or `promptarena serve` has `--audio-monitor on`, or `--audio-monitor auto` (the default) with stdout on a terminal. Runs started by `promptarena run` set media storage to the `media` directory under the output directory, and configure a state store.
 
 ---
 
@@ -419,7 +425,7 @@ Common configuration errors and solutions:
 |-------|-------|----------|
 | `invalid duplex timeout format` | Timeout not in Go duration format | Use format like `"5m"`, `"30s"`, `"1h30m"` |
 | `invalid turn detection mode` | Mode not `vad` or `asm` | Use `mode: vad` or `mode: asm` |
-| `silence_threshold_ms must be non-negative` | Negative VAD threshold | Use positive values |
+| `silence_threshold_ms must be non-negative` | Negative VAD threshold | Use zero or a positive value |
 | `voices[<voice id>]: provider id "<provider>" not found in tts_providers` | Voice references an unknown TTS provider ID | Check that `tts_providers:` lists the provider file and the `id:` matches |
 | `voices[N]: id is required` | A `voices:` entry has no `id` | Set `id` |
 | `voices[<id>]: provider is required` | A `voices:` entry has no `provider` | Set `provider` |
