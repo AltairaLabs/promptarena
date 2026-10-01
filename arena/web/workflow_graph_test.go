@@ -6,13 +6,32 @@ import (
 	"testing"
 
 	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
+
+	"github.com/AltairaLabs/PromptKit/runtime/v2/composition"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/workflow"
 )
 
-func TestBuildWorkflowGraph_NoConfig(t *testing.T) {
-	g, err := BuildWorkflowGraph(nil)
+// testWorkflow decodes a literal workflow document into the typed spec the
+// config carries, the way the YAML loader would.
+func testWorkflow(raw map[string]any) *workflow.Spec {
+	spec, err := workflow.ParseConfig(raw)
 	if err != nil {
-		t.Fatal(err)
+		panic(err)
 	}
+	return spec
+}
+
+// testCompositions decodes literal compositions into the config's typed map.
+func testCompositions(raw map[string]any) map[string]*composition.Composition {
+	comps, err := composition.ParseConfig(raw)
+	if err != nil {
+		panic(err)
+	}
+	return comps
+}
+
+func TestBuildWorkflowGraph_NoConfig(t *testing.T) {
+	g := BuildWorkflowGraph(nil)
 	if len(g.Nodes) != 1 || g.Nodes[0].ID != "default" || g.Nodes[0].Kind != "entry" {
 		t.Fatalf("want single default entry node, got %+v", g.Nodes)
 	}
@@ -22,10 +41,7 @@ func TestBuildWorkflowGraph_NoConfig(t *testing.T) {
 }
 
 func TestBuildWorkflowGraph_NoConfig_SerializesEdgesAsEmptyArray(t *testing.T) {
-	g, err := BuildWorkflowGraph(nil)
-	if err != nil {
-		t.Fatal(err)
-	}
+	g := BuildWorkflowGraph(nil)
 	b, err := json.Marshal(g)
 	if err != nil {
 		t.Fatal(err)
@@ -39,10 +55,7 @@ func TestBuildWorkflowGraph_NoConfig_SerializesEdgesAsEmptyArray(t *testing.T) {
 }
 
 func TestBuildWorkflowGraph_NoWorkflow(t *testing.T) {
-	g, err := BuildWorkflowGraph(&arenaconfig.Config{})
-	if err != nil {
-		t.Fatal(err)
-	}
+	g := BuildWorkflowGraph(&arenaconfig.Config{})
 	if len(g.Nodes) != 1 || g.Nodes[0].ID != "default" || g.Nodes[0].Kind != "entry" {
 		t.Fatalf("want single default entry node, got %+v", g.Nodes)
 	}
@@ -55,17 +68,14 @@ func TestBuildWorkflowGraph_NoWorkflow(t *testing.T) {
 }
 
 func TestBuildWorkflowGraph_StateMachine(t *testing.T) {
-	cfg := &arenaconfig.Config{Workflow: map[string]any{
+	cfg := &arenaconfig.Config{Workflow: testWorkflow(map[string]any{
 		"version": 2, "entry": "intake",
 		"states": map[string]any{
 			"intake":  map[string]any{"on_event": map[string]any{"classified": "resolve"}},
 			"resolve": map[string]any{}, // no on_event => terminal
 		},
-	}}
-	g, err := BuildWorkflowGraph(cfg)
-	if err != nil {
-		t.Fatal(err)
-	}
+	})}
+	g := BuildWorkflowGraph(cfg)
 	byID := map[string]WorkflowGraphNode{}
 	for _, n := range g.Nodes {
 		byID[n.ID] = n
@@ -82,7 +92,7 @@ func TestBuildWorkflowGraph_StateMachine(t *testing.T) {
 }
 
 func TestBuildWorkflowGraph_MiddleAgentState(t *testing.T) {
-	cfg := &arenaconfig.Config{Workflow: map[string]any{
+	cfg := &arenaconfig.Config{Workflow: testWorkflow(map[string]any{
 		"version": 2, "entry": "intake",
 		"states": map[string]any{
 			"intake": map[string]any{"on_event": map[string]any{"classified": "triage"}},
@@ -91,11 +101,8 @@ func TestBuildWorkflowGraph_MiddleAgentState(t *testing.T) {
 				"terminal": true,
 			},
 		},
-	}}
-	g, err := BuildWorkflowGraph(cfg)
-	if err != nil {
-		t.Fatal(err)
-	}
+	})}
+	g := BuildWorkflowGraph(cfg)
 	byID := map[string]WorkflowGraphNode{}
 	for _, n := range g.Nodes {
 		byID[n.ID] = n
@@ -109,7 +116,7 @@ func TestBuildWorkflowGraph_MiddleAgentState(t *testing.T) {
 }
 
 func TestBuildWorkflowGraph_OnMaxVisitsEdge(t *testing.T) {
-	cfg := &arenaconfig.Config{Workflow: map[string]any{
+	cfg := &arenaconfig.Config{Workflow: testWorkflow(map[string]any{
 		"version": 2, "entry": "intake",
 		"states": map[string]any{
 			"intake": map[string]any{
@@ -120,11 +127,8 @@ func TestBuildWorkflowGraph_OnMaxVisitsEdge(t *testing.T) {
 			"triage":   map[string]any{"on_event": map[string]any{"done": "escalate"}},
 			"escalate": map[string]any{},
 		},
-	}}
-	g, err := BuildWorkflowGraph(cfg)
-	if err != nil {
-		t.Fatal(err)
-	}
+	})}
+	g := BuildWorkflowGraph(cfg)
 
 	var maxVisitsEdges []WorkflowGraphEdge
 	for _, e := range g.Edges {
@@ -142,21 +146,18 @@ func TestBuildWorkflowGraph_OnMaxVisitsEdge(t *testing.T) {
 }
 
 func TestBuildWorkflowGraph_DeterministicOrdering(t *testing.T) {
-	cfg := &arenaconfig.Config{Workflow: map[string]any{
+	cfg := &arenaconfig.Config{Workflow: testWorkflow(map[string]any{
 		"version": 2, "entry": "b",
 		"states": map[string]any{
 			"b": map[string]any{"on_event": map[string]any{"z": "a", "y": "c"}},
 			"a": map[string]any{},
 			"c": map[string]any{},
 		},
-	}}
+	})}
 
 	var first WorkflowGraph
 	for i := range 10 {
-		g, err := BuildWorkflowGraph(cfg)
-		if err != nil {
-			t.Fatal(err)
-		}
+		g := BuildWorkflowGraph(cfg)
 		if i == 0 {
 			first = g
 			continue
@@ -189,16 +190,9 @@ func TestBuildWorkflowGraph_DeterministicOrdering(t *testing.T) {
 	}
 }
 
-func TestBuildWorkflowGraph_ParseError(t *testing.T) {
-	cfg := &arenaconfig.Config{Workflow: func() {}} // not JSON-marshalable
-	if _, err := BuildWorkflowGraph(cfg); err == nil {
-		t.Fatal("want error for unparsable workflow config, got nil")
-	}
-}
-
 func TestBuildWorkflowGraph_CompositionExpansion(t *testing.T) {
 	cfg := &arenaconfig.Config{
-		Workflow: map[string]any{
+		Workflow: testWorkflow(map[string]any{
 			"version": 2, "entry": "intake",
 			"states": map[string]any{
 				"intake": map[string]any{"on_event": map[string]any{"go": "process"}},
@@ -208,8 +202,8 @@ func TestBuildWorkflowGraph_CompositionExpansion(t *testing.T) {
 					"terminal":      true,
 				},
 			},
-		},
-		Compositions: map[string]any{
+		}),
+		Compositions: testCompositions(map[string]any{
 			"flow": map[string]any{
 				"version": 1,
 				"steps": []map[string]any{
@@ -224,13 +218,10 @@ func TestBuildWorkflowGraph_CompositionExpansion(t *testing.T) {
 					{"id": "reject", "kind": "prompt", "depends_on": []string{"route"}},
 				},
 			},
-		},
+		}),
 	}
 
-	g, err := BuildWorkflowGraph(cfg)
-	if err != nil {
-		t.Fatal(err)
-	}
+	g := BuildWorkflowGraph(cfg)
 
 	nodeByID := map[string]WorkflowGraphNode{}
 	for _, n := range g.Nodes {
@@ -289,7 +280,7 @@ func TestBuildWorkflowGraph_CompositionExpansion_JoinHintDedupesEdge(t *testing.
 	// graph: one from the branch's Then loop and one from the DependsOn
 	// loop.
 	cfg := &arenaconfig.Config{
-		Workflow: map[string]any{
+		Workflow: testWorkflow(map[string]any{
 			"version": 2, "entry": "intake",
 			"states": map[string]any{
 				"intake": map[string]any{"on_event": map[string]any{"go": "process"}},
@@ -299,8 +290,8 @@ func TestBuildWorkflowGraph_CompositionExpansion_JoinHintDedupesEdge(t *testing.
 					"terminal":      true,
 				},
 			},
-		},
-		Compositions: map[string]any{
+		}),
+		Compositions: testCompositions(map[string]any{
 			"flow": map[string]any{
 				"version": 1,
 				"steps": []map[string]any{
@@ -315,13 +306,10 @@ func TestBuildWorkflowGraph_CompositionExpansion_JoinHintDedupesEdge(t *testing.
 					{"id": "reject", "kind": "prompt", "depends_on": []string{"route"}},
 				},
 			},
-		},
+		}),
 	}
 
-	g, err := BuildWorkflowGraph(cfg)
-	if err != nil {
-		t.Fatal(err)
-	}
+	g := BuildWorkflowGraph(cfg)
 
 	var matches int
 	for _, e := range g.Edges {
@@ -336,7 +324,7 @@ func TestBuildWorkflowGraph_CompositionExpansion_JoinHintDedupesEdge(t *testing.
 
 func TestBuildWorkflowGraph_CompositionExpansion_ParallelFanOut(t *testing.T) {
 	cfg := &arenaconfig.Config{
-		Workflow: map[string]any{
+		Workflow: testWorkflow(map[string]any{
 			"version": 2, "entry": "run",
 			"states": map[string]any{
 				"run": map[string]any{
@@ -345,8 +333,8 @@ func TestBuildWorkflowGraph_CompositionExpansion_ParallelFanOut(t *testing.T) {
 					"terminal":      true,
 				},
 			},
-		},
-		Compositions: map[string]any{
+		}),
+		Compositions: testCompositions(map[string]any{
 			"par": map[string]any{
 				"version": 1,
 				"steps": []map[string]any{
@@ -361,13 +349,10 @@ func TestBuildWorkflowGraph_CompositionExpansion_ParallelFanOut(t *testing.T) {
 					},
 				},
 			},
-		},
+		}),
 	}
 
-	g, err := BuildWorkflowGraph(cfg)
-	if err != nil {
-		t.Fatal(err)
-	}
+	g := BuildWorkflowGraph(cfg)
 
 	nodeByID := map[string]WorkflowGraphNode{}
 	for _, n := range g.Nodes {
@@ -408,7 +393,7 @@ func TestBuildWorkflowGraph_CompositionExpansion_ImplicitSequencing(t *testing.T
 	// order + branch/parallel structure, matching how the runtime's
 	// composition engine actually executes the step list.
 	cfg := &arenaconfig.Config{
-		Workflow: map[string]any{
+		Workflow: testWorkflow(map[string]any{
 			"version": 2, "entry": "intake",
 			"states": map[string]any{
 				"intake": map[string]any{"on_event": map[string]any{"go": "analyzing"}},
@@ -418,8 +403,8 @@ func TestBuildWorkflowGraph_CompositionExpansion_ImplicitSequencing(t *testing.T
 					"terminal":      true,
 				},
 			},
-		},
-		Compositions: map[string]any{
+		}),
+		Compositions: testCompositions(map[string]any{
 			"document-analysis": map[string]any{
 				"version": 1,
 				"steps": []map[string]any{
@@ -442,13 +427,10 @@ func TestBuildWorkflowGraph_CompositionExpansion_ImplicitSequencing(t *testing.T
 					{"id": "synthesize", "kind": "agent", "termination": map[string]any{"max_steps": 3}},
 				},
 			},
-		},
+		}),
 	}
 
-	g, err := BuildWorkflowGraph(cfg)
-	if err != nil {
-		t.Fatal(err)
-	}
+	g := BuildWorkflowGraph(cfg)
 
 	hasEdge := func(from, to string, dashed bool) bool {
 		for _, e := range g.Edges {
@@ -539,7 +521,7 @@ func TestBuildWorkflowGraph_CompositionExpansion_ImplicitSequencing(t *testing.T
 
 func TestBuildWorkflowGraph_CompositionExpansion_MissingCompositions(t *testing.T) {
 	cfg := &arenaconfig.Config{
-		Workflow: map[string]any{
+		Workflow: testWorkflow(map[string]any{
 			"version": 2, "entry": "process",
 			"states": map[string]any{
 				"process": map[string]any{
@@ -548,14 +530,11 @@ func TestBuildWorkflowGraph_CompositionExpansion_MissingCompositions(t *testing.
 					"terminal":      true,
 				},
 			},
-		},
+		}),
 		// Compositions intentionally left nil.
 	}
 
-	g, err := BuildWorkflowGraph(cfg)
-	if err != nil {
-		t.Fatal(err)
-	}
+	g := BuildWorkflowGraph(cfg)
 	if len(g.Nodes) != 1 || g.Nodes[0].ID != "process" {
 		t.Fatalf("want only the state node when cfg.Compositions is nil, got %+v", g.Nodes)
 	}
@@ -566,7 +545,7 @@ func TestBuildWorkflowGraph_CompositionExpansion_MissingCompositions(t *testing.
 
 func TestBuildWorkflowGraph_CompositionExpansion_UnknownCompositionName(t *testing.T) {
 	cfg := &arenaconfig.Config{
-		Workflow: map[string]any{
+		Workflow: testWorkflow(map[string]any{
 			"version": 2, "entry": "process",
 			"states": map[string]any{
 				"process": map[string]any{
@@ -575,21 +554,18 @@ func TestBuildWorkflowGraph_CompositionExpansion_UnknownCompositionName(t *testi
 					"terminal":      true,
 				},
 			},
-		},
-		Compositions: map[string]any{
+		}),
+		Compositions: testCompositions(map[string]any{
 			"other": map[string]any{
 				"version": 1,
 				"steps": []map[string]any{
 					{"id": "s", "kind": "tool", "tool": "echo"},
 				},
 			},
-		},
+		}),
 	}
 
-	g, err := BuildWorkflowGraph(cfg)
-	if err != nil {
-		t.Fatal(err)
-	}
+	g := BuildWorkflowGraph(cfg)
 	if len(g.Nodes) != 1 || g.Nodes[0].ID != "process" {
 		t.Fatalf("want only the state node when the named composition is not found, got %+v", g.Nodes)
 	}
@@ -615,7 +591,7 @@ func TestBuildWorkflowGraph_CompositionExpansion_UnknownCompositionName(t *testi
 // test by changing the join model without reading that note.
 func TestBuildWorkflowGraph_CompositionExpansion_BackToBackBranches_KnownLimitation(t *testing.T) {
 	cfg := &arenaconfig.Config{
-		Workflow: map[string]any{
+		Workflow: testWorkflow(map[string]any{
 			"version": 2, "entry": "intake",
 			"states": map[string]any{
 				"intake": map[string]any{"on_event": map[string]any{"go": "route_test"}},
@@ -625,8 +601,8 @@ func TestBuildWorkflowGraph_CompositionExpansion_BackToBackBranches_KnownLimitat
 					"terminal":      true,
 				},
 			},
-		},
-		Compositions: map[string]any{
+		}),
+		Compositions: testCompositions(map[string]any{
 			"back_to_back": map[string]any{
 				"version": 1,
 				"steps": []map[string]any{
@@ -647,13 +623,10 @@ func TestBuildWorkflowGraph_CompositionExpansion_BackToBackBranches_KnownLimitat
 					{"id": "q", "kind": "prompt"},
 				},
 			},
-		},
+		}),
 	}
 
-	g, err := BuildWorkflowGraph(cfg)
-	if err != nil {
-		t.Fatal(err)
-	}
+	g := BuildWorkflowGraph(cfg)
 
 	hasEdge := func(from, to string, dashed bool) bool {
 		for _, e := range g.Edges {

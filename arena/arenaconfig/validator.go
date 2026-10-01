@@ -323,14 +323,7 @@ func (v *ConfigValidator) validateCrossReferences() {
 // prompt_task references resolve against the loaded prompt configs' task
 // types, which is what the engine binds workflow states to.
 func (v *ConfigValidator) validateWorkflow() {
-	if v.config.Workflow == nil {
-		return
-	}
-	spec, err := workflow.ParseConfig(v.config.Workflow)
-	if err != nil {
-		v.errors = append(v.errors, fmt.Errorf("workflow: %w", err))
-		return
-	}
+	spec := v.config.Workflow
 	if spec == nil {
 		return
 	}

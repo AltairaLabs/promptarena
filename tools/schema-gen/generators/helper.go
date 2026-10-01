@@ -167,6 +167,9 @@ func Generate(cfg *SchemaConfig) (interface{}, error) {
 	if err := applySpecPatterns(schema); err != nil {
 		return nil, fmt.Errorf("apply spec-declared patterns to %s: %w", cfg.Filename, err)
 	}
+	if err := applySpecDescriptions(schema); err != nil {
+		return nil, fmt.Errorf("apply spec descriptions to %s: %w", cfg.Filename, err)
+	}
 
 	return schema, nil
 }

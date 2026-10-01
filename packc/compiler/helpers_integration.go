@@ -14,13 +14,13 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/v2/persistence/memory"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/prompt"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/tools"
-	"github.com/AltairaLabs/PromptKit/runtime/v2/workflow"
 )
 
-// parseCompositionsFromConfig parses the compositions block from arena config.
-// Returns nil, nil when none are configured.
+// parseCompositionsFromConfig returns the compositions block from arena config.
+// Returns nil, nil when none are configured. Like parseAgentsFromConfig, it is a
+// pass-through: the config field is the generated PromptPack type already.
 func parseCompositionsFromConfig(cfg *arenaconfig.Config) (map[string]*composition.Composition, error) {
-	return composition.ParseConfig(cfg.Compositions)
+	return cfg.Compositions, nil
 }
 
 // buildMemoryRepo creates a memory-backed prompt repository from the loaded config.
@@ -144,10 +144,11 @@ func parsePackEvalsFromConfig(cfg *arenaconfig.Config) []evals.EvalDef {
 	return cfg.PackEvals
 }
 
-// parseWorkflowFromConfig parses workflow config from arena config.
-// Returns nil, nil when no workflow is configured.
+// parseWorkflowFromConfig returns the workflow config from arena config.
+// Returns nil, nil when no workflow is configured. A pass-through, for the same
+// reason as parseCompositionsFromConfig.
 func parseWorkflowFromConfig(cfg *arenaconfig.Config) (*prompt.WorkflowConfig, error) {
-	return workflow.ParseConfig(cfg.Workflow)
+	return cfg.Workflow, nil
 }
 
 // parseAgentsFromConfig parses agents config from arena config.

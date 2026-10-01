@@ -354,12 +354,7 @@ func (s *Server) handleWorkflow(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "engine not configured", http.StatusServiceUnavailable)
 		return
 	}
-	graph, err := BuildWorkflowGraph(s.engine.GetConfig())
-	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": err.Error()})
-		return
-	}
-	writeJSON(w, http.StatusOK, graph)
+	writeJSON(w, http.StatusOK, BuildWorkflowGraph(s.engine.GetConfig()))
 }
 
 // handleListResults returns a locator for every completed run: its ID plus the

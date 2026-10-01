@@ -7,8 +7,10 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
 	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/composition"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/evals"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/prompt"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/workflow"
 )
 
 // AssertionConfig represents an assertion configuration used in arena scenarios.
@@ -112,10 +114,20 @@ type Config struct {
 	// the runtime config supports is available here under `runtime:` without
 	// Arena needing a bespoke field for each.
 	Runtime *config.RuntimeConfigSpec `yaml:"runtime,omitempty" json:"runtime,omitempty"`
-	// Workflow configures a workflow state machine (auto-registers the workflow tool).
-	Workflow interface{} `yaml:"workflow,omitempty" json:"workflow,omitempty"`
-	// Compositions configures composed multi-agent pipelines.
-	Compositions interface{} `yaml:"compositions,omitempty" json:"compositions,omitempty"`
+	// Workflow and Compositions follow the Agents precedent below: both were
+	// interface{} passthroughs that workflow.ParseConfig and
+	// composition.ParseConfig round-tripped through JSON into exactly these
+	// generated PromptPack types. Typing them here gives the arena schema the
+	// real shape, so a typo in a state's `control` or a step's `termination`
+	// fails schema validation instead of surfacing (or not) at run time.
+
+	// Workflow configures a workflow state machine (auto-registers the workflow
+	// tool): the entry state, each state's prompt or composition, its event
+	// transitions, turn control, visit limits and artifacts.
+	Workflow *workflow.Spec `yaml:"workflow,omitempty" json:"workflow,omitempty"`
+	// Compositions declares named composition step graphs (RFC 0010), keyed by
+	// name, that a workflow state with `orchestration: composition` runs.
+	Compositions map[string]*composition.Composition `yaml:"compositions,omitempty" json:"compositions,omitempty"`
 	// Memory configures the memory capability (auto-registers the memory tools).
 	Memory interface{} `yaml:"memory,omitempty" json:"memory,omitempty"`
 	// Typed as the generated PromptPack type rather than interface{}: it was a

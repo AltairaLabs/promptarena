@@ -49,6 +49,11 @@ var specOpenObjects = map[string]string{
 	// packspec.MetricDef. Open in the spec for the same reason: a metric
 	// definition carries handler-specific keys the spec does not enumerate.
 	"MetricDef": "/$defs/MetricDef",
+
+	// packspec.WorkflowConfigEngine, a workflow's `engine:` block. Open in the
+	// spec: it hosts the standardized `budget` alongside runtime-specific hints
+	// (timeout, concurrency, ...), which the generated type keeps in Extra.
+	"WorkflowConfigEngine": "/$defs/WorkflowConfig/properties/engine",
 }
 
 // applySpecOpenObjects opens the generated definitions that the PromptPack spec
