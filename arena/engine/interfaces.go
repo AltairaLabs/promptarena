@@ -13,6 +13,7 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/v2/evals"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/events"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/pipeline/stage"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/prompt"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/providers"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/tools"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
@@ -141,6 +142,10 @@ type ConversationRequest struct {
 	// the active composition for the current workflow state (RFC 0010). It returns
 	// nil for states that are not composition-orchestrated.
 	ActiveCompositionResolver func() *composition.Composition
+
+	// CallPack is the pack composition steps are routed against (RFC 0017);
+	// see turnexecutors.TurnRequest.CallPack.
+	CallPack *prompt.Pack
 
 	// CompositionRecorder is the per-run recorder for RFC 0010 testability. When
 	// non-nil it is stamped onto every TurnRequest so buildStagePipeline can pass

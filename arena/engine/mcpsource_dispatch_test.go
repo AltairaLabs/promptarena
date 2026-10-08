@@ -108,6 +108,12 @@ func newFakeSSEMCPServer(t *testing.T, tool mcp.Tool, callResp mcp.ToolCallRespo
 			return
 		}
 		w.WriteHeader(http.StatusAccepted)
+		if req.ID == nil {
+			// A notification (notifications/initialized, after the
+			// handshake): JSON-RPC sends no response, and a client that
+			// receives one rejects the session as an invalid request.
+			return
+		}
 
 		go func() {
 			resp := srv.handle(req)

@@ -4,12 +4,15 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/AltairaLabs/PromptKit/runtime/v2/prompt"
+
 	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
 	arenaaudio "github.com/AltairaLabs/promptarena/v2/arena/audio"
 	"github.com/AltairaLabs/promptarena/v2/arena/chaos"
 	"github.com/AltairaLabs/promptarena/v2/arena/consent"
 	arenastages "github.com/AltairaLabs/promptarena/v2/arena/stages"
 
+	"github.com/AltairaLabs/PromptKit/runtime/v2/composition"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/evals"
 	_ "github.com/AltairaLabs/PromptKit/runtime/v2/evals/handlers" // register default eval handlers
 	"github.com/AltairaLabs/PromptKit/runtime/v2/events"
@@ -454,6 +457,27 @@ func (e *PipelineExecutor) appendPromptContextStages(
 	return stages
 }
 
+// stepProviderResolver picks the provider each composition prompt/agent step
+// runs on (RFC 0017), by the same rule as the SDK: the key
+// prompt.CallProviderKey names, bound through the run's provider binding. The
+// default key runs on the scenario's provider, as every step did before.
+func (e *PipelineExecutor) stepProviderResolver(req *TurnRequest) func(*composition.Step) (providers.Provider, error) {
+	return func(step *composition.Step) (providers.Provider, error) {
+		key := prompt.CallProviderKey(req.CallPack, step.PromptTask, step.Provider)
+		if !prompt.IsNamedProviderKey(key) {
+			return req.Provider, nil
+		}
+		if e.providerBinding == nil {
+			return nil, fmt.Errorf("provider %q: %w", key, evals.ErrNoBinding)
+		}
+		prov, err := e.providerBinding.LLM(key)
+		if err != nil {
+			return nil, fmt.Errorf("provider %q: %w", key, err)
+		}
+		return prov, nil
+	}
+}
+
 // appendProviderOrCompositionStage adds the CompositionStage for composition
 // turns (RFC 0010) or the normal LLM ProviderStage otherwise. Consent/chaos
 // tool hooks and pack-declared guardrail provider hooks run inline in the
@@ -481,14 +505,15 @@ func (e *PipelineExecutor) appendProviderOrCompositionStage(
 		baseMetadata["mock_scenario_id"] = req.Scenario.ID
 	}
 	deps := stage.CompositionExecutorDeps{
-		PromptRegistry: req.PromptRegistry,
-		Provider:       req.Provider,
-		ToolRegistry:   e.registryFor(req),
-		Emitter:        emitter,
-		HookRegistry:   hookReg,
-		BaseVariables:  mergedVars,
-		SchemaResolver: stage.NewFileSchemaResolver(req.BaseDir),
-		BaseMetadata:   baseMetadata,
+		PromptRegistry:  req.PromptRegistry,
+		Provider:        req.Provider,
+		ToolRegistry:    e.registryFor(req),
+		Emitter:         emitter,
+		HookRegistry:    hookReg,
+		BaseVariables:   mergedVars,
+		SchemaResolver:  stage.NewFileSchemaResolver(req.BaseDir),
+		BaseMetadata:    baseMetadata,
+		ResolveProvider: e.stepProviderResolver(req),
 	}
 	// RFC 0010 Task 5: when a per-run recorder is wired, build the
 	// CompositionStage with it so step outputs, branch targets, and parallel
