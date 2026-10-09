@@ -3,6 +3,7 @@ package engine
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -11,10 +12,12 @@ import (
 	arenastore "github.com/AltairaLabs/promptarena/v2/arena/statestore"
 
 	"github.com/AltairaLabs/PromptKit/runtime/v2/composition"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/evals"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/events"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/logger"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/pipeline/stage"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/prompt"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/providers"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/workflow"
 )
@@ -116,7 +119,10 @@ func (e *Engine) initWorkflow() error {
 	// them into LoadedPack.Compositions so buildCompositionResolver can find
 	// them at turn time. This mirrors the packc compile-time path but avoids
 	// requiring a compiled pack for arena testing.
-	return e.mergeInlineCompositions()
+	if err := e.mergeInlineCompositions(); err != nil {
+		return err
+	}
+	return e.checkCallSiteProviders()
 }
 
 // mergeInlineCompositions merges inline compositions declared on the arena
@@ -137,6 +143,75 @@ func (e *Engine) mergeInlineCompositions() error {
 		e.config.LoadedPack.Compositions[name] = comp
 	}
 	return nil
+}
+
+// checkCallSiteProviders fails the run before it starts when a prompt or
+// composition step names a provider key (RFC 0017) that the pack does not
+// declare, that this config binds nothing to, or that is bound to something
+// that cannot run the call, as sdk.Open does. Without it the step would fail
+// at the turn that reaches it, or, before steps were routed by key, run on the
+// scenario's provider without a word.
+func (e *Engine) checkCallSiteProviders() error {
+	sites := prompt.CallSites(e.config.LoadedPack)
+	if len(sites) == 0 {
+		return nil
+	}
+	reqs, err := prompt.ResolveRequirements(e.config.LoadedPack)
+	if err != nil {
+		return err
+	}
+	declared := make(map[string]prompt.ResolvedRequirement, len(reqs))
+	for _, r := range reqs {
+		declared[r.Key] = r
+	}
+	var binding evals.ProviderBinding
+	if e.evalOrchestrator != nil {
+		binding = e.evalOrchestrator.providerBinding
+	}
+	var problems []string
+	for _, site := range sites {
+		if msg := checkCallSite(site, declared, binding); msg != "" {
+			problems = append(problems, msg)
+		}
+	}
+	if len(problems) > 0 {
+		return fmt.Errorf("pack call sites cannot resolve their providers:\n  - %s",
+			strings.Join(problems, "\n  - "))
+	}
+	return nil
+}
+
+// checkCallSite returns what is wrong with one call site's key, or "".
+func checkCallSite(
+	site prompt.CallSite, declared map[string]prompt.ResolvedRequirement, binding evals.ProviderBinding,
+) string {
+	req, ok := declared[site.Key]
+	if !ok {
+		return fmt.Sprintf("%s names provider %q, which the pack does not declare in requires.providers",
+			site.Site, site.Key)
+	}
+	if req.Role != prompt.RequirementRoleLLM {
+		return fmt.Sprintf("%s names provider %q, which the pack declares with role %q; "+
+			"a prompt or step runs on an llm provider", site.Site, site.Key, req.Role)
+	}
+	if binding == nil {
+		return fmt.Sprintf("%s names provider %q and this config wires no providers to bind it to",
+			site.Site, site.Key)
+	}
+	prov, err := binding.LLM(site.Key)
+	switch {
+	case errors.Is(err, evals.ErrWrongKind):
+		return fmt.Sprintf("%s names provider %q, which this config binds to an inference provider; "+
+			"a prompt or step needs an LLM provider", site.Site, site.Key)
+	case err != nil:
+		return fmt.Sprintf("%s names provider %q, which this config binds nothing to; "+
+			"add a providers: entry with that id, or a judges: entry by that name", site.Site, site.Key)
+	}
+	if _, tools := prov.(providers.ToolSupport); site.NeedsTools && !tools {
+		return fmt.Sprintf("%s uses tools and names provider %q, which is bound to %T, "+
+			"a provider without tool support", site.Site, site.Key, prov)
+	}
+	return ""
 }
 
 // prepareWorkflowScenario sets up a workflow scenario for execution through
@@ -332,6 +407,7 @@ func (e *Engine) wireWorkflowHooks(req *ConversationRequest, runID string, rt *r
 	// CurrentStateMeta takes no context, so the run cannot be recovered later.
 	req.WorkflowStateResolver = e.workflowTransExec.ResolverForRun(runID)
 	req.ActiveCompositionResolver = e.buildCompositionResolver(runID)
+	req.CallPack = e.config.LoadedPack
 	// RFC 0010 Task 5: thread the per-run composition recorder so that
 	// buildTurnRequest can stamp it onto every TurnRequest, enabling
 	// NewCompositionStageWithRecorder to record step outputs per turn.

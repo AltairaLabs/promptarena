@@ -131,6 +131,11 @@ type TurnRequest struct {
 	// Only set on workflow composition turns; nil on non-composition turns.
 	CompositionRecorder *stage.CompositionRecorder
 
+	// CallPack is the pack a composition turn's steps are routed against
+	// (RFC 0017): a step's `provider`, else its prompt's, names the requires
+	// key that runs it. Nil routes every step on Provider.
+	CallPack *prompt.Pack
+
 	// ToolRegistry, when non-nil, is this run's own registry: a child of the
 	// engine's, sharing its tool descriptors but owning its executors. Per-run
 	// executor state — the memory scope, the active skill set, the HTTP
