@@ -345,41 +345,7 @@ func createProviderImpl(configDir string, provider *config.Provider) (providers.
 		return nil, fmt.Errorf("failed to resolve credentials for provider %s: %w", provider.ID, err)
 	}
 
-	requestTimeout := parseProviderDuration(provider.ID, "request_timeout", provider.RequestTimeout)
-	streamIdleTimeout := parseProviderDuration(provider.ID, "stream_idle_timeout", provider.StreamIdleTimeout)
-	streamRetry := buildStreamRetryPolicy(provider.ID, provider.StreamRetry)
-	streamRetryBudget := buildStreamRetryBudget(provider.StreamRetry)
-	httpTransport := buildHTTPTransportOptions(provider.ID, provider.HTTPTransport)
-
-	spec := providers.ProviderSpec{
-		ID:                  provider.ID,
-		Type:                provider.Type,
-		Model:               provider.Model,
-		BaseURL:             provider.BaseURL,
-		IncludeRawOutput:    provider.IncludeRawOutput,
-		AdditionalConfig:    provider.AdditionalConfig,
-		Credential:          cred,
-		Platform:            platform,
-		PlatformConfig:      platformConfig,
-		UnsupportedParams:   provider.UnsupportedParams,
-		Capabilities:        provider.Capabilities,
-		RequestTimeout:      requestTimeout,
-		StreamIdleTimeout:   streamIdleTimeout,
-		StreamRetry:         streamRetry,
-		StreamRetryBudget:   streamRetryBudget,
-		StreamMaxConcurrent: provider.StreamMaxConcurrent,
-		HTTPTransport:       httpTransport,
-		Defaults: providers.ProviderDefaults{
-			Temperature:          provider.Defaults.Temperature,
-			TopP:                 provider.Defaults.TopP,
-			MaxTokens:            provider.Defaults.MaxTokens,
-			DisablePromptCaching: provider.Defaults.PromptCaching != nil && !*provider.Defaults.PromptCaching,
-			Pricing: providers.Pricing{
-				InputCostPer1K:  provider.Pricing.InputCostPer1K,
-				OutputCostPer1K: provider.Pricing.OutputCostPer1K,
-			},
-		},
-	}
+	spec := buildProviderSpec(provider, cred, platform, platformConfig)
 	providerImpl, err := providers.CreateProviderFromSpec(spec)
 	if err != nil {
 		return nil, err
@@ -395,85 +361,42 @@ func createProviderImpl(configDir string, provider *config.Provider) (providers.
 	return providerImpl, nil
 }
 
-// buildStreamRetryPolicy translates a StreamRetryConfig from arena config
-// into a providers.StreamRetryPolicy. Nil or disabled config returns the
-// zero policy (retry off). Malformed durations are logged and skipped so
-// the provider falls back to the built-in defaults for that field.
-func buildStreamRetryPolicy(providerID string, cfg *config.StreamRetryConfig) providers.StreamRetryPolicy {
-	if cfg == nil || !cfg.Enabled {
-		return providers.StreamRetryPolicy{}
+// buildProviderSpec translates a provider config and its resolved credential
+// into the spec the runtime factory consumes.
+func buildProviderSpec(
+	provider *config.Provider,
+	cred providers.Credential,
+	platform string,
+	platformConfig *providers.PlatformConfig,
+) providers.ProviderSpec {
+	spec := providers.ProviderSpec{
+		ID:                provider.ID,
+		Type:              provider.Type,
+		Model:             provider.Model,
+		BaseURL:           provider.BaseURL,
+		Headers:           provider.Headers,
+		IncludeRawOutput:  provider.IncludeRawOutput,
+		AdditionalConfig:  provider.AdditionalConfig,
+		Credential:        cred,
+		Platform:          platform,
+		PlatformConfig:    platformConfig,
+		UnsupportedParams: provider.UnsupportedParams,
+		Capabilities:      provider.Capabilities,
+		Defaults: providers.ProviderDefaults{
+			Temperature: provider.Defaults.Temperature,
+			TopP:        provider.Defaults.TopP,
+			MaxTokens:   provider.Defaults.MaxTokens,
+			Pricing: providers.Pricing{
+				InputCostPer1K:  provider.Pricing.InputCostPer1K,
+				OutputCostPer1K: provider.Pricing.OutputCostPer1K,
+			},
+		},
 	}
-	policy := providers.StreamRetryPolicy{
-		Enabled:     true,
-		MaxAttempts: cfg.MaxAttempts,
-	}
-	if cfg.InitialDelay != "" {
-		policy.InitialDelay = parseProviderDuration(providerID, "stream_retry.initial_delay", cfg.InitialDelay)
-	}
-	if cfg.MaxDelay != "" {
-		policy.MaxDelay = parseProviderDuration(providerID, "stream_retry.max_delay", cfg.MaxDelay)
-	}
-	switch cfg.RetryWindow {
-	case "", string(providers.StreamRetryWindowPreFirstChunk):
-		policy.Window = providers.StreamRetryWindowPreFirstChunk
-	case string(providers.StreamRetryWindowAlways):
-		policy.Window = providers.StreamRetryWindowAlways
-	default:
-		logger.Warn("arena: unknown stream_retry.retry_window, defaulting to pre_first_chunk",
-			"provider", providerID, "value", cfg.RetryWindow)
-		policy.Window = providers.StreamRetryWindowPreFirstChunk
-	}
-	return policy
-}
-
-// buildStreamRetryBudget constructs a per-provider retry budget from the
-// arena config's stream_retry.budget block. Returns nil when the config
-// is absent, disabled, or missing required fields — the caller treats
-// nil as "unbounded retries" (Phase 1 behavior).
-func buildStreamRetryBudget(cfg *config.StreamRetryConfig) *providers.RetryBudget {
-	if cfg == nil || !cfg.Enabled || cfg.Budget == nil {
-		return nil
-	}
-	return providers.NewRetryBudget(cfg.Budget.RatePerSec, cfg.Budget.Burst)
-}
-
-// buildHTTPTransportOptions translates an HTTPTransportConfig from arena
-// config into providers.HTTPTransportOptions. A nil config yields the
-// zero value, which the runtime interprets as "use package defaults".
-// Malformed idle_conn_timeout values are logged and ignored so the
-// provider falls back to the built-in default rather than failing hard
-// on a single typo.
-func buildHTTPTransportOptions(providerID string, cfg *config.HTTPTransportConfig) providers.HTTPTransportOptions {
-	if cfg == nil {
-		return providers.HTTPTransportOptions{}
-	}
-	return providers.HTTPTransportOptions{
-		MaxConnsPerHost:     cfg.MaxConnsPerHost,
-		MaxIdleConnsPerHost: cfg.MaxIdleConnsPerHost,
-		IdleConnTimeout:     parseProviderDuration(providerID, "http_transport.idle_conn_timeout", cfg.IdleConnTimeout),
-	}
-}
-
-// parseProviderDuration parses a Go duration string from a provider config
-// field. Empty string yields zero duration (the caller's default applies).
-// Malformed input or non-positive values log a warning and yield zero so
-// the provider falls back to its built-in default rather than failing hard.
-func parseProviderDuration(providerID, field, value string) time.Duration {
-	if value == "" {
-		return 0
-	}
-	d, err := time.ParseDuration(value)
-	if err != nil {
-		logger.Warn("arena: ignoring invalid provider duration, using default",
-			"provider", providerID, "field", field, "value", value, "error", err)
-		return 0
-	}
-	if d <= 0 {
-		logger.Warn("arena: ignoring non-positive provider duration, using default",
-			"provider", providerID, "field", field, "value", value)
-		return 0
-	}
-	return d
+	// Request timeouts, stream retry, HTTP transport and prompt caching come
+	// from the same conversion the SDK uses, so a provider file means the same
+	// thing in both.
+	config.ApplyProviderTuning(&spec, provider)
+	return spec
 }
 
 // discoverAndRegisterMCPTools discovers tools from MCP servers and registers them in the tool registry.

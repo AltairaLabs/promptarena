@@ -817,8 +817,10 @@ func attachJudgeMetadata(metadata map[string]interface{}, cfg *arenaconfig.Confi
 }
 
 // providerSpecFromConfig converts config.Provider to providers.ProviderSpec.
+// Tuning fields go through config.ApplyProviderTuning, as they do for the
+// providers under test, so a judge honors the same provider file settings.
 func providerSpecFromConfig(p *config.Provider) providers.ProviderSpec {
-	return providers.ProviderSpec{
+	spec := providers.ProviderSpec{
 		ID:               p.ID,
 		Type:             p.Type,
 		Model:            p.Model,
@@ -827,16 +829,17 @@ func providerSpecFromConfig(p *config.Provider) providers.ProviderSpec {
 		IncludeRawOutput: p.IncludeRawOutput,
 		AdditionalConfig: p.AdditionalConfig,
 		Defaults: providers.ProviderDefaults{
-			Temperature:          p.Defaults.Temperature,
-			TopP:                 p.Defaults.TopP,
-			MaxTokens:            p.Defaults.MaxTokens,
-			DisablePromptCaching: p.Defaults.PromptCaching != nil && !*p.Defaults.PromptCaching,
+			Temperature: p.Defaults.Temperature,
+			TopP:        p.Defaults.TopP,
+			MaxTokens:   p.Defaults.MaxTokens,
 			Pricing: providers.Pricing{
 				InputCostPer1K:  p.Pricing.InputCostPer1K,
 				OutputCostPer1K: p.Pricing.OutputCostPer1K,
 			},
 		},
 	}
+	config.ApplyProviderTuning(&spec, p)
+	return spec
 }
 
 // fireSessionUpdate emits a hooks.SessionEvent for the completed turn if a
