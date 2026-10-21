@@ -28,8 +28,10 @@ catalogs in `reference/` instead of calling `promptarena explain`/`schema` repea
    **A prompt offers the model only the tools in its `spec.allowed_tools`.** Listing a
    tool under `tools:` in `config.arena.yaml` defines it; the model is not offered it
    until a prompt lists it in `allowed_tools` (or an activated skill grants it). A tool
-   no prompt lists is never called, and `tools_called` on it fails with "got 0" — fix
-   the prompt, not `mock-responses.yaml`. `promptarena validate` warns about both.
+   no prompt lists is never called by a real model, and `tools_called` on it can fail
+   with "got 0" — fix the prompt, not `mock-responses.yaml`. In a workflow, each
+   state's prompt offers its own tools. `promptarena validate` warns when no prompt
+   offers a tool a scenario expects called.
 4. **Lay it out, scaffold, and give it a personality.** Canonical layout and naming:
    `config.arena.yaml`, `prompts/*.prompt.yaml`, `providers/*.provider.yaml`,
    `scenarios/*.scenario.yaml`, `tools/*.tool.yaml`, `mock-responses.yaml`. Start from the

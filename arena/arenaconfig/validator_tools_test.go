@@ -266,3 +266,28 @@ func TestValidateToolUsage_NoPromptConfigs(t *testing.T) {
 	v.validateToolUsage()
 	assert.Empty(t, v.GetWarnings())
 }
+
+// Global conversation assertions run for every scenario, so they are checked
+// against each scenario's prompt too.
+func TestValidateToolUsage_GlobalAssertions(t *testing.T) {
+	cfg := &Config{
+		Globals: &Globals{ConversationAssertions: []AssertionConfig{{
+			Type:   "tools_called_session",
+			Params: map[string]interface{}{"tools": []interface{}{"audit_log"}},
+		}}},
+		LoadedTools: []config.ToolData{toolData("audit_log")},
+		LoadedPromptConfigs: map[string]*PromptConfigData{
+			"support": {Config: stubPrompt{taskType: "support"}},
+			"audit":   {Config: stubPrompt{taskType: "audit", tools: []string{"audit_log"}}},
+		},
+		LoadedScenarios: map[string]*Scenario{
+			"chat":  {TaskType: "support"},
+			"audit": {TaskType: "audit"},
+		},
+	}
+	v := NewConfigValidatorWithPath(cfg, "")
+	v.validateToolUsage()
+
+	require.Len(t, v.GetWarnings(), 1)
+	assert.Contains(t, v.GetWarnings()[0], `scenario "chat" asserts tools_called_session on tool "audit_log"`)
+}

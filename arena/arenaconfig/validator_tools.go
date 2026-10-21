@@ -2,10 +2,9 @@ package arenaconfig
 
 import (
 	"fmt"
-	"sort"
+	"maps"
+	"slices"
 
-	"github.com/AltairaLabs/PromptKit/runtime/v2/packspec"
-	"github.com/AltairaLabs/PromptKit/runtime/v2/prompt"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/skills"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/tools"
 )
@@ -46,7 +45,7 @@ func (v *ConfigValidator) validateToolUsage() {
 	allowed := v.getAllowedToolNames()
 
 	check := ValidationCheck{Name: "Tools are offered by prompts", Passed: true}
-	for _, name := range sortedKeys(defined) {
+	for _, name := range slices.Sorted(maps.Keys(defined)) {
 		if allowed[name] || granted[name] {
 			continue
 		}
@@ -68,7 +67,7 @@ func (v *ConfigValidator) validateToolUsage() {
 // offers any tool at all; a real model cannot. Only tools the config defines
 // are checked: capability, MCP and A2A tools are offered by other means.
 func (v *ConfigValidator) validateAssertedToolsOffered(defined, granted map[string]bool) {
-	for _, name := range sortedKeys(v.config.LoadedScenarios) {
+	for _, name := range slices.Sorted(maps.Keys(v.config.LoadedScenarios)) {
 		scenario := v.config.LoadedScenarios[name]
 		if scenario == nil || scenario.Duplex != nil {
 			continue // a duplex session offers every registered tool
@@ -77,7 +76,7 @@ func (v *ConfigValidator) validateAssertedToolsOffered(defined, granted map[stri
 		if prompts == "" {
 			continue // no prompt matches the task type; reported elsewhere
 		}
-		for _, a := range scenarioAssertions(scenario) {
+		for _, a := range v.scenarioAssertions(scenario) {
 			if !toolCallAssertionTypes[a.Type] {
 				continue
 			}
@@ -106,7 +105,7 @@ func (v *ConfigValidator) toolsOfferedToScenario(scenario *Scenario) (map[string
 	}
 	offered := make(map[string]bool)
 	var ids []string
-	for _, id := range sortedKeys(v.config.LoadedPromptConfigs) {
+	for _, id := range slices.Sorted(maps.Keys(v.config.LoadedPromptConfigs)) {
 		pc := v.config.LoadedPromptConfigs[id]
 		if pc == nil || pc.Config == nil || promptTaskType(pc) != scenario.TaskType {
 			continue
@@ -138,15 +137,14 @@ func (v *ConfigValidator) hasDuplexScenario() bool {
 // getDefinedToolNames returns the names of the tools the config defines, as
 // the runtime registers them.
 func (v *ConfigValidator) getDefinedToolNames() map[string]bool {
-	names := make(map[string]bool)
+	reg := tools.NewRegistry()
 	for _, t := range v.config.LoadedTools {
-		reg := tools.NewRegistry()
-		if err := reg.LoadToolFromBytes(t.FilePath, t.Data); err != nil {
-			continue // a tool that does not parse is reported by the load stage
-		}
-		for name := range reg.GetTools() {
-			names[name] = true
-		}
+		// A tool that does not parse is reported by the load stage.
+		_ = reg.LoadToolFromBytes(t.FilePath, t.Data)
+	}
+	names := make(map[string]bool)
+	for name := range reg.GetTools() {
+		names[name] = true
 	}
 	return names
 }
@@ -169,19 +167,8 @@ func (v *ConfigValidator) getSkillGrantedToolNames() (granted map[string]bool, k
 	if len(v.config.LoadedSkillSources) == 0 {
 		return granted, true
 	}
-	sources := make([]skills.SkillSource, len(v.config.LoadedSkillSources))
-	for i := range v.config.LoadedSkillSources {
-		s := &v.config.LoadedSkillSources[i]
-		sources[i] = skills.SkillSource{
-			Dir:          prompt.SkillPath(s),
-			Name:         s.Name,
-			Description:  s.Description,
-			Instructions: s.Instructions,
-			Preload:      packspec.Deref(s.Preload, false),
-		}
-	}
 	reg := skills.NewRegistry()
-	if err := reg.Discover(sources); err != nil {
+	if err := reg.Discover(v.config.SkillSources()); err != nil {
 		return nil, false
 	}
 	for _, sk := range reg.List() {
@@ -209,9 +196,14 @@ func promptTaskType(pc *PromptConfigData) string {
 	return pc.TaskType
 }
 
-// scenarioAssertions returns the scenario's turn and conversation assertions.
-func scenarioAssertions(s *Scenario) []AssertionConfig {
-	all := append([]AssertionConfig(nil), s.ConversationAssertions...)
+// scenarioAssertions returns the assertions evaluated for the scenario: the
+// arena-level global conversation assertions, its own, and its turns'.
+func (v *ConfigValidator) scenarioAssertions(s *Scenario) []AssertionConfig {
+	var all []AssertionConfig
+	if v.config.Globals != nil {
+		all = append(all, v.config.Globals.ConversationAssertions...)
+	}
+	all = append(all, s.ConversationAssertions...)
 	for i := range s.Turns {
 		all = append(all, s.Turns[i].Assertions...)
 	}
@@ -242,13 +234,4 @@ func stringList(v interface{}) []string {
 		return out
 	}
 	return nil
-}
-
-func sortedKeys[V any](m map[string]V) []string {
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	return keys
 }

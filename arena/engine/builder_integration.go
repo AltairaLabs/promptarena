@@ -19,7 +19,6 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/v2/logger"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/mcp"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/mediagen"
-	"github.com/AltairaLabs/PromptKit/runtime/v2/packspec"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/persistence/memory"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/prompt"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/providers"
@@ -864,21 +863,9 @@ func discoverAndRegisterSkillTools(
 		return nil, "", nil
 	}
 
-	// Convert config skill sources to runtime SkillSource
-	sources := make([]skills.SkillSource, len(cfg.LoadedSkillSources))
-	for i, s := range cfg.LoadedSkillSources {
-		sources[i] = skills.SkillSource{
-			Dir:          prompt.SkillPath(&s),
-			Name:         s.Name,
-			Description:  s.Description,
-			Instructions: s.Instructions,
-			Preload:      packspec.Deref(s.Preload, false),
-		}
-	}
-
 	// Discover skills
 	reg := skills.NewRegistry()
-	if err := reg.Discover(sources); err != nil {
+	if err := reg.Discover(cfg.SkillSources()); err != nil {
 		return nil, "", fmt.Errorf("skills discovery: %w", err)
 	}
 

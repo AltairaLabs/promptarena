@@ -56,13 +56,17 @@ reply after the tool result comes back. Get this wrong and responses slide out o
 alignment part-way through a scenario.
 
 **3. A scripted tool call is not an offered tool.** A prompt offers the model
-only the tools in its `spec.allowed_tools`. If the prompt lists none, the
-scripted `tool_calls` never run, and `tools_called` fails with "got 0" however
-this file is written — add the tool to `allowed_tools`; the mock is not the
-problem. If the prompt offers some tools but not this one, the mock still runs
-the call, so the scenario passes against the mock and fails against a real
-model, which only calls what it was offered. `promptarena validate` warns in
-both cases.
+only the tools in its `spec.allowed_tools`. If the turn offers no tools at all,
+the scripted `tool_calls` never run, and `tools_called` fails with "got 0"
+however this file is written — add the tool to `allowed_tools`; the mock is not
+the problem. If the turn offers some tools but not this one (a workflow always
+offers `workflow__transition`), the mock still runs the call, so the scenario
+passes against the mock and fails against a real model, which only calls what
+it was offered. In a workflow, script each tool call after the transition into
+the state whose prompt offers it. `promptarena validate` warns when no prompt
+offers a tool, or when a scenario asserts a call its prompt cannot make; it
+does not follow workflow transitions, so it cannot tell which state a scripted
+call lands in.
 
 ## Structured turn fields
 
