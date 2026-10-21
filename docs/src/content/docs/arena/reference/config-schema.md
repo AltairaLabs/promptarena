@@ -362,6 +362,76 @@ Tools discovered from a source-backed server are registered under their
 **raw** MCP name (`Read`, `Edit`, …) rather than the namespaced
 `mcp__<server>__<tool>` form used by stdio/url entries.
 
+#### `pack_metadata.governance`
+
+Governance facts about the agent the pack defines, and the obligations they
+trigger. `packc compile` copies the block into the pack's `metadata.governance`.
+An agent can declare its own block under `agents.members.<name>.governance`; a
+field set there replaces the pack value, and a field left out inherits it.
+
+**Declarations**:
+- `accountable_owner` (string): the role or team answerable for the agent
+- `autonomy_level` (string): one of `suggests`, `acts_with_approval`,
+  `acts_with_oversight`, `acts_autonomously`
+- `intended_purpose` (string), `foreseeable_misuse` (array of strings)
+- `operator_role`, `risk_classification` (string): a vocabulary term such as
+  `eu-aiact:AIDeployer`, or a free string
+- `intended_deployment_contexts`, `capabilities`, `approved_environments`
+  (arrays of strings)
+- `requires_ai_disclosure` (bool)
+- `vocabularies` (object): CURIE prefix to IRI, for prefixes beyond the
+  well-known ones (`dpv`, `eu-aiact`, `ai`, `pp`, `risk` and others)
+- `extensions` (object): opaque annotations; keys should be namespaced
+
+**Obligations and reviews**:
+- `obligations` (array): each has an `id`, an `obligation` term, optional
+  `applies_to` (`capability`, `data_class`, `risk_classification`), `note` and
+  `extensions`, and `controls`. Each control has exactly one key:
+  - `field`: a governance field that must be declared
+  - `validator`: the `id` of a validator on one of the pack's prompts
+  - `eval`: the `id` of a pack eval or a prompt eval
+  - `external`: a control outside the pack, described in prose
+- `reviews` (array): each has an `id`, a `type` term, a `cadence` (an ISO 8601
+  duration such as `P3M`), an `owner` team, and optional `satisfies` (obligation
+  ids), `eval` and `extensions`
+- `independent_of` (object): `axes` (any of `model`, `provider`, `tools`,
+  `prompts`, `accountable_owner`) on which whatever produces the agent's input
+  must differ, and `enforcement` (`strict` or `advisory`)
+
+```yaml
+pack_metadata:
+  governance:
+    accountable_owner: Head of Credit Risk
+    autonomy_level: acts_with_approval
+    risk_classification: eu-aiact:HighRiskAI
+    obligations:
+      - id: human-oversight
+        obligation: eu-aiact:Article14
+        controls:
+          - field: autonomy_level
+          - validator: no-decision-wording
+          - eval: recommendation-not-decision
+    reviews:
+      - id: fair-lending-review
+        type: pp:BiasTesting
+        cadence: P3M
+        owner: Model Risk Management
+        satisfies: [human-oversight]
+```
+
+`promptarena validate` and `packc compile` check the references. A control
+naming a validator, an eval or a field the pack does not declare, or a review
+naming an obligation that does not exist, is an error. An obligation or review
+term whose prefix is neither well-known nor declared in `vocabularies` is a
+warning.
+
+The governance block, prompt specs, validators, pack evals, workflow states,
+agent members, compositions and tools each accept `extensions`: opaque
+annotations that nothing in PromptArena or PromptKit interprets.
+
+The [mortgage underwriting example](/arena/examples/mortgage-underwriting/)
+carries a complete block.
+
 #### `defaults.output`
 
 Output configuration for test results.
@@ -635,12 +705,16 @@ Array of runtime validators/guardrails. See [Validators Reference](/arena/refere
 **Structure**:
 ```yaml
 validators:
-  - type: validator_name
+  - id: optional-id       # what a governance control refers to
+    type: validator_name
     params:
       param1: value1
       param2: value2
     message: "Optional description"
+    extensions: {}        # opaque annotations
 ```
+
+Validator ids must be unique across the pack.
 
 ## Scenario
 

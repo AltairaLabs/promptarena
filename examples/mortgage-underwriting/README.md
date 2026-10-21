@@ -1,8 +1,9 @@
 # Mortgage underwriting — governance metadata on a pack
 
-A fictional mortgage underwriting assistant, used to demonstrate **`pack_metadata.governance`**
-(RFC 0013): the facts that make a regulated agent deployable, carried in the pack
-itself rather than in a document beside it.
+A fictional mortgage underwriting assistant, used to demonstrate **`pack_metadata.governance`**:
+the facts that make a regulated agent deployable (RFC 0013), and the obligations
+they trigger with the controls that discharge them (RFC 0016), carried in the
+pack itself rather than in a document beside it.
 
 Northwind Home Loans is not a real lender, these are not real lending guidelines,
 and every applicant, property and figure here is invented. The providers are
@@ -58,6 +59,33 @@ PROMPTKIT_SCHEMA_SOURCE=local ../../bin/packc validate mortgage.pack.json
 blocks land under `agents.members.*.governance`, where a deployment gate or an
 auditor can read them.
 
+## Obligations, controls and reviews
+
+The governance block also records what its declarations oblige and what
+discharges each obligation:
+
+| Obligation | Controls |
+|---|---|
+| `human-oversight` (`eu-aiact:Article14`) | the declared `autonomy_level`; the `no-decision-wording` validator on the assessment prompt, which enforces in the response path; the `recommendation-not-decision` pack eval, which measures every conversation |
+| `ai-disclosure` (`eu-aiact:Article50`) | the declared `requires_ai_disclosure`; an `external` control, the broker portal's AI label, described in prose because it lives outside the pack |
+
+`reviews` holds the recurring obligation: a quarterly (`P3M`) fair-lending
+review owned by Model Risk Management, which satisfies `human-oversight` and
+reads the same eval. Completions of a review are runtime state and stay out of
+the pack.
+
+These are references, and they are checked. A control naming a validator, an
+eval or a governance field that the pack does not declare, or a review naming
+an obligation that does not exist, fails `promptarena validate` and
+`packc compile`:
+
+```bash
+PROMPTKIT_SCHEMA_SOURCE=local ../../bin/promptarena validate config.arena.yaml
+```
+
+Nothing here decides whether an obligation applies. That is a legal
+determination; the pack records the answer and points at the controls.
+
 ## Per-agent overrides
 
 An agent's `governance` overrides the pack block by **per-field replacement**: a
@@ -71,9 +99,8 @@ and arrays and `extensions` replace whole rather than merging.
 | `assessment` | `autonomy_level: suggests` | the strictest level in the pack, on the step that shapes the outcome |
 
 `verification` is the one worth reading twice: declaring `extensions` there
-means the pack's `control-set` and `review-cadence` keys do **not** appear on
-that agent. That is the specified behaviour, and it is the rule most people
-guess wrong.
+means the pack's `control-set` key does **not** appear on that agent. That is
+the specified behaviour, and it is the rule most people guess wrong.
 
 ## Tools
 

@@ -113,29 +113,39 @@ func applySpecPropertyCounts(schema *jsonschema.Schema) error {
 		return err
 	}
 	for _, pc := range specPropertyCounts {
-		node, err := resolvePointer(spec, pc.pointer)
+		minProps, maxProps, err := specPropertyBounds(spec, pc)
 		if err != nil {
-			return fmt.Errorf("resolving %s for $defs/%s: %w", pc.pointer, pc.def, err)
-		}
-		obj, ok := node.(map[string]interface{})
-		if !ok {
-			return fmt.Errorf("%s for $defs/%s does not name an object", pc.pointer, pc.def)
-		}
-		minProps, hasMin := specCount(obj, "minProperties")
-		maxProps, hasMax := specCount(obj, "maxProperties")
-		if !hasMin && !hasMax {
-			return fmt.Errorf("%s for $defs/%s sets neither minProperties nor maxProperties", pc.pointer, pc.def)
+			return err
 		}
 		for _, def := range definitionsNamed(schema, pc.def) {
-			if hasMin {
-				def.MinProperties = &minProps
-			}
-			if hasMax {
-				def.MaxProperties = &maxProps
-			}
+			def.MinProperties = minProps
+			def.MaxProperties = maxProps
 		}
 	}
 	return nil
+}
+
+// specPropertyBounds reads pc's minProperties and maxProperties from the spec;
+// either may be nil, but not both.
+func specPropertyBounds(spec map[string]interface{}, pc specPropertyCount) (minProps, maxProps *uint64, err error) {
+	node, err := resolvePointer(spec, pc.pointer)
+	if err != nil {
+		return nil, nil, fmt.Errorf("resolving %s for $defs/%s: %w", pc.pointer, pc.def, err)
+	}
+	obj, ok := node.(map[string]interface{})
+	if !ok {
+		return nil, nil, fmt.Errorf("%s for $defs/%s does not name an object", pc.pointer, pc.def)
+	}
+	if n, ok := specCount(obj, "minProperties"); ok {
+		minProps = &n
+	}
+	if n, ok := specCount(obj, "maxProperties"); ok {
+		maxProps = &n
+	}
+	if minProps == nil && maxProps == nil {
+		return nil, nil, fmt.Errorf("%s for $defs/%s sets neither minProperties nor maxProperties", pc.pointer, pc.def)
+	}
+	return minProps, maxProps, nil
 }
 
 // specCount reads a non-negative integer keyword from a decoded spec object.
