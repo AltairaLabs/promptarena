@@ -1,13 +1,13 @@
 # Voice IVR Workflow Demo
 
-A workflow-driven IVR for a fictional bank. The pack defines a four-state machine — `greeting` → `triage` → `{resolution, handoff}` — and the scenarios assert every state transition.
+A workflow-driven IVR for a fictional bank. The pack defines a three-state machine — `verifying` → `{resolution, handoff}` — and the scenarios assert every state transition. Each state's prompt offers the model only the tool that state uses: `lookup_account` in `verifying`, `check_balance` in `resolution`, `transfer_to_agent` in `handoff`.
 
 ## What it tests
 
 | Scenario | What the agent must do |
 |---|---|
-| `balance-check` | Verify identity (`lookup_account`), transition to triage, hear the balance request, run `check_balance`, transition to resolution, end the call. |
-| `handoff-to-agent` | Verify identity, hear a suspected-fraud report, route to handoff, run `transfer_to_agent`, never call `check_balance`. |
+| `balance-check` | Hear the balance request, verify identity (`lookup_account`), transition to resolution, run `check_balance` there, end the call. Never call `transfer_to_agent`. |
+| `handoff-to-agent` | Hear a suspected-fraud report, verify identity, transition to handoff, run `transfer_to_agent` there. Never call `check_balance`. |
 
 Each turn carries `state_is` or `transitioned_to` assertions; the final turn checks `workflow_complete`, `workflow_transition_order`, and the expected `tools_called` / `tools_not_called` pattern.
 
@@ -45,8 +45,7 @@ voice-ivr/
 ├── config.arena.yaml          # pack + workflow definition
 ├── mock-responses.yaml        # scripted LLM turns including workflow__transition calls
 ├── prompts/
-│   ├── greeting.yaml
-│   ├── triage.yaml
+│   ├── verifying.yaml
 │   ├── resolution.yaml
 │   └── handoff.yaml
 ├── providers/
@@ -62,5 +61,5 @@ voice-ivr/
 
 ## Extending
 
-- **Add a self-service path**: define a new terminal state in `config.arena.yaml`, add a new `on_event:` mapping in `triage`, add a prompt + scenario.
-- **Add a verification gate**: insert an intermediate state between `greeting` and `triage`. The `workflow_tool_access` assertion can enforce that the agent only uses certain tools in each state.
+- **Add a self-service path**: define a new terminal state in `config.arena.yaml`, add a new `on_event:` mapping in `verifying`, add a prompt (with its own `allowed_tools`) and a scenario.
+- **Check tool use per state**: the `workflow_tool_access` assertion can enforce that the agent only uses certain tools in each state.

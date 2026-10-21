@@ -6,6 +6,7 @@ spec:
   task_type: "handoff"
   version: "v1.0.0"
   description: "Voice IVR handoff — transfer the caller to a human agent"
+  allowed_tools: [transfer_to_agent]
 
   system_template: |
     You are the BankCo voice IVR system, currently in the HANDOFF state.

@@ -6,6 +6,7 @@ spec:
   task_type: "verifying"
   version: "v1.0.0"
   description: "Voice IVR greeting + identity verification + intent triage"
+  allowed_tools: [lookup_account]
 
   system_template: |
     You are the BankCo voice IVR system, currently in the VERIFYING state.
