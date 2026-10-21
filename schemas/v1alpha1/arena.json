@@ -1469,11 +1469,23 @@
     "GovernanceIndependentOf": {
       "properties": {
         "axes": {
-          "items": true,
+          "items": {
+            "enum": [
+              "model",
+              "provider",
+              "tools",
+              "prompts",
+              "accountable_owner"
+            ]
+          },
           "type": "array"
         },
         "enforcement": {
-          "type": "string"
+          "type": "string",
+          "enum": [
+            "strict",
+            "advisory"
+          ]
         }
       },
       "additionalProperties": false,
@@ -2259,7 +2271,9 @@
         }
       },
       "additionalProperties": false,
-      "type": "object"
+      "type": "object",
+      "maxProperties": 1,
+      "minProperties": 1
     },
     "OutputConfig": {
       "properties": {
@@ -3130,7 +3144,8 @@
     "Review": {
       "properties": {
         "cadence": {
-          "type": "string"
+          "type": "string",
+          "pattern": "^P(?:(?:\\d+Y(?:\\d+M)?(?:\\d+W)?(?:\\d+D)?|\\d+M(?:\\d+W)?(?:\\d+D)?|\\d+W(?:\\d+D)?|\\d+D)(?:T(?:\\d+H(?:\\d+M)?(?:\\d+S)?|\\d+M(?:\\d+S)?|\\d+S))?|T(?:\\d+H(?:\\d+M)?(?:\\d+S)?|\\d+M(?:\\d+S)?|\\d+S))$"
         },
         "eval": {
           "type": "string"

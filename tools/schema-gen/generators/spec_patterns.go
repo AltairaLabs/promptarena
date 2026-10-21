@@ -44,6 +44,8 @@ var specPatterns = []specPattern{
 	{def: "ContentPart", property: "type", pointer: "/$defs/ContentPart/properties/type/pattern"},
 	{def: "MediaConfig", property: "supported_types", items: true,
 		pointer: "/$defs/MediaConfig/properties/supported_types/items/pattern"},
+	// RFC 0016: a review's cadence is an ISO 8601 duration.
+	{def: "Review", property: "cadence", pointer: "/$defs/Review/properties/cadence/pattern"},
 }
 
 // applySpecPatterns copies the spec's patterns onto the generated properties

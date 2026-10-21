@@ -568,7 +568,7 @@ func TestArenaSchema_PackEvalsKeepsPackShape(t *testing.T) {
 
 // TestArenaSchema_GovernanceAutonomyLevelIsClosed guards the enum RFC 0013
 // closes on autonomy_level. packspec.Governance is a read-only generated type
-// with no jsonschema tags, so without applyGovernanceEnums the reflector emits
+// with no jsonschema tags, so without applySpecEnums the reflector emits
 // a bare string and `autonomy_level: reviewed` passes arena validation only to
 // fail three steps later at pack compile.
 func TestArenaSchema_GovernanceAutonomyLevelIsClosed(t *testing.T) {
