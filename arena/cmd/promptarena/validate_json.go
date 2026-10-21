@@ -17,7 +17,7 @@ import (
 // Stages `promptarena validate` reports, in the order they run. A stage runs
 // only when the ones before it got far enough to feed it. After these come the
 // pack stages from compiler.Check ("compile", "skills", "workflow",
-// "compositions", "agents", "pack", "pack_schema") — the same checks
+// "compositions", "agents", "governance", "pack", "pack_schema") — the same checks
 // `packc compile` and `packc validate` run, so validate is a superset of packc
 // by construction rather than by keeping two lists in step.
 const (
