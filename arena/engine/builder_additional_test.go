@@ -23,12 +23,11 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/v2/tools"
 )
 
-// TestParseProviderDuration covers the duration string parser used by the
-// arena loader to translate config.Provider.RequestTimeout and
-// config.Provider.StreamIdleTimeout into time.Duration values for
-// providers.ProviderSpec. Invalid or non-positive input must log and yield
-// zero so the provider falls back to its built-in default.
-func TestParseProviderDuration(t *testing.T) {
+// TestBuildProviderSpec_RequestTimeout covers how a provider's
+// request_timeout becomes a time.Duration on providers.ProviderSpec. Invalid
+// or non-positive input must log and yield zero so the provider falls back to
+// its built-in default.
+func TestBuildProviderSpec_RequestTimeout(t *testing.T) {
 	tests := []struct {
 		name  string
 		value string
@@ -46,8 +45,8 @@ func TestParseProviderDuration(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := parseProviderDuration("test-provider", "request_timeout", tt.value)
-			require.Equal(t, tt.want, got)
+			got := buildProviderSpec(&config.Provider{ID: "test-provider", RequestTimeout: tt.value}, nil, "", nil)
+			require.Equal(t, tt.want, got.RequestTimeout)
 		})
 	}
 }
