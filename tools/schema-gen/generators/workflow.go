@@ -16,8 +16,8 @@ import (
 
 // applyWorkflowEnums closes the enums on a workflow state and an artifact slot.
 //
-// The values come from promptkit's own constants, as applyGovernanceEnums does,
-// so the schema accepts exactly what the runtime's workflow validator accepts.
+// The values come from promptkit's own constants, so the schema accepts exactly
+// what the runtime's workflow validator accepts.
 // orchestration, control and artifact mode are closed enums in the spec too.
 // persistence has no enum in the spec, but workflow.Validate rejects anything
 // but these two values, so leaving it open would only defer the error.

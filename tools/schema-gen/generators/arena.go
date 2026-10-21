@@ -27,7 +27,6 @@ func GenerateArenaSchema() (interface{}, error) {
 		Customize: func(schema *jsonschema.Schema) {
 			addArenaExample(schema)
 			applyKnownTypeSuggestions(schema)
-			applyGovernanceEnums(schema)
 			applyWorkflowEnums(schema)
 			applyCompositionShapes(schema)
 			applyInlineToolNamePattern(schema)

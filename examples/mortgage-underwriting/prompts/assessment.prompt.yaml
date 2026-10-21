@@ -35,3 +35,16 @@ spec:
   allowed_tools:
     - compute_ratios
     - workflow__transition
+
+  # The validator the pack's human-oversight obligation names as a control.
+  # Validators enforce in the response path; the id is what the obligation
+  # refers to.
+  validators:
+    - id: no-decision-wording
+      type: banned_words
+      params:
+        words:
+          - "approved"
+          - "declined"
+          - "denied"
+          - "rejected"

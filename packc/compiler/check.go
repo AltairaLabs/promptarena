@@ -21,6 +21,7 @@ const (
 	StageWorkflow     = "workflow"     // the workflow state machine
 	StageCompositions = "compositions" // composition step graphs and their references
 	StageAgents       = "agents"       // the agents block
+	StageGovernance   = "governance"   // governance references a schema cannot express (RFC 0016)
 	StagePack         = "pack"         // pack structure, as `packc validate` checks it
 	StagePackSchema   = "pack_schema"  // the compiled pack against the PromptPack spec schema
 )
@@ -167,11 +168,18 @@ func (r *CheckResult) checkPack(pack *prompt.Pack, configDir, configFile string)
 		r.addAll(false, StageAgents, configFile, agentWarnings)
 	}
 
-	// pack.Validate repeats the workflow and agent findings reported above;
-	// what is left is the pack's own structure, which `packc validate` treats
-	// as blocking.
+	// An obligation or review naming an eval, validator, field or obligation
+	// the pack does not declare is an error; an undeclared vocabulary prefix
+	// is only a warning.
+	gov := pack.ValidateGovernance()
+	r.addAll(true, StageGovernance, configFile, gov.Errors)
+	r.addAll(false, StageGovernance, configFile, gov.Warnings)
+
+	// pack.Validate repeats the workflow, agent and governance findings
+	// reported above; what is left is the pack's own structure, which
+	// `packc validate` treats as blocking.
 	reported := map[string]bool{}
-	for _, list := range [][]string{wf.Errors, wf.Warnings, agentErrs, agentWarnings} {
+	for _, list := range [][]string{wf.Errors, wf.Warnings, agentErrs, agentWarnings, gov.Errors, gov.Warnings} {
 		for _, m := range list {
 			reported[m] = true
 		}

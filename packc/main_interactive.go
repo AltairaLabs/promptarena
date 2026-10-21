@@ -293,8 +293,11 @@ func validateCommand() {
 	wfResult := pack.ValidateWorkflow()
 	wfIssueCount := len(wfResult.Errors) + len(wfResult.Warnings)
 
-	// Non-workflow issues are always blocking errors
-	nonWFCount := len(warnings) - wfIssueCount
+	// Governance warnings (an undeclared vocabulary prefix) never block.
+	govResult := pack.ValidateGovernance()
+
+	// Every other issue is a blocking error
+	nonWFCount := len(warnings) - wfIssueCount - len(govResult.Warnings)
 	hasErrors := nonWFCount > 0 || wfResult.HasErrors()
 
 	if hasErrors {
@@ -317,6 +320,13 @@ func validateCommand() {
 	}
 	for _, w := range skillWarnings {
 		fmt.Printf("⚠ %s\n", w)
+	}
+
+	if len(govResult.Warnings) > 0 {
+		fmt.Printf("⚠ Governance warnings:\n")
+		for _, w := range govResult.Warnings {
+			fmt.Printf(warningFormat, w)
+		}
 	}
 
 	// Workflow warnings are informational (PascalCase, cycles)

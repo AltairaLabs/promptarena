@@ -66,8 +66,9 @@ Fields under `spec`:
 |-------|------|----------|-------------|
 | `artifacts` | object |  | Named artifact slots for lightweight, structured metadata that flows across state visits. Artifacts should be pointers (commit SHAs, URIs), compact representations (schemas, summaries, diffs), or small structured results — not bulk data. Artifact values are available to the prompt as template variables under the 'artifacts' namespace (e.g., {{artifacts.commit_sha}}). |
 | `composition` | string |  | Reference to a composition key defined in the pack's compositions object (RFC 0010). Required when orchestration is 'composition'; absent otherwise. |
-| `control` | string |  | Who holds the next turn after entering this state (RFC 0014). 'user' yields the conversation to the user (default, and the behavior of every state before v1.7.0). 'agent' runs another agent round in this state without yielding, for transient routing or processing states. Orthogonal to 'orchestration', which declares who initiates a transition rather than who holds the turn after one; inert on states reached via 'external' orchestration. Bounded by terminal states, max_visits and the workflow budget — it introduces no new limits. |
+| `control` | string |  | Who holds the next turn after entering this state (RFC 0014). 'user' yields the conversation to the user (the default). Before v1.7.0 the specification did not say who holds the turn after a transition, and implementations differed; one that previously ran the destination state should treat adopting this default as a behavioral change for packs that do not declare 'control'. 'agent' runs another agent round in this state without yielding, for transient routing or processing states. Orthogonal to 'orchestration', which declares who initiates a transition rather than who holds the turn after one; inert on states reached via 'external' orchestration. Bounded by terminal states, max_visits and the workflow budget — it introduces no new limits. |
 | `description` | string |  | Human-readable description of this state's purpose. |
+| `extensions` | object |  | Opaque policy annotations about this object (RFC 0016). Never interpreted by this specification and never passed to a scorer, guardrail or model as configuration. Keys SHOULD be namespaced. |
 | `max_visits` | integer |  | Maximum number of times this state can be entered during a single workflow execution. When the limit is reached, the workflow transitions to the state named in on_max_visits. If on_max_visits is not set, the workflow terminates. |
 | `on_event` | object |  | Map of event name to target state name. When the named event fires, the workflow transitions to the target state. |
 | `on_max_visits` | string |  | Target state to transition to when max_visits is reached. Must reference a key in the states object. If omitted and max_visits is reached, the workflow terminates with a budget-exhausted status. |
@@ -91,6 +92,7 @@ Fields under `spec`:
 |-------|------|----------|-------------|
 | `description` | string |  | Human-readable description of what this composition does. |
 | `engine` | object |  | Runtime-specific configuration (e.g. budgets, telemetry, scheduling hints). Opaque escape hatch with no schema enforcement. |
+| `extensions` | object |  | Opaque policy annotations about this object (RFC 0016). Never interpreted by this specification and never passed to a scorer, guardrail or model as configuration. Keys SHOULD be namespaced. |
 | `input_schema` | string |  | Reference to a JSON Schema declaring the structured input shape. Path or fragment reference. |
 | `output` | string |  | Step ID whose output is the composition's output. If omitted, runtimes should treat the last step's output as the composition output. |
 | `output_schema` | string |  | Reference to a JSON Schema declaring the structured output shape. |
@@ -113,6 +115,7 @@ Fields under `spec`:
 | `output_schema` | string |  | Reference to a JSON Schema for the expected output shape. Runtimes parse the LLM response against this schema. |
 | `predicate` | object |  | Branch steps only: the condition that selects then or else. |
 | `prompt_task` | string |  | Reference to a prompt key defined in the pack's prompts object. |
+| `provider` | string |  | Key of the provider requirement that runs this step, overriding the provider of the step's prompt_task. Absent means the prompt's provider (RFC 0017). |
 | `reduce` | object |  | Parallel steps only: how the branch outputs are merged. |
 | `termination` | object |  | REQUIRED. The condition under which the bounded loop exits. Without an explicit termination predicate, an agent step is invalid. |
 | `then` | string |  | Step ID to execute when the predicate evaluates true. |
@@ -208,6 +211,7 @@ Fields under `spec`:
 | `compilation` | object |  | — |
 | `description` | string | ✓ | — |
 | `evals` | array |  | — |
+| `extensions` | object |  | — |
 | `fragments` | array |  | — |
 | `media` | object |  | — |
 | `metadata` | object |  | — |

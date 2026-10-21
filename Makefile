@@ -144,8 +144,9 @@ fmt: ## Format Go code with gofmt
 
 # ── Schemas ─────────────────────────────────────────────────────────────────
 
-schemas: ## Regenerate the JSON schemas from the Go config types
+schemas: ## Regenerate the JSON schemas, and the copies embedded in the binary
 	@$(GO) run ./tools/schema-gen/
+	@$(GO) generate ./arena/agentkb/schema.go
 
 schemas-check: ## Fail if committed schemas are out of date (CI guard)
 	@$(GO) run ./tools/schema-gen/ --check

@@ -23,7 +23,7 @@ import (
 // "Additional property <x> is not allowed" at authoring time for a key the
 // compiled artifact would have accepted.
 //
-// This is the same class of gap applyGovernanceEnums fixes from the other
+// This is the same class of gap applySpecEnums fixes from the other
 // direction: there the spec closes an enum the reflector left open; here the
 // spec opens an object the reflector closed. Both exist because packspec types
 // carry no schema tags, and both are repaired here from the spec itself rather

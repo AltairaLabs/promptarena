@@ -1,8 +1,10 @@
 package agentkb
 
 import (
+	"io/fs"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -31,14 +33,32 @@ func TestSchema_ReturnsBytesAndRejectsUnknown(t *testing.T) {
 // Parity: the embedded schemas must byte-match the generated source of truth, so
 // the binary can never ship a schema that disagrees with its own validate.
 func TestSchemas_ByteMatchGeneratedSource(t *testing.T) {
-	t.Skip("requires schema-gen source (stays in promptkit); schemas are vendored here")
-	names, err := SchemaNames()
-	require.NoError(t, err)
-	for _, name := range names {
-		embedded, err := Schema(name)
+	srcRoot := filepath.Join("..", "..", "schemas", "v1alpha1")
+	err := fs.WalkDir(schemasFS, "schemas", func(path string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return err
+		}
+		embedded, err := schemasFS.ReadFile(path)
 		require.NoError(t, err)
-		src, err := os.ReadFile(filepath.Join("..", "..", "..", "schemas", "v1alpha1", name+".json"))
-		require.NoError(t, err, "missing source schema for %s", name)
-		assert.Equal(t, string(src), string(embedded), "embedded %s drifted from schemas/v1alpha1", name)
-	}
+		rel := strings.TrimPrefix(path, "schemas/")
+		src, err := os.ReadFile(filepath.Join(srcRoot, filepath.FromSlash(rel)))
+		require.NoError(t, err, "missing source schema for %s", rel)
+		assert.Equal(t, string(src), string(embedded),
+			"embedded %s drifted from schemas/v1alpha1; run `make schemas`", rel)
+		return nil
+	})
+	require.NoError(t, err)
+
+	// And the other way: every source schema is embedded.
+	err = filepath.WalkDir(srcRoot, func(path string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() || !strings.HasSuffix(path, ".json") {
+			return err
+		}
+		rel, err := filepath.Rel(srcRoot, path)
+		require.NoError(t, err)
+		_, statErr := fs.Stat(schemasFS, "schemas/"+filepath.ToSlash(rel))
+		assert.NoError(t, statErr, "schemas/v1alpha1/%s is not embedded; run `make schemas`", rel)
+		return nil
+	})
+	require.NoError(t, err)
 }

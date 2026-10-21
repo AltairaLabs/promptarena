@@ -16,9 +16,10 @@ Author configs to the schema first; don't guess field names.
 
 On an arena config, `promptarena validate` goes beyond the schema. It runs the arena's
 consistency checks, then builds the pack in memory and runs every check `packc` runs:
-workflow, compositions, agents, skills, pack structure, and the compiled pack against
-the PromptPack spec. If `validate` passes, `packc compile` will too. A config with no
-`prompt_configs` builds no pack, so those checks are skipped and the report says so.
+workflow, compositions, agents, skills, governance references, pack structure, and the
+compiled pack against the PromptPack spec. If `validate` passes, `packc compile` will
+too. A config with no `prompt_configs` builds no pack, so those checks are skipped and
+the report says so.
 
 Use `promptarena validate --json <config>` and fix everything it reports in one pass.
 Each entry in `errors` has a `stage` (which check found it), a `field` (where), a
