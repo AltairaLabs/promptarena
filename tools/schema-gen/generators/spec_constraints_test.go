@@ -41,11 +41,21 @@ func TestSpecEnumsCarriedIntoEverySchema(t *testing.T) {
 	}
 }
 
-// TestSpecPropertyCountsCarriedIntoEverySchema: a control carries exactly one
-// key wherever the generated schemas define it.
+// TestSpecPropertyCountsCarriedIntoEverySchema: every specPropertyCounts entry
+// carries the spec's bounds wherever the generated schemas define it (for an
+// obligation control, exactly one key).
 func TestSpecPropertyCountsCarriedIntoEverySchema(t *testing.T) {
+	spec, err := parseEmbeddedSpec()
+	if err != nil {
+		t.Fatalf("parse embedded spec: %v", err)
+	}
 	schemas := generatedSchemas(t)
 	for _, pc := range specPropertyCounts {
+		node, err := resolvePointer(spec, pc.pointer)
+		if err != nil {
+			t.Fatalf("$defs/%s -> %s: %v", pc.def, pc.pointer, err)
+		}
+		want := node.(map[string]interface{})
 		seen := false
 		for file, doc := range schemas {
 			def, ok := defsOf(doc)[pc.def].(map[string]interface{})
@@ -53,9 +63,10 @@ func TestSpecPropertyCountsCarriedIntoEverySchema(t *testing.T) {
 				continue
 			}
 			seen = true
-			if def["minProperties"] != float64(1) || def["maxProperties"] != float64(1) {
-				t.Errorf("%s: $defs/%s minProperties/maxProperties = %v/%v, want 1/1",
-					file, pc.def, def["minProperties"], def["maxProperties"])
+			for _, key := range []string{"minProperties", "maxProperties"} {
+				if def[key] != want[key] {
+					t.Errorf("%s: $defs/%s %s = %v, want %v", file, pc.def, key, def[key], want[key])
+				}
 			}
 		}
 		if !seen {

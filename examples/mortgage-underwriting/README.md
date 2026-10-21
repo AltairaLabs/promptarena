@@ -1,9 +1,9 @@
 # Mortgage underwriting — governance metadata on a pack
 
 A fictional mortgage underwriting assistant, used to demonstrate **`pack_metadata.governance`**:
-the facts that make a regulated agent deployable (RFC 0013), and the obligations
-they trigger with the controls that discharge them (RFC 0016), carried in the
-pack itself rather than in a document beside it.
+the facts that make a regulated agent deployable, and the obligations they
+trigger with the controls that discharge them, carried in the pack itself rather
+than in a document beside it.
 
 Northwind Home Loans is not a real lender, these are not real lending guidelines,
 and every applicant, property and figure here is invented. The providers are

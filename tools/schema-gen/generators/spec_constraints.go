@@ -2,6 +2,7 @@ package generators
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/invopop/jsonschema"
 )
@@ -86,6 +87,7 @@ func setSpecEnum(def *jsonschema.Schema, se specEnum, enum []interface{}) error 
 	if !ok || prop == nil {
 		return nil
 	}
+	enum = slices.Clone(enum) // one slice per definition, so editing one leaves the others alone
 	if !se.items {
 		prop.Enum = enum
 		return nil

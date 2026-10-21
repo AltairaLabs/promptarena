@@ -112,11 +112,16 @@ spec:
       trigger: on_session_complete
       description: "The assistant recommends; it never states an approval or a decline."
       params:
+        # Decision phrases, not bare words: "the applicant declined to share
+        # bank statements" is evidence, not an outcome. Matching is
+        # case-insensitive.
         patterns:
-          - "approved"
-          - "declined"
-          - "denied"
-          - "rejected"
+          - "you are approved"
+          - "we have approved"
+          - "your application is approved"
+          - "you are declined"
+          - "we have declined"
+          - "your application is declined"
 
   # intake → verification → assessment → referral (terminal).
   #

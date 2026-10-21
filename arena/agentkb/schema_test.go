@@ -44,7 +44,20 @@ func TestSchemas_ByteMatchGeneratedSource(t *testing.T) {
 		src, err := os.ReadFile(filepath.Join(srcRoot, filepath.FromSlash(rel)))
 		require.NoError(t, err, "missing source schema for %s", rel)
 		assert.Equal(t, string(src), string(embedded),
-			"embedded %s drifted from schemas/v1alpha1; run `make schemas` and `go generate ./arena/agentkb`", rel)
+			"embedded %s drifted from schemas/v1alpha1; run `make schemas`", rel)
+		return nil
+	})
+	require.NoError(t, err)
+
+	// And the other way: every source schema is embedded.
+	err = filepath.WalkDir(srcRoot, func(path string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() || !strings.HasSuffix(path, ".json") {
+			return err
+		}
+		rel, err := filepath.Rel(srcRoot, path)
+		require.NoError(t, err)
+		_, statErr := fs.Stat(schemasFS, "schemas/"+filepath.ToSlash(rel))
+		assert.NoError(t, statErr, "schemas/v1alpha1/%s is not embedded; run `make schemas`", rel)
 		return nil
 	})
 	require.NoError(t, err)
