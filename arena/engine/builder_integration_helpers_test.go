@@ -283,3 +283,28 @@ func TestBuildStateStore_SelectsBackend(t *testing.T) {
 		assert.Contains(t, err.Error(), "unsupported state store type")
 	})
 }
+
+// TestProviderSpecFromConfig_AppliesTuning pins that judge providers get the
+// same tuning as providers under test, so a provider file behaves the same
+// whether it is the system under test or the judge.
+func TestProviderSpecFromConfig_AppliesTuning(t *testing.T) {
+	p := &config.Provider{
+		ID:                  "judge",
+		RequestTimeout:      "2m",
+		StreamMaxConcurrent: 2,
+		StreamRetry:         &config.StreamRetryConfig{Enabled: true, MaxAttempts: 3},
+		HTTPTransport:       &config.HTTPTransportConfig{MaxConnsPerHost: 4},
+		Headers:             map[string]string{"X-Tenant": "acme"},
+	}
+	judge := providerSpecFromConfig(p)
+	assert.Equal(t, 2*time.Minute, judge.RequestTimeout)
+	assert.Equal(t, 2, judge.StreamMaxConcurrent)
+	assert.True(t, judge.StreamRetry.Enabled)
+	assert.Equal(t, 4, judge.HTTPTransport.MaxConnsPerHost)
+	assert.Equal(t, p.Headers, judge.Headers)
+
+	underTest := tunedSpec(p)
+	assert.Equal(t, underTest.RequestTimeout, judge.RequestTimeout)
+	assert.Equal(t, underTest.StreamRetry, judge.StreamRetry)
+	assert.Equal(t, underTest.HTTPTransport, judge.HTTPTransport)
+}
