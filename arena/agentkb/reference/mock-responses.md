@@ -43,7 +43,7 @@ selfplay:
       1: "I want a refund."
 ```
 
-## The two keys that catch people out
+## Three things that catch people out
 
 **1. Scenario keys are `metadata.name`, not `spec.id`.** The manifest loader runs
 `SetID(GetName())`, so `metadata.name` overwrites whatever `spec.id` says — the
@@ -55,13 +55,22 @@ that triggers a tool call consumes **two** entries: one for the call, one for th
 reply after the tool result comes back. Get this wrong and responses slide out of
 alignment part-way through a scenario.
 
+**3. A scripted tool call is not an offered tool.** A prompt offers the model
+only the tools in its `spec.allowed_tools`. If the prompt lists none, the
+scripted `tool_calls` never run, and `tools_called` fails with "got 0" however
+this file is written — add the tool to `allowed_tools`; the mock is not the
+problem. If the prompt offers some tools but not this one, the mock still runs
+the call, so the scenario passes against the mock and fails against a real
+model, which only calls what it was offered. `promptarena validate` warns in
+both cases.
+
 ## Structured turn fields
 
 | Field | Notes |
 |---|---|
 | `type` | `text`, `tool_calls`, or `multimodal`. Defaults to `text`; set to `tool_calls` automatically when `tool_calls` is present, so you rarely write it. |
 | `content` | The text. `text:` and `response:` are also accepted (`response` is legacy); `content` wins if more than one is present. |
-| `tool_calls[].name` | Tool to invoke — must match a tool the kit defines. |
+| `tool_calls[].name` | Tool to invoke — must match a tool the kit defines **and** the scenario's prompt lists in `spec.allowed_tools`. |
 | `tool_calls[].arguments` | Map passed to the tool. The tool then runs for real. |
 | `parts[]` | Multimodal parts: `type` of `text`/`image`/`audio`/`video`/`document`, plus the matching `text`/`image_url`/`audio_url`/`video_url`/`document_url`. URLs may be `mock://`, `http(s)://`, `data:`, or a file path. |
 | `audio_file` | Duplex auto-respond only. Raw PCM, signed 16-bit little-endian, mono. Path resolves relative to this file. |

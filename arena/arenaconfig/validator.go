@@ -352,60 +352,6 @@ func (v *ConfigValidator) getPromptTaskTypes() map[string]bool {
 	return taskTypes
 }
 
-// validateToolUsage checks that tools are properly connected to prompts
-func (v *ConfigValidator) validateToolUsage() {
-	definedTools := v.getDefinedToolNames()
-	allowedTools := v.getAllowedToolNames()
-
-	check := v.buildToolUsageCheck(definedTools, allowedTools)
-	if len(check.Issues) > 0 || check.Passed {
-		v.checks = append(v.checks, check)
-	}
-}
-
-// getDefinedToolNames returns all tool names defined in the config
-func (v *ConfigValidator) getDefinedToolNames() map[string]bool {
-	definedTools := make(map[string]bool)
-	for _, t := range v.config.LoadedTools {
-		baseName := filepath.Base(t.FilePath)
-		definedTools[baseName] = true
-	}
-	return definedTools
-}
-
-// getAllowedToolNames returns all tool names allowed by prompts
-func (v *ConfigValidator) getAllowedToolNames() map[string]bool {
-	allowedTools := make(map[string]bool)
-	for _, pc := range v.config.LoadedPromptConfigs {
-		if pc != nil && pc.Config != nil {
-			if promptCfg, ok := pc.Config.(interface{ GetAllowedTools() []string }); ok {
-				for _, tool := range promptCfg.GetAllowedTools() {
-					allowedTools[tool] = true
-				}
-			}
-		}
-	}
-	return allowedTools
-}
-
-// buildToolUsageCheck builds the validation check for tool usage
-func (v *ConfigValidator) buildToolUsageCheck(definedTools, allowedTools map[string]bool) ValidationCheck {
-	check := ValidationCheck{
-		Name:   "Tools are used by prompts",
-		Passed: true,
-	}
-	for toolFile := range definedTools {
-		// Check if this specific tool is allowed by any prompt
-		if !allowedTools[toolFile] {
-			check.Passed = false
-			check.Warning = true
-			issue := fmt.Sprintf("tool %s is defined but not allowed by any prompt", toolFile)
-			check.Issues = append(check.Issues, issue)
-		}
-	}
-	return check
-}
-
 // validateAllowedToolsResolve warns when a prompt's allowed_tools entry cannot
 // resolve to a real tool. This is the class of mistake that passes in Arena
 // (where MCP tools are currently auto-surfaced regardless of allowed_tools) but

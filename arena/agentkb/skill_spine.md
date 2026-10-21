@@ -25,6 +25,11 @@ catalogs in `reference/` instead of calling `promptarena explain`/`schema` repea
    instead of guessing. In a non-interactive run (`claude -p`, CI) nobody can answer —
    author `mode: mock` tools and flag the invented contracts as assumptions rather than
    stalling on a question. See the "Derive a tool from a reference" idiom.
+   **A prompt offers the model only the tools in its `spec.allowed_tools`.** Listing a
+   tool under `tools:` in `config.arena.yaml` defines it; the model is not offered it
+   until a prompt lists it in `allowed_tools` (or an activated skill grants it). A tool
+   no prompt lists is never called, and `tools_called` on it fails with "got 0" — fix
+   the prompt, not `mock-responses.yaml`. `promptarena validate` warns about both.
 4. **Lay it out, scaffold, and give it a personality.** Canonical layout and naming:
    `config.arena.yaml`, `prompts/*.prompt.yaml`, `providers/*.provider.yaml`,
    `scenarios/*.scenario.yaml`, `tools/*.tool.yaml`, `mock-responses.yaml`. Start from the
@@ -101,6 +106,9 @@ spec:
   description: A helpful assistant.
   system_template: |
     You are a helpful assistant. Be concise and accurate.
+  # The tools this prompt offers the model. A tool that is defined but listed in
+  # no prompt's allowed_tools is never called.
+  # allowed_tools: [lookup]
 ```
 
 ### providers/mock.provider.yaml
