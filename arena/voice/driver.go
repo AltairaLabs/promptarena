@@ -24,14 +24,14 @@ func NewDriver(io AudioIO, run LiveRunner, onLevel func(user, agent float32)) *D
 }
 
 // NewDriverWithGuard constructs a Driver with an optional half-duplex echo guard.
-// When guard is non-nil, mic frames are gated by g.Allow before reaching the runner,
-// and g.SetAgentSpeaking is toggled around each playback frame.
-//
-// v1 limitation: the per-frame SetAgentSpeaking toggle is effective only for synchronous
-// playback (where Play blocks for the full frame duration). Real buffered hardware drivers
-// return from Play before the audio is audible, so the flag stays true for only microseconds
-// and does not suppress echo. Hardware wiring must hold SetAgentSpeaking true for the entire
-// audible playback duration — see the TODO in Driver.Run.
+// When guard is non-nil, each played frame is recorded with guard.RecordPlayback
+// before it reaches AudioIO.Play, and mic frames are gated by guard.Allow before
+// reaching the runner. RecordPlayback tracks a speaking deadline extended by
+// each frame's own audible duration, so the gate stays correct against
+// buffered hardware drivers whose Play call returns long before the audio is
+// actually audible. The runner's flush callback is wrapped to also call
+// guard.Reset, so a barge-in that drops queued playback also closes the gate
+// immediately instead of leaving it open for audio that will now never sound.
 func NewDriverWithGuard(io AudioIO, run LiveRunner, onLevel func(user, agent float32), guard *EchoGuard) *Driver {
 	return &Driver{io: io, run: run, onLevel: onLevel, guard: guard}
 }
@@ -45,19 +45,19 @@ func (d *Driver) Run(ctx context.Context) error {
 
 	play := func(frame []byte) {
 		if d.guard != nil {
-			// TODO(voice): hold SetAgentSpeaking for the audible playback duration, not just
-			// the Play call. Buffered hardware drivers return from Play before audio is emitted,
-			// so the guard window closes before the mic can pick up the echo. A future wiring
-			// should accept a playback-duration hint (e.g. frame length / sample rate) and
-			// defer SetAgentSpeaking(false) until after the audio is audible.
-			d.guard.SetAgentSpeaking(true)
+			d.guard.RecordPlayback(frame)
 		}
 		d.io.Play(frame)
 		if d.onLevel != nil {
 			d.onLevel(0, rms(frame))
 		}
-		if d.guard != nil {
-			d.guard.SetAgentSpeaking(false)
+	}
+
+	flush := d.io.Flush
+	if d.guard != nil {
+		flush = func() {
+			d.io.Flush()
+			d.guard.Reset()
 		}
 	}
 
@@ -65,7 +65,7 @@ func (d *Driver) Run(ctx context.Context) error {
 	if d.onLevel != nil || d.guard != nil {
 		mic = d.tapLevels(ctx, mic)
 	}
-	return d.run(ctx, mic, play, d.io.Flush)
+	return d.run(ctx, mic, play, flush)
 }
 
 // tapLevels forwards mic frames while reporting their RMS as the user level.
