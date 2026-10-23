@@ -5,12 +5,12 @@ import (
 	"github.com/invopop/jsonschema"
 
 	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
-
-	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
 )
 
 const (
-	schemaBaseURL            = config.SchemaBaseURL
+	// schemaBaseURL is where the schemas are published; promptkit.altairalabs.ai
+	// hosts the copies this generator writes.
+	schemaBaseURL            = "https://promptkit.altairalabs.ai/schemas/v1alpha1"
 	defaultTemperature       = 0.7
 	defaultMaxTokens         = 1000
 	defaultProviderMaxTokens = 2000

@@ -12,6 +12,8 @@ import (
 	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/logger"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/prompt"
+
+	"github.com/AltairaLabs/promptarena/v2/arena/configschema"
 )
 
 const (
@@ -181,7 +183,7 @@ func LoadConfig(filename string) (*Config, error) {
 	}
 
 	// Step 1: JSON Schema validation (structure, types, required fields, kind values)
-	if err := config.ValidateArenaConfig(data); err != nil {
+	if err := configschema.Check(config.ConfigTypeArena, data); err != nil {
 		return nil, fmt.Errorf("schema validation failed: %w", err)
 	}
 
@@ -338,8 +340,32 @@ func (c *Config) loadSelfPlayAndJudgeResources(filename string) error {
 	return c.mergeJudgeSpecs()
 }
 
+// checkFile validates a config file against promptarena's schema for its type.
+// PromptKit's loaders check only the Go types, so the schema check is ours.
+func checkFile(configType config.ConfigType, filename string) error {
+	data, err := os.ReadFile(filename) //nosec G304 -- operator-provided config file path is the loader's purpose
+	if err != nil {
+		return fmt.Errorf("failed to read %s: %w", filename, err)
+	}
+	if err := configschema.Check(configType, data); err != nil {
+		return fmt.Errorf("invalid %s file %s: %w", configType, filename, err)
+	}
+	return nil
+}
+
+// loadProvider loads a provider file after checking it against the schema.
+func loadProvider(filename string) (*config.Provider, error) {
+	if err := checkFile(config.ConfigTypeProvider, filename); err != nil {
+		return nil, err
+	}
+	return config.LoadProvider(filename)
+}
+
 // LoadScenario loads and parses a scenario from a YAML file in K8s-style manifest format
 func LoadScenario(filename string) (*Scenario, error) {
+	if err := checkFile(config.ConfigTypeScenario, filename); err != nil {
+		return nil, err
+	}
 	// Use K8s version for unmarshaling
 	manifest, err := config.LoadSimpleK8sManifest[*ScenarioConfigK8s](filename, "Scenario")
 	if err != nil {
@@ -363,6 +389,9 @@ func LoadScenario(filename string) (*Scenario, error) {
 
 // LoadEval loads and parses an eval configuration from a YAML file in K8s-style manifest format
 func LoadEval(filename string) (*Eval, error) {
+	if err := checkFile(config.ConfigTypeEval, filename); err != nil {
+		return nil, err
+	}
 	// Use K8s version for unmarshaling
 	manifest, err := config.LoadSimpleK8sManifest[*EvalConfigK8s](filename, "Eval")
 	if err != nil {
@@ -393,7 +422,7 @@ func (c *Config) loadPromptConfigs(configPath string) error {
 		}
 
 		// Schema validation
-		if err = config.ValidatePromptConfig(data); err != nil {
+		if err = configschema.Check(config.ConfigTypePromptConfig, data); err != nil {
 			return fmt.Errorf(errSchemaValidationFailed, ref.File, err)
 		}
 
@@ -461,7 +490,7 @@ func (c *Config) loadEvals(configPath string) error {
 func (c *Config) loadProviders(configPath string) error {
 	for _, ref := range c.Providers {
 		fullPath := config.ResolveFilePath(configPath, ref.File)
-		provider, err := config.LoadProvider(fullPath)
+		provider, err := loadProvider(fullPath)
 		if err != nil {
 			return fmt.Errorf("failed to load provider %s: %w", ref.File, err)
 		}
@@ -524,7 +553,7 @@ func (c *Config) routePredictProvider(ref ProviderRef, provider *config.Provider
 func (c *Config) loadTTSProviders(configPath string) error {
 	for _, ref := range c.TTSProviders {
 		fullPath := config.ResolveFilePath(configPath, ref.File)
-		provider, err := config.LoadProvider(fullPath)
+		provider, err := loadProvider(fullPath)
 		if err != nil {
 			return fmt.Errorf("loading tts_providers[%s]: %w", ref.File, err)
 		}
@@ -545,7 +574,7 @@ func (c *Config) loadTTSProviders(configPath string) error {
 func (c *Config) loadSTTProviders(configPath string) error {
 	for _, ref := range c.STTProviders {
 		fullPath := config.ResolveFilePath(configPath, ref.File)
-		provider, err := config.LoadProvider(fullPath)
+		provider, err := loadProvider(fullPath)
 		if err != nil {
 			return fmt.Errorf("loading stt_providers[%s]: %w", ref.File, err)
 		}
@@ -566,7 +595,7 @@ func (c *Config) loadSTTProviders(configPath string) error {
 func (c *Config) loadEmbeddingProviders(configPath string) error {
 	for _, ref := range c.EmbeddingProviders {
 		fullPath := config.ResolveFilePath(configPath, ref.File)
-		provider, err := config.LoadProvider(fullPath)
+		provider, err := loadProvider(fullPath)
 		if err != nil {
 			return fmt.Errorf("loading embedding_providers[%s]: %w", ref.File, err)
 		}
@@ -616,7 +645,7 @@ func (c *Config) validateInferenceDefaults() error {
 func (c *Config) loadImageProviders(configPath string) error {
 	for _, ref := range c.ImageProviders {
 		fullPath := config.ResolveFilePath(configPath, ref.File)
-		provider, err := config.LoadProvider(fullPath)
+		provider, err := loadProvider(fullPath)
 		if err != nil {
 			return fmt.Errorf("loading image_providers[%s]: %w", ref.File, err)
 		}
@@ -694,7 +723,7 @@ func (c *Config) loadTools(configPath string) error {
 		// by the tool registry at load time, not by schema.
 		ext := strings.ToLower(filepath.Ext(ref.File))
 		if ext == extYAML || ext == extYML {
-			if err := config.ValidateTool(data); err != nil {
+			if err := configschema.Check(config.ConfigTypeTool, data); err != nil {
 				return fmt.Errorf(errSchemaValidationFailed, ref.File, err)
 			}
 		}

@@ -196,6 +196,9 @@
         },
         "http_transport": {
           "$ref": "#/$defs/HTTPTransportConfig"
+        },
+        "message_metadata_template": {
+          "type": "string"
         }
       },
       "additionalProperties": false,

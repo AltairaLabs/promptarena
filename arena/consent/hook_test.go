@@ -4,14 +4,15 @@ import (
 	"context"
 	"testing"
 
-	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
+	"github.com/AltairaLabs/promptarena/v2/arena/configschema"
+
 	"github.com/AltairaLabs/PromptKit/runtime/v2/hooks"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/tools"
 )
 
 func init() {
 	if testing.Testing() {
-		config.SchemaValidationDisabled.Store(true)
+		configschema.Disabled.Store(true)
 	}
 }
 

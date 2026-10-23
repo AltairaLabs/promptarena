@@ -3,12 +3,12 @@ package markdown
 import (
 	"testing"
 
-	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
+	"github.com/AltairaLabs/promptarena/v2/arena/configschema"
 )
 
 // init disables schema validation for tests since schemas may not be published yet.
 func init() {
 	if testing.Testing() {
-		config.SchemaValidationDisabled.Store(true)
+		configschema.Disabled.Store(true)
 	}
 }
