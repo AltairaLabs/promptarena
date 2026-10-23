@@ -81,9 +81,20 @@ skill and then calls `refund`; with `refund` removed from both skills'
 `allowed-tools` and nothing else changed, it activates the same skills and never
 calls `refund`, because it was never offered.
 
-Note that the mock provider cannot show this. A mock emits whatever tool calls
-its response file names, regardless of the tools array it was handed, so
-`promptarena run` against the mock exercises activation but not gating.
+A mock provider emits whatever tool calls its response file names, regardless
+of the tools array it was handed, so `tools_called` cannot show gating against
+it. The scenarios check the tools array itself with `tools_offered`:
+
+- `billing-flow` asserts that `refund` is not offered before any skill is
+  active, and is offered from the turn that activates `pci-compliance`. It
+  stops being offered once the conversation reaches `closed`, where
+  `skills: none` leaves no skill active.
+- `orders-flow` asserts that `search_orders` is still not offered after
+  `order-troubleshooting`, which asks for it, is active: the config never
+  declares that tool.
+
+Remove `refund` from `pci-compliance`'s `allowed-tools`, or add it to a prompt
+baseline, and `billing-flow` fails.
 
 ## Running
 

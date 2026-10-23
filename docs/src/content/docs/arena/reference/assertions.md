@@ -63,6 +63,7 @@ The table below lists the most commonly used assertion types. For full details a
 | `content_matches` | Response matches a regular expression |
 | `tools_called` | Specific tools were invoked during the turn |
 | `tools_not_called` | Specific tools were not invoked |
+| `tools_offered` | Specific tools were offered to the model during the turn, whether or not it called them |
 | `llm_judge` | LLM evaluates response quality against criteria |
 | `json_schema` | Response conforms to a JSON Schema |
 | `no_tool_errors` | All tool calls completed without errors |
@@ -173,6 +174,43 @@ Equivalently, the dedicated `tools_not_called` assertion expresses the forbidden
 ```
 
 Pick whichever reads better. `max_calls > 0` (e.g. "at most 3 lookups per turn") is only available on `tools_called`.
+
+### Tools offered
+
+`tools_called` sees what the model called. `tools_offered` sees what the turn
+offered it: the tools array the provider received. Use it to check a skill
+grant or a prompt's `allowed_tools`. A grant that adds nothing and a grant that
+works produce the same transcript whenever the model does not go on to call
+the tool.
+
+```yaml
+turns:
+  - role: user
+    content: "I was charged twice."
+    assertions:
+      # Before a skill grants it, refund is not offered.
+      - type: tools_offered
+        params:
+          tools: [refund]
+          absent: true
+  - role: user
+    content: "Can you process the refund?"
+    assertions:
+      # This turn activates the skill whose allowed-tools names refund.
+      - type: tools_offered
+        params:
+          tools: [refund]
+```
+
+Parameters:
+- `tools` (or `tool_names`): the tools to check
+- `absent` (bool): none of them may be offered
+- `exact` (bool): the offered set must be exactly these tools
+
+A mock provider returns the tool calls its response file names whether or not
+the tools were offered, so `tools_called` cannot show gating against a mock.
+`tools_offered` can. If the turn offered no tools at all, the assertion fails,
+because there is nothing to judge.
 
 ### LLM judge
 

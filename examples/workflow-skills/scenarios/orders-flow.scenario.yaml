@@ -18,6 +18,14 @@ spec:
 
     - role: user
       content: "What's the latest tracking update?"
+      assertions:
+        # order-troubleshooting is active and its allowed-tools asks for
+        # search_orders, but this config never declares that tool, so the
+        # grant cannot add it.
+        - type: tools_offered
+          params:
+            tools: [search_orders]
+            absent: true
 
     - role: user
       content: "That's great news, thank you for looking into it."

@@ -16,12 +16,30 @@ spec:
 
     - role: user
       content: "Yes, my email is jane@example.com and the duplicate charge was $79.99."
+      assertions:
+        # No skill is active yet, so the grant has not happened: refund is
+        # not in the tools array the provider receives.
+        - type: tools_offered
+          params:
+            tools: [refund]
+            absent: true
 
     - role: user
       content: "The order was placed 5 days ago. Can you process the refund?"
+      assertions:
+        # This turn activates pci-compliance, whose allowed-tools names
+        # refund, so the next provider round is offered it.
+        - type: tools_offered
+          params:
+            tools: [refund]
 
     - role: user
       content: "Yes, please go ahead and process the refund to my card."
+      assertions:
+        # The grant lasts while the skill stays active.
+        - type: tools_offered
+          params:
+            tools: [refund]
 
     - role: user
       content: "Great, thank you for processing the refund."
