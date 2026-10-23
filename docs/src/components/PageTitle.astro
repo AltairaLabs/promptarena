@@ -3,11 +3,13 @@
  * Custom PageTitle Component
  *
  * Extends Starlight's PageTitle to include a version banner for non-latest docs.
+ * Renders starlight-page-actions' PageTitle (Starlight's default title plus the
+ * Copy Markdown / Open in ChatGPT / Claude buttons), because this override
+ * takes precedence over the one the plugin registers.
  */
-import type { Props } from '@astrojs/starlight/props';
-import Default from '@astrojs/starlight/components/PageTitle.astro';
+import PageActionsTitle from 'starlight-page-actions/overrides/PageTitle.astro';
 import VersionBanner from './VersionBanner.astro';
 ---
 
 <VersionBanner />
-<Default {...Astro.props}><slot /></Default>
+<PageActionsTitle />

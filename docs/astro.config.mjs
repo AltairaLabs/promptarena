@@ -2,6 +2,8 @@
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
 import d2 from 'astro-d2';
+import starlightLlmsTxt from 'starlight-llms-txt';
+import starlightPageActions from 'starlight-page-actions';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 
@@ -119,6 +121,27 @@ export default defineConfig({
       },
       social: [
         { icon: 'github', label: 'GitHub', href: 'https://github.com/AltairaLabs/promptarena' },
+      ],
+      plugins: [
+        // /llms.txt, /llms-full.txt and /llms-small.txt for LLMs and coding
+        // agents. Pinned to 0.10.x: 0.11+ needs Astro 7 / Starlight 0.41.
+        starlightLlmsTxt({
+          description:
+            'PromptArena is a command-line tool for testing and evaluating LLM prompts and agents. It runs scenarios and red-team simulations across providers such as Claude, OpenAI, Gemini, Azure and local models, scores the results with assertions and evals, and gates CI on them. PackC, documented here too, compiles prompt configuration into portable PromptPack files. Both are built on the PromptKit Go runtime.',
+          details:
+            'Install with `npm install -g @altairalabs/promptarena @altairalabs/packc`, or `go install github.com/AltairaLabs/promptarena/v2/arena/cmd/promptarena@latest`. Pages under `/arena/` cover the test runner and pages under `/packc/` cover the pack compiler. Every docs page is also served as Markdown at its URL with `.md` appended (for example `/arena/reference/cli-commands.md`).',
+          optionalLinks: [
+            { label: 'PromptKit docs', url: 'https://promptkit.altairalabs.ai/llms.txt', description: 'The Go runtime and SDK PromptArena is built on' },
+            { label: 'PromptPack specification', url: 'https://promptpack.org/llms.txt', description: 'The pack format PackC compiles to' },
+            { label: 'Source code', url: 'https://github.com/AltairaLabs/promptarena' },
+          ],
+        }),
+        // Copy-as-Markdown, "Open in ChatGPT/Claude", and a raw .md copy of
+        // every page. No `baseUrl`: setting it makes this plugin write its own
+        // dist/llms.txt at build:done, clobbering starlight-llms-txt's.
+        // The site's own PageTitle override wins over the plugin's, so
+        // src/components/PageTitle.astro renders the plugin's title itself.
+        starlightPageActions(),
       ],
       // Version switcher (header) + "not latest" banner (page title).
       components: {

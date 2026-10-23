@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://promptkit.altairalabs.ai/sitemap-index.xml
+Sitemap: https://promptarena.altairalabs.ai/sitemap-index.xml
