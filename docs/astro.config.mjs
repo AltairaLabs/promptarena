@@ -127,7 +127,7 @@ export default defineConfig({
         // agents. Pinned to 0.10.x: 0.11+ needs Astro 7 / Starlight 0.41.
         starlightLlmsTxt({
           description:
-            'PromptArena is a command-line tool for testing and evaluating LLM prompts and agents. It runs scenarios and red-team simulations across providers such as Claude, OpenAI, Gemini, Azure and local models, scores the results with assertions and evals, and gates CI on them. PackC, documented here too, compiles prompt configuration into portable PromptPack files. Both are built on the PromptKit Go runtime.',
+            'PromptArena is an open-source (Apache 2.0) test harness for LLM agents. It drives multi-turn simulated users and red-team attackers against your agent and its real tools, tests voice agents as duplex audio, load-tests, scores the results with assertions and evals, and gates CI on them, on whichever providers you choose: Claude, OpenAI, Gemini, Azure or local models. PackC, documented here too, compiles prompt configuration into portable PromptPack files. Both are built on the PromptKit Go runtime, and PromptArena is the test engine inside Omnia.',
           details:
             'Install with `npm install -g @altairalabs/promptarena @altairalabs/packc`, or `go install github.com/AltairaLabs/promptarena/v2/arena/cmd/promptarena@latest`. Pages under `/arena/` cover the test runner and pages under `/packc/` cover the pack compiler. Every docs page is also served as Markdown at its URL with `.md` appended (for example `/arena/reference/cli-commands.md`).',
           optionalLinks: [
