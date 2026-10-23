@@ -121,6 +121,17 @@ updates:
         patterns:
           - "@altairalabs/atlas"
           - "@altairalabs/atlas-tokens"
+          # Atlas imports its icons from lucide-react as a peer, and a new
+          # Atlas release can use an icon our pinned lucide-react lacks: atlas
+          # 0.30 fails `vite build` on lucide-react 0.469. Moving lucide-react
+          # with Atlas keeps the pair buildable.
+          - "lucide-react"
+      # React requires react and react-dom at exactly the same version; a PR
+      # bumping one alone fails every test suite at load time.
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
     labels:
       - "dependencies"
       - "npm"
