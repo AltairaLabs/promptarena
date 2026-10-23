@@ -6,23 +6,16 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/AltairaLabs/promptarena/v2/arena/agentkb"
+	"github.com/AltairaLabs/promptarena/v2/arena/configschema"
 	"github.com/AltairaLabs/promptarena/v2/packc/compiler"
-
-	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
 )
 
 // useBinarySchemas turns schema validation on (this package's tests run with
-// it off) against the schemas embedded in this binary, as main does, rather
-// than PromptKit's own copy.
+// it off) against the schemas embedded in this binary.
 func useBinarySchemas(t *testing.T) {
 	t.Helper()
-	config.SchemaValidationDisabled.Store(false)
-	agentkb.UseEmbeddedSchemas()
-	t.Cleanup(func() {
-		config.UseSchemaFS(nil)
-		config.SchemaValidationDisabled.Store(true)
-	})
+	configschema.Disabled.Store(false)
+	t.Cleanup(func() { configschema.Disabled.Store(true) })
 }
 
 // governanceKit writes a kit whose pack_metadata.governance is gov, indented

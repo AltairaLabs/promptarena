@@ -5,8 +5,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/AltairaLabs/promptarena/v2/arena/agentkb"
-
 	"github.com/spf13/pflag"
 
 	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
@@ -21,7 +19,6 @@ const (
 )
 
 func main() {
-	agentkb.UseEmbeddedSchemas()
 	if len(os.Args) < minArgsForCommand {
 		printUsage()
 		os.Exit(1)

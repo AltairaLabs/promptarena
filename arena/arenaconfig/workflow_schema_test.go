@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
+	"github.com/AltairaLabs/promptarena/v2/arena/configschema"
 )
 
 // workflowSchemaArena is an arena config exercising every workflow and
@@ -99,8 +100,8 @@ func workflowSchemaDoc(control, termination string) []byte {
 
 func TestArenaSchema_AcceptsWorkflowAndCompositions(t *testing.T) {
 	t.Setenv("PROMPTKIT_SCHEMA_SOURCE", "local")
-	require.NoError(t, config.ValidateArenaConfig(workflowSchemaDoc("agent", "max_steps: 3")))
-	require.NoError(t, config.ValidateArenaConfig(workflowSchemaDoc("user", "tool_called: done")))
+	require.NoError(t, configschema.Check(config.ConfigTypeArena, workflowSchemaDoc("agent", "max_steps: 3")))
+	require.NoError(t, configschema.Check(config.ConfigTypeArena, workflowSchemaDoc("user", "tool_called: done")))
 }
 
 // A typo inside a workflow or a composition must fail the SCHEMA stage — the

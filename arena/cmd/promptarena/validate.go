@@ -11,6 +11,8 @@ import (
 
 	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
 	_ "github.com/AltairaLabs/PromptKit/runtime/v2/evals/handlers" // register built-in eval handlers
+
+	"github.com/AltairaLabs/promptarena/v2/arena/configschema"
 )
 
 var validateCmd = &cobra.Command{
@@ -138,7 +140,7 @@ func prepareValidationWithType(filePath, typeOption string) ([]byte, string, err
 	// Determine config type
 	configType := typeOption
 	if configType == "auto" {
-		detectedType, err := config.DetectConfigType(data)
+		detectedType, err := configschema.DetectType(data)
 		if err != nil {
 			return nil, "", fmt.Errorf("could not auto-detect config type: %w\nUse --type to specify explicitly", err)
 		}
@@ -178,7 +180,7 @@ func performBusinessLogicValidation(filePath string) error {
 }
 
 func validateWithSchema(data []byte, configType config.ConfigType) (*config.SchemaValidationResult, error) {
-	return config.ValidateWithSchema(data, configType)
+	return configschema.Validate(data, configType)
 }
 
 func displayErrors(errors []config.SchemaValidationError, verbose bool) {

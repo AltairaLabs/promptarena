@@ -242,6 +242,7 @@ Fields under `spec`:
 | `http_transport` | object |  | — |
 | `id` | string |  | — |
 | `include_raw_output` | boolean |  | — |
+| `message_metadata_template` | string |  | — |
 | `model` | string |  | — |
 | `platform` | object |  | — |
 | `pricing` | object |  | — |

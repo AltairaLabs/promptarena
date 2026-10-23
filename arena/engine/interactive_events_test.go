@@ -7,17 +7,18 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AltairaLabs/promptarena/v2/arena/configschema"
+
 	"github.com/AltairaLabs/promptarena/v2/arena/artifacts"
 	arenaaudio "github.com/AltairaLabs/promptarena/v2/arena/audio"
 
-	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/events"
 )
 
 // TestEngine_SimpleAccessors covers option setters and simple accessors on
 // Engine that have no dedicated test home.
 func TestEngine_SimpleAccessors(t *testing.T) {
-	config.SchemaValidationDisabled.Store(true)
+	configschema.Disabled.Store(true)
 
 	cfg := filepath.Join("testdata", "interactive", "config.arena.yaml")
 	eng, err := NewEngineFromConfigFile(filepath.Clean(cfg))
