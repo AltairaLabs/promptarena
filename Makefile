@@ -106,8 +106,8 @@ test-examples: build-go ## Validate every example config and mock-run the showca
 # schema sweep all stayed green. workflow-skills is here for the same reason
 # from the other direction: it drives the skill tool-grant path, where a grant
 # that silently grants nothing leaves no trace the model's transcript can
-# show. Until arena#223 lands its tools_offered assertion, a clean run through
-# the workflow is the only check that path gets.
+# show. Its tools_offered assertions check that refund is absent before a skill
+# grants it and offered after.
 	@set -e; \
 	run() { ex="$$1"; shift; echo "=== $$ex ==="; ( cd "examples/$$ex" && env PROMPTKIT_SCHEMA_SOURCE=local ../../bin/promptarena run "$$@" </dev/null ); }; \
 	run customer-support  --config config.arena.yaml --ci --mock-provider --mock-config mock-responses.yaml --scenario customer-support-scenarios --formats json; \
