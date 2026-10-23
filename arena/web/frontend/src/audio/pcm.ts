@@ -1,6 +1,6 @@
 // PCM helpers for the voice mic leg. Inverse of player.ts's int16ToFloat32.
 
-export function float32ToInt16(input: Float32Array): Int16Array {
+export function float32ToInt16(input: Float32Array): Int16Array<ArrayBuffer> {
   const out = new Int16Array(input.length);
   for (let i = 0; i < input.length; i++) {
     const s = Math.max(-1, Math.min(1, input[i]));

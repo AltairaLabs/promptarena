@@ -122,7 +122,7 @@ export function base64ToInt16(b64: string): Int16Array {
   return new Int16Array(bytes.buffer, bytes.byteOffset, bytes.byteLength / 2);
 }
 
-export function int16ToFloat32(input: Int16Array): Float32Array {
+export function int16ToFloat32(input: Int16Array): Float32Array<ArrayBuffer> {
   const out = new Float32Array(input.length);
   for (let i = 0; i < input.length; i++) {
     out[i] = input[i] / 32768;
