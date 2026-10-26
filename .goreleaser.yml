@@ -72,6 +72,7 @@ archives:
     files:
       - README.md
       - LICENSE
+      - NOTICE
   - id: packc
     ids: [packc]
     name_template: >-
@@ -85,6 +86,7 @@ archives:
     files:
       - README.md
       - LICENSE
+      - NOTICE
 
 # Checksum configuration
 checksum:
