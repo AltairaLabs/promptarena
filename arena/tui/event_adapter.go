@@ -7,6 +7,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 
 	arenaaudio "github.com/AltairaLabs/promptarena/v2/arena/audio"
+	"github.com/AltairaLabs/promptarena/v2/arena/statestore"
 	"github.com/AltairaLabs/promptarena/v2/arena/tui/logging"
 
 	"github.com/AltairaLabs/PromptKit/runtime/v2/events"
@@ -241,6 +242,7 @@ func (a *EventAdapter) handleArenaEvents(event *events.Event) tea.Msg {
 		return RunStartedMsg{
 			RunID:    event.ExecutionID,
 			Scenario: readString(event.Data, "scenario"),
+			DataRow:  readString(event.Data, statestore.DataRowLabel),
 			Provider: readString(event.Data, "provider"),
 			Region:   readString(event.Data, "region"),
 			Time:     event.Timestamp,

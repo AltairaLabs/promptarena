@@ -847,10 +847,10 @@ Runs the scenario once per row of a dataset file. A scenario cannot set both `da
 | `field` | string | none | JSONL only. Each row is replaced by the object under this key, for files shaped `{"item": {...}}`. |
 
 **File formats**:
-- JSONL: one JSON object per line. Blank lines are skipped. String values are used as written, numbers keep their written form (`1.50` stays `1.50`), booleans become `true`/`false`, `null` becomes an empty string, and arrays and objects become compact JSON.
-- CSV: the first record is the header. Every record must have as many fields as the header. A leading UTF-8 byte order mark is removed.
+- JSONL: exactly one JSON object per line. Blank lines are skipped. String values are used as written, numbers keep their written form (`1.50` stays `1.50`), booleans become `true`/`false`, `null` becomes an empty string, and arrays and objects become compact JSON.
+- CSV: the first record is the header. Every header column needs a unique, non-empty name, and every record must have as many fields as the header. A leading UTF-8 byte order mark is removed.
 
-**Placeholders**: `{column}` is replaced with the row's value for that column in turn `content`, text `parts`, assertion `params` (at any depth) and `message`, `conversation_assertions`, and `variables` values. A column name starts with a letter or `_` and continues with letters, digits, `_`, `-` or `.`. Double-braced `{{name}}` template variables are left for the prompt template. Substituted values are always strings, and they are not scanned for further placeholders.
+**Placeholders**: `{column}` is replaced with the row's value for that column in turn `content`, text `parts`, assertion `params` (at any depth) and `message`, `conversation_assertions`, `seed_memories` content, and `variables` values. A column name starts with a letter or `_` and continues with letters, digits, `_`, `-` or `.`. Double-braced `{{name}}` template variables are left for the prompt template. Substituted values are always strings, and they are not scanned for further placeholders. Values are inserted as written: in a regex `pattern`, characters such as `+` or `$` in a value keep their regex meaning.
 
 **Row IDs**: a row's `id` column names it. Rows without one are named by their 1-based position in the file. Two rows with the same ID are an error.
 

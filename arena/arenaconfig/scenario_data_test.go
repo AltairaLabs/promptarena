@@ -121,6 +121,9 @@ func TestReadDataFile_Errors(t *testing.T) {
 		"ragged csv":    {name: "e.csv", content: "a,b\n1\n", want: "wrong number of fields"},
 		"duplicate ids": {name: "f.csv", content: "id,a\nx,1\nx,2\n", want: `rows 1 and 2 share id "x"`},
 		"extension":     {name: "g.json", content: "{}", want: "unsupported extension"},
+		"two on a line": {name: "h.jsonl", content: `{"a": 1}{"a": 2}` + "\n", want: "line 1: more than one JSON value"},
+		"repeated col":  {name: "i.csv", content: "id,q,q\n1,a,b\n", want: `header repeats column "q"`},
+		"unnamed col":   {name: "j.csv", content: "id,q,\n1,a,b\n", want: "header column 3 has no name"},
 	}
 	for name, tc := range cases {
 		t.Run(name, func(t *testing.T) {
@@ -185,6 +188,7 @@ func TestForDataRow_SubstitutesWithoutTouchingOriginal(t *testing.T) {
 			Type:   "llm_judge",
 			Params: map[string]interface{}{"criteria": "Says {answer}"},
 		}},
+		SeedMemories: []SeedMemoryEntry{{Content: "User asked about {country}"}},
 	}
 	row := DataRow{ID: "fr", Values: map[string]string{"country": "France", "answer": "Paris"}}
 
@@ -198,6 +202,7 @@ func TestForDataRow_SubstitutesWithoutTouchingOriginal(t *testing.T) {
 	assert.Equal(t, []interface{}{"Paris"}, a.Params["patterns"])
 	assert.Equal(t, map[string]interface{}{"x": "Paris", "n": 3}, a.Params["nested"])
 	assert.Equal(t, "Says Paris", got.ConversationAssertions[0].Params["criteria"])
+	assert.Equal(t, "User asked about France", got.SeedMemories[0].Content)
 
 	assert.Equal(t, "Capital of {country}?", original.Turns[0].Content)
 	assert.Equal(t, "{country}", original.Turns[0].Parts[0].Text)
@@ -205,4 +210,5 @@ func TestForDataRow_SubstitutesWithoutTouchingOriginal(t *testing.T) {
 	assert.Equal(t, "expected {answer}", original.Turns[0].Assertions[0].Message)
 	assert.Equal(t, []interface{}{"{answer}"}, original.Turns[0].Assertions[0].Params["patterns"])
 	assert.Equal(t, "Says {answer}", original.ConversationAssertions[0].Params["criteria"])
+	assert.Equal(t, "User asked about {country}", original.SeedMemories[0].Content)
 }

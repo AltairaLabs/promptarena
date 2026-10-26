@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"maps"
 	"os"
 	"path/filepath"
 	"sort"
@@ -27,7 +28,8 @@ const maxDataLineBytes = 16 * 1024 * 1024
 
 // ScenarioData runs a scenario once per row of a dataset file. Each row's
 // columns are substituted as {column} into turn content, text parts,
-// assertion params and messages, conversation assertions and variables.
+// assertion params and messages, conversation assertions, seed memories and
+// variables.
 type ScenarioData struct {
 	// File is a .jsonl or .csv file, relative to the scenario file (or to
 	// the arena config for inline scenario specs).
@@ -163,6 +165,9 @@ func decodeJSONObject(raw []byte) (map[string]interface{}, error) {
 	if obj == nil {
 		return nil, errors.New("not a JSON object")
 	}
+	if dec.More() {
+		return nil, errors.New("more than one JSON value on the line")
+	}
 	return obj, nil
 }
 
@@ -197,8 +202,16 @@ func readCSVRecords(r io.Reader) ([]map[string]string, error) {
 		return nil, err
 	}
 	header[0] = strings.TrimPrefix(header[0], "\ufeff") // Excel writes a UTF-8 BOM
+	seen := make(map[string]bool, len(header))
 	for i := range header {
 		header[i] = strings.TrimSpace(header[i])
+		switch {
+		case header[i] == "":
+			return nil, fmt.Errorf("header column %d has no name", i+1)
+		case seen[header[i]]:
+			return nil, fmt.Errorf("header repeats column %q", header[i])
+		}
+		seen[header[i]] = true
 	}
 	var records []map[string]string
 	for {
@@ -277,12 +290,8 @@ func (s *Scenario) ForDataRow(row DataRow) *Scenario {
 		out.Turns[i].Assertions = append([]AssertionConfig(nil), s.Turns[i].Assertions...)
 	}
 	out.ConversationAssertions = append([]AssertionConfig(nil), s.ConversationAssertions...)
-	if s.Variables != nil {
-		out.Variables = make(map[string]string, len(s.Variables))
-		for k, v := range s.Variables {
-			out.Variables[k] = v
-		}
-	}
+	out.SeedMemories = append([]SeedMemoryEntry(nil), s.SeedMemories...)
+	out.Variables = maps.Clone(s.Variables)
 	out.walkDataTemplates(func(text string) string {
 		return SubstituteDataPlaceholders(text, row.Values)
 	})
@@ -304,6 +313,9 @@ func (s *Scenario) walkDataTemplates(fn func(string) string) {
 		walkAssertionTemplates(turn.Assertions, fn)
 	}
 	walkAssertionTemplates(s.ConversationAssertions, fn)
+	for i := range s.SeedMemories {
+		s.SeedMemories[i].Content = fn(s.SeedMemories[i].Content)
+	}
 	for k, v := range s.Variables {
 		s.Variables[k] = fn(v)
 	}

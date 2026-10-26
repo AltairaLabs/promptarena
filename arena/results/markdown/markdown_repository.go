@@ -1004,6 +1004,7 @@ func (r *MarkdownResultRepository) formatBytes(bytes int64) string {
 }
 
 // scenarioName names a result's scenario, with its dataset row for dataset runs.
+// Row IDs come from the dataset, so a "|" in one is escaped to keep table rows intact.
 func scenarioName(result *engine.RunResult) string {
-	return statestore.ScenarioDisplayName(result.ScenarioID, result.Labels)
+	return strings.ReplaceAll(statestore.ScenarioDisplayName(result.ScenarioID, result.Labels), "|", `\|`)
 }

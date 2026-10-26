@@ -109,3 +109,13 @@ func TestRunLabelsAndParams_DataRow(t *testing.T) {
 	assert.Equal(t, map[string]string{"suite": "geo"}, e.runLabels(plain))
 	assert.Nil(t, e.runParams(plain))
 }
+
+func TestGenerateScenarioCombinations_DataWithoutRowsIsAnError(t *testing.T) {
+	s := dataScenario(1)
+	s.Data.Rows = nil
+	e := dataEngine(s)
+
+	_, err := e.generateScenarioCombinations("r1", "capitals", nil)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "data file rows.jsonl has no loaded rows")
+}

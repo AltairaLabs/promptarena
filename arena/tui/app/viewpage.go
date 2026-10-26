@@ -264,7 +264,8 @@ func (p *ResultsPage) handleRunSelection() (Page, tea.Cmd) {
 		return p, nil
 	}
 	result := p.loadedResults[idx]
-	cvp := NewConversationViewPage(result.RunID, result.ScenarioID, result.ProviderID, result)
+	scenarioName := statestore.ScenarioDisplayName(result.ScenarioID, result.Labels)
+	cvp := NewConversationViewPage(result.RunID, scenarioName, result.ProviderID, result)
 	return p, func() tea.Msg { return PushPageMsg{Page: cvp} }
 }
 
@@ -453,7 +454,7 @@ func loadRunResult(runID, resultsDir string) tea.Cmd {
 		}
 		return resultLoadedViewMsg{
 			runID:      result.RunID,
-			scenarioID: result.ScenarioID,
+			scenarioID: statestore.ScenarioDisplayName(result.ScenarioID, result.Labels),
 			providerID: result.ProviderID,
 			result:     result,
 		}
@@ -508,7 +509,7 @@ func convertResultsToViewData(results []*statestore.RunResult) []panels.RunInfo 
 		}
 		runs[i] = panels.RunInfo{
 			RunID:    result.RunID,
-			Scenario: result.ScenarioID,
+			Scenario: statestore.ScenarioDisplayName(result.ScenarioID, result.Labels),
 			Provider: result.ProviderID,
 			Region:   result.Region,
 			Status:   status,

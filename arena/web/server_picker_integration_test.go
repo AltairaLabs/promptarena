@@ -198,3 +198,25 @@ func TestLoadOneResult_ErrorPaths(t *testing.T) {
 		}
 	})
 }
+
+// TestLoadOneResult_KeepsLabels checks that reloading a saved result keeps
+// its labels, which carry a dataset run's row.
+func TestLoadOneResult_KeepsLabels(t *testing.T) {
+	ctx := context.Background()
+	store := statestore.NewArenaStateStore()
+	p := filepath.Join(t.TempDir(), "row.json")
+	body := `{"RunID":"run-row","ScenarioID":"capitals","ProviderID":"p1","Messages":[],"Labels":{"data_row":"fr"}}`
+	if err := os.WriteFile(p, []byte(body), 0o600); err != nil {
+		t.Fatalf("write: %v", err)
+	}
+	if !loadOneResult(ctx, store, p) {
+		t.Fatal("expected true for valid result")
+	}
+	res, err := store.GetResult(ctx, "run-row")
+	if err != nil {
+		t.Fatalf("GetResult: %v", err)
+	}
+	if res.Labels[statestore.DataRowLabel] != "fr" {
+		t.Errorf("labels = %v, want data_row=fr", res.Labels)
+	}
+}

@@ -202,6 +202,9 @@ func (e *Engine) generateScenarioCombinations(region, scenarioID string, provide
 	// each row is reported on its own. Data and perturbations are mutually
 	// exclusive, so there is no variant dimension to fold in.
 	if scenario.Data != nil {
+		if len(scenario.Data.Rows) == 0 {
+			return nil, fmt.Errorf("scenario %s: data file %s has no loaded rows", scenarioID, scenario.Data.File)
+		}
 		return dataRowCombinations(region, scenarioID, providers, scenario.Data.Rows, trials), nil
 	}
 
@@ -501,6 +504,11 @@ func (e *Engine) executeScenarioRun(
 	if !exists {
 		return saveError(fmt.Sprintf("scenario not found: %s", combo.ScenarioID))
 	}
+	// Substitute the dataset row before anything reads the scenario, so seed
+	// memories and MCP sources see this row's values too.
+	if combo.DataRowID != "" {
+		scenario = dataRowScenario(scenario, combo)
+	}
 
 	// Apply per-run timeout, now that we know the scenario shape.
 	runTimeout := e.resolveRunTimeout(scenario)
@@ -558,9 +566,6 @@ func (e *Engine) executeScenarioRun(
 	}
 
 	execScenario := e.perturbedScenario(scenario, combo.PerturbationIndex)
-	if combo.DataRowID != "" {
-		execScenario = dataRowScenario(scenario, combo)
-	}
 	runOrch := e.resolveRunOrchestrator(workflowOrch)
 
 	// Build a per-run AudioRouter when monitoring is enabled and the
@@ -655,12 +660,22 @@ func (e *Engine) perturbedScenario(scenario *arenaconfig.Scenario, perturbationI
 }
 
 // dataRowScenario returns a copy of the scenario with the combination's
-// dataset row substituted, or the original if the row is out of range.
+// dataset row substituted, or the original if the combination has no row.
 func dataRowScenario(scenario *arenaconfig.Scenario, combo RunCombination) *arenaconfig.Scenario {
-	if scenario.Data == nil || combo.DataRowIndex < 0 || combo.DataRowIndex >= len(scenario.Data.Rows) {
+	row, ok := dataRow(scenario, combo)
+	if !ok {
 		return scenario
 	}
-	return scenario.ForDataRow(scenario.Data.Rows[combo.DataRowIndex])
+	return scenario.ForDataRow(row)
+}
+
+// dataRow returns the dataset row a combination uses, if it has one.
+func dataRow(scenario *arenaconfig.Scenario, combo RunCombination) (arenaconfig.DataRow, bool) {
+	if combo.DataRowID == "" || scenario.Data == nil ||
+		combo.DataRowIndex < 0 || combo.DataRowIndex >= len(scenario.Data.Rows) {
+		return arenaconfig.DataRow{}, false
+	}
+	return scenario.Data.Rows[combo.DataRowIndex], true
 }
 
 // resolveRunOrchestrator returns the eval orchestrator to use for this run.
@@ -866,15 +881,19 @@ func (e *Engine) createRunEmitter(ctx context.Context, runID string, combo *RunC
 	// Use runID as sessionID for session recording - this ensures events are
 	// associated with the recording file for this run
 	emitter := events.NewEmitter(e.eventBus, runID, runID, runID)
+	started := map[string]interface{}{
+		"scenario": combo.ScenarioID,
+		"provider": combo.ProviderID,
+		"region":   combo.Region,
+	}
+	if combo.DataRowID != "" {
+		started[statestore.DataRowLabel] = combo.DataRowID
+	}
 	emitter.EmitCustom(
 		events.EventType("arena.run.started"),
 		"ArenaEngine",
 		"run_started",
-		map[string]interface{}{
-			"scenario": combo.ScenarioID,
-			"provider": combo.ProviderID,
-			"region":   combo.Region,
-		},
+		started,
 		fmt.Sprintf("Run %s started", runID),
 	)
 	return emitter
@@ -948,11 +967,13 @@ func (e *Engine) runLabels(combo RunCombination) map[string]string {
 // runParams records the dataset row's values on a dataset run, or nil.
 func (e *Engine) runParams(combo RunCombination) map[string]interface{} {
 	scenario, ok := e.scenarios[combo.ScenarioID]
-	if !ok || combo.DataRowID == "" || scenario.Data == nil ||
-		combo.DataRowIndex < 0 || combo.DataRowIndex >= len(scenario.Data.Rows) {
+	if !ok {
 		return nil
 	}
-	row := scenario.Data.Rows[combo.DataRowIndex]
+	row, ok := dataRow(scenario, combo)
+	if !ok {
+		return nil
+	}
 	values := make(map[string]interface{}, len(row.Values))
 	for k, v := range row.Values {
 		values[k] = v

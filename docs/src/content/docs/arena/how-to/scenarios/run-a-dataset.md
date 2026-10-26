@@ -42,7 +42,7 @@ Run one scenario against every row of a JSONL or CSV file, with each row's value
                patterns: ["{answer}"]
    ```
 
-   The path is relative to the scenario file. Placeholders also work in `conversation_assertions`, such as an `llm_judge` criterion, and in `variables`.
+   The path is relative to the scenario file. Placeholders also work in `conversation_assertions`, such as an `llm_judge` criterion, in `seed_memories` content and in `variables`. A value goes into a regex `pattern` as written, so prefer `content_includes` when values contain characters such as `+`, `$` or `(`.
 
 3. If each JSONL line wraps the values in an object, as in `{"item": {"country": "France", ...}}`, name that key with `field`:
 

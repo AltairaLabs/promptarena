@@ -1148,8 +1148,13 @@ const DataRowLabel = "data_row"
 // ScenarioDisplayName names a run's scenario in reports: the scenario ID, or
 // "scenario[row]" for a dataset run, so each row reads as its own result.
 func ScenarioDisplayName(scenarioID string, labels map[string]string) string {
-	if row := labels[DataRowLabel]; row != "" {
-		return scenarioID + "[" + row + "]"
+	return ScenarioRowName(scenarioID, labels[DataRowLabel])
+}
+
+// ScenarioRowName is ScenarioDisplayName for a known row ID ("" for none).
+func ScenarioRowName(scenarioID, row string) string {
+	if row == "" {
+		return scenarioID
 	}
-	return scenarioID
+	return scenarioID + "[" + row + "]"
 }
