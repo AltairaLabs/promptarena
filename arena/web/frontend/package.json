@@ -17,7 +17,7 @@
   "dependencies": {
     "@altairalabs/atlas": "^0.30.0",
     "@altairalabs/atlas-tokens": "^0.7.0",
-    "@dagrejs/dagre": "^3.0.0",
+    "@dagrejs/dagre": "^3.1.1",
     "@xyflow/react": "^12.12.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
