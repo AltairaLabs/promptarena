@@ -15,6 +15,7 @@ import (
 	"github.com/AltairaLabs/promptarena/v2/arena/assertions"
 	"github.com/AltairaLabs/promptarena/v2/arena/engine"
 	"github.com/AltairaLabs/promptarena/v2/arena/results"
+	"github.com/AltairaLabs/promptarena/v2/arena/statestore"
 
 	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )
@@ -173,6 +174,9 @@ func (r *JUnitResultRepository) generateSuiteName(result *engine.RunResult) stri
 func (r *JUnitResultRepository) generateTestName(result *engine.RunResult) string {
 	// For now, use provider.region.runID format
 	// Future: implement template processing
+	if row := result.Labels[statestore.DataRowLabel]; row != "" {
+		return fmt.Sprintf("%s.%s.%s[%s]", result.ProviderID, result.Region, result.RunID, row)
+	}
 	return fmt.Sprintf("%s.%s.%s", result.ProviderID, result.Region, result.RunID)
 }
 

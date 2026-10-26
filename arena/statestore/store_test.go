@@ -449,3 +449,12 @@ func TestDeepCloneMessage_PreservesReasoning(t *testing.T) {
 		t.Fatal("clone shares Opaque backing array with the original")
 	}
 }
+
+func TestScenarioDisplayName(t *testing.T) {
+	if got := ScenarioDisplayName("capitals", map[string]string{DataRowLabel: "fr"}); got != "capitals[fr]" {
+		t.Errorf("dataset run: got %q", got)
+	}
+	if got := ScenarioDisplayName("capitals", map[string]string{"suite": "geo"}); got != "capitals" {
+		t.Errorf("plain run: got %q", got)
+	}
+}

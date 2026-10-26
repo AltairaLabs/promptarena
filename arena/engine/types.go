@@ -27,11 +27,17 @@ type RunCombination struct {
 
 	// PerturbationIndex identifies which perturbation variant this run uses (-1 = no perturbation).
 	PerturbationIndex int
+
+	// DataRowID names the dataset row this run uses ("" = scenario has no data
+	// file); DataRowIndex is that row's position in the scenario's rows.
+	DataRowID    string
+	DataRowIndex int
 }
 
-// TrialGroupKey identifies a unique scenario+provider+region combination for trial grouping.
+// TrialGroupKey identifies a unique scenario+row+provider+region combination for trial grouping.
 type TrialGroupKey struct {
 	ScenarioID string
+	DataRowID  string
 	ProviderID string
 	Region     string
 }

@@ -39,7 +39,7 @@ func NewResultView() *ResultView {
 func (v *ResultView) Render(res *statestore.RunResult, status RunStatus) string {
 	lines := []string{
 		fmt.Sprintf("Run: %s", res.RunID),
-		fmt.Sprintf("Scenario: %s", res.ScenarioID),
+		fmt.Sprintf("Scenario: %s", statestore.ScenarioDisplayName(res.ScenarioID, res.Labels)),
 		fmt.Sprintf("Provider: %s", res.ProviderID),
 		fmt.Sprintf("Region: %s", res.Region),
 		fmt.Sprintf("Status: %s", formatStatus(status)),

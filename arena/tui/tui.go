@@ -821,7 +821,7 @@ func SummaryFromStore(ctx context.Context, store runResultStorer, runIDs []strin
 			failed++
 			errors = append(errors, ErrorInfo{
 				RunID:    res.RunID,
-				Scenario: res.ScenarioID,
+				Scenario: statestore.ScenarioDisplayName(res.ScenarioID, res.Labels),
 				Provider: res.ProviderID,
 				Region:   res.Region,
 				Error:    res.Error,
@@ -830,7 +830,7 @@ func SummaryFromStore(ctx context.Context, store runResultStorer, runIDs []strin
 			failed++
 			errors = append(errors, ErrorInfo{
 				RunID:    res.RunID,
-				Scenario: res.ScenarioID,
+				Scenario: statestore.ScenarioDisplayName(res.ScenarioID, res.Labels),
 				Provider: res.ProviderID,
 				Region:   res.Region,
 				Error:    fmt.Sprintf("%d conversation assertion(s) failed", res.ConversationAssertions.Failed),

@@ -6,7 +6,7 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/v2/evals"
 )
 
-// AggregateTrialResults groups trial run results by scenario+provider+region,
+// AggregateTrialResults groups trial run results by scenario+row+provider+region,
 // computes statistical metrics, and updates the first run in each group with
 // the aggregated TrialResults. Returns the run IDs that represent trial groups
 // (i.e., the first run ID of each group that now carries the summary).
@@ -50,11 +50,7 @@ func groupTrialRuns(runIDs []string, combos []RunCombination) []trialGroup {
 		if i >= len(runIDs) || runIDs[i] == "" {
 			continue
 		}
-		key := TrialGroupKey{
-			ScenarioID: combo.ScenarioID,
-			ProviderID: combo.ProviderID,
-			Region:     combo.Region,
-		}
+		key := trialGroupKey(combo)
 		if _, exists := groupMap[key]; !exists {
 			keyOrder = append(keyOrder, key)
 		}
@@ -75,12 +71,21 @@ func groupTrialRuns(runIDs []string, combos []RunCombination) []trialGroup {
 			continue
 		}
 		groups = append(groups, trialGroup{
-			key:    TrialGroupKey{ScenarioID: combo.ScenarioID, ProviderID: combo.ProviderID, Region: combo.Region},
+			key:    trialGroupKey(combo),
 			runIDs: []string{runIDs[i]},
 		})
 	}
 
 	return groups
+}
+
+func trialGroupKey(combo RunCombination) TrialGroupKey {
+	return TrialGroupKey{
+		ScenarioID: combo.ScenarioID,
+		DataRowID:  combo.DataRowID,
+		ProviderID: combo.ProviderID,
+		Region:     combo.Region,
+	}
 }
 
 type trialRunResult struct {

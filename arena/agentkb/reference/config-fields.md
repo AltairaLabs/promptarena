@@ -291,6 +291,7 @@ Fields under `spec`:
 | `context_metadata` | object |  | — |
 | `context_policy` | object |  | Context management policy for long conversations. |
 | `conversation_assertions` | array |  | Assertions evaluated after the entire conversation completes. |
+| `data` | object |  | Run the scenario once per row of a JSONL or CSV dataset |
 | `description` | string | ✓ | — |
 | `duplex` | object |  | Duplex enables bidirectional streaming mode for voice/audio scenarios. |
 | `id` | string |  | — |

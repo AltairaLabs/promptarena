@@ -98,6 +98,24 @@ func (c *Config) mergeScenarioSpecs() error {
 	)
 }
 
+// loadInlineScenarioData validates inline scenario specs that declare a data
+// block and reads their datasets, resolved against the arena config file.
+// File-referenced scenarios were loaded by LoadScenario, which skips them here.
+func (c *Config) loadInlineScenarioData(configPath string) error {
+	for _, scenario := range c.LoadedScenarios {
+		if scenario.Data == nil || scenario.Data.Rows != nil {
+			continue
+		}
+		if err := scenario.Validate(); err != nil {
+			return err
+		}
+		if err := loadScenarioData(scenario, configPath); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // mergeEvalSpecs merges inline eval specs into LoadedEvals.
 func (c *Config) mergeEvalSpecs() error {
 	return mergeSpecs(
@@ -293,6 +311,9 @@ func (c *Config) loadPromptScenarioResources(filename string) error {
 	if err := c.mergeScenarioSpecs(); err != nil {
 		return err
 	}
+	if err := c.loadInlineScenarioData(filename); err != nil {
+		return err
+	}
 	return c.validateScenarioVoices()
 }
 
@@ -375,6 +396,11 @@ func LoadScenario(filename string) (*Scenario, error) {
 	// Validate nested configs (DuplexConfig, RelevanceConfig, etc.)
 	if err := manifest.Spec.Validate(); err != nil {
 		return nil, fmt.Errorf("scenario validation failed for %s: %w", filename, err)
+	}
+
+	// Dataset paths resolve against the scenario file, like eval recordings.
+	if err := loadScenarioData(&manifest.Spec, filename); err != nil {
+		return nil, err
 	}
 
 	// Copy K8s metadata.labels into the spec so downstream consumers

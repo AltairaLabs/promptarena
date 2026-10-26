@@ -198,6 +198,13 @@ func (e *Engine) generateScenarioCombinations(region, scenarioID string, provide
 		trials = 1
 	}
 
+	// A dataset scenario runs once per row, and its trials group per row, so
+	// each row is reported on its own. Data and perturbations are mutually
+	// exclusive, so there is no variant dimension to fold in.
+	if scenario.Data != nil {
+		return dataRowCombinations(region, scenarioID, providers, scenario.Data.Rows, trials), nil
+	}
+
 	// Compute perturbation variants (if any)
 	perturbationVariants := ExpandPerturbations(scenario)
 	perturbationCount := len(perturbationVariants)
@@ -223,6 +230,30 @@ func (e *Engine) generateScenarioCombinations(region, scenarioID string, provide
 	}
 
 	return combinations, nil
+}
+
+// dataRowCombinations creates one trial group per provider and dataset row.
+func dataRowCombinations(
+	region, scenarioID string, providerIDs []string, rows []arenaconfig.DataRow, trials int,
+) []RunCombination {
+	combinations := make([]RunCombination, 0, len(providerIDs)*len(rows)*trials)
+	for _, providerID := range providerIDs {
+		for rowIndex := range rows {
+			for t := range trials {
+				combinations = append(combinations, RunCombination{
+					Region:            region,
+					ScenarioID:        scenarioID,
+					ProviderID:        providerID,
+					TrialIndex:        t,
+					TotalTrials:       trials,
+					PerturbationIndex: -1,
+					DataRowID:         rows[rowIndex].ID,
+					DataRowIndex:      rowIndex,
+				})
+			}
+		}
+	}
+	return combinations
 }
 
 // resolveProvidersForScenario determines which providers to use for a specific scenario
@@ -527,6 +558,9 @@ func (e *Engine) executeScenarioRun(
 	}
 
 	execScenario := e.perturbedScenario(scenario, combo.PerturbationIndex)
+	if combo.DataRowID != "" {
+		execScenario = dataRowScenario(scenario, combo)
+	}
 	runOrch := e.resolveRunOrchestrator(workflowOrch)
 
 	// Build a per-run AudioRouter when monitoring is enabled and the
@@ -618,6 +652,15 @@ func (e *Engine) perturbedScenario(scenario *arenaconfig.Scenario, perturbationI
 	perturbed := *scenario
 	perturbed.Turns = ApplyPerturbation(scenario.Turns, variants[perturbationIndex])
 	return &perturbed
+}
+
+// dataRowScenario returns a copy of the scenario with the combination's
+// dataset row substituted, or the original if the row is out of range.
+func dataRowScenario(scenario *arenaconfig.Scenario, combo RunCombination) *arenaconfig.Scenario {
+	if scenario.Data == nil || combo.DataRowIndex < 0 || combo.DataRowIndex >= len(scenario.Data.Rows) {
+		return scenario
+	}
+	return scenario.ForDataRow(scenario.Data.Rows[combo.DataRowIndex])
 }
 
 // resolveRunOrchestrator returns the eval orchestrator to use for this run.
@@ -851,7 +894,8 @@ func (e *Engine) saveRunError(
 		Region:     combo.Region,
 		ScenarioID: combo.ScenarioID,
 		ProviderID: combo.ProviderID,
-		Labels:     e.scenarioLabels(combo.ScenarioID),
+		Labels:     e.runLabels(combo),
+		Params:     e.runParams(combo),
 		StartTime:  start,
 		EndTime:    time.Now(),
 		Duration:   time.Since(start),
@@ -888,6 +932,34 @@ func (e *Engine) scenarioLabels(scenarioID string) map[string]string {
 	return maps.Clone(scenario.Labels)
 }
 
+// runLabels returns the scenario's labels plus, for dataset runs, the row ID.
+func (e *Engine) runLabels(combo RunCombination) map[string]string {
+	labels := e.scenarioLabels(combo.ScenarioID)
+	if combo.DataRowID == "" {
+		return labels
+	}
+	if labels == nil {
+		labels = make(map[string]string, 1)
+	}
+	labels[statestore.DataRowLabel] = combo.DataRowID
+	return labels
+}
+
+// runParams records the dataset row's values on a dataset run, or nil.
+func (e *Engine) runParams(combo RunCombination) map[string]interface{} {
+	scenario, ok := e.scenarios[combo.ScenarioID]
+	if !ok || combo.DataRowID == "" || scenario.Data == nil ||
+		combo.DataRowIndex < 0 || combo.DataRowIndex >= len(scenario.Data.Rows) {
+		return nil
+	}
+	row := scenario.Data.Rows[combo.DataRowIndex]
+	values := make(map[string]interface{}, len(row.Values))
+	for k, v := range row.Values {
+		values[k] = v
+	}
+	return map[string]interface{}{"data_row": row.ID, "data": values}
+}
+
 func (e *Engine) saveRunMetadata(
 	ctx context.Context,
 	store *statestore.ArenaStateStore,
@@ -902,7 +974,8 @@ func (e *Engine) saveRunMetadata(
 		Region:                       combo.Region,
 		ScenarioID:                   combo.ScenarioID,
 		ProviderID:                   combo.ProviderID,
-		Labels:                       e.scenarioLabels(combo.ScenarioID),
+		Labels:                       e.runLabels(combo),
+		Params:                       e.runParams(combo),
 		StartTime:                    start,
 		EndTime:                      time.Now(),
 		Duration:                     duration,
@@ -1151,7 +1224,11 @@ func generateRunID(combo RunCombination, batchID string) string {
 		hash := sha256.Sum256([]byte(fmt.Sprintf("eval_%s", combo.EvalID)))
 		return fmt.Sprintf("%s_eval_%s_%x_%04x", batchID, combo.EvalID, hash[:4], nonce)
 	}
-	hash := sha256.Sum256([]byte(fmt.Sprintf("%s_%s_%s", combo.Region, combo.ScenarioID, combo.ProviderID)))
+	hashInput := fmt.Sprintf("%s_%s_%s", combo.Region, combo.ScenarioID, combo.ProviderID)
+	if combo.DataRowID != "" {
+		hashInput += "_row_" + combo.DataRowID
+	}
+	hash := sha256.Sum256([]byte(hashInput))
 	return fmt.Sprintf("%s_%s_%s_%s_%x_%04x", batchID, combo.ProviderID, combo.Region, combo.ScenarioID, hash[:4], nonce)
 }
 

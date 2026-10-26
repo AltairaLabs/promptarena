@@ -704,6 +704,9 @@ type Scenario struct {
 	// Trials is the number of times to execute this scenario for statistical evaluation.
 	// When > 1, assertion results are aggregated across trials using pass rates and flakiness scores.
 	Trials int `json:"trials,omitempty" yaml:"trials,omitempty" jsonschema:"description=Number of times to run this scenario for statistical evaluation"` //nolint:lll
+	// Data runs the scenario once per row of a JSONL or CSV file, substituting
+	// each row's columns as {column}. Mutually exclusive with turn perturbations.
+	Data *ScenarioData `json:"data,omitempty" yaml:"data,omitempty" jsonschema:"description=Run the scenario once per row of a JSONL or CSV dataset"` //nolint:lll
 	// SeedMemories pre-populates the memory store before the first turn.
 	// Uses the same fields as memory__remember: content (required), type, confidence, metadata.
 	SeedMemories []SeedMemoryEntry `json:"seed_memories,omitempty" yaml:"seed_memories,omitempty"`
@@ -752,6 +755,12 @@ func (s *Scenario) Validate() error {
 	if s.ContextPolicy != nil && s.ContextPolicy.Relevance != nil {
 		if err := s.ContextPolicy.Relevance.Validate(); err != nil {
 			return fmt.Errorf("scenario %s context policy: %w", s.ID, err)
+		}
+	}
+
+	if s.Data != nil {
+		if err := s.Data.validate(s); err != nil {
+			return fmt.Errorf("scenario %s: %w", s.ID, err)
 		}
 	}
 

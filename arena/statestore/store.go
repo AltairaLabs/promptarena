@@ -1140,3 +1140,16 @@ type AssertionsSummary struct {
 	Results []ConversationValidationResult `json:"results"`
 	Total   int                            `json:"total"`
 }
+
+// DataRowLabel is the run label naming the dataset row a run used, set on
+// runs of scenarios with a data file.
+const DataRowLabel = "data_row"
+
+// ScenarioDisplayName names a run's scenario in reports: the scenario ID, or
+// "scenario[row]" for a dataset run, so each row reads as its own result.
+func ScenarioDisplayName(scenarioID string, labels map[string]string) string {
+	if row := labels[DataRowLabel]; row != "" {
+		return scenarioID + "[" + row + "]"
+	}
+	return scenarioID
+}

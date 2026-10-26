@@ -469,6 +469,10 @@
           "type": "integer",
           "description": "Number of times to run this scenario for statistical evaluation"
         },
+        "data": {
+          "$ref": "#/$defs/ScenarioData",
+          "description": "Run the scenario once per row of a JSONL or CSV dataset"
+        },
         "seed_memories": {
           "items": {
             "$ref": "#/$defs/SeedMemoryEntry"
@@ -483,6 +487,24 @@
         "description"
       ],
       "description": "Scenario describes user turns, context, and validation constraints."
+    },
+    "ScenarioData": {
+      "properties": {
+        "file": {
+          "type": "string",
+          "description": "Dataset file (.jsonl or .csv) with one row per run; relative to the scenario file"
+        },
+        "field": {
+          "type": "string",
+          "description": "JSONL only: unwrap each row to the object under this key"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "file"
+      ],
+      "description": "ScenarioData runs a scenario once per row of a dataset file."
     },
     "SeedMemoryEntry": {
       "properties": {
