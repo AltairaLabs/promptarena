@@ -837,6 +837,65 @@ assertions:
 
 Optional metadata about the scenario. `context` is a free-form key-value map. `context_metadata` has typed fields: `domain`, `user_role`, `project_stage`.
 
+#### `data`
+
+Runs the scenario once per row of a dataset file. A scenario cannot set both `data` and turn `perturbations`.
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `file` | string | required | Dataset file, `.jsonl` (or `.ndjson`) or `.csv`. Relative paths resolve against the scenario file; for an inline `scenario_specs` entry, against the arena config file. |
+| `field` | string | none | JSONL only. Each row is replaced by the object under this key, for files shaped `{"item": {...}}`. |
+
+**File formats**:
+- JSONL: exactly one JSON object per line. Blank lines are skipped. String values are used as written, numbers keep their written form (`1.50` stays `1.50`), booleans become `true`/`false`, `null` becomes an empty string, and arrays and objects become compact JSON.
+- CSV: the first record is the header. Every header column needs a unique, non-empty name, and every record must have as many fields as the header. A leading UTF-8 byte order mark is removed.
+
+**Placeholders**: `{column}` is replaced with the row's value for that column in turn `content`, text `parts`, assertion `params` (at any depth) and `message`, `conversation_assertions`, `seed_memories` content, and `variables` values. A column name starts with a letter or `_` and continues with letters, digits, `_`, `-` or `.`. Double-braced `{{name}}` template variables are left for the prompt template. Substituted values are always strings, and they are not scanned for further placeholders. Values are inserted as written: in a regex `pattern`, characters such as `+` or `$` in a value keep their regex meaning.
+
+**Row IDs**: a row's `id` column names it. Rows without one are named by their 1-based position in the file. Two rows with the same ID are an error.
+
+**Loading errors**: the config fails to load when the file has no rows, when a JSONL line is not an object, or when a placeholder the scenario uses has no column in some row.
+
+**Runs and reports**: each row is a separate run per provider and region. With `trials`, every row runs that many times, and trial results and `pass_threshold` aggregate within the row. Reports name a row's runs `scenario[row-id]`. Each run carries the label `data_row: <row-id>`, and its JSON result records `Params.data_row` and the row's values under `Params.data`.
+
+```yaml
+spec:
+  task_type: assistant
+  description: Capital cities
+  trials: 2
+  data:
+    file: data/capitals.jsonl
+  turns:
+    - role: user
+      content: "What is the capital of {country}?"
+      assertions:
+        - type: content_includes
+          params:
+            patterns: ["{answer}"]
+```
+
+#### `perturbations`
+
+A turn field. Maps a placeholder name to a list of values, and runs the scenario once per combination of values.
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `perturbations` | map of string to list of strings | none | Placeholder name to candidate values. |
+
+- Keys are collected from every turn. A key defined on more than one turn takes the union of its values.
+- The variants are the Cartesian product of all keys: `{city: [NYC, LA], tone: [formal, casual]}` gives four.
+- `{key}` is replaced in the `content` and text `parts` of every turn. Assertions are not substituted.
+- Variants run as trials. Per provider and region the scenario runs `trials × variants` times, and trial `i` uses variant `i mod variants`. All variants aggregate into one trial result.
+
+```yaml
+turns:
+  - role: user
+    content: "Book a {tone} reply about a flight from {city}"
+    perturbations:
+      city: [NYC, LA]
+      tone: [formal, casual]
+```
+
 ## Provider
 
 Configures an LLM provider for testing.

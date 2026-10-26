@@ -113,6 +113,7 @@ type audioMonitor interface {
 type RunInfo struct {
 	RunID            string
 	Scenario         string
+	DataRow          string // dataset row ID; "" when the scenario has no data file
 	Provider         string
 	Region           string
 	Status           RunStatus
@@ -218,6 +219,7 @@ func (m *Model) handleRunStarted(msg *RunStartedMsg) {
 	m.activeRuns = append(m.activeRuns, RunInfo{
 		RunID:     msg.RunID,
 		Scenario:  msg.Scenario,
+		DataRow:   msg.DataRow,
 		Provider:  msg.Provider,
 		Region:    msg.Region,
 		Status:    StatusRunning,
@@ -228,7 +230,8 @@ func (m *Model) handleRunStarted(msg *RunStartedMsg) {
 	m.logs = append(m.logs, LogEntry{
 		Timestamp: msg.Time,
 		Level:     "INFO",
-		Message:   fmt.Sprintf("Started: %s/%s/%s", msg.Provider, msg.Scenario, msg.Region),
+		Message: fmt.Sprintf("Started: %s/%s/%s",
+			msg.Provider, statestore.ScenarioRowName(msg.Scenario, msg.DataRow), msg.Region),
 	})
 	m.trimLogs()
 }
@@ -472,7 +475,7 @@ func (m *Model) convertToRunInfos() []panels.RunInfo {
 		hasAudio := m.audioMonitor != nil && m.audioMonitor.HasAudio(runID)
 		runs[i] = panels.RunInfo{
 			RunID:            runID,
-			Scenario:         m.activeRuns[i].Scenario,
+			Scenario:         statestore.ScenarioRowName(m.activeRuns[i].Scenario, m.activeRuns[i].DataRow),
 			Provider:         m.activeRuns[i].Provider,
 			Region:           m.activeRuns[i].Region,
 			Status:           panels.RunStatus(m.activeRuns[i].Status),
@@ -732,7 +735,7 @@ func (m *Model) buildSummary(outputDir string) *Summary {
 		if run.Status == StatusFailed {
 			errors = append(errors, ErrorInfo{
 				RunID:    run.RunID,
-				Scenario: run.Scenario,
+				Scenario: statestore.ScenarioRowName(run.Scenario, run.DataRow),
 				Provider: run.Provider,
 				Region:   run.Region,
 				Error:    run.Error,
@@ -821,7 +824,7 @@ func SummaryFromStore(ctx context.Context, store runResultStorer, runIDs []strin
 			failed++
 			errors = append(errors, ErrorInfo{
 				RunID:    res.RunID,
-				Scenario: res.ScenarioID,
+				Scenario: statestore.ScenarioDisplayName(res.ScenarioID, res.Labels),
 				Provider: res.ProviderID,
 				Region:   res.Region,
 				Error:    res.Error,
@@ -830,7 +833,7 @@ func SummaryFromStore(ctx context.Context, store runResultStorer, runIDs []strin
 			failed++
 			errors = append(errors, ErrorInfo{
 				RunID:    res.RunID,
-				Scenario: res.ScenarioID,
+				Scenario: statestore.ScenarioDisplayName(res.ScenarioID, res.Labels),
 				Provider: res.ProviderID,
 				Region:   res.Region,
 				Error:    fmt.Sprintf("%d conversation assertion(s) failed", res.ConversationAssertions.Failed),

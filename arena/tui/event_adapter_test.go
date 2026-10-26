@@ -1028,3 +1028,22 @@ func TestEventAdapter_MessageCreated_TextInParts(t *testing.T) {
 		"the user's text was dropped: the panel renders an empty bubble for any "+
 			"message that carries its text in Parts")
 }
+
+func TestEventAdapter_RunStartedCarriesDataRow(t *testing.T) {
+	adapter := NewEventAdapterWithModel(NewModel("test.yaml", 1))
+	msg := adapter.mapEvent(&events.Event{
+		Type:        events.EventType("arena.run.started"),
+		ExecutionID: "run-1",
+		Data: &events.CustomEventData{Data: map[string]interface{}{
+			"scenario": "capitals",
+			"data_row": "fr",
+		}},
+	})
+	started, ok := msg.(RunStartedMsg)
+	if !ok {
+		t.Fatalf("expected RunStartedMsg, got %T", msg)
+	}
+	if started.Scenario != "capitals" || started.DataRow != "fr" {
+		t.Errorf("got scenario %q, row %q", started.Scenario, started.DataRow)
+	}
+}

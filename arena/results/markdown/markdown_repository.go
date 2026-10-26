@@ -15,6 +15,7 @@ import (
 	"github.com/AltairaLabs/promptarena/v2/arena/assertions"
 	"github.com/AltairaLabs/promptarena/v2/arena/engine"
 	"github.com/AltairaLabs/promptarena/v2/arena/results"
+	"github.com/AltairaLabs/promptarena/v2/arena/statestore"
 
 	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )
@@ -544,7 +545,7 @@ func (r *MarkdownResultRepository) writeConversationAssertionRun(
 	if !result.ConversationAssertions.Passed {
 		status = "❌ Failed"
 	}
-	fmt.Fprintf(content, "### %s → %s (%s) — %s\n\n", result.ScenarioID, result.ProviderID, result.Region, status)
+	fmt.Fprintf(content, "### %s → %s (%s) — %s\n\n", scenarioName(result), result.ProviderID, result.Region, status)
 	fmt.Fprintf(content, "- **Total Assertions**: %d\n", result.ConversationAssertions.Total)
 	if result.ConversationAssertions.Failed > 0 {
 		fmt.Fprintf(content, "- **Failed**: %d\n", result.ConversationAssertions.Failed)
@@ -653,7 +654,7 @@ func (r *MarkdownResultRepository) writeResultRow(content *strings.Builder, resu
 	turns := len(result.Messages)
 	fmt.Fprintf(content, "| %s | %s | %s | %s | %s | %d | %s | %s | %s | %s |\n",
 		result.ProviderID,
-		result.ScenarioID,
+		scenarioName(result),
 		result.Region,
 		status,
 		duration,
@@ -749,7 +750,7 @@ func (r *MarkdownResultRepository) writeFailedTestsSection(content *strings.Buil
 
 // writeFailedTestDetail writes details for a single failed test
 func (r *MarkdownResultRepository) writeFailedTestDetail(content *strings.Builder, result *engine.RunResult) {
-	content.WriteString(fmt.Sprintf("### ❌ %s → %s (%s)\n\n", result.ScenarioID, result.ProviderID, result.Region))
+	fmt.Fprintf(content, "### ❌ %s → %s (%s)\n\n", scenarioName(result), result.ProviderID, result.Region)
 
 	// Basic info
 	content.WriteString(fmt.Sprintf("- **Duration**: %s\n", result.Duration.String()))
@@ -1000,4 +1001,10 @@ func (r *MarkdownResultRepository) formatBytes(bytes int64) string {
 		exp++
 	}
 	return fmt.Sprintf("%.1f %cB", float64(bytes)/float64(div), "KMGTPE"[exp])
+}
+
+// scenarioName names a result's scenario, with its dataset row for dataset runs.
+// Row IDs come from the dataset, so a "|" in one is escaped to keep table rows intact.
+func scenarioName(result *engine.RunResult) string {
+	return strings.ReplaceAll(statestore.ScenarioDisplayName(result.ScenarioID, result.Labels), "|", `\|`)
 }

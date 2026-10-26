@@ -33,6 +33,9 @@ Test quickly and cost-free with mock providers instead of real LLM APIs.
 ### [Validate Outputs](/arena/how-to/scenarios/validate-outputs/)
 Use assertions and custom validators to verify LLM response quality.
 
+### [Run a Scenario Over a Dataset](/arena/how-to/scenarios/run-a-dataset/)
+Load inputs and expected answers from a JSONL or CSV file, and get one result per row.
+
 ### [Use guardrails as test signals (the three-role model)](/arena/how-to/scenarios/guardrails-as-signals/)
 Walk through `examples/guardrails-test/`. One primitive enforces in production AND fires as an observable test signal. The canonical demo of the eval / guardrail / assertion bridge.
 

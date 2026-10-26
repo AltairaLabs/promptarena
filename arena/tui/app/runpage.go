@@ -194,7 +194,7 @@ func (p *RunPage) drillDownCmd(run *tui.RunInfo) tea.Cmd {
 		if r, err := p.store.GetResult(context.Background(), run.RunID); err == nil && r != nil {
 			result = r
 			if result.ScenarioID != "" {
-				scenarioID = result.ScenarioID
+				scenarioID = statestore.ScenarioDisplayName(result.ScenarioID, result.Labels)
 			}
 			if result.ProviderID != "" {
 				providerID = result.ProviderID

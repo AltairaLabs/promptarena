@@ -80,6 +80,7 @@ func loadOneResult(ctx context.Context, store *statestore.ArenaStateStore, path 
 		Region:                       r.Region,
 		ScenarioID:                   r.ScenarioID,
 		ProviderID:                   r.ProviderID,
+		Labels:                       r.Labels,
 		Params:                       r.Params,
 		Commit:                       r.Commit,
 		StartTime:                    r.StartTime,

@@ -11,6 +11,7 @@ import (
 type RunStartedMsg struct {
 	RunID    string
 	Scenario string
+	DataRow  string // dataset row ID; "" when the scenario has no data file
 	Provider string
 	Region   string
 	Time     time.Time
