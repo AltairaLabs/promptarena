@@ -29,6 +29,8 @@ type openEntry struct {
 	serverName  string
 	closer      io.Closer
 	containerID string // backing container ID when the source runs one (else "")
+	// ports maps extra published container ports to host URLs (else nil).
+	ports map[string]string
 }
 
 // mcpSourceScope manages per-scope open/close of source-backed MCP entries.
@@ -155,7 +157,9 @@ func (m *mcpSourceScope) openOne(ctx context.Context, entry *config.MCPServerCon
 		_ = closer.Close()
 		return openEntry{}, fmt.Errorf("mcp server %q: discover tools after Open failed: %w", entry.Name, err)
 	}
-	return openEntry{serverName: entry.Name, closer: closer, containerID: conn.ContainerID}, nil
+	return openEntry{
+		serverName: entry.Name, closer: closer, containerID: conn.ContainerID, ports: conn.Ports,
+	}, nil
 }
 
 // containerIDs returns the backing container ID for every currently-open source
@@ -169,6 +173,27 @@ func (m *mcpSourceScope) containerIDs() map[string]string {
 		for _, e := range entries {
 			if e.containerID != "" {
 				out[e.serverName] = e.containerID
+			}
+		}
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	return out
+}
+
+// ports returns the extra published ports (container port → host URL) of
+// every currently-open source that has any, keyed by server name. Surfaced
+// into SessionEvent metadata so session hooks can reach services running in
+// the sandbox. Returns nil when none.
+func (m *mcpSourceScope) ports() map[string]map[string]string {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	out := map[string]map[string]string{}
+	for _, entries := range m.opens {
+		for _, e := range entries {
+			if len(e.ports) > 0 {
+				out[e.serverName] = e.ports
 			}
 		}
 	}
