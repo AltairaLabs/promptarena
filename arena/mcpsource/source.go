@@ -32,6 +32,11 @@ type MCPConn struct {
 	// SessionEvent metadata so session hooks can reach the sandbox (e.g. a
 	// workspace-capture hook running `docker cp`).
 	ContainerID string
+	// Ports maps each extra published container port (as a string, e.g.
+	// "3000") to the host URL that reaches it (e.g. "http://localhost:54321").
+	// Surfaced into SessionEvent metadata so session hooks can reach services
+	// the agent started inside the sandbox (DAST, load tests). Nil when none.
+	Ports map[string]string
 }
 
 // MCPSource opens an MCP endpoint with caller-supplied args.

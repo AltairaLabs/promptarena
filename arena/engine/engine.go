@@ -226,6 +226,11 @@ func (e *Engine) sessionEventMetadata(runCtx context.Context, runID string) map[
 	if cids := sandboxContainerIDsFromContext(runCtx); len(cids) > 0 {
 		meta["sandbox_containers"] = cids
 	}
+	// Extra published sandbox ports (server → container port → host URL), so
+	// hooks can reach services the agent started inside the sandbox.
+	if ports := sandboxPortsFromContext(runCtx); len(ports) > 0 {
+		meta["sandbox_ports"] = ports
+	}
 	// Expose this run's artifacts directory — the base path, owned by Arena from
 	// config (<outDir>/artifacts/<runID>). Hooks write their outputs here and
 	// record only relative filenames; the report links <base>/<filename>. Arena
