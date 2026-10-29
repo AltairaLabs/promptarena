@@ -1003,6 +1003,7 @@ func (e *Engine) saveRunMetadata(
 		Error:                        result.Error,
 		Skipped:                      result.Skipped,
 		SkipReason:                   result.SkipReason,
+		StopReason:                   result.StopReason,
 		SelfPlay:                     result.SelfPlay,
 		PersonaID:                    result.PersonaID,
 		RecordingPath:                e.GetRecordingPath(runID),

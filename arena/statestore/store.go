@@ -73,6 +73,9 @@ type RunMetadata struct {
 	Error      string                 `json:"error,omitempty"`
 	Skipped    bool                   `json:"skipped,omitempty"`
 	SkipReason string                 `json:"skip_reason,omitempty"`
+	// StopReason classifies why a failed run stopped when it hit a cap
+	// (e.g. "max_rounds"); empty otherwise.
+	StopReason string `json:"stop_reason,omitempty"`
 
 	// Self-play metadata
 	SelfPlay      bool              `json:"self_play,omitempty"`
@@ -913,6 +916,9 @@ func (s *ArenaStateStore) deepCloneRunMetadata(m *RunMetadata) *RunMetadata {
 		EndTime:       m.EndTime,
 		Duration:      m.Duration,
 		Error:         m.Error,
+		Skipped:       m.Skipped,
+		SkipReason:    m.SkipReason,
+		StopReason:    m.StopReason,
 		SelfPlay:      m.SelfPlay,
 		PersonaID:     m.PersonaID,
 		RecordingPath: m.RecordingPath,
@@ -1105,6 +1111,7 @@ type RunResult struct {
 	Error        string                  `json:"Error"`
 	Skipped      bool                    `json:"Skipped,omitempty"`
 	SkipReason   string                  `json:"SkipReason,omitempty"`
+	StopReason   string                  `json:"StopReason,omitempty"`
 	SelfPlay     bool                    `json:"SelfPlay"`
 	PersonaID    string                  `json:"PersonaID"`
 	MediaOutputs []MediaOutput           `json:"MediaOutputs"` // Media produced during the run

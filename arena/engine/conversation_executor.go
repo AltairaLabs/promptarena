@@ -147,6 +147,7 @@ func (ce *DefaultConversationExecutor) runNonStreamingTurn(
 		result := ce.buildResultFromStateStore(ctx, req)
 		result.Failed = true
 		result.Error = err.Error()
+		result.StopReason = stopReasonFor(err)
 		return result
 	}
 
@@ -616,6 +617,7 @@ func (ce *DefaultConversationExecutor) handleTurnExecutionError(
 			"error", err)
 		result.Failed = true
 		result.Error = err.Error()
+		result.StopReason = stopReasonFor(err)
 	}
 
 	return result

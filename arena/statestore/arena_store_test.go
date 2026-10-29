@@ -438,6 +438,43 @@ func TestArenaStateStore_SaveMetadata_LabelsRoundTrip(t *testing.T) {
 	assert.Equal(t, "bugfix", result.Labels["category"])
 }
 
+// TestArenaStateStore_SaveMetadata_StopReasonRoundTrip ensures a run's stop
+// reason survives SaveMetadata → GetResult, so results can separate a run cut
+// off by a cap from one that broke.
+func TestArenaStateStore_SaveMetadata_StopReasonRoundTrip(t *testing.T) {
+	store := NewArenaStateStore()
+	ctx := context.Background()
+
+	require.NoError(t, store.SaveMetadata(ctx, "run-capped", &RunMetadata{
+		RunID:      "run-capped",
+		Error:      "provider stage: max rounds (2) exceeded",
+		StopReason: "max_rounds",
+	}))
+
+	result, err := store.GetResult(ctx, "run-capped")
+	require.NoError(t, err)
+	assert.Equal(t, "max_rounds", result.StopReason)
+}
+
+// TestArenaStateStore_SaveMetadata_SkippedRoundTrip guards the deep clone:
+// it used to drop Skipped/SkipReason, so a run skipped on a transient
+// provider error came back from GetResult looking like a clean run.
+func TestArenaStateStore_SaveMetadata_SkippedRoundTrip(t *testing.T) {
+	store := NewArenaStateStore()
+	ctx := context.Background()
+
+	require.NoError(t, store.SaveMetadata(ctx, "run-skipped", &RunMetadata{
+		RunID:      "run-skipped",
+		Skipped:    true,
+		SkipReason: "provider returned 503",
+	}))
+
+	result, err := store.GetResult(ctx, "run-skipped")
+	require.NoError(t, err)
+	assert.True(t, result.Skipped)
+	assert.Equal(t, "provider returned 503", result.SkipReason)
+}
+
 // TestArenaStateStore_SaveMetadata_WithError tests saving metadata with error
 func TestArenaStateStore_SaveMetadata_WithError(t *testing.T) {
 	store := NewArenaStateStore()
