@@ -496,7 +496,7 @@ promptarena run [flags]
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `-o, --out` | string | `out` | Output directory |
-| `--format` | []string | from config | Output formats: json, junit, markdown |
+| `--format` | []string | from config | Output formats: json, junit, markdown, csv |
 | `--formats` | []string | from config | Alias for --format |
 
 #### Legacy Output Flags (Deprecated)
