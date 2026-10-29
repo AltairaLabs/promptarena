@@ -189,3 +189,32 @@ func TestUnsupportedOperations(t *testing.T) {
 	assert.Error(t, err)
 	assert.Error(t, repo.SaveResult(&engine.RunResult{}))
 }
+
+func TestSaveResults_FlattensScalarEvalData(t *testing.T) {
+	res := engine.RunResult{
+		RunID: "run-bax", ScenarioID: "s", ProviderID: "p",
+		EvalResults: []evals.EvalResult{{
+			EvalID: "baxbench",
+			Score:  ptr(0.5),
+			Details: map[string]any{
+				"functional_score": 0.75,
+				"security_score":   1,
+				"app_started":      true,
+				"score":            0.1, // would shadow the eval's own score
+				"note":             "strings stay in JSON",
+				"cwes":             map[string]any{"CWE-89": false},
+			},
+		}},
+	}
+	dir := t.TempDir()
+	require.NoError(t, NewRepository(dir).SaveResults([]engine.RunResult{res}))
+
+	header, rows := readCSV(t, dir)
+	row := rows[0]
+	assert.Equal(t, "0.5", row["eval.baxbench.score"])
+	assert.Equal(t, "0.75", row["eval.baxbench.functional_score"])
+	assert.Equal(t, "1", row["eval.baxbench.security_score"])
+	assert.Equal(t, "true", row["eval.baxbench.app_started"])
+	assert.NotContains(t, header, "eval.baxbench.note")
+	assert.NotContains(t, header, "eval.baxbench.cwes")
+}

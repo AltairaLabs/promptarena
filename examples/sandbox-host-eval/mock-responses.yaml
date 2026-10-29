@@ -1,0 +1,31 @@
+# Canned model decisions; the tools run for real in the sandbox container.
+scenarios:
+  finishes:
+    turns:
+      1:
+        response: "Writing the file."
+        tool_calls:
+          - name: Bash
+            arguments:
+              description: "write hello.txt"
+              command: "echo 'hello from the agent' > /workspace/hello.txt"
+      2:
+        response: "Done: /workspace/hello.txt is written."
+
+  # max_rounds is 1, so the model never gets round 2: the cap ends the run
+  # right after the first tool call.
+  hits-max-rounds:
+    turns:
+      1:
+        response: "Writing the file."
+        tool_calls:
+          - name: Bash
+            arguments:
+              description: "write hello.txt"
+              command: "echo 'hello from the agent' > /workspace/hello.txt"
+      2:
+        response: "Checking it."
+        tool_calls:
+          - name: Read
+            arguments:
+              file_path: /workspace/hello.txt

@@ -1,0 +1,16 @@
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Scenario
+
+metadata:
+  name: finishes
+  labels:
+    ending: normal
+
+spec:
+  id: finishes
+  task_type: sandbox-agent
+  description: The agent writes the file and finishes normally.
+
+  turns:
+    - role: user
+      content: Write "hello from the agent" to /workspace/hello.txt.

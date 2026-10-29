@@ -1,0 +1,17 @@
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: PromptConfig
+
+metadata:
+  name: sandbox-agent
+
+spec:
+  task_type: sandbox-agent
+  version: "v1.0.0"
+  description: "Agent that writes a file in its sandbox."
+  system_template: |
+    You are a coding agent working in a sandbox at /workspace.
+    Complete the user's task with the tools available.
+
+  allowed_tools:
+    - Bash
+    - Read

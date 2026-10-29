@@ -363,6 +363,107 @@ Tools discovered from a source-backed server are registered under their
 **raw** MCP name (`Read`, `Edit`, …) rather than the namespaced
 `mcp__<server>__<tool>` form used by stdio/url entries.
 
+#### `runtime.evals`
+
+Binds an eval type name to a program on the host. Reference the type from
+`pack_evals` (or a pack's `evals`), usually with
+`trigger: on_session_complete`. Arena runs the program after the agent
+finishes and before the session's sandbox container is removed. The program
+runs on the host, not in the sandbox, so the agent never sees it, and it
+inherits the host environment, including Docker access.
+
+```yaml
+spec:
+  mcp_servers:
+    - name: sandbox
+      source: docker
+      scope: session
+      source_args:
+        image: ghcr.io/altairalabs/codegen-sandbox:latest
+        ports: [5000]
+
+  runtime:
+    evals:
+      sandbox_probe:
+        command: evals/sandbox_probe.py   # relative paths resolve against the config directory
+        args: []
+        env: [DOCKER_HOST]                # host variables to pass through (the rest are inherited)
+        timeout_ms: 300000                # per invocation; default 30s
+
+  pack_evals:
+    - id: sandbox_probe
+      type: sandbox_probe
+      trigger: on_session_complete
+      params:                             # passed to the program as-is
+        container_port: "5000"
+```
+
+| Field | Meaning |
+|---|---|
+| `command` | Program to run. A relative path containing `/` resolves against the config directory; a bare name (`python3`) is looked up on `PATH`. |
+| `args` | Extra arguments. |
+| `env` | Names of host environment variables to pass through. The program inherits the rest of the host environment too. |
+| `timeout_ms` | Per-invocation timeout. Default 30000. On timeout or a non-zero exit the eval scores 0, with stderr in the explanation. |
+
+**Input** is one JSON document on stdin:
+
+```json
+{
+  "type": "sandbox_probe",
+  "params": {"container_port": "5000"},
+  "content": "<last assistant message>",
+  "context": {
+    "session_id": "<run id>",
+    "messages": [...],
+    "tool_calls": [...],
+    "metadata": {
+      "arena": {
+        "run_id": "2026-10-29T15-12-24Z-0001_…",
+        "scenario_id": "build-service",
+        "provider_id": "claude",
+        "region": "default",
+        "trial_index": 0,
+        "labels": {"arm": "spec"},
+        "artifacts_dir": "/abs/out/artifacts/<run id>",
+        "sandboxes": {
+          "sandbox": {
+            "container_id": "b4ba96b88cf6…",
+            "ports": {"5000": {"host_port": 54321, "url": "http://localhost:54321"}}
+          }
+        }
+      }
+    }
+  }
+}
+```
+
+`sandboxes` is keyed by `mcp_servers` name. `ports` lists each port under
+the source's `ports` arg. `artifacts_dir` is a host directory for the run's
+outputs (the `session_end` workspace-capture hook writes there too). The
+workspace path inside the container is whatever the image uses
+(`/workspace` for `codegen-sandbox`).
+
+**Output** is one JSON document on stdout, `{"score": <number>, "detail":
+"<text>", "data": {...}}`. `score` becomes the eval's score and `data` its
+`details` in the run JSON. In the CSV export, each top-level numeric or
+boolean entry in `data` gets its own `eval.<id>.<key>` column, so one
+program can report several scores (e.g. `functional_score` and
+`security_score`). Nested values, such as per-test or per-CWE detail, stay
+in the run JSON. Write logs to stderr.
+
+**Lifecycle.** Session evals run once per session, after the agent's last
+turn, while the session's sandbox container is still running. They run
+whether the run ended normally or was cut off by `tool_policy.max_rounds`,
+`tool_policy.max_cost_usd` or `defaults.run_timeout`; after a timeout they
+run on a fresh context, bounded by their own `timeout_ms`. The `session_end`
+hook runs after them, and the container is removed last. The program can
+`docker exec` into the container, for example to kill agent-started
+processes and start the app fresh before testing it.
+
+Don't put harness files in a directory under `skills:`, because skills are
+mounted into the sandbox where the agent can read them. A runnable example is
+in [`examples/sandbox-host-eval/`](https://github.com/AltairaLabs/promptarena/tree/main/examples/sandbox-host-eval).
+
 #### `pack_metadata.governance`
 
 Governance facts about the agent the pack defines, and the obligations they

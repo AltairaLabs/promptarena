@@ -15,6 +15,8 @@ import (
 
 	"github.com/AltairaLabs/promptarena/v2/arena/engine"
 	"github.com/AltairaLabs/promptarena/v2/arena/results"
+
+	"github.com/AltairaLabs/PromptKit/runtime/v2/evals"
 )
 
 // FileName is the CSV file written into the output directory.
@@ -158,6 +160,7 @@ func rowFor(res *engine.RunResult) map[string]string {
 		if ev.Score != nil {
 			row[prefixEval+ev.EvalID+".score"] = formatFloat(*ev.Score)
 		}
+		addEvalDataColumns(row, ev)
 	}
 	if res.ToolStats != nil {
 		for name, n := range res.ToolStats.ByTool {
@@ -165,6 +168,25 @@ func rowFor(res *engine.RunResult) map[string]string {
 		}
 	}
 	return row
+}
+
+// addEvalDataColumns flattens an eval's top-level numeric and boolean data
+// entries into eval.<id>.<key> columns, so one eval can report several
+// scores (e.g. functional_score and security_score). Nested values stay in
+// the run JSON; a "score" key would shadow the eval's own score and is
+// skipped.
+func addEvalDataColumns(row map[string]string, ev *evals.EvalResult) {
+	for k, v := range ev.Details {
+		if k == "score" {
+			continue
+		}
+		col := prefixEval + ev.EvalID + "." + k
+		if b, isBool := v.(bool); isBool {
+			row[col] = strconv.FormatBool(b)
+		} else if n, isNum := numeric(v); isNum {
+			row[col] = formatFloat(n)
+		}
+	}
 }
 
 // sortedDynamicColumns orders columns by group (labels, assertions, evals,
