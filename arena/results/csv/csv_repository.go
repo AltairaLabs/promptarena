@@ -170,11 +170,11 @@ func rowFor(res *engine.RunResult) map[string]string {
 	return row
 }
 
-// addEvalDataColumns flattens an eval's top-level numeric and boolean data
-// entries into eval.<id>.<key> columns, so one eval can report several
-// scores (e.g. functional_score and security_score). Nested values stay in
-// the run JSON; a "score" key would shadow the eval's own score and is
-// skipped.
+// addEvalDataColumns flattens an eval's named metrics and its top-level
+// numeric and boolean data entries into eval.<id>.<key> columns, so one eval
+// can report several scores (e.g. functional_score and security_score).
+// Nested values stay in the run JSON; a "score" key would shadow the eval's
+// own score and is skipped. A metric wins over a data entry of the same name.
 func addEvalDataColumns(row map[string]string, ev *evals.EvalResult) {
 	for k, v := range ev.Details {
 		if k == "score" {
@@ -186,6 +186,12 @@ func addEvalDataColumns(row map[string]string, ev *evals.EvalResult) {
 		} else if n, isNum := numeric(v); isNum {
 			row[col] = formatFloat(n)
 		}
+	}
+	for k, v := range ev.Metrics {
+		if k == "score" {
+			continue
+		}
+		row[prefixEval+ev.EvalID+"."+k] = formatFloat(v)
 	}
 }
 

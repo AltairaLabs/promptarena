@@ -14,7 +14,8 @@ described under context.metadata.arena:
             "ports": {"5000": {"host_port": 54321,
                                "url": "http://localhost:54321"}}}}}}}}
 
-It writes {"score": <float>, "detail": "...", "data": {...}} to stdout.
+It writes {"score": <float>, "detail": "...", "metrics": {...}, "data": {...}}
+to stdout, or {"error": "..."} when there is nothing to measure.
 Logs go to stderr. Uses only the Python standard library and the docker CLI.
 """
 import json
@@ -52,7 +53,7 @@ def main():
     sandbox = (arena.get("sandboxes") or {}).get("sandbox") or {}
     cid = sandbox.get("container_id")
     if not cid:
-        print(json.dumps({"score": 0, "detail": "no sandbox container in context.metadata.arena"}))
+        print(json.dumps({"error": "no sandbox container in context.metadata.arena"}))
         return
 
     ctr_port = str(params.get("container_port", "5000"))
@@ -90,6 +91,7 @@ def main():
     print(json.dumps({
         "score": passed / len(checks),
         "detail": f"{passed}/{len(checks)} sandbox checks passed",
+        "metrics": {"checks_passed": passed, "checks_total": len(checks)},
         "data": data,
     }))
 

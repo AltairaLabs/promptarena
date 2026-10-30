@@ -218,3 +218,24 @@ func TestSaveResults_FlattensScalarEvalData(t *testing.T) {
 	assert.NotContains(t, header, "eval.baxbench.note")
 	assert.NotContains(t, header, "eval.baxbench.cwes")
 }
+
+func TestSaveResults_EvalMetricsBecomeColumns(t *testing.T) {
+	res := engine.RunResult{
+		RunID: "run-bax", ScenarioID: "s", ProviderID: "p",
+		EvalResults: []evals.EvalResult{{
+			EvalID:  "baxbench",
+			Score:   ptr(0.5),
+			Metrics: map[string]float64{"functional_score": 0.75, "cwe_count": 2, "score": 0.1},
+			Details: map[string]any{"functional_score": 0.2, "app_started": true},
+		}},
+	}
+	dir := t.TempDir()
+	require.NoError(t, NewRepository(dir).SaveResults([]engine.RunResult{res}))
+
+	_, rows := readCSV(t, dir)
+	row := rows[0]
+	assert.Equal(t, "0.5", row["eval.baxbench.score"])
+	assert.Equal(t, "0.75", row["eval.baxbench.functional_score"], "metric wins over data")
+	assert.Equal(t, "2", row["eval.baxbench.cwe_count"])
+	assert.Equal(t, "true", row["eval.baxbench.app_started"])
+}

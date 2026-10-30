@@ -444,12 +444,16 @@ workspace path inside the container is whatever the image uses
 (`/workspace` for `codegen-sandbox`).
 
 **Output** is one JSON document on stdout, `{"score": <number>, "detail":
-"<text>", "data": {...}}`. `score` becomes the eval's score and `data` its
-`details` in the run JSON. In the CSV export, each top-level numeric or
-boolean entry in `data` gets its own `eval.<id>.<key>` column, so one
-program can report several scores (e.g. `functional_score` and
-`security_score`). Nested values, such as per-test or per-CWE detail, stay
-in the run JSON. Write logs to stderr.
+"<text>", "metrics": {...}, "data": {...}}`. `score` becomes the eval's
+score, `metrics` its named sub-scores, and `data` its `details` in the run
+JSON. In the CSV export, each metric and each top-level numeric or boolean
+entry in `data` gets its own `eval.<id>.<key>` column, so one program can
+report several scores (e.g. `functional_score` and `security_score`).
+Nested values, such as per-test or per-CWE detail, stay in the run JSON.
+If the program can't measure (the app never started, say), it returns
+`{"error": "<why>"}`. The eval is then recorded as errored, not as a score
+of 0. A crash, a timeout or output that isn't valid JSON counts as an
+error too. Write logs to stderr.
 
 **Lifecycle.** Session evals run once per session, after the agent's last
 turn, while the session's sandbox container is still running. They run
