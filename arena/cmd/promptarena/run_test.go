@@ -60,6 +60,21 @@ func TestConvertToEngineRunResult(t *testing.T) {
 	now := time.Now()
 	duration := 5 * time.Second
 
+	t.Run("carries skip and stop reasons", func(t *testing.T) {
+		// Dropping these made a run skipped on a transient provider error
+		// read as a pass, and hid why a capped run stopped.
+		skipped := convertToEngineRunResult(&statestore.RunResult{
+			RunID: "skipped", Skipped: true, SkipReason: "provider returned 503",
+		})
+		assert.True(t, skipped.Skipped)
+		assert.Equal(t, "provider returned 503", skipped.SkipReason)
+
+		capped := convertToEngineRunResult(&statestore.RunResult{
+			RunID: "capped", Error: "max rounds (2) exceeded", StopReason: "max_rounds",
+		})
+		assert.Equal(t, "max_rounds", capped.StopReason)
+	})
+
 	t.Run("basic conversion without roles", func(t *testing.T) {
 		sr := &statestore.RunResult{
 			RunID:       "test-run-001",

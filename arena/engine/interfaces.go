@@ -218,4 +218,8 @@ type ConversationResult struct {
 
 	Skipped    bool   `json:"skipped,omitempty"`     // Whether execution was skipped due to transient provider error
 	SkipReason string `json:"skip_reason,omitempty"` // Reason for skipping
+
+	// StopReason classifies why a failed run stopped when it hit a cap
+	// (e.g. StopReasonMaxRounds); empty otherwise.
+	StopReason string `json:"stop_reason,omitempty"`
 }

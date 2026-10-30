@@ -73,6 +73,9 @@ type RunMetadata struct {
 	Error      string                 `json:"error,omitempty"`
 	Skipped    bool                   `json:"skipped,omitempty"`
 	SkipReason string                 `json:"skip_reason,omitempty"`
+	// StopReason classifies why a failed run stopped when it hit a cap
+	// (e.g. "max_rounds"); empty otherwise.
+	StopReason string `json:"stop_reason,omitempty"`
 
 	// Self-play metadata
 	SelfPlay      bool              `json:"self_play,omitempty"`
@@ -913,6 +916,9 @@ func (s *ArenaStateStore) deepCloneRunMetadata(m *RunMetadata) *RunMetadata {
 		EndTime:       m.EndTime,
 		Duration:      m.Duration,
 		Error:         m.Error,
+		Skipped:       m.Skipped,
+		SkipReason:    m.SkipReason,
+		StopReason:    m.StopReason,
 		SelfPlay:      m.SelfPlay,
 		PersonaID:     m.PersonaID,
 		RecordingPath: m.RecordingPath,
@@ -1116,6 +1122,9 @@ type RunResult struct {
 
 	// Session recording path (if recording is enabled)
 	RecordingPath string `json:"RecordingPath,omitempty"`
+
+	// Cap the run stopped on, if any; mirrors engine.RunResult.StopReason.
+	StopReason string `json:"StopReason,omitempty"`
 
 	// Conversation-level assertions evaluated after the conversation completes (summary format)
 	ConversationAssertions AssertionsSummary `json:"conversation_assertions,omitempty"`
