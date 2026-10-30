@@ -11,6 +11,7 @@ PromptArena supports multiple output formats for test results, each optimized fo
 | **JSON** | Programmatic access, APIs | `.json` | Excellent |
 | **Markdown** | Human review, documentation, GitHub | `.md` | Good |
 | **JUnit XML** | CI/CD systems | `.xml` | Excellent |
+| **CSV** | Charts, spreadsheets, notebooks | `.csv` | — |
 
 > **There is no HTML report.** Interactive review is served by the web UI: run `promptarena serve` and you get the same content the old `report.html` carried, plus live runs. See [Interactive Web UI](#interactive-web-ui) below. It needs no format flag, because it reads the per-run JSON files from your output directory.
 >
@@ -25,6 +26,7 @@ out/
   results.json           # JSON results
   results.md             # Markdown report
   junit.xml              # JUnit XML
+  results.csv            # CSV, one row per run
   media/                 # Media storage (images, audio, video)
     run-20241124-123456/
       session-xyz/
@@ -448,6 +450,45 @@ pipeline {
 - store_test_results:
     path: out/junit.xml
 ```
+
+## CSV Format
+
+`csv` writes `results.csv` into the output directory: one row per run,
+for charting in a spreadsheet, notebook or plotting library.
+
+```yaml
+defaults:
+  output:
+    formats: ["json", "csv"]
+```
+
+### Columns
+
+Every row starts with the same fixed columns:
+
+| Column | Meaning |
+|---|---|
+| `run_id`, `scenario_id`, `provider_id`, `region` | Which run this is |
+| `passed` | Same pass rule as the JUnit and Markdown reports; `false` for skipped runs |
+| `skipped` | Run was skipped (e.g. a transient provider error) rather than failed |
+| `stop_reason` | Why a failed run stopped when it hit a cap, e.g. `max_rounds`; empty otherwise |
+| `error` | Error message, if any |
+| `duration_ms` | Wall-clock duration |
+| `input_tokens`, `output_tokens`, `cached_tokens`, `total_cost_usd` | Token and cost totals |
+| `tool_calls_total` | Tool calls in the run |
+
+Then dynamic columns, grouped in this order:
+
+| Column | Source |
+|---|---|
+| `label.<key>` | Scenario `metadata.labels` — e.g. `label.arm` to group runs by experiment arm |
+| `assertion.<n>.<type>.passed` / `.score` | The run's n-th conversation assertion (1-based, declaration order) |
+| `eval.<eval_id>.score` | Pack eval scores; for an eval that fires per turn, the last turn's score |
+| `tool.<name>.count` | Calls per tool |
+
+The header is the union across all runs, so a run that lacks a column
+(a different scenario's assertions, a tool it never called) leaves that
+cell empty.
 
 ## Multiple Formats
 

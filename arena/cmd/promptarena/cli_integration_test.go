@@ -40,6 +40,17 @@ func TestCreateResultRepository_Multiple(t *testing.T) {
 	assert.NotNil(t, repo)
 }
 
+func TestCreateResultRepository_CSV(t *testing.T) {
+	params := &RunParameters{
+		OutDir:        t.TempDir(),
+		OutputFormats: []string{"csv"},
+	}
+
+	repo, err := createResultRepository(params, "")
+	require.NoError(t, err)
+	require.NotNil(t, repo)
+}
+
 func TestCreateResultRepository_UnsupportedFormat(t *testing.T) {
 	params := &RunParameters{
 		OutDir:        "/tmp/test",

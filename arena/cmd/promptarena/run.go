@@ -11,6 +11,7 @@ import (
 	arenaaudio "github.com/AltairaLabs/promptarena/v2/arena/audio"
 	"github.com/AltairaLabs/promptarena/v2/arena/engine"
 	"github.com/AltairaLabs/promptarena/v2/arena/results"
+	csvrepo "github.com/AltairaLabs/promptarena/v2/arena/results/csv"
 	jsonrepo "github.com/AltairaLabs/promptarena/v2/arena/results/json"
 	"github.com/AltairaLabs/promptarena/v2/arena/results/junit"
 	"github.com/AltairaLabs/promptarena/v2/arena/results/markdown"
@@ -24,6 +25,8 @@ const (
 	flagMaxTokens = "max-tokens"
 
 	formatMarkdown = "markdown"
+	formatCSV      = "csv"
+	formatJUnit    = "junit"
 	// formatHTML was a bespoke standalone report renderer. The web UI
 	// supersedes it and markdown carries the same content for CI, so the
 	// format is still accepted but normalised to markdown — see
@@ -50,9 +53,11 @@ func createResultRepository(params *RunParameters, configFile string) (results.R
 		case "json":
 			jsonRepo := jsonrepo.NewJSONResultRepository(params.OutDir)
 			composite.AddRepository(jsonRepo)
-		case "junit":
+		case formatJUnit:
 			junitRepo := junit.NewJUnitResultRepository(params.JUnitFile)
 			composite.AddRepository(junitRepo)
+		case formatCSV:
+			composite.AddRepository(csvrepo.NewRepository(params.OutDir))
 		// formatHTML is normalised away in processHTMLSettings; accept it here
 		// too so any caller building params directly still gets a report.
 		case formatMarkdown, formatHTML:
@@ -117,8 +122,8 @@ func init() {
 	runCmd.Flags().Bool("ci", false, "CI mode (disable TUI, simple logs)")
 	runCmd.Flags().Bool("simple", false, "Simple mode (alias for --ci)")
 	runCmd.Flags().Bool("html", false, "Deprecated: the HTML report was removed; produces markdown instead")
-	runCmd.Flags().StringSlice("format", []string{}, "Output formats (json, junit, markdown) - defaults from config")
-	runCmd.Flags().StringSlice("formats", []string{}, "Output formats (json, junit, markdown) - alias for --format")
+	runCmd.Flags().StringSlice("format", []string{}, "Output formats (json, junit, markdown, csv) - defaults from config")
+	runCmd.Flags().StringSlice("formats", []string{}, "Output formats (json, junit, markdown, csv) - alias for --format")
 	runCmd.Flags().String("junit-file", "", "JUnit XML output file (default: out/junit.xml)")
 	runCmd.Flags().String("html-file", "", "Deprecated: the HTML report was removed; use --markdown-file")
 	// Keep both accepted so existing scripts do not fail outright, but say so.
@@ -179,7 +184,7 @@ type RunParameters struct {
 	CIMode        bool // --ci: deterministic machine output, non-zero exit on failure
 	SimpleMode    bool // --simple: human-friendly non-TUI (styled + live status bar)
 	Verbose       bool
-	OutputFormats []string // New: output formats (json, junit, markdown)
+	OutputFormats []string // New: output formats (json, junit, markdown, csv)
 	JUnitFile     string   // New: JUnit XML output file
 	MarkdownFile  string   // New: Markdown output file
 	MockProvider  bool     // Enable mock provider mode

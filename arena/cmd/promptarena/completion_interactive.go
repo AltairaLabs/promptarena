@@ -313,7 +313,8 @@ func completeFormats(
 	_ []string,
 	_ string,
 ) ([]string, cobra.ShellCompDirective) {
-	return []string{"json", "junit", "html", "markdown"}, cobra.ShellCompDirectiveNoFileComp
+	formats := []string{inspectFormatJSON, formatJUnit, formatHTML, formatMarkdown, formatCSV}
+	return formats, cobra.ShellCompDirectiveNoFileComp
 }
 
 // completeInspectFormat provides completion for config-inspect format options
