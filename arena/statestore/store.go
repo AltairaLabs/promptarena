@@ -1111,7 +1111,6 @@ type RunResult struct {
 	Error        string                  `json:"Error"`
 	Skipped      bool                    `json:"Skipped,omitempty"`
 	SkipReason   string                  `json:"SkipReason,omitempty"`
-	StopReason   string                  `json:"StopReason,omitempty"`
 	SelfPlay     bool                    `json:"SelfPlay"`
 	PersonaID    string                  `json:"PersonaID"`
 	MediaOutputs []MediaOutput           `json:"MediaOutputs"` // Media produced during the run
@@ -1123,6 +1122,9 @@ type RunResult struct {
 
 	// Session recording path (if recording is enabled)
 	RecordingPath string `json:"RecordingPath,omitempty"`
+
+	// Cap the run stopped on, if any; mirrors engine.RunResult.StopReason.
+	StopReason string `json:"StopReason,omitempty"`
 
 	// Conversation-level assertions evaluated after the conversation completes (summary format)
 	ConversationAssertions AssertionsSummary `json:"conversation_assertions,omitempty"`

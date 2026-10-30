@@ -64,8 +64,8 @@ type RunResult struct {
 	Error      string                  `json:"Error"`
 	Skipped    bool                    `json:"Skipped,omitempty"`
 	SkipReason string                  `json:"SkipReason,omitempty"`
-	// StopReason classifies why a failed run stopped when it hit a cap
-	// (e.g. StopReasonMaxRounds); empty otherwise.
+	// StopReason names the cap a failed run hit (StopReasonMaxRounds);
+	// empty for any other ending.
 	StopReason string `json:"StopReason,omitempty"`
 	SelfPlay   bool   `json:"SelfPlay"`
 	PersonaID  string `json:"PersonaID"`

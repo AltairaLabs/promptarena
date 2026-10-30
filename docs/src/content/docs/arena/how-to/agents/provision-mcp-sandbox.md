@@ -158,11 +158,40 @@ container.
 | `branch`           | string              | no       | repo default | Branch to clone. Ignored when `repo` is empty.                                                                         |
 | `env`              | map\<string,string> | no       | —           | Environment variables passed via `-e`.                                                                                 |
 | `mounts`           | list of objects     | no       | —           | Bind mounts. Each entry takes `source` (host path), `target` (container path), `readonly` (bool).                       |
+| `ports`            | list of ints        | no       | —           | Extra container ports to publish, each on a free host port. `8080` (the MCP port) is rejected.                          |
+| `network`          | string              | no       | Docker default | Passed to `--network`. `none` and `host` are rejected — both drop the published MCP port.                            |
+| `cpus`             | string or number    | no       | unlimited   | Passed to `--cpus` (e.g. `1.5`).                                                                                        |
+| `memory`           | string              | no       | unlimited   | Passed to `--memory` (e.g. `2g`).                                                                                       |
 
 The source picks a free local port, publishes the container's `8080`
 to it, polls `<url>/sse` until the server is ready (20s budget), then
 returns `MCPConn{URL: "http://localhost:<port>"}`. On `Close()`, the
 container is stopped and removed.
+
+### Reaching services the agent starts
+
+A web service the agent starts inside the sandbox is only reachable
+from the host if its port is listed under `ports`. Arena publishes each
+one and exposes the mapping to session hooks as `sandbox_ports` in the
+event metadata, next to `sandbox_containers`:
+
+```yaml
+source_args:
+  image: ghcr.io/altairalabs/codegen-sandbox:latest
+  ports: [3000]
+  cpus: 2
+  memory: 2g
+```
+
+```json
+{"sandbox_containers": {"sandbox": "<cid>"},
+ "sandbox_ports": {"sandbox": {"3000": "http://localhost:54321"}}}
+```
+
+A `session_end` hook can then point a DAST scanner or load generator at
+`http://localhost:54321` from the host, so it doesn't compete with the
+app for the sandbox's CPU. To restrict egress, put the container on a
+user-defined bridge network routed through a filtering proxy.
 
 Cloning a private repo requires either credentials baked into the
 image or a host-side wrapper around the source — the built-in source
