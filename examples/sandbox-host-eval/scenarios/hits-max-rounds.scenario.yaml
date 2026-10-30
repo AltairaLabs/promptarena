@@ -1,0 +1,21 @@
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Scenario
+
+metadata:
+  name: hits-max-rounds
+  labels:
+    ending: max_rounds
+
+spec:
+  id: hits-max-rounds
+  task_type: sandbox-agent
+  description: |
+    The agent writes the file, then keeps calling tools until the
+    tool-round cap ends the run. The eval must still score it.
+
+  tool_policy:
+    max_rounds: 1
+
+  turns:
+    - role: user
+      content: Write "hello from the agent" to /workspace/hello.txt, then check it.

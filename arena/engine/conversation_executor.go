@@ -882,6 +882,11 @@ func (ce *DefaultConversationExecutor) buildResultFromStateStore(
 	// Collect media outputs from assistant messages
 	mediaOutputs := CollectMediaOutputs(messages)
 
+	// A run that hit its timeout is still scored on what it did: the run
+	// context is already canceled, so evaluate on a detached one. Each eval
+	// stays bounded by its own timeout.
+	ctx = scoringContext(ctx)
+
 	// Evaluate conversation-level assertions, if any
 	convAssertionResults := ce.evaluateConversationAssertions(ctx, req, messages)
 

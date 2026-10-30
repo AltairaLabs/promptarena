@@ -235,13 +235,24 @@ func (e *Engine) sessionEventMetadata(runCtx context.Context, runID string) map[
 	// config (<outDir>/artifacts/<runID>). Hooks write their outputs here and
 	// record only relative filenames; the report links <base>/<filename>. Arena
 	// creates the dir so hooks don't have to know the output layout.
-	if e.outputDir != "" && runID != "" {
-		dir := filepath.Join(e.outputDir, "artifacts", runID)
-		if err := os.MkdirAll(dir, outputDirPerm); err == nil {
-			meta["artifacts_dir"] = dir
-		}
+	if dir := e.runArtifactsDir(runID); dir != "" {
+		meta["artifacts_dir"] = dir
 	}
 	return meta
+}
+
+// runArtifactsDir returns this run's artifacts directory
+// (<outDir>/artifacts/<runID>), creating it. Empty when there is no output
+// directory or it cannot be created.
+func (e *Engine) runArtifactsDir(runID string) string {
+	if e.outputDir == "" || runID == "" {
+		return ""
+	}
+	dir := filepath.Join(e.outputDir, "artifacts", runID)
+	if err := os.MkdirAll(dir, outputDirPerm); err != nil {
+		return ""
+	}
+	return dir
 }
 
 // NewEngineFromConfigFile creates a new simulation engine from a configuration file.

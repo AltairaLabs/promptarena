@@ -15,6 +15,8 @@ import (
 
 	"github.com/AltairaLabs/promptarena/v2/arena/engine"
 	"github.com/AltairaLabs/promptarena/v2/arena/results"
+
+	"github.com/AltairaLabs/PromptKit/runtime/v2/evals"
 )
 
 // FileName is the CSV file written into the output directory.
@@ -69,6 +71,9 @@ const (
 	prefixEval      = "eval."
 	prefixTool      = "tool."
 )
+
+// scoreKey is the details/metrics key that would shadow an eval's own score.
+const scoreKey = "score"
 
 // Repository writes all results to a single CSV file.
 type Repository struct {
@@ -147,7 +152,7 @@ func rowFor(res *engine.RunResult) map[string]string {
 	for i, a := range res.ConversationAssertions.Results {
 		key := fmt.Sprintf("%s%d.%s", prefixAssertion, i+1, a.Type)
 		row[key+".passed"] = strconv.FormatBool(a.Passed)
-		if score, ok := numeric(a.Details["score"]); ok {
+		if score, ok := numeric(a.Details[scoreKey]); ok {
 			row[key+".score"] = formatFloat(score)
 		}
 	}
@@ -158,6 +163,7 @@ func rowFor(res *engine.RunResult) map[string]string {
 		if ev.Score != nil {
 			row[prefixEval+ev.EvalID+".score"] = formatFloat(*ev.Score)
 		}
+		addEvalDataColumns(row, ev)
 	}
 	if res.ToolStats != nil {
 		for name, n := range res.ToolStats.ByTool {
@@ -165,6 +171,31 @@ func rowFor(res *engine.RunResult) map[string]string {
 		}
 	}
 	return row
+}
+
+// addEvalDataColumns flattens an eval's named metrics and its top-level
+// numeric and boolean data entries into eval.<id>.<key> columns, so one eval
+// can report several scores (e.g. functional_score and security_score).
+// Nested values stay in the run JSON; a "score" key would shadow the eval's
+// own score and is skipped. A metric wins over a data entry of the same name.
+func addEvalDataColumns(row map[string]string, ev *evals.EvalResult) {
+	for k, v := range ev.Details {
+		if k == scoreKey {
+			continue
+		}
+		col := prefixEval + ev.EvalID + "." + k
+		if b, isBool := v.(bool); isBool {
+			row[col] = strconv.FormatBool(b)
+		} else if n, isNum := numeric(v); isNum {
+			row[col] = formatFloat(n)
+		}
+	}
+	for k, v := range ev.Metrics {
+		if k == scoreKey {
+			continue
+		}
+		row[prefixEval+ev.EvalID+"."+k] = formatFloat(v)
+	}
 }
 
 // sortedDynamicColumns orders columns by group (labels, assertions, evals,

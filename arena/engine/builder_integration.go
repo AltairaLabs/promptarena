@@ -15,7 +15,7 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/v2/classify"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/credentials"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/evals"
-	_ "github.com/AltairaLabs/PromptKit/runtime/v2/evals/handlers" // register default eval handlers
+	"github.com/AltairaLabs/PromptKit/runtime/v2/evals/handlers" // also registers default eval handlers via init()
 	"github.com/AltairaLabs/PromptKit/runtime/v2/logger"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/mcp"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/mediagen"
@@ -690,6 +690,7 @@ func buildEvalOrchestrator(
 
 	// Create registry with default handlers (registered via init() in handlers package)
 	registry := evals.NewEvalTypeRegistry()
+	registerExecEvals(registry, cfg)
 
 	// Validate that all eval types have registered handlers
 	if typeErrs := evals.ValidateEvalTypes(allDefs, registry); len(typeErrs) > 0 {
@@ -697,6 +698,38 @@ func buildEvalOrchestrator(
 	}
 
 	return NewEvalOrchestrator(registry, allDefs, skipEvals, evalTypeFilter, packID), nil
+}
+
+// registerExecEvals registers each runtime.evals binding as an eval type
+// backed by a host-side program: the program reads the eval request as JSON
+// on stdin and writes {score, detail, data} to stdout. Arena runs it on the
+// host, never inside a sandbox, so the agent cannot see the harness.
+func registerExecEvals(registry *evals.EvalTypeRegistry, cfg *arenaconfig.Config) {
+	if cfg == nil || cfg.Runtime == nil {
+		return
+	}
+	for typeName, binding := range cfg.Runtime.Evals {
+		if binding == nil {
+			continue
+		}
+		registry.Register(handlers.NewExecEvalHandler(&handlers.ExecEvalConfig{
+			TypeName:  typeName,
+			Command:   resolveEvalCommand(cfg.ConfigDir, binding.Command),
+			Args:      binding.Args,
+			Env:       binding.Env,
+			TimeoutMs: binding.TimeoutMs,
+		}))
+	}
+}
+
+// resolveEvalCommand resolves a relative eval command path (one containing a
+// path separator, like evals/score.py) against the config directory, so a
+// kit runs from anywhere. A bare name (python3) is left for PATH lookup.
+func resolveEvalCommand(configDir, command string) string {
+	if configDir == "" || filepath.IsAbs(command) || !strings.ContainsRune(command, filepath.Separator) {
+		return command
+	}
+	return filepath.Join(configDir, command)
 }
 
 // collectAllEvalDefs merges eval definitions from a loaded compiled

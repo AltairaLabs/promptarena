@@ -1,0 +1,55 @@
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Arena
+metadata:
+  name: sandbox-host-eval
+  annotations:
+    description: |
+      A host-side eval program scores each session's sandbox container:
+      it gets the container ID and mapped ports on stdin, uses the Docker
+      CLI and HTTP against them, and returns {score, data}.
+      Needs Docker:
+        docker pull ghcr.io/altairalabs/codegen-sandbox:latest
+        promptarena run -c examples/sandbox-host-eval/config.arena.yaml --ci
+
+spec:
+  prompt_configs:
+    - id: sandbox-agent
+      file: prompts/sandbox-agent.yaml
+
+  providers:
+    - file: providers/mock-provider.yaml
+
+  scenarios:
+    - file: scenarios/finishes.scenario.yaml
+    - file: scenarios/hits-max-rounds.scenario.yaml
+
+  mcp_servers:
+    - name: sandbox
+      source: docker
+      scope: session
+      source_args:
+        image: ghcr.io/altairalabs/codegen-sandbox:latest
+        ports: [5000]
+
+  # The eval program lives on the host, outside the sandbox, so the agent
+  # never sees it. A relative `command` resolves against this directory.
+  runtime:
+    evals:
+      sandbox_probe:
+        command: evals/sandbox_probe.py
+        timeout_ms: 60000
+
+  pack_evals:
+    - id: sandbox_probe
+      type: sandbox_probe
+      trigger: on_session_complete
+      params:
+        file: /workspace/hello.txt
+        container_port: "5000"
+
+  defaults:
+    temperature: 0.1
+    max_tokens: 512
+    output:
+      dir: out
+      formats: ["json", "csv"]

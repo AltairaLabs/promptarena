@@ -43,7 +43,7 @@ category_for() {
             echo "Voice and duplex" ;;
         ollama-local|vllm-local)
             echo "Local and self-hosted models" ;;
-        codegen-sandbox|codegen-anthropic|codegen-eval|test-a-codegen-agent)
+        codegen-sandbox|codegen-anthropic|codegen-eval|test-a-codegen-agent|sandbox-host-eval)
             echo "Codegen agents" ;;
         model-migration|session-replay|load-testing)
             echo "Regression, replay and load" ;;

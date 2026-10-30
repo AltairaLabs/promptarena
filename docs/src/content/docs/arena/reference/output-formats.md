@@ -484,6 +484,7 @@ Then dynamic columns, grouped in this order:
 | `label.<key>` | Scenario `metadata.labels` — e.g. `label.arm` to group runs by experiment arm |
 | `assertion.<n>.<type>.passed` / `.score` | The run's n-th conversation assertion (1-based, declaration order) |
 | `eval.<eval_id>.score` | Pack eval scores; for an eval that fires per turn, the last turn's score |
+| `eval.<eval_id>.<key>` | Each of the eval's `metrics`, and each top-level numeric or boolean entry in its `data`, e.g. `eval.baxbench.security_score`; a metric wins over a `data` entry with the same name, and nested values stay in the run JSON |
 | `tool.<name>.count` | Calls per tool |
 
 The header is the union across all runs, so a run that lacks a column

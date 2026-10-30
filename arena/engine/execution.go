@@ -558,6 +558,17 @@ func (e *Engine) executeScenarioRun(
 	}
 	defer mcpCleanup()
 	runCtx = mcpRunCtx
+	// Hand evals the run's identity; exec evals receive it, with the
+	// sandboxes, as context.metadata.arena.
+	runCtx = withEvalRunInfo(runCtx, &evalRunInfo{
+		RunID:        runID,
+		ScenarioID:   combo.ScenarioID,
+		ProviderID:   combo.ProviderID,
+		Region:       combo.Region,
+		TrialIndex:   combo.TrialIndex,
+		Labels:       e.runLabels(combo),
+		ArtifactsDir: e.runArtifactsDir(runID),
+	})
 
 	// Get provider
 	provider, exists := e.providerRegistry.Get(combo.ProviderID)

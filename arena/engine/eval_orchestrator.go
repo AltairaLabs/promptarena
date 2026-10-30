@@ -177,7 +177,7 @@ func (h *EvalOrchestrator) RunTurnEvals(
 		return nil
 	}
 
-	evalCtx := h.buildEvalContext(messages, turnIndex, sessionID)
+	evalCtx := withArenaEvalMetadata(ctx, h.buildEvalContext(messages, turnIndex, sessionID))
 	results := h.runner.RunTurnEvals(h.withClassify(ctx), h.defs, evalCtx)
 	return assertions.ConvertEvalResults(results)
 }
@@ -201,7 +201,7 @@ func (h *EvalOrchestrator) RunSessionEvals(
 	if turnIndex < 0 {
 		turnIndex = 0
 	}
-	evalCtx := h.buildEvalContext(messages, turnIndex, sessionID)
+	evalCtx := withArenaEvalMetadata(ctx, h.buildEvalContext(messages, turnIndex, sessionID))
 	return h.runner.RunSessionEvals(h.withClassify(ctx), h.defs, evalCtx)
 }
 
@@ -220,7 +220,7 @@ func (h *EvalOrchestrator) RunConversationEvals(
 	if turnIndex < 0 {
 		turnIndex = 0
 	}
-	evalCtx := h.buildEvalContext(messages, turnIndex, sessionID)
+	evalCtx := withArenaEvalMetadata(ctx, h.buildEvalContext(messages, turnIndex, sessionID))
 	results := h.runner.RunConversationEvals(h.withClassify(ctx), h.defs, evalCtx)
 	return assertions.ConvertEvalResults(results)
 }
@@ -251,7 +251,7 @@ func (h *EvalOrchestrator) RunAssertionsAsEvals(
 		defs[i].Trigger = string(trigger)
 	}
 
-	evalCtx := h.buildEvalContext(messages, turnIndex, sessionID)
+	evalCtx := withArenaEvalMetadata(ctx, h.buildEvalContext(messages, turnIndex, sessionID))
 	classifyCtx := h.withClassify(ctx)
 
 	switch trigger { //nolint:exhaustive // Only conversation and turn triggers are meaningful here
