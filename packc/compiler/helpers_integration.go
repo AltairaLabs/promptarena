@@ -20,7 +20,7 @@ import (
 // Returns nil, nil when none are configured. Like parseAgentsFromConfig, it is a
 // pass-through: the config field is the generated PromptPack type already.
 func parseCompositionsFromConfig(cfg *arenaconfig.Config) (map[string]*composition.Composition, error) {
-	return cfg.Compositions, nil
+	return cfg.CompositionSpecs, nil
 }
 
 // buildMemoryRepo creates a memory-backed prompt repository from the loaded config.
@@ -148,7 +148,7 @@ func parsePackEvalsFromConfig(cfg *arenaconfig.Config) []evals.EvalDef {
 // Returns nil, nil when no workflow is configured. A pass-through, for the same
 // reason as parseCompositionsFromConfig.
 func parseWorkflowFromConfig(cfg *arenaconfig.Config) (*prompt.WorkflowConfig, error) {
-	return cfg.Workflow, nil
+	return cfg.WorkflowSpec, nil
 }
 
 // parseAgentsFromConfig parses agents config from arena config.

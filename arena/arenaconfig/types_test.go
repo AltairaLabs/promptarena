@@ -98,7 +98,7 @@ compositions:
 	var cfg Config
 	err := yaml.Unmarshal([]byte(yamlData), &cfg)
 	require.NoError(t, err)
-	if cfg.Compositions == nil {
+	if cfg.CompositionSpecs == nil {
 		t.Fatal("Compositions not parsed")
 	}
 }

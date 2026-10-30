@@ -52,15 +52,22 @@ type WorkflowGraph struct {
 }
 
 // BuildWorkflowGraph turns a config's workflow spec into a topology graph.
-// cfg == nil or cfg.Workflow == nil produces a single "default" node with no
+// cfg == nil or cfg.WorkflowSpec == nil produces a single "default" node with no
 // edges (Arena's implicit single-state workflow). Node and edge ordering is
-// deterministic (sorted by state name, then event name).
-func BuildWorkflowGraph(cfg *arenaconfig.Config) WorkflowGraph {
-	if cfg == nil || cfg.Workflow == nil {
-		return defaultWorkflowGraph()
+// deterministic (sorted by state name, then event name). The error reports a
+// workflow or compositions value, set through the deprecated untyped fields,
+// that doesn't parse.
+func BuildWorkflowGraph(cfg *arenaconfig.Config) (WorkflowGraph, error) {
+	if cfg != nil {
+		if err := cfg.ResolveDeprecatedFields(); err != nil {
+			return WorkflowGraph{}, err
+		}
+	}
+	if cfg == nil || cfg.WorkflowSpec == nil {
+		return defaultWorkflowGraph(), nil
 	}
 
-	spec, comps := cfg.Workflow, cfg.Compositions
+	spec, comps := cfg.WorkflowSpec, cfg.CompositionSpecs
 
 	names := sortedStateNames(spec.States)
 
@@ -82,7 +89,7 @@ func BuildWorkflowGraph(cfg *arenaconfig.Config) WorkflowGraph {
 
 	graph.Edges = dedupeEdges(graph.Edges)
 
-	return graph
+	return graph, nil
 }
 
 // defaultWorkflowGraph is Arena's implicit single-state workflow, used when a

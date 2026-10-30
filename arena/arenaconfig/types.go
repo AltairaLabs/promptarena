@@ -124,10 +124,21 @@ type Config struct {
 	// Workflow configures a workflow state machine (auto-registers the workflow
 	// tool): the entry state, each state's prompt or composition, its event
 	// transitions, turn control, visit limits and artifacts.
-	Workflow *workflow.Spec `yaml:"workflow,omitempty" json:"workflow,omitempty"`
+	WorkflowSpec *workflow.Spec `yaml:"workflow,omitempty" json:"workflow,omitempty"`
 	// Compositions declares named composition step graphs (RFC 0010), keyed by
 	// name, that a workflow state with `orchestration: composition` runs.
-	Compositions map[string]*composition.Composition `yaml:"compositions,omitempty" json:"compositions,omitempty"`
+	CompositionSpecs map[string]*composition.Composition `yaml:"compositions,omitempty" json:"compositions,omitempty"`
+	// Workflow is the untyped form of WorkflowSpec, kept for Go callers that
+	// build a Config by hand. Read only when WorkflowSpec is nil; see
+	// ResolveDeprecatedFields.
+	//
+	// Deprecated: set WorkflowSpec.
+	Workflow interface{} `yaml:"-" json:"-"`
+	// Compositions is the untyped form of CompositionSpecs, kept for Go callers
+	// that build a Config by hand. Read only when CompositionSpecs is empty.
+	//
+	// Deprecated: set CompositionSpecs.
+	Compositions interface{} `yaml:"-" json:"-"`
 	// Memory configures the memory capability (auto-registers the memory tools).
 	Memory interface{} `yaml:"memory,omitempty" json:"memory,omitempty"`
 	// Typed as the generated PromptPack type rather than interface{}: it was a
@@ -872,6 +883,11 @@ type ToolPolicy struct {
 	// There is no scenario-wide total: per-turn is the only call cap.
 	MaxToolCallsPerTurn int      `json:"max_tool_calls_per_turn,omitempty" yaml:"max_tool_calls_per_turn,omitempty"`
 	Blocklist           []string `json:"blocklist,omitempty" yaml:"blocklist,omitempty"`
+	// MaxTotalToolCalls never limited anything and is ignored; it is not part
+	// of the config schema.
+	//
+	// Deprecated: use MaxToolCallsPerTurn.
+	MaxTotalToolCalls int `json:"-" yaml:"-"`
 	// MaxRounds is the maximum number of tool-call rounds per turn.
 	// 0/unset means the prompt's tool_policy.max_rounds, or 50 when it sets
 	// none. Never unlimited.
