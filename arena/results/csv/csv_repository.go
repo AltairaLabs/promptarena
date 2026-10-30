@@ -72,6 +72,9 @@ const (
 	prefixTool      = "tool."
 )
 
+// scoreKey is the details/metrics key that would shadow an eval's own score.
+const scoreKey = "score"
+
 // Repository writes all results to a single CSV file.
 type Repository struct {
 	outputDir string
@@ -149,7 +152,7 @@ func rowFor(res *engine.RunResult) map[string]string {
 	for i, a := range res.ConversationAssertions.Results {
 		key := fmt.Sprintf("%s%d.%s", prefixAssertion, i+1, a.Type)
 		row[key+".passed"] = strconv.FormatBool(a.Passed)
-		if score, ok := numeric(a.Details["score"]); ok {
+		if score, ok := numeric(a.Details[scoreKey]); ok {
 			row[key+".score"] = formatFloat(score)
 		}
 	}
@@ -177,7 +180,7 @@ func rowFor(res *engine.RunResult) map[string]string {
 // own score and is skipped. A metric wins over a data entry of the same name.
 func addEvalDataColumns(row map[string]string, ev *evals.EvalResult) {
 	for k, v := range ev.Details {
-		if k == "score" {
+		if k == scoreKey {
 			continue
 		}
 		col := prefixEval + ev.EvalID + "." + k
@@ -188,7 +191,7 @@ func addEvalDataColumns(row map[string]string, ev *evals.EvalResult) {
 		}
 	}
 	for k, v := range ev.Metrics {
-		if k == "score" {
+		if k == scoreKey {
 			continue
 		}
 		row[prefixEval+ev.EvalID+"."+k] = formatFloat(v)
