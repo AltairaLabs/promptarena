@@ -84,6 +84,7 @@ func (e *Engine) openScenarioSessionMCPSources(
 	// metadata can expose them to hooks (e.g. a workspace-capture hook). They
 	// live on the per-run runScope, not the engine's shared scope.
 	runCtx = withSandboxContainerIDs(runCtx, runScope.containerIDs())
+	runCtx = withSandboxPorts(runCtx, runScope.ports())
 
 	return runCtx, func() {
 		closeSession()
@@ -107,4 +108,23 @@ func withSandboxContainerIDs(ctx context.Context, ids map[string]string) context
 func sandboxContainerIDsFromContext(ctx context.Context) map[string]string {
 	ids, _ := ctx.Value(sandboxContainersKey{}).(map[string]string)
 	return ids
+}
+
+type sandboxPortsKey struct{}
+
+// withSandboxPorts returns a context carrying the open sandboxes' extra
+// published ports (server name → container port → host URL). A no-op when
+// ports is empty.
+func withSandboxPorts(ctx context.Context, ports map[string]map[string]string) context.Context {
+	if len(ports) == 0 {
+		return ctx
+	}
+	return context.WithValue(ctx, sandboxPortsKey{}, ports)
+}
+
+// sandboxPortsFromContext returns the sandbox ports carried by ctx, or nil
+// when none were set.
+func sandboxPortsFromContext(ctx context.Context) map[string]map[string]string {
+	ports, _ := ctx.Value(sandboxPortsKey{}).(map[string]map[string]string)
+	return ports
 }

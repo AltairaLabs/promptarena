@@ -242,3 +242,28 @@ func TestMCPSourceScope_InjectsMountsFromSkills(t *testing.T) {
 	assert.Equal(t, "/skills/codegen", mounts[0]["target"])
 	assert.Equal(t, true, mounts[0]["readonly"])
 }
+
+type portsSource struct{ ports map[string]string }
+
+func (s *portsSource) Open(_ context.Context, _ map[string]any) (mcpsource.MCPConn, io.Closer, error) {
+	return mcpsource.MCPConn{URL: "http://fake", ContainerID: "cid", Ports: s.ports},
+		closerFunc(func() error { return nil }), nil
+}
+
+func TestMCPSourceScope_ReportsOpenPorts(t *testing.T) {
+	mcpsource.RegisterMCPSource("ports-scope", &portsSource{ports: map[string]string{"3000": "http://localhost:54321"}})
+	mcpsource.RegisterMCPSource("ports-scope-none", &portsSource{})
+	mgr := newMCPSourceScope(mcp.NewRegistry())
+	assert.Nil(t, mgr.ports())
+
+	cfgs := []config.MCPServerConfig{
+		{Name: "sandbox", Source: "ports-scope", Scope: "session"},
+		{Name: "other", Source: "ports-scope-none", Scope: "session"},
+	}
+	require.NoError(t, mgr.OpenAll(context.Background(), mcpsource.ScopeSession, "run1", nil, nil, cfgs))
+
+	assert.Equal(t, map[string]map[string]string{"sandbox": {"3000": "http://localhost:54321"}}, mgr.ports())
+
+	require.Empty(t, mgr.CloseAll(mcpsource.ScopeSession, "run1"))
+	assert.Nil(t, mgr.ports())
+}

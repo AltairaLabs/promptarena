@@ -14,6 +14,18 @@ type RunSpec struct {
 	PortCtr  int
 	Env      map[string]string
 	Mounts   []Mount
+	// ExtraPorts are additional container ports published on host ports
+	// (e.g. a web service the agent starts inside the sandbox).
+	ExtraPorts []PortMapping
+	Network    string // --network; empty means Docker's default
+	CPUs       string // --cpus; empty means unlimited
+	Memory     string // --memory; empty means unlimited
+}
+
+// PortMapping publishes container port Ctr on host port Host.
+type PortMapping struct {
+	Host int
+	Ctr  int
 }
 
 // Mount describes one -v flag on a container.
@@ -46,6 +58,18 @@ func buildRunArgs(spec RunSpec) []string {
 	args := []string{"run", "-d", "--rm"}
 	if spec.PortHost > 0 && spec.PortCtr > 0 {
 		args = append(args, "-p", fmt.Sprintf("%d:%d", spec.PortHost, spec.PortCtr))
+	}
+	for _, p := range spec.ExtraPorts {
+		args = append(args, "-p", fmt.Sprintf("%d:%d", p.Host, p.Ctr))
+	}
+	if spec.Network != "" {
+		args = append(args, "--network", spec.Network)
+	}
+	if spec.CPUs != "" {
+		args = append(args, "--cpus", spec.CPUs)
+	}
+	if spec.Memory != "" {
+		args = append(args, "--memory", spec.Memory)
 	}
 	for k, v := range spec.Env {
 		args = append(args, "-e", k+"="+v)

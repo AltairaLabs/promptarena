@@ -53,6 +53,9 @@ func (s *Source) Open(ctx context.Context, args map[string]any) (mcpsource.MCPCo
 		Env:      stringMap(args["env"]),
 		Mounts:   mountsFromArgs(args["mounts"]),
 	}
+	if argErr := applyRuntimeArgs(&spec, args); argErr != nil {
+		return mcpsource.MCPConn{}, nil, argErr
+	}
 
 	cid, err := s.cli.Run(ctx, spec)
 	if err != nil {
@@ -82,7 +85,123 @@ func (s *Source) Open(ctx context.Context, args map[string]any) (mcpsource.MCPCo
 		return mcpsource.MCPConn{}, nil, fmt.Errorf("docker source: container not healthy: %w", err)
 	}
 
-	return mcpsource.MCPConn{URL: url, ContainerID: cid}, closer, nil
+	return mcpsource.MCPConn{URL: url, ContainerID: cid, Ports: s.portURLs(cid, spec.ExtraPorts)}, closer, nil
+}
+
+// portURLs maps each extra published container port to the host URL that
+// reaches it. Nil when no extra ports were requested.
+func (s *Source) portURLs(cid string, ports []PortMapping) map[string]string {
+	if len(ports) == 0 {
+		return nil
+	}
+	out := make(map[string]string, len(ports))
+	for _, p := range ports {
+		out[strconv.Itoa(p.Ctr)] = s.resolveURL(cid, strconv.Itoa(p.Host))
+	}
+	return out
+}
+
+// applyRuntimeArgs reads the optional ports / network / cpus / memory args
+// into spec. Each extra port is published on a free host port.
+func applyRuntimeArgs(spec *RunSpec, args map[string]any) error {
+	ports, err := portsFromArgs(args["ports"])
+	if err != nil {
+		return err
+	}
+	for _, ctr := range ports {
+		host, pickErr := pickFreePort()
+		if pickErr != nil {
+			return fmt.Errorf("docker source: pick free port for %d: %w", ctr, pickErr)
+		}
+		spec.ExtraPorts = append(spec.ExtraPorts, PortMapping{Host: host, Ctr: ctr})
+	}
+	if spec.Network, err = stringArg(args, "network"); err != nil {
+		return err
+	}
+	// --network none/host drop published ports, so the MCP endpoint would be
+	// unreachable. Egress control belongs on a user-defined bridge network.
+	if spec.Network == "none" || spec.Network == "host" {
+		return fmt.Errorf("docker source: args.network %q is not supported: the MCP port must be published; "+
+			"use a user-defined bridge network (e.g. one routed through a filtering proxy)", spec.Network)
+	}
+	if spec.CPUs, err = stringArg(args, "cpus"); err != nil {
+		return err
+	}
+	if spec.Memory, err = stringArg(args, "memory"); err != nil {
+		return err
+	}
+	return nil
+}
+
+// portsFromArgs parses args.ports: a list of container ports. YAML yields
+// ints; JSON yields float64s; numeric strings are accepted too.
+func portsFromArgs(v any) ([]int, error) {
+	if v == nil {
+		return nil, nil
+	}
+	list, ok := v.([]any)
+	if !ok {
+		return nil, fmt.Errorf("docker source: args.ports must be a list of container ports, got %T", v)
+	}
+	seen := make(map[int]bool, len(list))
+	out := make([]int, 0, len(list))
+	for _, item := range list {
+		port, err := toPort(item)
+		if err != nil {
+			return nil, err
+		}
+		if port == defaultSandboxPort {
+			return nil, fmt.Errorf("docker source: args.ports: %d is the sandbox's MCP port", port)
+		}
+		if seen[port] {
+			return nil, fmt.Errorf("docker source: args.ports: %d listed twice", port)
+		}
+		seen[port] = true
+		out = append(out, port)
+	}
+	return out, nil
+}
+
+func toPort(v any) (int, error) {
+	var port int
+	switch n := v.(type) {
+	case int:
+		port = n
+	case float64:
+		if n != float64(int(n)) {
+			return 0, fmt.Errorf("docker source: args.ports: %v is not a whole number", n)
+		}
+		port = int(n)
+	case string:
+		p, err := strconv.Atoi(n)
+		if err != nil {
+			return 0, fmt.Errorf("docker source: args.ports: %q is not a port number", n)
+		}
+		port = p
+	default:
+		return 0, fmt.Errorf("docker source: args.ports: unsupported value %v (%T)", v, v)
+	}
+	if port < 1 || port > 65535 {
+		return 0, fmt.Errorf("docker source: args.ports: %d is out of range 1-65535", port)
+	}
+	return port, nil
+}
+
+// stringArg reads an optional scalar arg as a string. Numbers are accepted
+// (YAML turns `cpus: 2` into an int) and formatted without trailing zeros.
+func stringArg(args map[string]any, key string) (string, error) {
+	switch v := args[key].(type) {
+	case nil:
+		return "", nil
+	case string:
+		return v, nil
+	case int:
+		return strconv.Itoa(v), nil
+	case float64:
+		return strconv.FormatFloat(v, 'f', -1, 64), nil
+	default:
+		return "", fmt.Errorf("docker source: args.%s must be a string or number, got %T", key, v)
+	}
 }
 
 func (s *Source) resolveURL(cid, port string) string {

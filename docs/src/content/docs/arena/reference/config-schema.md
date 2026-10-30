@@ -344,7 +344,8 @@ for the full guide.
 - `scope` (string, required): One of `run`, `scenario`, `session`.
 - `source_args` (object, optional): Source-specific arguments. Schema
   varies per source. The built-in `docker` source accepts `image`,
-  `repo`, `branch`, `env`, `mounts`. Templated against scenario
+  `repo`, `branch`, `env`, `mounts`, `ports`, `network`, `cpus`,
+  `memory`. Templated against scenario
   variables (`{{scenario.<key>}}`) before `Open()`.
 
 ```yaml
