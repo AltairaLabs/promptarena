@@ -903,7 +903,7 @@ spec:
 	require.NoError(t, err)
 
 	// Verify workflow was loaded
-	require.NotEmpty(t, cfg.Workflow, "Workflow should be loaded from config")
+	require.NotEmpty(t, cfg.WorkflowSpec, "Workflow should be loaded from config")
 
 	// Build and compile
 	memRepo, repoErr := buildMemoryRepo(cfg)

@@ -177,8 +177,8 @@ func TestValidateToolUsage_IgnoresUndefinedToolsAndOtherAssertions(t *testing.T)
 // the tool counts for every scenario.
 func TestValidateToolUsage_WorkflowUsesEveryPrompt(t *testing.T) {
 	cfg := &Config{
-		Workflow:    &workflow.Spec{},
-		LoadedTools: []config.ToolData{toolData("refund_order")},
+		WorkflowSpec: &workflow.Spec{},
+		LoadedTools:  []config.ToolData{toolData("refund_order")},
 		LoadedPromptConfigs: map[string]*PromptConfigData{
 			"intake":  {Config: stubPrompt{taskType: "intake"}},
 			"billing": {Config: stubPrompt{taskType: "billing", tools: []string{"refund_order"}}},

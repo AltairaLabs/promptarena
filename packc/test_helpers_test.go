@@ -39,10 +39,10 @@ func parsePackEvalsFromConfig(cfg *arenaconfig.Config) []evals.EvalDef {
 // parseWorkflowFromConfig parses workflow config from arena config.
 // Kept as test helper after migration to compiler package.
 func parseWorkflowFromConfig(cfg *arenaconfig.Config) *prompt.WorkflowConfig {
-	if cfg.Workflow == nil {
+	if cfg.WorkflowSpec == nil {
 		return nil
 	}
-	data, err := json.Marshal(cfg.Workflow)
+	data, err := json.Marshal(cfg.WorkflowSpec)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: failed to marshal workflow config: %v\n", err)
 		return nil

@@ -46,6 +46,9 @@ func NewConfigValidatorWithPath(cfg *Config, configPath string) *ConfigValidator
 
 // Validate performs comprehensive validation of the configuration
 func (v *ConfigValidator) Validate() error {
+	if err := v.config.ResolveDeprecatedFields(); err != nil {
+		return err
+	}
 	v.validatePromptConfigs()
 	v.validateProviders()
 	v.validateScenarios()
@@ -323,7 +326,7 @@ func (v *ConfigValidator) validateCrossReferences() {
 // prompt_task references resolve against the loaded prompt configs' task
 // types, which is what the engine binds workflow states to.
 func (v *ConfigValidator) validateWorkflow() {
-	spec := v.config.Workflow
+	spec := v.config.WorkflowSpec
 	if spec == nil {
 		return
 	}

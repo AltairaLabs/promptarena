@@ -81,17 +81,17 @@ func workflowPromptTasks(spec *workflow.Spec) []string {
 }
 
 // initWorkflow parses the workflow config and registers the workflow__transition
-// tool in the tool registry. Called during engine initialization when config.Workflow
+// tool in the tool registry. Called during engine initialization when config.WorkflowSpec
 // is present.
 //
 // The transition tool executor updates scenario.TaskType on each transition so that
 // the next pipeline turn uses the correct prompt from the PromptRegistry.
 func (e *Engine) initWorkflow() error {
-	if e.config.Workflow == nil {
+	if e.config.WorkflowSpec == nil {
 		return nil
 	}
 
-	spec := e.config.Workflow
+	spec := e.config.WorkflowSpec
 
 	// Register transition tool executor. The prompt registry is what lets it
 	// hand a turn over to a destination state mid-flight rather than waiting
@@ -129,7 +129,7 @@ func (e *Engine) initWorkflow() error {
 // config into LoadedPack.Compositions so buildCompositionResolver can find them
 // at turn time (RFC 0010). No-op when none are declared.
 func (e *Engine) mergeInlineCompositions() error {
-	comps := e.config.Compositions
+	comps := e.config.CompositionSpecs
 	if len(comps) == 0 {
 		return nil
 	}

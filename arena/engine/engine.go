@@ -89,8 +89,8 @@ type Engine struct {
 	recordingDir         string                       // Directory where session recordings are stored
 	a2aCleanup           func()                       // Cleanup function for mock A2A servers
 	evalOrchestrator     *EvalOrchestrator            // Orchestrates eval and assertion execution during runs
-	workflowSpec         *workflow.Spec               // Optional workflow spec (set if config.Workflow != nil)
-	workflowTransExec    *workflowTransitionExecutor  // Optional transition executor (set if config.Workflow != nil)
+	workflowSpec         *workflow.Spec               // Optional workflow spec (set if config.WorkflowSpec != nil)
+	workflowTransExec    *workflowTransitionExecutor  // Optional transition executor (set if config.WorkflowSpec != nil)
 	skillsFactory        *SkillsFactory               // Optional — set when skills are configured
 	memoryStore          *memory.InMemoryStore        // Optional memory store (set if config.Memory != nil)
 	recordingConfig      *stage.RecordingStageConfig  // Optional — enables RecordingStage in pipelines
@@ -392,6 +392,10 @@ func NewEngine(
 	adapterRegistry *adapters.Registry,
 	toolRegistry *tools.Registry,
 ) (*Engine, error) {
+	if err := cfg.ResolveDeprecatedFields(); err != nil {
+		return nil, err
+	}
+
 	// Build state store from config if configured
 	stateStore, err := buildStateStore(cfg)
 	if err != nil {

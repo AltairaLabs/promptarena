@@ -25,7 +25,7 @@ func minimalEngineForWorkflow(cfg *arenaconfig.Config) *Engine {
 }
 
 // startOnlyWorkflow is a one-state workflow: enough for initWorkflow, which
-// returns early when config.Workflow is nil.
+// returns early when config.WorkflowSpec is nil.
 func startOnlyWorkflow() *workflow.Spec {
 	return &workflow.Spec{
 		Version: 1,
@@ -34,13 +34,13 @@ func startOnlyWorkflow() *workflow.Spec {
 	}
 }
 
-// TestInitWorkflow_InlineCompositionsLoaded verifies that when config.Compositions
+// TestInitWorkflow_InlineCompositionsLoaded verifies that when config.CompositionSpecs
 // is set (the inline Arena path), initWorkflow merges them into
 // config.LoadedPack.Compositions so that buildCompositionResolver can find them
 // at turn time. This covers the fix in execution_workflow_integration.go.
 func TestInitWorkflow_InlineCompositionsLoaded(t *testing.T) {
 	// Minimal workflow spec — needed because initWorkflow returns early if
-	// config.Workflow is nil.
+	// config.WorkflowSpec is nil.
 	orchestration := workflow.OrchestrationComposition
 	spec := &workflow.Spec{
 		Version: 1,
@@ -63,8 +63,8 @@ func TestInitWorkflow_InlineCompositionsLoaded(t *testing.T) {
 	}
 
 	cfg := &arenaconfig.Config{
-		Workflow:     spec,
-		Compositions: comps,
+		WorkflowSpec:     spec,
+		CompositionSpecs: comps,
 	}
 
 	eng := minimalEngineForWorkflow(cfg)
@@ -90,14 +90,14 @@ func TestInitWorkflow_InlineCompositionsLoaded(t *testing.T) {
 	}
 }
 
-// TestInitWorkflow_NoCompositions verifies that when config.Compositions is nil,
+// TestInitWorkflow_NoCompositions verifies that when config.CompositionSpecs is nil,
 // initWorkflow does not create a LoadedPack (no-op path).
 func TestInitWorkflow_NoCompositions(t *testing.T) {
 	spec := startOnlyWorkflow()
 
 	cfg := &arenaconfig.Config{
-		Workflow:     spec,
-		Compositions: nil,
+		WorkflowSpec:     spec,
+		CompositionSpecs: nil,
 	}
 
 	eng := minimalEngineForWorkflow(cfg)
@@ -130,9 +130,9 @@ func TestInitWorkflow_MergesIntoExistingLoadedPack(t *testing.T) {
 	}}
 
 	cfg := &arenaconfig.Config{
-		Workflow:     spec,
-		Compositions: comps,
-		LoadedPack:   existingPack,
+		WorkflowSpec:     spec,
+		CompositionSpecs: comps,
+		LoadedPack:       existingPack,
 	}
 
 	eng := minimalEngineForWorkflow(cfg)

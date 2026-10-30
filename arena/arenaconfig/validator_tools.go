@@ -100,7 +100,7 @@ func (v *ConfigValidator) validateAssertedToolsOffered(defined, granted map[stri
 // every prompt counts there; otherwise it is the prompts sharing the
 // scenario's task_type.
 func (v *ConfigValidator) toolsOfferedToScenario(scenario *Scenario) (map[string]bool, string) {
-	if v.config.Workflow != nil || len(v.config.Compositions) > 0 || v.config.Agents != nil {
+	if v.config.WorkflowSpec != nil || len(v.config.CompositionSpecs) > 0 || v.config.Agents != nil {
 		return v.getAllowedToolNames(), "any prompt"
 	}
 	offered := make(map[string]bool)

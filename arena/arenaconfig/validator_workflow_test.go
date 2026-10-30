@@ -29,7 +29,7 @@ func workflowValidatorConfig(states map[string]any) *Config {
 			"route":   {TaskType: "route"},
 			"confirm": {TaskType: "confirm"},
 		},
-		Workflow: workflowFromMap(map[string]any{
+		WorkflowSpec: workflowFromMap(map[string]any{
 			"version": 2,
 			"entry":   "route",
 			"states":  states,
