@@ -37,7 +37,7 @@ func TestGenerateSelfplayText(t *testing.T) {
 		gen := &fakeSelfplayGenerator{
 			result: &pipeline.ExecutionResult{Response: &pipeline.Response{Content: "hi there"}},
 		}
-		text, res, err := generateSelfplayText(ctx, gen, nil, "s1", 1, 0)
+		text, res, err := generateSelfplayText(ctx, gen, nil, "s1", 1, 0, &arenaconfig.TurnDefinition{})
 		require.NoError(t, err)
 		assert.Equal(t, "hi there", text)
 		assert.NotNil(t, res)
@@ -45,14 +45,14 @@ func TestGenerateSelfplayText(t *testing.T) {
 
 	t.Run("propagates generator error", func(t *testing.T) {
 		gen := &fakeSelfplayGenerator{err: errors.New("boom")}
-		_, _, err := generateSelfplayText(ctx, gen, nil, "s1", 1, 2)
+		_, _, err := generateSelfplayText(ctx, gen, nil, "s1", 1, 2, &arenaconfig.TurnDefinition{})
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "turn 2")
 	})
 
 	t.Run("errors on nil response", func(t *testing.T) {
 		gen := &fakeSelfplayGenerator{result: &pipeline.ExecutionResult{}}
-		_, _, err := generateSelfplayText(ctx, gen, nil, "s1", 1, 3)
+		_, _, err := generateSelfplayText(ctx, gen, nil, "s1", 1, 3, &arenaconfig.TurnDefinition{})
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "no text response")
 	})
@@ -61,7 +61,7 @@ func TestGenerateSelfplayText(t *testing.T) {
 		gen := &fakeSelfplayGenerator{
 			result: &pipeline.ExecutionResult{Response: &pipeline.Response{Content: ""}},
 		}
-		_, _, err := generateSelfplayText(ctx, gen, nil, "s1", 1, 4)
+		_, _, err := generateSelfplayText(ctx, gen, nil, "s1", 1, 4, &arenaconfig.TurnDefinition{})
 		require.Error(t, err)
 		assert.Contains(t, err.Error(), "empty text")
 	})

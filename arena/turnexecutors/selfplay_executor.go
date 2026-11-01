@@ -98,7 +98,9 @@ func (e *SelfPlayExecutor) generateUserMessage(
 
 	// Build generator options from turn request metadata
 	genOpts := &selfplay.GeneratorOptions{
-		Emitter: emitterFromRequest(req),
+		Emitter:     emitterFromRequest(req),
+		Temperature: req.SelfPlayUserTemp,
+		Seed:        req.SelfPlaySeed,
 	}
 	if nt, ok := req.Metadata["natural_termination_enabled"].(bool); ok && nt {
 		genOpts.NaturalTerminationEnabled = true
@@ -261,7 +263,9 @@ func (e *SelfPlayExecutor) generateUserMessageForStream(
 
 	// Build generator options from turn request metadata
 	genOpts := &selfplay.GeneratorOptions{
-		Emitter: emitterFromRequest(req),
+		Emitter:     emitterFromRequest(req),
+		Temperature: req.SelfPlayUserTemp,
+		Seed:        req.SelfPlaySeed,
 	}
 	if nt, ok := req.Metadata["natural_termination_enabled"].(bool); ok && nt {
 		genOpts.NaturalTerminationEnabled = true

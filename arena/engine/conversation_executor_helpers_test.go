@@ -18,19 +18,19 @@ func TestResolveTurnTemperature(t *testing.T) {
 			Config:      &arenaconfig.Config{Defaults: arenaconfig.Defaults{Temperature: 0.3}},
 			Temperature: &temp,
 		}
-		assert.InDelta(t, 0.7, resolveTurnTemperature(req), 1e-6)
+		assert.InDelta(t, 0.7, resolveTurnTemperature(req, nil), 1e-6)
 	})
 
 	t.Run("falls back to config default", func(t *testing.T) {
 		req := ConversationRequest{
 			Config: &arenaconfig.Config{Defaults: arenaconfig.Defaults{Temperature: 0.3}},
 		}
-		assert.InDelta(t, 0.3, resolveTurnTemperature(req), 1e-6)
+		assert.InDelta(t, 0.3, resolveTurnTemperature(req, nil), 1e-6)
 	})
 
 	t.Run("zero config default passes zero", func(t *testing.T) {
 		req := ConversationRequest{Config: &arenaconfig.Config{}}
-		assert.InDelta(t, 0.0, resolveTurnTemperature(req), 1e-6)
+		assert.InDelta(t, 0.0, resolveTurnTemperature(req, nil), 1e-6)
 	})
 }
 

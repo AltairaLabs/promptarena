@@ -146,11 +146,7 @@ func (cg *ContentGenerator) NextUserTurn(
 		"user_context": "user",
 	}
 
-	// Get temperature from persona or use default
-	temperature := arenaconfig.DefaultPersonaTemperature
-	if cg.persona.Defaults.Temperature != nil {
-		temperature = *cg.persona.Defaults.Temperature
-	}
+	temperature := cg.resolveTemperature(opts)
 
 	// Log the self-play user generation API call
 	logger.LLMCall(
@@ -168,17 +164,14 @@ func (cg *ContentGenerator) NextUserTurn(
 	// 3. SelfPlayUserTurnContextStage - injects scenario context for MockProvider
 	// 4. TemplateStage - final variable substitution
 	// 5. ProviderStage - calls LLM
-	maxTokens := 200 // Short user messages
-	if opts != nil && opts.NaturalTerminationEnabled {
-		maxTokens = 300 // Extra room for completion marker
-	}
 	var emitter *events.Emitter
 	if opts != nil {
 		emitter = opts.Emitter
 	}
 	providerConfig := &stage.ProviderConfig{
 		Temperature: temperature,
-		MaxTokens:   maxTokens,
+		MaxTokens:   cg.resolveMaxTokens(opts),
+		Seed:        cg.resolveSeed(opts),
 		Source:      events.SourceSelfPlay,
 	}
 
@@ -258,8 +251,10 @@ func (cg *ContentGenerator) NextUserTurn(
 		result.CostInfo.TotalCost,
 	)
 
-	// Validate the response (treat failures as warnings, not hard errors)
-	if result.Response != nil && result.Response.Content != "" {
+	// Validate the response (treat failures as warnings, not hard errors).
+	// Adversarial personas write long, structured turns on purpose, so the
+	// short-user-message checks don't apply to them.
+	if result.Response != nil && result.Response.Content != "" && !cg.persona.IsAdversarial() {
 		if err := cg.validateUserResponse(result.Response.Content); err != nil {
 			logger.Warn(
 				"User response validation warning",
@@ -293,6 +288,52 @@ func (cg *ContentGenerator) NextUserTurn(
 	}
 
 	return result, nil
+}
+
+// Token caps for generated user turns when the persona sets no max_tokens.
+const (
+	defaultUserTurnMaxTokens = 200 // Short user messages
+	// completionMarkerTokens is the extra room left for the completion marker
+	// when natural termination is enabled.
+	completionMarkerTokens = 100
+)
+
+// resolveTemperature returns the turn's temperature: the per-turn override
+// when set, else the persona default, else the package default.
+func (cg *ContentGenerator) resolveTemperature(opts *GeneratorOptions) float32 {
+	if opts != nil && opts.Temperature != nil {
+		return *opts.Temperature
+	}
+	if cg.persona.Defaults.Temperature != nil {
+		return *cg.persona.Defaults.Temperature
+	}
+	return arenaconfig.DefaultPersonaTemperature
+}
+
+// resolveSeed returns the seed to send: the per-turn seed when set, else the
+// persona's defaults.seed. A zero or absent seed sends none.
+func (cg *ContentGenerator) resolveSeed(opts *GeneratorOptions) *int {
+	if opts != nil && opts.Seed != nil {
+		return opts.Seed
+	}
+	if cg.persona.Defaults.Seed != nil && *cg.persona.Defaults.Seed != 0 {
+		return cg.persona.Defaults.Seed
+	}
+	return nil
+}
+
+// resolveMaxTokens returns the token cap for a generated turn. A persona's
+// max_tokens is used exactly as configured. Otherwise the short-user-message
+// default applies, plus room for the completion marker when natural
+// termination is enabled.
+func (cg *ContentGenerator) resolveMaxTokens(opts *GeneratorOptions) int {
+	if cg.persona.Defaults.MaxTokens != nil {
+		return *cg.persona.Defaults.MaxTokens
+	}
+	if opts != nil && opts.NaturalTerminationEnabled {
+		return defaultUserTurnMaxTokens + completionMarkerTokens
+	}
+	return defaultUserTurnMaxTokens
 }
 
 // convertStageResult converts stage.ExecutionResult to pipeline.ExecutionResult

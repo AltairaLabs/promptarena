@@ -1705,19 +1705,34 @@ spec:
   defaults:                          # Optional: Generation parameters
     temperature: 0.8                 # Sampling temperature (default: 0.7)
     seed: 42                         # Reproducibility seed (omit/0 sends none)
+    max_tokens: 200                  # Exact cap per generated turn (unset: 200, or 300 with natural termination)
+
+  mode: user                         # Optional: user (default) or adversarial
 ```
+
+#### Modes
+
+| Mode | Behaviour |
+|---|---|
+| `user` (default) | Each generated turn is checked against the shape of a short user message: at most two sentences, at most two questions, no assistant-like phrasing ("step 1:", "I recommend"). A turn that fails gets a `validation_warning` in its metadata. The turn is still sent. |
+| `adversarial` | Skips those checks. Use it for personas whose turns are long or structured on purpose, such as pasted documents, multi-part requests or role-play setups. Pair it with a higher `defaults.max_tokens`. |
 
 ### Turn-Level Control
 
-Turn count and natural termination are configured on the scenario turn, not the persona:
+Turn count, natural termination and per-turn sampling overrides are configured on the scenario turn, not the persona:
 
 ```yaml
 turns:
   - role: gemini-user
     persona: frustrated-customer
-    turns: 3           # Minimum exchanges
-    max_turns: 8       # Upper bound (natural termination enabled)
+    turns: 3            # Minimum exchanges
+    max_turns: 8        # Upper bound (natural termination enabled)
+    user_temp: 1.0      # Persona temperature for these turns (overrides defaults.temperature)
+    assistant_temp: 0.2 # Temperature of the agent under test for these turns
+    seed: 7             # Seed for the persona's generation (overrides defaults.seed)
 ```
+
+All three overrides treat `0` as unset. `seed` applies to the persona only. The agent under test takes its seed from the arena's `defaults.seed`. `assistant_temp` gives way to a temperature passed on the command line or in the request, and applies to text turns only. Duplex (realtime) turns take their sampling from the duplex provider config.
 
 ## Next Steps
 

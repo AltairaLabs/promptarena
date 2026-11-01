@@ -621,7 +621,7 @@
         },
         "seed": {
           "type": "integer",
-          "description": "Override seed"
+          "description": "Override the self-play persona's seed"
         },
         "streaming": {
           "type": "boolean",

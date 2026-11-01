@@ -16,7 +16,11 @@ import (
 // Default values for persona configuration
 const (
 	DefaultPersonaTemperature = float32(0.7)
-	DefaultPersonaSeed        = 42
+	// DefaultPersonaSeed is no longer applied to loaded personas: a persona
+	// sends a seed only when defaults.seed is set.
+	//
+	// Deprecated: nothing reads it; it is kept for API compatibility.
+	DefaultPersonaSeed = 42
 )
 
 // PersonaConfig represents a K8s-style persona configuration manifest
@@ -51,6 +55,24 @@ type UserPersonaPack struct {
 	// or fails fast if no default is configured.
 	Voice    string          `json:"voice,omitempty" yaml:"voice,omitempty"`
 	Defaults PersonaDefaults `json:"defaults,omitempty" yaml:"defaults,omitempty"`
+	// Mode selects how the persona's generated turns are checked. "user"
+	// (the default when empty) warns when a turn stops sounding like a short
+	// user message — more than two sentences, more than two questions, or
+	// assistant-like phrasing. "adversarial" skips those checks, for personas
+	// whose turns are deliberately long or structured (pasted documents,
+	// multi-part requests, role-play setups).
+	Mode string `json:"mode,omitempty" yaml:"mode,omitempty" jsonschema:"enum=user,enum=adversarial"`
+}
+
+// Persona modes accepted by UserPersonaPack.Mode.
+const (
+	PersonaModeUser        = "user"
+	PersonaModeAdversarial = "adversarial"
+)
+
+// IsAdversarial reports whether the persona runs in adversarial mode.
+func (p *UserPersonaPack) IsAdversarial() bool {
+	return p.Mode == PersonaModeAdversarial
 }
 
 // FragmentRef references a reusable prompt fragment
@@ -88,6 +110,10 @@ type PersonaStyle struct {
 type PersonaDefaults struct {
 	Temperature *float32 `json:"temperature,omitempty" yaml:"temperature,omitempty"`
 	Seed        *int     `json:"seed,omitempty" yaml:"seed,omitempty"`
+	// MaxTokens caps each generated turn exactly. Unset keeps the built-in cap
+	// of 200 tokens (300 when natural termination is enabled, to leave room
+	// for the completion marker).
+	MaxTokens *int `json:"max_tokens,omitempty" yaml:"max_tokens,omitempty" jsonschema:"minimum=1"`
 }
 
 // LoadPersona loads a user persona from a YAML or JSON file
@@ -211,23 +237,39 @@ func validateAndReturnPersona(persona *UserPersonaPack, filename string) (*UserP
 				"use system_template or system_prompt instead", persona.ID)
 	}
 
+	if err := validatePersonaGeneration(persona); err != nil {
+		return nil, err
+	}
+
 	// Validate style properties
 	if err := validatePersonaStyle(persona.Style); err != nil {
 		return nil, fmt.Errorf("persona %s style validation failed: %w", persona.ID, err)
 	}
 
-	// Set defaults only if not specified (nil means "use default")
-	// This correctly preserves explicit temperature=0 and seed=0 values
+	// Set defaults only if not specified (nil means "use default").
+	// This correctly preserves an explicit temperature=0. The seed is left
+	// unset: a persona sends a seed only when it declares one.
 	if persona.Defaults.Temperature == nil {
 		defaultTemp := DefaultPersonaTemperature
 		persona.Defaults.Temperature = &defaultTemp
 	}
-	if persona.Defaults.Seed == nil {
-		defaultSeed := DefaultPersonaSeed
-		persona.Defaults.Seed = &defaultSeed
-	}
 
 	return persona, nil
+}
+
+// validatePersonaGeneration checks the fields that control turn generation
+// (mode and defaults.max_tokens). File personas and inline persona_specs
+// both go through it.
+func validatePersonaGeneration(persona *UserPersonaPack) error {
+	if persona.Mode != "" && persona.Mode != PersonaModeUser && persona.Mode != PersonaModeAdversarial {
+		return fmt.Errorf("persona %s: invalid mode %q, must be one of: %s, %s",
+			persona.ID, persona.Mode, PersonaModeUser, PersonaModeAdversarial)
+	}
+	if persona.Defaults.MaxTokens != nil && *persona.Defaults.MaxTokens <= 0 {
+		return fmt.Errorf("persona %s: defaults.max_tokens must be positive, got %d",
+			persona.ID, *persona.Defaults.MaxTokens)
+	}
+	return nil
 }
 
 // validatePersonaStyle validates the persona style properties
