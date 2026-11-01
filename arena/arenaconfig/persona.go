@@ -62,6 +62,11 @@ type UserPersonaPack struct {
 	// whose turns are deliberately long or structured (pasted documents,
 	// multi-part requests, role-play setups).
 	Mode string `json:"mode,omitempty" yaml:"mode,omitempty" jsonschema:"enum=user,enum=adversarial"`
+	// PrivateNotes lets the persona keep notes the agent under test never
+	// sees. Text inside <notes>...</notes> in a generated turn is removed
+	// before the turn is sent, and every earlier turn's notes are given back
+	// to the persona as {{persona_notes}}.
+	PrivateNotes bool `json:"private_notes,omitempty" yaml:"private_notes,omitempty"`
 }
 
 // Persona modes accepted by UserPersonaPack.Mode.

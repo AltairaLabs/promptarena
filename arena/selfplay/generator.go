@@ -139,11 +139,16 @@ func (cg *ContentGenerator) NextUserTurn(
 	// Extract region from persona ID (or default to "us")
 	region := extractRegionFromPersonaID(cg.persona.ID)
 
-	// Build base variables for persona assembly
+	// Build base variables for persona assembly: the fixed self-play keys,
+	// then the per-exchange feedback variables (exchange number, objective
+	// status and checks, private notes).
 	baseVariables := map[string]string{
 		"context_slot": "", // Empty for self-play - conversation context comes through messages
 		"domain_hint":  "general",
 		"user_context": "user",
+	}
+	for k, v := range feedbackVariables(cg.persona, history, opts) {
+		baseVariables[k] = v
 	}
 
 	temperature := cg.resolveTemperature(opts)
@@ -251,6 +256,18 @@ func (cg *ContentGenerator) NextUserTurn(
 		result.CostInfo.TotalCost,
 	)
 
+	// Private notes are taken out before anything else sees the turn: the
+	// agent under test never receives them, and the validation below judges
+	// only what is sent.
+	var notes string
+	if cg.persona.PrivateNotes && result.Response != nil {
+		result.Response.Content, notes = extractNotes(result.Response.Content)
+		if result.Response.Content == "" && notes != "" {
+			return nil, fmt.Errorf("persona %s wrote only private notes and no message for the agent; "+
+				"the persona prompt must ask for a message outside <notes>", cg.persona.ID)
+		}
+	}
+
 	// Validate the response (treat failures as warnings, not hard errors).
 	// Adversarial personas write long, structured turns on purpose, so the
 	// short-user-message checks don't apply to them.
@@ -276,6 +293,9 @@ func (cg *ContentGenerator) NextUserTurn(
 		result.Metadata = make(map[string]interface{})
 	}
 	result.Metadata["persona"] = cg.persona.ID
+	if notes != "" {
+		result.Metadata[MetaPersonaNotes] = notes
+	}
 	result.Metadata["role"] = "self-play-user"
 	result.Metadata["self_play_provider"] = cg.provider.ID()
 	// Surface the resolved system prompt so the duplex executor can stamp

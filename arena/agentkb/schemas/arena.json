@@ -4439,6 +4439,10 @@
             "adversarial"
           ],
           "description": "Mode selects how the persona's generated turns are checked. \"user\"\n(the default when empty) warns when a turn stops sounding like a short\nuser message — more than two sentences, more than two questions, or\nassistant-like phrasing. \"adversarial\" skips those checks, for personas\nwhose turns are deliberately long or structured (pasted documents,\nmulti-part requests, role-play setups)."
+        },
+        "private_notes": {
+          "type": "boolean",
+          "description": "PrivateNotes lets the persona keep notes the agent under test never\nsees. Text inside \u003cnotes\u003e...\u003c/notes\u003e in a generated turn is removed\nbefore the turn is sent, and every earlier turn's notes are given back\nto the persona as {{persona_notes}}."
         }
       },
       "additionalProperties": false,

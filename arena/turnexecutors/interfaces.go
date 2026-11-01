@@ -103,6 +103,9 @@ type TurnRequest struct {
 	// SelfPlaySeed is the seed sent with the persona's generation call (the
 	// turn's seed). Nil sends none.
 	SelfPlaySeed *int
+	// SelfPlayVars are extra template variables for the persona's prompt on
+	// this exchange (exchange number, objective feedback).
+	SelfPlayVars map[string]string
 
 	// ConsentOverrides controls consent simulation for client-side tools.
 	// Keys are tool names, values are "grant", "deny", or "timeout".
