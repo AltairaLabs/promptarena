@@ -60,4 +60,9 @@ type GeneratorOptions struct {
 	// Seed is sent to the provider for this turn (the scenario turn's seed).
 	// Nil sends no seed.
 	Seed *int
+
+	// Variables are extra template variables for the persona's
+	// system_template, such as the exchange number and objective feedback.
+	// They override the generator's defaults for the same keys.
+	Variables map[string]string
 }

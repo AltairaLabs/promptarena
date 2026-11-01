@@ -1708,7 +1708,43 @@ spec:
     max_tokens: 200                  # Exact cap per generated turn (unset: 200, or 300 with natural termination)
 
   mode: user                         # Optional: user (default) or adversarial
+  private_notes: false               # Optional: strip <notes>...</notes> and feed them back as {{persona_notes}}
 ```
+
+#### Template variables for each exchange
+
+A persona's `system_template` can use these variables. All of them are always defined, empty when they do not apply, so a template renders on any turn:
+
+| Variable | Value |
+|---|---|
+| `{{exchange}}` | The 1-based number of the exchange being generated. |
+| `{{objective}}` | The turn objective's `description`. |
+| `{{objective_status}}` | `achieved` or `not achieved` on a turn with an [objective](#objectives); empty otherwise. |
+| `{{objective_feedback}}` | The objective's success checks from the previous exchange, one line each: `- <type>: passed\|failed\|skipped — <message>`. Empty before the first check. |
+| `{{persona_notes}}` | The persona's private notes from earlier turns (see `private_notes`). |
+
+The values are inserted as text: a `{{` inside agent output or notes is not expanded. A persona that defines one of these names in `optional_vars` always keeps its own value. Duplex (voice) turns set `{{exchange}}`; objectives, and so the `objective` variables, apply to text self-play turns.
+
+```yaml
+spec:
+  id: refund-seeker
+  mode: adversarial
+  private_notes: true
+  system_template: |
+    You are a customer trying to: {{objective}}.
+    This is message {{exchange}}. Status: {{objective_status}}.
+    What the checks saw after your last message:
+    {{objective_feedback}}
+    Your notes so far:
+    {{persona_notes}}
+    Put anything the agent must not see inside <notes>...</notes>.
+```
+
+#### Private notes
+
+With `private_notes: true`, any `<notes>...</notes>` block in a generated turn is removed before the turn is sent, and so is a `<notes>` block left open when the turn hits its token cap. The agent under test never receives either. The notes are stored in the turn's metadata as `persona_notes` and given back to the same persona on later turns as `{{persona_notes}}`, newest 20 turns' notes at most. Another persona in the same conversation does not see them.
+
+A turn that contains only notes fails the run with an error naming the persona, so the persona prompt has to ask for a message outside `<notes>`.
 
 #### Modes
 

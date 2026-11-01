@@ -3,10 +3,13 @@ package engine
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"strings"
 	"sync"
 
 	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
 	asrt "github.com/AltairaLabs/promptarena/v2/arena/assertions"
+	"github.com/AltairaLabs/promptarena/v2/arena/selfplay"
 
 	"github.com/AltairaLabs/PromptKit/runtime/v2/evals"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/logger"
@@ -150,12 +153,10 @@ func (t *objectiveTracker) afterExchange(ctx context.Context, exchange int) bool
 		return false
 	}
 	t.outcome.exchanges = exchange
-	if t.outcome.achieved() {
-		return t.outcome.cfg.StopsOnSuccess()
-	}
 
 	if t.orch == nil {
 		t.outcome.evalErr = objectiveErrNoRunner
+		t.outcome.checks = nil
 		return false
 	}
 	// A run that hit its timeout still has its last exchange judged, as
@@ -163,16 +164,24 @@ func (t *objectiveTracker) afterExchange(ctx context.Context, exchange int) bool
 	ctx = scoringContext(ctx)
 	_, messages, err := t.ce.loadMessagesFromStateStore(ctx, t.req)
 	if err != nil {
+		// Clear the checks so the persona is not shown results from an
+		// exchange that was not re-checked.
 		t.outcome.evalErr = err.Error()
+		t.outcome.checks = nil
 		return false
 	}
 	t.outcome.evalErr = ""
+	// The checks are re-run even once the objective is achieved, so the
+	// persona's feedback always describes the latest exchange.
 	checks := t.orch.RunAssertionsAsConversationResults(
 		ctx, t.outcome.cfg.Success, messages,
 		len(messages)-1, t.req.ConversationID,
 		evals.TriggerOnConversationComplete,
 	)
 	t.outcome.checks = checks
+	if t.outcome.achieved() {
+		return t.outcome.cfg.StopsOnSuccess()
+	}
 	if !allPassed(checks, len(t.outcome.cfg.Success)) {
 		return false
 	}
@@ -180,6 +189,58 @@ func (t *objectiveTracker) afterExchange(ctx context.Context, exchange int) bool
 	logger.Debug("Self-play objective achieved",
 		"turn", t.outcome.turnIndex, "exchange", exchange)
 	return t.outcome.cfg.StopsOnSuccess()
+}
+
+// personaVariables returns the persona's template variables for the
+// exchange about to be generated (1-based): its number and, on a turn with an
+// objective, the objective, whether it has been achieved, and the success
+// checks from the previous exchange. A nil tracker gives the exchange number
+// alone.
+func (t *objectiveTracker) personaVariables(exchange int) map[string]string {
+	vars := map[string]string{selfplay.VarExchange: strconv.Itoa(exchange)}
+	if t == nil {
+		return vars
+	}
+	vars[selfplay.VarObjective] = t.outcome.cfg.Description
+	vars[selfplay.VarObjectiveStatus] = objectiveStatusNotAchieved
+	if t.outcome.achieved() {
+		vars[selfplay.VarObjectiveStatus] = objectiveStatusAchieved
+	}
+	vars[selfplay.VarObjectiveFeedback] = checksFeedback(t.outcome.checks)
+	return vars
+}
+
+// Values of the objective_status persona variable.
+const (
+	objectiveStatusAchieved    = "achieved"
+	objectiveStatusNotAchieved = "not achieved"
+)
+
+// States a success check is reported in, in objective_feedback.
+const (
+	checkStatePassed  = "passed"
+	checkStateFailed  = "failed"
+	checkStateSkipped = "skipped"
+)
+
+// checksFeedback renders success-check results for the persona, one line per
+// check: "- <type>: passed|failed — <message>".
+func checksFeedback(checks []asrt.ConversationValidationResult) string {
+	lines := make([]string, 0, len(checks))
+	for i := range checks {
+		state := checkStateFailed
+		if _, skipped := asrt.IsSkipped(checks[i].Details); skipped {
+			state = checkStateSkipped
+		} else if checks[i].Passed {
+			state = checkStatePassed
+		}
+		line := fmt.Sprintf("- %s: %s", checks[i].Type, state)
+		if checks[i].Message != "" {
+			line += " — " + checks[i].Message
+		}
+		lines = append(lines, line)
+	}
+	return strings.Join(lines, "\n")
 }
 
 // finish records the outcome on the conversation.

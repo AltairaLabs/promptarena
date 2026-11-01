@@ -87,4 +87,5 @@ func TestGenerateSelfplayText_PassesTurnOverrides(t *testing.T) {
 	assert.InDelta(t, 0.95, *gen.opts.Temperature, 1e-6)
 	require.NotNil(t, gen.opts.Seed)
 	assert.Equal(t, 3, *gen.opts.Seed)
+	assert.Equal(t, "2", gen.opts.Variables["exchange"], "duplex turns get the exchange number too")
 }

@@ -703,6 +703,7 @@ func generateSelfplayText(
 		SelfplayTurnIndex: selfplayTurnNum,
 		Temperature:       positiveFloat32OrNil(turn.UserTemp),
 		Seed:              seedOrNil(turn.Seed),
+		Variables:         map[string]string{selfplay.VarExchange: strconv.Itoa(selfplayTurnNum)},
 	}
 	textResult, err := textGen.NextUserTurn(ctx, history, scenarioID, opts)
 	if err != nil {
@@ -740,7 +741,8 @@ func (de *DuplexConversationExecutor) buildSelfplayTurnMeta(
 	// Copy only relevant metadata from the generation result. Avoid copying
 	// pipeline internal fields like system_prompt, base_variables, etc.
 	if textResult.Metadata != nil {
-		for _, field := range []string{"self_play_provider", "validation_warning", "warning_type"} {
+		fields := []string{"self_play_provider", "validation_warning", "warning_type", selfplay.MetaPersonaNotes}
+		for _, field := range fields {
 			if v, ok := textResult.Metadata[field]; ok {
 				turnMeta[field] = v
 			}

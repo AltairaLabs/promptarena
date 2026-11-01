@@ -242,7 +242,8 @@ func (ce *DefaultConversationExecutor) executeNonStreamingSelfPlayTurn(
 		turnReq.Metadata["natural_termination_enabled"] = true
 	}
 
-	return ce.runSelfPlayExchanges(ctx, req, turnIdx, &scenarioTurn, func() error {
+	return ce.runSelfPlayExchanges(ctx, req, turnIdx, &scenarioTurn, func(vars map[string]string) error {
+		turnReq.SelfPlayVars = vars
 		return ce.selfPlayExecutor.ExecuteTurn(ctx, turnReq)
 	})
 }
@@ -521,8 +522,9 @@ func (ce *DefaultConversationExecutor) executeStreamingSelfPlayTurns(
 	_, _, naturalTermination := selfPlayTurnBounds(&scenarioTurn)
 	shouldStream := req.Scenario.ShouldStreamTurn(turnIdx)
 
-	return ce.runSelfPlayExchanges(ctx, req, turnIdx, &scenarioTurn, func() error {
+	return ce.runSelfPlayExchanges(ctx, req, turnIdx, &scenarioTurn, func(vars map[string]string) error {
 		turnReq := ce.buildSelfPlayTurnRequest(req, &scenarioTurn, naturalTermination)
+		turnReq.SelfPlayVars = vars
 		if shouldStream {
 			return ce.executeTurnWithStreaming(ctx, turnReq, ce.selfPlayExecutor)
 		}
@@ -531,23 +533,24 @@ func (ce *DefaultConversationExecutor) executeStreamingSelfPlayTurns(
 }
 
 // runSelfPlayExchanges runs a self-play turn's exchanges, calling exchange
-// once per exchange, up to the turn's bounds. When the turn has an objective
-// it is checked after every completed exchange; reaching it ends the turn
-// early (unless the objective says otherwise), and the outcome is recorded
-// on the conversation whatever happens.
+// once per exchange, up to the turn's bounds, with the persona's template
+// variables for that exchange. When the turn has an objective it is checked
+// after every completed exchange; reaching it ends the turn early (unless
+// the objective says otherwise), and the outcome is recorded on the
+// conversation whatever happens.
 func (ce *DefaultConversationExecutor) runSelfPlayExchanges(
 	ctx context.Context,
 	req *ConversationRequest,
 	turnIdx int,
 	scenarioTurn *arenaconfig.TurnDefinition,
-	exchange func() error,
+	exchange func(vars map[string]string) error,
 ) error {
 	minTurns, maxTurns, _ := selfPlayTurnBounds(scenarioTurn)
 	tracker := ce.newObjectiveTracker(req, turnIdx, scenarioTurn)
 	defer tracker.finish()
 
 	for i := 0; i < maxTurns; i++ {
-		err := exchange()
+		err := exchange(tracker.personaVariables(i + 1))
 		if err == nil || errors.Is(err, selfplay.ErrConversationComplete) {
 			if tracker.afterExchange(ctx, i+1) {
 				return nil
