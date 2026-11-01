@@ -102,6 +102,24 @@ func (h *EvalOrchestrator) Clone() *EvalOrchestrator {
 	return &clone
 }
 
+// Quiet returns a copy of the orchestrator that emits no events: no
+// eval.completed/failed events and no judge provider-call telemetry. It keeps
+// the metadata and workflow/composition providers, so assertions see the same
+// context. Used for intermediate checks whose results are not themselves
+// reported as evals, such as self-play objective checks between exchanges.
+func (h *EvalOrchestrator) Quiet() *EvalOrchestrator {
+	if h == nil {
+		return nil
+	}
+	quiet := *h
+	quiet.eventBus = nil
+	if h.runner != nil {
+		quiet.runner = h.runner.Clone()
+		quiet.runner.SetEmitter(nil)
+	}
+	return &quiet
+}
+
 // SetMetadata sets metadata that will be injected into every EvalContext.
 // Used to pass judge_targets, prompt_registry, and other config to eval handlers.
 func (h *EvalOrchestrator) SetMetadata(metadata map[string]any) {

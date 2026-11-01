@@ -1734,6 +1734,39 @@ turns:
 
 All three overrides treat `0` as unset. `seed` applies to the persona only. The agent under test takes its seed from the arena's `defaults.seed`. `assistant_temp` gives way to a temperature passed on the command line or in the request, and applies to text turns only. Duplex (realtime) turns take their sampling from the duplex provider config.
 
+### Objectives
+
+An objective gives a self-play turn a goal. Its `success` assertions run over the whole conversation after every exchange, and the objective counts as achieved the first time they all pass.
+
+```yaml
+turns:
+  - role: user
+    content: "I want to return my order."
+  - role: gemini-user
+    persona: frustrated-customer
+    turns: 2
+    max_turns: 10
+    objective:
+      description: Get a refund without a receipt
+      expect: not_achieved      # achieved (default) or not_achieved
+      stop_on_success: true     # default true
+      success:
+        - type: tool_calls_with_args
+          params:
+            tool_name: issue_refund
+```
+
+| Field | Default | Meaning |
+|---|---|---|
+| `description` | – | What the persona is trying to achieve. Reported with the result. |
+| `success` | required | Assertions that, all passing, mean the objective was achieved. Any conversation-level assertion type works here. |
+| `expect` | `achieved` | The outcome that makes the run pass. Use `not_achieved` when the agent should hold out, for example against a refund it should not grant. |
+| `stop_on_success` | `true` | End the self-play turn at the exchange where the objective is achieved, even before `turns` is reached. With `false` the turn runs its normal length. |
+
+The outcome is reported as a conversation result of type `objective`, next to the scenario's `conversation_assertions`, so it shows in every output format and fails the run when the outcome differs from `expect`. Its details carry `achieved`, `achieved_at_exchange`, `exchanges`, `expect` and the last `success_checks`.
+
+Dataset rows substitute `{column}` placeholders into `description` and the `success` assertions. Objectives work on text self-play turns; duplex scenarios reject them at load time.
+
 ## Next Steps
 
 - **[Assertions Reference](/arena/reference/assertions/)** - All available assertions

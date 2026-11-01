@@ -775,6 +775,25 @@ func (s *Scenario) Validate() error {
 		}
 	}
 
+	return s.validateObjectives()
+}
+
+// validateObjectives checks every turn objective. Duplex scenarios run
+// self-play through a different executor, which does not check objectives
+// yet, so they are rejected there rather than silently ignored.
+func (s *Scenario) validateObjectives() error {
+	for i := range s.Turns {
+		turn := &s.Turns[i]
+		if turn.Objective == nil {
+			continue
+		}
+		if s.Duplex != nil {
+			return fmt.Errorf("scenario %s: turns[%d].objective is not supported in duplex scenarios yet", s.ID, i)
+		}
+		if err := turn.Objective.validate(turn, i); err != nil {
+			return fmt.Errorf("scenario %s: %w", s.ID, err)
+		}
+	}
 	return nil
 }
 
@@ -1105,8 +1124,66 @@ type TurnDefinition struct {
 	// Chaos configures fault injection for resilience testing.
 	Chaos *ChaosConfig `json:"chaos,omitempty" yaml:"chaos,omitempty"`
 
+	// Objective gives a self-play turn a goal that is checked after every
+	// exchange, so the run can stop as soon as the goal is reached and the
+	// result records whether, and when, it was.
+	Objective *ObjectiveConfig `json:"objective,omitempty" yaml:"objective,omitempty"`
+
 	// Turn-level assertions (for testing only)
 	Assertions []AssertionConfig `json:"assertions,omitempty" yaml:"assertions,omitempty"`
+}
+
+// Objective expectations accepted by ObjectiveConfig.Expect.
+const (
+	ObjectiveExpectAchieved    = "achieved"
+	ObjectiveExpectNotAchieved = "not_achieved"
+)
+
+// ObjectiveConfig is a goal for a self-play turn. Success holds ordinary
+// assertions, evaluated over the whole conversation after each exchange; the
+// objective counts as achieved the first time they all pass. The run reports
+// the outcome as an "objective" conversation result, which passes when the
+// outcome matches Expect.
+type ObjectiveConfig struct {
+	// Description says what the persona is trying to achieve. It is reported
+	// with the result.
+	Description string `json:"description,omitempty" yaml:"description,omitempty"`
+	// Success lists the assertions that, all passing, mean the objective was
+	// achieved.
+	Success []AssertionConfig `json:"success" yaml:"success"`
+	// Expect is the outcome that makes the run pass: "achieved" (the default)
+	// or "not_achieved".
+	Expect string `json:"expect,omitempty" yaml:"expect,omitempty" jsonschema:"enum=achieved,enum=not_achieved"`
+	// StopOnSuccess ends the self-play turn as soon as the objective is
+	// achieved, even before its minimum turn count. Default true.
+	StopOnSuccess *bool `json:"stop_on_success,omitempty" yaml:"stop_on_success,omitempty"`
+}
+
+// ExpectsAchieved reports whether the run passes when the objective is
+// achieved.
+func (o *ObjectiveConfig) ExpectsAchieved() bool {
+	return o.Expect != ObjectiveExpectNotAchieved
+}
+
+// StopsOnSuccess reports whether the self-play turn ends once the objective
+// is achieved.
+func (o *ObjectiveConfig) StopsOnSuccess() bool {
+	return o.StopOnSuccess == nil || *o.StopOnSuccess
+}
+
+// validate checks the objective on the turn at turnIndex.
+func (o *ObjectiveConfig) validate(turn *TurnDefinition, turnIndex int) error {
+	if turn.Persona == "" {
+		return fmt.Errorf("turns[%d].objective: objectives need a self-play turn (one with a persona)", turnIndex)
+	}
+	if len(o.Success) == 0 {
+		return fmt.Errorf("turns[%d].objective.success: at least one assertion is required", turnIndex)
+	}
+	if o.Expect != "" && o.Expect != ObjectiveExpectAchieved && o.Expect != ObjectiveExpectNotAchieved {
+		return fmt.Errorf("turns[%d].objective.expect: invalid value %q, must be one of: %s, %s",
+			turnIndex, o.Expect, ObjectiveExpectAchieved, ObjectiveExpectNotAchieved)
+	}
+	return nil
 }
 
 // ChaosConfig defines fault injection rules for a turn.

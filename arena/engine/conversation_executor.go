@@ -76,6 +76,13 @@ func (ce *DefaultConversationExecutor) ExecuteConversation(ctx context.Context, 
 	if req.EventBus != nil {
 		emitter = events.NewEmitter(req.EventBus, req.RunID, req.RunID, req.ConversationID)
 	}
+	if req.objectives == nil {
+		req.objectives = &objectiveRecorder{}
+	}
+	if err := ce.objectiveRoleError(req.Scenario); err != nil {
+		return &ConversationResult{Error: err.Error(), Failed: true}
+	}
+
 	// Check if scenario uses streaming - if so, use streaming path
 	if req.Scenario.Streaming {
 		// Any turn uses streaming, use streaming executor
@@ -134,7 +141,7 @@ func (ce *DefaultConversationExecutor) runNonStreamingTurn(
 		preAssistantCount = ce.countAssistantMessages(ctx, req)
 	}
 
-	err := ce.executeNonStreamingTurn(turnCtx, req, scenarioTurn)
+	err := ce.executeNonStreamingTurn(turnCtx, req, turnIdx, scenarioTurn)
 
 	if err != nil {
 		logger.Error("Turn execution failed",
@@ -200,12 +207,13 @@ func (ce *DefaultConversationExecutor) countAssistantMessages(ctx context.Contex
 func (ce *DefaultConversationExecutor) executeNonStreamingTurn(
 	ctx context.Context,
 	req *ConversationRequest,
+	turnIdx int,
 	scenarioTurn arenaconfig.TurnDefinition,
 ) error {
 	turnReq := ce.buildTurnRequest(*req, scenarioTurn)
 
 	if ce.isSelfPlayRole(scenarioTurn.Role) {
-		return ce.executeNonStreamingSelfPlayTurn(ctx, turnReq, scenarioTurn)
+		return ce.executeNonStreamingSelfPlayTurn(ctx, req, turnIdx, turnReq, scenarioTurn)
 	}
 
 	if scenarioTurn.Role == roleUser {
@@ -218,10 +226,12 @@ func (ce *DefaultConversationExecutor) executeNonStreamingTurn(
 // executeNonStreamingSelfPlayTurn executes self-play turns without streaming
 func (ce *DefaultConversationExecutor) executeNonStreamingSelfPlayTurn(
 	ctx context.Context,
+	req *ConversationRequest,
+	turnIdx int,
 	turnReq turnexecutors.TurnRequest,
 	scenarioTurn arenaconfig.TurnDefinition,
 ) error {
-	minTurns, maxTurns, naturalTermination := selfPlayTurnBounds(&scenarioTurn)
+	_, _, naturalTermination := selfPlayTurnBounds(&scenarioTurn)
 
 	turnReq.SelfPlayRole = scenarioTurn.Role
 	turnReq.SelfPlayPersona = scenarioTurn.Persona
@@ -232,13 +242,9 @@ func (ce *DefaultConversationExecutor) executeNonStreamingSelfPlayTurn(
 		turnReq.Metadata["natural_termination_enabled"] = true
 	}
 
-	for i := 0; i < maxTurns; i++ {
-		err := ce.selfPlayExecutor.ExecuteTurn(ctx, turnReq)
-		if done, loopErr := handleCompletionError(err, i, minTurns, maxTurns); done {
-			return loopErr
-		}
-	}
-	return nil
+	return ce.runSelfPlayExchanges(ctx, req, turnIdx, &scenarioTurn, func() error {
+		return ce.selfPlayExecutor.ExecuteTurn(ctx, turnReq)
+	})
 }
 
 // executeWithStreaming runs conversation with streaming enabled, using per-turn overrides
@@ -512,19 +518,41 @@ func (ce *DefaultConversationExecutor) executeStreamingSelfPlayTurns(
 	turnIdx int,
 	scenarioTurn arenaconfig.TurnDefinition,
 ) error {
-	minTurns, maxTurns, naturalTermination := selfPlayTurnBounds(&scenarioTurn)
+	_, _, naturalTermination := selfPlayTurnBounds(&scenarioTurn)
 	shouldStream := req.Scenario.ShouldStreamTurn(turnIdx)
 
-	for i := 0; i < maxTurns; i++ {
+	return ce.runSelfPlayExchanges(ctx, req, turnIdx, &scenarioTurn, func() error {
 		turnReq := ce.buildSelfPlayTurnRequest(req, &scenarioTurn, naturalTermination)
-
-		var err error
 		if shouldStream {
-			err = ce.executeTurnWithStreaming(ctx, turnReq, ce.selfPlayExecutor)
-		} else {
-			err = ce.selfPlayExecutor.ExecuteTurn(ctx, turnReq)
+			return ce.executeTurnWithStreaming(ctx, turnReq, ce.selfPlayExecutor)
 		}
+		return ce.selfPlayExecutor.ExecuteTurn(ctx, turnReq)
+	})
+}
 
+// runSelfPlayExchanges runs a self-play turn's exchanges, calling exchange
+// once per exchange, up to the turn's bounds. When the turn has an objective
+// it is checked after every completed exchange; reaching it ends the turn
+// early (unless the objective says otherwise), and the outcome is recorded
+// on the conversation whatever happens.
+func (ce *DefaultConversationExecutor) runSelfPlayExchanges(
+	ctx context.Context,
+	req *ConversationRequest,
+	turnIdx int,
+	scenarioTurn *arenaconfig.TurnDefinition,
+	exchange func() error,
+) error {
+	minTurns, maxTurns, _ := selfPlayTurnBounds(scenarioTurn)
+	tracker := ce.newObjectiveTracker(req, turnIdx, scenarioTurn)
+	defer tracker.finish()
+
+	for i := 0; i < maxTurns; i++ {
+		err := exchange()
+		if err == nil || errors.Is(err, selfplay.ErrConversationComplete) {
+			if tracker.afterExchange(ctx, i+1) {
+				return nil
+			}
+		}
 		if done, loopErr := handleCompletionError(err, i, minTurns, maxTurns); done {
 			return loopErr
 		}
@@ -694,6 +722,15 @@ func (ce *DefaultConversationExecutor) ExecuteConversationStream(ctx context.Con
 // executeStreamingConversation handles the main streaming conversation logic
 func (ce *DefaultConversationExecutor) executeStreamingConversation(ctx context.Context, req ConversationRequest, outChan chan<- ConversationStreamChunk) {
 	result := ce.initializeStreamResult(req)
+
+	// This path runs one exchange per self-play turn and has no objective
+	// check, so an objective here would be silently skipped.
+	if hasObjectives(req.Scenario) {
+		result.Failed = true
+		ce.sendErrorChunk(outChan, result, fmt.Errorf(
+			"scenario %s: self-play objectives are not supported on the streaming conversation path", req.Scenario.ID))
+		return
+	}
 
 	for turnIdx, scenarioTurn := range req.Scenario.Turns {
 		if !ce.executeStreamingTurnAndSendChunks(ctx, req, turnIdx, scenarioTurn, result, outChan) {
@@ -903,8 +940,10 @@ func (ce *DefaultConversationExecutor) buildResultFromStateStore(
 	// stays bounded by its own timeout.
 	ctx = scoringContext(ctx)
 
-	// Evaluate conversation-level assertions, if any
+	// Evaluate conversation-level assertions, if any, then add each
+	// self-play objective's outcome alongside them.
 	convAssertionResults := ce.evaluateConversationAssertions(ctx, req, messages)
+	convAssertionResults = append(convAssertionResults, req.objectives.results()...)
 
 	// Run pack-level evals at session end. These are non-gating
 	// observations — same machinery that fires in production. They

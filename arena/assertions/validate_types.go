@@ -53,6 +53,14 @@ func collectScenarioErrors(
 				errs = append(errs, formatUnknownType(name, loc, a.Type, registeredTypes))
 			}
 		}
+		if obj := scenario.Turns[i].Objective; obj != nil {
+			for _, a := range obj.Success {
+				if a.Type != "" && !registry.Has(a.Type) {
+					loc := fmt.Sprintf("turns[%d].objective.success", i)
+					errs = append(errs, formatUnknownType(name, loc, a.Type, registeredTypes))
+				}
+			}
+		}
 	}
 	return errs
 }
