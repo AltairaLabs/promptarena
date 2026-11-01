@@ -1715,7 +1715,7 @@ spec:
 | Mode | Behaviour |
 |---|---|
 | `user` (default) | Each generated turn is checked against the shape of a short user message: at most two sentences, at most two questions, no assistant-like phrasing ("step 1:", "I recommend"). A turn that fails gets a `validation_warning` in its metadata. The turn is still sent. |
-| `adversarial` | Skips those checks. Use it for personas whose turns are long or structured on purpose, such as pasted documents, multi-part requests or role-play setups. Pair it with a higher `defaults.max_tokens`. |
+| `adversarial` | Skips those checks. Use it for personas that write long or structured turns, such as pasted documents, multi-part requests or role-play setups. Pair it with a higher `defaults.max_tokens`. |
 
 ### Turn-Level Control
 
