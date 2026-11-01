@@ -91,3 +91,15 @@ func TestValidateAssertionTypes(t *testing.T) {
 		assert.Contains(t, errs[0], "contains")
 	})
 }
+
+func TestValidateAssertionTypes_ObjectiveSuccess(t *testing.T) {
+	scenarios := map[string]*arenaconfig.Scenario{
+		"s": {Turns: []arenaconfig.TurnDefinition{{
+			Persona:   "p",
+			Objective: &arenaconfig.ObjectiveConfig{Success: []arenaconfig.AssertionConfig{{Type: "contians"}}},
+		}}},
+	}
+	errs := ValidateAssertionTypes(scenarios, evals.NewEvalTypeRegistry())
+	require.Len(t, errs, 1)
+	assert.Contains(t, errs[0], "turns[0].objective.success")
+}

@@ -88,6 +88,11 @@ type ConversationRequest struct {
 	// isolated workflow metadata). If nil, the executor's shared orchestrator is used.
 	EvalOrchestrator *EvalOrchestrator
 
+	// objectives collects the outcome of each self-play turn objective in
+	// this conversation. ExecuteConversation sets it; a pointer, so copies of
+	// the request share one recorder.
+	objectives *objectiveRecorder
+
 	// VoiceSTT is the STT provider for the VAD voice path (Task 7). Nil in ASM mode.
 	// Set from --voice-stt by the chat command; consumed by runInteractiveVADVoice.
 	VoiceSTT *config.Provider

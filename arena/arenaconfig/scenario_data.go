@@ -288,6 +288,11 @@ func (s *Scenario) ForDataRow(row DataRow) *Scenario {
 		out.Turns[i] = s.Turns[i]
 		out.Turns[i].Parts = append([]TurnContentPart(nil), s.Turns[i].Parts...)
 		out.Turns[i].Assertions = append([]AssertionConfig(nil), s.Turns[i].Assertions...)
+		if obj := s.Turns[i].Objective; obj != nil {
+			objCopy := *obj
+			objCopy.Success = append([]AssertionConfig(nil), obj.Success...)
+			out.Turns[i].Objective = &objCopy
+		}
 	}
 	out.ConversationAssertions = append([]AssertionConfig(nil), s.ConversationAssertions...)
 	out.SeedMemories = append([]SeedMemoryEntry(nil), s.SeedMemories...)
@@ -311,6 +316,10 @@ func (s *Scenario) walkDataTemplates(fn func(string) string) {
 			}
 		}
 		walkAssertionTemplates(turn.Assertions, fn)
+		if turn.Objective != nil {
+			turn.Objective.Description = fn(turn.Objective.Description)
+			walkAssertionTemplates(turn.Objective.Success, fn)
+		}
 	}
 	walkAssertionTemplates(s.ConversationAssertions, fn)
 	for i := range s.SeedMemories {

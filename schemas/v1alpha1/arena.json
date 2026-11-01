@@ -2208,6 +2208,39 @@
       "additionalProperties": false,
       "type": "object"
     },
+    "ObjectiveConfig": {
+      "properties": {
+        "description": {
+          "type": "string",
+          "description": "Description says what the persona is trying to achieve. It is reported\nwith the result."
+        },
+        "success": {
+          "items": {
+            "$ref": "#/$defs/AssertionConfig"
+          },
+          "type": "array",
+          "description": "Success lists the assertions that, all passing, mean the objective was\nachieved."
+        },
+        "expect": {
+          "type": "string",
+          "enum": [
+            "achieved",
+            "not_achieved"
+          ],
+          "description": "Expect is the outcome that makes the run pass: \"achieved\" (the default)\nor \"not_achieved\"."
+        },
+        "stop_on_success": {
+          "type": "boolean",
+          "description": "StopOnSuccess ends the self-play turn as soon as the objective is\nachieved, even before its minimum turn count. Default true."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "success"
+      ],
+      "description": "ObjectiveConfig is a goal for a self-play turn."
+    },
     "Obligation": {
       "properties": {
         "applies_to": {
@@ -4263,6 +4296,10 @@
         "chaos": {
           "$ref": "#/$defs/ChaosConfig",
           "description": "Chaos configures fault injection for resilience testing."
+        },
+        "objective": {
+          "$ref": "#/$defs/ObjectiveConfig",
+          "description": "Objective gives a self-play turn a goal that is checked after every\nexchange, so the run can stop as soon as the goal is reached and the\nresult records whether, and when, it was."
         },
         "assertions": {
           "items": {
