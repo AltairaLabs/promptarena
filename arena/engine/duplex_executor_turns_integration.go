@@ -654,7 +654,7 @@ func (de *DuplexConversationExecutor) processSelfPlayDuplexTurn(
 	history := selfplayHistoryView(de.getConversationHistory(ctx, req))
 
 	generatedText, textResult, err := generateSelfplayText(
-		ctx, textGen, history, req.Scenario.ID, selfplayTurnNum, turnIdx)
+		ctx, textGen, history, req.Scenario.ID, selfplayTurnNum, turnIdx, turn)
 	if err != nil {
 		return err
 	}
@@ -697,8 +697,13 @@ func generateSelfplayText(
 	history []types.Message,
 	scenarioID string,
 	selfplayTurnNum, turnIdx int,
+	turn *arenaconfig.TurnDefinition,
 ) (string, *pipeline.ExecutionResult, error) {
-	opts := &selfplay.GeneratorOptions{SelfplayTurnIndex: selfplayTurnNum}
+	opts := &selfplay.GeneratorOptions{
+		SelfplayTurnIndex: selfplayTurnNum,
+		Temperature:       positiveFloat32OrNil(turn.UserTemp),
+		Seed:              seedOrNil(turn.Seed),
+	}
 	textResult, err := textGen.NextUserTurn(ctx, history, scenarioID, opts)
 	if err != nil {
 		return "", nil, fmt.Errorf("failed to generate text for turn %d: %w", turnIdx, err)

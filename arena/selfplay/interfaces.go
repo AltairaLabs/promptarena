@@ -52,4 +52,12 @@ type GeneratorOptions struct {
 
 	// Emitter is an optional event emitter for provider call telemetry.
 	Emitter *events.Emitter
+
+	// Temperature overrides the persona's default temperature for this turn
+	// (the scenario turn's user_temp). Nil keeps the persona default.
+	Temperature *float32
+
+	// Seed is sent to the provider for this turn (the scenario turn's seed).
+	// Nil sends no seed.
+	Seed *int
 }

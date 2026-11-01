@@ -97,6 +97,12 @@ type TurnRequest struct {
 	ScriptedParts   []arenaconfig.TurnContentPart // ScriptedExecutor: multimodal parts (precedence)
 	SelfPlayRole    string                        // SelfPlayExecutor: the self-play role
 	SelfPlayPersona string                        // SelfPlayExecutor: the persona to use
+	// SelfPlayUserTemp overrides the persona's temperature (the turn's
+	// user_temp). Nil keeps the persona default.
+	SelfPlayUserTemp *float32
+	// SelfPlaySeed is the seed sent with the persona's generation call (the
+	// turn's seed). Nil sends none.
+	SelfPlaySeed *int
 
 	// ConsentOverrides controls consent simulation for client-side tools.
 	// Keys are tool names, values are "grant", "deny", or "timeout".

@@ -353,7 +353,7 @@ func (ce *DefaultConversationExecutor) buildTurnRequest(
 		metadata["prompt_registry"] = ce.promptRegistry
 	}
 
-	temperature := resolveTurnTemperature(req)
+	temperature := resolveTurnTemperature(req, &scenarioTurn)
 	maxTokens := resolveTurnMaxTokens(req)
 	promptVars := buildTurnPromptVars(req)
 	activeComposition := resolveActiveComposition(req)
@@ -389,16 +389,32 @@ func (ce *DefaultConversationExecutor) buildTurnRequest(
 		CallPack:              req.CallPack,
 		ToolRegistry:          req.ToolRegistry,
 		SkillToolGrants:       req.SkillToolGrants,
+		SelfPlayUserTemp:      positiveFloat32OrNil(scenarioTurn.UserTemp),
+		SelfPlaySeed:          seedOrNil(scenarioTurn.Seed),
 	}
 }
 
 // resolveTurnTemperature determines the temperature for a turn: a per-request
-// override wins, otherwise the config default (0 lets the provider decide).
-func resolveTurnTemperature(req ConversationRequest) float64 {
+// override wins, then the turn's assistant_temp, otherwise the config default
+// (0 lets the provider decide).
+func resolveTurnTemperature(req ConversationRequest, scenarioTurn *arenaconfig.TurnDefinition) float64 {
 	if req.Temperature != nil {
 		return *req.Temperature
 	}
+	if scenarioTurn != nil && scenarioTurn.AssistantTemp > 0 {
+		return float64(scenarioTurn.AssistantTemp)
+	}
 	return float64(req.Config.Defaults.Temperature)
+}
+
+// positiveFloat32OrNil returns a pointer to v, or nil when v is not positive.
+// The turn's temperature overrides are plain float32 with omitempty, so zero
+// means "not set" rather than "temperature 0".
+func positiveFloat32OrNil(v float32) *float32 {
+	if v <= 0 {
+		return nil
+	}
+	return &v
 }
 
 // resolveTurnMaxTokens determines the max_tokens for a turn: a per-request

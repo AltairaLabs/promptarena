@@ -358,10 +358,9 @@ spec:
 		t.Errorf("Expected default temperature 0.7, got %f", *persona.Defaults.Temperature)
 	}
 
-	if persona.Defaults.Seed == nil {
-		t.Error("Expected default seed to be set")
-	} else if *persona.Defaults.Seed != 42 {
-		t.Errorf("Expected default seed 42, got %d", *persona.Defaults.Seed)
+	// No seed is defaulted: a persona sends one only when it declares one.
+	if persona.Defaults.Seed != nil {
+		t.Errorf("Expected no default seed, got %d", *persona.Defaults.Seed)
 	}
 }
 

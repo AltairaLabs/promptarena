@@ -193,6 +193,7 @@ Fields under `spec`:
 | `fragments` | array |  | NEW: Template system (preferred) |
 | `goals` | array | ✓ | — |
 | `id` | string |  | — |
+| `mode` | string |  | Mode selects how the persona's generated turns are checked. "user" (the default when empty) warns when a turn stops sounding like a short user message — more than two sentences, more than two questions, or assistant-like phrasing. "adversarial" skips those checks, for personas whose turns are deliberately long or structured (pasted documents, multi-part requests, role-play setups). |
 | `optional_vars` | object |  | Variables with default values |
 | `prompt_activity` | string |  | DEPRECATED: Legacy prompt builder reference |
 | `required_vars` | array |  | Variables that must be provided |

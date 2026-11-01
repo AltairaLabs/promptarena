@@ -841,6 +841,9 @@ func (c *Config) loadSelfPlayResources(configPath string) error {
 			return fmt.Errorf("persona %q defined in both persona_specs and personas file refs", id)
 		}
 		spec.ID = id
+		if err := validatePersonaGeneration(spec); err != nil {
+			return err
+		}
 		c.LoadedPersonas[id] = spec
 	}
 

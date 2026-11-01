@@ -1088,7 +1088,7 @@ type TurnDefinition struct {
 	MaxTurns      int     `json:"max_turns,omitempty" yaml:"max_turns,omitempty"`
 	AssistantTemp float32 `json:"assistant_temp,omitempty" yaml:"assistant_temp,omitempty"` // Override assistant temperature
 	UserTemp      float32 `json:"user_temp,omitempty" yaml:"user_temp,omitempty"`           // Override user temperature
-	Seed          int     `json:"seed,omitempty" yaml:"seed,omitempty"`                     // Override seed
+	Seed          int     `json:"seed,omitempty" yaml:"seed,omitempty"`                     // Override the self-play persona's seed
 
 	// Streaming control - if nil, uses scenario-level streaming setting
 	Streaming *bool `json:"streaming,omitempty" yaml:"streaming,omitempty"` // Override streaming for this turn

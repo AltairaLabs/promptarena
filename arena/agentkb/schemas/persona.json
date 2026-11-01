@@ -62,6 +62,11 @@
         },
         "seed": {
           "type": "integer"
+        },
+        "max_tokens": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "MaxTokens caps each generated turn exactly. Unset keeps the built-in cap\nof 200 tokens (300 when natural termination is enabled, to leave room\nfor the completion marker)."
         }
       },
       "additionalProperties": false,
@@ -165,6 +170,14 @@
         },
         "defaults": {
           "$ref": "#/$defs/PersonaDefaults"
+        },
+        "mode": {
+          "type": "string",
+          "enum": [
+            "user",
+            "adversarial"
+          ],
+          "description": "Mode selects how the persona's generated turns are checked. \"user\"\n(the default when empty) warns when a turn stops sounding like a short\nuser message — more than two sentences, more than two questions, or\nassistant-like phrasing. \"adversarial\" skips those checks, for personas\nwhose turns are deliberately long or structured (pasted documents,\nmulti-part requests, role-play setups)."
         }
       },
       "additionalProperties": false,
