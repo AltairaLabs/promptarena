@@ -482,6 +482,10 @@ func convertToEngineRunResult(sr *statestore.RunResult) engine.RunResult {
 		EvalResults: sr.EvalResults,
 	}
 
+	if tr, ok := sr.TrialResults.(*engine.TrialResults); ok {
+		result.TrialResults = tr
+	}
+
 	// Convert A2AAgents
 	result.A2AAgents = convertA2AAgentsToEngine(sr.A2AAgents)
 

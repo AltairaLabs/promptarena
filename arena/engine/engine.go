@@ -915,7 +915,7 @@ func (e *Engine) ExecuteRuns(ctx context.Context, plan *RunPlan, concurrency int
 
 	// Aggregate trial results for scenarios with Trials > 1
 	if arenaStore, ok := e.stateStore.(*arenastore.ArenaStateStore); ok {
-		runIDs = AggregateTrialResults(arenaStore, runIDs, plan.Combinations)
+		runIDs = aggregateTrialResults(arenaStore, runIDs, plan.Combinations, e.thresholdsFor)
 	}
 
 	if len(executionErrors) > 0 {

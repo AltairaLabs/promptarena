@@ -131,6 +131,34 @@ func (s *ArenaStateStore) SetTrialResults(ctx context.Context, runID string, tri
 	return nil
 }
 
+// SetAssertionResults replaces a run's messages, conversation assertion
+// results and error. Trial aggregation uses it to stamp the verdict across
+// trials onto the run that represents the trial group.
+func (s *ArenaStateStore) SetAssertionResults(
+	ctx context.Context, runID string, messages []types.Message, convResults []ConversationValidationResult,
+	runErr string,
+) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	arenaState, exists := s.conversations[runID]
+	if !exists {
+		return fmt.Errorf("conversation %s not found", runID)
+	}
+	if arenaState.RunMetadata == nil {
+		return fmt.Errorf("run metadata not found for %s", runID)
+	}
+	cloned := make([]types.Message, len(messages))
+	for i := range messages {
+		cloned[i] = s.deepCloneMessage(&messages[i])
+	}
+	arenaState.Messages = cloned
+	arenaState.RunMetadata.ConversationAssertionResults = append(
+		[]ConversationValidationResult(nil), convResults...)
+	arenaState.RunMetadata.Error = runErr
+	return nil
+}
+
 // buildConversationAssertionsSummary converts raw conversation assertion results into summary format
 func buildConversationAssertionsSummary(results []ConversationValidationResult) AssertionsSummary {
 	total := len(results)

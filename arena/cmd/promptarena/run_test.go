@@ -954,3 +954,12 @@ func TestContainsHelper(t *testing.T) {
 		})
 	}
 }
+
+func TestConvertToEngineRunResult_TrialResults(t *testing.T) {
+	tr := &engine.TrialResults{TrialCount: 3, PassRate: 2.0 / 3.0, Passed: true}
+	got := convertToEngineRunResult(&statestore.RunResult{RunID: "r1", TrialResults: tr})
+	assert.Same(t, tr, got.TrialResults, "trial results reach the JSON output")
+
+	got = convertToEngineRunResult(&statestore.RunResult{RunID: "r2"})
+	assert.Nil(t, got.TrialResults)
+}

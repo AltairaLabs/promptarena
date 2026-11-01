@@ -39,6 +39,8 @@ const (
 	assertKeyConfig  = "config"
 	assertKeyParams  = "params"
 	assertKeySkipped = "skipped"
+
+	assertKeyPassThreshold = "pass_threshold"
 )
 
 // ArenaAssertionStage validates assertions after LLM responses.
@@ -299,7 +301,7 @@ func (s *ArenaAssertionStage) filterAssertionsByWhen(
 					assertKeySkipped: true,
 					assertKeyMessage: ac.Message,
 					assertKeyDetails: map[string]interface{}{"skip_reason": reason},
-					assertKeyConfig:  map[string]interface{}{assertKeyType: ac.Type, assertKeyParams: ac.Params},
+					assertKeyConfig:  reportConfig(&ac),
 				})
 				continue
 			}
@@ -372,12 +374,26 @@ func buildSingleAssertionResult(
 	}
 	// Attach the original assertion config so reports can show what was tested
 	if cfg != nil {
-		resultMap[assertKeyConfig] = map[string]interface{}{
-			assertKeyType:   cfg.Type,
-			assertKeyParams: cfg.Params,
-		}
+		resultMap[assertKeyConfig] = reportConfig(cfg)
 	}
 	return resultMap, displayType
+}
+
+// reportConfig is the assertion config attached to a turn result. It carries
+// the configured message and pass_threshold when set, which trial aggregation
+// reads back to name and judge the assertion across trials.
+func reportConfig(cfg *assertions.AssertionConfig) map[string]interface{} {
+	m := map[string]interface{}{
+		assertKeyType:   cfg.Type,
+		assertKeyParams: cfg.Params,
+	}
+	if cfg.Message != "" {
+		m[assertKeyMessage] = cfg.Message
+	}
+	if cfg.PassThreshold != nil {
+		m[assertKeyPassThreshold] = *cfg.PassThreshold
+	}
+	return m
 }
 
 // buildWhenParams builds parameters for when-condition evaluation.
