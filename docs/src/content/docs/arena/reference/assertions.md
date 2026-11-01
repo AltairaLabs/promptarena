@@ -331,7 +331,16 @@ assertions:
 
 - Default: `1.0` (all trials must pass)
 - Range: `0.0` to `1.0`
+- Applies to turn `assertions` and `conversation_assertions` alike
 - Useful for non-deterministic LLM outputs where some variance is acceptable
+
+How the verdict is reported:
+
+- **One run per scenario.** A scenario with `trials` is reported as one run: the first trial that ran without error. Its assertion results carry the verdict across trials, and each message ends with the count, for example `Should usually include a recommendation (passed 4 of 5 trials, pass_threshold 0.80)`. The count is also in the result's `details.trials`.
+- **Failing a turn assertion.** On a single run, a failing turn assertion ends the run with an error. Across trials, a turn assertion below its threshold sets the reported run's error to `turn assertions below pass_threshold across <n> trials: ...`.
+- **Failing a conversation assertion.** A conversation assertion below its threshold is reported as failed.
+- **Errored trials.** A trial that ended in an error, such as a provider failure, counts as a failure of every assertion it has no result for. A trial stopped early by a failing turn assertion counts that failure once, not against the turns it never reached. If the group fails only because trials errored, the reported run's error is `<n> of <m> trials errored: <first error>`.
+- **`trial_results` in the JSON result.** The run's JSON result has a `trial_results` block with `passed`, `trial_count`, `pass_rate`, `flakiness_score`, `errored_trials` and `per_assertion_stats`. Each entry in `per_assertion_stats` holds that assertion's `name`, `pass_rate`, `pass_count`, `fail_count`, `pass_threshold` and `passed`. `trial_results.passed` always matches whether the reported run passed.
 
 ## Best Practices
 

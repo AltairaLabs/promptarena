@@ -79,25 +79,33 @@ already exits non-zero on any assertion failure, wiring the gate is usually
 "make this step a required check."
 
 For noisier real-provider runs, tune the assertions themselves rather than the CI
-step. Use `pass_threshold` to tolerate stochastic noise and `trials` to run a
-scenario multiple times:
+step. Set `trials` on the scenario to run it several times, and
+`pass_threshold` on an assertion to say what share of those trials it must pass:
 
 ```yaml
-assertions:
-  - type: assertion
-    params:
-      eval_type: llm_judge
-      eval_params:
-        criteria: "Agent stayed professional under pressure"
-      min_score: 0.7
-    pass_threshold: 0.8     # 80% of trials must pass
-
-  - type: tools_called
-    params:
-      tool_names: [lookup_order]
-    trials: 5               # run the same scenario 5 times
-    pass_threshold: 0.8     # 4 of 5 must pass
+spec:
+  trials: 5                 # run the scenario 5 times
+  turns:
+    - role: user
+      content: "Where is order 1234?"
+      assertions:
+        - type: assertion
+          params:
+            eval_type: llm_judge
+            eval_params:
+              criteria: "Agent stayed professional under pressure"
+            min_score: 0.7
+          pass_threshold: 0.8   # 4 of 5 trials must pass
+  conversation_assertions:
+    - type: tools_called
+      params:
+        tool_names: [lookup_order]
+      pass_threshold: 0.8       # 4 of 5 trials must pass
 ```
+
+An assertion without `pass_threshold` must pass in every trial. The run
+reported for the scenario carries the verdict across trials, so the exit code,
+JUnit and CSV fail when any assertion falls below its threshold.
 
 | Gate type | Assertion shape | Why |
 |---|---|---|

@@ -568,3 +568,18 @@ func TestArenaAssertionStage_AllAssertionsRunOnFailure(t *testing.T) {
 	assert.Equal(t, 2, assertionsResult["total"])
 	assert.Equal(t, 1, assertionsResult["failed"])
 }
+
+func TestReportConfig_PassThreshold(t *testing.T) {
+	threshold := 0.8
+	with := reportConfig(&assertions.AssertionConfig{Type: "min_length", PassThreshold: &threshold})
+	assert.Equal(t, 0.8, with["pass_threshold"])
+
+	without := reportConfig(&assertions.AssertionConfig{Type: "min_length"})
+	_, has := without["pass_threshold"]
+	assert.False(t, has, "an unset pass_threshold is omitted so the default applies")
+}
+
+func TestReportConfig_Message(t *testing.T) {
+	got := reportConfig(&assertions.AssertionConfig{Type: "contains", Message: "mentions the window"})
+	assert.Equal(t, "mentions the window", got["message"])
+}

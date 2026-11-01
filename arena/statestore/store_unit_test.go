@@ -776,3 +776,37 @@ func TestClear(t *testing.T) {
 		t.Error("expected error loading cleared conversation")
 	}
 }
+
+func TestSetAssertionResults(t *testing.T) {
+	store := NewArenaStateStore()
+	ctx := context.Background()
+
+	if err := store.SetAssertionResults(ctx, "missing", nil, nil, ""); err == nil {
+		t.Fatal("expected an error for an unknown run")
+	}
+	if err := store.Save(ctx, &runtimestore.ConversationState{ID: "run-1"}); err != nil {
+		t.Fatalf("Save: %v", err)
+	}
+	if err := store.SetAssertionResults(ctx, "run-1", nil, nil, ""); err == nil {
+		t.Fatal("expected an error for a run without metadata")
+	}
+	if err := store.SaveMetadata(ctx, "run-1", &RunMetadata{RunID: "run-1"}); err != nil {
+		t.Fatalf("SaveMetadata: %v", err)
+	}
+
+	msgs := []types.Message{{Role: "assistant", Content: "hi"}}
+	conv := []ConversationValidationResult{{Type: "contains", Passed: false}}
+	if err := store.SetAssertionResults(ctx, "run-1", msgs, conv, "below threshold"); err != nil {
+		t.Fatalf("SetAssertionResults: %v", err)
+	}
+	msgs[0].Content = "mutated after the call"
+	conv[0].Passed = true
+
+	rr, err := store.GetResult(ctx, "run-1")
+	if err != nil {
+		t.Fatalf("GetResult: %v", err)
+	}
+	if rr.Messages[0].Content != "hi" || rr.ConversationAssertions.Passed || rr.Error != "below threshold" {
+		t.Fatalf("stored state should be a copy: %+v", rr)
+	}
+}
