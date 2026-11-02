@@ -1157,6 +1157,35 @@ type ObjectiveConfig struct {
 	// StopOnSuccess ends the self-play turn as soon as the objective is
 	// achieved, even before its minimum turn count. Default true.
 	StopOnSuccess *bool `json:"stop_on_success,omitempty" yaml:"stop_on_success,omitempty"`
+	// Rewind drops an exchange from the conversation when its checks all
+	// pass, so the persona tries again from before it.
+	Rewind *ObjectiveRewindConfig `json:"rewind,omitempty" yaml:"rewind,omitempty"`
+}
+
+// DefaultObjectiveRewindMax is how many exchanges a turn may rewind when
+// rewind.max is not set.
+const DefaultObjectiveRewindMax = 3
+
+// ObjectiveRewindConfig drops exchanges from a self-play turn. Until the
+// objective is achieved, the When assertions are checked after each exchange;
+// when they all pass, the exchange's messages are removed from the
+// conversation, so neither the persona nor the agent sees them again, and the
+// persona is told what was removed. Only the messages are removed: tool side
+// effects, workflow state and memory writes stay. Rewound exchanges still
+// count towards the turn's max_turns, and their cost is still counted.
+type ObjectiveRewindConfig struct {
+	// When lists the assertions that, all passing on an exchange, rewind it.
+	When []AssertionConfig `json:"when" yaml:"when"`
+	// Max caps how many exchanges the turn may rewind. Default 3.
+	Max int `json:"max,omitempty" yaml:"max,omitempty" jsonschema:"minimum=0"`
+}
+
+// MaxRewinds returns how many exchanges the turn may rewind.
+func (r *ObjectiveRewindConfig) MaxRewinds() int {
+	if r.Max == 0 {
+		return DefaultObjectiveRewindMax
+	}
+	return r.Max
 }
 
 // ExpectsAchieved reports whether the run passes when the objective is
@@ -1182,6 +1211,14 @@ func (o *ObjectiveConfig) validate(turn *TurnDefinition, turnIndex int) error {
 	if o.Expect != "" && o.Expect != ObjectiveExpectAchieved && o.Expect != ObjectiveExpectNotAchieved {
 		return fmt.Errorf("turns[%d].objective.expect: invalid value %q, must be one of: %s, %s",
 			turnIndex, o.Expect, ObjectiveExpectAchieved, ObjectiveExpectNotAchieved)
+	}
+	if o.Rewind != nil {
+		if len(o.Rewind.When) == 0 {
+			return fmt.Errorf("turns[%d].objective.rewind.when: at least one assertion is required", turnIndex)
+		}
+		if o.Rewind.Max < 0 {
+			return fmt.Errorf("turns[%d].objective.rewind.max: must not be negative, got %d", turnIndex, o.Rewind.Max)
+		}
 	}
 	return nil
 }

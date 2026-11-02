@@ -60,6 +60,14 @@ func collectScenarioErrors(
 					errs = append(errs, formatUnknownType(name, loc, a.Type, registeredTypes))
 				}
 			}
+			if obj.Rewind != nil {
+				for _, a := range obj.Rewind.When {
+					if a.Type != "" && !registry.Has(a.Type) {
+						loc := fmt.Sprintf("turns[%d].objective.rewind.when", i)
+						errs = append(errs, formatUnknownType(name, loc, a.Type, registeredTypes))
+					}
+				}
+			}
 		}
 	}
 	return errs

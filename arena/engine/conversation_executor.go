@@ -190,7 +190,7 @@ func (ce *DefaultConversationExecutor) runNonStreamingTurn(
 // whether a turn actually produced a new assistant message. Returns 0 on any
 // load error (the guard then simply skips stamping).
 func (ce *DefaultConversationExecutor) countAssistantMessages(ctx context.Context, req *ConversationRequest) int {
-	_, messages, err := ce.loadMessagesFromStateStore(ctx, req)
+	messages, err := ce.loadMessagesFromStateStore(ctx, req)
 	if err != nil {
 		return 0
 	}
@@ -550,10 +550,17 @@ func (ce *DefaultConversationExecutor) runSelfPlayExchanges(
 	defer tracker.finish()
 
 	for i := 0; i < maxTurns; i++ {
+		tracker.beforeExchange(ctx)
 		err := exchange(tracker.personaVariables(i + 1))
 		if err == nil || errors.Is(err, selfplay.ErrConversationComplete) {
-			if tracker.afterExchange(ctx, i+1) {
+			stop, rewound := tracker.afterExchange(ctx, i+1)
+			if stop {
 				return nil
+			}
+			if rewound {
+				// The persona ending the conversation was part of the
+				// exchange that was removed, so the turn carries on.
+				continue
 			}
 		}
 		if done, loopErr := handleCompletionError(err, i, minTurns, maxTurns); done {
@@ -913,7 +920,7 @@ func (ce *DefaultConversationExecutor) fireSessionUpdate(ctx context.Context, re
 	// so the event carries the transcript up to and including this turn.
 	// Failures here are non-fatal — we emit the update with an empty slice
 	// rather than silently dropping the event.
-	_, messages, _ := ce.loadMessagesFromStateStore(ctx, req)
+	messages, _ := ce.loadMessagesFromStateStore(ctx, req)
 	_ = reg.RunSessionUpdate(ctx, hooks.SessionEvent{
 		SessionID:      sessionID,
 		ConversationID: sessionID,
@@ -927,12 +934,13 @@ func (ce *DefaultConversationExecutor) fireSessionUpdate(ctx context.Context, re
 func (ce *DefaultConversationExecutor) buildResultFromStateStore(
 	ctx context.Context, req *ConversationRequest,
 ) *ConversationResult {
-	_, messages, err := ce.loadMessagesFromStateStore(ctx, req)
+	messages, err := ce.loadMessagesFromStateStore(ctx, req)
 	if err != nil {
 		return ce.createErrorResult(err.Error())
 	}
 
 	totalCost, toolStats := ce.calculateTotalsFromMessages(messages)
+	addCostFromMetaKey(&totalCost, ce.conversationMetadata(ctx, req), rewoundCostMetaKey)
 	isSelfPlay, personaID := ce.extractSelfPlayInfo(req.Scenario)
 
 	// Collect media outputs from assistant messages
@@ -1102,22 +1110,46 @@ func buildMetadataExtras(req *ConversationRequest, promptRegistry *prompt.Regist
 	return extras
 }
 
+// stateStoreFor returns the request's state store.
+func stateStoreFor(req *ConversationRequest) (statestore.Store, error) {
+	if req.StateStoreConfig == nil || req.StateStoreConfig.Store == nil {
+		return nil, errors.New("StateStore is required but not configured")
+	}
+	store, ok := req.StateStoreConfig.Store.(statestore.Store)
+	if !ok {
+		return nil, errors.New("invalid StateStore implementation")
+	}
+	return store, nil
+}
+
+// conversationMetadata returns the stored conversation's metadata, or nil
+// when it cannot be loaded.
+func (ce *DefaultConversationExecutor) conversationMetadata(
+	ctx context.Context, req *ConversationRequest,
+) map[string]interface{} {
+	store, err := stateStoreFor(req)
+	if err != nil {
+		return nil
+	}
+	state, err := store.Load(ctx, req.ConversationID)
+	if err != nil {
+		return nil
+	}
+	return state.Metadata
+}
+
 // loadMessagesFromStateStore loads messages from the state store
 func (ce *DefaultConversationExecutor) loadMessagesFromStateStore(
 	ctx context.Context, req *ConversationRequest,
-) (statestore.Store, []types.Message, error) {
-	if req.StateStoreConfig == nil || req.StateStoreConfig.Store == nil {
-		return nil, nil, errors.New("StateStore is required but not configured")
-	}
-
-	store, ok := req.StateStoreConfig.Store.(statestore.Store)
-	if !ok {
-		return nil, nil, errors.New("invalid StateStore implementation")
+) ([]types.Message, error) {
+	store, err := stateStoreFor(req)
+	if err != nil {
+		return nil, err
 	}
 
 	state, err := store.Load(ctx, req.ConversationID)
 	if err != nil && !errors.Is(err, statestore.ErrNotFound) {
-		return nil, nil, fmt.Errorf("failed to load conversation from StateStore: %v", err)
+		return nil, fmt.Errorf("failed to load conversation from StateStore: %v", err)
 	}
 
 	var messages []types.Message
@@ -1125,7 +1157,7 @@ func (ce *DefaultConversationExecutor) loadMessagesFromStateStore(
 		messages = state.Messages
 	}
 
-	return store, messages, nil
+	return messages, nil
 }
 
 // createErrorResult creates a ConversationResult for error cases
@@ -1170,14 +1202,7 @@ func (ce *DefaultConversationExecutor) aggregateMessageCost(totalCost, msgCost *
 	if msgCost == nil {
 		return
 	}
-
-	totalCost.InputTokens += msgCost.InputTokens
-	totalCost.OutputTokens += msgCost.OutputTokens
-	totalCost.CachedTokens += msgCost.CachedTokens
-	totalCost.InputCostUSD += msgCost.InputCostUSD
-	totalCost.OutputCostUSD += msgCost.OutputCostUSD
-	totalCost.CachedCostUSD += msgCost.CachedCostUSD
-	totalCost.TotalCost += msgCost.TotalCost
+	addCost(totalCost, msgCost)
 }
 
 // aggregateToolStats counts tool calls from the message
