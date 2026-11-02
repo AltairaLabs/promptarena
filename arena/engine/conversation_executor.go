@@ -149,6 +149,7 @@ func (ce *DefaultConversationExecutor) runNonStreamingTurn(
 			"role", scenarioTurn.Role,
 			"error", err)
 		ce.notifyTurnCompleted(emitter, turnIdx, scenarioTurn.Role, req.Scenario.ID, err)
+		req.objectives.recordUnreached(req.Scenario)
 
 		// Load messages from StateStore (they were saved before validation failed)
 		result := ce.buildResultFromStateStore(ctx, req)
@@ -564,6 +565,9 @@ func (ce *DefaultConversationExecutor) runSelfPlayExchanges(
 			}
 		}
 		if done, loopErr := handleCompletionError(err, i, minTurns, maxTurns); done {
+			if loopErr != nil {
+				tracker.interrupted()
+			}
 			return loopErr
 		}
 	}
@@ -652,9 +656,15 @@ func (ce *DefaultConversationExecutor) executeScriptedTurn(
 func (ce *DefaultConversationExecutor) handleTurnExecutionError(
 	ctx context.Context, req *ConversationRequest, err error, turnIdx int, scenarioTurn arenaconfig.TurnDefinition,
 ) *ConversationResult {
+	transient := providers.IsTransient(err)
+	if !transient {
+		// A skipped run is left out of the results, so only a failed one
+		// reports the objectives it never reached.
+		req.objectives.recordUnreached(req.Scenario)
+	}
 	result := ce.buildResultFromStateStore(ctx, req)
 
-	if providers.IsTransient(err) {
+	if transient {
 		logger.Warn("Turn skipped (transient provider error)",
 			"turn", turnIdx,
 			"role", scenarioTurn.Role,

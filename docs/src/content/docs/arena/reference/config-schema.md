@@ -1843,7 +1843,7 @@ turns:
 | `expect` | `achieved` | The outcome that makes the run pass. Use `not_achieved` when the agent should hold out, for example against a refund it should not grant. |
 | `stop_on_success` | `true` | End the self-play turn at the exchange where the objective is achieved, even before `turns` is reached. With `false` the turn runs its normal length. |
 
-The outcome is reported as a conversation result of type `objective`, next to the scenario's `conversation_assertions`, so it shows in every output format and fails the run when the outcome differs from `expect`. Its details carry `achieved`, `achieved_at_exchange`, `exchanges`, `expect` and the last `success_checks`.
+The outcome is reported as a conversation result of type `objective`, next to the scenario's `conversation_assertions`, so it shows in every output format and fails the run when the outcome differs from `expect`. A run that fails before reaching an objective's turn still reports it, as not evaluated, with an `error` saying the run ended before that turn; a turn that errors before its objective is achieved is reported the same way. Both carry `ended_early: true`, and with `trials` they count like a missing result, so a trial stopped by a failing turn assertion is not counted against the objective too. Its details carry `achieved`, `achieved_at_exchange`, `exchanges`, `expect` and the last `success_checks`.
 
 Dataset rows substitute `{column}` placeholders into `description`, the `success` assertions and the `rewind.when` assertions. Objectives work on text self-play turns; duplex scenarios reject them at load time.
 

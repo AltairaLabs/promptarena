@@ -533,7 +533,7 @@ Each row reports:
 How the counts are built:
 
 - **Trials.** A scenario with `trials` contributes one attempt per trial, and its cost covers every trial, not only the run reported for the group.
-- **Errored runs.** A run that ended in an error is unevaluated for each objective its scenario's other runs recorded and it didn't. Its cost still counts. An objective already achieved stays counted as achieved even if a later check errored.
+- **Errored runs.** A run or trial that fails before reaching an objective's turn reports that objective as not evaluated ("the run ended before this turn"), and so does one whose objective turn itself errors before the objective is achieved. Either way it counts as unevaluated under its own description and dataset row, once per trial, and its cost still counts. A run with no result at all, such as one that timed out before saving a message, is counted as unevaluated for each objective its scenario's other runs recorded. A run skipped for a transient provider error is left out, as it is everywhere else. An objective already achieved stays counted as achieved even if a later check errored.
 - **What a rate means.** A rate is the share of these attempts, at this budget, that reached the objective, and the interval says how far it can be trusted. A rate of 0 does not show that the objective can't be reached.
 
 ## Multiple Formats

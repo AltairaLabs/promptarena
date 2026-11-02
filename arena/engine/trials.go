@@ -209,6 +209,11 @@ func loadTrialResults(
 		}
 
 		for i, ar := range rr.ConversationAssertions.Results {
+			if endedEarly(&ar) {
+				// Counted like a missing result: a failure of an errored
+				// trial, unless a failing turn assertion stopped it.
+				continue
+			}
 			tr.assertionResults[conversationAssertionKey(i, ar.Type)] = trialOutcome{
 				assertionType: ar.Type,
 				name:          conversationAssertionName(i, ar),

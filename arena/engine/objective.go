@@ -27,6 +27,10 @@ const (
 	objectiveKeyTurnIndex   = "turn_index"
 	objectiveKeyDescription = "description"
 	objectiveErrNoRunner    = "eval runner not configured"
+	objectiveErrNotReached  = "the run ended before this turn"
+	objectiveErrInterrupted = "the turn ended with an error before the objective was decided"
+	// objectiveKeyEndedEarly marks an outcome cut short by a run error.
+	objectiveKeyEndedEarly = "ended_early"
 )
 
 // objectiveRecorder collects objective outcomes for one conversation.
@@ -42,6 +46,30 @@ func (r *objectiveRecorder) record(o objectiveOutcome) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	r.outcomes = append(r.outcomes, o)
+}
+
+// recordUnreached records each objective in the scenario that has no outcome
+// yet as not evaluated, because the run failed before reaching its turn.
+// Without this, a failed run would report nothing for those objectives and
+// every report would drop the attempt. The run's error is already on the
+// result, so the outcome carries a short fixed reason rather than repeating it.
+func (r *objectiveRecorder) recordUnreached(scenario *arenaconfig.Scenario) {
+	if r == nil || scenario == nil {
+		return
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	have := make(map[int]bool, len(r.outcomes))
+	for i := range r.outcomes {
+		have[r.outcomes[i].turnIndex] = true
+	}
+	for i := range scenario.Turns {
+		if obj := scenario.Turns[i].Objective; obj != nil && !have[i] {
+			r.outcomes = append(r.outcomes, objectiveOutcome{
+				turnIndex: i, cfg: obj, evalErr: objectiveErrNotReached, endedEarly: true,
+			})
+		}
+	}
 }
 
 // results returns one conversation result per recorded objective, in the
@@ -74,6 +102,9 @@ type objectiveOutcome struct {
 	evalErr string
 	// rewinds lists the exchanges removed from the conversation, in order.
 	rewinds []rewoundExchange
+	// endedEarly is set when a run error stopped the objective being
+	// decided: the run never reached its turn, or the turn errored.
+	endedEarly bool
 }
 
 // rewoundExchange is one exchange removed from the conversation by the
@@ -122,6 +153,9 @@ func (o *objectiveOutcome) result() asrt.ConversationValidationResult {
 	}
 	if o.evalErr != "" {
 		details["error"] = o.evalErr
+	}
+	if o.endedEarly {
+		details[objectiveKeyEndedEarly] = true
 	}
 	if len(o.rewinds) > 0 {
 		rewinds := make([]map[string]interface{}, len(o.rewinds))
@@ -426,6 +460,28 @@ func checksFeedback(checks []asrt.ConversationValidationResult) string {
 		lines = append(lines, line)
 	}
 	return strings.Join(lines, "\n")
+}
+
+// interrupted marks the objective as not decided when the turn stops on an
+// error: unless it was already achieved, the exchanges run so far are not a
+// fair attempt.
+func (t *objectiveTracker) interrupted() {
+	if t == nil || t.outcome.achieved() {
+		return
+	}
+	t.outcome.evalErr = objectiveErrInterrupted
+	t.outcome.checks = nil
+	t.outcome.endedEarly = true
+}
+
+// endedEarly reports whether an objective result was cut short by a run
+// error. Trial aggregation treats such a result like a missing one.
+func endedEarly(r *asrt.ConversationValidationResult) bool {
+	if r.Type != objectiveResultType {
+		return false
+	}
+	v, _ := r.Details[objectiveKeyEndedEarly].(bool)
+	return v
 }
 
 // finish records the outcome on the conversation.
