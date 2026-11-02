@@ -291,6 +291,11 @@ func (s *Scenario) ForDataRow(row DataRow) *Scenario {
 		if obj := s.Turns[i].Objective; obj != nil {
 			objCopy := *obj
 			objCopy.Success = append([]AssertionConfig(nil), obj.Success...)
+			if obj.Rewind != nil {
+				rewindCopy := *obj.Rewind
+				rewindCopy.When = append([]AssertionConfig(nil), obj.Rewind.When...)
+				objCopy.Rewind = &rewindCopy
+			}
 			out.Turns[i].Objective = &objCopy
 		}
 	}
@@ -319,6 +324,9 @@ func (s *Scenario) walkDataTemplates(fn func(string) string) {
 		if turn.Objective != nil {
 			turn.Objective.Description = fn(turn.Objective.Description)
 			walkAssertionTemplates(turn.Objective.Success, fn)
+			if turn.Objective.Rewind != nil {
+				walkAssertionTemplates(turn.Objective.Rewind.When, fn)
+			}
 		}
 	}
 	walkAssertionTemplates(s.ConversationAssertions, fn)

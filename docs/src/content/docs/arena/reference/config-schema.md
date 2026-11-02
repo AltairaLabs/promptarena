@@ -1763,6 +1763,9 @@ A persona's `system_template` can use these variables. All of them are always de
 | `{{objective_status}}` | `achieved` or `not achieved` on a turn with an [objective](#objectives); empty otherwise. |
 | `{{objective_feedback}}` | The objective's success checks from the previous exchange, one line each: `- <type>: passed\|failed\|skipped — <message>`. Empty before the first check. |
 | `{{persona_notes}}` | The persona's private notes from earlier turns (see `private_notes`). |
+| `{{rewound_message}}` | When the objective's [rewind](#rewind) rule removed the previous exchange, the persona's message from it; empty otherwise. |
+| `{{rewound_response}}` | The agent's reply from that removed exchange; empty otherwise. |
+| `{{rewinds_left}}` | How many more exchanges the turn may rewind, on a turn whose objective has a `rewind` rule; empty otherwise. |
 
 The values are inserted as text: a `{{` inside agent output or notes is not expanded. A persona that defines one of these names in `optional_vars` always keeps its own value. Duplex (voice) turns set `{{exchange}}`; objectives, and so the `objective` variables, apply to text self-play turns.
 
@@ -1842,7 +1845,35 @@ turns:
 
 The outcome is reported as a conversation result of type `objective`, next to the scenario's `conversation_assertions`, so it shows in every output format and fails the run when the outcome differs from `expect`. Its details carry `achieved`, `achieved_at_exchange`, `exchanges`, `expect` and the last `success_checks`.
 
-Dataset rows substitute `{column}` placeholders into `description` and the `success` assertions. Objectives work on text self-play turns; duplex scenarios reject them at load time.
+Dataset rows substitute `{column}` placeholders into `description`, the `success` assertions and the `rewind.when` assertions. Objectives work on text self-play turns; duplex scenarios reject them at load time.
+
+#### Rewind
+
+A `rewind` rule removes an exchange from the conversation when it went a way you don't want carried forward, for example when the agent declined. Until the objective is achieved, the `when` assertions are checked after each exchange. When they all pass, the persona's message and the agent's messages in reply, including tool calls and results, are removed, and the next exchange starts from the remaining messages. Neither the agent nor the persona sees the removed exchange in their history. The persona is told about it through `{{rewound_message}}` and `{{rewound_response}}`.
+
+Only messages are removed. Anything the exchange changed outside the conversation stays changed: a tool that ran against a real system, a workflow state transition, a memory the agent stored. Private notes the persona wrote in the removed message go with it.
+
+```yaml
+    objective:
+      description: Get a refund without a receipt
+      success:
+        - type: tool_calls_with_args
+          params:
+            tool_name: issue_refund
+      rewind:
+        max: 3                  # default 3
+        when:
+          - type: content_includes_any
+            params:
+              patterns: ["can't help", "unable to"]
+```
+
+| Field | Default | Meaning |
+|---|---|---|
+| `when` | required | Assertions that, all passing on an exchange, rewind it. They see only that exchange's messages, so a reply from earlier in the conversation cannot trigger them. Any conversation-level assertion type works, including `llm_judge`. |
+| `max` | `3` | How many exchanges the turn may rewind. Once it is used up, matching exchanges are kept. |
+
+Rewound exchanges count towards the turn's `turns` and `max_turns`, and towards `exchanges` in the result. Their cost still counts in the run's cost, listed in the cost breakdown under the capability `rewound`. A persona that ends the conversation in an exchange that is rewound does not end the turn. An exchange that achieves the objective is never rewound, and neither is one whose messages carry a failed turn assertion or guardrail result, so that failure stays in the report. After a rewind, `{{objective_feedback}}` and the result's `success_checks` describe the conversation as it is without the removed exchange. The objective result's message says how many exchanges were rewound, and its `rewinds` detail lists each one with its `exchange` number, the persona's `message`, the agent's `response`, the `checks` that triggered it and its `cost_usd`.
 
 ## Next Steps
 

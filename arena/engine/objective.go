@@ -2,6 +2,7 @@ package engine
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
@@ -13,6 +14,8 @@ import (
 
 	"github.com/AltairaLabs/PromptKit/runtime/v2/evals"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/logger"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/statestore"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )
 
 // objectiveResultType is the conversation-result type an objective outcome
@@ -69,6 +72,32 @@ type objectiveOutcome struct {
 	checks []asrt.ConversationValidationResult
 	// evalErr is set when the success assertions could not be evaluated.
 	evalErr string
+	// rewinds lists the exchanges removed from the conversation, in order.
+	rewinds []rewoundExchange
+}
+
+// rewoundExchange is one exchange removed from the conversation by the
+// objective's rewind rule.
+type rewoundExchange struct {
+	// exchange is the 1-based exchange that was removed.
+	exchange int
+	// message is what the persona said; response is the agent's last reply.
+	message  string
+	response string
+	// checks holds the rewind assertions' results that triggered the rewind.
+	checks []asrt.ConversationValidationResult
+	// cost is what the removed messages cost; it still counts towards the run.
+	cost types.CostInfo
+}
+
+func (r *rewoundExchange) detail() map[string]interface{} {
+	return map[string]interface{}{
+		"exchange": r.exchange,
+		"message":  r.message,
+		"response": r.response,
+		"checks":   r.checks,
+		"cost_usd": r.cost.TotalCost,
+	}
 }
 
 func (o *objectiveOutcome) achieved() bool { return o.achievedAt > 0 }
@@ -94,6 +123,13 @@ func (o *objectiveOutcome) result() asrt.ConversationValidationResult {
 	if o.evalErr != "" {
 		details["error"] = o.evalErr
 	}
+	if len(o.rewinds) > 0 {
+		rewinds := make([]map[string]interface{}, len(o.rewinds))
+		for i := range o.rewinds {
+			rewinds[i] = o.rewinds[i].detail()
+		}
+		details["rewinds"] = rewinds
+	}
 	return asrt.ConversationValidationResult{
 		Type:    objectiveResultType,
 		Passed:  o.evalErr == "" && o.achieved() == o.cfg.ExpectsAchieved(),
@@ -107,14 +143,19 @@ func (o *objectiveOutcome) message() string {
 	if label == "" {
 		label = fmt.Sprintf("turn %d objective", o.turnIndex)
 	}
+	var msg string
 	switch {
 	case o.evalErr != "":
-		return fmt.Sprintf("%s: could not be evaluated: %s", label, o.evalErr)
+		msg = fmt.Sprintf("%s: could not be evaluated: %s", label, o.evalErr)
 	case o.achieved():
-		return fmt.Sprintf("%s: achieved at exchange %d of %d", label, o.achievedAt, o.exchanges)
+		msg = fmt.Sprintf("%s: achieved at exchange %d of %d", label, o.achievedAt, o.exchanges)
 	default:
-		return fmt.Sprintf("%s: not achieved in %d exchanges", label, o.exchanges)
+		msg = fmt.Sprintf("%s: not achieved in %d exchanges", label, o.exchanges)
 	}
+	if n := len(o.rewinds); n > 0 {
+		msg += fmt.Sprintf(" (%d rewound)", n)
+	}
+	return msg
 }
 
 // objectiveTracker checks one self-play turn's objective after each exchange.
@@ -126,6 +167,15 @@ type objectiveTracker struct {
 	// checks are probes, and only the final objective result is reported.
 	orch    *EvalOrchestrator
 	outcome objectiveOutcome
+	// startLen is how many messages the conversation held before the current
+	// exchange, and startKnown whether that is known; a rewind cuts the
+	// conversation back to startLen. afterExchange carries it forward, so the
+	// conversation is only loaded for it when it is not known.
+	startLen   int
+	startKnown bool
+	// lastRewound is the exchange the previous exchange's rewind removed, or
+	// nil when the previous exchange was kept.
+	lastRewound *rewoundExchange
 }
 
 // newObjectiveTracker returns a tracker for the turn, or nil when the turn
@@ -144,33 +194,48 @@ func (ce *DefaultConversationExecutor) newObjectiveTracker(
 	}
 }
 
+// beforeExchange notes where the next exchange starts, so it can be rewound.
+// It does nothing unless the objective has a rewind rule.
+func (t *objectiveTracker) beforeExchange(ctx context.Context) {
+	if t == nil || t.outcome.cfg.Rewind == nil || t.startKnown {
+		return
+	}
+	messages, err := t.ce.loadMessagesFromStateStore(ctx, t.req)
+	t.startLen, t.startKnown = len(messages), err == nil
+}
+
 // afterExchange evaluates the objective once exchange (1-based) has
-// completed, and reports whether the self-play turn should stop. An
-// evaluation error is kept only until a later exchange evaluates cleanly, so
-// one transient failure does not decide the outcome.
-func (t *objectiveTracker) afterExchange(ctx context.Context, exchange int) bool {
+// completed, and reports whether the self-play turn should stop and whether
+// the exchange was rewound. An evaluation error is kept only until a later
+// exchange evaluates cleanly, so one transient failure does not decide the
+// outcome.
+func (t *objectiveTracker) afterExchange(ctx context.Context, exchange int) (stop, rewound bool) {
 	if t == nil {
-		return false
+		return false, false
 	}
 	t.outcome.exchanges = exchange
+	t.lastRewound = nil
 
 	if t.orch == nil {
 		t.outcome.evalErr = objectiveErrNoRunner
 		t.outcome.checks = nil
-		return false
+		t.startKnown = false
+		return false, false
 	}
 	// A run that hit its timeout still has its last exchange judged, as
 	// conversation assertions are.
 	ctx = scoringContext(ctx)
-	_, messages, err := t.ce.loadMessagesFromStateStore(ctx, t.req)
+	messages, err := t.ce.loadMessagesFromStateStore(ctx, t.req)
 	if err != nil {
 		// Clear the checks so the persona is not shown results from an
 		// exchange that was not re-checked.
 		t.outcome.evalErr = err.Error()
 		t.outcome.checks = nil
-		return false
+		t.startKnown = false
+		return false, false
 	}
 	t.outcome.evalErr = ""
+	prevChecks := t.outcome.checks
 	// The checks are re-run even once the objective is achieved, so the
 	// persona's feedback always describes the latest exchange.
 	checks := t.orch.RunAssertionsAsConversationResults(
@@ -180,15 +245,128 @@ func (t *objectiveTracker) afterExchange(ctx context.Context, exchange int) bool
 	)
 	t.outcome.checks = checks
 	if t.outcome.achieved() {
-		return t.outcome.cfg.StopsOnSuccess()
+		t.keepExchange(messages)
+		return t.outcome.cfg.StopsOnSuccess(), false
 	}
 	if !allPassed(checks, len(t.outcome.cfg.Success)) {
-		return false
+		if t.maybeRewind(ctx, exchange, messages) {
+			// The checks described the removed exchange; the conversation
+			// is back to what the previous checks saw.
+			t.outcome.checks = prevChecks
+			return false, true
+		}
+		t.keepExchange(messages)
+		return false, false
 	}
+	t.keepExchange(messages)
 	t.outcome.achievedAt = exchange
 	logger.Debug("Self-play objective achieved",
 		"turn", t.outcome.turnIndex, "exchange", exchange)
-	return t.outcome.cfg.StopsOnSuccess()
+	return t.outcome.cfg.StopsOnSuccess(), false
+}
+
+// keepExchange records that the conversation, as loaded after the exchange,
+// is where the next exchange starts.
+func (t *objectiveTracker) keepExchange(messages []types.Message) {
+	t.startLen, t.startKnown = len(messages), true
+}
+
+// maybeRewind removes the exchange just run from the conversation when the
+// objective's rewind assertions all pass on it and the turn has rewinds
+// left, and reports whether it did. An exchange with a failed turn assertion or guardrail
+// result is kept, so the failure stays in the report.
+func (t *objectiveTracker) maybeRewind(ctx context.Context, exchange int, messages []types.Message) bool {
+	rule := t.outcome.cfg.Rewind
+	if rule == nil || !t.startKnown || t.startLen >= len(messages) ||
+		len(t.outcome.rewinds) >= rule.MaxRewinds() {
+		return false
+	}
+	// The rewind checks see only the exchange just run: a conversation-level
+	// check reads every reply, so one matching an earlier, kept reply would
+	// otherwise rewind every exchange after it.
+	dropped := messages[t.startLen:]
+	if hasFailedTurnChecks(dropped) {
+		return false
+	}
+	checks := t.orch.RunAssertionsAsConversationResults(
+		ctx, rule.When, dropped,
+		len(dropped)-1, t.req.ConversationID,
+		evals.TriggerOnConversationComplete,
+	)
+	if !allPassed(checks, len(rule.When)) {
+		return false
+	}
+	rec := rewoundExchange{exchange: exchange, checks: checks}
+	for i := range dropped {
+		msgCost(&rec.cost, &dropped[i])
+		switch dropped[i].Role {
+		case roleUser:
+			if rec.message == "" {
+				rec.message = dropped[i].GetContent()
+			}
+		case roleAssistant:
+			if c := dropped[i].GetContent(); c != "" {
+				rec.response = c
+			}
+		}
+	}
+	if err := t.truncate(ctx, &rec.cost); err != nil {
+		logger.Warn("Self-play rewind failed; keeping the exchange",
+			"turn", t.outcome.turnIndex, "exchange", exchange, "error", err)
+		return false
+	}
+	t.outcome.rewinds = append(t.outcome.rewinds, rec)
+	t.lastRewound = &t.outcome.rewinds[len(t.outcome.rewinds)-1]
+	logger.Debug("Self-play exchange rewound",
+		"turn", t.outcome.turnIndex, "exchange", exchange)
+	return true
+}
+
+// truncate cuts the stored conversation back to startLen messages, adding
+// cost (what the removed messages cost) to the conversation's rewound-cost
+// metadata so the run's total still includes it. It runs between exchanges,
+// outside the pipeline, so replacing the whole state is safe.
+func (t *objectiveTracker) truncate(ctx context.Context, cost *types.CostInfo) error {
+	store, err := stateStoreFor(t.req)
+	if err != nil {
+		return err
+	}
+	writer, ok := store.(statestore.BulkWriter)
+	if !ok {
+		return errors.New("the state store cannot replace a conversation")
+	}
+	state, err := store.Load(ctx, t.req.ConversationID)
+	if err != nil {
+		return err
+	}
+	if len(state.Messages) < t.startLen {
+		return fmt.Errorf("conversation has %d messages, fewer than the %d before the exchange",
+			len(state.Messages), t.startLen)
+	}
+	state.Messages = state.Messages[:t.startLen]
+	if state.Metadata == nil {
+		state.Metadata = map[string]interface{}{}
+	}
+	state.Metadata[rewoundCostMetaKey] = addCostToMeta(state.Metadata[rewoundCostMetaKey], cost)
+	return writer.Save(ctx, state)
+}
+
+// hasFailedTurnChecks reports whether any message carries a failed turn
+// assertion or guardrail result.
+func hasFailedTurnChecks(messages []types.Message) bool {
+	for i := range messages {
+		for j := range messages[i].Validations {
+			if !messages[i].Validations[j].Passed {
+				return true
+			}
+		}
+		for _, r := range trialTurnResults(&messages[i]) {
+			if passed, ok := r["passed"].(bool); ok && !passed {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 // personaVariables returns the persona's template variables for the
@@ -207,6 +385,13 @@ func (t *objectiveTracker) personaVariables(exchange int) map[string]string {
 		vars[selfplay.VarObjectiveStatus] = objectiveStatusAchieved
 	}
 	vars[selfplay.VarObjectiveFeedback] = checksFeedback(t.outcome.checks)
+	if r := t.lastRewound; r != nil {
+		vars[selfplay.VarRewoundMessage] = r.message
+		vars[selfplay.VarRewoundResponse] = r.response
+	}
+	if rule := t.outcome.cfg.Rewind; rule != nil {
+		vars[selfplay.VarRewindsLeft] = strconv.Itoa(rule.MaxRewinds() - len(t.outcome.rewinds))
+	}
 	return vars
 }
 

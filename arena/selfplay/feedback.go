@@ -24,6 +24,14 @@ const (
 	VarObjectiveFeedback = "objective_feedback"
 	// VarPersonaNotes holds the persona's private notes from earlier turns.
 	VarPersonaNotes = "persona_notes"
+	// VarRewoundMessage and VarRewoundResponse hold the persona's message and
+	// the agent's reply from the previous exchange when the objective's rewind
+	// rule removed it, and are empty otherwise.
+	VarRewoundMessage  = "rewound_message"
+	VarRewoundResponse = "rewound_response"
+	// VarRewindsLeft is how many more exchanges the turn may rewind, on a
+	// turn whose objective has a rewind rule.
+	VarRewindsLeft = "rewinds_left"
 )
 
 // MetaPersonaNotes is the message metadata key that carries a turn's private
@@ -41,7 +49,10 @@ const reNotesGroups = 2
 // executor nests generation metadata under.
 const metaRawResponse = "raw_response"
 
-var feedbackVarKeys = []string{VarExchange, VarObjective, VarObjectiveStatus, VarObjectiveFeedback, VarPersonaNotes}
+var feedbackVarKeys = []string{
+	VarExchange, VarObjective, VarObjectiveStatus, VarObjectiveFeedback, VarPersonaNotes,
+	VarRewoundMessage, VarRewoundResponse, VarRewindsLeft,
+}
 
 // reNotes matches a <notes>...</notes> block, case-insensitively and across
 // lines. A block left open (a turn cut off by its token cap) runs to the end

@@ -35,6 +35,21 @@ func TestScenarioValidate_Objective(t *testing.T) {
 			want: "invalid value",
 		},
 		{
+			name: "rewind needs when",
+			turn: TurnDefinition{Persona: "p", Objective: &ObjectiveConfig{
+				Success: validObjective().Success, Rewind: &ObjectiveRewindConfig{},
+			}},
+			want: "rewind.when: at least one assertion",
+		},
+		{
+			name: "negative rewind max",
+			turn: TurnDefinition{Persona: "p", Objective: &ObjectiveConfig{
+				Success: validObjective().Success,
+				Rewind:  &ObjectiveRewindConfig{When: validObjective().Success, Max: -1},
+			}},
+			want: "rewind.max",
+		},
+		{
 			name: "duplex unsupported",
 			turn: TurnDefinition{Persona: "p", Objective: validObjective()},
 			mod:  func(s *Scenario) { s.Duplex = &DuplexConfig{} },
@@ -89,4 +104,28 @@ func TestForDataRow_SubstitutesObjective(t *testing.T) {
 	orig := s.Turns[1].Objective
 	assert.Equal(t, "get {goal}", orig.Description, "original scenario is not modified")
 	assert.Equal(t, []interface{}{"{marker}"}, orig.Success[0].Params["patterns"])
+}
+
+func TestObjectiveRewindConfig_MaxRewinds(t *testing.T) {
+	assert.Equal(t, DefaultObjectiveRewindMax, (&ObjectiveRewindConfig{}).MaxRewinds())
+	assert.Equal(t, 5, (&ObjectiveRewindConfig{Max: 5}).MaxRewinds())
+}
+
+func TestForDataRow_SubstitutesRewind(t *testing.T) {
+	s := objectiveScenario(TurnDefinition{
+		Persona: "p",
+		Objective: &ObjectiveConfig{
+			Success: validObjective().Success,
+			Rewind: &ObjectiveRewindConfig{When: []AssertionConfig{{
+				Type:   "content_includes_any",
+				Params: map[string]interface{}{"patterns": []interface{}{"{refusal}"}},
+			}}},
+		},
+	})
+
+	out := s.ForDataRow(DataRow{ID: "r1", Values: map[string]string{"refusal": "I can't"}})
+
+	assert.Equal(t, []interface{}{"I can't"}, out.Turns[1].Objective.Rewind.When[0].Params["patterns"])
+	assert.Equal(t, []interface{}{"{refusal}"}, s.Turns[1].Objective.Rewind.When[0].Params["patterns"],
+		"original scenario is not modified")
 }

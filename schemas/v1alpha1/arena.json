@@ -2232,6 +2232,10 @@
         "stop_on_success": {
           "type": "boolean",
           "description": "StopOnSuccess ends the self-play turn as soon as the objective is\nachieved, even before its minimum turn count. Default true."
+        },
+        "rewind": {
+          "$ref": "#/$defs/ObjectiveRewindConfig",
+          "description": "Rewind drops an exchange from the conversation when its checks all\npass, so the persona tries again from before it."
         }
       },
       "additionalProperties": false,
@@ -2240,6 +2244,28 @@
         "success"
       ],
       "description": "ObjectiveConfig is a goal for a self-play turn."
+    },
+    "ObjectiveRewindConfig": {
+      "properties": {
+        "when": {
+          "items": {
+            "$ref": "#/$defs/AssertionConfig"
+          },
+          "type": "array",
+          "description": "When lists the assertions that, all passing on an exchange, rewind it."
+        },
+        "max": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Max caps how many exchanges the turn may rewind. Default 3."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "when"
+      ],
+      "description": "ObjectiveRewindConfig drops exchanges from a self-play turn."
     },
     "Obligation": {
       "properties": {

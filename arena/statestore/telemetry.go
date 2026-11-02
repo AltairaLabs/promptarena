@@ -36,6 +36,10 @@ func (s *ArenaStateStore) extractValidations(state *ArenaConversationState) []Va
 	return validations
 }
 
+// rewoundCostMetaKey is the conversation metadata key holding what the
+// exchanges a self-play rewind removed cost. Mirrors the engine's key.
+const rewoundCostMetaKey = "rewound_cost"
+
 // ancillaryMetaCostKeys is the list of Message.Meta keys that carry an
 // ancillary cost contribution (TTS, STT, embedding, image_gen, persona-side
 // LLM via self-play). Mirrors the engine-side list in
@@ -66,6 +70,11 @@ func (s *ArenaStateStore) computeTotalCost(state *ArenaConversationState) types.
 		}
 		foldAncillaryMetaCosts(&totalCost, msg.Meta)
 	}
+	// Exchanges a self-play rewind removed are no longer in Messages, but
+	// what they cost is kept in the conversation metadata.
+	if rewound, ok := state.Metadata[rewoundCostMetaKey].(map[string]any); ok {
+		foldMetaCost(&totalCost, rewound)
+	}
 
 	return totalCost
 }
@@ -83,20 +92,24 @@ func foldAncillaryMetaCosts(total *types.CostInfo, meta map[string]any) {
 		if !ok {
 			continue
 		}
-		entry, ok := raw.(map[string]any)
-		if !ok {
-			continue
+		if entry, ok := raw.(map[string]any); ok {
+			foldMetaCost(total, entry)
 		}
-		c := costInfoFromMeta(entry)
-		total.InputTokens += c.InputTokens
-		total.OutputTokens += c.OutputTokens
-		total.CachedTokens += c.CachedTokens
-		total.InputCostUSD += c.InputCostUSD
-		total.OutputCostUSD += c.OutputCostUSD
-		total.CachedCostUSD += c.CachedCostUSD
-		total.TotalCost += c.TotalCost
-		total.Breakdown = append(total.Breakdown, breakdownItemsForMessage(&c)...)
 	}
+}
+
+// foldMetaCost adds a cost map stored in metadata to the running total and
+// emits its Breakdown line items.
+func foldMetaCost(total *types.CostInfo, entry map[string]any) {
+	c := costInfoFromMeta(entry)
+	total.InputTokens += c.InputTokens
+	total.OutputTokens += c.OutputTokens
+	total.CachedTokens += c.CachedTokens
+	total.InputCostUSD += c.InputCostUSD
+	total.OutputCostUSD += c.OutputCostUSD
+	total.CachedCostUSD += c.CachedCostUSD
+	total.TotalCost += c.TotalCost
+	total.Breakdown = append(total.Breakdown, breakdownItemsForMessage(&c)...)
 }
 
 // costInfoFromMeta reconstructs a CostInfo from the map[string]any shape

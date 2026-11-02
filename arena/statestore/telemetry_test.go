@@ -128,3 +128,23 @@ func TestMetaFloat(t *testing.T) {
 	assert.Equal(t, 0.0, metaFloat("not a number"))
 	assert.Equal(t, 0.0, metaFloat(nil))
 }
+
+func TestComputeTotalCost_IncludesRewoundCost(t *testing.T) {
+	s := NewArenaStateStore()
+	state := &ArenaConversationState{}
+	state.Messages = []types.Message{{Role: "assistant", CostInfo: &types.CostInfo{TotalCost: 0.01, OutputTokens: 10}}}
+	state.Metadata = map[string]any{
+		rewoundCostMetaKey: map[string]any{
+			"total_cost_usd": 0.02, "output_cost_usd": 0.02, "output_tokens": float64(20), "capability": "rewound",
+		},
+	}
+
+	total := s.computeTotalCost(state)
+
+	assert.InDelta(t, 0.03, total.TotalCost, 1e-9)
+	assert.Equal(t, 30, total.OutputTokens)
+	require.NotEmpty(t, total.Breakdown)
+	last := total.Breakdown[len(total.Breakdown)-1]
+	assert.Equal(t, "rewound", last.Capability)
+	assert.InDelta(t, 0.02, last.USD, 1e-9)
+}
