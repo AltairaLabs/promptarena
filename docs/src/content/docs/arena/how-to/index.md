@@ -36,6 +36,9 @@ Use assertions and custom validators to verify LLM response quality.
 ### [Run a Scenario Over a Dataset](/arena/how-to/scenarios/run-a-dataset/)
 Load inputs and expected answers from a JSONL or CSV file, and get one result per row.
 
+### [Test how an agent handles tool failures](/arena/how-to/scenarios/inject-tool-failures/)
+Use a turn's `chaos:` block to make calls to a named tool fail, then assert that the agent reports the failure instead of inventing a result.
+
 ### [Use guardrails as test signals (the three-role model)](/arena/how-to/scenarios/guardrails-as-signals/)
 Walk through `examples/guardrails-test/`. One primitive enforces in production AND fires as an observable test signal. The canonical demo of the eval / guardrail / assertion bridge.
 

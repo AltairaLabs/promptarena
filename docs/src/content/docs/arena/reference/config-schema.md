@@ -915,6 +915,7 @@ Array of conversation turns. Each turn is either a scripted user message, an ass
 - `role` (string, required): `"user"` or `"assistant"`
 - `content` (string, required): Turn content
 - `assertions` (array, optional): Checks to run (user turns only)
+- `chaos` (object, optional): Tool failures to inject during the turn (see [`chaos`](#chaos))
 
 **Self-Play Turn Fields**:
 - `role` (string, required): A self-play role (e.g. `"gemini-user"`) matching a configured role in `self_play.roles`
@@ -1000,6 +1001,46 @@ turns:
     perturbations:
       city: [NYC, LA]
       tone: [formal, casual]
+```
+
+#### `chaos`
+
+A turn field. Makes calls to named tools fail during that turn, so you can test how the agent handles a broken dependency.
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `chaos.tool_failures` | list | none | Failure rules. For each call, the first rule naming the tool whose probability roll fires applies. |
+| `tool_failures[].tool` | string | required | Tool name to fail. |
+| `tool_failures[].mode` | string | required | `error`, `timeout` or `slow`. |
+| `tool_failures[].probability` | number | `1.0` | Chance that each call fails. `0` or unset means every call. |
+| `tool_failures[].message` | string | per mode | Text the model receives. |
+
+What each mode does:
+
+- **`error` and `timeout`** block the call: the tool never runs. The model receives a tool result whose text is `Tool <name> blocked by hook: <message>`. Your `message` appears word for word after that prefix. Without a `message`, it is `Chaos: tool <name> failed with injected error` or `Chaos: tool <name> timed out (injected)`. The two modes differ only in that default text and in the metadata. No time passes, so `timeout` does not exercise a real timeout.
+- **`slow`** waits 2 seconds, then lets the call run normally.
+- **Any other mode** blocks the call like `error`, with the default text `Chaos: tool <name> failed (mode=<mode>)`. The mode is not validated.
+
+What reports and assertions see:
+
+- **Metadata.** The tool result message carries `chaos_injected: true`, `chaos_mode` and `chaos_tool` in its metadata. `slow` also adds `chaos_delay_ms`, and `timeout` adds `chaos_timeout: true`.
+- **Assertions.** A blocked call fails `no_tool_errors`. It does not count as a call for `tools_called`.
+
+Where it applies:
+
+- **Turn types.** Scripted user turns and self-play turns honour `chaos`. Duplex turns ignore it.
+- **Scope.** Only calls made while that turn runs are affected.
+
+```yaml
+turns:
+  - role: user
+    content: "Look up order ORD-12345 for me"
+    chaos:
+      tool_failures:
+        - tool: lookup_order
+          mode: error
+          probability: 0.5
+          message: "Order service unavailable (503). Retry later."
 ```
 
 ## Provider
