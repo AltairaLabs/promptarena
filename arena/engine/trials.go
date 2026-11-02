@@ -165,6 +165,8 @@ type trialRunResult struct {
 	// failedTurnAssertion is set when a turn assertion failed, which is what
 	// ends a run with an error part way through.
 	failedTurnAssertion bool
+	cost                float64
+	objectives          []ObjectiveOutcome
 }
 
 // conversationAssertionKey identifies a conversation assertion across trials
@@ -215,6 +217,8 @@ func loadTrialResults(
 			}
 		}
 		collectTurnOutcomes(&tr, rr.Messages)
+		tr.cost = rr.Cost.TotalCost
+		tr.objectives = ObjectiveOutcomes(rr.ConversationAssertions.Results)
 
 		results = append(results, tr)
 	}
@@ -369,6 +373,8 @@ func computeTrialResults(trials []trialRunResult) *TrialResults {
 		// no assertions to judge it needs every trial to have run.
 		Passed:        allMet && errored < len(trials) && (len(assertionKeys) > 0 || errored == 0),
 		ErroredTrials: errored,
+		TotalCost:     totalTrialCost(trials),
+		Objectives:    objectiveTrialStats(trials),
 	}
 }
 

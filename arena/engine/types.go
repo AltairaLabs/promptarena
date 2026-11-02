@@ -126,6 +126,32 @@ type TrialResults struct {
 	// ErroredTrials is the number of trials that ended in an error. Each one
 	// counts as a failure of the assertions it has no result for.
 	ErroredTrials int `json:"errored_trials,omitempty"`
+	// TotalCost is the summed cost of every trial, in USD.
+	TotalCost float64 `json:"total_cost,omitempty"`
+	// Objectives summarizes each self-play turn objective across trials.
+	Objectives []ObjectiveTrialStats `json:"objectives,omitempty"`
+}
+
+// ObjectiveTrialStats summarizes one self-play turn objective across the
+// trials of a scenario.
+type ObjectiveTrialStats struct {
+	// TurnIndex is the scenario turn the objective is on.
+	TurnIndex int `json:"turn_index"`
+	// Description is the objective's description.
+	Description string `json:"description,omitempty"`
+	// Expect is the outcome that passes the run: "achieved" or "not_achieved".
+	Expect string `json:"expect,omitempty"`
+	// Attempts is the number of trials whose objective was evaluated.
+	Attempts int `json:"attempts"`
+	// Achieved is the number of those trials that reached the objective.
+	Achieved int `json:"achieved"`
+	// AchievedAtExchange lists, for each trial that reached the objective,
+	// the 1-based exchange at which it did.
+	AchievedAtExchange []int `json:"achieved_at_exchange,omitempty"`
+	// Unevaluated is the number of trials whose success checks could not be
+	// evaluated, or that errored before the objective was recorded. They are
+	// not counted in Attempts.
+	Unevaluated int `json:"unevaluated,omitempty"`
 }
 
 // AssertionTrialStats holds per-assertion statistics across trial runs.

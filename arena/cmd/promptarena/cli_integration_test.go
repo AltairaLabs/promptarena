@@ -295,3 +295,52 @@ func TestRootCommandLaunchesTheHub(t *testing.T) {
 	assert.Equal(t, GetVersion(), gotCtx.Version)
 	assert.NotEmpty(t, gotCtx.ResultsDir)
 }
+
+func TestCreateResultRepository_Objectives(t *testing.T) {
+	params := &RunParameters{
+		OutDir:            t.TempDir(),
+		OutputFormats:     []string{"objectives"},
+		ObjectivesGroupBy: []string{"scenario"},
+	}
+
+	repo, err := createResultRepository(params, "")
+	require.NoError(t, err)
+	require.NotNil(t, repo)
+}
+
+func TestExtractObjectivesGroupBy(t *testing.T) {
+	t.Run("defaults to scenario without the flag", func(t *testing.T) {
+		params := &RunParameters{}
+		require.NoError(t, extractObjectivesGroupBy(&cobra.Command{}, params))
+		assert.Equal(t, []string{"scenario"}, params.ObjectivesGroupBy)
+	})
+
+	newCmd := func(args ...string) *cobra.Command {
+		cmd := &cobra.Command{}
+		cmd.Flags().StringSlice(flagObjectivesGroupBy, []string{"scenario"}, "")
+		require.NoError(t, cmd.Flags().Parse(args))
+		return cmd
+	}
+
+	withFormat := func() *RunParameters { return &RunParameters{OutputFormats: []string{"objectives"}} }
+
+	t.Run("reads the flag", func(t *testing.T) {
+		params := withFormat()
+		require.NoError(t, extractObjectivesGroupBy(newCmd("--objectives-group-by=label.category,data.tier"), params))
+		assert.Equal(t, []string{"label.category", "data.tier"}, params.ObjectivesGroupBy)
+	})
+
+	t.Run("rejects an unknown key", func(t *testing.T) {
+		err := extractObjectivesGroupBy(newCmd("--objectives-group-by=row"), withFormat())
+		assert.ErrorContains(t, err, `unknown objectives group-by key "row"`)
+	})
+
+	t.Run("without the format the flag is ignored with a warning", func(t *testing.T) {
+		cmd := newCmd("--objectives-group-by=row")
+		var stderr bytes.Buffer
+		cmd.SetErr(&stderr)
+		params := &RunParameters{OutputFormats: []string{"json"}}
+		require.NoError(t, extractObjectivesGroupBy(cmd, params))
+		assert.Contains(t, stderr.String(), "has no effect without --formats objectives")
+	})
+}
