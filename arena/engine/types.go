@@ -152,6 +152,10 @@ type ObjectiveTrialStats struct {
 	// evaluated, or that errored before the objective was recorded. They are
 	// not counted in Attempts.
 	Unevaluated int `json:"unevaluated,omitempty"`
+	// Unreliable is the number of evaluated trials in which a persona
+	// invented a specific it was not given (see persona facts). They are not
+	// counted in Attempts, so the simulator's mistakes don't move the rate.
+	Unreliable int `json:"unreliable,omitempty"`
 }
 
 // AssertionTrialStats holds per-assertion statistics across trial runs.

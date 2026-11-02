@@ -59,6 +59,10 @@ type Group struct {
 	// success checks could not be evaluated, or the run or trial errored
 	// before the objective was recorded. They are not counted in Attempts.
 	Unevaluated int `json:"unevaluated,omitempty"`
+	// Unreliable is the number of evaluated attempts in which a persona
+	// invented a specific it was not given, so the attempt measured the
+	// simulator as much as the agent. They are not counted in Attempts.
+	Unreliable int `json:"unreliable,omitempty"`
 }
 
 // Grouping is the report for one group-by key.
@@ -103,6 +107,7 @@ type attempt struct {
 	achieved    int
 	achievedAt  []int
 	unevaluated int
+	unreliable  int
 	// cost is this objective's share of the run's cost.
 	cost float64
 }
@@ -201,18 +206,21 @@ func attemptsOf(run *engine.RunResult) []attempt {
 			out = append(out, attempt{
 				run: run, turnIndex: o.TurnIndex, description: o.Description, expect: expectOrDefault(o.Expect),
 				attempts: o.Attempts, achieved: o.Achieved, achievedAt: o.AchievedAtExchange,
-				unevaluated: o.Unevaluated,
+				unevaluated: o.Unevaluated, unreliable: o.Unreliable,
 			})
 		}
 		return out
 	}
 	outcomes := engine.ObjectiveOutcomes(run.ConversationAssertions.Results)
+	unreliable := engine.UnreliableTurns(run.ConversationAssertions.Results)
 	out := make([]attempt, 0, len(outcomes))
 	for _, o := range outcomes {
 		a := attempt{run: run, turnIndex: o.TurnIndex, description: o.Description, expect: expectOrDefault(o.Expect)}
 		switch {
 		case !o.Evaluated:
 			a.unevaluated = 1
+		case unreliable[o.TurnIndex]:
+			a.unreliable = 1
 		case o.Achieved:
 			a.attempts, a.achieved, a.achievedAt = 1, 1, []int{o.AchievedAtExchange}
 		default:
@@ -304,6 +312,7 @@ func summarize(value, expect string, attempts []attempt) Group {
 		g.Attempts += a.attempts
 		g.Achieved += a.achieved
 		g.Unevaluated += a.unevaluated
+		g.Unreliable += a.unreliable
 		g.Cost += a.cost
 		for _, x := range a.achievedAt {
 			exchangeSum += x

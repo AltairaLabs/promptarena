@@ -210,6 +210,12 @@ func (cg *ContentGenerator) NextUserTurn(
 			WithProviderRubric(cg.providerRubric),
 	}
 
+	// Tell a persona with declared facts that they are the only specifics it
+	// may state. The instruction stage appends any text to the system prompt.
+	if instruction := FactsInstruction(cg.persona); instruction != "" {
+		stages = append(stages, arenastages.NewCompletionInstructionStageWithTurnState(instruction, turnState))
+	}
+
 	// Append natural termination instruction when enabled
 	if opts != nil && opts.NaturalTerminationEnabled {
 		stages = append(stages,

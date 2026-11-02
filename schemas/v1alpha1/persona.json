@@ -73,6 +73,40 @@
       "type": "object",
       "description": "PersonaDefaults contains default LLM parameters for the persona."
     },
+    "PersonaFact": {
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "ID names the fact, e.g. order_number."
+        },
+        "value": {
+          "type": "string",
+          "description": "Value is what the persona may say, e.g. \"A-100\"."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "id",
+        "value"
+      ],
+      "description": "PersonaFact is one fact a persona holds."
+    },
+    "PersonaFactPolicy": {
+      "properties": {
+        "check": {
+          "type": "boolean",
+          "description": "Check runs the fidelity check after each of the persona's self-play\nturns: an identifier-shaped specific in its message that is in no fact\nand nowhere earlier in the conversation is reported as invented.\nDefault true."
+        },
+        "fail_on_violation": {
+          "type": "boolean",
+          "description": "FailOnViolation fails the run when the persona invents a specific. By\ndefault the run is only flagged as unreliable, so the simulator's\nmistake is not counted as the agent's failure."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "PersonaFactPolicy controls the fidelity check on a persona with facts."
+    },
     "PersonaStyle": {
       "properties": {
         "verbosity": {
@@ -182,6 +216,17 @@
         "private_notes": {
           "type": "boolean",
           "description": "PrivateNotes lets the persona keep notes the agent under test never\nsees. Text inside \u003cnotes\u003e...\u003c/notes\u003e in a generated turn is removed\nbefore the turn is sent, and every earlier turn's notes are given back\nto the persona as {{persona_notes}}."
+        },
+        "facts": {
+          "items": {
+            "$ref": "#/$defs/PersonaFact"
+          },
+          "type": "array",
+          "description": "Facts are the only specifics (numbers, dates, names, codes) the persona\nmay state. They are added to its prompt, with an instruction to say it\ndoesn't have anything else it is asked for, and are available to a\nsystem_template as {{facts}}."
+        },
+        "fact_policy": {
+          "$ref": "#/$defs/PersonaFactPolicy",
+          "description": "FactPolicy controls how the persona's turns are checked against Facts."
         }
       },
       "additionalProperties": false,

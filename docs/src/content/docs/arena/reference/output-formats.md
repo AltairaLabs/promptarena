@@ -529,6 +529,7 @@ Each row reports:
 | `mean_exchanges_to_achieve` | Mean exchange at which achieved attempts got there |
 | `cost`, `cost_per_achieved` | Cost of the group's runs in USD, and that divided by `achieved`. A run with several objectives splits its cost evenly between them, so the costs in any one table add up to the overall cost. |
 | `unevaluated` | Attempts that were never judged: their checks couldn't be evaluated, or the run or trial errored before recording the objective. Not counted in `attempts`. |
+| `unreliable` | Judged attempts on a self-play turn where the persona invented a specific it was not given (see [persona facts](/arena/reference/config-schema/#persona-facts)). The attempt measured the simulator as much as the agent, so it is not counted in `attempts`. Its cost still counts. |
 
 How the counts are built:
 

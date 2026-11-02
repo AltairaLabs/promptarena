@@ -95,6 +95,10 @@ func objectiveTrialStats(trials []trialRunResult) []ObjectiveTrialStats {
 				s.Unevaluated++
 				continue
 			}
+			if trials[i].unreliableTurns[o.TurnIndex] {
+				s.Unreliable++
+				continue
+			}
 			s.Attempts++
 			if o.Achieved {
 				s.Achieved++

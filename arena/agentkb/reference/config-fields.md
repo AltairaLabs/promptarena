@@ -190,6 +190,8 @@ Fields under `spec`:
 | `constraints` | array | ✓ | — |
 | `defaults` | object |  | — |
 | `description` | string | ✓ | — |
+| `fact_policy` | object |  | FactPolicy controls how the persona's turns are checked against Facts. |
+| `facts` | array |  | Facts are the only specifics (numbers, dates, names, codes) the persona may state. They are added to its prompt, with an instruction to say it doesn't have anything else it is asked for, and are available to a system_template as {{facts}}. |
 | `fragments` | array |  | NEW: Template system (preferred) |
 | `goals` | array | ✓ | — |
 | `id` | string |  | — |
