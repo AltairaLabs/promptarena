@@ -39,6 +39,9 @@ Load inputs and expected answers from a JSONL or CSV file, and get one result pe
 ### [Use guardrails as test signals (the three-role model)](/arena/how-to/scenarios/guardrails-as-signals/)
 Walk through `examples/guardrails-test/`. One primitive enforces in production AND fires as an observable test signal. The canonical demo of the eval / guardrail / assertion bridge.
 
+### [Red-team a support agent for PII leakage](/arena/how-to/scenarios/pii-guardrail-red-team/)
+Walk through `examples/pii-guardrail-red-team/`: two scripted probes check that a `pii_leakage` guardrail catches a leak and stays quiet on a routine question, asserted with `guardrail_triggered`.
+
 ### [Run workflow scenarios as a regression suite](/arena/how-to/scenarios/workflow-regression/)
 Walk through `examples/workflow-support/` and `examples/workflow-order-processing/`. State machines as first-class test subjects: drive the agent through the lifecycle, assert the transitions, gate merges on the workflow reaching the expected end state.
 
@@ -64,9 +67,6 @@ Walk through `examples/voice-latency-budget/`: gate every turn against a `max_ms
 
 ### [Test voice agents that call tools mid-conversation](/arena/how-to/voice/voice-tool-calls/)
 Walk through `examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml`: a busy-professional persona drives a voice agent through weather / calendar / reminder tool calls. Conversation-level assertions catch the tool-call pattern without leaving the audio pipeline.
-
-### [Red-team a voice agent with safety guardrails](/arena/how-to/voice/voice-red-team/)
-Walk through `examples/voice-red-team/`: `pii_leakage` wired as a guardrail in the pack, scenarios assert the firing via `guardrail_triggered`. Same primitive enforces in production AND fires as a test signal — the three-role pattern (eval / guardrail / assertion) end-to-end.
 
 ### [PII-redaction guardrails for voice agents](/arena/how-to/voice/voice-guardrails/)
 Walk through `examples/voice-guardrails/`: a focused single-scenario demo of the runtime + test bridge. The `pii_leakage` guardrail replaces the agent's would-be-spoken PII before reaching TTS; the test reads the firing from `validations:` on the recorded message via `guardrail_triggered`.

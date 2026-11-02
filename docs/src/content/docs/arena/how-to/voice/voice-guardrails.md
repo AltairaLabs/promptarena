@@ -57,7 +57,7 @@ PromptArena's three-role model collapses that: the eval primitive IS the guardra
 
 ## Side-by-side with red-team
 
-This demo is intentionally focused — one scenario, one assertion. For a wider battery of red-team scenarios (jailbreak, fraud, legitimate-question controls), see [Red-team a voice agent with safety guardrails](/arena/how-to/voice/voice-red-team/).
+This demo is intentionally focused — one scenario, one assertion. For a second scenario that checks the guardrail stays quiet on a legitimate question, see [Red-team a support agent for PII leakage](/arena/how-to/scenarios/pii-guardrail-red-team/).
 
 ## Switching to live voice
 

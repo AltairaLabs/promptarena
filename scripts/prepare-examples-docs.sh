@@ -29,7 +29,7 @@ category_for() {
     case "$1" in
         customer-support|variables-demo|text-negotiation)
             echo "Start here" ;;
-        assertions-test|resilience-testing|guardrails-test|rag-agent|eval-test|reasoning-test)
+        assertions-test|resilience-testing|guardrails-test|pii-guardrail-red-team|rag-agent|eval-test|reasoning-test)
             echo "Assertions and validation" ;;
         customer-support-integrated|mcp-chatbot|mcp-filesystem-test|mcp-memory-test)
             echo "Tools and MCP" ;;
@@ -39,7 +39,7 @@ category_for() {
             echo "Context and memory" ;;
         multimodal-basics|multimodal-tool-results|arena-media-test)
             echo "Multimodal" ;;
-        duplex-streaming|voice-console-vad|voice-console-asm|voice-refund-demo|voice-ivr|voice-guardrails|voice-red-team|voice-bake-off|voice-latency-budget)
+        duplex-streaming|voice-console-vad|voice-console-asm|voice-refund-demo|voice-ivr|voice-guardrails|voice-bake-off|voice-latency-budget)
             echo "Voice and duplex" ;;
         ollama-local|vllm-local)
             echo "Local and self-hosted models" ;;

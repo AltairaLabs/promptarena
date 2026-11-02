@@ -54,7 +54,8 @@ const howToRedirects = {
   '/arena/how-to/voice-guardrails/': '/arena/how-to/voice/voice-guardrails/',
   '/arena/how-to/voice-ivr/': '/arena/how-to/voice/voice-ivr/',
   '/arena/how-to/voice-latency-budget/': '/arena/how-to/voice/voice-latency-budget/',
-  '/arena/how-to/voice-red-team/': '/arena/how-to/voice/voice-red-team/',
+  '/arena/how-to/voice-red-team/': '/arena/how-to/scenarios/pii-guardrail-red-team/',
+  '/arena/how-to/voice/voice-red-team/': '/arena/how-to/scenarios/pii-guardrail-red-team/',
   '/arena/how-to/voice-tool-calls/': '/arena/how-to/voice/voice-tool-calls/',
   // Consolidated CI pages
   '/arena/how-to/arena-ci-quality-gate/': '/arena/how-to/interfaces/run-in-ci/',

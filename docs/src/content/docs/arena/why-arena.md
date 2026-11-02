@@ -33,7 +33,6 @@ Demos:
 - [Voice IVR with workflow](/arena/how-to/voice/voice-ivr/) — workflow state machine routes the call. Asserts transitions.
 - [Voice + tool calls](/arena/how-to/voice/voice-tool-calls/) — agent calls tools mid-conversation under live audio.
 - [Voice latency budget](/arena/how-to/voice/voice-latency-budget/) — assert `latency_budget(max_ms: ...)` per turn.
-- [Voice red-team](/arena/how-to/voice/voice-red-team/) — adversarial personas probe safety guardrails.
 - [Voice + guardrails](/arena/how-to/voice/voice-guardrails/) — PII redaction observed via `guardrail_triggered`.
 - [Voice provider bake-off](/arena/how-to/voice/voice-bake-off/) — same scenario, multiple duplex providers, side-by-side report.
 - [Expressive voice characterization](/arena/how-to/voice/voice-characterization/) — bracket-tag persona markup lowered into each provider's native dialect.
@@ -45,7 +44,6 @@ Single-turn evaluators miss the failure modes that only show up across multiple 
 Demos:
 
 - [Voice customer support self-play](/arena/how-to/voice/voice-customer-support/) — multi-turn voice conversation with adversarial personas.
-- [Voice red-team](/arena/how-to/voice/voice-red-team/) — sustained adversarial pressure.
 - [Text negotiation](/arena/how-to/agents/text-negotiation/) — four-turn rental haggling with conversation-outcome assertions.
 
 ## Assert workflow state transitions
@@ -76,7 +74,7 @@ about the control itself rather than about its side effects.
 Demos:
 
 - [Guardrails as test signals](/arena/how-to/scenarios/guardrails-as-signals/) — the canonical demonstration: `banned_words` wired as a guardrail, asserted via `guardrail_triggered`.
-- [Voice red-team](/arena/how-to/voice/voice-red-team/) — the safety primitives (`pii_leakage`, etc.) applied under voice.
+- [PII guardrail red-team](/arena/how-to/scenarios/pii-guardrail-red-team/) — scripted probes check that `pii_leakage` fires.
 - [Voice + guardrails](/arena/how-to/voice/voice-guardrails/) — focused PII redaction demo emphasising the runtime + test bridge.
 
 ## Run a real agent runtime under mock LLMs
