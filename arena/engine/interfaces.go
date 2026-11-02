@@ -93,6 +93,10 @@ type ConversationRequest struct {
 	// the request share one recorder.
 	objectives *objectiveRecorder
 
+	// fidelity collects each self-play turn's persona fidelity result, for
+	// personas that declare facts. ExecuteConversation sets it.
+	fidelity *fidelityRecorder
+
 	// VoiceSTT is the STT provider for the VAD voice path (Task 7). Nil in ASM mode.
 	// Set from --voice-stt by the chat command; consumed by runInteractiveVADVoice.
 	VoiceSTT *config.Provider

@@ -90,7 +90,8 @@ func RenderMarkdown(report *Report) string {
 		"and each rate has a 95% Wilson score interval. A rate of 0 means the objective wasn't reached " +
 		"in these attempts, not that it can't be. Objectives that should be achieved and objectives " +
 		"that should not (`expect: not_achieved`, where a high rate means the agent failed to hold out) " +
-		"are reported in separate rows.\n\n")
+		"are reported in separate rows. Unreliable attempts are ones in which a persona invented a specific " +
+		"it was not given; like unevaluated ones, they are not counted in the rate.\n\n")
 	if len(report.Totals) == 0 {
 		b.WriteString("No run had an objective.\n")
 		return b.String()
@@ -110,8 +111,8 @@ func writeTable(b *strings.Builder, by string, groups []Group) {
 		first = by
 	}
 	fmt.Fprintf(b, "| %s | Expect | Achieved | Rate | 95%% CI | Mean exchanges | Cost | "+
-		"Cost per achieved | Unevaluated |\n", first)
-	b.WriteString("|---|---|---|---|---|---|---|---|---|\n")
+		"Cost per achieved | Unevaluated | Unreliable |\n", first)
+	b.WriteString("|---|---|---|---|---|---|---|---|---|---|\n")
 	for _, g := range groups {
 		perAchieved := "–"
 		if g.Achieved > 0 {
@@ -122,9 +123,9 @@ func writeTable(b *strings.Builder, by string, groups []Group) {
 			rate = fmt.Sprintf("%.1f%%", g.Rate*percent)
 			interval = fmt.Sprintf("%.1f%%–%.1f%%", g.CILow*percent, g.CIHigh*percent)
 		}
-		fmt.Fprintf(b, "| %s | %s | %d / %d | %s | %s | %s | %s | %s | %d |\n",
+		fmt.Fprintf(b, "| %s | %s | %d / %d | %s | %s | %s | %s | %s | %d | %d |\n",
 			escapeCell(g.Value), g.Expect, g.Achieved, g.Attempts, rate, interval,
-			optionalFloat(g.MeanExchangesToAchieve, "%.1f"), formatCost(g.Cost), perAchieved, g.Unevaluated)
+			optionalFloat(g.MeanExchangesToAchieve, "%.1f"), formatCost(g.Cost), perAchieved, g.Unevaluated, g.Unreliable)
 	}
 }
 

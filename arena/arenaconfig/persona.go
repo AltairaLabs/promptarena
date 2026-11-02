@@ -67,7 +67,79 @@ type UserPersonaPack struct {
 	// before the turn is sent, and every earlier turn's notes are given back
 	// to the persona as {{persona_notes}}.
 	PrivateNotes bool `json:"private_notes,omitempty" yaml:"private_notes,omitempty"`
+	// Facts are the only specifics (numbers, dates, names, codes) the persona
+	// may state. They are added to its prompt, with an instruction to say it
+	// doesn't have anything else it is asked for, and are available to a
+	// system_template as {{facts}}.
+	Facts []PersonaFact `json:"facts,omitempty" yaml:"facts,omitempty"`
+	// FactPolicy controls how the persona's turns are checked against Facts.
+	FactPolicy *PersonaFactPolicy `json:"fact_policy,omitempty" yaml:"fact_policy,omitempty"`
 }
+
+// PersonaFact is one fact a persona holds.
+type PersonaFact struct {
+	// ID names the fact, e.g. order_number.
+	ID string `json:"id" yaml:"id"`
+	// Value is what the persona may say, e.g. "A-100".
+	Value string `json:"value" yaml:"value"`
+}
+
+// PersonaFactPolicy controls the fidelity check on a persona with facts.
+type PersonaFactPolicy struct {
+	// Check runs the fidelity check after each of the persona's self-play
+	// turns: an identifier-shaped specific in its message that is in no fact
+	// and nowhere earlier in the conversation is reported as invented.
+	// Default true.
+	Check *bool `json:"check,omitempty" yaml:"check,omitempty"`
+	// FailOnViolation fails the run when the persona invents a specific. By
+	// default the run is only flagged as unreliable, so the simulator's
+	// mistake is not counted as the agent's failure.
+	FailOnViolation bool `json:"fail_on_violation,omitempty" yaml:"fail_on_violation,omitempty"`
+}
+
+// ChecksFacts reports whether the persona's turns are checked against its
+// facts: it has facts and the check is not turned off.
+func (p *UserPersonaPack) ChecksFacts() bool {
+	if len(p.Facts) == 0 {
+		return false
+	}
+	return p.FactPolicy == nil || p.FactPolicy.Check == nil || *p.FactPolicy.Check
+}
+
+// FailsOnFactViolation reports whether an invented specific fails the run.
+func (p *UserPersonaPack) FailsOnFactViolation() bool {
+	return p.FactPolicy != nil && p.FactPolicy.FailOnViolation
+}
+
+// FactsText renders the facts one per line as "- id: value", the value of
+// {{facts}}.
+func (p *UserPersonaPack) FactsText() string {
+	lines := make([]string, len(p.Facts))
+	for i, f := range p.Facts {
+		lines[i] = fmt.Sprintf("- %s: %s", f.ID, f.Value)
+	}
+	return strings.Join(lines, "\n")
+}
+
+// validatePersonaFacts checks that every fact has a unique id and a value.
+func validatePersonaFacts(persona *UserPersonaPack) error {
+	seen := make(map[string]bool, len(persona.Facts))
+	for i, f := range persona.Facts {
+		switch {
+		case f.ID == "":
+			return fmt.Errorf("persona %s: facts[%d].id is required", persona.ID, i)
+		case strings.TrimSpace(f.Value) == "":
+			return fmt.Errorf("persona %s: facts[%d] (%s) needs a value", persona.ID, i, f.ID)
+		case seen[f.ID]:
+			return fmt.Errorf("persona %s: facts[%d]: duplicate id %q", persona.ID, i, f.ID)
+		}
+		seen[f.ID] = true
+	}
+	return nil
+}
+
+// PersonaVarFacts is the template variable holding the persona's facts.
+const PersonaVarFacts = "facts"
 
 // Persona modes accepted by UserPersonaPack.Mode.
 const (
@@ -274,7 +346,7 @@ func validatePersonaGeneration(persona *UserPersonaPack) error {
 		return fmt.Errorf("persona %s: defaults.max_tokens must be positive, got %d",
 			persona.ID, *persona.Defaults.MaxTokens)
 	}
-	return nil
+	return validatePersonaFacts(persona)
 }
 
 // validatePersonaStyle validates the persona style properties
@@ -406,6 +478,9 @@ func (p *UserPersonaPack) buildTemplatedPrompt(region string, contextVars map[st
 	vars["challenge_level"] = p.Style.ChallengeLevel
 	vars["friction_tags"] = strings.Join(p.Style.FrictionTags, ", ")
 	vars["region"] = region
+	if len(p.Facts) > 0 {
+		vars[PersonaVarFacts] = p.FactsText()
+	}
 
 	// Set defaults for persona-specific variables if empty
 	const defaultVerbosity = "medium"

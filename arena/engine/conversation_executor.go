@@ -79,6 +79,9 @@ func (ce *DefaultConversationExecutor) ExecuteConversation(ctx context.Context, 
 	if req.objectives == nil {
 		req.objectives = &objectiveRecorder{}
 	}
+	if req.fidelity == nil {
+		req.fidelity = &fidelityRecorder{}
+	}
 	if err := ce.objectiveRoleError(req.Scenario); err != nil {
 		return &ConversationResult{Error: err.Error(), Failed: true}
 	}
@@ -549,10 +552,15 @@ func (ce *DefaultConversationExecutor) runSelfPlayExchanges(
 	minTurns, maxTurns, _ := selfPlayTurnBounds(scenarioTurn)
 	tracker := ce.newObjectiveTracker(req, turnIdx, scenarioTurn)
 	defer tracker.finish()
+	fidelity := ce.newFidelityTracker(req, turnIdx, scenarioTurn)
+	defer fidelity.finish()
 
 	for i := 0; i < maxTurns; i++ {
 		tracker.beforeExchange(ctx)
 		err := exchange(tracker.personaVariables(i + 1))
+		// Fidelity first, and whatever the exchange returned: an exchange the
+		// objective then rewinds, or that the agent failed on, is still checked.
+		fidelity.afterExchange(ctx, i+1)
 		if err == nil || errors.Is(err, selfplay.ErrConversationComplete) {
 			stop, rewound := tracker.afterExchange(ctx, i+1)
 			if stop {
@@ -965,6 +973,7 @@ func (ce *DefaultConversationExecutor) buildResultFromStateStore(
 	// self-play objective's outcome alongside them.
 	convAssertionResults := ce.evaluateConversationAssertions(ctx, req, messages)
 	convAssertionResults = append(convAssertionResults, req.objectives.results()...)
+	convAssertionResults = append(convAssertionResults, req.fidelity.all()...)
 
 	// Run pack-level evals at session end. These are non-gating
 	// observations — same machinery that fires in production. They

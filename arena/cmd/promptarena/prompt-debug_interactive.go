@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/v2/arena/selfplay"
 )
 
 var promptDebugCmd = &cobra.Command{
@@ -368,6 +369,8 @@ func buildPersonaPrompt(
 	if err != nil {
 		return "", "", nil, fmt.Errorf("failed to build persona system prompt: %w", err)
 	}
+	// Show the facts instruction the self-play generator adds.
+	systemPrompt += selfplay.FactsInstruction(personaPack)
 
 	promptType := fmt.Sprintf("persona '%s' (region: %s)", opts.Persona, personaRegion)
 	return systemPrompt, promptType, variables, nil

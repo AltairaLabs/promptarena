@@ -167,6 +167,8 @@ type trialRunResult struct {
 	failedTurnAssertion bool
 	cost                float64
 	objectives          []ObjectiveOutcome
+	// unreliableTurns holds the turns whose persona invented a specific.
+	unreliableTurns map[int]bool
 }
 
 // conversationAssertionKey identifies a conversation assertion across trials
@@ -224,6 +226,7 @@ func loadTrialResults(
 		collectTurnOutcomes(&tr, rr.Messages)
 		tr.cost = rr.Cost.TotalCost
 		tr.objectives = ObjectiveOutcomes(rr.ConversationAssertions.Results)
+		tr.unreliableTurns = UnreliableTurns(rr.ConversationAssertions.Results)
 
 		results = append(results, tr)
 	}

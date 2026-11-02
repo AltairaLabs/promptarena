@@ -1750,6 +1750,13 @@ spec:
 
   mode: user                         # Optional: user (default) or adversarial
   private_notes: false               # Optional: strip <notes>...</notes> and feed them back as {{persona_notes}}
+
+  facts:                             # Optional: the only specifics the persona may state
+    - id: order_number
+      value: "A-100"
+  fact_policy:                       # Optional
+    check: true                      # Check each persona message against its facts (default true)
+    fail_on_violation: false         # Fail the run when the persona invents a specific (default false)
 ```
 
 #### Template variables for each exchange
@@ -1789,6 +1796,46 @@ spec:
 With `private_notes: true`, any `<notes>...</notes>` block in a generated turn is removed before the turn is sent, and so is a `<notes>` block left open when the turn hits its token cap. The agent under test never receives either. The notes are stored in the turn's metadata as `persona_notes` and given back to the same persona on later turns as `{{persona_notes}}`, newest 20 turns' notes at most. Another persona in the same conversation does not see them.
 
 A turn that contains only notes fails the run with an error naming the persona, so the persona prompt has to ask for a message outside `<notes>`.
+
+#### Persona facts
+
+A persona's `goals` and prompt describe what it knows in prose, and nothing checks that it sticks to it. Over a long conversation a simulated user can make up an account number, a date or an email, and a failed run then measures the simulator rather than the agent. `facts` declares the specifics the persona holds:
+
+```yaml
+spec:
+  id: order-chaser
+  system_prompt: You want to know where your order is.
+  goals: [Find out where order A-100 is]
+  facts:
+    - id: order_number
+      value: "A-100"
+    - id: order_date
+      value: "28 October"
+    - id: tried
+      value: "checked the tracking page; it shows no update"
+```
+
+Each fact needs an `id`, unique within the persona, and a non-empty `value`.
+
+**In the prompt.** The persona is told that its facts are the only specifics it knows, and to say it doesn't have anything else it is asked for. The facts are listed after its prompt, one per line as `- <id>: <value>`. A `system_template` can place them itself with `{{facts}}`; then only the instruction is added.
+
+**The check.** After each of the persona's self-play messages, Arena looks for identifier-shaped specifics in it:
+- email addresses;
+- tokens that contain a digit and at least three letters and digits in all, such as `A-100`, `2024-10-28`, `#4471` (checked as `4471`) and `10:30`. On their own, `2` or `28` don't count, and nor do ordinals (`2nd`, `28th`) or percentages (`100%`).
+
+A specific is reported as invented when it appears in none of these:
+- what the persona was given: its facts, goals, constraints, description, prompt text, `optional_vars` and the turn's objective description;
+- anything earlier in the conversation, including the agent's replies and tool results, and exchanges that an objective's rewind removed.
+
+It is a heuristic: it catches made-up codes and numbers, not a made-up name or a rephrased date. A message is checked even when the agent then fails on it, so the persona's invention is not blamed on the agent.
+
+Each self-play turn with such a persona adds a conversation result of type `persona_fidelity`:
+- **Message.** For example `persona order-chaser invented 1 specific: "B-7731" (exchange 4)`, or `persona order-chaser stated only declared facts in 6 messages`.
+- **Details.** `reliable`, `checked_messages`, and `violations`, which lists each `exchange` with the `specifics` it invented.
+
+**Scoring.** By default the result passes even when the persona invented something: the run is flagged, not failed, because the mistake is the simulator's. The [objectives report](/arena/reference/output-formats/#objectives-format) counts the objective on a flagged turn as `unreliable` and leaves it out of the rate. Objectives on other turns of the same run are unaffected. Set `fact_policy.fail_on_violation: true` to fail the run instead, or `fact_policy.check: false` to keep the facts in the prompt without checking them.
+
+The check runs before an objective's [rewind](#rewind), so an exchange that is rewound is still checked. It applies to text self-play turns. Duplex (voice) turns don't run the check or add the facts instruction, though a `system_template` there can still use `{{facts}}`.
 
 #### Modes
 

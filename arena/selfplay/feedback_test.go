@@ -168,3 +168,18 @@ func TestNextUserTurn_StripsPrivateNotes(t *testing.T) {
 		assert.NotContains(t, res.Metadata, MetaPersonaNotes)
 	})
 }
+
+func TestFactsInstruction(t *testing.T) {
+	assert.Empty(t, FactsInstruction(nil))
+	assert.Empty(t, FactsInstruction(&arenaconfig.UserPersonaPack{ID: "p"}))
+
+	p := &arenaconfig.UserPersonaPack{ID: "p", Facts: []arenaconfig.PersonaFact{{ID: "order", Value: "A-100"}}}
+	got := FactsInstruction(p)
+	assert.Contains(t, got, "say you don't have it")
+	assert.Contains(t, got, "Your facts:\n- order: A-100")
+
+	p.SystemTemplate = "Facts: {{facts}}"
+	got = FactsInstruction(p)
+	assert.Contains(t, got, "say you don't have it")
+	assert.NotContains(t, got, "Your facts:", "the template already places the facts")
+}

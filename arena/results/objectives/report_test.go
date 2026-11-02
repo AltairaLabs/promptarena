@@ -253,3 +253,41 @@ func TestBuild_MissingAttemptForDatasetRows(t *testing.T) {
 	assert.Equal(t, []string{"Refund a mug", "Refund a tv", "rows turn 1 objective"}, values,
 		"an errored row isn't credited to another row's objective")
 }
+
+func TestBuild_UnreliableAttemptsAreLeftOutOfTheRate(t *testing.T) {
+	unreliable := assertions.ConversationValidationResult{Type: "persona_fidelity", Passed: true,
+		Details: map[string]interface{}{"reliable": false, "turn_index": 0}}
+	runs := []engine.RunResult{
+		run("r1", "s", 1.0, nil, nil, objective("goal", false, 0, "")),
+		run("r2", "s", 1.0, nil, nil, objective("goal", true, 1, ""), unreliable),
+	}
+	r := run("r3", "s", 1.0, nil, nil)
+	r.TrialResults = &engine.TrialResults{TotalCost: 2.0, Objectives: []engine.ObjectiveTrialStats{
+		{Description: "goal", Expect: "achieved", Attempts: 2, Achieved: 1, AchievedAtExchange: []int{1}, Unreliable: 3},
+	}}
+	runs = append(runs, r)
+
+	report := Build(runs, nil)
+
+	total := report.Totals[0]
+	assert.Equal(t, 3, total.Attempts)
+	assert.Equal(t, 1, total.Achieved, "the unreliable run's success is not counted")
+	assert.Equal(t, 4, total.Unreliable)
+	assert.InDelta(t, 4.0, total.Cost, 1e-9, "unreliable runs' cost still counts")
+	assert.Contains(t, RenderMarkdown(report), "| all | achieved | 1 / 3 | 33.3% |")
+	assert.Contains(t, RenderMarkdown(report), "| 0 | 4 |\n")
+}
+
+func TestBuild_UnreliableIsPerTurn(t *testing.T) {
+	unreliableTurn1 := assertions.ConversationValidationResult{Type: "persona_fidelity", Passed: true,
+		Details: map[string]interface{}{"reliable": false, "turn_index": 1}}
+	runs := []engine.RunResult{run("r1", "s", 1.0, nil, nil,
+		objectiveOn(1, "achieved", "first", true, 1, ""), objectiveOn(3, "achieved", "second", true, 1, ""),
+		unreliableTurn1)}
+
+	groups := Build(runs, []string{GroupObjective}).Groupings[0].Groups
+
+	require.Len(t, groups, 2)
+	assert.Equal(t, 1, groups[0].Unreliable, "turn 1's persona invented a specific")
+	assert.Equal(t, 1, groups[1].Attempts, "turn 3's objective is unaffected")
+}

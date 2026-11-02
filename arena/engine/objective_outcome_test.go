@@ -114,3 +114,15 @@ func TestObjectiveTrialStats_ErroredTrialThatRecordedIsCountedOnce(t *testing.T)
 		t.Fatalf("stats = %+v, want the recorded attempt and nothing unevaluated", got[0])
 	}
 }
+
+func TestObjectiveTrialStats_UnreliableTrialIsNotAnAttempt(t *testing.T) {
+	trials := []trialRunResult{
+		{objectives: ObjectiveOutcomes([]asrt.ConversationValidationResult{outcomeResult(1, true, 2, "")})},
+		{unreliableTurns: map[int]bool{1: true}, objectives: ObjectiveOutcomes([]asrt.ConversationValidationResult{outcomeResult(1, true, 1, "")})},
+		{unreliableTurns: map[int]bool{1: true}, objectives: ObjectiveOutcomes([]asrt.ConversationValidationResult{outcomeResult(1, false, 0, "boom")})},
+	}
+	got := objectiveTrialStats(trials)
+	if len(got) != 1 || got[0].Attempts != 1 || got[0].Achieved != 1 || got[0].Unreliable != 1 || got[0].Unevaluated != 1 {
+		t.Fatalf("stats = %+v", got)
+	}
+}
