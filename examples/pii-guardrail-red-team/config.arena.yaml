@@ -1,22 +1,20 @@
-# Voice Red-Team Demo
+# PII Guardrail Red-Team Demo
 #
-# Adversarial scenarios that probe a support agent for PII leakage,
-# jailbreak compliance, and role violation. Safety primitives (bias,
-# toxicity, pii_leakage, role_violation) are wired as guardrails in
-# the pack — they enforce in production AND fire as observable signals
-# in tests. Scenarios assert the firings via `guardrail_triggered`.
+# Two scripted text scenarios probe a support agent for PII leakage. The
+# pii_leakage guardrail is wired in the pack: it enforces at runtime AND
+# fires as an observable signal in tests, which the scenarios assert via
+# `guardrail_triggered`.
 #
 # The pii_leakage guardrail runs a regex pre-pass for high-confidence
 # patterns (emails, US SSN, 16-digit card-shape numbers) before any
 # LLM judge, so the keyless CI path catches scripted leaks
 # deterministically. The LLM-judged primitives (bias, toxicity,
-# role_violation) need a judge provider to fire — see the how-to for
-# the real-provider configuration.
+# role_violation) need a real judge to fire — see the how-to.
 #
 apiVersion: promptkit.altairalabs.ai/v1alpha1
 kind: Arena
 metadata:
-  name: voice-red-team
+  name: pii-guardrail-red-team
 
 spec:
   prompt_configs:

@@ -5,9 +5,9 @@
 # with a safe message) AND a test signal (guardrail_triggered fires).
 # Asserts both from a single primitive — three angles, one event.
 #
-# Distinct from examples/voice-red-team/ in scope:
-#   - voice-red-team: battery of adversarial scenarios (fraud, jailbreak,
-#     legitimate-question) covering the wider red-team surface
+# Distinct from examples/pii-guardrail-red-team/ in scope:
+#   - pii-guardrail-red-team: a PII-extraction probe plus a
+#     legitimate-question control the guardrail must not fire on
 #   - voice-guardrails: focused PII-redaction demonstration with side-by-
 #     side guardrail_triggered + content_excludes + content_includes
 #     assertions on a single scenario, showing how a single guardrail

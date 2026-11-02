@@ -78,7 +78,7 @@ Content filtering usually arrives one of two ways:
 
 PromptArena's three-role model collapses that: the same primitive enforces in real time AND is observable in tests. One implementation. Production catches in real time AND the test observes the firing, from the same code.
 
-Worth pairing with the [voice red-team how-to](/arena/how-to/voice/voice-red-team/) which applies the same three-role pattern under voice with the safety primitives (`bias`, `toxicity`, `pii_leakage`, `role_violation`).
+Worth pairing with the [PII guardrail red-team how-to](/arena/how-to/scenarios/pii-guardrail-red-team/), which applies the same pattern to `pii_leakage` and shows how to add the LLM-judged safety primitives (`bias`, `toxicity`, `role_violation`).
 
 ## Production vs test mode
 

@@ -2,7 +2,7 @@
 
 Focused demonstration of the runtime+test bridge: a single `pii_leakage` guardrail produces a production effect (the agent's would-be-spoken PII is replaced with a safe message before reaching the TTS layer) AND fires as an observable test signal (`guardrail_triggered`).
 
-Distinct from `examples/voice-red-team/` in scope: this demo focuses on the PII-redaction shape and the assertion bridge; the red-team example covers the wider adversarial surface (fraud, jailbreak, legitimate).
+Distinct from `examples/pii-guardrail-red-team/` in scope: this demo focuses on the PII-redaction shape and the assertion bridge; the red-team example adds a legitimate-question control that the guardrail must not fire on.
 
 ## What it tests
 
