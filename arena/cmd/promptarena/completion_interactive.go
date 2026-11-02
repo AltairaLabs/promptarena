@@ -313,7 +313,7 @@ func completeFormats(
 	_ []string,
 	_ string,
 ) ([]string, cobra.ShellCompDirective) {
-	formats := []string{inspectFormatJSON, formatJUnit, formatHTML, formatMarkdown, formatCSV}
+	formats := []string{inspectFormatJSON, formatJUnit, formatHTML, formatMarkdown, formatCSV, formatObjectives}
 	return formats, cobra.ShellCompDirectiveNoFileComp
 }
 

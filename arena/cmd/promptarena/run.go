@@ -15,6 +15,7 @@ import (
 	jsonrepo "github.com/AltairaLabs/promptarena/v2/arena/results/json"
 	"github.com/AltairaLabs/promptarena/v2/arena/results/junit"
 	"github.com/AltairaLabs/promptarena/v2/arena/results/markdown"
+	"github.com/AltairaLabs/promptarena/v2/arena/results/objectives"
 	"github.com/AltairaLabs/promptarena/v2/arena/statestore"
 
 	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
@@ -23,10 +24,15 @@ import (
 // Flag name constants to avoid duplication
 const (
 	flagMaxTokens = "max-tokens"
+	// flagObjectivesGroupBy sets the objectives report's groupings.
+	flagObjectivesGroupBy = "objectives-group-by"
 
 	formatMarkdown = "markdown"
 	formatCSV      = "csv"
-	formatJUnit    = "junit"
+	// formatObjectives writes objectives.json and objectives.md: how often
+	// self-play turn objectives were achieved, with confidence intervals.
+	formatObjectives = "objectives"
+	formatJUnit      = "junit"
 	// formatHTML was a bespoke standalone report renderer. The web UI
 	// supersedes it and markdown carries the same content for CI, so the
 	// format is still accepted but normalised to markdown — see
@@ -58,6 +64,8 @@ func createResultRepository(params *RunParameters, configFile string) (results.R
 			composite.AddRepository(junitRepo)
 		case formatCSV:
 			composite.AddRepository(csvrepo.NewRepository(params.OutDir))
+		case formatObjectives:
+			composite.AddRepository(objectives.NewRepository(params.OutDir, params.ObjectivesGroupBy))
 		// formatHTML is normalised away in processHTMLSettings; accept it here
 		// too so any caller building params directly still gets a report.
 		case formatMarkdown, formatHTML:
@@ -122,8 +130,12 @@ func init() {
 	runCmd.Flags().Bool("ci", false, "CI mode (disable TUI, simple logs)")
 	runCmd.Flags().Bool("simple", false, "Simple mode (alias for --ci)")
 	runCmd.Flags().Bool("html", false, "Deprecated: the HTML report was removed; produces markdown instead")
-	runCmd.Flags().StringSlice("format", []string{}, "Output formats (json, junit, markdown, csv) - defaults from config")
-	runCmd.Flags().StringSlice("formats", []string{}, "Output formats (json, junit, markdown, csv) - alias for --format")
+	runCmd.Flags().StringSlice("format", []string{},
+		"Output formats (json, junit, markdown, csv, objectives) - defaults from config")
+	runCmd.Flags().StringSlice("formats", []string{},
+		"Output formats (json, junit, markdown, csv, objectives) - alias for --format")
+	runCmd.Flags().StringSlice(flagObjectivesGroupBy, []string{objectives.GroupScenario},
+		"Groupings for the objectives report: scenario, provider, objective, label.<key>, data.<column>")
 	runCmd.Flags().String("junit-file", "", "JUnit XML output file (default: out/junit.xml)")
 	runCmd.Flags().String("html-file", "", "Deprecated: the HTML report was removed; use --markdown-file")
 	// Keep both accepted so existing scripts do not fail outright, but say so.
@@ -184,11 +196,13 @@ type RunParameters struct {
 	CIMode        bool // --ci: deterministic machine output, non-zero exit on failure
 	SimpleMode    bool // --simple: human-friendly non-TUI (styled + live status bar)
 	Verbose       bool
-	OutputFormats []string // New: output formats (json, junit, markdown, csv)
-	JUnitFile     string   // New: JUnit XML output file
-	MarkdownFile  string   // New: Markdown output file
-	MockProvider  bool     // Enable mock provider mode
-	MockConfig    string   // Path to mock provider configuration
+	OutputFormats []string // New: output formats (json, junit, markdown, csv, objectives)
+	// ObjectivesGroupBy lists the objectives report's groupings.
+	ObjectivesGroupBy []string
+	JUnitFile         string // New: JUnit XML output file
+	MarkdownFile      string // New: Markdown output file
+	MockProvider      bool   // Enable mock provider mode
+	MockConfig        string // Path to mock provider configuration
 	// ProviderOverrides holds raw "from=to" pairs from --override-provider,
 	// substituting one configured provider's spec for another at invocation time.
 	ProviderOverrides []string
@@ -355,6 +369,33 @@ func extractOutputFormatFlags(cmd *cobra.Command, cfg *arenaconfig.Config, param
 	if params.MarkdownFile, err = cmd.Flags().GetString("markdown-file"); err != nil {
 		return fmt.Errorf("failed to get markdown-file flag: %w", err)
 	}
+	return extractObjectivesGroupBy(cmd, params)
+}
+
+// extractObjectivesGroupBy reads --objectives-group-by, defaulting to
+// grouping by scenario when the command doesn't define it. The keys are
+// validated only when the objectives format is requested; set without it,
+// the flag does nothing, which is reported on stderr.
+func extractObjectivesGroupBy(cmd *cobra.Command, params *RunParameters) error {
+	params.ObjectivesGroupBy = []string{objectives.GroupScenario}
+	flag := cmd.Flags().Lookup(flagObjectivesGroupBy)
+	if flag == nil {
+		return nil
+	}
+	if !contains(params.OutputFormats, formatObjectives) {
+		if flag.Changed {
+			cmd.PrintErrf("warning: --%s has no effect without --formats %s\n", flagObjectivesGroupBy, formatObjectives)
+		}
+		return nil
+	}
+	groupBy, err := cmd.Flags().GetStringSlice(flagObjectivesGroupBy)
+	if err != nil {
+		return fmt.Errorf("failed to get %s flag: %w", flagObjectivesGroupBy, err)
+	}
+	if err := objectives.ValidateGroupBy(groupBy); err != nil {
+		return err
+	}
+	params.ObjectivesGroupBy = groupBy
 	return nil
 }
 

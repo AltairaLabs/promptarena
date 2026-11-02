@@ -12,6 +12,7 @@ PromptArena supports multiple output formats for test results, each optimized fo
 | **Markdown** | Human review, documentation, GitHub | `.md` | Good |
 | **JUnit XML** | CI/CD systems | `.xml` | Excellent |
 | **CSV** | Charts, spreadsheets, notebooks | `.csv` | — |
+| **Objectives** | How often self-play objectives were achieved, with confidence intervals | `.json`, `.md` | — |
 
 > **There is no HTML report.** Interactive review is served by the web UI: run `promptarena serve` and you get the same content the old `report.html` carried, plus live runs. See [Interactive Web UI](#interactive-web-ui) below. It needs no format flag, because it reads the per-run JSON files from your output directory.
 >
@@ -27,6 +28,8 @@ out/
   results.md             # Markdown report
   junit.xml              # JUnit XML
   results.csv            # CSV, one row per run
+  objectives.json        # Objective report (objectives format)
+  objectives.md          # The same report as Markdown tables
   media/                 # Media storage (images, audio, video)
     run-20241124-123456/
       session-xyz/
@@ -490,6 +493,48 @@ Then dynamic columns, grouped in this order:
 The header is the union across all runs, so a run that lacks a column
 (a different scenario's assertions, a tool it never called) leaves that
 cell empty.
+
+## Objectives Format
+
+`objectives` reports how often self-play turn [objectives](/arena/reference/config-schema/#objectives) were achieved. It writes `objectives.json` and `objectives.md` into the output directory. Runs without an objective are left out.
+
+```bash
+promptarena run --ci --formats json,objectives \
+  --objectives-group-by scenario,label.category,data.tier
+```
+
+The report always has an overall table. It then has one table per `--objectives-group-by` key (default `scenario`). The flag only applies with the `objectives` format; without it, the flag does nothing and a warning is printed.
+
+| Key | Groups runs by |
+|---|---|
+| `scenario` | Scenario ID |
+| `provider` | Provider ID |
+| `objective` | The objective's `description`, after dataset placeholders are filled in, or `<scenario> turn <n> objective` when it has none |
+| `label.<key>` | A scenario `metadata.labels` value |
+| `data.<column>` | A dataset row's column, for scenarios that run over a [dataset](/arena/how-to/scenarios/run-a-dataset/) |
+
+A run that lacks the key is grouped under `(none)`. An unknown key is an error.
+
+Each table has a row per value and expected outcome. Objectives with `expect: achieved` and with `expect: not_achieved` are never counted together. For `not_achieved`, the rate is how often the agent failed to hold out.
+
+Each row reports:
+
+| Field | Meaning |
+|---|---|
+| `expect` | The objectives' expected outcome: `achieved` or `not_achieved` |
+| `attempts` | Objective attempts whose success checks were evaluated |
+| `achieved` | Attempts that reached the objective |
+| `rate` | `achieved / attempts`. The Markdown shows `–` when nothing was judged. |
+| `ci_low`, `ci_high` | 95% Wilson score interval on `rate` |
+| `mean_exchanges_to_achieve` | Mean exchange at which achieved attempts got there |
+| `cost`, `cost_per_achieved` | Cost of the group's runs in USD, and that divided by `achieved`. A run with several objectives splits its cost evenly between them, so the costs in any one table add up to the overall cost. |
+| `unevaluated` | Attempts that were never judged: their checks couldn't be evaluated, or the run or trial errored before recording the objective. Not counted in `attempts`. |
+
+How the counts are built:
+
+- **Trials.** A scenario with `trials` contributes one attempt per trial, and its cost covers every trial, not only the run reported for the group.
+- **Errored runs.** A run that ended in an error is unevaluated for each objective its scenario's other runs recorded and it didn't. Its cost still counts. An objective already achieved stays counted as achieved even if a later check errored.
+- **What a rate means.** A rate is the share of these attempts, at this budget, that reached the objective, and the interval says how far it can be trusted. A rate of 0 does not show that the objective can't be reached.
 
 ## Multiple Formats
 
