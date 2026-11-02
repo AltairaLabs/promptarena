@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@altairalabs/atlas':
-        specifier: ^0.30.0
-        version: 0.30.0(@dagrejs/dagre@3.1.1)(@types/react@19.2.14)(@xyflow/react@12.12.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(supports-color@7.2.0)
+        specifier: ^0.31.0
+        version: 0.31.0(@dagrejs/dagre@3.1.1)(@types/react@19.2.14)(@xyflow/react@12.12.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(supports-color@7.2.0)(three@0.186.1)
       '@altairalabs/atlas-tokens':
         specifier: ^0.7.0
         version: 0.7.0
@@ -27,8 +27,8 @@ importers:
         specifier: ^2.1.1
         version: 2.1.1
       lucide-react:
-        specifier: ^1.61.0
-        version: 1.61.0(@types/react@19.2.14)(react@19.3.1)
+        specifier: ^1.65.0
+        version: 1.65.0(@types/react@19.2.14)(react@19.3.1)
       radix-ui:
         specifier: ^1.6.7
         version: 1.6.7(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -99,13 +99,14 @@ packages:
   '@altairalabs/atlas-tokens@0.7.0':
     resolution: {integrity: sha512-VL1+nwZbOiI3OeX2QXEF7nkk4gBqSmUK42y3pt4/f+PynM3TlexIWJLr2C8dXENXDd8DLStLYelQ+AED70zn3Q==, tarball: https://npm.pkg.github.com/download/@altairalabs/atlas-tokens/0.7.0/d7f1088fdf4a2857d3208df8943b9f9f8ce684a5}
 
-  '@altairalabs/atlas@0.30.0':
-    resolution: {integrity: sha512-UJCtRAC+a/5u2tDp/t7OJ0rwEvEqPL6soP3q8vl+62wDGWxjm5IylatFzI1epy1fojGuabGzxPR0wcj9FEhfGw==, tarball: https://npm.pkg.github.com/download/@altairalabs/atlas/0.30.0/58900004f0b1293b5c451f7606d2165c0d9a0f8e}
+  '@altairalabs/atlas@0.31.0':
+    resolution: {integrity: sha512-ZFa7Lw4dXl4XDyIp7AONbKKFXZLHcaI6XzXrsEZgDEMjNXOYnaonvCl7FKwjR502J9ueMB+aWn6XPgRRB0oOng==, tarball: https://npm.pkg.github.com/download/@altairalabs/atlas/0.31.0/8ca234554d3d544364b479251944c4c3f832b109}
     peerDependencies:
       '@dagrejs/dagre': ^3.0.0
       '@xyflow/react': ^12.0.0
       react: ^18.3.0 || ^19.0.0
       react-dom: ^18.3.0 || ^19.0.0
+      three: ^0.186.0
 
   '@ampproject/remapping@2.3.0':
     resolution: {integrity: sha512-30iZtAPgz+LTIYoeivqYo853f02jBYSd5uGnGpkFV0M3xOt9aN73erkgYAmZU43x4VfqcnLxW9Kpg3R5LC4YYw==}
@@ -2185,8 +2186,8 @@ packages:
   lru-cache@5.1.1:
     resolution: {integrity: sha512-KpNARQA3Iwv+jTA0utUVVbrh+Jlrr1Fv0e56GGzAFOXN7dk/FviaDW8LHmK52DlcH4WP2n6gI8vN1aesBFgo9w==}
 
-  lucide-react@1.61.0:
-    resolution: {integrity: sha512-v2SQPPPNjnr+BlhL9Spuzmo5yR+hLkftfuE4E3jaxdNPgSH0hJKPcLJBP7yAta87jQNPsSERS59PJjCJ/CorBA==}
+  lucide-react@1.65.0:
+    resolution: {integrity: sha512-roSdtzudEY39i2hn5LLjA8toYfhF2z4S10WSqZF4ubXpHlOmNTvaxMxZLdJfQDi6pEifQWX+cRmYihKSsvAxfA==}
     peerDependencies:
       '@types/react': '*'
       react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
@@ -2608,6 +2609,9 @@ packages:
     resolution: {integrity: sha512-u9E6A+ZDYdp7a4WnarkXPZOx8Ilz46+kby6p1yZ8zsGTz9gYa6FIS7lj2oezzNKmtdyyJNNmmXDppga5GB7kSw==}
     engines: {node: '>=18'}
 
+  three@0.186.1:
+    resolution: {integrity: sha512-blFeqb49wRCSGUGj7gtpfnSGHy2lwDk94RhUmS1c/hTby70kvChbWpkJ4Pm1390LqzzvTmzgXKHPEafJwCb8jA==}
+
   tinybench@2.9.0:
     resolution: {integrity: sha512-0+DUvqWMValLmha6lr4kD8iAMK1HzV0/aKnCtWb9v9641TnP/MFb7Pc2bxoxQjTXAErryXVgUOfv2YqNllqGeg==}
 
@@ -2862,16 +2866,17 @@ snapshots:
 
   '@altairalabs/atlas-tokens@0.7.0': {}
 
-  '@altairalabs/atlas@0.30.0(@dagrejs/dagre@3.1.1)(@types/react@19.2.14)(@xyflow/react@12.12.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(supports-color@7.2.0)':
+  '@altairalabs/atlas@0.31.0(@dagrejs/dagre@3.1.1)(@types/react@19.2.14)(@xyflow/react@12.12.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(supports-color@7.2.0)(three@0.186.1)':
     dependencies:
       '@dagrejs/dagre': 3.1.1
       '@xyflow/react': 12.12.0(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
-      lucide-react: 1.61.0(@types/react@19.2.14)(react@19.3.1)
+      lucide-react: 1.65.0(@types/react@19.2.14)(react@19.3.1)
       react: 19.3.1
       react-dom: 19.3.1(react@19.3.1)
       react-image-crop: 11.1.2(react@19.3.1)
       react-markdown: 10.1.0(@types/react@19.2.14)(react@19.3.1)(supports-color@7.2.0)
       remark-gfm: 4.0.1(supports-color@7.2.0)
+      three: 0.186.1
     transitivePeerDependencies:
       - '@types/react'
       - supports-color
@@ -4817,7 +4822,7 @@ snapshots:
     dependencies:
       yallist: 3.1.1
 
-  lucide-react@1.61.0(@types/react@19.2.14)(react@19.3.1):
+  lucide-react@1.65.0(@types/react@19.2.14)(react@19.3.1):
     dependencies:
       react: 19.3.1
     optionalDependencies:
@@ -5533,6 +5538,8 @@ snapshots:
       '@istanbuljs/schema': 0.1.6
       glob: 10.5.0
       minimatch: 10.2.5
+
+  three@0.186.1: {}
 
   tinybench@2.9.0: {}
 
