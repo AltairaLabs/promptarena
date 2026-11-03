@@ -113,6 +113,18 @@ type PersonaFactPolicy struct {
 	// what it invented, and sends the retry; the first draft is recorded as
 	// repaired, and the retry is still checked.
 	OnViolation string `json:"on_violation,omitempty" yaml:"on_violation,omitempty" jsonschema:"enum=flag,enum=regenerate"`
+	// Judge also asks the configured judge, for each persona message the
+	// specifics check passes, whether the message asserts a specific fact
+	// (a name, amount, place or event, say) that is not among the facts or
+	// earlier in the conversation. A message the judge flags marks the run
+	// unreliable, as an invented specific does. Each check is one judge call.
+	Judge bool `json:"judge,omitempty" yaml:"judge,omitempty"`
+}
+
+// JudgesFacts reports whether the configured judge also checks the persona's
+// messages against its facts.
+func (p *UserPersonaPack) JudgesFacts() bool {
+	return p.ChecksFacts() && p.FactPolicy != nil && p.FactPolicy.Judge
 }
 
 // Values of PersonaFactPolicy.OnViolation.
@@ -160,6 +172,9 @@ func validatePersonaFacts(persona *UserPersonaPack) error {
 	}
 	if pol := persona.FactPolicy; pol != nil && pol.OnViolation == FactViolationRegenerate && !persona.ChecksFacts() {
 		return fmt.Errorf("persona %s: fact_policy.on_violation: regenerate needs facts and the check on", persona.ID)
+	}
+	if pol := persona.FactPolicy; pol != nil && pol.Judge && !persona.ChecksFacts() {
+		return fmt.Errorf("persona %s: fact_policy.judge needs facts and the check on", persona.ID)
 	}
 	seen := make(map[string]bool, len(persona.Facts))
 	for i, f := range persona.Facts {

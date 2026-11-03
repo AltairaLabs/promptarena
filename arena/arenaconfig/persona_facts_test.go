@@ -89,3 +89,33 @@ func TestPersonaFactPolicy_OnViolation(t *testing.T) {
 	err = validatePersonaFacts(&UserPersonaPack{ID: "p", FactPolicy: &PersonaFactPolicy{OnViolation: FactViolationRegenerate}})
 	require.Error(t, err)
 }
+
+func TestPersonaFactPolicy_Judge(t *testing.T) {
+	facts := []PersonaFact{{ID: "o", Value: "A-100"}}
+	p := &UserPersonaPack{ID: "p", Facts: facts, FactPolicy: &PersonaFactPolicy{Judge: true}}
+	assert.NoError(t, validatePersonaFacts(p))
+	assert.True(t, p.JudgesFacts())
+	assert.False(t, (&UserPersonaPack{Facts: facts}).JudgesFacts(), "the judge is opt-in")
+
+	off := false
+	p.FactPolicy.Check = &off
+	assert.False(t, p.JudgesFacts(), "the judge needs the check")
+	err := validatePersonaFacts(p)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "fact_policy.judge needs facts and the check on")
+	err = validatePersonaFacts(&UserPersonaPack{ID: "p", FactPolicy: &PersonaFactPolicy{Judge: true}})
+	require.Error(t, err)
+}
+
+func TestValidatePersonaJudges(t *testing.T) {
+	judged := &UserPersonaPack{ID: "p", Facts: []PersonaFact{{ID: "o", Value: "A-100"}},
+		FactPolicy: &PersonaFactPolicy{Judge: true}}
+	c := &Config{LoadedPersonas: map[string]*UserPersonaPack{"p": judged}}
+	err := c.validatePersonaJudges()
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "persona p: fact_policy.judge needs a judge in spec.judges")
+
+	c.LoadedJudges = map[string]*JudgeTarget{"j": {}}
+	assert.NoError(t, c.validatePersonaJudges())
+	assert.NoError(t, (&Config{LoadedPersonas: map[string]*UserPersonaPack{"p": factsPersona()}}).validatePersonaJudges())
+}

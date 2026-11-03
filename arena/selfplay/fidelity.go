@@ -3,6 +3,7 @@ package selfplay
 import (
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
 
 	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
@@ -106,21 +107,41 @@ func alnumCount(s string) int {
 }
 
 // PersonaGivenText returns, lowercased, what the persona's config gives it:
-// its description, prompt, facts, goals, constraints, optional_vars values and
-// the string values its state can hold. A specific found here was not
+// its facts and its PersonaBackground. A specific found here was not
 // invented.
 func PersonaGivenText(persona *arenaconfig.UserPersonaPack) string {
-	parts := []string{persona.Description, persona.SystemPrompt, persona.SystemTemplate}
+	parts := make([]string, 0, len(persona.Facts)+1)
 	for _, f := range persona.Facts {
 		parts = append(parts, f.Value)
 	}
+	parts = append(parts, PersonaBackground(persona))
+	return strings.ToLower(strings.Join(parts, "\n"))
+}
+
+// PersonaBackground returns what the persona's config tells it about itself
+// besides its facts, one non-empty line or paragraph each: its description,
+// prompt, goals, constraints, optional_vars values (by name) and the string
+// values its state can hold.
+func PersonaBackground(persona *arenaconfig.UserPersonaPack) string {
+	parts := []string{persona.Description, persona.SystemPrompt, persona.SystemTemplate}
 	parts = append(parts, persona.Goals...)
 	parts = append(parts, persona.Constraints...)
-	for _, v := range persona.OptionalVars {
-		parts = append(parts, v)
+	names := make([]string, 0, len(persona.OptionalVars))
+	for name := range persona.OptionalVars {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	for _, name := range names {
+		parts = append(parts, persona.OptionalVars[name])
 	}
 	parts = append(parts, persona.StateStrings()...)
-	return strings.ToLower(strings.Join(parts, "\n"))
+	kept := parts[:0]
+	for _, p := range parts {
+		if strings.TrimSpace(p) != "" {
+			kept = append(kept, p)
+		}
+	}
+	return strings.Join(kept, "\n")
 }
 
 // InventedSpecifics returns the specifics in message that appear in none of

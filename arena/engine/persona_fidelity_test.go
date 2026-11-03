@@ -3,6 +3,7 @@ package engine
 import (
 	"context"
 	"errors"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -48,6 +49,13 @@ func fidelityRegistry(t *testing.T, persona *arenaconfig.UserPersonaPack) *selfp
 func runFidelity(t *testing.T, persona *arenaconfig.UserPersonaPack, turn arenaconfig.TurnDefinition,
 	says ...string) *ConversationResult {
 	t.Helper()
+	return runFidelityWith(t, evals.NewEvalTypeRegistry(), persona, turn, says...)
+}
+
+// runFidelityWith is runFidelity with the eval handlers in reg.
+func runFidelityWith(t *testing.T, reg *evals.EvalTypeRegistry, persona *arenaconfig.UserPersonaPack,
+	turn arenaconfig.TurnDefinition, says ...string) *ConversationResult {
+	t.Helper()
 	scripted := &MockTurnExecutor{executeFunc: func(ctx context.Context, req turnexecutors.TurnRequest) error {
 		return saveMessagesToStateStore(ctx, req, []types.Message{
 			{Role: "user", Content: "Where is my order?"},
@@ -63,7 +71,7 @@ func runFidelity(t *testing.T, persona *arenaconfig.UserPersonaPack, turn arenac
 	}}
 	executor := NewDefaultConversationExecutor(scripted, selfPlay, fidelityRegistry(t, persona),
 		createTestPromptRegistry(t), nil)
-	executor.evalOrchestrator = NewEvalOrchestrator(evals.NewEvalTypeRegistry(), nil, false, nil, "")
+	executor.evalOrchestrator = NewEvalOrchestrator(reg, nil, false, nil, "")
 	turn.Role = "attacker"
 	turn.Persona = persona.ID
 	if turn.Turns == 0 {
@@ -188,7 +196,8 @@ func TestPersonaFidelity_RewoundReplyCanBeRepeated(t *testing.T) {
 	obj.Rewind = &arenaconfig.ObjectiveRewindConfig{When: []arenaconfig.AssertionConfig{{
 		Type: "content_includes_any", Params: map[string]interface{}{"patterns": []interface{}{"Let me check"}},
 	}}, Max: 1}
-	persona := customerPersona(nil)
+	persona := customerPersona(&arenaconfig.PersonaFactPolicy{Judge: true})
+	judge := &fakeFactJudge{}
 	scripted := &MockTurnExecutor{executeFunc: func(ctx context.Context, req turnexecutors.TurnRequest) error {
 		return saveMessagesToStateStore(ctx, req, []types.Message{{Role: "user", Content: "Hi"}, {Role: "assistant", Content: "Hello"}})
 	}}
@@ -200,7 +209,7 @@ func TestPersonaFidelity_RewoundReplyCanBeRepeated(t *testing.T) {
 		return saveMessagesToStateStore(ctx, req, []types.Message{{Role: "user", Content: says}, {Role: "assistant", Content: reply}})
 	}}
 	executor := NewDefaultConversationExecutor(scripted, selfPlay, fidelityRegistry(t, persona), createTestPromptRegistry(t), nil)
-	executor.evalOrchestrator = NewEvalOrchestrator(evals.NewEvalTypeRegistry(), nil, false, nil, "")
+	executor.evalOrchestrator = NewEvalOrchestrator(judgeRegistry(judge), nil, false, nil, "")
 	res := executor.ExecuteConversation(context.Background(), ConversationRequest{
 		Region: "default",
 		Scenario: &arenaconfig.Scenario{ID: "f", TaskType: "assistant", Turns: []arenaconfig.TurnDefinition{
@@ -214,6 +223,10 @@ func TestPersonaFidelity_RewoundReplyCanBeRepeated(t *testing.T) {
 	require.Len(t, rewinds, 1, "exchange 1, which gave K-8080, was rewound")
 	assert.Equal(t, true, fidelityResult(t, res).Details["reliable"],
 		"the persona was handed K-8080 as {{rewound_response}}, so repeating it is not inventing")
+	assert.Equal(t, 2, fidelityResult(t, res).Details["checked_messages"],
+		"the message after a rewind sits where the removed one did, and is still checked")
+	require.Len(t, judge.criteria, 2)
+	assert.Contains(t, judge.criteria[1], "Let me check, ticket K-8080.", "the judge is shown the rewound exchange")
 }
 
 func TestPersonaFidelity_MessageTheAgentFailedOnIsChecked(t *testing.T) {
@@ -331,4 +344,111 @@ func TestPersonaFidelity_RecordsRepairFromTheMessage(t *testing.T) {
 	r := fidelityResult(t, res)
 	assert.Equal(t, true, r.Details["reliable"])
 	assert.Contains(t, r.Message, "(1 draft regenerated)")
+}
+
+// fakeFactJudge stands in for llm_judge: it flags any message containing a
+// word from flag, and records what it was asked to judge.
+type fakeFactJudge struct {
+	flag     map[string]string
+	err      string
+	skip     string
+	contents []string
+	criteria []string
+}
+
+func (j *fakeFactJudge) Type() string { return "llm_judge" }
+
+func (j *fakeFactJudge) Eval(_ context.Context, evalCtx *evals.EvalContext, params map[string]any) (*evals.EvalResult, error) {
+	j.contents = append(j.contents, evalCtx.CurrentOutput)
+	c, _ := params["criteria"].(string)
+	j.criteria = append(j.criteria, c)
+	if j.err != "" {
+		return &evals.EvalResult{Type: j.Type(), Error: j.err}, nil
+	}
+	if j.skip != "" {
+		return &evals.EvalResult{Type: j.Type(), Skipped: true, SkipReason: j.skip}, nil
+	}
+	score, reasoning := 1.0, "only declared facts"
+	for word, why := range j.flag {
+		if strings.Contains(evalCtx.CurrentOutput, word) {
+			score, reasoning = 0, why
+		}
+	}
+	return &evals.EvalResult{Type: j.Type(), Score: &score, Explanation: reasoning}, nil
+}
+
+func judgeRegistry(j *fakeFactJudge) *evals.EvalTypeRegistry {
+	reg := evals.NewEvalTypeRegistry()
+	reg.Register(j)
+	return reg
+}
+
+func TestPersonaFidelity_JudgeFlagsAnInventedFactWithoutAnIdentifier(t *testing.T) {
+	judge := &fakeFactJudge{flag: map[string]string{"Leeds": "states a city the persona was not given"}}
+	res := runFidelityWith(t, judgeRegistry(judge), customerPersona(&arenaconfig.PersonaFactPolicy{Judge: true}),
+		arenaconfig.TurnDefinition{},
+		"My order A-100 hasn't arrived.",
+		"It was going to my sister in Leeds.")
+
+	require.False(t, res.Failed, res.Error)
+	r := fidelityResult(t, res)
+	assert.True(t, r.Passed, "a judge flag marks the run unreliable without failing it")
+	assert.Equal(t, false, r.Details["reliable"])
+	assert.Equal(t, []map[string]interface{}{{"exchange": 2, "reasoning": "states a city the persona was not given"}},
+		r.Details["judge_flags"])
+	assert.Equal(t, `persona customer: the judge flagged 1 message: exchange 2 (states a city the persona was not given)`,
+		r.Message)
+	assert.Equal(t, map[int]bool{1: true}, UnreliableTurns(res.ConversationAssertionResults))
+
+	// The judge sees the persona's message, not the agent's reply, and is
+	// given the facts and the conversation before the message.
+	assert.Equal(t, []string{"My order A-100 hasn't arrived.", "It was going to my sister in Leeds."}, judge.contents)
+	assert.Contains(t, judge.criteria[1], "- order_number: A-100")
+	assert.Contains(t, judge.criteria[1], "You want to know where your order is.", "the background keeps its case")
+	assert.Contains(t, judge.criteria[1], "I've opened ticket T-555 for you.")
+	assert.NotContains(t, judge.criteria[1], "sister in Leeds", "the message is the content, not the context")
+}
+
+func TestPersonaFidelity_JudgeSkipsAMessageTheSpecificsCheckFlagged(t *testing.T) {
+	judge := &fakeFactJudge{}
+	res := runFidelityWith(t, judgeRegistry(judge), customerPersona(&arenaconfig.PersonaFactPolicy{Judge: true}),
+		arenaconfig.TurnDefinition{}, "My order is A-100.", "Or B-7731.")
+
+	r := fidelityResult(t, res)
+	assert.Equal(t, []string{"My order is A-100."}, judge.contents)
+	assert.Equal(t, `persona customer invented 1 specific: "B-7731" (exchange 2)`, r.Message)
+	assert.Nil(t, r.Details["judge_flags"])
+}
+
+func TestPersonaFidelity_JudgeErrorIsReportedWithoutAFlag(t *testing.T) {
+	judge := &fakeFactJudge{err: "judge_provider not found in metadata"}
+	res := runFidelityWith(t, judgeRegistry(judge), customerPersona(&arenaconfig.PersonaFactPolicy{Judge: true}),
+		arenaconfig.TurnDefinition{}, "My order is A-100.")
+
+	r := fidelityResult(t, res)
+	assert.True(t, r.Passed)
+	assert.Equal(t, true, r.Details["reliable"])
+	assert.Equal(t, []map[string]interface{}{{"exchange": 1, "error": "judge_provider not found in metadata"}},
+		r.Details["judge_errors"])
+	assert.Equal(t, "persona customer stated only declared facts in 1 messages (judge failed on 1)", r.Message)
+}
+
+func TestPersonaFidelity_JudgeIsOptIn(t *testing.T) {
+	judge := &fakeFactJudge{}
+	res := runFidelityWith(t, judgeRegistry(judge), customerPersona(nil), arenaconfig.TurnDefinition{},
+		"My order is A-100.")
+
+	require.False(t, res.Failed, res.Error)
+	assert.Empty(t, judge.contents)
+	assert.Nil(t, fidelityResult(t, res).Details["judge_flags"])
+}
+
+func TestPersonaFidelity_SkippedJudgeIsNotAPass(t *testing.T) {
+	judge := &fakeFactJudge{skip: "sampled out"}
+	res := runFidelityWith(t, judgeRegistry(judge), customerPersona(&arenaconfig.PersonaFactPolicy{Judge: true}),
+		arenaconfig.TurnDefinition{}, "My order is A-100.")
+
+	r := fidelityResult(t, res)
+	assert.Equal(t, []map[string]interface{}{{"exchange": 1, "error": "skipped: sampled out"}}, r.Details["judge_errors"])
+	assert.Equal(t, "persona customer stated only declared facts in 1 messages (judge failed on 1)", r.Message)
 }
