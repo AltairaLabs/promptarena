@@ -18,24 +18,6 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )
 
-func TestSpecifics(t *testing.T) {
-	tests := []struct {
-		text string
-		want []string
-	}{
-		{"My order is A-100, placed 28 October.", []string{"A-100"}},
-		{"Email jo.smith@example.com or call 0207 946 0018.", []string{"jo.smith@example.com", "0207", "946", "0018"}},
-		{"Ticket #4471, at 10:30, ref 2024-10-28.", []string{"4471", "10:30", "2024-10-28"}},
-		{"I have 2 kids and waited 15 minutes.", nil},
-		{"Repeat: A-100 and a-100.", []string{"A-100"}},
-		{"No specifics here at all.", nil},
-		{"Order #4471 on my 2nd try, the 28th, 100% sure.", []string{"4471"}},
-	}
-	for _, tt := range tests {
-		assert.Equal(t, tt.want, specifics(tt.text), tt.text)
-	}
-}
-
 // customerPersona holds an order number and an order date.
 func customerPersona(policy *arenaconfig.PersonaFactPolicy) *arenaconfig.UserPersonaPack {
 	return &arenaconfig.UserPersonaPack{
@@ -285,4 +267,68 @@ func TestPersonaFidelity_PersonaGenerationFailureChecksNothingTwice(t *testing.T
 	})
 
 	assert.Equal(t, 1, fidelityResult(t, res).Details["checked_messages"])
+}
+
+func TestRepairedSpecifics(t *testing.T) {
+	assert.Equal(t, []string{"B-7731"}, repairedSpecifics(map[string]interface{}{
+		"raw_response": map[string]interface{}{selfplay.MetaFidelityRepaired: []string{"B-7731"}},
+	}))
+	assert.Equal(t, []string{"B-7731"}, repairedSpecifics(map[string]interface{}{
+		"raw_response": map[string]interface{}{selfplay.MetaFidelityRepaired: []interface{}{"B-7731", 3}},
+	}), "as decoded from JSON")
+	assert.Equal(t, []string{"B-7731"}, repairedSpecifics(map[string]interface{}{
+		selfplay.MetaFidelityRepaired: []string{"B-7731"},
+	}), "the duplex executor stores it at the top level")
+	assert.Nil(t, repairedSpecifics(nil))
+}
+
+func TestPersonaFidelity_ReportsRegeneratedDrafts(t *testing.T) {
+	tr := &fidelityTracker{
+		persona: customerPersona(nil), checked: 2,
+		repaired: []fidelityViolation{{exchange: 2, specifics: []string{"B-7731"}}},
+	}
+	r := tr.result()
+	assert.True(t, r.Passed)
+	assert.Equal(t, true, r.Details["reliable"], "a repaired draft was never sent")
+	assert.Equal(t, "persona customer stated only declared facts in 2 messages (1 draft regenerated)", r.Message)
+	repaired, ok := r.Details["repaired"].([]map[string]interface{})
+	require.True(t, ok)
+	assert.Equal(t, 2, repaired[0]["exchange"])
+
+	tr.violations = []fidelityViolation{{exchange: 3, specifics: []string{"C-1"}}}
+	tr.repaired = append(tr.repaired, fidelityViolation{exchange: 3, specifics: []string{"D-22"}})
+	assert.Equal(t, `persona customer invented 1 specific: "C-1" (exchange 3) (2 drafts regenerated)`, tr.result().Message)
+}
+
+func TestPersonaFidelity_RecordsRepairFromTheMessage(t *testing.T) {
+	persona := customerPersona(&arenaconfig.PersonaFactPolicy{OnViolation: arenaconfig.FactViolationRegenerate})
+	scripted := &MockTurnExecutor{executeFunc: func(ctx context.Context, req turnexecutors.TurnRequest) error {
+		return saveMessagesToStateStore(ctx, req, []types.Message{
+			{Role: "user", Content: "Hi"}, {Role: "assistant", Content: "Hello."},
+		})
+	}}
+	selfPlay := &MockTurnExecutor{executeFunc: func(ctx context.Context, req turnexecutors.TurnRequest) error {
+		return saveMessagesToStateStore(ctx, req, []types.Message{
+			{Role: "user", Content: "My order is A-100.", Meta: map[string]interface{}{
+				"raw_response": map[string]interface{}{selfplay.MetaFidelityRepaired: []string{"B-7731"}},
+			}},
+			{Role: "assistant", Content: "Checking."},
+		})
+	}}
+	executor := NewDefaultConversationExecutor(scripted, selfPlay, fidelityRegistry(t, persona),
+		createTestPromptRegistry(t), nil)
+	executor.evalOrchestrator = NewEvalOrchestrator(evals.NewEvalTypeRegistry(), nil, false, nil, "")
+	res := executor.ExecuteConversation(context.Background(), ConversationRequest{
+		Region: "default",
+		Scenario: &arenaconfig.Scenario{ID: "f", TaskType: "assistant", Turns: []arenaconfig.TurnDefinition{
+			{Role: "user", Content: "Hi"}, {Role: "attacker", Persona: persona.ID, Turns: 1},
+		}},
+		Provider:         &MockProvider{id: "test"},
+		Config:           &arenaconfig.Config{},
+		StateStoreConfig: &StateStoreConfig{Store: createTestStateStore(), UserID: "u"},
+		ConversationID:   "f-conv",
+	})
+	r := fidelityResult(t, res)
+	assert.Equal(t, true, r.Details["reliable"])
+	assert.Contains(t, r.Message, "(1 draft regenerated)")
 }
