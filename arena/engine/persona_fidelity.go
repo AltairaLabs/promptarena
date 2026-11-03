@@ -3,12 +3,12 @@ package engine
 import (
 	"context"
 	"fmt"
-	"regexp"
 	"strings"
 	"sync"
 
 	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
 	asrt "github.com/AltairaLabs/promptarena/v2/arena/assertions"
+	"github.com/AltairaLabs/promptarena/v2/arena/selfplay"
 
 	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )
@@ -25,66 +25,6 @@ const (
 	fidelityKeyExchange  = "exchange"
 	fidelityKeySpecifics = "specifics"
 )
-
-// minSpecificLen is the fewest letters and digits a token needs to count as a
-// specific: "A-100" and "2024" do, "2" and "28" don't, so a count or a day of
-// the month on its own is not flagged.
-const minSpecificLen = 3
-
-var (
-	// reOrdinal matches an ordinal such as 1st or 28th, which is ordinary
-	// speech rather than an identifier.
-	reOrdinal = regexp.MustCompile(`^\d+(st|nd|rd|th)$`)
-	// reEmail matches an email address.
-	reEmail = regexp.MustCompile(`[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}`)
-	// reToken matches a run of letters, digits and the joiners identifiers
-	// use (A-100, 2024-10-28, #4471, 10:30).
-	reToken = regexp.MustCompile(`[A-Za-z0-9#][A-Za-z0-9\-_/.:#]*`)
-)
-
-// specifics returns the identifier-shaped tokens in text, in order and without
-// repeats: email addresses, and tokens that contain a digit and at least
-// minSpecificLen letters and digits. Ordinals (2nd, 28th) and percentages are
-// not specifics, and a leading or trailing '#', '-', '/', '.', ':' or '_' is
-// dropped, so "#4471" matches a fact of "4471".
-func specifics(text string) []string {
-	var out []string
-	seen := map[string]bool{}
-	add := func(s string) {
-		if k := strings.ToLower(s); !seen[k] {
-			seen[k] = true
-			out = append(out, s)
-		}
-	}
-	for _, email := range reEmail.FindAllString(text, -1) {
-		add(email)
-	}
-	rest := reEmail.ReplaceAllString(text, " ")
-	for _, loc := range reToken.FindAllStringIndex(rest, -1) {
-		if loc[1] < len(rest) && rest[loc[1]] == '%' {
-			continue
-		}
-		tok := strings.Trim(rest[loc[0]:loc[1]], tokenJoiners)
-		if strings.ContainsAny(tok, "0123456789") && alnumCount(tok) >= minSpecificLen &&
-			!reOrdinal.MatchString(strings.ToLower(tok)) {
-			add(tok)
-		}
-	}
-	return out
-}
-
-// tokenJoiners are the characters reToken allows inside an identifier.
-const tokenJoiners = "-_/.:#"
-
-func alnumCount(s string) int {
-	n := 0
-	for _, r := range s {
-		if r >= '0' && r <= '9' || r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' {
-			n++
-		}
-	}
-	return n
-}
 
 // fidelityViolation is one persona message that stated specifics it was not
 // given.
@@ -115,7 +55,10 @@ type fidelityTracker struct {
 	lastChecked int
 	checked     int
 	violations  []fidelityViolation
-	loadErr     string
+	// repaired lists the drafts fact_policy.on_violation: regenerate
+	// replaced, with the specifics each invented.
+	repaired []fidelityViolation
+	loadErr  string
 }
 
 // newFidelityTracker returns a tracker for the turn, or nil when its persona
@@ -130,22 +73,13 @@ func (ce *DefaultConversationExecutor) newFidelityTracker(
 	if persona == nil || !persona.ChecksFacts() {
 		return nil
 	}
-	parts := []string{persona.Description, persona.SystemPrompt, persona.SystemTemplate}
-	for _, f := range persona.Facts {
-		parts = append(parts, f.Value)
-	}
-	parts = append(parts, persona.Goals...)
-	parts = append(parts, persona.Constraints...)
-	for _, v := range persona.OptionalVars {
-		parts = append(parts, v)
-	}
+	known := selfplay.PersonaGivenText(persona)
 	if turn.Objective != nil {
-		parts = append(parts, turn.Objective.Description)
+		known += "\n" + strings.ToLower(turn.Objective.Description)
 	}
-	parts = append(parts, persona.StateStrings()...)
 	return &fidelityTracker{
 		ce: ce, req: req, turnIndex: turnIdx, persona: persona,
-		known: strings.ToLower(strings.Join(parts, "\n")), lastChecked: -1,
+		known: known, lastChecked: -1,
 	}
 }
 
@@ -172,18 +106,39 @@ func (t *fidelityTracker) afterExchange(ctx context.Context, exchange int) {
 	}
 	t.lastChecked = idx
 	t.checked++
-	earlier := strings.ToLower(conversationText(messages[:idx]))
-	var invented []string
-	for _, s := range specifics(messages[idx].GetContent()) {
-		k := strings.ToLower(s)
-		if !strings.Contains(t.known, k) && !strings.Contains(earlier, k) && !strings.Contains(t.seen, k) {
-			invented = append(invented, s)
-		}
+	if r := repairedSpecifics(messages[idx].Meta); len(r) > 0 {
+		t.repaired = append(t.repaired, fidelityViolation{exchange: exchange, specifics: r})
 	}
-	t.seen += strings.ToLower(conversationText(messages[idx:]))
+	invented := selfplay.InventedSpecifics(messages[idx].GetContent(),
+		t.known, selfplay.ConversationText(messages[:idx]), t.seen)
+	t.seen += strings.ToLower(selfplay.ConversationText(messages[idx:]))
 	if len(invented) > 0 {
 		t.violations = append(t.violations, fidelityViolation{exchange: exchange, specifics: invented})
 	}
+}
+
+// repairedSpecifics reads the specifics a regenerated persona draft
+// invented, stored under raw_response by the text self-play executor and at
+// the top level by the duplex one.
+func repairedSpecifics(meta map[string]interface{}) []string {
+	v, ok := meta[selfplay.MetaFidelityRepaired]
+	if !ok {
+		raw, _ := meta["raw_response"].(map[string]interface{})
+		v = raw[selfplay.MetaFidelityRepaired]
+	}
+	switch v := v.(type) {
+	case []string:
+		return v
+	case []interface{}:
+		out := make([]string, 0, len(v))
+		for _, s := range v {
+			if str, ok := s.(string); ok {
+				out = append(out, str)
+			}
+		}
+		return out
+	}
+	return nil
 }
 
 func lastIndexOfRole(messages []types.Message, role string) int {
@@ -193,21 +148,6 @@ func lastIndexOfRole(messages []types.Message, role string) int {
 		}
 	}
 	return -1
-}
-
-// conversationText joins every message's text and tool result, so a
-// specific the agent or a tool gave can be repeated by the persona.
-func conversationText(messages []types.Message) string {
-	var b strings.Builder
-	for i := range messages {
-		b.WriteString(messages[i].GetContent())
-		b.WriteByte('\n')
-		if messages[i].ToolResult != nil {
-			b.WriteString(messages[i].ToolResult.GetTextContent())
-			b.WriteByte('\n')
-		}
-	}
-	return b.String()
 }
 
 // finish records the turn's fidelity result on the conversation.
@@ -223,11 +163,10 @@ func (t *fidelityTracker) finish() {
 // unreliable without failing it.
 func (t *fidelityTracker) result() asrt.ConversationValidationResult {
 	invented := 0
-	violations := make([]map[string]interface{}, len(t.violations))
-	for i, v := range t.violations {
+	for _, v := range t.violations {
 		invented += len(v.specifics)
-		violations[i] = map[string]interface{}{fidelityKeyExchange: v.exchange, fidelityKeySpecifics: v.specifics}
 	}
+	violations := violationDetails(t.violations)
 	reliable := len(t.violations) == 0
 	details := map[string]interface{}{
 		fidelityKeyPersona:   t.persona.ID,
@@ -235,6 +174,9 @@ func (t *fidelityTracker) result() asrt.ConversationValidationResult {
 		fidelityKeyReliable:  reliable,
 		"checked_messages":   t.checked,
 		"violations":         violations,
+	}
+	if len(t.repaired) > 0 {
+		details["repaired"] = violationDetails(t.repaired)
 	}
 	if t.loadErr != "" {
 		details["error"] = t.loadErr
@@ -247,9 +189,23 @@ func (t *fidelityTracker) result() asrt.ConversationValidationResult {
 	}
 }
 
+func violationDetails(vs []fidelityViolation) []map[string]interface{} {
+	out := make([]map[string]interface{}, len(vs))
+	for i, v := range vs {
+		out[i] = map[string]interface{}{fidelityKeyExchange: v.exchange, fidelityKeySpecifics: v.specifics}
+	}
+	return out
+}
+
 func (t *fidelityTracker) message(invented int) string {
+	suffix := ""
+	if n := len(t.repaired); n == 1 {
+		suffix = " (1 draft regenerated)"
+	} else if n > 1 {
+		suffix = fmt.Sprintf(" (%d drafts regenerated)", n)
+	}
 	if len(t.violations) == 0 {
-		return fmt.Sprintf("persona %s stated only declared facts in %d messages", t.persona.ID, t.checked)
+		return fmt.Sprintf("persona %s stated only declared facts in %d messages%s", t.persona.ID, t.checked, suffix)
 	}
 	quoted := make([]string, 0, invented)
 	for _, v := range t.violations {
@@ -261,7 +217,7 @@ func (t *fidelityTracker) message(invented int) string {
 	if invented == 1 {
 		noun = "specific"
 	}
-	return fmt.Sprintf("persona %s invented %d %s: %s", t.persona.ID, invented, noun, strings.Join(quoted, ", "))
+	return fmt.Sprintf("persona %s invented %d %s: %s%s", t.persona.ID, invented, noun, strings.Join(quoted, ", "), suffix)
 }
 
 // fidelityRecorder collects persona fidelity results for one conversation.

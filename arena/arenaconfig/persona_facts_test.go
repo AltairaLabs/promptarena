@@ -64,3 +64,28 @@ func TestPersonaFacts_TemplateVariable(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, "You know:\n- order_number: A-100\n- order_date: 28 October", prompt)
 }
+
+func TestPersonaFactPolicy_OnViolation(t *testing.T) {
+	facts := []PersonaFact{{ID: "o", Value: "A-100"}}
+	p := &UserPersonaPack{ID: "p", Facts: facts, FactPolicy: &PersonaFactPolicy{OnViolation: FactViolationRegenerate}}
+	assert.NoError(t, validatePersonaFacts(p))
+	assert.True(t, p.RegeneratesOnFactViolation())
+
+	off := false
+	p.FactPolicy.Check = &off
+	assert.False(t, p.RegeneratesOnFactViolation(), "regenerate needs the check")
+
+	for _, v := range []string{"", FactViolationFlag} {
+		assert.False(t, (&UserPersonaPack{Facts: facts, FactPolicy: &PersonaFactPolicy{OnViolation: v}}).RegeneratesOnFactViolation())
+	}
+	err := validatePersonaFacts(&UserPersonaPack{ID: "p", Facts: facts, FactPolicy: &PersonaFactPolicy{OnViolation: "retry"}})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), `fact_policy.on_violation must be flag or regenerate, got "retry"`)
+
+	err = validatePersonaFacts(&UserPersonaPack{ID: "p", Facts: facts,
+		FactPolicy: &PersonaFactPolicy{Check: &off, OnViolation: FactViolationRegenerate}})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "regenerate needs facts and the check on")
+	err = validatePersonaFacts(&UserPersonaPack{ID: "p", FactPolicy: &PersonaFactPolicy{OnViolation: FactViolationRegenerate}})
+	require.Error(t, err)
+}

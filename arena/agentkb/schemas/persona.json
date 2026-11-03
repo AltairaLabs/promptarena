@@ -151,6 +151,14 @@
         "fail_on_violation": {
           "type": "boolean",
           "description": "FailOnViolation fails the run when the persona invents a specific. By\ndefault the run is only flagged as unreliable, so the simulator's\nmistake is not counted as the agent's failure."
+        },
+        "on_violation": {
+          "type": "string",
+          "enum": [
+            "flag",
+            "regenerate"
+          ],
+          "description": "OnViolation is what happens when a generated message states a specific\nthe persona was not given. \"flag\" (the default) sends it and lets the\ncheck report it. \"regenerate\" generates the message once more, told\nwhat it invented, and sends the retry; the first draft is recorded as\nrepaired, and the retry is still checked."
         }
       },
       "additionalProperties": false,

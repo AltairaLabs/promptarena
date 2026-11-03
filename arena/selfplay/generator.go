@@ -136,9 +136,6 @@ func (cg *ContentGenerator) NextUserTurn(
 	// Gemini rejects the request when parts[0].inline_data has no bytes.
 	history = sanitizeHistoryForText(history)
 
-	// Extract region from persona ID (or default to "us")
-	region := extractRegionFromPersonaID(cg.persona.ID)
-
 	// Build base variables for persona assembly: the fixed self-play keys,
 	// then the per-exchange feedback variables (exchange number, objective
 	// status and checks, private notes).
@@ -150,6 +147,134 @@ func (cg *ContentGenerator) NextUserTurn(
 	for k, v := range feedbackVariables(cg.persona, history, opts) {
 		baseVariables[k] = v
 	}
+
+	turn, err := cg.generate(ctx, history, scenarioID, opts, baseVariables, "")
+	if err != nil {
+		return nil, err
+	}
+	var repaired []string
+	if cg.persona.RegeneratesOnFactViolation() {
+		turn, repaired = cg.repairInventedSpecifics(ctx, turn, history, scenarioID, opts, baseVariables)
+	}
+	result := turn.result
+
+	// Validate the response (treat failures as warnings, not hard errors).
+	// Adversarial personas write long, structured turns on purpose, so the
+	// short-user-message checks don't apply to them.
+	if result.Response != nil && result.Response.Content != "" && !cg.persona.IsAdversarial() {
+		if err := cg.validateUserResponse(result.Response.Content); err != nil {
+			logger.Warn(
+				"User response validation warning",
+				"provider", cg.provider.ID(),
+				"role", selfPlayUserRole,
+				"warning", err.Error(),
+			)
+			// Add warning to metadata
+			if result.Metadata == nil {
+				result.Metadata = make(map[string]interface{})
+			}
+			result.Metadata["validation_warning"] = err.Error()
+			result.Metadata["warning_type"] = "user_response_validation"
+		}
+	}
+
+	// Add persona metadata to result
+	if result.Metadata == nil {
+		result.Metadata = make(map[string]interface{})
+	}
+	result.Metadata["persona"] = cg.persona.ID
+	if turn.notes != "" {
+		result.Metadata[MetaPersonaNotes] = turn.notes
+	}
+	if len(repaired) > 0 {
+		result.Metadata[MetaFidelityRepaired] = repaired
+	}
+	result.Metadata["role"] = "self-play-user"
+	result.Metadata["self_play_provider"] = cg.provider.ID()
+	// Surface the resolved system prompt so the duplex executor can stamp
+	// it on the user message for the arena dev panel's Self-Play tab. The
+	// PersonaAssemblyStage writes it into turnState during pipeline execution;
+	// reading from turnState here is safe because generate has returned, so
+	// no stage is still mutating turnState.
+	if turn.systemPrompt != "" {
+		result.Metadata["system_prompt"] = turn.systemPrompt
+	}
+
+	return result, nil
+}
+
+// generatedTurn is one generation of the persona's message, with its private
+// notes already taken out.
+type generatedTurn struct {
+	result       *pipeline.ExecutionResult
+	notes        string
+	systemPrompt string
+}
+
+// repairInventedSpecifics generates the turn once more when it states a
+// specific the persona was not given, telling the persona what it invented.
+// It returns the turn to send, with both generations' cost, and the
+// specifics the first draft invented; when the draft invented nothing, or
+// the retry fails, the draft is returned unchanged and nothing is repaired.
+//
+// What counts as given matches the run's fidelity check, except that only
+// the conversation the persona sees (history, without tool results) is
+// read: the persona's private notes and the objective's check feedback are
+// not given.
+func (cg *ContentGenerator) repairInventedSpecifics(
+	ctx context.Context, turn *generatedTurn, history []types.Message,
+	scenarioID string, opts *GeneratorOptions, baseVariables map[string]string,
+) (*generatedTurn, []string) {
+	if turn.result.Response == nil {
+		return turn, nil
+	}
+	given := []string{PersonaGivenText(cg.persona), ConversationText(history)}
+	for _, k := range []string{VarObjective, VarRewoundMessage, VarRewoundResponse} {
+		given = append(given, baseVariables[k])
+	}
+	invented := InventedSpecifics(turn.result.Response.Content, given...)
+	if len(invented) == 0 {
+		return turn, nil
+	}
+	logger.Debug("Self-play persona invented specifics; regenerating",
+		"persona", cg.persona.ID, "specifics", invented)
+	retry, err := cg.generate(ctx, history, scenarioID, retryOptions(cg.resolveSeed(opts), opts), baseVariables,
+		RegenerateInstruction(invented))
+	if err != nil {
+		logger.Warn("Self-play persona regeneration failed; sending the first draft",
+			"persona", cg.persona.ID, "error", err)
+		return turn, nil
+	}
+	addCostInfo(&retry.result.CostInfo, &turn.result.CostInfo)
+	// The dev panel shows the persona's prompt, not the retry note.
+	retry.systemPrompt = turn.systemPrompt
+	return retry, invented
+}
+
+// retryOptions returns opts for the regenerated draft: with a seed, the next
+// one, so a seeded provider does not return the same draft again.
+func retryOptions(seed *int, opts *GeneratorOptions) *GeneratorOptions {
+	if seed == nil {
+		return opts
+	}
+	retry := GeneratorOptions{}
+	if opts != nil {
+		retry = *opts
+	}
+	next := *seed + 1
+	retry.Seed = &next
+	return &retry
+}
+
+// generate runs the persona pipeline once. A non-empty retryNote is appended
+// to the system prompt, telling the persona what was wrong with its previous
+// draft.
+func (cg *ContentGenerator) generate(
+	ctx context.Context, history []types.Message, scenarioID string,
+	opts *GeneratorOptions, baseVariables map[string]string, retryNote string,
+) (*generatedTurn, error) {
+	// Extract region from persona ID (or default to "us")
+	region := extractRegionFromPersonaID(cg.persona.ID)
 
 	temperature := cg.resolveTemperature(opts)
 
@@ -210,17 +335,17 @@ func (cg *ContentGenerator) NextUserTurn(
 			WithProviderRubric(cg.providerRubric),
 	}
 
-	// Tell a persona with declared facts that they are the only specifics it
-	// may state. The instruction stage appends any text to the system prompt.
-	if instruction := FactsInstruction(cg.persona); instruction != "" {
-		stages = append(stages, arenastages.NewCompletionInstructionStageWithTurnState(instruction, turnState))
-	}
-
-	// Append natural termination instruction when enabled
+	// Instructions appended to the persona's system prompt: the facts rule
+	// for a persona with declared facts, the natural termination
+	// instruction, and the note on a regenerated draft. They share one
+	// stage, since a pipeline's stage names must be unique.
+	instruction := FactsInstruction(cg.persona)
 	if opts != nil && opts.NaturalTerminationEnabled {
-		stages = append(stages,
-			arenastages.NewCompletionInstructionStageWithTurnState(CompletionInstruction, turnState),
-		)
+		instruction += CompletionInstruction
+	}
+	instruction += retryNote
+	if instruction != "" {
+		stages = append(stages, arenastages.NewCompletionInstructionStageWithTurnState(instruction, turnState))
 	}
 
 	// Swap user↔assistant roles so the self-play LLM sees its own prior outputs
@@ -263,7 +388,7 @@ func (cg *ContentGenerator) NextUserTurn(
 	)
 
 	// Private notes are taken out before anything else sees the turn: the
-	// agent under test never receives them, and the validation below judges
+	// agent under test never receives them, and the checks after this judge
 	// only what is sent.
 	var notes string
 	if cg.persona.PrivateNotes && result.Response != nil {
@@ -273,47 +398,18 @@ func (cg *ContentGenerator) NextUserTurn(
 				"the persona prompt must ask for a message outside <notes>", cg.persona.ID)
 		}
 	}
+	return &generatedTurn{result: result, notes: notes, systemPrompt: turnState.SystemPrompt}, nil
+}
 
-	// Validate the response (treat failures as warnings, not hard errors).
-	// Adversarial personas write long, structured turns on purpose, so the
-	// short-user-message checks don't apply to them.
-	if result.Response != nil && result.Response.Content != "" && !cg.persona.IsAdversarial() {
-		if err := cg.validateUserResponse(result.Response.Content); err != nil {
-			logger.Warn(
-				"User response validation warning",
-				"provider", cg.provider.ID(),
-				"role", selfPlayUserRole,
-				"warning", err.Error(),
-			)
-			// Add warning to metadata
-			if result.Metadata == nil {
-				result.Metadata = make(map[string]interface{})
-			}
-			result.Metadata["validation_warning"] = err.Error()
-			result.Metadata["warning_type"] = "user_response_validation"
-		}
-	}
-
-	// Add persona metadata to result
-	if result.Metadata == nil {
-		result.Metadata = make(map[string]interface{})
-	}
-	result.Metadata["persona"] = cg.persona.ID
-	if notes != "" {
-		result.Metadata[MetaPersonaNotes] = notes
-	}
-	result.Metadata["role"] = "self-play-user"
-	result.Metadata["self_play_provider"] = cg.provider.ID()
-	// Surface the resolved system prompt so the duplex executor can stamp
-	// it on the user message for the arena dev panel's Self-Play tab. The
-	// PersonaAssemblyStage writes it into turnState during pipeline execution;
-	// reading from turnState here is safe because ExecuteSync above has
-	// returned, so no stage is still mutating turnState.
-	if turnState.SystemPrompt != "" {
-		result.Metadata["system_prompt"] = turnState.SystemPrompt
-	}
-
-	return result, nil
+// addCostInfo adds from's token counts and costs to into.
+func addCostInfo(into, from *types.CostInfo) {
+	into.InputTokens += from.InputTokens
+	into.OutputTokens += from.OutputTokens
+	into.CachedTokens += from.CachedTokens
+	into.InputCostUSD += from.InputCostUSD
+	into.OutputCostUSD += from.OutputCostUSD
+	into.CachedCostUSD += from.CachedCostUSD
+	into.TotalCost += from.TotalCost
 }
 
 // Token caps for generated user turns when the persona sets no max_tokens.

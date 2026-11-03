@@ -741,7 +741,8 @@ func (de *DuplexConversationExecutor) buildSelfplayTurnMeta(
 	// Copy only relevant metadata from the generation result. Avoid copying
 	// pipeline internal fields like system_prompt, base_variables, etc.
 	if textResult.Metadata != nil {
-		fields := []string{"self_play_provider", "validation_warning", "warning_type", selfplay.MetaPersonaNotes}
+		fields := []string{"self_play_provider", "validation_warning", "warning_type", selfplay.MetaPersonaNotes,
+			selfplay.MetaFidelityRepaired}
 		for _, field := range fields {
 			if v, ok := textResult.Metadata[field]; ok {
 				turnMeta[field] = v

@@ -1835,6 +1835,14 @@ Each self-play turn with such a persona adds a conversation result of type `pers
 
 **Scoring.** By default the result passes even when the persona invented something: the run is flagged, not failed, because the mistake is the simulator's. The [objectives report](/arena/reference/output-formats/#objectives-format) counts the objective on a flagged turn as `unreliable` and leaves it out of the rate. Objectives on other turns of the same run are unaffected. Set `fact_policy.fail_on_violation: true` to fail the run instead, or `fact_policy.check: false` to keep the facts in the prompt without checking them.
 
+**Regenerating.** With `fact_policy.on_violation: regenerate`, a persona message is checked before it is sent. A draft that states a specific the persona wasn't given is generated once more, with a note naming what it invented, and the retry is sent whatever it says. The agent never sees the first draft.
+- **What counts as given.** What the persona was given, the conversation as the persona sees it, the objective, and the exchange a rewind removed. Tool results don't count here, since the persona never sees them, and nor do its own private notes. A seeded persona's retry uses the next seed, so it doesn't return the same draft.
+- **Requirements.** `regenerate` needs facts and the check on; validation rejects it otherwise.
+- **Reporting.** The `persona_fidelity` result lists each replaced draft under `repaired`, with its `exchange` and `specifics`, and its message ends with, for example, `(1 draft regenerated)`. A replaced draft doesn't make the turn unreliable, but the retry is checked like any other message.
+- **Cost.** Both generations count towards the run's cost.
+
+The default, `on_violation: flag`, sends the message and lets the check report it.
+
 The check runs before an objective's [rewind](#rewind), so an exchange that is rewound is still checked. It applies to text self-play turns. Duplex (voice) turns don't run the check or add the facts instruction, though a `system_template` there can still use `{{facts}}`.
 
 #### Persona state

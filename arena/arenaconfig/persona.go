@@ -107,6 +107,24 @@ type PersonaFactPolicy struct {
 	// default the run is only flagged as unreliable, so the simulator's
 	// mistake is not counted as the agent's failure.
 	FailOnViolation bool `json:"fail_on_violation,omitempty" yaml:"fail_on_violation,omitempty"`
+	// OnViolation is what happens when a generated message states a specific
+	// the persona was not given. "flag" (the default) sends it and lets the
+	// check report it. "regenerate" generates the message once more, told
+	// what it invented, and sends the retry; the first draft is recorded as
+	// repaired, and the retry is still checked.
+	OnViolation string `json:"on_violation,omitempty" yaml:"on_violation,omitempty" jsonschema:"enum=flag,enum=regenerate"`
+}
+
+// Values of PersonaFactPolicy.OnViolation.
+const (
+	FactViolationFlag       = "flag"
+	FactViolationRegenerate = "regenerate"
+)
+
+// RegeneratesOnFactViolation reports whether a message that invents a
+// specific is generated again before it is sent.
+func (p *UserPersonaPack) RegeneratesOnFactViolation() bool {
+	return p.ChecksFacts() && p.FactPolicy != nil && p.FactPolicy.OnViolation == FactViolationRegenerate
 }
 
 // ChecksFacts reports whether the persona's turns are checked against its
@@ -135,6 +153,14 @@ func (p *UserPersonaPack) FactsText() string {
 
 // validatePersonaFacts checks that every fact has a unique id and a value.
 func validatePersonaFacts(persona *UserPersonaPack) error {
+	if pol := persona.FactPolicy; pol != nil && pol.OnViolation != "" &&
+		pol.OnViolation != FactViolationFlag && pol.OnViolation != FactViolationRegenerate {
+		return fmt.Errorf("persona %s: fact_policy.on_violation must be %s or %s, got %q",
+			persona.ID, FactViolationFlag, FactViolationRegenerate, pol.OnViolation)
+	}
+	if pol := persona.FactPolicy; pol != nil && pol.OnViolation == FactViolationRegenerate && !persona.ChecksFacts() {
+		return fmt.Errorf("persona %s: fact_policy.on_violation: regenerate needs facts and the check on", persona.ID)
+	}
 	seen := make(map[string]bool, len(persona.Facts))
 	for i, f := range persona.Facts {
 		switch {
