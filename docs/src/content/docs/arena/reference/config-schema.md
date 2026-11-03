@@ -1852,7 +1852,7 @@ spec:
     patience: { type: int, initial: 3, min: 0 }
     gave_order_number: { type: bool }
   transitions:
-    - when:                        # checks the exchange just run
+    - when:                        # checks the latest exchange
         - type: content_includes_any
           params: { patterns: ["can you confirm", "verify"] }
       add: { patience: -1 }
@@ -1876,7 +1876,7 @@ spec:
 - `set` assigns values, each of its variable's type;
 - `add` adds to an `int`, and a negative amount subtracts.
 
-The assertions see only the exchange just run, so a reply from an earlier exchange doesn't fire a transition again. By default (`target: agent`) they read the exchange's messages: the persona's message and the agent's replies to it. With `target: persona` they read the persona's message alone, presented as if it were the reply, so content assertions such as `content_includes_any` match what the persona said.
+The assertions see only the latest exchange, so a reply from an earlier exchange doesn't fire a transition again. By default (`target: agent`) they read the exchange's messages: the persona's message and the agent's replies to it. With `target: persona` they read the persona's message alone, presented as if it were the reply, so content assertions such as `content_includes_any` match what the persona said.
 
 An exchange that an objective's [rewind](#rewind) removes changes nothing: the persona's state stays as it was before it. An exchange that ends with an error isn't applied either.
 
