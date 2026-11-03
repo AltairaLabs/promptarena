@@ -105,6 +105,9 @@ type objectiveOutcome struct {
 	// endedEarly is set when a run error stopped the objective being
 	// decided: the run never reached its turn, or the turn errored.
 	endedEarly bool
+	// personaOutcome is the persona state outcome that ended the turn, such
+	// as abandoned; empty when no stop_when condition did.
+	personaOutcome string
 }
 
 // rewoundExchange is one exchange removed from the conversation by the
@@ -145,7 +148,7 @@ func (o *objectiveOutcome) result() asrt.ConversationValidationResult {
 		objectiveKeyDescription: o.cfg.Description,
 		"expect":                expect,
 		"achieved":              o.achieved(),
-		"exchanges":             o.exchanges,
+		keyExchanges:            o.exchanges,
 		"success_checks":        o.checks,
 	}
 	if o.achieved() {
@@ -156,6 +159,9 @@ func (o *objectiveOutcome) result() asrt.ConversationValidationResult {
 	}
 	if o.endedEarly {
 		details[objectiveKeyEndedEarly] = true
+	}
+	if o.personaOutcome != "" {
+		details["persona_outcome"] = o.personaOutcome
 	}
 	if len(o.rewinds) > 0 {
 		rewinds := make([]map[string]interface{}, len(o.rewinds))
@@ -188,6 +194,9 @@ func (o *objectiveOutcome) message() string {
 	}
 	if n := len(o.rewinds); n > 0 {
 		msg += fmt.Sprintf(" (%d rewound)", n)
+	}
+	if o.personaOutcome != "" {
+		msg += fmt.Sprintf(" (persona %s)", o.personaOutcome)
 	}
 	return msg
 }
@@ -472,6 +481,14 @@ func (t *objectiveTracker) interrupted() {
 	t.outcome.evalErr = objectiveErrInterrupted
 	t.outcome.checks = nil
 	t.outcome.endedEarly = true
+}
+
+// stoppedByPersona notes that the persona's state ended the turn with
+// outcome.
+func (t *objectiveTracker) stoppedByPersona(outcome string) {
+	if t != nil {
+		t.outcome.personaOutcome = outcome
+	}
 }
 
 // endedEarly reports whether an objective result was cut short by a run

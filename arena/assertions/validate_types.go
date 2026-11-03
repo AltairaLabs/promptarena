@@ -36,6 +36,27 @@ func ValidateAssertionTypes(scenarios map[string]*arenaconfig.Scenario, registry
 	return errs
 }
 
+// ValidatePersonaAssertionTypes checks the assertion types in every persona's
+// state transitions, the same way ValidateAssertionTypes checks scenarios.
+func ValidatePersonaAssertionTypes(
+	personas map[string]*arenaconfig.UserPersonaPack, registry *evals.EvalTypeRegistry,
+) []string {
+	registeredTypes := registry.Types()
+	var errs []string
+	for name, persona := range personas {
+		for i := range persona.Transitions {
+			for _, a := range persona.Transitions[i].When {
+				if a.Type != "" && !registry.Has(a.Type) {
+					loc := fmt.Sprintf("transitions[%d].when", i)
+					errs = append(errs, formatUnknownType("persona "+name, loc, a.Type, registeredTypes))
+				}
+			}
+		}
+	}
+	sort.Strings(errs)
+	return errs
+}
+
 func collectScenarioErrors(
 	name string, scenario *arenaconfig.Scenario,
 	registry *evals.EvalTypeRegistry, registeredTypes []string,

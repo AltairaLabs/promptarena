@@ -133,9 +133,12 @@ func (r *validateJSONReport) addArenaStages(filePath string) {
 		r.addWarning(validateFinding{Stage: stageConfig, Description: w})
 	}
 
-	if len(cfg.LoadedScenarios) > 0 {
+	if len(cfg.LoadedScenarios) > 0 || len(cfg.LoadedPersonas) > 0 {
 		r.Stages = append(r.Stages, stageAssertions)
-		for _, e := range assertions.ValidateAssertionTypes(cfg.LoadedScenarios, evals.NewEvalTypeRegistry()) {
+		registry := evals.NewEvalTypeRegistry()
+		errs := assertions.ValidateAssertionTypes(cfg.LoadedScenarios, registry)
+		errs = append(errs, assertions.ValidatePersonaAssertionTypes(cfg.LoadedPersonas, registry)...)
+		for _, e := range errs {
 			r.addError(validateFinding{Stage: stageAssertions, Description: e})
 		}
 	}

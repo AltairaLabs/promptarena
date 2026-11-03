@@ -200,9 +200,12 @@ Fields under `spec`:
 | `private_notes` | boolean |  | PrivateNotes lets the persona keep notes the agent under test never sees. Text inside <notes>...</notes> in a generated turn is removed before the turn is sent, and every earlier turn's notes are given back to the persona as {{persona_notes}}. |
 | `prompt_activity` | string |  | DEPRECATED: Legacy prompt builder reference |
 | `required_vars` | array |  | Variables that must be provided |
+| `state` | object |  | State declares typed variables the harness keeps for the persona across a conversation, such as patience or whether it has given its order number. A system_template reads them as {{state.<name>}}, or all of them as {{state}}. |
+| `stop_when` | array |  | StopWhen ends the persona's self-play turn when its state matches a condition, such as patience reaching 0. The first condition that matches is reported as the turn's outcome. |
 | `style` | object |  | — |
 | `system_prompt` | string |  | LEGACY: Backward compatibility |
 | `system_template` | string |  | Template with {{variables}} |
+| `transitions` | array |  | Transitions update State after each self-play exchange whose checks pass, in order. |
 | `voice` | string |  | Voice references an arena-level voice id (see Config.Voices). When set, selfplay synthesis routes this persona's text through the bound TTS provider. Empty means the arena falls back to its default voice or fails fast if no default is configured. |
 
 ## promptconfig

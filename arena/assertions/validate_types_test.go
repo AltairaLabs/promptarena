@@ -120,3 +120,16 @@ func TestValidateAssertionTypes_ObjectiveRewind(t *testing.T) {
 	require.Len(t, errs, 1)
 	assert.Contains(t, errs[0], "turns[0].objective.rewind.when")
 }
+
+func TestValidatePersonaAssertionTypes(t *testing.T) {
+	personas := map[string]*arenaconfig.UserPersonaPack{
+		"customer": {Transitions: []arenaconfig.PersonaTransition{
+			{When: []arenaconfig.AssertionConfig{{Type: "content_includes_any"}}},
+			{When: []arenaconfig.AssertionConfig{{Type: "contians"}}},
+		}},
+	}
+	errs := ValidatePersonaAssertionTypes(personas, evals.NewEvalTypeRegistry())
+	require.Len(t, errs, 1)
+	assert.Contains(t, errs[0], `persona customer: transitions[1].when: unknown assertion type "contians"`)
+	assert.Empty(t, ValidatePersonaAssertionTypes(nil, evals.NewEvalTypeRegistry()))
+}
