@@ -2,6 +2,56 @@
   "$schema": "https://json-schema.org/draft-07/schema",
   "$id": "https://promptkit.altairalabs.ai/schemas/v1alpha1/persona.json",
   "$defs": {
+    "AssertionConfig": {
+      "properties": {
+        "type": {
+          "type": "string"
+        },
+        "params": {
+          "type": "object",
+          "description": "Params is optional: many assertion types take no parameters, so an\nentry with only `type:` is valid and must not require an empty\n`params: {}` stub. omitempty also drops it from the schema's required set."
+        },
+        "message": {
+          "type": "string"
+        },
+        "when": {
+          "$ref": "#/$defs/AssertionWhen"
+        },
+        "pass_threshold": {
+          "type": "number",
+          "description": "PassThreshold is the minimum pass rate (0.0-1.0) required across trials.\nOnly meaningful when the parent scenario has Trials \u003e 1.\nIf unset, defaults to 1.0 (must pass every trial)."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "description": "AssertionConfig represents an assertion configuration used in arena scenarios."
+    },
+    "AssertionWhen": {
+      "properties": {
+        "tool_called": {
+          "type": "string",
+          "description": "ToolCalled requires an exact tool name to have been called."
+        },
+        "tool_called_pattern": {
+          "type": "string",
+          "description": "ToolCalledPattern is a regex that must match at least one tool name."
+        },
+        "any_tool_called": {
+          "type": "boolean",
+          "description": "AnyToolCalled requires at least one tool to have been called."
+        },
+        "min_tool_calls": {
+          "type": "integer",
+          "description": "MinToolCalls is the minimum number of tool calls required."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "AssertionWhen specifies preconditions that must be met for an assertion to run."
+    },
     "FragmentRef": {
       "properties": {
         "name": {
@@ -107,6 +157,69 @@
       "type": "object",
       "description": "PersonaFactPolicy controls the fidelity check on a persona with facts."
     },
+    "PersonaStateVar": {
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "int",
+            "bool",
+            "string"
+          ],
+          "description": "Type is int, bool or string."
+        },
+        "initial": {
+          "description": "Initial is the value the variable starts a conversation with. Default\n0, false or \"\"."
+        },
+        "min": {
+          "type": "integer",
+          "description": "Min is an int variable's lowest value; a transition that would go\nbelow it stops there."
+        },
+        "max": {
+          "type": "integer",
+          "description": "Max is an int variable's highest value; a transition that would go\nabove it stops there."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "description": "PersonaStateVar declares one variable of a persona's state."
+    },
+    "PersonaStopCondition": {
+      "properties": {
+        "state": {
+          "type": "string",
+          "description": "State names the variable compared."
+        },
+        "equals": {
+          "description": "Equals matches a value of the variable's type."
+        },
+        "at_most": {
+          "type": "integer",
+          "description": "AtMost matches an int variable at or below the value."
+        },
+        "at_least": {
+          "type": "integer",
+          "description": "AtLeast matches an int variable at or above the value."
+        },
+        "outcome": {
+          "type": "string",
+          "description": "Outcome labels the stop in the report, e.g. abandoned. Default\n\"stopped\"."
+        },
+        "fail": {
+          "type": "boolean",
+          "description": "Fail fails the run when the condition stops the turn. By default the\nstop is reported without failing."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "state"
+      ],
+      "description": "PersonaStopCondition ends the persona's self-play turn when its state matches."
+    },
     "PersonaStyle": {
       "properties": {
         "verbosity": {
@@ -141,6 +254,42 @@
         "friction_tags"
       ],
       "description": "PersonaStyle defines behavioral characteristics for the user persona"
+    },
+    "PersonaTransition": {
+      "properties": {
+        "when": {
+          "items": {
+            "$ref": "#/$defs/AssertionConfig"
+          },
+          "type": "array",
+          "description": "When lists the assertions that, all passing on the exchange just run,\napply the transition. They see only that exchange."
+        },
+        "target": {
+          "type": "string",
+          "enum": [
+            "agent",
+            "persona"
+          ],
+          "description": "Target is what the assertions read: \"agent\" (the default) checks the\nexchange's messages; \"persona\" checks the persona's own message, as if\nit were the reply, so content assertions match what the persona said."
+        },
+        "set": {
+          "type": "object",
+          "description": "Set assigns values, each of its variable's type."
+        },
+        "add": {
+          "additionalProperties": {
+            "type": "integer"
+          },
+          "type": "object",
+          "description": "Add adds to int variables; a negative amount subtracts."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "when"
+      ],
+      "description": "PersonaTransition changes the persona's state after an exchange whose checks all pass."
     },
     "UserPersonaPack": {
       "properties": {
@@ -227,6 +376,27 @@
         "fact_policy": {
           "$ref": "#/$defs/PersonaFactPolicy",
           "description": "FactPolicy controls how the persona's turns are checked against Facts."
+        },
+        "state": {
+          "additionalProperties": {
+            "$ref": "#/$defs/PersonaStateVar"
+          },
+          "type": "object",
+          "description": "State declares typed variables the harness keeps for the persona across\na conversation, such as patience or whether it has given its order\nnumber. A system_template reads them as {{state.\u003cname\u003e}}, or all of\nthem as {{state}}."
+        },
+        "transitions": {
+          "items": {
+            "$ref": "#/$defs/PersonaTransition"
+          },
+          "type": "array",
+          "description": "Transitions update State after each self-play exchange whose checks\npass, in order."
+        },
+        "stop_when": {
+          "items": {
+            "$ref": "#/$defs/PersonaStopCondition"
+          },
+          "type": "array",
+          "description": "StopWhen ends the persona's self-play turn when its state matches a\ncondition, such as patience reaching 0. The first condition that\nmatches is reported as the turn's outcome."
         }
       },
       "additionalProperties": false,

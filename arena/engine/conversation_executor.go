@@ -82,6 +82,9 @@ func (ce *DefaultConversationExecutor) ExecuteConversation(ctx context.Context, 
 	if req.fidelity == nil {
 		req.fidelity = &fidelityRecorder{}
 	}
+	if req.personaState == nil {
+		req.personaState = &personaStateRecorder{}
+	}
 	if err := ce.objectiveRoleError(req.Scenario); err != nil {
 		return &ConversationResult{Error: err.Error(), Failed: true}
 	}
@@ -554,22 +557,37 @@ func (ce *DefaultConversationExecutor) runSelfPlayExchanges(
 	defer tracker.finish()
 	fidelity := ce.newFidelityTracker(req, turnIdx, scenarioTurn)
 	defer fidelity.finish()
+	state := ce.newStateTracker(req, turnIdx, scenarioTurn)
+	defer state.finish()
+	if state.stoppedAtStart() {
+		tracker.stoppedByPersona(state.stop.OutcomeLabel())
+		return nil
+	}
 
 	for i := 0; i < maxTurns; i++ {
 		tracker.beforeExchange(ctx)
-		err := exchange(tracker.personaVariables(i + 1))
+		vars := tracker.personaVariables(i + 1)
+		state.addVariables(vars)
+		err := exchange(vars)
 		// Fidelity first, and whatever the exchange returned: an exchange the
 		// objective then rewinds, or that the agent failed on, is still checked.
 		fidelity.afterExchange(ctx, i+1)
 		if err == nil || errors.Is(err, selfplay.ErrConversationComplete) {
 			stop, rewound := tracker.afterExchange(ctx, i+1)
-			if stop {
-				return nil
-			}
 			if rewound {
 				// The persona ending the conversation was part of the
-				// exchange that was removed, so the turn carries on.
+				// exchange that was removed, so the turn carries on, and the
+				// persona's state is as it was before it.
 				continue
+			}
+			// The state is updated even when the objective ends the turn,
+			// but a stop condition only ends a turn the objective did not.
+			if state.afterExchange(ctx, i+1, !stop) {
+				tracker.stoppedByPersona(state.stop.OutcomeLabel())
+				return nil
+			}
+			if stop {
+				return nil
 			}
 		}
 		if done, loopErr := handleCompletionError(err, i, minTurns, maxTurns); done {
@@ -974,6 +992,7 @@ func (ce *DefaultConversationExecutor) buildResultFromStateStore(
 	convAssertionResults := ce.evaluateConversationAssertions(ctx, req, messages)
 	convAssertionResults = append(convAssertionResults, req.objectives.results()...)
 	convAssertionResults = append(convAssertionResults, req.fidelity.all()...)
+	convAssertionResults = append(convAssertionResults, req.personaState.all()...)
 
 	// Run pack-level evals at session end. These are non-gating
 	// observations — same machinery that fires in production. They

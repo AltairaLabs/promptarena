@@ -74,6 +74,18 @@ type UserPersonaPack struct {
 	Facts []PersonaFact `json:"facts,omitempty" yaml:"facts,omitempty"`
 	// FactPolicy controls how the persona's turns are checked against Facts.
 	FactPolicy *PersonaFactPolicy `json:"fact_policy,omitempty" yaml:"fact_policy,omitempty"`
+	// State declares typed variables the harness keeps for the persona across
+	// a conversation, such as patience or whether it has given its order
+	// number. A system_template reads them as {{state.<name>}}, or all of
+	// them as {{state}}.
+	State map[string]PersonaStateVar `json:"state,omitempty" yaml:"state,omitempty"`
+	// Transitions update State after each self-play exchange whose checks
+	// pass, in order.
+	Transitions []PersonaTransition `json:"transitions,omitempty" yaml:"transitions,omitempty"`
+	// StopWhen ends the persona's self-play turn when its state matches a
+	// condition, such as patience reaching 0. The first condition that
+	// matches is reported as the turn's outcome.
+	StopWhen []PersonaStopCondition `json:"stop_when,omitempty" yaml:"stop_when,omitempty"`
 }
 
 // PersonaFact is one fact a persona holds.
@@ -346,7 +358,10 @@ func validatePersonaGeneration(persona *UserPersonaPack) error {
 		return fmt.Errorf("persona %s: defaults.max_tokens must be positive, got %d",
 			persona.ID, *persona.Defaults.MaxTokens)
 	}
-	return validatePersonaFacts(persona)
+	if err := validatePersonaFacts(persona); err != nil {
+		return err
+	}
+	return validatePersonaState(persona)
 }
 
 // validatePersonaStyle validates the persona style properties
@@ -464,6 +479,14 @@ func (p *UserPersonaPack) buildTemplatedPrompt(region string, contextVars map[st
 	// 1. Start with optional variable defaults
 	for k, v := range p.OptionalVars {
 		vars[k] = v
+	}
+
+	// The state's starting values, so a template renders outside a run; the
+	// run passes the current state as context variables.
+	if p.HasState() {
+		for k, v := range p.StateVars(p.InitialState()) {
+			vars[k] = v
+		}
 	}
 
 	// 2. Merge context variables (higher priority)

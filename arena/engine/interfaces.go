@@ -97,6 +97,11 @@ type ConversationRequest struct {
 	// personas that declare facts. ExecuteConversation sets it.
 	fidelity *fidelityRecorder
 
+	// personaState holds each persona's declared state across the
+	// conversation and collects each self-play turn's state result.
+	// ExecuteConversation sets it.
+	personaState *personaStateRecorder
+
 	// VoiceSTT is the STT provider for the VAD voice path (Task 7). Nil in ASM mode.
 	// Set from --voice-stt by the chat command; consumed by runInteractiveVADVoice.
 	VoiceSTT *config.Provider

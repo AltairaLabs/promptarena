@@ -1824,7 +1824,7 @@ Each fact needs an `id`, unique within the persona, and a non-empty `value`.
 - tokens that contain a digit and at least three letters and digits in all, such as `A-100`, `2024-10-28`, `#4471` (checked as `4471`) and `10:30`. On their own, `2` or `28` don't count, and nor do ordinals (`2nd`, `28th`) or percentages (`100%`).
 
 A specific is reported as invented when it appears in none of these:
-- what the persona was given: its facts, goals, constraints, description, prompt text, `optional_vars` and the turn's objective description;
+- what the persona was given: its facts, goals, constraints, description, prompt text, `optional_vars`, the string values its [state](#persona-state) can hold, and the turn's objective description;
 - anything earlier in the conversation, including the agent's replies and tool results, and exchanges that an objective's rewind removed.
 
 It is a heuristic: it catches made-up codes and numbers, not a made-up name or a rephrased date. A message is checked even when the agent then fails on it, so the persona's invention is not blamed on the agent.
@@ -1836,6 +1836,59 @@ Each self-play turn with such a persona adds a conversation result of type `pers
 **Scoring.** By default the result passes even when the persona invented something: the run is flagged, not failed, because the mistake is the simulator's. The [objectives report](/arena/reference/output-formats/#objectives-format) counts the objective on a flagged turn as `unreliable` and leaves it out of the rate. Objectives on other turns of the same run are unaffected. Set `fact_policy.fail_on_violation: true` to fail the run instead, or `fact_policy.check: false` to keep the facts in the prompt without checking them.
 
 The check runs before an objective's [rewind](#rewind), so an exchange that is rewound is still checked. It applies to text self-play turns. Duplex (voice) turns don't run the check or add the facts instruction, though a `system_template` there can still use `{{facts}}`.
+
+#### Persona state
+
+Private notes are a memory the model writes and nothing verifies. `state` is one the harness keeps: typed variables that assertions update between exchanges, so an author can say "after the agent asks for ID twice, the user gets impatient" and have it happen every run.
+
+```yaml
+spec:
+  id: order-chaser
+  system_template: |
+    You want to know where your order is.
+    Your patience: {{state.patience}} of 3. At 1 or below, be curt.
+    Already gave your order number: {{state.gave_order_number}}
+  state:
+    patience: { type: int, initial: 3, min: 0 }
+    gave_order_number: { type: bool }
+  transitions:
+    - when:                        # checks the exchange just run
+        - type: content_includes_any
+          params: { patterns: ["can you confirm", "verify"] }
+      add: { patience: -1 }
+    - when:
+        - type: content_includes_any
+          params: { patterns: ["A-100"] }
+      target: persona              # checks what the persona said
+      set: { gave_order_number: true }
+  stop_when:
+    - state: patience
+      equals: 0
+      outcome: abandoned
+      fail: true
+```
+
+**State.** Each variable has a `type` of `int`, `bool` or `string`, an optional `initial` value (default `0`, `false` or `""`) and, for an `int`, optional `min` and `max` bounds, which `initial` must be within. A change that would pass a bound stops at it. State is kept per persona for the whole conversation, so a later self-play turn with the same persona starts where the last one left off.
+
+**In the prompt.** A `system_template` reads each variable as `{{state.<name>}}`, and all of them as `{{state}}`, one `- <name>: <value>` line each. The persona is given its state as it stands before each exchange. Outside a run, for example in `prompt-debug`, the template renders with the initial values. A plain `system_prompt` doesn't see the state, but transitions and stop conditions still run.
+
+**Transitions.** After each self-play exchange, every transition whose `when` assertions all pass is applied, in order:
+- `set` assigns values, each of its variable's type;
+- `add` adds to an `int`, and a negative amount subtracts.
+
+The assertions see only the exchange just run, so a reply from an earlier exchange doesn't fire a transition again. By default (`target: agent`) they read the exchange's messages: the persona's message and the agent's replies to it. With `target: persona` they read the persona's message alone, presented as if it were the reply, so content assertions such as `content_includes_any` match what the persona said.
+
+An exchange that an objective's [rewind](#rewind) removes changes nothing: the persona's state stays as it was before it. An exchange that ends with an error isn't applied either.
+
+**Stop conditions.** After the transitions, the first `stop_when` condition that matches ends the self-play turn. A condition names a `state` variable and compares it with `equals`, `at_most` or `at_least` (the last two for an `int`); every comparison given must hold. `outcome` labels the stop (default `stopped`). If the turn's objective is decided on the same exchange, the objective ends the turn and no stop is reported. The conditions are also checked before a turn's first exchange, so a persona an earlier turn left abandoned doesn't speak again.
+
+Each self-play turn with a persona that has transitions or stop conditions adds a conversation result of type `persona_state`:
+- **Message.** For example `persona order-chaser state patience 3→0; abandoned at exchange 4`, or `persona order-chaser state unchanged`.
+- **Details.** `initial` and `final` state, `exchanges`, and `changes`, which lists each transition applied with its `exchange`, `transition` (its index), and the state `before` and `after`. A stopped turn adds `outcome` and `stopped_at_exchange`.
+
+**Scoring.** The result passes unless a condition with `fail: true` stopped the turn, or the transitions could not be evaluated (no eval runner, or the conversation could not be loaded); then `error` says why. A stop also shows on the turn's [objective](#objectives): its result gets `persona_outcome`, and its message ends with, for example, `(persona abandoned)`. The objective is not achieved, so the objectives report counts it as a failed attempt: "the agent drove the customer to abandon" is measured by the success rate.
+
+Transitions apply to text self-play turns. Duplex (voice) turns don't update the state.
 
 #### Modes
 

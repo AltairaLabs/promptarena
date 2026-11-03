@@ -142,6 +142,7 @@ func (ce *DefaultConversationExecutor) newFidelityTracker(
 	if turn.Objective != nil {
 		parts = append(parts, turn.Objective.Description)
 	}
+	parts = append(parts, persona.StateStrings()...)
 	return &fidelityTracker{
 		ce: ce, req: req, turnIndex: turnIdx, persona: persona,
 		known: strings.ToLower(strings.Join(parts, "\n")), lastChecked: -1,
