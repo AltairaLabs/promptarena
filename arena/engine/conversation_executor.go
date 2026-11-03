@@ -575,6 +575,7 @@ func (ce *DefaultConversationExecutor) runSelfPlayExchanges(
 		if err == nil || errors.Is(err, selfplay.ErrConversationComplete) {
 			stop, rewound := tracker.afterExchange(ctx, i+1)
 			if rewound {
+				fidelity.rewound()
 				// The persona ending the conversation was part of the
 				// exchange that was removed, so the turn carries on, and the
 				// persona's state is as it was before it.

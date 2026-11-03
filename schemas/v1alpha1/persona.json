@@ -159,6 +159,10 @@
             "regenerate"
           ],
           "description": "OnViolation is what happens when a generated message states a specific\nthe persona was not given. \"flag\" (the default) sends it and lets the\ncheck report it. \"regenerate\" generates the message once more, told\nwhat it invented, and sends the retry; the first draft is recorded as\nrepaired, and the retry is still checked."
+        },
+        "judge": {
+          "type": "boolean",
+          "description": "Judge also asks the configured judge, for each persona message the\nspecifics check passes, whether the message asserts a specific fact\n(a name, amount, place or event, say) that is not among the facts or\nearlier in the conversation. A message the judge flags marks the run\nunreliable, as an invented specific does. Each check is one judge call."
         }
       },
       "additionalProperties": false,

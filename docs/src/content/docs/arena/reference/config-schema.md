@@ -1757,6 +1757,8 @@ spec:
   fact_policy:                       # Optional
     check: true                      # Check each persona message against its facts (default true)
     fail_on_violation: false         # Fail the run when the persona invents a specific (default false)
+    on_violation: flag               # flag (default) or regenerate
+    judge: false                     # Also ask the configured judge about each message (default false)
 ```
 
 #### Template variables for each exchange
@@ -1827,11 +1829,19 @@ A specific is reported as invented when it appears in none of these:
 - what the persona was given: its facts, goals, constraints, description, prompt text, `optional_vars`, the string values its [state](#persona-state) can hold, and the turn's objective description;
 - anything earlier in the conversation, including the agent's replies and tool results, and exchanges that an objective's rewind removed.
 
-It is a heuristic: it catches made-up codes and numbers, not a made-up name or a rephrased date. A message is checked even when the agent then fails on it, so the persona's invention is not blamed on the agent.
+It is a heuristic: it catches made-up codes and numbers, not a made-up name or a rephrased date. A message is checked even when the agent then fails on it, so the persona's invention is not blamed on the agent. For the rest, turn on the judge.
+
+**The judge.** With `fact_policy.judge: true`, each persona message that the specifics check passes is also sent to the configured judge (`spec.judges`; with several, the first by name). The judge is asked whether the message asserts a specific fact, such as a name, amount, place or event, that the persona was not given and the conversation had not established. It is shown the persona's facts, the rest of what it was given, the conversation before the message, and any exchange a rewind removed.
+- **Flags.** A message the judge scores below 0.5 marks the turn unreliable, as an invented specific does, and with `fail_on_violation: true` it fails the run. The result lists it under `judge_flags`, with its `exchange` and the judge's `reasoning`, and the message reads, for example, `persona order-chaser: the judge flagged 1 message: exchange 3 (states a city it was not given)`.
+- **Errors.** A judge call that fails or is skipped is listed under `judge_errors`, and the message ends with `(judge failed on 1)`. It doesn't mark the turn unreliable.
+- **Requirements.** `judge` needs facts and the check on, and a judge in `spec.judges`; loading the config fails otherwise.
+- **Cost.** Each judged message is one judge call. The check runs on the quiet path that objective checks use, so it emits no eval events.
+
+`on_violation: regenerate` acts on the specifics check only; a judge flag is reported, not repaired.
 
 Each self-play turn with such a persona adds a conversation result of type `persona_fidelity`:
 - **Message.** For example `persona order-chaser invented 1 specific: "B-7731" (exchange 4)`, or `persona order-chaser stated only declared facts in 6 messages`.
-- **Details.** `reliable`, `checked_messages`, and `violations`, which lists each `exchange` with the `specifics` it invented.
+- **Details.** `reliable`, `checked_messages`, and `violations`, which lists each `exchange` with the `specifics` it invented. With the [judge](#persona-facts) on, also `judge_flags` and `judge_errors`.
 
 **Scoring.** By default the result passes even when the persona invented something: the run is flagged, not failed, because the mistake is the simulator's. The [objectives report](/arena/reference/output-formats/#objectives-format) counts the objective on a flagged turn as `unreliable` and leaves it out of the rate. Objectives on other turns of the same run are unaffected. Set `fact_policy.fail_on_violation: true` to fail the run instead, or `fact_policy.check: false` to keep the facts in the prompt without checking them.
 

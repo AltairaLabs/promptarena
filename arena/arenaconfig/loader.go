@@ -358,7 +358,24 @@ func (c *Config) loadSelfPlayAndJudgeResources(filename string) error {
 	if err := c.buildJudgeTargets(); err != nil {
 		return err
 	}
-	return c.mergeJudgeSpecs()
+	if err := c.mergeJudgeSpecs(); err != nil {
+		return err
+	}
+	return c.validatePersonaJudges()
+}
+
+// validatePersonaJudges checks that a judge is configured when a persona's
+// fact_policy asks for one.
+func (c *Config) validatePersonaJudges() error {
+	if len(c.LoadedJudges) > 0 {
+		return nil
+	}
+	for name, persona := range c.LoadedPersonas {
+		if persona.JudgesFacts() {
+			return fmt.Errorf("persona %s: fact_policy.judge needs a judge in spec.judges", name)
+		}
+	}
+	return nil
 }
 
 // checkFile validates a config file against promptarena's schema for its type.

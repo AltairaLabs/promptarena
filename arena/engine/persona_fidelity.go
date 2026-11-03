@@ -50,15 +50,31 @@ type fidelityTracker struct {
 	// handed back to the persona as {{rewound_response}}) still counts as
 	// given.
 	seen string
-	// lastChecked is the index of the last persona message checked, so a
-	// message is never checked twice.
-	lastChecked int
-	checked     int
-	violations  []fidelityViolation
+	// next is the index a persona message must be at or after to be new, so
+	// a message is never checked twice. A rewind moves it back to where the
+	// removed message was, since the next message takes its place.
+	next int
+	// lastIdx is the index of the last persona message checked, and lastText
+	// its exchange as it was checked, kept in case the exchange is rewound.
+	lastIdx  int
+	lastText string
+	// rewoundText is the text of exchanges a rewind removed. The persona was
+	// handed them back, so the judge is shown them too.
+	rewoundText string
+	// objective is the turn's objective description, which the persona is
+	// given.
+	objective  string
+	checked    int
+	violations []fidelityViolation
 	// repaired lists the drafts fact_policy.on_violation: regenerate
 	// replaced, with the specifics each invented.
 	repaired []fidelityViolation
-	loadErr  string
+	// orch runs the fact_policy.judge check without emitting eval events; nil
+	// when the persona doesn't ask for the judge.
+	orch        *EvalOrchestrator
+	judgeFlags  []judgeNote
+	judgeErrors []judgeNote
+	loadErr     string
 }
 
 // newFidelityTracker returns a tracker for the turn, or nil when its persona
@@ -74,13 +90,19 @@ func (ce *DefaultConversationExecutor) newFidelityTracker(
 		return nil
 	}
 	known := selfplay.PersonaGivenText(persona)
+	objective := ""
 	if turn.Objective != nil {
-		known += "\n" + strings.ToLower(turn.Objective.Description)
+		objective = turn.Objective.Description
+		known += "\n" + strings.ToLower(objective)
 	}
-	return &fidelityTracker{
+	t := &fidelityTracker{
 		ce: ce, req: req, turnIndex: turnIdx, persona: persona,
-		known: known, lastChecked: -1,
+		known: known, objective: objective,
 	}
+	if persona.JudgesFacts() {
+		t.orch = ce.resolveEvalOrchestrator(req).Quiet()
+	}
+	return t
 }
 
 // afterExchange checks the persona's message from the exchange just run
@@ -100,21 +122,37 @@ func (t *fidelityTracker) afterExchange(ctx context.Context, exchange int) {
 		return
 	}
 	idx := lastIndexOfRole(messages, roleUser)
-	if idx < 0 || idx == t.lastChecked {
+	if idx < 0 || idx < t.next {
 		// No persona message yet, or none new: generating it is what failed.
 		return
 	}
-	t.lastChecked = idx
+	t.next, t.lastIdx = idx+1, idx
+	t.lastText = selfplay.ConversationText(messages[idx:])
 	t.checked++
 	if r := repairedSpecifics(messages[idx].Meta); len(r) > 0 {
 		t.repaired = append(t.repaired, fidelityViolation{exchange: exchange, specifics: r})
 	}
 	invented := selfplay.InventedSpecifics(messages[idx].GetContent(),
 		t.known, selfplay.ConversationText(messages[:idx]), t.seen)
-	t.seen += strings.ToLower(selfplay.ConversationText(messages[idx:]))
+	t.seen += strings.ToLower(t.lastText)
 	if len(invented) > 0 {
 		t.violations = append(t.violations, fidelityViolation{exchange: exchange, specifics: invented})
+		return
 	}
+	if t.orch != nil {
+		// A message the specifics check already flagged is not judged too.
+		t.judgeMessage(scoringContext(ctx), exchange, messages[:idx+1])
+	}
+}
+
+// rewound records that the exchange just checked was removed: the next
+// persona message takes the removed one's place, and is new.
+func (t *fidelityTracker) rewound() {
+	if t == nil {
+		return
+	}
+	t.next = t.lastIdx
+	t.rewoundText += t.lastText
 }
 
 // repairedSpecifics reads the specifics a regenerated persona draft
@@ -167,7 +205,7 @@ func (t *fidelityTracker) result() asrt.ConversationValidationResult {
 		invented += len(v.specifics)
 	}
 	violations := violationDetails(t.violations)
-	reliable := len(t.violations) == 0
+	reliable := len(t.violations) == 0 && len(t.judgeFlags) == 0
 	details := map[string]interface{}{
 		fidelityKeyPersona:   t.persona.ID,
 		fidelityKeyTurnIndex: t.turnIndex,
@@ -177,6 +215,12 @@ func (t *fidelityTracker) result() asrt.ConversationValidationResult {
 	}
 	if len(t.repaired) > 0 {
 		details["repaired"] = violationDetails(t.repaired)
+	}
+	if len(t.judgeFlags) > 0 {
+		details["judge_flags"] = judgeNoteDetails(t.judgeFlags, "reasoning")
+	}
+	if len(t.judgeErrors) > 0 {
+		details["judge_errors"] = judgeNoteDetails(t.judgeErrors, "error")
 	}
 	if t.loadErr != "" {
 		details["error"] = t.loadErr
@@ -204,8 +248,17 @@ func (t *fidelityTracker) message(invented int) string {
 	} else if n > 1 {
 		suffix = fmt.Sprintf(" (%d drafts regenerated)", n)
 	}
+	if n := len(t.judgeErrors); n > 0 {
+		suffix += fmt.Sprintf(" (judge failed on %d)", n)
+	}
 	if len(t.violations) == 0 {
+		if len(t.judgeFlags) > 0 {
+			return fmt.Sprintf("persona %s: %s%s", t.persona.ID, t.judgeFlagsText(), suffix)
+		}
 		return fmt.Sprintf("persona %s stated only declared facts in %d messages%s", t.persona.ID, t.checked, suffix)
+	}
+	if len(t.judgeFlags) > 0 {
+		suffix = "; " + t.judgeFlagsText() + suffix
 	}
 	quoted := make([]string, 0, invented)
 	for _, v := range t.violations {
