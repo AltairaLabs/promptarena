@@ -1,0 +1,68 @@
+# yaml-language-server: $schema=https://promptkit.altairalabs.ai/schemas/latest/scenario.json
+#
+# Noisy-Line Duplex Scenario
+#
+# The scripted-text scenario over a bad line: each turn's synthesized audio is
+# made quieter and has background noise added before the agent hears it, with
+# audio_transforms. The TTS cache keeps the clean audio.
+# Uses mock TTS so the example runs without OPENAI_API_KEY / ElevenLabs keys.
+#
+# `voice:` references the arena voice catalog; the duplex executor resolves
+# it via Config.ResolveVoice and routes through the provider-yaml path.
+#
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Scenario
+metadata:
+  name: duplex-noisy-line
+
+spec:
+  id: duplex-noisy-line
+  task_type: voice-assistant
+  description: "Scripted text user turns over a quiet, noisy line"
+
+  # Voice catalog reference — resolved to mock-tts at runtime.
+  # For real audio: change to a voice id backed by an OpenAI or ElevenLabs provider.
+  voice: scripted-mock
+
+  duplex:
+    timeout: "30s"
+    turn_detection:
+      mode: asm
+
+  streaming: true
+
+  turns:
+    - role: user
+      content: "Hello, can you hear me?"
+      audio_transforms:
+        - gain_db: -12        # a quiet caller
+        - noise_dbfs: -40     # line noise, seeded from the text
+      assertions:
+        - type: content_matches
+          params:
+            pattern: "(?i)(hello|hi|hey|yes|hear)"
+
+    - role: user
+      content: "What's your name?"
+      audio_transforms:
+        - gain_db: -12
+        - noise_dbfs: -40
+      assertions:
+        - type: content_includes
+          params:
+            patterns:
+              - "Nova"
+
+    - role: user
+      content: "Tell me a fun fact"
+      audio_transforms:
+        - gain_db: -12
+        - noise_dbfs: -40
+      assertions:
+        - type: content_matches
+          params:
+            pattern: ".{20,}"
+
+  context:
+    goal: "Verify scripted-text user turns route through TTS to audio"
+    timeline: "immediate"

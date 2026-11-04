@@ -160,6 +160,26 @@
       "type": "object",
       "description": "AssertionWhen specifies preconditions that must be met for an assertion to run."
     },
+    "AudioTransform": {
+      "properties": {
+        "gain_db": {
+          "type": "number",
+          "description": "GainDB scales the audio by this many decibels: negative is quieter,\npositive louder (clipped at full scale)."
+        },
+        "noise_dbfs": {
+          "type": "number",
+          "maximum": 0,
+          "description": "NoiseDBFS adds white noise at this level, in dB relative to full scale\n(for example -30), as on a noisy line. The noise is seeded from the\nmessage text, so a run is repeatable."
+        },
+        "exec": {
+          "$ref": "#/$defs/TransformExec",
+          "description": "Exec pipes the audio through a program: raw 16-bit little-endian mono\nPCM on stdin, the same on stdout. ARENA_SAMPLE_RATE carries the sample\nrate. timeout_ms, when set, bounds the whole utterance."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "AudioTransform rewrites the audio of a duplex turn's spoken user message after it is synthesized (and after the TTS cache) and before the agent hears it."
+    },
     "ChaosConfig": {
       "properties": {
         "tool_failures": {
@@ -667,7 +687,7 @@
         "timeout_ms": {
           "type": "integer",
           "minimum": 0,
-          "description": "TimeoutMs bounds each run. Default 10000."
+          "description": "TimeoutMs bounds each run. A message transform defaults to 10000; an\naudio transform has no default, since it runs as long as the speech."
         }
       },
       "additionalProperties": false,
@@ -675,7 +695,7 @@
       "required": [
         "command"
       ],
-      "description": "TransformExec is a program that rewrites a persona's message."
+      "description": "TransformExec is a program that rewrites a message or its audio."
     },
     "TrialBudget": {
       "properties": {
@@ -790,6 +810,13 @@
           },
           "type": "array",
           "description": "Transforms rewrite each of the persona's messages, in order, after it\nis generated and before the agent receives it. The persona, and the\nfidelity and state checks, see the message as it was generated."
+        },
+        "audio_transforms": {
+          "items": {
+            "$ref": "#/$defs/AudioTransform"
+          },
+          "type": "array",
+          "description": "AudioTransforms rewrite the audio of the turn's spoken user message, in\norder, after it is synthesized and before the agent hears it. Duplex\nscenarios only."
         },
         "assertions": {
           "items": {

@@ -788,6 +788,9 @@ func (s *Scenario) Validate() error {
 		if err := validateTransforms(&s.Turns[i], i); err != nil {
 			return fmt.Errorf("scenario %s: %w", s.ID, err)
 		}
+		if err := validateAudioTransforms(s, &s.Turns[i], i); err != nil {
+			return fmt.Errorf("scenario %s: %w", s.ID, err)
+		}
 	}
 
 	return s.validateObjectives()
@@ -1147,6 +1150,10 @@ type TurnDefinition struct {
 	// is generated and before the agent receives it. The persona, and the
 	// fidelity and state checks, see the message as it was generated.
 	Transforms []MessageTransform `json:"transforms,omitempty" yaml:"transforms,omitempty"`
+	// AudioTransforms rewrite the audio of the turn's spoken user message, in
+	// order, after it is synthesized and before the agent hears it. Duplex
+	// scenarios only.
+	AudioTransforms []AudioTransform `json:"audio_transforms,omitempty" yaml:"audio_transforms,omitempty"`
 
 	// Turn-level assertions (for testing only)
 	Assertions []AssertionConfig `json:"assertions,omitempty" yaml:"assertions,omitempty"`
