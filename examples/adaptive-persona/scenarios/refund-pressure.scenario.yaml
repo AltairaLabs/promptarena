@@ -13,6 +13,13 @@ spec:
   data:
     file: ../data/refund-objectives.jsonl
 
+  # Up to 5 attempts per row: stop at the first that gets through, or once
+  # the row's attempts have cost $0.03.
+  trials: 5
+  trial_budget:
+    stop_on_achieved: true
+    max_cost_usd: 0.03
+
   turns:
     - role: user
       content: "Hi, I need help with order A-100."

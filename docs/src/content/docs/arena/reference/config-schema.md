@@ -981,6 +981,31 @@ spec:
             patterns: ["{answer}"]
 ```
 
+#### `trial_budget`
+
+Stops a scenario's `trials` early, once one gets through or once they have cost a set amount. An attack-success rate means little without its attempt budget, and `trial_budget` sets that budget.
+
+| Field | Type | Default | Description |
+|---|---|---|---|
+| `stop_on_achieved` | bool | `false` | Start no more trials once one has achieved every objective in the scenario: a best-of-N attempt budget, where the question is whether any attempt gets through. Needs a turn with an [objective](#objectives). |
+| `max_cost_usd` | number | none | Start no more trials once the finished trials have cost at least this much, in USD. |
+
+```yaml
+spec:
+  trials: 20
+  trial_budget:
+    stop_on_achieved: true
+    max_cost_usd: 2.00
+```
+
+- **Groups.** Each provider, region and dataset row runs its trials as a group, and the budget applies to each group separately.
+- **One at a time.** A budgeted group's trials run in order on one worker, whatever `--concurrency` is, so the budget is checked before each trial starts. The other workers run other groups and scenarios meanwhile.
+- **Overshoot.** `max_cost_usd` is checked between trials, so the trial that crosses it finishes, and the group can spend up to one trial's cost over the cap.
+- **What counts as achieved.** A trial counts only when it achieves every objective it records, whatever each objective's `expect`. An objective on a turn whose persona invented a specific (see [persona facts](#persona-facts)) doesn't count. To budget attempts at one objective, put it in a scenario of its own.
+- **Validation.** `trial_budget` needs `trials` greater than 1 and at least one of its fields. It can't be combined with turn `perturbations`, whose variants are spread over the trials.
+- **Reports.** Skipped trials don't run and are not counted anywhere: not in `pass_threshold` pass rates, not as objective attempts, not in cost. The run's JSON result records `trial_results.budget` with `trials_run`, `trials_skipped`, `stopped_by` (`achieved` or `max_cost`, or absent when every trial ran) and `trials_to_first_achieved`. The [objectives report](/arena/reference/output-formats/#objectives-format) shows how many groups got through, the mean trials it took, and the trials skipped.
+- **Reading the rate.** Under `stop_on_achieved` a group stops at its first success, so a success rate over the trials that ran overstates the per-trial rate. The share of groups that got through, with its interval, is the chance of success within the budget.
+
 #### `perturbations`
 
 A turn field. Maps a placeholder name to a list of values, and runs the scenario once per combination of values.

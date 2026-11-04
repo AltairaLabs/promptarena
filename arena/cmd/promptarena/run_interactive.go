@@ -429,6 +429,10 @@ func executeSimple(ctx context.Context, eng *engine.Engine, plan *engine.RunPlan
 			status.Advance(runErr)
 			status.Live(os.Stdout)
 		})
+		eng.RegisterTrialsSkippedHook(func(n int) {
+			status.Skip(n)
+			status.Live(os.Stdout)
+		})
 		status.Live(os.Stdout)
 	}
 

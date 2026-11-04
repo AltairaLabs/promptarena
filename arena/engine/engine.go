@@ -98,7 +98,8 @@ type Engine struct {
 	audioMonitorHooks    []AudioMonitorHook           // Subscribers fired when a per-run AudioRouter is built
 	audioMonitorMu       sync.RWMutex                 // Guards audioMonitorHooks
 	runCompletedHooks    []RunCompletedHook           // Subscribers fired when each run finishes
-	runCompletedMu       sync.RWMutex                 // Guards runCompletedHooks
+	trialsSkippedHooks   []TrialsSkippedHook          // Subscribers fired when a trial budget skips trials
+	runCompletedMu       sync.RWMutex                 // Guards runCompletedHooks and trialsSkippedHooks
 	sessionHooks         *hooks.Registry              // Optional — fires SessionHook lifecycle per run
 	outputDir            string                       // Resolved report output dir; exposes per-run artifacts base
 	artifactStore        artifacts.Store              // Persists per-run report artifacts (default: local backend)
@@ -892,20 +893,31 @@ func (e *Engine) ExecuteRuns(ctx context.Context, plan *RunPlan, concurrency int
 	// so the whole sweep groups together and repeated sweeps stay distinct.
 	batchID := newBatchID()
 
-	work := make(chan runWorkItem, len(plan.Combinations))
-	for i, combo := range plan.Combinations {
-		work <- runWorkItem{idx: i, combo: combo}
+	items := e.planWork(plan.Combinations)
+	work := make(chan runWorkItem, len(items))
+	for i := range items {
+		work <- items[i]
 	}
 	close(work)
 
 	var wg sync.WaitGroup
 	var mu sync.Mutex
+	budgets := newTrialBudgets()
+	record := func(idx int, runID string, err error) {
+		mu.Lock()
+		runIDs[idx] = runID
+		errs[idx] = err
+		mu.Unlock()
+		if runID != "" {
+			e.fireRunCompletedHooks(runID, err)
+		}
+	}
 
 	for range concurrency {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			e.runWorker(ctx, work, runIDs, errs, &mu, batchID)
+			e.runWorker(ctx, work, record, batchID, budgets)
 		}()
 	}
 
@@ -915,7 +927,7 @@ func (e *Engine) ExecuteRuns(ctx context.Context, plan *RunPlan, concurrency int
 
 	// Aggregate trial results for scenarios with Trials > 1
 	if arenaStore, ok := e.stateStore.(*arenastore.ArenaStateStore); ok {
-		runIDs = aggregateTrialResults(arenaStore, runIDs, plan.Combinations, e.thresholdsFor)
+		runIDs = aggregateTrialResults(arenaStore, runIDs, plan.Combinations, e.thresholdsFor, budgets)
 	}
 
 	if len(executionErrors) > 0 {
@@ -925,44 +937,40 @@ func (e *Engine) ExecuteRuns(ctx context.Context, plan *RunPlan, concurrency int
 	return runIDs, nil
 }
 
-// runWorkItem pairs a combination with its index in the results slice.
+// runWorkItem is one unit of work: a combination and its index in the
+// results slice, or a budgeted scenario's trial group (budget and trials
+// set), whose trials run in order.
 type runWorkItem struct {
-	idx   int
-	combo RunCombination
+	idx    int
+	combo  RunCombination
+	budget *arenaconfig.TrialBudget
+	trials []runWorkItem
 }
 
-// runWorker drains the work channel, executing each combination and recording
-// its run ID and error into the shared slices (guarded by mu). Combinations
-// dequeued after the context is canceled are recorded as canceled without
-// running. Run-completed hooks fire for every run that produced a run ID.
+// runWorker drains the work channel, executing each combination and passing
+// its run ID and error to record, which fires the run-completed hooks for
+// every run that produced a run ID. Combinations dequeued after the context
+// is canceled are recorded as canceled without running. A budgeted trial
+// group runs its trials in order until its budget is met.
 func (e *Engine) runWorker(
 	ctx context.Context,
 	work <-chan runWorkItem,
-	runIDs []string,
-	errs []error,
-	mu *sync.Mutex,
+	record func(idx int, runID string, err error),
 	batchID string,
+	budgets *trialBudgets,
 ) {
 	for item := range work {
-		// Check cancellation before starting work.
-		if ctx.Err() != nil {
-			mu.Lock()
-			runIDs[item.idx] = ""
-			errs[item.idx] = ctx.Err()
-			mu.Unlock()
+		if item.budget != nil {
+			e.runBudgetedTrials(ctx, &item, record, batchID, budgets)
 			continue
 		}
-
-		runID, err := e.executeRun(ctx, item.combo, batchID)
-
-		mu.Lock()
-		runIDs[item.idx] = runID
-		errs[item.idx] = err
-		mu.Unlock()
-
-		if runID != "" {
-			e.fireRunCompletedHooks(runID, err)
+		// Check cancellation before starting work.
+		if ctx.Err() != nil {
+			record(item.idx, "", ctx.Err())
+			continue
 		}
+		runID, err := e.executeRun(ctx, item.combo, batchID)
+		record(item.idx, runID, err)
 	}
 }
 

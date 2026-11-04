@@ -29,7 +29,7 @@ const thresholdEpsilon = 1e-9
 // Conversation assertions are judged against the default threshold of 1.0;
 // the engine resolves each scenario's pass_threshold values itself.
 func AggregateTrialResults(store *statestore.ArenaStateStore, runIDs []string, combos []RunCombination) []string {
-	return aggregateTrialResults(store, runIDs, combos, nil)
+	return aggregateTrialResults(store, runIDs, combos, nil, nil)
 }
 
 // conversationConfigs returns the conversation assertions a scenario
@@ -38,6 +38,7 @@ type conversationConfigs func(scenarioID string) []assertions.AssertionConfig
 
 func aggregateTrialResults(
 	store *statestore.ArenaStateStore, runIDs []string, combos []RunCombination, thresholds conversationConfigs,
+	budgets *trialBudgets,
 ) []string {
 	// Group run IDs by trial group key
 	groups := groupTrialRuns(runIDs, combos)
@@ -47,7 +48,10 @@ func aggregateTrialResults(
 
 	var summaryIDs []string
 	for _, group := range groups {
-		if len(group.runIDs) <= 1 {
+		budget := budgets.result(group.key)
+		// A budget that stopped a group after its first trial still reports
+		// how it ended, so that group is aggregated too.
+		if len(group.runIDs) <= 1 && (budget == nil || !group.trials) {
 			summaryIDs = append(summaryIDs, group.runIDs...)
 			continue
 		}
@@ -58,6 +62,7 @@ func aggregateTrialResults(
 		}
 		results := loadTrialResults(store, group.runIDs, convConfigs)
 		trialResults := computeTrialResults(results)
+		trialResults.Budget = budget
 		summaryID := representativeTrial(results)
 		attachTrialResults(store, summaryID, trialResults)
 		applyTrialVerdict(store, results, summaryID, trialResults)
@@ -94,6 +99,9 @@ func (e *Engine) thresholdsFor(scenarioID string) []assertions.AssertionConfig {
 type trialGroup struct {
 	key    TrialGroupKey
 	runIDs []string
+	// trials is set for a group of a scenario's trials, as opposed to a
+	// single run.
+	trials bool
 }
 
 func groupTrialRuns(runIDs []string, combos []RunCombination) []trialGroup {
@@ -117,7 +125,7 @@ func groupTrialRuns(runIDs []string, combos []RunCombination) []trialGroup {
 
 	groups := make([]trialGroup, 0, len(keyOrder))
 	for _, key := range keyOrder {
-		groups = append(groups, trialGroup{key: key, runIDs: groupMap[key]})
+		groups = append(groups, trialGroup{key: key, runIDs: groupMap[key], trials: true})
 	}
 
 	// Also include non-trial run IDs as single-entry groups

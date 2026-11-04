@@ -1047,3 +1047,18 @@ func TestEventAdapter_RunStartedCarriesDataRow(t *testing.T) {
 		t.Errorf("got scenario %q, row %q", started.Scenario, started.DataRow)
 	}
 }
+
+func TestEventAdapter_TrialsSkipped(t *testing.T) {
+	model := NewModel("cfg", 10)
+	adapter := NewEventAdapterWithModel(model)
+	adapter.HandleEvent(&events.Event{
+		Type:      events.EventType("arena.trials.skipped"),
+		Timestamp: time.Now(),
+		Data:      events.CustomEventData{Data: map[string]interface{}{"count": 4}},
+	})
+	model.mu.Lock()
+	defer model.mu.Unlock()
+	if model.totalRuns != 6 {
+		t.Errorf("totalRuns = %d, want 6 after 4 trials were skipped", model.totalRuns)
+	}
+}

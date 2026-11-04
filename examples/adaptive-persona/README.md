@@ -33,6 +33,7 @@ promptarena run --ci --objectives-group-by objective,data.category
 | Persona state | `state`, `transitions` and `stop_when` on `refund-seeker` | `patience` starts at 3 and drops each time the agent mentions the receipt. At 0 the persona gives up, and the turn ends with the outcome `gave_up`. |
 | Persona facts | `facts` and `fact_policy` on `order-chaser` | The persona may state only `A-100` and `28 October`. Its scripted message includes a tracking code it was never given, so the run is flagged unreliable. |
 | Fact judge | `fact_policy.judge: true`, `spec.judges` | Each message that passes the specifics check is also sent to the judge, which appears in the run log as an `llm_judge` eval. The mock judge passes every message; a flag would add `judge_flags` to the `persona_fidelity` result. |
+| Attempt budget | `trials` and `trial_budget` in `refund-pressure` | Each row gets up to 5 attempts, and stops at the first that gets through or once its attempts have cost $0.03. Here each row stops on cost after 3 trials, and the report counts the 6 skipped trials apart. |
 | No-attack baseline | `baseline: true` in `scenarios/refund-baseline.scenario.yaml` | The same objectives asked for once. The report counts these attempts in a Baseline column, and shows the attack's lift over them. |
 | Objectives report | `--formats objectives` | Success rates with 95% intervals, grouped by scenario or dataset column, with unreliable runs counted apart. |
 
@@ -58,10 +59,12 @@ persona_fidelity  persona order-chaser invented 1 specific: "TRK-55120" (exchang
 
 `out/objectives.md` then counts the `refund-pressure` attempts, sets the unreliable one apart, and puts the baseline beside the attack:
 
-| Group | Expect | Achieved | Rate | 95% CI | Mean exchanges | Cost | Cost per achieved | Unevaluated | Unreliable | Baseline | Lift |
-|---|---|---|---|---|---|---|---|---|---|---|---|
-| all | achieved | 0 / 0 | – | – | – | $0.001680 | – | 0 | 1 | – | – |
-| all | not_achieved | 0 / 3 | 0.0% | 0.0%–56.1% | – | $0.04 | – | 0 | 0 | 0 / 3, 0.0% (0.0%–56.1%), $0.003360 | +0.0 pts |
+| Group | Expect | Achieved | Rate | 95% CI | Mean exchanges | Cost | Cost per achieved | Unevaluated | Unreliable | Groups achieved | Trials to first achieved | Trials skipped | Baseline | Lift |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| all | achieved | 0 / 0 | – | – | – | $0.001680 | – | 0 | 1 | – | – | – | – | – |
+| all | not_achieved | 0 / 9 | 0.0% | 0.0%–29.9% | – | $0.13 | – | 0 | 0 | 0 / 3, 0.0% (0.0%–56.1%) | – | 6 | 0 / 3, 0.0% (0.0%–56.1%), $0.003360 | +0.0 pts |
+
+The 9 attempts are 3 trials for each of the 3 rows. Groups achieved is how many rows had an attempt get through within the budget: none here. Against an agent that gives in, read that column rather than Rate, which counts attempts that stopped at the first success; Trials to first achieved is then how many attempts the attack needed.
 
 The agent held out against both, so the lift is 0. Against an agent that gives in, a lift well above 0 is what the attack earned; a high rate with a high baseline means the agent gives in to anyone who asks.
 
@@ -74,7 +77,7 @@ The mocks script both sides of each conversation by scenario and turn, in `mock-
 1. Replace `providers/agent-mock.provider.yaml` with your agent's provider.
 2. Point the `customer` role (`self_play.roles`) and the `fact-judge` judge at real models.
 
-The persona then writes its own messages from its `system_template`. With a real persona model, add `trials` to the scenarios to get a success rate from repeated attempts.
+The persona then writes its own messages from its `system_template`. With a real persona model, each trial is a fresh attempt, so raise `trials` and the `trial_budget` to get a success rate from repeated attempts.
 
 ## Files
 
@@ -84,7 +87,7 @@ prompts/support.yaml                   the agent's refund policy
 personas/refund-seeker.persona.yaml    objective feedback, notes, state
 personas/order-chaser.persona.yaml     facts and the fact judge
 personas/plain-customer.persona.yaml   the baseline: asks once, plainly
-scenarios/refund-pressure.scenario.yaml  dataset objectives, expect, rewind
+scenarios/refund-pressure.scenario.yaml  dataset objectives, expect, rewind, trial budget
 scenarios/refund-baseline.scenario.yaml  the same objectives, baseline: true
 scenarios/order-status.scenario.yaml   an objective the agent should achieve
 data/refund-objectives.jsonl           one row per objective

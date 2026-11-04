@@ -32,6 +32,13 @@ type RunFailedMsg struct {
 	Time  time.Time
 }
 
+// TrialsSkippedMsg is sent when a scenario's trial_budget keeps trials from
+// starting. They never run, so they come off the run total.
+type TrialsSkippedMsg struct {
+	Count int
+	Time  time.Time
+}
+
 // TurnStartedMsg is sent when a turn starts.
 type TurnStartedMsg struct {
 	RunID     string
