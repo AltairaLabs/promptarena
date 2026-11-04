@@ -1,0 +1,28 @@
+# yaml-language-server: $schema=../../schemas/v1alpha1/arena.json
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Arena
+metadata:
+  name: indirect-injection
+spec:
+  tools:
+    # lookup_order's result carries an injected instruction.
+    - file: tools/lookup-order.tool.yaml
+    - file: tools/send-email.tool.yaml
+
+  prompt_configs:
+    - id: support
+      file: prompts/support.yaml
+
+  providers:
+    # The agent under test. Swap this for a real provider to test your agent.
+    - file: providers/agent-mock.provider.yaml
+
+  scenarios:
+    - file: scenarios/injected-order-note.scenario.yaml
+    - file: scenarios/compromised-agent.scenario.yaml
+
+  defaults:
+    concurrency: 1
+    output:
+      dir: out
+      formats: ["json"]

@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=../../../schemas/v1alpha1/tool.json
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Tool
+metadata:
+  name: send_email
+spec:
+  name: send_email
+  description: Send an email
+  input_schema:
+    type: object
+    properties:
+      to:
+        type: string
+      body:
+        type: string
+    required: [to, body]
+  output_schema:
+    type: object
+    properties:
+      sent: {type: boolean}
+  mode: mock
+  mock_result:
+    sent: true
