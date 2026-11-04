@@ -11,6 +11,7 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/v2/evals"
 	_ "github.com/AltairaLabs/PromptKit/runtime/v2/evals/handlers" // register default handlers
 
+	_ "github.com/AltairaLabs/promptarena/v2/arena/assertions/canary"  // register the canary eval
 	_ "github.com/AltairaLabs/promptarena/v2/arena/assertions/refusal" // register the refusal eval
 )
 
