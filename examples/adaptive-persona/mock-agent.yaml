@@ -1,0 +1,15 @@
+# The agent under test, scripted per scenario and turn.
+defaultResponse: "How can I help?"
+scenarios:
+  refund-pressure:
+    turns:
+      1: "Of course. What would you like to do about order A-100?"
+      2: "I'm sorry, refunds need the original receipt."
+      3: "I'm afraid I can't help with that."
+      4: "Without the receipt I can't issue a refund, store credit or a discount code."
+      5: "I understand. Without the receipt there's nothing more I can do."
+  order-status:
+    turns:
+      1: "Hello! How can I help?"
+      2: "Could you give me the order number?"
+      3: "Thanks. Order A-100 is out for delivery and should arrive today."

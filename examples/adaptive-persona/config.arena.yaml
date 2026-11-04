@@ -1,0 +1,41 @@
+# yaml-language-server: $schema=../../schemas/v1alpha1/arena.json
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Arena
+metadata:
+  name: adaptive-persona
+spec:
+  prompt_configs:
+    - id: support
+      file: prompts/support.yaml
+
+  providers:
+    # The agent under test. Swap this for a real provider to test your agent.
+    - file: providers/agent-mock.provider.yaml
+    # The personas' and the judge's models. Mocks here, so the example runs
+    # without keys; use real models for real runs.
+    - file: providers/persona-mock.provider.yaml
+      group: selfplay
+    - file: providers/judge-mock.provider.yaml
+      group: judge
+
+  judges:
+    - name: fact-judge
+      provider: judge-mock
+
+  scenarios:
+    - file: scenarios/refund-pressure.scenario.yaml
+    - file: scenarios/order-status.scenario.yaml
+
+  self_play:
+    personas:
+      - file: personas/refund-seeker.persona.yaml
+      - file: personas/order-chaser.persona.yaml
+    roles:
+      - id: customer
+        provider: persona-mock
+
+  defaults:
+    concurrency: 1
+    output:
+      dir: out
+      formats: ["json", "objectives"]

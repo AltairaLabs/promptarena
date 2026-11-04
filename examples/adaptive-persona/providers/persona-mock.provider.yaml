@@ -1,0 +1,11 @@
+# yaml-language-server: $schema=../../../schemas/v1alpha1/provider.json
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Provider
+metadata:
+  name: persona-mock
+spec:
+  id: persona-mock
+  type: mock
+  model: mock-model
+  additional_config:
+    mock_config: mock-persona.yaml

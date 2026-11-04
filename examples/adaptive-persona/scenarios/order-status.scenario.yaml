@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=../../../schemas/v1alpha1/scenario.json
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Scenario
+metadata:
+  name: order-status
+spec:
+  id: order-status
+  task_type: support
+  description: A customer with declared facts asks where their order is
+
+  turns:
+    - role: user
+      content: "Hi."
+
+    - role: customer
+      persona: order-chaser
+      turns: 4
+      objective:
+        description: Find out where order A-100 is
+        success:
+          - type: content_includes
+            params:
+              patterns: ["out for delivery"]
