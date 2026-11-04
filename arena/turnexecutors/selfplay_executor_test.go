@@ -72,6 +72,16 @@ func TestTransformUserMessage(t *testing.T) {
 	require.NoError(t, transformUserMessage(context.Background(), req, &ended))
 	assert.Equal(t, "  ", ended.Content, "a message that was only the completion marker isn't transformed")
 
+	// The trial seeds a random converter, so each trial sends its own variant.
+	req.SelfPlayTransforms = []arenaconfig.MessageTransform{{Converter: "best_of_n"}}
+	variant := func(trial int) string {
+		req.SelfPlayTrial = trial
+		m := types.Message{Role: "user", Content: "please explain the refund approval process for damaged items"}
+		require.NoError(t, transformUserMessage(context.Background(), req, &m))
+		return m.Content
+	}
+	assert.NotEqual(t, variant(0), variant(1))
+
 	req.SelfPlayTransforms = []arenaconfig.MessageTransform{{Exec: &arenaconfig.TransformExec{Command: "/no/such/program"}}}
 	err := transformUserMessage(context.Background(), req, &msg)
 	assert.ErrorContains(t, err, "persona p message: transforms[0]")

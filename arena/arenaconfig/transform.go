@@ -3,6 +3,7 @@ package arenaconfig
 import (
 	"fmt"
 	"math"
+	"slices"
 	"strings"
 )
 
@@ -12,11 +13,17 @@ const TransformMessagePlaceholder = "{{message}}"
 
 // MessageTransform rewrites a self-play persona's message after it is
 // generated and before the agent under test receives it. Set exactly one of
-// Template or Exec.
+// Template, Converter or Exec.
 type MessageTransform struct {
 	// Template is the message to send, with {{message}} standing for the
 	// persona's message, e.g. "{{message}}\n\nSent from my phone".
 	Template string `json:"template,omitempty" yaml:"template,omitempty"`
+	// Converter rewrites the message with a built-in converter: base64,
+	// rot13, leetspeak, reverse, homoglyph (Cyrillic look-alikes),
+	// unicode_tags (invisible tag characters), zero_width (zero-width spaces
+	// inside words) or best_of_n (Best-of-N's random scrambling, case flips
+	// and character noise, seeded per scenario, trial and exchange).
+	Converter string `json:"converter,omitempty" yaml:"converter,omitempty" jsonschema:"enum=base64,enum=rot13,enum=leetspeak,enum=reverse,enum=homoglyph,enum=unicode_tags,enum=zero_width,enum=best_of_n"`
 	// Exec runs a program that rewrites the message.
 	Exec *TransformExec `json:"exec,omitempty" yaml:"exec,omitempty"`
 }
@@ -37,12 +44,18 @@ type TransformExec struct {
 	TimeoutMs int `json:"timeout_ms,omitempty" yaml:"timeout_ms,omitempty" jsonschema:"minimum=0"`
 }
 
+// TransformConverters are the built-in converters a message transform can
+// name.
+var TransformConverters = []string{
+	"base64", "rot13", "leetspeak", "reverse", "homoglyph", "unicode_tags", "zero_width", "best_of_n",
+}
+
 // DefaultTransformTimeoutMs bounds an exec transform when timeout_ms is not
 // set.
 const DefaultTransformTimeoutMs = 10000
 
 // validateTransforms checks the turn at turnIndex's transforms.
-func validateTransforms(turn *TurnDefinition, turnIndex int) error {
+func validateTransforms(s *Scenario, turn *TurnDefinition, turnIndex int) error {
 	if len(turn.Transforms) > 0 && turn.Persona == "" {
 		return fmt.Errorf("turns[%d].transforms: transforms need a self-play turn (one with a persona)", turnIndex)
 	}
@@ -50,8 +63,17 @@ func validateTransforms(turn *TurnDefinition, turnIndex int) error {
 		t := &turn.Transforms[i]
 		where := fmt.Sprintf("turns[%d].transforms[%d]", turnIndex, i)
 		switch {
-		case (t.Template == "") == (t.Exec == nil):
-			return fmt.Errorf("%s: set exactly one of template or exec", where)
+		case countSet(t.Template != "", t.Converter != "", t.Exec != nil) != 1:
+			return fmt.Errorf("%s: set exactly one of template, converter or exec", where)
+		case t.Converter != "" && s.Duplex != nil:
+			// The converters rewrite text for reading: spoken, an encoding is
+			// noise and tag characters are silence, so the agent would pass an
+			// attack it never heard.
+			return fmt.Errorf("%s.converter: converters rewrite text, not speech, so a duplex turn can't use them; "+
+				"use audio_transforms", where)
+		case t.Converter != "" && !slices.Contains(TransformConverters, t.Converter):
+			return fmt.Errorf("%s.converter %q is not one of %s", where, t.Converter,
+				strings.Join(TransformConverters, ", "))
 		case t.Template != "" && !strings.Contains(t.Template, TransformMessagePlaceholder):
 			return fmt.Errorf("%s.template must contain %s", where, TransformMessagePlaceholder)
 		case t.Exec != nil && strings.TrimSpace(t.Exec.Command) == "":
@@ -94,14 +116,8 @@ func validateAudioTransforms(s *Scenario, turn *TurnDefinition, turnIndex int) e
 	for i := range turn.AudioTransforms {
 		t := &turn.AudioTransforms[i]
 		where := fmt.Sprintf("turns[%d].audio_transforms[%d]", turnIndex, i)
-		set := 0
-		for _, isSet := range []bool{t.GainDB != nil, t.NoiseDBFS != nil, t.Exec != nil} {
-			if isSet {
-				set++
-			}
-		}
 		switch {
-		case set != 1:
+		case countSet(t.GainDB != nil, t.NoiseDBFS != nil, t.Exec != nil) != 1:
 			return fmt.Errorf("%s: set exactly one of gain_db, noise_dbfs or exec", where)
 		case t.GainDB != nil && (math.IsNaN(*t.GainDB) || math.IsInf(*t.GainDB, 0)):
 			return fmt.Errorf("%s.gain_db must be a finite number", where)
@@ -116,4 +132,15 @@ func validateAudioTransforms(s *Scenario, turn *TurnDefinition, turnIndex int) e
 		}
 	}
 	return nil
+}
+
+// countSet counts the fields that are set.
+func countSet(set ...bool) int {
+	n := 0
+	for _, isSet := range set {
+		if isSet {
+			n++
+		}
+	}
+	return n
 }

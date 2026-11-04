@@ -68,8 +68,10 @@ type ConversationRequest struct {
 	Timeout     *int     // Timeout in seconds
 
 	// For distributed execution and tracing (v0.2.0+)
-	RunID    string            // Unique identifier for this run
-	Metadata map[string]string // Additional metadata for debugging/tracing
+	RunID string // Unique identifier for this run
+	// TrialIndex is the 0-based trial this run is, when the scenario has trials.
+	TrialIndex int
+	Metadata   map[string]string // Additional metadata for debugging/tracing
 
 	// Event bus for runtime/TUI events
 	EventBus events.Bus

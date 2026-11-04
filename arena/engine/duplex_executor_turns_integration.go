@@ -666,6 +666,7 @@ func (de *DuplexConversationExecutor) processSelfPlayDuplexTurn(
 	if len(turn.Transforms) > 0 {
 		sent, terr := selfplay.ApplyTransforms(ctx, turn.Transforms, req.Config.ConfigDir, selfplay.TransformRequest{
 			Message: generatedText, Persona: turn.Persona, Scenario: req.Scenario.ID, Exchange: selfplayTurnNum,
+			Trial: req.TrialIndex,
 		})
 		if terr != nil {
 			return fmt.Errorf("turn %d: persona %s message: %w", turnIdx, turn.Persona, terr)

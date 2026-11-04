@@ -1,0 +1,33 @@
+# yaml-language-server: $schema=../../schemas/v1alpha1/arena.json
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Arena
+metadata:
+  name: red-team-converters
+spec:
+  prompt_configs:
+    - id: support
+      file: prompts/support.yaml
+
+  providers:
+    # The agent under test. Swap this for a real provider to test your agent.
+    - file: providers/agent-mock.provider.yaml
+    # The attacker's model. A mock here, so the example runs without keys.
+    - file: providers/attacker-mock.provider.yaml
+      group: selfplay
+
+  scenarios:
+    - file: scenarios/best-of-n.scenario.yaml
+    - file: scenarios/encoded.scenario.yaml
+
+  self_play:
+    personas:
+      - file: personas/attacker.persona.yaml
+    roles:
+      - id: attacker
+        provider: attacker-mock
+
+  defaults:
+    concurrency: 1
+    output:
+      dir: out
+      formats: ["json", "objectives"]

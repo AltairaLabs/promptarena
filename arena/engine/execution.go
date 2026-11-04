@@ -721,6 +721,7 @@ func (e *Engine) buildConversationRequest(
 		Config:           e.config,
 		Region:           combo.Region,
 		RunID:            runID,
+		TrialIndex:       combo.TrialIndex,
 		EventBus:         e.eventBus,
 		EvalOrchestrator: runOrch,
 		RecordingConfig:  e.recordingConfig,

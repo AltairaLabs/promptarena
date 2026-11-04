@@ -785,7 +785,7 @@ func (s *Scenario) Validate() error {
 	}
 
 	for i := range s.Turns {
-		if err := validateTransforms(&s.Turns[i], i); err != nil {
+		if err := validateTransforms(s, &s.Turns[i], i); err != nil {
 			return fmt.Errorf("scenario %s: %w", s.ID, err)
 		}
 		if err := validateAudioTransforms(s, &s.Turns[i], i); err != nil {

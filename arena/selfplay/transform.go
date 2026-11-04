@@ -33,6 +33,12 @@ type TransformRequest struct {
 	Scenario string `json:"scenario"`
 	// Exchange is the 1-based self-play exchange the message is for.
 	Exchange int `json:"exchange"`
+	// Trial is the 0-based trial the run is, when the scenario has trials.
+	Trial int `json:"trial"`
+	// Seed is the run's configured seed (defaults.seed), 0 when unset. It
+	// seeds the random converters with the trial, so a new seed gives new
+	// variants.
+	Seed int `json:"-"`
 }
 
 // transformResponse is what an exec transform writes on stdout.
@@ -54,6 +60,8 @@ func ApplyTransforms(
 		switch {
 		case t.Template != "":
 			msg = strings.ReplaceAll(t.Template, arenaconfig.TransformMessagePlaceholder, msg)
+		case t.Converter != "":
+			msg, err = convert(t.Converter, msg, converterSeed(&req, i))
 		case t.Exec != nil:
 			req.Message = msg
 			msg, err = runExecTransform(ctx, t.Exec, configDir, req)
