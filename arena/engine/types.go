@@ -130,6 +130,9 @@ type TrialResults struct {
 	TotalCost float64 `json:"total_cost,omitempty"`
 	// Objectives summarizes each self-play turn objective across trials.
 	Objectives []ObjectiveTrialStats `json:"objectives,omitempty"`
+	// Budget reports how the scenario's trial_budget ended the trials, when
+	// it has one.
+	Budget *TrialBudgetResult `json:"budget,omitempty"`
 }
 
 // ObjectiveTrialStats summarizes one self-play turn objective across the

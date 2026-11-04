@@ -3654,6 +3654,10 @@
           "type": "integer",
           "description": "Number of times to run this scenario for statistical evaluation"
         },
+        "trial_budget": {
+          "$ref": "#/$defs/TrialBudget",
+          "description": "TrialBudget stops the scenario's trials early: once one achieves every\nobjective, or once they have cost a set amount."
+        },
         "data": {
           "$ref": "#/$defs/ScenarioData",
           "description": "Run the scenario once per row of a JSONL or CSV dataset"
@@ -4384,6 +4388,22 @@
         "output_schema",
         "mode"
       ]
+    },
+    "TrialBudget": {
+      "properties": {
+        "stop_on_achieved": {
+          "type": "boolean",
+          "description": "StopOnAchieved starts no more trials once one has achieved every\nobjective in the scenario: a best-of-N attempt budget, where the\nquestion is whether any attempt gets through."
+        },
+        "max_cost_usd": {
+          "type": "number",
+          "minimum": 0,
+          "description": "MaxCostUSD starts no more trials once the group's finished trials have\ncost at least this much, in USD."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "TrialBudget stops a scenario's trials early."
     },
     "TurnContentPart": {
       "properties": {

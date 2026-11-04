@@ -405,3 +405,63 @@ func TestBaselineCell(t *testing.T) {
 	assert.Equal(t, "2 / 3, 66.7% (20.8%–93.9%), $1.00, 4 unreliable",
 		baselineCell(&Group{Achieved: 2, Attempts: 3, Rate: 2.0 / 3.0, CILow: 0.2077, CIHigh: 0.939, Cost: 1, Unreliable: 4}))
 }
+
+func budgetedRun(id string, budget *engine.TrialBudgetResult, achieved int) engine.RunResult {
+	r := run(id, "attack", 0.1, nil, nil, objective("get a refund", achieved > 0, 1, ""))
+	r.TrialResults = &engine.TrialResults{
+		TotalCost: 0.5,
+		Budget:    budget,
+		Objectives: []engine.ObjectiveTrialStats{{
+			Description: "get a refund", Attempts: budget.TrialsRun, Achieved: achieved,
+		}},
+	}
+	return r
+}
+
+func TestBuild_TrialBudget(t *testing.T) {
+	runs := []engine.RunResult{
+		budgetedRun("a", &engine.TrialBudgetResult{TrialsRun: 2, TrialsSkipped: 8, StoppedBy: "achieved",
+			TrialsToFirstAchieved: 2}, 1),
+		budgetedRun("b", &engine.TrialBudgetResult{TrialsRun: 4, TrialsSkipped: 6, StoppedBy: "achieved",
+			TrialsToFirstAchieved: 4}, 1),
+		budgetedRun("c", &engine.TrialBudgetResult{TrialsRun: 3, TrialsSkipped: 7, StoppedBy: "max_cost"}, 0),
+	}
+	total := Build(runs, nil).Totals[0]
+	assert.Equal(t, 9, total.Attempts, "only the trials that ran are attempts")
+	assert.Equal(t, 21, total.TrialsSkipped)
+	assert.InDelta(t, 3.0, total.MeanTrialsToFirstAchieved, 1e-9, "the mean over groups that got through")
+	assert.Equal(t, 2, total.FirstAchievedGroups)
+	assert.Equal(t, 3, total.BudgetedGroups)
+
+	md := RenderMarkdown(Build(runs, nil))
+	assert.Contains(t, md, "| Groups achieved | Trials to first achieved | Trials skipped |")
+	assert.Contains(t, md, "| 2 / 3, 66.7% (20.8%–93.9%) | 3.0 | 21 |")
+	low, high := Wilson(2, 3)
+	assert.InDelta(t, low, total.GroupsCILow, 1e-9)
+	assert.InDelta(t, high, total.GroupsCIHigh, 1e-9)
+	assert.NotContains(t, RenderMarkdown(Build([]engine.RunResult{
+		run("x", "s", 0, nil, nil, objective("o", true, 1, "")),
+	}, nil)), "Trials skipped", "the columns appear only when a trial budget ran")
+	mixed := RenderMarkdown(Build(append(runs, run("x", "plain", 0, nil, nil, objective("o", true, 1, ""))),
+		[]string{GroupScenario}))
+	assert.Contains(t, mixed, "| plain | achieved | 1 / 1 |")
+	assert.Contains(t, mixed, "| – | – | – |", "a row without a budget shows no skips")
+}
+
+func TestBuild_TrialBudgetCountsEachRunOnceInEveryRow(t *testing.T) {
+	r := run("a", "attack", 0.1, nil, nil, objectiveOn(1, "achieved", "first", true, 1, ""),
+		objectiveOn(2, "achieved", "second", true, 1, ""))
+	r.TrialResults = &engine.TrialResults{
+		Budget: &engine.TrialBudgetResult{TrialsRun: 2, TrialsSkipped: 3, StoppedBy: "achieved", TrialsToFirstAchieved: 2},
+		Objectives: []engine.ObjectiveTrialStats{
+			{TurnIndex: 1, Description: "first", Attempts: 2, Achieved: 1},
+			{TurnIndex: 2, Description: "second", Attempts: 2, Achieved: 1},
+		},
+	}
+	report := Build([]engine.RunResult{r}, []string{GroupObjective})
+	assert.Equal(t, 1, report.Totals[0].BudgetedGroups, "two objectives, one trial group")
+	assert.Equal(t, 3, report.Totals[0].TrialsSkipped)
+	for _, g := range report.Groupings[0].Groups {
+		assert.Equal(t, 1, g.BudgetedGroups, "%s carries the budget too", g.Value)
+	}
+}

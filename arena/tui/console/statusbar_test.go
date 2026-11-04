@@ -121,3 +121,16 @@ var errFail = &fakeErr{}
 type fakeErr struct{}
 
 func (*fakeErr) Error() string { return "boom" }
+
+func TestStatusBarSkipTakesRunsOffTheTotal(t *testing.T) {
+	sb := NewStatusBar(10, false)
+	sb.Advance(nil)
+	sb.Skip(4)
+	if got := plain(sb.Render()); !strings.Contains(got, "1/6") {
+		t.Errorf("Render() = %q, want it to contain 1/6", got)
+	}
+	sb.Skip(20)
+	if got := plain(sb.Render()); !strings.Contains(got, "1/1") {
+		t.Errorf("Render() = %q, want the total never below what is done", got)
+	}
+}

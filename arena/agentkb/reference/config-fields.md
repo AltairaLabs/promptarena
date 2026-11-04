@@ -311,6 +311,7 @@ Fields under `spec`:
 | `streaming` | boolean |  | Enable streaming for all turns by default. |
 | `task_type` | string |  | — |
 | `tool_policy` | object |  | — |
+| `trial_budget` | object |  | TrialBudget stops the scenario's trials early: once one achieves every objective, or once they have cost a set amount. |
 | `trials` | integer |  | Number of times to run this scenario for statistical evaluation |
 | `turns` | array |  | — |
 | `variables` | object |  | Template variables to inject into the pack |

@@ -715,6 +715,9 @@ type Scenario struct {
 	// Trials is the number of times to execute this scenario for statistical evaluation.
 	// When > 1, assertion results are aggregated across trials using pass rates and flakiness scores.
 	Trials int `json:"trials,omitempty" yaml:"trials,omitempty" jsonschema:"description=Number of times to run this scenario for statistical evaluation"` //nolint:lll
+	// TrialBudget stops the scenario's trials early: once one achieves every
+	// objective, or once they have cost a set amount.
+	TrialBudget *TrialBudget `json:"trial_budget,omitempty" yaml:"trial_budget,omitempty"`
 	// Data runs the scenario once per row of a JSONL or CSV file, substituting
 	// each row's columns as {column}. Mutually exclusive with turn perturbations.
 	Data *ScenarioData `json:"data,omitempty" yaml:"data,omitempty" jsonschema:"description=Run the scenario once per row of a JSONL or CSV dataset"` //nolint:lll
@@ -771,6 +774,12 @@ func (s *Scenario) Validate() error {
 
 	if s.Data != nil {
 		if err := s.Data.validate(s); err != nil {
+			return fmt.Errorf("scenario %s: %w", s.ID, err)
+		}
+	}
+
+	if s.TrialBudget != nil {
+		if err := s.TrialBudget.validate(s); err != nil {
 			return fmt.Errorf("scenario %s: %w", s.ID, err)
 		}
 	}

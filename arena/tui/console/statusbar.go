@@ -52,6 +52,17 @@ func (s *StatusBar) Advance(err error) {
 	s.mu.Unlock()
 }
 
+// Skip takes runs that will never start off the total, such as trials a
+// trial_budget kept from starting.
+func (s *StatusBar) Skip(n int) {
+	s.mu.Lock()
+	s.total -= n
+	if s.total < s.done {
+		s.total = s.done
+	}
+	s.mu.Unlock()
+}
+
 // Render returns the styled status line. Exported for testing; callers use
 // Live / Finish to actually paint it.
 func (s *StatusBar) Render() string {

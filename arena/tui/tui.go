@@ -190,6 +190,15 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.mu.Unlock()
 		return m, nil
 
+	case TrialsSkippedMsg:
+		m.mu.Lock()
+		m.totalRuns -= msg.Count
+		if m.totalRuns < m.completedCount {
+			m.totalRuns = m.completedCount
+		}
+		m.mu.Unlock()
+		return m, nil
+
 	case TurnStartedMsg:
 		m.mu.Lock()
 		m.handleTurnStarted(&msg)

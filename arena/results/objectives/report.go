@@ -63,6 +63,24 @@ type Group struct {
 	// invented a specific it was not given, so the attempt measured the
 	// simulator as much as the agent. They are not counted in Attempts.
 	Unreliable int `json:"unreliable,omitempty"`
+	// BudgetedGroups is the number of trial groups in this group that ran
+	// under a scenario's trial_budget, and FirstAchievedGroups how many of
+	// them had a trial achieve every objective. Under stop_on_achieved, Rate
+	// counts trials that stopped at the first success, so it overstates the
+	// per-trial rate; FirstAchievedGroups / BudgetedGroups, bounded by
+	// GroupsCILow and GroupsCIHigh, is the chance of success within the
+	// budget.
+	BudgetedGroups      int     `json:"budgeted_groups,omitempty"`
+	FirstAchievedGroups int     `json:"first_achieved_groups,omitempty"`
+	GroupsCILow         float64 `json:"groups_ci_low,omitempty"`
+	GroupsCIHigh        float64 `json:"groups_ci_high,omitempty"`
+	// MeanTrialsToFirstAchieved is the mean, over those trial groups, of how
+	// many trials had run when the first achieved every objective: the
+	// attempts it took. 0 when none did.
+	MeanTrialsToFirstAchieved float64 `json:"mean_trials_to_first_achieved,omitempty"`
+	// TrialsSkipped is the number of trials a trial_budget kept from
+	// starting. They are not attempts.
+	TrialsSkipped int `json:"trials_skipped,omitempty"`
 	// Baseline totals the group's baseline attempts, from objectives marked
 	// baseline: true: the same goal pursued without the attack. They are not
 	// counted in the fields above, and their cost is Baseline.Cost. Nil when
@@ -120,6 +138,9 @@ type attempt struct {
 	unreliable  int
 	// baseline marks a no-attack baseline objective's attempts.
 	baseline bool
+	// budget is how the run's trial_budget ended its trials. Every attempt of
+	// the run carries it; a group counts each run once.
+	budget *engine.TrialBudgetResult
 	// cost is this objective's share of the run's cost.
 	cost float64
 }
@@ -222,6 +243,7 @@ func attemptsOf(run *engine.RunResult) []attempt {
 				run: run, turnIndex: o.TurnIndex, description: o.Description, expect: expectOrDefault(o.Expect),
 				attempts: o.Attempts, achieved: o.Achieved, achievedAt: o.AchievedAtExchange,
 				unevaluated: o.Unevaluated, unreliable: o.Unreliable, baseline: o.Baseline,
+				budget: run.TrialResults.Budget,
 			})
 		}
 		return out
@@ -340,6 +362,7 @@ func summarize(value, expect string, attempts []attempt) Group {
 		}
 	}
 	g := tally(value, expect, attack)
+	addBudgets(&g, attempts)
 	if len(baseline) > 0 {
 		b := tally(value, expect, baseline)
 		g.Baseline = &b
@@ -374,6 +397,33 @@ func tally(value, expect string, attempts []attempt) Group {
 		g.CostPerAchieved = g.Cost / float64(g.Achieved)
 	}
 	return g
+}
+
+// addBudgets totals the trial budgets of the runs behind a set of attempts,
+// counting each run once however many of its objectives are in the set.
+func addBudgets(g *Group, attempts []attempt) {
+	seen := map[*engine.RunResult]bool{}
+	trialsToFirst := 0
+	for i := range attempts {
+		a := &attempts[i]
+		if a.budget == nil || seen[a.run] {
+			continue
+		}
+		seen[a.run] = true
+		g.BudgetedGroups++
+		g.TrialsSkipped += a.budget.TrialsSkipped
+		if a.budget.TrialsToFirstAchieved > 0 {
+			g.FirstAchievedGroups++
+			trialsToFirst += a.budget.TrialsToFirstAchieved
+		}
+	}
+	if g.BudgetedGroups == 0 {
+		return
+	}
+	g.GroupsCILow, g.GroupsCIHigh = Wilson(g.FirstAchievedGroups, g.BudgetedGroups)
+	if g.FirstAchievedGroups > 0 {
+		g.MeanTrialsToFirstAchieved = float64(trialsToFirst) / float64(g.FirstAchievedGroups)
+	}
 }
 
 // lift is the attack's rate minus the baseline's, over the objectives both

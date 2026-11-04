@@ -435,7 +435,7 @@ func TestAggregateTrialResults_PassThreshold(t *testing.T) {
 			return []assertions.AssertionConfig{{Type: "contains", PassThreshold: ptr(0.66)}}
 		}
 
-		aggregateTrialResults(store, []string{"a", "b", "c"}, trialCombos(3), thresholds)
+		aggregateTrialResults(store, []string{"a", "b", "c"}, trialCombos(3), thresholds, nil)
 
 		rr, _ := store.GetResult(context.Background(), "a")
 		if !rr.ConversationAssertions.Passed {
@@ -477,7 +477,7 @@ func TestAggregateTrialResults_PassThreshold(t *testing.T) {
 		saveTrialRun(t, store, "b", turnMessages(
 			turnResult("min_length", true, ptr(0.5)), turnResult("content_includes", false, nil)), nil, "")
 
-		aggregateTrialResults(store, []string{"a", "b"}, trialCombos(2), nil)
+		aggregateTrialResults(store, []string{"a", "b"}, trialCombos(2), nil, nil)
 
 		state, _ := store.GetArenaState(context.Background(), "a")
 		summary := state.Messages[1].Meta["assertions"].(map[string]interface{})
@@ -502,7 +502,7 @@ func TestAggregateTrialResults_PassThreshold(t *testing.T) {
 		saveTrialRun(t, store, "a", turnMessages(skipped), nil, "")
 		saveTrialRun(t, store, "b", turnMessages(turnResult("min_length", true, nil)), nil, "")
 
-		aggregateTrialResults(store, []string{"a", "b"}, trialCombos(2), nil)
+		aggregateTrialResults(store, []string{"a", "b"}, trialCombos(2), nil, nil)
 
 		rr, _ := store.GetResult(context.Background(), "a")
 		stats := rr.TrialResults.(*TrialResults).PerAssertionStats["turn[0]:min_length#0"]
@@ -519,7 +519,7 @@ func TestAggregateTrialResults_PassThreshold(t *testing.T) {
 			return []assertions.AssertionConfig{{Type: "contains", PassThreshold: ptr(0.6)}}
 		}
 
-		aggregateTrialResults(store, []string{"a", "b"}, trialCombos(2), thresholds)
+		aggregateTrialResults(store, []string{"a", "b"}, trialCombos(2), thresholds, nil)
 
 		rr, _ := store.GetResult(context.Background(), "a")
 		tr := rr.TrialResults.(*TrialResults)
@@ -534,7 +534,7 @@ func TestAggregateTrialResults_PassThreshold(t *testing.T) {
 		saveTrialRun(t, store, "b", turnMessages(turnResult("min_length", false, nil)), nil,
 			"validation failed: min_length")
 
-		aggregateTrialResults(store, []string{"a", "b"}, trialCombos(2), nil)
+		aggregateTrialResults(store, []string{"a", "b"}, trialCombos(2), nil, nil)
 
 		rr, _ := store.GetResult(context.Background(), "a")
 		want := "turn assertions below pass_threshold across 2 trials: " +
@@ -550,7 +550,7 @@ func TestAggregateTrialResults_PassThreshold(t *testing.T) {
 			"validation failed: min_length")
 		saveTrialRun(t, store, "b", turnMessages(turnResult("min_length", true, ptr(0.5))), nil, "")
 
-		ids := aggregateTrialResults(store, []string{"a", "b"}, trialCombos(2), nil)
+		ids := aggregateTrialResults(store, []string{"a", "b"}, trialCombos(2), nil, nil)
 
 		if len(ids) != 1 || ids[0] != "b" {
 			t.Fatalf("summary IDs = %v, want [b]", ids)
@@ -566,7 +566,7 @@ func TestAggregateTrialResults_PassThreshold(t *testing.T) {
 		saveTrialRun(t, store, "a", nil, nil, "")
 		saveTrialRun(t, store, "b", nil, conv(false), "")
 
-		aggregateTrialResults(store, []string{"a", "b"}, trialCombos(2), nil)
+		aggregateTrialResults(store, []string{"a", "b"}, trialCombos(2), nil, nil)
 
 		rr, _ := store.GetResult(context.Background(), "a")
 		if rr.ConversationAssertions.Passed || len(rr.ConversationAssertions.Results) != 1 {
@@ -595,7 +595,7 @@ func TestAggregateTrialResults_PassThreshold(t *testing.T) {
 		saveTrialRun(t, store, "a", turnMessages(a), nil, "validation failed")
 		saveTrialRun(t, store, "b", turnMessages(b), nil, "")
 
-		aggregateTrialResults(store, []string{"a", "b"}, trialCombos(2), nil)
+		aggregateTrialResults(store, []string{"a", "b"}, trialCombos(2), nil, nil)
 
 		rr, _ := store.GetResult(context.Background(), "b")
 		tr := rr.TrialResults.(*TrialResults)
@@ -612,7 +612,7 @@ func TestAggregateTrialResults_PassThreshold(t *testing.T) {
 		saveTrialRun(t, store, "b",
 			append(turnMessages(turnResult("min_length", true, ptr(0.5))), later...), nil, "")
 
-		aggregateTrialResults(store, []string{"a", "b"}, trialCombos(2), nil)
+		aggregateTrialResults(store, []string{"a", "b"}, trialCombos(2), nil, nil)
 
 		rr, _ := store.GetResult(context.Background(), "b")
 		tr := rr.TrialResults.(*TrialResults)
@@ -626,7 +626,7 @@ func TestAggregateTrialResults_PassThreshold(t *testing.T) {
 		saveTrialRun(t, store, "a", nil, nil, "provider 500")
 		saveTrialRun(t, store, "b", nil, nil, "")
 
-		aggregateTrialResults(store, []string{"a", "b"}, trialCombos(2), nil)
+		aggregateTrialResults(store, []string{"a", "b"}, trialCombos(2), nil, nil)
 
 		rr, _ := store.GetResult(context.Background(), "b")
 		if rr.Error != "1 of 2 trials errored: provider 500" {
@@ -647,7 +647,7 @@ func TestAggregateTrialResults_PassThreshold(t *testing.T) {
 		saveTrialRun(t, store, "a", duplex(true), nil, "")
 		saveTrialRun(t, store, "b", duplex(false), nil, "")
 
-		aggregateTrialResults(store, []string{"a", "b"}, trialCombos(2), nil)
+		aggregateTrialResults(store, []string{"a", "b"}, trialCombos(2), nil, nil)
 
 		state, _ := store.GetArenaState(context.Background(), "a")
 		if state.Messages[0].Meta["assertions"].(map[string]interface{})["all_passed"] != false {

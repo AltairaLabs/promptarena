@@ -96,17 +96,25 @@ func RenderMarkdown(report *Report) string {
 		b.WriteString("No run had an objective.\n")
 		return b.String()
 	}
-	withBaseline := hasBaseline(report)
-	if withBaseline {
+	cols := optionalColumns{baseline: hasBaseline(report), budget: hasBudget(report)}
+	if cols.budget {
+		b.WriteString("Groups achieved counts the trial groups run under a `trial_budget` in which a trial " +
+			"achieved every objective, with a 95% Wilson interval: the chance of success within the budget. " +
+			"Under `stop_on_achieved` a group stops at its first success, so read this rather than Rate, " +
+			"which then overstates the per-trial rate. Trials to first achieved is the mean number of trials " +
+			"those groups took. Trials skipped are trials the budget kept from starting; they are not " +
+			"attempts.\n\n")
+	}
+	if cols.baseline {
 		b.WriteString("Baseline attempts are from objectives marked `baseline: true`: the same goal pursued " +
 			"without the attack. They are counted in the Baseline column only, with their cost. Lift is the " +
 			"attack's rate minus the baseline's, in percentage points, over the objectives both attempted.\n\n")
 	}
 	b.WriteString("## Overall\n\n")
-	writeTable(&b, "", report.Totals, withBaseline)
+	writeTable(&b, "", report.Totals, cols)
 	for _, g := range report.Groupings {
 		fmt.Fprintf(&b, "\n## By %s\n\n", g.By)
-		writeTable(&b, g.By, g.Groups, withBaseline)
+		writeTable(&b, g.By, g.Groups, cols)
 	}
 	return b.String()
 }
@@ -121,7 +129,26 @@ func hasBaseline(report *Report) bool {
 	return false
 }
 
-func writeTable(b *strings.Builder, by string, groups []Group, withBaseline bool) {
+// twoColumnRule is the Markdown header rule for a pair of optional columns.
+const twoColumnRule = "---|---|"
+
+// optionalColumns are the table columns shown only when some run needs them.
+type optionalColumns struct {
+	baseline bool
+	budget   bool
+}
+
+// hasBudget reports whether any run in the report had a trial budget.
+func hasBudget(report *Report) bool {
+	for i := range report.Totals {
+		if report.Totals[i].BudgetedGroups > 0 {
+			return true
+		}
+	}
+	return false
+}
+
+func writeTable(b *strings.Builder, by string, groups []Group, cols optionalColumns) {
 	first := "Group"
 	if by != "" {
 		first = by
@@ -129,9 +156,13 @@ func writeTable(b *strings.Builder, by string, groups []Group, withBaseline bool
 	header := "| %s | Expect | Achieved | Rate | 95%% CI | Mean exchanges | Cost | " +
 		"Cost per achieved | Unevaluated | Unreliable |"
 	rule := "|---|---|---|---|---|---|---|---|---|---|"
-	if withBaseline {
+	if cols.budget {
+		header += " Groups achieved | Trials to first achieved | Trials skipped |"
+		rule += "---|" + twoColumnRule
+	}
+	if cols.baseline {
 		header += " Baseline | Lift |"
-		rule += "---|---|"
+		rule += twoColumnRule
 	}
 	fmt.Fprintf(b, header+"\n", first)
 	b.WriteString(rule + "\n")
@@ -148,7 +179,15 @@ func writeTable(b *strings.Builder, by string, groups []Group, withBaseline bool
 		fmt.Fprintf(b, "| %s | %s | %d / %d | %s | %s | %s | %s | %s | %d | %d |",
 			escapeCell(g.Value), g.Expect, g.Achieved, g.Attempts, rate, interval,
 			optionalFloat(g.MeanExchangesToAchieve, "%.1f"), formatCost(g.Cost), perAchieved, g.Unevaluated, g.Unreliable)
-		if withBaseline {
+		if cols.budget {
+			skipped := "–"
+			if g.BudgetedGroups > 0 {
+				skipped = fmt.Sprint(g.TrialsSkipped)
+			}
+			fmt.Fprintf(b, " %s | %s | %s |", groupsAchievedCell(&g),
+				optionalFloat(g.MeanTrialsToFirstAchieved, "%.1f"), skipped)
+		}
+		if cols.baseline {
 			fmt.Fprintf(b, " %s | %s |", baselineCell(g.Baseline), liftCell(g.Lift))
 		}
 		b.WriteString("\n")
@@ -173,6 +212,17 @@ func baselineCell(bl *Group) string {
 		parts = append(parts, fmt.Sprintf("%d unreliable", bl.Unreliable))
 	}
 	return strings.Join(parts, ", ")
+}
+
+// groupsAchievedCell shows how many budgeted trial groups had a trial
+// achieve every objective, with the rate and its interval.
+func groupsAchievedCell(g *Group) string {
+	if g.BudgetedGroups == 0 {
+		return "–"
+	}
+	rate := float64(g.FirstAchievedGroups) / float64(g.BudgetedGroups)
+	return fmt.Sprintf("%d / %d, %.1f%% (%.1f%%–%.1f%%)", g.FirstAchievedGroups, g.BudgetedGroups,
+		rate*percent, g.GroupsCILow*percent, g.GroupsCIHigh*percent)
 }
 
 func liftCell(lift *float64) string {

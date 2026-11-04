@@ -254,6 +254,8 @@ func (a *EventAdapter) handleArenaEvents(event *events.Event) tea.Msg {
 			Cost:     readFloat(event.Data, "cost"),
 			Time:     event.Timestamp,
 		}
+	case events.EventType("arena.trials.skipped"):
+		return TrialsSkippedMsg{Count: readInt(event.Data, "count"), Time: event.Timestamp}
 	case events.EventType("arena.run.failed"):
 		return RunFailedMsg{
 			RunID: event.ExecutionID,

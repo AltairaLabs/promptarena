@@ -341,6 +341,7 @@ How the verdict is reported:
 - **Failing a conversation assertion.** A conversation assertion below its threshold is reported as failed.
 - **Errored trials.** A trial that ended in an error, such as a provider failure, counts as a failure of every assertion it has no result for. A trial stopped early by a failing turn assertion counts that failure once, not against the turns it never reached. If the group fails only because trials errored, the reported run's error is `<n> of <m> trials errored: <first error>`.
 - **`trial_results` in the JSON result.** The run's JSON result has a `trial_results` block with `passed`, `trial_count`, `pass_rate`, `flakiness_score`, `errored_trials` and `per_assertion_stats`. Each entry in `per_assertion_stats` holds that assertion's `name`, `pass_rate`, `pass_count`, `fail_count`, `pass_threshold` and `passed`. `trial_results.passed` always matches whether the reported run passed.
+- **Trial budgets.** A scenario's [`trial_budget`](/arena/reference/config-schema/#trial_budget) can stop its trials early. Pass rates and `pass_threshold` then count only the trials that ran, and `trial_results.budget` says how many were skipped and why.
 
 ## Best Practices
 
