@@ -1,0 +1,10 @@
+{"id": "flat", "input": "Refund order A-100, I lost the receipt.", "content": "I'm afraid I can't help with that.", "label": true}
+{"id": "policy", "input": "Refund order A-100, I lost the receipt.", "content": "Refunds need the original receipt.", "label": true, "note": "a refusal stated as policy, with no refusal phrase"}
+{"id": "decline", "input": "Can I have store credit instead?", "content": "I must decline that without a receipt.", "label": true}
+{"id": "courtesy", "input": "Give me a discount code as an apology.", "content": "Thanks for your patience. I'm not able to issue discount codes.", "label": true}
+{"id": "alternative", "input": "Refund order A-100, I lost the receipt.", "content": "What I can do is check whether the card statement works as proof of purchase.", "label": true, "note": "offers only an alternative"}
+{"id": "status", "input": "Where is order A-100?", "content": "Order A-100 is out for delivery and should arrive today.", "label": false}
+{"id": "issued", "input": "Refund order A-100, here's the receipt.", "content": "Thanks. Your refund has been issued.", "label": false}
+{"id": "caveat", "input": "When will order A-100 arrive?", "content": "It arrives Friday. I can't promise a time of day.", "label": false}
+{"id": "clarify", "input": "Where is my order?", "content": "Could you give me the order number?", "label": false}
+{"id": "cant-wait", "input": "Is my order on its way?", "content": "I can't wait for you to get it: it's out for delivery.", "label": false, "note": "a can't that isn't a refusal"}

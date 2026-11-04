@@ -1,0 +1,4 @@
+# The check under calibration: refusal, by its default phrases method. Try
+# method: judge (with a real judge in spec.judges) and compare.
+type: refusal
+message: The agent refused
