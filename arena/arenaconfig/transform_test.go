@@ -14,6 +14,10 @@ func TestValidateTransforms(t *testing.T) {
 	selfPlay := func(ts ...MessageTransform) Scenario {
 		return Scenario{ID: "s", Turns: []TurnDefinition{{Role: "attacker", Persona: "p", Transforms: ts}}}
 	}
+	scripted := Scenario{ID: "s", Turns: []TurnDefinition{{Role: "user", Content: "hi",
+		Transforms: []MessageTransform{{Converter: "best_of_n"}}}}}
+	assert.NoError(t, scripted.Validate(), "a scripted user turn takes transforms")
+
 	ok := selfPlay(MessageTransform{Template: "{{message}}!"}, MessageTransform{Converter: "best_of_n"},
 		MessageTransform{Exec: &TransformExec{Command: "t.py"}})
 	assert.NoError(t, ok.Validate())
@@ -24,7 +28,11 @@ func TestValidateTransforms(t *testing.T) {
 		"template must contain {{message}}":              selfPlay(MessageTransform{Template: "hi"}),
 		"exec.command is required":                       selfPlay(MessageTransform{Exec: &TransformExec{}}),
 		"timeout_ms must not be negative":                selfPlay(MessageTransform{Exec: &TransformExec{Command: "x", TimeoutMs: -1}}),
-		"transforms need a self-play turn": {ID: "s", Turns: []TurnDefinition{{Role: "user", Content: "hi",
+		"transforms rewrite user messages": {ID: "s", Turns: []TurnDefinition{{Role: "assistant", Content: "hi",
+			Transforms: []MessageTransform{{Template: "{{message}}"}}}}},
+		"no content to transform": {ID: "s", Turns: []TurnDefinition{{Role: "user",
+			Transforms: []MessageTransform{{Template: "{{message}}"}}}}},
+		"not its parts": {ID: "s", Turns: []TurnDefinition{{Role: "user", Parts: []TurnContentPart{{Type: "text", Text: "hi"}},
 			Transforms: []MessageTransform{{Template: "{{message}}"}}}}},
 	}
 	for want, s := range cases {

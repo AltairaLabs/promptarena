@@ -306,9 +306,9 @@ func (e *SelfPlayExecutor) generateUserMessageForStream(
 	return msg, completionDetected, nil
 }
 
-// transformUserMessage applies the turn's transforms to the persona's
-// message, after the completion marker is stripped, and keeps the message as
-// the persona wrote it under persona_original.
+// transformUserMessage applies the turn's transforms to a user message: the
+// persona's, after the completion marker is stripped, or a scripted turn's.
+// It keeps the message as written under persona_original.
 func transformUserMessage(ctx context.Context, req *TurnRequest, msg *types.Message) error {
 	// A message that was only the completion marker ends the conversation;
 	// there is nothing to transform or send.
@@ -326,6 +326,9 @@ func transformUserMessage(ctx context.Context, req *TurnRequest, msg *types.Mess
 		Trial: req.SelfPlayTrial, Seed: req.SelfPlayRunSeed,
 	})
 	if err != nil {
+		if req.SelfPlayPersona == "" {
+			return fmt.Errorf("scripted message: %w", err)
+		}
 		return fmt.Errorf("persona %s message: %w", req.SelfPlayPersona, err)
 	}
 	msg.Content = sent

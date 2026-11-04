@@ -18,6 +18,7 @@ spec:
   scenarios:
     - file: scenarios/best-of-n.scenario.yaml
     - file: scenarios/encoded.scenario.yaml
+    - file: scenarios/probe-best-of-n.scenario.yaml
 
   self_play:
     personas:

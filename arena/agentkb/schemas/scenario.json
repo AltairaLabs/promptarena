@@ -334,7 +334,7 @@
       },
       "additionalProperties": false,
       "type": "object",
-      "description": "MessageTransform rewrites a self-play persona's message after it is generated and before the agent under test receives it."
+      "description": "MessageTransform rewrites a user message before the agent under test receives it: a self-play persona's, after it is generated, or a scripted turn's text."
     },
     "ObjectMeta": {
       "properties": {

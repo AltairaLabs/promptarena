@@ -85,4 +85,7 @@ func TestTransformUserMessage(t *testing.T) {
 	req.SelfPlayTransforms = []arenaconfig.MessageTransform{{Exec: &arenaconfig.TransformExec{Command: "/no/such/program"}}}
 	err := transformUserMessage(context.Background(), req, &msg)
 	assert.ErrorContains(t, err, "persona p message: transforms[0]")
+	req.SelfPlayPersona = ""
+	err = transformUserMessage(context.Background(), req, &msg)
+	assert.ErrorContains(t, err, "scripted message: transforms[0]")
 }

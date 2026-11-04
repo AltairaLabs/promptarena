@@ -321,6 +321,12 @@ func TestProcessScriptedTextDuplexTurn_ViaScenarioVoice(t *testing.T) {
 	err := de.processScriptedTextDuplexTurn(ctx, req, turn, 0, in, out)
 	require.NoError(t, err, "scripted-text via scenario.Voice should succeed")
 
+	// The turn's transforms run before the text is spoken: one that fails
+	// fails the turn.
+	turn.Transforms = []arenaconfig.MessageTransform{{Exec: &arenaconfig.TransformExec{Command: "/no/such/program"}}}
+	err = de.processScriptedTextDuplexTurn(ctx, req, turn, 0, in, out)
+	require.ErrorContains(t, err, "turn 0: scripted message: transforms[0]")
+
 	close(in)
 	<-drainDone
 }

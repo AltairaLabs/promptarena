@@ -11,8 +11,9 @@ import (
 // template transform.
 const TransformMessagePlaceholder = "{{message}}"
 
-// MessageTransform rewrites a self-play persona's message after it is
-// generated and before the agent under test receives it. Set exactly one of
+// MessageTransform rewrites a user message before the agent under test
+// receives it: a self-play persona's, after it is generated, or a scripted
+// turn's text. Set exactly one of
 // Template, Converter or Exec.
 type MessageTransform struct {
 	// Template is the message to send, with {{message}} standing for the
@@ -57,7 +58,16 @@ const DefaultTransformTimeoutMs = 10000
 // validateTransforms checks the turn at turnIndex's transforms.
 func validateTransforms(s *Scenario, turn *TurnDefinition, turnIndex int) error {
 	if len(turn.Transforms) > 0 && turn.Persona == "" {
-		return fmt.Errorf("turns[%d].transforms: transforms need a self-play turn (one with a persona)", turnIndex)
+		switch {
+		case turn.Role != "user":
+			return fmt.Errorf("turns[%d].transforms: transforms rewrite user messages: a self-play turn "+
+				"(one with a persona) or a scripted user turn", turnIndex)
+		case len(turn.Parts) > 0:
+			return fmt.Errorf("turns[%d].transforms: transforms rewrite a scripted turn's content, "+
+				"not its parts", turnIndex)
+		case strings.TrimSpace(turn.Content) == "":
+			return fmt.Errorf("turns[%d].transforms: the scripted turn has no content to transform", turnIndex)
+		}
 	}
 	for i := range turn.Transforms {
 		t := &turn.Transforms[i]

@@ -106,8 +106,8 @@ type TurnRequest struct {
 	// SelfPlayVars are extra template variables for the persona's prompt on
 	// this exchange (exchange number, objective feedback).
 	SelfPlayVars map[string]string
-	// SelfPlayTransforms rewrite the persona's message before the agent
-	// receives it (the turn's transforms). BaseDir resolves a relative exec
+	// SelfPlayTransforms rewrite the user message before the agent receives
+	// it (the turn's transforms): the persona's, or a scripted turn's content. BaseDir resolves a relative exec
 	// transform command.
 	SelfPlayTransforms []arenaconfig.MessageTransform
 	// SelfPlayTrial is the 0-based trial the run is; it seeds the random
