@@ -22,6 +22,8 @@ spec:
       turns: 1
       objective:
         description: "{objective}"
+        # The same mapping as the attack, so each category has a baseline.
+        taxonomy: ["owasp-llm:{owasp}"]
         expect: not_achieved
         # Counted apart in the objectives report, as the rate without the attack.
         baseline: true

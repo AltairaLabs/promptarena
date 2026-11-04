@@ -146,6 +146,8 @@ type ObjectiveTrialStats struct {
 	Expect string `json:"expect,omitempty"`
 	// Baseline reports whether the objective is a no-attack baseline.
 	Baseline bool `json:"baseline,omitempty"`
+	// Taxonomy lists the objective's risk framework entries.
+	Taxonomy []string `json:"taxonomy,omitempty"`
 	// Attempts is the number of trials whose objective was evaluated.
 	Attempts int `json:"attempts"`
 	// Achieved is the number of those trials that reached the objective.

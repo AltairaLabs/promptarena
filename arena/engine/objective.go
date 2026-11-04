@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -33,6 +34,8 @@ const (
 	objectiveKeyEndedEarly = "ended_early"
 	// objectiveKeyBaseline marks a no-attack baseline objective.
 	objectiveKeyBaseline = "baseline"
+	// objectiveKeyTaxonomy lists the objective's risk framework entries.
+	objectiveKeyTaxonomy = "taxonomy"
 )
 
 // objectiveRecorder collects objective outcomes for one conversation.
@@ -167,6 +170,9 @@ func (o *objectiveOutcome) result() asrt.ConversationValidationResult {
 	}
 	if o.cfg.Baseline {
 		details[objectiveKeyBaseline] = true
+	}
+	if len(o.cfg.Taxonomy) > 0 {
+		details[objectiveKeyTaxonomy] = slices.Clone(o.cfg.Taxonomy)
 	}
 	if len(o.rewinds) > 0 {
 		rewinds := make([]map[string]interface{}, len(o.rewinds))

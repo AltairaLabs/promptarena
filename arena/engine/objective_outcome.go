@@ -25,6 +25,8 @@ type ObjectiveOutcome struct {
 	Evaluated bool
 	// Baseline reports whether the objective is a no-attack baseline.
 	Baseline bool
+	// Taxonomy lists the objective's risk framework entries.
+	Taxonomy []string
 }
 
 // ObjectiveOutcomes reads the objective outcomes from a run's conversation
@@ -53,9 +55,33 @@ func ObjectiveOutcomes(results []asrt.ConversationValidationResult) []ObjectiveO
 			Exchanges:          detailInt(d, "exchanges"),
 			Evaluated:          !failed || achieved,
 			Baseline:           baseline,
+			Taxonomy:           detailStrings(d, objectiveKeyTaxonomy),
 		})
 	}
 	return out
+}
+
+// detailStrings reads a list of strings detail.
+func detailStrings(d map[string]interface{}, key string) []string {
+	return stringList(d[key])
+}
+
+// stringList reads a list of strings that may have been through a JSON round
+// trip, which turns it into a []interface{}.
+func stringList(v interface{}) []string {
+	switch v := v.(type) {
+	case []string:
+		return v
+	case []interface{}:
+		out := make([]string, 0, len(v))
+		for _, s := range v {
+			if str, ok := s.(string); ok {
+				out = append(out, str)
+			}
+		}
+		return out
+	}
+	return nil
 }
 
 // detailInt reads an integer detail that may have been through a JSON round
@@ -94,6 +120,7 @@ func objectiveTrialStats(trials []trialRunResult) []ObjectiveTrialStats {
 				index[o.TurnIndex] = pos
 				out = append(out, ObjectiveTrialStats{
 					TurnIndex: o.TurnIndex, Description: o.Description, Expect: o.Expect, Baseline: o.Baseline,
+					Taxonomy: o.Taxonomy,
 				})
 			}
 			s := &out[pos]

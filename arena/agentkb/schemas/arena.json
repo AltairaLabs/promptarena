@@ -2276,6 +2276,13 @@
         "baseline": {
           "type": "boolean",
           "description": "Baseline marks the objective as a no-attack baseline: the same goal\npursued without the attack, such as a persona asking once and plainly.\nThe objectives report counts baseline attempts apart from the others,\nand compares each group's rate with its baseline's."
+        },
+        "taxonomy": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Taxonomy maps the objective to risk frameworks, as \u003cframework\u003e:\u003cid\u003e\nentries such as owasp-llm:LLM01, owasp-agentic:ASI02 or\natlas:AML.T0051. The objectives report groups attempts by each entry.\nEntries take dataset row {placeholders}."
         }
       },
       "additionalProperties": false,

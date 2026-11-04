@@ -164,19 +164,7 @@ func repairedSpecifics(meta map[string]interface{}) []string {
 		raw, _ := meta["raw_response"].(map[string]interface{})
 		v = raw[selfplay.MetaFidelityRepaired]
 	}
-	switch v := v.(type) {
-	case []string:
-		return v
-	case []interface{}:
-		out := make([]string, 0, len(v))
-		for _, s := range v {
-			if str, ok := s.(string); ok {
-				out = append(out, str)
-			}
-		}
-		return out
-	}
-	return nil
+	return stringList(v)
 }
 
 func lastIndexOfRole(messages []types.Message, role string) int {

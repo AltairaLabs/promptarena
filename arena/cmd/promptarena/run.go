@@ -135,7 +135,8 @@ func init() {
 	runCmd.Flags().StringSlice("formats", []string{},
 		"Output formats (json, junit, markdown, csv, objectives) - alias for --format")
 	runCmd.Flags().StringSlice(flagObjectivesGroupBy, []string{objectives.GroupScenario},
-		"Groupings for the objectives report: scenario, provider, objective, label.<key>, data.<column>")
+		"Groupings for the objectives report: scenario, provider, objective, taxonomy, taxonomy.<framework>, "+
+			"label.<key>, data.<column>")
 	runCmd.Flags().String("junit-file", "", "JUnit XML output file (default: out/junit.xml)")
 	runCmd.Flags().String("html-file", "", "Deprecated: the HTML report was removed; use --markdown-file")
 	// Keep both accepted so existing scripts do not fail outright, but say so.

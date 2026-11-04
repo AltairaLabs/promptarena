@@ -6,19 +6,24 @@ package objectives
 import (
 	"fmt"
 	"math"
+	"slices"
 	"sort"
 	"strings"
 
+	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
 	"github.com/AltairaLabs/promptarena/v2/arena/engine"
 )
 
-// Group-by keys. label.<key> and data.<column> take a suffix.
+// Group-by keys. label.<key>, data.<column> and taxonomy.<framework> take a
+// suffix.
 const (
 	GroupScenario  = "scenario"
 	GroupProvider  = "provider"
 	GroupObjective = "objective"
+	GroupTaxonomy  = "taxonomy"
 	groupLabel     = "label."
 	groupData      = "data."
+	groupTaxonomy  = "taxonomy."
 )
 
 // noValue is the group value for runs that lack the group-by key.
@@ -33,6 +38,9 @@ const wilsonZ = 1.959963984540054
 type Group struct {
 	// Value is the group-by key's value shared by these runs.
 	Value string `json:"value"`
+	// Title names a taxonomy entry Arena knows, such as "Prompt Injection"
+	// for owasp-llm:LLM01.
+	Title string `json:"title,omitempty"`
 	// Expect is the objectives' expected outcome: "achieved" or
 	// "not_achieved". For not_achieved, Rate is how often the agent failed to
 	// hold out.
@@ -98,6 +106,9 @@ type Grouping struct {
 	// By is the group-by key, e.g. "scenario" or "label.category".
 	By     string  `json:"by"`
 	Groups []Group `json:"groups"`
+	// Untested lists, for a taxonomy grouping, the entries of each known
+	// framework the grouping covers that no objective was mapped to.
+	Untested []string `json:"untested,omitempty"`
 }
 
 // Report is the objective report for a set of runs.
@@ -113,12 +124,13 @@ type Report struct {
 func ValidateGroupBy(keys []string) error {
 	for _, k := range keys {
 		switch {
-		case k == GroupScenario, k == GroupProvider, k == GroupObjective:
+		case k == GroupScenario, k == GroupProvider, k == GroupObjective, k == GroupTaxonomy:
 		case strings.HasPrefix(k, groupLabel) && len(k) > len(groupLabel):
 		case strings.HasPrefix(k, groupData) && len(k) > len(groupData):
+		case strings.HasPrefix(k, groupTaxonomy) && len(k) > len(groupTaxonomy):
 		default:
 			return fmt.Errorf("unknown objectives group-by key %q: want scenario, provider, objective, "+
-				"label.<key> or data.<column>", k)
+				"taxonomy, taxonomy.<framework>, label.<key> or data.<column>", k)
 		}
 	}
 	return nil
@@ -138,6 +150,8 @@ type attempt struct {
 	unreliable  int
 	// baseline marks a no-attack baseline objective's attempts.
 	baseline bool
+	// taxonomy lists the objective's risk framework entries.
+	taxonomy []string
 	// budget is how the run's trial_budget ended its trials. Every attempt of
 	// the run carries it; a group counts each run once.
 	budget *engine.TrialBudgetResult
@@ -151,6 +165,7 @@ type objectiveMeta struct {
 	description string
 	expect      string
 	baseline    bool
+	taxonomy    []string
 }
 
 // Build makes the report. Runs without an objective are left out. A run that
@@ -178,10 +193,66 @@ func Build(runs []engine.RunResult, groupBy []string) *Report {
 		all = append(all, attempts...)
 	}
 	report := &Report{Totals: groupAttempts(all, "")}
-	for _, key := range groupBy {
-		report.Groupings = append(report.Groupings, Grouping{By: key, Groups: groupAttempts(all, key)})
+	for _, key := range withTaxonomy(groupBy, all) {
+		g := Grouping{By: key, Groups: groupAttempts(all, key)}
+		if isTaxonomyKey(key) {
+			g.Untested = untested(key, g.Groups)
+		}
+		report.Groupings = append(report.Groupings, g)
 	}
 	return report
+}
+
+func isTaxonomyKey(key string) bool {
+	return key == GroupTaxonomy || strings.HasPrefix(key, groupTaxonomy)
+}
+
+// withTaxonomy adds a taxonomy grouping when an objective is mapped to a
+// framework and no grouping asked for one, so the mapping is reported.
+func withTaxonomy(groupBy []string, all []attempt) []string {
+	if slices.ContainsFunc(groupBy, isTaxonomyKey) {
+		return groupBy
+	}
+	for i := range all {
+		if len(all[i].taxonomy) > 0 {
+			return append(slices.Clone(groupBy), GroupTaxonomy)
+		}
+	}
+	return groupBy
+}
+
+// untested lists the entries of each known framework a taxonomy grouping
+// covers that no evaluated attempt was for. A taxonomy.<framework> grouping
+// covers that framework; a taxonomy grouping covers each framework one of its
+// groups belongs to.
+func untested(key string, groups []Group) []string {
+	tested := map[string]bool{}
+	frameworks := map[string]bool{}
+	for i := range groups {
+		// A category whose every attempt errored or was unreliable was not
+		// tested.
+		if groups[i].Attempts > 0 {
+			tested[groups[i].Value] = true
+		}
+		if f, _ := arenaconfig.TaxonomyFrameworkOf(groups[i].Value); f != nil {
+			frameworks[f.Name] = true
+		}
+	}
+	if name, ok := strings.CutPrefix(key, groupTaxonomy); ok {
+		frameworks = map[string]bool{name: true}
+	}
+	var out []string
+	for _, f := range arenaconfig.TaxonomyFrameworks {
+		if !frameworks[f.Name] {
+			continue
+		}
+		for _, id := range f.IDs {
+			if entry := f.Name + ":" + id; !tested[entry] {
+				out = append(out, entry)
+			}
+		}
+	}
+	return out
 }
 
 // addToCatalog records an objective a run recorded. When runs of the same
@@ -196,13 +267,16 @@ func addToCatalog(catalog map[string]map[int]objectiveMeta, a *attempt) {
 	}
 	meta, seen := turns[a.turnIndex]
 	if !seen {
-		turns[a.turnIndex] = objectiveMeta{a.description, a.expect, a.baseline}
+		turns[a.turnIndex] = objectiveMeta{a.description, a.expect, a.baseline, a.taxonomy}
 		return
 	}
 	if meta.description != a.description {
 		meta.description = ""
-		turns[a.turnIndex] = meta
 	}
+	if !slices.Equal(meta.taxonomy, a.taxonomy) {
+		meta.taxonomy = nil
+	}
+	turns[a.turnIndex] = meta
 }
 
 // missingAttempts returns an unevaluated attempt for each objective in the
@@ -223,7 +297,8 @@ func missingAttempts(run *engine.RunResult, recorded []attempt, catalog map[int]
 	for _, turn := range turns {
 		m := catalog[turn]
 		out = append(out, attempt{
-			run: run, turnIndex: turn, description: m.description, expect: m.expect, baseline: m.baseline, unevaluated: 1,
+			run: run, turnIndex: turn, description: m.description, expect: m.expect, baseline: m.baseline,
+			taxonomy: m.taxonomy, unevaluated: 1,
 		})
 	}
 	return out
@@ -243,7 +318,7 @@ func attemptsOf(run *engine.RunResult) []attempt {
 				run: run, turnIndex: o.TurnIndex, description: o.Description, expect: expectOrDefault(o.Expect),
 				attempts: o.Attempts, achieved: o.Achieved, achievedAt: o.AchievedAtExchange,
 				unevaluated: o.Unevaluated, unreliable: o.Unreliable, baseline: o.Baseline,
-				budget: run.TrialResults.Budget,
+				taxonomy: o.Taxonomy, budget: run.TrialResults.Budget,
 			})
 		}
 		return out
@@ -254,7 +329,7 @@ func attemptsOf(run *engine.RunResult) []attempt {
 	for _, o := range outcomes {
 		a := attempt{
 			run: run, turnIndex: o.TurnIndex, description: o.Description, expect: expectOrDefault(o.Expect),
-			baseline: o.Baseline,
+			baseline: o.Baseline, taxonomy: o.Taxonomy,
 		}
 		switch {
 		case !o.Evaluated:
@@ -283,17 +358,16 @@ const expectAchieved = "achieved"
 
 // groupAttempts splits attempts by the group-by key's value and their
 // expected outcome, sorted by value and then expectation. An empty key puts
-// every attempt in one value, "all".
+// every attempt in one value, "all". Under a taxonomy key an attempt counts
+// in the group of each of its entries.
 func groupAttempts(all []attempt, key string) []Group {
 	type groupKey struct{ value, expect string }
 	byKey := map[groupKey][]attempt{}
 	for _, a := range all {
-		v := "all"
-		if key != "" {
-			v = groupValue(&a, key)
+		for _, v := range groupValues(&a, key) {
+			k := groupKey{v, a.expect}
+			byKey[k] = append(byKey[k], a)
 		}
-		k := groupKey{v, a.expect}
-		byKey[k] = append(byKey[k], a)
 	}
 	keys := make([]groupKey, 0, len(byKey))
 	for k := range byKey {
@@ -307,9 +381,35 @@ func groupAttempts(all []attempt, key string) []Group {
 	})
 	groups := make([]Group, 0, len(keys))
 	for _, k := range keys {
-		groups = append(groups, summarize(k.value, k.expect, byKey[k]))
+		g := summarize(k.value, k.expect, byKey[k])
+		if isTaxonomyKey(key) {
+			g.Title = arenaconfig.TaxonomyTitle(k.value)
+		}
+		groups = append(groups, g)
 	}
 	return groups
+}
+
+// groupValues lists the groups an attempt belongs to under key.
+func groupValues(a *attempt, key string) []string {
+	switch {
+	case key == "":
+		return []string{"all"}
+	case isTaxonomyKey(key):
+		framework := strings.TrimPrefix(key, groupTaxonomy)
+		var out []string
+		for _, e := range a.taxonomy {
+			// taxonomy.<framework> keeps that framework's entries.
+			if key == GroupTaxonomy || strings.HasPrefix(e, framework+":") {
+				out = append(out, e)
+			}
+		}
+		if len(out) == 0 {
+			return []string{noValue}
+		}
+		return out
+	}
+	return []string{groupValue(a, key)}
 }
 
 func groupValue(a *attempt, key string) string {

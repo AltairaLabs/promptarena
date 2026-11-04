@@ -503,7 +503,7 @@ promptarena run --ci --formats json,objectives \
   --objectives-group-by scenario,label.category,data.tier
 ```
 
-The report always has an overall table. It then has one table per `--objectives-group-by` key (default `scenario`). The flag only applies with the `objectives` format; without it, the flag does nothing and a warning is printed.
+The report always has an overall table. It then has one table per `--objectives-group-by` key (default `scenario`), and a `taxonomy` table when any objective has a [`taxonomy`](/arena/reference/config-schema/#objectives) and no key asked for one. The flag only applies with the `objectives` format; without it, the flag does nothing and a warning is printed.
 
 | Key | Groups runs by |
 |---|---|
@@ -512,8 +512,12 @@ The report always has an overall table. It then has one table per `--objectives-
 | `objective` | The objective's `description`, after dataset placeholders are filled in, or `<scenario> turn <n> objective` when it has none |
 | `label.<key>` | A scenario `metadata.labels` value |
 | `data.<column>` | A dataset row's column, for scenarios that run over a [dataset](/arena/how-to/scenarios/run-a-dataset/) |
+| `taxonomy` | Each entry of the objective's `taxonomy`, such as `owasp-llm:LLM01` |
+| `taxonomy.<framework>` | The objective's entries for one framework, such as `taxonomy.owasp-llm` |
 
 A run that lacks the key is grouped under `(none)`. An unknown key is an error.
+
+**Taxonomy groupings.** An attempt counts in the row of each of its entries, so an objective mapped to two categories appears in both rows, and the rows of a taxonomy table can add up to more than the overall table. A row for an entry Arena knows gets the entry's `title`, such as `System Prompt Leakage` for `owasp-llm:LLM07`. The grouping's `untested` lists the entries of each known framework it covers that no evaluated attempt was for: of every framework one of its rows is in, or of the one framework a `taxonomy.<framework>` key names. The Markdown shows them under the table, after "No objective maps to:". A baseline counts in a taxonomy row only when its objective has the same entries, so give a baseline the same `taxonomy` as its attack.
 
 Each table has a row per value and expected outcome. Objectives with `expect: achieved` and with `expect: not_achieved` are never counted together. For `not_achieved`, the rate is how often the agent failed to hold out.
 
@@ -521,6 +525,7 @@ Each row reports:
 
 | Field | Meaning |
 |---|---|
+| `title` | A known taxonomy entry's title. Absent in other groupings. |
 | `expect` | The objectives' expected outcome: `achieved` or `not_achieved` |
 | `attempts` | Objective attempts whose success checks were evaluated |
 | `achieved` | Attempts that reached the objective |
