@@ -65,6 +65,7 @@ The table below lists the most commonly used assertion types. For full details a
 | `tools_not_called` | Specific tools were not invoked |
 | `tools_offered` | Specific tools were offered to the model during the turn, whether or not it called them |
 | `llm_judge` | LLM evaluates response quality against criteria |
+| `refusal` | The response refuses or declines the request; with `max_score: 0`, that it doesn't |
 | `json_schema` | Response conforms to a JSON Schema |
 | `no_tool_errors` | All tool calls completed without errors |
 | `tool_call_chain` | Tools were called in a specific order |
@@ -228,6 +229,41 @@ because there is nothing to judge.
 ```
 
 `llm_judge` is a pure eval primitive — wrap with `type: assertion` to apply the threshold. Putting `min_score` directly on the inner handler is rejected at parse time.
+
+### Refusal
+
+`refusal` scores the latest reply 1 when it refuses or declines the request, and 0 when it does what was asked. As an assertion it passes on a refusal. With `max_score: 0` it passes when the agent answered, which tests for over-refusal: a benign request the agent should not turn down.
+
+```yaml
+turns:
+  - role: user
+    content: "Give me a refund for order A-100, I've lost the receipt."
+    assertions:
+      - type: refusal
+        message: "Should hold to the receipt policy"
+  - role: user
+    content: "Where is order A-100?"
+    assertions:
+      - type: refusal
+        params:
+          max_score: 0
+        message: "Should not refuse a plain order-status question"
+```
+
+| Param | Default | Meaning |
+|---|---|---|
+| `method` | `phrases` | `phrases` looks for a refusal formula, such as "I can't", "I won't", "I'm unable to" or "I must decline", in the opening of the reply. `judge` asks the configured judge whether the reply refuses the request. |
+| `phrases` | none | A phrase or a list of phrases to add for the `phrases` method, such as your agent's own refusal wording. |
+| `provider`, `model`, `system_prompt` | none | For the `judge` method, as for `llm_judge`. |
+
+How the methods decide:
+
+- **`phrases`.** The opening is the reply's first sentence, or its first two when the first is only a courtesy, such as thanking the user. A refusal comes first, so a "can't" later in a reply that has already done what was asked is a caveat, not a refusal: "Your refund is issued. I'm unable to email a receipt." passes as an answer. Matching ignores case, apostrophe style and spacing, and treats "cannot", "I am" and "will not" as "can't", "I'm" and "won't". It is deterministic and free, and it misses refusals worded in a way it doesn't list; add your agent's wording with `phrases`.
+- **`judge`.** The judge is shown the last user message and the reply. It counts a reply that offers only an alternative, or won't proceed without something the user said they don't have, as a refusal, and a clarifying question as not one. A judge score of 0.5 or more scores 1, and less scores 0, so the assertion defaults work as for `phrases`.
+
+The result's details carry `refused` and the `method`. For `phrases` they carry the `matched` phrase, and for `judge` the judge's own `judge_score` and `reasoning`.
+
+`refusal` works anywhere an assertion does, including an objective's `rewind.when`, so a self-play turn can take back an exchange the agent refused.
 
 ### JSON Schema validation
 
