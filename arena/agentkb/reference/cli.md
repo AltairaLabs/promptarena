@@ -6,6 +6,12 @@ Generated from the command tree. Run `promptarena <cmd> --help` for full detail.
 
 Write the authoring brief (AGENTS.md + .claude/skills) into a project
 
+## promptarena calibrate
+
+Score a check, such as an LLM judge, against examples a person has labeled
+
+Flags: `--check`, `--config`, `--examples`, `--min-agreement`, `--min-kappa`, `--out`
+
 ## promptarena chat
 
 Chat interactively with an agent defined in an Arena config

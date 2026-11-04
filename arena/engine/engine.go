@@ -99,6 +99,8 @@ type Engine struct {
 	audioMonitorMu       sync.RWMutex                 // Guards audioMonitorHooks
 	runCompletedHooks    []RunCompletedHook           // Subscribers fired when each run finishes
 	trialsSkippedHooks   []TrialsSkippedHook          // Subscribers fired when a trial budget skips trials
+	quietOnce            sync.Once                    // Builds quietOrch on first RunCheck
+	quietOrch            *EvalOrchestrator            // evalOrchestrator without eval events, for RunCheck
 	runCompletedMu       sync.RWMutex                 // Guards runCompletedHooks and trialsSkippedHooks
 	sessionHooks         *hooks.Registry              // Optional — fires SessionHook lifecycle per run
 	outputDir            string                       // Resolved report output dir; exposes per-run artifacts base

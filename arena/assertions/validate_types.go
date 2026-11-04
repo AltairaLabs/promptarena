@@ -1,6 +1,7 @@
 package assertions
 
 import (
+	"errors"
 	"fmt"
 	"sort"
 	"strings"
@@ -92,6 +93,19 @@ func collectScenarioErrors(
 		}
 	}
 	return errs
+}
+
+// ValidateCheckType reports an error, with a "did you mean?" suggestion, when
+// a check's type has no handler in the registry.
+func ValidateCheckType(where, checkType string, registry *evals.EvalTypeRegistry) error {
+	if registry.Has(checkType) {
+		return nil
+	}
+	msg := fmt.Sprintf("%s: unknown check type %q", where, checkType)
+	if suggestion := closestMatch(checkType, registry.Types()); suggestion != "" {
+		msg += fmt.Sprintf(" (did you mean %q?)", suggestion)
+	}
+	return errors.New(msg)
 }
 
 func formatUnknownType(scenario, location, badType string, registered []string) string {

@@ -27,6 +27,7 @@ promptarena [command] [flags]
 | `chat` | Talk live to an agent defined in your Arena config (interactive TUI) |
 | `serve` | Start the live web UI with SSE streaming and REST API |
 | `validate` | Validate configuration files |
+| `calibrate` | Score a check, such as an LLM judge, against examples a person has labeled |
 | `view` | Browse and view past test results in the TUI |
 | `export` | Export arena config as a PromptPack JSON file |
 | `deploy` | Deploy prompt packs to cloud providers via adapter plugins |
@@ -626,6 +627,69 @@ promptarena run --seed 12345
 
 # Same seed across runs produces same results
 promptarena run --seed 12345 --provider openai
+```
+
+---
+
+## `promptarena calibrate`
+
+Score a check against examples a person has labeled, to find out how far to trust it before its verdicts go into a report. The check is written as in a scenario's `conversation_assertions`, such as an `llm_judge` or `refusal` assertion, and uses the arena config's judges and providers, as it would in a run.
+
+### Usage
+
+```bash
+promptarena calibrate --check <file> --examples <file> [flags]
+```
+
+### Flags
+
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--check` | string | required | YAML file holding the check: `type`, `params` and an optional `message` |
+| `--examples` | string | required | JSONL file of labeled examples |
+| `-c, --config` | string | `config.arena.yaml` | Arena config, or a directory holding `config.arena.yaml`, whose judges and providers the check uses |
+| `-o, --out` | string | `out` | Directory for `calibration.json` and `calibration.md` |
+| `--min-kappa` | float | none | Exit non-zero when Cohen's kappa is below this |
+| `--min-agreement` | float | none | Exit non-zero when agreement, 0 to 1, is below this |
+
+### Examples file
+
+One JSON object per line:
+
+```json
+{"id": "lost-receipt", "input": "Refund order A-100, I lost the receipt.", "content": "Refunds need the original receipt.", "label": true, "note": "a refusal without a refusal phrase"}
+{"id": "status", "input": "Where is order A-100?", "content": "It's out for delivery.", "label": false}
+```
+
+| Field | Meaning |
+|---|---|
+| `label` | Required. `true` when the check should pass on this example. |
+| `content` | The reply the check judges. |
+| `input` | The user message before it. Optional. |
+| `messages` | A whole conversation in place of `input` and `content`. The check judges it as it would a run's conversation. |
+| `id` | Names the example in the report. Defaults to `line <n>`. |
+| `note` | Free text, carried into the report's disagreements. |
+
+### Report
+
+The command prints the Markdown report and writes it, with the JSON, to the output directory.
+
+- **Agreement.** The share of evaluated examples whose verdict matches the label, with a 95% Wilson interval.
+- **Per label.** How often the check passes pass-labeled examples and fails fail-labeled ones, each with an interval. A check can agree often and still miss most of one kind.
+- **Cohen's kappa.** Agreement corrected for what chance alone would give: 1 is perfect, 0 no better than chance. It is the figure to gate on when one label is much more common than the other.
+- **Counts.** A 2×2 table of the check's verdicts against the labels.
+- **Disagreements.** Every example the check got wrong, with its message and note.
+
+An example the check can't evaluate, such as a judge call that fails, is listed and left out of every figure. With no example evaluated, the command fails.
+
+### Examples
+
+```bash
+# How far does the refusal check agree with these labels?
+promptarena calibrate --check checks/refusal.yaml --examples data/refusal-labels.jsonl
+
+# Gate CI on the judge's agreement with the team's labels
+promptarena calibrate --check checks/judge.yaml --examples data/judge-labels.jsonl --min-kappa 0.6
 ```
 
 ---

@@ -261,6 +261,8 @@ How the methods decide:
 - **`phrases`.** The opening is the reply's first sentence, or its first two when the first is only a courtesy, such as thanking the user. A refusal comes first, so a "can't" later in a reply that has already done what was asked is a caveat, not a refusal: "Your refund is issued. I'm unable to email a receipt." passes as an answer. Matching ignores case, apostrophe style and spacing, and treats "cannot", "I am" and "will not" as "can't", "I'm" and "won't". It is deterministic and free, and it misses refusals worded in a way it doesn't list; add your agent's wording with `phrases`.
 - **`judge`.** The judge is shown the last user message and the reply. It counts a reply that offers only an alternative, or won't proceed without something the user said they don't have, as a refusal, and a clarifying question as not one. A judge score of 0.5 or more scores 1, and less scores 0, so the assertion defaults work as for `phrases`.
 
+To find out how far either method agrees with your own judgment, label some replies and score the check against them with [`promptarena calibrate`](/arena/reference/cli-commands/#promptarena-calibrate).
+
 The result's details carry `refused` and the `method`. For `phrases` they carry the `matched` phrase, and for `judge` the judge's own `judge_score` and `reasoning`.
 
 `refusal` works anywhere an assertion does, including an objective's `rewind.when`, so a self-play turn can take back an exchange the agent refused.

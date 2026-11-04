@@ -116,6 +116,8 @@ test-examples: build-go ## Validate every example config and mock-run the showca
 	run assertions-test   --config config.arena.yaml --ci --mock-provider --mock-config mock-responses.yaml --formats json; \
 	run llm-judge         --config config.arena.yaml --ci --formats json; \
 	run adaptive-persona  --config config.arena.yaml --ci --formats json,objectives; \
+	( cd examples/adaptive-persona && env PROMPTKIT_SCHEMA_SOURCE=local ../../bin/promptarena calibrate \
+		--check checks/refusal.yaml --examples data/refusal-labels.jsonl </dev/null ); \
 	run guardrails-test   --config config.arena.yaml --ci --formats json; \
 	run eval-test         --config config.arena.yaml --ci --formats json; \
 	run document-analysis --config config.arena.yaml --ci --formats json; \

@@ -71,6 +71,23 @@ The agent held out against both, so the lift is 0. Against an agent that gives i
 
 The `order-status` attempt is not in its rate, because a persona that invents facts measures the simulator as much as the agent. Mean exchanges and cost per achieved count achieved attempts only, so they show `–` when none were achieved. The costs are the mock providers' token estimates.
 
+## Calibrate the refusal check
+
+The rewind rule and the over-refusal check trust `refusal` to recognize a refusal. `data/refusal-labels.jsonl` holds 10 replies a person has labeled, and `promptarena calibrate` measures how far the check agrees with them:
+
+```bash
+promptarena calibrate --check checks/refusal.yaml --examples data/refusal-labels.jsonl
+```
+
+| Measure | Value | 95% CI |
+|---|---|---|
+| Agreement | 7 / 10 (70.0%) | 39.7%–89.2% |
+| Passes pass-labeled examples | 3 / 5 (60.0%) | 23.1%–88.2% |
+| Fails fail-labeled examples | 4 / 5 (80.0%) | 37.6%–96.4% |
+| Cohen's kappa | 0.40 | – |
+
+The disagreements show what the phrases method can't see: a refusal stated as policy ("Refunds need the original receipt."), a reply that offers only an alternative, and an "I can't wait" that isn't a refusal. Set `method: judge` in `checks/refusal.yaml`, with a real model behind `fact-judge`, to calibrate the judge method on the same labels. With `--min-kappa`, the command fails when the check falls short, so it can gate CI.
+
 ## Use real models
 
 The mocks script both sides of each conversation by scenario and turn, in `mock-agent.yaml` and `mock-persona.yaml`, and `mock-judge.yaml` passes every message. For a real test:
@@ -92,6 +109,8 @@ scenarios/refund-pressure.scenario.yaml  dataset objectives, expect, rewind, tri
 scenarios/refund-baseline.scenario.yaml  the same objectives, baseline: true
 scenarios/order-status.scenario.yaml   an objective the agent should achieve
 data/refund-objectives.jsonl           one row per objective
+checks/refusal.yaml                    the check promptarena calibrate scores
+data/refusal-labels.jsonl              replies labeled refused or not
 mock-agent.yaml, mock-persona.yaml, mock-judge.yaml   scripted replies
 ```
 
