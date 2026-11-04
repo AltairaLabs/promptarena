@@ -2001,6 +2001,36 @@ The program writes `{"message": "<rewritten message>"}` to stdout. A program tha
 
 Transforms run after the completion marker is stripped and after `fact_policy.on_violation: regenerate` has replaced a draft. A message that was only the completion marker ends the conversation and is not transformed. In duplex scenarios transforms rewrite the text before it is spoken, and `exchange` counts self-play exchanges across the whole scenario, as `{{exchange}}` does there.
 
+#### Audio transforms
+
+`audio_transforms` on a turn of a [duplex](/arena/reference/duplex-config/) scenario rewrites the audio of the spoken user message after it is synthesized and before the agent hears it. It applies to scripted-text turns and to self-play turns, after any text `transforms`. Use it to test how the agent copes with a quiet caller, a noisy line, or audio passed through your own processing.
+
+```yaml
+turns:
+  - role: user
+    content: "Hello, can you hear me?"
+    audio_transforms:
+      - gain_db: -12          # quieter; positive is louder, clipped at full scale
+      - noise_dbfs: -40       # white noise at -40 dB relative to full scale
+      - exec:
+          command: sox
+          args: [-t, raw, -r, "24000", -e, signed, -b, "16", -c, "1", -, -t, raw, -, highpass, "300"]
+```
+
+The transforms run in order, each on the previous one's output, and stream: the audio is transformed as it arrives, never held whole. Set exactly one field in each entry.
+
+| Field | Meaning |
+|---|---|
+| `gain_db` | Scale the audio by this many decibels. It must be a finite number. |
+| `noise_dbfs` | Add uniform white noise whose level is this many dB below full scale; 0 or below. The noise is seeded from the message text, so a run is repeatable. |
+| `exec` | Pipe the audio through a program, with the same `command`, `args`, `env` and `timeout_ms` fields as a [message transform](#message-transforms). The audio flows at the pace the agent receives it, so there is no default timeout; `timeout_ms`, when set, bounds the whole utterance. |
+
+**The exec protocol.** Arena runs the program on the host, in the arena config's directory. It writes the audio to the program's stdin as raw 16-bit little-endian mono PCM, and reads the same from its stdout. The environment carries `ARENA_SAMPLE_RATE`, `ARENA_AUDIO_FORMAT=pcm_s16le` and `ARENA_AUDIO_CHANNELS=1`. A program that fails or times out fails the turn, with its stderr in the error, and so does synthesized audio that fails partway: the agent is never graded on a truncated utterance.
+
+The transforms run after the TTS cache: the cached audio stays as synthesized. The recorded user audio is what the agent heard. The TTS latency reported for the turn includes the time the transforms take.
+
+`audio_transforms` needs a duplex scenario, and applies to speech Arena synthesizes. A turn with an audio part streams that recording as it is, so validation rejects `audio_transforms` on it.
+
 ### Objectives
 
 An objective gives a self-play turn a goal. Its `success` assertions run over the whole conversation after every exchange, and the objective counts as achieved the first time they all pass.

@@ -21,6 +21,7 @@ This is ideal for testing voice assistants, customer support bots, and any real-
 | **Self-Play with TTS** | LLM-generated user messages converted to audio via TTS |
 | **Multiple Providers** | Test across Gemini 2.0 Flash and OpenAI GPT-4o Realtime |
 | **Mock Mode** | CI-friendly testing without API keys |
+| **Audio Transforms** | Make the caller quieter and add line noise before the agent hears them |
 
 ## Prerequisites
 
@@ -106,6 +107,16 @@ Extended conversation simulating a support call:
 - Multiple self-play turns with different personas
 - Comprehensive assertion testing
 - Tests natural conversation flow
+
+### 4. `duplex-noisy-line` - A Quiet Caller on a Noisy Line
+
+The scripted-text turns again, each with `audio_transforms`: the synthesized audio is turned down by 12 dB and white noise at −40 dBFS is added before the agent hears it. It runs on the mock provider:
+
+```bash
+promptarena run --provider mock-duplex --scenario duplex-noisy-line
+```
+
+The TTS cache keeps the clean audio. The noise is seeded from each turn's text, so a run is repeatable. An `exec` audio transform can pipe the audio through your own program instead; see the [configuration reference](https://promptarena.altairalabs.ai/arena/reference/config-schema/#audio-transforms).
 
 ## Configuration Reference
 

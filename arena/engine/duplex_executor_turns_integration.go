@@ -383,7 +383,7 @@ func (de *DuplexConversationExecutor) processScriptedTextDuplexTurn(
 		return fmt.Errorf("resolving voice for scripted-text turn %d: %w", turnIdx, err)
 	}
 	return de.streamTextAsAudio(
-		ctx, turn.Content, ttsProvider, nil,
+		ctx, turn.Content, ttsProvider, nil, audioPlanFor(req, turn),
 		inputChan, outputChan,
 	)
 }
@@ -675,7 +675,7 @@ func (de *DuplexConversationExecutor) processSelfPlayDuplexTurn(
 	}
 
 	return de.streamTextAsAudio(
-		ctx, generatedText, ttsProvider, turnMeta,
+		ctx, generatedText, ttsProvider, turnMeta, audioPlanFor(req, turn),
 		inputChan, outputChan,
 	)
 }
@@ -793,6 +793,7 @@ func (de *DuplexConversationExecutor) streamTextAsAudio(
 	text string,
 	ttsProvider *config.Provider,
 	turnMeta map[string]any,
+	audio *audioPlan,
 	inputChan chan<- stage.StreamElement,
 	outputChan <-chan stage.StreamElement,
 ) error {
@@ -808,6 +809,15 @@ func (de *DuplexConversationExecutor) streamTextAsAudio(
 	stream, err := de.openTextSynthesisStream(ctx, text, ttsProvider)
 	if err != nil {
 		return fmt.Errorf("failed to open TTS stream: %w", err)
+	}
+	if audio != nil && len(audio.transforms) > 0 {
+		// After the TTS cache: the cached audio stays as synthesized, and
+		// the agent hears the transformed stream.
+		stream.Reader, err = selfplay.ApplyAudioTransforms(ctx, audio.transforms, audio.configDir,
+			stream.Reader, stream.SampleRate, text)
+		if err != nil {
+			return fmt.Errorf("failed to transform turn audio: %w", err)
+		}
 	}
 	costStamper := func(latency time.Duration) {
 		stampTTSCostInMeta(de.selfPlayRegistry, ttsProvider, text, latency, turnMeta)
@@ -1214,4 +1224,22 @@ func stampTTSCostInMeta(
 	if costMeta != nil {
 		turnMeta[ttsCostMetaKey] = costMeta
 	}
+}
+
+// audioPlan carries a turn's audio transforms to its TTS stream.
+type audioPlan struct {
+	transforms []arenaconfig.AudioTransform
+	configDir  string
+}
+
+// audioPlanFor returns the turn's audio transforms, or nil when it has none.
+func audioPlanFor(req *ConversationRequest, turn *arenaconfig.TurnDefinition) *audioPlan {
+	if len(turn.AudioTransforms) == 0 {
+		return nil
+	}
+	dir := ""
+	if req.Config != nil {
+		dir = req.Config.ConfigDir
+	}
+	return &audioPlan{transforms: turn.AudioTransforms, configDir: dir}
 }

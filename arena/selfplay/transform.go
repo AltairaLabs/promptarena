@@ -76,45 +76,17 @@ func runExecTransform(
 	if cfg.TimeoutMs == 0 {
 		timeout = arenaconfig.DefaultTransformTimeoutMs * time.Millisecond
 	}
-	if configDir != "" {
-		// Absolute, so a relative command isn't resolved against Dir twice.
-		if abs, err := filepath.Abs(configDir); err == nil {
-			configDir = abs
-		}
-	}
-	parent := ctx
-	ctx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
-
 	input, err := json.Marshal(req)
 	if err != nil {
 		return "", err
 	}
-	//nolint:gosec // the program is the operator's, from their own config
-	cmd := exec.CommandContext(ctx, transformCommand(configDir, cfg.Command), cfg.Args...)
-	// The program runs in the config directory, so its own relative paths,
-	// such as a script passed in args, resolve as the config reads.
-	cmd.Dir = configDir
-	// A child the program leaves running can hold the pipes open; stop
-	// waiting for them shortly after the program itself is killed.
-	cmd.WaitDelay = transformWaitDelay
-	cmd.Stdin = bytes.NewReader(input)
-	var stdout, stderr bytes.Buffer
-	cmd.Stdout, cmd.Stderr = &stdout, &stderr
-	if len(cfg.Env) > 0 {
-		cmd.Env = os.Environ()
-		for k, v := range cfg.Env {
-			cmd.Env = append(cmd.Env, k+"="+v)
-		}
-	}
-	if err := cmd.Run(); err != nil {
-		if parent.Err() != nil {
-			return "", parent.Err()
-		}
-		if errors.Is(ctx.Err(), context.DeadlineExceeded) {
-			return "", fmt.Errorf("%s timed out after %s", cfg.Command, timeout)
-		}
-		return "", fmt.Errorf("%s: %w: %s", cfg.Command, err, strings.TrimSpace(stderr.String()))
+	run := newTransformRun(ctx, cfg, configDir, timeout, nil)
+	defer run.cancel()
+	run.cmd.Stdin = bytes.NewReader(input)
+	var stdout bytes.Buffer
+	run.cmd.Stdout = &stdout
+	if err := run.cmd.Run(); err != nil {
+		return "", run.failure(err)
 	}
 	var resp transformResponse
 	if err := json.Unmarshal(stdout.Bytes(), &resp); err != nil || resp.Message == nil {
@@ -122,6 +94,65 @@ func runExecTransform(
 			truncate(stdout.String(), 200)) //nolint:mnd // enough of the output to recognize it
 	}
 	return *resp.Message, nil
+}
+
+// transformRun is an exec transform's program, set up to run: in the config
+// directory, with its environment, and bounded by its timeout.
+type transformRun struct {
+	cmd     *exec.Cmd
+	parent  context.Context
+	ctx     context.Context
+	cancel  context.CancelFunc
+	timeout time.Duration
+	name    string
+	stderr  *strings.Builder
+}
+
+// newTransformRun prepares cfg's program. A zero timeout sets no deadline
+// beyond ctx's own. extraEnv adds environment variables before cfg.Env.
+func newTransformRun(
+	ctx context.Context, cfg *arenaconfig.TransformExec, configDir string, timeout time.Duration, extraEnv []string,
+) *transformRun {
+	if configDir != "" {
+		// Absolute, so a relative command isn't resolved against Dir twice.
+		if abs, err := filepath.Abs(configDir); err == nil {
+			configDir = abs
+		}
+	}
+	r := &transformRun{parent: ctx, timeout: timeout, name: cfg.Command, stderr: &strings.Builder{}}
+	if timeout > 0 {
+		r.ctx, r.cancel = context.WithTimeout(ctx, timeout)
+	} else {
+		r.ctx, r.cancel = context.WithCancel(ctx)
+	}
+	//nolint:gosec // the program is the operator's, from their own config
+	r.cmd = exec.CommandContext(r.ctx, transformCommand(configDir, cfg.Command), cfg.Args...)
+	// The program runs in the config directory, so its own relative paths,
+	// such as a script passed in args, resolve as the config reads.
+	r.cmd.Dir = configDir
+	// A child the program leaves running can hold the pipes open; stop
+	// waiting for them shortly after the program itself is killed.
+	r.cmd.WaitDelay = transformWaitDelay
+	r.cmd.Stderr = r.stderr
+	if len(extraEnv) > 0 || len(cfg.Env) > 0 {
+		r.cmd.Env = append(os.Environ(), extraEnv...)
+		for k, v := range cfg.Env {
+			r.cmd.Env = append(r.cmd.Env, k+"="+v)
+		}
+	}
+	return r
+}
+
+// failure describes how a run that returned err ended: the run itself was
+// canceled, the transform timed out, or the program failed, with its stderr.
+func (r *transformRun) failure(err error) error {
+	switch {
+	case r.parent.Err() != nil:
+		return r.parent.Err()
+	case errors.Is(r.ctx.Err(), context.DeadlineExceeded):
+		return fmt.Errorf("%s timed out after %s", r.name, r.timeout)
+	}
+	return fmt.Errorf("%s: %w: %s", r.name, err, strings.TrimSpace(r.stderr.String()))
 }
 
 // transformWaitDelay is how long to wait for a killed transform's output

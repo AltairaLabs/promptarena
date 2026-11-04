@@ -72,6 +72,7 @@ spec:
     - file: scenarios/duplex-tools.scenario.yaml
     - file: scenarios/duplex-replay.scenario.yaml
     - file: scenarios/duplex-scripted-text.scenario.yaml
+    - file: scenarios/duplex-noisy-line.scenario.yaml
     - file: scenarios/duplex-scripted-text-openai.scenario.yaml
 
   # Tool definitions for voice assistant

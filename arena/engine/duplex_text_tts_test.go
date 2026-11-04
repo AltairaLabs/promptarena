@@ -155,7 +155,7 @@ func TestStreamTextAsAudio_HappyPath(t *testing.T) {
 		}
 	}()
 
-	err := de.streamTextAsAudio(ctx, "please refund my order", ttsProvider, turnMeta, in, out)
+	err := de.streamTextAsAudio(ctx, "please refund my order", ttsProvider, turnMeta, nil, in, out)
 	require.NoError(t, err)
 
 	// streamTextAsAudio doesn't close inputChan; the test does so after
@@ -222,6 +222,7 @@ func TestStreamTextAsAudio_RejectsEmptyText(t *testing.T) {
 		"",
 		newTestTTSProvider("fake", "v1", 0),
 		nil,
+		nil,
 		in,
 		out,
 	)
@@ -236,7 +237,7 @@ func TestStreamTextAsAudio_RejectsNilProvider(t *testing.T) {
 	in := make(chan stage.StreamElement, 4)
 	out := make(chan stage.StreamElement)
 
-	err := de.streamTextAsAudio(context.Background(), "hi", nil, nil, in, out)
+	err := de.streamTextAsAudio(context.Background(), "hi", nil, nil, nil, in, out)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "ttsProvider is nil")
 }
@@ -251,6 +252,7 @@ func TestStreamTextAsAudio_RejectsMissingRegistry(t *testing.T) {
 		context.Background(),
 		"hi",
 		newTestTTSProvider("fake", "v1", 0),
+		nil,
 		nil,
 		in,
 		out,
@@ -367,4 +369,43 @@ func TestTurnHasAudioPart(t *testing.T) {
 		}}
 		assert.True(t, turnHasAudioPart(turn))
 	})
+}
+
+func TestStreamTextAsAudio_AppliesAudioTransforms(t *testing.T) {
+	pcmPayload := bytes.Repeat([]byte{0x00, 0x10}, 16) // samples of 4096
+	reg, _ := newRegistryWithFakeTTS("fake", pcmPayload)
+	de := &DuplexConversationExecutor{selfPlayRegistry: reg}
+	in := make(chan stage.StreamElement, 16)
+	out := make(chan stage.StreamElement, 1)
+	out <- stage.StreamElement{EndOfStream: true, Message: &types.Message{Role: "assistant", Content: "ok"}}
+
+	var audio []byte
+	drainDone := make(chan struct{})
+	go func() {
+		defer close(drainDone)
+		for elem := range in {
+			if elem.Audio != nil {
+				audio = append(audio, elem.Audio.Samples...)
+			}
+		}
+	}()
+	half := -6.0206
+	plan := &audioPlan{transforms: []arenaconfig.AudioTransform{{GainDB: &half}}}
+	err := de.streamTextAsAudio(context.Background(), "hi", newTestTTSProvider("fake", "v1", 16000), nil, plan, in, out)
+	require.NoError(t, err)
+	close(in)
+	<-drainDone
+
+	require.GreaterOrEqual(t, len(audio), len(pcmPayload))
+	assert.Equal(t, bytes.Repeat([]byte{0x00, 0x08}, 16), audio[:len(pcmPayload)],
+		"the agent hears the audio at half amplitude")
+}
+
+func TestAudioPlanFor(t *testing.T) {
+	assert.Nil(t, audioPlanFor(&ConversationRequest{}, &arenaconfig.TurnDefinition{}))
+	gain := 3.0
+	plan := audioPlanFor(&ConversationRequest{Config: &arenaconfig.Config{ConfigDir: "/kit"}},
+		&arenaconfig.TurnDefinition{AudioTransforms: []arenaconfig.AudioTransform{{GainDB: &gain}}})
+	require.NotNil(t, plan)
+	assert.Equal(t, "/kit", plan.configDir)
 }
