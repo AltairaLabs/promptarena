@@ -11,6 +11,9 @@ import (
 	// self-register via init), so knownEvalTypes reflects exactly the set this
 	// PromptKit build supports.
 	_ "github.com/AltairaLabs/PromptKit/runtime/v2/evals/handlers"
+
+	// And arena's own eval types, such as refusal.
+	_ "github.com/AltairaLabs/promptarena/v2/arena/assertions/refusal"
 )
 
 // knownEvalTypes returns the sorted list of eval/assertion handler types this

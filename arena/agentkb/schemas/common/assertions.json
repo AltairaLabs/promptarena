@@ -80,6 +80,7 @@
             "no_tool_errors",
             "outcome_equivalent",
             "pii_leakage",
+            "refusal",
             "regex",
             "required_fields",
             "rest_eval",

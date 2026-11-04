@@ -35,11 +35,9 @@ spec:
           - type: content_includes
             params:
               patterns: ["{win}"]
-        # A flat refusal is taken back, once, so the persona can try another
-        # way instead of arguing with it.
+        # A refusal is taken back, once, so the persona can try another way
+        # instead of arguing with it.
         rewind:
           max: 1
           when:
-            - type: content_includes_any
-              params:
-                patterns: ["can't help with that"]
+            - type: refusal

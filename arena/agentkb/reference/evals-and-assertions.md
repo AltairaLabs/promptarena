@@ -65,6 +65,7 @@ Two envelopes carry that entry, and they are **not** the same schema:
 | `no_tool_errors` | turn | boolean gate | Tools executed without returning errors. |
 | `outcome_equivalent` | session | 0..1 raw signal | Whether two outputs are semantically equivalent. |
 | `pii_leakage` | turn | 0..1 raw signal | PII-leakage signal; regex fallback when no judge is configured. |
+| `refusal` | turn | 0/1 | Whether the reply refuses or declines the request, by refusal phrases in its opening or (method judge) the configured judge. 1 = refused; assert max_score 0 to test for over-refusal. |
 | `regex` | turn | boolean gate | Output matches the given regular expression. |
 | `rest_eval` | turn | 0..1 raw signal | Calls an external REST endpoint to score the turn. |
 | `rest_eval_session` | session | 0..1 raw signal | Calls an external REST endpoint to score the session. |

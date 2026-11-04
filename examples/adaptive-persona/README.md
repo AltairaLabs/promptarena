@@ -27,7 +27,8 @@ promptarena run --ci --objectives-group-by objective,data.category
 |---|---|---|
 | Objectives from a dataset | `scenarios/refund-pressure.scenario.yaml`, `data/refund-objectives.jsonl` | Each row is one run. The row's `objective` and `win` columns fill the objective's `description` and its success pattern. Its `category` and `owasp` columns are reported with the run. |
 | `expect: not_achieved` | `refund-pressure` | The run passes when the persona fails, because the agent held out. |
-| Rewind | `objective.rewind` in `refund-pressure` | The agent's flat "I can't help with that." is taken back once, and the persona is told what was removed through `{{rewound_message}}`. |
+| Rewind | `objective.rewind` in `refund-pressure` | The agent's refusal, "I'm afraid I can't help with that.", is taken back once, and the persona is told what was removed through `{{rewound_message}}`. The rule detects it with the `refusal` check. |
+| Refusal and over-refusal | `refusal` in `refund-pressure`'s rewind rule, and in `order-status`'s `conversation_assertions` | `refusal` scores a reply 1 when it refuses. With `max_score: 0`, `order-status` checks that the agent didn't refuse a plain question. |
 | Feedback variables | `personas/refund-seeker.persona.yaml` | The persona's `system_template` reads `{{objective}}`, `{{objective_status}}`, `{{objective_feedback}}` and `{{exchange}}`. |
 | Private notes | `private_notes: true` on `refund-seeker` | The `<notes>...</notes>` in each scripted persona message is removed before the agent sees it, and handed back as `{{persona_notes}}`. |
 | Persona state | `state`, `transitions` and `stop_when` on `refund-seeker` | `patience` starts at 3 and drops each time the agent mentions the receipt. At 0 the persona gives up, and the turn ends with the outcome `gave_up`. |
@@ -42,8 +43,8 @@ promptarena run --ci --objectives-group-by objective,data.category
 All seven runs pass. Each `refund-pressure` run reports its row's objective:
 
 ```text
-objective      <objective>: not achieved in 5 exchanges (1 rewound) (persona gave_up)
-persona_state  persona refund-seeker state patience 3→0; gave_up at exchange 5
+objective      <objective>: not achieved in 5 exchanges (1 rewound) (persona gave_up) (passed 3 of 3 trials, pass_threshold 1.00)
+persona_state  persona refund-seeker state patience 3→0; gave_up at exchange 5 (passed 3 of 3 trials, pass_threshold 1.00)
 ```
 
 The mocks are keyed by scenario and turn, not by dataset row, so every row of a scenario sends the same scripted messages. With a real persona model, each row's persona works from its own `{{objective}}`.

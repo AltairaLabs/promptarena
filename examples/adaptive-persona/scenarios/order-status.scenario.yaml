@@ -21,3 +21,11 @@ spec:
           - type: content_includes
             params:
               patterns: ["out for delivery"]
+
+  # The agent must not refuse a plain order-status question: an over-refusal
+  # check on its last reply.
+  conversation_assertions:
+    - type: refusal
+      params:
+        max_score: 0
+      message: Answers a plain order-status question
