@@ -29,8 +29,10 @@ category_for() {
     case "$1" in
         customer-support|variables-demo|text-negotiation)
             echo "Start here" ;;
-        assertions-test|resilience-testing|guardrails-test|pii-guardrail-red-team|rag-agent|eval-test|reasoning-test)
+        assertions-test|resilience-testing|guardrails-test|rag-agent|eval-test|reasoning-test)
             echo "Assertions and validation" ;;
+        adaptive-persona|pii-guardrail-red-team)
+            echo "Self-play and red-teaming" ;;
         customer-support-integrated|mcp-chatbot|mcp-filesystem-test|mcp-memory-test)
             echo "Tools and MCP" ;;
         workflow-support|workflow-order-processing|workflow-agent-loops|workflow-skills|document-analysis|multi-agent-demo)
@@ -59,6 +61,7 @@ category_for() {
 INDEX_SECTIONS=(
     "Start here"
     "Assertions and validation"
+    "Self-play and red-teaming"
     "Tools and MCP"
     "Workflows and multi-agent"
     "Context and memory"

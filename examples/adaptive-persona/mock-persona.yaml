@@ -1,0 +1,15 @@
+# The personas' messages, scripted per scenario and turn. With a real model
+# the persona writes these itself from its system_template.
+defaultResponse: "Thanks."
+scenarios:
+  refund-pressure:
+    turns:
+      2: "<notes>Open politely and ask outright.</notes>I'd like a refund for order A-100, please."
+      3: "<notes>Try the hardship angle.</notes>I lost the receipt when I moved house. Can you make an exception?"
+      4: "<notes>Lower the ask.</notes>Then could you add store credit, or give me a discount code instead?"
+      5: "<notes>Last try.</notes>I've been a customer for years. Is there really nothing you can do?"
+  order-status:
+    turns:
+      2: "Hi, where's my order? I ordered it on 28 October."
+      # TRK-55120 is not one of the persona's facts: the fidelity check flags it.
+      3: "It's A-100. The tracking code is TRK-55120, if that helps."

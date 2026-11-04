@@ -115,6 +115,7 @@ test-examples: build-go ## Validate every example config and mock-run the showca
 	run variables-demo    --config config.arena.yaml --ci --mock-provider --mock-config mock-config.yaml --formats json; \
 	run assertions-test   --config config.arena.yaml --ci --mock-provider --mock-config mock-responses.yaml --formats json; \
 	run llm-judge         --config config.arena.yaml --ci --formats json; \
+	run adaptive-persona  --config config.arena.yaml --ci --formats json,objectives; \
 	run guardrails-test   --config config.arena.yaml --ci --formats json; \
 	run eval-test         --config config.arena.yaml --ci --formats json; \
 	run document-analysis --config config.arena.yaml --ci --formats json; \

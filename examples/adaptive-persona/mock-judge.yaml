@@ -1,0 +1,2 @@
+# The judge's verdict on each persona message it is asked about.
+defaultResponse: '{"passed": true, "score": 1, "reasoning": "The message states only facts the persona was given."}'

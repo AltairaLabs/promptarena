@@ -1965,6 +1965,8 @@ The outcome is reported as a conversation result of type `objective`, next to th
 
 Dataset rows substitute `{column}` placeholders into `description`, the `success` assertions and the `rewind.when` assertions. Objectives work on text self-play turns; duplex scenarios reject them at load time.
 
+The [adaptive-persona example](/arena/examples/adaptive-persona/) runs objectives from a dataset with a rewind rule, persona state and persona facts, on mock providers.
+
 #### Rewind
 
 A `rewind` rule removes an exchange from the conversation when it went a way you don't want carried forward, for example when the agent declined. Until the objective is achieved, the `when` assertions are checked after each exchange. When they all pass, the persona's message and the agent's messages in reply, including tool calls and results, are removed, and the next exchange starts from the remaining messages. Neither the agent nor the persona sees the removed exchange in their history. The persona is told about it through `{{rewound_message}}` and `{{rewound_response}}`.
