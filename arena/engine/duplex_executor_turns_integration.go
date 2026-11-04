@@ -661,6 +661,19 @@ func (de *DuplexConversationExecutor) processSelfPlayDuplexTurn(
 
 	turnMeta := de.buildSelfplayTurnMeta(turn, selfplayTurnNum, textResult)
 
+	// Transforms rewrite the text before it is spoken; the persona keeps
+	// what it wrote.
+	if len(turn.Transforms) > 0 {
+		sent, terr := selfplay.ApplyTransforms(ctx, turn.Transforms, req.Config.ConfigDir, selfplay.TransformRequest{
+			Message: generatedText, Persona: turn.Persona, Scenario: req.Scenario.ID, Exchange: selfplayTurnNum,
+		})
+		if terr != nil {
+			return fmt.Errorf("turn %d: persona %s message: %w", turnIdx, turn.Persona, terr)
+		}
+		turnMeta[selfplay.MetaPersonaOriginal] = generatedText
+		generatedText = sent
+	}
+
 	return de.streamTextAsAudio(
 		ctx, generatedText, ttsProvider, turnMeta,
 		inputChan, outputChan,
@@ -1130,7 +1143,9 @@ func selfplayHistoryView(history []types.Message) []types.Message {
 		if role != roleUser && role != roleAssistant {
 			continue
 		}
-		text := strings.TrimSpace(m.Content)
+		// The persona sees its own messages as it wrote them, before any
+		// transforms.
+		text := strings.TrimSpace(selfplay.PersonaText(&m))
 		if text == "" {
 			continue
 		}

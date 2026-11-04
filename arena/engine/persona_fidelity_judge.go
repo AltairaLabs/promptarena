@@ -34,7 +34,7 @@ func (t *fidelityTracker) judgeMessage(ctx context.Context, exchange int, messag
 	idx := len(messages) - 1
 	// The judge reads the latest assistant message as the content to judge,
 	// so the persona's message is presented as one.
-	content := []types.Message{{Role: roleAssistant, Content: messages[idx].GetContent()}}
+	content := []types.Message{{Role: roleAssistant, Content: selfplay.PersonaText(&messages[idx])}}
 	checks := t.orch.RunAssertionsAsConversationResults(ctx,
 		[]asrt.AssertionConfig{{Type: "llm_judge", Params: map[string]interface{}{
 			"criteria":  t.judgeCriteria(messages[:idx]),
@@ -98,6 +98,9 @@ func judgeTranscript(messages []types.Message) string {
 			continue
 		}
 		text := messages[i].GetContent()
+		if messages[i].Role == roleUser {
+			text = selfplay.PersonaText(&messages[i])
+		}
 		if messages[i].ToolResult != nil {
 			text = messages[i].ToolResult.GetTextContent()
 		}

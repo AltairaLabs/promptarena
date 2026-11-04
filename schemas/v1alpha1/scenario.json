@@ -286,6 +286,21 @@
       "type": "object",
       "description": "DuplexResilienceConfig configures error handling and retry behavior for duplex streaming."
     },
+    "MessageTransform": {
+      "properties": {
+        "template": {
+          "type": "string",
+          "description": "Template is the message to send, with {{message}} standing for the\npersona's message, e.g. \"{{message}}\\n\\nSent from my phone\"."
+        },
+        "exec": {
+          "$ref": "#/$defs/TransformExec",
+          "description": "Exec runs a program that rewrites the message."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "description": "MessageTransform rewrites a self-play persona's message after it is generated and before the agent under test receives it."
+    },
     "ObjectMeta": {
       "properties": {
         "name": {
@@ -629,6 +644,39 @@
       "type": "object",
       "description": "ToolPolicy defines constraints for tool usage in scenarios."
     },
+    "TransformExec": {
+      "properties": {
+        "command": {
+          "type": "string",
+          "description": "Command is the program. A path containing a separator resolves against\nthe arena config's directory; a bare name is looked up on PATH."
+        },
+        "args": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Args are passed to the program."
+        },
+        "env": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object",
+          "description": "Env adds environment variables for the program."
+        },
+        "timeout_ms": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "TimeoutMs bounds each run. Default 10000."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "command"
+      ],
+      "description": "TransformExec is a program that rewrites a persona's message."
+    },
     "TrialBudget": {
       "properties": {
         "stop_on_achieved": {
@@ -735,6 +783,13 @@
         "objective": {
           "$ref": "#/$defs/ObjectiveConfig",
           "description": "Objective gives a self-play turn a goal that is checked after every\nexchange, so the run can stop as soon as the goal is reached and the\nresult records whether, and when, it was."
+        },
+        "transforms": {
+          "items": {
+            "$ref": "#/$defs/MessageTransform"
+          },
+          "type": "array",
+          "description": "Transforms rewrite each of the persona's messages, in order, after it\nis generated and before the agent receives it. The persona, and the\nfidelity and state checks, see the message as it was generated."
         },
         "assertions": {
           "items": {

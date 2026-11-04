@@ -106,6 +106,10 @@ type TurnRequest struct {
 	// SelfPlayVars are extra template variables for the persona's prompt on
 	// this exchange (exchange number, objective feedback).
 	SelfPlayVars map[string]string
+	// SelfPlayTransforms rewrite the persona's message before the agent
+	// receives it (the turn's transforms). BaseDir resolves a relative exec
+	// transform command.
+	SelfPlayTransforms []arenaconfig.MessageTransform
 
 	// ConsentOverrides controls consent simulation for client-side tools.
 	// Keys are tool names, values are "grant", "deny", or "timeout".

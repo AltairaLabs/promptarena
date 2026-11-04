@@ -452,3 +452,31 @@ func TestPersonaFidelity_SkippedJudgeIsNotAPass(t *testing.T) {
 	assert.Equal(t, []map[string]interface{}{{"exchange": 1, "error": "skipped: sampled out"}}, r.Details["judge_errors"])
 	assert.Equal(t, "persona customer stated only declared facts in 1 messages (judge failed on 1)", r.Message)
 }
+
+func TestPersonaFidelity_ChecksTheMessageAsThePersonaWroteIt(t *testing.T) {
+	persona := customerPersona(nil)
+	scripted := &MockTurnExecutor{executeFunc: func(ctx context.Context, req turnexecutors.TurnRequest) error {
+		return saveMessagesToStateStore(ctx, req, []types.Message{{Role: "user", Content: "Hi"}, {Role: "assistant", Content: "Hello"}})
+	}}
+	selfPlay := &MockTurnExecutor{executeFunc: func(ctx context.Context, req turnexecutors.TurnRequest) error {
+		// A transform appended a reference the persona never wrote.
+		return saveMessagesToStateStore(ctx, req, []types.Message{
+			{Role: "user", Content: "My order A-100. Ref ZX-9001", Meta: map[string]interface{}{
+				selfplay.MetaPersonaOriginal: "My order A-100.",
+			}},
+			{Role: "assistant", Content: "Let me check."},
+		})
+	}}
+	executor := NewDefaultConversationExecutor(scripted, selfPlay, fidelityRegistry(t, persona), createTestPromptRegistry(t), nil)
+	executor.evalOrchestrator = NewEvalOrchestrator(evals.NewEvalTypeRegistry(), nil, false, nil, "")
+	res := executor.ExecuteConversation(context.Background(), ConversationRequest{
+		Region: "default",
+		Scenario: &arenaconfig.Scenario{ID: "t", TaskType: "assistant", Turns: []arenaconfig.TurnDefinition{
+			{Role: "user", Content: "Hi"}, {Role: "attacker", Persona: persona.ID, Turns: 1},
+		}},
+		Provider: &MockProvider{id: "test"}, Config: &arenaconfig.Config{},
+		StateStoreConfig: &StateStoreConfig{Store: createTestStateStore(), UserID: "u"}, ConversationID: "t",
+	})
+	assert.Equal(t, true, fidelityResult(t, res).Details["reliable"],
+		"a specific the transform added is not the persona's invention")
+}

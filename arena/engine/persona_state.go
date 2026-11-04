@@ -9,6 +9,7 @@ import (
 
 	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
 	asrt "github.com/AltairaLabs/promptarena/v2/arena/assertions"
+	"github.com/AltairaLabs/promptarena/v2/arena/selfplay"
 
 	"github.com/AltairaLabs/PromptKit/runtime/v2/evals"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/logger"
@@ -194,7 +195,7 @@ func (t *stateTracker) applyTransitions(ctx context.Context, exchange int) {
 	// conversation-level check reads every reply, so one matching an earlier
 	// reply would otherwise fire the transition on every exchange after it.
 	agentView := messages[start:]
-	personaView := []types.Message{{Role: roleAssistant, Content: messages[start].GetContent()}}
+	personaView := []types.Message{{Role: roleAssistant, Content: selfplay.PersonaText(&messages[start])}}
 	for i := range t.persona.Transitions {
 		tr := &t.persona.Transitions[i]
 		view := agentView
