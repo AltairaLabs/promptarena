@@ -1959,7 +1959,7 @@ All three overrides treat `0` as unset. `seed` applies to the persona only. The 
 
 ### Message transforms
 
-`transforms` on a self-play turn rewrites each of the persona's messages after it is generated and before the agent under test receives it. Use it to test how the agent copes with a message in a different form than the persona writes: typed in a hurry, wrapped in a template, encoded or perturbed by a built-in converter, or passed through your own program.
+`transforms` on a self-play turn rewrites each of the persona's messages after it is generated and before the agent under test receives it. On a scripted `user` turn it rewrites the turn's `content` the same way, so a fixed probe gets the same converters. Use it to test how the agent copes with a message in a different form than the persona writes: typed in a hurry, wrapped in a template, encoded or perturbed by a built-in converter, or passed through your own program.
 
 ```yaml
 turns:
@@ -1985,7 +1985,7 @@ The transforms run in order, each on the previous one's output.
 | `exec.args`, `exec.env` | Arguments and extra environment variables for the program. |
 | `exec.timeout_ms` | How long one run may take. Default 10000. |
 
-Set exactly one of `template`, `converter` or `exec` in each entry. `transforms` needs a turn with a `persona`. A duplex turn can't use `converter`, because the converters rewrite text for reading, and spoken they are noise or silence; use [audio transforms](#audio-transforms) there.
+Set exactly one of `template`, `converter` or `exec` in each entry. `transforms` needs a self-play turn or a scripted `user` turn with `content`; a turn with `parts` can't use it. A duplex turn can't use `converter`, because the converters rewrite text for reading, and spoken they are noise or silence; use [audio transforms](#audio-transforms) there.
 
 **Converters.**
 
@@ -2036,7 +2036,9 @@ The program writes `{"message": "<rewritten message>"}` to stdout. A program tha
 - **The agent.** It receives the transformed message, and the conversation records it as sent.
 - **The persona.** It sees its own messages as it wrote them, so a transform doesn't feed back into what it writes next.
 - **Checks on the persona.** The [persona facts](#persona-facts) check, the fact judge and persona [state](#persona-state) transitions with `target: persona` read the message as it was written. A specific that a transform adds is not the persona's invention.
-- **Metadata.** The original is kept in the message's metadata as `persona_original`.
+- **Metadata.** The original is kept in the message's metadata as `persona_original`, on scripted turns too.
+
+On a scripted turn, an exec program's request has an empty `persona` and `exchange` 0. Each trial still gets its own `best_of_n` variant, because the seed includes the trial.
 
 Transforms run after the completion marker is stripped and after `fact_policy.on_violation: regenerate` has replaced a draft. A message that was only the completion marker ends the conversation and is not transformed. In duplex scenarios transforms rewrite the text before it is spoken, and `exchange` counts self-play exchanges across the whole scenario, as `{{exchange}}` does there.
 

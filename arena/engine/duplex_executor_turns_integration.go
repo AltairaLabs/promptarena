@@ -382,8 +382,21 @@ func (de *DuplexConversationExecutor) processScriptedTextDuplexTurn(
 	if err != nil {
 		return fmt.Errorf("resolving voice for scripted-text turn %d: %w", turnIdx, err)
 	}
+	// Transforms rewrite the text before it is spoken.
+	text := turn.Content
+	meta := map[string]interface{}{}
+	if len(turn.Transforms) > 0 {
+		sent, terr := selfplay.ApplyTransforms(ctx, turn.Transforms, req.Config.ConfigDir, selfplay.TransformRequest{
+			Message: text, Scenario: req.Scenario.ID, Trial: req.TrialIndex,
+		})
+		if terr != nil {
+			return fmt.Errorf("turn %d: scripted message: %w", turnIdx, terr)
+		}
+		meta[selfplay.MetaPersonaOriginal] = text
+		text = sent
+	}
 	return de.streamTextAsAudio(
-		ctx, turn.Content, ttsProvider, nil, audioPlanFor(req, turn),
+		ctx, text, ttsProvider, meta, audioPlanFor(req, turn),
 		inputChan, outputChan,
 	)
 }

@@ -43,7 +43,7 @@ func NewScriptedExecutor(pipelineExecutor *PipelineExecutor) *ScriptedExecutor {
 //nolint:gocritic // Public API - changing to pointer would break callers
 func (e *ScriptedExecutor) ExecuteTurn(ctx context.Context, req TurnRequest) error {
 	// Build user message from scripted content or parts
-	userMessage, err := e.buildUserMessage(&req)
+	userMessage, err := e.buildUserMessage(ctx, &req)
 	if err != nil {
 		return err
 	}
@@ -52,8 +52,9 @@ func (e *ScriptedExecutor) ExecuteTurn(ctx context.Context, req TurnRequest) err
 	return e.pipelineExecutor.Execute(ctx, &req, &userMessage)
 }
 
-// buildUserMessage creates a user message from either ScriptedContent or ScriptedParts
-func (e *ScriptedExecutor) buildUserMessage(req *TurnRequest) (types.Message, error) {
+// buildUserMessage creates a user message from either ScriptedContent or
+// ScriptedParts, and applies the turn's transforms to scripted content.
+func (e *ScriptedExecutor) buildUserMessage(ctx context.Context, req *TurnRequest) (types.Message, error) {
 	userMessage := types.Message{
 		Role:      "user",
 		Timestamp: time.Now(),
@@ -78,6 +79,9 @@ func (e *ScriptedExecutor) buildUserMessage(req *TurnRequest) (types.Message, er
 	} else {
 		// Fall back to legacy text-only content
 		userMessage.Content = req.ScriptedContent
+		if err := transformUserMessage(ctx, req, &userMessage); err != nil {
+			return types.Message{}, err
+		}
 	}
 
 	return userMessage, nil
@@ -140,7 +144,7 @@ func (e *ScriptedExecutor) executeStreamingPipeline(
 	outChan chan<- MessageStreamChunk,
 ) {
 	// Build user message from scripted content or parts
-	userMessage, err := e.buildUserMessage(req)
+	userMessage, err := e.buildUserMessage(ctx, req)
 	if err != nil {
 		outChan <- MessageStreamChunk{Error: err}
 		return
