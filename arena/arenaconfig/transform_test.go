@@ -2,6 +2,8 @@ package arenaconfig
 
 import (
 	"math"
+	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -12,14 +14,16 @@ func TestValidateTransforms(t *testing.T) {
 	selfPlay := func(ts ...MessageTransform) Scenario {
 		return Scenario{ID: "s", Turns: []TurnDefinition{{Role: "attacker", Persona: "p", Transforms: ts}}}
 	}
-	ok := selfPlay(MessageTransform{Template: "{{message}}!"}, MessageTransform{Exec: &TransformExec{Command: "t.py"}})
+	ok := selfPlay(MessageTransform{Template: "{{message}}!"}, MessageTransform{Converter: "best_of_n"},
+		MessageTransform{Exec: &TransformExec{Command: "t.py"}})
 	assert.NoError(t, ok.Validate())
 
 	cases := map[string]Scenario{
-		"set exactly one of template or exec": selfPlay(MessageTransform{}),
-		"template must contain {{message}}":   selfPlay(MessageTransform{Template: "hi"}),
-		"exec.command is required":            selfPlay(MessageTransform{Exec: &TransformExec{}}),
-		"timeout_ms must not be negative":     selfPlay(MessageTransform{Exec: &TransformExec{Command: "x", TimeoutMs: -1}}),
+		"set exactly one of template, converter or exec": selfPlay(MessageTransform{}),
+		`converter "caesar" is not one of base64`:        selfPlay(MessageTransform{Converter: "caesar"}),
+		"template must contain {{message}}":              selfPlay(MessageTransform{Template: "hi"}),
+		"exec.command is required":                       selfPlay(MessageTransform{Exec: &TransformExec{}}),
+		"timeout_ms must not be negative":                selfPlay(MessageTransform{Exec: &TransformExec{Command: "x", TimeoutMs: -1}}),
 		"transforms need a self-play turn": {ID: "s", Turns: []TurnDefinition{{Role: "user", Content: "hi",
 			Transforms: []MessageTransform{{Template: "{{message}}"}}}}},
 	}
@@ -30,6 +34,24 @@ func TestValidateTransforms(t *testing.T) {
 	}
 	both := selfPlay(MessageTransform{Template: "{{message}}", Exec: &TransformExec{Command: "x"}})
 	assert.ErrorContains(t, both.Validate(), "set exactly one")
+	both = selfPlay(MessageTransform{Template: "{{message}}", Converter: "rot13"})
+	assert.ErrorContains(t, both.Validate(), "set exactly one")
+
+	spoken := Scenario{Duplex: &DuplexConfig{}, Turns: []TurnDefinition{{Role: "attacker", Persona: "p",
+		Transforms: []MessageTransform{{Converter: "base64"}}}}}
+	assert.ErrorContains(t, validateTransforms(&spoken, &spoken.Turns[0], 0), "converters rewrite text, not speech")
+}
+
+func TestTransformConverters_MatchTheSchemaEnum(t *testing.T) {
+	field, ok := reflect.TypeOf(MessageTransform{}).FieldByName("Converter")
+	require.True(t, ok)
+	enum := []string{}
+	for _, part := range strings.Split(field.Tag.Get("jsonschema"), ",") {
+		if v, found := strings.CutPrefix(part, "enum="); found {
+			enum = append(enum, v)
+		}
+	}
+	assert.Equal(t, TransformConverters, enum)
 }
 
 func TestValidateAudioTransforms(t *testing.T) {

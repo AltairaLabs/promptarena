@@ -406,6 +406,8 @@ func (ce *DefaultConversationExecutor) buildTurnRequest(
 		SelfPlayUserTemp:      positiveFloat32OrNil(scenarioTurn.UserTemp),
 		SelfPlaySeed:          seedOrNil(scenarioTurn.Seed),
 		SelfPlayTransforms:    scenarioTurn.Transforms,
+		SelfPlayTrial:         req.TrialIndex,
+		SelfPlayRunSeed:       req.Config.Defaults.Seed,
 	}
 }
 

@@ -323,6 +323,7 @@ func transformUserMessage(ctx context.Context, req *TurnRequest, msg *types.Mess
 	original := msg.Content
 	sent, err := selfplay.ApplyTransforms(ctx, req.SelfPlayTransforms, req.BaseDir, selfplay.TransformRequest{
 		Message: original, Persona: req.SelfPlayPersona, Scenario: scenarioID, Exchange: exchange,
+		Trial: req.SelfPlayTrial, Seed: req.SelfPlayRunSeed,
 	})
 	if err != nil {
 		return fmt.Errorf("persona %s message: %w", req.SelfPlayPersona, err)

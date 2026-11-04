@@ -2019,6 +2019,20 @@
           "type": "string",
           "description": "Template is the message to send, with {{message}} standing for the\npersona's message, e.g. \"{{message}}\\n\\nSent from my phone\"."
         },
+        "converter": {
+          "type": "string",
+          "enum": [
+            "base64",
+            "rot13",
+            "leetspeak",
+            "reverse",
+            "homoglyph",
+            "unicode_tags",
+            "zero_width",
+            "best_of_n"
+          ],
+          "description": "Converter rewrites the message with a built-in converter: base64,\nrot13, leetspeak, reverse, homoglyph (Cyrillic look-alikes),\nunicode_tags (invisible tag characters), zero_width (zero-width spaces\ninside words) or best_of_n (Best-of-N's random scrambling, case flips\nand character noise, seeded per scenario, trial and exchange)."
+        },
         "exec": {
           "$ref": "#/$defs/TransformExec",
           "description": "Exec runs a program that rewrites the message."

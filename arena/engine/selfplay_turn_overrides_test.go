@@ -39,8 +39,9 @@ func TestResolveTurnTemperature_AssistantTemp(t *testing.T) {
 func TestBuildTurnRequest_SelfPlayOverrides(t *testing.T) {
 	ce := &DefaultConversationExecutor{}
 	req := ConversationRequest{
-		Config:   &arenaconfig.Config{Defaults: arenaconfig.Defaults{Temperature: 0.3}},
-		Scenario: &arenaconfig.Scenario{TaskType: "task"},
+		Config:     &arenaconfig.Config{Defaults: arenaconfig.Defaults{Temperature: 0.3}},
+		Scenario:   &arenaconfig.Scenario{TaskType: "task"},
+		TrialIndex: 3,
 	}
 
 	t.Run("set", func(t *testing.T) {
@@ -52,6 +53,7 @@ func TestBuildTurnRequest_SelfPlayOverrides(t *testing.T) {
 		require.NotNil(t, tr.SelfPlaySeed)
 		assert.Equal(t, 9, *tr.SelfPlaySeed)
 		assert.InDelta(t, 0.5, tr.Temperature, 1e-6)
+		assert.Equal(t, 3, tr.SelfPlayTrial, "the trial seeds the random converters")
 	})
 
 	t.Run("unset", func(t *testing.T) {

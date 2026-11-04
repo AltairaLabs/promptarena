@@ -110,6 +110,12 @@ type TurnRequest struct {
 	// receives it (the turn's transforms). BaseDir resolves a relative exec
 	// transform command.
 	SelfPlayTransforms []arenaconfig.MessageTransform
+	// SelfPlayTrial is the 0-based trial the run is; it seeds the random
+	// converters.
+	SelfPlayTrial int
+	// SelfPlayRunSeed is the run's defaults.seed, 0 when unset; with the
+	// trial it seeds the random converters.
+	SelfPlayRunSeed int
 
 	// ConsentOverrides controls consent simulation for client-side tools.
 	// Keys are tool names, values are "grant", "deny", or "timeout".
