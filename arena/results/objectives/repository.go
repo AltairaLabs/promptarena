@@ -96,23 +96,45 @@ func RenderMarkdown(report *Report) string {
 		b.WriteString("No run had an objective.\n")
 		return b.String()
 	}
+	withBaseline := hasBaseline(report)
+	if withBaseline {
+		b.WriteString("Baseline attempts are from objectives marked `baseline: true`: the same goal pursued " +
+			"without the attack. They are counted in the Baseline column only, with their cost. Lift is the " +
+			"attack's rate minus the baseline's, in percentage points, over the objectives both attempted.\n\n")
+	}
 	b.WriteString("## Overall\n\n")
-	writeTable(&b, "", report.Totals)
+	writeTable(&b, "", report.Totals, withBaseline)
 	for _, g := range report.Groupings {
 		fmt.Fprintf(&b, "\n## By %s\n\n", g.By)
-		writeTable(&b, g.By, g.Groups)
+		writeTable(&b, g.By, g.Groups, withBaseline)
 	}
 	return b.String()
 }
 
-func writeTable(b *strings.Builder, by string, groups []Group) {
+// hasBaseline reports whether any group in the report has baseline attempts.
+func hasBaseline(report *Report) bool {
+	for i := range report.Totals {
+		if report.Totals[i].Baseline != nil {
+			return true
+		}
+	}
+	return false
+}
+
+func writeTable(b *strings.Builder, by string, groups []Group, withBaseline bool) {
 	first := "Group"
 	if by != "" {
 		first = by
 	}
-	fmt.Fprintf(b, "| %s | Expect | Achieved | Rate | 95%% CI | Mean exchanges | Cost | "+
-		"Cost per achieved | Unevaluated | Unreliable |\n", first)
-	b.WriteString("|---|---|---|---|---|---|---|---|---|---|\n")
+	header := "| %s | Expect | Achieved | Rate | 95%% CI | Mean exchanges | Cost | " +
+		"Cost per achieved | Unevaluated | Unreliable |"
+	rule := "|---|---|---|---|---|---|---|---|---|---|"
+	if withBaseline {
+		header += " Baseline | Lift |"
+		rule += "---|---|"
+	}
+	fmt.Fprintf(b, header+"\n", first)
+	b.WriteString(rule + "\n")
 	for _, g := range groups {
 		perAchieved := "–"
 		if g.Achieved > 0 {
@@ -123,10 +145,41 @@ func writeTable(b *strings.Builder, by string, groups []Group) {
 			rate = fmt.Sprintf("%.1f%%", g.Rate*percent)
 			interval = fmt.Sprintf("%.1f%%–%.1f%%", g.CILow*percent, g.CIHigh*percent)
 		}
-		fmt.Fprintf(b, "| %s | %s | %d / %d | %s | %s | %s | %s | %s | %d | %d |\n",
+		fmt.Fprintf(b, "| %s | %s | %d / %d | %s | %s | %s | %s | %s | %d | %d |",
 			escapeCell(g.Value), g.Expect, g.Achieved, g.Attempts, rate, interval,
 			optionalFloat(g.MeanExchangesToAchieve, "%.1f"), formatCost(g.Cost), perAchieved, g.Unevaluated, g.Unreliable)
+		if withBaseline {
+			fmt.Fprintf(b, " %s | %s |", baselineCell(g.Baseline), liftCell(g.Lift))
+		}
+		b.WriteString("\n")
 	}
+}
+
+// baselineCell shows a group's baseline: achieved / attempts with its rate
+// and interval, its cost, and any attempts left out of its rate.
+func baselineCell(bl *Group) string {
+	if bl == nil {
+		return "–"
+	}
+	parts := []string{fmt.Sprintf("%d / %d", bl.Achieved, bl.Attempts)}
+	if bl.Attempts > 0 {
+		parts = append(parts, fmt.Sprintf("%.1f%% (%.1f%%–%.1f%%)", bl.Rate*percent, bl.CILow*percent, bl.CIHigh*percent))
+	}
+	parts = append(parts, formatCost(bl.Cost))
+	if bl.Unevaluated > 0 {
+		parts = append(parts, fmt.Sprintf("%d unevaluated", bl.Unevaluated))
+	}
+	if bl.Unreliable > 0 {
+		parts = append(parts, fmt.Sprintf("%d unreliable", bl.Unreliable))
+	}
+	return strings.Join(parts, ", ")
+}
+
+func liftCell(lift *float64) string {
+	if lift == nil {
+		return "–"
+	}
+	return fmt.Sprintf("%+.1f pts", *lift*percent)
 }
 
 func optionalFloat(v float64, format string) string {

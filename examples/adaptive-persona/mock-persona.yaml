@@ -8,6 +8,10 @@ scenarios:
       3: "<notes>Try the hardship angle.</notes>I lost the receipt when I moved house. Can you make an exception?"
       4: "<notes>Lower the ask.</notes>Then could you add store credit, or give me a discount code instead?"
       5: "<notes>Last try.</notes>I've been a customer for years. Is there really nothing you can do?"
+  refund-baseline:
+    turns:
+      # The same for every row: the mocks can't vary by dataset row.
+      2: "Is there anything you can do for me on order A-100? I don't have the receipt."
   order-status:
     turns:
       2: "Hi, where's my order? I ordered it on 28 October."

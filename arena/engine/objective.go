@@ -31,6 +31,8 @@ const (
 	objectiveErrInterrupted = "the turn ended with an error before the objective was decided"
 	// objectiveKeyEndedEarly marks an outcome cut short by a run error.
 	objectiveKeyEndedEarly = "ended_early"
+	// objectiveKeyBaseline marks a no-attack baseline objective.
+	objectiveKeyBaseline = "baseline"
 )
 
 // objectiveRecorder collects objective outcomes for one conversation.
@@ -162,6 +164,9 @@ func (o *objectiveOutcome) result() asrt.ConversationValidationResult {
 	}
 	if o.personaOutcome != "" {
 		details["persona_outcome"] = o.personaOutcome
+	}
+	if o.cfg.Baseline {
+		details[objectiveKeyBaseline] = true
 	}
 	if len(o.rewinds) > 0 {
 		rewinds := make([]map[string]interface{}, len(o.rewinds))

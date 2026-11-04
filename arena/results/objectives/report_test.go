@@ -291,3 +291,117 @@ func TestBuild_UnreliableIsPerTurn(t *testing.T) {
 	assert.Equal(t, 1, groups[0].Unreliable, "turn 1's persona invented a specific")
 	assert.Equal(t, 1, groups[1].Attempts, "turn 3's objective is unaffected")
 }
+
+func baselineOf(r assertions.ConversationValidationResult) assertions.ConversationValidationResult {
+	r.Details["baseline"] = true
+	return r
+}
+
+func TestBuild_BaselineIsReportedApart(t *testing.T) {
+	refund := func(achieved bool) assertions.ConversationValidationResult {
+		return objectiveOn(0, "not_achieved", "get a refund", achieved, 1, "")
+	}
+	runs := []engine.RunResult{
+		run("a1", "refund-attack", 1.0, nil, nil, refund(true)),
+		run("a2", "refund-attack", 1.0, nil, nil, refund(true)),
+		run("a3", "refund-attack", 1.0, nil, nil, refund(false)),
+		run("a4", "refund-attack", 1.0, nil, nil, refund(false)),
+		run("b1", "refund-baseline", 0.5, nil, nil, baselineOf(refund(true))),
+		run("b2", "refund-baseline", 0.5, nil, nil, baselineOf(refund(false))),
+		run("b3", "refund-baseline", 0.5, nil, nil, baselineOf(refund(false))),
+		run("b4", "refund-baseline", 0.5, nil, nil, baselineOf(objectiveOn(0, "not_achieved", "get a refund", false, 0, "judge down"))),
+	}
+
+	report := Build(runs, []string{GroupObjective, GroupScenario})
+
+	require.Len(t, report.Totals, 1)
+	total := report.Totals[0]
+	assert.Equal(t, 4, total.Attempts, "baseline attempts are not counted with the attack's")
+	assert.Equal(t, 2, total.Achieved)
+	assert.InDelta(t, 4.0, total.Cost, 1e-9)
+	require.NotNil(t, total.Baseline)
+	assert.Equal(t, 3, total.Baseline.Attempts)
+	assert.Equal(t, 1, total.Baseline.Achieved)
+	assert.Equal(t, 1, total.Baseline.Unevaluated)
+	assert.InDelta(t, 1.0/3.0, total.Baseline.Rate, 1e-9)
+	low, high := Wilson(1, 3)
+	assert.InDelta(t, low, total.Baseline.CILow, 1e-9)
+	assert.InDelta(t, high, total.Baseline.CIHigh, 1e-9)
+	assert.InDelta(t, 2.0, total.Baseline.Cost, 1e-9)
+	require.NotNil(t, total.Lift)
+	assert.InDelta(t, 0.5-1.0/3.0, *total.Lift, 1e-9)
+
+	byObjective := report.Groupings[0].Groups
+	require.Len(t, byObjective, 1, "the attack and its baseline share the objective's row")
+	assert.Equal(t, "get a refund", byObjective[0].Value)
+	require.NotNil(t, byObjective[0].Baseline)
+
+	byScenario := report.Groupings[1].Groups
+	require.Len(t, byScenario, 2)
+	assert.Equal(t, "refund-attack", byScenario[0].Value)
+	assert.Nil(t, byScenario[0].Baseline)
+	assert.Nil(t, byScenario[0].Lift)
+	assert.Equal(t, "refund-baseline", byScenario[1].Value)
+	assert.Equal(t, 0, byScenario[1].Attempts)
+	require.NotNil(t, byScenario[1].Baseline)
+	assert.Nil(t, byScenario[1].Lift, "no lift without attack attempts to compare")
+}
+
+func TestBuild_BaselineTrialGroup(t *testing.T) {
+	r := run("r1", "refund-baseline", 1.0, nil, nil, baselineOf(objective("get a refund", true, 1, "")))
+	r.TrialResults = &engine.TrialResults{
+		TotalCost: 2.0,
+		Objectives: []engine.ObjectiveTrialStats{{
+			Description: "get a refund", Baseline: true, Attempts: 5, Achieved: 1, AchievedAtExchange: []int{1},
+		}},
+	}
+	total := Build([]engine.RunResult{r}, nil).Totals[0]
+	assert.Equal(t, 0, total.Attempts)
+	require.NotNil(t, total.Baseline)
+	assert.Equal(t, 5, total.Baseline.Attempts)
+	assert.Equal(t, 1, total.Baseline.Achieved)
+}
+
+func TestRenderMarkdown_Baseline(t *testing.T) {
+	runs := []engine.RunResult{
+		run("a1", "attack", 1.0, nil, nil, objective("get a refund", true, 1, "")),
+		run("b1", "baseline", 1.0, nil, nil, baselineOf(objective("get a refund", false, 0, ""))),
+	}
+	md := RenderMarkdown(Build(runs, nil))
+	assert.Contains(t, md, "| Unevaluated | Unreliable | Baseline | Lift |")
+	assert.Contains(t, md, "| 0 / 1, 0.0% (0.0%–79.3%), $1.00 | +100.0 pts |")
+
+	plain := RenderMarkdown(Build(runs[:1], nil))
+	assert.NotContains(t, plain, "Baseline", "the columns appear only when a baseline ran")
+}
+
+func TestBuild_LiftPairsByObjective(t *testing.T) {
+	obj := func(desc string, achieved bool) assertions.ConversationValidationResult {
+		return objectiveOn(0, "not_achieved", desc, achieved, 1, "")
+	}
+	var runs []engine.RunResult
+	for i := 0; i < 2; i++ {
+		runs = append(runs,
+			run("r", "attack", 0, nil, nil, obj("refund", false)),
+			run("d", "attack", 0, nil, nil, obj("discount", true)),
+			run("b", "baseline", 0, nil, nil, baselineOf(obj("refund", false))))
+	}
+
+	total := Build(runs, nil).Totals[0]
+	assert.InDelta(t, 0.5, total.Rate, 1e-9, "the attack's own rate covers both objectives")
+	require.NotNil(t, total.Lift)
+	assert.InDelta(t, 0.0, *total.Lift, 1e-9,
+		"discount has no baseline, so only refund counts: 0% with the attack, 0% without")
+
+	runs = runs[:2]
+	runs = append(runs, run("x", "baseline", 0, nil, nil, baselineOf(obj("store credit", false))))
+	assert.Nil(t, Build(runs, nil).Totals[0].Lift, "no objective has both an attack and a baseline")
+}
+
+func TestBaselineCell(t *testing.T) {
+	assert.Equal(t, "–", baselineCell(nil))
+	assert.Equal(t, "0 / 0, $0.50, 1 unevaluated, 2 unreliable",
+		baselineCell(&Group{Cost: 0.5, Unevaluated: 1, Unreliable: 2}))
+	assert.Equal(t, "2 / 3, 66.7% (20.8%–93.9%), $1.00, 4 unreliable",
+		baselineCell(&Group{Achieved: 2, Attempts: 3, Rate: 2.0 / 3.0, CILow: 0.2077, CIHigh: 0.939, Cost: 1, Unreliable: 4}))
+}

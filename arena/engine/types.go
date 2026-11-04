@@ -141,6 +141,8 @@ type ObjectiveTrialStats struct {
 	Description string `json:"description,omitempty"`
 	// Expect is the outcome that passes the run: "achieved" or "not_achieved".
 	Expect string `json:"expect,omitempty"`
+	// Baseline reports whether the objective is a no-attack baseline.
+	Baseline bool `json:"baseline,omitempty"`
 	// Attempts is the number of trials whose objective was evaluated.
 	Attempts int `json:"attempts"`
 	// Achieved is the number of those trials that reached the objective.

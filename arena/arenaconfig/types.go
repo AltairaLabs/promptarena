@@ -1160,6 +1160,11 @@ type ObjectiveConfig struct {
 	// Rewind drops an exchange from the conversation when its checks all
 	// pass, so the persona tries again from before it.
 	Rewind *ObjectiveRewindConfig `json:"rewind,omitempty" yaml:"rewind,omitempty"`
+	// Baseline marks the objective as a no-attack baseline: the same goal
+	// pursued without the attack, such as a persona asking once and plainly.
+	// The objectives report counts baseline attempts apart from the others,
+	// and compares each group's rate with its baseline's.
+	Baseline bool `json:"baseline,omitempty" yaml:"baseline,omitempty"`
 }
 
 // DefaultObjectiveRewindMax is how many exchanges a turn may rewind when
