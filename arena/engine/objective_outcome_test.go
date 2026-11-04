@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"testing"
 
+	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
 	asrt "github.com/AltairaLabs/promptarena/v2/arena/assertions"
 )
 
@@ -124,5 +125,25 @@ func TestObjectiveTrialStats_UnreliableTrialIsNotAnAttempt(t *testing.T) {
 	got := objectiveTrialStats(trials)
 	if len(got) != 1 || got[0].Attempts != 1 || got[0].Achieved != 1 || got[0].Unreliable != 1 || got[0].Unevaluated != 1 {
 		t.Fatalf("stats = %+v", got)
+	}
+}
+
+func TestObjectiveBaselineIsRecordedAndReadBack(t *testing.T) {
+	o := &objectiveOutcome{turnIndex: 1, cfg: &arenaconfig.ObjectiveConfig{Description: "get a refund", Baseline: true}}
+	r := o.result()
+	if r.Details[objectiveKeyBaseline] != true {
+		t.Fatalf("details = %+v, want baseline: true", r.Details)
+	}
+	if _, set := (&objectiveOutcome{cfg: &arenaconfig.ObjectiveConfig{}}).result().Details[objectiveKeyBaseline]; set {
+		t.Fatal("an objective that is not a baseline has no baseline detail")
+	}
+
+	outcomes := ObjectiveOutcomes([]asrt.ConversationValidationResult{r})
+	if len(outcomes) != 1 || !outcomes[0].Baseline {
+		t.Fatalf("outcomes = %+v, want a baseline", outcomes)
+	}
+	stats := objectiveTrialStats([]trialRunResult{{objectives: outcomes}})
+	if len(stats) != 1 || !stats[0].Baseline {
+		t.Fatalf("stats = %+v, want a baseline", stats)
 	}
 }

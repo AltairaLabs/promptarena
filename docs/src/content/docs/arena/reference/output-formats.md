@@ -527,9 +527,13 @@ Each row reports:
 | `rate` | `achieved / attempts`. The Markdown shows `–` when nothing was judged. |
 | `ci_low`, `ci_high` | 95% Wilson score interval on `rate` |
 | `mean_exchanges_to_achieve` | Mean exchange at which achieved attempts got there |
-| `cost`, `cost_per_achieved` | Cost of the group's runs in USD, and that divided by `achieved`. A run with several objectives splits its cost evenly between them, so the costs in any one table add up to the overall cost. |
+| `cost`, `cost_per_achieved` | Cost of the group's runs in USD, and that divided by `achieved`. A run with several objectives splits its cost evenly between them, so the costs in any one table, with their baselines' costs, add up to the overall cost. |
 | `unevaluated` | Attempts that were never judged: their checks couldn't be evaluated, or the run or trial errored before recording the objective. Not counted in `attempts`. |
 | `unreliable` | Judged attempts on a self-play turn where the persona invented a specific it was not given (see [persona facts](/arena/reference/config-schema/#persona-facts)). The attempt measured the simulator as much as the agent, so it is not counted in `attempts`. Its cost still counts. |
+| `baseline` | The group's attempts at objectives marked [`baseline: true`](/arena/reference/config-schema/#objectives), with the same fields as a row. They are counted here and not in the row's other fields, and their cost is `baseline.cost`. Absent when the group has none. |
+| `lift` | How much more often the attack reached its objective than the baseline did: the attack's rate minus the baseline's, both over only the objectives that the attack and the baseline both attempted. Absent unless one objective has evaluated attempts on both sides. |
+
+**Baselines.** A rate on its own doesn't say how much of it the attack earned: an agent that hands out refunds to anyone who asks scores high against every attack. A baseline objective pursues the same goal without the attack, for example with a persona that asks once and plainly, and is marked `baseline: true`. A baseline pairs with the attack attempts whose objective has the same `description`, after dataset placeholders are filled in. Its attempts land in the same row as the attack's when they share the group's value, so group by `objective`, or by a `data.<column>` or `label.<key>` they share. Grouped by `scenario`, a baseline in its own scenario gets its own row, with `attempts` 0 and no lift. An objective with no baseline, or a baseline with no attack, is left out of the lift, so a row that mixes them doesn't credit the attack with a lift it never earned. The Markdown adds Baseline and Lift columns when any run had a baseline. The Baseline cell shows achieved / attempts, the rate and interval, the cost, and any unevaluated or unreliable attempts; the lift is in percentage points.
 
 How the counts are built:
 

@@ -23,6 +23,8 @@ type ObjectiveOutcome struct {
 	// Evaluated is false when the success checks could not be evaluated. An
 	// objective already achieved stays evaluated even if a later check errored.
 	Evaluated bool
+	// Baseline reports whether the objective is a no-attack baseline.
+	Baseline bool
 }
 
 // ObjectiveOutcomes reads the objective outcomes from a run's conversation
@@ -38,6 +40,7 @@ func ObjectiveOutcomes(results []asrt.ConversationValidationResult) []ObjectiveO
 		achieved, _ := d["achieved"].(bool)
 		description, _ := d[objectiveKeyDescription].(string)
 		expect, _ := d["expect"].(string)
+		baseline, _ := d[objectiveKeyBaseline].(bool)
 		if expect == "" {
 			expect = arenaconfig.ObjectiveExpectAchieved
 		}
@@ -49,6 +52,7 @@ func ObjectiveOutcomes(results []asrt.ConversationValidationResult) []ObjectiveO
 			AchievedAtExchange: detailInt(d, "achieved_at_exchange"),
 			Exchanges:          detailInt(d, "exchanges"),
 			Evaluated:          !failed || achieved,
+			Baseline:           baseline,
 		})
 	}
 	return out
@@ -88,7 +92,9 @@ func objectiveTrialStats(trials []trialRunResult) []ObjectiveTrialStats {
 			if !ok {
 				pos = len(out)
 				index[o.TurnIndex] = pos
-				out = append(out, ObjectiveTrialStats{TurnIndex: o.TurnIndex, Description: o.Description, Expect: o.Expect})
+				out = append(out, ObjectiveTrialStats{
+					TurnIndex: o.TurnIndex, Description: o.Description, Expect: o.Expect, Baseline: o.Baseline,
+				})
 			}
 			s := &out[pos]
 			if !o.Evaluated {

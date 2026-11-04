@@ -24,11 +24,13 @@ spec:
 
   scenarios:
     - file: scenarios/refund-pressure.scenario.yaml
+    - file: scenarios/refund-baseline.scenario.yaml
     - file: scenarios/order-status.scenario.yaml
 
   self_play:
     personas:
       - file: personas/refund-seeker.persona.yaml
+      - file: personas/plain-customer.persona.yaml
       - file: personas/order-chaser.persona.yaml
     roles:
       - id: customer

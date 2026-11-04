@@ -63,6 +63,16 @@ type Group struct {
 	// invented a specific it was not given, so the attempt measured the
 	// simulator as much as the agent. They are not counted in Attempts.
 	Unreliable int `json:"unreliable,omitempty"`
+	// Baseline totals the group's baseline attempts, from objectives marked
+	// baseline: true: the same goal pursued without the attack. They are not
+	// counted in the fields above, and their cost is Baseline.Cost. Nil when
+	// the group has none.
+	Baseline *Group `json:"baseline,omitempty"`
+	// Lift is how much more often the attack reached its objective than the
+	// baseline did: the attack's rate minus the baseline's, both over the
+	// objectives (by description) that the two attempted. Nil when no
+	// objective has evaluated attempts on both sides.
+	Lift *float64 `json:"lift,omitempty"`
 }
 
 // Grouping is the report for one group-by key.
@@ -108,6 +118,8 @@ type attempt struct {
 	achievedAt  []int
 	unevaluated int
 	unreliable  int
+	// baseline marks a no-attack baseline objective's attempts.
+	baseline bool
 	// cost is this objective's share of the run's cost.
 	cost float64
 }
@@ -117,6 +129,7 @@ type attempt struct {
 type objectiveMeta struct {
 	description string
 	expect      string
+	baseline    bool
 }
 
 // Build makes the report. Runs without an objective are left out. A run that
@@ -162,7 +175,7 @@ func addToCatalog(catalog map[string]map[int]objectiveMeta, a *attempt) {
 	}
 	meta, seen := turns[a.turnIndex]
 	if !seen {
-		turns[a.turnIndex] = objectiveMeta{a.description, a.expect}
+		turns[a.turnIndex] = objectiveMeta{a.description, a.expect, a.baseline}
 		return
 	}
 	if meta.description != a.description {
@@ -188,7 +201,9 @@ func missingAttempts(run *engine.RunResult, recorded []attempt, catalog map[int]
 	out := make([]attempt, 0, len(turns))
 	for _, turn := range turns {
 		m := catalog[turn]
-		out = append(out, attempt{run: run, turnIndex: turn, description: m.description, expect: m.expect, unevaluated: 1})
+		out = append(out, attempt{
+			run: run, turnIndex: turn, description: m.description, expect: m.expect, baseline: m.baseline, unevaluated: 1,
+		})
 	}
 	return out
 }
@@ -206,7 +221,7 @@ func attemptsOf(run *engine.RunResult) []attempt {
 			out = append(out, attempt{
 				run: run, turnIndex: o.TurnIndex, description: o.Description, expect: expectOrDefault(o.Expect),
 				attempts: o.Attempts, achieved: o.Achieved, achievedAt: o.AchievedAtExchange,
-				unevaluated: o.Unevaluated, unreliable: o.Unreliable,
+				unevaluated: o.Unevaluated, unreliable: o.Unreliable, baseline: o.Baseline,
 			})
 		}
 		return out
@@ -215,7 +230,10 @@ func attemptsOf(run *engine.RunResult) []attempt {
 	unreliable := engine.UnreliableTurns(run.ConversationAssertions.Results)
 	out := make([]attempt, 0, len(outcomes))
 	for _, o := range outcomes {
-		a := attempt{run: run, turnIndex: o.TurnIndex, description: o.Description, expect: expectOrDefault(o.Expect)}
+		a := attempt{
+			run: run, turnIndex: o.TurnIndex, description: o.Description, expect: expectOrDefault(o.Expect),
+			baseline: o.Baseline,
+		}
 		switch {
 		case !o.Evaluated:
 			a.unevaluated = 1
@@ -280,10 +298,7 @@ func groupValue(a *attempt, key string) string {
 	case key == GroupProvider:
 		v = a.run.ProviderID
 	case key == GroupObjective:
-		v = a.description
-		if v == "" {
-			v = fmt.Sprintf("%s turn %d objective", a.run.ScenarioID, a.turnIndex)
-		}
+		v = objectiveName(a)
 	case strings.HasPrefix(key, groupLabel):
 		v = a.run.Labels[strings.TrimPrefix(key, groupLabel)]
 	case strings.HasPrefix(key, groupData):
@@ -295,6 +310,15 @@ func groupValue(a *attempt, key string) string {
 	return v
 }
 
+// objectiveName names an attempt's objective: its description, or its
+// scenario and turn when it has none.
+func objectiveName(a *attempt) string {
+	if a.description != "" {
+		return a.description
+	}
+	return fmt.Sprintf("%s turn %d objective", a.run.ScenarioID, a.turnIndex)
+}
+
 // dataValue reads a dataset column from a run's Params.data.
 func dataValue(run *engine.RunResult, column string) string {
 	data, _ := run.Params["data"].(map[string]interface{})
@@ -304,8 +328,28 @@ func dataValue(run *engine.RunResult, column string) string {
 	return ""
 }
 
-// summarize totals a set of attempts.
+// summarize totals a set of attempts. Baseline attempts are totalled apart,
+// as the group's Baseline, and Lift compares the two.
 func summarize(value, expect string, attempts []attempt) Group {
+	var attack, baseline []attempt
+	for _, a := range attempts {
+		if a.baseline {
+			baseline = append(baseline, a)
+		} else {
+			attack = append(attack, a)
+		}
+	}
+	g := tally(value, expect, attack)
+	if len(baseline) > 0 {
+		b := tally(value, expect, baseline)
+		g.Baseline = &b
+		g.Lift = lift(attack, baseline)
+	}
+	return g
+}
+
+// tally totals a set of attempts into a group.
+func tally(value, expect string, attempts []attempt) Group {
 	g := Group{Value: value, Expect: expect}
 	exchangeSum, exchangeCount := 0, 0
 	for _, a := range attempts {
@@ -330,6 +374,37 @@ func summarize(value, expect string, attempts []attempt) Group {
 		g.CostPerAchieved = g.Cost / float64(g.Achieved)
 	}
 	return g
+}
+
+// lift is the attack's rate minus the baseline's, over the objectives both
+// attempted, paired by objective (see objectiveName). An objective with no
+// baseline, or a baseline with no attack, is left out of both rates, so a
+// group mixing them doesn't credit the attack with a lift it never earned.
+// It is nil when no objective has evaluated attempts on both sides.
+func lift(attack, baseline []attempt) *float64 {
+	inAttack, inBaseline := map[string]bool{}, map[string]bool{}
+	for i := range attack {
+		inAttack[objectiveName(&attack[i])] = true
+	}
+	for i := range baseline {
+		inBaseline[objectiveName(&baseline[i])] = true
+	}
+	paired := func(as []attempt, other map[string]bool) []attempt {
+		var out []attempt
+		for i := range as {
+			if other[objectiveName(&as[i])] {
+				out = append(out, as[i])
+			}
+		}
+		return out
+	}
+	a := tally("", "", paired(attack, inBaseline))
+	b := tally("", "", paired(baseline, inAttack))
+	if a.Attempts == 0 || b.Attempts == 0 {
+		return nil
+	}
+	l := a.Rate - b.Rate
+	return &l
 }
 
 // runCost is the cost of a run, or of all its trials when it stands for a

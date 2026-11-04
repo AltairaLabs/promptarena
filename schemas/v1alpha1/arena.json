@@ -2236,6 +2236,10 @@
         "rewind": {
           "$ref": "#/$defs/ObjectiveRewindConfig",
           "description": "Rewind drops an exchange from the conversation when its checks all\npass, so the persona tries again from before it."
+        },
+        "baseline": {
+          "type": "boolean",
+          "description": "Baseline marks the objective as a no-attack baseline: the same goal\npursued without the attack, such as a persona asking once and plainly.\nThe objectives report counts baseline attempts apart from the others,\nand compares each group's rate with its baseline's."
         }
       },
       "additionalProperties": false,
