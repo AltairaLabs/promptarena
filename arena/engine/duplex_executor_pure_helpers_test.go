@@ -12,6 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/v2/arena/selfplay"
 
 	"github.com/AltairaLabs/PromptKit/runtime/v2/pipeline"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/tools"
@@ -199,4 +200,12 @@ func TestBuildSelfplayTurnMeta(t *testing.T) {
 		require.True(t, ok)
 		assert.Equal(t, 10, cost["input_tokens"])
 	})
+}
+
+func TestSelfplayHistoryView_RestoresThePersonasOriginals(t *testing.T) {
+	out := selfplayHistoryView([]types.Message{
+		{Role: "user", Content: "hi\n\nSent from my phone", Meta: map[string]interface{}{selfplay.MetaPersonaOriginal: "hi"}},
+		{Role: "assistant", Content: "hello"},
+	})
+	assert.Equal(t, []types.Message{{Role: "user", Content: "hi"}, {Role: "assistant", Content: "hello"}}, out)
 }

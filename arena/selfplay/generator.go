@@ -134,7 +134,7 @@ func (cg *ContentGenerator) NextUserTurn(
 	// file paths, URLs). Without this, a duplex assistant message that
 	// carries an externalized audio Part poisons the next selfplay call —
 	// Gemini rejects the request when parts[0].inline_data has no bytes.
-	history = sanitizeHistoryForText(history)
+	history = sanitizeHistoryForText(restorePersonaOriginals(history))
 
 	// Build base variables for persona assembly: the fixed self-play keys,
 	// then the per-exchange feedback variables (exchange number, objective

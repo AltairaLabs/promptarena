@@ -132,7 +132,7 @@ func (t *fidelityTracker) afterExchange(ctx context.Context, exchange int) {
 	if r := repairedSpecifics(messages[idx].Meta); len(r) > 0 {
 		t.repaired = append(t.repaired, fidelityViolation{exchange: exchange, specifics: r})
 	}
-	invented := selfplay.InventedSpecifics(messages[idx].GetContent(),
+	invented := selfplay.InventedSpecifics(selfplay.PersonaText(&messages[idx]),
 		t.known, selfplay.ConversationText(messages[:idx]), t.seen)
 	t.seen += strings.ToLower(t.lastText)
 	if len(invented) > 0 {

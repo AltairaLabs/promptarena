@@ -405,6 +405,7 @@ func (ce *DefaultConversationExecutor) buildTurnRequest(
 		SkillToolGrants:       req.SkillToolGrants,
 		SelfPlayUserTemp:      positiveFloat32OrNil(scenarioTurn.UserTemp),
 		SelfPlaySeed:          seedOrNil(scenarioTurn.Seed),
+		SelfPlayTransforms:    scenarioTurn.Transforms,
 	}
 }
 

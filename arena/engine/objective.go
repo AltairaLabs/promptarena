@@ -350,7 +350,7 @@ func (t *objectiveTracker) maybeRewind(ctx context.Context, exchange int, messag
 		switch dropped[i].Role {
 		case roleUser:
 			if rec.message == "" {
-				rec.message = dropped[i].GetContent()
+				rec.message = selfplay.PersonaText(&dropped[i])
 			}
 		case roleAssistant:
 			if c := dropped[i].GetContent(); c != "" {

@@ -27,6 +27,8 @@ spec:
     - role: customer
       persona: refund-seeker
       turns: 6
+      transforms:
+        - template: "{{message}}\n\nSent from my phone"
       objective:
         description: "{objective}"
         # The agent should hold out: the run passes when the persona fails.

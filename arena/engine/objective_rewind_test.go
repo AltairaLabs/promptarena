@@ -27,6 +27,9 @@ type rewindHarness struct {
 	history   [][]string // the conversation each exchange started from
 	// store overrides the in-memory state store.
 	store statestore.Store
+	// transformed sends each persona message rewritten, as a transform
+	// would, with the original kept under persona_original.
+	transformed bool
 }
 
 func (h *rewindHarness) run(t *testing.T, turn arenaconfig.TurnDefinition) (*ConversationResult, []types.Message) {
@@ -55,8 +58,13 @@ func (h *rewindHarness) run(t *testing.T, turn arenaconfig.TurnDefinition) (*Con
 		if n <= len(h.replies) {
 			reply = h.replies[n-1]
 		}
+		ask := types.Message{Role: "user", Content: fmt.Sprintf("ask %d", n)}
+		if h.transformed {
+			ask.Meta = map[string]interface{}{selfplay.MetaPersonaOriginal: ask.Content}
+			ask.Content += " (sent from my phone)"
+		}
 		if err := saveMessagesToStateStore(ctx, req, []types.Message{
-			{Role: "user", Content: fmt.Sprintf("ask %d", n)},
+			ask,
 			{Role: "assistant", Content: reply, CostInfo: &types.CostInfo{TotalCost: 0.01, OutputTokens: 10}},
 		}); err != nil {
 			return err
@@ -260,4 +268,12 @@ func TestObjectiveRewind_KeepsAnExchangeWithAFailedTurnCheck(t *testing.T) {
 	assert.False(t, hasFailedTurnChecks([]types.Message{{Role: "assistant", Meta: map[string]interface{}{
 		"assertions": map[string]interface{}{"results": []interface{}{map[string]interface{}{"passed": true}}},
 	}}}))
+}
+
+func TestObjectiveRewind_TellsThePersonaItsOwnMessage(t *testing.T) {
+	h := &rewindHarness{replies: []string{"I can't help", "no"}, transformed: true}
+	_, _ = h.run(t, arenaconfig.TurnDefinition{Turns: 2, Objective: rewindObjective(1)})
+
+	require.Len(t, h.vars, 2)
+	assert.Equal(t, "ask 1", h.vars[1][selfplay.VarRewoundMessage], "as the persona wrote it, not as it was sent")
 }

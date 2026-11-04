@@ -35,6 +35,7 @@ promptarena run --ci --objectives-group-by objective,data.category
 | Persona facts | `facts` and `fact_policy` on `order-chaser` | The persona may state only `A-100` and `28 October`. Its scripted message includes a tracking code it was never given, so the run is flagged unreliable. |
 | Fact judge | `fact_policy.judge: true`, `spec.judges` | Each message that passes the specifics check is also sent to the judge, which appears in the run log as an `llm_judge` eval. The mock judge passes every message; a flag would add `judge_flags` to the `persona_fidelity` result. |
 | Attempt budget | `trials` and `trial_budget` in `refund-pressure` | Each row gets up to 5 attempts, and stops at the first that gets through or once its attempts have cost $0.03. Here each row stops on cost after 3 trials, and the report counts the 6 skipped trials apart. |
+| Message transforms | `transforms` in `refund-pressure` and `order-status`, `transforms/hurried.py` | `refund-pressure` appends "Sent from my phone" to each message with a template. `order-status` runs an exec transform that types each message as a hurried user would. The agent receives the rewritten message, and the persona and its fidelity check see what it wrote, kept as `persona_original`. |
 | No-attack baseline | `baseline: true` in `scenarios/refund-baseline.scenario.yaml` | The same objectives asked for once. The report counts these attempts in a Baseline column, and shows the attack's lift over them. |
 | Objectives report | `--formats objectives` | Success rates with 95% intervals, grouped by scenario or dataset column, with unreliable runs counted apart. |
 
@@ -109,6 +110,7 @@ scenarios/refund-pressure.scenario.yaml  dataset objectives, expect, rewind, tri
 scenarios/refund-baseline.scenario.yaml  the same objectives, baseline: true
 scenarios/order-status.scenario.yaml   an objective the agent should achieve
 data/refund-objectives.jsonl           one row per objective
+transforms/hurried.py                  an exec transform: a hurried user's typing
 checks/refusal.yaml                    the check promptarena calibrate scores
 data/refusal-labels.jsonl              replies labeled refused or not
 mock-agent.yaml, mock-persona.yaml, mock-judge.yaml   scripted replies

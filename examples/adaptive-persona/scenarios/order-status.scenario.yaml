@@ -15,6 +15,12 @@ spec:
     - role: customer
       persona: order-chaser
       turns: 4
+      # Each message is rewritten as a hurried user would type it before the
+      # agent sees it; the persona, and its fidelity check, see what it wrote.
+      transforms:
+        - exec:
+            command: python3
+            args: [transforms/hurried.py]
       objective:
         description: Find out where order A-100 is
         success:

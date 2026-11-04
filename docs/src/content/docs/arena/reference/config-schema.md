@@ -1957,6 +1957,50 @@ turns:
 
 All three overrides treat `0` as unset. `seed` applies to the persona only. The agent under test takes its seed from the arena's `defaults.seed`. `assistant_temp` gives way to a temperature passed on the command line or in the request, and applies to text turns only. Duplex (realtime) turns take their sampling from the duplex provider config.
 
+### Message transforms
+
+`transforms` on a self-play turn rewrites each of the persona's messages after it is generated and before the agent under test receives it. Use it to test how the agent copes with a message in a different form than the persona writes: typed in a hurry, wrapped in a template, passed through your own converter.
+
+```yaml
+turns:
+  - role: customer
+    persona: order-chaser
+    turns: 4
+    transforms:
+      - template: "{{message}}\n\nSent from my phone"
+      - exec:
+          command: python3
+          args: [transforms/hurried.py]
+          timeout_ms: 5000      # default 10000
+```
+
+The transforms run in order, each on the previous one's output.
+
+| Field | Meaning |
+|---|---|
+| `template` | The message to send, with `{{message}}` standing for the message so far. It must contain `{{message}}`. |
+| `exec.command` | A program that rewrites the message. A path containing a separator resolves against the arena config's directory; a bare name such as `python3` is looked up on `PATH`. |
+| `exec.args`, `exec.env` | Arguments and extra environment variables for the program. |
+| `exec.timeout_ms` | How long one run may take. Default 10000. |
+
+Set exactly one of `template` or `exec` in each entry. `transforms` needs a turn with a `persona`.
+
+**The exec protocol.** Arena runs the program on the host, in the arena config's directory, once per message. It writes a JSON request to the program's stdin:
+
+```json
+{"message": "I'd like a refund for order A-100.", "persona": "refund-seeker", "scenario": "refund-pressure", "exchange": 1}
+```
+
+The program writes `{"message": "<rewritten message>"}` to stdout. A program that exits non-zero, times out, writes anything else, or returns an empty message fails the turn, with its stderr in the error. The message is never sent untransformed.
+
+**Who sees what.**
+- **The agent.** It receives the transformed message, and the conversation records it as sent.
+- **The persona.** It sees its own messages as it wrote them, so a transform doesn't feed back into what it writes next.
+- **Checks on the persona.** The [persona facts](#persona-facts) check, the fact judge and persona [state](#persona-state) transitions with `target: persona` read the message as it was written. A specific that a transform adds is not the persona's invention.
+- **Metadata.** The original is kept in the message's metadata as `persona_original`.
+
+Transforms run after the completion marker is stripped and after `fact_policy.on_violation: regenerate` has replaced a draft. A message that was only the completion marker ends the conversation and is not transformed. In duplex scenarios transforms rewrite the text before it is spoken, and `exchange` counts self-play exchanges across the whole scenario, as `{{exchange}}` does there.
+
 ### Objectives
 
 An objective gives a self-play turn a goal. Its `success` assertions run over the whole conversation after every exchange, and the objective counts as achieved the first time they all pass.

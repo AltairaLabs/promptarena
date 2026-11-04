@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/AltairaLabs/promptarena/v2/arena/consent"
@@ -124,7 +125,11 @@ func (e *SelfPlayExecutor) generateUserMessage(
 		execResult.Response.Content = cleaned
 	}
 
-	return e.buildUserMessageFromResult(req, execResult), completionDetected, nil
+	msg := e.buildUserMessageFromResult(req, execResult)
+	if err := transformUserMessage(ctx, req, &msg); err != nil {
+		return types.Message{}, false, err
+	}
+	return msg, completionDetected, nil
 }
 
 // buildUserMessageFromResult constructs a user message from execution result
@@ -293,7 +298,41 @@ func (e *SelfPlayExecutor) generateUserMessageForStream(
 		execResult.Response.Content = cleaned
 	}
 
-	return e.buildUserMessage(req, execResult), completionDetected, nil
+	msg := e.buildUserMessage(req, execResult)
+	if err := transformUserMessage(ctx, req, &msg); err != nil {
+		outChan <- MessageStreamChunk{Error: err}
+		return types.Message{}, false, err
+	}
+	return msg, completionDetected, nil
+}
+
+// transformUserMessage applies the turn's transforms to the persona's
+// message, after the completion marker is stripped, and keeps the message as
+// the persona wrote it under persona_original.
+func transformUserMessage(ctx context.Context, req *TurnRequest, msg *types.Message) error {
+	// A message that was only the completion marker ends the conversation;
+	// there is nothing to transform or send.
+	if len(req.SelfPlayTransforms) == 0 || strings.TrimSpace(msg.Content) == "" {
+		return nil
+	}
+	exchange, _ := strconv.Atoi(req.SelfPlayVars[selfplay.VarExchange])
+	scenarioID := ""
+	if req.Scenario != nil {
+		scenarioID = req.Scenario.ID
+	}
+	original := msg.Content
+	sent, err := selfplay.ApplyTransforms(ctx, req.SelfPlayTransforms, req.BaseDir, selfplay.TransformRequest{
+		Message: original, Persona: req.SelfPlayPersona, Scenario: scenarioID, Exchange: exchange,
+	})
+	if err != nil {
+		return fmt.Errorf("persona %s message: %w", req.SelfPlayPersona, err)
+	}
+	msg.Content = sent
+	if msg.Meta == nil {
+		msg.Meta = map[string]interface{}{}
+	}
+	msg.Meta[selfplay.MetaPersonaOriginal] = original
+	return nil
 }
 
 // buildUserMessage constructs a user message from execution result

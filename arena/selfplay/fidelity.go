@@ -36,7 +36,7 @@ have it.`, strings.Join(quoted, ", "))
 func ConversationText(messages []types.Message) string {
 	var b strings.Builder
 	for i := range messages {
-		b.WriteString(messages[i].GetContent())
+		b.WriteString(PersonaText(&messages[i]))
 		b.WriteByte('\n')
 		if messages[i].ToolResult != nil {
 			b.WriteString(messages[i].ToolResult.GetTextContent())
