@@ -87,6 +87,9 @@ func loadScenarioData(s *Scenario, baseFile string) error {
 	if err := checkDataPlaceholders(s, rows); err != nil {
 		return fmt.Errorf("scenario %s: data file %s: %w", s.ID, s.Data.File, err)
 	}
+	if err := checkDataTaxonomy(s, rows); err != nil {
+		return fmt.Errorf("scenario %s: data file %s: %w", s.ID, s.Data.File, err)
+	}
 	s.Data.Rows = rows
 	return nil
 }
@@ -291,6 +294,7 @@ func (s *Scenario) ForDataRow(row DataRow) *Scenario {
 		if obj := s.Turns[i].Objective; obj != nil {
 			objCopy := *obj
 			objCopy.Success = append([]AssertionConfig(nil), obj.Success...)
+			objCopy.Taxonomy = append([]string(nil), obj.Taxonomy...)
 			if obj.Rewind != nil {
 				rewindCopy := *obj.Rewind
 				rewindCopy.When = append([]AssertionConfig(nil), obj.Rewind.When...)
@@ -323,6 +327,9 @@ func (s *Scenario) walkDataTemplates(fn func(string) string) {
 		walkAssertionTemplates(turn.Assertions, fn)
 		if turn.Objective != nil {
 			turn.Objective.Description = fn(turn.Objective.Description)
+			for j := range turn.Objective.Taxonomy {
+				turn.Objective.Taxonomy[j] = fn(turn.Objective.Taxonomy[j])
+			}
 			walkAssertionTemplates(turn.Objective.Success, fn)
 			if turn.Objective.Rewind != nil {
 				walkAssertionTemplates(turn.Objective.Rewind.When, fn)

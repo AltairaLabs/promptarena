@@ -2098,11 +2098,34 @@ turns:
 | `success` | required | Assertions that, all passing, mean the objective was achieved. Any conversation-level assertion type works here. |
 | `expect` | `achieved` | The outcome that makes the run pass. Use `not_achieved` when the agent should hold out, for example against a refund it should not grant. |
 | `stop_on_success` | `true` | End the self-play turn at the exchange where the objective is achieved, even before `turns` is reached. With `false` the turn runs its normal length. |
+| `taxonomy` | — | Map the objective to risk frameworks, as `<framework>:<id>` entries, such as `[owasp-llm:LLM01, atlas:AML.T0051]`. The [objectives report](/arena/reference/output-formats/#objectives-format) groups attempts by each entry and lists the categories no objective maps to. Entries take dataset row `{placeholders}`. See [Framework mapping](#framework-mapping). |
 | `baseline` | `false` | Mark the objective as a no-attack baseline: the same goal pursued without the attack, such as by a persona that asks once and plainly. The [objectives report](/arena/reference/output-formats/#objectives-format) counts baseline attempts apart and shows each group's rate against its baseline's. The run passes or fails on `expect` as usual. |
+
+#### Framework mapping
+
+An objective's `taxonomy` entries name a framework and an id within it. Arena knows two frameworks' ids and titles, and checks entries against them:
+
+| Framework | Ids |
+|---|---|
+| `owasp-llm` | The [OWASP Top 10 for LLM Applications 2025](https://genai.owasp.org/llm-top-10/): `LLM01` Prompt Injection to `LLM10` Unbounded Consumption |
+| `owasp-agentic` | The OWASP Top 10 for Agentic Applications 2026: `ASI01` Agent Goal Hijack to `ASI10` Rogue Agents |
+
+An `atlas` entry must be a [MITRE ATLAS](https://atlas.mitre.org/) technique id, such as `atlas:AML.T0051` or `atlas:AML.T0051.001`. Any other framework name, such as `nist-ai-600-1` or your own, is accepted as written. An entry with a `{placeholder}` needs a dataset, and is checked as each row fills it in, so a row value such as `LLM6` fails at load time. An entry listed twice is an error.
+
+```yaml
+objective:
+  description: "{objective}"
+  expect: not_achieved
+  taxonomy: ["owasp-llm:{owasp}", "atlas:AML.T0051"]
+  success:
+    - type: content_includes
+      params:
+        patterns: ["{win}"]
+```
 
 The outcome is reported as a conversation result of type `objective`, next to the scenario's `conversation_assertions`, so it shows in every output format and fails the run when the outcome differs from `expect`. A run that fails before reaching an objective's turn still reports it, as not evaluated, with an `error` saying the run ended before that turn; a turn that errors before its objective is achieved is reported the same way. Both carry `ended_early: true`, and with `trials` they count like a missing result, so a trial stopped by a failing turn assertion is not counted against the objective too. Its details carry `achieved`, `achieved_at_exchange`, `exchanges`, `expect` and the last `success_checks`.
 
-Dataset rows substitute `{column}` placeholders into `description`, the `success` assertions and the `rewind.when` assertions. Objectives work on text self-play turns; duplex scenarios reject them at load time.
+Dataset rows substitute `{column}` placeholders into `description`, `taxonomy`, the `success` assertions and the `rewind.when` assertions. Objectives work on text self-play turns; duplex scenarios reject them at load time.
 
 The [adaptive-persona example](/arena/examples/adaptive-persona/) runs objectives from a dataset with a rewind rule, persona state and persona facts, on mock providers.
 

@@ -808,7 +808,7 @@ func (s *Scenario) validateObjectives() error {
 		if s.Duplex != nil {
 			return fmt.Errorf("scenario %s: turns[%d].objective is not supported in duplex scenarios yet", s.ID, i)
 		}
-		if err := turn.Objective.validate(turn, i); err != nil {
+		if err := turn.Objective.validate(turn, i, s.Data != nil); err != nil {
 			return fmt.Errorf("scenario %s: %w", s.ID, err)
 		}
 	}
@@ -1191,6 +1191,11 @@ type ObjectiveConfig struct {
 	// The objectives report counts baseline attempts apart from the others,
 	// and compares each group's rate with its baseline's.
 	Baseline bool `json:"baseline,omitempty" yaml:"baseline,omitempty"`
+	// Taxonomy maps the objective to risk frameworks, as <framework>:<id>
+	// entries such as owasp-llm:LLM01, owasp-agentic:ASI02 or
+	// atlas:AML.T0051. The objectives report groups attempts by each entry.
+	// Entries take dataset row {placeholders}.
+	Taxonomy []string `json:"taxonomy,omitempty" yaml:"taxonomy,omitempty"`
 }
 
 // DefaultObjectiveRewindMax is how many exchanges a turn may rewind when
@@ -1232,7 +1237,7 @@ func (o *ObjectiveConfig) StopsOnSuccess() bool {
 }
 
 // validate checks the objective on the turn at turnIndex.
-func (o *ObjectiveConfig) validate(turn *TurnDefinition, turnIndex int) error {
+func (o *ObjectiveConfig) validate(turn *TurnDefinition, turnIndex int, hasData bool) error {
 	if turn.Persona == "" {
 		return fmt.Errorf("turns[%d].objective: objectives need a self-play turn (one with a persona)", turnIndex)
 	}
@@ -1242,6 +1247,9 @@ func (o *ObjectiveConfig) validate(turn *TurnDefinition, turnIndex int) error {
 	if o.Expect != "" && o.Expect != ObjectiveExpectAchieved && o.Expect != ObjectiveExpectNotAchieved {
 		return fmt.Errorf("turns[%d].objective.expect: invalid value %q, must be one of: %s, %s",
 			turnIndex, o.Expect, ObjectiveExpectAchieved, ObjectiveExpectNotAchieved)
+	}
+	if err := validateTaxonomy(o.Taxonomy, turnIndex, hasData); err != nil {
+		return err
 	}
 	if o.Rewind != nil {
 		if len(o.Rewind.When) == 0 {

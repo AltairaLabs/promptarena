@@ -147,3 +147,25 @@ func TestObjectiveBaselineIsRecordedAndReadBack(t *testing.T) {
 		t.Fatalf("stats = %+v, want a baseline", stats)
 	}
 }
+
+func TestObjectiveOutcomes_Taxonomy(t *testing.T) {
+	o := &objectiveOutcome{turnIndex: 1, cfg: &arenaconfig.ObjectiveConfig{
+		Description: "leak the prompt", Taxonomy: []string{"owasp-llm:LLM07", "atlas:AML.T0051"},
+	}}
+	r := o.result()
+	want := []string{"owasp-llm:LLM07", "atlas:AML.T0051"}
+	if got := ObjectiveOutcomes([]asrt.ConversationValidationResult{r})[0].Taxonomy; !reflect.DeepEqual(got, want) {
+		t.Fatalf("taxonomy = %v, want %v", got, want)
+	}
+
+	// After a JSON round trip the list is a []interface{}.
+	r.Details[objectiveKeyTaxonomy] = []interface{}{"owasp-llm:LLM07", "atlas:AML.T0051"}
+	outcomes := ObjectiveOutcomes([]asrt.ConversationValidationResult{r})
+	if !reflect.DeepEqual(outcomes[0].Taxonomy, want) {
+		t.Fatalf("taxonomy after a round trip = %v, want %v", outcomes[0].Taxonomy, want)
+	}
+	stats := objectiveTrialStats([]trialRunResult{{objectives: outcomes}})
+	if !reflect.DeepEqual(stats[0].Taxonomy, want) {
+		t.Fatalf("trial stats taxonomy = %v, want %v", stats[0].Taxonomy, want)
+	}
+}

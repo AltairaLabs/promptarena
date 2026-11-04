@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
 	"github.com/AltairaLabs/promptarena/v2/arena/engine"
 	"github.com/AltairaLabs/promptarena/v2/arena/results"
 )
@@ -115,6 +116,9 @@ func RenderMarkdown(report *Report) string {
 	for _, g := range report.Groupings {
 		fmt.Fprintf(&b, "\n## By %s\n\n", g.By)
 		writeTable(&b, g.By, g.Groups, cols)
+		if len(g.Untested) > 0 {
+			fmt.Fprintf(&b, "\nNo objective maps to: %s.\n", strings.Join(untestedNames(g.Untested), ", "))
+		}
 	}
 	return b.String()
 }
@@ -177,7 +181,7 @@ func writeTable(b *strings.Builder, by string, groups []Group, cols optionalColu
 			interval = fmt.Sprintf("%.1f%%–%.1f%%", g.CILow*percent, g.CIHigh*percent)
 		}
 		fmt.Fprintf(b, "| %s | %s | %d / %d | %s | %s | %s | %s | %s | %d | %d |",
-			escapeCell(g.Value), g.Expect, g.Achieved, g.Attempts, rate, interval,
+			escapeCell(groupName(&g)), g.Expect, g.Achieved, g.Attempts, rate, interval,
 			optionalFloat(g.MeanExchangesToAchieve, "%.1f"), formatCost(g.Cost), perAchieved, g.Unevaluated, g.Unreliable)
 		if cols.budget {
 			skipped := "–"
@@ -192,6 +196,23 @@ func writeTable(b *strings.Builder, by string, groups []Group, cols optionalColu
 		}
 		b.WriteString("\n")
 	}
+}
+
+// groupName is a group's value, with its title when it has one.
+func groupName(g *Group) string {
+	if g.Title != "" {
+		return g.Value + " " + g.Title
+	}
+	return g.Value
+}
+
+// untestedNames gives each untested taxonomy entry its title.
+func untestedNames(entries []string) []string {
+	out := make([]string, len(entries))
+	for i, e := range entries {
+		out[i] = strings.TrimSpace(e + " " + arenaconfig.TaxonomyTitle(e))
+	}
+	return out
 }
 
 // baselineCell shows a group's baseline: achieved / attempts with its rate
