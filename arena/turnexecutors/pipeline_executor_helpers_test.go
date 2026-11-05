@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
 
@@ -773,6 +774,17 @@ func TestBuildHookRegistry_NilWhenNothingToHook(t *testing.T) {
 
 	t.Run("guardrail hooks alone produce a registry", func(t *testing.T) {
 		assert.NotNil(t, buildHookRegistry(&TurnRequest{}, []hooks.ProviderHook{noopProviderHook{}}))
+	})
+
+	t.Run("tool result transforms alone produce a rewriting registry", func(t *testing.T) {
+		assert.Nil(t, buildHookRegistry(&TurnRequest{Scenario: &arenaconfig.Scenario{}}, nil),
+			"a scenario without tool_result_transforms adds no hook")
+		req := &TurnRequest{Scenario: &arenaconfig.Scenario{ToolResultTransforms: []arenaconfig.ToolResultTransform{
+			{Tool: "t", Transforms: []arenaconfig.MessageTransform{{Template: "{{message}}!"}}},
+		}}}
+		reg := buildHookRegistry(req, nil)
+		require.NotNil(t, reg)
+		assert.True(t, reg.HasToolResultRewriters())
 	})
 }
 

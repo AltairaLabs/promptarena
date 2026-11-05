@@ -11,6 +11,7 @@ import (
 	"github.com/AltairaLabs/promptarena/v2/arena/chaos"
 	"github.com/AltairaLabs/promptarena/v2/arena/consent"
 	arenastages "github.com/AltairaLabs/promptarena/v2/arena/stages"
+	"github.com/AltairaLabs/promptarena/v2/arena/toolresult"
 
 	"github.com/AltairaLabs/PromptKit/runtime/v2/composition"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/evals"
@@ -639,6 +640,9 @@ func buildHookRegistry(req *TurnRequest, guardrailHooks []hooks.ProviderHook) *h
 	if req.ChaosConfig != nil {
 		toolHooks = append(toolHooks, chaos.NewHook())
 	}
+	if h := toolResultHook(req); h != nil {
+		toolHooks = append(toolHooks, h)
+	}
 	if len(toolHooks) == 0 && len(guardrailHooks) == 0 {
 		return nil
 	}
@@ -650,6 +654,17 @@ func buildHookRegistry(req *TurnRequest, guardrailHooks []hooks.ProviderHook) *h
 		opts = append(opts, hooks.WithToolHook(h))
 	}
 	return hooks.NewRegistry(opts...)
+}
+
+// toolResultHook rewrites the results of the tools the scenario's
+// tool_result_transforms name, or is nil when it names none.
+func toolResultHook(req *TurnRequest) *toolresult.Hook {
+	if req.Scenario == nil {
+		return nil
+	}
+	return toolresult.NewHook(req.Scenario.ToolResultTransforms, toolresult.Run{
+		ConfigDir: req.BaseDir, Scenario: req.Scenario.ID, Trial: req.SelfPlayTrial, Seed: req.SelfPlayRunSeed,
+	})
 }
 
 // buildProviderStage creates a provider stage, attaching hooks for consent

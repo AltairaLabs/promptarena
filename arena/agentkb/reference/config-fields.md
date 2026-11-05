@@ -311,6 +311,7 @@ Fields under `spec`:
 | `streaming` | boolean |  | Enable streaming for all turns by default. |
 | `task_type` | string |  | — |
 | `tool_policy` | object |  | — |
+| `tool_result_transforms` | array |  | ToolResultTransforms rewrite named tools' results before the agent sees them, on every turn: live HTTP, MCP and mock tools alike. Use them to plant an indirect prompt injection in real tool output. Not for duplex scenarios. |
 | `trial_budget` | object |  | TrialBudget stops the scenario's trials early: once one achieves every objective, or once they have cost a set amount. |
 | `trials` | integer |  | Number of times to run this scenario for statistical evaluation |
 | `turns` | array |  | — |

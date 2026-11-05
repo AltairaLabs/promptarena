@@ -332,7 +332,44 @@ func (c *Config) loadEvalToolSkillResources(filename string) error {
 	if err := c.mergeToolSpecs(); err != nil {
 		return err
 	}
+	if err := c.validateToolResultTargets(); err != nil {
+		return err
+	}
 	return c.loadSkills(filename)
+}
+
+// validateToolResultTargets rejects tool_result_transforms on a client-mode
+// tool: the caller supplies its result, which never passes through the
+// rewrite and the planted content would silently be missing.
+func (c *Config) validateToolResultTargets() error {
+	modes := map[string]string{}
+	for _, t := range c.LoadedTools {
+		var doc struct {
+			Name string `yaml:"name"`
+			Mode string `yaml:"mode"`
+			Spec struct {
+				Name string `yaml:"name"`
+				Mode string `yaml:"mode"`
+			} `yaml:"spec"`
+		}
+		if yaml.Unmarshal(t.Data, &doc) != nil {
+			continue
+		}
+		if doc.Spec.Name != "" {
+			modes[doc.Spec.Name] = doc.Spec.Mode
+		} else if doc.Name != "" {
+			modes[doc.Name] = doc.Mode
+		}
+	}
+	for name, s := range c.LoadedScenarios {
+		for i, r := range s.ToolResultTransforms {
+			if modes[r.Tool] == "client" {
+				return fmt.Errorf("scenario %s: tool_result_transforms[%d]: %s is a client tool, whose result "+
+					"the caller supplies, so it can't be rewritten", name, i, r.Tool)
+			}
+		}
+	}
+	return nil
 }
 
 // loadSelfPlayAndJudgeResources loads self-play resources (when enabled) and

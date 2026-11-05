@@ -55,6 +55,42 @@ var TransformConverters = []string{
 // set.
 const DefaultTransformTimeoutMs = 10000
 
+// ToolResultTransform rewrites a tool's result before the agent under test
+// sees it: live HTTP, MCP and mock tools alike. Use it to plant an indirect
+// prompt injection in what a real tool returns.
+type ToolResultTransform struct {
+	// Tool is the name of the tool whose results to rewrite.
+	Tool string `json:"tool" yaml:"tool"`
+	// Transforms rewrite the result's text in order, as a turn's transforms
+	// rewrite a message: {{message}} in a template stands for the result, and
+	// an exec program also receives the tool's name and arguments.
+	Transforms []MessageTransform `json:"transforms" yaml:"transforms"`
+}
+
+// validateToolResultTransforms checks a scenario's tool_result_transforms.
+func validateToolResultTransforms(s *Scenario) error {
+	if len(s.ToolResultTransforms) > 0 && s.Duplex != nil {
+		return fmt.Errorf("tool_result_transforms: duplex scenarios run tools outside the turn pipeline, " +
+			"so their results can't be rewritten")
+	}
+	for i := range s.ToolResultTransforms {
+		r := &s.ToolResultTransforms[i]
+		where := fmt.Sprintf("tool_result_transforms[%d]", i)
+		switch {
+		case strings.TrimSpace(r.Tool) == "":
+			return fmt.Errorf("%s.tool is required", where)
+		case len(r.Transforms) == 0:
+			return fmt.Errorf("%s.transforms needs at least one transform", where)
+		}
+		for j := range r.Transforms {
+			if err := validateTransform(&r.Transforms[j], fmt.Sprintf("%s.transforms[%d]", where, j), false); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 // validateTransforms checks the turn at turnIndex's transforms.
 func validateTransforms(s *Scenario, turn *TurnDefinition, turnIndex int) error {
 	if len(turn.Transforms) > 0 && turn.Persona == "" {
@@ -70,27 +106,35 @@ func validateTransforms(s *Scenario, turn *TurnDefinition, turnIndex int) error 
 		}
 	}
 	for i := range turn.Transforms {
-		t := &turn.Transforms[i]
-		where := fmt.Sprintf("turns[%d].transforms[%d]", turnIndex, i)
-		switch {
-		case countSet(t.Template != "", t.Converter != "", t.Exec != nil) != 1:
-			return fmt.Errorf("%s: set exactly one of template, converter or exec", where)
-		case t.Converter != "" && s.Duplex != nil:
-			// The converters rewrite text for reading: spoken, an encoding is
-			// noise and tag characters are silence, so the agent would pass an
-			// attack it never heard.
-			return fmt.Errorf("%s.converter: converters rewrite text, not speech, so a duplex turn can't use them; "+
-				"use audio_transforms", where)
-		case t.Converter != "" && !slices.Contains(TransformConverters, t.Converter):
-			return fmt.Errorf("%s.converter %q is not one of %s", where, t.Converter,
-				strings.Join(TransformConverters, ", "))
-		case t.Template != "" && !strings.Contains(t.Template, TransformMessagePlaceholder):
-			return fmt.Errorf("%s.template must contain %s", where, TransformMessagePlaceholder)
-		case t.Exec != nil && strings.TrimSpace(t.Exec.Command) == "":
-			return fmt.Errorf("%s.exec.command is required", where)
-		case t.Exec != nil && t.Exec.TimeoutMs < 0:
-			return fmt.Errorf("%s.exec.timeout_ms must not be negative", where)
+		if err := validateTransform(&turn.Transforms[i], fmt.Sprintf("turns[%d].transforms[%d]", turnIndex, i),
+			s.Duplex != nil); err != nil {
+			return err
 		}
+	}
+	return nil
+}
+
+// validateTransform checks one message transform at where. spoken is true
+// when the message is synthesized to speech.
+func validateTransform(t *MessageTransform, where string, spoken bool) error {
+	switch {
+	case countSet(t.Template != "", t.Converter != "", t.Exec != nil) != 1:
+		return fmt.Errorf("%s: set exactly one of template, converter or exec", where)
+	case t.Converter != "" && spoken:
+		// The converters rewrite text for reading: spoken, an encoding is
+		// noise and tag characters are silence, so the agent would pass an
+		// attack it never heard.
+		return fmt.Errorf("%s.converter: converters rewrite text, not speech, so a duplex turn can't use them; "+
+			"use audio_transforms", where)
+	case t.Converter != "" && !slices.Contains(TransformConverters, t.Converter):
+		return fmt.Errorf("%s.converter %q is not one of %s", where, t.Converter,
+			strings.Join(TransformConverters, ", "))
+	case t.Template != "" && !strings.Contains(t.Template, TransformMessagePlaceholder):
+		return fmt.Errorf("%s.template must contain %s", where, TransformMessagePlaceholder)
+	case t.Exec != nil && strings.TrimSpace(t.Exec.Command) == "":
+		return fmt.Errorf("%s.exec.command is required", where)
+	case t.Exec != nil && t.Exec.TimeoutMs < 0:
+		return fmt.Errorf("%s.exec.timeout_ms must not be negative", where)
 	}
 	return nil
 }
