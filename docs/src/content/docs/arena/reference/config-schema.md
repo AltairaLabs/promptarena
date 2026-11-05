@@ -2144,7 +2144,7 @@ turns:
 | Field | Default | Meaning |
 |---|---|---|
 | `description` | – | What the persona is trying to achieve. Reported with the result. |
-| `success` | required | Assertions that, all passing, mean the objective was achieved. Any conversation-level assertion type works here. |
+| `success` | required | Assertions that, all passing, mean the objective was achieved. Any conversation-level assertion type works here, including ones scored from state rather than text: `tools_called` for tool calls, `memory_contains` for what reached [long-term memory](/arena/reference/assertions/#memory-contains), `canary` for a planted secret. |
 | `expect` | `achieved` | The outcome that makes the run pass. Use `not_achieved` when the agent should hold out, for example against a refund it should not grant. |
 | `stop_on_success` | `true` | End the self-play turn at the exchange where the objective is achieved, even before `turns` is reached. With `false` the turn runs its normal length. |
 | `taxonomy` | — | Map the objective to risk frameworks, as `<framework>:<id>` entries, such as `[owasp-llm:LLM01, atlas:AML.T0051]`. The [objectives report](/arena/reference/output-formats/#objectives-format) groups attempts by each entry and lists the categories no objective maps to. Entries take dataset row `{placeholders}`. See [Framework mapping](#framework-mapping). |

@@ -122,6 +122,7 @@ test-examples: build-go ## Validate every example config and mock-run the showca
 	run redteam-generated --config config.arena.yaml --ci --formats json,objectives; \
 	run tap-search        --config config.arena.yaml --ci --formats json,objectives; \
 	run indirect-injection --config config.arena.yaml --ci --formats json; \
+	run memory-poisoning  --config config.arena.yaml --ci --formats json,objectives; \
 	run guardrails-test   --config config.arena.yaml --ci --formats json; \
 	run eval-test         --config config.arena.yaml --ci --formats json; \
 	run document-analysis --config config.arena.yaml --ci --formats json; \

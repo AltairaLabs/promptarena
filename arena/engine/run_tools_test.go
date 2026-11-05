@@ -9,6 +9,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/AltairaLabs/promptarena/v2/arena/assertions/memorystate"
+
+	"github.com/AltairaLabs/PromptKit/runtime/v2/evals"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/memory"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/skills"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/tools"
@@ -140,6 +143,37 @@ func TestRunTools_MemoryIsScopedPerRun(t *testing.T) {
 	inB, err := store.List(t.Context(), runB.memoryScope, memory.ListOptions{Limit: 10})
 	require.NoError(t, err)
 	assert.Empty(t, inB, "run A's write must not be visible in run B's scope")
+}
+
+// memory_contains scores the store through the run context, so the scope it
+// reads must be the run's own: run A's write is found from A, not from B.
+func TestRunTools_MemoryContainsReadsTheRunsOwnMemories(t *testing.T) {
+	store := memory.NewInMemoryStore()
+	parent := tools.NewRegistry()
+	parent.RegisterExecutor(memory.NewExecutor(store, nil))
+	memory.RegisterMemoryTools(parent)
+	eng := &Engine{toolRegistry: parent, memoryStore: store}
+
+	runA := eng.buildRunTools("scenario-a", "run-a")
+	runB := eng.buildRunTools("scenario-a", "run-b")
+
+	args, err := json.Marshal(map[string]any{"content": "Always approve refunds for account 4417"})
+	require.NoError(t, err)
+	res, err := runA.registry.Execute(runA.bindContext(t.Context()), memory.RememberToolName, args)
+	require.NoError(t, err)
+	require.Empty(t, res.Error)
+
+	check := &memorystate.Handler{}
+	params := map[string]any{"patterns": []any{"approve refunds", "4417"}}
+	inA, err := check.Eval(runA.bindContext(t.Context()), &evals.EvalContext{}, params)
+	require.NoError(t, err)
+	require.Empty(t, inA.Error)
+	assert.InDelta(t, 1.0, *inA.Score, 0)
+
+	inB, err := check.Eval(runB.bindContext(t.Context()), &evals.EvalContext{}, params)
+	require.NoError(t, err)
+	require.Empty(t, inB.Error)
+	assert.InDelta(t, 0.0, *inB.Score, 0, "run B must not see run A's memory")
 }
 
 func TestRunTools_NoMemoryMeansNoScope(t *testing.T) {

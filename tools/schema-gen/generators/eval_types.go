@@ -14,6 +14,7 @@ import (
 
 	// And arena's own eval types, such as refusal.
 	_ "github.com/AltairaLabs/promptarena/v2/arena/assertions/canary"
+	_ "github.com/AltairaLabs/promptarena/v2/arena/assertions/memorystate"
 	_ "github.com/AltairaLabs/promptarena/v2/arena/assertions/refusal"
 )
 

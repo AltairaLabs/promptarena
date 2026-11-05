@@ -59,6 +59,7 @@
                 "llm_judge_tool_calls",
                 "max_length",
                 "max_sentences",
+                "memory_contains",
                 "min_length",
                 "no_tool_errors",
                 "outcome_equivalent",
