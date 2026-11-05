@@ -119,6 +119,7 @@ test-examples: build-go ## Validate every example config and mock-run the showca
 	( cd examples/adaptive-persona && env PROMPTKIT_SCHEMA_SOURCE=local ../../bin/promptarena calibrate \
 		--check checks/refusal.yaml --examples data/refusal-labels.jsonl </dev/null ); \
 	run red-team-converters --config config.arena.yaml --ci --formats json,objectives; \
+	run redteam-generated --config config.arena.yaml --ci --formats json,objectives; \
 	run indirect-injection --config config.arena.yaml --ci --formats json; \
 	run guardrails-test   --config config.arena.yaml --ci --formats json; \
 	run eval-test         --config config.arena.yaml --ci --formats json; \
