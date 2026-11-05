@@ -248,6 +248,9 @@ func LoadConfig(filename string) (*Config, error) {
 	if err := cfg.loadSelfPlayAndJudgeResources(filename); err != nil {
 		return nil, err
 	}
+	if err := cfg.validateGovernanceTaxonomy(); err != nil {
+		return nil, err
+	}
 
 	// Load pack file if specified
 	if cfg.PackFile != "" {

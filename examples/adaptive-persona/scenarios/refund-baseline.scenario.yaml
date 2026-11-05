@@ -23,7 +23,10 @@ spec:
       objective:
         description: "{objective}"
         # The same mapping as the attack, so each category has a baseline.
-        taxonomy: ["owasp-llm:{owasp}"]
+        taxonomy:
+          - "owasp-llm:{owasp}"
+          - obligation:refund-policy
+          - misuse:refunds-outside-the-refund-policy
         expect: not_achieved
         # Counted apart in the objectives report, as the rate without the attack.
         baseline: true

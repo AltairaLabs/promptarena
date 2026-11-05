@@ -118,6 +118,8 @@ type Report struct {
 	Totals []Group `json:"totals"`
 	// Groupings holds one entry per group-by key, in the order requested.
 	Groupings []Grouping `json:"groupings"`
+	// titles names each untested taxonomy entry, for the Markdown report.
+	titles map[string]string
 }
 
 // ValidateGroupBy reports an error for a group-by key the report doesn't know.
@@ -172,7 +174,11 @@ type objectiveMeta struct {
 // errored before recording an objective its scenario's other runs recorded
 // gets an unevaluated attempt for it, so its failure and its cost are not
 // dropped.
-func Build(runs []engine.RunResult, groupBy []string) *Report {
+//
+// governance holds the frameworks of the pack governance the config declares
+// (see arenaconfig.Config.GovernanceFrameworks): their titles name the groups,
+// and their entries no objective tested are listed as untested.
+func Build(runs []engine.RunResult, groupBy []string, governance ...arenaconfig.TaxonomyFramework) *Report {
 	perRun := make([][]attempt, len(runs))
 	catalog := map[string]map[int]objectiveMeta{}
 	for i := range runs {
@@ -192,15 +198,48 @@ func Build(runs []engine.RunResult, groupBy []string) *Report {
 		}
 		all = append(all, attempts...)
 	}
-	report := &Report{Totals: groupAttempts(all, "")}
-	for _, key := range withTaxonomy(groupBy, all) {
+	frameworks := append(slices.Clone(arenaconfig.TaxonomyFrameworks), governance...)
+	report := &Report{Totals: groupAttempts(all, ""), titles: map[string]string{}}
+	for _, key := range withTaxonomy(groupBy, all, len(governance) > 0) {
 		g := Grouping{By: key, Groups: groupAttempts(all, key)}
 		if isTaxonomyKey(key) {
-			g.Untested = untested(key, g.Groups)
+			report.titleTaxonomy(&g, frameworks)
 		}
 		report.Groupings = append(report.Groupings, g)
 	}
 	return report
+}
+
+// titleTaxonomy names a taxonomy grouping's rows and lists its untested
+// entries, recording their titles for the Markdown report.
+func (r *Report) titleTaxonomy(g *Grouping, frameworks []arenaconfig.TaxonomyFramework) {
+	for i := range g.Groups {
+		g.Groups[i].Title = taxonomyTitle(frameworks, g.Groups[i].Value)
+	}
+	g.Untested = untested(g.By, g.Groups, frameworks)
+	for _, e := range g.Untested {
+		r.titles[e] = taxonomyTitle(frameworks, e)
+	}
+}
+
+// frameworkOf returns the framework an entry such as "owasp-llm:LLM01"
+// belongs to, and the id within it.
+func frameworkOf(frameworks []arenaconfig.TaxonomyFramework, entry string) (*arenaconfig.TaxonomyFramework, string) {
+	name, id, _ := strings.Cut(entry, ":")
+	for i := range frameworks {
+		if frameworks[i].Name == name {
+			return &frameworks[i], id
+		}
+	}
+	return nil, id
+}
+
+// taxonomyTitle is the title of an entry one of the frameworks knows, or "".
+func taxonomyTitle(frameworks []arenaconfig.TaxonomyFramework, entry string) string {
+	if f, id := frameworkOf(frameworks, entry); f != nil {
+		return f.Titles[id]
+	}
+	return ""
 }
 
 func isTaxonomyKey(key string) bool {
@@ -208,13 +247,14 @@ func isTaxonomyKey(key string) bool {
 }
 
 // withTaxonomy adds a taxonomy grouping when an objective is mapped to a
-// framework and no grouping asked for one, so the mapping is reported.
-func withTaxonomy(groupBy []string, all []attempt) []string {
+// framework, or the config declares governance, and no grouping asked for
+// one, so the mapping and any untested obligation are reported.
+func withTaxonomy(groupBy []string, all []attempt, governance bool) []string {
 	if slices.ContainsFunc(groupBy, isTaxonomyKey) {
 		return groupBy
 	}
 	for i := range all {
-		if len(all[i].taxonomy) > 0 {
+		if governance || len(all[i].taxonomy) > 0 {
 			return append(slices.Clone(groupBy), GroupTaxonomy)
 		}
 	}
@@ -225,16 +265,20 @@ func withTaxonomy(groupBy []string, all []attempt) []string {
 // covers that no evaluated attempt was for. A taxonomy.<framework> grouping
 // covers that framework; a taxonomy grouping covers each framework one of its
 // groups belongs to.
-func untested(key string, groups []Group) []string {
+//
+// The governance frameworks are always covered: the config declared those
+// obligations and misuses, so one nothing tested is reported even when no
+// objective maps to governance at all.
+func untested(key string, groups []Group, all []arenaconfig.TaxonomyFramework) []string {
 	tested := map[string]bool{}
-	frameworks := map[string]bool{}
+	frameworks := map[string]bool{arenaconfig.TaxonomyObligation: true, arenaconfig.TaxonomyMisuse: true}
 	for i := range groups {
 		// A category whose every attempt errored or was unreliable was not
 		// tested.
 		if groups[i].Attempts > 0 {
 			tested[groups[i].Value] = true
 		}
-		if f, _ := arenaconfig.TaxonomyFrameworkOf(groups[i].Value); f != nil {
+		if f, _ := frameworkOf(all, groups[i].Value); f != nil {
 			frameworks[f.Name] = true
 		}
 	}
@@ -242,7 +286,7 @@ func untested(key string, groups []Group) []string {
 		frameworks = map[string]bool{name: true}
 	}
 	var out []string
-	for _, f := range arenaconfig.TaxonomyFrameworks {
+	for _, f := range all {
 		if !frameworks[f.Name] {
 			continue
 		}
@@ -381,11 +425,7 @@ func groupAttempts(all []attempt, key string) []Group {
 	})
 	groups := make([]Group, 0, len(keys))
 	for _, k := range keys {
-		g := summarize(k.value, k.expect, byKey[k])
-		if isTaxonomyKey(key) {
-			g.Title = arenaconfig.TaxonomyTitle(k.value)
-		}
-		groups = append(groups, g)
+		groups = append(groups, summarize(k.value, k.expect, byKey[k]))
 	}
 	return groups
 }

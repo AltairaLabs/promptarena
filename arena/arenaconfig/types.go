@@ -1209,8 +1209,9 @@ type ObjectiveConfig struct {
 	Baseline bool `json:"baseline,omitempty" yaml:"baseline,omitempty"`
 	// Taxonomy maps the objective to risk frameworks, as <framework>:<id>
 	// entries such as owasp-llm:LLM01, owasp-agentic:ASI02 or
-	// atlas:AML.T0051. The objectives report groups attempts by each entry.
-	// Entries take dataset row {placeholders}.
+	// atlas:AML.T0051, or to the config's pack governance as obligation:<id>
+	// or misuse:<slug of a foreseeable_misuse entry>. The objectives report
+	// groups attempts by each entry. Entries take dataset row {placeholders}.
 	Taxonomy []string `json:"taxonomy,omitempty" yaml:"taxonomy,omitempty"`
 }
 

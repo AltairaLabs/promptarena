@@ -65,7 +65,8 @@ func createResultRepository(params *RunParameters, configFile string) (results.R
 		case formatCSV:
 			composite.AddRepository(csvrepo.NewRepository(params.OutDir))
 		case formatObjectives:
-			composite.AddRepository(objectives.NewRepository(params.OutDir, params.ObjectivesGroupBy))
+			composite.AddRepository(objectives.NewRepository(params.OutDir, params.ObjectivesGroupBy,
+				governanceFrameworks(configFile)...))
 		// formatHTML is normalised away in processHTMLSettings; accept it here
 		// too so any caller building params directly still gets a report.
 		case formatMarkdown, formatHTML:
@@ -93,6 +94,20 @@ func createResultRepository(params *RunParameters, configFile string) (results.R
 	}
 
 	return composite, nil
+}
+
+// governanceFrameworks returns the taxonomy frameworks of the pack governance
+// the config declares, for the objectives report, or none when the config
+// can't be loaded: the run itself reports that.
+func governanceFrameworks(configFile string) []arenaconfig.TaxonomyFramework {
+	if configFile == "" {
+		return nil
+	}
+	cfg, err := arenaconfig.LoadConfig(configFile)
+	if err != nil {
+		return nil
+	}
+	return cfg.GovernanceFrameworks()
 }
 
 // createResultSummary creates a summary using the results builder
