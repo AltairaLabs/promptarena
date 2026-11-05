@@ -228,6 +228,7 @@ func (e *Engine) generateScenarioCombinations(region, scenarioID string, provide
 				TrialIndex:        t,
 				TotalTrials:       totalTrials,
 				PerturbationIndex: perturbationIndexForTrial(t, perturbationCount),
+				Repetition:        t / perturbationCount,
 			})
 		}
 	}
@@ -250,6 +251,7 @@ func dataRowCombinations(
 					TrialIndex:        t,
 					TotalTrials:       trials,
 					PerturbationIndex: -1,
+					Repetition:        t,
 					DataRowID:         rows[rowIndex].ID,
 					DataRowIndex:      rowIndex,
 				})
@@ -722,6 +724,9 @@ func (e *Engine) buildConversationRequest(
 		Region:           combo.Region,
 		RunID:            runID,
 		TrialIndex:       combo.TrialIndex,
+		Repetition:       combo.Repetition,
+		DataRowIndex:     combo.DataRowIndex,
+		Perturbation:     combo.PerturbationIndex,
 		EventBus:         e.eventBus,
 		EvalOrchestrator: runOrch,
 		RecordingConfig:  e.recordingConfig,

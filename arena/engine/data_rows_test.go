@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -51,6 +52,32 @@ func TestGenerateScenarioCombinations_DataRows(t *testing.T) {
 	}
 	assert.Equal(t, "fr", combos[0].DataRowID)
 	assert.Equal(t, "jp", combos[3].DataRowID)
+}
+
+func TestGenerateScenarioCombinations_RepetitionPairsEveryVariantWithEveryVoice(t *testing.T) {
+	s := &arenaconfig.Scenario{
+		Providers: []string{"p1"},
+		Trials:    2,
+		Voices:    []string{"a", "b"},
+		Turns: []arenaconfig.TurnDefinition{{Role: "user", Content: "Go to {city}",
+			Perturbations: map[string][]string{"city": {"NYC", "LA"}}}},
+	}
+	e := dataEngine(s)
+	e.scenarios = map[string]*arenaconfig.Scenario{"trip": s}
+	combos, err := e.generateScenarioCombinations("r1", "trip", nil)
+	require.NoError(t, err)
+	pairs := map[[2]string]bool{}
+	for _, c := range combos {
+		pairs[[2]string{s.TrialVoice(c.Repetition), fmt.Sprint(c.PerturbationIndex)}] = true
+	}
+	assert.Len(t, pairs, 4, "both variants are heard in both voices")
+
+	e = dataEngine(dataScenario(3))
+	combos, err = e.generateScenarioCombinations("r1", "capitals", nil)
+	require.NoError(t, err)
+	for _, c := range combos {
+		assert.Equal(t, c.TrialIndex, c.Repetition, "without perturbations a repetition is a trial")
+	}
 }
 
 func TestGroupTrialRuns_GroupsPerDataRow(t *testing.T) {

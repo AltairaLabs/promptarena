@@ -125,6 +125,7 @@ test-examples: build-go ## Validate every example config and mock-run the showca
 	run document-analysis --config config.arena.yaml --ci --formats json; \
 	run mortgage-underwriting --config config.arena.yaml --ci --formats json; \
 	run duplex-streaming  --config config.arena.yaml --ci --provider mock-duplex --scenario duplex-noisy-line --formats json; \
+	run duplex-streaming  --config config.arena.yaml --ci --provider mock-duplex --scenario duplex-voice-best-of-n --formats json; \
 	run voice-guardrails  --config config.arena.yaml --ci --formats json; \
 	run pii-guardrail-red-team --config config.arena.yaml --ci --formats json; \
 	run workflow-skills   --config config.arena.yaml --ci --formats json

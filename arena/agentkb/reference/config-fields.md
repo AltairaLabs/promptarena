@@ -315,7 +315,8 @@ Fields under `spec`:
 | `trials` | integer |  | Number of times to run this scenario for statistical evaluation |
 | `turns` | array |  | — |
 | `variables` | object |  | Template variables to inject into the pack |
-| `voice` | string |  | Voice references an arena-level voice id (see Config.Voices) used to synthesize this scenario's scripted-text user turns. The duplex executor resolves the voice via Config.ResolveVoice.  For selfplay scenarios (turns with role: selfplay-user) the persona owns voice choice; Scenario.Voice is ignored. |
+| `voice` | string |  | Voice references an arena-level voice id (see Config.Voices) used to synthesize this scenario's scripted-text user turns. The duplex executor resolves the voice via Config.ResolveVoice.  For selfplay scenarios (turns with role: selfplay-user) the persona owns voice choice; Scenario.Voice is ignored. To speak each trial in a different voice, set Voices instead. |
+| `voices` | array |  | Voices are arena voice ids (from the arena's voices catalog) taken in turn, one per trial: trial i speaks every user turn, scripted or self-play, in voices[i mod len(voices)], so a scenario's trials try the attack in several voices. With perturbations, the voice changes once every variant has run, so each variant is heard in each voice. It overrides the persona's voice, and can't be set with voice. |
 
 ## tool
 

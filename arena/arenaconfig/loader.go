@@ -723,16 +723,28 @@ func (c *Config) validateVoiceBindings() error {
 	return nil
 }
 
-// validateScenarioVoices checks that every scenario's voice (when set) resolves
-// to a valid arena voice binding. Scenarios without a voice field are allowed —
-// they use persona-driven voices (selfplay) resolved via the arena voice catalog.
+// validateScenarioVoices checks that every scenario's voice and voices (when
+// set) resolve to valid arena voice bindings. Scenarios without either are
+// allowed — they use persona-driven voices (selfplay) resolved via the arena
+// voice catalog.
 func (c *Config) validateScenarioVoices() error {
 	for name, scenario := range c.LoadedScenarios {
-		if scenario.Voice == "" {
-			continue
+		if len(scenario.Voices) > 0 {
+			switch {
+			case scenario.Voice != "":
+				return fmt.Errorf("scenario %s: set voice or voices, not both", name)
+			case scenario.Duplex == nil:
+				return fmt.Errorf("scenario %s: voices need a duplex scenario", name)
+			}
 		}
-		if _, err := c.ResolveVoice(scenario.Voice); err != nil {
-			return fmt.Errorf("scenario %s: %w", name, err)
+		ids := scenario.Voices
+		if scenario.Voice != "" {
+			ids = []string{scenario.Voice}
+		}
+		for _, id := range ids {
+			if _, err := c.ResolveVoice(id); err != nil {
+				return fmt.Errorf("scenario %s: %w", name, err)
+			}
 		}
 	}
 	return nil

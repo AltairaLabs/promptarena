@@ -106,11 +106,30 @@ type AudioTransform struct {
 	// (for example -30), as on a noisy line. The noise is seeded from the
 	// message text, so a run is repeatable.
 	NoiseDBFS *float64 `json:"noise_dbfs,omitempty" yaml:"noise_dbfs,omitempty" jsonschema:"maximum=0"`
+	// Speed changes the tempo and keeps the pitch: 1.25 is a quarter faster,
+	// 0.8 slower. From 0.25 to 4.
+	Speed *float64 `json:"speed,omitempty" yaml:"speed,omitempty" jsonschema:"minimum=0.25,maximum=4"`
+	// PitchSemitones shifts the pitch by this many semitones and keeps the
+	// duration: 12 is an octave up, -3 a minor third down. From -24 to 24.
+	PitchSemitones *float64 `json:"pitch_semitones,omitempty" yaml:"pitch_semitones,omitempty" jsonschema:"minimum=-24,maximum=24"` //nolint:lll
+	// BestOfN applies Best-of-N's audio augmentations (arXiv 2412.03556): a
+	// random tempo (0.8 to 1.25), pitch (up to 3 semitones either way), volume
+	// (up to 6 dB either way) and, half the time, background noise (-45 to
+	// -25 dBFS). The draw is seeded per scenario, turn, trial, defaults.seed
+	// and message, so each trial hears its own variant and a run repeats.
+	BestOfN bool `json:"best_of_n,omitempty" yaml:"best_of_n,omitempty"`
 	// Exec pipes the audio through a program: raw 16-bit little-endian mono
 	// PCM on stdin, the same on stdout. ARENA_SAMPLE_RATE carries the sample
 	// rate. timeout_ms, when set, bounds the whole utterance.
 	Exec *TransformExec `json:"exec,omitempty" yaml:"exec,omitempty"`
 }
+
+// The bounds on an audio transform's speed and pitch.
+const (
+	minAudioSpeed     = 0.25
+	maxAudioSpeed     = 4
+	maxPitchSemitones = 24
+)
 
 // validateAudioTransforms checks the turn at turnIndex's audio transforms.
 func validateAudioTransforms(s *Scenario, turn *TurnDefinition, turnIndex int) error {
@@ -127,8 +146,15 @@ func validateAudioTransforms(s *Scenario, turn *TurnDefinition, turnIndex int) e
 		t := &turn.AudioTransforms[i]
 		where := fmt.Sprintf("turns[%d].audio_transforms[%d]", turnIndex, i)
 		switch {
-		case countSet(t.GainDB != nil, t.NoiseDBFS != nil, t.Exec != nil) != 1:
-			return fmt.Errorf("%s: set exactly one of gain_db, noise_dbfs or exec", where)
+		case countSet(t.GainDB != nil, t.NoiseDBFS != nil, t.Speed != nil, t.PitchSemitones != nil,
+			t.BestOfN, t.Exec != nil) != 1:
+			return fmt.Errorf("%s: set exactly one of gain_db, noise_dbfs, speed, pitch_semitones, best_of_n or exec",
+				where)
+		case t.Speed != nil && !(*t.Speed >= minAudioSpeed && *t.Speed <= maxAudioSpeed):
+			return fmt.Errorf("%s.speed must be from %v to %v, got %v", where, minAudioSpeed, maxAudioSpeed, *t.Speed)
+		case t.PitchSemitones != nil && !(math.Abs(*t.PitchSemitones) <= maxPitchSemitones):
+			return fmt.Errorf("%s.pitch_semitones must be from -%v to %v, got %v", where,
+				maxPitchSemitones, maxPitchSemitones, *t.PitchSemitones)
 		case t.GainDB != nil && (math.IsNaN(*t.GainDB) || math.IsInf(*t.GainDB, 0)):
 			return fmt.Errorf("%s.gain_db must be a finite number", where)
 		case t.NoiseDBFS != nil && (math.IsNaN(*t.NoiseDBFS) || math.IsInf(*t.NoiseDBFS, 1)):

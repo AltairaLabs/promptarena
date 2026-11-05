@@ -2,7 +2,6 @@ package selfplay
 
 import (
 	"context"
-	"encoding/binary"
 	"errors"
 	"fmt"
 	"hash/fnv"
@@ -24,26 +23,49 @@ const pcmFullScale = 32767
 // pcmChunk is how many bytes a PCM filter reads from its source at a time.
 const pcmChunk = 4096
 
+// AudioTransformRequest describes the audio an audio transform rewrites.
+type AudioTransformRequest struct {
+	// SampleRate is the PCM stream's sample rate.
+	SampleRate int
+	// Message is the spoken text. It seeds noise, so a run is repeatable.
+	Message string
+	// Scenario, Turn, Trial, DataRow, Perturbation and Seed (defaults.seed)
+	// seed best_of_n along with the message, so each trial hears its own
+	// variant.
+	Scenario     string
+	Turn         int
+	Trial        int
+	DataRow      int
+	Perturbation int
+	Seed         int
+}
+
 // ApplyAudioTransforms wraps a 16-bit little-endian mono PCM stream with the
 // turn's audio transforms, in order. The result streams: each transform
 // works on the audio as it arrives, never on the whole utterance at once.
-// seed makes noise repeatable; the message text is a good one. Closing the
-// returned reader closes src.
+// Closing the returned reader closes src.
 func ApplyAudioTransforms(
 	ctx context.Context, transforms []arenaconfig.AudioTransform, configDir string,
-	src io.ReadCloser, sampleRate int, seed string,
+	src io.ReadCloser, req AudioTransformRequest,
 ) (io.ReadCloser, error) {
 	out := src
 	for i := range transforms {
 		t := &transforms[i]
+		seed := fmt.Sprintf("%s#%d", req.Message, i)
 		switch {
 		case t.GainDB != nil:
 			factor := math.Pow(10, *t.GainDB/20) //nolint:mnd // decibels to amplitude
 			out = newPCMFilter(out, func(s float64) float64 { return s * factor })
 		case t.NoiseDBFS != nil:
-			out = newNoiseFilter(out, *t.NoiseDBFS, fmt.Sprintf("%s#%d", seed, i))
+			out = newNoiseFilter(out, *t.NoiseDBFS, seed)
+		case t.Speed != nil:
+			out = newProcessorFilter(out, newStretcher(*t.Speed, req.SampleRate))
+		case t.PitchSemitones != nil:
+			out = newProcessorFilter(out, newPitchShifter(*t.PitchSemitones, req.SampleRate))
+		case t.BestOfN:
+			out = newBestOfN(out, &req, i)
 		case t.Exec != nil:
-			r, err := newExecAudioFilter(ctx, t.Exec, configDir, out, sampleRate)
+			r, err := newExecAudioFilter(ctx, t.Exec, configDir, out, req.SampleRate)
 			if err != nil {
 				_ = out.Close()
 				return nil, fmt.Errorf("audio_transforms[%d]: %w", i, err)
@@ -54,49 +76,22 @@ func ApplyAudioTransforms(
 	return out, nil
 }
 
-// pcmFilter applies a function to every sample of a PCM16 stream.
-type pcmFilter struct {
-	src     io.ReadCloser
-	fn      func(float64) float64
-	buf     []byte
-	carry   []byte // a trailing odd byte, held until its pair arrives
-	pending []byte
-	err     error
-}
+// sampleMap applies a function to every sample.
+type sampleMap func(float64) float64
 
-func newPCMFilter(src io.ReadCloser, fn func(float64) float64) *pcmFilter {
-	return &pcmFilter{src: src, fn: fn, buf: make([]byte, pcmChunk)}
-}
-
-func (f *pcmFilter) Read(p []byte) (int, error) {
-	for len(f.pending) == 0 {
-		if f.err != nil {
-			return 0, f.err
-		}
-		n, err := f.src.Read(f.buf)
-		data := append(f.carry, f.buf[:n]...) //nolint:gocritic // carry is at most one byte
-		even := len(data) &^ 1
-		for i := 0; i < even; i += 2 {
-			//nolint:gosec // reinterpreting the PCM16 sample bits, both ways
-			s := float64(int16(binary.LittleEndian.Uint16(data[i:])))
-			binary.LittleEndian.PutUint16(data[i:], uint16(clampSample(f.fn(s)))) //nolint:gosec // as above
-		}
-		f.carry = append([]byte(nil), data[even:]...)
-		f.pending = data[:even]
-		if err != nil {
-			// An odd byte at the very end can't be a sample; pass it on.
-			f.pending = append(f.pending, f.carry...)
-			f.carry = nil
-			f.err = err
-		}
+func (m sampleMap) push(in []float64) []float64 {
+	for i, s := range in {
+		in[i] = m(s)
 	}
-	n := copy(p, f.pending)
-	f.pending = f.pending[n:]
-	return n, nil
+	return in
 }
 
-// Close closes the source.
-func (f *pcmFilter) Close() error { return f.src.Close() }
+func (m sampleMap) flush() []float64 { return nil }
+
+// newPCMFilter applies a function to every sample of a PCM16 stream.
+func newPCMFilter(src io.ReadCloser, fn func(float64) float64) io.ReadCloser {
+	return newProcessorFilter(src, sampleMap(fn))
+}
 
 func clampSample(v float64) int16 {
 	if math.IsNaN(v) {
@@ -112,11 +107,16 @@ func clampSample(v float64) int16 {
 	return int16(v)
 }
 
-// newNoiseFilter adds uniform white noise at level dBFS, seeded from seed.
-func newNoiseFilter(src io.ReadCloser, dbfs float64, seed string) *pcmFilter {
+// seededRNG returns a random source seeded from seed, for repeatable audio.
+func seededRNG(seed string) *rand.Rand {
 	h := fnv.New64a()
 	_, _ = h.Write([]byte(seed))
-	rng := rand.New(rand.NewPCG(h.Sum64(), 0)) //nolint:gosec // repeatable test noise, not security
+	return rand.New(rand.NewPCG(h.Sum64(), 0)) //nolint:gosec // repeatable test audio, not security
+}
+
+// newNoiseFilter adds uniform white noise at level dBFS, seeded from seed.
+func newNoiseFilter(src io.ReadCloser, dbfs float64, seed string) io.ReadCloser {
+	rng := seededRNG(seed)
 	// Uniform noise on [-a, a] has RMS a/√3; scale so its RMS is the level.
 	amplitude := math.Pow(10, dbfs/20) * pcmFullScale * math.Sqrt(3) //nolint:mnd // dB to amplitude, uniform RMS
 	return newPCMFilter(src, func(s float64) float64 { return s + (rng.Float64()*2-1)*amplitude })

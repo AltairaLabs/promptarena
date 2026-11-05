@@ -707,8 +707,16 @@ type Scenario struct {
 	// resolves the voice via Config.ResolveVoice.
 	//
 	// For selfplay scenarios (turns with role: selfplay-user) the persona owns
-	// voice choice; Scenario.Voice is ignored.
+	// voice choice; Scenario.Voice is ignored. To speak each trial in a
+	// different voice, set Voices instead.
 	Voice string `yaml:"voice,omitempty" json:"voice,omitempty"`
+	// Voices are arena voice ids (from the arena's voices catalog) taken in
+	// turn, one per trial: trial i speaks every user turn, scripted or
+	// self-play, in voices[i mod len(voices)], so a scenario's trials try the
+	// attack in several voices. With perturbations, the voice changes once
+	// every variant has run, so each variant is heard in each voice. It
+	// overrides the persona's voice, and can't be set with voice.
+	Voices []string `yaml:"voices,omitempty" json:"voices,omitempty"`
 
 	// Variables are injected into the pack's template variables.
 	Variables map[string]string `json:"variables,omitempty" yaml:"variables,omitempty" jsonschema:"description=Template variables to inject into the pack"` //nolint:lll

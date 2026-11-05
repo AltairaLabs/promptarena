@@ -71,6 +71,14 @@ type ConversationRequest struct {
 	RunID string // Unique identifier for this run
 	// TrialIndex is the 0-based trial this run is, when the scenario has trials.
 	TrialIndex int
+	// Repetition is RunCombination.Repetition: the trial counted once per
+	// cycle of perturbation variants. It picks the voice from the scenario's
+	// voices.
+	Repetition int
+	// DataRowIndex and Perturbation are the run's dataset row and
+	// perturbation variant (-1 for none); with the trial they seed best_of_n.
+	DataRowIndex int
+	Perturbation int
 	Metadata   map[string]string // Additional metadata for debugging/tracing
 
 	// Event bus for runtime/TUI events

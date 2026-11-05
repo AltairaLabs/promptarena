@@ -97,4 +97,24 @@ func TestValidateAudioTransforms(t *testing.T) {
 	}
 	both := duplex(AudioTransform{GainDB: &g, NoiseDBFS: &n})
 	assert.ErrorContains(t, validateAudioTransforms(&both, &both.Turns[0], 0), "set exactly one")
+	both = duplex(AudioTransform{BestOfN: true, Speed: &g})
+	assert.ErrorContains(t, validateAudioTransforms(&both, &both.Turns[0], 0), "set exactly one")
+}
+
+func TestValidateAudioTransforms_SpeedAndPitch(t *testing.T) {
+	duplex := func(ts ...AudioTransform) Scenario {
+		return Scenario{ID: "s", Duplex: &DuplexConfig{}, Turns: []TurnDefinition{{Role: "user", Content: "hi", AudioTransforms: ts}}}
+	}
+	fast, up := 1.25, -3.0
+	ok := duplex(AudioTransform{Speed: &fast}, AudioTransform{PitchSemitones: &up}, AudioTransform{BestOfN: true})
+	assert.NoError(t, validateAudioTransforms(&ok, &ok.Turns[0], 0))
+
+	for _, bad := range []float64{0, 0.2, 5, math.NaN(), math.Inf(1)} {
+		s := duplex(AudioTransform{Speed: &bad})
+		assert.ErrorContains(t, validateAudioTransforms(&s, &s.Turns[0], 0), "speed must be from 0.25 to 4", bad)
+	}
+	for _, bad := range []float64{25, -30, math.NaN(), math.Inf(-1)} {
+		s := duplex(AudioTransform{PitchSemitones: &bad})
+		assert.ErrorContains(t, validateAudioTransforms(&s, &s.Turns[0], 0), "pitch_semitones must be from -24 to 24", bad)
+	}
 }

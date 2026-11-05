@@ -340,25 +340,43 @@ func turnHasAudioPart(turn *arenaconfig.TurnDefinition) bool {
 	return false
 }
 
-// resolveTTSProvider returns the loaded TTS provider for a turn by looking
-// up the persona's voice id in the arena's voice catalog. Returns nil, nil if
-// the turn has no associated persona or the persona declares no voice.
+// resolveTTSProvider returns the loaded TTS provider for a self-play turn by
+// looking up its voice id in the arena's voice catalog: the repetition's
+// voice from the scenario's voices, else the persona's. Returns nil, nil if
+// there is neither.
 func resolveTTSProvider(
 	arenaConfig *arenaconfig.Config,
+	scenario *arenaconfig.Scenario,
+	repetition int,
 	persona *arenaconfig.UserPersonaPack,
 ) (*config.Provider, error) {
-	if arenaConfig == nil || persona == nil || persona.Voice == "" {
+	if arenaConfig == nil {
 		return nil, nil
 	}
-	return arenaConfig.ResolveVoice(persona.Voice)
+	if voice := scenario.TrialVoice(repetition); voice != "" {
+		p, err := arenaConfig.ResolveVoice(voice)
+		if err != nil {
+			return nil, fmt.Errorf("scenario voices: %w", err)
+		}
+		return p, nil
+	}
+	if persona == nil || persona.Voice == "" {
+		return nil, nil
+	}
+	p, err := arenaConfig.ResolveVoice(persona.Voice)
+	if err != nil {
+		return nil, fmt.Errorf("persona %s: %w", persona.ID, err)
+	}
+	return p, nil
 }
 
 // processScriptedTextDuplexTurn handles user turns whose content is plain text
 // (no audio parts). The text is synthesized via TTS and streamed to the duplex
 // provider.
 //
-// The scenario must declare a voice via spec.voice, which is resolved through
-// the arena voice catalog (Config.ResolveVoice).
+// The scenario must declare a voice via its voice field, or one per
+// repetition via its voices field, resolved through the arena voice catalog
+// (Config.ResolveVoice).
 func (de *DuplexConversationExecutor) processScriptedTextDuplexTurn(
 	ctx context.Context,
 	req *ConversationRequest,
@@ -371,14 +389,21 @@ func (de *DuplexConversationExecutor) processScriptedTextDuplexTurn(
 		return fmt.Errorf("self-play registry not configured for duplex turn %d (required for TTS)", turnIdx)
 	}
 
-	if req.Scenario == nil || req.Scenario.Voice == "" {
+	voice := ""
+	if req.Scenario != nil {
+		voice = req.Scenario.Voice
+		if v := req.Scenario.TrialVoice(req.Repetition); v != "" {
+			voice = v
+		}
+	}
+	if voice == "" {
 		return fmt.Errorf(
-			"TTS configuration required for scripted-text duplex turn %d: set spec.voice on the scenario",
+			"TTS configuration required for scripted-text duplex turn %d: set spec.voice or spec.voices on the scenario",
 			turnIdx,
 		)
 	}
 
-	ttsProvider, err := req.Config.ResolveVoice(req.Scenario.Voice)
+	ttsProvider, err := req.Config.ResolveVoice(voice)
 	if err != nil {
 		return fmt.Errorf("resolving voice for scripted-text turn %d: %w", turnIdx, err)
 	}
@@ -396,7 +421,7 @@ func (de *DuplexConversationExecutor) processScriptedTextDuplexTurn(
 		text = sent
 	}
 	return de.streamTextAsAudio(
-		ctx, text, ttsProvider, meta, audioPlanFor(req, turn),
+		ctx, text, ttsProvider, meta, audioPlanFor(req, turn, turnIdx),
 		inputChan, outputChan,
 	)
 }
@@ -634,12 +659,13 @@ func (de *DuplexConversationExecutor) processSelfPlayDuplexTurn(
 		return fmt.Errorf("self-play registry not configured for duplex turn %d", turnIdx)
 	}
 
-	// Resolve TTS via the persona → voice catalog path. The persona must declare
-	// a voice id (persona.Voice != "") that maps to a loaded TTS provider yaml.
+	// Resolve TTS via the voice catalog: the repetition's voice from the
+	// scenario's voices, else the persona's, which must map to a loaded TTS
+	// provider yaml.
 	persona := de.selfPlayRegistry.GetPersona(turn.Persona)
-	ttsProvider, err := resolveTTSProvider(req.Config, persona)
+	ttsProvider, err := resolveTTSProvider(req.Config, req.Scenario, req.Repetition, persona)
 	if err != nil {
-		return fmt.Errorf("resolving voice for persona %s: %w", turn.Persona, err)
+		return fmt.Errorf("resolving voice for self-play duplex turn %d: %w", turnIdx, err)
 	}
 	if ttsProvider == nil {
 		return fmt.Errorf(
@@ -689,7 +715,7 @@ func (de *DuplexConversationExecutor) processSelfPlayDuplexTurn(
 	}
 
 	return de.streamTextAsAudio(
-		ctx, generatedText, ttsProvider, turnMeta, audioPlanFor(req, turn),
+		ctx, generatedText, ttsProvider, turnMeta, audioPlanFor(req, turn, turnIdx),
 		inputChan, outputChan,
 	)
 }
@@ -827,8 +853,10 @@ func (de *DuplexConversationExecutor) streamTextAsAudio(
 	if audio != nil && len(audio.transforms) > 0 {
 		// After the TTS cache: the cached audio stays as synthesized, and
 		// the agent hears the transformed stream.
+		areq := audio.request
+		areq.SampleRate, areq.Message = stream.SampleRate, text
 		stream.Reader, err = selfplay.ApplyAudioTransforms(ctx, audio.transforms, audio.configDir,
-			stream.Reader, stream.SampleRate, text)
+			stream.Reader, areq)
 		if err != nil {
 			return fmt.Errorf("failed to transform turn audio: %w", err)
 		}
@@ -1244,16 +1272,24 @@ func stampTTSCostInMeta(
 type audioPlan struct {
 	transforms []arenaconfig.AudioTransform
 	configDir  string
+	// request carries what seeds best_of_n; the stream fills in the rest.
+	request selfplay.AudioTransformRequest
 }
 
 // audioPlanFor returns the turn's audio transforms, or nil when it has none.
-func audioPlanFor(req *ConversationRequest, turn *arenaconfig.TurnDefinition) *audioPlan {
+func audioPlanFor(req *ConversationRequest, turn *arenaconfig.TurnDefinition, turnIdx int) *audioPlan {
 	if len(turn.AudioTransforms) == 0 {
 		return nil
 	}
-	dir := ""
+	plan := &audioPlan{transforms: turn.AudioTransforms,
+		request: selfplay.AudioTransformRequest{Turn: turnIdx, Trial: req.TrialIndex,
+			DataRow: req.DataRowIndex, Perturbation: req.Perturbation}}
 	if req.Config != nil {
-		dir = req.Config.ConfigDir
+		plan.configDir = req.Config.ConfigDir
+		plan.request.Seed = req.Config.Defaults.Seed
 	}
-	return &audioPlan{transforms: turn.AudioTransforms, configDir: dir}
+	if req.Scenario != nil {
+		plan.request.Scenario = req.Scenario.ID
+	}
+	return plan
 }

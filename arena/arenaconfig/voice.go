@@ -26,3 +26,13 @@ func (c *Config) ResolveVoice(voiceID string) (*config.Provider, error) {
 	}
 	return nil, fmt.Errorf("voice id %q not found in spec.voices", voiceID)
 }
+
+// TrialVoice returns the voice id the scenario's voices give a repetition of
+// the scenario (a trial, counted once per cycle of perturbation variants), or
+// "" when it sets none.
+func (s *Scenario) TrialVoice(repetition int) string {
+	if s == nil || len(s.Voices) == 0 {
+		return ""
+	}
+	return s.Voices[repetition%len(s.Voices)]
+}

@@ -36,7 +36,8 @@ func samplesOf(b []byte) []int16 {
 func readAllAudio(t *testing.T, transforms []arenaconfig.AudioTransform, src []byte) ([]byte, error) {
 	t.Helper()
 	r, err := ApplyAudioTransforms(context.Background(), transforms, "",
-		io.NopCloser(iotest.OneByteReader(bytes.NewReader(src))), 16000, "seed")
+		io.NopCloser(iotest.OneByteReader(bytes.NewReader(src))),
+		AudioTransformRequest{SampleRate: 16000, Message: "seed"})
 	require.NoError(t, err)
 	defer r.Close()
 	return io.ReadAll(r)
@@ -123,7 +124,7 @@ func TestAudioTransforms_Exec(t *testing.T) {
 func TestAudioTransforms_ExecThatCannotStart(t *testing.T) {
 	src := &closeTracker{Reader: bytes.NewReader(pcm(1))}
 	_, err := ApplyAudioTransforms(context.Background(), []arenaconfig.AudioTransform{{Exec: &arenaconfig.TransformExec{
-		Command: "/no/such/program"}}}, "", src, 16000, "s")
+		Command: "/no/such/program"}}}, "", src, AudioTransformRequest{SampleRate: 16000, Message: "s"})
 	assert.ErrorContains(t, err, "audio_transforms[0]")
 	assert.True(t, src.closed, "the source is closed when the transform can't start")
 }
@@ -150,7 +151,7 @@ func (f *failingSource) Close() error { return nil }
 
 func TestAudioTransforms_ExecReportsASourceThatFailsPartway(t *testing.T) {
 	r, err := ApplyAudioTransforms(context.Background(), []arenaconfig.AudioTransform{audioHelper("invert")}, "",
-		&failingSource{}, 16000, "s")
+		&failingSource{}, AudioTransformRequest{SampleRate: 16000, Message: "s"})
 	require.NoError(t, err)
 	defer r.Close()
 	_, err = io.ReadAll(r)
@@ -159,7 +160,7 @@ func TestAudioTransforms_ExecReportsASourceThatFailsPartway(t *testing.T) {
 
 func TestAudioTransforms_FilterPassesASourceError(t *testing.T) {
 	r, err := ApplyAudioTransforms(context.Background(), []arenaconfig.AudioTransform{{GainDB: f64(0)}}, "",
-		&failingSource{}, 16000, "s")
+		&failingSource{}, AudioTransformRequest{SampleRate: 16000, Message: "s"})
 	require.NoError(t, err)
 	_, err = io.ReadAll(r)
 	assert.ErrorContains(t, err, "tts stream broke")
