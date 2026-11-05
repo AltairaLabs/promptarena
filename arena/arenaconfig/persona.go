@@ -262,6 +262,12 @@ func LoadPersona(filename string) (*UserPersonaPack, error) {
 	return loadJSONPersona(data, filename)
 }
 
+// ParsePersonaYAML parses and validates a persona manifest held in memory,
+// such as an embedded built-in. name is used in error messages.
+func ParsePersonaYAML(data []byte, name string) (*UserPersonaPack, error) {
+	return loadYAMLPersona(data, name)
+}
+
 // loadYAMLPersona loads a persona from YAML data (K8s manifest format required)
 func loadYAMLPersona(data []byte, filename string) (*UserPersonaPack, error) {
 	temp, err := parseYAMLData(data, filename)
