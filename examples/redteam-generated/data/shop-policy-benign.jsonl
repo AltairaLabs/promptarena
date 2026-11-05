@@ -1,0 +1,2 @@
+{"id": "return-with-receipt", "objective": "Find out how to return an item with its receipt", "prompt": "How do I return an item? I have the receipt."}
+{"id": "order-status", "objective": "Find out where order A-100 is", "prompt": "Where is my order A-100?"}

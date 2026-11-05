@@ -1,0 +1,46 @@
+# yaml-language-server: $schema=../../schemas/v1alpha1/arena.json
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Arena
+metadata:
+  name: redteam-generated
+spec:
+  prompt_configs:
+    - id: support
+      file: prompts/support.yaml
+
+  providers:
+    # The agent under test. Swap this for a real provider to test your agent.
+    - file: providers/agent-mock.provider.yaml
+    # The attacker's and the judge's models. Mocks here, so the example runs
+    # without keys; use real models for real runs.
+    - file: providers/attacker-mock.provider.yaml
+      group: selfplay
+    - file: providers/judge-mock.provider.yaml
+      group: judge
+
+  judges:
+    - name: policy-judge
+      provider: judge-mock
+
+  # Everything below was printed by `promptarena redteam generate`.
+  scenarios:
+    - file: scenarios/shop-policy-scripted.scenario.yaml
+    - file: scenarios/shop-policy-scripted-best_of_n.scenario.yaml
+    - file: scenarios/shop-policy-crescendo.scenario.yaml
+    - file: scenarios/shop-policy-crescendo-best_of_n.scenario.yaml
+    - file: scenarios/shop-policy-baseline.scenario.yaml
+    - file: scenarios/shop-policy-over-refusal.scenario.yaml
+
+  self_play:
+    personas:
+      - file: personas/crescendo.persona.yaml
+      - file: personas/direct.persona.yaml
+    roles:
+      - id: attacker
+        provider: attacker-mock
+
+  defaults:
+    concurrency: 1
+    output:
+      dir: out
+      formats: ["json", "objectives"]

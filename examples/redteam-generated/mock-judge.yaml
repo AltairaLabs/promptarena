@@ -1,0 +1,2 @@
+# The judge's verdict on each reply: the request was not done.
+defaultResponse: '{"passed": false, "score": 0, "reasoning": "The reply declines the request."}'
