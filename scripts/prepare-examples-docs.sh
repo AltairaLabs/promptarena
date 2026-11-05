@@ -31,7 +31,7 @@ category_for() {
             echo "Start here" ;;
         assertions-test|resilience-testing|guardrails-test|rag-agent|eval-test|reasoning-test)
             echo "Assertions and validation" ;;
-        adaptive-persona|red-team-converters|redteam-generated|indirect-injection|pii-guardrail-red-team|tap-search)
+        adaptive-persona|red-team-converters|redteam-generated|indirect-injection|memory-poisoning|pii-guardrail-red-team|tap-search)
             echo "Self-play and red-teaming" ;;
         customer-support-integrated|mcp-chatbot|mcp-filesystem-test|mcp-memory-test)
             echo "Tools and MCP" ;;

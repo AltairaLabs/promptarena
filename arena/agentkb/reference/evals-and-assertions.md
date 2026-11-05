@@ -62,6 +62,7 @@ Two envelopes carry that entry, and they are **not** the same schema:
 | `llm_judge_session` | session | 0..1 raw signal | An LLM judges the whole session against a rubric. Requires a judge provider. |
 | `llm_judge_tool_calls` | session | 0..1 raw signal | An LLM judges the session's tool calls against a rubric. Requires a judge provider. |
 | `max_length` | turn | boolean gate | Output is at most the given length (characters/tokens). |
+| `memory_contains` | session | 0/1 | Whether the run's long-term memory store holds an entry matching patterns (case-insensitive, all must appear) and/or regex, scored from the stored memories in the run's own scope, not the transcript. Seed memories are skipped unless include_seeded. 1 = found; as an objective success check it scores memory poisoning; assert max_score 0 for "never stored". |
 | `min_length` | turn | boolean gate | Output is at least the given length (characters/tokens). |
 | `no_tool_errors` | turn | boolean gate | Tools executed without returning errors. |
 | `outcome_equivalent` | session | 0..1 raw signal | Whether two outputs are semantically equivalent. |

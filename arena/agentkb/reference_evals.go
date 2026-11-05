@@ -11,8 +11,9 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/v2/evals"
 	_ "github.com/AltairaLabs/PromptKit/runtime/v2/evals/handlers" // register default handlers
 
-	_ "github.com/AltairaLabs/promptarena/v2/arena/assertions/canary"  // register the canary eval
-	_ "github.com/AltairaLabs/promptarena/v2/arena/assertions/refusal" // register the refusal eval
+	_ "github.com/AltairaLabs/promptarena/v2/arena/assertions/canary"      // register the canary eval
+	_ "github.com/AltairaLabs/promptarena/v2/arena/assertions/memorystate" // register the memory_contains eval
+	_ "github.com/AltairaLabs/promptarena/v2/arena/assertions/refusal"     // register the refusal eval
 )
 
 //go:embed evalmeta.yaml

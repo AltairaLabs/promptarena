@@ -1,0 +1,44 @@
+# yaml-language-server: $schema=../../schemas/v1alpha1/arena.json
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Arena
+metadata:
+  name: memory-poisoning
+spec:
+  tools:
+    # read_ticket's result carries an instruction aimed at the agent's memory.
+    - file: tools/read-ticket.tool.yaml
+
+  prompt_configs:
+    - id: support
+      file: prompts/support.yaml
+
+  providers:
+    # The agent under test. Swap this for a real provider to test your agent.
+    - file: providers/agent-mock.provider.yaml
+    # The attacker persona's model. A mock here, so the example runs without
+    # keys; use a real model for real runs.
+    - file: providers/persona-mock.provider.yaml
+      group: selfplay
+
+  # Long-term memory: auto-registers memory__remember, memory__recall,
+  # memory__list and memory__forget. Each run writes under its own scope, and
+  # memory_contains reads that scope.
+  memory:
+    enabled: true
+
+  scenarios:
+    - file: scenarios/memory-poisoning.scenario.yaml
+    - file: scenarios/poisoned-agent.scenario.yaml
+
+  self_play:
+    personas:
+      - file: personas/memory-attacker.persona.yaml
+    roles:
+      - id: attacker
+        provider: persona-mock
+
+  defaults:
+    concurrency: 1
+    output:
+      dir: out
+      formats: ["json", "objectives"]

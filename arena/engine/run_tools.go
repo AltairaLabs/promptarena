@@ -3,6 +3,8 @@ package engine
 import (
 	"context"
 
+	"github.com/AltairaLabs/promptarena/v2/arena/assertions/memorystate"
+
 	"github.com/AltairaLabs/PromptKit/runtime/v2/memory"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/skills"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/tools"
@@ -47,6 +49,11 @@ type runTools struct {
 	// memory is not configured. Kept so seed memories land in the same place
 	// the run's tool calls will.
 	memoryScope map[string]string
+
+	// memoryStore is the engine's memory store, nil when memory is not
+	// configured. Bound to the run context with the scope, so memory_contains
+	// reads this run's memories and no other's.
+	memoryStore memory.Store
 }
 
 // buildRunTools creates the per-run tool state.
@@ -70,6 +77,7 @@ func (e *Engine) buildRunTools(scenarioID, runID string) *runTools {
 			memoryScopeScenario: scenarioID,
 			memoryScopeRun:      runID,
 		}
+		rt.memoryStore = e.memoryStore
 	}
 
 	if e.skillsFactory != nil {
@@ -92,6 +100,7 @@ func (rt *runTools) bindContext(ctx context.Context) context.Context {
 	}
 	if rt.memoryScope != nil {
 		ctx = memory.WithScope(ctx, rt.memoryScope)
+		ctx = memorystate.WithStore(ctx, rt.memoryStore)
 	}
 	return ctx
 }
