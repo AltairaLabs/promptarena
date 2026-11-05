@@ -168,6 +168,64 @@ type ObjectiveTrialStats struct {
 	// invented a specific it was not given (see persona facts). They are not
 	// counted in Attempts, so the simulator's mistakes don't move the rate.
 	Unreliable int `json:"unreliable,omitempty"`
+	// Search totals what the objective's tree search did across the trials,
+	// when the objective has one.
+	Search *SearchStats `json:"search,omitempty"`
+}
+
+// SearchStats is what an objective's tree search (objective.search) did: in
+// one run, or totalled over several, as Searches says.
+type SearchStats struct {
+	// Searches is how many tree searches these figures total.
+	Searches int `json:"searches"`
+	// DepthReached is the deepest exchange each search sent to the agent,
+	// summed over the searches.
+	DepthReached int `json:"depth_reached"`
+	// Nodes is how many branches were sent to the agent and scored.
+	Nodes int `json:"nodes"`
+	// PrunedOffTopic is how many drafted messages the judge dropped as no
+	// longer pursuing the objective, before they were sent.
+	PrunedOffTopic int `json:"pruned_off_topic"`
+	// AttackerCalls is how many messages the persona drafted.
+	AttackerCalls int `json:"attacker_calls"`
+	// TargetCalls is how many messages were sent to the agent. An agent that
+	// uses tools may make several model calls for one message.
+	TargetCalls int `json:"target_calls"`
+	// JudgeCalls is how many times the search's judge was asked to score a
+	// reply or check a draft, and JudgeErrors how many of those failed; a
+	// failed score falls back to the success checks, and a failed check
+	// keeps the draft.
+	JudgeCalls  int `json:"judge_calls"`
+	JudgeErrors int `json:"judge_errors,omitempty"`
+	// BestScore is the highest score a branch reached (1–10), the best over
+	// the searches.
+	BestScore float64 `json:"best_score"`
+}
+
+// add totals o into s.
+func (s *SearchStats) add(o *SearchStats) {
+	s.Searches += o.Searches
+	s.DepthReached += o.DepthReached
+	s.Nodes += o.Nodes
+	s.PrunedOffTopic += o.PrunedOffTopic
+	s.AttackerCalls += o.AttackerCalls
+	s.TargetCalls += o.TargetCalls
+	s.JudgeCalls += o.JudgeCalls
+	s.JudgeErrors += o.JudgeErrors
+	s.BestScore = max(s.BestScore, o.BestScore)
+}
+
+// AddSearchStats returns total with o added to it, starting a new total when
+// total is nil. A nil o leaves total as it is.
+func AddSearchStats(total, o *SearchStats) *SearchStats {
+	if o == nil {
+		return total
+	}
+	if total == nil {
+		total = &SearchStats{}
+	}
+	total.add(o)
+	return total
 }
 
 // AssertionTrialStats holds per-assertion statistics across trial runs.

@@ -113,6 +113,8 @@ type objectiveOutcome struct {
 	// personaOutcome is the persona state outcome that ended the turn, such
 	// as abandoned; empty when no stop_when condition did.
 	personaOutcome string
+	// search is what the objective's tree search did; nil without one.
+	search *SearchStats
 }
 
 // rewoundExchange is one exchange removed from the conversation by the
@@ -174,6 +176,9 @@ func (o *objectiveOutcome) result() asrt.ConversationValidationResult {
 	if len(o.cfg.Taxonomy) > 0 {
 		details[objectiveKeyTaxonomy] = slices.Clone(o.cfg.Taxonomy)
 	}
+	if o.search != nil {
+		details[objectiveKeySearch] = searchDetail(o.cfg.Search, o.search)
+	}
 	if len(o.rewinds) > 0 {
 		rewinds := make([]map[string]interface{}, len(o.rewinds))
 		for i := range o.rewinds {
@@ -208,6 +213,10 @@ func (o *objectiveOutcome) message() string {
 	}
 	if o.personaOutcome != "" {
 		msg += fmt.Sprintf(" (persona %s)", o.personaOutcome)
+	}
+	if s := o.search; s != nil {
+		msg += fmt.Sprintf(" (tree search: %d branches, %d pruned, best score %.1f)",
+			s.Nodes, s.PrunedOffTopic, s.BestScore)
 	}
 	return msg
 }
@@ -401,7 +410,7 @@ func (t *objectiveTracker) truncate(ctx context.Context, cost *types.CostInfo) e
 	if state.Metadata == nil {
 		state.Metadata = map[string]interface{}{}
 	}
-	state.Metadata[rewoundCostMetaKey] = addCostToMeta(state.Metadata[rewoundCostMetaKey], cost)
+	state.Metadata[rewoundCostMetaKey] = addCostToMeta(state.Metadata[rewoundCostMetaKey], cost, rewoundCapability)
 	return writer.Save(ctx, state)
 }
 

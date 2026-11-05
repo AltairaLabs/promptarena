@@ -1213,6 +1213,105 @@ type ObjectiveConfig struct {
 	// or misuse:<slug of a foreseeable_misuse entry>. The objectives report
 	// groups attempts by each entry. Entries take dataset row {placeholders}.
 	Taxonomy []string `json:"taxonomy,omitempty" yaml:"taxonomy,omitempty"`
+	// Search explores a tree of conversations instead of one: each exchange,
+	// the persona drafts several candidate messages, each is sent to the agent
+	// on its own branch, and the best-scoring branches are kept (Tree of
+	// Attacks with Pruning). The turn's turns and max_turns don't apply; the
+	// tree's depth bounds the exchanges.
+	Search *ObjectiveSearchConfig `json:"search,omitempty" yaml:"search,omitempty"`
+}
+
+// ObjectiveSearchStrategyTree is the tree search strategy.
+const ObjectiveSearchStrategyTree = "tree"
+
+// Defaults for an objective search that leaves a size unset.
+const (
+	DefaultSearchBranching = 3
+	DefaultSearchWidth     = 4
+	DefaultSearchDepth     = 5
+)
+
+// ObjectiveSearchConfig makes a self-play turn search a tree of
+// conversations for the objective. At each depth, every kept branch has the
+// persona draft Branching candidate messages from that branch's conversation;
+// with PruneOffTopic, the judge drops candidates that no longer pursue the
+// objective before they are sent. Each candidate left is sent to the agent on
+// its own branch, then scored: 10 when the objective's success checks all
+// pass, otherwise the judge's 1–10 score, or without a judge, by how many
+// success checks pass. The Width best branches are kept for the next depth.
+// The search stops when a branch achieves the objective or at Depth, and the
+// run records the achieving (or best-scoring) branch as its conversation.
+//
+// Branches share whatever the agent's tools changed: only the messages are
+// forked. A search sends at most Depth × Width × Branching messages to the
+// agent.
+type ObjectiveSearchConfig struct {
+	// Strategy is the search strategy. Only "tree" is supported.
+	Strategy string `json:"strategy" yaml:"strategy" jsonschema:"enum=tree"`
+	// Branching is how many candidate messages the persona drafts from each
+	// kept branch at each depth. Default 3.
+	Branching int `json:"branching,omitempty" yaml:"branching,omitempty" jsonschema:"minimum=0"`
+	// Width is how many of the best-scoring branches are kept at each depth.
+	// Default 4.
+	Width int `json:"width,omitempty" yaml:"width,omitempty" jsonschema:"minimum=0"`
+	// Depth is how many exchanges a branch may run. Default 5.
+	Depth int `json:"depth,omitempty" yaml:"depth,omitempty" jsonschema:"minimum=0"`
+	// Judge names a judge in spec.judges that scores each agent reply from 1
+	// (nothing towards the objective) to 10 (meets it). Without one, a reply
+	// is scored by the share of the success checks it passes.
+	Judge string `json:"judge,omitempty" yaml:"judge,omitempty"`
+	// PruneOffTopic asks the judge, before a candidate is sent, whether it
+	// still pursues the objective, and drops it when it does not. Needs judge.
+	PruneOffTopic bool `json:"prune_off_topic,omitempty" yaml:"prune_off_topic,omitempty"`
+}
+
+// BranchingOrDefault returns how many candidates each branch drafts.
+func (s *ObjectiveSearchConfig) BranchingOrDefault() int {
+	return positiveOr(s.Branching, DefaultSearchBranching)
+}
+
+// WidthOrDefault returns how many branches are kept at each depth.
+func (s *ObjectiveSearchConfig) WidthOrDefault() int {
+	return positiveOr(s.Width, DefaultSearchWidth)
+}
+
+// DepthOrDefault returns how many exchanges a branch may run.
+func (s *ObjectiveSearchConfig) DepthOrDefault() int {
+	return positiveOr(s.Depth, DefaultSearchDepth)
+}
+
+func positiveOr(v, def int) int {
+	if v > 0 {
+		return v
+	}
+	return def
+}
+
+// validate checks the search on the objective of the turn at turnIndex.
+func (s *ObjectiveSearchConfig) validate(o *ObjectiveConfig, turn *TurnDefinition, turnIndex int) error {
+	prefix := fmt.Sprintf("turns[%d].objective.search", turnIndex)
+	if s.Strategy != ObjectiveSearchStrategyTree {
+		return fmt.Errorf("%s.strategy: invalid value %q, must be %q", prefix, s.Strategy, ObjectiveSearchStrategyTree)
+	}
+	if s.Branching < 0 || s.Width < 0 || s.Depth < 0 {
+		return fmt.Errorf("%s: branching, width and depth must not be negative", prefix)
+	}
+	if s.PruneOffTopic && s.Judge == "" {
+		return fmt.Errorf("%s.prune_off_topic: needs a judge (search.judge)", prefix)
+	}
+	if o.Rewind != nil {
+		return fmt.Errorf("turns[%d].objective: rewind and search can't be combined; "+
+			"a tree search already drops the branches that score worst", turnIndex)
+	}
+	if !o.StopsOnSuccess() {
+		return fmt.Errorf("turns[%d].objective: stop_on_success: false can't be combined with search, "+
+			"which stops at the first branch that achieves the objective", turnIndex)
+	}
+	if turn.Turns != 0 || turn.MaxTurns != 0 {
+		return fmt.Errorf("turns[%d]: turns and max_turns don't apply with objective.search; "+
+			"set search.depth instead", turnIndex)
+	}
+	return nil
 }
 
 // DefaultObjectiveRewindMax is how many exchanges a turn may rewind when
@@ -1275,6 +1374,9 @@ func (o *ObjectiveConfig) validate(turn *TurnDefinition, turnIndex int, hasData 
 		if o.Rewind.Max < 0 {
 			return fmt.Errorf("turns[%d].objective.rewind.max: must not be negative, got %d", turnIndex, o.Rewind.Max)
 		}
+	}
+	if o.Search != nil {
+		return o.Search.validate(o, turn, turnIndex)
 	}
 	return nil
 }

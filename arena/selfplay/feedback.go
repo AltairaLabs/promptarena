@@ -32,6 +32,13 @@ const (
 	// VarRewindsLeft is how many more exchanges the turn may rewind, on a
 	// turn whose objective has a rewind rule.
 	VarRewindsLeft = "rewinds_left"
+	// VarSearchScore is, on a turn whose objective searches a tree, the score
+	// (1–10) of the agent's last reply on the branch being extended, and empty
+	// on the first exchange.
+	VarSearchScore = "search_score"
+	// VarSearchBranch says which of the branch's candidates is being drafted,
+	// as "2 of 3", on a turn whose objective searches a tree.
+	VarSearchBranch = "search_branch"
 )
 
 // MetaPersonaNotes is the message metadata key that carries a turn's private
@@ -51,7 +58,7 @@ const metaRawResponse = "raw_response"
 
 var feedbackVarKeys = []string{
 	VarExchange, VarObjective, VarObjectiveStatus, VarObjectiveFeedback, VarPersonaNotes,
-	VarRewoundMessage, VarRewoundResponse, VarRewindsLeft,
+	VarRewoundMessage, VarRewoundResponse, VarRewindsLeft, VarSearchScore, VarSearchBranch,
 }
 
 // reNotes matches a <notes>...</notes> block, case-insensitively and across

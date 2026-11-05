@@ -135,8 +135,18 @@ func msgCost(total *types.CostInfo, msg *types.Message) {
 // rewoundCapability labels rewound cost in the report's cost breakdown.
 const rewoundCapability = "rewound"
 
-// addCostToMeta returns existing (a cost map, or nil) with c added to it.
-func addCostToMeta(existing interface{}, c *types.CostInfo) map[string]interface{} {
+// searchCostMetaKey is the conversation metadata key holding what the
+// branches an objective's tree search explored and did not keep cost, so the
+// run's total still counts them. Stored in the same map shape as
+// self_play_cost.
+const searchCostMetaKey = "search_cost"
+
+// searchCapability labels tree search cost in the report's cost breakdown.
+const searchCapability = "search"
+
+// addCostToMeta returns existing (a cost map, or nil) with c added to it,
+// labeled with capability.
+func addCostToMeta(existing interface{}, c *types.CostInfo, capability string) map[string]interface{} {
 	var sum types.CostInfo
 	if m, ok := existing.(map[string]interface{}); ok {
 		sum = costFromMeta(m)
@@ -150,6 +160,6 @@ func addCostToMeta(existing interface{}, c *types.CostInfo) map[string]interface
 		metaOutputCostUSD: sum.OutputCostUSD,
 		metaCachedCostUSD: sum.CachedCostUSD,
 		metaTotalCostUSD:  sum.TotalCost,
-		"capability":      rewoundCapability,
+		"capability":      capability,
 	}
 }

@@ -99,6 +99,10 @@ type Group struct {
 	// objectives (by description) that the two attempted. Nil when no
 	// objective has evaluated attempts on both sides.
 	Lift *float64 `json:"lift,omitempty"`
+	// Search totals what the tree searches (objective.search) behind the
+	// group's attempts did, including unevaluated ones: branches explored and
+	// pruned, the depth reached and the calls made. Nil when none searched.
+	Search *engine.SearchStats `json:"search,omitempty"`
 }
 
 // Grouping is the report for one group-by key.
@@ -159,6 +163,8 @@ type attempt struct {
 	budget *engine.TrialBudgetResult
 	// cost is this objective's share of the run's cost.
 	cost float64
+	// search is what the objective's tree search did, or nil.
+	search *engine.SearchStats
 }
 
 // objectiveMeta is what the report knows about an objective on a scenario
@@ -362,7 +368,7 @@ func attemptsOf(run *engine.RunResult) []attempt {
 				run: run, turnIndex: o.TurnIndex, description: o.Description, expect: expectOrDefault(o.Expect),
 				attempts: o.Attempts, achieved: o.Achieved, achievedAt: o.AchievedAtExchange,
 				unevaluated: o.Unevaluated, unreliable: o.Unreliable, baseline: o.Baseline,
-				taxonomy: o.Taxonomy, budget: run.TrialResults.Budget,
+				taxonomy: o.Taxonomy, budget: run.TrialResults.Budget, search: o.Search,
 			})
 		}
 		return out
@@ -373,7 +379,7 @@ func attemptsOf(run *engine.RunResult) []attempt {
 	for _, o := range outcomes {
 		a := attempt{
 			run: run, turnIndex: o.TurnIndex, description: o.Description, expect: expectOrDefault(o.Expect),
-			baseline: o.Baseline, taxonomy: o.Taxonomy,
+			baseline: o.Baseline, taxonomy: o.Taxonomy, search: o.Search,
 		}
 		switch {
 		case !o.Evaluated:
@@ -521,6 +527,7 @@ func tally(value, expect string, attempts []attempt) Group {
 		g.Unevaluated += a.unevaluated
 		g.Unreliable += a.unreliable
 		g.Cost += a.cost
+		g.Search = engine.AddSearchStats(g.Search, a.search)
 		for _, x := range a.achievedAt {
 			exchangeSum += x
 			exchangeCount++

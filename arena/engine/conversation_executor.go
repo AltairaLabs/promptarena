@@ -37,6 +37,9 @@ type DefaultConversationExecutor struct {
 	selfPlayRegistry *selfplay.Registry
 	promptRegistry   *prompt.Registry
 	evalOrchestrator *EvalOrchestrator
+	// searchJudge returns an objective search's judge; nil builds it from
+	// spec.judges.
+	searchJudge searchJudgeFunc
 }
 
 // NewDefaultConversationExecutor creates a new conversation executor
@@ -238,6 +241,9 @@ func (ce *DefaultConversationExecutor) executeNonStreamingSelfPlayTurn(
 	turnReq turnexecutors.TurnRequest,
 	scenarioTurn arenaconfig.TurnDefinition,
 ) error {
+	if searches(&scenarioTurn) {
+		return ce.runTreeSearch(ctx, req, turnIdx, &scenarioTurn)
+	}
 	_, _, naturalTermination := selfPlayTurnBounds(&scenarioTurn)
 
 	turnReq.SelfPlayRole = scenarioTurn.Role
@@ -529,6 +535,10 @@ func (ce *DefaultConversationExecutor) executeStreamingSelfPlayTurns(
 	turnIdx int,
 	scenarioTurn arenaconfig.TurnDefinition,
 ) error {
+	// A tree search drafts and sends each branch itself, without streaming.
+	if searches(&scenarioTurn) {
+		return ce.runTreeSearch(ctx, req, turnIdx, &scenarioTurn)
+	}
 	_, _, naturalTermination := selfPlayTurnBounds(&scenarioTurn)
 	shouldStream := req.Scenario.ShouldStreamTurn(turnIdx)
 
@@ -980,7 +990,9 @@ func (ce *DefaultConversationExecutor) buildResultFromStateStore(
 	}
 
 	totalCost, toolStats := ce.calculateTotalsFromMessages(messages)
-	addCostFromMetaKey(&totalCost, ce.conversationMetadata(ctx, req), rewoundCostMetaKey)
+	convMeta := ce.conversationMetadata(ctx, req)
+	addCostFromMetaKey(&totalCost, convMeta, rewoundCostMetaKey)
+	addCostFromMetaKey(&totalCost, convMeta, searchCostMetaKey)
 	isSelfPlay, personaID := ce.extractSelfPlayInfo(req.Scenario)
 
 	// Collect media outputs from assistant messages

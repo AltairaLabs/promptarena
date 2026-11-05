@@ -116,6 +116,10 @@ type TurnRequest struct {
 	// SelfPlayRunSeed is the run's defaults.seed, 0 when unset; with the
 	// trial it seeds the random converters.
 	SelfPlayRunSeed int
+	// SelfPlayMessage, when set, is the persona's message for the exchange,
+	// already generated (by SelfPlayExecutor.GenerateUserMessage): it is sent
+	// as it is instead of generating one.
+	SelfPlayMessage *types.Message
 
 	// ConsentOverrides controls consent simulation for client-side tools.
 	// Keys are tool names, values are "grant", "deny", or "timeout".

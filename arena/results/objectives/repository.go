@@ -99,7 +99,7 @@ func RenderMarkdown(report *Report) string {
 		b.WriteString("No run had an objective.\n")
 		return b.String()
 	}
-	cols := optionalColumns{baseline: hasBaseline(report), budget: hasBudget(report)}
+	cols := optionalColumns{baseline: hasBaseline(report), budget: hasBudget(report), search: hasSearch(report)}
 	if cols.budget {
 		b.WriteString("Groups achieved counts the trial groups run under a `trial_budget` in which a trial " +
 			"achieved every objective, with a 95% Wilson interval: the chance of success within the budget. " +
@@ -112,6 +112,11 @@ func RenderMarkdown(report *Report) string {
 		b.WriteString("Baseline attempts are from objectives marked `baseline: true`: the same goal pursued " +
 			"without the attack. They are counted in the Baseline column only, with their cost. Lift is the " +
 			"attack's rate minus the baseline's, in percentage points, over the objectives both attempted.\n\n")
+	}
+	if cols.search {
+		b.WriteString("Tree search totals the objectives searched as a tree (`objective.search`): branches sent " +
+			"to the agent, drafts pruned as off-topic, the mean deepest exchange reached and the best score " +
+			"(1–10), then the persona's drafts, the messages sent to the agent and the judge's calls.\n\n")
 	}
 	b.WriteString("## Overall\n\n")
 	writeTable(&b, "", report.Totals, cols)
@@ -142,6 +147,27 @@ const twoColumnRule = "---|---|"
 type optionalColumns struct {
 	baseline bool
 	budget   bool
+	search   bool
+}
+
+// hasSearch reports whether any objective in the report searched a tree.
+func hasSearch(report *Report) bool {
+	for i := range report.Totals {
+		if report.Totals[i].Search != nil {
+			return true
+		}
+	}
+	return false
+}
+
+// searchCell summarizes a group's tree searches.
+func searchCell(s *engine.SearchStats) string {
+	if s == nil || s.Searches == 0 {
+		return "–"
+	}
+	return fmt.Sprintf("%d branches, %d pruned, depth %.1f, best %.1f; calls: %d attacker, %d target, %d judge",
+		s.Nodes, s.PrunedOffTopic, float64(s.DepthReached)/float64(s.Searches), s.BestScore,
+		s.AttackerCalls, s.TargetCalls, s.JudgeCalls)
 }
 
 // hasBudget reports whether any run in the report had a trial budget.
@@ -170,6 +196,10 @@ func writeTable(b *strings.Builder, by string, groups []Group, cols optionalColu
 		header += " Baseline | Lift |"
 		rule += twoColumnRule
 	}
+	if cols.search {
+		header += " Tree search |"
+		rule += "---|"
+	}
 	fmt.Fprintf(b, header+"\n", first)
 	b.WriteString(rule + "\n")
 	for _, g := range groups {
@@ -195,6 +225,9 @@ func writeTable(b *strings.Builder, by string, groups []Group, cols optionalColu
 		}
 		if cols.baseline {
 			fmt.Fprintf(b, " %s | %s |", baselineCell(g.Baseline), liftCell(g.Lift))
+		}
+		if cols.search {
+			fmt.Fprintf(b, " %s |", searchCell(g.Search))
 		}
 		b.WriteString("\n")
 	}

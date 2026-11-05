@@ -148,3 +148,20 @@ func TestComputeTotalCost_IncludesRewoundCost(t *testing.T) {
 	assert.Equal(t, "rewound", last.Capability)
 	assert.InDelta(t, 0.02, last.USD, 1e-9)
 }
+
+func TestComputeTotalCost_IncludesSearchCost(t *testing.T) {
+	s := NewArenaStateStore()
+	state := &ArenaConversationState{}
+	state.Messages = []types.Message{{Role: "assistant", CostInfo: &types.CostInfo{TotalCost: 0.01}}}
+	state.Metadata = map[string]any{
+		searchCostMetaKey: map[string]any{
+			"total_cost_usd": 0.05, "output_cost_usd": 0.05, "output_tokens": float64(50), "capability": "search",
+		},
+	}
+
+	total := s.computeTotalCost(state)
+
+	assert.InDelta(t, 0.06, total.TotalCost, 1e-9)
+	require.NotEmpty(t, total.Breakdown)
+	assert.Equal(t, "search", total.Breakdown[len(total.Breakdown)-1].Capability)
+}

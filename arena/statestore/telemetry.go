@@ -40,6 +40,11 @@ func (s *ArenaStateStore) extractValidations(state *ArenaConversationState) []Va
 // exchanges a self-play rewind removed cost. Mirrors the engine's key.
 const rewoundCostMetaKey = "rewound_cost"
 
+// searchCostMetaKey is the conversation metadata key holding what the
+// branches an objective's tree search did not keep cost. Mirrors the
+// engine's key.
+const searchCostMetaKey = "search_cost"
+
 // ancillaryMetaCostKeys is the list of Message.Meta keys that carry an
 // ancillary cost contribution (TTS, STT, embedding, image_gen, persona-side
 // LLM via self-play). Mirrors the engine-side list in
@@ -74,6 +79,11 @@ func (s *ArenaStateStore) computeTotalCost(state *ArenaConversationState) types.
 	// what they cost is kept in the conversation metadata.
 	if rewound, ok := state.Metadata[rewoundCostMetaKey].(map[string]any); ok {
 		foldMetaCost(&totalCost, rewound)
+	}
+	// Likewise the branches an objective's tree search explored and did not
+	// keep.
+	if search, ok := state.Metadata[searchCostMetaKey].(map[string]any); ok {
+		foldMetaCost(&totalCost, search)
 	}
 
 	return totalCost
