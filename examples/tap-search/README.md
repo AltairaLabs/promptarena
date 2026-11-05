@@ -22,7 +22,7 @@ The config writes `out/` in the `json` and `objectives` formats.
 |---|---|---|
 | Tree search | `objective.search` in `scenarios/holds-out.scenario.yaml` | `branching: 2`, `width: 2`, `depth: 3`: two drafts from each kept branch, the two best kept, three exchanges deep. |
 | Judge scoring | `search.judge: scorer`, `spec.judges` | Each reply is scored 1–10 towards the objective, and the scores pick the branches to keep. A reply scores 10 only when the objective's `success` checks pass. |
-| Off-topic pruning | `prune_off_topic: true` in `holds-out` | The judge checks each draft before it's sent and drops one that no longer pursues the objective. The mock judge passes every draft, so nothing is pruned here. |
+| Off-topic pruning | `prune_off_topic: true` in `holds-out` | The judge checks each draft before it's sent and drops one that has drifted off the objective. The mock judge passes every draft, so nothing is pruned here. |
 | Search variables | `personas/attacker.persona.yaml` | `{{search_branch}}` ("2 of 2") and `{{search_score}}` (the branch's last score) tell the persona which draft it is writing and how its branch is doing. |
 | Private notes per branch | `private_notes: true` | Notes in a draft stay with the branch it was written on, and never reach the agent. |
 | Stop on success | `positive-control` | The search stops at the first branch whose checks pass, and the run records that branch as its conversation. |

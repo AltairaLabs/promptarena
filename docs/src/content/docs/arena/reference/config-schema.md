@@ -2242,7 +2242,7 @@ Rewound exchanges count towards the turn's `turns` and `max_turns`, and towards 
 
 #### Tree search
 
-A `search` makes the turn explore a tree of conversations for the objective, as in Tree of Attacks with Pruning ([Mehrotra et al., 2023](https://arxiv.org/abs/2312.02119)). Each exchange, every kept branch has the persona draft `branching` candidate messages, each written from that branch's own conversation. With `prune_off_topic`, the judge drops drafts that no longer pursue the objective before they are sent. Each draft left is sent to the agent on its own branch, and the reply is scored. The `width` best-scoring branches go on to the next exchange. The search stops at the first branch whose `success` checks all pass, or after `depth` exchanges.
+A `search` makes the turn explore a tree of conversations for the objective, as in Tree of Attacks with Pruning ([Mehrotra et al., 2023](https://arxiv.org/abs/2312.02119)). Each exchange, every kept branch has the persona draft `branching` candidate messages, each written from that branch's own conversation. With `prune_off_topic`, the judge drops drafts that have drifted off the objective before they are sent. Each draft left is sent to the agent on its own branch, and the reply is scored. The `width` best-scoring branches go on to the next exchange. The search stops at the first branch whose `success` checks all pass, or after `depth` exchanges.
 
 ```yaml
     objective:
