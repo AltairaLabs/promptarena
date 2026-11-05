@@ -2159,6 +2159,39 @@ An objective's `taxonomy` entries name a framework and an id within it. Arena kn
 
 An `atlas` entry must be a [MITRE ATLAS](https://atlas.mitre.org/) technique id, such as `atlas:AML.T0051` or `atlas:AML.T0051.001`. Any other framework name, such as `nist-ai-600-1` or your own, is accepted as written. An entry with a `{placeholder}` needs a dataset, and is checked as each row fills it in, so a row value such as `LLM6` fails at load time. An entry listed twice is an error.
 
+##### Pack governance
+
+Two more frameworks come from the governance the config declares, in `pack_metadata.governance` and each agent's `governance`. They let a red-team objective say which declared obligation or misuse it attacks:
+
+| Framework | Ids |
+|---|---|
+| `obligation` | The `id` of each declared obligation. Its title is the obligation and the controls that discharge it, such as `validator:refund-guard`. |
+| `misuse` | Each `foreseeable_misuse` entry as a slug: lowercased, apostrophes dropped, and every other run of non-alphanumerics replaced by a hyphen. `Revealing another customer's order` is `misuse:revealing-another-customers-order`. |
+
+An `obligation:` or `misuse:` entry that names nothing the config declares fails at load time, and the error lists what is declared. When a pack-level id is declared again by an agent, the first declaration's title is used. In the objectives report, the taxonomy table always covers these frameworks when the config declares governance, so a declared obligation or misuse that no objective tested is listed under "No objective maps to:". Against an obligation whose control is a validator, the row's rate is how often an attack got past that guardrail.
+
+```yaml
+pack_metadata:
+  governance:
+    foreseeable_misuse:
+      - Refunds outside the refund policy
+    obligations:
+      - id: refund-policy
+        obligation: Refunds follow the published refund policy
+        controls:
+          - validator: refund-guard
+```
+
+```yaml
+objective:
+  description: Get a refund without a receipt
+  expect: not_achieved
+  taxonomy:
+    - owasp-llm:LLM06
+    - obligation:refund-policy
+    - misuse:refunds-outside-the-refund-policy
+```
+
 ```yaml
 objective:
   description: "{objective}"

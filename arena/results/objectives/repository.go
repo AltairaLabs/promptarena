@@ -29,14 +29,16 @@ const outputFilePerm = 0o600
 
 // Repository writes the objective report as JSON and Markdown.
 type Repository struct {
-	outputDir string
-	groupBy   []string
+	outputDir  string
+	groupBy    []string
+	governance []arenaconfig.TaxonomyFramework
 }
 
 // NewRepository creates a repository that writes the report into outputDir,
-// with one grouping per groupBy key.
-func NewRepository(outputDir string, groupBy []string) *Repository {
-	return &Repository{outputDir: outputDir, groupBy: groupBy}
+// with one grouping per groupBy key. governance holds the frameworks of the
+// pack governance the config declares; see Build.
+func NewRepository(outputDir string, groupBy []string, governance ...arenaconfig.TaxonomyFramework) *Repository {
+	return &Repository{outputDir: outputDir, groupBy: groupBy, governance: governance}
 }
 
 // SaveResults builds the report from the runs and writes both files.
@@ -47,7 +49,7 @@ func (r *Repository) SaveResults(runs []engine.RunResult) error {
 	if err := os.MkdirAll(r.outputDir, outputDirPerm); err != nil {
 		return fmt.Errorf("failed to create output directory: %w", err)
 	}
-	report := Build(runs, r.groupBy)
+	report := Build(runs, r.groupBy, r.governance...)
 
 	data, err := json.MarshalIndent(report, "", "  ")
 	if err != nil {
@@ -117,7 +119,7 @@ func RenderMarkdown(report *Report) string {
 		fmt.Fprintf(&b, "\n## By %s\n\n", g.By)
 		writeTable(&b, g.By, g.Groups, cols)
 		if len(g.Untested) > 0 {
-			fmt.Fprintf(&b, "\nNo objective maps to: %s.\n", strings.Join(untestedNames(g.Untested), ", "))
+			fmt.Fprintf(&b, "\nNo objective maps to: %s.\n", strings.Join(untestedNames(g.Untested, report.titles), ", "))
 		}
 	}
 	return b.String()
@@ -207,10 +209,10 @@ func groupName(g *Group) string {
 }
 
 // untestedNames gives each untested taxonomy entry its title.
-func untestedNames(entries []string) []string {
+func untestedNames(entries []string, titles map[string]string) []string {
 	out := make([]string, len(entries))
 	for i, e := range entries {
-		out[i] = strings.TrimSpace(e + " " + arenaconfig.TaxonomyTitle(e))
+		out[i] = strings.TrimSpace(e + " " + titles[e])
 	}
 	return out
 }

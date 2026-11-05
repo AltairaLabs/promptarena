@@ -503,7 +503,7 @@ promptarena run --ci --formats json,objectives \
   --objectives-group-by scenario,label.category,data.tier
 ```
 
-The report always has an overall table. It then has one table per `--objectives-group-by` key (default `scenario`), and a `taxonomy` table when any objective has a [`taxonomy`](/arena/reference/config-schema/#objectives) and no key asked for one. The flag only applies with the `objectives` format; without it, the flag does nothing and a warning is printed.
+The report always has an overall table. It then has one table per `--objectives-group-by` key (default `scenario`), and a `taxonomy` table when any objective has a [`taxonomy`](/arena/reference/config-schema/#objectives), or the config declares [pack governance](/arena/reference/config-schema/#pack-governance), and no key asked for one. The flag only applies with the `objectives` format; without it, the flag does nothing and a warning is printed.
 
 | Key | Groups runs by |
 |---|---|
@@ -517,7 +517,7 @@ The report always has an overall table. It then has one table per `--objectives-
 
 A run that lacks the key is grouped under `(none)`. An unknown key is an error.
 
-**Taxonomy groupings.** An attempt counts in the row of each of its entries, so an objective mapped to two categories appears in both rows, and the rows of a taxonomy table can add up to more than the overall table. A row for an entry Arena knows gets the entry's `title`, such as `System Prompt Leakage` for `owasp-llm:LLM07`. The grouping's `untested` lists the entries of each known framework it covers that no evaluated attempt was for: of every framework one of its rows is in, or of the one framework a `taxonomy.<framework>` key names. The Markdown shows them under the table, after "No objective maps to:". A baseline counts in a taxonomy row only when its objective has the same entries, so give a baseline the same `taxonomy` as its attack.
+**Taxonomy groupings.** An attempt counts in the row of each of its entries, so an objective mapped to two categories appears in both rows, and the rows of a taxonomy table can add up to more than the overall table. A row for an entry Arena knows gets the entry's `title`, such as `System Prompt Leakage` for `owasp-llm:LLM07`. The grouping's `untested` lists the entries of each known framework it covers that no evaluated attempt was for: of every framework one of its rows is in, or of the one framework a `taxonomy.<framework>` key names. The Markdown shows them under the table, after "No objective maps to:". The `obligation` and `misuse` frameworks built from the config's pack governance are always covered, so a declared obligation or foreseeable misuse that nothing tested is listed even when no objective maps to governance. A baseline counts in a taxonomy row only when its objective has the same entries, so give a baseline the same `taxonomy` as its attack.
 
 Each table has a row per value and expected outcome. Objectives with `expect: achieved` and with `expect: not_achieved` are never counted together. For `not_achieved`, the rate is how often the agent failed to hold out.
 

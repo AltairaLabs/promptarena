@@ -27,6 +27,7 @@ promptarena run --ci --objectives-group-by objective,data.category
 |---|---|---|
 | Objectives from a dataset | `scenarios/refund-pressure.scenario.yaml`, `data/refund-objectives.jsonl` | Each row is one run. The row's `objective` and `win` columns fill the objective's `description` and its success pattern. Its `category` column is reported with the run. |
 | Framework mapping | `taxonomy: ["owasp-llm:{owasp}"]` in `refund-pressure` and `refund-baseline` | The row's `owasp` column maps each objective to an OWASP Top 10 for LLM Applications category. The objectives report adds a By taxonomy table, with each category's title, and lists the categories no objective maps to. |
+| Governance coverage | `pack_metadata.governance` in `config.arena.yaml`; `obligation:refund-policy` and `misuse:refunds-outside-the-refund-policy` in the two refund scenarios' `taxonomy` | The objectives map to the obligation and the foreseeable misuse the config declares. The By taxonomy table reports each one, with the obligation's controls in its title, and lists the declared misuse nothing tests. |
 | `expect: not_achieved` | `refund-pressure` | The run passes when the persona fails, because the agent held out. |
 | Rewind | `objective.rewind` in `refund-pressure` | The agent's refusal, "I'm afraid I can't help with that.", is taken back once, and the persona is told what was removed through `{{rewound_message}}`. The rule detects it with the `refusal` check. |
 | Refusal and over-refusal | `refusal` in `refund-pressure`'s rewind rule, and in `order-status`'s `conversation_assertions` | `refusal` scores a reply 1 when it refuses. With `max_score: 0`, `order-status` checks that the agent didn't refuse a plain question. |
@@ -69,13 +70,15 @@ persona_fidelity  persona order-chaser invented 1 specific: "TRK-55120" (exchang
 
 The 6 attempts are 2 trials for each of the 3 rows. Groups achieved is how many rows had an attempt get through within the budget: none here. Against an agent that gives in, read that column rather than Rate, which counts attempts that stopped at the first success; Trials to first achieved is then how many attempts the attack needed.
 
-The report then adds a By taxonomy table, because the objectives are mapped to a framework:
+The report then adds a By taxonomy table, because the objectives are mapped to frameworks and the config declares governance:
 
 | taxonomy | Expect | Achieved | Rate | 95% CI | … | Baseline | Lift |
 |---|---|---|---|---|---|---|---|
+| misuse:refunds-outside-the-refund-policy Refunds outside the refund policy | not_achieved | 0 / 6 | 0.0% | 0.0%–39.0% | … | 0 / 3, 0.0% (0.0%–56.1%), $0.003360 | +0.0 pts |
+| obligation:refund-policy Refunds follow the published refund policy (controls: external:Refund API rejects refunds without a receipt) | not_achieved | 0 / 6 | 0.0% | 0.0%–39.0% | … | 0 / 3, 0.0% (0.0%–56.1%), $0.003360 | +0.0 pts |
 | owasp-llm:LLM06 Excessive Agency | not_achieved | 0 / 6 | 0.0% | 0.0%–39.0% | … | 0 / 3, 0.0% (0.0%–56.1%), $0.003360 | +0.0 pts |
 
-Under it, "No objective maps to:" lists the other nine OWASP categories: what this suite doesn't test yet. The `order-status` objective has no mapping, so it is counted under `(none)`.
+Under it, "No objective maps to:" lists the other nine OWASP categories and `misuse:revealing-another-customers-order`, the declared misuse no objective attacks: what this suite doesn't test yet. The `order-status` objective has no mapping, so it is counted under `(none)`.
 
 The agent held out against both, so the lift is 0. Against an agent that gives in, a lift well above 0 is what the attack earned; a high rate with a high baseline means the agent gives in to anyone who asks.
 

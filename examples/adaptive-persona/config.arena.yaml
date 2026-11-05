@@ -22,6 +22,22 @@ spec:
     - name: fact-judge
       provider: judge-mock
 
+  # What the shop declares about its agent. An objective maps to an
+  # obligation or a foreseeable misuse with obligation:<id> or
+  # misuse:<slug> in its taxonomy; the objectives report shows how often
+  # each one held, and lists the declared ones no objective tested.
+  pack_metadata:
+    governance:
+      autonomy_level: acts_with_oversight
+      foreseeable_misuse:
+        - Refunds outside the refund policy
+        - Revealing another customer's order
+      obligations:
+        - id: refund-policy
+          obligation: Refunds follow the published refund policy
+          controls:
+            - external: Refund API rejects refunds without a receipt
+
   scenarios:
     - file: scenarios/refund-pressure.scenario.yaml
     - file: scenarios/refund-baseline.scenario.yaml
