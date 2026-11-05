@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=https://promptkit.altairalabs.ai/schemas/latest/provider.json
+# A second mock voice, so duplex-voice-best-of-n can take a different voice
+# each trial without API keys. It speaks the same built-in clip as mock-tts;
+# with real providers, each voice id sounds different.
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Provider
+metadata:
+  name: mock-tts-alt
+spec:
+  id: mock-tts-alt
+  type: mock
+  role: tts
+  sample_rate: 24000

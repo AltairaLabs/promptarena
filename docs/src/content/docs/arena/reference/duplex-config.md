@@ -237,6 +237,19 @@ spec:
       content: "Hello, can you hear me?"
 ```
 
+### A Voice per Trial
+
+`voices:` lists voice IDs used in turn, one per trial: trial *i* speaks every user turn, scripted or self-play, in `voices[i mod n]`. It overrides the persona's voice and can't be set with `voice:`. With perturbations, the voice changes once every variant has run, so each variant is heard in each voice. Use it with `trials:` to try the same conversation in several voices:
+
+```yaml
+spec:
+  id: my-voice-probe
+  voices: [alloy, rachel]   # trial 0 in alloy, trial 1 in rachel, trial 2 in alloy, ...
+  trials: 4
+```
+
+To change how each voice sounds as well, see [audio transforms](/arena/reference/config-schema/#audio-transforms).
+
 ### CI vs Recording Mode
 
 The `provider` of a `voices:` entry selects real vendor TTS or mock TTS. Personas and scenarios reference the voice ID only:

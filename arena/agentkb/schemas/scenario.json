@@ -172,6 +172,22 @@
           "maximum": 0,
           "description": "NoiseDBFS adds white noise at this level, in dB relative to full scale\n(for example -30), as on a noisy line. The noise is seeded from the\nmessage text, so a run is repeatable."
         },
+        "speed": {
+          "type": "number",
+          "maximum": 4,
+          "minimum": 0.25,
+          "description": "Speed changes the tempo and keeps the pitch: 1.25 is a quarter faster,\n0.8 slower. From 0.25 to 4."
+        },
+        "pitch_semitones": {
+          "type": "number",
+          "maximum": 24,
+          "minimum": -24,
+          "description": "PitchSemitones shifts the pitch by this many semitones and keeps the\nduration: 12 is an octave up, -3 a minor third down. From -24 to 24."
+        },
+        "best_of_n": {
+          "type": "boolean",
+          "description": "BestOfN applies Best-of-N's audio augmentations (arXiv 2412.03556): a\nrandom tempo (0.8 to 1.25), pitch (up to 3 semitones either way), volume\n(up to 6 dB either way) and, half the time, background noise (-45 to\n-25 dBFS). The draw is seeded per scenario, turn, trial, defaults.seed\nand message, so each trial hears its own variant and a run repeats."
+        },
         "exec": {
           "$ref": "#/$defs/TransformExec",
           "description": "Exec pipes the audio through a program: raw 16-bit little-endian mono\nPCM on stdin, the same on stdout. ARENA_SAMPLE_RATE carries the sample\nrate. timeout_ms, when set, bounds the whole utterance."
@@ -577,7 +593,14 @@
         },
         "voice": {
           "type": "string",
-          "description": "Voice references an arena-level voice id (see Config.Voices) used to\nsynthesize this scenario's scripted-text user turns. The duplex executor\nresolves the voice via Config.ResolveVoice.\n\nFor selfplay scenarios (turns with role: selfplay-user) the persona owns\nvoice choice; Scenario.Voice is ignored."
+          "description": "Voice references an arena-level voice id (see Config.Voices) used to\nsynthesize this scenario's scripted-text user turns. The duplex executor\nresolves the voice via Config.ResolveVoice.\n\nFor selfplay scenarios (turns with role: selfplay-user) the persona owns\nvoice choice; Scenario.Voice is ignored. To speak each trial in a\ndifferent voice, set Voices instead."
+        },
+        "voices": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array",
+          "description": "Voices are arena voice ids (from the arena's voices catalog) taken in\nturn, one per trial: trial i speaks every user turn, scripted or\nself-play, in voices[i mod len(voices)], so a scenario's trials try the\nattack in several voices. With perturbations, the voice changes once\nevery variant has run, so each variant is heard in each voice. It\noverrides the persona's voice, and can't be set with voice."
         },
         "variables": {
           "additionalProperties": {

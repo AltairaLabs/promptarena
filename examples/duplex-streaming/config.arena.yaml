@@ -47,6 +47,7 @@ spec:
     - file: providers/openai-alloy-expressive.provider.yaml
     - file: providers/openai-alloy.provider.yaml
     - file: providers/mock-tts.provider.yaml
+    - file: providers/mock-tts-alt.provider.yaml
 
   voices:
     # For real-provider mode (requires API keys). For keyless CI:
@@ -62,6 +63,9 @@ spec:
       provider: mock-tts
     - id: scripted-alloy
       provider: openai-alloy
+    # A second keyless voice, for scenarios that take a voice per trial.
+    - id: scripted-mock-alt
+      provider: mock-tts-alt
 
   # Scenario definitions
   scenarios:
@@ -73,6 +77,7 @@ spec:
     - file: scenarios/duplex-replay.scenario.yaml
     - file: scenarios/duplex-scripted-text.scenario.yaml
     - file: scenarios/duplex-noisy-line.scenario.yaml
+    - file: scenarios/duplex-voice-best-of-n.scenario.yaml
     - file: scenarios/duplex-scripted-text-openai.scenario.yaml
 
   # Tool definitions for voice assistant

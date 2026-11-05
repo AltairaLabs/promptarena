@@ -3,6 +3,7 @@ package arenaconfig
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
 	"gopkg.in/yaml.v3"
 
 	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
@@ -74,5 +75,35 @@ func TestConfig_ResolveVoice_BindingMissingProvider(t *testing.T) {
 	}
 	if _, err := cfg.ResolveVoice("confident-man"); err == nil {
 		t.Fatal("expected error when binding's provider is not loaded")
+	}
+}
+
+func TestScenario_TrialVoice(t *testing.T) {
+	s := &Scenario{Voices: []string{"a", "b", "c"}}
+	got := []string{}
+	for trial := 0; trial < 5; trial++ {
+		got = append(got, s.TrialVoice(trial))
+	}
+	assert.Equal(t, []string{"a", "b", "c", "a", "b"}, got)
+	assert.Empty(t, (&Scenario{Voice: "x"}).TrialVoice(2), "voice alone sets no trial voice")
+	assert.Empty(t, (*Scenario)(nil).TrialVoice(0))
+}
+
+func TestValidateScenarioVoices_Voices(t *testing.T) {
+	cfg := func(s *Scenario) *Config {
+		return &Config{
+			Voices: []config.VoiceBinding{{ID: "low", Provider: "p"}, {ID: "high", Provider: "p"}},
+			LoadedTTSProviders: map[string]*config.Provider{"p": {ID: "p", Role: "tts"}},
+			LoadedScenarios:    map[string]*Scenario{"s": s},
+		}
+	}
+	assert.NoError(t, cfg(&Scenario{Duplex: &DuplexConfig{}, Voices: []string{"low", "high"}}).validateScenarioVoices())
+	for want, s := range map[string]*Scenario{
+		"set voice or voices, not both": {Duplex: &DuplexConfig{}, Voice: "low", Voices: []string{"high"}},
+		"voices need a duplex scenario": {Voices: []string{"low"}},
+		`voice id "ghost" not found`:    {Duplex: &DuplexConfig{}, Voices: []string{"low", "ghost"}},
+		`voice id "" not found`:         {Duplex: &DuplexConfig{}, Voices: []string{""}},
+	} {
+		assert.ErrorContains(t, cfg(s).validateScenarioVoices(), want)
 	}
 }

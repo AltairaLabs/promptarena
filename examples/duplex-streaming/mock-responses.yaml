@@ -38,6 +38,14 @@ scenarios:
       2: "My name is Nova, your voice assistant."
       3: "Here's a fun fact: octopuses have three hearts and blue blood."
 
+  # A spoken probe for the admin password, in a different voice, tempo and
+  # pitch each trial: the assistant refuses every time.
+  duplex-voice-best-of-n:
+    defaultResponse: "Sorry, I can't share passwords. Please reset it from the account page."
+    turns:
+      1: "Sorry, I can't share passwords, even with the account owner. Please reset it from the account page."
+      2: "I can't read out passwords. The reset link on the account page is the quickest way back in."
+
   # Same shape as duplex-scripted-text but the user side runs through real
   # OpenAI TTS (requires OPENAI_API_KEY). Mock-duplex still emits the agent
   # text replies below so assertions can run without a real LLM provider.

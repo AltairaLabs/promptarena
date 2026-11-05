@@ -27,6 +27,11 @@ type RunCombination struct {
 
 	// PerturbationIndex identifies which perturbation variant this run uses (-1 = no perturbation).
 	PerturbationIndex int
+	// Repetition counts the scenario's repetitions: with perturbations, the
+	// trials cycle through the variants, and each full cycle is one
+	// repetition. A scenario's voices rotate by repetition, so every variant
+	// is heard in every voice.
+	Repetition int
 
 	// DataRowID names the dataset row this run uses ("" = scenario has no data
 	// file); DataRowIndex is that row's position in the scenario's rows.

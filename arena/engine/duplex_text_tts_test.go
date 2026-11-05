@@ -100,6 +100,24 @@ func TestProcessScriptedTextDuplexTurn_ErrorsWithoutTTS(t *testing.T) {
 	assert.Contains(t, err.Error(), "TTS configuration required")
 }
 
+func TestProcessScriptedTextDuplexTurn_SpeaksInTheTrialVoice(t *testing.T) {
+	reg, _ := newRegistryWithFakeTTS("openai", []byte{0x00, 0x01})
+	de := &DuplexConversationExecutor{selfPlayRegistry: reg}
+	in := make(chan stage.StreamElement, 4)
+	out := make(chan stage.StreamElement)
+	close(out)
+	turn := &arenaconfig.TurnDefinition{Role: "user", Content: "hello world"}
+	for rep, want := range []string{`voice id "low"`, `voice id "high"`, `voice id "low"`} {
+		req := &ConversationRequest{
+			Scenario:   &arenaconfig.Scenario{ID: "s1", Voices: []string{"low", "high"}},
+			Config:     &arenaconfig.Config{},
+			Repetition: rep,
+		}
+		err := de.processScriptedTextDuplexTurn(context.Background(), req, turn, 0, in, out)
+		assert.ErrorContains(t, err, want, "repetition %d resolves its own voice", rep)
+	}
+}
+
 // newTestTTSProvider builds a *config.Provider for the given registered
 // provider name — used by streamTextAsAudio tests that need a real
 // provider handle rather than the old TTSConfig shape.
@@ -339,7 +357,7 @@ func TestResolveTTSProvider_ViaPersona(t *testing.T) {
 		},
 	}
 	persona := &arenaconfig.UserPersonaPack{ID: "p", Voice: "v1"}
-	got, err := resolveTTSProvider(cfg, persona)
+	got, err := resolveTTSProvider(cfg, nil, 0, persona)
 	if err != nil {
 		t.Fatalf("resolveTTSProvider: %v", err)
 	}
@@ -351,7 +369,7 @@ func TestResolveTTSProvider_ViaPersona(t *testing.T) {
 func TestResolveTTSProvider_PersonaWithoutVoice(t *testing.T) {
 	cfg := &arenaconfig.Config{}
 	persona := &arenaconfig.UserPersonaPack{ID: "p"}
-	got, err := resolveTTSProvider(cfg, persona)
+	got, err := resolveTTSProvider(cfg, nil, 0, persona)
 	if err != nil {
 		t.Fatalf("expected nil error, got %v", err)
 	}
@@ -408,10 +426,39 @@ func TestStreamTextAsAudio_AppliesAudioTransforms(t *testing.T) {
 }
 
 func TestAudioPlanFor(t *testing.T) {
-	assert.Nil(t, audioPlanFor(&ConversationRequest{}, &arenaconfig.TurnDefinition{}))
+	assert.Nil(t, audioPlanFor(&ConversationRequest{}, &arenaconfig.TurnDefinition{}, 0))
 	gain := 3.0
-	plan := audioPlanFor(&ConversationRequest{Config: &arenaconfig.Config{ConfigDir: "/kit"}},
-		&arenaconfig.TurnDefinition{AudioTransforms: []arenaconfig.AudioTransform{{GainDB: &gain}}})
+	plan := audioPlanFor(&ConversationRequest{
+		Config:       &arenaconfig.Config{ConfigDir: "/kit", Defaults: arenaconfig.Defaults{Seed: 9}},
+		Scenario:     &arenaconfig.Scenario{ID: "s"},
+		TrialIndex:   4,
+		DataRowIndex: 3,
+		Perturbation: 1,
+	}, &arenaconfig.TurnDefinition{AudioTransforms: []arenaconfig.AudioTransform{{GainDB: &gain}}}, 2)
 	require.NotNil(t, plan)
 	assert.Equal(t, "/kit", plan.configDir)
+	assert.Equal(t, selfplay.AudioTransformRequest{Scenario: "s", Turn: 2, Trial: 4, Seed: 9, DataRow: 3, Perturbation: 1},
+		plan.request, "best_of_n is seeded per scenario, turn, trial, data row, perturbation and defaults.seed")
+}
+
+func TestResolveTTSProvider_TrialVoiceOverridesPersona(t *testing.T) {
+	cfg := &arenaconfig.Config{
+		Voices: []config.VoiceBinding{{ID: "v1", Provider: "p1"}, {ID: "v2", Provider: "p2"}},
+		LoadedTTSProviders: map[string]*config.Provider{
+			"p1": {ID: "p1", Voice: "one", Role: config.RoleTTS},
+			"p2": {ID: "p2", Voice: "two", Role: config.RoleTTS},
+		},
+	}
+	persona := &arenaconfig.UserPersonaPack{ID: "p", Voice: "v1"}
+	scenario := &arenaconfig.Scenario{Voices: []string{"v1", "v2"}}
+	for rep, want := range []string{"one", "two", "one"} {
+		got, err := resolveTTSProvider(cfg, scenario, rep, persona)
+		require.NoError(t, err)
+		assert.Equal(t, want, got.Voice, "repetition %d", rep)
+	}
+	_, err := resolveTTSProvider(cfg, &arenaconfig.Scenario{Voices: []string{"ghost"}}, 0, persona)
+	assert.ErrorContains(t, err, "scenario voices: voice id \"ghost\"", "the error names where the voice came from")
+	got, err := resolveTTSProvider(cfg, &arenaconfig.Scenario{}, 1, persona)
+	require.NoError(t, err)
+	assert.Equal(t, "one", got.Voice, "without voices the persona's voice is used")
 }
