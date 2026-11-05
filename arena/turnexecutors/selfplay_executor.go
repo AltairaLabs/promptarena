@@ -35,16 +35,22 @@ func NewSelfPlayExecutor(pipelineExecutor *PipelineExecutor, contentProvider sel
 //
 //nolint:gocritic // Public API - changing to pointer would break callers
 func (e *SelfPlayExecutor) ExecuteTurn(ctx context.Context, req TurnRequest) error {
-	// Load history from StateStore if configured
-	history, err := e.loadHistory(ctx, &req)
-	if err != nil {
-		return err
-	}
+	var userMessage types.Message
+	completionDetected := false
+	if req.SelfPlayMessage != nil {
+		userMessage = *req.SelfPlayMessage
+	} else {
+		// Load history from StateStore if configured
+		history, err := e.loadHistory(ctx, &req)
+		if err != nil {
+			return err
+		}
 
-	// Generate user message using LLM
-	userMessage, completionDetected, err := e.generateUserMessage(ctx, &req, history)
-	if err != nil {
-		return err
+		// Generate user message using LLM
+		userMessage, completionDetected, err = e.generateUserMessage(ctx, &req, history)
+		if err != nil {
+			return err
+		}
 	}
 
 	// Execute AI response through the pipeline (assistant responds to the natural closing message)
@@ -58,6 +64,19 @@ func (e *SelfPlayExecutor) ExecuteTurn(ctx context.Context, req TurnRequest) err
 	}
 
 	return nil
+}
+
+// GenerateUserMessage drafts the persona's next message from the conversation
+// in the state store, without sending it: the message ExecuteTurn would send,
+// transforms applied. A completion marker is stripped and ignored. Pass the
+// message back as TurnRequest.SelfPlayMessage to send it.
+func (e *SelfPlayExecutor) GenerateUserMessage(ctx context.Context, req TurnRequest) (types.Message, error) {
+	history, err := e.loadHistory(ctx, &req)
+	if err != nil {
+		return types.Message{}, err
+	}
+	msg, _, err := e.generateUserMessage(ctx, &req, history)
+	return msg, err
 }
 
 // loadHistory loads conversation history from StateStore

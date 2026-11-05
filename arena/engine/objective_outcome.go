@@ -27,6 +27,9 @@ type ObjectiveOutcome struct {
 	Baseline bool
 	// Taxonomy lists the objective's risk framework entries.
 	Taxonomy []string
+	// Search is what the objective's tree search did, or nil when it has
+	// none.
+	Search *SearchStats
 }
 
 // ObjectiveOutcomes reads the objective outcomes from a run's conversation
@@ -56,9 +59,30 @@ func ObjectiveOutcomes(results []asrt.ConversationValidationResult) []ObjectiveO
 			Evaluated:          !failed || achieved,
 			Baseline:           baseline,
 			Taxonomy:           detailStrings(d, objectiveKeyTaxonomy),
+			Search:             searchStatsFrom(d[objectiveKeySearch]),
 		})
 	}
 	return out
+}
+
+// searchStatsFrom reads an objective result's search detail, which may have
+// been through a JSON round trip.
+func searchStatsFrom(v interface{}) *SearchStats {
+	d, ok := v.(map[string]interface{})
+	if !ok {
+		return nil
+	}
+	return &SearchStats{
+		Searches:       1,
+		DepthReached:   detailInt(d, searchKeyDepthReached),
+		Nodes:          detailInt(d, searchKeyNodes),
+		PrunedOffTopic: detailInt(d, searchKeyPruned),
+		AttackerCalls:  detailInt(d, searchKeyAttackerCalls),
+		TargetCalls:    detailInt(d, searchKeyTargetCalls),
+		JudgeCalls:     detailInt(d, searchKeyJudgeCalls),
+		JudgeErrors:    detailInt(d, searchKeyJudgeErrors),
+		BestScore:      metaFloat(d[searchKeyBestScore]),
+	}
 }
 
 // detailStrings reads a list of strings detail.
@@ -124,6 +148,7 @@ func objectiveTrialStats(trials []trialRunResult) []ObjectiveTrialStats {
 				})
 			}
 			s := &out[pos]
+			s.Search = AddSearchStats(s.Search, o.Search)
 			if !o.Evaluated {
 				s.Unevaluated++
 				continue

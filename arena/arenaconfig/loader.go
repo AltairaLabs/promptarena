@@ -401,7 +401,28 @@ func (c *Config) loadSelfPlayAndJudgeResources(filename string) error {
 	if err := c.mergeJudgeSpecs(); err != nil {
 		return err
 	}
-	return c.validatePersonaJudges()
+	if err := c.validatePersonaJudges(); err != nil {
+		return err
+	}
+	return c.validateSearchJudges()
+}
+
+// validateSearchJudges checks that each objective search's judge is in
+// spec.judges.
+func (c *Config) validateSearchJudges() error {
+	for name, s := range c.LoadedScenarios {
+		for i := range s.Turns {
+			obj := s.Turns[i].Objective
+			if obj == nil || obj.Search == nil || obj.Search.Judge == "" {
+				continue
+			}
+			if _, ok := c.LoadedJudges[obj.Search.Judge]; !ok {
+				return fmt.Errorf("scenario %s: turns[%d].objective.search.judge: no judge %q in spec.judges",
+					name, i, obj.Search.Judge)
+			}
+		}
+	}
+	return nil
 }
 
 // validatePersonaJudges checks that a judge is configured when a persona's

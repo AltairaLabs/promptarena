@@ -1,0 +1,41 @@
+# yaml-language-server: $schema=../../schemas/v1alpha1/arena.json
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Arena
+metadata:
+  name: tap-search
+spec:
+  prompt_configs:
+    - id: support
+      file: prompts/support.yaml
+
+  providers:
+    # The agent under test. Swap this for a real provider to test your agent.
+    - file: providers/agent-mock.provider.yaml
+    # The attacker's and the judge's models. Mocks here, so the example runs
+    # without keys; use real models for real runs.
+    - file: providers/attacker-mock.provider.yaml
+      group: selfplay
+    - file: providers/judge-mock.provider.yaml
+      group: judge
+
+  # The search's judge scores each reply 1-10 and checks drafts stay on topic.
+  judges:
+    - name: scorer
+      provider: judge-mock
+
+  scenarios:
+    - file: scenarios/holds-out.scenario.yaml
+    - file: scenarios/positive-control.scenario.yaml
+
+  self_play:
+    personas:
+      - file: personas/attacker.persona.yaml
+    roles:
+      - id: attacker
+        provider: attacker-mock
+
+  defaults:
+    concurrency: 1
+    output:
+      dir: out
+      formats: ["json", "objectives"]

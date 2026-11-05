@@ -165,16 +165,24 @@ func (t *stateTracker) stoppedAtStart() bool {
 // checkStop records the first stop condition the state meets, after exchange
 // (0 before the first), and reports whether there was one.
 func (t *stateTracker) checkStop(exchange int) bool {
+	c := t.stopFor(t.state)
+	if c == nil {
+		return false
+	}
+	t.stop, t.stoppedAt = c, exchange
+	logger.Debug("Self-play persona state stopped the turn",
+		"turn", t.turnIndex, "exchange", exchange, "outcome", c.OutcomeLabel())
+	return true
+}
+
+// stopFor returns the first stop condition state meets, or nil.
+func (t *stateTracker) stopFor(state map[string]interface{}) *arenaconfig.PersonaStopCondition {
 	for i := range t.persona.StopWhen {
-		c := &t.persona.StopWhen[i]
-		if c.Matches(t.state[c.State]) {
-			t.stop, t.stoppedAt = c, exchange
-			logger.Debug("Self-play persona state stopped the turn",
-				"turn", t.turnIndex, "exchange", exchange, "outcome", c.OutcomeLabel())
-			return true
+		if c := &t.persona.StopWhen[i]; c.Matches(state[c.State]) {
+			return c
 		}
 	}
-	return false
+	return nil
 }
 
 func (t *stateTracker) applyTransitions(ctx context.Context, exchange int) {

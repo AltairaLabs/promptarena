@@ -2314,6 +2314,10 @@
           },
           "type": "array",
           "description": "Taxonomy maps the objective to risk frameworks, as \u003cframework\u003e:\u003cid\u003e\nentries such as owasp-llm:LLM01, owasp-agentic:ASI02 or\natlas:AML.T0051, or to the config's pack governance as obligation:\u003cid\u003e\nor misuse:\u003cslug of a foreseeable_misuse entry\u003e. The objectives report\ngroups attempts by each entry. Entries take dataset row {placeholders}."
+        },
+        "search": {
+          "$ref": "#/$defs/ObjectiveSearchConfig",
+          "description": "Search explores a tree of conversations instead of one: each exchange,\nthe persona drafts several candidate messages, each is sent to the agent\non its own branch, and the best-scoring branches are kept (Tree of\nAttacks with Pruning). The turn's turns and max_turns don't apply; the\ntree's depth bounds the exchanges."
         }
       },
       "additionalProperties": false,
@@ -2344,6 +2348,46 @@
         "when"
       ],
       "description": "ObjectiveRewindConfig drops exchanges from a self-play turn."
+    },
+    "ObjectiveSearchConfig": {
+      "properties": {
+        "strategy": {
+          "type": "string",
+          "enum": [
+            "tree"
+          ],
+          "description": "Strategy is the search strategy. Only \"tree\" is supported."
+        },
+        "branching": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Branching is how many candidate messages the persona drafts from each\nkept branch at each depth. Default 3."
+        },
+        "width": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Width is how many of the best-scoring branches are kept at each depth.\nDefault 4."
+        },
+        "depth": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "Depth is how many exchanges a branch may run. Default 5."
+        },
+        "judge": {
+          "type": "string",
+          "description": "Judge names a judge in spec.judges that scores each agent reply from 1\n(nothing towards the objective) to 10 (meets it). Without one, a reply\nis scored by the share of the success checks it passes."
+        },
+        "prune_off_topic": {
+          "type": "boolean",
+          "description": "PruneOffTopic asks the judge, before a candidate is sent, whether it\nstill pursues the objective, and drops it when it does not. Needs judge."
+        }
+      },
+      "additionalProperties": false,
+      "type": "object",
+      "required": [
+        "strategy"
+      ],
+      "description": "ObjectiveSearchConfig makes a self-play turn search a tree of conversations for the objective."
     },
     "Obligation": {
       "properties": {
