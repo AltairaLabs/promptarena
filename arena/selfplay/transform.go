@@ -24,17 +24,25 @@ const MetaPersonaOriginal = "persona_original"
 
 // TransformRequest is what an exec transform reads on stdin.
 type TransformRequest struct {
-	// Message is the message to rewrite: the persona's, or the previous
-	// transform's output.
+	// Message is the message to rewrite: the persona's, a scripted turn's, or
+	// a tool's result (tool_result_transforms), or the previous transform's
+	// output.
 	Message string `json:"message"`
 	// Persona is the persona's id.
 	Persona string `json:"persona"`
 	// Scenario is the scenario's id.
 	Scenario string `json:"scenario"`
-	// Exchange is the 1-based self-play exchange the message is for.
+	// Exchange is the 1-based self-play exchange the message is for; 0 for a
+	// scripted turn or a tool result.
 	Exchange int `json:"exchange"`
 	// Trial is the 0-based trial the run is, when the scenario has trials.
 	Trial int `json:"trial"`
+	// Tool, ToolArgs and ToolCallID name the tool, give its arguments and
+	// identify the call, when the message is a tool's result
+	// (tool_result_transforms).
+	Tool       string          `json:"tool,omitempty"`
+	ToolArgs   json.RawMessage `json:"tool_args,omitempty"`
+	ToolCallID string          `json:"tool_call_id,omitempty"`
 	// Seed is the run's configured seed (defaults.seed), 0 when unset. It
 	// seeds the random converters with the trial, so a new seed gives new
 	// variants.
@@ -46,8 +54,8 @@ type transformResponse struct {
 	Message *string `json:"message"`
 }
 
-// ApplyTransforms runs a turn's transforms over the persona's message, in
-// order, and returns the message to send. configDir resolves a relative exec
+// ApplyTransforms runs transforms over req.Message in order (a persona's or
+// scripted turn's message, or a tool's result) and returns the rewrite. configDir resolves a relative exec
 // command. A transform that fails, or produces an empty message, is an error:
 // sending the message untransformed would test something else.
 func ApplyTransforms(

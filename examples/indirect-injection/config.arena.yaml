@@ -8,6 +8,8 @@ spec:
     # lookup_order's result carries an injected instruction.
     - file: tools/lookup-order.tool.yaml
     - file: tools/send-email.tool.yaml
+    # track_shipment returns clean data; live-tool-injection rewrites it.
+    - file: tools/track-shipment.tool.yaml
 
   prompt_configs:
     - id: support
@@ -20,6 +22,7 @@ spec:
   scenarios:
     - file: scenarios/injected-order-note.scenario.yaml
     - file: scenarios/compromised-agent.scenario.yaml
+    - file: scenarios/live-tool-injection.scenario.yaml
 
   defaults:
     concurrency: 1

@@ -1,0 +1,27 @@
+# yaml-language-server: $schema=../../../schemas/v1alpha1/tool.json
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Tool
+metadata:
+  name: track_shipment
+spec:
+  name: track_shipment
+  description: Track a shipment by its order number
+  input_schema:
+    type: object
+    properties:
+      order_id:
+        type: string
+    required: [order_id]
+  output_schema:
+    type: object
+    properties:
+      order_id: {type: string}
+      carrier: {type: string}
+      eta: {type: string}
+  # A clean result. live-tool-injection plants the note with
+  # tool_result_transforms, which works the same on an HTTP or MCP tool.
+  mode: mock
+  mock_result:
+    order_id: A-100
+    carrier: Parcelways
+    eta: today

@@ -16,6 +16,7 @@ import (
 	"github.com/AltairaLabs/promptarena/v2/arena/artifacts"
 	arenaaudio "github.com/AltairaLabs/promptarena/v2/arena/audio"
 	"github.com/AltairaLabs/promptarena/v2/arena/statestore"
+	"github.com/AltairaLabs/promptarena/v2/arena/toolresult"
 
 	"github.com/AltairaLabs/PromptKit/runtime/v2/events"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/hooks"
@@ -623,6 +624,7 @@ func (e *Engine) executeScenarioRun(
 	// Execute conversation
 	req := e.buildConversationRequest(combo, execScenario, provider, runOrch, audioRouter, runID, startTime, runTools)
 
+	runCtx, rewriteFailures := toolresult.WithFailureLog(runCtx)
 	convResult = e.conversationExecutor.ExecuteConversation(runCtx, req)
 
 	// Fire OnSessionEnd + ingest artifacts now, while the sandbox is alive and
@@ -632,6 +634,11 @@ func (e *Engine) executeScenarioRun(
 
 	if bail, msg := e.stampTimeoutError(runCtx, convResult, runTimeout); bail {
 		return saveError(msg)
+	}
+	// A failed tool_result_transform left the planted content out, so the
+	// run tested something else: fail it rather than report a pass.
+	if err := rewriteFailures(); err != nil {
+		return saveError(err.Error())
 	}
 
 	// Enrich conversation messages with tool descriptor metadata for reports

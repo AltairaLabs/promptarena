@@ -38,6 +38,10 @@ func converterSeed(req *TransformRequest, index int) uint64 {
 	h := fnv.New64a()
 	_, _ = fmt.Fprintf(h, "%s\x00%s\x00%d\x00%d\x00%d\x00%d\x00%s",
 		req.Scenario, req.Persona, req.Exchange, req.Trial, req.Seed, index, req.Message)
+	if req.ToolCallID != "" {
+		// Each call to a tool draws its own variant, even of the same result.
+		_, _ = fmt.Fprintf(h, "\x00%s", req.ToolCallID)
+	}
 	return h.Sum64()
 }
 

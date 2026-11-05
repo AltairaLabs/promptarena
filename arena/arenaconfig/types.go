@@ -701,6 +701,11 @@ type Scenario struct {
 	ConversationAssertions []AssertionConfig `json:"conversation_assertions,omitempty" yaml:"conversation_assertions,omitempty"` //nolint:lll
 	// Duplex enables bidirectional streaming mode for voice/audio scenarios.
 	Duplex *DuplexConfig `json:"duplex,omitempty" yaml:"duplex,omitempty"`
+	// ToolResultTransforms rewrite named tools' results before the agent sees
+	// them, on every turn: live HTTP, MCP and mock tools alike. Use them to
+	// plant an indirect prompt injection in real tool output. Not for duplex
+	// scenarios.
+	ToolResultTransforms []ToolResultTransform `json:"tool_result_transforms,omitempty" yaml:"tool_result_transforms,omitempty"` //nolint:lll
 
 	// Voice references an arena-level voice id (see Config.Voices) used to
 	// synthesize this scenario's scripted-text user turns. The duplex executor
@@ -799,6 +804,9 @@ func (s *Scenario) Validate() error {
 		if err := validateAudioTransforms(s, &s.Turns[i], i); err != nil {
 			return fmt.Errorf("scenario %s: %w", s.ID, err)
 		}
+	}
+	if err := validateToolResultTransforms(s); err != nil {
+		return fmt.Errorf("scenario %s: %w", s.ID, err)
 	}
 
 	return s.validateObjectives()

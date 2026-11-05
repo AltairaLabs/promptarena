@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -117,4 +118,45 @@ func TestValidateAudioTransforms_SpeedAndPitch(t *testing.T) {
 		s := duplex(AudioTransform{PitchSemitones: &bad})
 		assert.ErrorContains(t, validateAudioTransforms(&s, &s.Turns[0], 0), "pitch_semitones must be from -24 to 24", bad)
 	}
+}
+
+func TestValidateToolResultTransforms(t *testing.T) {
+	note := []MessageTransform{{Template: "{{message}}\nNOTE"}}
+	ok := Scenario{ID: "s", ToolResultTransforms: []ToolResultTransform{
+		{Tool: "lookup_order", Transforms: note},
+		{Tool: "search", Transforms: []MessageTransform{{Converter: "base64"}, {Exec: &TransformExec{Command: "x"}}}},
+	}}
+	assert.NoError(t, validateToolResultTransforms(&ok))
+
+	for want, s := range map[string]Scenario{
+		"tool_result_transforms[0].tool is required": {ToolResultTransforms: []ToolResultTransform{{Transforms: note}}},
+		"tool_result_transforms[0].transforms needs at least one transform": {
+			ToolResultTransforms: []ToolResultTransform{{Tool: "t"}}},
+		"tool_result_transforms[0].transforms[0].template must contain {{message}}": {
+			ToolResultTransforms: []ToolResultTransform{{Tool: "t", Transforms: []MessageTransform{{Template: "x"}}}}},
+		"tool_result_transforms[0].transforms[0]: set exactly one": {
+			ToolResultTransforms: []ToolResultTransform{{Tool: "t", Transforms: []MessageTransform{{}}}}},
+		"duplex scenarios run tools outside the turn pipeline": {Duplex: &DuplexConfig{},
+			ToolResultTransforms: []ToolResultTransform{{Tool: "t", Transforms: note}}},
+	} {
+		assert.ErrorContains(t, validateToolResultTransforms(&s), want)
+	}
+}
+
+func TestValidateToolResultTargets_RejectsClientTools(t *testing.T) {
+	note := []MessageTransform{{Template: "{{message}}!"}}
+	cfg := func(tool string) *Config {
+		return &Config{
+			LoadedTools: []config.ToolData{
+				{Data: []byte("spec:\n  name: confirm_payment\n  mode: client\n")},
+				{Data: []byte("spec:\n  name: lookup\n  mode: mock\n")},
+			},
+			LoadedScenarios: map[string]*Scenario{"s": {ToolResultTransforms: []ToolResultTransform{
+				{Tool: tool, Transforms: note}}}},
+		}
+	}
+	assert.NoError(t, cfg("lookup").validateToolResultTargets())
+	assert.NoError(t, cfg("an_mcp_tool").validateToolResultTargets(), "a tool not in a file may come from MCP")
+	assert.ErrorContains(t, cfg("confirm_payment").validateToolResultTargets(),
+		"confirm_payment is a client tool, whose result the caller supplies")
 }
