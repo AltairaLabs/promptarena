@@ -45,6 +45,9 @@ Walk through `examples/guardrails-test/`. One primitive enforces in production A
 ### [Red-team a support agent for PII leakage](/arena/how-to/scenarios/pii-guardrail-red-team/)
 Walk through `examples/pii-guardrail-red-team/`: two scripted probes check that a `pii_leakage` guardrail catches a leak and stays quiet on a routine question, asserted with `guardrail_triggered`.
 
+### [Generate a red-team suite from objectives](/arena/how-to/scenarios/generate-red-team-scenarios/)
+Turn a file of objectives, or a public set such as JailbreakBench, into scenarios that cross them with attack strategies and converters, with a no-attack baseline and an over-refusal check, using `promptarena redteam generate`.
+
 ### [Run workflow scenarios as a regression suite](/arena/how-to/scenarios/workflow-regression/)
 Walk through `examples/workflow-support/` and `examples/workflow-order-processing/`. State machines as first-class test subjects: drive the agent through the lifecycle, assert the transitions, gate merges on the workflow reaching the expected end state.
 

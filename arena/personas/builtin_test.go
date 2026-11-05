@@ -21,7 +21,7 @@ func TestList_EveryBuiltinLoads(t *testing.T) {
 		names = append(names, e.Name)
 		assert.NotEmpty(t, e.Description, e.Name)
 	}
-	assert.Equal(t, []string{"adversarial-scaffold", "crescendo", "multi-technique", "refine"}, names)
+	assert.Equal(t, []string{"adversarial-scaffold", "crescendo", "direct", "multi-technique", "refine"}, names)
 }
 
 // Built-ins are referenced by ID from scenario turns, so the ID must be the

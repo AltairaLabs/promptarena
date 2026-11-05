@@ -99,6 +99,13 @@ Debug and test prompt generation
 
 Flags: `--config`, `--context`, `--domain`, `--json`, `--list`, `--persona`, `--region`, `--scenario`, `--show-meta`, `--show-prompt`, `--show-stats`, `--task-type`, `--user`, `--verbose`
 
+## promptarena redteam
+
+Generate red-team scenarios from objective sets
+
+- `promptarena redteam datasets` — List the public objective sets generate can fetch
+- `promptarena redteam generate` — Write red-team scenarios for a set of objectives
+
 ## promptarena run
 
 Run conversation simulations
