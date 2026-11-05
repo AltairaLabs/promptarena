@@ -13,7 +13,10 @@ import (
 	"github.com/AltairaLabs/promptarena/v2/arena/templates"
 )
 
-const examplesListUse = "list"
+const (
+	examplesListUse = "list"
+	showNameUse     = "show <name>"
+)
 
 var (
 	examplesTagFlag  string
@@ -39,7 +42,7 @@ Examples:
 }
 
 var examplesShowCmd = &cobra.Command{
-	Use:   "show <name>",
+	Use:   showNameUse,
 	Short: "Print an example kit's files",
 	Args:  cobra.ExactArgs(1),
 	RunE:  runExamplesShow,

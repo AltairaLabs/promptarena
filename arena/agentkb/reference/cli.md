@@ -85,6 +85,14 @@ Manage mock responses for PromptArena
 
 - `promptarena mocks generate` — Generate mock provider responses from Arena JSON results
 
+## promptarena personas
+
+Copy built-in self-play personas into a project
+
+- `promptarena personas add` — Copy a built-in persona into the project
+- `promptarena personas list` — List the built-in personas
+- `promptarena personas show` — Print a built-in persona's YAML
+
 ## promptarena prompt-debug
 
 Debug and test prompt generation
