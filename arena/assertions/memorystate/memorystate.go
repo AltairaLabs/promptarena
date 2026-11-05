@@ -174,21 +174,24 @@ func failed(msg string) *evals.EvalResult {
 // stringList reads a param that is a string or a list of strings. A number,
 // as YAML reads an all-digit token, is taken as its text.
 func stringList(v any) []string {
+	var items []any
 	switch v := v.(type) {
 	case nil:
 		return nil
 	case []string:
 		return v
 	case []any:
-		out := make([]string, 0, len(v))
-		for _, p := range v {
-			if p != nil {
-				out = append(out, fmt.Sprint(p))
-			}
-		}
-		return out
+		items = v
+	default:
+		items = []any{v}
 	}
-	return []string{fmt.Sprint(v)}
+	var out []string
+	for _, item := range items {
+		if item != nil {
+			out = append(out, fmt.Sprint(item))
+		}
+	}
+	return out
 }
 
 func init() { //nolint:gochecknoinits // handler self-registration, as PromptKit's handlers do
