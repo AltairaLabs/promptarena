@@ -65,12 +65,39 @@ spec:
   type: openai
   model: gpt-4o
   defaults:
-    temperature: 0.2
+    temprature: 0.2
 `)
 	_, err := loadProvider(path)
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "provider configuration does not match schema")
-	assert.Contains(t, err.Error(), "max_tokens")
+	assert.Contains(t, err.Error(), "temprature")
+}
+
+// Issue #358: every field of defaults, pricing and rate_limit is optional, as
+// it was before the loaders checked the schema. Leaving one out loads.
+func TestLoadProvider_AcceptsPartialDefaults(t *testing.T) {
+	path := writeLoaderSchemaFile(t, `apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Provider
+metadata:
+  name: mock
+spec:
+  id: mock-provider
+  type: mock
+  model: mock-model
+  defaults:
+    temperature: 0.7
+    max_tokens: 256
+  pricing:
+    input_cost_per_1k: 0.01
+  rate_limit:
+    rps: 5
+`)
+	p, err := loadProvider(path)
+	require.NoError(t, err)
+	assert.InDelta(t, 0.7, p.Defaults.Temperature, 1e-6)
+	assert.Equal(t, 256, p.Defaults.MaxTokens)
+	assert.Zero(t, p.Defaults.TopP)
+	assert.Zero(t, p.Pricing.OutputCostPer1K)
 }
 
 func TestLoadProvider_AcceptsMessageMetadataTemplate(t *testing.T) {

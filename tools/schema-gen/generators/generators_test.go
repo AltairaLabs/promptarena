@@ -168,6 +168,37 @@ func TestGenerateProviderSchema(t *testing.T) {
 	}
 }
 
+// Issue #358: PromptKit's provider config fields carry no omitempty, so the
+// reflector marks them required; every one of them is optional in a file.
+func TestProviderSchema_DefaultsPricingRateLimitAreOptional(t *testing.T) {
+	for _, gen := range []func() (interface{}, error){GenerateProviderSchema, GenerateArenaSchema} {
+		out, err := gen()
+		if err != nil {
+			t.Fatalf("generate: %v", err)
+		}
+		schema := out.(*jsonschema.Schema)
+		for _, name := range optionalFieldDefinitions {
+			def, ok := schema.Definitions[name]
+			if !ok {
+				t.Fatalf("$defs/%s missing from %s", name, schema.ID)
+			}
+			if len(def.Required) != 0 {
+				t.Errorf("$defs/%s in %s requires %v, want none", name, schema.ID, def.Required)
+			}
+		}
+	}
+}
+
+func TestApplyOptionalFields_NilAndAbsentAreSkipped(t *testing.T) {
+	applyOptionalFields(nil)
+	applyOptionalFields(&jsonschema.Schema{})
+	other := &jsonschema.Schema{Required: []string{"x"}}
+	applyOptionalFields(&jsonschema.Schema{Definitions: jsonschema.Definitions{"Other": other}})
+	if len(other.Required) != 1 {
+		t.Errorf("unlisted definition lost its required list")
+	}
+}
+
 func TestGeneratePromptConfigSchema(t *testing.T) {
 	schema, err := GeneratePromptConfigSchema()
 	if err != nil {
