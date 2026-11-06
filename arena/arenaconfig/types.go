@@ -176,7 +176,7 @@ type Config struct {
 	// StateStore configures conversation state persistence (memory, redis, or file).
 	StateStore *config.StateStoreConfig `yaml:"state_store,omitempty" json:"state_store,omitempty"`
 	// Defaults holds global defaults applied when a scenario does not specify its
-	// own (temperature, max_tokens, concurrency, output, fail_on, …).
+	// own (temperature, max_tokens, concurrency, output, …).
 	Defaults Defaults `yaml:"defaults" json:"defaults"`
 	// SelfPlay configures self-play: personas and roles that drive the user side
 	// of a conversation.
@@ -470,9 +470,11 @@ type Defaults struct {
 	// ConfigDir is the base directory for all config files (prompts, providers, scenarios, tools).
 	// If not set, defaults to the directory containing the main config file.
 	// If the main config file path is not known, defaults to current working directory.
-	ConfigDir string   `yaml:"config_dir,omitempty" json:"config_dir,omitempty"`
-	FailOn    []string `yaml:"fail_on,omitempty" json:"fail_on,omitempty"`
-	Verbose   bool     `yaml:"verbose,omitempty" json:"verbose,omitempty"`
+	ConfigDir string `yaml:"config_dir,omitempty" json:"config_dir,omitempty"`
+	// Deprecated: FailOn is ignored and will be removed. Loading warns when it
+	// is set.
+	FailOn  []string `yaml:"fail_on,omitempty" json:"fail_on,omitempty"`
+	Verbose bool     `yaml:"verbose,omitempty" json:"verbose,omitempty"`
 
 	// Monitor groups runtime-monitor configuration (audio, future surfaces).
 	Monitor *MonitorSection `yaml:"monitor,omitempty" json:"monitor,omitempty"`
@@ -1478,10 +1480,10 @@ type Eval struct {
 	ConversationAssertions []AssertionConfig `json:"conversation_assertions,omitempty" yaml:"conversation_assertions,omitempty" jsonschema:"description=Conversation-level assertions"` //nolint:lll
 	// Tags for categorizing and filtering evaluations
 	Tags []string `json:"tags,omitempty" yaml:"tags,omitempty" jsonschema:"description=Tags for categorization"`
-	// Mode controls replay behavior: "instant", "realtime", or "accelerated"
-	Mode string `json:"mode,omitempty" yaml:"mode,omitempty" jsonschema:"enum=instant,enum=realtime,enum=accelerated,description=Replay timing mode (instant, realtime, or accelerated)"` //nolint:lll
-	// Speed controls playback speed when Mode is "accelerated" (default: 1.0)
-	Speed float64 `json:"speed,omitempty" yaml:"speed,omitempty" jsonschema:"description=Playback speed (default 1.0)"`
+	// Deprecated: Mode is ignored and will be removed. Loading warns when it is set.
+	Mode string `json:"mode,omitempty" yaml:"mode,omitempty" jsonschema:"enum=instant,enum=realtime,enum=accelerated,description=Ignored and will be removed"` //nolint:lll
+	// Deprecated: Speed is ignored and will be removed. Loading warns when it is set.
+	Speed float64 `json:"speed,omitempty" yaml:"speed,omitempty" jsonschema:"description=Ignored and will be removed"`
 }
 
 // EvalTurnConfig configures turn-level assertions for evaluations

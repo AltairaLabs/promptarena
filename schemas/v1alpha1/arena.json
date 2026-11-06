@@ -749,7 +749,7 @@
         },
         "defaults": {
           "$ref": "#/$defs/Defaults",
-          "description": "Defaults holds global defaults applied when a scenario does not specify its\nown (temperature, max_tokens, concurrency, output, fail_on, …)."
+          "description": "Defaults holds global defaults applied when a scenario does not specify its\nown (temperature, max_tokens, concurrency, output, …)."
         },
         "self_play": {
           "$ref": "#/$defs/SelfPlayConfig",
@@ -946,7 +946,8 @@
           "items": {
             "type": "string"
           },
-          "type": "array"
+          "type": "array",
+          "description": "Deprecated: FailOn is ignored and will be removed. Loading warns when it\nis set."
         },
         "verbose": {
           "type": "boolean"
@@ -1174,11 +1175,11 @@
             "realtime",
             "accelerated"
           ],
-          "description": "Replay timing mode (instant"
+          "description": "Ignored and will be removed"
         },
         "speed": {
           "type": "number",
-          "description": "Playback speed (default 1.0)"
+          "description": "Ignored and will be removed"
         }
       },
       "additionalProperties": false,

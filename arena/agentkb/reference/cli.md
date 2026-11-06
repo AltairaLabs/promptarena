@@ -110,7 +110,7 @@ Generate red-team scenarios from objective sets
 
 Run conversation simulations
 
-Flags: `--audio-monitor`, `--audio-rate`, `--ci`, `--concurrency`, `--config`, `--eval-types`, `--eval`, `--format`, `--formats`, `--junit-file`, `--markdown-file`, `--max-tokens`, `--mock-config`, `--mock-provider`, `--objectives-group-by`, `--out`, `--override-provider`, `--provider`, `--region`, `--roles`, `--scenario`, `--seed`, `--selfplay`, `--simple`, `--skip-pack-evals`, `--temperature`, `--verbose`
+Flags: `--audio-monitor`, `--audio-rate`, `--ci`, `--concurrency`, `--config`, `--eval-types`, `--eval`, `--format`, `--formats`, `--junit-file`, `--markdown-file`, `--max-tokens`, `--mock-config`, `--mock-provider`, `--objectives-group-by`, `--out`, `--override-provider`, `--provider`, `--region`, `--scenario`, `--simple`, `--skip-pack-evals`, `--verbose`
 
 ## promptarena schema
 

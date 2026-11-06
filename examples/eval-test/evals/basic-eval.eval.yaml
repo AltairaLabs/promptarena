@@ -39,4 +39,3 @@ spec:
   tags:
     - test
     - geography
-  mode: instant

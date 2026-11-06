@@ -617,7 +617,6 @@ spec:
   conversation_assertions:
     - type: llm_judge_conversation
       params:
-        judge: default
         criteria: "Test criteria"
   tags:
     - test

@@ -81,9 +81,6 @@ func RegisterRunCompletions() {
 	// Dynamic completion for --region flag
 	_ = runCmd.RegisterFlagCompletionFunc("region", completeRegions)
 
-	// Dynamic completion for --roles flag
-	_ = runCmd.RegisterFlagCompletionFunc("roles", completeRoles)
-
 	// Dynamic completion for --config flag (yaml files)
 	_ = runCmd.RegisterFlagCompletionFunc("config", completeConfigFiles)
 
@@ -174,24 +171,6 @@ func completeRegions(cmd *cobra.Command, args []string, toComplete string) ([]st
 		}
 	}
 	return regions, cobra.ShellCompDirectiveNoFileComp
-}
-
-// completeRoles provides dynamic completion for self-play role names
-func completeRoles(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
-	cfg := loadConfigForCompletion(cmd)
-	if cfg == nil {
-		return nil, cobra.ShellCompDirectiveNoFileComp
-	}
-
-	var roles []string
-	if cfg.SelfPlay != nil {
-		for _, role := range cfg.SelfPlay.Roles {
-			if toComplete == "" || strings.HasPrefix(role.ID, toComplete) {
-				roles = append(roles, role.ID)
-			}
-		}
-	}
-	return roles, cobra.ShellCompDirectiveNoFileComp
 }
 
 // completeConfigFiles provides completion for config file paths

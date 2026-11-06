@@ -206,11 +206,11 @@
             "realtime",
             "accelerated"
           ],
-          "description": "Replay timing mode (instant"
+          "description": "Ignored and will be removed"
         },
         "speed": {
           "type": "number",
-          "description": "Playback speed (default 1.0)"
+          "description": "Ignored and will be removed"
         }
       },
       "additionalProperties": false,

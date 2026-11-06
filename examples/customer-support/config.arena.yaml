@@ -31,5 +31,3 @@ spec:
     output:
       dir: out
       formats: ["json", "markdown"]
-    fail_on:
-      - provider_error
