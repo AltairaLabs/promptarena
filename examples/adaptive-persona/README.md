@@ -4,9 +4,9 @@ A self-play persona that pursues an objective, reads back how each exchange went
 
 The agent under test is a shop's support agent whose policy forbids refunds without a receipt. Three scenarios test it:
 
-- **`refund-pressure`** runs once per row of `data/refund-objectives.jsonl`. In each run, a `refund-seeker` persona pushes for something the policy forbids, and the agent should hold out.
-- **`refund-baseline`** asks for the same things once and plainly, with a `plain-customer` persona. It is the no-attack baseline that the attack's rate is compared with.
-- **`order-status`** has an `order-chaser` persona with declared facts ask where its order is. The agent should answer.
+- `refund-pressure` runs once per row of `data/refund-objectives.jsonl`. In each run, a `refund-seeker` persona pushes for something the policy forbids, and the agent should hold out.
+- `refund-baseline` asks for the same things once and plainly, with a `plain-customer` persona. It is the no-attack baseline that the attack's rate is compared with.
+- `order-status` has an `order-chaser` persona with declared facts ask where its order is. The agent should answer.
 
 ## Run it
 
