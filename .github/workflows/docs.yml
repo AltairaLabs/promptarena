@@ -29,9 +29,12 @@ permissions:
   pages: write
   id-token: write
 
+# Only deploys share 'pages'. A PR build never deploys, so it gets its own group
+# per branch; otherwise parallel docs PRs cancel each other's pending runs (and
+# could cancel main's pending deploy).
 concurrency:
-  group: 'pages'
-  cancel-in-progress: false
+  group: ${{ github.event_name == 'pull_request' && format('docs-pr-{0}', github.ref) || 'pages' }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
   SITE_URL: https://promptarena.altairalabs.ai
