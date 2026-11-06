@@ -320,17 +320,12 @@ func (r *MarkdownResultRepository) countMediaByType(summary *testSummary, conten
 
 // mediaHasData checks if media has any data source
 func (r *MarkdownResultRepository) mediaHasData(media *types.MediaContent) bool {
-	return (media.Data != nil && *media.Data != "") ||
-		(media.FilePath != nil && *media.FilePath != "") ||
-		(media.URL != nil && *media.URL != "")
+	return results.MediaHasData(media)
 }
 
-// calculateMediaSize calculates the size of inline media data
+// calculateMediaSize returns the media's size in bytes
 func (r *MarkdownResultRepository) calculateMediaSize(media *types.MediaContent) int64 {
-	if media.Data != nil && *media.Data != "" {
-		return int64(len(*media.Data))
-	}
-	return 0
+	return results.MediaSizeBytes(media)
 }
 
 // hasFailedAssertions checks if a result has any failed assertions

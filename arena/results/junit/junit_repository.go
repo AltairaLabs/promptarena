@@ -658,17 +658,12 @@ func countMediaByType(stats *MediaStats, contentType string) {
 
 // mediaHasData checks if media has any data source
 func mediaHasData(media *types.MediaContent) bool {
-	return (media.Data != nil && *media.Data != "") ||
-		(media.FilePath != nil && *media.FilePath != "") ||
-		(media.URL != nil && *media.URL != "")
+	return results.MediaHasData(media)
 }
 
-// calculateMediaSize calculates the size of inline media data
+// calculateMediaSize returns the media's size in bytes
 func calculateMediaSize(media *types.MediaContent) int64 {
-	if media.Data != nil && *media.Data != "" {
-		return int64(len(*media.Data))
-	}
-	return 0
+	return results.MediaSizeBytes(media)
 }
 
 // renderMediaProperties creates JUnit properties for media statistics

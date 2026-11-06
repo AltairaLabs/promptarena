@@ -64,12 +64,7 @@ func quietSetupLogs(useTUI bool, params *RunParameters) func() {
 }
 
 // loadConfiguration loads and parses the arena configuration file
-func loadConfiguration(cmd *cobra.Command) (string, *arenaconfig.Config, error) {
-	configFile, err := cmd.Flags().GetString("config")
-	if err != nil {
-		return "", nil, fmt.Errorf("failed to get config flag: %w", err)
-	}
-
+func loadConfiguration(configFile string) (string, *arenaconfig.Config, error) {
 	// If config path is a directory, append config.arena.yaml
 	if info, statErr := os.Stat(configFile); statErr == nil && info.IsDir() {
 		configFile = filepath.Join(configFile, "config.arena.yaml")
@@ -155,9 +150,9 @@ func processResults(results []engine.RunResult, params *RunParameters, configFil
 // runSimulations is the main entry point for the run command.
 // It orchestrates configuration loading, parameter extraction, execution, and result processing.
 // This is an interactive/integration function excluded from coverage testing.
-func runSimulations(cmd *cobra.Command) error {
+func runSimulations(cmd *cobra.Command, configPath string) error {
 	// Parse configuration and flags
-	configFile, cfg, err := loadConfiguration(cmd)
+	configFile, cfg, err := loadConfiguration(configPath)
 	if err != nil {
 		return err
 	}
