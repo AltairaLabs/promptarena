@@ -313,7 +313,9 @@ eval and prints it:
 `>=` and `>` become `min_score`; `<=` and `<` become `max_score`; `==` sets both.
 Bounds are inclusive, so a strict operator is widened and the decision says so.
 `--expect` also selects: only sessions whose measurement fell outside the range
-(or never produced one) are generated.
+(or never produced one) are generated. This holds whether or not the source
+filters on its side: every fetched session is checked again, and one inside
+every range is skipped with a warning naming the expectations.
 
 ```
 session run-1 eval faithfulness (faithfulness) scored 0.42: asserted-threshold min_score 0.8 — pack threshold gte 0.8 (recorded score 0.42)

@@ -64,7 +64,7 @@ func (a *RecordingsAdapter) List(
 		if opts.FilterPassed != nil && summary.HasFailures == *opts.FilterPassed {
 			continue
 		}
-		if len(opts.Expectations) > 0 && !violatesAny(evalsFrom(msgs, meta), opts.Expectations) {
+		if len(opts.Expectations) > 0 && !generate.ViolatesAny(evalsFrom(msgs, meta), opts.Expectations) {
 			continue
 		}
 		summaries = append(summaries, summary)
@@ -164,37 +164,8 @@ func buildSummary(
 		summary.ProviderID = id
 	}
 	evals := evalsFrom(msgs, meta)
-	summary.HasFailures = hasFailedVerdict(evals) || violatesAny(evals, expectations)
+	summary.HasFailures = generate.HasFailedVerdict(evals) || generate.ViolatesAny(evals, expectations)
 	return summary
-}
-
-func hasFailedVerdict(evals []generate.EvalResult) bool {
-	for i := range evals {
-		if evals[i].Failed() {
-			return true
-		}
-	}
-	return false
-}
-
-// violatesAny reports whether any expectation is violated by the session's
-// measurement of that eval. A session that never measured the eval violates
-// it: it cannot satisfy a range it has no value for.
-func violatesAny(evals []generate.EvalResult, expectations []generate.Expectation) bool {
-	for _, e := range expectations {
-		var score *float64
-		found := false
-		for i := range evals {
-			if evals[i].ID == e.EvalID {
-				score, found = evals[i].Score, true
-				break
-			}
-		}
-		if !found || e.Violated(score) {
-			return true
-		}
-	}
-	return false
 }
 
 func packRef(meta *adapters.RecordingMetadata) *generate.PackRef {
@@ -243,9 +214,9 @@ func workflowTrace(meta *adapters.RecordingMetadata) *generate.WorkflowTrace {
 // evalsFrom assembles every recorded eval: conversation-level judged results,
 // pack measurements, and per-turn judged results re-keyed by the user turn
 // they answer. Recordings key per-turn results by message index (the
-// assistant message evaluated); the converter indexes scenario turns, which
-// are user messages, so an assistant message maps to the most recent user
-// message before it.
+// assistant message evaluated); generate.UserTurns maps that position to the
+// user turn it belongs to. A position out of range or before the first user
+// message cannot be placed and is dropped.
 func evalsFrom(msgs []types.Message, meta *adapters.RecordingMetadata) []generate.EvalResult {
 	if meta == nil {
 		return nil
@@ -260,14 +231,7 @@ func evalsFrom(msgs []types.Message, meta *adapters.RecordingMetadata) []generat
 	if len(meta.TurnAssertions) == 0 {
 		return out
 	}
-	userTurnBefore := make([]int, len(msgs))
-	turn := -1
-	for i := range msgs {
-		if msgs[i].Role == "user" {
-			turn++
-		}
-		userTurnBefore[i] = turn
-	}
+	userTurnBefore := generate.UserTurns(msgs)
 	// Map iteration is unordered; sort so Evals, and therefore the generated
 	// assertion order, is stable run to run.
 	msgIdxs := make([]int, 0, len(meta.TurnAssertions))

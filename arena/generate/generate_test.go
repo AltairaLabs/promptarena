@@ -134,6 +134,47 @@ func TestGenerate_ExpectationsFlowToListAndConvert(t *testing.T) {
 	assert.Equal(t, 0.8, res.Scenarios[0].Spec.ConversationAssertions[0].Params["min_score"])
 }
 
+// A source that ignores Expectations still yields scenarios only for the
+// sessions that violate one: Generate re-checks every fetched session and
+// reports the rest in Skipped.
+func TestGenerate_RechecksExpectationsClientSide(t *testing.T) {
+	src := &fakeSource{ // List ignores opts entirely
+		summaries: []SessionSummary{{ID: "low"}, {ID: "high"}, {ID: "unmeasured"}},
+		details: map[string]*SessionDetail{
+			"low":        session("low", "one", EvalResult{ID: "faith", Type: "faithfulness", Kind: "eval", Score: f(0.3)}),
+			"high":       session("high", "two", EvalResult{ID: "faith", Type: "faithfulness", Kind: "eval", Score: f(0.95)}),
+			"unmeasured": session("unmeasured", "three"),
+		},
+	}
+	exp := []Expectation{{EvalID: "faith", Min: f(0.8)}}
+	res, err := Generate(context.Background(), Request{Source: src, List: ListOptions{Expectations: exp}})
+	require.NoError(t, err)
+
+	names := make([]string, 0, len(res.Scenarios))
+	for _, sc := range res.Scenarios {
+		names = append(names, sc.Metadata.Name)
+	}
+	assert.Equal(t, []string{"low", "unmeasured"}, names)
+	require.Len(t, res.Skipped, 1)
+	assert.Equal(t, "high", res.Skipped[0].SessionID)
+	assert.Contains(t, res.Skipped[0].Reason, "faith")
+}
+
+// Convert.Expectations bound assertions only; they do not select sessions.
+func TestGenerate_ConvertExpectationsDoNotSelect(t *testing.T) {
+	src := &fakeSource{
+		summaries: []SessionSummary{{ID: "high"}},
+		details: map[string]*SessionDetail{
+			"high": session("high", "two", EvalResult{ID: "faith", Type: "faithfulness", Kind: "eval", Score: f(0.95)}),
+		},
+	}
+	exp := []Expectation{{EvalID: "faith", Min: f(0.8)}}
+	res, err := Generate(context.Background(), Request{Source: src, Convert: ConvertOptions{Expectations: exp}})
+	require.NoError(t, err)
+	assert.Len(t, res.Scenarios, 1)
+	assert.Empty(t, res.Skipped)
+}
+
 // A pack supplies params and the declared threshold for evals the source
 // recorded without them (Omnia does not store eval params).
 func TestGenerate_PackEnrichesEvals(t *testing.T) {

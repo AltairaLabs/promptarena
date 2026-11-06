@@ -33,8 +33,9 @@ type ListOptions struct {
 	// Limit caps the number of results. 0 means unlimited.
 	Limit int
 	// Expectations narrow to sessions where a measurement fell outside the
-	// given range. Adapters that can filter server-side should; the converter
-	// re-checks client-side so the outcome is the same either way.
+	// given range. Adapters that can filter server-side should (ViolatesAny is
+	// the check); Generate re-checks every fetched session client-side so the
+	// outcome is the same either way.
 	Expectations []Expectation
 }
 
@@ -82,7 +83,8 @@ type SessionDetail struct {
 // parameters when the source knows them (arena run output records them;
 // Omnia does not, and the pack supplies them). Threshold is the pack author's
 // declared expectation when the pack is available. Turn is nil for a
-// conversation-level result, else the index of the USER turn it answers.
+// conversation-level result, else the index of the USER turn it answers (see
+// UserTurns; EvalResultsFromRows resolves it from a store's message ids).
 type EvalResult struct {
 	ID        string
 	Type      string

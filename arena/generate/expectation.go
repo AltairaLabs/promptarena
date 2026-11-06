@@ -92,6 +92,30 @@ func (e Expectation) Violated(score *float64) bool {
 	return false
 }
 
+// String renders the expectation in the form ParseExpectation reads:
+// "faith>=0.8", "tox<=0.2", "x==1", or "x in [0.2, 0.8]" for a range.
+func (e Expectation) String() string {
+	switch {
+	case e.Min != nil && e.Max != nil && *e.Min == *e.Max:
+		return fmt.Sprintf("%s==%v", e.EvalID, *e.Min)
+	case e.Min != nil && e.Max != nil:
+		return fmt.Sprintf("%s in [%v, %v]", e.EvalID, *e.Min, *e.Max)
+	case e.Min != nil:
+		return fmt.Sprintf("%s>=%v", e.EvalID, *e.Min)
+	case e.Max != nil:
+		return fmt.Sprintf("%s<=%v", e.EvalID, *e.Max)
+	}
+	return e.EvalID
+}
+
+func describeExpectations(exps []Expectation) string {
+	parts := make([]string, len(exps))
+	for i, e := range exps {
+		parts[i] = e.String()
+	}
+	return strings.Join(parts, ", ")
+}
+
 // Bounds returns the min_score/max_score the expectation becomes.
 func (e Expectation) Bounds() (minScore, maxScore *float64) {
 	return e.Min, e.Max
