@@ -1,0 +1,2324 @@
+{
+ "page": "docs/src/content/docs/arena/reference/output-formats.md",
+ "commit": "60cd1a146e6224c0d66c972d18f329a0ce76c522",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "PromptArena supports multiple output formats for test results",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:57"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "Multiple formats can be generated simultaneously from a single test run",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:57",
+    "arena/results/composite.go"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "Format registry name 'json' with file extension .json",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:59",
+    "arena/results/json/json_repository.go:22"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "Format registry name 'markdown' with file extension .md",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:72",
+    "arena/results/markdown/markdown_repository.go:25"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "Format registry name 'junit' with file extension .xml",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:478",
+    "arena/cmd/promptarena/run.go:62"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "Format registry name 'csv' with file extension .csv",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:65",
+    "arena/results/csv/csv_repository.go:23"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "Format registry name 'objectives' writes .json and .md files",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:67",
+    "arena/results/objectives/repository.go:17"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "There is no HTML report output (report.html is no longer produced)",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:36",
+    "arena/cmd/promptarena/run.go:458"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "promptarena serve provides the web UI which replaces the old report.html content, plus live runs",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:108",
+    "arena/web/server_loader_integration.go:25"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "The web UI needs no format flag because it reads the per-run JSON files from the output directory",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/server_loader_integration.go:25",
+    "arena/web/server_loader_integration.go:49"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "'html' is still accepted as a format for backwards compatibility",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:40",
+    "arena/cmd/promptarena/run.go:458"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "Passing --format html produces a Markdown report silently",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:426",
+    "arena/cmd/promptarena/run.go:458"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "Setting html in defaults.output.formats silently produces a Markdown report",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:373",
+    "arena/cmd/promptarena/run.go:426"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "The run command has a --format flag (singular)",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:148",
+    "arena/cmd/promptarena/run.go:368"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "Output file results.json is written to the output directory",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/json/json_repository.go:22",
+    "arena/results/json/json_repository.go:74",
+    "arena/results/json/json_repository.go:97"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "Output file results.md (Markdown report) is written to the output directory",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:486",
+    "arena/results/markdown/markdown_repository.go:25"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "Output file junit.xml (JUnit XML) is written to the output directory",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:478"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "results.csv is written with one row per run",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/csv/csv_repository.go:23",
+    "arena/results/csv/csv_repository.go:3"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "objectives.json is written to the output directory",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/objectives/repository.go:17"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "objectives.md is the same objectives report rendered as Markdown tables",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/objectives/repository.go:18"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "A media/ directory is created under the output directory for media storage",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:1024"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "Media layout is media/run-<timestamp>/<session>/<conv>/ with image files and .meta sidecars (image1.png, image1.png.meta)",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:1027"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "Arena automatically creates a media/ directory to store large media content (images, audio, video)",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:1017"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "Media deduplication is enabled (shared media stored once)",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:1030"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "Media organization is by-run (each run isolated under its own run-<timestamp> directory)",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:1029"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "Each media file has a .meta sidecar file with context",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:1027"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "Media location is {output_dir}/media/run-{timestamp}/",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:1019",
+    "arena/engine/engine.go:1024"
+   ]
+  },
+  {
+   "id": 28,
+   "claim": "Link to Media Storage documentation at promptkit.altairalabs.ai/sdk/how-to/",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 29,
+   "claim": "Configuration key path defaults.output",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:466"
+   ]
+  },
+  {
+   "id": 30,
+   "claim": "Field defaults.output.dir sets the output directory",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:514",
+    "arena/cmd/promptarena/run.go:294",
+    "arena/cmd/promptarena/serve_interactive.go:221",
+    "arena/engine/engine.go:1019",
+    "arena/engine/engine.go:703"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "Field defaults.output.formats is a list of format names, example value ['json','markdown','junit']",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:515",
+    "arena/cmd/promptarena/run.go:373"
+   ]
+  },
+  {
+   "id": 32,
+   "claim": "Config block defaults.output.markdown exists",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:518"
+   ]
+  },
+  {
+   "id": 33,
+   "claim": "Field markdown.file sets custom Markdown output filename",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:536",
+    "arena/cmd/promptarena/run.go:483"
+   ]
+  },
+  {
+   "id": 34,
+   "claim": "Field markdown.include_details (boolean) includes detailed test information",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:537",
+    "arena/results/markdown/markdown_repository.go:166"
+   ]
+  },
+  {
+   "id": 35,
+   "claim": "Field markdown.show_overview (boolean) shows executive overview section",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:538",
+    "arena/results/markdown/markdown_repository.go:156"
+   ]
+  },
+  {
+   "id": 36,
+   "claim": "Field markdown.show_results_matrix (boolean) shows results matrix table",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:539",
+    "arena/results/markdown/markdown_repository.go:161"
+   ]
+  },
+  {
+   "id": 37,
+   "claim": "Field markdown.show_failed_tests (boolean) shows failed tests section",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:540",
+    "arena/results/markdown/markdown_repository.go:171"
+   ]
+  },
+  {
+   "id": 38,
+   "claim": "Field markdown.show_cost_summary (boolean) shows cost analysis section",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:541",
+    "arena/results/markdown/markdown_repository.go:176"
+   ]
+  },
+  {
+   "id": 39,
+   "claim": "Config block defaults.output.junit exists",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:519"
+   ]
+  },
+  {
+   "id": 40,
+   "claim": "Field junit.file sets custom JUnit output filename",
+   "verdict": "dead",
+   "evidence": [
+    "arena/arenaconfig/types.go:546",
+    "arena/cmd/promptarena/run.go:477"
+   ]
+  },
+  {
+   "id": 41,
+   "claim": "JSON example top-level keys are arena_config, summary, results",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/types.go:51",
+    "arena/results/json/json_repository.go:97"
+   ]
+  },
+  {
+   "id": 42,
+   "claim": "JSON field arena_config (object with name, timestamp, version)",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/json/json_repository.go:97"
+   ]
+  },
+  {
+   "id": 43,
+   "claim": "JSON field arena_config.name (string)",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/json/json_repository.go:103"
+   ]
+  },
+  {
+   "id": 44,
+   "claim": "JSON field arena_config.timestamp (string)",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/json/json_repository.go:102"
+   ]
+  },
+  {
+   "id": 45,
+   "claim": "JSON field arena_config.version (string)",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/json/json_repository.go:97"
+   ]
+  },
+  {
+   "id": 46,
+   "claim": "JSON field summary (object)",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/json/json_repository.go:97"
+   ]
+  },
+  {
+   "id": 47,
+   "claim": "JSON field summary.total_tests",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/json/json_repository.go:99"
+   ]
+  },
+  {
+   "id": 48,
+   "claim": "JSON field summary.passed",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/json/json_repository.go:100"
+   ]
+  },
+  {
+   "id": 49,
+   "claim": "JSON field summary.failed",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/json/json_repository.go:101"
+   ]
+  },
+  {
+   "id": 50,
+   "claim": "JSON field summary.errors",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/json/json_repository.go:101"
+   ]
+  },
+  {
+   "id": 51,
+   "claim": "JSON field summary.skipped",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/types.go:70",
+    "arena/results/json/json_repository.go:97"
+   ]
+  },
+  {
+   "id": 52,
+   "claim": "JSON field summary.total_duration is a duration string such as 45.2s",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/json/json_repository.go:109"
+   ]
+  },
+  {
+   "id": 53,
+   "claim": "JSON field summary.total_cost",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/json/json_repository.go:106"
+   ]
+  },
+  {
+   "id": 54,
+   "claim": "JSON field summary.total_tokens",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/json/json_repository.go:108"
+   ]
+  },
+  {
+   "id": 55,
+   "claim": "JSON field results (array of per-run objects)",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/json/json_repository.go:104",
+    "arena/results/json/json_repository.go:74"
+   ]
+  },
+  {
+   "id": 56,
+   "claim": "Per-result field scenario (example value basic-qa)",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/types.go:55"
+   ]
+  },
+  {
+   "id": 57,
+   "claim": "Per-result field provider (example value openai-gpt4o-mini)",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/types.go:56"
+   ]
+  },
+  {
+   "id": 58,
+   "claim": "Per-result field status (example value passed)",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/types.go:65",
+    "arena/engine/types.go:69"
+   ]
+  },
+  {
+   "id": 59,
+   "claim": "Per-result field duration (string such as 3.2s)",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/types.go:68"
+   ]
+  },
+  {
+   "id": 60,
+   "claim": "Per-result field turns (array)",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/types.go:61"
+   ]
+  },
+  {
+   "id": 61,
+   "claim": "Turn field turn_number",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/types.go:61"
+   ]
+  },
+  {
+   "id": 62,
+   "claim": "Turn field role (example value user)",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/types.go:61"
+   ]
+  },
+  {
+   "id": 63,
+   "claim": "Turn field content",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/types.go:61"
+   ]
+  },
+  {
+   "id": 64,
+   "claim": "Turn field response (object with role, content, cost_info)",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/types.go:61"
+   ]
+  },
+  {
+   "id": 65,
+   "claim": "Response field role (example value assistant)",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/types.go:61"
+   ]
+  },
+  {
+   "id": 66,
+   "claim": "Response field content",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/types.go:61"
+   ]
+  },
+  {
+   "id": 67,
+   "claim": "Response field cost_info (object)",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/types.go:61"
+   ]
+  },
+  {
+   "id": 68,
+   "claim": "CostInfo field input_tokens",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/types.go:63"
+   ]
+  },
+  {
+   "id": 69,
+   "claim": "CostInfo field output_tokens",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/types.go:63"
+   ]
+  },
+  {
+   "id": 70,
+   "claim": "CostInfo field cost (per-turn value 0.00001)",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/types.go:63"
+   ]
+  },
+  {
+   "id": 71,
+   "claim": "Turn field assertions (array)",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/markdown/markdown_repository.go:357",
+    "arena/results/markdown/markdown_repository.go:373"
+   ]
+  },
+  {
+   "id": 72,
+   "claim": "Assertion type content_includes is a registered assertion type",
+   "verdict": "true",
+   "evidence": [
+    "arena/agentkb/schemas/common/assertions.json"
+   ]
+  },
+  {
+   "id": 73,
+   "claim": "Assertion field passed (boolean)",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/markdown/markdown_repository.go:403"
+   ]
+  },
+  {
+   "id": 74,
+   "claim": "Assertion field message (example value 'Should mention Paris')",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/markdown/markdown_repository.go:378"
+   ]
+  },
+  {
+   "id": 75,
+   "claim": "Assertion field details (null in example)",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/markdown/markdown_repository.go:378"
+   ]
+  },
+  {
+   "id": 76,
+   "claim": "Per-result field cost_info (object)",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/types.go:63"
+   ]
+  },
+  {
+   "id": 77,
+   "claim": "Result cost_info field total_input_tokens",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/types.go:63"
+   ]
+  },
+  {
+   "id": 78,
+   "claim": "Result cost_info field total_output_tokens",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/types.go:63"
+   ]
+  },
+  {
+   "id": 79,
+   "claim": "Result cost_info field total_cost",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/types.go:63"
+   ]
+  },
+  {
+   "id": 80,
+   "claim": "JSON output has no format-specific options",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:524"
+   ]
+  },
+  {
+   "id": 81,
+   "claim": "JSON format is enabled by adding json to defaults.output.formats",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:377",
+    "arena/cmd/promptarena/run.go:59"
+   ]
+  },
+  {
+   "id": 82,
+   "claim": "JSON output is written to <dir>/index.json along with per-run files",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/json/json_repository.go:22",
+    "arena/results/json/json_repository.go:92"
+   ]
+  },
+  {
+   "id": 83,
+   "claim": "Example command jq '.summary.passed' out/results.json",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/json/json_repository.go:22",
+    "arena/results/json/json_repository.go:99"
+   ]
+  },
+  {
+   "id": 84,
+   "claim": "Python example uses json module and reads out/results.json",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/json/json_repository.go:22"
+   ]
+  },
+  {
+   "id": 85,
+   "claim": "Python example reads results['summary']['passed'] and results['summary']['total_tests']",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/json/json_repository.go:99"
+   ]
+  },
+  {
+   "id": 86,
+   "claim": "Python example iterates results['results'] reading provider and cost_info.total_cost",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/types.go:56",
+    "arena/engine/types.go:63"
+   ]
+  },
+  {
+   "id": 87,
+   "claim": "TypeScript schema TestResults has arena_config, summary, results",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/json/json_repository.go:97"
+   ]
+  },
+  {
+   "id": 88,
+   "claim": "Schema arena_config fields name, timestamp, version are strings",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/json/json_repository.go:97"
+   ]
+  },
+  {
+   "id": 89,
+   "claim": "Schema summary fields total_tests, passed, failed, errors, skipped are numbers",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/json/json_repository.go:99"
+   ]
+  },
+  {
+   "id": 90,
+   "claim": "Schema summary.total_duration is a string",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/json/json_repository.go:109"
+   ]
+  },
+  {
+   "id": 91,
+   "claim": "Schema summary.total_cost is a number",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/json/json_repository.go:106"
+   ]
+  },
+  {
+   "id": 92,
+   "claim": "Schema summary.total_tokens is a number",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/json/json_repository.go:108"
+   ]
+  },
+  {
+   "id": 93,
+   "claim": "Schema summary.average_cost is a number",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/json/json_repository.go:107"
+   ]
+  },
+  {
+   "id": 94,
+   "claim": "Schema results is an array of TestResult",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/json/json_repository.go:97"
+   ]
+  },
+  {
+   "id": 95,
+   "claim": "TestResult.scenario is a string",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/types.go:55"
+   ]
+  },
+  {
+   "id": 96,
+   "claim": "TestResult.provider is a string",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/types.go:56"
+   ]
+  },
+  {
+   "id": 97,
+   "claim": "TestResult.status enum values are passed, failed, error, skipped",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/types.go:65",
+    "arena/engine/types.go:70"
+   ]
+  },
+  {
+   "id": 98,
+   "claim": "TestResult.duration is a string",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/types.go:68"
+   ]
+  },
+  {
+   "id": 99,
+   "claim": "TestResult.error is an optional string",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/types.go:69"
+   ]
+  },
+  {
+   "id": 100,
+   "claim": "TestResult.turns is an array of Turn",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/types.go:61"
+   ]
+  },
+  {
+   "id": 101,
+   "claim": "TestResult.cost_info is CostInfo",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/types.go:63"
+   ]
+  },
+  {
+   "id": 102,
+   "claim": "TestResult.metadata is an optional Record<string, any>",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/types.go:59",
+    "arena/engine/types.go:60"
+   ]
+  },
+  {
+   "id": 103,
+   "claim": "Turn.turn_number is a number",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/types.go:61"
+   ]
+  },
+  {
+   "id": 104,
+   "claim": "Turn.role enum values are user and assistant",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/types.go:61"
+   ]
+  },
+  {
+   "id": 105,
+   "claim": "Turn.content is a string",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/types.go:61"
+   ]
+  },
+  {
+   "id": 106,
+   "claim": "Turn.response is an optional object",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/types.go:61"
+   ]
+  },
+  {
+   "id": 107,
+   "claim": "Response.role is a string",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/types.go:61"
+   ]
+  },
+  {
+   "id": 108,
+   "claim": "Response.content is a string",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/types.go:61"
+   ]
+  },
+  {
+   "id": 109,
+   "claim": "Response.tool_calls is an optional ToolCall array",
+   "verdict": "unverified",
+   "evidence": [
+    "arena/engine/types.go:61"
+   ]
+  },
+  {
+   "id": 110,
+   "claim": "ToolCall type is referenced by the schema (must exist as a type in results output)",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 111,
+   "claim": "Response.cost_info is CostInfo",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/types.go:61"
+   ]
+  },
+  {
+   "id": 112,
+   "claim": "Turn.assertions is an optional Assertion array",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/markdown/markdown_repository.go:357",
+    "arena/results/markdown/markdown_repository.go:373"
+   ]
+  },
+  {
+   "id": 113,
+   "claim": "Assertion.type is a string",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/markdown/markdown_repository.go:378"
+   ]
+  },
+  {
+   "id": 114,
+   "claim": "Assertion.passed is a boolean",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/markdown/markdown_repository.go:403"
+   ]
+  },
+  {
+   "id": 115,
+   "claim": "Assertion.message is a string",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/markdown/markdown_repository.go:378"
+   ]
+  },
+  {
+   "id": 116,
+   "claim": "Assertion.details is optional any",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/markdown/markdown_repository.go:378"
+   ]
+  },
+  {
+   "id": 117,
+   "claim": "CostInfo.input_tokens is a number",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/types.go:63"
+   ]
+  },
+  {
+   "id": 118,
+   "claim": "CostInfo.output_tokens is a number",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/types.go:63"
+   ]
+  },
+  {
+   "id": 119,
+   "claim": "CostInfo.cached_tokens is an optional number",
+   "verdict": "unverified",
+   "evidence": [
+    "arena/results/csv/csv_repository.go:48"
+   ]
+  },
+  {
+   "id": 120,
+   "claim": "CostInfo.cost is a number",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/types.go:63"
+   ]
+  },
+  {
+   "id": 121,
+   "claim": "Interactive review lives in the web UI, which starts from promptarena serve and covers the same ground as the old static report",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:108",
+    "arena/web/server_loader_integration.go:25"
+   ]
+  },
+  {
+   "id": 122,
+   "claim": "Web UI Standings view ranks pass rates across providers",
+   "verdict": "false",
+   "evidence": [
+    "arena/web/frontend/src/components/arena/Standings.tsx:38",
+    "arena/web/frontend/src/lib/arenaView.ts:261"
+   ]
+  },
+  {
+   "id": 123,
+   "claim": "Web UI Trial matrix is a scenario x provider grid; each cell shows pass rate, cost and latency",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/frontend/src/components/arena/TrialMatrix.tsx:24",
+    "arena/web/frontend/src/components/arena/TrialMatrix.tsx:95"
+   ]
+  },
+  {
+   "id": 124,
+   "claim": "Clicking a matrix cell scopes the run ledger to that scenario/provider pair",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/frontend/src/App.tsx:386",
+    "arena/web/frontend/src/App.tsx:624"
+   ]
+  },
+  {
+   "id": 125,
+   "claim": "Transcripts open from the run ledger showing turn-by-turn conversation with assertion outcomes",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/frontend/src/App.tsx:375",
+    "arena/web/frontend/src/lib/arenaInspectorTabs.tsx"
+   ]
+  },
+  {
+   "id": 126,
+   "claim": "Web UI shows per-cell and per-run cost and latency, plus a running spend estimate before starting a run",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/frontend/src/App.tsx:318",
+    "arena/web/frontend/src/lib/arenaView.ts:309"
+   ]
+  },
+  {
+   "id": 127,
+   "claim": "Previous (historical) results load alongside the current run",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:231",
+    "arena/web/frontend/src/App.tsx:276"
+   ]
+  },
+  {
+   "id": 128,
+   "claim": "Run events are streamed live over SSE as the run executes",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/server.go:127",
+    "arena/web/server.go:160"
+   ]
+  },
+  {
+   "id": 129,
+   "claim": "Web UI supports interactive chat with a configured agent in the browser",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/server.go:137",
+    "arena/web/server.go:138"
+   ]
+  },
+  {
+   "id": 130,
+   "claim": "promptarena serve loads existing results and can start new runs",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:231",
+    "arena/web/server.go:135"
+   ]
+  },
+  {
+   "id": 131,
+   "claim": "Command: promptarena serve",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:109"
+   ]
+  },
+  {
+   "id": 132,
+   "claim": "Flag --open on promptarena serve opens a browser automatically",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:133",
+    "arena/cmd/promptarena/serve_interactive.go:259"
+   ]
+  },
+  {
+   "id": 133,
+   "claim": "Flag -p on promptarena serve sets a custom port (example -p 3000)",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:132"
+   ]
+  },
+  {
+   "id": 134,
+   "claim": "Markdown report begins with the heading PromptArena Test Report",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/markdown/markdown_repository.go:145",
+    "arena/results/markdown/markdown_repository.go:153"
+   ]
+  },
+  {
+   "id": 135,
+   "claim": "Markdown report includes a Generated line and an Arena line (arena name)",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/markdown/markdown_repository.go:143"
+   ]
+  },
+  {
+   "id": 136,
+   "claim": "Markdown report has a Summary section with Total Tests, Passed, Failed, Duration, Cost and Tokens bullets",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/markdown/markdown_repository.go:414",
+    "arena/results/markdown/markdown_repository.go:417"
+   ]
+  },
+  {
+   "id": 137,
+   "claim": "Markdown report formats token counts with thousands separators (4,521)",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/markdown/markdown_repository.go:413"
+   ]
+  },
+  {
+   "id": 138,
+   "claim": "Markdown report has a Results by Provider section with per-provider headings and per-scenario subheadings (Scenario: name)",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/markdown/markdown_repository.go:501",
+    "arena/results/markdown/markdown_repository.go:502"
+   ]
+  },
+  {
+   "id": 139,
+   "claim": "Markdown per-scenario block shows Status in upper case (PASSED), Duration and Cost",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/markdown/markdown_repository.go:502"
+   ]
+  },
+  {
+   "id": 140,
+   "claim": "Markdown per-turn block is headed Turn N and shows User and Assistant lines",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/markdown/markdown_repository.go:166",
+    "arena/results/markdown/markdown_repository.go:502"
+   ]
+  },
+  {
+   "id": 141,
+   "claim": "Markdown assertion list shows assertion type and message (content_includes: Should mention Paris)",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/markdown/markdown_repository.go:537",
+    "arena/results/markdown/markdown_repository.go:555"
+   ]
+  },
+  {
+   "id": 142,
+   "claim": "Markdown turn token line shows total and input/output (37 (input: 25, output: 12))",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/markdown/markdown_repository.go:170"
+   ]
+  },
+  {
+   "id": 143,
+   "claim": "Markdown options block accepts keys file, include_details, show_overview, show_results_matrix, show_failed_tests, show_cost_summary under output.markdown",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:535-541",
+    "arena/results/markdown/markdown_repository.go:156-179"
+   ]
+  },
+  {
+   "id": 144,
+   "claim": "Field markdown.include_details (example report.md) includes full conversation details",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:537",
+    "arena/results/markdown/markdown_repository.go:166-168"
+   ]
+  },
+  {
+   "id": 145,
+   "claim": "Field markdown.show_cost_summary in the Markdown options block",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:541",
+    "arena/results/markdown/markdown_repository.go:176"
+   ]
+  },
+  {
+   "id": 146,
+   "claim": "markdown.file default example value report.md",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:536",
+    "arena/cmd/promptarena/run.go:483-486"
+   ]
+  },
+  {
+   "id": 147,
+   "claim": "GitHub Actions example step runs promptarena run arena.yaml",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:144",
+    "arena/cmd/promptarena/run.go:294"
+   ]
+  },
+  {
+   "id": 148,
+   "claim": "Example reads out/results.md, the Markdown report file",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:486"
+   ]
+  },
+  {
+   "id": 149,
+   "claim": "GitHub Actions example uses actions/github-script@v6 with context.issue and github.rest.issues.createComment",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 150,
+   "claim": "Documentation include directive syntax [include file=\"test-results/results.md\"] is supported by the docs site",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 151,
+   "claim": "Example command slack-markdown-converter converts the Markdown report for Slack",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 152,
+   "claim": "Example command slack-cli chat-post-message with --channel flag",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 153,
+   "claim": "JUnit XML example root element testsuites with name PromptArena Tests",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/junit/junit_repository.go:157"
+   ]
+  },
+  {
+   "id": 154,
+   "claim": "JUnit testsuites attributes tests, failures, errors, time",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/junit/junit_repository.go:156-163",
+    "arena/results/junit/junit_types.go:13-21"
+   ]
+  },
+  {
+   "id": 155,
+   "claim": "JUnit testsuite element with name, tests, failures, errors, time attributes",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/junit/junit_repository.go:107-113",
+    "arena/results/junit/junit_types.go:24-34"
+   ]
+  },
+  {
+   "id": 156,
+   "claim": "JUnit testcase name format is <scenario>.<provider> (example basic-qa.openai-gpt4o-mini)",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/junit/junit_repository.go:174-181"
+   ]
+  },
+  {
+   "id": 157,
+   "claim": "JUnit testcase attributes name, classname (scenario), time",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/junit/junit_repository.go:187-191",
+    "arena/results/junit/junit_types.go:43-47"
+   ]
+  },
+  {
+   "id": 158,
+   "claim": "JUnit testcase includes system-out with turn transcript and assertion names",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/junit/junit_repository.go:324-345"
+   ]
+  },
+  {
+   "id": 159,
+   "claim": "JUnit failure element with message 'Assertion failed: content_includes' and type AssertionFailure",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/junit/junit_repository.go:246-249",
+    "arena/results/junit/junit_repository.go:316-319"
+   ]
+  },
+  {
+   "id": 160,
+   "claim": "Config block junit with file key (example junit.xml)",
+   "verdict": "dead",
+   "evidence": [
+    "arena/arenaconfig/types.go:545-548",
+    "arena/cmd/promptarena/run.go:476-478"
+   ]
+  },
+  {
+   "id": 161,
+   "claim": "CI example runs promptarena run arena.yaml",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:144"
+   ]
+  },
+  {
+   "id": 162,
+   "claim": "GitHub Actions example uses EnricoMi/publish-unit-test-result-action@v2 with files out/junit.xml",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 163,
+   "claim": "GitLab CI example uses artifacts.reports.junit with out/junit.xml",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 164,
+   "claim": "Jenkins example runs sh 'promptarena run arena.yaml' and junit 'out/junit.xml' in post always",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 165,
+   "claim": "CircleCI example uses store_test_results with path out/junit.xml",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 166,
+   "claim": "csv format writes results.csv into the output directory with one row per run",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/csv/csv_repository.go:113",
+    "arena/results/csv/csv_repository.go:23"
+   ]
+  },
+  {
+   "id": 167,
+   "claim": "Example formats list ['json','csv'] is valid for defaults.output.formats",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:358-380",
+    "arena/cmd/promptarena/run.go:60-66"
+   ]
+  },
+  {
+   "id": 168,
+   "claim": "CSV fixed column run_id",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/csv/csv_repository.go:37-40"
+   ]
+  },
+  {
+   "id": 169,
+   "claim": "CSV fixed column scenario_id",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/csv/csv_repository.go:37-40"
+   ]
+  },
+  {
+   "id": 170,
+   "claim": "CSV fixed column provider_id",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/csv/csv_repository.go:37-40"
+   ]
+  },
+  {
+   "id": 171,
+   "claim": "CSV fixed column region",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/csv/csv_repository.go:37-40"
+   ]
+  },
+  {
+   "id": 172,
+   "claim": "CSV fixed column passed uses the same pass rule as JUnit and Markdown reports, false for skipped runs",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/csv/csv_repository.go:41",
+    "arena/results/junit/junit_repository.go:223-250",
+    "arena/results/markdown/markdown_repository.go:230-234",
+    "arena/results/utils.go:89-101"
+   ]
+  },
+  {
+   "id": 173,
+   "claim": "CSV fixed column skipped is true for runs skipped (e.g. transient provider error)",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/conversation_executor.go:711-719",
+    "arena/results/csv/csv_repository.go:42"
+   ]
+  },
+  {
+   "id": 174,
+   "claim": "CSV fixed column stop_reason (example value max_rounds) is set when a failed run hit a cap",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/conversation_executor.go:728",
+    "arena/engine/stop_reason.go:11-20",
+    "arena/results/csv/csv_repository.go:43"
+   ]
+  },
+  {
+   "id": 175,
+   "claim": "CSV fixed column error holds the error message",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/csv/csv_repository.go:44"
+   ]
+  },
+  {
+   "id": 176,
+   "claim": "CSV fixed column duration_ms is wall-clock duration in milliseconds",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/csv/csv_repository.go:45"
+   ]
+  },
+  {
+   "id": 177,
+   "claim": "CSV fixed column input_tokens",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/csv/csv_repository.go:46-49"
+   ]
+  },
+  {
+   "id": 178,
+   "claim": "CSV fixed column output_tokens",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/csv/csv_repository.go:46-49"
+   ]
+  },
+  {
+   "id": 179,
+   "claim": "CSV fixed column cached_tokens",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/csv/csv_repository.go:46-49"
+   ]
+  },
+  {
+   "id": 180,
+   "claim": "CSV fixed column total_cost_usd",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/csv/csv_repository.go:46-49"
+   ]
+  },
+  {
+   "id": 181,
+   "claim": "CSV fixed column tool_calls_total",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/csv/csv_repository.go:50-55"
+   ]
+  },
+  {
+   "id": 182,
+   "claim": "Dynamic CSV column label.<key> comes from scenario metadata.labels (example label.arm)",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:487-488",
+    "arena/engine/execution.go:970-976",
+    "arena/results/csv/csv_repository.go:149-151"
+   ]
+  },
+  {
+   "id": 183,
+   "claim": "Dynamic CSV columns assertion.<n>.<type>.passed and assertion.<n>.<type>.score, 1-based in declaration order",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/csv/csv_repository.go:152-158"
+   ]
+  },
+  {
+   "id": 184,
+   "claim": "Dynamic CSV column eval.<eval_id>.score; for per-turn evals uses last turn score",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/csv/csv_repository.go:159-165"
+   ]
+  },
+  {
+   "id": 185,
+   "claim": "Dynamic CSV columns eval.<eval_id>.<key> from eval metrics and top-level numeric/boolean data entries; metric wins on name clash",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/csv/csv_repository.go:176-199"
+   ]
+  },
+  {
+   "id": 186,
+   "claim": "Example column eval.baxbench.security_score",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/csv/csv_repository.go:186-197"
+   ]
+  },
+  {
+   "id": 187,
+   "claim": "Dynamic CSV column tool.<name>.count gives calls per tool",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/csv/csv_repository.go:168-172"
+   ]
+  },
+  {
+   "id": 188,
+   "claim": "CSV header is the union of columns across all runs and missing cells are left empty",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/csv/csv_repository.go:100-129"
+   ]
+  },
+  {
+   "id": 189,
+   "claim": "objectives format writes objectives.json and objectives.md into the output directory",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/objectives/repository.go:17-18",
+    "arena/results/objectives/repository.go:58-61"
+   ]
+  },
+  {
+   "id": 190,
+   "claim": "Runs without an objective are left out of the objectives report",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/objectives/report.go:179-181",
+    "arena/results/objectives/report.go:376-396"
+   ]
+  },
+  {
+   "id": 191,
+   "claim": "Objectives report link target /arena/reference/config-schema/#objectives",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 192,
+   "claim": "Command promptarena run with --ci flag",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:145"
+   ]
+  },
+  {
+   "id": 193,
+   "claim": "Flag --formats on promptarena run accepts comma-separated list including json and objectives",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:150-151",
+    "arena/cmd/promptarena/run.go:361-364"
+   ]
+  },
+  {
+   "id": 194,
+   "claim": "Flag --objectives-group-by on promptarena run",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:152-154",
+    "arena/cmd/promptarena/run.go:28"
+   ]
+  },
+  {
+   "id": 195,
+   "claim": "Example group-by keys scenario, label.category, data.tier are valid",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/objectives/report.go:130-143"
+   ]
+  },
+  {
+   "id": 196,
+   "claim": "Overall objectives table is always present",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/objectives/report.go:208",
+    "arena/results/objectives/repository.go:98-122"
+   ]
+  },
+  {
+   "id": 197,
+   "claim": "One objectives table is produced per --objectives-group-by key, defaulting to scenario",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:152",
+    "arena/cmd/promptarena/run.go:392"
+   ]
+  },
+  {
+   "id": 198,
+   "claim": "A taxonomy table is produced when an objective has taxonomy or config declares pack governance and no key asked for one",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/governance_taxonomy.go:52-100",
+    "arena/results/objectives/report.go:255-268"
+   ]
+  },
+  {
+   "id": 199,
+   "claim": "Link target /arena/reference/config-schema/#pack-governance",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 200,
+   "claim": "The --objectives-group-by flag only applies to the objectives format; otherwise it is ignored and a warning is printed",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:397-406"
+   ]
+  },
+  {
+   "id": 201,
+   "claim": "Group-by key scenario groups runs by scenario ID",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/objectives/report.go:464-465"
+   ]
+  },
+  {
+   "id": 202,
+   "claim": "Group-by key provider groups runs by provider ID",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/objectives/report.go:466-467"
+   ]
+  },
+  {
+   "id": 203,
+   "claim": "Group-by key objective uses the objective description after dataset placeholders are filled, or '<scenario> turn <n> objective' when none",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/scenario_data.go:329",
+    "arena/results/objectives/report.go:468-469",
+    "arena/results/objectives/report.go:483-488"
+   ]
+  },
+  {
+   "id": 204,
+   "claim": "Group-by key label.<key> uses a scenario metadata.labels value",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/objectives/report.go:470-471"
+   ]
+  },
+  {
+   "id": 205,
+   "claim": "Group-by key data.<column> uses a dataset row column",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/objectives/report.go:472-473",
+    "arena/results/objectives/report.go:491-497"
+   ]
+  },
+  {
+   "id": 206,
+   "claim": "Link target /arena/how-to/scenarios/run-a-dataset/",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 207,
+   "claim": "Group-by key taxonomy groups by each entry of the objective taxonomy, e.g. owasp-llm:LLM01",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/objectives/report.go:444-457"
+   ]
+  },
+  {
+   "id": 208,
+   "claim": "Group-by key taxonomy.<framework> groups by one framework's entries (example taxonomy.owasp-llm)",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/objectives/report.go:444-457"
+   ]
+  },
+  {
+   "id": 209,
+   "claim": "A run lacking the grouping key is grouped under (none)",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/objectives/report.go:30",
+    "arena/results/objectives/report.go:475-477"
+   ]
+  },
+  {
+   "id": 210,
+   "claim": "An unknown --objectives-group-by key is an error",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:410-412",
+    "arena/results/objectives/report.go:130-141"
+   ]
+  },
+  {
+   "id": 211,
+   "claim": "An attempt counts in the row of each of its taxonomy entries",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/objectives/report.go:413-420"
+   ]
+  },
+  {
+   "id": 212,
+   "claim": "A known taxonomy entry gets its title, e.g. System Prompt Leakage for owasp-llm:LLM07",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/taxonomy.go:27-34",
+    "arena/results/objectives/report.go:243-249"
+   ]
+  },
+  {
+   "id": 213,
+   "claim": "The untested list covers entries of each known framework the grouping touches that no evaluated attempt was for",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/objectives/report.go:278-306"
+   ]
+  },
+  {
+   "id": 214,
+   "claim": "Markdown shows untested entries under the table after the text 'No objective maps to:'",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/objectives/repository.go:126-128"
+   ]
+  },
+  {
+   "id": 215,
+   "claim": "The obligation and misuse frameworks built from pack governance are always covered in untested",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/objectives/report.go:278-293"
+   ]
+  },
+  {
+   "id": 216,
+   "claim": "A baseline counts in a taxonomy row only when its objective has the same taxonomy entries",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/objectives/report.go:326-328",
+    "arena/results/objectives/report.go:440-457"
+   ]
+  },
+  {
+   "id": 217,
+   "claim": "Objectives with expect achieved and expect not_achieved are never counted together",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/objectives/report.go:414-419"
+   ]
+  },
+  {
+   "id": 218,
+   "claim": "For not_achieved the rate is how often the agent failed to hold out",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/objectives/report.go:46-47"
+   ]
+  },
+  {
+   "id": 219,
+   "claim": "Row field title is absent in groupings other than taxonomy",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/objectives/report.go:43"
+   ]
+  },
+  {
+   "id": 220,
+   "claim": "Row field expect has values achieved or not_achieved",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/objectives/report.go:399-404",
+    "arena/results/objectives/report.go:47"
+   ]
+  },
+  {
+   "id": 221,
+   "claim": "Row field attempts counts objective attempts whose success checks were evaluated",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/objectives/report.go:48-49"
+   ]
+  },
+  {
+   "id": 222,
+   "claim": "Row field achieved counts attempts that reached the objective",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/objectives/report.go:50-51"
+   ]
+  },
+  {
+   "id": 223,
+   "claim": "Row field rate equals achieved / attempts and Markdown shows an en dash when nothing judged",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/objectives/report.go:52-53",
+    "arena/results/objectives/repository.go:210-214"
+   ]
+  },
+  {
+   "id": 224,
+   "claim": "Row fields ci_low and ci_high are a 95% Wilson score interval on rate",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/objectives/report.go:54-56",
+    "arena/results/objectives/report.go:616-631"
+   ]
+  },
+  {
+   "id": 225,
+   "claim": "Row field mean_exchanges_to_achieve is the mean exchange at which achieved attempts reached the objective",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/objectives/report.go:540-542",
+    "arena/results/objectives/report.go:57-59"
+   ]
+  },
+  {
+   "id": 226,
+   "claim": "Row fields cost and cost_per_achieved (cost divided by achieved), in USD",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/objectives/report.go:543-545",
+    "arena/results/objectives/report.go:63-65"
+   ]
+  },
+  {
+   "id": 227,
+   "claim": "A run with several objectives splits its cost evenly between them",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/objectives/report.go:203",
+    "arena/results/objectives/report.go:607-614"
+   ]
+  },
+  {
+   "id": 228,
+   "claim": "Row field unevaluated counts attempts never judged and not counted in attempts",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/objectives/report.go:385-386",
+    "arena/results/objectives/report.go:69"
+   ]
+  },
+  {
+   "id": 229,
+   "claim": "Row field unreliable counts judged attempts on a self-play turn where the persona invented a specific, excluded from attempts but cost still counts",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/objectives/report.go:203",
+    "arena/results/objectives/report.go:387-388",
+    "arena/results/objectives/report.go:73"
+   ]
+  },
+  {
+   "id": 230,
+   "claim": "Link target /arena/reference/config-schema/#persona-facts",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 231,
+   "claim": "Row fields budgeted_groups, first_achieved_groups, groups_ci_low, groups_ci_high, mean_trials_to_first_achieved exist for trial groups",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/objectives/report.go:551-573",
+    "arena/results/objectives/report.go:81-91"
+   ]
+  },
+  {
+   "id": 232,
+   "claim": "Scenario field trial_budget (link /arena/reference/config-schema/#trial_budget)",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:733"
+   ]
+  },
+  {
+   "id": 233,
+   "claim": "Trial budget option stop_on_achieved exists and counts trials that stopped at first success",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/trial_budget.go:13"
+   ]
+  },
+  {
+   "id": 234,
+   "claim": "Markdown adds Groups achieved, Trials to first achieved and Trials skipped columns when any run had a budget",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/objectives/repository.go:191-194"
+   ]
+  },
+  {
+   "id": 235,
+   "claim": "Row field trials_skipped counts trials a trial_budget kept from starting, costing nothing and not counted as attempts",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/objectives/report.go:561",
+    "arena/results/objectives/report.go:91"
+   ]
+  },
+  {
+   "id": 236,
+   "claim": "Row field baseline holds the group's baseline attempts with the same fields as a row; absent when none",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/objectives/report.go:512-516",
+    "arena/results/objectives/report.go:96"
+   ]
+  },
+  {
+   "id": 237,
+   "claim": "Objective field baseline: true marks a baseline objective",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1209"
+   ]
+  },
+  {
+   "id": 238,
+   "claim": "Link target /arena/reference/config-schema/#objectives for baseline",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 239,
+   "claim": "Row field lift is attack rate minus baseline rate over objectives both attempted, absent unless an objective has evaluated attempts on both sides",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/objectives/report.go:101",
+    "arena/results/objectives/report.go:581-605"
+   ]
+  },
+  {
+   "id": 240,
+   "claim": "Row field search holds totals for tree search: searches, nodes, pruned_off_topic, depth_reached, attacker_calls, target_calls, judge_calls, judge_errors, best_score",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/types.go:178-203",
+    "arena/results/objectives/report.go:105"
+   ]
+  },
+  {
+   "id": 241,
+   "claim": "Link target /arena/reference/config-schema/#tree-search for tree search objectives",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 242,
+   "claim": "Markdown adds a Tree search column when any objective searched",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/objectives/repository.go:153-161",
+    "arena/results/objectives/repository.go:199-201"
+   ]
+  },
+  {
+   "id": 243,
+   "claim": "A baseline pairs with attack attempts whose objective has the same description after placeholders are filled",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/objectives/report.go:483-488",
+    "arena/results/objectives/report.go:576-592"
+   ]
+  },
+  {
+   "id": 244,
+   "claim": "Markdown adds Baseline and Lift columns when any run had a baseline; Baseline cell shows achieved / attempts",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/objectives/repository.go:195-197",
+    "arena/results/objectives/repository.go:253-270"
+   ]
+  },
+  {
+   "id": 245,
+   "claim": "Lift is reported in percentage points",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/objectives/repository.go:284-289"
+   ]
+  },
+  {
+   "id": 246,
+   "claim": "Objective with no baseline or baseline with no attack is left out of lift",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/objectives/report.go:576-605"
+   ]
+  },
+  {
+   "id": 247,
+   "claim": "A scenario with trials contributes one attempt per trial and its cost covers every trial",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:730",
+    "arena/results/objectives/report.go:365-373",
+    "arena/results/objectives/report.go:607-614"
+   ]
+  },
+  {
+   "id": 248,
+   "claim": "A run or trial that fails before reaching an objective's turn reports the objective as unevaluated with message 'the run ended before this turn'",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/objective.go:31",
+    "arena/engine/objective.go:61-78"
+   ]
+  },
+  {
+   "id": 249,
+   "claim": "An objective turn that errors before the objective is achieved counts as unevaluated",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/conversation_executor.go:611-615",
+    "arena/engine/objective.go:32",
+    "arena/engine/objective.go:494-504"
+   ]
+  },
+  {
+   "id": 250,
+   "claim": "A run with no result at all is counted as unevaluated for each objective its scenario's other runs recorded",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/execution.go:785-791",
+    "arena/results/objectives/report.go:199-201",
+    "arena/results/objectives/report.go:334-355"
+   ]
+  },
+  {
+   "id": 251,
+   "claim": "A run skipped for a transient provider error is left out of objectives counts",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/conversation_executor.go:703-719",
+    "arena/engine/objective_unreached_test.go:68-77"
+   ]
+  },
+  {
+   "id": 252,
+   "claim": "An objective already achieved stays counted as achieved even if a later check errored",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/objective.go:497-499"
+   ]
+  },
+  {
+   "id": 253,
+   "claim": "Rate is the share of attempts at this budget that reached the objective and a rate of 0 does not show the objective cannot be reached",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/objectives/report.go:536-538",
+    "arena/results/objectives/repository.go:92-97"
+   ]
+  },
+  {
+   "id": 254,
+   "claim": "Generating all formats in one run uses defaults.output.formats list of json, markdown, junit",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:57-93"
+   ]
+  },
+  {
+   "id": 255,
+   "claim": "Multiple-format output tree shows results.json, results.md and junit.xml",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:486",
+    "arena/results/json/json_repository.go:22",
+    "arena/results/junit/junit_repository.go:157"
+   ]
+  },
+  {
+   "id": 256,
+   "claim": "Config key defaults.output.dir accepts a custom directory name (example test-results-2024-01-15)",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:116",
+    "arena/cmd/promptarena/run.go:294",
+    "arena/cmd/promptarena/serve_interactive.go:221",
+    "arena/engine/engine.go:1019-1025"
+   ]
+  },
+  {
+   "id": 257,
+   "claim": "Flag --out on promptarena run overrides the output directory",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:144"
+   ]
+  },
+  {
+   "id": 258,
+   "claim": "Command promptarena run arena.yaml --out custom-dir",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:144"
+   ]
+  },
+  {
+   "id": 259,
+   "claim": "Python example reads out/results.json",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/json/json_repository.go:22"
+   ]
+  },
+  {
+   "id": 260,
+   "claim": "Python example reads results['summary'] with passed and total_tests",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/json/json_repository.go:96-130"
+   ]
+  },
+  {
+   "id": 261,
+   "claim": "Python example reads result['cost_info']['total_cost'] and result['scenario']",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/json/json_repository.go:96-130"
+   ]
+  },
+  {
+   "id": 262,
+   "claim": "Python example checks result['status'] == 'failed' and turn['assertions'] with assertion['passed'] and assertion['message']",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/types.go:60-80"
+   ]
+  },
+  {
+   "id": 263,
+   "claim": "Node.js example reads out/results.json with JSON.parse",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/json/json_repository.go:22"
+   ]
+  },
+  {
+   "id": 264,
+   "claim": "Node.js example reads results.results entries with scenario, provider, status and cost_info.total_cost",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/types.go:60-80"
+   ]
+  },
+  {
+   "id": 265,
+   "claim": "Node.js example compares r.status === 'passed'",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/types.go:60-80"
+   ]
+  },
+  {
+   "id": 266,
+   "claim": "Go example Results struct maps json tags summary, total_tests, passed, total_cost",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/json/json_repository.go:96-130"
+   ]
+  },
+  {
+   "id": 267,
+   "claim": "Go example imports encoding/json and os but calls fmt.Printf without importing fmt (example is not compilable as shown)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 268,
+   "claim": "Typical file size for 100 tests: JSON about 500 KB",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 269,
+   "claim": "Typical file size for 100 tests: Markdown about 300 KB",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 270,
+   "claim": "Typical file size for 100 tests: JUnit XML about 200 KB",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 271,
+   "claim": "Each format in defaults.output.formats is written on every run",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:55-93"
+   ]
+  },
+  {
+   "id": 272,
+   "claim": "Example formats ['json'] is valid for defaults.output.formats",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:60-62"
+   ]
+  },
+  {
+   "id": 273,
+   "claim": "Field markdown.include_details can be set to false to omit full conversation transcripts",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/markdown/markdown_repository.go:166-168"
+   ]
+  },
+  {
+   "id": 274,
+   "claim": "Field markdown.show_results_matrix can be set to false to omit the results matrix table",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/markdown/markdown_repository.go:161-163"
+   ]
+  },
+  {
+   "id": 275,
+   "claim": "Format names markdown, junit, json used in best-practice examples are valid format names",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:513-515",
+    "arena/cmd/promptarena/run.go:57-93"
+   ]
+  },
+  {
+   "id": 276,
+   "claim": "jq expression uses summary.total_tests, summary.passed, and results[].provider and cost_info.total_cost on out/results.json",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/json/json_repository.go:96-130"
+   ]
+  },
+  {
+   "id": 277,
+   "claim": "Link target /arena/how-to/interfaces/run-in-ci/",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 278,
+   "claim": "Link target /arena/reference/config-schema/ (output configuration)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 279,
+   "claim": "Link target /arena/how-to/scenarios/validate-outputs/",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 280,
+   "claim": "Examples for output configuration patterns exist under examples/",
+   "verdict": "true",
+   "evidence": [
+    "examples/tap-search/config.arena.yaml:1"
+   ]
+  }
+ ]
+}

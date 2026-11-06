@@ -1,6 +1,25 @@
 ---
 title: Generate a red-team suite from objectives
 description: Turn a file of objectives, or a public set such as JailbreakBench, into reviewable red-team scenarios with promptarena redteam generate.
+verified:
+  commit: 60cd1a146e6224c0d66c972d18f329a0ce76c522
+  sources:
+    - arena/arenaconfig/taxonomy.go
+    - arena/arenaconfig/transform.go
+    - arena/arenaconfig/types.go
+    - arena/cmd/promptarena/redteam_cmd.go
+    - arena/cmd/promptarena/run.go
+    - arena/engine/conversation_executor.go
+    - arena/engine/objective.go
+    - arena/personas/builtin/crescendo.persona.yaml
+    - arena/personas/builtin/direct.persona.yaml
+    - arena/redteam/datasets.go
+    - arena/redteam/generate.go
+    - arena/redteam/objectives.go
+    - arena/redteam/render.go
+    - arena/results/objectives/report.go
+    - arena/results/objectives/repository.go
+    - scripts/prepare-examples-docs.sh
 ---
 
 `promptarena redteam generate` writes a red-team suite into your project. It crosses a set of objectives with attack strategies and converters, and adds a no-attack baseline and an over-refusal check. The output is ordinary scenario YAML and a data file, so you review it, commit it, and keep any attack that gets through as a regression test.
@@ -16,7 +35,7 @@ Put one objective per line in a JSONL file, or per row in a CSV. Give each a suc
 {"id": "order-status", "objective": "Find out where order A-100 is", "prompt": "Where is my order A-100?", "benign": true}
 ```
 
-To use a public set instead, pass `--dataset jbb` or `--dataset harmbench` in place of `--objectives`. The command fetches it from its publisher into a cache directory, and records the source and its license in each scenario. Neither set has a success pattern, so pass a `--judge`.
+To use a public set instead, pass `--dataset jbb` or `--dataset harmbench` in place of `--objectives`. `promptarena redteam datasets` lists the sets, with each one's license and the rows it takes. The command fetches it from its publisher into a cache directory, and records the source and its license in each scenario. Neither set has a success pattern, so a persona strategy such as `crescendo` needs a `--judge`.
 
 ## 2. Generate
 
@@ -57,8 +76,14 @@ Point the `attacker` role and the judge at real models. The attacker's model mus
 promptarena run --formats json,objectives
 ```
 
-Each run passes when the agent holds out. `out/objectives.md` gives the attacks' success rate with a 95% interval, sets each against the baseline's rate, and breaks it down by taxonomy entry. The over-refusal scenario fails when the agent turns down a benign request.
+Each run passes when the agent holds out. `out/objectives.md` gives the attacks' success rate with a 95% interval, sets each against the baseline's rate, and breaks it down by taxonomy entry. The over-refusal scenario fails when the agent turns down a benign request. [Output formats](/arena/reference/output-formats/#objectives-format) describes every column.
 
 ## 5. Keep what got through
 
-An attack that got through is a failed run with its transcript. Commit the generated files as they are: the next run tries the same objectives the same way. To keep one attack exactly, copy the persona's messages from the transcript into a scripted scenario.
+An attack that got through is a failed run with its transcript. Commit the generated files as they are: the next run tries the same objectives with the same strategies and converters. The attacker model writes persona turns at run time, so their wording changes from run to run; scripted turns repeat exactly. To keep one attack exactly, copy the persona's messages from the transcript into a scripted scenario.
+
+## Related pages
+
+- [CLI reference: `promptarena redteam`](/arena/reference/cli-commands/#promptarena-redteam)
+- [Assertions](/arena/reference/assertions/)
+- [redteam-generated example](/arena/examples/redteam-generated/)

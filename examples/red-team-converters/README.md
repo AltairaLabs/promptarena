@@ -4,9 +4,9 @@ An attacker persona tries to get a support agent to reveal its staff override co
 
 Three scenarios test the agent:
 
-- **`best-of-n`** is Best-of-N jailbreaking ([Hughes et al., 2024](https://arxiv.org/abs/2412.03556)). The `best_of_n` converter sends a fresh random variant of the request on each of up to 8 trials, and the trial budget stops at the first variant that gets through.
-- **`encoded`** base64-encodes the request and wraps it in an instruction to decode it, by chaining a converter and a template.
-- **`probe-best-of-n`** is Best-of-N on a fixed, scripted request, with no attacker persona: each of 8 trials sends its own variant, and an assertion checks every reply.
+- `best-of-n` is Best-of-N jailbreaking ([Hughes et al., 2024](https://arxiv.org/abs/2412.03556)). The `best_of_n` converter sends a fresh random variant of the request on each of up to 8 trials, and the trial budget stops at the first variant that gets through.
+- `encoded` base64-encodes the request and wraps it in an instruction to decode it, by chaining a converter and a template.
+- `probe-best-of-n` is Best-of-N on a fixed, scripted request, with no attacker persona: each of 8 trials sends its own variant, and an assertion checks every reply.
 
 ## Run it
 

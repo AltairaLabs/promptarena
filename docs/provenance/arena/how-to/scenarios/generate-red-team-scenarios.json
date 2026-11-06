@@ -1,0 +1,568 @@
+{
+ "page": "docs/src/content/docs/arena/how-to/scenarios/generate-red-team-scenarios.md",
+ "commit": "60cd1a146e6224c0d66c972d18f329a0ce76c522",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "Command `promptarena redteam generate` turns objectives file or public set (JailbreakBench) into red-team scenarios",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/redteam_cmd.go:118",
+    "arena/cmd/promptarena/redteam_cmd.go:17",
+    "arena/redteam/datasets.go:46"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "`promptarena redteam generate` writes a red-team suite into the project",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/redteam_cmd.go:140",
+    "arena/redteam/generate.go:161"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "Generator crosses objectives with attack strategies and converters",
+   "verdict": "true",
+   "evidence": [
+    "arena/redteam/generate.go:301",
+    "arena/redteam/generate.go:405"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "Generator adds a no-attack baseline scenario",
+   "verdict": "true",
+   "evidence": [
+    "arena/redteam/generate.go:306",
+    "arena/redteam/generate.go:458"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "Generator adds an over-refusal check scenario",
+   "verdict": "true",
+   "evidence": [
+    "arena/redteam/generate.go:310",
+    "arena/redteam/generate.go:474"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "Output is ordinary scenario YAML plus a data file",
+   "verdict": "true",
+   "evidence": [
+    "arena/redteam/generate.go:299",
+    "arena/redteam/generate.go:603",
+    "arena/redteam/render.go:87"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "Link target /arena/examples/redteam-generated/ exists as the redteam-generated example",
+   "verdict": "true",
+   "evidence": [
+    "scripts/prepare-examples-docs.sh:125"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "CLI reference page at /arena/reference/cli-commands/ has a #promptarena-redteam anchor listing every redteam flag",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/redteam_cmd.go:74"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "Objectives can be given as one objective per line in a JSONL file",
+   "verdict": "true",
+   "evidence": [
+    "arena/redteam/objectives.go:153",
+    "arena/redteam/objectives.go:81"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "Objectives can be given as one row per objective in a CSV file",
+   "verdict": "true",
+   "evidence": [
+    "arena/redteam/objectives.go:186",
+    "arena/redteam/objectives.go:83"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "Objective rows support a success pattern field (matched against reply text to detect a successful attack)",
+   "verdict": "true",
+   "evidence": [
+    "arena/redteam/generate.go:524",
+    "arena/redteam/generate.go:541",
+    "arena/redteam/objectives.go:57"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "Objective rows support `benign: true` marking requests the agent should answer",
+   "verdict": "true",
+   "evidence": [
+    "arena/redteam/objectives.go:115",
+    "arena/redteam/objectives.go:119",
+    "arena/redteam/objectives.go:58"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "Objective row example uses fields id, objective, prompt, taxonomy, success_pattern",
+   "verdict": "true",
+   "evidence": [
+    "arena/redteam/generate.go:52",
+    "arena/redteam/objectives.go:51",
+    "arena/redteam/objectives.go:56",
+    "arena/redteam/objectives.go:98"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "Example taxonomy value `owasp-llm:LLM07` is a valid taxonomy value",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/taxonomy.go:34",
+    "arena/arenaconfig/taxonomy.go:93"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "Benign example row uses fields id, objective, prompt, benign",
+   "verdict": "true",
+   "evidence": [
+    "arena/redteam/objectives.go:58",
+    "arena/redteam/objectives.go:98"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "Flag `--dataset jbb` selects the JailbreakBench public set",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/redteam_cmd.go:77",
+    "arena/redteam/datasets.go:57"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "Flag `--dataset harmbench` selects the HarmBench public set",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/redteam_cmd.go:77",
+    "arena/redteam/datasets.go:48"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "`--dataset` is used in place of `--objectives`",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/redteam_cmd.go:165",
+    "arena/cmd/promptarena/redteam_cmd.go:190"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "The command fetches the public dataset from its publisher into a cache directory",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/redteam_cmd.go:177",
+    "arena/redteam/datasets.go:172",
+    "arena/redteam/datasets.go:184"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "Each generated scenario records the dataset source and its license",
+   "verdict": "true",
+   "evidence": [
+    "arena/redteam/generate.go:559",
+    "arena/redteam/generate.go:571"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "Neither public set (jbb, harmbench) has a success pattern",
+   "verdict": "true",
+   "evidence": [
+    "arena/redteam/datasets.go:105",
+    "arena/redteam/datasets.go:86"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "Public-set use requires passing a `--judge`",
+   "verdict": "false",
+   "evidence": [
+    "arena/redteam/generate.go:239",
+    "arena/redteam/generate.go:252",
+    "arena/redteam/generate.go:533"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "Command example: `promptarena redteam generate --objectives objectives.jsonl --name shop-policy`",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/redteam_cmd.go:75",
+    "arena/cmd/promptarena/redteam_cmd.go:84"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "Flag `--strategies` accepts comma-separated values; example value `scripted,crescendo`",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/redteam_cmd.go:86",
+    "arena/redteam/generate.go:204",
+    "arena/redteam/generate.go:257"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "Strategy name `scripted` is a registered attack strategy",
+   "verdict": "true",
+   "evidence": [
+    "arena/redteam/generate.go:20",
+    "arena/redteam/generate.go:209"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "Strategy name `crescendo` is a registered attack strategy",
+   "verdict": "true",
+   "evidence": [
+    "arena/personas/builtin/crescendo.persona.yaml:28",
+    "arena/redteam/generate.go:204"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "Flag `--converters` accepts comma-separated values; example value `none,best_of_n`",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/transform.go:50",
+    "arena/cmd/promptarena/redteam_cmd.go:88"
+   ]
+  },
+  {
+   "id": 28,
+   "claim": "Converter name `none` is accepted as a converter value meaning no converter",
+   "verdict": "true",
+   "evidence": [
+    "arena/redteam/generate.go:22",
+    "arena/redteam/generate.go:263"
+   ]
+  },
+  {
+   "id": 29,
+   "claim": "Converter name `best_of_n` is a registered converter",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/transform.go:50",
+    "arena/redteam/generate.go:263"
+   ]
+  },
+  {
+   "id": 30,
+   "claim": "Flag `--judge` names the judge for generated scenarios",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/redteam_cmd.go:91",
+    "arena/redteam/generate.go:103"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "Flag `--task-type` accepts value `support`",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/redteam_cmd.go:92",
+    "arena/redteam/generate.go:31"
+   ]
+  },
+  {
+   "id": 32,
+   "claim": "Flag `--trials` sets trial count (example value 2)",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/redteam_cmd.go:95",
+    "arena/redteam/generate.go:388"
+   ]
+  },
+  {
+   "id": 33,
+   "claim": "Generator writes one scenario per strategy and converter pair, four in the example (2 strategies x 2 converters)",
+   "verdict": "true",
+   "evidence": [
+    "arena/redteam/generate.go:301",
+    "arena/redteam/generate.go:303"
+   ]
+  },
+  {
+   "id": 34,
+   "claim": "Generator writes a scenario named `shop-policy-baseline`",
+   "verdict": "true",
+   "evidence": [
+    "arena/redteam/generate.go:459"
+   ]
+  },
+  {
+   "id": 35,
+   "claim": "Generator writes a scenario named `shop-policy-over-refusal`",
+   "verdict": "true",
+   "evidence": [
+    "arena/redteam/generate.go:475"
+   ]
+  },
+  {
+   "id": 36,
+   "claim": "Each generated scenario runs once per row of `data/shop-policy.jsonl`",
+   "verdict": "true",
+   "evidence": [
+    "arena/redteam/generate.go:299",
+    "arena/redteam/generate.go:381",
+    "arena/redteam/render.go:42"
+   ]
+  },
+  {
+   "id": 37,
+   "claim": "The `crescendo` and `direct` personas are copied into a `personas/` directory",
+   "verdict": "true",
+   "evidence": [
+    "arena/personas/builtin/direct.persona.yaml:1",
+    "arena/redteam/generate.go:326",
+    "arena/redteam/generate.go:614"
+   ]
+  },
+  {
+   "id": 38,
+   "claim": "Persona `direct` is a built-in persona",
+   "verdict": "true",
+   "evidence": [
+    "arena/personas/builtin/direct.persona.yaml:1",
+    "arena/redteam/generate.go:24"
+   ]
+  },
+  {
+   "id": 39,
+   "claim": "Persona `crescendo` is a built-in persona",
+   "verdict": "true",
+   "evidence": [
+    "arena/personas/builtin/crescendo.persona.yaml:28"
+   ]
+  },
+  {
+   "id": 40,
+   "claim": "Command writes nothing if a scenario or data file already exists, unless `--force` is passed",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/redteam_cmd.go:101",
+    "arena/redteam/generate.go:585"
+   ]
+  },
+  {
+   "id": 41,
+   "claim": "Command never replaces an existing persona file",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/redteam_cmd.go:66",
+    "arena/redteam/generate.go:618"
+   ]
+  },
+  {
+   "id": 42,
+   "claim": "Generated scenario path `scenarios/shop-policy-scripted.scenario.yaml`",
+   "verdict": "true",
+   "evidence": [
+    "arena/redteam/generate.go:322",
+    "arena/redteam/generate.go:406"
+   ]
+  },
+  {
+   "id": 43,
+   "claim": "Generated persona paths `personas/crescendo.persona.yaml` and `personas/direct.persona.yaml`",
+   "verdict": "true",
+   "evidence": [
+    "arena/redteam/generate.go:616"
+   ]
+  },
+  {
+   "id": 44,
+   "claim": "Printed config uses top-level `spec.scenarios[].file` list",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:412",
+    "arena/arenaconfig/types.go:98",
+    "arena/redteam/generate.go:633"
+   ]
+  },
+  {
+   "id": 45,
+   "claim": "Printed config uses `spec.self_play.personas[].file`",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:183",
+    "arena/arenaconfig/types.go:428",
+    "arena/arenaconfig/types.go:448",
+    "arena/redteam/generate.go:639"
+   ]
+  },
+  {
+   "id": 46,
+   "claim": "Field `self_play` exists under spec",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:183",
+    "arena/arenaconfig/types.go:428"
+   ]
+  },
+  {
+   "id": 47,
+   "claim": "Field `self_play.roles` is a list of role entries with `id` and `provider`",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:435",
+    "arena/arenaconfig/types.go:453"
+   ]
+  },
+  {
+   "id": 48,
+   "claim": "Role id `attacker` is the expected role identifier for the attacker",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/conversation_executor.go:228",
+    "arena/redteam/generate.go:27",
+    "arena/redteam/generate.go:642"
+   ]
+  },
+  {
+   "id": 49,
+   "claim": "Field `judges` exists under spec with items having `name` and `provider`",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:393",
+    "arena/arenaconfig/types.go:93",
+    "arena/redteam/generate.go:645"
+   ]
+  },
+  {
+   "id": 50,
+   "claim": "Command `promptarena run --formats json,objectives`",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:149"
+   ]
+  },
+  {
+   "id": 51,
+   "claim": "Run flag `--formats` accepts `json` and `objectives` as values",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:149",
+    "arena/cmd/promptarena/run.go:32"
+   ]
+  },
+  {
+   "id": 52,
+   "claim": "Each red-team run passes when the agent holds out (agent does not produce the attack success pattern)",
+   "verdict": "true",
+   "evidence": [
+    "arena/redteam/generate.go:440",
+    "arena/redteam/generate.go:502",
+    "arena/redteam/generate.go:541"
+   ]
+  },
+  {
+   "id": 53,
+   "claim": "`out/objectives.md` is the produced objectives report file",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:68",
+    "arena/results/objectives/repository.go:18"
+   ]
+  },
+  {
+   "id": 54,
+   "claim": "Objectives report gives the attacks' success rate with a 95% interval",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/objectives/report.go:33",
+    "arena/results/objectives/report.go:54"
+   ]
+  },
+  {
+   "id": 55,
+   "claim": "Objectives report compares each attack rate against the baseline rate",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/objectives/report.go:101",
+    "arena/results/objectives/report.go:92",
+    "arena/results/objectives/repository.go:196"
+   ]
+  },
+  {
+   "id": 56,
+   "claim": "Objectives report breaks down results by taxonomy entry",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:152",
+    "arena/results/objectives/report.go:255",
+    "arena/results/objectives/report.go:258"
+   ]
+  },
+  {
+   "id": 57,
+   "claim": "Over-refusal scenario fails when the agent turns down a benign request",
+   "verdict": "true",
+   "evidence": [
+    "arena/redteam/generate.go:474",
+    "arena/redteam/generate.go:481"
+   ]
+  },
+  {
+   "id": 58,
+   "claim": "A successful attack is recorded as a failed run with its transcript",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1181",
+    "arena/engine/objective.go:151",
+    "arena/redteam/generate.go:502"
+   ]
+  },
+  {
+   "id": 59,
+   "claim": "Re-running the generated suite tries the same objectives the same way (deterministic generated files)",
+   "verdict": "false",
+   "evidence": [
+    "arena/redteam/generate.go:405",
+    "arena/redteam/generate.go:437"
+   ]
+  },
+  {
+   "id": 60,
+   "claim": "Persona messages in a transcript can be copied into a scripted scenario to keep one attack exactly",
+   "verdict": "true",
+   "evidence": [
+    "arena/redteam/generate.go:427",
+    "arena/redteam/generate.go:429"
+   ]
+  },
+  {
+   "id": 61,
+   "claim": "promptarena redteam datasets lists the public sets with each one's license and the rows it takes",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/redteam_cmd.go:108",
+    "arena/redteam/datasets.go:1"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,1044 @@
+{
+ "page": "docs/src/content/docs/arena/reference/assertions.md",
+ "commit": "60cd1a146e6224c0d66c972d18f329a0ce76c522",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "Assertions run after each turn or across the full session",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/eval_orchestrator.go:261",
+    "arena/stages/assertions.go:208"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "Assertion field 'type' is required and names the assertion type",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:20",
+    "schemas/v1alpha1/scenario.json:5"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "Assertion field 'params' is required and holds type-specific parameters",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:24",
+    "schemas/v1alpha1/scenario.json:5"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "Assertion field 'message' is optional and shown in reports",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:25",
+    "arena/stages/assertions.go:366"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "Assertion field 'when' is optional conditional filtering",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:26",
+    "arena/stages/assertions.go:288"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "Assertion field 'pass_threshold' is optional and documented as a 0.0-1.0 pass rate for trial runs",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:27",
+    "arena/engine/trials.go:351"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "pass_threshold default is 1.0 (all trials must pass)",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/trials.go:18",
+    "arena/engine/trials.go:358"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "content_includes: response contains specific text patterns, case-insensitive",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/register.go:1"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "content_excludes: response does not contain forbidden text",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/register.go:1"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "content_matches: response matches a regular expression",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/register.go:1"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "tools_called assertion type exists",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/register.go:1"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "tools_not_called assertion type exists",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/register.go:1"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "tools_offered assertion type exists and checks tools offered to the provider in the turn",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/validator_tools.go:69"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "llm_judge assertion type exists",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/register.go:1"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "refusal assertion type exists and supports max_score: 0 to invert",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/refusal/refusal.go:21",
+    "arena/assertions/types.go:55"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "canary assertion type exists and supports max_score: 0 to invert",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/canary/canary.go:27",
+    "arena/assertions/types.go:55"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "memory_contains assertion type exists and supports max_score: 0 to invert",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/memorystate/memorystate.go:24",
+    "arena/assertions/types.go:55"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "json_schema assertion type exists",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/register.go:1"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "no_tool_errors assertion type exists",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/register.go:1"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "tool_call_chain assertion type exists and checks tools called in a specific order",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/register.go:1"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "tool_exec assertion type exists and invokes a registered tool at session end",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:221",
+    "examples/test-a-codegen-agent/config.arena.yaml:57"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "content_includes is an alias for contains",
+   "verdict": "true",
+   "evidence": [
+    "arena/agentkb/reference_evals.go:80"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "Assertions can be scoped to a single turn or to the entire conversation session",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1175",
+    "arena/arenaconfig/types.go:701"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "Turn-level assertions are declared on individual turns under an 'assertions' key and check only that turn's response",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1175",
+    "arena/stages/assertions.go:208"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "Session-level assertions are declared at scenario level using 'conversation_assertions'",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:701"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "Conversation assertion example uses type 'assertion' with params.eval_type and params.eval_params",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/types.go:57",
+    "examples/rag-agent/scenarios/paris-capital.scenario.yaml:18"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "eval_type value 'llm_judge_session' is a valid eval type",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/register.go:1"
+   ]
+  },
+  {
+   "id": 28,
+   "claim": "eval_params accepts a 'criteria' key for llm_judge_session",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/register.go:1"
+   ]
+  },
+  {
+   "id": 29,
+   "claim": "min_score is a valid param key on the type 'assertion' wrapper for eval assertions",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/types.go:55",
+    "arena/assertions/types.go:61"
+   ]
+  },
+  {
+   "id": 30,
+   "claim": "tools_called example uses params key 'tools' with a list of tool names",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/register.go:1"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "tools_called accepts params 'tool_names' or 'tools' of type []string, required",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/register.go:1"
+   ]
+  },
+  {
+   "id": 32,
+   "claim": "tools_called param min_calls is an int defaulting to 1",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/register.go:1"
+   ]
+  },
+  {
+   "id": 33,
+   "claim": "Under-called tools fail proportionally (ratio score) under min_calls",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/register.go:1"
+   ]
+  },
+  {
+   "id": 34,
+   "claim": "tools_called param max_calls is an int with no upper bound by default",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/register.go:1"
+   ]
+  },
+  {
+   "id": 35,
+   "claim": "Over-called tools fail hard with score 0 regardless of min_calls, and max_calls: 0 forbids a tool",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/register.go:1"
+   ]
+  },
+  {
+   "id": 36,
+   "claim": "tools_called param ignore_validation is a bool defaulting to false and counts argument-validation failures as successful calls",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/register.go:1"
+   ]
+  },
+  {
+   "id": 37,
+   "claim": "tools_called param require_args is a bool defaulting to false and counts only calls with non-empty arguments",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/register.go:1"
+   ]
+  },
+  {
+   "id": 38,
+   "claim": "Example uses tools_called in conversation_assertions with params tool_names, min_calls and max_calls: 0",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/register.go:1"
+   ]
+  },
+  {
+   "id": 39,
+   "claim": "Example uses tools_not_called with params tool_names",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/register.go:1"
+   ]
+  },
+  {
+   "id": 40,
+   "claim": "max_calls greater than 0 is only available on tools_called",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/register.go:1"
+   ]
+  },
+  {
+   "id": 41,
+   "claim": "Example uses tools_offered in turn-level assertions with params tools and absent",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/validator_tools.go:69"
+   ]
+  },
+  {
+   "id": 42,
+   "claim": "tools_offered accepts params 'tools' or 'tool_names'",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/validator_tools.go:69"
+   ]
+  },
+  {
+   "id": 43,
+   "claim": "tools_offered param 'absent' is a bool meaning none of the tools may be offered",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/validator_tools.go:69"
+   ]
+  },
+  {
+   "id": 44,
+   "claim": "tools_offered param 'exact' is a bool meaning the offered set must be exactly these tools",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/validator_tools.go:69"
+   ]
+  },
+  {
+   "id": 45,
+   "claim": "A mock provider returns tool calls named in its response file whether or not the tools were offered",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 46,
+   "claim": "tools_offered fails when the turn offered no tools at all",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/validator_tools.go:69"
+   ]
+  },
+  {
+   "id": 47,
+   "claim": "llm_judge example uses type 'assertion' with eval_type llm_judge, eval_params.criteria and min_score",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/types.go:57"
+   ]
+  },
+  {
+   "id": 48,
+   "claim": "min_score placed directly on the inner llm_judge handler is rejected at parse time",
+   "verdict": "false",
+   "evidence": [
+    "arena/assertions/eval_adapter.go:171",
+    "arena/assertions/types.go:55"
+   ]
+  },
+  {
+   "id": 49,
+   "claim": "refusal scores the latest reply 1 when it refuses and 0 when it complies; passes on refusal by default",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/refusal/refusal.go:102",
+    "arena/assertions/refusal/refusal.go:140"
+   ]
+  },
+  {
+   "id": 50,
+   "claim": "Refusal example uses type refusal in turns with optional params max_score: 0 and message",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/refusal/refusal.go:89",
+    "arena/assertions/types.go:55"
+   ]
+  },
+  {
+   "id": 51,
+   "claim": "refusal param 'method' defaults to 'phrases'",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/refusal/refusal.go:89"
+   ]
+  },
+  {
+   "id": 52,
+   "claim": "refusal method values are 'phrases' and 'judge'",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/refusal/refusal.go:31"
+   ]
+  },
+  {
+   "id": 53,
+   "claim": "refusal param 'phrases' accepts a string or list of extra refusal phrases",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/refusal/refusal.go:219",
+    "arena/assertions/refusal/refusal.go:92"
+   ]
+  },
+  {
+   "id": 54,
+   "claim": "refusal judge method accepts params provider, model and system_prompt",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/refusal/refusal.go:125"
+   ]
+  },
+  {
+   "id": 55,
+   "claim": "phrases method examines the reply's first sentence, or first two when the first is only a courtesy",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/refusal/refusal.go:166",
+    "arena/assertions/refusal/refusal.go:172"
+   ]
+  },
+  {
+   "id": 56,
+   "claim": "phrases matching ignores case, apostrophe style and spacing, and normalises 'cannot', 'I am', 'will not' to \"can't\", \"I'm\", \"won't\"",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/refusal/refusal.go:194",
+    "arena/assertions/refusal/refusal.go:203"
+   ]
+  },
+  {
+   "id": 57,
+   "claim": "judge method scores 1 when judge score is 0.5 or more and 0 otherwise",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/refusal/refusal.go:140",
+    "arena/assertions/refusal/refusal.go:69"
+   ]
+  },
+  {
+   "id": 58,
+   "claim": "promptarena calibrate is a CLI command for scoring checks against labelled replies",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/calibrate_cmd.go:34"
+   ]
+  },
+  {
+   "id": 59,
+   "claim": "refusal result details carry 'refused' and 'method'; phrases details carry 'matched' and judge details carry 'judge_score' and 'reasoning'",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/refusal/refusal.go:116",
+    "arena/assertions/refusal/refusal.go:147"
+   ]
+  },
+  {
+   "id": 60,
+   "claim": "refusal works inside an objective's rewind.when condition",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/validate_types.go:86",
+    "arena/engine/objective.go:355"
+   ]
+  },
+  {
+   "id": 61,
+   "claim": "canary scores 1 when no planted canary appears in replies or tool-call arguments and 0 otherwise",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/canary/canary.go:104"
+   ]
+  },
+  {
+   "id": 62,
+   "claim": "canary example in conversation_assertions with params tokens",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/canary/canary.go:69"
+   ]
+  },
+  {
+   "id": 63,
+   "claim": "Red-team objective block accepts description, expect (value not_achieved) and success list",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1189",
+    "arena/arenaconfig/types.go:1198"
+   ]
+  },
+  {
+   "id": 64,
+   "claim": "canary param 'tokens' is required, accepts a string or list, and each token needs at least 6 letters or digits",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/canary/canary.go:370",
+    "arena/assertions/canary/canary.go:70",
+    "arena/assertions/canary/canary.go:76"
+   ]
+  },
+  {
+   "id": 65,
+   "claim": "canary param 'in' accepts 'replies' or 'tool_args' and defaults to both",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/canary/canary.go:80",
+    "arena/assertions/canary/canary.go:85"
+   ]
+  },
+  {
+   "id": 66,
+   "claim": "Tool-call arguments include the transcript calls and calls the host recorded; a guardrail canary counts only that turn's reply and tool calls",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/canary/canary.go:127",
+    "arena/assertions/canary/canary.go:151"
+   ]
+  },
+  {
+   "id": 67,
+   "claim": "canary detects verbatim leaks with letter case ignored",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/canary/canary.go:232"
+   ]
+  },
+  {
+   "id": 68,
+   "claim": "canary detects separated leaks with punctuation or zero-width characters between letters",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/canary/canary.go:234",
+    "arena/assertions/canary/canary.go:263"
+   ]
+  },
+  {
+   "id": 69,
+   "claim": "canary detects disguised leaks in Unicode tag characters, compatibility forms and Cyrillic or Greek homoglyphs",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/canary/canary.go:236",
+    "arena/assertions/canary/canary.go:259"
+   ]
+  },
+  {
+   "id": 70,
+   "claim": "canary detects reversed leaks, including when also disguised",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/canary/canary.go:238"
+   ]
+  },
+  {
+   "id": 71,
+   "claim": "canary detects base64 (standard, URL-safe, line-wrapped) and hex encodings forward or reversed",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/canary/canary.go:241",
+    "arena/assertions/canary/canary.go:316",
+    "arena/assertions/canary/canary.go:327"
+   ]
+  },
+  {
+   "id": 72,
+   "claim": "canary result details carry 'leaked' and 'leaks', where leaks report token, location ('reply <n>' or 'tool call <name>') and form",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/canary/canary.go:111",
+    "arena/assertions/canary/canary.go:40"
+   ]
+  },
+  {
+   "id": 73,
+   "claim": "memory_contains reads the run's memory store and scores 1 when a stored memory matches",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/memorystate/memorystate.go:76",
+    "arena/engine/run_tools.go:94"
+   ]
+  },
+  {
+   "id": 74,
+   "claim": "memory_contains requires spec.memory.enabled: true",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:143",
+    "arena/engine/execution_memory_integration.go:18"
+   ]
+  },
+  {
+   "id": 75,
+   "claim": "Objectives are checked after every exchange and work with stop_on_success",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1161",
+    "arena/arenaconfig/types.go:1199"
+   ]
+  },
+  {
+   "id": 76,
+   "claim": "memory_contains with max_score: 0 passes when no matching memory was stored",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/memorystate/memorystate.go:105",
+    "arena/assertions/types.go:55"
+   ]
+  },
+  {
+   "id": 77,
+   "claim": "taxonomy value 'owasp-agentic:ASI06' is a valid taxonomy identifier on an objective",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/taxonomy.go:45",
+    "arena/arenaconfig/types.go:1210"
+   ]
+  },
+  {
+   "id": 78,
+   "claim": "memory_contains param 'patterns' accepts a list of strings for success checks",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/memorystate/memorystate.go:142"
+   ]
+  },
+  {
+   "id": 79,
+   "claim": "memory_contains param 'regex' accepts a regular expression string",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/memorystate/memorystate.go:147"
+   ]
+  },
+  {
+   "id": 80,
+   "claim": "memory_contains param 'patterns' is a string or list; a memory matches when its content contains every pattern, ignoring case",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/memorystate/memorystate.go:160"
+   ]
+  },
+  {
+   "id": 81,
+   "claim": "memory_contains 'regex' is a Go regular expression; with 'patterns' both must match; one of patterns or regex is required",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/memorystate/memorystate.go:147",
+    "arena/assertions/memorystate/memorystate.go:160"
+   ]
+  },
+  {
+   "id": 82,
+   "claim": "memory_contains param 'types' filters by memory type, such as instruction or preference, defaulting to all",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/memorystate/memorystate.go:66",
+    "arena/assertions/memorystate/memorystate.go:87"
+   ]
+  },
+  {
+   "id": 83,
+   "claim": "memory_contains param 'include_seeded' defaults to false and searches scenario seed_memories when true",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/memorystate/memorystate.go:91",
+    "arena/engine/execution_memory_integration.go:65"
+   ]
+  },
+  {
+   "id": 84,
+   "claim": "Each run writes memory under its own scope, so concurrent runs and trials do not see each other's memories",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/run_tools.go:101",
+    "arena/engine/run_tools.go:75"
+   ]
+  },
+  {
+   "id": 85,
+   "claim": "Memory writes survive an objective's rewind",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1326",
+    "arena/engine/objective.go:392"
+   ]
+  },
+  {
+   "id": 86,
+   "claim": "memory_contains result details carry found, searched, and matches; each match has id, type, content and provenance",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/memorystate/memorystate.go:113",
+    "arena/assertions/memorystate/memorystate.go:38"
+   ]
+  },
+  {
+   "id": 87,
+   "claim": "A run without memory reports an error from memory_contains",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/memorystate/memorystate.go:83"
+   ]
+  },
+  {
+   "id": 88,
+   "claim": "json_schema example uses params.schema with type, required, properties and enum",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/register.go:1"
+   ]
+  },
+  {
+   "id": 89,
+   "claim": "An assertion whose when conditions are not met is skipped and recorded as passed with skipped: true, not failed",
+   "verdict": "true",
+   "evidence": [
+    "arena/stages/assertions.go:295"
+   ]
+  },
+  {
+   "id": 90,
+   "claim": "when field tool_called is a string matching an exact tool name",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:51",
+    "arena/assertions/when.go:56"
+   ]
+  },
+  {
+   "id": 91,
+   "claim": "when field tool_called_pattern is a string regex matched against tool names",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:53",
+    "arena/assertions/when.go:73"
+   ]
+  },
+  {
+   "id": 92,
+   "claim": "when field any_tool_called is a boolean",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:55",
+    "arena/assertions/when.go:36"
+   ]
+  },
+  {
+   "id": 93,
+   "claim": "when field min_tool_calls is an integer",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:57",
+    "arena/assertions/when.go:48"
+   ]
+  },
+  {
+   "id": 94,
+   "claim": "All when conditions are AND-ed together",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/when.go:26"
+   ]
+  },
+  {
+   "id": 95,
+   "claim": "eval_type llm_judge_tool_calls is a valid eval type",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/register.go:1"
+   ]
+  },
+  {
+   "id": 96,
+   "claim": "A skipped assertion makes no judge LLM call",
+   "verdict": "true",
+   "evidence": [
+    "arena/stages/assertions.go:220",
+    "arena/stages/assertions.go:288"
+   ]
+  },
+  {
+   "id": 97,
+   "claim": "tool_call_chain example with when fields any_tool_called and min_tool_calls and params steps",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:49",
+    "arena/assertions/when.go:26"
+   ]
+  },
+  {
+   "id": 98,
+   "claim": "tool_call_chain steps entries use the key 'tool' to name a tool",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/register.go:1"
+   ]
+  },
+  {
+   "id": 99,
+   "claim": "Skipped assertion report JSON has fields type, passed, skipped, message and details.skip_reason",
+   "verdict": "true",
+   "evidence": [
+    "arena/stages/assertions.go:298"
+   ]
+  },
+  {
+   "id": 100,
+   "claim": "In duplex or streaming paths without tool trace data, when conditions pass unconditionally and the validator decides",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/turn_tool_trace.go:30",
+    "arena/assertions/when.go:26"
+   ]
+  },
+  {
+   "id": 101,
+   "claim": "pass_threshold example on a content_includes turn assertion with value 0.8",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:30",
+    "arena/engine/trials.go:351"
+   ]
+  },
+  {
+   "id": 102,
+   "claim": "pass_threshold applies to both turn assertions and conversation_assertions",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/trials.go:244",
+    "arena/engine/trials.go:353"
+   ]
+  },
+  {
+   "id": 103,
+   "claim": "A scenario with trials is reported as one run: the first trial that ran without error",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/trials.go:66",
+    "arena/engine/trials.go:79"
+   ]
+  },
+  {
+   "id": 104,
+   "claim": "Assertion messages get a suffix with the trial count, e.g. 'passed 4 of 5 trials, pass_threshold 0.80', and details.trials carries the count",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/trials.go:580"
+   ]
+  },
+  {
+   "id": 105,
+   "claim": "On a single run a failing turn assertion ends the run with an error",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/trials.go:76",
+    "arena/stages/assertions.go:336"
+   ]
+  },
+  {
+   "id": 106,
+   "claim": "Across trials, turn assertion below threshold sets run error to 'turn assertions below pass_threshold across <n> trials: ...'",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/trials.go:518"
+   ]
+  },
+  {
+   "id": 107,
+   "claim": "A conversation assertion below its threshold is reported as failed",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/trials.go:468"
+   ]
+  },
+  {
+   "id": 108,
+   "claim": "An errored trial counts as a failure of every assertion it has no result for; a trial stopped early counts the failure once",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/trials.go:397"
+   ]
+  },
+  {
+   "id": 109,
+   "claim": "When trials errored, the run error reads '<n> of <m> trials errored: <first error>'",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/trials.go:520",
+    "arena/engine/trials.go:539"
+   ]
+  },
+  {
+   "id": 110,
+   "claim": "JSON result has trial_results block with fields passed, trial_count, pass_rate, flakiness_score, errored_trials and per_assertion_stats",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/types.go:104",
+    "arena/engine/types.go:112"
+   ]
+  },
+  {
+   "id": 111,
+   "claim": "per_assertion_stats entries have fields name, pass_rate, pass_count, fail_count, pass_threshold and passed",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/types.go:233"
+   ]
+  },
+  {
+   "id": 112,
+   "claim": "trial_results.passed always matches whether the reported run passed",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/trials.go:390",
+    "arena/engine/trials.go:514"
+   ]
+  },
+  {
+   "id": 113,
+   "claim": "Scenario field trial_budget can stop trials early and is documented at config-schema trial_budget",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:733"
+   ]
+  },
+  {
+   "id": 114,
+   "claim": "trial_results.budget reports how many trials were skipped and why",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/trial_budget.go:21",
+    "arena/engine/types.go:140"
+   ]
+  },
+  {
+   "id": 115,
+   "claim": "content_matches is the regex-based content check, content_includes is for simple text checks",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/register.go:1"
+   ]
+  },
+  {
+   "id": 116,
+   "claim": "Internal anchor #conditional-filtering-when exists on this page",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 117,
+   "claim": "Internal link /arena/reference/cli-commands/#promptarena-calibrate resolves to a page with that anchor",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 118,
+   "claim": "Internal link /arena/reference/config-schema/#trial_budget resolves to a page with that anchor",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 119,
+   "claim": "Internal link /arena/reference/validators/ resolves to an existing docs page",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 120,
+   "claim": "Internal link /arena/explanation/eval-framework/ resolves to an existing docs page",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 121,
+   "claim": "Mermaid sequence diagram has participants Scenario, LLM, Assertion and Result",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 122,
+   "claim": "Diagram edge: Scenario sends User Turn to LLM",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 123,
+   "claim": "Diagram edge: LLM returns Assistant Response to Scenario",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 124,
+   "claim": "Diagram loop 'For Each Assertion' wraps Check Response, Evaluate and Pass/Fail + Details to Result",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 125,
+   "claim": "Diagram edge: Result sends Aggregate Results to Scenario",
+   "verdict": "true",
+   "evidence": []
+  }
+ ]
+}
