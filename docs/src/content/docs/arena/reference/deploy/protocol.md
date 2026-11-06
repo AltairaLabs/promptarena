@@ -1,5 +1,21 @@
 ---
 title: 'Deploy: Protocol'
+verified:
+  commit: 60cd1a146e6224c0d66c972d18f329a0ce76c522
+  sources:
+    - arena/cmd/promptarena/deploy_config_interactive.go
+    - arena/cmd/promptarena/deploy_interactive.go
+    - arena/cmd/promptarena/deploy_login_interactive.go
+    - arena/cmd/promptarena/generate.go
+    - arena/cmd/promptarena/generate_integration.go
+    - arena/deploy/flow/credentials.go
+    - arena/deploy/flow/login.go
+    - arena/deploy/flow/sessions.go
+    - arena/generate/generate.go
+    - deploy/adaptersdk/serve.go
+    - deploy/client.go
+    - deploy/provider.go
+    - deploy/sessions.go
 ---
 
 ## Overview
@@ -66,8 +82,7 @@ Returns adapter metadata.
 {
   "jsonrpc": "2.0",
   "id": 1,
-  "method": "get_provider_info",
-  "params": {}
+  "method": "get_provider_info"
 }
 ```
 
@@ -97,7 +112,7 @@ Returns adapter metadata.
 
 ### validate_config
 
-Validates provider configuration before planning.
+Validates provider configuration. `deploy config import` calls it unless you pass `--skip-validate`.
 
 **Request:**
 
@@ -630,8 +645,7 @@ Standard JSON-RPC 2.0 error codes:
 
 | Code | Name | Description |
 |------|------|-------------|
-| `-32700` | Parse Error | Invalid JSON received |
-| `-32600` | Invalid Request | Request object is not valid JSON-RPC |
+| `-32700` | Parse Error | Invalid JSON or invalid params |
 | `-32601` | Method Not Found | Unknown method name |
 | `-32603` | Internal Error | Provider method returned an error |
 

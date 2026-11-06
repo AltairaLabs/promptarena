@@ -1,0 +1,1148 @@
+{
+ "page": "docs/src/content/docs/arena/reference/deploy/protocol.md",
+ "commit": "60cd1a146e6224c0d66c972d18f329a0ce76c522",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "Deploy adapters communicate with the CLI using JSON-RPC 2.0 over stdio (stdin/stdout)",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:41",
+    "deploy/client.go:29"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "Input is line-delimited JSON on stdin",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:100"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "Output is line-delimited JSON on stdout",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:107"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "Encoding is UTF-8",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:107"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "Max line size is 10 MB",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:103",
+    "deploy/client.go:102"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "Initial buffer is 64 KB",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:104",
+    "deploy/client.go:104"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "Each JSON-RPC message is a single line terminated by newline; the CLI sends requests and reads responses sequentially",
+   "verdict": "true",
+   "evidence": [
+    "deploy/client.go:187",
+    "deploy/client.go:209"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "Request envelope has jsonrpc \"2.0\", id, method and params fields",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:48",
+    "deploy/client.go:44"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "Success response carries jsonrpc, id and result",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:56",
+    "deploy/client.go:52"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "Error response carries jsonrpc, id and error with code and message",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:64",
+    "deploy/client.go:60"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "The protocol has a get_provider_info method",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:19",
+    "deploy/client.go:30"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "get_provider_info returns adapter metadata",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:183"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "get_provider_info request uses an empty params object",
+   "verdict": "false",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:183",
+    "deploy/client.go:271",
+    "deploy/client.go:47"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "get_provider_info response example has result fields name, version, capabilities and config_schema",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:18"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "get_provider_info result field name is a string and required",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:19"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "get_provider_info result field version is a string and required",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:20"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "get_provider_info result field capabilities is a string array and optional",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:21"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "get_provider_info result field config_schema is an optional string holding a JSON Schema for config validation",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:22"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "The protocol has a validate_config method",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:20",
+    "deploy/client.go:31"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "validate_config validates provider configuration before planning",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_config_interactive.go:122",
+    "arena/cmd/promptarena/deploy_config_interactive.go:155"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "validate_config request uses a params object with a config string field holding JSON-encoded provider config",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:26"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "validate_config response example with valid true",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:31"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "validate_config invalid response example has valid false and an errors array",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:31"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "validate_config param config is a string holding JSON-encoded provider config",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:27"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "validate_config result field valid is a bool",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:32"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "validate_config result field errors is a string array",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:33"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "validate_config result field warnings is a string array",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:36"
+   ]
+  },
+  {
+   "id": 28,
+   "claim": "validate_config warnings are non-blocking and do not affect valid",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_config_interactive.go:168",
+    "deploy/provider.go:34"
+   ]
+  },
+  {
+   "id": 29,
+   "claim": "The CLI prints validate_config warnings with a warning-sign prefix",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_config_interactive.go:168",
+    "arena/cmd/promptarena/deploy_interactive.go:98"
+   ]
+  },
+  {
+   "id": 30,
+   "claim": "The protocol has a plan method",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:21",
+    "deploy/client.go:32"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "plan analyzes the pack and config to determine which resources need to change",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:213",
+    "deploy/provider.go:178"
+   ]
+  },
+  {
+   "id": 32,
+   "claim": "plan request params are pack_json, deploy_config, environment and prior_state",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:40"
+   ]
+  },
+  {
+   "id": 33,
+   "claim": "plan response example has result fields changes and summary, with change types agent_runtime and a2a_endpoint and actions CREATE and UPDATE",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:49",
+    "deploy/provider.go:58"
+   ]
+  },
+  {
+   "id": 34,
+   "claim": "plan param pack_json is the serialized .pack.json contents",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:41"
+   ]
+  },
+  {
+   "id": 35,
+   "claim": "plan param deploy_config is a string holding the JSON-encoded merged provider config",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:42"
+   ]
+  },
+  {
+   "id": 36,
+   "claim": "plan param environment is a string holding the target environment name",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:43"
+   ]
+  },
+  {
+   "id": 37,
+   "claim": "plan param prior_state is opaque adapter state from prior deploy, empty on first deploy",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:45"
+   ]
+  },
+  {
+   "id": 38,
+   "claim": "plan result field changes is a ResourceChange array",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:50"
+   ]
+  },
+  {
+   "id": 39,
+   "claim": "plan result field summary is a human-readable string",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:51"
+   ]
+  },
+  {
+   "id": 40,
+   "claim": "plan result field warnings is a string array printed before the plan changes with a warning-sign prefix",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_interactive.go:144",
+    "arena/cmd/promptarena/deploy_interactive.go:98",
+    "deploy/provider.go:54"
+   ]
+  },
+  {
+   "id": 41,
+   "claim": "ResourceChange has fields type, name, action and detail, all strings",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:58"
+   ]
+  },
+  {
+   "id": 42,
+   "claim": "ResourceChange action values are CREATE, UPDATE, DELETE, DRIFT and NO_CHANGE",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:10"
+   ]
+  },
+  {
+   "id": 43,
+   "claim": "The protocol has an apply method",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:22",
+    "deploy/client.go:33"
+   ]
+  },
+  {
+   "id": 44,
+   "claim": "apply executes the deployment plan, creating, updating or deleting resources",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:230",
+    "deploy/provider.go:179"
+   ]
+  },
+  {
+   "id": 45,
+   "claim": "apply request params are pack_json, deploy_config, environment and prior_state",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:235",
+    "deploy/provider.go:40"
+   ]
+  },
+  {
+   "id": 46,
+   "claim": "apply response example has result fields adapter_state and events, with event types progress, resource and complete",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:70",
+    "deploy/provider.go:66"
+   ]
+  },
+  {
+   "id": 47,
+   "claim": "apply params are pack_json, deploy_config, environment and prior_state (opaque, empty if first deploy), all strings",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:40"
+   ]
+  },
+  {
+   "id": 48,
+   "claim": "apply result field adapter_state is an opaque string the CLI persists",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:71",
+    "deploy/client.go:297"
+   ]
+  },
+  {
+   "id": 49,
+   "claim": "apply result field events is an ApplyEvent array",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:72"
+   ]
+  },
+  {
+   "id": 50,
+   "claim": "ApplyEvent type values are progress, resource, error and complete",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:67"
+   ]
+  },
+  {
+   "id": 51,
+   "claim": "ApplyEvent has message string and resource ResourceResult fields",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:68",
+    "deploy/provider.go:69"
+   ]
+  },
+  {
+   "id": 52,
+   "claim": "ResourceResult status values are created, updated, deleted and failed",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:105"
+   ]
+  },
+  {
+   "id": 53,
+   "claim": "ResourceResult has fields type, name, action, status and detail, all strings",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:101"
+   ]
+  },
+  {
+   "id": 54,
+   "claim": "The protocol has a destroy method",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:23",
+    "deploy/client.go:34"
+   ]
+  },
+  {
+   "id": 55,
+   "claim": "destroy tears down all managed resources",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:254",
+    "deploy/provider.go:180"
+   ]
+  },
+  {
+   "id": 56,
+   "claim": "destroy request params are deploy_config, environment and prior_state (no pack_json)",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:139"
+   ]
+  },
+  {
+   "id": 57,
+   "claim": "destroy response example has status destroyed and an events array with progress and complete events",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:272",
+    "deploy/adaptersdk/serve.go:77"
+   ]
+  },
+  {
+   "id": 58,
+   "claim": "destroy params are deploy_config, environment and prior_state, all strings",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:139"
+   ]
+  },
+  {
+   "id": 59,
+   "claim": "destroy result status is always destroyed on success",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:272"
+   ]
+  },
+  {
+   "id": 60,
+   "claim": "destroy result field events is a DestroyEvent array",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:79",
+    "deploy/provider.go:112"
+   ]
+  },
+  {
+   "id": 61,
+   "claim": "The protocol has a status method",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:24",
+    "deploy/client.go:35"
+   ]
+  },
+  {
+   "id": 62,
+   "claim": "status queries current deployment status from the cloud provider",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:276",
+    "deploy/provider.go:181"
+   ]
+  },
+  {
+   "id": 63,
+   "claim": "status request params are deploy_config, environment and prior_state",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:146"
+   ]
+  },
+  {
+   "id": 64,
+   "claim": "status response example has result fields status, resources and state",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:119"
+   ]
+  },
+  {
+   "id": 65,
+   "claim": "status params are deploy_config, environment and prior_state, all strings",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:146"
+   ]
+  },
+  {
+   "id": 66,
+   "claim": "status result field status values are deployed, not_deployed, degraded and unknown",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:120"
+   ]
+  },
+  {
+   "id": 67,
+   "claim": "status result field resources is a ResourceStatus array",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:121"
+   ]
+  },
+  {
+   "id": 68,
+   "claim": "status result field state is an optional string holding updated adapter state",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:122"
+   ]
+  },
+  {
+   "id": 69,
+   "claim": "ResourceStatus has fields type, name, status and detail, all strings",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:129"
+   ]
+  },
+  {
+   "id": 70,
+   "claim": "ResourceStatus status values are healthy, unhealthy and missing",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:132"
+   ]
+  },
+  {
+   "id": 71,
+   "claim": "The protocol has an import method",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:25",
+    "deploy/client.go:36"
+   ]
+  },
+  {
+   "id": 72,
+   "claim": "import imports a pre-existing resource into deployment state so the CLI can manage it",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:293",
+    "deploy/provider.go:182"
+   ]
+  },
+  {
+   "id": 73,
+   "claim": "import request params are resource_type, resource_name, identifier, deploy_config, environment and prior_state",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:159"
+   ]
+  },
+  {
+   "id": 74,
+   "claim": "import response example has result fields resource and state",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:169"
+   ]
+  },
+  {
+   "id": 75,
+   "claim": "import param resource_type is a string such as agent_runtime",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:160"
+   ]
+  },
+  {
+   "id": 76,
+   "claim": "import param resource_name is the name assigned in local state",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:161"
+   ]
+  },
+  {
+   "id": 77,
+   "claim": "import param identifier is a provider-specific resource identifier string",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:162"
+   ]
+  },
+  {
+   "id": 78,
+   "claim": "import param prior_state is optional",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:165"
+   ]
+  },
+  {
+   "id": 79,
+   "claim": "import result field resource is a ResourceStatus",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:170"
+   ]
+  },
+  {
+   "id": 80,
+   "claim": "import result field state is the updated opaque adapter state string",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:171"
+   ]
+  },
+  {
+   "id": 81,
+   "claim": "The protocol has an optional get_login_url method",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:26",
+    "deploy/client.go:37"
+   ]
+  },
+  {
+   "id": 82,
+   "claim": "get_login_url is served only by adapters that advertise the login capability and implement the LoginProvider interface; other adapters return method-not-found",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/login.go:134",
+    "deploy/adaptersdk/serve.go:317",
+    "deploy/provider.go:187"
+   ]
+  },
+  {
+   "id": 83,
+   "claim": "get_login_url returns the provider's browser authorize URL used by the deploy login command",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_login_interactive.go:16",
+    "arena/deploy/flow/login.go:107"
+   ]
+  },
+  {
+   "id": 84,
+   "claim": "The deploy login command exists",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_login_interactive.go:16"
+   ]
+  },
+  {
+   "id": 85,
+   "claim": "get_login_url request params are callback_url, state and config",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:192"
+   ]
+  },
+  {
+   "id": 86,
+   "claim": "get_login_url param callback_url is the CLI loopback callback the provider must redirect to",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/login.go:107",
+    "deploy/provider.go:193"
+   ]
+  },
+  {
+   "id": 87,
+   "claim": "get_login_url param state is a CSRF nonce the provider must echo back",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/login.go:178",
+    "deploy/provider.go:194"
+   ]
+  },
+  {
+   "id": 88,
+   "claim": "get_login_url param config is a JSON-encoded, possibly partial deploy config carrying provider coordinates such as api_endpoint",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:195",
+    "deploy/provider.go:198"
+   ]
+  },
+  {
+   "id": 89,
+   "claim": "get_login_url result field authorize_url is the URL the CLI opens in the browser",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/login.go:114",
+    "deploy/provider.go:203"
+   ]
+  },
+  {
+   "id": 90,
+   "claim": "The protocol has an optional complete_login method",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:27",
+    "deploy/client.go:38"
+   ]
+  },
+  {
+   "id": 91,
+   "claim": "complete_login is optional and exchanges the captured callback parameters for a deploy profile and a scoped token",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:334",
+    "deploy/provider.go:217"
+   ]
+  },
+  {
+   "id": 92,
+   "claim": "complete_login request params are params (an object with code and state) and config",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:209"
+   ]
+  },
+  {
+   "id": 93,
+   "claim": "complete_login param params is an object of all query parameters captured from the loopback callback",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/login.go:175",
+    "deploy/provider.go:210"
+   ]
+  },
+  {
+   "id": 94,
+   "claim": "complete_login param config is a JSON-encoded deploy config string",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:214"
+   ]
+  },
+  {
+   "id": 95,
+   "claim": "complete_login result field profile is an object holding endpoint, workspace, providers and skills to merge into the config",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/login.go:204",
+    "deploy/provider.go:221"
+   ]
+  },
+  {
+   "id": 96,
+   "claim": "complete_login result field token is a string",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:222"
+   ]
+  },
+  {
+   "id": 97,
+   "claim": "The complete_login token is stored in the credentials file and never in the config",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/credentials.go:24",
+    "arena/deploy/flow/login.go:214"
+   ]
+  },
+  {
+   "id": 98,
+   "claim": "The protocol has an optional list_sessions method",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:28",
+    "deploy/client.go:39"
+   ]
+  },
+  {
+   "id": 99,
+   "claim": "list_sessions is served only by adapters that advertise the sessions capability and implement the SessionSourceProvider interface; other adapters return method-not-found",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:384",
+    "deploy/sessions.go:13"
+   ]
+  },
+  {
+   "id": 100,
+   "claim": "list_sessions is used by promptarena generate --source <adapter>",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/generate.go:46",
+    "arena/deploy/flow/sessions.go:142"
+   ]
+  },
+  {
+   "id": 101,
+   "claim": "list_sessions request params are deploy_config, environment, filter_passed, expectations, limit and cursor",
+   "verdict": "true",
+   "evidence": [
+    "deploy/sessions.go:44"
+   ]
+  },
+  {
+   "id": 102,
+   "claim": "list_sessions param deploy_config is the merged deploy config (endpoint, workspace, api_token and profile fields), the same document plan and apply receive",
+   "verdict": "true",
+   "evidence": [
+    "deploy/sessions.go:45"
+   ]
+  },
+  {
+   "id": 103,
+   "claim": "list_sessions param environment is the deploy environment the config was merged for",
+   "verdict": "true",
+   "evidence": [
+    "deploy/sessions.go:49"
+   ]
+  },
+  {
+   "id": 104,
+   "claim": "list_sessions param filter_passed is an optional bool: true returns passed sessions only, false returns failed sessions only, absent returns all",
+   "verdict": "true",
+   "evidence": [
+    "deploy/sessions.go:53"
+   ]
+  },
+  {
+   "id": 105,
+   "claim": "list_sessions param filter_eval_type is an optional string filtering to sessions that recorded an eval of that type",
+   "verdict": "true",
+   "evidence": [
+    "deploy/sessions.go:55"
+   ]
+  },
+  {
+   "id": 106,
+   "claim": "list_sessions param expectations is an optional object array of {eval_id, min?, max?}",
+   "verdict": "true",
+   "evidence": [
+    "deploy/sessions.go:37",
+    "deploy/sessions.go:57"
+   ]
+  },
+  {
+   "id": 107,
+   "claim": "list_sessions param limit is an optional int page size where 0 means the adapter default",
+   "verdict": "true",
+   "evidence": [
+    "deploy/sessions.go:58"
+   ]
+  },
+  {
+   "id": 108,
+   "claim": "list_sessions param cursor is an optional string that continues a previous page",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/sessions.go:158",
+    "deploy/sessions.go:61"
+   ]
+  },
+  {
+   "id": 109,
+   "claim": "list_sessions result field sessions is an array of summaries with id, scenario_id, provider_id, timestamp, turn_count, has_failures, tags and metadata",
+   "verdict": "true",
+   "evidence": [
+    "deploy/sessions.go:72"
+   ]
+  },
+  {
+   "id": 110,
+   "claim": "list_sessions result field next_cursor is non-empty when more pages follow",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/sessions.go:155",
+    "deploy/sessions.go:67"
+   ]
+  },
+  {
+   "id": 111,
+   "claim": "Whether a filter is applied server-side is the adapter's choice",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/sessions.go:137",
+    "deploy/sessions.go:24"
+   ]
+  },
+  {
+   "id": 112,
+   "claim": "The CLI re-checks expectations against every session it fetches",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/generate.go:82"
+   ]
+  },
+  {
+   "id": 113,
+   "claim": "A fetched session that violates no expectation is reported as skipped",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/generate_integration.go:31",
+    "arena/generate/generate.go:83"
+   ]
+  },
+  {
+   "id": 114,
+   "claim": "The protocol has an optional get_session method",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:29",
+    "deploy/client.go:40"
+   ]
+  },
+  {
+   "id": 115,
+   "claim": "get_session is optional and returns one session in full",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:401",
+    "deploy/sessions.go:84"
+   ]
+  },
+  {
+   "id": 116,
+   "claim": "get_session request params are deploy_config, environment and session_id",
+   "verdict": "true",
+   "evidence": [
+    "deploy/sessions.go:84"
+   ]
+  },
+  {
+   "id": 117,
+   "claim": "get_session result session.messages is a JSON array of PromptKit types.Message with tool calls and results inline",
+   "verdict": "true",
+   "evidence": [
+    "deploy/sessions.go:103",
+    "deploy/sessions.go:99"
+   ]
+  },
+  {
+   "id": 118,
+   "claim": "get_session result session.pack is an optional object with name, version and digest",
+   "verdict": "true",
+   "evidence": [
+    "deploy/sessions.go:105",
+    "deploy/sessions.go:116"
+   ]
+  },
+  {
+   "id": 119,
+   "claim": "get_session result session.variables is an optional object of template variables",
+   "verdict": "true",
+   "evidence": [
+    "deploy/sessions.go:107"
+   ]
+  },
+  {
+   "id": 120,
+   "claim": "get_session result session.workflow is an optional object with entry_state, entry_prompt_task and transitions[{from, to, event, prompt_task, message_index}]",
+   "verdict": "true",
+   "evidence": [
+    "deploy/sessions.go:123",
+    "deploy/sessions.go:131"
+   ]
+  },
+  {
+   "id": 121,
+   "claim": "get_session result session.evals is an array of recorded evals with id, type, kind, score, passed, params, threshold, message, details and turn",
+   "verdict": "true",
+   "evidence": [
+    "deploy/sessions.go:142",
+    "deploy/sessions.go:157"
+   ]
+  },
+  {
+   "id": 122,
+   "claim": "Eval kind values are eval, assertion and guardrail",
+   "verdict": "true",
+   "evidence": [
+    "deploy/sessions.go:139"
+   ]
+  },
+  {
+   "id": 123,
+   "claim": "Redaction is the platform's responsibility and the adapter performs none",
+   "verdict": "true",
+   "evidence": [
+    "deploy/sessions.go:26"
+   ]
+  },
+  {
+   "id": 124,
+   "claim": "Error code -32700 is Parse Error",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:34"
+   ]
+  },
+  {
+   "id": 125,
+   "claim": "Error code -32600 is Invalid Request",
+   "verdict": "dead",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:35"
+   ]
+  },
+  {
+   "id": 126,
+   "claim": "Error code -32601 is Method Not Found",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:174",
+    "deploy/adaptersdk/serve.go:36",
+    "deploy/client.go:72"
+   ]
+  },
+  {
+   "id": 127,
+   "claim": "Error code -32603 is Internal Error for provider method errors",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:190",
+    "deploy/adaptersdk/serve.go:37"
+   ]
+  },
+  {
+   "id": 128,
+   "claim": "Adapters may return custom error codes with descriptive messages",
+   "verdict": "true",
+   "evidence": [
+    "deploy/client.go:255",
+    "deploy/client.go:60"
+   ]
+  },
+  {
+   "id": 129,
+   "claim": "Example adapter error response uses code -32603 with an AWS AccessDeniedException message",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:190"
+   ]
+  },
+  {
+   "id": 130,
+   "claim": "The CLI uses sequential integer request IDs starting from 1",
+   "verdict": "true",
+   "evidence": [
+    "deploy/client.go:149",
+    "deploy/client.go:195"
+   ]
+  },
+  {
+   "id": 131,
+   "claim": "The adapter must include the matching id in each response",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:177",
+    "deploy/adaptersdk/serve.go:359"
+   ]
+  },
+  {
+   "id": 132,
+   "claim": "Request IDs are not reused within a single session",
+   "verdict": "true",
+   "evidence": [
+    "deploy/client.go:195"
+   ]
+  },
+  {
+   "id": 133,
+   "claim": "The Adapter SDK page is a Go SDK for implementing this protocol",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:1"
+   ]
+  },
+  {
+   "id": 134,
+   "claim": "The Adapter Architecture page is at /arena/explanation/deploy/adapter-architecture/",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 135,
+   "claim": "The CLI Commands page is at /arena/reference/deploy/cli-commands/ and documents the CLI that drives the protocol",
+   "verdict": "true",
+   "evidence": []
+  }
+ ]
+}

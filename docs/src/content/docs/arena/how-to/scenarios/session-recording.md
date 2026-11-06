@@ -1,15 +1,34 @@
 ---
 title: Session Recording
+description: Record Arena scenario runs to JSONL, then load, replay, annotate and evaluate them.
+verified:
+  commit: 60cd1a146e6224c0d66c972d18f329a0ce76c522
+  sources:
+    - .github/workflows/ci.yml
+    - arena/arenaconfig/loader.go
+    - arena/arenaconfig/types.go
+    - arena/cmd/promptarena/run_interactive.go
+    - arena/engine/builder_integration.go
+    - arena/engine/conversation_executor.go
+    - arena/engine/duplex_executor_pipeline_integration.go
+    - arena/engine/engine.go
+    - arena/engine/execution.go
+    - arena/engine/execution_workflow_integration.go
+    - arena/turnexecutors/pipeline_stages_integration.go
+    - examples/eval-test/config.arena.yaml
+    - examples/session-replay/demo/main.go
+    - examples/session-replay/replay-player/main.go
+    - schemas/v1alpha1/eval.json
 ---
-Learn how to capture detailed session recordings for debugging, replay, and analysis of Arena test runs.
+Capture a recording of each Arena run, then load it for replay, annotation and evaluation.
 
-## Why Use Session Recording?
+See [Session Recording Architecture](/arena/explanation/session-recording/) for how recordings work.
 
-- **Deep debugging**: See exact event sequences and timing
-- **Audio reconstruction**: Export voice conversations as WAV files
-- **Replay capability**: Recreate test runs with deterministic providers
-- **Performance analysis**: Analyze per-event timing and latency
-- **Annotation support**: Add labels, scores, and comments to recordings
+## Prerequisites
+
+- A PromptArena project with a `config.arena.yaml` (`promptarena init` creates one).
+- Non-duplex scenarios. Duplex runs write no recording file.
+- Go, to load, replay or annotate a recording with the `recording` package.
 
 ## Enable Session Recording
 
@@ -32,7 +51,7 @@ spec:
         dir: recordings         # Subdirectory for recordings
 ```
 
-Run your tests normally:
+Run your tests:
 
 ```bash
 promptarena run --scenario my-test
@@ -42,75 +61,31 @@ Recordings are saved to `out/recordings/` as JSONL files.
 
 ## Recording Format
 
-Each recording is a JSONL file containing:
-
-1. **Metadata line**: Session info, timing, provider details
-2. **Event lines**: Individual events with timestamps and data
+Each line of a recording is one event, `{"seq":N,"event":{...}}`. See [Storage Format](/arena/explanation/session-recording/#storage-format) for the file formats.
 
 ```jsonl
-{"type":"metadata","session_id":"run-123","start_time":"2024-01-15T10:30:00Z","duration":"5.2s",...}
-{"type":"event","timestamp":"2024-01-15T10:30:00.100Z","event_type":"conversation.started",...}
-{"type":"event","timestamp":"2024-01-15T10:30:00.500Z","event_type":"message.created",...}
-{"type":"event","timestamp":"2024-01-15T10:30:01.200Z","event_type":"audio.input",...}
+{"seq":1,"event":{"type":"message.created","timestamp":"2024-01-15T10:30:00.500Z","session_id":"run-123","conversation_id":"...","data_type":"...","data":{...}}}
 ```
 
 ## Captured Events
 
-Session recordings capture a comprehensive event stream covering all runtime activity:
+An Arena recording holds these event types:
 
-| Category | Event Type | Description |
-|----------|------------|-------------|
-| **Conversation** | `conversation.started` | Session initialization with system prompt |
-| **Messages** | `message.created` | User and assistant messages with multimodal content parts |
-| | `message.updated` | Metadata updates (latency, token counts, cost) |
-| **Pipeline** | `pipeline.started` | Pipeline execution start with middleware count |
-| | `pipeline.completed` | Pipeline completion with total cost/tokens |
-| | `pipeline.failed` | Pipeline failure with error |
-| **Stages** | `stage.started` | Pipeline stage start, with the stage name and type (one per stage per turn) |
-| | `stage.completed` | Stage completion with duration |
-| | `stage.failed` | Stage failure with error and duration |
-| **Provider** | `provider.call.started` | LLM API call initiation (provider, model, message count) |
-| | `provider.call.completed` | LLM API call completion (tokens, cost, cached tokens) |
-| | `provider.call.failed` | LLM API call failure with error |
-| **Tools** | `tool.call.started` | Tool execution start with arguments |
-| | `tool.call.completed` | Tool completion with duration and status |
-| | `tool.call.failed` | Tool failure with error and duration |
-| **Client Tools** | `tool.client.request` | Client-side tool request with consent message and categories |
-| **Validation** | `validation.started` | Validator execution start |
-| | `validation.passed` | Validation success with duration |
-| | `validation.failed` | Validation failure with violations |
-| **Context** | `context.built` | Context window assembly (token count, budget, truncation) |
-| | `context.token_budget_exceeded` | Token budget overflow (required vs. budget) |
-| **State** | `state.loaded` | Conversation state loaded from store |
-| | `state.saved` | Conversation state persisted |
-| **Streaming** | `stream.interrupted` | Stream interruption with reason |
-| **Workflow** | `workflow.transitioned` | Workflow state transition (from/to states, event, prompt task) |
-| | `workflow.completed` | Workflow reached terminal state (final state, transition count) |
-| **Audio** | `audio.input` | User/environment audio chunks |
-| | `audio.output` | Assistant audio chunks |
-| | `audio.transcription` | Speech-to-text transcription result |
-| **Video** | `video.frame` | Video frame capture |
-| **Images** | `image.input` | Image input from user/environment |
-| | `image.output` | Image output from agent |
-| | `screenshot` | Screenshot capture |
+| Event Type | Description |
+|------------|-------------|
+| `message.created` | One event per message: user, assistant and tool messages, with multimodal content parts |
+| `stream.interrupted` | A stream interruption, with the reason |
 
-`middleware.started`, `middleware.completed` and `middleware.failed` appear only in recordings made before PromptKit replaced its middleware chain with pipeline stages. Current runs emit the `stage.*` events instead.
+Tool calls appear inside `message.created` events. Assistant messages carry `ToolCalls` (id, name, args) and tool messages carry `ToolResult`.
 
 ### Multimodal Content in Events
 
 The `message.created` event includes a `Parts` field (`[]ContentPart`) for multimodal messages. Each `ContentPart` has a `Type` field indicating the content kind:
 
-- **`text`** — Text content with a `Text` field
-- **`image`** — Image content with a `Media` field containing MIME type, URL, or inline data
-- **`audio`** — Audio content with a `Media` field
-- **`video`** — Video content with a `Media` field
-
-Audio, video, and image events use `BinaryPayload` for content storage:
-- `InlineData` — Raw bytes for small payloads
-- `StorageReference` — Backend-specific storage reference for externalized content
-- `MIMEType` — Content type (e.g., `audio/pcm`, `image/png`)
-
-Audio events include `AudioMetadata` (sample rate, channels, encoding, duration) and video events include `VideoMetadata` (width, height, frame rate) for media reconstruction.
+- `text`: text content with a `Text` field
+- `image`: image content with a `Media` field containing MIME type, URL, or inline data
+- `audio`: audio content with a `Media` field
+- `video`: video content with a `Media` field
 
 ## Working with Recordings
 
@@ -141,36 +116,6 @@ func main() {
     // Iterate events
     for _, event := range rec.Events {
         fmt.Printf("[%v] %s\n", event.Offset, event.Type)
-    }
-}
-```
-
-### Export Audio to WAV
-
-For voice conversations, extract audio tracks as WAV files:
-
-```go
-// Create replay player
-player, err := recording.NewReplayPlayer(rec)
-if err != nil {
-    panic(err)
-}
-
-timeline := player.Timeline()
-
-// Export user audio
-if timeline.HasTrack(events.TrackAudioInput) {
-    err := timeline.ExportAudioToWAV(events.TrackAudioInput, "user_audio.wav")
-    if err != nil {
-        fmt.Printf("Export failed: %v\n", err)
-    }
-}
-
-// Export assistant audio
-if timeline.HasTrack(events.TrackAudioOutput) {
-    err := timeline.ExportAudioToWAV(events.TrackAudioOutput, "assistant_audio.wav")
-    if err != nil {
-        fmt.Printf("Export failed: %v\n", err)
     }
 }
 ```
@@ -249,20 +194,17 @@ Use recordings for deterministic test replay:
 ```go
 import "github.com/AltairaLabs/PromptKit/runtime/v2/providers/replay"
 
-// Create replay provider from recording
-provider, err := replay.NewProviderFromRecording(rec)
+// Create replay provider from recording (nil config uses defaults)
+provider, err := replay.NewProvider(rec, nil)
 if err != nil {
     panic(err)
 }
 
 // Use like any other provider - returns recorded responses
-response, err := provider.Complete(ctx, messages, opts)
+response, err := provider.Predict(ctx, req) // req is a providers.PredictionRequest
 ```
 
-This enables:
-- Regression testing without API calls
-- Reproducing exact conversation flows
-- Testing against known-good responses
+`replay.NewProviderFromFile(path, cfg)` builds the provider directly from a recording file. See [Session Recording Architecture](/arena/explanation/session-recording/#replay-provider) for the use cases.
 
 ## Evaluating Recorded Conversations
 
@@ -278,32 +220,22 @@ metadata:
 spec:
   id: support-validation
   description: Validate customer support conversation quality
-  
+
   recording:
     path: out/recordings/session-abc123.jsonl
     type: session
-  
-  judge_targets:
-    default:
-      type: openai
-      model: gpt-4o
-      id: quality-judge
-  
-  assertions:
+
+  conversation_assertions:
     - type: llm_judge
       params:
-        judge: default
         criteria: "Did the agent provide helpful and accurate information?"
-        expected: pass
-    
+
     - type: llm_judge
       params:
-        judge: default
         criteria: "Was the conversation tone professional and empathetic?"
-        expected: pass
 ```
 
-Reference the eval in your arena configuration:
+Declare the judge in your arena configuration and reference the eval. A judge is a `{name, provider}` entry in `spec.judges`, where `provider` is the ID of a provider listed in `spec.providers`:
 
 ```yaml
 # arena.yaml
@@ -315,7 +247,16 @@ metadata:
 spec:
   providers:
     - file: providers/openai-gpt4o.provider.yaml
-  
+
+  defaults:
+    output:
+      dir: out
+      formats: [json]
+
+  judges:
+    - name: default
+      provider: openai-gpt4o
+
   evals:
     - file: evals/validate-recording.eval.yaml
 ```
@@ -326,38 +267,25 @@ Run evaluations:
 promptarena run --config arena.yaml
 ```
 
-This workflow enables:
-- **Quality assurance**: Validate conversation quality with LLM judges
-- **Regression testing**: Ensure consistency across model updates
-- **Batch evaluation**: Test multiple recordings with the same criteria
-- **CI/CD integration**: Automated conversation quality checks
-
-See the **[Eval Configuration Reference](/arena/reference/config-schema#eval-saved-conversation-evaluation)** for complete documentation.
+See the [Eval Configuration Reference](/arena/reference/config-schema#eval-saved-conversation-evaluation) for complete documentation.
 
 ## Complete Example
 
-See `examples/session-replay/` for a full working example:
+See `examples/session-replay/` for a full working example. `demo` records events, loads them, and plays them back with annotations. `replay-player` loads a recording and takes an optional path:
 
 ```bash
 cd examples/session-replay
-go run demo/replay_example.go
+go run ./demo
 
 # Or with your own recording:
-go run demo/replay_example.go path/to/recording.jsonl
+go run ./replay-player path/to/recording.jsonl
 ```
-
-The example demonstrates:
-- Loading recordings
-- Creating a replay player
-- Simulating playback with event correlation
-- Exporting audio tracks
-- Working with annotations
 
 ## Recording Storage
 
 ### File Organization
 
-```
+```text
 out/
 └── recordings/
     ├── run-abc123.jsonl     # One file per test run
@@ -365,11 +293,7 @@ out/
     └── run-ghi789.jsonl
 ```
 
-### Storage Considerations
-
-- **Size**: Recordings with audio can be large (audio data is base64-encoded)
-- **Retention**: Consider cleanup policies for old recordings
-- **Compression**: JSONL files compress well with gzip
+See [Session Recording Architecture](/arena/explanation/session-recording/#performance-considerations) for size, retention and compression.
 
 ### CI/CD Integration
 
@@ -392,23 +316,17 @@ Save recordings as artifacts for debugging failed tests:
 ## What's Captured vs. What's Not
 
 ### Captured in Recordings
-- Complete event stream with precise timestamps
-- Audio chunks for voice conversations
 - Message content and metadata, including multimodal content parts
-- Tool calls with arguments, results, and timing
-- Client tool requests with consent information
-- Provider call timing and token usage
-- Stage and middleware execution lifecycle
-- Workflow state transitions and completion
-- Validation results
+- Tool calls with arguments (inside assistant messages) and tool results (inside tool messages)
+- Stream interruptions
 
 ### Not Captured (stored separately)
 - Post-run human feedback (UserFeedback)
 - Session tags added after completion
 - External annotations (stored in separate files)
 
-## Next Steps
+## Related pages
 
-- **[Duplex/Voice Testing](/arena/how-to/voice/setup-voice-testing/)** - Set up voice conversation testing
-- **[Replay Provider](/arena/explanation/session-recording/)** - Use recordings for deterministic replay
-- **[Configuration Schema](/arena/reference/config-schema/)** - Full configuration reference
+- [Duplex/Voice Testing](/arena/how-to/voice/setup-voice-testing/)
+- [Session Recording Architecture](/arena/explanation/session-recording/)
+- [Configuration Schema](/arena/reference/config-schema/)
