@@ -1,50 +1,35 @@
 ---
 title: 'Tutorial 2: Multi-Prompt Packs'
+description: Compile three customer-service prompts and a tool definition into one pack, then add a fourth prompt and recompile.
 sidebar:
   order: 2
+verified:
+  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  sources:
+    - arena/arenaconfig/loader.go
+    - arena/arenaconfig/types.go
+    - packc/compiler/helpers_integration.go
+    - packc/main.go
+    - packc/main_interactive.go
+    - schemas/v1alpha1/arena.json
 ---
-Build a pack containing multiple prompts for a complete application.
-
-## Learning Objectives
-
-In this tutorial, you'll learn to:
-
-- Create multiple prompt configurations
-- Organize prompts by feature
-- Compile all prompts into a single pack
-- Reference prompts within the pack
-
-## Time Required
-
-**20 minutes**
+In this tutorial we build one pack for a customer-service application. It holds three prompts (greeting, support and escalation) and the definition of a tool the support prompt can call.
 
 ## Prerequisites
 
-- Completed [Tutorial 1: Your First Pack](/packc/tutorials/01-first-pack/)
-- packc installed
-- Basic understanding of prompt structure
+- [Tutorial 1: Your First Pack](/packc/tutorials/01-first-pack/) completed, with `packc` on your `PATH`
 
-## Scenario
-
-You're building a customer service application that needs three types of prompts:
-
-1. **Greeting** - Welcome customers
-2. **Support** - Answer support questions
-3. **Escalation** - Handle complex issues
-
-## Step 1: Project Setup
-
-Create a new project:
+## Step 1: Create the project
 
 ```bash
 mkdir customer-service-pack
 cd customer-service-pack
-mkdir -p prompts config packs
+mkdir -p prompts tools config packs
 ```
 
-## Step 2: Create Multiple Prompts
+## Step 2: Write three prompts
 
-### Greeting Prompt
+The greeting prompt:
 
 ```bash
 cat > prompts/greeting.yaml <<'EOF'
@@ -56,29 +41,21 @@ spec:
   task_type: greeting
   description: Welcome customers and identify their needs
   version: v1.0.0
-
   system_template: |
     You are a friendly customer service representative.
     Greet the customer warmly and ask how you can help them today.
     Customer: {{customer_name}}
-    Previous interactions: {{previous_interactions}}
-
   template_engine:
     version: v1
     syntax: "{{variable}}"
-
   variables:
     - name: customer_name
       type: string
       required: true
-    - name: previous_interactions
-      type: string
-      required: false
-      default: "none"
 EOF
 ```
 
-### Support Prompt
+The support prompt. Its `allowed_tools` names a tool we define in step 3:
 
 ```bash
 cat > prompts/support.yaml <<'EOF'
@@ -90,19 +67,14 @@ spec:
   task_type: support
   description: Provide technical support and solutions
   version: v1.0.0
-
   system_template: |
     You are a knowledgeable technical support specialist.
     Help customers solve their technical issues with clear, step-by-step guidance.
-    Always be patient and understanding.
     Customer: {{customer_name}}
     Issue: {{issue}}
-    Product: {{product}}
-
   template_engine:
     version: v1
     syntax: "{{variable}}"
-
   variables:
     - name: customer_name
       type: string
@@ -110,17 +82,12 @@ spec:
     - name: issue
       type: string
       required: true
-    - name: product
-      type: string
-      required: true
-
   allowed_tools:
     - search_knowledge_base
-    - create_ticket
 EOF
 ```
 
-### Escalation Prompt
+The escalation prompt:
 
 ```bash
 cat > prompts/escalation.yaml <<'EOF'
@@ -132,64 +99,78 @@ spec:
   task_type: escalation
   description: Handle complex issues requiring escalation
   version: v1.0.0
-
   system_template: |
     You are a senior support specialist handling escalated issues.
-    Document the issue thoroughly and prepare it for senior management review.
-    Be empathetic and assure the customer their issue has high priority.
+    Document the issue thoroughly and assure the customer it has high priority.
     Customer: {{customer_name}}
-    Account Type: {{account_type}}
     Issue: {{issue}}
-    Previous attempts: {{previous_attempts}}
     Urgency: {{urgency}}
-
   template_engine:
     version: v1
     syntax: "{{variable}}"
-
   variables:
     - name: customer_name
-      type: string
-      required: true
-    - name: account_type
       type: string
       required: true
     - name: issue
       type: string
       required: true
-    - name: previous_attempts
-      type: string
-      required: false
-      default: "none"
     - name: urgency
       type: string
-      required: true
-
-  allowed_tools:
-    - create_escalation_ticket
-    - notify_manager
+      required: false
+      default: normal
 EOF
 ```
 
-## Step 3: Create Arena Configuration
+## Step 3: Define the tool
 
-Create a configuration that includes all three prompts:
+```bash
+cat > tools/search_knowledge_base.yaml <<'EOF'
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Tool
+metadata:
+  name: search_knowledge_base
+spec:
+  name: search_knowledge_base
+  description: Search the support knowledge base
+  input_schema:
+    type: object
+    properties:
+      query:
+        type: string
+    required: [query]
+  output_schema:
+    type: object
+  mode: mock
+EOF
+```
+
+The tool's `input_schema` becomes the tool's `parameters` in the pack.
+
+## Step 4: List everything in the Arena config
 
 ```bash
 cat > config/arena.yaml <<'EOF'
-prompt_configs:
-  - id: greeting
-    file: ../prompts/greeting.yaml
-  - id: support
-    file: ../prompts/support.yaml
-  - id: escalation
-    file: ../prompts/escalation.yaml
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Arena
+metadata:
+  name: customer-service
+spec:
+  prompt_configs:
+    - id: greeting
+      file: ../prompts/greeting.yaml
+    - id: support
+      file: ../prompts/support.yaml
+    - id: escalation
+      file: ../prompts/escalation.yaml
+  tools:
+    - file: ../tools/search_knowledge_base.yaml
+  providers: []
+  defaults: {}
 EOF
 ```
 
-## Step 4: Compile Multi-Prompt Pack
-
-Compile all prompts into a single pack:
+## Step 5: Compile the pack
 
 ```bash
 packc compile \
@@ -198,115 +179,59 @@ packc compile \
   --id customer-service
 ```
 
-**Expected output:**
+You see the three prompts (in any order) and the tool:
 
-```
+```text
 ✓ Pack compiled successfully: packs/customer-service.pack.json
   Contains 3 prompts: [greeting support escalation]
+  Contains 1 tools: [search_knowledge_base]
 ```
 
-## Step 5: Inspect the Pack
-
-See all prompts in the pack:
+## Step 6: Inspect the pack
 
 ```bash
 packc inspect packs/customer-service.pack.json
 ```
 
-**Key sections to notice:**
+The prompts section lists each prompt by task type, and the support prompt shows its tool:
 
-```
+```text
 === Prompts (3) ===
 
 [escalation]
   Name: Escalation Handler
+  Description: Handle complex issues requiring escalation
   Version: v1.0.0
-  Tools (2): [create_escalation_ticket notify_manager]
+  Variables: 2 required, 1 optional
+    Required: [customer_name issue]
 
 [greeting]
   Name: Customer Greeting
+  Description: Welcome customers and identify their needs
   Version: v1.0.0
+  Variables: 1 required, 0 optional
+    Required: [customer_name]
 
 [support]
   Name: Technical Support
+  Description: Provide technical support and solutions
   Version: v1.0.0
-  Tools (2): [search_knowledge_base create_ticket]
+  Variables: 2 required, 0 optional
+    Required: [customer_name issue]
+  Tools (1): [search_knowledge_base]
 ```
 
-## Step 6: Validate the Pack
+An application loads this one file and selects a prompt by its task type: `greeting`, `support` or `escalation`.
 
-Ensure all prompts are valid:
+## Step 7: Validate the pack
 
 ```bash
 packc validate packs/customer-service.pack.json
 ```
 
-## Understanding Multi-Prompt Packs
+You see `✓ Schema validation passed` and `✓ Pack structure is valid`.
 
-### Pack Structure
-
-Your pack now contains:
-
-```json
-{
-  "id": "customer-service",
-  "version": "1.0.0",
-  "prompts": {
-    "greeting": { ... },
-    "support": { ... },
-    "escalation": { ... }
-  }
-}
-```
-
-### Using Multiple Prompts
-
-In your application, you can select prompts by task type:
-
-```go
-// Load pack
-pack, _ := prompt.LoadPack("./packs/customer-service.pack.json")
-
-// Access greeting prompt
-greetingPrompt := pack.GetPrompt("greeting")
-
-// Access support prompt
-supportPrompt := pack.GetPrompt("support")
-
-// List all available prompts
-promptTypes := pack.ListPrompts()
-```
-
-## Organizing Large Packs
-
-### By Feature
-
-```
-prompts/
-├── greeting/
-│   ├── standard.yaml
-│   └── vip.yaml
-├── support/
-│   ├── technical.yaml
-│   └── billing.yaml
-└── escalation/
-    └── priority.yaml
-```
-
-### By Environment
-
-```
-config/
-├── arena.dev.yaml      # Dev prompts
-├── arena.staging.yaml  # Staging prompts
-└── arena.prod.yaml     # Production prompts
-```
-
-## Try It Yourself
-
-### 1. Add a Fourth Prompt
-
-Create a follow-up prompt:
+## Step 8: Add a fourth prompt
 
 ```bash
 cat > prompts/followup.yaml <<'EOF'
@@ -318,158 +243,40 @@ spec:
   task_type: followup
   description: Check on customer satisfaction after support
   version: v1.0.0
-
   system_template: |
     You are conducting a satisfaction check after customer support.
     Ask if the issue was resolved and if they need any additional help.
     Customer: {{customer_name}}
-    Resolution: {{resolution}}
-
   template_engine:
     version: v1
     syntax: "{{variable}}"
-
   variables:
     - name: customer_name
-      type: string
-      required: true
-    - name: resolution
       type: string
       required: true
 EOF
 ```
 
-Update arena.yaml:
+Add it to `prompt_configs` in `config/arena.yaml`, after the escalation entry:
 
 ```yaml
-prompt_configs:
-  - id: greeting
-    file: ../prompts/greeting.yaml
-  - id: support
-    file: ../prompts/support.yaml
-  - id: escalation
-    file: ../prompts/escalation.yaml
-  - id: followup
-    file: ../prompts/followup.yaml  # Add new prompt
+    - id: followup
+      file: ../prompts/followup.yaml
 ```
 
 Recompile:
 
 ```bash
-packc compile --config config/arena.yaml --output packs/customer-service.pack.json --id customer-service
+packc compile \
+  --config config/arena.yaml \
+  --output packs/customer-service.pack.json \
+  --id customer-service
 ```
 
-### 2. Create Environment-Specific Packs
+The summary now reads `Contains 4 prompts`, and `packc inspect` shows a `[followup]` block.
 
-```bash
-# Development version (shorter responses)
-cp config/arena.yaml config/arena.dev.yaml
+## Next steps
 
-# Production version (add more validation)
-cp config/arena.yaml config/arena.prod.yaml
-
-# Compile both
-packc compile --config config/arena.dev.yaml --output packs/customer-service-dev.pack.json --id customer-service-dev
-packc compile --config config/arena.prod.yaml --output packs/customer-service-prod.pack.json --id customer-service-prod
-```
-
-## Benefits of Multi-Prompt Packs
-
-### 1. Single Distribution
-
-One pack file contains all related prompts:
-
-```bash
-# Instead of:
-app.load("greeting.pack.json")
-app.load("support.pack.json")
-app.load("escalation.pack.json")
-
-# You have:
-app.load("customer-service.pack.json")
-```
-
-### 2. Consistent Versioning
-
-All prompts share the same version:
-
-```bash
-packc compile --config arena.yaml --output packs/customer-service-v1.2.0.pack.json --id customer-service
-```
-
-### 3. Simplified Deployment
-
-Deploy one file instead of many:
-
-```bash
-# Single deployment
-cp packs/customer-service.pack.json /deployment/packs/
-```
-
-## Best Practices
-
-### 1. Related Prompts Together
-
-Group prompts by application or feature:
-
-```
-Good: customer-service.pack.json contains all customer service prompts
-Avoid: all-prompts.pack.json containing unrelated prompts
-```
-
-### 2. Consistent Naming
-
-Use consistent task_type naming:
-
-```yaml
-# Good
-task_type: customer-greeting
-task_type: customer-support
-task_type: customer-escalation
-
-# Avoid
-task_type: greeting
-task_type: support_thing
-task_type: esc
-```
-
-### 3. Document Prompt Relationships
-
-```yaml
-# arena.yaml with comments
-prompt_configs:
-  - id: greeting
-    file: ../prompts/greeting.yaml    # Step 1: Initial contact
-  - id: support
-    file: ../prompts/support.yaml     # Step 2: Problem solving
-  - id: escalation
-    file: ../prompts/escalation.yaml  # Step 3: Complex issues
-  - id: followup
-    file: ../prompts/followup.yaml    # Step 4: Satisfaction check
-```
-
-## Next Steps
-
-Continue learning about pack management:
-
-- **[Tutorial 3: Validation Workflows](/packc/tutorials/03-validation-workflow/)** - Ensure pack quality
-- **[How-To: Organize Packs](/packc/how-to/organize-packs/)** - Structure your packs
-- **[Reference: Pack Format](/packc/explanation/pack-format/)** - Understanding pack structure
-
-## Summary
-
-You've learned to:
-
-- Create multiple related prompts
-- Compile them into a single pack
-- Organize prompts by feature
-- Understand multi-prompt pack structure
-- Use prompts selectively in applications
-
-Multi-prompt packs are ideal for:
-- Complete applications
-- Feature sets
-- Workflow stages
-- Related use cases
-
-Great job!
+- [Tutorial 3: Validation Workflows](/packc/tutorials/03-validation-workflow/): catch broken prompts before they ship
+- [Organize packs](/packc/how-to/organize-packs/): lay out larger projects
+- [Pack format](/packc/explanation/pack-format/): how prompts, tools and fragments sit in a pack

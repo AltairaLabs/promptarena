@@ -1,0 +1,143 @@
+{
+ "page": "docs/src/content/docs/packc/reference/inspect.md",
+ "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "inspect takes one pack-file argument; no flags",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:341-348"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "inspect does not validate",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:350-365"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "section order: pack info, template engine, prompts, fragments, workflow, agents, metadata, compilation",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:356-363"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "pack info lines",
+   "verdict": "true",
+   "evidence": [
+    "packc/main.go:58-66"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "template engine line and features",
+   "verdict": "true",
+   "evidence": [
+    "packc/main.go:68-75"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "prompt block lines, sorted by task type",
+   "verdict": "true",
+   "evidence": [
+    "packc/main.go:77-154"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "fragments sorted",
+   "verdict": "true",
+   "evidence": [
+    "packc/main.go:156-160",
+    "packc/main.go:256-263"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "workflow section",
+   "verdict": "true",
+   "evidence": [
+    "packc/main.go:162-200"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "agents section",
+   "verdict": "true",
+   "evidence": [
+    "packc/main.go:202-230"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "metadata and compilation lines",
+   "verdict": "true",
+   "evidence": [
+    "packc/main.go:232-254"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "pack-level tools, evals, skills, compositions not printed",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:356-363"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "exit 1 and 'Error loading pack:' on missing/invalid file",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:342-354"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "old: 'Error loading pack: open missing.pack.json'",
+   "verdict": "false",
+   "evidence": [
+    "packc/main_interactive.go:350-354"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "old: 'Error loading pack: invalid pack format'",
+   "verdict": "false",
+   "evidence": [
+    "packc/main_interactive.go:350-354"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "old: fragments printed comma-separated",
+   "verdict": "false",
+   "evidence": [
+    "packc/main.go:158"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "old: tools printed with commas",
+   "verdict": "false",
+   "evidence": [
+    "packc/main.go:121"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "old: grep 'Tools:' finds tools lines",
+   "verdict": "false",
+   "evidence": [
+    "packc/main.go:121"
+   ]
+  }
+ ]
+}

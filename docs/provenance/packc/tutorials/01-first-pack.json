@@ -1,0 +1,79 @@
+{
+ "page": "docs/src/content/docs/packc/tutorials/01-first-pack.md",
+ "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "prompt config fields apiVersion/kind/metadata.name/spec.task_type/version/system_template/template_engine/variables",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:540-552"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "arena manifest with prompt_configs, providers: [], defaults: {} compiles",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:180",
+    "arena/arenaconfig/types.go:88-91",
+    "schemas/v1alpha1/arena.json:839"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "compile summary output",
+   "verdict": "true",
+   "evidence": [
+    "packc/main.go:274-294"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "validate success output",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:256-338"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "go install github.com/AltairaLabs/promptarena/v2/packc@latest installs packc reporting 'packc dev'",
+   "verdict": "true",
+   "evidence": [
+    "packc/main.go:21"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "inspect output for the greeting pack",
+   "verdict": "true",
+   "evidence": [
+    "packc/main.go:247-254",
+    "packc/main.go:58-154"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "pack JSON holds id, name, version, template_engine, prompts with variables and pipeline, compilation",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 8,
+   "claim": "old: arena config without apiVersion/kind/spec compiles",
+   "verdict": "false",
+   "evidence": [
+    "schemas/v1alpha1/arena.json:839"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "old: packc version prints 'packc v0.1.0'",
+   "verdict": "false",
+   "evidence": [
+    "packc/main.go:21"
+   ]
+  }
+ ]
+}

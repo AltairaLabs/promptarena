@@ -1,79 +1,43 @@
 ---
 title: PackC Reference
+description: Command reference for packc, the compiler that turns PromptArena prompt configs into PromptPack JSON files.
 sidebar:
   order: 0
+verified:
+  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  sources:
+    - packc/compiler/compiler.go
+    - packc/main_interactive.go
+    - packc/schema_validator.go
 ---
-Complete command-line reference for the PromptKit Pack Compiler (packc).
-
-## Overview
-
-PackC is the official compiler for PromptKit packs. It transforms YAML prompt configurations into optimized, validated JSON pack files ready for use with the SDK.
+`packc` compiles prompt configs into [PromptPack](https://promptpack.org) JSON files (`.pack.json`), validates them, and prints their contents. It compiles with the PromptKit runtime's pack compiler and validates against the PromptPack schema embedded in that runtime.
 
 ## Commands
 
-- **[compile](/packc/reference/compile/)** - Compile all prompts from arena.yaml into a pack
-- **[compile-prompt](/packc/reference/compile-prompt/)** - Compile a single prompt to pack format
-- **[validate](/packc/reference/validate/)** - Validate a pack file
-- **[inspect](/packc/reference/inspect/)** - Display pack information and structure
-- **[version](/packc/reference/version/)** - Show packc version
-- **completion** - Generate a shell completion script (bash, zsh, fish, powershell)
+| Command | Description |
+|---|---|
+| [`compile`](/packc/reference/compile/) | Compile every prompt an Arena config lists into one pack. |
+| [`compile-prompt`](/packc/reference/compile-prompt/) | Compile one PromptConfig file into a single-prompt pack. |
+| [`validate`](/packc/reference/validate/) | Validate a pack file against the PromptPack schema and structure rules. |
+| [`inspect`](/packc/reference/inspect/) | Print a summary of a pack file. |
+| [`version`](/packc/reference/version/) | Print the `packc` version. |
+| `completion <shell>` | Print a shell completion script for `bash`, `zsh`, `fish` or `powershell`. See [Install packc](/packc/how-to/install/). |
+| `help` | Print usage. `--help` and `-h` before a command do the same. |
 
-## Quick Reference
+An unknown command prints `Unknown command: <name>` and the usage, and exits with code `1`. `packc` with no command prints the usage and exits with code `1`.
 
-### Common Usage
+`compile` and `compile-prompt` accept `--help`, which prints their flags. `validate` and `inspect` treat any first argument, `--help` included, as the pack file path.
 
-```bash
-# Compile all prompts into a pack
-packc compile --config arena.yaml --output app.pack.json --id my-app
-
-# Validate a pack
-packc validate app.pack.json
-
-# Inspect pack contents
-packc inspect app.pack.json
-```
-
-### Installation
+## Example
 
 ```bash
-# Install from source
-go install github.com/AltairaLabs/promptarena/v2/packc@latest
+packc compile -c config.arena.yaml -o packs/app.pack.json --id my-app
+packc validate packs/app.pack.json
+packc inspect packs/app.pack.json
 ```
 
-### Pack File Format
+## Related
 
-PackC produces `.pack.json` files with this structure:
-
-```json
-{
-  "$schema": "https://promptpack.org/schema/latest/promptpack.schema.json",
-  "id": "my-app",
-  "name": "My Application",
-  "version": "v1.0.0",
-  "template_engine": {
-    "version": "v1",
-    "syntax": "{{variable}}"
-  },
-  "prompts": {
-    "task_type": {
-      "id": "task_type",
-      "name": "Display Name",
-      "system_template": "System prompt...",
-      "version": "v1.0.0",
-      "tools": ["tool1", "tool2"],
-      "variables": [...]
-    }
-  },
-  "compilation": {
-    "compiled_with": "packc-v0.1.0",
-    "created_at": "2025-01-15T10:30:00Z",
-    "schema": "v1"
-  }
-}
-```
-
-## See Also
-
-- [PackC How-To Guides](/packc/how-to/) - Task-focused guides
-- [PackC Tutorials](/packc/tutorials/) - Learn by building
-- [Pack Format Specification](/packc/explanation/pack-format/)
+- [PackC tutorials](/packc/tutorials/)
+- [PackC how-to guides](/packc/how-to/)
+- [Pack format](/packc/explanation/pack-format/)

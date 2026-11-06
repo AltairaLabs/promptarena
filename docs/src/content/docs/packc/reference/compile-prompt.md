@@ -1,413 +1,125 @@
 ---
 title: compile-prompt
+description: Flags, output and exit codes of packc compile-prompt, which compiles one PromptConfig file into a single-prompt pack.
 sidebar:
   order: 2
+verified:
+  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  sources:
+    - packc/main.go
+    - packc/main_interactive.go
 ---
-Compile a single prompt YAML file into pack format.
+`packc compile-prompt` compiles one `kind: PromptConfig` YAML file into a pack that holds only that prompt. It reads no Arena config, so the pack carries no tools, workflow, agents or pack-level evals.
 
 ## Synopsis
 
 ```bash
-packc compile-prompt --prompt <yaml-file> --output <json-file>
+packc compile-prompt -p <prompt.yaml> -o <pack-file>
 ```
 
-## Description
+## Flags
 
-The `compile-prompt` command compiles a single prompt YAML configuration file into a standalone pack JSON file. This is useful for:
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-p`, `--prompt` | string | none (required) | Path to the PromptConfig YAML file. |
+| `-o`, `--output` | string | none (required) | Path of the pack file to write. The parent directory must exist. |
 
-- Testing individual prompts during development
-- Creating single-prompt packs for specialized use cases
-- Compiling prompts independently of the main arena.yaml
-- Quick iteration on prompt development
+## Input
 
-Unlike the `compile` command which processes all prompts from arena.yaml, `compile-prompt` focuses on a single prompt file and produces a minimal pack containing only that prompt.
-
-## Options
-
-### Required Options
-
-**`--prompt <path>`**
-- Path to the prompt YAML file to compile
-- The YAML must contain a valid PromptConfig structure
-- Relative paths are resolved from the current directory
-
-**`--output <path>`**
-- Output pack file path
-- Must end with `.json` or `.pack.json`
-- Parent directory will be created if it doesn't exist
-
-## Examples
-
-### Basic Single Prompt Compilation
-
-```bash
-packc compile-prompt \
-  --prompt prompts/support.yaml \
-  --output packs/support.pack.json
-```
-
-### Compile for Testing
-
-```bash
-# Compile to temporary location for testing
-packc compile-prompt \
-  --prompt prompts/experimental/new-feature.yaml \
-  --output /tmp/test-feature.pack.json
-```
-
-### Multiple Single Prompts
-
-```bash
-# Compile several prompts individually
-for prompt in prompts/*.yaml; do
-  name=$(basename "$prompt" .yaml)
-  packc compile-prompt \
-    --prompt "$prompt" \
-    --output "packs/${name}.pack.json"
-done
-```
-
-## Input Format
-
-The prompt YAML file must contain a valid PromptConfig structure:
+A PromptConfig file:
 
 ```yaml
-# prompts/support.yaml
 apiVersion: promptkit.altairalabs.ai/v1alpha1
 kind: PromptConfig
 metadata:
   name: Customer Support Agent
 spec:
-  task_type: customer-support
+  task_type: customer_support
   description: Handles customer inquiries
   version: v1.0.0
   system_template: |
     You are a helpful customer support agent.
-    You assist customers with their questions.
     Customer: {{customer_name}}
-
   template_engine:
     version: v1
     syntax: "{{variable}}"
-
   variables:
     - name: customer_name
       type: string
       required: true
-
   allowed_tools:
     - search_knowledge_base
 ```
 
-## Output Format
+## Output
 
-The command produces a JSON pack file with this structure:
+The pack's top-level fields come from the prompt config:
 
-```json
-{
-  "id": "customer-support",
-  "name": "Customer Support Agent",
-  "version": "v1.0.0",
-  "template_engine": {
-    "version": "v1",
-    "syntax": "{{variable}}"
-  },
-  "prompts": {
-    "customer-support": {
-      "id": "customer-support",
-      "name": "Customer Support Agent",
-      "description": "Handles customer inquiries",
-      "version": "v1.0.0",
-      "system_template": "You are a helpful customer support agent.\nYou assist customers with their questions.\nCustomer: {{customer_name}}",
-      "variables": [
-        {
-          "name": "customer_name",
-          "type": "string",
-          "required": true
-        }
-      ],
-      "tools": ["search_knowledge_base"]
-    }
-  },
-  "compilation": {
-    "compiled_with": "packc-v0.1.0",
-    "created_at": "2025-01-16T10:30:00Z",
-    "schema": "v1"
-  }
-}
+| Pack field | Source |
+|---|---|
+| `id` | `spec.task_type`, with `_` replaced by `-` |
+| `name` | `metadata.name` |
+| `version` | `spec.version` |
+| `description` | `spec.description` |
+| `template_engine` | `spec.template_engine` |
+| `metadata` | `spec.metadata` |
+| `prompts.<task_type>` | the compiled prompt; `allowed_tools` becomes `tools` |
+| `compilation.compiled_with` | `packc-<version>`, where `<version>` is what [`packc version`](/packc/reference/version/) prints |
+
+The pack has no `$schema` field. For the example above the command prints:
+
+```text
+Compiling prompt 'customer_support' to pack...
+✓ Pack compiled successfully: packs/support.pack.json
 ```
 
-## Compilation Process
+## Validation
 
-The compile-prompt command performs these steps:
+`compile-prompt` checks only that the file parses as a PromptConfig. It does not validate the prompt config or the pack against their schemas, and it does not run the structural checks of [`packc validate`](/packc/reference/validate/): a pack it writes can fail `packc validate`. When `spec.media.enabled` is true, media files referenced under `spec.media.examples` are resolved relative to the prompt file's directory, and a missing one prints a warning:
 
-1. **Read YAML File** - Load and parse the prompt YAML
-2. **Validate Structure** - Ensure PromptConfig is valid
-3. **Check Media References** - Validate any media file paths
-4. **Create Registry** - Build in-memory prompt registry
-5. **Compile Pack** - Generate optimized pack JSON
-6. **Write Output** - Save pack to specified file
-
-## Exit Codes
-
-- **0** - Successful compilation
-- **1** - Error occurred (see error message)
-
-## Common Errors
-
-### Invalid YAML Syntax
-
-```
-Error parsing prompt config: yaml: line 5: mapping values are not allowed in this context
-```
-
-**Solution**: Check YAML indentation and syntax. Use a YAML validator.
-
-### Missing Required Fields
-
-```
-Error parsing prompt config: missing required field: task_type
-```
-
-**Solution**: Ensure the prompt YAML includes all required fields (task_type, system_template).
-
-### Media File Not Found
-
-```
+```text
 ⚠ Media validation warnings:
-  - Image file not found: images/logo.png
+  - Media file not found: images/logo.png (example: product-photo, part 0)
 ```
 
-**Solution**: Ensure media files exist at specified paths relative to the prompt file location.
+Errors print to stderr:
 
-### Invalid Template Syntax
+| Message | Cause |
+|---|---|
+| `Error: --prompt and --output are required` | A flag is missing. |
+| `Error reading prompt file: ...` | The prompt file cannot be read. |
+| `Error parsing prompt config: ...` | The file is not valid YAML, or misses a required field such as `apiVersion`. |
+| `Compilation failed: failed to write pack file: ...` | The output path cannot be written, for example because its directory does not exist. |
 
-```
-Compilation failed: template parse error: unexpected "}" in operand
-```
+## Exit codes
 
-**Solution**: Check Go template syntax in user_template or system_template. Ensure `` are balanced.
+| Code | Meaning |
+|---|---|
+| `0` | Pack written. |
+| `1` | The prompt file could not be read, parsed or compiled, or the pack could not be written. |
+| `2` | A required flag is missing, or a flag is unknown. |
 
-### Output Directory Missing
+## Examples
 
-```
-Failed to write pack file: no such file or directory
-```
-
-**Solution**: Create output directory first or use mkdir:
+Compile one prompt and validate the result:
 
 ```bash
 mkdir -p packs
-packc compile-prompt --prompt prompts/support.yaml --output packs/support.pack.json
-```
-
-## Warnings
-
-The compile-prompt command may display warnings that don't prevent compilation:
-
-### Media Reference Warnings
-
-```
-⚠ Media validation warnings:
-  - Image file not found: assets/banner.jpg
-  - Video file missing: media/intro.mp4
-```
-
-These warnings indicate missing media files referenced in the prompt. The pack will compile, but media content may not work at runtime.
-
-## Integration
-
-### Pre-commit Hook
-
-```bash
-#!/bin/bash
-# .git/hooks/pre-commit
-# Compile modified prompts before commit
-
-for file in $(git diff --cached --name-only | grep '^prompts/.*\.yaml$'); do
-  name=$(basename "$file" .yaml)
-  echo "Compiling $file..."
-  packc compile-prompt --prompt "$file" --output "packs/${name}.pack.json"
-  
-  if [ $? -ne 0 ]; then
-    echo "Failed to compile $file"
-    exit 1
-  fi
-  
-  git add "packs/${name}.pack.json"
-done
-```
-
-### Makefile Target
-
-```makefile
-.PHONY: compile-prompts
-compile-prompts:
-	@mkdir -p packs
-	@for prompt in prompts/*.yaml; do \
-		name=$$(basename $$prompt .yaml); \
-		echo "Compiling $$prompt..."; \
-		packc compile-prompt --prompt $$prompt --output packs/$$name.pack.json; \
-	done
-
-.PHONY: compile-single
-compile-single:
-	@if [ -z "$(PROMPT)" ]; then \
-		echo "Usage: make compile-single PROMPT=prompts/support.yaml"; \
-		exit 1; \
-	fi
-	@packc compile-prompt --prompt $(PROMPT) --output $(OUTPUT)
-```
-
-Usage:
-
-```bash
-# Compile all prompts individually
-make compile-prompts
-
-# Compile specific prompt
-make compile-single PROMPT=prompts/support.yaml OUTPUT=packs/support.pack.json
-```
-
-### CI/CD Pipeline
-
-```yaml
-# .github/workflows/compile-single-prompts.yml
-name: Compile Modified Prompts
-
-on:
-  pull_request:
-    paths:
-      - 'prompts/*.yaml'
-
-jobs:
-  compile:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Install packc
-        run: go install github.com/AltairaLabs/promptarena/v2/packc@latest
-      
-      - name: Detect modified prompts
-        id: changed-files
-        uses: tj-actions/changed-files@v40
-        with:
-          files: prompts/*.yaml
-      
-      - name: Compile modified prompts
-        if: steps.changed-files.outputs.any_changed == 'true'
-        run: |
-          mkdir -p packs
-          for file in $; do
-            name=$(basename "$file" .yaml)
-            echo "Compiling $file..."
-            packc compile-prompt --prompt "$file" --output "packs/${name}.pack.json"
-          done
-      
-      - name: Upload packs
-        uses: actions/upload-artifact@v3
-        with:
-          name: compiled-packs
-          path: packs/*.pack.json
-```
-
-## Development Workflow
-
-### Quick Test Cycle
-
-```bash
-# Edit prompt
-vim prompts/support.yaml
-
-# Compile for testing
-packc compile-prompt \
-  --prompt prompts/support.yaml \
-  --output /tmp/test-support.pack.json
-
-# Test with SDK
-go run cmd/test/main.go --pack /tmp/test-support.pack.json
-```
-
-### Organize by Environment
-
-```bash
-# Development
-packc compile-prompt \
-  --prompt prompts/dev/support.yaml \
-  --output packs/dev/support.pack.json
-
-# Staging
-packc compile-prompt \
-  --prompt prompts/staging/support.yaml \
-  --output packs/staging/support.pack.json
-
-# Production
-packc compile-prompt \
-  --prompt prompts/prod/support.yaml \
-  --output packs/prod/support.pack.json
-```
-
-## Best Practices
-
-### 1. Use Descriptive Filenames
-
-```bash
-# Good
-packc compile-prompt \
-  --prompt prompts/customer-support-v2.yaml \
-  --output packs/customer-support-v2.pack.json
-
-# Avoid
-packc compile-prompt \
-  --prompt prompts/temp.yaml \
-  --output packs/out.json
-```
-
-### 2. Validate After Compilation
-
-```bash
-packc compile-prompt --prompt prompts/support.yaml --output packs/support.pack.json
+packc compile-prompt -p prompts/support.yaml -o packs/support.pack.json
 packc validate packs/support.pack.json
 ```
 
-### 3. Version Individual Prompts
+Compile every prompt in a directory into its own pack:
 
 ```bash
-# Include version in filename
-packc compile-prompt \
-  --prompt prompts/support.yaml \
-  --output "packs/support-$(date +%Y%m%d).pack.json"
-```
-
-### 4. Use Scripts for Batch Operations
-
-```bash
-#!/bin/bash
-# compile-all-prompts.sh
-
+mkdir -p packs
 for prompt in prompts/*.yaml; do
-  name=$(basename "$prompt" .yaml)
-  echo "Compiling: $name"
-  
-  packc compile-prompt \
-    --prompt "$prompt" \
-    --output "packs/${name}.pack.json"
-  
-  if [ $? -eq 0 ]; then
-    echo "✓ Compiled: packs/${name}.pack.json"
-  else
-    echo "✗ Failed: $prompt"
-    exit 1
-  fi
+  packc compile-prompt -p "$prompt" -o "packs/$(basename "$prompt" .yaml).pack.json"
 done
-
-echo "✓ All prompts compiled successfully"
 ```
 
-## See Also
+## Related
 
-- [compile command](/packc/reference/compile/) - Compile all prompts from arena.yaml
-- [validate command](/packc/reference/validate/) - Validate compiled packs
-- [inspect command](/packc/reference/inspect/) - Inspect pack contents
-- [Pack Format](/packc/explanation/pack-format/) - Pack structure details
+- [compile](/packc/reference/compile/): compile every prompt in an Arena config into one pack
+- [validate](/packc/reference/validate/): validate a pack file
+- [Pack format](/packc/explanation/pack-format/)

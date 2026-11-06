@@ -1,0 +1,92 @@
+{
+ "page": "docs/src/content/docs/packc/reference/version.md",
+ "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "version prints 'packc <version>'",
+   "verdict": "true",
+   "evidence": [
+    "packc/main.go:21",
+    "packc/main_interactive.go:40-41"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "release builds set main.version to the version without v",
+   "verdict": "true",
+   "evidence": [
+    ".goreleaser.yml:41-57"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "go install / make build-go report dev",
+   "verdict": "true",
+   "evidence": [
+    "Makefile:59-64",
+    "packc/main.go:21"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "Homebrew cask and npm package ship release binaries",
+   "verdict": "true",
+   "evidence": [
+    ".goreleaser.yml:230-245",
+    "npm/packc/package.json"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "compile and compile-prompt write packc-<version> into compiled_with",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:151",
+    "packc/main_interactive.go:239"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "inspect prints it on the Compilation line",
+   "verdict": "true",
+   "evidence": [
+    "packc/main.go:247-254"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "old: output 'packc v0.1.0'",
+   "verdict": "false",
+   "evidence": [
+    ".goreleaser.yml:56"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "old: compatibility table packc v0.1.0 / SDK v0.1.x",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 9,
+   "claim": "old: inspect prints 'Pack Format'",
+   "verdict": "false",
+   "evidence": [
+    "packc/main.go:58-254"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "old: 'Pack compiled with packc v0.2.0 but SDK expects v0.1.0' error",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 11,
+   "claim": "old: GitHub workflow matrix with stripped ${{ }} expressions",
+   "verdict": "false",
+   "evidence": []
+  }
+ ]
+}

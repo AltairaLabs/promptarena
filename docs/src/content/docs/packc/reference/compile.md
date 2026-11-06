@@ -1,9 +1,21 @@
 ---
 title: compile
+description: Flags, input, output and exit codes of packc compile, which compiles every prompt an Arena config lists into one PromptPack file.
 sidebar:
   order: 1
+verified:
+  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  sources:
+    - arena/arenaconfig/loader.go
+    - arena/arenaconfig/types.go
+    - packc/compiler/check.go
+    - packc/compiler/compiler.go
+    - packc/compiler/helpers_integration.go
+    - packc/main.go
+    - packc/main_interactive.go
+    - schemas/v1alpha1/arena.json
 ---
-Compile all prompts from an arena.yaml configuration into a single pack file.
+`packc compile` loads an Arena config, compiles every prompt config it lists into one [PromptPack](https://promptpack.org) JSON file, validates the result, and writes it. It is the command for building a pack from a project.
 
 ## Synopsis
 
@@ -11,303 +23,143 @@ Compile all prompts from an arena.yaml configuration into a single pack file.
 packc compile [-c <arena.yaml>] [-o <pack-file>] [--id <pack-id>]
 ```
 
-## Description
+## Flags
 
-The `compile` command reads an Arena configuration file (`arena.yaml`) that references multiple prompt YAML files and compiles them all into a single optimized `.pack.json` file.
+| Flag | Type | Default | Description |
+|---|---|---|---|
+| `-c`, `--config` | string | `config.arena.yaml` | Path to the Arena config file. |
+| `-o`, `--output` | string | `<id>.pack.json` | Path of the pack file to write. Missing parent directories are created. |
+| `--id` | string | current directory name, sanitized | Pack ID, written to the pack's `id` and `name` fields. |
 
-This is the primary command for building production packs that contain multiple prompts for your application.
+An explicit `--id` must match `^[a-z][a-z0-9-]*$`, the PromptPack pattern for a pack ID. Any other value fails the compile before the config is loaded:
 
-## Options
-
-### Optional (all flags have smart defaults)
-
-**`-c, --config <path>`**
-- Path to the arena.yaml configuration file
-- This file lists all prompts to include in the pack
-- Default: `config.arena.yaml`
-
-**`-o, --output <path>`**
-- Path where the compiled pack file will be written
-- Should end in `.pack.json`
-- Default: `{id}.pack.json`
-- Example: `packs/customer-support.pack.json`
-
-**`--id <string>`**
-- Unique identifier for this pack
-- Used by the SDK to reference the pack
-- Should be kebab-case (e.g., `customer-support`)
-- Default: current folder name (sanitized to lowercase alphanumeric with hyphens)
-
-## Examples
-
-### Basic Compilation
-
-```bash
-packc compile \
-  --config arena.yaml \
-  --output packs/app.pack.json \
-  --id my-app
+```text
+Compilation failed: [pack_id] invalid pack ID "Assistant_1": must start with a lowercase letter and contain only lowercase letters, digits and dashes (pattern ^[a-z][a-z0-9-]*$)
 ```
 
-### Production Pack
+The default ID is the name of the directory you run `packc` from, lowercased, with spaces turned into hyphens, other characters outside `a-z`, `0-9` and `-` removed, repeated hyphens collapsed, and leading and trailing hyphens trimmed. A name that does not then start with a letter gets a `pack-` prefix, and an empty one becomes `pack`.
 
-```bash
-packc compile \
-  --config configs/production/arena.yaml \
-  --output dist/production.pack.json \
-  --id prod-assistant
-```
+## Input
 
-### Multiple Environments
-
-```bash
-# Development pack
-packc compile \
-  --config arena.dev.yaml \
-  --output packs/app.dev.pack.json \
-  --id app-dev
-
-# Production pack
-packc compile \
-  --config arena.prod.yaml \
-  --output packs/app.prod.pack.json \
-  --id app-prod
-```
-
-## Input: arena.yaml Structure
-
-The arena.yaml file references prompt configurations:
+The Arena config is a `kind: Arena` manifest. Its schema requires `spec.providers` and `spec.defaults`; `packc compile` reads neither, so empty values satisfy it:
 
 ```yaml
-prompt_configs:
-  - file: prompts/support.yaml
-  - file: prompts/sales.yaml
-  - file: prompts/technical.yaml
-
-tools:
-  - file: tools/search_kb.yaml
-  - file: tools/create_ticket.yaml
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Arena
+metadata:
+  name: customer-support
+spec:
+  prompt_configs:
+    - id: support
+      file: prompts/support.yaml
+    - id: escalation
+      file: prompts/escalation.yaml
+  tools:
+    - file: tools/search_kb.yaml
+  providers: []
+  defaults: {}
 ```
 
-## Output: Pack File
+File paths resolve relative to the Arena config's directory. These `spec` fields reach the pack:
 
-The command produces a `.pack.json` file:
+| Arena field | Pack field |
+|---|---|
+| `prompt_configs`, `prompt_specs` | `prompts`, keyed by each prompt's `spec.task_type` |
+| `tools` | `tools`, keyed by tool name |
+| `pack_evals` | `evals` |
+| `workflow` | `workflow` |
+| `agents` | `agents` |
+| `compositions` | `compositions` |
+| `skills` | `skills`, with paths made relative to the config directory |
+| `pack_metadata` | `metadata` |
+
+The pack's `template_engine` is copied from one of the prompts that sets `spec.template_engine`; packc does not check that the prompts agree. Without `pack_metadata`, the pack's `metadata` is taken from the prompt whose `prompt_configs` ID sorts first among those that set `spec.metadata`, and the compile prints a warning naming it. See [Configuration Schema](/arena/reference/config-schema/) for every Arena field.
+
+## Output
+
+The pack's top-level `version` is `v1.0.0` and its `description` is `Pack containing <n> prompts`. Each prompt keeps its own `version`. `compilation.compiled_with` is `packc-<version>`, where `<version>` is what [`packc version`](/packc/reference/version/) prints.
 
 ```json
 {
   "$schema": "https://promptpack.org/schema/latest/promptpack.schema.json",
-  "id": "customer-support",
-  "name": "customer-support",
-  "version": "v1.0.0",
-  "template_engine": {
-    "version": "v1",
-    "syntax": "{{variable}}"
+  "compilation": {
+    "compiled_with": "packc-dev",
+    "created_at": "2026-11-06T18:08:46Z",
+    "schema": "v1"
   },
+  "description": "Pack containing 1 prompts",
+  "id": "greeting",
+  "name": "greeting",
   "prompts": {
-    "customer-support": {
-      "id": "customer-support",
-      "name": "Customer Support Agent",
-      "system_template": "You are a customer support agent...",
-      "version": "v1.0.0"
-    },
-    "sales-assistant": {
-      "id": "sales-assistant",
-      "name": "Sales Assistant",
-      "system_template": "You are a sales assistant...",
-      "version": "v1.0.0"
+    "greeting": {
+      "id": "greeting",
+      "name": "Greeting Assistant",
+      "version": "v1.0.0",
+      "system_template": "You are a friendly assistant...",
+      "variables": [ ... ],
+      "pipeline": { ... }
     }
   },
-  "compilation": {
-    "compiled_with": "packc-v0.1.0",
-    "created_at": "2025-01-15T10:30:00Z",
-    "schema": "v1"
-  }
+  "template_engine": {
+    "syntax": "{{variable}}",
+    "version": "v1"
+  },
+  "version": "v1.0.0"
 }
 ```
 
-## Compilation Process
+On success the command prints a summary. The `tools`, `evals`, `workflow` and `agents` lines appear only when the pack has them:
 
-The compile command performs these steps:
+```text
+✓ Pack compiled successfully: packs/customer-support.pack.json
+  Contains 2 prompts: [support escalation]
+  Contains 1 tools: [search_kb]
+```
 
-1. **Load Configuration** - Read arena.yaml
-2. **Parse Prompts** - Load all referenced YAML files
-3. **Validate** - Check for errors and warnings
-4. **Compile** - Transform to pack format
-5. **Write** - Save to output file
+## Validation
 
-## Exit Codes
+Before writing, `compile` runs the same checks as [`packc validate`](/packc/reference/validate/), plus composition checks, against the compiled pack:
 
-- `0` - Success
-- `1` - Error (invalid config, compilation failure, etc.)
+| Stage | Checks |
+|---|---|
+| `pack_id` | the pack ID |
+| `load` | the Arena config and every file it references, against their schemas |
+| `compile` | prompt parsing, missing media files, metadata promotion |
+| `skills` | skill sources and paths |
+| `workflow` | the workflow state machine |
+| `compositions` | composition step graphs and their references |
+| `agents` | the `agents` block |
+| `governance` | governance references |
+| `pack` | pack structure: required fields, semantic versions, a `system_template` that uses `{{` with no declared variables |
+| `pack_schema` | the compiled pack against the PromptPack schema |
 
-## Common Errors
+An error at any stage stops the compile and writes nothing. Errors print to stderr as `Compilation failed:` followed by `[<stage>] <message>`, or by `<n> problems:` and one `  - [<stage>] <message>` line per error when there are several. Warnings print to stdout as `⚠ [<stage>] <message>` and do not stop the compile.
 
-### Using Smart Defaults
+## Exit codes
 
-All flags have smart defaults, so you can run `packc compile` with no arguments:
+| Code | Meaning |
+|---|---|
+| `0` | Pack compiled and written. |
+| `1` | Compilation failed, or the pack file could not be written. |
+| `2` | Unknown flag. |
+
+## Examples
+
+Compile with every default, from the directory that holds `config.arena.yaml`:
 
 ```bash
-# Uses config.arena.yaml, folder name as ID, {id}.pack.json as output
 packc compile
-
-# Or override specific options
-packc compile --config arena.yaml --output app.pack.json --id my-app
 ```
 
-### Config File Not Found
+Name the config, the output and the ID:
 
 ```bash
-Error loading arena config: open arena.yaml: no such file or directory
+packc compile -c config/arena.yaml -o packs/customer-support.pack.json --id customer-support
 ```
 
-**Solution:** Check that the config file exists:
+## Related
 
-```bash
-ls -la arena.yaml
-```
-
-### Invalid YAML Syntax
-
-```bash
-Error loading arena config: yaml: line 5: mapping values are not allowed
-```
-
-**Solution:** Fix YAML syntax errors in arena.yaml or prompt files.
-
-### Missing Prompt Files
-
-```bash
-Error: prompt file not found: prompts/support.yaml
-```
-
-**Solution:** Ensure all referenced prompt files exist.
-
-## Validation Warnings
-
-The compiler may emit warnings for non-fatal issues:
-
-```bash
-⚠ Media validation warnings for customer-support:
-  - Referenced image not found: images/logo.png
-  - Template variable 'user_name' not defined
-```
-
-These warnings don't stop compilation but should be addressed.
-
-## Performance
-
-Compilation is fast:
-
-- Small packs (1-5 prompts): <100ms
-- Medium packs (10-20 prompts): <500ms
-- Large packs (50+ prompts): <2s
-
-## Best Practices
-
-### 1. Organize by Environment
-
-```
-configs/
-├── arena.dev.yaml
-├── arena.staging.yaml
-└── arena.prod.yaml
-
-packs/
-├── app.dev.pack.json
-├── app.staging.pack.json
-└── app.prod.pack.json
-```
-
-### 2. Use Descriptive Pack IDs
-
-```bash
-# Good
---id customer-support-v2
---id sales-assistant-prod
---id technical-docs-staging
-
-# Bad
---id pack1
---id app
---id test
-```
-
-### 3. Version Your Packs
-
-Include version in pack metadata:
-
-```yaml
-# arena.yaml
-version: "1.0"
-metadata:
-  pack_version: "2.1.0"
-```
-
-### 4. Validate After Compilation
-
-Always validate after compiling:
-
-```bash
-packc compile --config arena.yaml --output app.pack.json --id my-app
-packc validate app.pack.json
-```
-
-### 5. Store Packs in Version Control
-
-Commit compiled packs to track changes:
-
-```bash
-git add packs/app.pack.json
-git commit -m "chore: update customer support pack"
-```
-
-## Integration with CI/CD
-
-### GitHub Actions
-
-```yaml
-name: Compile Packs
-
-on: [push]
-
-jobs:
-  compile:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Install packc
-        run: go install github.com/AltairaLabs/promptarena/v2/packc@latest
-      
-      - name: Compile packs
-        run: |
-          packc compile --config arena.yaml --output packs/app.pack.json --id my-app
-          packc validate packs/app.pack.json
-      
-      - name: Upload packs
-        uses: actions/upload-artifact@v3
-        with:
-          name: compiled-packs
-          path: packs/
-```
-
-### Makefile
-
-```makefile
-.PHONY: compile-packs
-compile-packs:
-	packc compile --config arena.yaml --output packs/app.pack.json --id my-app
-	packc validate packs/app.pack.json
-
-.PHONY: compile-all
-compile-all:
-	packc compile --config arena.dev.yaml --output packs/app.dev.pack.json --id app-dev
-	packc compile --config arena.prod.yaml --output packs/app.prod.pack.json --id app-prod
-```
-
-## See Also
-
-- [compile-prompt](/packc/reference/compile-prompt/) - Compile single prompt
-- [validate](/packc/reference/validate/) - Validate pack file
-- [inspect](/packc/reference/inspect/) - Inspect pack contents
-- [How to Compile Packs](/packc/how-to/compile-packs/)
+- [compile-prompt](/packc/reference/compile-prompt/): compile one prompt file
+- [validate](/packc/reference/validate/): validate a pack file
+- [inspect](/packc/reference/inspect/): print a pack's contents
+- [Compile packs](/packc/how-to/compile-packs/)
