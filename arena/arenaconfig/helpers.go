@@ -26,3 +26,35 @@ func ResolveConfigDir(cfg *Config, configFilePath string) string {
 	// Default to current working directory
 	return "."
 }
+
+// DefaultOutputDir is where results, media and recordings go when neither the
+// --out flag nor defaults.output.dir names a directory.
+const DefaultOutputDir = "out"
+
+// OutputDir returns where results, media and recordings go, in the precedence
+// every command shares: the --out override recorded by ResolveOutputDir, then
+// defaults.output.dir, then the deprecated defaults.out_dir, then
+// DefaultOutputDir. A relative path is relative to the working directory.
+func (c *Config) OutputDir() string {
+	switch {
+	case c.outputDirOverride != "":
+		return c.outputDirOverride
+	case c.Defaults.Output.Dir != "":
+		return c.Defaults.Output.Dir
+	case c.Defaults.OutDir != "":
+		return c.Defaults.OutDir
+	default:
+		return DefaultOutputDir
+	}
+}
+
+// ResolveOutputDir records an explicitly set --out flag as the output
+// directory and returns the result of OutputDir. Recording it on the config
+// is what makes the engine's media storage and session recordings, which read
+// the config, land in the same directory as the results.
+func (c *Config) ResolveOutputDir(flagValue string, flagSet bool) string {
+	if flagSet && flagValue != "" {
+		c.outputDirOverride = flagValue
+	}
+	return c.OutputDir()
+}

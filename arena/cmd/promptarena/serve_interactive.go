@@ -217,14 +217,9 @@ func runServe(cmd *cobra.Command, args []string) error {
 	// Get state store for results API
 	arenaStore, _ := eng.GetStateStore().(*statestore.ArenaStateStore)
 
-	// Resolve output directory
-	outDir := cfg.Defaults.Output.Dir
-	if outDir == "" {
-		outDir = "out"
-	}
-	if !filepath.IsAbs(outDir) {
-		outDir = filepath.Join(cfg.Defaults.ConfigDir, outDir)
-	}
+	// Resolve output directory: the same precedence `run` uses (serve has no
+	// --out flag), so the UI lists the results `run` wrote.
+	outDir := cfg.ResolveOutputDir("", false)
 
 	// Load existing results from the output directory (if any)
 	if arenaStore != nil {

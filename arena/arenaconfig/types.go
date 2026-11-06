@@ -242,6 +242,9 @@ type Config struct {
 
 	// Base directory for resolving relative paths (set during LoadConfig)
 	ConfigDir string `yaml:"-" json:"-"`
+
+	// outputDirOverride is an explicitly set --out flag; see ResolveOutputDir.
+	outputDirOverride string
 }
 
 const (

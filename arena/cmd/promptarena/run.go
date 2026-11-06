@@ -117,13 +117,38 @@ func createResultSummary(runResults []engine.RunResult, successCount, errorCount
 }
 
 var runCmd = &cobra.Command{
-	Use:   "run",
+	Use:   "run [config-path]",
 	Short: "Run conversation simulations",
-	Long: `Run multi-turn conversation simulations across multiple LLM providers, 
-voice profiles, and system prompts.`,
+	Long: `Run multi-turn conversation simulations across multiple LLM providers,
+voice profiles, and system prompts.
+
+The config path can be given as the one argument or with -c, not both. If it
+is a directory, run looks for config.arena.yaml inside it.`,
+	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return runSimulations(cmd)
+		configFile, err := resolveRunConfigPath(cmd, args)
+		if err != nil {
+			return err
+		}
+		return runSimulations(cmd, configFile)
 	},
+}
+
+// resolveRunConfigPath returns the config path from the one positional
+// argument or the -c flag. Giving both is an error rather than a silent
+// choice, so a stray argument is never ignored.
+func resolveRunConfigPath(cmd *cobra.Command, args []string) (string, error) {
+	configFile, err := cmd.Flags().GetString("config")
+	if err != nil {
+		return "", fmt.Errorf("failed to get config flag: %w", err)
+	}
+	if len(args) == 0 {
+		return configFile, nil
+	}
+	if cmd.Flags().Changed("config") {
+		return "", fmt.Errorf("config path given twice (argument %q and -c %q): use one", args[0], configFile)
+	}
+	return args[0], nil
 }
 
 func init() {
@@ -241,6 +266,7 @@ func extractRunParameters(cmd *cobra.Command, cfg *arenaconfig.Config) (*RunPara
 	if err := extractBasicFlags(cmd, params); err != nil {
 		return nil, err
 	}
+	applyConfigRunDefaults(cmd, cfg, params)
 
 	// Extract mock provider flags
 	if err := extractMockFlags(cmd, params); err != nil {
@@ -314,6 +340,17 @@ func extractBasicFlags(cmd *cobra.Command, params *RunParameters) error {
 		return fmt.Errorf("failed to get eval-types flag: %w", err)
 	}
 	return nil
+}
+
+// applyConfigRunDefaults fills the settings the config can also give: a flag
+// set on the command line wins, then the config's defaults, then the flag's
+// own default. The resolved output directory is written back to the config so
+// media storage and session recordings follow --out too.
+func applyConfigRunDefaults(cmd *cobra.Command, cfg *arenaconfig.Config, params *RunParameters) {
+	if !cmd.Flags().Changed("concurrency") && cfg.Defaults.Concurrency > 0 {
+		params.Concurrency = cfg.Defaults.Concurrency
+	}
+	params.OutDir = cfg.ResolveOutputDir(params.OutDir, cmd.Flags().Changed("out"))
 }
 
 // extractAudioMonitorFlags extracts the audio monitoring flags.

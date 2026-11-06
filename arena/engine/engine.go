@@ -58,7 +58,6 @@ import (
 
 // Default directory names for output.
 const (
-	defaultOutputDir     = "out"
 	defaultRecordingsDir = "recordings"
 )
 
@@ -700,10 +699,7 @@ func (e *Engine) ConfigureSessionRecordingFromConfig() error {
 	}
 
 	// Determine recording directory
-	outDir := e.config.Defaults.Output.Dir
-	if outDir == "" {
-		outDir = defaultOutputDir
-	}
+	outDir := e.config.OutputDir()
 	recDir := rec.Dir
 	if recDir == "" {
 		recDir = defaultRecordingsDir
@@ -1016,12 +1012,7 @@ func (e *Engine) GetDuplexExecutor() *DuplexConversationExecutor {
 // wrapper; until then events are no-ops but spans still emit.
 func buildMediaStorage(cfg *arenaconfig.Config) (storage.MediaStorageService, error) {
 	// Determine the media storage directory
-	outDir := cfg.Defaults.Output.Dir
-	if outDir == "" {
-		outDir = defaultOutputDir
-	}
-
-	mediaDir := filepath.Join(outDir, "media")
+	mediaDir := filepath.Join(cfg.OutputDir(), "media")
 
 	// Create local file store with run-based organization
 	fileStore, err := local.NewFileStore(local.FileStoreConfig{
