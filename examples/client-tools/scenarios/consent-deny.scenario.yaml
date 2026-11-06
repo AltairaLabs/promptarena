@@ -13,10 +13,13 @@ spec:
       consent_overrides:
         get_location: deny
       assertions:
-        - type: tool_called
+        # tools_called counts only calls that succeeded, and a denied call
+        # fails by design, so the attempt is counted with tool_call_count.
+        - type: tool_call_count
           params:
-            tool_name: get_location
-            message: "Should attempt to call get_location tool"
+            tool: get_location
+            min: 1
+          message: "Should attempt to call get_location tool"
 
     - role: user
       content: "Can you try again?"
@@ -24,4 +27,4 @@ spec:
         - type: content_matches
           params:
             pattern: "(?i)(unable|denied|provide|manually|sorry)"
-            message: "Should explain that location access was denied and suggest alternatives"
+          message: "Should explain that location access was denied and suggest alternatives"

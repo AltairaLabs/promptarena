@@ -308,14 +308,34 @@ func buildProviderFilterSet(cfg *arenaconfig.Config, providerFilter []string) ma
 	return filterSet
 }
 
-func createProviderImpl(configDir string, provider *config.Provider) (providers.Provider, error) {
-	// Resolve relative mock_config path against configDir
-	if provider.Type == "mock" && provider.AdditionalConfig != nil {
-		if mockCfg, ok := provider.AdditionalConfig["mock_config"].(string); ok &&
-			mockCfg != "" && !filepath.IsAbs(mockCfg) && configDir != "" {
-			provider.AdditionalConfig["mock_config"] = filepath.Join(configDir, mockCfg)
-		}
+// providerFileKeys names, per provider type, the additional_config key that
+// holds a file path. Like every other path in an arena config, it is written
+// relative to the config directory, not to wherever promptarena was started.
+// The replay provider's recording used to be left as-is, so it resolved against
+// the working directory: examples/session-replay only ran from the repo root
+// and examples/eval-test only from its own directory.
+// providerTypeMock is the provider type of the built-in mock provider.
+const providerTypeMock = "mock"
+
+var providerFileKeys = map[string]string{
+	providerTypeMock: "mock_config",
+	"replay":         "recording",
+}
+
+// resolveProviderFilePath rewrites a provider's relative file path (see
+// providerFileKeys) to one rooted at configDir.
+func resolveProviderFilePath(configDir string, provider *config.Provider) {
+	key, ok := providerFileKeys[provider.Type]
+	if !ok || provider.AdditionalConfig == nil || configDir == "" {
+		return
 	}
+	if p, ok := provider.AdditionalConfig[key].(string); ok && p != "" && !filepath.IsAbs(p) {
+		provider.AdditionalConfig[key] = filepath.Join(configDir, p)
+	}
+}
+
+func createProviderImpl(configDir string, provider *config.Provider) (providers.Provider, error) {
+	resolveProviderFilePath(configDir, provider)
 
 	// Resolve credential using the credential chain
 	ctx := context.Background()
@@ -354,7 +374,7 @@ func createProviderImpl(configDir string, provider *config.Provider) (providers.
 	// decorator never sees it. Re-wire it here so agent turns without their own
 	// audio default to the built-in "mock assistant turn" clip — keyless mock
 	// runs are then audible on both sides with no per-turn config.
-	if provider.Type == "mock" {
+	if provider.Type == providerTypeMock {
 		applyDefaultMockAgentAudio(providerImpl, provider.AdditionalConfig)
 	}
 	return providerImpl, nil

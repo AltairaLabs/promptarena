@@ -70,6 +70,9 @@ jobs:
               - '.github/actions/**'
             examples:
               - 'examples/**'
+              - 'scripts/test-examples.sh'
+              - 'Makefile'
+              - '.github/workflows/ci.yml'
               - 'arena/cmd/**'
               - 'schemas/**'
               # The example packs are the integration test for the engine that
@@ -357,49 +360,8 @@ jobs:
           go-version: '1.26.0'
       - name: Install ALSA dev headers (for voice CGO)
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev
-      - name: Build promptarena
-        run: go build -o bin/promptarena ./arena/cmd/promptarena
-
-      - name: Validate every example config against the schemas
-        run: |
-          FAILED=0; TOTAL=0
-          while IFS= read -r cfg; do
-            TOTAL=$((TOTAL+1))
-            if ! ./bin/promptarena validate "$cfg" --schema-only >/dev/null 2>&1; then
-              echo "::error::$cfg failed schema validation"
-              ./bin/promptarena validate "$cfg" --schema-only 2>&1 | grep -iE 'error|❌' | head -5
-              FAILED=$((FAILED+1))
-            fi
-          done < <(find examples -maxdepth 2 \( -name 'config.arena.yaml' -o -name '*.arena.yaml' -o -name 'arena.yaml' \) -not -path '*/out/*' | sort)
-          echo "Validated $TOTAL config(s); $FAILED failed."
-          [ $FAILED -eq 0 ]
-
-      - name: Mock-run the showcase examples
-        run: |
-          set -e
-          run() { local ex="$1"; shift; echo "=== $ex ==="; ( cd "examples/$ex" && ../../bin/promptarena run "$@" ); }
-          run customer-support  --config config.arena.yaml --ci --mock-provider --mock-config mock-responses.yaml --scenario customer-support-scenarios --formats json
-          run multimodal-basics --config config.arena.yaml --ci --mock-provider --mock-config mock-responses.yaml --formats json
-          run variables-demo    --config config.arena.yaml --ci --mock-provider --mock-config mock-config.yaml --formats json
-          run assertions-test   --config config.arena.yaml --ci --mock-provider --mock-config mock-responses.yaml --formats json
-          run llm-judge         --config config.arena.yaml --ci --formats json
-          run guardrails-test   --config config.arena.yaml --ci --formats json
-          run eval-test         --config config.arena.yaml --ci --formats json
-          run document-analysis --config config.arena.yaml --ci --formats json
-
-          # Workflow examples. These were previously schema-validated only, so
-          # nothing executed them and a broken one could land on main — which is
-          # how workflow-skills sat with every skill__activate refused, and how
-          # the agent-loops mocks kept emitting an event invalid for the state
-          # they had reached. They exercise the most intricate machinery in the
-          # repo (state handoff mid-turn, per-state skill filtering, max-visits
-          # redirects), so they are the last examples that should go unrun.
-          #
-          # No --mock-provider: each declares mock_config on its provider, and
-          # the flag replaces the assistant content wholesale, which would
-          # discard the scripted tool calls the workflows are driven by.
-          run voice-ivr                 --config config.arena.yaml --ci --formats json
-          run workflow-agent-loops      --config config.arena.yaml --ci --formats json
-          run workflow-order-processing --config config.arena.yaml --ci --formats json
-          run workflow-skills           --config config.arena.yaml --ci --formats json
-          run workflow-support          --config config.arena.yaml --ci --formats json
+      # Validates every example config, then runs every example that needs no
+      # API key. The list lives in scripts/test-examples.sh so `make
+      # test-examples` runs exactly what this job runs.
+      - name: Validate and mock-run the examples
+        run: make test-examples

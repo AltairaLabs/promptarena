@@ -72,6 +72,66 @@ func TestCreateProviderImpl_MockProvider(t *testing.T) {
 	require.Equal(t, "mock-assistant", provider.ID())
 }
 
+// TestCreateProviderImpl_ReplayRecordingResolvesAgainstConfigDir pins that a
+// replay provider's relative recording path is rooted at the arena config
+// directory, as mock_config is, rather than at the working directory. The
+// replay provider loads the recording when it is built, so a path resolved
+// against the wrong root fails here with "no such file or directory".
+func TestCreateProviderImpl_ReplayRecordingResolvesAgainstConfigDir(t *testing.T) {
+	recording, err := os.ReadFile(filepath.Join(
+		"..", "..", "examples", "session-replay", "recordings", "geography-session.recording.json"))
+	require.NoError(t, err)
+
+	configDir := t.TempDir()
+	require.NoError(t, os.MkdirAll(filepath.Join(configDir, "recordings"), 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(configDir, "recordings", "session.json"), recording, 0o600))
+
+	providerCfg := &config.Provider{
+		ID:    "replay",
+		Type:  "replay",
+		Model: "recorded-session",
+		AdditionalConfig: map[string]interface{}{
+			"recording": "recordings/session.json",
+		},
+	}
+
+	provider, err := createProviderImpl(configDir, providerCfg)
+	require.NoError(t, err)
+	require.NotNil(t, provider)
+	assert.Equal(t, filepath.Join(configDir, "recordings", "session.json"),
+		providerCfg.AdditionalConfig["recording"])
+}
+
+// TestResolveProviderFilePath covers the cases that must leave the path alone:
+// an absolute path, no config directory, a type with no file key, and a
+// missing additional_config.
+func TestResolveProviderFilePath(t *testing.T) {
+	abs := filepath.Join(t.TempDir(), "rec.json")
+	tests := []struct {
+		name      string
+		configDir string
+		provider  *config.Provider
+		key       string
+		want      any
+	}{
+		{"mock relative", "/cfg", &config.Provider{Type: "mock",
+			AdditionalConfig: map[string]any{"mock_config": "m.yaml"}}, "mock_config", filepath.Join("/cfg", "m.yaml")},
+		{"replay absolute", "/cfg", &config.Provider{Type: "replay",
+			AdditionalConfig: map[string]any{"recording": abs}}, "recording", abs},
+		{"no config dir", "", &config.Provider{Type: "replay",
+			AdditionalConfig: map[string]any{"recording": "r.json"}}, "recording", "r.json"},
+		{"type without a file key", "/cfg", &config.Provider{Type: "openai",
+			AdditionalConfig: map[string]any{"recording": "r.json"}}, "recording", "r.json"},
+		{"no additional_config", "/cfg", &config.Provider{Type: "replay"}, "recording", nil},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			resolveProviderFilePath(tt.configDir, tt.provider)
+			assert.Equal(t, tt.want, tt.provider.AdditionalConfig[tt.key])
+		})
+	}
+}
+
 func TestBuildEngineComponents_MinimalConfig(t *testing.T) {
 	cfg := &arenaconfig.Config{
 		LoadedProviders: map[string]*config.Provider{

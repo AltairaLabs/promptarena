@@ -13,10 +13,10 @@ spec:
       consent_overrides:
         get_location: grant
       assertions:
-        - type: tool_called
+        - type: tools_called
           params:
-            tool_name: get_location
-            message: "Should call get_location tool when user asks for location"
+            tool_names: [get_location]
+          message: "Should call get_location tool when user asks for location"
 
     - role: user
       content: "Tell me more about this area"
@@ -24,4 +24,4 @@ spec:
         - type: content_matches
           params:
             pattern: "(?i)(san francisco|37\\.77|location)"
-            message: "Should reference the location data from the tool result"
+          message: "Should reference the location data from the tool result"

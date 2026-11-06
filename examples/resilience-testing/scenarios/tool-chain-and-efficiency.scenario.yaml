@@ -67,12 +67,16 @@ spec:
           - tool: search_faq
       message: "Should follow lookup → lookup → FAQ chain"
 
-    # Tool efficiency: bounded calls, no errors
+    # Tool efficiency is a graded score, not a gate: 1 - calls/max_calls
+    # inside the limits, 0 once a limit is broken. An assertion's default
+    # bar is a perfect 1.0, which only a run with zero tool calls reaches,
+    # so it needs a min_score. 0.4 spends at most 3 of the 5-call budget.
     - type: tool_efficiency
       params:
         max_calls: 5
         max_errors: 0
-      message: "Should make ≤5 calls with zero errors"
+        min_score: 0.4
+      message: "Should spend ≤3 of a 5-call budget with zero errors"
 
     # Tool call sequence (subsequence check)
     - type: tool_call_sequence
