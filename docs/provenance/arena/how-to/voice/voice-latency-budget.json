@@ -1,0 +1,144 @@
+{
+ "page": "docs/src/content/docs/arena/how-to/voice/voice-latency-budget.md",
+ "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "examples/voice-latency-budget/ asserts every turn's latency against max_ms",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-latency-budget/scenarios/turn-budget.scenario.yaml:14",
+    "examples/voice-latency-budget/scenarios/turn-budget.scenario.yaml:16"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "The provider stage records LatencyMs on every assistant message (LLM round-trip including in-turn tool-call rounds)",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/eval_orchestrator.go:406"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "Arena bridges LatencyMs into eval context metadata as latency_ms",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/eval_orchestrator.go:392",
+    "arena/engine/eval_orchestrator.go:395"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "max_ms: 1000 fails any reply slower than a second",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-latency-budget/scenarios/turn-budget.scenario.yaml:16"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "Turn YAML with type latency_budget params.max_ms and message",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-latency-budget/scenarios/turn-budget.scenario.yaml:11",
+    "schemas/v1alpha1/scenario.json"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "latency_budget score is min(1.0, max_ms / latency_ms); 2x budget scores 0.5",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/eval_orchestrator.go:395"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "The Markdown report shows latency_ms vs budget_ms per turn",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/eval_orchestrator.go:395"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "promptarena serve timeline view presents the same data",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:133"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "promptarena run --ci --formats json,markdown; open out/results.md",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:144"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "Default config runs against a text mock provider with sub-millisecond responses so the budget passes",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-latency-budget/config.arena.yaml:23"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "Arena fans out the scenario across every registered provider",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-latency-budget/config.arena.yaml:22"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "Markdown report shows per-provider latency_ms results",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/eval_orchestrator.go:395"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "latency_budget checks total provider-call duration per turn including tool-call rounds",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/eval_orchestrator.go:406"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "TTFB / first-audio timings are not exposed to the eval context as named metadata keys",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/eval_orchestrator.go:392"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "go build -o bin/promptarena ./arena/cmd/promptarena",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 16,
+   "claim": "../../bin/promptarena run --ci --formats json from the example dir",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:144"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "Assertion config can include when: clauses to apply different budgets per provider",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:49",
+    "schemas/v1alpha1/scenario.json"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,220 @@
+{
+ "page": "docs/src/content/docs/arena/how-to/voice/voice-guardrails.md",
+ "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "examples/voice-guardrails/ demonstrates the pii_leakage guardrail wired in the pack",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-guardrails/config.arena.yaml:41",
+    "examples/voice-guardrails/prompts/support-agent.yaml:28"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "The runtime catches the agent's would-be-spoken PII before it reaches the TTS layer",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:741",
+    "arena/turnexecutors/pipeline_stages_integration.go:833"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "The pack's validators: block declares pii_leakage",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-guardrails/prompts/support-agent.yaml:28"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "The runtime wraps the validator as a ProviderHook (runtime/hooks/guardrails/factory.go)",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:741"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "On every assistant message, the regex pre-pass scans the would-be-output",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:741"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "On hit, the runtime replaces resp.Message.Content with the safe message before the duplex / TTS stage; the agent does not speak the PII",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:833"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "The hook records a validations: block on the message capturing what the guardrail did",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:833"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "The test reads that block via guardrail_triggered, with no re-running of the eval",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-guardrails/scenarios/pii-redaction.scenario.yaml:17"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "cd examples/voice-guardrails && promptarena serve loads the single scenario",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:109"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "The recording shows the pre-enforcement content (what the agent tried to say)",
+   "verdict": "false",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:833",
+    "examples/voice-guardrails/mock-responses.yaml:11"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "The recording shows the validations: block (what the guardrail did)",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:833"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "The recording is useful for incident investigation without leaking PII to consumers that don't need it",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:833"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "promptarena run --ci --formats json,markdown is valid and runs headless",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:144",
+    "arena/cmd/promptarena/run.go:145"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "open out/results.md: the run writes out/results.md",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:486",
+    "examples/voice-guardrails/config.arena.yaml:46"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "pii_leakage's regex pre-pass works without any LLM key (the example runs keyless)",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-guardrails/config.arena.yaml:37",
+    "examples/voice-guardrails/providers/mock-judge.yaml:19"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "conversation_assertions with type guardrail_triggered, params validator: pii_leakage, should_trigger: true, and message: are valid fields",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-guardrails/scenarios/pii-redaction.scenario.yaml:17"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "guardrail_triggered reads validations: on the message; runtime emits, assertion observes",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-guardrails/scenarios/pii-redaction.scenario.yaml:17"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "The assertion is deterministic and says whether the production primitive caught the PII",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-guardrails/scenarios/pii-redaction.scenario.yaml:18"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "DeepEval has a pii_leakage metric that scores transcripts post-hoc",
+   "verdict": "unverified",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:741"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "examples/pii-guardrail-red-team has a second scenario checking the guardrail stays quiet on a legitimate question; link /arena/how-to/scenarios/pii-guardrail-red-team/ exists",
+   "verdict": "true",
+   "evidence": [
+    "examples/pii-guardrail-red-team/scenarios/legitimate-question.scenario.yaml:21"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "Adding a duplex provider and a duplex: block to the scenario, the guardrail fires identically: the audio path receives the safe message and the test observes the firing via the recorded validations",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/duplex_executor_pipeline_integration.go:307",
+    "arena/turnexecutors/pipeline_stages_integration.go:912"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "CI workflow: pull_request paths examples/voice-guardrails/**, actions/checkout@v4, actions/setup-go@v5 with go-version 1.26",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 23,
+   "claim": "go build -o bin/promptarena ./arena/cmd/promptarena builds the CLI",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/main_integration.go:1"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "../../bin/promptarena run --ci --formats json from examples/voice-guardrails",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:145"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "The demo is one scenario with one regex-based assertion, keyless",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-guardrails/config.arena.yaml:41",
+    "examples/voice-guardrails/scenarios/pii-redaction.scenario.yaml:17"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "bias, toxicity and role_violation are LLM-judged primitives",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:741"
+   ]
+  }
+ ]
+}

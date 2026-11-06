@@ -1,0 +1,430 @@
+{
+ "page": "docs/src/content/docs/arena/how-to/voice/voice-console.md",
+ "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "Voice is built into the standard promptarena binary; no special build is needed",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/chat.go:15",
+    "arena/cmd/promptarena/chat_interactive.go:20",
+    "arena/voice/session_audioio_interactive.go:15"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "The mic stays open the whole session and speaker audio feeds back into the mic without headphones, causing echo loops",
+   "verdict": "true",
+   "evidence": [
+    "arena/voice/driver.go:47",
+    "arena/voice/driver.go:64"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "An Arena config needs at least one provider and one agent declared to start a voice session",
+   "verdict": "true",
+   "evidence": [
+    "arena/tui/app/chatpage.go:197",
+    "arena/tui/app/chatpage.go:212"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "The promptarena binary stays pure Go with no cgo",
+   "verdict": "true",
+   "evidence": [
+    ".goreleaser.yml:25",
+    "arena/voice/portaudio/portaudio_io_interactive.go:35"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "The binary loads PortAudio dynamically at runtime, and only when a voice session starts",
+   "verdict": "true",
+   "evidence": [
+    "arena/tui/app/chatpage_voice.go:59",
+    "arena/voice/portaudio/portaudio_io_interactive.go:68",
+    "arena/voice/session_audioio_interactive.go:15"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "npm install -g @altairalabs/promptarena installs the promptarena CLI",
+   "verdict": "true",
+   "evidence": [
+    "npm/promptarena/package.json:2"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "go build -o bin/promptarena ./arena/cmd/promptarena builds the CLI",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/chat.go:5"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "chat --voice without PortAudio prints a clear install hint and every other feature keeps working",
+   "verdict": "true",
+   "evidence": [
+    "arena/tui/app/chatpage.go:624",
+    "arena/tui/app/chatpage_voice.go:59",
+    "arena/voice/portaudio/portaudio_io_interactive.go:98"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "On macOS, PortAudio is installed with: brew install portaudio",
+   "verdict": "true",
+   "evidence": [
+    "arena/voice/portaudio/portaudio_io_interactive.go:100"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "On Debian / Ubuntu, PortAudio is installed with: sudo apt install libportaudio2",
+   "verdict": "true",
+   "evidence": [
+    "arena/voice/portaudio/portaudio_io_interactive.go:101"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "On Fedora / RHEL, PortAudio is installed with: sudo dnf install portaudio",
+   "verdict": "unverified",
+   "evidence": [
+    "arena/voice/portaudio/portaudio_discovery.go:43",
+    "arena/voice/portaudio/portaudio_io_interactive.go:98"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "On Windows, portaudio.dll must be placed on PATH",
+   "verdict": "true",
+   "evidence": [
+    "arena/voice/portaudio/portaudio_discovery.go:32",
+    "arena/voice/portaudio/portaudio_dlopen_windows.go:12"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "Example command: promptarena chat --voice --config config.arena.yaml",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/chat.go:12",
+    "arena/cmd/promptarena/chat.go:15"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "The voice console opens in full-screen TUI mode",
+   "verdict": "true",
+   "evidence": [
+    "arena/tui/app/launch_interactive.go:44"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "The agent responds with synthesized audio",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_interactive.go:158",
+    "arena/engine/duplex_interactive.go:418"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "Pressing q or Ctrl-C exits the voice console",
+   "verdict": "true",
+   "evidence": [
+    "arena/tui/app/app.go:74",
+    "arena/tui/app/app.go:88"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "OpenAI Realtime and Gemini Live handle turn detection natively inside the connection",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_interactive.go:65",
+    "arena/tui/app/page.go:82"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "ASM streams raw PCM from the microphone directly into the provider connection, and the provider signals when a turn is complete",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_interactive.go:174",
+    "arena/engine/duplex_interactive.go:84"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "ASM mode is the default for realtime providers",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_interactive.go:65",
+    "arena/tui/app/chatpage_voice.go:96"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "ASM is selected automatically for any provider that supports stream input, with no extra flags",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_interactive.go:61",
+    "arena/engine/duplex_interactive.go:65"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "The audio_enabled: true provider setting enables stream input",
+   "verdict": "dead",
+   "evidence": [
+    "examples/voice-console-asm/providers/gemini-realtime.provider.yaml:30"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "The response_modalities: [AUDIO] setting enables stream input",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/duplex_executor_pipeline_integration.go:516",
+    "arena/engine/duplex_interactive.go:65",
+    "arena/tui/app/page.go:88"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "Standard chat-completion providers without streaming audio input fall back to client-side VAD",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_interactive.go:226",
+    "arena/engine/duplex_interactive.go:65"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "In VAD mode the mic is recorded locally until silence is detected, then transcribed via an STT provider and sent as a text turn",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_interactive.go:375",
+    "arena/engine/duplex_interactive.go:435"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "In VAD mode, TTS converts the agent's reply to audio for playback",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_interactive.go:410",
+    "arena/engine/duplex_interactive.go:418"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "Example command: promptarena chat --voice --voice-stt openai-whisper --voice-output-voice alloy --config config.arena.yaml",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/chat.go:16",
+    "arena/cmd/promptarena/chat.go:17"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "The --voice-stt flag exists and takes an STT provider id",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/chat.go:16",
+    "arena/tui/app/chatpage_voice.go:114"
+   ]
+  },
+  {
+   "id": 28,
+   "claim": "The --voice-output-voice flag exists and takes a TTS voice id",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/chat.go:17",
+    "arena/engine/duplex_interactive.go:275"
+   ]
+  },
+  {
+   "id": 29,
+   "claim": "--voice-stt must match a provider declared under stt_providers: in the Arena config",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:683",
+    "arena/arenaconfig/types.go:209",
+    "arena/tui/app/chatpage_voice.go:115"
+   ]
+  },
+  {
+   "id": 30,
+   "claim": "--voice-output-voice must match a voice id declared under voices: in the Arena config",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:217",
+    "arena/arenaconfig/voice.go:12"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "The value of --voice-output-voice is a voice binding id, the id: field of an entry in the voices: list, not a raw vendor voice name",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/voice.go:16",
+    "arena/engine/duplex_interactive.go:468"
+   ]
+  },
+  {
+   "id": 32,
+   "claim": "The voice binding maps the id to the actual synthesis voice for the configured provider",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/voice.go:20",
+    "arena/engine/duplex_interactive.go:473"
+   ]
+  },
+  {
+   "id": 33,
+   "claim": "The --echo-guard flag exists and gates the mic while the agent is speaking",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/chat.go:18",
+    "arena/tui/app/chatpage_voice.go:165",
+    "arena/voice/echo_guard.go:153"
+   ]
+  },
+  {
+   "id": 34,
+   "claim": "Example command: promptarena chat --voice --echo-guard --config config.arena.yaml",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/chat.go:15",
+    "arena/cmd/promptarena/chat.go:18"
+   ]
+  },
+  {
+   "id": 35,
+   "claim": "Echo guard is off by default",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/chat.go:18"
+   ]
+  },
+  {
+   "id": 36,
+   "claim": "Echo guard adds a small latency",
+   "verdict": "false",
+   "evidence": [
+    "arena/voice/driver.go:71",
+    "arena/voice/echo_guard.go:153"
+   ]
+  },
+  {
+   "id": 37,
+   "claim": "Echo guard is best-effort in v1: it suppresses capture during playback but does not perform full acoustic echo cancellation",
+   "verdict": "true",
+   "evidence": [
+    "arena/voice/echo_guard.go:153",
+    "arena/voice/echo_guard.go:47"
+   ]
+  },
+  {
+   "id": 38,
+   "claim": "Headphones give the lowest latency and cleanest transcription compared with echo guard",
+   "verdict": "unverified",
+   "evidence": [
+    "arena/cmd/promptarena/chat.go:18"
+   ]
+  },
+  {
+   "id": 39,
+   "claim": "The --voice flag defaults to false",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/chat.go:15"
+   ]
+  },
+  {
+   "id": 40,
+   "claim": "The --voice flag requires PortAudio installed",
+   "verdict": "true",
+   "evidence": [
+    "arena/tui/app/chatpage_voice.go:59",
+    "arena/voice/session_audioio_interactive.go:15"
+   ]
+  },
+  {
+   "id": 41,
+   "claim": "The --voice-stt flag has no default and is the STT provider id for VAD mode",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/chat.go:16",
+    "arena/engine/duplex_interactive.go:61"
+   ]
+  },
+  {
+   "id": 42,
+   "claim": "The --voice-output-voice flag has no default and is the TTS voice id used in VAD mode",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/chat.go:17",
+    "arena/engine/duplex_interactive.go:275"
+   ]
+  },
+  {
+   "id": 43,
+   "claim": "The --echo-guard flag defaults to false",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/chat.go:18"
+   ]
+  },
+  {
+   "id": 44,
+   "claim": "The --config flag defaults to config.arena.yaml",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/chat.go:12"
+   ]
+  },
+  {
+   "id": 45,
+   "claim": "The --config flag exists and takes the path to the Arena config file",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/chat.go:12",
+    "arena/cmd/promptarena/chat_interactive.go:17"
+   ]
+  },
+  {
+   "id": 46,
+   "claim": "Link #install-portaudio resolves to the Install PortAudio heading on this page (also line 20)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 47,
+   "claim": "Link /arena/how-to/voice/setup-voice-testing/ targets an existing page covering self-play voice testing",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 48,
+   "claim": "Link /arena/how-to/providers/configure-providers/ targets an existing page on declaring TTS and STT providers",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 49,
+   "claim": "Link /arena/how-to/setup/installation/ targets an existing installation page",
+   "verdict": "true",
+   "evidence": []
+  }
+ ]
+}

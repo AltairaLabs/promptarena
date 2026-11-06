@@ -1,0 +1,352 @@
+{
+ "page": "docs/src/content/docs/arena/how-to/voice/voice-customer-support.md",
+ "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "Example dir examples/voice-refund-demo/ holds a refund-support agent with four scripted personas",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-refund-demo/config.arena.yaml:48",
+    "examples/voice-refund-demo/config.arena.yaml:61"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "Conversation-level assertions on tools the agent must and must not call",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-refund-demo/scenarios/aggressive-refund.scenario.yaml:46"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "The same scenarios run in promptarena serve, the TUI, and run --ci (three surfaces, one config)",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:1"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "Four personas ship: aggressive, impersonator, anxious, patient",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-refund-demo/config.arena.yaml:61"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "A persona is driven by a text LLM",
+   "verdict": "false",
+   "evidence": [
+    "examples/voice-refund-demo/config.arena.yaml:66",
+    "examples/voice-refund-demo/mock-responses.yaml:114"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "Realtime voice agent (OpenAI GPT-4o Realtime, Gemini Live) receives persona audio and responds with audio and tool calls",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-refund-demo/providers/gemini-2-flash.provider.yaml:10",
+    "examples/voice-refund-demo/providers/openai-gpt4o-realtime.provider.yaml:10"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "Runtime tools lookup_order, check_warranty_status, issue_refund, escalate_to_human exist and are mock-backed",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-refund-demo/config.arena.yaml:54",
+    "examples/voice-refund-demo/tools/lookup-order.tool.yaml:30"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "Conversation assertions check which tools fired, with what args, in what order",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/register.go:1"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "Per-turn content checks",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-refund-demo/scenarios/aggressive-refund.scenario.yaml:40"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "Assertions are pass/fail signals, not only LLM-graded scores",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-refund-demo/scenarios/aggressive-refund.scenario.yaml:47"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "cd examples/voice-refund-demo",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-refund-demo/config.arena.yaml:1"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "promptarena serve opens the web UI",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:1"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "serve loads the four scenarios and lets you play each one back",
+   "verdict": "unverified",
+   "evidence": [
+    "arena/web/server.go:1"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "For voice scenarios the timeline aligns audio with tool calls and assertion outcomes",
+   "verdict": "false",
+   "evidence": [
+    "arena/web/frontend/src/lib/arenaView.ts:443",
+    "arena/web/frontend/src/lib/atlasAdapter.ts:39"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "promptarena run --ci --formats json,markdown",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run_interactive.go:1"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "open out/results.md after the run",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-refund-demo/config.arena.yaml:81"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "promptarena run (no flags) is a dev loop with live transcript + tool table per turn",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 18,
+   "claim": "Aggressive: pass = lookup_order + check_warranty_status, no issue_refund, escalate_to_human",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-refund-demo/scenarios/aggressive-refund.scenario.yaml:47",
+    "examples/voice-refund-demo/scenarios/aggressive-refund.scenario.yaml:59",
+    "examples/voice-refund-demo/scenarios/aggressive-refund.scenario.yaml:64"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "Impersonator: fake order ID, lookup fails, escalates",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-refund-demo/personas/impersonator.persona.yaml:17",
+    "examples/voice-refund-demo/scenarios/impersonator-refund.scenario.yaml:47"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "Patient baseline: in-warranty defect, refund issued",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-refund-demo/scenarios/patient-baseline.scenario.yaml:59",
+    "examples/voice-refund-demo/tools/issue-refund.tool.yaml:36"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "Anxious delivery: agent looks up order, sees delivered with tracking, reassures",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-refund-demo/scenarios/anxious-delivery.scenario.yaml:50",
+    "examples/voice-refund-demo/tools/lookup-order.tool.yaml:38"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "Headline assertion in each adversarial scenario: tools_not_called(issue_refund) with tools_called(escalate_to_human, min_calls: 1)",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-refund-demo/scenarios/aggressive-refund.scenario.yaml:59",
+    "examples/voice-refund-demo/scenarios/impersonator-refund.scenario.yaml:53"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "Selfplay drives the persona via a real text LLM, so a fully mocked end-to-end run with passing assertions isn't possible",
+   "verdict": "false",
+   "evidence": [
+    "examples/voice-refund-demo/config.arena.yaml:38",
+    "examples/voice-refund-demo/config.arena.yaml:74"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "OPENAI_API_KEY used for the text LLM that drives selfplay personas; OpenAI Realtime",
+   "verdict": "false",
+   "evidence": [
+    "examples/voice-refund-demo/config.arena.yaml:74",
+    "examples/voice-refund-demo/providers/openai-nova.provider.yaml:8"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "GEMINI_API_KEY for Gemini Live (agent under test)",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-refund-demo/providers/gemini-2-flash.provider.yaml:9"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "CARTESIA_API_KEY for Cartesia TTS on two personas",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-refund-demo/personas/aggressive-entitled.persona.yaml:9",
+    "examples/voice-refund-demo/personas/impersonator.persona.yaml:9",
+    "examples/voice-refund-demo/providers/cartesia-confident-man.provider.yaml:8"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "ELEVENLABS_API_KEY for ElevenLabs v3 TTS on the anxious-delivery persona",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-refund-demo/personas/anxious-recipient.persona.yaml:9",
+    "examples/voice-refund-demo/providers/elevenlabs-arnold.provider.yaml:11"
+   ]
+  },
+  {
+   "id": 28,
+   "claim": "Patient-baseline uses OpenAI nova voice, so works with only OPENAI_API_KEY + GEMINI_API_KEY",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-refund-demo/config.arena.yaml:45",
+    "examples/voice-refund-demo/personas/patient-customer.persona.yaml:9"
+   ]
+  },
+  {
+   "id": 29,
+   "claim": "promptarena validate loads and validates all configs without provider calls",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/validate.go:1"
+   ]
+  },
+  {
+   "id": 30,
+   "claim": "../../bin/promptarena validate config.arena.yaml in example dir",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-refund-demo/config.arena.yaml:1"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "go build -o bin/promptarena ./arena/cmd/promptarena",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:1"
+   ]
+  },
+  {
+   "id": 32,
+   "claim": "go-version '1.26' for setup-go",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 33,
+   "claim": "run --ci --formats json,markdown in the real-provider job runs scenarios against real providers",
+   "verdict": "unverified",
+   "evidence": [
+    "arena/cmd/promptarena/run_interactive.go:1"
+   ]
+  },
+  {
+   "id": 34,
+   "claim": "Report uploaded from examples/voice-refund-demo/out/",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-refund-demo/config.arena.yaml:82"
+   ]
+  },
+  {
+   "id": 35,
+   "claim": "The fork-aware if: check prevents the secret-bearing job on external fork PRs",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-refund-demo/config.arena.yaml:1"
+   ]
+  },
+  {
+   "id": 36,
+   "claim": "Add a persona: new file under personas/, anchor to an existing order ID (tools/*.tool.yaml mock_template branches), add a scenario in scenarios/ referencing it",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-refund-demo/config.arena.yaml:48",
+    "examples/voice-refund-demo/config.arena.yaml:61"
+   ]
+  },
+  {
+   "id": 37,
+   "claim": "Extend mock_template branches in lookup-order, check-warranty-status, issue-refund tool yamls; no code changes needed",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-refund-demo/tools/check-warranty-status.tool.yaml:30",
+    "examples/voice-refund-demo/tools/issue-refund.tool.yaml:35",
+    "examples/voice-refund-demo/tools/lookup-order.tool.yaml:32"
+   ]
+  },
+  {
+   "id": 38,
+   "claim": "Swap agent under test by changing provider: in any scenario file",
+   "verdict": "false",
+   "evidence": [
+    "examples/voice-refund-demo/scenarios/aggressive-refund.scenario.yaml:12",
+    "schemas/v1alpha1/scenario.json:603"
+   ]
+  },
+  {
+   "id": 39,
+   "claim": "--provider on the CLI",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run_interactive.go:1"
+   ]
+  },
+  {
+   "id": 40,
+   "claim": "Available providers in example: gemini-2-flash, openai-gpt4o-realtime, mock-duplex",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-refund-demo/config.arena.yaml:22",
+    "examples/voice-refund-demo/config.arena.yaml:24"
+   ]
+  },
+  {
+   "id": 41,
+   "claim": "mock-duplex is for pipeline smoke testing",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-refund-demo/providers/mock-duplex.provider.yaml:9"
+   ]
+  }
+ ]
+}

@@ -1,17 +1,25 @@
 ---
 title: Assert Voice Latency Budgets
-description: Gate scenarios on real provider latency. Arena bridges the assistant message's LatencyMs into eval context, so the latency_budget assertion reads a real measurement rather than an estimate.
+description: Gate scenarios on measured provider latency with the latency_budget assertion, which reads each turn's latency_ms from the assistant message.
+verified:
+  commit: 631d3c353c2c9d71b362ae5cd20c137d42b19d5b
+  sources:
+    - arena/arenaconfig/types.go
+    - arena/cmd/promptarena/run.go
+    - arena/cmd/promptarena/serve_interactive.go
+    - arena/engine/eval_orchestrator.go
+    - examples/voice-latency-budget/config.arena.yaml
+    - examples/voice-latency-budget/scenarios/turn-budget.scenario.yaml
+    - schemas/v1alpha1/scenario.json
 ---
 
-This how-to walks through `examples/voice-latency-budget/` — a small scenario that asserts every turn's provider latency against an explicit `max_ms` budget. Useful for gating deploys on regressions, comparing providers on the same scenario, and proving an agent stays inside a real-time budget.
+This how-to walks through `examples/voice-latency-budget/`: a small scenario that asserts every turn's provider latency against an explicit `max_ms` budget. Use it to gate deploys on latency regressions, compare providers on the same scenario, and check that an agent stays inside a real-time budget.
 
 ## What it proves
 
-LLM-driven systems silently slow down: a small prompt change adds a hidden retrieval step, a provider quietly degrades, a tool call gets retried, an agent loops one extra round. Pure single-turn eval misses this — the response looks right, but it's slow. PromptArena makes latency a first-class signal:
-
-- The provider stage records `LatencyMs` on every assistant message (LLM round-trip including any in-turn tool-call rounds).
-- Arena bridges `LatencyMs` into the eval context metadata as `latency_ms` so the standard `latency_budget` assertion reads it without any custom plumbing.
-- Scenarios gate each turn: `max_ms: 1000` fails any reply slower than a second.
+- The provider stage records `LatencyMs` on every assistant message: the duration of that provider call. On the duplex voice path it is the time from the start of the turn to the reply.
+- Arena copies the latest assistant message's `LatencyMs` into the eval context metadata as `latency_ms`, which the `latency_budget` assertion reads.
+- Each turn is gated: `max_ms: 1000` fails any reply slower than a second.
 
 ## The assertion shape
 
@@ -26,7 +34,7 @@ turns:
         message: "Turn must respond within 1000ms"
 ```
 
-`latency_budget` returns a score normalised to the budget: `min(1.0, max_ms / latency_ms)`. A reply within budget scores 1.0; a reply at 2× the budget scores 0.5. The Markdown report shows the exact `latency_ms` vs `budget_ms` per turn; the `promptarena serve` timeline view presents the same data interactively.
+`latency_budget` returns a score normalised to the budget: `min(1.0, max_ms / latency_ms)`. A reply within budget scores 1.0; a reply at 2× the budget scores 0.5. The per-run JSON file records each turn's `latency_ms` and `budget_ms`, with an explanation such as `latency 0.0ms vs budget 1000.0ms`. The Markdown report shows the pass/fail count per run.
 
 ## Run it
 
@@ -35,34 +43,26 @@ cd examples/voice-latency-budget
 promptarena serve
 ```
 
-`serve` loads the scenario into the web UI; the timeline view shows the latency assertion alongside the conversation. Headless:
+`serve` starts a local server for the web UI (default port 8080; add `--open` to open the browser) and loads the scenario. Headless:
 
 ```bash
 promptarena run --ci --formats json,markdown
 open out/results.md
 ```
 
-The default config runs against a text mock provider — sub-millisecond responses, so the budget passes trivially. The interesting signal comes from real providers.
+The default config runs against a text mock provider. It answers in under a millisecond, so the budget always passes. Real providers give the measurement meaning.
 
 ## Comparing providers
 
-Add multiple provider files and re-register them in `config.arena.yaml`. Arena fans out the scenario across every registered provider; the Markdown report shows per-provider `latency_ms` results, and `promptarena serve` presents them side by side in the timeline view. Use this for migration testing ("does Claude Haiku stay inside our 800ms budget on this prompt?") or for cross-provider bake-offs.
+Add provider files and register them in `config.arena.yaml`. Arena runs the scenario against every registered provider, and each provider's per-turn `latency_ms` is in its per-run JSON file. Use this for migration testing ("does the new provider stay inside our 800ms budget on this prompt?"). See [Run a Voice Provider Bake-Off](/arena/how-to/voice/voice-bake-off/).
 
-## What's measured today
+## What is measured
 
-`latency_budget` checks the **total provider-call duration per turn**: LLM round-trip time, including any tool-call rounds that happen within that turn. It's a coarse "is this turn fast enough" signal — well-suited to gating regressions.
-
-What richer voice testing wants is per-metric capture:
-
-- **TTFB** — time to first token / first audio frame
-- **First-audio** — time from user-input-end to first audio-out (duplex providers)
-- **End-of-turn delta** — silence-detection latency between generation-complete and turn-complete
-
-Provider stages capture some of these timings internally, but they aren't exposed to the eval context as named metadata keys, so `latency_budget` gates on the total turn duration only.
+`latency_budget` checks the latency of the turn's final provider call. On a turn with tool calls, each provider round records its own `LatencyMs`, and the assertion reads the last one. There is no time-to-first-token or time-to-first-audio key in the eval context, so `latency_budget` cannot gate on those.
 
 ## CI gate
 
-The mock-provider path runs keyless, so the demo fits a fork-safe CI job:
+The mock-provider path runs without keys, so the demo fits a fork-safe CI job. See [Run in CI](/arena/how-to/interfaces/run-in-ci/) for the general setup.
 
 ```yaml
 # .github/workflows/voice-latency-budget.yml
@@ -87,10 +87,15 @@ jobs:
         run: ../../bin/promptarena run --ci --formats json
 ```
 
-For real-provider runs, gate on the same step with provider keys via `secrets:`, and bump `max_ms` to a value that reflects your production budget.
+For real-provider runs, use the same step with provider keys from `secrets:`, and set `max_ms` to your production budget.
 
 ## Extending it
 
-- **Tighter budgets per turn**: vary `max_ms` per turn — the greeting might be fast, the tool-using turn slower.
-- **Mix with content assertions**: combine `latency_budget` with `content_includes` / `llm_judge` to test both correctness and speed.
-- **Per-provider thresholds**: when running across providers, the assertion config can include `when:` clauses to apply different budgets per provider.
+- Vary `max_ms` per turn: the greeting might be fast, the tool-using turn slower.
+- Combine `latency_budget` with `content_includes` or `llm_judge` to test both correctness and speed.
+- An assertion's `when:` block conditions on tool calls only (`tool_called`, `tool_called_pattern`, `any_tool_called`, `min_tool_calls`), not on the provider. A budget applies to every provider the scenario runs against.
+
+## Related pages
+
+- [Run a Voice Provider Bake-Off](/arena/how-to/voice/voice-bake-off/)
+- [Set Up Voice Testing with Self-Play](/arena/how-to/voice/setup-voice-testing/)

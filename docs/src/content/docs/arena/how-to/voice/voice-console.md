@@ -1,32 +1,47 @@
 ---
 title: Use the Voice Console
+description: Hold a live, hands-free voice conversation with an Arena agent from the terminal with promptarena chat --voice.
+verified:
+  commit: 631d3c353c2c9d71b362ae5cd20c137d42b19d5b
+  sources:
+    - .goreleaser.yml
+    - arena/arenaconfig/loader.go
+    - arena/arenaconfig/types.go
+    - arena/arenaconfig/voice.go
+    - arena/cmd/promptarena/chat.go
+    - arena/cmd/promptarena/chat_interactive.go
+    - arena/engine/duplex_executor_pipeline_integration.go
+    - arena/engine/duplex_interactive.go
+    - arena/tui/app/app.go
+    - arena/tui/app/chatpage.go
+    - arena/tui/app/chatpage_voice.go
+    - arena/tui/app/launch_interactive.go
+    - arena/tui/app/page.go
+    - arena/voice/driver.go
+    - arena/voice/echo_guard.go
+    - arena/voice/portaudio/portaudio_discovery.go
+    - arena/voice/portaudio/portaudio_dlopen_windows.go
+    - arena/voice/portaudio/portaudio_io_interactive.go
+    - arena/voice/session_audioio_interactive.go
+    - examples/voice-console-asm/providers/gemini-realtime.provider.yaml
+    - npm/promptarena/package.json
 ---
 Run a live, hands-free voice conversation with an Arena agent from the terminal.
 
 ## Prerequisites
 
-- The standard `promptarena` binary (voice is built in — no special build needed).
-- **PortAudio** installed on the host machine (see [Install PortAudio](#install-portaudio)).
-- A pair of **headphones** — the mic stays open the whole session; speaker audio feeds
-  straight back into the mic without them, causing echo loops.
-- An Arena config with at least one provider and one agent declared.
+- The standard `promptarena` binary. Voice is built in; there is no separate voice build. See [Install PromptArena](/arena/how-to/setup/installation/).
+- PortAudio installed on the host (see [Install PortAudio](#install-portaudio)).
+- Headphones, or `--echo-guard` if you use laptop speakers (see [Echo guard](#echo-guard)). The mic stays open for the whole session, and without either one the speaker audio feeds back into the mic.
+- An Arena config with at least one provider and one agent (a `prompt_configs` entry).
 
-## Getting the Binary
+## Getting the binary
 
-Voice ships **inside the standard `promptarena` binary** — there is no separate
-voice build. The binary stays pure Go (no cgo); it loads PortAudio dynamically
-**at runtime**, and only when you actually start a voice session. So you install
-`promptarena` the usual way (`npm install -g @altairalabs/promptarena`, a release
-download, or `go build -o bin/promptarena ./arena/cmd/promptarena`) and then [install PortAudio](#install-portaudio)
-to enable voice.
+`promptarena` loads PortAudio at runtime, and only when a voice session starts. Install the binary the usual way (`npm install -g @altairalabs/promptarena`, a release download, or `go build -o bin/promptarena ./arena/cmd/promptarena`), then [install PortAudio](#install-portaudio).
 
-If you run `chat --voice` without PortAudio present, only voice is unavailable —
-the command prints a clear install hint and every other feature keeps working.
+If PortAudio is missing, every other feature works. The voice console shows an `error: open audio device: ...` line with an install hint.
 
 ## Install PortAudio
-
-PortAudio must be present on the machine **at runtime** — the binary loads it on
-demand when a voice session starts.
 
 | Platform | Command |
 |----------|---------|
@@ -35,38 +50,33 @@ demand when a voice session starts.
 | Fedora / RHEL | `sudo dnf install portaudio` |
 | Windows | place `portaudio.dll` on your `PATH` |
 
-## Start a Voice Session
+## Start a voice session
 
 ```bash
 promptarena chat --voice --config config.arena.yaml
 ```
 
-The console opens in full-screen TUI mode. Speak naturally — the agent responds
-with synthesized audio. Press `q` or `Ctrl-C` to exit.
+If the config declares more than one agent or provider, the console first shows a numbered picker. It then opens in full-screen TUI mode. Speak; the agent replies with synthesized audio. Press `q`, `Esc` or `Ctrl-C` to exit.
 
-## Mode Selection: ASM vs VAD
+`chat` also starts a voice session without `--voice` when a scenario in the config has a `duplex:` block or a provider sets `additional_config.realtime: true`. A session ends after 30 minutes idle.
 
-How the system detects the end of each turn depends on the provider type.
+## Mode selection: ASM vs VAD
 
-### ASM mode (realtime providers — default)
+The console picks how it detects the end of each turn when the session starts:
 
-Providers such as OpenAI Realtime and Gemini Live handle turn detection natively
-inside the connection. The voice console uses **ASM** (Automatic Speech Mode) for
-these providers: it streams raw PCM from the microphone directly into the provider
-connection, and the provider signals when a turn is complete.
+1. If you pass `--voice-stt`, it uses VAD mode, whatever the provider.
+2. Otherwise, if the provider supports streaming audio input, it uses ASM mode.
+3. Otherwise it stops with `voice over a text agent requires an STT provider (--voice-stt)`.
 
-No extra flags are needed — ASM is selected automatically for any provider that
-supports stream input (`audio_enabled: true` / `response_modalities: [AUDIO]`).
+### ASM mode (realtime providers, default)
+
+Realtime providers such as OpenAI Realtime and Gemini Live detect turns inside the connection. In ASM (Automatic Speech Mode) the console streams raw PCM from the microphone straight into the provider connection, and the provider signals when a turn ends. No extra flags are needed.
 
 ### VAD mode (text / REST providers)
 
-For standard chat-completion providers that do not support streaming audio input,
-the voice console falls back to client-side **VAD** (Voice Activity Detection).
-The mic is recorded locally until silence is detected, then the audio is transcribed
-via an STT provider and sent as a text turn. TTS converts the agent's reply back
-to audio for playback.
+For chat-completion providers without streaming audio input, the console uses client-side VAD (Voice Activity Detection). It records the mic until it detects silence, transcribes the audio with an STT provider, and sends the text as a turn. A TTS provider turns the agent's reply back into audio.
 
-Supply the STT provider id and an optional TTS voice id:
+Pass the STT provider id and the TTS voice id:
 
 ```bash
 promptarena chat --voice \
@@ -75,41 +85,49 @@ promptarena chat --voice \
   --config config.arena.yaml
 ```
 
-`--voice-stt` must match a provider declared under `stt_providers:` in the Arena
-config. `--voice-output-voice` must match a voice id declared under `voices:`. The
-value is a **voice binding id** (the `id:` field in the `voices:` list), not a raw
-vendor voice name — the binding maps the id to the actual synthesis voice for the
-configured provider, so set the binding rather than a vendor-specific name unless the
-two happen to coincide.
+`--voice-stt` must match a provider declared under `stt_providers:` in the Arena config. `--voice-output-voice` must match a voice id declared under `voices:`, and VAD mode needs it. The value is a voice binding id (the `id:` field of a `voices:` entry), which maps to the synthesis voice of the configured TTS provider. Use the binding id, not the vendor's voice name, unless the two are the same.
 
-## Echo Guard
+## Echo guard
 
-When headphones are not available (e.g., laptop speakers), enable `--echo-guard`
-to gate the microphone while the agent is speaking:
+Without headphones (for example on laptop speakers), add `--echo-guard`:
 
 ```bash
 promptarena chat --voice --echo-guard --config config.arena.yaml
 ```
 
-Echo guard is **off by default** because it adds a small latency and is unnecessary
-when headphones are used. It is best-effort in v1: it suppresses capture during
-playback but does not perform full acoustic echo cancellation.
+While the agent speaks, the echo guard drops mic frames quieter than a threshold that follows the playback level: a frame passes only if its RMS level is at least the larger of `0.02` and half the smoothed playback level. The gate stays engaged for 200 ms after the last played audio, and it resets when playback is flushed on a barge-in.
 
-**Recommendation**: always prefer headphones over echo guard for the lowest latency
-and cleanest transcription.
+Speaker bleed and quiet speech during playback are dropped. Speech louder than that threshold still gets through, so you can interrupt the agent when `--barge-in` is also set. The guard adds no latency. It is a level gate, not acoustic echo cancellation.
 
-## Full Flag Reference
+Echo guard is off by default, which assumes headphones. Prefer headphones for the lowest latency and cleanest transcription.
+
+## Barge-in
+
+To interrupt the agent mid-reply, add `--barge-in`:
+
+```bash
+promptarena chat --voice --barge-in --config config.arena.yaml
+```
+
+Barge-in is off by default. On a realtime provider, the console flushes the agent's queued audio when the provider signals that you started speaking. Use it with headphones or `--echo-guard`; otherwise the agent's own audio can interrupt it.
+
+## Full flag reference
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `--voice` | `false` | Enable hands-free voice mode (requires PortAudio installed) |
-| `--voice-stt <id>` | — | STT provider id for VAD mode (text provider path) |
-| `--voice-output-voice <id>` | — | TTS voice id the agent speaks in (VAD mode) |
-| `--echo-guard` | `false` | Gate mic while agent speaks (best-effort; use headphones instead) |
+| `--voice` | `false` | Hands-free voice mode (requires PortAudio installed) |
+| `--voice-stt <id>` | none | STT provider id; selects VAD mode for a text agent |
+| `--voice-output-voice <id>` | none | TTS voice binding id the agent speaks in (VAD mode) |
+| `--echo-guard` | `false` | Gate the mic while the agent speaks (laptop speakers) |
+| `--barge-in` | `false` | Allow interrupting the agent mid-reply |
 | `--config <path>` | `config.arena.yaml` | Path to the Arena config file |
+| `--mock-provider` | `false` | Replace all providers with a generic mock |
+| `--mock-config <path>` | none | Mock response file, used with `--mock-provider` |
+| `-v`, `--verbose` | `false` | Debug logging (raw provider events, transcription) |
 
-## See Also
+See [CLI commands](/arena/reference/cli-commands/) for every `chat` flag.
 
-- [Set Up Voice Testing with Self-Play](/arena/how-to/voice/setup-voice-testing/) — automated voice testing without a live mic
-- [Configure Providers](/arena/how-to/providers/configure-providers/) — declare TTS and STT providers
-- [Install PromptArena](/arena/how-to/setup/installation/) — standard (non-voice) installation
+## Related pages
+
+- [Set Up Voice Testing with Self-Play](/arena/how-to/voice/setup-voice-testing/): automated voice testing without a live mic, and declaring TTS providers and `voices:`
+- [Install PromptArena](/arena/how-to/setup/installation/): standard installation

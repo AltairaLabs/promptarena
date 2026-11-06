@@ -1,0 +1,290 @@
+{
+ "page": "docs/src/content/docs/arena/how-to/voice/voice-tool-calls.md",
+ "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "examples/duplex-streaming/ contains tool-calling scenarios",
+   "verdict": "true",
+   "evidence": [
+    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:1"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "A scripted persona drives a sustained voice conversation via self-play + TTS",
+   "verdict": "true",
+   "evidence": [
+    "examples/duplex-streaming/config.arena.yaml:96",
+    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:55"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "Agent under test can be OpenAI Realtime or Gemini Live",
+   "verdict": "true",
+   "evidence": [
+    "examples/duplex-streaming/config.arena.yaml:29",
+    "examples/duplex-streaming/config.arena.yaml:30"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "Tool registry executes real handlers, mock-backed for demo",
+   "verdict": "true",
+   "evidence": [
+    "examples/duplex-streaming/config.arena.yaml:84",
+    "examples/duplex-streaming/tools/set_reminder.tool.yaml:35"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "Conversation-level assertions check which tools fired, args, order, results",
+   "verdict": "true",
+   "evidence": [
+    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:65"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "promptarena serve run from examples/duplex-streaming loads config.arena.yaml and all duplex-streaming scenarios",
+   "verdict": "true",
+   "evidence": [
+    "examples/duplex-streaming/config.arena.yaml:1"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "scenario duplex-tools has a busy-professional persona asking about weather, calendar, reminders, three tools",
+   "verdict": "true",
+   "evidence": [
+    "examples/duplex-streaming/mock-responses.yaml:141",
+    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:56"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "promptarena run --scenario duplex-tools --provider gemini-2-flash --ci; requires GEMINI_API_KEY or OPENAI_API_KEY",
+   "verdict": "true",
+   "evidence": [
+    "examples/duplex-streaming/config.arena.yaml:97",
+    "examples/duplex-streaming/providers/gemini-2-flash.provider.yaml:12"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "promptarena run --scenario duplex-tools --provider mock-duplex --ci needs no keys",
+   "verdict": "false",
+   "evidence": [
+    "examples/duplex-streaming/config.arena.yaml:96",
+    "examples/duplex-streaming/config.arena.yaml:97"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "scenario file path examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml",
+   "verdict": "true",
+   "evidence": [
+    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:1"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "turn 1 is role user with parts type audio, media.file_path audio/greeting.pcm, mime_type audio/L16",
+   "verdict": "true",
+   "evidence": [
+    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:43",
+    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:45"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "assertion content_matches with params.pattern \"(?i)(hello|hi|help|assist)\"",
+   "verdict": "false",
+   "evidence": [
+    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:50"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "turn role selfplay-user with persona busy-professional and turns: 4",
+   "verdict": "true",
+   "evidence": [
+    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:55",
+    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:57"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "conversation_assertions field",
+   "verdict": "true",
+   "evidence": [
+    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:65"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "tools_called assertion params tool_names (list) and min_calls",
+   "verdict": "true",
+   "evidence": [
+    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:67"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "three tools fired at least once over four-turn self-play conversation",
+   "verdict": "true",
+   "evidence": [
+    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:67",
+    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:74",
+    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:81"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "tool_calls_with_args and tool_call_sequence can be layered in as conversation assertions",
+   "verdict": "unverified",
+   "evidence": [
+    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:65"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "tool_calls_with_args params tool_name and expected_args (map)",
+   "verdict": "true",
+   "evidence": [
+    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:65"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "expected_args time: \"9am\" for set_reminder",
+   "verdict": "false",
+   "evidence": [
+    "examples/duplex-streaming/mock-responses.yaml:108",
+    "examples/duplex-streaming/mock-responses.yaml:146"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "tool_call_sequence params sequence list of tool names",
+   "verdict": "true",
+   "evidence": [
+    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:65"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "CI workflow YAML: validate job runs ../../bin/promptarena validate config.arena.yaml in examples/duplex-streaming",
+   "verdict": "true",
+   "evidence": [
+    "examples/duplex-streaming/config.arena.yaml:1"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "go build -o bin/promptarena ./arena/cmd/promptarena",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:533"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "go-version '1.26'",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 24,
+   "claim": "run --scenario duplex-tools --provider gemini-2-flash --ci --formats json,markdown flags",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:533"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "env GEMINI_API_KEY and OPENAI_API_KEY",
+   "verdict": "unverified",
+   "evidence": [
+    "examples/duplex-streaming/providers/gemini-2-flash.provider.yaml:12"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "fork-aware if: check keeps secret job off external fork PRs",
+   "verdict": "true",
+   "evidence": [
+    "examples/duplex-streaming/config.arena.yaml:1"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "mock-duplex provider emits a fixed auto_respond text instead of executing scripted tool calls in mock-responses.yaml",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/mock_default_audio.go:121",
+    "examples/duplex-streaming/providers/mock-duplex.provider.yaml:33"
+   ]
+  },
+  {
+   "id": 28,
+   "claim": "conversation-level tool-call assertions fail in mock mode (mock run executes end-to-end for smoke testing)",
+   "verdict": "false",
+   "evidence": [
+    "examples/duplex-streaming/config.arena.yaml:97",
+    "examples/duplex-streaming/providers/mock-duplex.provider.yaml:33"
+   ]
+  },
+  {
+   "id": 29,
+   "claim": "examples/voice-ivr uses a text-mode mock provider that executes scripted tool calls",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-ivr/mock-responses.yaml:19",
+    "examples/voice-ivr/mock-responses.yaml:25"
+   ]
+  },
+  {
+   "id": 30,
+   "claim": "No fully-mocked duplex provider scripts both audio output and tool calls",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/mock_default_audio.go:121",
+    "examples/duplex-streaming/mock-responses.yaml:14"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "new tool: drop .tool.yaml into tools/, reference in config.arena.yaml, mention in prompts/voice-assistant-tools.prompt.yaml",
+   "verdict": "true",
+   "evidence": [
+    "examples/duplex-streaming/config.arena.yaml:84",
+    "examples/duplex-streaming/prompts/voice-assistant-tools.prompt.yaml:51"
+   ]
+  },
+  {
+   "id": 32,
+   "claim": "replace tools_called with tool_calls_with_args and specify expected_args",
+   "verdict": "true",
+   "evidence": [
+    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:67"
+   ]
+  },
+  {
+   "id": 33,
+   "claim": "tools_not_called assertion type exists",
+   "verdict": "true",
+   "evidence": [
+    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:65"
+   ]
+  },
+  {
+   "id": 34,
+   "claim": "Tool failure includes hanging because result comes back during ongoing audio output",
+   "verdict": "unverified",
+   "evidence": []
+  }
+ ]
+}

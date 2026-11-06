@@ -1,0 +1,404 @@
+{
+ "page": "docs/src/content/docs/arena/how-to/voice/voice-ivr.md",
+ "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "examples/voice-ivr/ is a workflow-driven bank IVR",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-ivr/config.arena.yaml:41"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "Demo runs deterministically against a mock provider with no API keys",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-ivr/config.arena.yaml:30",
+    "examples/voice-ivr/providers/mock-provider.yaml:7"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "The same scenarios work against a live duplex voice provider with a one-line config swap",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/composite_conversation_executor.go:129",
+    "arena/engine/duplex_conversation_executor.go:75"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "Voice IVR failure modes: identity before account, right terminal state, only state-permitted tools",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/workflow_tool_executor.go:31"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "config.arena.yaml defines a workflow with entry state verifying",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-ivr/config.arena.yaml:41",
+    "examples/voice-ivr/config.arena.yaml:43"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "verifying branches via ServeBalance and EscalateToAgent events",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-ivr/config.arena.yaml:48",
+    "examples/voice-ivr/config.arena.yaml:49",
+    "examples/voice-ivr/config.arena.yaml:50"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "ServeBalance -> resolution (terminal); EscalateToAgent -> handoff (terminal)",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-ivr/config.arena.yaml:49",
+    "examples/voice-ivr/config.arena.yaml:50",
+    "examples/voice-ivr/config.arena.yaml:54",
+    "examples/voice-ivr/config.arena.yaml:58"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "The agent calls workflow__transition to drive the machine",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/execution_workflow_integration.go:83",
+    "arena/engine/workflow_tool_executor.go:340"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "Each transition is deferred during execution and committed at end of turn",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/workflow_state_resolver.go:105",
+    "arena/engine/workflow_tool_executor.go:142",
+    "arena/engine/workflow_tool_executor.go:33"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "Transitions are visible in the promptarena serve timeline view",
+   "verdict": "false",
+   "evidence": [
+    "arena/web/frontend/src/lib/arenaView.ts:443",
+    "arena/web/frontend/src/lib/atlasAdapter.ts:39",
+    "arena/web/workflow_graph.go:60"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "lookup_account, check_balance, transfer_to_agent exist as tools",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-ivr/tools/check-balance.tool.yaml:6",
+    "examples/voice-ivr/tools/lookup-account.tool.yaml:6",
+    "examples/voice-ivr/tools/transfer-to-agent.tool.yaml:6"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "Tools are mock-backed handlers whose results feed back into the conversation",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-ivr/tools/transfer-to-agent.tool.yaml:24",
+    "examples/voice-ivr/tools/transfer-to-agent.tool.yaml:25"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "Conversation assertions tools_called and tools_not_called exist",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-ivr/scenarios/balance-check.scenario.yaml:29",
+    "examples/voice-ivr/scenarios/balance-check.scenario.yaml:39"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "Balance scenario fails if the agent transfers to a human",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-ivr/scenarios/balance-check.scenario.yaml:39",
+    "examples/voice-ivr/scenarios/balance-check.scenario.yaml:40"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "Handoff scenario fails if the agent fetches a balance",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-ivr/scenarios/handoff-to-agent.scenario.yaml:36",
+    "examples/voice-ivr/scenarios/handoff-to-agent.scenario.yaml:37"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "workflow__transition shows up as a tool call from the test side",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/execution_workflow_integration.go:287"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "cd examples/voice-ivr; promptarena serve",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:110",
+    "arena/cmd/promptarena/serve_interactive.go:121"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "serve opens the web UI and loads both scenarios",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:133",
+    "arena/cmd/promptarena/serve_interactive.go:259",
+    "arena/cmd/promptarena/serve_interactive.go:303"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "Timeline view shows each tool call incl. workflow__transition on the same axis as the agent response",
+   "verdict": "false",
+   "evidence": [
+    "arena/web/frontend/src/lib/atlasAdapter.ts:36",
+    "arena/web/frontend/src/lib/atlasAdapter.ts:49"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "promptarena run --ci --formats json,markdown",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:145",
+    "arena/cmd/promptarena/run.go:150"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "open out/results.md after the run",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-ivr/config.arena.yaml:63",
+    "examples/voice-ivr/config.arena.yaml:64"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "promptarena run (no flags) is the dev loop",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:120"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "All three surfaces share the same config; mock provider deterministic",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-ivr/config.arena.yaml:30",
+    "examples/voice-ivr/mock-responses.yaml:28"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "Scenarios live at examples/voice-ivr/scenarios/*.scenario.yaml",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-ivr/config.arena.yaml:33",
+    "examples/voice-ivr/config.arena.yaml:34"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "conversation_assertions is the scenario field for conversation-level assertions",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-ivr/scenarios/balance-check.scenario.yaml:28"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "tools_called with params.tool_names (list) and min_calls (int)",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-ivr/scenarios/balance-check.scenario.yaml:29",
+    "examples/voice-ivr/scenarios/balance-check.scenario.yaml:31",
+    "examples/voice-ivr/scenarios/balance-check.scenario.yaml:32"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "message field on a conversation assertion",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-ivr/scenarios/balance-check.scenario.yaml:33"
+   ]
+  },
+  {
+   "id": 28,
+   "claim": "tools_not_called with params.tool_names",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-ivr/scenarios/balance-check.scenario.yaml:39",
+    "examples/voice-ivr/scenarios/balance-check.scenario.yaml:40"
+   ]
+  },
+  {
+   "id": 29,
+   "claim": "YAML snippet matches balance-check's first conversation assertions",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-ivr/scenarios/balance-check.scenario.yaml:29",
+    "examples/voice-ivr/scenarios/balance-check.scenario.yaml:34",
+    "examples/voice-ivr/scenarios/balance-check.scenario.yaml:39"
+   ]
+  },
+  {
+   "id": 30,
+   "claim": "The workflow definition in config.arena.yaml handles the state machine",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:127",
+    "examples/voice-ivr/config.arena.yaml:41"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "State transitions are visible in the serve timeline alongside the tool-call timeline",
+   "verdict": "false",
+   "evidence": [
+    "arena/web/frontend/src/lib/arenaView.ts:443",
+    "arena/web/frontend/src/lib/arenaView.ts:481"
+   ]
+  },
+  {
+   "id": 32,
+   "claim": "CI: go build -o bin/promptarena ./arena/cmd/promptarena",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:120"
+   ]
+  },
+  {
+   "id": 33,
+   "claim": "go-version '1.26' for setup-go",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 34,
+   "claim": "run: ../../bin/promptarena run --ci --formats json from examples/voice-ivr",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-ivr/config.arena.yaml:63"
+   ]
+  },
+  {
+   "id": 35,
+   "claim": "Run output lands in examples/voice-ivr/out/",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-ivr/config.arena.yaml:63",
+    "examples/voice-ivr/config.arena.yaml:64"
+   ]
+  },
+  {
+   "id": 36,
+   "claim": "The scenarios are voice-agnostic and drive a duplex provider as-is",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/composite_conversation_executor.go:129"
+   ]
+  },
+  {
+   "id": 37,
+   "claim": "Add a duplex provider file and register under providers: in config.arena.yaml",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-ivr/config.arena.yaml:29",
+    "examples/voice-ivr/config.arena.yaml:30"
+   ]
+  },
+  {
+   "id": 38,
+   "claim": "Add a duplex: block per scenario; shape in voice-refund-demo/scenarios",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_conversation_executor.go:75",
+    "examples/voice-refund-demo/scenarios/anxious-delivery.scenario.yaml:20"
+   ]
+  },
+  {
+   "id": 39,
+   "claim": "role: selfplay-user with personas; voice-refund-demo is the reference",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-refund-demo/scenarios/anxious-delivery.scenario.yaml:40"
+   ]
+  },
+  {
+   "id": 40,
+   "claim": "Workflow, tools, prompts, assertions stay the same; only the I/O layer changes",
+   "verdict": "unverified",
+   "evidence": [
+    "examples/voice-ivr/config.arena.yaml:8"
+   ]
+  },
+  {
+   "id": 41,
+   "claim": "Add a self-service path: new terminal state, on_event mapping in verifying, prompt, scenario",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-ivr/config.arena.yaml:22",
+    "examples/voice-ivr/config.arena.yaml:48",
+    "examples/voice-ivr/config.arena.yaml:51"
+   ]
+  },
+  {
+   "id": 42,
+   "claim": "Insert an intermediate state between verifying and the terminal states",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-ivr/config.arena.yaml:44",
+    "examples/voice-ivr/config.arena.yaml:48"
+   ]
+  },
+  {
+   "id": 43,
+   "claim": "workflow_tool_access can constrain which tools each state permits",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/workflow_tool_executor.go:31"
+   ]
+  },
+  {
+   "id": 44,
+   "claim": "tool_call_sequence asserts tool-call order (lookup_account before check_balance)",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/workflow_tool_executor.go:31"
+   ]
+  },
+  {
+   "id": 45,
+   "claim": "tool_calls_with_args asserts specific argument values",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/workflow_tool_executor.go:31"
+   ]
+  }
+ ]
+}
