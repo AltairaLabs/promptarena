@@ -641,6 +641,31 @@ func TestSetDefaultFilePaths_JUnitDefaults(t *testing.T) {
 	}
 }
 
+// defaults.output.junit.file used to be parsed and then never read.
+func TestSetDefaultFilePaths_JUnitFromConfig(t *testing.T) {
+	withJUnit := func(file string) *arenaconfig.Config {
+		return &arenaconfig.Config{Defaults: arenaconfig.Defaults{Output: arenaconfig.OutputConfig{
+			JUnit: &arenaconfig.JUnitOutputConfig{File: file},
+		}}}
+	}
+
+	params := &RunParameters{OutDir: "out"}
+	setDefaultFilePaths(withJUnit("reports/arena.xml"), params)
+	assert.Equal(t, filepath.Join("out", "reports", "arena.xml"), params.JUnitFile, "relative to the output dir")
+
+	params = &RunParameters{OutDir: "out"}
+	setDefaultFilePaths(withJUnit("/abs/arena.xml"), params)
+	assert.Equal(t, "/abs/arena.xml", params.JUnitFile)
+
+	params = &RunParameters{OutDir: "out", JUnitFile: "flag.xml"}
+	setDefaultFilePaths(withJUnit("reports/arena.xml"), params)
+	assert.Equal(t, "flag.xml", params.JUnitFile, "--junit-file wins")
+
+	params = &RunParameters{OutDir: "out"}
+	setDefaultFilePaths(withJUnit(""), params)
+	assert.Equal(t, filepath.Join("out", "junit.xml"), params.JUnitFile, "an empty file keeps the default")
+}
+
 func TestCountFailedAssertions(t *testing.T) {
 	tests := []struct {
 		name     string

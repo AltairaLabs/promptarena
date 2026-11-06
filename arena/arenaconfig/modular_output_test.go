@@ -235,7 +235,7 @@ func TestGetJUnitOutputConfig_EdgeCases(t *testing.T) {
 				JUnit: nil,
 			},
 			expected: &arenaconfig.JUnitOutputConfig{
-				File: "results.xml", // Default value
+				File: "junit.xml", // Default value
 			},
 		},
 		{

@@ -74,12 +74,17 @@ func (b *SummaryBuilder) BuildSummary(results []engine.RunResult) *ResultSummary
 	}
 }
 
-// RunPassed reports whether a single run passed. It is the one canonical
-// "did this run pass?" predicate: the report counters (CountResultsByStatus,
-// JSON/Markdown/JUnit summaries) and the TUI/console summary all decide pass
-// vs fail from this same rule so they cannot diverge — the false-green in #39
-// came from surfaces that consulted completion (Error == "") without consulting
-// assertion outcomes.
+// RunPassed reports whether a single run passed. CountResultsByStatus (and
+// through it the run summary the JSON index.json records) and the CSV
+// `passed` column decide pass vs fail from this rule — the false-green in #39
+// came from surfaces that consulted completion (Error == "") without
+// consulting assertion outcomes.
+//
+// The Markdown and JUnit reports and the console summary do not call it; each
+// has its own rule. Markdown (calculateSummary) fails a run on an error, on
+// ANY guardrail violation, or on a failed turn or conversation assertion, so a
+// run whose expected violation is covered by passing assertions passes here
+// and fails in results.md.
 //
 // A run passed when it completed without error AND:
 //   - every defined assertion (turn- and conversation-level) passed, AND

@@ -126,6 +126,20 @@ func TestInitMemory_NoConfigLeavesEverythingAlone(t *testing.T) {
 	assert.Nil(t, eng.toolRegistry.Get(memory.RecallToolName))
 }
 
+// TestInitMemory_EnabledFalseLeavesEverythingAlone: `memory: {enabled: false}`
+// used to create the store and offer the tools anyway, because only the
+// block's presence was checked.
+func TestInitMemory_EnabledFalseLeavesEverythingAlone(t *testing.T) {
+	eng := &Engine{
+		config:       &arenaconfig.Config{Memory: map[string]any{"enabled": false}},
+		toolRegistry: tools.NewRegistry(),
+	}
+
+	require.NoError(t, eng.initMemory())
+	assert.Nil(t, eng.memoryStore)
+	assert.Nil(t, eng.toolRegistry.Get(memory.RecallToolName))
+}
+
 // The scope a run writes under is the isolation boundary between runs — get it
 // wrong and one scenario recalls another's memories, which surfaces as a
 // passing assertion rather than an error. buildRunTools builds the scope and

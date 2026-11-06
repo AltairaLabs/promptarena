@@ -27,7 +27,7 @@ type AssertionConfig struct {
 	// PassThreshold is the minimum pass rate (0.0-1.0) required across trials.
 	// Only meaningful when the parent scenario has Trials > 1.
 	// If unset, defaults to 1.0 (must pass every trial).
-	PassThreshold *float64 `json:"pass_threshold,omitempty" yaml:"pass_threshold,omitempty"`
+	PassThreshold *float64 `json:"pass_threshold,omitempty" yaml:"pass_threshold,omitempty" jsonschema:"minimum=0,maximum=1"` //nolint:lll
 }
 
 // Globals holds arena-level cross-cutting config that applies to every
@@ -543,8 +543,9 @@ type MarkdownOutputConfig struct {
 
 // JUnitOutputConfig contains configuration options for JUnit XML output
 type JUnitOutputConfig struct {
-	File string `yaml:"file,omitempty" json:"file,omitempty"` // Custom JUnit output file name
-	// Future: could add options like test suite naming, etc.
+	// File is the JUnit XML file. A relative path is relative to the output
+	// directory; --junit-file overrides it. Default: junit.xml.
+	File string `yaml:"file,omitempty" json:"file,omitempty"`
 }
 
 // RecordingConfig contains configuration for session recording.
@@ -643,7 +644,7 @@ func (o *OutputConfig) GetJUnitOutputConfig() *JUnitOutputConfig {
 
 	// Return default configuration
 	return &JUnitOutputConfig{
-		File: "results.xml",
+		File: "junit.xml",
 	}
 }
 

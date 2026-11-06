@@ -10,12 +10,13 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/v2/memory"
 )
 
-// initMemory sets up the memory subsystem if config.Memory is set.
+// initMemory sets up the memory subsystem if the config enables it (a memory
+// block without `enabled: false`; see Config.MemoryEnabled).
 // Creates an InMemoryStore and registers the memory executor + tools.
 // The actual tool execution is real (not mocked) — the InMemoryStore
 // persists data across turns within a run.
 func (e *Engine) initMemory() error {
-	if e.config.Memory == nil {
+	if !e.config.MemoryEnabled() {
 		return nil
 	}
 

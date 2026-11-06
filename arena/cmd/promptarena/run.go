@@ -152,7 +152,8 @@ func init() {
 	runCmd.Flags().StringSlice(flagObjectivesGroupBy, []string{objectives.GroupScenario},
 		"Groupings for the objectives report: scenario, provider, objective, taxonomy, taxonomy.<framework>, "+
 			"label.<key>, data.<column>")
-	runCmd.Flags().String("junit-file", "", "JUnit XML output file (default: out/junit.xml)")
+	runCmd.Flags().String("junit-file", "",
+		"JUnit XML output file (default: defaults.output.junit.file, else <out>/junit.xml)")
 	runCmd.Flags().String("html-file", "", "Deprecated: the HTML report was removed; use --markdown-file")
 	// Keep both accepted so existing scripts do not fail outright, but say so.
 	_ = runCmd.Flags().MarkDeprecated("html", "the HTML report was removed; markdown is produced instead")
@@ -473,9 +474,14 @@ func normalizeOutputFormats(formats []string) []string {
 
 // setDefaultFilePaths sets default file paths for output files if not specified
 func setDefaultFilePaths(cfg *arenaconfig.Config, params *RunParameters) {
-	// Set default JUnit file path
+	// JUnit file: --junit-file, else defaults.output.junit.file (relative to
+	// the output directory), else junit.xml in the output directory.
 	if params.JUnitFile == "" {
-		params.JUnitFile = filepath.Join(params.OutDir, "junit.xml")
+		if j := cfg.Defaults.Output.JUnit; j != nil && j.File != "" {
+			params.JUnitFile = config.ResolveOutputPath(params.OutDir, j.File)
+		} else {
+			params.JUnitFile = filepath.Join(params.OutDir, "junit.xml")
+		}
 	}
 
 	// Set default Markdown file path if markdown generation is enabled
