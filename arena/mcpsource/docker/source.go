@@ -108,8 +108,12 @@ func applyRuntimeArgs(spec *RunSpec, args map[string]any) error {
 	if err != nil {
 		return err
 	}
+	// Each pick closes its probe listener before the next, so the kernel may
+	// hand the same ephemeral port back. Track what is taken so the MCP port
+	// and every extra port stay distinct.
+	used := map[int]bool{spec.PortHost: true}
 	for _, ctr := range ports {
-		host, pickErr := pickFreePort()
+		host, pickErr := pickDistinctFreePort(pickFreePort, used)
 		if pickErr != nil {
 			return fmt.Errorf("docker source: pick free port for %d: %w", ctr, pickErr)
 		}
@@ -267,6 +271,25 @@ func mountsFromArgs(v any) []Mount {
 		}
 	}
 	return out
+}
+
+// maxPortPicks bounds how many times pickDistinctFreePort retries a collision.
+const maxPortPicks = 16
+
+// pickDistinctFreePort picks a free port not already in used, records it, and
+// returns it.
+func pickDistinctFreePort(pick func() (int, error), used map[int]bool) (int, error) {
+	for range maxPortPicks {
+		p, err := pick()
+		if err != nil {
+			return 0, err
+		}
+		if !used[p] {
+			used[p] = true
+			return p, nil
+		}
+	}
+	return 0, errors.New("no distinct free port found")
 }
 
 func pickFreePort() (int, error) {
