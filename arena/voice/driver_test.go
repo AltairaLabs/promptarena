@@ -209,3 +209,63 @@ func TestDriverWithGuard_FlushResetsTheGate(t *testing.T) {
 		t.Fatalf("expected the mic frame to pass after flush reset the gate, got %d frames", len(received))
 	}
 }
+
+// TestDriverWithGuard_RealisticTurnSequence drives the gate end to end through
+// Driver.Run: agent speech whose echo reaches the mic at ~0.3x playback is
+// dropped, a barge-in well above the floor passes, and after the turn ends
+// naturally (no flush) a quiet next turn still lets a modest barge-in through.
+func TestDriverWithGuard_RealisticTurnSequence(t *testing.T) {
+	io := &fakeIO{capture: make(chan []byte, 4)}
+	guard := NewEchoGuardWithOptions(EchoGuardOptions{Threshold: 0.02, Hangover: 10 * time.Millisecond})
+
+	const n = 4800 // 200ms per frame at 24kHz
+	loudTurn, loudEcho, shout := constantFrame(0.8, n), constantFrame(0.24, n), constantFrame(0.7, n)
+	quietTurn, quietEcho, bargeIn := constantFrame(0.2, n), constantFrame(0.06, n), constantFrame(0.25, n)
+
+	var got []float32
+	runner := func(ctx context.Context, mic <-chan []byte, play func([]byte), _ func()) error {
+		recv := func() bool {
+			select {
+			case f, ok := <-mic:
+				if ok {
+					got = append(got, rms(f))
+				}
+				return ok
+			case <-time.After(time.Second):
+				return false
+			}
+		}
+		// Loud turn: echo is dropped, the shout is the first frame through.
+		play(loudTurn)
+		io.capture <- loudEcho
+		io.capture <- shout
+		if !recv() {
+			return nil
+		}
+		// Turn ends naturally; wait out the frame plus hangover.
+		time.Sleep(250 * time.Millisecond)
+		// Quiet turn: its echo is dropped, a 0.25-RMS barge-in passes.
+		play(quietTurn)
+		io.capture <- quietEcho
+		io.capture <- bargeIn
+		recv()
+		close(io.capture)
+		for f := range mic {
+			got = append(got, rms(f))
+		}
+		return nil
+	}
+
+	d := NewDriverWithGuard(io, runner, nil, guard)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := d.Run(ctx); err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if len(got) != 2 {
+		t.Fatalf("expected exactly the shout and the barge-in to pass, got RMS levels %v", got)
+	}
+	if got[0] < 0.6 || got[1] < 0.2 || got[1] > 0.3 {
+		t.Fatalf("wrong frames passed the gate: got RMS levels %v, want [~0.7 ~0.25]", got)
+	}
+}

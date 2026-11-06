@@ -12,7 +12,13 @@ const defaultHangover = 200 * time.Millisecond
 
 // defaultCouplingFactor is the fraction of the current playback RMS taken as
 // the dynamic echo floor: an estimate of how much speaker output reaches the
-// mic on an open-speaker laptop. A guess until measured on real hardware.
+// mic on an open-speaker laptop. 0.5 is an unmeasured default -- a guess until
+// it is calibrated against real speaker/mic hardware.
+//
+// The estimate tracks the most recently queued frame, not the one currently
+// sounding: if the runner queued audio far ahead of playback, the floor would
+// lead the audible envelope. In practice output is paced at roughly real time,
+// so queued and audible audio stay close together.
 const defaultCouplingFactor = 0.5
 
 // defaultDecayRate is the EMA weight kept on the previous playback estimate,
@@ -112,6 +118,14 @@ func (g *EchoGuard) recordPlaybackAt(frame []byte, now time.Time) {
 
 	g.mu.Lock()
 	defer g.mu.Unlock()
+	// A frame arriving after the previous window (plus hangover) has fully
+	// elapsed starts a new turn: begin the estimate fresh from this frame.
+	// Without this, a turn that ends naturally (no flush, so no Reset) leaves
+	// the previous turn's level in the EMA, and a quiet turn following a loud
+	// one inherits a floor high enough to drop a genuine barge-in.
+	if !g.speakingUntil.IsZero() && !now.Before(g.speakingUntil.Add(g.hangover)) {
+		g.playbackRMS = 0
+	}
 	if g.playbackRMS == 0 {
 		g.playbackRMS = frameRMS
 	} else {

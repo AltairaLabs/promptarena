@@ -158,3 +158,50 @@ func TestEchoGuardWithOptions_RejectsDecayRateOfOne(t *testing.T) {
 		t.Fatalf("DecayRate 1.0 was not rejected: got %v, want default 0.8", g.decayRate)
 	}
 }
+
+// constantFrame returns a PCM16 mono frame of n samples at a constant
+// amplitude, so its RMS is amp (0..1).
+func constantFrame(amp float32, n int) []byte {
+	v := int16(amp * 32767)
+	frame := make([]byte, n*pcm16BytesPerSample)
+	for i := 0; i < len(frame); i += pcm16BytesPerSample {
+		frame[i], frame[i+1] = byte(uint16(v)), byte(uint16(v)>>8)
+	}
+	return frame
+}
+
+// TestEchoGuard_NaturalTurnEndDoesNotLeakPlaybackRMS is the regression for a
+// stale playback estimate carrying across turns. A turn that ends naturally
+// (no flush, so no Reset) used to leave playbackRMS at the loud turn's level;
+// the first frame of the next, quiet turn was then averaged against it, the
+// floor jumped to ~0.4 and a genuine 0.25-RMS barge-in was dropped.
+func TestEchoGuard_NaturalTurnEndDoesNotLeakPlaybackRMS(t *testing.T) {
+	g := NewEchoGuard(0.02)
+	now := time.Now()
+
+	// Loud agent turn at full scale.
+	loud := constantFrame(1.0, 480) // 20ms at 24kHz
+	for i := 0; i < 10; i++ {
+		g.recordPlaybackAt(loud, now)
+		now = now.Add(playbackFrameDuration(loud))
+	}
+
+	// The turn ends naturally; the user pauses well past the hangover.
+	now = now.Add(defaultHangover + time.Second)
+
+	// Quiet agent turn: floor should be ~0.1 (0.2 * 0.5), not the loud turn's.
+	quiet := constantFrame(0.2, 480)
+	g.recordPlaybackAt(quiet, now)
+
+	echo := constantFrame(0.06, 480) // ~0.3x playback: still gated
+	if g.allowAt(echo, now) {
+		t.Fatal("expected the quiet turn's own echo to be gated")
+	}
+	bargeIn := constantFrame(0.25, 480)
+	if !g.allowAt(bargeIn, now) {
+		g.mu.Lock()
+		est := g.playbackRMS
+		g.mu.Unlock()
+		t.Fatalf("0.25-RMS barge-in dropped on the first quiet frame: playback estimate %.3f leaked from the previous turn", est)
+	}
+}
