@@ -1,23 +1,26 @@
 ---
 title: Use Arena as a Go Library
-description: Integrate Arena into Go applications for programmatic LLM testing
+description: Build a config in Go, run scenarios with the Arena engine and read the results from the state store.
+verified:
+  commit: 631d3c353c2c9d71b362ae5cd20c137d42b19d5b
+  sources:
+    - arena/arenaconfig/types.go
+    - arena/cmd/promptarena/run_interactive.go
+    - arena/engine/builder_integration.go
+    - arena/engine/engine.go
+    - arena/engine/execution.go
+    - arena/statestore/metadata.go
+    - arena/statestore/store.go
 ---
 
-This guide shows you how to integrate Arena into your Go applications for programmatic testing, custom tooling, and dynamic scenario generation.
+Embed the Arena engine in a Go program to build scenarios in code, run them against providers and read the results. See [Programmatic vs CLI](/arena/explanation/programmatic-vs-cli/) for when to choose the library over the CLI.
 
-## When to Use Arena as a Library
+## Prerequisites
 
-Use Arena programmatically when you need to:
+- Go 1.26 or later.
+- An API key in the environment for each real provider you use (for example `OPENAI_API_KEY`). The `mock` provider needs none.
 
-- **Integrate with existing systems** - Embed testing into your application
-- **Generate scenarios dynamically** - Create tests from data or user input
-- **Custom reporting** - Process results with your own logic
-- **Build testing tools** - Create specialized testing applications
-- **Automate workflows** - Chain testing with other operations
-
-## Installation
-
-Add Arena to your Go project:
+## 1. Install
 
 ```bash
 go get github.com/AltairaLabs/promptarena/v2/arena/engine
@@ -25,18 +28,17 @@ go get github.com/AltairaLabs/PromptKit/pkg/v2/config
 go get github.com/AltairaLabs/PromptKit/runtime/v2/prompt
 ```
 
-## Basic Usage
+## 2. Create the configuration
 
-### 1. Create Configuration
+`arenaconfig.Config` holds the loaded providers, prompts and scenarios. Set every `Loaded*` map before you build the engine components: the engine reads them once and ignores later changes.
 
 ```go
 import (
 	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/prompt"
-	"github.com/AltairaLabs/promptarena/v2/arena/engine"
+	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
 )
 
-// Create prompt configuration
 promptConfig := &prompt.Config{
 	Spec: prompt.Spec{
 		TaskType:       "assistant",
@@ -44,168 +46,172 @@ promptConfig := &prompt.Config{
 	},
 }
 
-// Create Arena configuration
-cfg := &config.Config{
+cfg := &arenaconfig.Config{
 	LoadedProviders: map[string]*config.Provider{
-		"openai": {
-			ID:    "openai",
-			Type:  "openai",
-			Model: "gpt-4",
-		},
+		"openai": {ID: "openai", Type: "openai", Model: "gpt-4o-mini"},
 	},
-	LoadedPromptConfigs: map[string]*config.PromptConfigData{
-		"assistant": {
-			Config:   promptConfig,
-			TaskType: "assistant",
-		},
+	LoadedPromptConfigs: map[string]*arenaconfig.PromptConfigData{
+		"assistant": {Config: promptConfig, TaskType: "assistant"},
 	},
-	LoadedScenarios: map[string]*config.Scenario{
+	LoadedScenarios: map[string]*arenaconfig.Scenario{
 		"test-1": {
 			ID:       "test-1",
 			TaskType: "assistant",
-			Turns: []config.TurnDefinition{
+			Turns: []arenaconfig.TurnDefinition{
 				{Role: "user", Content: "Hello"},
 			},
 		},
 	},
-	Defaults: config.Defaults{
-		Temperature: 0.7,
-		MaxTokens:   500,
-	},
+	Defaults: arenaconfig.Defaults{Temperature: 0.7, MaxTokens: 500},
 }
 ```
 
-### 2. Build Engine Components
+## 3. Build the engine
+
+`BuildEngineComponents` returns nine values. Pass `nil` as the second argument to initialise every provider.
 
 ```go
-// Build all required components
-providerReg, promptReg, mcpReg, executor, err := engine.BuildEngineComponents(cfg)
+import "github.com/AltairaLabs/promptarena/v2/arena/engine"
+
+providerReg, promptReg, mcpReg, executor, adapterReg, _, toolReg, _, err :=
+	engine.BuildEngineComponents(cfg, nil)
 if err != nil {
 	return err
 }
-```
 
-### 3. Create and Execute
-
-```go
-// Create engine
-eng, err := engine.NewEngine(cfg, providerReg, promptReg, mcpReg, executor)
+eng, err := engine.NewEngine(cfg, providerReg, promptReg, mcpReg, executor, adapterReg, toolReg)
 if err != nil {
 	return err
 }
 defer eng.Close()
+```
 
-// Generate plan
-plan, err := eng.GenerateRunPlan(nil, nil, nil)
+`engine.NewEngineFromConfig(cfg)` does both calls in one step and wires the A2A cleanup and skills factory for you.
+
+## 4. Run the scenarios
+
+`GenerateRunPlan` takes four filters: regions, providers, scenarios and evals. `nil` selects everything. `ExecuteRuns` takes the number of concurrent workers.
+
+```go
+plan, err := eng.GenerateRunPlan(nil, nil, nil, nil)
 if err != nil {
 	return err
 }
 
-// Execute
 ctx := context.Background()
-runIDs, err := eng.ExecuteRuns(ctx, plan, 4) // 4 concurrent workers
+runIDs, err := eng.ExecuteRuns(ctx, plan, 4)
 if err != nil {
 	return err
 }
 ```
 
-### 4. Retrieve Results
+`runIDs` has one entry per planned run. The entry is empty for a run that failed to save.
+
+## 5. Read the results
+
+With the default state store, `GetStateStore` returns a `*statestore.ArenaStateStore`.
 
 ```go
 import "github.com/AltairaLabs/promptarena/v2/arena/statestore"
 
-arenaStore := eng.GetStateStore().(*statestore.ArenaStateStore)
+store, ok := eng.GetStateStore().(*statestore.ArenaStateStore)
+if !ok {
+	return fmt.Errorf("unexpected state store %T", eng.GetStateStore())
+}
 
 for _, runID := range runIDs {
-	result, err := arenaStore.GetRunResult(ctx, runID)
+	result, err := store.GetResult(ctx, runID)
 	if err != nil {
+		log.Printf("no result for %q: %v", runID, err)
 		continue
 	}
-	
-	// Process result
-	fmt.Printf("Scenario: %s, Status: %s\n", 
-		result.ScenarioID,
-		getStatus(result.Error))
+	fmt.Printf("%s on %s: error=%q\n", result.ScenarioID, result.ProviderID, result.Error)
 }
 ```
 
-## Advanced Patterns
+An empty `result.Error` means the run finished without an error.
 
-### Dynamic Scenario Generation
+## Generate scenarios from data
 
-Generate scenarios from external data:
+Fill `cfg.LoadedScenarios` before step 3. `loadTestCases` and `buildTurns` stand for your own code.
 
 ```go
-// Load test cases from database/API/file
-testCases := loadTestCases()
-
-scenarios := make(map[string]*config.Scenario)
-for i, tc := range testCases {
-	scenarios[tc.ID] = &config.Scenario{
+scenarios := make(map[string]*arenaconfig.Scenario)
+for _, tc := range loadTestCases() {
+	scenarios[tc.ID] = &arenaconfig.Scenario{
 		ID:          tc.ID,
 		TaskType:    tc.TaskType,
 		Description: tc.Description,
 		Turns:       buildTurns(tc.Conversations),
 	}
 }
-
 cfg.LoadedScenarios = scenarios
 ```
 
-### Provider Comparison
+## Compare providers
 
-Test the same scenario across multiple providers:
+Define every provider in `cfg.LoadedProviders` before step 3. Each scenario then runs against the providers in its group.
 
 ```go
-providers := map[string]*config.Provider{
-	"openai-gpt4": {
-		ID:    "openai-gpt4",
-		Type:  "openai",
-		Model: "gpt-4",
-	},
-	"anthropic-claude": {
-		ID:    "anthropic-claude",
-		Type:  "anthropic",
-		Model: "claude-3-5-sonnet-20241022",
-	},
-	"google-gemini": {
-		ID:    "google-gemini",
-		Type:  "gemini",
-		Model: "gemini-2.0-flash-exp",
-	},
+cfg.LoadedProviders = map[string]*config.Provider{
+	"openai-gpt4o":     {ID: "openai-gpt4o", Type: "openai", Model: "gpt-4o"},
+	"anthropic-claude": {ID: "anthropic-claude", Type: "claude", Model: "claude-sonnet-4-6"},
+	"google-gemini":    {ID: "google-gemini", Type: "gemini", Model: "gemini-2.5-flash"},
 }
-
-cfg.LoadedProviders = providers
-
-// Execute - all providers will be tested
-plan, _ := eng.GenerateRunPlan(nil, nil, nil)
-runIDs, _ := eng.ExecuteRuns(ctx, plan, 6)
-
-// Compare results
-compareProviders(runIDs, eng.GetStateStore())
 ```
 
-### Custom Result Processing
+The provider `Type` is `openai`, `claude`, `gemini` or `mock`. `anthropic` is not a type.
 
-Process results with your own logic:
+## Filter a run
+
+Provider filters match provider IDs exactly, and scenario filters match scenario IDs. An unknown scenario ID returns an error.
+
+```go
+plan, err := eng.GenerateRunPlan(
+	nil,                                          // all regions
+	[]string{"openai-gpt4o", "anthropic-claude"}, // only these provider IDs
+	[]string{"critical-test-1"},                  // only this scenario
+	nil,                                          // all evals
+)
+```
+
+## Run without API calls
+
+Define a provider of type `mock` before step 3.
+
+```go
+cfg.LoadedProviders = map[string]*config.Provider{
+	"mock": {ID: "mock", Type: "mock", Model: "test-model"},
+}
+```
+
+To switch an existing engine to mock responses, pass a mock config file to `EnableMockProviderMode`:
+
+```go
+if err := eng.EnableMockProviderMode("mock-config.yaml"); err != nil {
+	return err
+}
+```
+
+## Process results yourself
 
 ```go
 type TestMetrics struct {
-	Provider    string
-	Scenario    string
-	Duration    time.Duration
-	Cost        float64
-	TokensUsed  int
-	Success     bool
-	ErrorMsg    string
+	Provider   string
+	Scenario   string
+	Duration   time.Duration
+	Cost       float64
+	TokensUsed int
+	Success    bool
 }
 
-func processResults(runIDs []string, store *statestore.ArenaStateStore) []TestMetrics {
+func processResults(ctx context.Context, runIDs []string, store *statestore.ArenaStateStore) []TestMetrics {
 	var metrics []TestMetrics
-	
 	for _, runID := range runIDs {
-		result, _ := store.GetRunResult(context.Background(), runID)
-		
+		result, err := store.GetResult(ctx, runID)
+		if err != nil {
+			continue
+		}
 		metrics = append(metrics, TestMetrics{
 			Provider:   result.ProviderID,
 			Scenario:   result.ScenarioID,
@@ -213,204 +219,120 @@ func processResults(runIDs []string, store *statestore.ArenaStateStore) []TestMe
 			Cost:       result.Cost.TotalCost,
 			TokensUsed: result.Cost.InputTokens + result.Cost.OutputTokens,
 			Success:    result.Error == "",
-			ErrorMsg:   result.Error,
 		})
 	}
-	
 	return metrics
 }
 ```
 
-### Filtered Execution
+## Run from `go test`
 
-Run specific combinations only:
-
-```go
-// Only test specific scenarios with specific providers
-plan, err := eng.GenerateRunPlan(
-	nil,                           // all regions
-	[]string{"openai", "claude"},  // only these providers
-	[]string{"critical-test-1"},   // only this scenario
-)
-```
-
-### Mock Provider for Testing
-
-Use mock providers to test without API calls:
-
-```go
-cfg.LoadedProviders = map[string]*config.Provider{
-	"mock": {
-		ID:    "mock",
-		Type:  "mock",
-		Model: "test-model",
-	},
-}
-
-// Optionally enable mock mode on existing engine
-err := eng.EnableMockProviderMode("path/to/mock-config.yaml")
-```
-
-## Integration Examples
-
-### Testing Framework Integration
+`createTestConfig` stands for your own function that returns an `*arenaconfig.Config`.
 
 ```go
 func TestLLMResponses(t *testing.T) {
 	cfg := createTestConfig()
-	
-	providerReg, promptReg, mcpReg, executor, err := engine.BuildEngineComponents(cfg)
+
+	providerReg, promptReg, mcpReg, executor, adapterReg, _, toolReg, _, err :=
+		engine.BuildEngineComponents(cfg, nil)
 	require.NoError(t, err)
-	
-	eng, err := engine.NewEngine(cfg, providerReg, promptReg, mcpReg, executor)
+
+	eng, err := engine.NewEngine(cfg, providerReg, promptReg, mcpReg, executor, adapterReg, toolReg)
 	require.NoError(t, err)
 	defer eng.Close()
-	
-	plan, _ := eng.GenerateRunPlan(nil, nil, nil)
+
+	plan, err := eng.GenerateRunPlan(nil, nil, nil, nil)
+	require.NoError(t, err)
 	runIDs, err := eng.ExecuteRuns(context.Background(), plan, 4)
 	require.NoError(t, err)
-	
-	// Assert results
+
 	store := eng.GetStateStore().(*statestore.ArenaStateStore)
 	for _, runID := range runIDs {
-		result, _ := store.GetRunResult(context.Background(), runID)
-		assert.Empty(t, result.Error, "Test should pass")
+		result, err := store.GetResult(context.Background(), runID)
+		require.NoError(t, err)
+		assert.Empty(t, result.Error)
 	}
 }
 ```
 
-### CI/CD Integration
+## Exit non-zero on failures
+
+For a CI job, count the failed runs and exit with a status code.
 
 ```go
-func main() {
-	// Load config from environment
-	cfg := buildConfigFromEnv()
-	
-	// Execute tests
-	eng, _ := setupEngine(cfg)
-	defer eng.Close()
-	
-	plan, _ := eng.GenerateRunPlan(nil, nil, nil)
-	runIDs, _ := eng.ExecuteRuns(context.Background(), plan, 10)
-	
-	// Process results and exit with appropriate code
-	results := collectResults(runIDs, eng.GetStateStore())
-	
-	if hasFailures(results) {
-		fmt.Println("Tests failed")
-		os.Exit(1)
+failed := 0
+for _, runID := range runIDs {
+	result, err := store.GetResult(ctx, runID)
+	if err != nil || result.Error != "" {
+		failed++
 	}
-	
-	fmt.Println("All tests passed")
-	os.Exit(0)
+}
+if failed > 0 {
+	fmt.Printf("%d of %d runs failed\n", failed, len(runIDs))
+	os.Exit(1)
 }
 ```
 
-### Custom Test Runner
+## Good practice
 
-```go
-type CustomRunner struct {
-	engine *engine.Engine
-	store  *statestore.ArenaStateStore
-}
+Close the engine with `defer eng.Close()`. `Close` shuts down the MCP registry, provider registry and event store. Build a separate set of components for each engine, because closing one engine closes the registries it was given.
 
-func (r *CustomRunner) RunWithRetry(scenario string, maxRetries int) error {
-	for i := 0; i < maxRetries; i++ {
-		plan, _ := r.engine.GenerateRunPlan(nil, nil, []string{scenario})
-		runIDs, _ := r.engine.ExecuteRuns(context.Background(), plan, 1)
-		
-		result, _ := r.store.GetRunResult(context.Background(), runIDs[0])
-		if result.Error == "" {
-			return nil
-		}
-		
-		log.Printf("Attempt %d failed, retrying...", i+1)
-		time.Sleep(time.Second * time.Duration(i+1))
-	}
-	
-	return fmt.Errorf("failed after %d attempts", maxRetries)
-}
+Match the worker count to the provider's rate limit: a low value such as `2` suits rate-limited APIs, and a high value such as `20` suits the `mock` provider.
+
+Log a failed `GetResult` lookup and continue, as step 5 does, so one bad run does not stop the batch.
+
+## Verify
+
+Run the program from step 5 with the `mock` provider:
+
+```bash
+go run .
 ```
 
-## Best Practices
-
-### 1. Always Close the Engine
-
-```go
-eng, _ := engine.NewEngine(cfg, providerReg, promptReg, mcpReg, executor)
-defer eng.Close() // Ensures proper cleanup
-```
-
-### 2. Handle Errors Gracefully
-
-```go
-result, err := store.GetRunResult(ctx, runID)
-if err != nil {
-	log.Printf("Failed to get result for %s: %v", runID, err)
-	continue // Don't fail entire batch
-}
-```
-
-### 3. Use Appropriate Concurrency
-
-```go
-// For rate-limited APIs
-runIDs, _ := eng.ExecuteRuns(ctx, plan, 2)
-
-// For mock testing
-runIDs, _ := eng.ExecuteRuns(ctx, plan, 20)
-```
-
-### 4. Reuse Components
-
-```go
-// Build components once
-providerReg, promptReg, mcpReg, executor, _ := engine.BuildEngineComponents(cfg)
-
-// Reuse for multiple engines
-eng1, _ := engine.NewEngine(cfg1, providerReg, promptReg, mcpReg, executor)
-eng2, _ := engine.NewEngine(cfg2, providerReg, promptReg, mcpReg, executor)
-```
+The output has one line per run, such as `test-1 on mock: error=""`.
 
 ## Troubleshooting
 
-### Import Errors
-
-If you see "package not found" errors:
+### Package not found
 
 ```bash
 go mod tidy
 go get github.com/AltairaLabs/promptarena/v2/arena/engine@latest
 ```
 
-### Type Assertion Failures
+### Type assertion fails
 
-Always check type assertions:
+`GetStateStore` returns the `statestore.Store` interface. A configured Redis state store returns a different type, so check the assertion:
 
 ```go
 arenaStore, ok := eng.GetStateStore().(*statestore.ArenaStateStore)
 if !ok {
-	log.Fatal("Expected ArenaStateStore")
+	log.Fatal("expected ArenaStateStore")
 }
 ```
 
-### Memory Issues with Large Test Suites
+### Provider changes have no effect
 
-Process results in batches:
+The engine copies `cfg.LoadedProviders` and `cfg.LoadedScenarios` when you build it. Set both before `BuildEngineComponents`.
+
+### A filter matches no runs
+
+Provider filters take provider IDs, not provider types. An unmatched provider filter produces an empty plan.
+
+### Memory use with large suites
+
+Process the run IDs in batches:
 
 ```go
 const batchSize = 100
 for i := 0; i < len(runIDs); i += batchSize {
-	end := i + batchSize
-	if end > len(runIDs) {
-		end = len(runIDs)
-	}
-	
+	end := min(i+batchSize, len(runIDs))
 	processBatch(runIDs[i:end], store)
 }
 ```
 
-## See Also
+## Related pages
 
-- [Tutorial: Programmatic Usage](/arena/tutorials/07-programmatic-usage/) - Step-by-step learning
-- [Reference: API Documentation](/arena/reference/api-reference/) - Complete API reference
+- [Programmatic Usage tutorial](/arena/tutorials/07-programmatic-usage/) walks through a first program step by step.
+- [API reference](/arena/reference/api-reference/) lists the engine API.
+- [Programmatic vs CLI](/arena/explanation/programmatic-vs-cli/) compares the two ways to run Arena.

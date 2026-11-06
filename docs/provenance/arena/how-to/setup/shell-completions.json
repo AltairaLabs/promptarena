@@ -1,0 +1,453 @@
+{
+ "page": "docs/src/content/docs/arena/how-to/setup/shell-completions.md",
+ "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "`promptarena` and `packc` each provide a shell completion feature",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/completion_interactive.go:19",
+    "packc/main_interactive.go:368"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "Completions suggest commands, flags, and dynamic values such as scenario names and providers",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/completion_interactive.go:74",
+    "packc/main_interactive.go:393"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "Command and subcommand completion is available",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/completion_interactive.go:55",
+    "packc/main_interactive.go:398"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "Flag names complete with a `--` prefix",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:137"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "`--scenario` lists scenarios from `config.arena.yaml`",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/completion_interactive.go:133",
+    "arena/cmd/promptarena/completion_interactive.go:76"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "`--provider` lists configured providers",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/completion_interactive.go:149",
+    "arena/cmd/promptarena/completion_interactive.go:79"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "`--roles` lists self-play role configurations",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/completion_interactive.go:180",
+    "arena/cmd/promptarena/completion_interactive.go:85"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "`--region` suggests prompt regions",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/completion_interactive.go:165",
+    "arena/cmd/promptarena/completion_interactive.go:82"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "`--format` offers the output formats json, junit, markdown, csv",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/completion_interactive.go:316",
+    "arena/cmd/promptarena/run.go:30"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "`--section` lists config sections for `config-inspect`",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/completion_interactive.go:213",
+    "arena/cmd/promptarena/completion_interactive.go:330"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "`--template` lists available project templates for `init`",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/completion_interactive.go:220",
+    "arena/cmd/promptarena/completion_interactive.go:228"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "The bash completion directory is `~/.local/share/bash-completion/completions`, and bash-completion loads files from it",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 13,
+   "claim": "`promptarena completion bash` prints a bash completion script",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/completion_interactive.go:60"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "`packc completion bash` prints a bash completion script",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:379",
+    "packc/main_interactive.go:393"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "Sourcing the generated files loads completion in the current shell",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/completion_interactive.go:60",
+    "packc/main_interactive.go:429"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "Writing to `/etc/bash_completion.d/promptarena` with `sudo promptarena completion bash > ...` succeeds, which requires the redirect to run as root",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 17,
+   "claim": "`packc completion bash` writes a script usable under `/etc/bash_completion.d/packc`",
+   "verdict": "false",
+   "evidence": [
+    "packc/main_interactive.go:379"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "`command -v promptarena` detects the binary on PATH",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 19,
+   "claim": "`source <(promptarena completion bash)` loads bash completion from stdout",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/completion_interactive.go:28",
+    "arena/cmd/promptarena/completion_interactive.go:60"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "`source <(packc completion bash)` loads bash completion from stdout",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:379"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "`promptarena completion zsh` writes a zsh completion script",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/completion_interactive.go:62"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "`packc completion zsh` writes a zsh completion script",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:381",
+    "packc/main_interactive.go:432"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "zsh loads a completion for `promptarena` from a file named `_promptarena` in an fpath directory",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/completion_interactive.go:40"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "`fpath=(~/.zsh/completions $fpath)` adds that directory to zsh's function path",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 25,
+   "claim": "`autoload -Uz compinit && compinit` initialises zsh completion",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/completion_interactive.go:38"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "`promptarena completion zsh` output can be placed at `${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/promptarena/_promptarena` for Oh My Zsh",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/completion_interactive.go:62"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "`packc completion zsh` output can be placed at `${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/packc/_packc` for Oh My Zsh",
+   "verdict": "false",
+   "evidence": [
+    "packc/main_interactive.go:381"
+   ]
+  },
+  {
+   "id": 28,
+   "claim": "`promptarena completion fish` writes a fish completion script",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/completion_interactive.go:64"
+   ]
+  },
+  {
+   "id": 29,
+   "claim": "`packc completion fish` writes a fish completion script",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:383",
+    "packc/main_interactive.go:485"
+   ]
+  },
+  {
+   "id": 30,
+   "claim": "Fish loads completions automatically from `~/.config/fish/completions/`",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/completion_interactive.go:46"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "`promptarena completion powershell` writes a PowerShell completion script",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/completion_interactive.go:66"
+   ]
+  },
+  {
+   "id": 32,
+   "claim": "`packc completion powershell` writes a PowerShell completion script",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:385",
+    "packc/main_interactive.go:510"
+   ]
+  },
+  {
+   "id": 33,
+   "claim": "Dot-sourcing `./promptarena.ps1` loads completion in the current session",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/completion_interactive.go:66",
+    "packc/main_interactive.go:510"
+   ]
+  },
+  {
+   "id": 34,
+   "claim": "`promptarena completion powershell | Out-String | Invoke-Expression` loads completion in the profile",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/completion_interactive.go:49"
+   ]
+  },
+  {
+   "id": 35,
+   "claim": "`packc completion powershell | Out-String | Invoke-Expression` loads completion in the profile",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:510"
+   ]
+  },
+  {
+   "id": 36,
+   "claim": "The demo Docker image has completions pre-configured",
+   "verdict": "false",
+   "evidence": [
+    ".goreleaser.yml:259",
+    ".goreleaser.yml:266",
+    ".goreleaser.yml:286"
+   ]
+  },
+  {
+   "id": 37,
+   "claim": "The Alpine package `bash-completion` is installable with `apk add --no-cache bash-completion`",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 38,
+   "claim": "`promptarena completion bash > /etc/bash_completion.d/promptarena` works inside a Dockerfile RUN step",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/completion_interactive.go:60"
+   ]
+  },
+  {
+   "id": 39,
+   "claim": "`packc completion bash > /etc/bash_completion.d/packc` works inside a Dockerfile RUN step",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:379"
+   ]
+  },
+  {
+   "id": 40,
+   "claim": "`/etc/profile.d/bash_completion.sh` exists on Alpine after installing bash-completion and sourcing it loads completions",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 41,
+   "claim": "`promptarena r<Tab>` completes to `promptarena run`",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:198"
+   ]
+  },
+  {
+   "id": 42,
+   "claim": "`promptarena run --sc<Tab>` completes to `--scenario`",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:137"
+   ]
+  },
+  {
+   "id": 43,
+   "claim": "`promptarena run --scenario <Tab>` lists scenario names from the config (example output basic-chat, edge-cases, multi-turn)",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/completion_interactive.go:133"
+   ]
+  },
+  {
+   "id": 44,
+   "claim": "`promptarena run --provider <Tab>` offers openai, anthropic, google, mock",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/completion_interactive.go:354",
+    "arena/cmd/promptarena/completion_interactive.go:79"
+   ]
+  },
+  {
+   "id": 45,
+   "claim": "`promptarena config-inspect --section` accepts prompts, providers, scenarios, tools, selfplay, judges, defaults, validation",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/completion_interactive.go:335",
+    "arena/cmd/promptarena/config_inspect_interactive.go:60"
+   ]
+  },
+  {
+   "id": 46,
+   "claim": "`promptarena init --template` offers quick-start, customer-support, code-assistant, multimodal, mcp-integration",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/completion_interactive.go:245",
+    "arena/templates/loader.go:142"
+   ]
+  },
+  {
+   "id": 47,
+   "claim": "`which promptarena` reports the installed binary",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 48,
+   "claim": "`promptarena completion bash | head -20` prints the start of the completion script",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/completion_interactive.go:60"
+   ]
+  },
+  {
+   "id": 49,
+   "claim": "`brew install bash-completion@2` is the Homebrew package for bash completion on macOS",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 50,
+   "claim": "`apt install bash-completion` is the package on Ubuntu/Debian",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 51,
+   "claim": "`exec $SHELL` reloads the shell",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 52,
+   "claim": "Dynamic completions (scenarios, providers, roles) need a valid `config.arena.yaml` in the current or a parent directory, and return empty results without one",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/completion_interactive.go:134",
+    "arena/cmd/promptarena/completion_interactive.go:96"
+   ]
+  },
+  {
+   "id": 53,
+   "claim": "`ls config.arena.yaml` checks for the config file in the current directory",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/completion_interactive.go:100"
+   ]
+  },
+  {
+   "id": 54,
+   "claim": "`promptarena __complete run --scenario \"\"` is the hidden completion entry point that lists scenarios",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/completion_interactive.go:76"
+   ]
+  },
+  {
+   "id": 55,
+   "claim": "Link target /arena/how-to/setup/installation/ exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 56,
+   "claim": "Link target /arena/reference/cli-commands exists",
+   "verdict": "true",
+   "evidence": []
+  }
+ ]
+}

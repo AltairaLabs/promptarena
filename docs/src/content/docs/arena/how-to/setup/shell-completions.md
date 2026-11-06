@@ -1,54 +1,66 @@
 ---
 title: Configure Shell Completions
+description: Enable tab completion for promptarena and packc in Bash, Zsh, Fish and PowerShell, including config-driven values for scenarios, providers and roles.
+verified:
+  commit: 631d3c353c2c9d71b362ae5cd20c137d42b19d5b
+  sources:
+    - .goreleaser.yml
+    - arena/cmd/promptarena/completion_interactive.go
+    - arena/cmd/promptarena/config_inspect_interactive.go
+    - arena/cmd/promptarena/run.go
+    - arena/templates/loader.go
+    - packc/main_interactive.go
 ---
-Enable tab completion for `promptarena` and `packc` commands in your shell. Shell completions provide intelligent suggestions for commands, flags, and even dynamic values like scenario names and providers.
+Enable tab completion for `promptarena` and `packc` commands in your shell.
 
-## Features
+## What completes
 
-PromptKit's shell completions include:
+Both binaries complete commands, subcommands and flag names. `promptarena` also completes these flag values:
 
-- **Command and subcommand completion** - Tab through available commands
-- **Flag completion** - Complete flag names with `--` prefix
-- **Dynamic value completion** - Context-aware suggestions for:
-  - `--scenario` - Lists scenarios from your `config.arena.yaml`
-  - `--provider` - Lists configured providers
-  - `--roles` - Lists self-play role configurations
-  - `--region` - Suggests prompt regions
-  - `--format` - Output format options (json, junit, markdown, csv)
-  - `--section` - Config sections for `config-inspect`
-  - `--template` - Available project templates for `init`
+| Flag | Values |
+|---|---|
+| `run --scenario` | scenarios in your `config.arena.yaml` |
+| `run --provider` | provider IDs in your `config.arena.yaml` |
+| `run --roles` | self-play role IDs in your `config.arena.yaml` |
+| `run --region` | `us`, `uk`, `au`, `eu`, `asia`, `latam` |
+| `run --format`, `run --formats` | `json`, `junit`, `html`, `markdown`, `csv`, `objectives` |
+| `config-inspect --section` | config sections |
+| `init --template` | built-in templates, then templates from configured template repos |
+
+`packc` completes from fixed lists only.
 
 ## Bash
 
-### Generate and Install
+### Install per user
 
 ```bash
-# Create completions directory if needed
+# Create the completions directory if needed
 mkdir -p ~/.local/share/bash-completion/completions
 
-# Generate completion scripts
+# Generate the completion scripts
 promptarena completion bash > ~/.local/share/bash-completion/completions/promptarena
 packc completion bash > ~/.local/share/bash-completion/completions/packc
 
-# Reload your shell or source the files
+# Reload your shell, or source the files
 source ~/.local/share/bash-completion/completions/promptarena
 source ~/.local/share/bash-completion/completions/packc
 ```
 
-### Alternative: System-wide Installation
+### Install system-wide
+
+The shell opens a `>` redirect before `sudo` runs, so write the file through `sudo tee`:
 
 ```bash
-# Requires sudo
-sudo promptarena completion bash > /etc/bash_completion.d/promptarena
-sudo packc completion bash > /etc/bash_completion.d/packc
+promptarena completion bash | sudo tee /etc/bash_completion.d/promptarena > /dev/null
+packc completion bash | sudo tee /etc/bash_completion.d/packc > /dev/null
 ```
 
-### Add to .bashrc (Permanent)
+### Load from .bashrc
 
 Add to your `~/.bashrc`:
 
 ```bash
-# PromptKit completions
+# PromptArena completions
 if command -v promptarena &> /dev/null; then
     source <(promptarena completion bash)
 fi
@@ -59,23 +71,23 @@ fi
 
 ## Zsh
 
-### Generate and Install
+### Generate and install
 
 ```bash
-# Create completions directory
+# Create the completions directory
 mkdir -p ~/.zsh/completions
 
-# Generate completion scripts
+# Generate the completion scripts
 promptarena completion zsh > ~/.zsh/completions/_promptarena
 packc completion zsh > ~/.zsh/completions/_packc
 ```
 
 ### Add to .zshrc
 
-Add to your `~/.zshrc` (before `compinit`):
+Add to your `~/.zshrc`, before `compinit`:
 
 ```zsh
-# Add custom completions directory to fpath
+# Add the custom completions directory to fpath
 fpath=(~/.zsh/completions $fpath)
 
 # Initialize completions
@@ -84,50 +96,53 @@ autoload -Uz compinit && compinit
 
 ### Alternative: Oh My Zsh
 
-If using Oh My Zsh, place completions in the custom completions directory:
+Create a plugin directory for each binary and write the completion script into it:
 
 ```bash
+mkdir -p ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/promptarena ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/packc
 promptarena completion zsh > ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/promptarena/_promptarena
 packc completion zsh > ${ZSH_CUSTOM:-~/.oh-my-zsh/custom}/plugins/packc/_packc
 ```
 
+Then add both plugins to `plugins=(...)` in your `~/.zshrc`, for example `plugins=(git promptarena packc)`.
+
 ## Fish
 
 ```bash
-# Generate completion scripts
+# Generate the completion scripts
 promptarena completion fish > ~/.config/fish/completions/promptarena.fish
 packc completion fish > ~/.config/fish/completions/packc.fish
 ```
 
-Fish will automatically load completions from this directory.
+Fish loads completions from this directory automatically.
 
 ## PowerShell
 
-### Generate and Load
+### Generate and load
 
 ```powershell
-# Generate completion scripts
+# Generate the completion scripts
 promptarena completion powershell > promptarena.ps1
 packc completion powershell > packc.ps1
 
-# Load completions (current session)
+# Load completions in the current session
 . ./promptarena.ps1
 . ./packc.ps1
 ```
 
-### Add to Profile (Permanent)
+### Add to your profile
 
 Add to your PowerShell profile (`$PROFILE`):
 
 ```powershell
-# PromptKit completions
+# PromptArena completions
 promptarena completion powershell | Out-String | Invoke-Expression
 packc completion powershell | Out-String | Invoke-Expression
 ```
 
 ## Docker
 
-If you're using the demo Docker image, completions are pre-configured. For custom Docker images, add to your Dockerfile:
+For an Alpine-based image that already contains both binaries, add to your Dockerfile:
 
 ```dockerfile
 # Install bash-completion
@@ -144,68 +159,69 @@ RUN echo 'source /etc/profile.d/bash_completion.sh' >> /root/.bashrc && \
     echo 'source /etc/bash_completion.d/packc' >> /root/.bashrc
 ```
 
-## Using Completions
+## Verify
 
-Once configured, use Tab to complete:
+Press Tab to complete:
 
 ```bash
 # Complete commands
-promptarena r<Tab>        # → promptarena run
+promptarena ru<Tab>       # → promptarena run
 
-# Complete flags  
+# Complete flags
 promptarena run --sc<Tab> # → promptarena run --scenario
 
-# Complete dynamic values (reads from config.arena.yaml)
+# Complete scenario names from config.arena.yaml
 promptarena run --scenario <Tab>
 # → basic-chat  edge-cases  multi-turn  ...
 
+# Complete provider IDs from config.arena.yaml
 promptarena run --provider <Tab>
-# → openai  anthropic  google  mock
+# → openai-gpt-4o-mini  claude-3-5-haiku  gemini-2-0-flash
 
 promptarena config-inspect --section <Tab>
 # → prompts  providers  scenarios  tools  selfplay  judges  defaults  validation
 
 promptarena init --template <Tab>
-# → quick-start  customer-support  code-assistant  multimodal  mcp-integration
+# → code-assistant  content-generation  customer-support  mcp-integration  multimodal  quick-start  community/basic-chatbot ...
 ```
 
 ## Troubleshooting
 
-### Completions Not Working
+### Completions not working
 
-1. **Verify the binary is in PATH:**
+1. Check that the binary is on your `PATH`:
    ```bash
    which promptarena
    ```
 
-2. **Check completion script was generated:**
+2. Check that the completion script generates:
    ```bash
    promptarena completion bash | head -20
    ```
 
-3. **Ensure bash-completion is installed:**
+3. Install bash-completion:
    ```bash
    # macOS
    brew install bash-completion@2
-   
+
    # Ubuntu/Debian
    apt install bash-completion
-   
+
    # Alpine
    apk add bash-completion
    ```
 
-4. **Reload your shell:**
+4. Reload your shell:
    ```bash
    exec $SHELL
    ```
 
-### Dynamic Completions Not Showing Values
+### No values for scenarios, providers or roles
 
-Dynamic completions (scenarios, providers, roles) require a valid `config.arena.yaml` in the current directory or parent directories. If no config is found, completions will return empty results.
+These completions read a valid `config.arena.yaml` in the current directory or a parent directory. With no config found, they return no values. Roles are also empty when the config has no self-play block.
 
 ```bash
-# Check if config is found
+# Check that the config is found
 cd /path/to/your/project
 ls config.arena.yaml
 
@@ -213,7 +229,7 @@ ls config.arena.yaml
 promptarena __complete run --scenario ""
 ```
 
-## See Also
+## Related pages
 
-- [Install PromptArena](/arena/how-to/setup/installation/) - Installation options
-- [CLI Commands Reference](/arena/reference/cli-commands) - Full command documentation
+- [Install PromptArena](/arena/how-to/setup/installation/)
+- [CLI commands](/arena/reference/cli-commands/)
