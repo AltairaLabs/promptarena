@@ -86,6 +86,8 @@ func (a *EventAdapter) mapEvent(event *events.Event) tea.Msg { //nolint:gocyclo 
 		return a.handleMiddlewareCompleted(event)
 	case events.EventMiddlewareFailed:
 		return a.logf("ERROR", event, "Middleware failed: %s (%v)", middlewareName(event), eventError(event))
+	case events.EventStageStarted, events.EventStageCompleted, events.EventStageFailed:
+		return a.handleStageEvent(event)
 	case events.EventToolCallStarted:
 		return a.logf("INFO", event, "Tool call started: %s", toolName(event))
 	case events.EventToolCallCompleted:
@@ -133,12 +135,66 @@ func (a *EventAdapter) handleProviderCallCompleted(event *events.Event) tea.Msg 
 		providerName(event), providerModel(event), data.Duration.Seconds(), data.Cost)
 }
 
+// handleMiddlewareCompleted logs a middleware.completed event. PromptKit no
+// longer emits middleware events (the pipeline emits stage.* instead); this is
+// kept so recordings made before that change still replay. The emitter and the
+// recording loader both produce a pointer, so accept both shapes.
 func (a *EventAdapter) handleMiddlewareCompleted(event *events.Event) tea.Msg {
-	data, ok := event.Data.(events.MiddlewareCompletedData)
-	if !ok {
+	data := middlewareData(event)
+	if data == nil {
 		return nil
 	}
 	return a.logf("INFO", event, "Middleware completed: %s (%.2fs)", data.Name, data.Duration.Seconds())
+}
+
+// handleStageEvent logs a pipeline stage lifecycle event. Every stage of every
+// turn emits a started and a completed event, so those go out at DEBUG to keep
+// the log readable; a failure is an ERROR.
+func (a *EventAdapter) handleStageEvent(event *events.Event) tea.Msg {
+	data := stageData(event)
+	if data == nil {
+		return nil
+	}
+	switch event.Type { //nolint:exhaustive // only stage events reach here
+	case events.EventStageStarted:
+		return a.logf("DEBUG", event, "Stage started: %s%s", data.Name, stageTypeSuffix(data.StageType))
+	case events.EventStageCompleted:
+		return a.logf("DEBUG", event, "Stage completed: %s (%.2fs)", data.Name, data.Duration.Seconds())
+	default:
+		return a.logf("ERROR", event, "Stage failed: %s (%.2fs, %v)", data.Name, data.Duration.Seconds(), data.Error)
+	}
+}
+
+func stageTypeSuffix(stageType string) string {
+	if stageType == "" {
+		return ""
+	}
+	return " [" + stageType + "]"
+}
+
+// stageData extracts the stage payload, accepting the pointer the emitter
+// produces and the value shape.
+func stageData(event *events.Event) *events.StageEventData {
+	switch d := event.Data.(type) {
+	case *events.StageEventData:
+		return d
+	case events.StageEventData:
+		return &d
+	default:
+		return nil
+	}
+}
+
+// middlewareData extracts the legacy middleware payload in either shape.
+func middlewareData(event *events.Event) *events.MiddlewareEventData {
+	switch d := event.Data.(type) {
+	case *events.MiddlewareEventData:
+		return d
+	case events.MiddlewareEventData:
+		return &d
+	default:
+		return nil
+	}
 }
 
 func (a *EventAdapter) handleContextBuilt(event *events.Event) tea.Msg {
@@ -319,10 +375,7 @@ func providerModel(event *events.Event) string {
 }
 
 func middlewareName(event *events.Event) string {
-	if data, ok := event.Data.(events.MiddlewareEventData); ok {
-		return data.Name
-	}
-	if data, ok := event.Data.(*events.MiddlewareEventData); ok {
+	if data := middlewareData(event); data != nil {
 		return data.Name
 	}
 	return ""
@@ -353,6 +406,8 @@ func eventError(event *events.Event) error {
 	case *events.ProviderCallFailedData:
 		return data.Error
 	case events.MiddlewareEventData:
+		return data.Error
+	case *events.MiddlewareEventData:
 		return data.Error
 	case events.ToolCallEventData:
 		return data.Error

@@ -405,7 +405,9 @@ func (e *PipelineExecutor) buildStagePipeline(
 	stages = e.appendPostProviderStages(stages, req, turnState)
 
 	// Chain all stages together
-	return builder.Chain(stages...).Build()
+	// The emitter makes the pipeline publish stage.* and pipeline.* lifecycle
+	// events, which the TUI log, web UI and session recordings show.
+	return builder.WithEventEmitter(emitterFromRequest(req)).Chain(stages...).Build()
 }
 
 // appendPromptContextStages adds the variable/prompt/context/template stages
@@ -838,7 +840,9 @@ func (e *PipelineExecutor) buildCommonStreamingStages(
 	// Media externalization, assertions, and state store save.
 	stages = e.appendStreamingFinalizeStages(stages, req, cfg, turnState)
 
-	return builder.Chain(stages...).Build()
+	// The emitter makes the pipeline publish stage.* and pipeline.* lifecycle
+	// events, which the TUI log, web UI and session recordings show.
+	return builder.WithEventEmitter(emitterFromRequest(req)).Chain(stages...).Build()
 }
 
 // appendStreamingPromptStages adds the StateStore load (+turn index), variable

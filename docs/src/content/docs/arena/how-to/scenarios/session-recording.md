@@ -66,12 +66,9 @@ Session recordings capture a comprehensive event stream covering all runtime act
 | **Pipeline** | `pipeline.started` | Pipeline execution start with middleware count |
 | | `pipeline.completed` | Pipeline completion with total cost/tokens |
 | | `pipeline.failed` | Pipeline failure with error |
-| **Stages** | `stage.started` | Streaming stage start with type info |
+| **Stages** | `stage.started` | Pipeline stage start, with the stage name and type (one per stage per turn) |
 | | `stage.completed` | Stage completion with duration |
 | | `stage.failed` | Stage failure with error and duration |
-| **Middleware** | `middleware.started` | Middleware execution start |
-| | `middleware.completed` | Middleware completion with duration |
-| | `middleware.failed` | Middleware failure with error |
 | **Provider** | `provider.call.started` | LLM API call initiation (provider, model, message count) |
 | | `provider.call.completed` | LLM API call completion (tokens, cost, cached tokens) |
 | | `provider.call.failed` | LLM API call failure with error |
@@ -96,6 +93,8 @@ Session recordings capture a comprehensive event stream covering all runtime act
 | **Images** | `image.input` | Image input from user/environment |
 | | `image.output` | Image output from agent |
 | | `screenshot` | Screenshot capture |
+
+`middleware.started`, `middleware.completed` and `middleware.failed` appear only in recordings made before PromptKit replaced its middleware chain with pipeline stages. Current runs emit the `stage.*` events instead.
 
 ### Multimodal Content in Events
 

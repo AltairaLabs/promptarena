@@ -418,7 +418,7 @@ func (de *DuplexConversationExecutor) buildVADComposedPipeline(
 		stage.NewTTSStageWithInterruption(ttsSvc, ttsCfg),
 	)
 
-	return builder.Chain(stages...).Build()
+	return builder.WithEventEmitter(emitter).Chain(stages...).Build()
 }
 
 // buildInteractiveVADConfig returns the AudioTurnStage config for the interactive
