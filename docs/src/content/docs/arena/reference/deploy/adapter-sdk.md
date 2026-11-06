@@ -1,10 +1,32 @@
 ---
 title: 'Deploy: Adapter SDK'
+verified:
+  commit: 60cd1a146e6224c0d66c972d18f329a0ce76c522
+  sources:
+    - arena/deploy/flow/config.go
+    - arena/deploy/flow/login.go
+    - arena/deploy/flow/render.go
+    - arena/deploy/flow/session.go
+    - arena/deploy/flow/sessions.go
+    - arena/generate/adapter.go
+    - arena/generate/generate.go
+    - arena/generate/mapping.go
+    - deploy/adaptersdk/agents.go
+    - deploy/adaptersdk/arena.go
+    - deploy/adaptersdk/arena_test.go
+    - deploy/adaptersdk/helpers.go
+    - deploy/adaptersdk/plan.go
+    - deploy/adaptersdk/serve.go
+    - deploy/adaptersdk/tools.go
+    - deploy/manager.go
+    - deploy/provider.go
+    - deploy/sessions.go
+    - schemas/v1alpha1/tool.json
 ---
 
 ## Overview
 
-The Adapter SDK (`runtime/deploy/adaptersdk`) provides Go functions for building deploy adapter plugins. It handles JSON-RPC communication so you only need to implement the `Provider` interface.
+The Adapter SDK (`deploy/adaptersdk`) provides Go functions for building deploy adapter plugins. It handles JSON-RPC communication so you only need to implement the `Provider` interface.
 
 ## Installation
 
@@ -325,7 +347,7 @@ type AgentInfo struct {
 type ToolInfo struct {
     Name        string      `json:"name"`
     Description string      `json:"description"`
-    Mode        string      `json:"mode"`          // "mock", "live", "mcp", "a2a"
+    Mode        string      `json:"mode"`          // "mock", "live", "mcp", "exec", "client"
     HasSchema   bool        `json:"has_schema"`
     InputSchema interface{} `json:"input_schema,omitempty"`
     HTTPURL     string      `json:"http_url,omitempty"`
@@ -380,7 +402,7 @@ Adapters may implement `LoginProvider` to support `promptarena deploy login`
 (browser-based autoconfigure). Advertise `deploy.LoginCapability` in
 `ProviderInfo.Capabilities`; the SDK then dispatches `get_login_url` /
 `complete_login` to your provider. Adapters that don't implement it are
-unaffected — the CLI reports login as unsupported.
+unaffected: the CLI reports login as unsupported.
 
 ```go
 type LoginProvider interface {
@@ -394,8 +416,7 @@ type LoginProvider interface {
 }
 ```
 
-The provider brokers its own authentication (e.g. OIDC) — the CLI never learns
-the identity provider. `LoginURLRequest`/`CompleteLoginRequest` both carry the
+`LoginURLRequest`/`CompleteLoginRequest` both carry the
 current deploy `Config` (JSON, possibly partial) so the adapter can read
 provider coordinates such as an endpoint.
 
@@ -405,8 +426,8 @@ Adapters may implement `SessionSourceProvider` so `promptarena generate --source
 <adapter>` can turn recorded production sessions into regression scenarios.
 Advertise `deploy.SessionsCapability` (`"sessions"`) in `ProviderInfo.Capabilities`;
 the SDK then dispatches `list_sessions` / `get_session` to your provider. Adapters
-that don't implement it are unaffected — the CLI reports session sourcing as
-unsupported and tells the user to upgrade the adapter.
+that don't implement it are unaffected: the CLI reports session sourcing as
+unsupported and tells you to upgrade the adapter.
 
 ```go
 type SessionSourceProvider interface {
@@ -667,28 +688,10 @@ type ImportResponse struct {
 
 ## Building and Installing
 
-Build your adapter binary:
-
-```bash
-go build -o promptarena-deploy-myprovider .
-```
-
-Install locally for testing:
-
-```bash
-mkdir -p ~/.promptarena/adapters
-cp promptarena-deploy-myprovider ~/.promptarena/adapters/
-```
-
-Test with the CLI:
-
-```bash
-promptarena deploy adapter list
-promptarena deploy plan
-```
+See [Install Adapters](/arena/how-to/deploy/install-adapters/) for installing and verifying a local adapter binary.
 
 ## See Also
 
-- [Protocol](/arena/reference/deploy/protocol/) — JSON-RPC wire protocol details
-- [Adapter Architecture](/arena/explanation/deploy/adapter-architecture/) — Design concepts
-- [CLI Commands](/arena/reference/deploy/cli-commands/) — CLI usage
+- [Protocol](/arena/reference/deploy/protocol/): JSON-RPC wire protocol details
+- [Adapter Architecture](/arena/explanation/deploy/adapter-architecture/): design concepts
+- [CLI Commands](/arena/reference/deploy/cli-commands/): CLI usage

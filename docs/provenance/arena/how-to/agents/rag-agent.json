@@ -1,0 +1,610 @@
+{
+ "page": "docs/src/content/docs/arena/how-to/agents/rag-agent.md",
+ "commit": "60cd1a146e6224c0d66c972d18f329a0ce76c522",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "Faithfulness, answer_relevancy, contextual_precision/recall/relevancy and hallucination can be used as scenario assertions",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/types.go:27",
+    "examples/rag-agent/scenarios/paris-capital.scenario.yaml:20"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "Keyless CI runs via a mock judge; a real LLM judge is used for production runs",
+   "verdict": "true",
+   "evidence": [
+    "examples/rag-agent/config.arena.yaml:28",
+    "examples/rag-agent/providers/mock-judge.yaml:7"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "examples/rag-agent/ is the example directory this how-to walks through",
+   "verdict": "true",
+   "evidence": [
+    "examples/rag-agent/config.arena.yaml:1"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "Registry eval type: faithfulness",
+   "verdict": "true",
+   "evidence": [
+    "examples/rag-agent/scenarios/paris-capital.scenario.yaml:20"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "Registry eval type: answer_relevancy",
+   "verdict": "true",
+   "evidence": [
+    "examples/rag-agent/scenarios/paris-capital.scenario.yaml:31"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "Registry eval type: contextual_precision",
+   "verdict": "true",
+   "evidence": [
+    "examples/rag-agent/scenarios/paris-capital.scenario.yaml:39"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "Registry eval type: contextual_recall",
+   "verdict": "true",
+   "evidence": [
+    "examples/rag-agent/scenarios/paris-capital.scenario.yaml:50"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "Registry eval type: contextual_relevancy",
+   "verdict": "true",
+   "evidence": [
+    "examples/rag-agent/scenarios/paris-capital.scenario.yaml:62"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "Registry eval type: hallucination",
+   "verdict": "true",
+   "evidence": [
+    "examples/rag-agent/scenarios/paris-capital.scenario.yaml:73"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "The RAG primitives are thin wrappers over llm_judge",
+   "verdict": "true",
+   "evidence": [
+    "examples/rag-agent/mock-responses-judge.yaml:3"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "Registry eval type: llm_judge",
+   "verdict": "true",
+   "evidence": [
+    "arena/redteam/generate.go:517"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "Default RAG judge prompts are adapted from public DeepEval and Ragas references under Apache 2.0",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 13,
+   "claim": "Each RAG primitive is a pure eval handler that emits the judge's score",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/types.go:27"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "Registry assertion type: assertion (wraps an eval with a threshold)",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/types.go:30",
+    "arena/assertions/types.go:35"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "The demo runs all six primitives against one question, answer and retrieved context",
+   "verdict": "true",
+   "evidence": [
+    "examples/rag-agent/scenarios/paris-capital.scenario.yaml:18"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "Example: turn-level assertion block with type assertion, eval_type and eval_params",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:24",
+    "arena/assertions/types.go:63"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "Field: turns (scenario list of turns)",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:686"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "Field: assertions on a turn",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1175"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "Field: type (value assertion)",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:22"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "Field: params",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:24"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "Field: eval_type",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/types.go:65",
+    "examples/rag-agent/scenarios/paris-capital.scenario.yaml:20"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "Field: eval_params",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/types.go:81",
+    "examples/rag-agent/scenarios/paris-capital.scenario.yaml:21"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "Field: contexts (list of strings) in eval_params",
+   "verdict": "true",
+   "evidence": [
+    "examples/rag-agent/scenarios/paris-capital.scenario.yaml:22"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "Field: judge (references a judge by name) in eval_params",
+   "verdict": "dead",
+   "evidence": [
+    "arena/engine/conversation_executor.go:917",
+    "examples/rag-agent/scenarios/paris-capital.scenario.yaml:25"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "Field: min_score (threshold)",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/types.go:56"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "Example value: answer_relevancy min_score is 0.8",
+   "verdict": "true",
+   "evidence": [
+    "examples/rag-agent/scenarios/paris-capital.scenario.yaml:34"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "Example value: contextual_precision min_score is 0.5",
+   "verdict": "true",
+   "evidence": [
+    "examples/rag-agent/scenarios/paris-capital.scenario.yaml:45"
+   ]
+  },
+  {
+   "id": 28,
+   "claim": "All six RAG assertions share the same shape: inner eval primitive plus type assertion wrapper with threshold",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/types.go:63",
+    "examples/rag-agent/scenarios/paris-capital.scenario.yaml:18"
+   ]
+  },
+  {
+   "id": 29,
+   "claim": "PromptKit reference docs define the eval, assertion and guardrail roles (checks #roles)",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 30,
+   "claim": "Every RAG handler accepts retrieved context in three forms",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 31,
+   "claim": "Context source preference order: contexts, then context, then context_field",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 32,
+   "claim": "Context source: contexts (inline list, used in the demo)",
+   "verdict": "true",
+   "evidence": [
+    "examples/rag-agent/scenarios/paris-capital.scenario.yaml:22"
+   ]
+  },
+  {
+   "id": 33,
+   "claim": "Context source: context (single-chunk string)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 34,
+   "claim": "Context source: context_field (metadata key)",
+   "verdict": "dead",
+   "evidence": [
+    "arena/engine/builder_integration.go:204",
+    "arena/engine/eval_orchestrator.go:371"
+   ]
+  },
+  {
+   "id": 35,
+   "claim": "Context chunks are read from evalCtx.Metadata",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/eval_orchestrator.go:359"
+   ]
+  },
+  {
+   "id": 36,
+   "claim": "Example: faithfulness with context_field for a live RAG agent",
+   "verdict": "dead",
+   "evidence": [
+    "arena/engine/builder_integration.go:204"
+   ]
+  },
+  {
+   "id": 37,
+   "claim": "A retrieval tool writing metadata['retrieved_chunks'] on each turn is picked up automatically by the assertion",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/builder_integration.go:204",
+    "arena/engine/eval_orchestrator.go:364"
+   ]
+  },
+  {
+   "id": 38,
+   "claim": "Command runs from examples/rag-agent (cd target)",
+   "verdict": "true",
+   "evidence": [
+    "examples/rag-agent/config.arena.yaml:1"
+   ]
+  },
+  {
+   "id": 39,
+   "claim": "Command: promptarena serve",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 40,
+   "claim": "Command: promptarena run",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:160"
+   ]
+  },
+  {
+   "id": 41,
+   "claim": "Flag: --ci on promptarena run",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:160"
+   ]
+  },
+  {
+   "id": 42,
+   "claim": "Flag: --formats on promptarena run",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:30"
+   ]
+  },
+  {
+   "id": 43,
+   "claim": "--formats accepts json and markdown",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:30"
+   ]
+  },
+  {
+   "id": 44,
+   "claim": "Run writes out/results.md",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:486",
+    "arena/results/markdown/markdown_repository.go:25"
+   ]
+  },
+  {
+   "id": 45,
+   "claim": "Keyless default: the RAG assistant and LLM judge are both mock providers",
+   "verdict": "true",
+   "evidence": [
+    "examples/rag-agent/config.arena.yaml:23",
+    "examples/rag-agent/config.arena.yaml:25"
+   ]
+  },
+  {
+   "id": 46,
+   "claim": "Mock judge returns {\"passed\": true, \"score\": 0.92, \"reasoning\": \"...\"} for every call",
+   "verdict": "true",
+   "evidence": [
+    "examples/rag-agent/mock-responses-judge.yaml:6"
+   ]
+  },
+  {
+   "id": 47,
+   "claim": "All six assertions pass under the scenario thresholds with the mock judge",
+   "verdict": "true",
+   "evidence": [
+    "examples/rag-agent/scenarios/paris-capital.scenario.yaml:26"
+   ]
+  },
+  {
+   "id": 48,
+   "claim": "Default min_score of 0.8 for most RAG assertions in the demo",
+   "verdict": "true",
+   "evidence": [
+    "examples/rag-agent/scenarios/paris-capital.scenario.yaml:26",
+    "examples/rag-agent/scenarios/paris-capital.scenario.yaml:79"
+   ]
+  },
+  {
+   "id": 49,
+   "claim": "min_score of 0.5 for contextual_precision and contextual_relevancy in the demo",
+   "verdict": "true",
+   "evidence": [
+    "examples/rag-agent/scenarios/paris-capital.scenario.yaml:45",
+    "examples/rag-agent/scenarios/paris-capital.scenario.yaml:68"
+   ]
+  },
+  {
+   "id": 50,
+   "claim": "A real LLM judge is swapped in by replacing the mock judge provider",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:959",
+    "examples/rag-agent/config.arena.yaml:28"
+   ]
+  },
+  {
+   "id": 51,
+   "claim": "Path providers/openai-judge.yaml is the judge provider file",
+   "verdict": "true",
+   "evidence": [
+    "examples/rag-agent/config.arena.yaml:25"
+   ]
+  },
+  {
+   "id": 52,
+   "claim": "apiVersion value promptkit.altairalabs.ai/v1alpha1",
+   "verdict": "true",
+   "evidence": [
+    "examples/rag-agent/providers/mock-judge.yaml:1"
+   ]
+  },
+  {
+   "id": 53,
+   "claim": "kind value: Provider",
+   "verdict": "true",
+   "evidence": [
+    "examples/rag-agent/providers/mock-judge.yaml:2"
+   ]
+  },
+  {
+   "id": 54,
+   "claim": "Field: metadata.name",
+   "verdict": "true",
+   "evidence": [
+    "examples/rag-agent/providers/mock-judge.yaml:4"
+   ]
+  },
+  {
+   "id": 55,
+   "claim": "Field: spec.id",
+   "verdict": "true",
+   "evidence": [
+    "examples/rag-agent/providers/mock-judge.yaml:6"
+   ]
+  },
+  {
+   "id": 56,
+   "claim": "Provider type openai is a registered provider type",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/completion_interactive.go:354"
+   ]
+  },
+  {
+   "id": 57,
+   "claim": "Field: spec.model with example value gpt-4o-mini",
+   "verdict": "true",
+   "evidence": [
+    "examples/rag-agent/providers/mock-judge.yaml:8"
+   ]
+  },
+  {
+   "id": 58,
+   "claim": "config.arena.yaml has a top-level judges: field",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:93",
+    "examples/rag-agent/config.arena.yaml:28"
+   ]
+  },
+  {
+   "id": 59,
+   "claim": "Field: judges (list)",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:93"
+   ]
+  },
+  {
+   "id": 60,
+   "claim": "Field: judges[].name",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:394"
+   ]
+  },
+  {
+   "id": 61,
+   "claim": "Field: judges[].provider references a provider by name",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:959",
+    "arena/arenaconfig/types.go:395"
+   ]
+  },
+  {
+   "id": 62,
+   "claim": "Env var: OPENAI_API_KEY is read by the openai provider",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 63,
+   "claim": "Assertions do not depend on which provider produced the assistant answer",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/conversation_executor.go:917"
+   ]
+  },
+  {
+   "id": 64,
+   "claim": "CI workflow file .github/workflows/rag-agent.yml",
+   "verdict": "false",
+   "evidence": [
+    ".github/workflows/ci.yml:1"
+   ]
+  },
+  {
+   "id": 65,
+   "claim": "Trigger: on pull_request with paths examples/rag-agent/**",
+   "verdict": "false",
+   "evidence": [
+    ".github/workflows/ci.yml:1"
+   ]
+  },
+  {
+   "id": 66,
+   "claim": "Job runs-on ubuntu-latest",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 67,
+   "claim": "Action actions/checkout@v4 is used",
+   "verdict": "false",
+   "evidence": [
+    ".github/workflows/ci.yml:28"
+   ]
+  },
+  {
+   "id": 68,
+   "claim": "Action actions/setup-go@v5 is used",
+   "verdict": "false",
+   "evidence": [
+    ".github/workflows/ci.yml:96"
+   ]
+  },
+  {
+   "id": 69,
+   "claim": "go-version 1.26 for CI build",
+   "verdict": "true",
+   "evidence": [
+    ".github/workflows/ci.yml:98"
+   ]
+  },
+  {
+   "id": 70,
+   "claim": "Command: go build -o bin/promptarena ./arena/cmd/promptarena",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:160"
+   ]
+  },
+  {
+   "id": 71,
+   "claim": "Step working-directory: examples/rag-agent",
+   "verdict": "true",
+   "evidence": [
+    "examples/rag-agent/config.arena.yaml:1"
+   ]
+  },
+  {
+   "id": 72,
+   "claim": "Command: ../../bin/promptarena run --ci --formats json",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:30"
+   ]
+  },
+  {
+   "id": 73,
+   "claim": "The default config is keyless",
+   "verdict": "true",
+   "evidence": [
+    "examples/rag-agent/config.arena.yaml:23",
+    "examples/rag-agent/config.arena.yaml:25"
+   ]
+  },
+  {
+   "id": 74,
+   "claim": "Attribution to DeepEval and Ragas lives in each handler's docstring",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 75,
+   "claim": "PromptKit Checks Reference lists the full parameter list for each RAG primitive",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 76,
+   "claim": "Link target /arena/how-to/scenarios/validate-outputs/ exists in the docs site",
+   "verdict": "true",
+   "evidence": []
+  }
+ ]
+}

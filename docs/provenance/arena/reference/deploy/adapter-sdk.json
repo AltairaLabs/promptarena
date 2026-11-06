@@ -1,0 +1,1932 @@
+{
+ "page": "docs/src/content/docs/arena/reference/deploy/adapter-sdk.md",
+ "commit": "60cd1a146e6224c0d66c972d18f329a0ce76c522",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "The Adapter SDK package is at runtime/deploy/adaptersdk",
+   "verdict": "false",
+   "evidence": [
+    "deploy/adaptersdk/agents.go:1",
+    "deploy/adaptersdk/serve.go:4"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "The SDK handles JSON-RPC communication so an adapter only implements the Provider interface",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:144",
+    "deploy/adaptersdk/serve.go:85"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "go get github.com/AltairaLabs/promptarena/v2/deploy fetches the deploy module",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:1"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "Import path github.com/AltairaLabs/promptarena/v2/deploy exists and provides the deploy package",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:1"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "Import path github.com/AltairaLabs/promptarena/v2/deploy/adaptersdk exists",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:1"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "deploy.ProviderInfo has field Name",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:18"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "deploy.ProviderInfo has field Version",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:18"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "Provider method GetProviderInfo(ctx context.Context) (*deploy.ProviderInfo, error)",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:176"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "Provider method ValidateConfig(ctx, *deploy.ValidateRequest) (*deploy.ValidateResponse, error)",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:177"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "deploy.ValidateResponse has field Valid",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:31"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "Provider method Plan(ctx, *deploy.PlanRequest) (*deploy.PlanResponse, error)",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:178"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "deploy.PlanResponse has field Changes of type []deploy.ResourceChange",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:49"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "deploy.ResourceChange has fields Type, Name, Action and Detail",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:58"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "deploy.ActionCreate constant exists",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:10"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "deploy.PlanResponse has field Summary",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:49"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "Provider method Apply(ctx, *deploy.PlanRequest, deploy.ApplyCallback) (string, error)",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:179"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "Provider method Destroy(ctx, *deploy.DestroyRequest, deploy.DestroyCallback) error",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:180"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "Provider method Status(ctx, *deploy.StatusRequest) (*deploy.StatusResponse, error)",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:181"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "deploy.StatusResponse has field Status",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:119",
+    "deploy/provider.go:129"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "deploy.StatusResponse has field Resources of type []deploy.ResourceStatus",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:119",
+    "deploy/provider.go:129"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "deploy.ResourceStatus has fields Type, Name and Status",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:119",
+    "deploy/provider.go:129"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "Provider method Import(ctx, *deploy.ImportRequest) (*deploy.ImportResponse, error)",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:182"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "deploy.ImportResponse has field Resource of type deploy.ResourceStatus",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:169"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "deploy.ImportResponse has field State",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:169"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "deploy.ImportRequest has fields ResourceType and ResourceName",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:159"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "deploy.ImportRequest has field Identifier",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:159"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "adaptersdk.Serve takes a provider and returns an error, and is the adapter main entry point",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:85"
+   ]
+  },
+  {
+   "id": 28,
+   "claim": "Adapter binary is built with go build -o promptarena-deploy-myprovider .",
+   "verdict": "true",
+   "evidence": [
+    "deploy/manager.go:28",
+    "deploy/manager.go:38"
+   ]
+  },
+  {
+   "id": 29,
+   "claim": "func Serve(provider deploy.Provider) error",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:85"
+   ]
+  },
+  {
+   "id": 30,
+   "claim": "Serve starts a JSON-RPC server reading requests from stdin and writing responses to stdout",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:144",
+    "deploy/adaptersdk/serve.go:85",
+    "deploy/adaptersdk/serve.go:92"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "Serve dispatches each JSON-RPC request to the matching Provider method",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:144",
+    "deploy/adaptersdk/serve.go:85",
+    "deploy/adaptersdk/serve.go:92"
+   ]
+  },
+  {
+   "id": 32,
+   "claim": "Serve blocks until stdin is closed",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:144",
+    "deploy/adaptersdk/serve.go:85",
+    "deploy/adaptersdk/serve.go:92"
+   ]
+  },
+  {
+   "id": 33,
+   "claim": "func ServeIO(provider deploy.Provider, r io.Reader, w io.Writer) error",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:92"
+   ]
+  },
+  {
+   "id": 34,
+   "claim": "ServeIO is the same as Serve but takes custom I/O streams",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:92"
+   ]
+  },
+  {
+   "id": 35,
+   "claim": "func ParsePack(packJSON []byte) (*prompt.Pack, error)",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/helpers.go:19",
+    "deploy/provider.go:41"
+   ]
+  },
+  {
+   "id": 36,
+   "claim": "ParsePack deserializes the PlanRequest.PackJSON field into a prompt.Pack",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/helpers.go:19",
+    "deploy/provider.go:41"
+   ]
+  },
+  {
+   "id": 37,
+   "claim": "Plan example: ParsePack([]byte(req.PackJSON)) compiles against the current API",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/helpers.go:19",
+    "deploy/provider.go:41"
+   ]
+  },
+  {
+   "id": 38,
+   "claim": "func NewProgressReporter(callback deploy.ApplyCallback) *ProgressReporter",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/helpers.go:29",
+    "deploy/adaptersdk/helpers.go:51",
+    "deploy/adaptersdk/helpers.go:85"
+   ]
+  },
+  {
+   "id": 39,
+   "claim": "ProgressReporter is a struct type in adaptersdk",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/helpers.go:29",
+    "deploy/adaptersdk/helpers.go:51",
+    "deploy/adaptersdk/helpers.go:85"
+   ]
+  },
+  {
+   "id": 40,
+   "claim": "ProgressReporter.Progress(message string, pct float64) method exists",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/helpers.go:29",
+    "deploy/adaptersdk/helpers.go:51",
+    "deploy/adaptersdk/helpers.go:85"
+   ]
+  },
+  {
+   "id": 41,
+   "claim": "ProgressReporter.Resource(result *deploy.ResourceResult) method exists",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/helpers.go:29",
+    "deploy/adaptersdk/helpers.go:51",
+    "deploy/adaptersdk/helpers.go:85"
+   ]
+  },
+  {
+   "id": 42,
+   "claim": "ProgressReporter.Error(err error) method reports a non-fatal error",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/helpers.go:29",
+    "deploy/adaptersdk/helpers.go:51",
+    "deploy/adaptersdk/helpers.go:85"
+   ]
+  },
+  {
+   "id": 43,
+   "claim": "Apply example using NewProgressReporter, Progress and Resource compiles against the current API",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/helpers.go:29",
+    "deploy/adaptersdk/helpers.go:51",
+    "deploy/adaptersdk/helpers.go:85"
+   ]
+  },
+  {
+   "id": 44,
+   "claim": "A pct value from 0.0 to 1.0 is rendered as message followed by (XX%)",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/helpers.go:29",
+    "deploy/adaptersdk/helpers.go:51",
+    "deploy/adaptersdk/helpers.go:85"
+   ]
+  },
+  {
+   "id": 45,
+   "claim": "Progress with pct 0.25 renders as 'Creating runtime... (25%)'",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/helpers.go:29",
+    "deploy/adaptersdk/helpers.go:51",
+    "deploy/adaptersdk/helpers.go:85"
+   ]
+  },
+  {
+   "id": 46,
+   "claim": "Progress values outside 0.0 to 1.0 are emitted as the bare message with no percentage",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/helpers.go:29",
+    "deploy/adaptersdk/helpers.go:51",
+    "deploy/adaptersdk/helpers.go:85"
+   ]
+  },
+  {
+   "id": 47,
+   "claim": "func GenerateResourcePlan(packJSON, arenaConfigJSON, deployConfigJSON string) (*ResourcePlan, error)",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/plan.go:25"
+   ]
+  },
+  {
+   "id": 48,
+   "claim": "Plan example calls GenerateResourcePlan with req.PackJSON, req.ArenaConfig and req.DeployConfig",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/plan.go:25"
+   ]
+  },
+  {
+   "id": 49,
+   "claim": "ResourcePlan has field Changes used as PlanResponse.Changes in the example",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/plan.go:25"
+   ]
+  },
+  {
+   "id": 50,
+   "claim": "adaptersdk.SummarizeChanges(changes) builds the plan summary in the example",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/plan.go:25"
+   ]
+  },
+  {
+   "id": 51,
+   "claim": "Plan example compiles against the current API (GenerateResourcePlan, PlanResponse, SummarizeChanges)",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/plan.go:25"
+   ]
+  },
+  {
+   "id": 52,
+   "claim": "GenerateResourcePlan parses the pack JSON and returns an error if it is invalid",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/plan.go:25"
+   ]
+  },
+  {
+   "id": 53,
+   "claim": "GenerateResourcePlan generates agent_runtime, a2a_endpoint and gateway resources for multi-agent packs",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/agents.go:79",
+    "deploy/adaptersdk/plan.go:31"
+   ]
+  },
+  {
+   "id": 54,
+   "claim": "GenerateResourcePlan extracts tool info and policies from the arena config",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/plan.go:33",
+    "deploy/adaptersdk/plan.go:43",
+    "deploy/adaptersdk/plan.go:45"
+   ]
+  },
+  {
+   "id": 55,
+   "claim": "GenerateResourcePlan filters out blocklisted tools",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/plan.go:33",
+    "deploy/adaptersdk/plan.go:43",
+    "deploy/adaptersdk/plan.go:45"
+   ]
+  },
+  {
+   "id": 56,
+   "claim": "GenerateResourcePlan parses tool targets from the deploy config",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/plan.go:33",
+    "deploy/adaptersdk/plan.go:43",
+    "deploy/adaptersdk/plan.go:45"
+   ]
+  },
+  {
+   "id": 57,
+   "claim": "GenerateResourcePlan generates tool_gateway resources for tools that have targets",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/plan.go:50",
+    "deploy/adaptersdk/tools.go:52"
+   ]
+  },
+  {
+   "id": 58,
+   "claim": "GenerateResourcePlan combines agent and tool changes into a single plan",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/plan.go:50",
+    "deploy/adaptersdk/tools.go:52"
+   ]
+  },
+  {
+   "id": 59,
+   "claim": "Empty arena config or deploy config are handled without error and produce no tool resources",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/plan.go:50",
+    "deploy/adaptersdk/tools.go:52"
+   ]
+  },
+  {
+   "id": 60,
+   "claim": "ResourcePlan is a struct type in adaptersdk",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/plan.go:13"
+   ]
+  },
+  {
+   "id": 61,
+   "claim": "ResourcePlan has field Changes of type []deploy.ResourceChange",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/plan.go:13"
+   ]
+  },
+  {
+   "id": 62,
+   "claim": "ResourcePlan has field Tools of type []ToolInfo",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/plan.go:13"
+   ]
+  },
+  {
+   "id": 63,
+   "claim": "ResourcePlan has field Targets of type ToolTargetMap",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/plan.go:13"
+   ]
+  },
+  {
+   "id": 64,
+   "claim": "ResourcePlan has field Policy of type *ToolPolicyInfo",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/plan.go:13"
+   ]
+  },
+  {
+   "id": 65,
+   "claim": "func SummarizeChanges(changes []deploy.ResourceChange) string",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/plan.go:84"
+   ]
+  },
+  {
+   "id": 66,
+   "claim": "SummarizeChanges returns '3 to create, 1 to update, 1 to delete' for a matching change set",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/plan.go:84"
+   ]
+  },
+  {
+   "id": 67,
+   "claim": "SummarizeChanges returns '5 to create, 2 unchanged' for a matching change set",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/plan.go:84"
+   ]
+  },
+  {
+   "id": 68,
+   "claim": "SummarizeChanges returns 'No changes' when there are no changes",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/plan.go:84"
+   ]
+  },
+  {
+   "id": 69,
+   "claim": "func FilterBlocklistedTools(tools []ToolInfo, policy *ToolPolicyInfo) []ToolInfo",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/plan.go:43",
+    "deploy/adaptersdk/plan.go:65"
+   ]
+  },
+  {
+   "id": 70,
+   "claim": "FilterBlocklistedTools returns tools unchanged when policy is nil or blocklist is empty",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/plan.go:43",
+    "deploy/adaptersdk/plan.go:65"
+   ]
+  },
+  {
+   "id": 71,
+   "claim": "GenerateResourcePlan calls FilterBlocklistedTools automatically",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/plan.go:43",
+    "deploy/adaptersdk/plan.go:65"
+   ]
+  },
+  {
+   "id": 72,
+   "claim": "func IsMultiAgent(pack *prompt.Pack) bool",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/agents.go:25"
+   ]
+  },
+  {
+   "id": 73,
+   "claim": "IsMultiAgent returns true when the pack has an agents section with members",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/agents.go:25"
+   ]
+  },
+  {
+   "id": 74,
+   "claim": "func ExtractAgents(pack *prompt.Pack) []AgentInfo",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/agents.go:33"
+   ]
+  },
+  {
+   "id": 75,
+   "claim": "ExtractAgents returns agent metadata for all members sorted by name",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/agents.go:33"
+   ]
+  },
+  {
+   "id": 76,
+   "claim": "ExtractAgents defaults missing input/output modes to text/plain",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/agents.go:33"
+   ]
+  },
+  {
+   "id": 77,
+   "claim": "func GenerateAgentResourcePlan(pack *prompt.Pack) []deploy.ResourceChange",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/agents.go:79"
+   ]
+  },
+  {
+   "id": 78,
+   "claim": "GenerateAgentResourcePlan creates agent_runtime and a2a_endpoint changes per member",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/agents.go:79"
+   ]
+  },
+  {
+   "id": 79,
+   "claim": "GenerateAgentResourcePlan gives the entry agent a gateway resource",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/agents.go:79"
+   ]
+  },
+  {
+   "id": 80,
+   "claim": "GenerateAgentResourcePlan returns nil for single-agent packs",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/agents.go:79"
+   ]
+  },
+  {
+   "id": 81,
+   "claim": "func GenerateAgentCards(pack *prompt.Pack) map[string]*a2a.AgentCard",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/agents.go:71"
+   ]
+  },
+  {
+   "id": 82,
+   "claim": "func ExtractToolInfo(arenaConfigJSON string) ([]ToolInfo, error)",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/arena.go:68"
+   ]
+  },
+  {
+   "id": 83,
+   "claim": "ExtractToolInfo reads inline tool specs and loaded tool files from the ArenaConfig",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/arena.go:68"
+   ]
+  },
+  {
+   "id": 84,
+   "claim": "ExtractToolInfo returns sorted, deduplicated tools with inline specs taking precedence",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/arena.go:68"
+   ]
+  },
+  {
+   "id": 85,
+   "claim": "func ExtractToolPolicies(arenaConfigJSON string) (*ToolPolicyInfo, error)",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/arena.go:107"
+   ]
+  },
+  {
+   "id": 86,
+   "claim": "ExtractToolPolicies merges blocklists from all scenarios and returns nil when none are found",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/arena.go:107"
+   ]
+  },
+  {
+   "id": 87,
+   "claim": "func ParseDeployToolTargets(deployConfigJSON string) (ToolTargetMap, error)",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/tools.go:32"
+   ]
+  },
+  {
+   "id": 88,
+   "claim": "ParseDeployToolTargets extracts the tool_targets map from deploy config JSON",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/tools.go:32"
+   ]
+  },
+  {
+   "id": 89,
+   "claim": "func GenerateToolGatewayPlan(tools []ToolInfo, targets ToolTargetMap) []deploy.ResourceChange",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/tools.go:52"
+   ]
+  },
+  {
+   "id": 90,
+   "claim": "GenerateToolGatewayPlan creates tool_gateway resource changes for tools with target mappings",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/tools.go:52"
+   ]
+  },
+  {
+   "id": 91,
+   "claim": "AgentInfo is a struct type in adaptersdk",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/agents.go:15"
+   ]
+  },
+  {
+   "id": 92,
+   "claim": "AgentInfo has field Name with json tag name",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/agents.go:15"
+   ]
+  },
+  {
+   "id": 93,
+   "claim": "AgentInfo has field Description with json tag description",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/agents.go:15"
+   ]
+  },
+  {
+   "id": 94,
+   "claim": "AgentInfo has field IsEntry with json tag is_entry",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/agents.go:15"
+   ]
+  },
+  {
+   "id": 95,
+   "claim": "AgentInfo has field Tags with json tag tags (omitempty)",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/agents.go:15"
+   ]
+  },
+  {
+   "id": 96,
+   "claim": "AgentInfo has field InputModes with json tag input_modes",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/agents.go:15"
+   ]
+  },
+  {
+   "id": 97,
+   "claim": "AgentInfo has field OutputModes with json tag output_modes",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/agents.go:15"
+   ]
+  },
+  {
+   "id": 98,
+   "claim": "ToolInfo is a struct type in adaptersdk",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/tools.go:11"
+   ]
+  },
+  {
+   "id": 99,
+   "claim": "ToolInfo has field Name with json tag name",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/tools.go:11"
+   ]
+  },
+  {
+   "id": 100,
+   "claim": "ToolInfo has field Description with json tag description",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/tools.go:11"
+   ]
+  },
+  {
+   "id": 101,
+   "claim": "ToolInfo field Mode takes values mock, live, mcp or a2a",
+   "verdict": "false",
+   "evidence": [
+    "deploy/adaptersdk/tools.go:14",
+    "schemas/v1alpha1/tool.json:321"
+   ]
+  },
+  {
+   "id": 102,
+   "claim": "ToolInfo has field HasSchema with json tag has_schema",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/tools.go:11"
+   ]
+  },
+  {
+   "id": 103,
+   "claim": "ToolInfo has field InputSchema of type interface{} with json tag input_schema (omitempty)",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/tools.go:11"
+   ]
+  },
+  {
+   "id": 104,
+   "claim": "ToolInfo has field HTTPURL with json tag http_url (omitempty)",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/tools.go:11"
+   ]
+  },
+  {
+   "id": 105,
+   "claim": "ToolInfo has field HTTPMethod with json tag http_method (omitempty)",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/tools.go:11"
+   ]
+  },
+  {
+   "id": 106,
+   "claim": "ToolTargetMap is map[string]json.RawMessage",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/tools.go:23",
+    "deploy/adaptersdk/tools.go:40"
+   ]
+  },
+  {
+   "id": 107,
+   "claim": "Deploy config uses a top-level tool_targets key holding per-tool target objects",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/tools.go:23",
+    "deploy/adaptersdk/tools.go:40"
+   ]
+  },
+  {
+   "id": 108,
+   "claim": "Example tool target uses a lambda_arn field (adapter-specific, illustrative)",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/arena_test.go:328"
+   ]
+  },
+  {
+   "id": 109,
+   "claim": "ToolPolicyInfo is a struct type in adaptersdk",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/tools.go:26"
+   ]
+  },
+  {
+   "id": 110,
+   "claim": "ToolPolicyInfo has field Blocklist of type []string with json tag blocklist (omitempty)",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/tools.go:26"
+   ]
+  },
+  {
+   "id": 111,
+   "claim": "deploy.Provider is an interface type",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:175"
+   ]
+  },
+  {
+   "id": 112,
+   "claim": "Provider.ValidateConfig signature as listed (ctx, *ValidateRequest) (*ValidateResponse, error)",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:175"
+   ]
+  },
+  {
+   "id": 113,
+   "claim": "Provider.Plan signature as listed (ctx, *PlanRequest) (*PlanResponse, error)",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:175"
+   ]
+  },
+  {
+   "id": 114,
+   "claim": "Provider.Apply signature as listed (ctx, *PlanRequest, ApplyCallback) (adapterState string, err error)",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:175"
+   ]
+  },
+  {
+   "id": 115,
+   "claim": "Provider.Destroy signature as listed (ctx, *DestroyRequest, DestroyCallback) error",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:175"
+   ]
+  },
+  {
+   "id": 116,
+   "claim": "Provider.Status signature as listed (ctx, *StatusRequest) (*StatusResponse, error)",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:175"
+   ]
+  },
+  {
+   "id": 117,
+   "claim": "Provider.Import signature as listed (ctx, *ImportRequest) (*ImportResponse, error)",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:175"
+   ]
+  },
+  {
+   "id": 118,
+   "claim": "Provider.GetProviderInfo signature as listed (ctx) (*ProviderInfo, error)",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:175"
+   ]
+  },
+  {
+   "id": 119,
+   "claim": "promptarena deploy login is the CLI command for browser-based autoconfigure",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/login.go:98"
+   ]
+  },
+  {
+   "id": 120,
+   "claim": "deploy.LoginCapability is advertised in ProviderInfo.Capabilities to enable login",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/login.go:148",
+    "deploy/provider.go:187"
+   ]
+  },
+  {
+   "id": 121,
+   "claim": "Login dispatches over the get_login_url and complete_login RPC methods",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:162",
+    "deploy/adaptersdk/serve.go:164"
+   ]
+  },
+  {
+   "id": 122,
+   "claim": "The CLI reports login as unsupported for adapters that do not implement LoginProvider",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/login.go:152"
+   ]
+  },
+  {
+   "id": 123,
+   "claim": "LoginProvider is an interface type with GetLoginURL and CompleteLogin methods",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:233"
+   ]
+  },
+  {
+   "id": 124,
+   "claim": "LoginProvider.GetLoginURL(ctx, *LoginURLRequest) (*LoginURLResponse, error)",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:233"
+   ]
+  },
+  {
+   "id": 125,
+   "claim": "The CLI supplies the loopback callback URL and a CSRF state nonce to GetLoginURL",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/login.go:103",
+    "arena/deploy/flow/login.go:113"
+   ]
+  },
+  {
+   "id": 126,
+   "claim": "LoginProvider.CompleteLogin(ctx, *CompleteLoginRequest) (*CompleteLoginResponse, error)",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:235"
+   ]
+  },
+  {
+   "id": 127,
+   "claim": "LoginURLRequest and CompleteLoginRequest both carry the current deploy Config as JSON",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:198",
+    "deploy/provider.go:214"
+   ]
+  },
+  {
+   "id": 128,
+   "claim": "promptarena generate --source <adapter> turns recorded sessions into regression scenarios",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/sessions.go:141"
+   ]
+  },
+  {
+   "id": 129,
+   "claim": "deploy.SessionsCapability has value sessions",
+   "verdict": "true",
+   "evidence": [
+    "deploy/sessions.go:13"
+   ]
+  },
+  {
+   "id": 130,
+   "claim": "Sessions capability is advertised in ProviderInfo.Capabilities",
+   "verdict": "true",
+   "evidence": [
+    "deploy/sessions.go:13"
+   ]
+  },
+  {
+   "id": 131,
+   "claim": "Session sourcing dispatches over list_sessions and get_session RPC methods",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:166",
+    "deploy/adaptersdk/serve.go:168"
+   ]
+  },
+  {
+   "id": 132,
+   "claim": "The CLI reports session sourcing as unsupported for adapters without the sessions capability and tells the user to upgrade the adapter",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/sessions.go:34",
+    "arena/deploy/flow/sessions.go:86"
+   ]
+  },
+  {
+   "id": 133,
+   "claim": "SessionSourceProvider is an interface type with ListSessions and GetSession methods",
+   "verdict": "true",
+   "evidence": [
+    "deploy/sessions.go:29"
+   ]
+  },
+  {
+   "id": 134,
+   "claim": "SessionSourceProvider.ListSessions(ctx, *ListSessionsRequest) (*ListSessionsResponse, error)",
+   "verdict": "true",
+   "evidence": [
+    "deploy/sessions.go:29"
+   ]
+  },
+  {
+   "id": 135,
+   "claim": "SessionSourceProvider.GetSession(ctx, *GetSessionRequest) (*GetSessionResponse, error)",
+   "verdict": "true",
+   "evidence": [
+    "deploy/sessions.go:29"
+   ]
+  },
+  {
+   "id": 136,
+   "claim": "The CLI re-checks Expectations on every fetched session regardless of server-side filtering",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/sessions.go:138",
+    "arena/generate/generate.go:82"
+   ]
+  },
+  {
+   "id": 137,
+   "claim": "GetSession returns messages, pack identity, variables, workflow trace and every recorded eval for one session",
+   "verdict": "true",
+   "evidence": [
+    "deploy/sessions.go:97"
+   ]
+  },
+  {
+   "id": 138,
+   "claim": "Session requests carry the merged deploy Config with endpoint, workspace and api_token",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/sessions.go:64",
+    "deploy/sessions.go:44"
+   ]
+  },
+  {
+   "id": 139,
+   "claim": "SessionDetail.Messages is json.RawMessage holding a JSON array of PromptKit types.Message",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/sessions.go:221",
+    "deploy/sessions.go:103"
+   ]
+  },
+  {
+   "id": 140,
+   "claim": "A measurement eval has a Score and a nil Passed",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/adapter.go:104",
+    "deploy/sessions.go:139"
+   ]
+  },
+  {
+   "id": 141,
+   "claim": "A judged assertion or guardrail eval carries a verdict in Passed",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/adapter.go:104",
+    "deploy/sessions.go:139"
+   ]
+  },
+  {
+   "id": 142,
+   "claim": "The pack's declared threshold is included in eval data when the platform knows it",
+   "verdict": "true",
+   "evidence": [
+    "deploy/sessions.go:142",
+    "deploy/sessions.go:157"
+   ]
+  },
+  {
+   "id": 143,
+   "claim": "Redaction of session data is the platform's job and the adapter does none",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:375",
+    "deploy/sessions.go:26"
+   ]
+  },
+  {
+   "id": 144,
+   "claim": "An eval's Turn is the index of the user turn it answers",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/mapping.go:50"
+   ]
+  },
+  {
+   "id": 145,
+   "claim": "The assistant reply and tool traffic after a user message belong to that user's turn",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/mapping.go:50"
+   ]
+  },
+  {
+   "id": 146,
+   "claim": "Go package github.com/AltairaLabs/promptarena/v2/arena/generate provides the in-process session helpers",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/mapping.go:1"
+   ]
+  },
+  {
+   "id": 147,
+   "claim": "generate helper ViolatesAny(evals, expectations) exists",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/mapping.go:16"
+   ]
+  },
+  {
+   "id": 148,
+   "claim": "A session that never measured the eval violates ViolatesAny",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/mapping.go:16"
+   ]
+  },
+  {
+   "id": 149,
+   "claim": "generate helper UserTurns(messages) exists and returns user turn per message position",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/mapping.go:50"
+   ]
+  },
+  {
+   "id": 150,
+   "claim": "generate helper UserTurnIndex(messages, ids) exists and keys user turns by message ids",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/mapping.go:65"
+   ]
+  },
+  {
+   "id": 151,
+   "claim": "generate helper EvalResultsFromRows(rows, turnIndex) exists and resolves Turn",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/mapping.go:97"
+   ]
+  },
+  {
+   "id": 152,
+   "claim": "EvalResultsFromRows treats an unknown message id as a conversation-level eval",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/mapping.go:97"
+   ]
+  },
+  {
+   "id": 153,
+   "claim": "A score without a verdict leaves Passed nil in EvalResultsFromRows",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/mapping.go:97"
+   ]
+  },
+  {
+   "id": 154,
+   "claim": "generate helper HasFailedVerdict(evals) exists",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/adapter.go:104",
+    "arena/generate/mapping.go:36"
+   ]
+  },
+  {
+   "id": 155,
+   "claim": "HasFailedVerdict is true only for a recorded negative verdict",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/adapter.go:104",
+    "arena/generate/mapping.go:36"
+   ]
+  },
+  {
+   "id": 156,
+   "claim": "ProviderInfo has field Name with json tag name",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:18"
+   ]
+  },
+  {
+   "id": 157,
+   "claim": "ProviderInfo has field Version with json tag version",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:18"
+   ]
+  },
+  {
+   "id": 158,
+   "claim": "ProviderInfo has field Capabilities of type []string with json tag capabilities (omitempty)",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:18"
+   ]
+  },
+  {
+   "id": 159,
+   "claim": "ProviderInfo has field ConfigSchema with json tag config_schema (omitempty)",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:18"
+   ]
+  },
+  {
+   "id": 160,
+   "claim": "ValidateRequest has field Config of type string",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:26"
+   ]
+  },
+  {
+   "id": 161,
+   "claim": "ValidateResponse has field Valid of type bool",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:31"
+   ]
+  },
+  {
+   "id": 162,
+   "claim": "ValidateResponse has field Errors of type []string",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:31"
+   ]
+  },
+  {
+   "id": 163,
+   "claim": "ValidateResponse has field Warnings of type []string for non-blocking advisories",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:31"
+   ]
+  },
+  {
+   "id": 164,
+   "claim": "ListSessionsRequest has field DeployConfig",
+   "verdict": "true",
+   "evidence": [
+    "deploy/sessions.go:37",
+    "deploy/sessions.go:44"
+   ]
+  },
+  {
+   "id": 165,
+   "claim": "ListSessionsRequest has field Environment",
+   "verdict": "true",
+   "evidence": [
+    "deploy/sessions.go:37",
+    "deploy/sessions.go:44"
+   ]
+  },
+  {
+   "id": 166,
+   "claim": "ListSessionsRequest has field FilterPassed of type *bool",
+   "verdict": "true",
+   "evidence": [
+    "deploy/sessions.go:37",
+    "deploy/sessions.go:44"
+   ]
+  },
+  {
+   "id": 167,
+   "claim": "ListSessionsRequest has field FilterEvalType of type string",
+   "verdict": "true",
+   "evidence": [
+    "deploy/sessions.go:37",
+    "deploy/sessions.go:44"
+   ]
+  },
+  {
+   "id": 168,
+   "claim": "ListSessionsRequest has field Expectations of type []SessionExpectation",
+   "verdict": "true",
+   "evidence": [
+    "deploy/sessions.go:37",
+    "deploy/sessions.go:44"
+   ]
+  },
+  {
+   "id": 169,
+   "claim": "SessionExpectation has fields eval_id, min and max",
+   "verdict": "true",
+   "evidence": [
+    "deploy/sessions.go:37",
+    "deploy/sessions.go:44"
+   ]
+  },
+  {
+   "id": 170,
+   "claim": "ListSessionsRequest has field Limit of type int",
+   "verdict": "true",
+   "evidence": [
+    "deploy/sessions.go:37",
+    "deploy/sessions.go:44"
+   ]
+  },
+  {
+   "id": 171,
+   "claim": "ListSessionsRequest has field Cursor of type string",
+   "verdict": "true",
+   "evidence": [
+    "deploy/sessions.go:37",
+    "deploy/sessions.go:44"
+   ]
+  },
+  {
+   "id": 172,
+   "claim": "ListSessionsResponse has field Sessions of type []SessionSummary",
+   "verdict": "true",
+   "evidence": [
+    "deploy/sessions.go:65"
+   ]
+  },
+  {
+   "id": 173,
+   "claim": "ListSessionsResponse has field NextCursor for paging",
+   "verdict": "true",
+   "evidence": [
+    "deploy/sessions.go:65"
+   ]
+  },
+  {
+   "id": 174,
+   "claim": "GetSessionRequest has field DeployConfig",
+   "verdict": "true",
+   "evidence": [
+    "deploy/sessions.go:84"
+   ]
+  },
+  {
+   "id": 175,
+   "claim": "GetSessionRequest has field Environment",
+   "verdict": "true",
+   "evidence": [
+    "deploy/sessions.go:84"
+   ]
+  },
+  {
+   "id": 176,
+   "claim": "GetSessionRequest has field SessionID",
+   "verdict": "true",
+   "evidence": [
+    "deploy/sessions.go:84"
+   ]
+  },
+  {
+   "id": 177,
+   "claim": "GetSessionResponse has field Session of type SessionDetail",
+   "verdict": "true",
+   "evidence": [
+    "deploy/sessions.go:91"
+   ]
+  },
+  {
+   "id": 178,
+   "claim": "SessionDetail embeds SessionSummary with fields id, scenario_id, provider_id, timestamp, turn_count, has_failures, tags and metadata",
+   "verdict": "true",
+   "evidence": [
+    "deploy/sessions.go:72",
+    "deploy/sessions.go:97"
+   ]
+  },
+  {
+   "id": 179,
+   "claim": "SessionDetail has field Pack of type *SessionPack with fields name, version and digest",
+   "verdict": "true",
+   "evidence": [
+    "deploy/sessions.go:116"
+   ]
+  },
+  {
+   "id": 180,
+   "claim": "SessionDetail has field Variables of type map[string]string",
+   "verdict": "true",
+   "evidence": [
+    "deploy/sessions.go:107"
+   ]
+  },
+  {
+   "id": 181,
+   "claim": "SessionDetail has field Workflow of type *SessionWorkflow with fields entry_state, entry_prompt_task and transitions",
+   "verdict": "true",
+   "evidence": [
+    "deploy/sessions.go:123"
+   ]
+  },
+  {
+   "id": 182,
+   "claim": "SessionDetail has field Evals of type []SessionEval",
+   "verdict": "true",
+   "evidence": [
+    "deploy/sessions.go:142",
+    "deploy/sessions.go:97"
+   ]
+  },
+  {
+   "id": 183,
+   "claim": "SessionEval has fields id, type, kind, score, passed, params, threshold, message, details and turn",
+   "verdict": "true",
+   "evidence": [
+    "deploy/sessions.go:142",
+    "deploy/sessions.go:97"
+   ]
+  },
+  {
+   "id": 184,
+   "claim": "LoginURLRequest has field CallbackURL",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:192"
+   ]
+  },
+  {
+   "id": 185,
+   "claim": "LoginURLRequest has field State",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:192"
+   ]
+  },
+  {
+   "id": 186,
+   "claim": "LoginURLRequest has field Config of type string (omitempty)",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:192"
+   ]
+  },
+  {
+   "id": 187,
+   "claim": "LoginURLResponse has field AuthorizeURL",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:202"
+   ]
+  },
+  {
+   "id": 188,
+   "claim": "CompleteLoginRequest has field Params of type map[string]string",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:209"
+   ]
+  },
+  {
+   "id": 189,
+   "claim": "CompleteLoginRequest has field Config of type string (omitempty)",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:209"
+   ]
+  },
+  {
+   "id": 190,
+   "claim": "CompleteLoginResponse has field Profile of type map[string]interface{} that is merged into the arena config",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/login.go:203",
+    "arena/deploy/flow/login.go:211",
+    "deploy/provider.go:220"
+   ]
+  },
+  {
+   "id": 191,
+   "claim": "CompleteLoginResponse has field Token (omitempty) that is stored in credentials",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/login.go:203",
+    "arena/deploy/flow/login.go:211",
+    "deploy/provider.go:220"
+   ]
+  },
+  {
+   "id": 192,
+   "claim": "PlanRequest has field PackJSON of type string",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:40"
+   ]
+  },
+  {
+   "id": 193,
+   "claim": "PlanRequest has field DeployConfig of type string",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:40"
+   ]
+  },
+  {
+   "id": 194,
+   "claim": "PlanRequest has field ArenaConfig of type string (omitempty)",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:40"
+   ]
+  },
+  {
+   "id": 195,
+   "claim": "PlanRequest has field Environment of type string",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:40"
+   ]
+  },
+  {
+   "id": 196,
+   "claim": "PlanRequest has field PriorState of type string (omitempty)",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:40"
+   ]
+  },
+  {
+   "id": 197,
+   "claim": "PlanResponse has field Changes of type []ResourceChange",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:49"
+   ]
+  },
+  {
+   "id": 198,
+   "claim": "PlanResponse has field Summary of type string",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:49"
+   ]
+  },
+  {
+   "id": 199,
+   "claim": "PlanResponse has field Warnings of type []string for non-blocking advisories",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:49"
+   ]
+  },
+  {
+   "id": 200,
+   "claim": "PlanRequest.ArenaConfig holds JSON-serialized arena config with loaded tools and scenarios",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/config.go:96",
+    "arena/deploy/flow/session.go:95"
+   ]
+  },
+  {
+   "id": 201,
+   "claim": "ResourceChange has field Type of type string",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:58"
+   ]
+  },
+  {
+   "id": 202,
+   "claim": "ResourceChange has field Name of type string",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:58"
+   ]
+  },
+  {
+   "id": 203,
+   "claim": "ResourceChange has field Action of type Action",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:58"
+   ]
+  },
+  {
+   "id": 204,
+   "claim": "ResourceChange has field Detail (omitempty)",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:58"
+   ]
+  },
+  {
+   "id": 205,
+   "claim": "Action constant ActionCreate has value CREATE",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:9"
+   ]
+  },
+  {
+   "id": 206,
+   "claim": "Action constant ActionUpdate has value UPDATE",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:9"
+   ]
+  },
+  {
+   "id": 207,
+   "claim": "Action constant ActionDelete has value DELETE",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:9"
+   ]
+  },
+  {
+   "id": 208,
+   "claim": "Action constant ActionNoChange has value NO_CHANGE",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:9"
+   ]
+  },
+  {
+   "id": 209,
+   "claim": "Action constant ActionDrift has value DRIFT",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:9"
+   ]
+  },
+  {
+   "id": 210,
+   "claim": "ApplyEvent has fields Type, Message and Resource",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:66"
+   ]
+  },
+  {
+   "id": 211,
+   "claim": "ApplyCallback is a func type taking *ApplyEvent and returning error",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:153"
+   ]
+  },
+  {
+   "id": 212,
+   "claim": "Apply event types are progress, resource, error and complete",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/helpers.go:55",
+    "deploy/provider.go:67"
+   ]
+  },
+  {
+   "id": 213,
+   "claim": "ResourceResult has fields Type, Name, Action, Status and Detail",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:101"
+   ]
+  },
+  {
+   "id": 214,
+   "claim": "ResourceResult Status values are created, updated, deleted and failed",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/render.go:24",
+    "deploy/provider.go:105"
+   ]
+  },
+  {
+   "id": 215,
+   "claim": "DestroyRequest has fields DeployConfig, Environment and PriorState",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:139"
+   ]
+  },
+  {
+   "id": 216,
+   "claim": "DestroyEvent has fields Type and Message",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:112"
+   ]
+  },
+  {
+   "id": 217,
+   "claim": "DestroyCallback is a func type taking *DestroyEvent and returning error",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:156"
+   ]
+  },
+  {
+   "id": 218,
+   "claim": "StatusRequest has fields DeployConfig, Environment and PriorState",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:146"
+   ]
+  },
+  {
+   "id": 219,
+   "claim": "StatusResponse has field Status of type string",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:119"
+   ]
+  },
+  {
+   "id": 220,
+   "claim": "StatusResponse has field State (omitempty)",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:119"
+   ]
+  },
+  {
+   "id": 221,
+   "claim": "ResourceStatus has fields Type, Name, Status and Detail",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:129"
+   ]
+  },
+  {
+   "id": 222,
+   "claim": "ImportRequest has fields ResourceType, ResourceName and Identifier",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:159"
+   ]
+  },
+  {
+   "id": 223,
+   "claim": "ImportRequest has fields DeployConfig and Environment (omitempty)",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:159"
+   ]
+  },
+  {
+   "id": 224,
+   "claim": "ImportRequest has field PriorState (omitempty)",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:159"
+   ]
+  },
+  {
+   "id": 225,
+   "claim": "ImportResponse has field Resource of type ResourceStatus",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:169"
+   ]
+  },
+  {
+   "id": 226,
+   "claim": "ImportResponse has field State of type string",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:169"
+   ]
+  },
+  {
+   "id": 227,
+   "claim": "Adapter binary build command go build -o promptarena-deploy-myprovider .",
+   "verdict": "true",
+   "evidence": [
+    "deploy/manager.go:28",
+    "deploy/manager.go:42",
+    "deploy/manager.go:49"
+   ]
+  },
+  {
+   "id": 228,
+   "claim": "Adapter binaries are installed into ~/.promptarena/adapters/",
+   "verdict": "true",
+   "evidence": [
+    "deploy/manager.go:28",
+    "deploy/manager.go:42",
+    "deploy/manager.go:49"
+   ]
+  },
+  {
+   "id": 229,
+   "claim": "promptarena deploy adapter list is a CLI command",
+   "verdict": "true",
+   "evidence": [
+    "deploy/manager.go:38"
+   ]
+  },
+  {
+   "id": 230,
+   "claim": "promptarena deploy plan is a CLI command",
+   "verdict": "true",
+   "evidence": [
+    "deploy/manager.go:38"
+   ]
+  }
+ ]
+}

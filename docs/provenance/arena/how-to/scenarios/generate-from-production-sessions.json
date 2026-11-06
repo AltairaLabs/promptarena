@@ -1,0 +1,493 @@
+{
+ "page": "docs/src/content/docs/arena/how-to/scenarios/generate-from-production-sessions.md",
+ "commit": "60cd1a146e6224c0d66c972d18f329a0ce76c522",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "Page title: Generate regression scenarios from production sessions",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 2,
+   "claim": "promptarena generate is a command with a --source flag taking an adapter name",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/generate.go:46",
+    "arena/cmd/promptarena/generate.go:78"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "--source pulls sessions from the platform the deploy adapter targets",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/generate.go:84",
+    "arena/deploy/flow/sessions.go:49"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "generate writes one scenario per session",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/generate.go:60",
+    "arena/generate/generate.go:93",
+    "arena/generate/generate.go:99"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "generate works best for one-shot and agent-loop sessions",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/converter.go:130"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "The first user input becomes the scenario's turn",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/generate.go:23",
+    "arena/generate/converter.go:130"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "Agent behaviour after the input (tool calls, workflow transitions, final answer) becomes assertions",
+   "verdict": "false",
+   "evidence": [
+    "arena/generate/converter.go:45",
+    "arena/generate/converter.go:83",
+    "arena/generate/decision.go:79"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "Later user turns in long multi-turn sessions are written against recorded answers and may not reproduce",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/converter.go:62"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "generate keeps every turn for multi-turn sessions and warns",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/converter.go:130",
+    "arena/generate/converter.go:62"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "The warning appears both in command output and in the scenario description",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/generate_integration.go:34",
+    "arena/generate/converter.go:122"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "Deploy adapter must have the sessions capability",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/sessions.go:86",
+    "deploy/sessions.go:13"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "promptarena deploy adapter install omnia installs the omnia adapter",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/connect.go:12"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "An older adapter is reported with the exact install command to run",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/connect.go:12",
+    "arena/deploy/flow/sessions.go:34"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "Arena config accepts a deploy: section",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:170",
+    "arena/deploy/flow/config.go:23"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "promptarena deploy login command issues the token used by generate",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/config.go:70",
+    "arena/deploy/flow/login.go:94"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "Adapter receives the same merged profile that deploy apply uses (endpoint, workspace, token)",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/session.go:54",
+    "arena/deploy/flow/sessions.go:64"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "promptarena deploy apply command exists",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_import_interactive.go:58"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "--workspace flag on generate overrides the workspace from the profile",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/generate.go:48",
+    "arena/deploy/flow/sessions.go:107"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "Example: promptarena generate with --source omnia, --config arena.yaml, --filter-passed=false, --output scenarios/production",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/generate.go:46",
+    "arena/cmd/promptarena/generate.go:52",
+    "arena/cmd/promptarena/generate.go:55",
+    "arena/cmd/promptarena/generate.go:59"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "--source is the adapter name, e.g. omnia",
+   "verdict": "unverified",
+   "evidence": [
+    "arena/cmd/promptarena/generate.go:46"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "--config flag on generate takes the arena config file",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/generate.go:119",
+    "arena/cmd/promptarena/generate.go:55",
+    "arena/deploy/flow/config.go:14"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "--filter-passed is a boolean flag on generate",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/generate.go:52",
+    "arena/cmd/promptarena/generate.go:98"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "--output flag on generate sets the output directory",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/generate.go:59",
+    "arena/cmd/promptarena/generate_integration.go:48"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "--filter-passed=false selects sessions with a failed recorded verdict",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/sessions.go:145",
+    "arena/generate/adapter.go:29",
+    "arena/generate/sources/recordings.go:64"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "--expect flag on generate accepts an eval expression such as faithfulness>=0.8",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/generate.go:53",
+    "arena/generate/expectation.go:31"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "Example: generate with --expect faithfulness>=0.8 and --output scenarios/faithfulness",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/generate.go:53",
+    "arena/cmd/promptarena/generate.go:59"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "--expect selects on a measurement and states the expected range",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/adapter.go:35",
+    "arena/generate/expectation.go:9"
+   ]
+  },
+  {
+   "id": 28,
+   "claim": "--expect faithfulness>=0.8 selects sessions where faithfulness scored below 0.8 or was never measured",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/expectation.go:82",
+    "arena/generate/mapping.go:16"
+   ]
+  },
+  {
+   "id": 29,
+   "claim": "Generated scenarios assert min_score: 0.8 for faithfulness",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/decision.go:154",
+    "arena/generate/expectation.go:68"
+   ]
+  },
+  {
+   "id": 30,
+   "claim": "Real sessions record measurements (scores), not verdicts",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/adapter.go:78",
+    "arena/generate/mapping.go:92"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "generate prints one line per recorded eval describing what it became and why",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/generate_integration.go:37",
+    "arena/generate/decision.go:85"
+   ]
+  },
+  {
+   "id": 32,
+   "claim": "Decision line shows eval decision 'asserted-expectation' with min_score and reason 'user expectation'",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/decision.go:131",
+    "arena/generate/decision.go:135",
+    "arena/generate/decision.go:51"
+   ]
+  },
+  {
+   "id": 33,
+   "claim": "Decision line 'reported' with the hint to pass --expect <eval>>=<value> (or <=) or declare threshold in the pack",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/decision.go:139"
+   ]
+  },
+  {
+   "id": 34,
+   "claim": "--expect accepts the <= operator as well as >=",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/expectation.go:27",
+    "arena/generate/expectation.go:64"
+   ]
+  },
+  {
+   "id": 35,
+   "claim": "An eval can declare a threshold in the pack",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/generate.go:132"
+   ]
+  },
+  {
+   "id": 36,
+   "claim": "Eval with a failed recorded verdict is asserted with its recorded params",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/decision.go:109"
+   ]
+  },
+  {
+   "id": 37,
+   "claim": "Eval with a passed recorded verdict is dropped",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/decision.go:104"
+   ]
+  },
+  {
+   "id": 38,
+   "claim": "Pack (--config) threshold for an eval causes it to be asserted with that bound",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/decision.go:115",
+    "arena/generate/generate.go:89"
+   ]
+  },
+  {
+   "id": 39,
+   "claim": "--expect for an eval causes it to be asserted with that bound",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/decision.go:131"
+   ]
+  },
+  {
+   "id": 40,
+   "claim": "Eval with no verdict, threshold or --expect is reported and never asserted against an invented bound",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/decision.go:139"
+   ]
+  },
+  {
+   "id": 41,
+   "claim": "Generated scenarios are plain YAML scenario files that can be edited by hand",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/generate.go:138"
+   ]
+  },
+  {
+   "id": 42,
+   "claim": "Redaction happens upstream in the platform before session data is served; the generator performs none",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/generate.go:61"
+   ]
+  },
+  {
+   "id": 43,
+   "claim": "generate.Generate is a library function that takes a SessionSourceAdapter",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/generate.go:26",
+    "arena/generate/generate.go:61"
+   ]
+  },
+  {
+   "id": 44,
+   "claim": "generate.SessionSourceAdapter is an exported interface type",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/adapter.go:16"
+   ]
+  },
+  {
+   "id": 45,
+   "claim": "Generate returns scenarios in memory with per-eval decisions",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/generate.go:46"
+   ]
+  },
+  {
+   "id": 46,
+   "claim": "flow.OpenSessionSource wraps an installed deploy adapter as a SessionSourceAdapter",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/sessions.go:255",
+    "arena/deploy/flow/sessions.go:49"
+   ]
+  },
+  {
+   "id": 47,
+   "claim": "An in-process platform can implement SessionSourceAdapter against its own store and call Generate directly",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/adapter.go:16",
+    "arena/generate/generate.go:61"
+   ]
+  },
+  {
+   "id": 48,
+   "claim": "Generate re-checks ListOptions.Expectations against every session it fetches",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/adapter.go:35",
+    "arena/generate/generate.go:82"
+   ]
+  },
+  {
+   "id": 49,
+   "claim": "Sessions that fail the expectation check land in Result.Skipped",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/generate.go:46",
+    "arena/generate/generate.go:83"
+   ]
+  },
+  {
+   "id": 50,
+   "claim": "arena/generate exports ViolatesAny for the expectation check",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/mapping.go:16"
+   ]
+  },
+  {
+   "id": 51,
+   "claim": "arena/generate exports UserTurnIndex to number evals by the user turn they answer",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/mapping.go:65"
+   ]
+  },
+  {
+   "id": 52,
+   "claim": "arena/generate exports EvalResultsFromRows to map stored records to eval results",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/mapping.go:97"
+   ]
+  },
+  {
+   "id": 53,
+   "claim": "arena/generate exports HasFailedVerdict for a summary's HasFailures",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/mapping.go:36",
+    "arena/generate/sources/recordings.go:167"
+   ]
+  },
+  {
+   "id": 54,
+   "claim": "Session summary has a HasFailures field",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/adapter.go:50"
+   ]
+  },
+  {
+   "id": 55,
+   "claim": "SessionDetail is the type stored records are mapped onto",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/adapter.go:58"
+   ]
+  },
+  {
+   "id": 56,
+   "claim": "An in-process source and a deploy adapter using the shared helpers produce the same scenarios from the same records",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/sessions_test.go:347"
+   ]
+  }
+ ]
+}

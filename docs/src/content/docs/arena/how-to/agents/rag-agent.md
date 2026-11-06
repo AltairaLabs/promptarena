@@ -1,17 +1,42 @@
 ---
 title: Test RAG Agents
-description: Exercise faithfulness, answer_relevancy, contextual_precision/recall/relevancy, and hallucination as scenario assertions. Keyless CI via a mock judge; real LLM judge for production runs.
+description: Gate a RAG agent with faithfulness, answer_relevancy, contextual_precision, contextual_recall, contextual_relevancy and hallucination assertions. Run keyless with a mock judge, or swap in a real LLM judge.
+verified:
+  commit: 60cd1a146e6224c0d66c972d18f329a0ce76c522
+  sources:
+    - .github/workflows/ci.yml
+    - arena/arenaconfig/loader.go
+    - arena/arenaconfig/types.go
+    - arena/assertions/types.go
+    - arena/cmd/promptarena/completion_interactive.go
+    - arena/cmd/promptarena/run.go
+    - arena/engine/builder_integration.go
+    - arena/engine/conversation_executor.go
+    - arena/engine/eval_orchestrator.go
+    - arena/redteam/generate.go
+    - arena/results/markdown/markdown_repository.go
+    - examples/rag-agent/config.arena.yaml
+    - examples/rag-agent/mock-responses-judge.yaml
+    - examples/rag-agent/providers/mock-judge.yaml
+    - examples/rag-agent/scenarios/paris-capital.scenario.yaml
 ---
 
-This how-to walks through `examples/rag-agent/` — the full named RAG primitive suite (`faithfulness`, `answer_relevancy`, `contextual_precision`, `contextual_recall`, `contextual_relevancy`, `hallucination`) exercised as scenario assertions. The vocabulary buyers from DeepEval / Ragas expect, wired in PromptArena.
+Use `examples/rag-agent/` to score a RAG agent's answer against its retrieved context with the six named RAG checks: `faithfulness`, `answer_relevancy`, `contextual_precision`, `contextual_recall`, `contextual_relevancy` and `hallucination`.
+
+## Prerequisites
+
+- The `promptarena` binary.
+- The `examples/rag-agent/` directory. The default config needs no API key.
 
 ## What it proves
 
-RAG eval frameworks compete on the primitive catalog: faithfulness, answer relevancy, contextual recall, hallucination. PromptArena ships those primitives via the PromptKit runtime as thin wrappers over `llm_judge` with hardened default prompts adapted from public DeepEval / Ragas references (Apache 2.0).
+The RAG checks are thin wrappers over `llm_judge` with default prompts adapted from public DeepEval and Ragas references (Apache 2.0). Each check is an eval handler that emits the judge's score. The demo runs all six against one question, one answer and its retrieved context, graded by a mock LLM judge.
 
-Each primitive is a pure eval handler — it emits the judge's score. Wrap with `type: assertion` and a threshold to gate a scenario; the demo runs all six against a single question + answer + retrieved context, with a mock LLM judge for keyless CI.
+Eval handlers emit scores only. Wrap each one in `type: assertion` with a `min_score` to make it gate the scenario. See the [eval framework](/arena/explanation/eval-framework/) for how evals, assertions and guardrails relate.
 
 ## The assertion shape
+
+Add one `type: assertion` entry per check under a turn's `assertions`:
 
 ```yaml
 turns:
@@ -25,14 +50,11 @@ turns:
             contexts:
               - "Paris is the capital and most populous city of France."
               - "Located on the Seine River in north-central France."
-            judge: rag-judge
           min_score: 0.8
 
       - type: assertion
         params:
           eval_type: answer_relevancy
-          eval_params:
-            judge: rag-judge
           min_score: 0.8
 
       - type: assertion
@@ -40,79 +62,74 @@ turns:
           eval_type: contextual_precision
           eval_params:
             contexts: [...]
-            judge: rag-judge
           min_score: 0.5
 
       # ... contextual_recall, contextual_relevancy, hallucination
 ```
 
-All six assertions share the same shape — the inner eval primitive does the work; the `type: assertion` wrapper supplies the threshold. See [the eval/assertion/guardrail split](https://promptkit.altairalabs.ai/reference/checks/#roles) for why this layering matters.
+All six assertions share this shape. The judge is the one configured under `judges:` in `config.arena.yaml`.
 
-## Three context sources
-
-Every RAG handler accepts retrieved context in three forms (preference order):
-
-1. **`contexts: [...]`** — the canonical inline list (used in the demo).
-2. **`context: "..."`** — single-chunk shorthand.
-3. **`context_field: <metadata-key>`** — look up the chunks from `evalCtx.Metadata`. Use this when a retrieval tool writes results to metadata at runtime; the assertion reads them back.
-
-For a live RAG agent, the dynamic `context_field` form is the right shape:
-
-```yaml
-- type: assertion
-  params:
-    eval_type: faithfulness
-    eval_params:
-      context_field: retrieved_chunks
-      judge: rag-judge
-    min_score: 0.8
-```
-
-Wire your retrieval tool to set `metadata["retrieved_chunks"]` on each turn and the assertion auto-picks-up the chunks.
+Pass the retrieved context inline as `contexts: [...]` (a list of chunks) or as `context: "..."` (a single chunk). `answer_relevancy` takes no context: it scores the answer against the question, which is the `question` param or the last user turn. See the [Checks Reference](https://promptkit.altairalabs.ai/reference/checks/) for every parameter of each check.
 
 ## Run it
 
-```bash
-cd examples/rag-agent
-promptarena serve
-```
+1. Change into the example and start the web UI:
 
-Headless / CI:
+   ```bash
+   cd examples/rag-agent
+   promptarena serve
+   ```
 
-```bash
-promptarena run --ci --formats json,markdown
-open out/results.md
-```
+2. Or run headless, as CI does:
 
-Keyless: both the RAG assistant and the LLM judge are mock providers. The mock judge returns `{"passed": true, "score": 0.92, "reasoning": "..."}` for every call; all six assertions pass under the scenario's `min_score` thresholds (`0.8` for most, `0.5` for the contextual_precision / contextual_relevancy ratios).
+   ```bash
+   promptarena run --ci --formats json,markdown
+   open out/results.md
+   ```
+
+The RAG assistant and the LLM judge are both mock providers. The mock judge returns `{"passed": true, "score": 0.92, "reasoning": "..."}` for every call, so all six assertions pass under the scenario's `min_score` thresholds: `0.8` for most checks and `0.5` for `contextual_precision` and `contextual_relevancy`.
 
 ## Swapping in a real judge
 
-Replace the mock judge with a real LLM provider:
+1. Create a provider file for the judge:
 
-```yaml
-# providers/openai-judge.yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Provider
-metadata:
-  name: openai-judge
-spec:
-  id: openai-judge
-  type: openai
-  model: gpt-4o-mini
-```
+   ```yaml
+   # providers/openai-judge.yaml
+   apiVersion: promptkit.altairalabs.ai/v1alpha1
+   kind: Provider
+   metadata:
+     name: openai-judge
+   spec:
+     id: openai-judge
+     type: openai
+     model: gpt-4o-mini
+   ```
 
-Update `judges:` in `config.arena.yaml`:
+2. In `config.arena.yaml`, replace the mock judge entry under `providers:` with the new file in the `judge` group:
 
-```yaml
-judges:
-  - name: rag-judge
-    provider: openai-judge
-```
+   ```yaml
+   providers:
+     - file: providers/mock-assistant.yaml
+       group: default
+     - file: providers/openai-judge.yaml
+       group: judge
+   ```
 
-Run with `OPENAI_API_KEY` set. The mock assistant can stay or get swapped too — the assertions don't care which provider produced the answer.
+3. Point the judge at the new provider:
+
+   ```yaml
+   judges:
+     - name: rag-judge
+       provider: openai-judge
+   ```
+
+4. Run with `OPENAI_API_KEY` set. The mock assistant can stay or be swapped too: the assertions grade the answer whichever provider produced it.
+
+The config defines one judge, and Arena uses it for every RAG assertion.
 
 ## CI gate
+
+Add a workflow like this to your own repository. The example builds `promptarena` from source; replace that step with however you install the binary.
 
 ```yaml
 # .github/workflows/rag-agent.yml
@@ -127,8 +144,8 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
         with:
           go-version: '1.26'
       - run: go build -o bin/promptarena ./arena/cmd/promptarena
@@ -137,13 +154,14 @@ jobs:
         run: ../../bin/promptarena run --ci --formats json
 ```
 
-The default config is keyless. Swap the mock judge for a real one when you want to grade real outputs.
+The default config is keyless. Swap the mock judge for a real one to grade real outputs.
 
 ## Naming and credit
 
-The handler default prompts are adapted from public DeepEval and Ragas reference implementations (Apache 2.0). Attribution lives in each handler's docstring. The name choices (`faithfulness`, `answer_relevancy`, `contextual_*`, `hallucination`) match the buyer-facing vocabulary in the comparison-sheet bake-offs.
+The handler default prompts are adapted from public DeepEval and Ragas reference implementations (Apache 2.0). Attribution lives in each handler's docstring.
 
-## Related how-tos
+## Related pages
 
-- The [Checks Reference](https://promptkit.altairalabs.ai/reference/checks/) has the full parameter list and surface notes for each RAG primitive.
-- The [Validate Outputs](/arena/how-to/scenarios/validate-outputs/) how-to covers the broader assertion mechanism.
+- The [Checks Reference](https://promptkit.altairalabs.ai/reference/checks/) has the full parameter list for each RAG check.
+- [Validate Outputs](/arena/how-to/scenarios/validate-outputs/) covers the broader assertion mechanism.
+- [Eval framework](/arena/explanation/eval-framework/) explains how evals, assertions and guardrails relate.

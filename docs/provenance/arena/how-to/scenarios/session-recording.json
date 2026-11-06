@@ -1,0 +1,1170 @@
+{
+ "page": "docs/src/content/docs/arena/how-to/scenarios/session-recording.md",
+ "commit": "60cd1a146e6224c0d66c972d18f329a0ce76c522",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "Deep debugging: see exact event sequences and timing in recordings",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:515",
+    "arena/turnexecutors/pipeline_stages_integration.go:601"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "Audio reconstruction: voice conversations can be exported as WAV files",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/duplex_executor_pipeline_integration.go:370",
+    "arena/engine/engine.go:515"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "Replay capability: recreate test runs with deterministic providers",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:322"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "Performance analysis: per-event timing and latency are available for analysis",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:515"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "Annotation support: labels, scores and comments can be added to recordings",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:515"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "apiVersion value promptkit.altairalabs.ai/v1alpha1 for the Arena config",
+   "verdict": "true",
+   "evidence": [
+    "examples/eval-test/config.arena.yaml:1"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "kind value Arena for the arena config document",
+   "verdict": "true",
+   "evidence": [
+    "examples/eval-test/config.arena.yaml:2"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "spec.defaults.output is a valid config block for arena defaults",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:466",
+    "arena/engine/engine.go:696"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "output.dir field sets the output directory (example value out)",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:510",
+    "arena/engine/engine.go:703"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "output.formats accepts json and markdown",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:511"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "output.recording.enabled is a boolean field that turns recording on",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:552",
+    "arena/engine/engine.go:697"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "output.recording.dir field sets the recordings subdirectory",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:554",
+    "arena/engine/engine.go:706"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "promptarena run --scenario <name> runs a single scenario",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run_interactive.go:1"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "Recordings are saved to out/recordings/ as JSONL files",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:684",
+    "arena/engine/engine.go:696"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "Each recording is a JSONL file whose first line is a metadata line",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:587"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "Each recording is a JSONL file followed by event lines",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:587"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "Metadata line example fields: type metadata, session_id, start_time, duration",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:587"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "Event line example fields: type event, timestamp, event_type",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:587"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "Session recordings capture a comprehensive event stream covering all runtime activity",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:515",
+    "arena/engine/engine.go:611",
+    "arena/turnexecutors/pipeline_stages_integration.go:601"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "conversation.started is emitted at session initialization and includes the system prompt",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:516",
+    "arena/engine/engine.go:612"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "message.created is emitted for user and assistant messages with multimodal content parts",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/execution.go:739",
+    "arena/turnexecutors/pipeline_stages_integration.go:601"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "message.updated is emitted for metadata updates (latency, token counts, cost)",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:515"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "pipeline.started is emitted at pipeline start and includes the middleware count",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:515"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "pipeline.completed is emitted at pipeline completion with total cost and tokens",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:515"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "pipeline.failed is emitted on pipeline failure with the error",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:515"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "stage.started is emitted once per stage per turn with the stage name and type",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:515"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "stage.completed is emitted at stage completion with duration",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:515"
+   ]
+  },
+  {
+   "id": 28,
+   "claim": "stage.failed is emitted on stage failure with the error and duration",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:515"
+   ]
+  },
+  {
+   "id": 29,
+   "claim": "provider.call.started is emitted with provider, model and message count",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:515"
+   ]
+  },
+  {
+   "id": 30,
+   "claim": "provider.call.completed is emitted with tokens, cost and cached tokens",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:515"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "provider.call.failed is emitted on LLM API call failure with the error",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:515"
+   ]
+  },
+  {
+   "id": 32,
+   "claim": "tool.call.started is emitted at tool execution start with arguments",
+   "verdict": "false",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:601"
+   ]
+  },
+  {
+   "id": 33,
+   "claim": "tool.call.completed is emitted with duration and status",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:515"
+   ]
+  },
+  {
+   "id": 34,
+   "claim": "tool.call.failed is emitted with the error and duration",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:515"
+   ]
+  },
+  {
+   "id": 35,
+   "claim": "tool.client.request is emitted for client-side tool requests with consent message and categories",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:515"
+   ]
+  },
+  {
+   "id": 36,
+   "claim": "validation.started is emitted at validator execution start",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:515"
+   ]
+  },
+  {
+   "id": 37,
+   "claim": "validation.passed is emitted on validation success with duration",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:515"
+   ]
+  },
+  {
+   "id": 38,
+   "claim": "validation.failed is emitted on validation failure with violations",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:515"
+   ]
+  },
+  {
+   "id": 39,
+   "claim": "context.built is emitted for context window assembly with token count, budget and truncation",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:515"
+   ]
+  },
+  {
+   "id": 40,
+   "claim": "context.token_budget_exceeded is emitted on token budget overflow with required vs budget",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:515"
+   ]
+  },
+  {
+   "id": 41,
+   "claim": "state.loaded is emitted when conversation state is loaded from the store",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:515"
+   ]
+  },
+  {
+   "id": 42,
+   "claim": "state.saved is emitted when conversation state is persisted",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:515"
+   ]
+  },
+  {
+   "id": 43,
+   "claim": "stream.interrupted is emitted on stream interruption with the reason",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:517",
+    "arena/engine/engine.go:613"
+   ]
+  },
+  {
+   "id": 44,
+   "claim": "workflow.transitioned is emitted with from and to states, event and prompt task",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:515",
+    "arena/engine/execution_workflow_integration.go:246"
+   ]
+  },
+  {
+   "id": 45,
+   "claim": "workflow.completed is emitted on reaching a terminal state with final state and transition count",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:515",
+    "arena/engine/execution_workflow_integration.go:246"
+   ]
+  },
+  {
+   "id": 46,
+   "claim": "audio.input is emitted for user or environment audio chunks",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/duplex_executor_pipeline_integration.go:370",
+    "arena/turnexecutors/pipeline_stages_integration.go:601"
+   ]
+  },
+  {
+   "id": 47,
+   "claim": "audio.output is emitted for assistant audio chunks",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/duplex_executor_pipeline_integration.go:420",
+    "arena/turnexecutors/pipeline_stages_integration.go:601"
+   ]
+  },
+  {
+   "id": 48,
+   "claim": "audio.transcription is emitted with the speech-to-text transcription result",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:515"
+   ]
+  },
+  {
+   "id": 49,
+   "claim": "video.frame is emitted for video frame capture",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:577"
+   ]
+  },
+  {
+   "id": 50,
+   "claim": "image.input is emitted for image input from user or environment",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:577"
+   ]
+  },
+  {
+   "id": 51,
+   "claim": "image.output is emitted for image output from the agent",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:577"
+   ]
+  },
+  {
+   "id": 52,
+   "claim": "screenshot is emitted for screenshot capture",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:515"
+   ]
+  },
+  {
+   "id": 53,
+   "claim": "middleware.started, middleware.completed and middleware.failed appear only in recordings made before PromptKit replaced its middleware chain with pipeline stages",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:515"
+   ]
+  },
+  {
+   "id": 54,
+   "claim": "Current runs emit stage.* events instead of middleware.* events",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:515"
+   ]
+  },
+  {
+   "id": 55,
+   "claim": "The message.created event includes a Parts field of type []ContentPart",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:601"
+   ]
+  },
+  {
+   "id": 56,
+   "claim": "ContentPart Type value text carries a Text field",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:601"
+   ]
+  },
+  {
+   "id": 57,
+   "claim": "ContentPart Type value image carries a Media field with MIME type, URL or inline data",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:601"
+   ]
+  },
+  {
+   "id": 58,
+   "claim": "ContentPart Type value audio carries a Media field",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:601"
+   ]
+  },
+  {
+   "id": 59,
+   "claim": "ContentPart Type value video carries a Media field",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:601"
+   ]
+  },
+  {
+   "id": 60,
+   "claim": "Audio, video and image events use BinaryPayload for content storage",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:577"
+   ]
+  },
+  {
+   "id": 61,
+   "claim": "BinaryPayload has an InlineData field holding raw bytes for small payloads",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:577"
+   ]
+  },
+  {
+   "id": 62,
+   "claim": "BinaryPayload has a StorageReference field for externalized content",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:577"
+   ]
+  },
+  {
+   "id": 63,
+   "claim": "BinaryPayload has a MIMEType field (e.g. audio/pcm, image/png)",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:577"
+   ]
+  },
+  {
+   "id": 64,
+   "claim": "Audio events include AudioMetadata with sample rate, channels, encoding and duration",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:577"
+   ]
+  },
+  {
+   "id": 65,
+   "claim": "Video events include VideoMetadata with width, height and frame rate",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:577"
+   ]
+  },
+  {
+   "id": 66,
+   "claim": "Import path github.com/AltairaLabs/PromptKit/runtime/v2/recording provides the recording package",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 67,
+   "claim": "recording.Load(path) returns a recording and an error",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 68,
+   "claim": "rec.Metadata.SessionID field exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 69,
+   "claim": "rec.Metadata.Duration field exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 70,
+   "claim": "rec.Metadata.EventCount field exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 71,
+   "claim": "rec.Metadata.ProviderName field exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 72,
+   "claim": "rec.Metadata.Model field exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 73,
+   "claim": "rec.Events is a collection iterable with range",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 74,
+   "claim": "Each recorded event has Offset and Type fields",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 75,
+   "claim": "recording.NewReplayPlayer(rec) returns a player and an error",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 76,
+   "claim": "player.Timeline() returns a timeline",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 77,
+   "claim": "timeline.HasTrack(track) reports whether a track exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 78,
+   "claim": "events.TrackAudioInput is a track constant (the snippet uses the events package but does not import it)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 79,
+   "claim": "timeline.ExportAudioToWAV(track, path) returns an error",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 80,
+   "claim": "events.TrackAudioOutput is a track constant",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 81,
+   "claim": "player.Seek(time.Duration) moves the playback position",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 82,
+   "claim": "player.GetState() returns the state at the current position",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 83,
+   "claim": "player.FormatPosition() returns a formatted position string",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 84,
+   "claim": "state.CurrentEvents field exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 85,
+   "claim": "state.Messages field exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 86,
+   "claim": "state.AudioInputActive field exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 87,
+   "claim": "state.AudioOutputActive field exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 88,
+   "claim": "player.Advance(duration) returns the events passed in that interval",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 89,
+   "claim": "player.Position() method exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 90,
+   "claim": "player.Duration() method exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 91,
+   "claim": "Import path github.com/AltairaLabs/PromptKit/runtime/v2/annotations provides the annotations package",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 92,
+   "claim": "annotations.Annotation struct has fields ID, Type, SessionID, Target, Key and Value",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 93,
+   "claim": "annotations.TypeScore constant exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 94,
+   "claim": "annotations.ForSession() builds a session-level target",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 95,
+   "claim": "annotations.NewScoreValue(float) builds a score value",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 96,
+   "claim": "annotations.TypeComment constant exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 97,
+   "claim": "annotations.InTimeRange(start, end) builds a time-range target",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 98,
+   "claim": "annotations.NewCommentValue(string) builds a comment value",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 99,
+   "claim": "player.SetAnnotations(anns) attaches annotations to the player",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 100,
+   "claim": "player.GetStateAt(duration) returns the state at a given position",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 101,
+   "claim": "state.ActiveAnnotations field exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 102,
+   "claim": "Import path github.com/AltairaLabs/PromptKit/runtime/v2/providers/replay provides the replay provider",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 103,
+   "claim": "replay.NewProviderFromRecording(rec) returns a provider and an error",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/builder_integration.go:322"
+   ]
+  },
+  {
+   "id": 104,
+   "claim": "The replay provider returns the recorded responses",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:322"
+   ]
+  },
+  {
+   "id": 105,
+   "claim": "provider.Complete(ctx, messages, opts) is the replay provider call signature",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/builder_integration.go:322"
+   ]
+  },
+  {
+   "id": 106,
+   "claim": "Recordings enable regression testing without API calls",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:322"
+   ]
+  },
+  {
+   "id": 107,
+   "claim": "Recordings enable reproducing exact conversation flows",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:322"
+   ]
+  },
+  {
+   "id": 108,
+   "claim": "Recordings enable testing against known-good responses",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:322"
+   ]
+  },
+  {
+   "id": 109,
+   "claim": "kind value Eval for the saved-conversation eval document",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:500"
+   ]
+  },
+  {
+   "id": 110,
+   "claim": "spec.id field identifies the eval",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1466"
+   ]
+  },
+  {
+   "id": 111,
+   "claim": "spec.description field is a free-text description of the eval",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1468"
+   ]
+  },
+  {
+   "id": 112,
+   "claim": "spec.recording block points the eval at a saved recording",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1470"
+   ]
+  },
+  {
+   "id": 113,
+   "claim": "spec.recording.path field takes the recording file path",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:506",
+    "arena/arenaconfig/types.go:1498"
+   ]
+  },
+  {
+   "id": 114,
+   "claim": "spec.recording.type accepts the value session",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1501"
+   ]
+  },
+  {
+   "id": 115,
+   "claim": "spec.judge_targets is a map of named judge providers",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/loader.go:975",
+    "arena/arenaconfig/types.go:93",
+    "arena/engine/conversation_executor.go:930"
+   ]
+  },
+  {
+   "id": 116,
+   "claim": "judge target type openai is a valid provider type",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:393"
+   ]
+  },
+  {
+   "id": 117,
+   "claim": "judge target model gpt-4o field",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:393-406"
+   ]
+  },
+  {
+   "id": 118,
+   "claim": "judge target id field",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:393-406"
+   ]
+  },
+  {
+   "id": 119,
+   "claim": "assertion type llm_judge is a registered assertion type",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/eval.json:56"
+   ]
+  },
+  {
+   "id": 120,
+   "claim": "llm_judge params.judge field references a judge_targets key",
+   "verdict": "dead",
+   "evidence": [
+    "arena/engine/conversation_executor.go:930"
+   ]
+  },
+  {
+   "id": 121,
+   "claim": "llm_judge params.criteria field takes the judging criteria text",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/conversation_executor.go:930"
+   ]
+  },
+  {
+   "id": 122,
+   "claim": "llm_judge params.expected accepts the value pass",
+   "verdict": "dead",
+   "evidence": [
+    "arena/engine/conversation_executor.go:930"
+   ]
+  },
+  {
+   "id": 123,
+   "claim": "spec.providers is a list of provider entries in an Arena config",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:86"
+   ]
+  },
+  {
+   "id": 124,
+   "claim": "spec.providers[].file references a provider YAML file",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:578"
+   ]
+  },
+  {
+   "id": 125,
+   "claim": "spec.evals is a list of eval entries in an Arena config",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:100"
+   ]
+  },
+  {
+   "id": 126,
+   "claim": "spec.evals[].file references an eval YAML file",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:566",
+    "arena/arenaconfig/types.go:417"
+   ]
+  },
+  {
+   "id": 127,
+   "claim": "promptarena run --config <file> runs an Arena config",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run_interactive.go:1"
+   ]
+  },
+  {
+   "id": 128,
+   "claim": "examples/session-replay/ directory exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 129,
+   "claim": "demo/replay_example.go exists under examples/session-replay and runs with go run",
+   "verdict": "false",
+   "evidence": [
+    "examples/session-replay/demo/main.go:1",
+    "examples/session-replay/replay-player/main.go:1"
+   ]
+  },
+  {
+   "id": 130,
+   "claim": "replay_example.go accepts an optional recording path argument",
+   "verdict": "false",
+   "evidence": [
+    "examples/session-replay/replay-player/main.go:26"
+   ]
+  },
+  {
+   "id": 131,
+   "claim": "The example demonstrates loading recordings",
+   "verdict": "true",
+   "evidence": [
+    "examples/session-replay/replay-player/main.go:30"
+   ]
+  },
+  {
+   "id": 132,
+   "claim": "The example demonstrates creating a replay player",
+   "verdict": "true",
+   "evidence": [
+    "examples/session-replay/replay-player/main.go:51"
+   ]
+  },
+  {
+   "id": 133,
+   "claim": "The example demonstrates simulating playback with event correlation",
+   "verdict": "true",
+   "evidence": [
+    "examples/session-replay/replay-player/main.go:65"
+   ]
+  },
+  {
+   "id": 134,
+   "claim": "The example demonstrates exporting audio tracks",
+   "verdict": "true",
+   "evidence": [
+    "examples/session-replay/replay-player/main.go:68"
+   ]
+  },
+  {
+   "id": 135,
+   "claim": "The example demonstrates working with annotations",
+   "verdict": "true",
+   "evidence": [
+    "examples/session-replay/replay-player/main.go:171",
+    "examples/session-replay/replay-player/main.go:58"
+   ]
+  },
+  {
+   "id": 136,
+   "claim": "Recordings are written as one JSONL file per test run under out/recordings/",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:684"
+   ]
+  },
+  {
+   "id": 137,
+   "claim": "Audio data in recordings is base64-encoded",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:515"
+   ]
+  },
+  {
+   "id": 138,
+   "claim": "promptarena run --ci flag exists",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run_interactive.go:1"
+   ]
+  },
+  {
+   "id": 139,
+   "claim": "actions/upload-artifact@v4 is the GitHub Action used for uploading recordings (example workflow)",
+   "verdict": "true",
+   "evidence": [
+    ".github/workflows/ci.yml:110"
+   ]
+  },
+  {
+   "id": 140,
+   "claim": "Example workflow uploads path out/recordings/",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:696",
+    "arena/engine/engine.go:706"
+   ]
+  },
+  {
+   "id": 141,
+   "claim": "Recordings capture the complete event stream with precise timestamps",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:515"
+   ]
+  },
+  {
+   "id": 142,
+   "claim": "Recordings capture audio chunks for voice conversations",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/duplex_executor_pipeline_integration.go:370",
+    "arena/engine/engine.go:515"
+   ]
+  },
+  {
+   "id": 143,
+   "claim": "Recordings capture message content and metadata, including multimodal content parts",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:601"
+   ]
+  },
+  {
+   "id": 144,
+   "claim": "Recordings capture tool calls with arguments, results and timing",
+   "verdict": "false",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:601"
+   ]
+  },
+  {
+   "id": 145,
+   "claim": "Recordings capture client tool requests with consent information",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:515"
+   ]
+  },
+  {
+   "id": 146,
+   "claim": "Recordings capture provider call timing and token usage",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:515"
+   ]
+  },
+  {
+   "id": 147,
+   "claim": "Recordings capture stage and middleware execution lifecycle",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:515"
+   ]
+  },
+  {
+   "id": 148,
+   "claim": "Recordings capture workflow state transitions and completion",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:515"
+   ]
+  },
+  {
+   "id": 149,
+   "claim": "Recordings capture validation results",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:515"
+   ]
+  },
+  {
+   "id": 150,
+   "claim": "Post-run human feedback (UserFeedback) is not captured in recordings",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:515"
+   ]
+  },
+  {
+   "id": 151,
+   "claim": "Session tags added after completion are not captured in recordings",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:515"
+   ]
+  },
+  {
+   "id": 152,
+   "claim": "External annotations are stored in separate files, not in recordings",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:515"
+   ]
+  }
+ ]
+}
