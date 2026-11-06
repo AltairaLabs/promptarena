@@ -10,12 +10,13 @@ type fakeIO struct {
 	capture chan []byte
 	played  [][]byte
 	started bool
+	flushed int
 }
 
 func (f *fakeIO) Start(context.Context) error  { f.started = true; return nil }
 func (f *fakeIO) CaptureChunks() <-chan []byte { return f.capture }
 func (f *fakeIO) Play(b []byte)                { f.played = append(f.played, b) }
-func (f *fakeIO) Flush()                       {}
+func (f *fakeIO) Flush()                       { f.flushed++ }
 func (f *fakeIO) Close() error                 { return nil }
 
 func TestDriver_PipesMicToRunnerAndPlaysOutput(t *testing.T) {
@@ -98,22 +99,28 @@ func TestRMS_NonSilenceIsPositive(t *testing.T) {
 	}
 }
 
-func TestDriverWithGuard_DropsQuietMicWhileAgentSpeaks(t *testing.T) {
+func TestDriverWithGuard_DropsQuietMicWhilePlaybackWindowOpen(t *testing.T) {
 	io := &fakeIO{capture: make(chan []byte, 2)}
 	var received [][]byte
+	loud := make([]byte, 6400) // ~200ms at 24kHz mono PCM16, loud enough to open the gate
+	for i := 0; i < len(loud); i += 2 {
+		loud[i], loud[i+1] = 0xff, 0x7f
+	}
 	runner := func(ctx context.Context, mic <-chan []byte, play func([]byte), _ func()) error {
+		play(loud) // agent speaks: opens the gate via RecordPlayback, same path Driver.Run uses for real audio
+		// Send the mic frame only after play() returns, so RecordPlayback has
+		// already run before the tap goroutine can read it -- otherwise this
+		// races against tapLevels the same way a boolean flag set after Run()
+		// starts would.
+		io.capture <- make([]byte, 64) // silence — should be gated while the window from `loud` is open
+		close(io.capture)
 		for f := range mic {
 			received = append(received, f)
 		}
 		return nil
 	}
 	guard := NewEchoGuard(0.5)
-	guard.SetAgentSpeaking(true) // simulate agent actively playing audio
-
 	d := NewDriverWithGuard(io, runner, nil, guard)
-
-	io.capture <- make([]byte, 64) // silence frame — should be gated
-	close(io.capture)
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
@@ -122,5 +129,143 @@ func TestDriverWithGuard_DropsQuietMicWhileAgentSpeaks(t *testing.T) {
 	}
 	if len(received) != 0 {
 		t.Fatalf("expected quiet mic frame to be dropped, got %d frames", len(received))
+	}
+}
+
+// TestDriverWithGuard_AdaptiveFloorEngagesOnBufferedHardware is the regression
+// for the bug this PR was written to fix: fakeIO.Play returns immediately, the
+// way real buffered hardware drivers do, so a boolean "speaking" flag toggled
+// synchronously around the Play call closes again before the mic frame it was
+// meant to gate ever arrives. RecordPlayback must open a window sized to the
+// frame's own audible duration instead, independent of how long Play took.
+func TestDriverWithGuard_AdaptiveFloorEngagesOnBufferedHardware(t *testing.T) {
+	io := &fakeIO{capture: make(chan []byte, 4)}
+	var received [][]byte
+
+	loud := make([]byte, 64)
+	for i := 0; i < len(loud); i += 2 {
+		loud[i], loud[i+1] = 0xff, 0x7f // ~full scale -> dynamic floor ~0.5
+	}
+	echo := make([]byte, 64)
+	for i := 0; i < len(echo); i += 2 {
+		echo[i], echo[i+1] = 0x00, 0x20 // ~0.25: under the dynamic floor, over the 0.02 base
+	}
+
+	runner := func(ctx context.Context, mic <-chan []byte, play func([]byte), _ func()) error {
+		play(loud)         // agent speaks
+		io.capture <- echo // its echo reaches the mic
+		close(io.capture)
+		for f := range mic {
+			received = append(received, f)
+		}
+		return nil
+	}
+
+	d := NewDriverWithGuard(io, runner, nil, NewEchoGuard(0.02))
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	if err := d.Run(ctx); err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if len(received) != 0 {
+		t.Fatalf("echo frame reached the runner: the adaptive floor did not engage (received %d frames)", len(received))
+	}
+}
+
+// TestDriverWithGuard_FlushResetsTheGate covers barge-in: dropping queued
+// playback (Interrupt element) must also close the gate immediately, or the
+// mic stays suppressed for audio that will now never actually sound.
+func TestDriverWithGuard_FlushResetsTheGate(t *testing.T) {
+	io := &fakeIO{capture: make(chan []byte, 2)}
+	var received [][]byte
+	loud := make([]byte, 6400) // ~200ms window
+	for i := 0; i < len(loud); i += 2 {
+		loud[i], loud[i+1] = 0xff, 0x7f
+	}
+	runner := func(ctx context.Context, mic <-chan []byte, play func([]byte), flush func()) error {
+		play(loud) // opens the gate
+		flush()    // barge-in: drop queued playback and reset the gate
+		// Sent only after flush(), so Reset has already run before the tap
+		// goroutine can read it -- see the note in the sibling test above.
+		io.capture <- make([]byte, 64) // quiet frame — must pass now that flush reset the gate
+		close(io.capture)
+		for f := range mic {
+			received = append(received, f)
+		}
+		return nil
+	}
+	guard := NewEchoGuard(0.5)
+	d := NewDriverWithGuard(io, runner, nil, guard)
+
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	if err := d.Run(ctx); err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if io.flushed != 1 {
+		t.Fatalf("expected AudioIO.Flush to be called once, got %d", io.flushed)
+	}
+	if len(received) != 1 {
+		t.Fatalf("expected the mic frame to pass after flush reset the gate, got %d frames", len(received))
+	}
+}
+
+// TestDriverWithGuard_RealisticTurnSequence drives the gate end to end through
+// Driver.Run: agent speech whose echo reaches the mic at ~0.3x playback is
+// dropped, a barge-in well above the floor passes, and after the turn ends
+// naturally (no flush) a quiet next turn still lets a modest barge-in through.
+func TestDriverWithGuard_RealisticTurnSequence(t *testing.T) {
+	io := &fakeIO{capture: make(chan []byte, 4)}
+	guard := NewEchoGuardWithOptions(EchoGuardOptions{Threshold: 0.02, Hangover: 10 * time.Millisecond})
+
+	const n = 4800 // 200ms per frame at 24kHz
+	loudTurn, loudEcho, shout := constantFrame(0.8, n), constantFrame(0.24, n), constantFrame(0.7, n)
+	quietTurn, quietEcho, bargeIn := constantFrame(0.2, n), constantFrame(0.06, n), constantFrame(0.25, n)
+
+	var got []float32
+	runner := func(ctx context.Context, mic <-chan []byte, play func([]byte), _ func()) error {
+		recv := func() bool {
+			select {
+			case f, ok := <-mic:
+				if ok {
+					got = append(got, rms(f))
+				}
+				return ok
+			case <-time.After(time.Second):
+				return false
+			}
+		}
+		// Loud turn: echo is dropped, the shout is the first frame through.
+		play(loudTurn)
+		io.capture <- loudEcho
+		io.capture <- shout
+		if !recv() {
+			return nil
+		}
+		// Turn ends naturally; wait out the frame plus hangover.
+		time.Sleep(250 * time.Millisecond)
+		// Quiet turn: its echo is dropped, a 0.25-RMS barge-in passes.
+		play(quietTurn)
+		io.capture <- quietEcho
+		io.capture <- bargeIn
+		recv()
+		close(io.capture)
+		for f := range mic {
+			got = append(got, rms(f))
+		}
+		return nil
+	}
+
+	d := NewDriverWithGuard(io, runner, nil, guard)
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	if err := d.Run(ctx); err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if len(got) != 2 {
+		t.Fatalf("expected exactly the shout and the barge-in to pass, got RMS levels %v", got)
+	}
+	if got[0] < 0.6 || got[1] < 0.2 || got[1] > 0.3 {
+		t.Fatalf("wrong frames passed the gate: got RMS levels %v, want [~0.7 ~0.25]", got)
 	}
 }
