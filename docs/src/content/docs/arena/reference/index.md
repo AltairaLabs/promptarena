@@ -1,98 +1,83 @@
 ---
 title: Arena Reference
+description: Index of the PromptArena reference pages, with summary tables of commands, common assertions and output formats.
 sidebar:
   order: 0
----
-Complete technical specifications and reference materials for PromptArena.
-
----
-
-## Quick Links
-
-### [CLI Commands](/arena/reference/cli-commands/)
-Complete command-line interface reference with all flags and options.
-
-### [Configuration Schema](/arena/reference/config-schema/)
-YAML configuration file structure and all available options.
-
-### [Assertions](/arena/reference/assertions/)
-All available assertion types for validating LLM responses.
-
-### [Validators](/arena/reference/validators/)
-Built-in validators for checking response quality and compliance.
-
-### [Scenario Format](/arena/reference/scenario-format/)
-Test scenario file structure and specification.
-
-### [Output Formats](/arena/reference/output-formats/)
-Report generation formats (JSON, Markdown, JUnit) and the interactive web UI.
-
-### [Duplex Configuration](/arena/reference/duplex-config/)
-Complete duplex streaming configuration for voice testing scenarios.
-
-### [Tool Authoring](/arena/reference/tool-authoring/)
-Picking a tool `mode` (mock static / mock template / live / mcp / exec / client) and writing each one.
-
+verified:
+  commit: 0dbee6290db4e4de3bff3101f260fd614f81c924
+  sources:
+    - arena/assertions/types.go
+    - arena/cmd/promptarena/config_inspect_interactive.go
+    - arena/cmd/promptarena/debug.go
+    - arena/cmd/promptarena/deploy_interactive.go
+    - arena/cmd/promptarena/init.go
+    - arena/cmd/promptarena/prompt-debug_interactive.go
+    - arena/cmd/promptarena/run.go
+    - arena/cmd/promptarena/serve_interactive.go
+    - arena/cmd/promptarena/validate.go
+    - arena/cmd/promptarena/view.go
+    - arena/engine/builder_integration.go
+    - schemas/v1alpha1/tool.json
 ---
 
-## Reference vs. How-To
+The PromptArena reference pages describe the `promptarena` commands, configuration files, check types and outputs. For task-oriented guides, see the [How-To Guides](/arena/how-to/); to learn by building, see the [Tutorials](/arena/tutorials/).
 
-**This is reference documentation** - dry, factual, technical specifications.
+## Pages
 
-Looking for task-oriented guides? See:
-- [Arena How-To Guides](/arena/how-to/) - Accomplish specific tasks
-- [Arena Tutorials](/arena/tutorials/) - Learn by building
+| Page | Covers |
+|------|--------|
+| [CLI Commands](/arena/reference/cli-commands/) | Every `promptarena` command with its flags and defaults |
+| [Configuration Schema](/arena/reference/config-schema/) | Every field of the arena, scenario, provider, prompt, tool and persona files |
+| [Scenario Format](/arena/reference/scenario-format/) | The structure of a scenario file |
+| [Assertions](/arena/reference/assertions/) | Assertion types for checking responses and conversations |
+| [Guardrails](/arena/reference/validators/) | Guardrails that check or block responses at runtime |
+| [Output Formats](/arena/reference/output-formats/) | Report formats and the web UI |
+| [Duplex Configuration](/arena/reference/duplex-config/) | Duplex (bidirectional streaming) scenarios for voice testing |
+| [Tool Authoring](/arena/reference/tool-authoring/) | The tool `mode` values (`mock`, `live`, `mcp`, `client`) and how to write each |
+| [Go API Reference](/arena/reference/api-reference/) | Using Arena as a Go library |
+| [Deploy: CLI Commands](/arena/reference/deploy/cli-commands/) | The `promptarena deploy` commands |
+| [Deploy: Target Capabilities](/arena/reference/deploy/target-capabilities/) | What each deploy target supports |
+| [Deploy: Protocol](/arena/reference/deploy/protocol/) | The protocol between `promptarena deploy` and an adapter |
+| [Deploy: Adapter SDK](/arena/reference/deploy/adapter-sdk/) | Writing a deploy adapter |
 
----
-
-## Quick Reference Tables
-
-### Command Summary
+## Commands
 
 | Command | Purpose |
 |---------|---------|
-| `promptarena run` | Execute test scenarios |
-| `promptarena config-inspect` | Validate configuration |
-| `promptarena debug` | Debug configuration loading |
+| `promptarena run` | Run scenarios against providers |
+| `promptarena init` | Create a new Arena project |
+| `promptarena validate` | Validate config files, and that an arena config builds a valid pack |
+| `promptarena config-inspect` | Inspect and validate an arena configuration |
+| `promptarena debug` | Debug configuration and prompt loading |
 | `promptarena prompt-debug` | Test prompt rendering |
-| `promptarena serve` | Review results interactively in the web UI |
+| `promptarena serve` | Start the web UI with live run streaming |
 | `promptarena view` | Browse past results in the terminal |
+| `promptarena deploy` | Deploy the arena pack to a target environment |
 
-### Common Assertions
+See [CLI Commands](/arena/reference/cli-commands/) for every command.
 
-| Assertion | Purpose |
-|-----------|---------|
-| `content_includes` | Response contains specific text |
-| `content_matches` | Response matches regex pattern |
-| `tools_called` | Specific tools were invoked |
-| `is_valid_json` | Response is valid JSON |
-| `json_schema` | Response matches JSON schema |
-| `llm_judge` | LLM evaluates response quality |
+## Common assertions
 
-### Output Formats
+| Assertion | Passes when |
+|-----------|-------------|
+| `content_includes` | The response contains every pattern |
+| `content_matches` | The response matches a regular expression |
+| `tools_called` | The named tools were called |
+| `is_valid_json` | The response is valid JSON |
+| `json_schema` | The response matches a JSON schema |
+| `llm_judge` | A judge model scores the response against criteria |
 
-| Format | Use Case |
-|--------|----------|
-| JSON | Machine processing, APIs |
-| HTML | Human-readable reports |
-| JUnit | CI/CD integration |
-| Markdown | Documentation, sharing |
+## Output formats
 
----
+| Format | `--format` value | Use |
+|--------|------------------|-----|
+| JSON | `json` | Machine processing |
+| JUnit XML | `junit` | CI test reporting |
+| Markdown | `markdown` | Human-readable reports |
+| CSV | `csv` | Spreadsheets |
+| Objectives | `objectives` | Objective pass rates, grouped with `--objectives-group-by` |
 
-## API Stability
+## Getting help
 
-Arena reference documentation follows semantic versioning:
-
-- **Stable**: CLI commands, configuration schema
-- **Beta**: Advanced assertions, custom validators
-- **Experimental**: New features marked explicitly
-
----
-
-## Getting Help
-
-- **How-To Guides**: [Task-oriented documentation](/arena/how-to/)
-- **Tutorials**: [Learning-oriented guides](/arena/tutorials/)
-- **Explanations**: [Conceptual documentation](/arena/)
-- **Issues**: [GitHub Issues](https://github.com/AltairaLabs/promptarena/v2/issues)
+- [Explanation](/arena/): how Arena works
+- [GitHub Issues](https://github.com/AltairaLabs/promptarena/issues)

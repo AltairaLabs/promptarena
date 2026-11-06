@@ -1,0 +1,866 @@
+{
+ "page": "docs/src/content/docs/arena/reference/api-reference.md",
+ "commit": "0dbee6290db4e4de3bff3101f260fd614f81c924",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "package github.com/AltairaLabs/promptarena/v2/arena/engine exists",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:1"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "func BuildEngineComponents(cfg *arenaconfig.Config, providerFilter []string) with the 9 named results listed",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/builder_integration.go:71",
+    "arena/engine/builder_integration.go:79"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "providerFilter limits which providers have credentials resolved; nil or empty initializes all",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:104",
+    "arena/engine/engine.go:297"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "promptRegistry is nil when the config loads none",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:504",
+    "arena/engine/builder_integration.go:506"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "mcpRegistry is nil when none are configured",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:621",
+    "arena/engine/builder_integration.go:623"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "convExecutor has the eval orchestrator already injected",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:167",
+    "arena/engine/builder_integration.go:168"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "adapterRegistry: recording-format readers used by eval scenarios",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:167",
+    "arena/engine/engine.go:385"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "a2aCleanup releases A2A agent connections; nil when there are none",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:1024",
+    "arena/engine/builder_integration.go:1026",
+    "arena/engine/engine.go:457"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "toolRegistry: registry of tools the runtime can execute",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:109",
+    "arena/engine/builder_integration.go:78"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "skillExecutor: Executor for skill activation (nil when the config has no skills)",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/builder_integration.go:79",
+    "arena/engine/builder_integration.go:912",
+    "arena/engine/builder_integration.go:916"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "example: LoadConfig then 9-value BuildEngineComponents(cfg, nil) compiles",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:197",
+    "arena/engine/builder_integration.go:71"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "func NewEngine(cfg, providerRegistry, promptRegistry, mcpRegistry, convExecutor, adapterRegistry, toolRegistry) (*Engine, error)",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:388"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "NewEngine adopts the eval orchestrator injected into convExecutor",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:360",
+    "arena/engine/engine.go:434"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "calling SetEventBus forwards the bus to the evals and eval.completed reach subscribers",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:520"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "NewEngine does not initialize workflow state machine, memory subsystem or runtime hooks; NewEngineFromConfig does",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:319",
+    "arena/engine/engine.go:327",
+    "arena/engine/engine.go:336",
+    "arena/engine/engine.go:388"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "NewEngine params providerRegistry, promptRegistry, mcpRegistry, convExecutor, adapterRegistry, toolRegistry are the components returned by BuildEngineComponents",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:71",
+    "arena/engine/engine.go:388"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "func NewEngineFromConfig(cfg *arenaconfig.Config, providerFilter ...string) (*Engine, error)",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:299"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "NewEngineFromConfig builds components and engine, then initializes workflow, memory and runtime hooks",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:299",
+    "arena/engine/engine.go:319",
+    "arena/engine/engine.go:327",
+    "arena/engine/engine.go:336"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "NewEngineFromConfig is the constructor the CLI uses",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run_interactive.go:245"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "modifying cfg before calling overrides what was loaded from disk",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:295"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "func NewEngineFromConfigFile(configPath string) (*Engine, error)",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:285"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "NewEngineFromConfigFile loads configuration from a file (arena.yaml)",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:287"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "example NewEngineFromConfigFile + defer eng.Close() compiles",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:285",
+    "arena/engine/engine.go:456"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "func (e *Engine) GenerateRunPlan(regionFilter, providerFilter, scenarioFilter []string) (*RunPlan, error)",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/execution.go:55"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "regionFilter/providerFilter/scenarioFilter: nil = all",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/execution.go:40",
+    "arena/engine/execution.go:77",
+    "arena/engine/execution.go:86"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "example GenerateRunPlan(nil, []string{...}, nil) compiles",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/execution.go:55"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "func (e *Engine) ExecuteRuns(ctx context.Context, plan *RunPlan, concurrency int) ([]string, error)",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:886"
+   ]
+  },
+  {
+   "id": 28,
+   "claim": "ExecuteRuns executes all runs in the plan concurrently with max concurrency",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:914"
+   ]
+  },
+  {
+   "id": 29,
+   "claim": "returned run IDs are in the same order as plan combinations",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:884",
+    "arena/engine/engine.go:904",
+    "arena/engine/engine.go:906"
+   ]
+  },
+  {
+   "id": 30,
+   "claim": "error returned when execution setup fails",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:931"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "example ExecuteRuns(ctx, plan, 4) compiles",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:886"
+   ]
+  },
+  {
+   "id": 32,
+   "claim": "func (e *Engine) GetStateStore() statestore.Store",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:987"
+   ]
+  },
+  {
+   "id": 33,
+   "claim": "eng.GetStateStore().(*statestore.ArenaStateStore) type assertion compiles",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:987",
+    "arena/statestore/store.go:132"
+   ]
+  },
+  {
+   "id": 34,
+   "claim": "func (e *Engine) Close() error shuts down engine and cleans resources",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:456"
+   ]
+  },
+  {
+   "id": 35,
+   "claim": "func (e *Engine) EnableMockProviderMode(mockConfigPath string) error",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:738"
+   ]
+  },
+  {
+   "id": 36,
+   "claim": "EnableMockProviderMode replaces all providers with mock providers",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:754",
+    "arena/engine/engine.go:778"
+   ]
+  },
+  {
+   "id": 37,
+   "claim": "mockConfigPath empty string gives default responses",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:742",
+    "arena/engine/engine.go:756",
+    "arena/engine/engine.go:758"
+   ]
+  },
+  {
+   "id": 38,
+   "claim": "returns error if mock configuration is invalid",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:743",
+    "arena/engine/engine.go:745"
+   ]
+  },
+  {
+   "id": 39,
+   "claim": "func (e *Engine) EnableSessionRecording(recordingDir string) error",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:585"
+   ]
+  },
+  {
+   "id": 40,
+   "claim": "enables session recording for all runs",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:585",
+    "arena/engine/engine.go:602"
+   ]
+  },
+  {
+   "id": 41,
+   "claim": "returns error if directory cannot be created",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:586",
+    "arena/engine/engine.go:588"
+   ]
+  },
+  {
+   "id": 42,
+   "claim": "type RunPlan struct { Combinations []RunCombination }",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/types.go:14"
+   ]
+  },
+  {
+   "id": 43,
+   "claim": "type RunCombination struct { Region, ScenarioID, ProviderID string } (snippet shows only these three fields)",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/types.go:19"
+   ]
+  },
+  {
+   "id": 44,
+   "claim": "RunCombination fields Region, ScenarioID, ProviderID described",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/types.go:20",
+    "arena/engine/types.go:21",
+    "arena/engine/types.go:23"
+   ]
+  },
+  {
+   "id": 45,
+   "claim": "type RunResult struct (engine) fields RunID, ProviderID, ScenarioID, Messages []types.Message, Cost types.CostInfo, Duration time.Duration, Error string",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/types.go:51",
+    "arena/engine/types.go:52",
+    "arena/engine/types.go:61",
+    "arena/engine/types.go:63",
+    "arena/engine/types.go:68",
+    "arena/engine/types.go:69"
+   ]
+  },
+  {
+   "id": 46,
+   "claim": "RunResult key field descriptions (RunID, ProviderID, ScenarioID, Messages, Cost, Duration, Error)",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/types.go:51"
+   ]
+  },
+  {
+   "id": 47,
+   "claim": "package arena/arenaconfig exists",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:85"
+   ]
+  },
+  {
+   "id": 48,
+   "claim": "arenaconfig.Config has LoadedProviders map[string]*Provider",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:221"
+   ]
+  },
+  {
+   "id": 49,
+   "claim": "Config.LoadedScenarios map[string]*Scenario",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:228"
+   ]
+  },
+  {
+   "id": 50,
+   "claim": "Config.LoadedPromptConfigs map[string]*PromptConfigData",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:220",
+    "arena/arenaconfig/types.go:380"
+   ]
+  },
+  {
+   "id": 51,
+   "claim": "Config.Defaults Defaults",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:180"
+   ]
+  },
+  {
+   "id": 52,
+   "claim": "type Provider struct in arenaconfig with ID, Type, Model",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:221"
+   ]
+  },
+  {
+   "id": 53,
+   "claim": "Provider.Type values include openai, claude, gemini, mock",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 54,
+   "claim": "type Scenario struct with ID, TaskType, Description string and Turns []TurnDefinition",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:682",
+    "arena/arenaconfig/types.go:683",
+    "arena/arenaconfig/types.go:684",
+    "arena/arenaconfig/types.go:686",
+    "arena/arenaconfig/types.go:692"
+   ]
+  },
+  {
+   "id": 55,
+   "claim": "type TurnDefinition struct with Role, Content, Persona string, Turns, MaxTurns int",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1134",
+    "arena/arenaconfig/types.go:1135",
+    "arena/arenaconfig/types.go:1136",
+    "arena/arenaconfig/types.go:1143",
+    "arena/arenaconfig/types.go:1145",
+    "arena/arenaconfig/types.go:1147"
+   ]
+  },
+  {
+   "id": 56,
+   "claim": "Role is 'user', 'assistant', or self-play role e.g. gemini-user",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1135"
+   ]
+  },
+  {
+   "id": 57,
+   "claim": "Turns sets minimum exchanges for self-play and MaxTurns the upper bound",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1144",
+    "arena/arenaconfig/types.go:1147"
+   ]
+  },
+  {
+   "id": 58,
+   "claim": "If MaxTurns is absent exactly Turns exchanges are executed",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1144",
+    "arena/arenaconfig/types.go:1146"
+   ]
+  },
+  {
+   "id": 59,
+   "claim": "type Defaults struct with Temperature float32, MaxTokens int, Output OutputConfig",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:462",
+    "arena/arenaconfig/types.go:463",
+    "arena/arenaconfig/types.go:464",
+    "arena/arenaconfig/types.go:469"
+   ]
+  },
+  {
+   "id": 60,
+   "claim": "package arena/statestore exists",
+   "verdict": "true",
+   "evidence": [
+    "arena/statestore/store.go:132"
+   ]
+  },
+  {
+   "id": 61,
+   "claim": "type ArenaStateStore struct",
+   "verdict": "true",
+   "evidence": [
+    "arena/statestore/store.go:132"
+   ]
+  },
+  {
+   "id": 62,
+   "claim": "func (s *ArenaStateStore) GetRunResult(ctx context.Context, runID string) (*RunResult, error)",
+   "verdict": "false",
+   "evidence": [
+    "arena/statestore/metadata.go:43"
+   ]
+  },
+  {
+   "id": 63,
+   "claim": "example arenaStore.GetRunResult(ctx, runID) ... result.ScenarioID, result.Duration, result.Cost.TotalCost",
+   "verdict": "false",
+   "evidence": [
+    "arena/statestore/metadata.go:43",
+    "arena/statestore/store.go:1095",
+    "arena/statestore/store.go:1105"
+   ]
+  },
+  {
+   "id": 64,
+   "claim": "GetRunResult returns error if run not found",
+   "verdict": "true",
+   "evidence": [
+    "arena/statestore/metadata.go:44",
+    "arena/statestore/metadata.go:49"
+   ]
+  },
+  {
+   "id": 65,
+   "claim": "result.Cost.TotalCost float64 printed with %.6f",
+   "verdict": "true",
+   "evidence": [
+    "arena/statestore/store.go:1105"
+   ]
+  },
+  {
+   "id": 66,
+   "claim": "package github.com/AltairaLabs/PromptKit/runtime/v2/prompt exists",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:104"
+   ]
+  },
+  {
+   "id": 67,
+   "claim": "prompt.Config struct { Spec Spec } (wrapper; omits APIVersion, Kind, Metadata)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 68,
+   "claim": "prompt.Spec has TaskType, Version, Description, SystemTemplate string, AllowedTools []string",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 69,
+   "claim": "example &prompt.Config{Spec: prompt.Spec{...}} compiles",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 70,
+   "claim": "package github.com/AltairaLabs/promptarena/v2/arena/generate exists",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/generate.go:1"
+   ]
+  },
+  {
+   "id": 71,
+   "claim": "generate is what `promptarena generate` runs",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 72,
+   "claim": "func Generate(ctx context.Context, req Request) (*Result, error)",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/generate.go:61"
+   ]
+  },
+  {
+   "id": 73,
+   "claim": "Request fields Source SessionSourceAdapter, List ListOptions, Convert ConvertOptions, Dedup bool, Pack *packspec.Pack",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/generate.go:23",
+    "arena/generate/generate.go:36"
+   ]
+  },
+  {
+   "id": 74,
+   "claim": "ListOptions fields FilterPassed, FilterEvalType, Expectations, Limit",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/adapter.go:28"
+   ]
+  },
+  {
+   "id": 75,
+   "claim": "ConvertOptions fields TaskType, Expectations",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/converter.go:24"
+   ]
+  },
+  {
+   "id": 76,
+   "claim": "Dedup drops sessions with the same failure fingerprint",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/generate.go:33",
+    "arena/generate/generate.go:93",
+    "arena/generate/generate.go:95"
+   ]
+  },
+  {
+   "id": 77,
+   "claim": "Pack supplies eval params and declared thresholds the source did not record",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/generate.go:114",
+    "arena/generate/generate.go:36"
+   ]
+  },
+  {
+   "id": 78,
+   "claim": "type Result struct { Scenarios []*arenaconfig.ScenarioConfig; Skipped []Skipped; Warnings []string; Decisions []Decision; Deduplicated int }",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/generate.go:46",
+    "arena/generate/generate.go:51"
+   ]
+  },
+  {
+   "id": 79,
+   "claim": "Generate lists, fetches each, optionally dedups, converts each into a scenario",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/generate.go:61",
+    "arena/generate/generate.go:93"
+   ]
+  },
+  {
+   "id": 80,
+   "claim": "Nothing is printed and nothing is written to disk",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/generate.go:140",
+    "arena/generate/generate.go:61"
+   ]
+  },
+  {
+   "id": 81,
+   "claim": "Session that fails to load or convert is recorded in Skipped; failure to list is fatal",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/generate.go:47",
+    "arena/generate/generate.go:61"
+   ]
+  },
+  {
+   "id": 82,
+   "claim": "Each recorded eval produces one Decision",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/decision.go:79",
+    "arena/generate/decision.go:91"
+   ]
+  },
+  {
+   "id": 83,
+   "claim": "failed recorded verdict asserted with its params; measurement bounded by pack threshold or Expectation asserted with that bound; measurement with no known range reported, not asserted",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/decision.go:119",
+    "arena/generate/decision.go:73"
+   ]
+  },
+  {
+   "id": 84,
+   "claim": "func WriteScenarios(dir string, scenarios []*arenaconfig.ScenarioConfig) ([]string, error)",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/generate.go:140"
+   ]
+  },
+  {
+   "id": 85,
+   "claim": "WriteScenarios writes each scenario to <dir>/<name>.scenario.yaml and returns the paths",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/generate.go:140"
+   ]
+  },
+  {
+   "id": 86,
+   "claim": "SessionSourceAdapter interface Name(), List(ctx, ListOptions) ([]SessionSummary, error), Get(ctx, sessionID) (*SessionDetail, error)",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/adapter.go:16"
+   ]
+  },
+  {
+   "id": 87,
+   "claim": "SessionDetail carries messages (types.Message), pack identity, variables, workflow trace and every recorded eval with kind, score, verdict",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/adapter.go:62",
+    "arena/generate/adapter.go:65",
+    "arena/generate/adapter.go:68",
+    "arena/generate/adapter.go:71",
+    "arena/generate/adapter.go:75"
+   ]
+  },
+  {
+   "id": 88,
+   "claim": "sources.NewRecordingsAdapter(glob) reads local run output and session recordings",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/sources/recordings.go:17",
+    "arena/generate/sources/recordings.go:30"
+   ]
+  },
+  {
+   "id": 89,
+   "claim": "flow.OpenSessionSource in package arena/deploy/flow wraps an installed deploy adapter advertising the sessions capability",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/sessions.go:43",
+    "arena/deploy/flow/sessions.go:49"
+   ]
+  },
+  {
+   "id": 90,
+   "claim": "type Expectation struct{ EvalID string; Min, Max *float64 }",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/expectation.go:13"
+   ]
+  },
+  {
+   "id": 91,
+   "claim": "func ParseExpectation(s string) (Expectation, error) // \"faithfulness>=0.8\"",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/expectation.go:31"
+   ]
+  },
+  {
+   "id": 92,
+   "claim": "On ListOptions an Expectation selects sessions whose score fell outside the range",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/adapter.go:34",
+    "arena/generate/generate.go:82"
+   ]
+  },
+  {
+   "id": 93,
+   "claim": "On ConvertOptions an Expectation becomes the generated assertion's min_score / max_score",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/decision.go:119",
+    "arena/generate/expectation.go:13"
+   ]
+  },
+  {
+   "id": 94,
+   "claim": "Generate copies List.Expectations to Convert.Expectations when the latter is empty",
+   "verdict": "true",
+   "evidence": [
+    "arena/generate/generate.go:65",
+    "arena/generate/generate.go:66"
+   ]
+  },
+  {
+   "id": 95,
+   "claim": "arenaconfig.LoadConfig(\"config.arena.yaml\") returns (*Config, error)",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:197"
+   ]
+  },
+  {
+   "id": 96,
+   "claim": "NewEngineFromConfig builds components, engine, and workflow, memory and hook subsystems",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:299",
+    "arena/engine/engine.go:319",
+    "arena/engine/engine.go:327",
+    "arena/engine/engine.go:336"
+   ]
+  },
+  {
+   "id": 97,
+   "claim": "Complete workflow: GenerateRunPlan(nil, nil, nil)",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/execution.go:55"
+   ]
+  },
+  {
+   "id": 98,
+   "claim": "store := eng.GetStateStore().(*statestore.ArenaStateStore); store.GetRunResult(ctx, runID)",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:987",
+    "arena/statestore/metadata.go:43"
+   ]
+  },
+  {
+   "id": 99,
+   "claim": "link /arena/tutorials/07-programmatic-usage/ and /arena/how-to/setup/use-as-go-library/ exist",
+   "verdict": "unverified",
+   "evidence": []
+  }
+ ]
+}

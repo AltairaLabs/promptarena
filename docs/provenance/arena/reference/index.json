@@ -1,0 +1,96 @@
+{
+ "page": "docs/src/content/docs/arena/reference/index.md",
+ "commit": "0dbee6290db4e4de3bff3101f260fd614f81c924",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "Tool modes: mock, live, mcp, exec, client",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/builder_integration.go:109",
+    "schemas/v1alpha1/tool.json:321"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "promptarena run runs scenarios",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:119"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "promptarena config-inspect inspects and validates configuration",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/config_inspect_interactive.go:16"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "promptarena debug debugs configuration loading",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/debug.go:16"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "promptarena prompt-debug tests prompt rendering",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/prompt-debug_interactive.go:17"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "promptarena serve starts the web UI",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:109"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "promptarena view browses past results in the terminal",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/view.go:8"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "promptarena init, validate and deploy exist (added to table)",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_interactive.go:19",
+    "arena/cmd/promptarena/init.go:15",
+    "arena/cmd/promptarena/validate.go:19"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "content_includes, content_matches, tools_called, is_valid_json, json_schema, llm_judge are assertion types (runtime evals/handlers registry)",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/types.go:30"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "Output formats include HTML",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:56",
+    "arena/cmd/promptarena/run.go:71"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "GitHub issues at github.com/AltairaLabs/promptarena/v2/issues",
+   "verdict": "false",
+   "evidence": []
+  }
+ ]
+}

@@ -1,0 +1,898 @@
+{
+ "page": "docs/src/content/docs/arena/reference/deploy/cli-commands.md",
+ "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "Global flag --env / -e, default empty string, resolves to `default`",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_interactive.go:53",
+    "arena/deploy/flow/config.go:30",
+    "arena/deploy/flow/options.go:7"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "Global flag --config, default arena.yaml",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_interactive.go:54"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "Global flag --pack, optional pre-compiled .pack.json, default compiles from --config",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_interactive.go:55",
+    "arena/deploy/flow/config.go:43"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "The three flags are persistent: valid on every deploy subcommand incl. adapter and config",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_interactive.go:53",
+    "arena/cmd/promptarena/deploy_interactive.go:58"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "When --pack is omitted the CLI compiles the pack from --config on the fly",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/config.go:43",
+    "arena/deploy/flow/config.go:51"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "With --pack the CLI reads that .pack.json instead of compiling",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/config.go:44",
+    "arena/deploy/flow/config.go:45"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "Synopsis: promptarena deploy [subcommand] [flags]",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_interactive.go:18"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "deploy manages prompt pack deployments through adapter plugins; supports plan, apply, status, destroy",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_interactive.go:18",
+    "arena/cmd/promptarena/deploy_interactive.go:58"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "Bare `deploy` runs plan and apply sequentially and is the default command",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_interactive.go:199",
+    "arena/cmd/promptarena/deploy_interactive.go:41"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "deploy process step 1-2: load arena.yaml deploy config and resolve pack (compile or --pack)",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/session.go:40",
+    "arena/deploy/flow/session.go:41",
+    "arena/deploy/flow/session.go:49"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "deploy process step 3: merge base config with environment overrides",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/config.go:60",
+    "arena/deploy/flow/config.go:62",
+    "arena/deploy/flow/config.go:65"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "deploy process steps 4-5: load prior state, refresh it from the live environment before planning",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/session.go:77",
+    "arena/deploy/flow/session.go:85"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "deploy process steps 6-7: call adapter Plan then adapter Apply",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_interactive.go:225",
+    "arena/cmd/promptarena/deploy_interactive.go:235"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "deploy process step 8: save state with adapter state, pack checksum and timestamps",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/session.go:115",
+    "arena/deploy/flow/session.go:124",
+    "arena/deploy/flow/session.go:126",
+    "deploy/state.go:191"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "deploy plan previews changes without modifying any resources",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_plan_interactive.go:40",
+    "arena/cmd/promptarena/deploy_plan_interactive.go:48"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "deploy plan output starts `Planning deployment (env: production)...` then `Provider: agentcore v0.2.0`",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_interactive.go:90",
+    "arena/cmd/promptarena/deploy_plan_interactive.go:37",
+    "arena/cmd/promptarena/deploy_plan_interactive.go:38"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "plan output shows a `Changes:` header, rows like `  + agent_runtime.greeting    Create agent runtime`, and a `Summary: 1 to create, ...` line",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_interactive.go:125",
+    "arena/cmd/promptarena/deploy_interactive.go:142",
+    "arena/cmd/promptarena/deploy_interactive.go:145",
+    "arena/cmd/promptarena/deploy_interactive.go:152"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "Change symbols: + CREATE, ~ UPDATE, - DELETE, ! DRIFT, space NO_CHANGE",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/render.go:6",
+    "deploy/provider.go:10"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "Unchanged resources are shown in plan output as a row with a space symbol",
+   "verdict": "unverified",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_interactive.go:151",
+    "arena/deploy/flow/render.go:16"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "deploy apply is called automatically by deploy",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_apply_interactive.go:50",
+    "arena/cmd/promptarena/deploy_apply_interactive.go:55",
+    "arena/cmd/promptarena/deploy_interactive.go:199",
+    "arena/deploy/flow/session.go:157"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "deploy apply [flags] applies deployment changes",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_apply_interactive.go:15",
+    "arena/cmd/promptarena/deploy_apply_interactive.go:28"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "deploy status shows current deployment status and resource health",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_status_interactive.go:15",
+    "arena/cmd/promptarena/deploy_status_interactive.go:26"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "status output starts `Status: deployed`, then `Last deployed:` and `Pack checksum:` before a `Resources:` list",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_interactive.go:181",
+    "arena/cmd/promptarena/deploy_interactive.go:182",
+    "arena/cmd/promptarena/deploy_status_interactive.go:37",
+    "arena/cmd/promptarena/deploy_status_interactive.go:75",
+    "arena/cmd/promptarena/deploy_status_interactive.go:76"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "Resource rows read `agent_runtime.greeting: healthy` and append ` \u2014 detail` when present",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_interactive.go:186",
+    "arena/cmd/promptarena/deploy_interactive.go:188"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "Status values: deployed, not_deployed, degraded, unknown",
+   "verdict": "unverified",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_interactive.go:182",
+    "deploy/provider.go:120"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "Resource health values: healthy, unhealthy, missing",
+   "verdict": "unverified",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_interactive.go:186",
+    "deploy/provider.go:132"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "deploy status requires prior deployment state and exits with error if none exists",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_status_interactive.go:53",
+    "arena/cmd/promptarena/deploy_status_interactive.go:54",
+    "arena/cmd/promptarena/deploy_status_interactive.go:57"
+   ]
+  },
+  {
+   "id": 28,
+   "claim": "deploy destroy tears down all managed resources",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_destroy_interactive.go:15",
+    "arena/cmd/promptarena/deploy_destroy_interactive.go:70"
+   ]
+  },
+  {
+   "id": 29,
+   "claim": "destroy step 1: load prior state, exit if none exists",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_destroy_interactive.go:58",
+    "arena/cmd/promptarena/deploy_destroy_interactive.go:59",
+    "arena/cmd/promptarena/deploy_destroy_interactive.go:61"
+   ]
+  },
+  {
+   "id": 30,
+   "claim": "destroy step 2: call adapter Destroy with prior state",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_destroy_interactive.go:70",
+    "arena/cmd/promptarena/deploy_destroy_interactive.go:73"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "destroy step 3: delete the local state file",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_destroy_interactive.go:82",
+    "deploy/state.go:95"
+   ]
+  },
+  {
+   "id": 32,
+   "claim": "destroy step 4: display completion message",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_destroy_interactive.go:87"
+   ]
+  },
+  {
+   "id": 33,
+   "claim": "destroy requires prior deployment state",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_destroy_interactive.go:58",
+    "arena/cmd/promptarena/deploy_destroy_interactive.go:61"
+   ]
+  },
+  {
+   "id": 34,
+   "claim": "deploy refresh queries the adapter and updates local state to match reality; detects drift",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_refresh_interactive.go:71",
+    "arena/cmd/promptarena/deploy_refresh_interactive.go:80",
+    "arena/cmd/promptarena/deploy_refresh_interactive.go:84"
+   ]
+  },
+  {
+   "id": 35,
+   "claim": "refresh step 1: acquire deploy lock",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_refresh_interactive.go:40",
+    "arena/deploy/flow/connect.go:37"
+   ]
+  },
+  {
+   "id": 36,
+   "claim": "refresh step 2: load prior state, exit if none exists",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_refresh_interactive.go:59",
+    "arena/cmd/promptarena/deploy_refresh_interactive.go:60",
+    "arena/cmd/promptarena/deploy_refresh_interactive.go:62"
+   ]
+  },
+  {
+   "id": 37,
+   "claim": "refresh step 3: call adapter Status with prior state",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_refresh_interactive.go:71",
+    "arena/cmd/promptarena/deploy_refresh_interactive.go:74"
+   ]
+  },
+  {
+   "id": 38,
+   "claim": "refresh step 4: update adapter state and last_refreshed timestamp",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_refresh_interactive.go:80",
+    "arena/cmd/promptarena/deploy_refresh_interactive.go:83",
+    "deploy/state.go:31"
+   ]
+  },
+  {
+   "id": 39,
+   "claim": "refresh step 6: display resource status with drift shown by `!`",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_interactive.go:186",
+    "arena/cmd/promptarena/deploy_refresh_interactive.go:89",
+    "arena/cmd/promptarena/deploy_refresh_interactive.go:90",
+    "arena/deploy/flow/render.go:14"
+   ]
+  },
+  {
+   "id": 40,
+   "claim": "refresh requires prior deployment state",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_refresh_interactive.go:59",
+    "arena/cmd/promptarena/deploy_refresh_interactive.go:62"
+   ]
+  },
+  {
+   "id": 41,
+   "claim": "deploy import <type> <name> <id> takes exactly three positional arguments",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_import_interactive.go:17",
+    "arena/cmd/promptarena/deploy_import_interactive.go:31"
+   ]
+  },
+  {
+   "id": 42,
+   "claim": "Arguments: type (e.g. agent_runtime, a2a_endpoint), name (assigned in local state), id (provider-specific identifier)",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_import_interactive.go:23",
+    "arena/cmd/promptarena/deploy_import_interactive.go:80"
+   ]
+  },
+  {
+   "id": 43,
+   "claim": "Example `promptarena deploy import agent_runtime my-agent container-abc123` and `--env production` variant",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_import_interactive.go:29",
+    "arena/cmd/promptarena/deploy_import_interactive.go:31"
+   ]
+  },
+  {
+   "id": 44,
+   "claim": "import step 1: acquire deploy lock",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_import_interactive.go:50"
+   ]
+  },
+  {
+   "id": 45,
+   "claim": "import step 2: load prior state or create new state if none exists",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_import_interactive.go:64",
+    "arena/cmd/promptarena/deploy_import_interactive.go:93",
+    "arena/cmd/promptarena/deploy_import_interactive.go:99"
+   ]
+  },
+  {
+   "id": 46,
+   "claim": "import step 3: call adapter Import with resource type, name and identifier",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_import_interactive.go:80",
+    "arena/cmd/promptarena/deploy_import_interactive.go:81",
+    "deploy/client.go:356"
+   ]
+  },
+  {
+   "id": 47,
+   "claim": "import step 5: save updated state with last_refreshed timestamp",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_import_interactive.go:104",
+    "arena/cmd/promptarena/deploy_import_interactive.go:105"
+   ]
+  },
+  {
+   "id": 48,
+   "claim": "import step 6: display imported resource information",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_import_interactive.go:110",
+    "arena/cmd/promptarena/deploy_import_interactive.go:112"
+   ]
+  },
+  {
+   "id": 49,
+   "claim": "deploy login is available only for adapters that advertise the `login` capability",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/login.go:142",
+    "arena/deploy/flow/login.go:148",
+    "deploy/provider.go:187"
+   ]
+  },
+  {
+   "id": 50,
+   "claim": "deploy login has a --provider flag; defaults to deploy.provider in the config",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_login_interactive.go:34",
+    "arena/cmd/promptarena/deploy_login_interactive.go:40",
+    "arena/cmd/promptarena/deploy_login_interactive.go:45"
+   ]
+  },
+  {
+   "id": 51,
+   "claim": "login step 1-2: resolve provider, connect adapter, verify login capability",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/login.go:100",
+    "arena/deploy/flow/login.go:76",
+    "arena/deploy/flow/login.go:84"
+   ]
+  },
+  {
+   "id": 52,
+   "claim": "login step 3: loopback callback server on 127.0.0.1 and open browser to the authorize URL with a CSRF state",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/login.go:103",
+    "arena/deploy/flow/login.go:113",
+    "arena/deploy/flow/login.go:123",
+    "arena/deploy/flow/login.go:174"
+   ]
+  },
+  {
+   "id": 53,
+   "claim": "login step 4: provider authenticates the user (brokers OIDC; CLI never sees the identity provider) and redirects back with a one-time code",
+   "verdict": "unverified",
+   "evidence": [
+    "arena/deploy/flow/login.go:128",
+    "arena/deploy/flow/login.go:180"
+   ]
+  },
+  {
+   "id": 54,
+   "claim": "login step 5: exchange the code via the adapter for a deploy profile and a scoped token",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/login.go:135",
+    "arena/deploy/flow/login.go:139"
+   ]
+  },
+  {
+   "id": 55,
+   "claim": "login step 6: merge profile into the arena config and store token in ~/.promptarena/credentials, never in arena.yaml",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/credentials.go:25",
+    "arena/deploy/flow/credentials.go:67",
+    "arena/deploy/flow/login.go:203",
+    "arena/deploy/flow/login.go:204",
+    "arena/deploy/flow/login.go:222"
+   ]
+  },
+  {
+   "id": 56,
+   "claim": "At deploy time the stored token is loaded automatically when the config carries no api_token",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/config.go:70",
+    "arena/deploy/flow/config.go:71",
+    "arena/deploy/flow/config.go:72"
+   ]
+  },
+  {
+   "id": 57,
+   "claim": "Token precedence: explicit api_token > provider env var > credentials store",
+   "verdict": "unverified",
+   "evidence": [
+    "arena/deploy/flow/config.go:70",
+    "arena/deploy/flow/config.go:71"
+   ]
+  },
+  {
+   "id": 58,
+   "claim": "deploy login needs a local browser; not for CI",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/login.go:123",
+    "arena/deploy/flow/login.go:58"
+   ]
+  },
+  {
+   "id": 59,
+   "claim": "deploy config import <profile-file|-> merges an exported deploy profile into the deploy config and validates it",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_config_interactive.go:110",
+    "arena/cmd/promptarena/deploy_config_interactive.go:34",
+    "arena/cmd/promptarena/deploy_config_interactive.go:55"
+   ]
+  },
+  {
+   "id": 60,
+   "claim": "The profile is a JSON or YAML mapping",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_config_interactive.go:101",
+    "arena/cmd/promptarena/deploy_config_interactive.go:104",
+    "arena/cmd/promptarena/deploy_config_interactive.go:80"
+   ]
+  },
+  {
+   "id": 61,
+   "claim": "The merge only touches deploy.config; comments, key order and other sections are preserved",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/login.go:261",
+    "arena/deploy/flow/login.go:297",
+    "arena/deploy/flow/login.go:371"
+   ]
+  },
+  {
+   "id": 62,
+   "claim": "`-` as the argument reads the profile from stdin",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_config_interactive.go:85",
+    "arena/cmd/promptarena/deploy_config_interactive.go:89"
+   ]
+  },
+  {
+   "id": 63,
+   "claim": "Flag --provider default `omnia`: provider to set when the deploy section is created",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_config_interactive.go:63",
+    "arena/cmd/promptarena/deploy_config_interactive.go:64"
+   ]
+  },
+  {
+   "id": 64,
+   "claim": "Flag --skip-validate default false skips validating the merged config against the adapter",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_config_interactive.go:123",
+    "arena/cmd/promptarena/deploy_config_interactive.go:67"
+   ]
+  },
+  {
+   "id": 65,
+   "claim": "config import step 2: deep-merge under spec.deploy.config, creating the deploy section with provider if absent; existing keys overridden, nested mappings merged",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/login.go:276",
+    "arena/deploy/flow/login.go:285",
+    "arena/deploy/flow/login.go:381"
+   ]
+  },
+  {
+   "id": 66,
+   "claim": "config import step 3: writes config back with owner-only permissions for new files",
+   "verdict": "false",
+   "evidence": [
+    "arena/deploy/flow/login.go:231",
+    "arena/deploy/flow/login.go:232",
+    "arena/deploy/flow/login.go:245",
+    "arena/deploy/flow/login.go:247"
+   ]
+  },
+  {
+   "id": 67,
+   "claim": "config import step 4: unless --skip-validate, validate via the adapter's validate_config RPC",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_config_interactive.go:155",
+    "deploy/client.go:280",
+    "deploy/client.go:31"
+   ]
+  },
+  {
+   "id": 68,
+   "claim": "deploy adapter install <provider>[@<version>] installs an adapter binary from the registry",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:118",
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:129",
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:168"
+   ]
+  },
+  {
+   "id": 69,
+   "claim": "install step 1: look up provider in the built-in adapter registry, which supplies its GitHub repo",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/adapter_registry.json:3",
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:349",
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:354",
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:47"
+   ]
+  },
+  {
+   "id": 70,
+   "claim": "install step 2: version is the pinned one, otherwise the newest release from the GitHub Releases API",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:239",
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:240",
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:288"
+   ]
+  },
+  {
+   "id": 71,
+   "claim": "install step 3: download binary from GitHub Releases for current OS/architecture",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:373",
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:375",
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:398"
+   ]
+  },
+  {
+   "id": 72,
+   "claim": "install step 4: installed to ~/.promptarena/adapters/promptarena-deploy-{provider}",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:389",
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:390",
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:76"
+   ]
+  },
+  {
+   "id": 73,
+   "claim": "install step 5: executable permissions 0755",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:405",
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:51"
+   ]
+  },
+  {
+   "id": 74,
+   "claim": "A newly released adapter is installable immediately without rebuilding PromptArena (version resolved live)",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:22",
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:289",
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:291"
+   ]
+  },
+  {
+   "id": 75,
+   "claim": "If the GitHub API is unreachable, install falls back to the registry's recorded version and warns",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:293",
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:294",
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:299"
+   ]
+  },
+  {
+   "id": 76,
+   "claim": "Fallback warning text: `warning: could not resolve latest agentcore from GitHub (...); falling back to registry default v0.3.1`",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:295",
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:296"
+   ]
+  },
+  {
+   "id": 77,
+   "claim": "The recorded registry version is refreshed daily and only affects the offline path",
+   "verdict": "true",
+   "evidence": [
+    ".github/workflows/sync-adapter-registry.yml:24",
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:23"
+   ]
+  },
+  {
+   "id": 78,
+   "claim": "Download URL: https://github.com/{repo}/releases/download/v{version}/promptarena-deploy-{provider}_{os}_{arch}",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:69",
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:86",
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:91"
+   ]
+  },
+  {
+   "id": 79,
+   "claim": "deploy adapter list lists installed adapters",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:133",
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:413"
+   ]
+  },
+  {
+   "id": 80,
+   "claim": "list output: each search directory with adapters printed as `label (path):` header followed by binary filenames, indented two spaces",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:422",
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:424"
+   ]
+  },
+  {
+   "id": 81,
+   "claim": "With no adapters it prints `No adapters installed.` and a hint to run `promptarena deploy adapter install <provider>`",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:430",
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:432"
+   ]
+  },
+  {
+   "id": 82,
+   "claim": "list search locations: 1. project-local .promptarena/adapters/, 2. user-level ~/.promptarena/adapters/",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:470",
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:476",
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:486"
+   ]
+  },
+  {
+   "id": 83,
+   "claim": "deploy adapter remove <provider> removes an installed adapter",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:148",
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:439"
+   ]
+  },
+  {
+   "id": 84,
+   "claim": "remove deletes the binary from ~/.promptarena/adapters/",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:443",
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:448",
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:455"
+   ]
+  },
+  {
+   "id": 85,
+   "claim": "Config example: deploy.provider (required), deploy.config (optional base provider config), deploy.environments.<env>.config (per-environment overrides)",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:361",
+    "arena/arenaconfig/types.go:363",
+    "arena/arenaconfig/types.go:365",
+    "arena/arenaconfig/types.go:367"
+   ]
+  },
+  {
+   "id": 86,
+   "claim": "Environment config is merged with the base config; environment value wins",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/config.go:62",
+    "arena/deploy/flow/config.go:65",
+    "arena/deploy/flow/config.go:66"
+   ]
+  },
+  {
+   "id": 87,
+   "claim": "File path arena.yaml is the default config file",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_interactive.go:54"
+   ]
+  },
+  {
+   "id": 88,
+   "claim": "Deployment state is stored at .promptarena/deploy.state as JSON",
+   "verdict": "true",
+   "evidence": [
+    "deploy/state.go:14",
+    "deploy/state.go:15",
+    "deploy/state.go:82"
+   ]
+  },
+  {
+   "id": 89,
+   "claim": "Deploy lock file at .promptarena/deploy.lock prevents concurrent access",
+   "verdict": "true",
+   "evidence": [
+    "deploy/lock.go:26",
+    "deploy/lock.go:46",
+    "deploy/lock.go:9"
+   ]
+  },
+  {
+   "id": 90,
+   "claim": "Project-local adapters at .promptarena/adapters/",
+   "verdict": "true",
+   "evidence": [
+    "deploy/manager.go:42"
+   ]
+  },
+  {
+   "id": 91,
+   "claim": "User-level adapters at ~/.promptarena/adapters/",
+   "verdict": "true",
+   "evidence": [
+    "deploy/manager.go:49"
+   ]
+  },
+  {
+   "id": 92,
+   "claim": "See Also links to /arena/how-to/deploy/configure/, /arena/how-to/deploy/plan-and-apply/, /arena/reference/deploy/protocol/",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 93,
+   "claim": "Subcommands present: plan, apply, status, destroy, refresh, import, login, config import, adapter install/list/remove",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:161",
+    "arena/cmd/promptarena/deploy_config_interactive.go:60",
+    "arena/cmd/promptarena/deploy_interactive.go:58",
+    "arena/cmd/promptarena/deploy_interactive.go:63",
+    "arena/cmd/promptarena/deploy_login_interactive.go:33"
+   ]
+  },
+  {
+   "id": 94,
+   "claim": "Plan rows use resource types such as agent_runtime and a2a_endpoint",
+   "verdict": "unverified",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_interactive.go:152"
+   ]
+  }
+ ]
+}

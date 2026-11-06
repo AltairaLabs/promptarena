@@ -2,28 +2,36 @@
 title: Tool Authoring
 sidebar:
   order: 8
+verified:
+  commit: 631d3c353c2c9d71b362ae5cd20c137d42b19d5b
+  sources:
+    - arena/engine/builder_integration.go
+    - examples/customer-support/tools/example-tool.tool.yaml
+    - examples/voice-refund-demo/tools/lookup-order.tool.yaml
+    - schemas/v1alpha1/tool.json
 ---
 
-How to write Tool YAMLs for PromptArena: which `mode` to use, and how to wire each one.
+Tool YAML modes for PromptArena and the fields each mode takes.
 
 For the full `Tool` schema (every field), see [Configuration Schema → Tool](/arena/reference/config-schema/#tool) or `schemas/v1alpha1/tool.json` in the repo.
 
-## Modes at a glance
+## Modes
 
-| `mode` | Use when | Required fields |
+Valid `mode` values under `promptarena`: `mock`, `live`, `mcp`, `client`, `local`, or the name of a registered executor.
+
+| `mode` | Behaviour | Fields |
 |---|---|---|
-| `mock` (static) | Response is the same regardless of args | `mock_result` |
-| `mock` (template) | Response depends on args (e.g. branch on order_id) | `mock_template` or `mock_template_file` |
-| `live` | Tool calls a real HTTP endpoint | `http:` |
-| `mcp` | Tool is exposed by an MCP server already configured at the arena level | (none — auto-discovered) |
-| `exec` | Tool shells out to a local subprocess | `exec:` |
-| `client` | Tool is handled by client code (SDK consumer or external runtime) | `client:` |
+| `mock` (static) | Returns `mock_result` for every call, whatever the args | `mock_result` |
+| `mock` (template) | Renders `mock_template` with the call args and returns the result | `mock_template` |
+| `live` | Calls a real HTTP endpoint | `http` |
+| `mcp` | Uses a tool exposed by an MCP server configured at the arena level | none (auto-discovered) |
+| `client` | Answered by the mock executor: returns the `mock_template` or `mock_result` output, or `{"result": "mock response"}` if neither is set | `client` (optional) |
 
-`mock_result` and `mock_template` are mutually exclusive on a single tool.
+If `mock_template` is set, the template executor runs and `mock_result` is ignored.
 
-## Mock — static (`mock_result`)
+## Mock: static (`mock_result`)
 
-Returns the same response for every call. Use this when the value is a constant or when no test case in your suite needs to differentiate.
+Returns the same response for every call.
 
 ```yaml
 apiVersion: promptkit.altairalabs.ai/v1alpha1
@@ -50,16 +58,9 @@ spec:
     conditions: cloudy
 ```
 
-## Mock — input-branching (`mock_template`)
+## Mock: input-branching (`mock_template`)
 
-Returns a different response based on tool-call args. Args are parsed as a JSON map and exposed as the template's data context. The rendered output is parsed back as JSON.
-
-This is the right answer when:
-- One scenario should look up a real order, another should fail to find it
-- A "happy path" persona needs `in_warranty: true` while a "hostile" persona needs `false`
-- You want to keep all branching logic in YAML rather than writing code
-
-**Do not write a custom executor for this case** — the template executor already exists.
+Returns a response that depends on the tool-call args. The args are parsed as a JSON map and become the template's data context. The rendered output is parsed back as JSON. If the rendered text is not valid JSON, the executor wraps it in an object under the `result` key.
 
 ```yaml
 apiVersion: promptkit.altairalabs.ai/v1alpha1
@@ -100,27 +101,17 @@ Supported control flow includes:
 - `{{ if eq .field "value" }}…{{ else if … }}…{{ else }}…{{ end }}`
 - `{{ range .items }}…{{ end }}`
 - Comparison helpers: `eq`, `ne`, `lt`, `gt`, `le`, `ge`
-- `printf`, `index`, and the rest of the standard template functions
+- `printf`, `index`, and the rest of the built-in template functions
 
-The `{{- … -}}` form trims surrounding whitespace, which is what you want when the rendered output must parse as JSON.
-
-### Long templates: `mock_template_file`
-
-For templates that don't fit comfortably inline, point at a file (path is relative to the tool YAML):
-
-```yaml
-spec:
-  mode: mock
-  mock_template_file: templates/lookup-order.tmpl
-```
+The `{{- … -}}` form trims surrounding whitespace so that the rendered output parses as JSON.
 
 ### Multimodal mocks: `mock_parts`
 
-For tools that should return image/audio/video/document content alongside JSON, add `mock_parts` (works with both `mock_result` and `mock_template`). See [Configuration Schema → Tool](/arena/reference/config-schema/#tool) for the full structure.
+`mock_parts` returns image, audio, video or document content alongside the JSON result. It works with both `mock_result` and `mock_template`. A part's `file_path` resolves against the config directory. The structure is defined by `MockPartSpec` and `MockMediaSpec` in `schemas/v1alpha1/tool.json`.
 
-## Live — HTTP (`mode: live`)
+## Live: HTTP (`mode: live`)
 
-Calls a real HTTP endpoint. Args are sent as JSON; response is the parsed JSON body.
+Calls a real HTTP endpoint. Args are sent as JSON. A JSON response body is returned as is, a non-JSON body is wrapped in an object under `result`, and a non-2xx status is an error.
 
 ```yaml
 spec:
@@ -131,42 +122,41 @@ spec:
     headers:
       Content-Type: "application/json"
     headers_from_env:
-      - API_TOKEN          # → "Authorization: Bearer ${API_TOKEN}"
+      - Authorization=API_TOKEN
     timeout_ms: 5000
-    redact:                # fields stripped from logs
+    redact:
       - api_key
 ```
 
-## MCP — discovered tools (`mode: mcp`)
+| `http` field | Type | Description |
+|---|---|---|
+| `url` | string | Endpoint URL |
+| `method` | string | HTTP method |
+| `headers` | map of string | Static request headers |
+| `headers_from_env` | list of string | Entries of the form `Header-Name=ENV_VAR_NAME`. The header is set to the raw value of the environment variable. Entries without `=` are ignored, and an unset or empty variable sets no header. |
+| `timeout_ms` | integer | Request timeout in milliseconds |
+| `redact` | list of string | Top-level keys of a JSON object response whose values are replaced with `"[REDACTED]"` before the result reaches the model. Nested keys are not matched. |
 
-The tool is provided by an MCP server configured at the arena level. The arena auto-discovers tools from configured servers; the Tool YAML only declares the contract.
+In the example, `Authorization=API_TOKEN` sets the `Authorization` header to the value of `API_TOKEN`. Put the full header value, such as `Bearer ...`, in the variable.
+
+## MCP: discovered tools (`mode: mcp`)
+
+The tool is provided by an MCP server configured at the arena level. The arena discovers tools from configured servers, and the Tool YAML declares the contract.
 
 ```yaml
 spec:
   mode: mcp
-  # No additional config — the MCP client provides the executor.
 ```
 
-## Exec — subprocess (`mode: exec`)
+## Client (`mode: client`)
 
-Calls a local subprocess; args are sent on stdin, response is read from stdout.
-
-```yaml
-spec:
-  mode: exec
-  exec:
-    command: ./bin/lookup-order
-    args: ["--format=json"]
-    timeout_ms: 5000
-```
-
-## Client — handled outside the runtime (`mode: client`)
-
-The runtime hands the tool call back to the SDK consumer (or an external system) for execution. Used when the executor lives outside the test harness — e.g. a real backend you want the LLM to call, but where Arena should not own the implementation.
+A `client` tool is answered by the mock executor: it returns `mock_template` or `mock_result` output, or `{"result": "mock response"}` if neither is set. The optional `client` block carries the following settings.
 
 ```yaml
 spec:
   mode: client
+  mock_result:
+    content: "file contents"
   client:
     timeout_ms: 5000
     categories: [filesystem]
@@ -177,23 +167,17 @@ spec:
     validate_output: true
 ```
 
-## Choosing a mode
-
-```mermaid
-flowchart TD
-    q1{"Need a deterministic<br/>test fixture?"}
-    q1 -->|Same response every call| a1["mock + mock_result"]
-    q1 -->|Response depends on args| a2["mock + mock_template"]
-
-    q2{"Want the LLM to<br/>hit a real system?"}
-    q2 -->|HTTP API I control| b1["live + http"]
-    q2 -->|Tool from an MCP server| b2["mcp"]
-    q2 -->|Local CLI or script| b3["exec"]
-    q2 -->|Caller SDK or app handles it| b4["client"]
-```
+| `client` field | Type | Description |
+|---|---|---|
+| `timeout_ms` | integer | Timeout in milliseconds |
+| `categories` | list of string | Tool categories |
+| `validate_output` | boolean | Validate the output against `output_schema` |
+| `consent.required` | boolean | Required when `consent` is set |
+| `consent.message` | string | Consent prompt text |
+| `consent.decline_strategy` | string | `fallback`, `error` or `retry` |
 
 ## See also
 
-- [Configuration Schema → Tool](/arena/reference/config-schema/#tool) — full field reference
-- [`examples/voice-refund-demo`](https://github.com/AltairaLabs/promptarena/v2/tree/main/examples/voice-refund-demo) — `mock_template` branching across three personas
-- [`examples/customer-support`](https://github.com/AltairaLabs/promptarena/v2/tree/main/examples/customer-support) — `mode: mock` with static results
+- [Configuration Schema → Tool](/arena/reference/config-schema/#tool): full field reference
+- [`examples/voice-refund-demo`](https://github.com/AltairaLabs/promptarena/tree/main/examples/voice-refund-demo): `mock_template` branching across four scenarios
+- [`examples/customer-support`](https://github.com/AltairaLabs/promptarena/tree/main/examples/customer-support): `mode: mock` with static results
