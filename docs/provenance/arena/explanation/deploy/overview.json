@@ -1,0 +1,103 @@
+{
+ "page": "docs/src/content/docs/arena/explanation/deploy/overview.md",
+ "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "adapters speak JSON-RPC over stdio",
+   "verdict": "true",
+   "evidence": [
+    "deploy/client.go:14-41"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "state tracking: checksums, timestamps, adapter state",
+   "verdict": "true",
+   "evidence": [
+    "deploy/state.go:22-33"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "applies with streaming progress feedback",
+   "verdict": "false",
+   "evidence": [
+    "deploy/client.go:306-325"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "tracks state with checksums and versioning",
+   "verdict": "false",
+   "evidence": [
+    "arena/deploy/flow/session.go:120-124"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "promptarena deploy adapter install omnia",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/adapter_registry.json:9-14"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "cat >> arena.yaml appending a top-level deploy section",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/loader.go:197-216"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "providers map form default: claude-prod",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/config.go:60-80"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "deploy plan, deploy, deploy status",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_interactive.go:18-64"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "diagram: pack -> CLI -> adapter -> cloud; CLI -> state",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/session.go:40-63",
+    "deploy/state.go:13-20"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "supported adapters omnia, agentcore, vertex",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/adapter_registry.json:1-28"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "more adapters are coming",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/adapter_registry.json:1-28"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "Deploy requires a compiled .pack.json",
+   "verdict": "false",
+   "evidence": [
+    "arena/deploy/flow/config.go:37-56"
+   ]
+  }
+ ]
+}

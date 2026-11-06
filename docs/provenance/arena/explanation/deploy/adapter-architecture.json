@@ -1,0 +1,155 @@
+{
+ "page": "docs/src/content/docs/arena/explanation/deploy/adapter-architecture.md",
+ "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "JSON-RPC 2.0 over stdio",
+   "verdict": "true",
+   "evidence": [
+    "deploy/client.go:14-41"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "stdin requests, stdout responses",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:85-106",
+    "deploy/client.go:125-150"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "stderr available for adapter debug logging (not captured)",
+   "verdict": "false",
+   "evidence": [
+    "deploy/client.go:120-123"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "discovery order",
+   "verdict": "true",
+   "evidence": [
+    "deploy/manager.go:31-62"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "naming promptarena-deploy-{provider}",
+   "verdict": "true",
+   "evidence": [
+    "deploy/manager.go:26-29"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "example adapters cloudrun and lambda",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/adapter_registry.json:1-28"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "platform suffix stripped to canonical name at install",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:388-390"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "Provider interface has six methods",
+   "verdict": "false",
+   "evidence": [
+    "deploy/provider.go:174-183"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "ValidateConfig checks config before planning",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_config_interactive.go:155",
+    "arena/deploy/flow/session.go:101-112"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "Plan receives pack, config, env, prior state; returns CREATE/UPDATE/DELETE/NO_CHANGE",
+   "verdict": "false",
+   "evidence": [
+    "deploy/provider.go:39-63"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "Apply returns an opaque state string the CLI persists",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/session.go:114-131",
+    "deploy/provider.go:179"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "Destroy returns no state",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:180"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "Status returns overall status and per-resource health",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:118-136"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "CLI closes stdin and adapter exits",
+   "verdict": "true",
+   "evidence": [
+    "deploy/client.go:165-182"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "process lives for one CLI command",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/connect.go:27-34",
+    "arena/deploy/flow/session.go:65-71"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "initial buffer 64 KB, max line 10 MB",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:100-106",
+    "deploy/client.go:100-105"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "adapters can be written in any language; Go SDK provided",
+   "verdict": "true",
+   "evidence": [
+    "deploy/adaptersdk/serve.go:85-92"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "no streaming: events collected in final response",
+   "verdict": "true",
+   "evidence": [
+    "deploy/client.go:306-325"
+   ]
+  }
+ ]
+}

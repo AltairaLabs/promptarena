@@ -1,18 +1,28 @@
 ---
 title: 'Deploy: Install Adapters'
+description: Install, list and remove deploy adapter binaries, and control which binary a project uses.
+verified:
+  commit: 631d3c353c2c9d71b362ae5cd20c137d42b19d5b
+  sources:
+    - .github/workflows/sync-adapter-registry.yml
+    - arena/cmd/promptarena/adapter_registry.json
+    - arena/cmd/promptarena/deploy_adapter_interactive.go
+    - arena/deploy/flow/connect.go
+    - arena/deploy/flow/preflight.go
+    - deploy/manager.go
 ---
 
 ## Goal
 
-Install, list, and remove deploy adapter plugins.
+Install, list, and remove deploy adapter binaries.
 
 ## Prerequisites
 
-- PromptKit CLI (`promptarena`) installed
+- The `promptarena` CLI installed
 
 ## Install an Adapter
 
-Install the Omnia adapter (the primary Altaira platform target) from the default registry:
+Install the Omnia adapter from the built-in registry:
 
 ```bash
 promptarena deploy adapter install omnia
@@ -24,39 +34,36 @@ Install a specific version:
 promptarena deploy adapter install omnia@1.4.0
 ```
 
-Or install the Google Agent Runtime adapter instead:
-
-```bash
-promptarena deploy adapter install vertex
-```
-
-The AWS Bedrock AgentCore adapter uses the same command:
+The other adapters use the same command:
 
 ```bash
 promptarena deploy adapter install agentcore
+promptarena deploy adapter install vertex
+promptarena deploy adapter install foundry
 ```
 
-**What happens:**
+What happens:
 
-1. The CLI looks up the adapter in the built-in registry
-2. Resolves the version to install: the one you pinned with `@version`, otherwise the newest GitHub release. If the Releases API is unreachable (offline, rate-limited), it falls back to the version recorded in the built-in registry and says so, and that fallback is refreshed automatically whenever an adapter releases
-3. Downloads the binary from the adapter's GitHub Releases for your OS and architecture
-4. Installs it to `~/.promptarena/adapters/promptarena-deploy-{provider}` (e.g. `promptarena-deploy-omnia`)
-5. Sets executable permissions (0755)
+1. The CLI looks up the adapter in its built-in registry. An unknown name fails with `unknown adapter "<name>"; available: ...`.
+2. It resolves the version: the one you pinned with `@version`, otherwise the newest GitHub release. If the GitHub Releases API is unreachable (offline or rate-limited), it prints a warning and falls back to the version in the built-in registry. A daily workflow keeps that fallback version current.
+3. It downloads the binary for your OS and architecture from the adapter's GitHub Releases.
+4. It writes the binary to `~/.promptarena/adapters/promptarena-deploy-{provider}` (for example `promptarena-deploy-omnia`) with mode `0755`.
 
 ### Download URL Format
 
 Adapter binaries are fetched from GitHub Releases:
 
-```
+```text
 https://github.com/{repo}/releases/download/v{version}/promptarena-deploy-{provider}_{os}_{arch}
 ```
 
 For example, on macOS ARM64:
 
-```
+```text
 https://github.com/AltairaLabs/PromptArena-deploy-omnia/releases/download/v1.4.0/promptarena-deploy-omnia_darwin_arm64
 ```
+
+A 404 means the release does not exist or has no binary for your platform. The error says which, and where the version came from.
 
 ## List Installed Adapters
 
@@ -66,18 +73,21 @@ See all installed adapters:
 promptarena deploy adapter list
 ```
 
-**Expected output:**
+Expected output, one block per directory that holds an adapter:
 
-```
-Installed adapters:
-  omnia      ~/.promptarena/adapters/promptarena-deploy-omnia
-  agentcore  ~/.promptarena/adapters/promptarena-deploy-agentcore
+```text
+project-local (/path/to/project/.promptarena/adapters):
+  promptarena-deploy-omnia
+user-level (/home/you/.promptarena/adapters):
+  promptarena-deploy-agentcore
 ```
 
 The list command searches two locations:
 
-1. **Project-local**: `.promptarena/adapters/` in your project directory
-2. **User-level**: `~/.promptarena/adapters/` in your home directory
+1. Project-local: `.promptarena/adapters/` in the current directory
+2. User-level: `~/.promptarena/adapters/` in your home directory
+
+It does not list adapters found on `$PATH`.
 
 ## Remove an Adapter
 
@@ -87,34 +97,34 @@ Remove an installed adapter:
 promptarena deploy adapter remove omnia
 ```
 
-This removes the binary from `~/.promptarena/adapters/`.
+This removes the binary from `~/.promptarena/adapters/`. It does not touch project-local copies.
 
 ## Adapter Discovery
 
-When you run a deploy command, the CLI locates the adapter binary in this order:
+When you run a deploy command, the CLI uses the first executable it finds:
 
-1. **Project-local** — `.promptarena/adapters/promptarena-deploy-{provider}`
-2. **User-level** — `~/.promptarena/adapters/promptarena-deploy-{provider}`
-3. **System PATH** — Standard `$PATH` lookup
+1. Project-local: `.promptarena/adapters/promptarena-deploy-{provider}`
+2. User-level: `~/.promptarena/adapters/promptarena-deploy-{provider}`
+3. System `$PATH`: `promptarena-deploy-{provider}`
 
-This lets you override a global adapter with a project-specific version.
+A project-local binary overrides the user-level one. Commands print the path they use on an `Adapter:` line.
 
 ## Manual Installation
 
-You can also install adapters manually by placing the binary in the right location:
+To use an adapter you built yourself, place the binary in one of the discovery locations:
 
 ```bash
 # Build from source
 cd promptarena-deploy-myprovider
 go build -o promptarena-deploy-myprovider .
 
-# Install to user-level directory
+# Install to the user-level directory
 mkdir -p ~/.promptarena/adapters
 cp promptarena-deploy-myprovider ~/.promptarena/adapters/
 chmod 755 ~/.promptarena/adapters/promptarena-deploy-myprovider
 ```
 
-Or install to your project for team-specific versions:
+Or install it into the project, to pin a version for everyone working on it:
 
 ```bash
 mkdir -p .promptarena/adapters
@@ -126,25 +136,22 @@ chmod 755 .promptarena/adapters/promptarena-deploy-myprovider
 
 | Adapter | Provider | Description |
 |---------|----------|-------------|
-| `omnia` | Omnia Kubernetes platform | Deploy to the Altaira Omnia workspace (PromptPack, AgentRuntime, ToolRegistry CRDs) |
+| `omnia` | Omnia Kubernetes platform | Deploy to an Omnia workspace (PromptPack, AgentRuntime, ToolRegistry CRDs) |
 | `agentcore` | AWS Bedrock AgentCore | Deploy to AWS Bedrock AgentCore |
 | `vertex` | Google Agent Runtime | Deploy to Agent Runtime, formerly Vertex AI Agent Engine (one engine per agent) |
+| `foundry` | Azure AI Foundry | Deploy Azure AI Foundry hosted agents |
 
-They are not interchangeable — see
-[Target Capabilities](/arena/reference/deploy/target-capabilities/) for a
-side-by-side comparison of lifecycle support, tool execution, A2A and
-observability.
-
+Their lifecycle support, tool execution, A2A and observability differ. See [Target Capabilities](/arena/reference/deploy/target-capabilities/) for a side-by-side comparison.
 
 ## Verification
 
-Confirm an adapter is working:
+Confirm an adapter is installed and starts:
 
 ```bash
-# List should show the adapter
+# The adapter appears in the list
 promptarena deploy adapter list
 
-# Plan should connect to the adapter successfully
+# The plan prints the adapter path and connects to it
 promptarena deploy plan
 ```
 
@@ -152,7 +159,7 @@ promptarena deploy plan
 
 ### Adapter not found
 
-Ensure the binary exists and is executable:
+`adapter not found for provider "<p>"` means no executable `promptarena-deploy-<p>` exists in any discovery location. Check that the binary exists and is executable:
 
 ```bash
 ls -la ~/.promptarena/adapters/
@@ -160,7 +167,7 @@ ls -la ~/.promptarena/adapters/
 
 ### Permission denied
 
-Fix executable permissions:
+Discovery skips a file without the executable bit. Fix its permissions:
 
 ```bash
 chmod 755 ~/.promptarena/adapters/promptarena-deploy-omnia
@@ -168,7 +175,7 @@ chmod 755 ~/.promptarena/adapters/promptarena-deploy-omnia
 
 ### Wrong architecture
 
-If you see exec format errors, the binary was built for a different OS/architecture. Reinstall:
+If you see exec format errors, the binary was built for a different OS or architecture. Reinstall:
 
 ```bash
 promptarena deploy adapter remove omnia
@@ -177,7 +184,7 @@ promptarena deploy adapter install omnia
 
 ## See Also
 
-- [Configure Deploy](/arena/how-to/deploy/configure/) — Set up arena.yaml after installing an adapter
-- [Use the TUI: Deploy from the TUI](/arena/how-to/interfaces/use-the-tui/#deploy-from-the-tui) — the Deploy wizard's preflight step detects a missing adapter and prints this install command, but adapter management stays CLI-only
-- [CLI Commands](/arena/reference/deploy/cli-commands/) — Complete adapter command reference
-- [Adapter SDK](/arena/reference/deploy/adapter-sdk/) — Build your own adapter
+- [Configure Deploy](/arena/how-to/deploy/configure/): set up the deploy section after installing an adapter
+- [Use the TUI: Deploy from the TUI](/arena/how-to/interfaces/use-the-tui/#deploy-from-the-tui): the Deploy wizard's preflight step detects a missing adapter and prints this install command; adapter management is CLI-only
+- [CLI Commands](/arena/reference/deploy/cli-commands/): complete adapter command reference
+- [Adapter SDK](/arena/reference/deploy/adapter-sdk/): build your own adapter

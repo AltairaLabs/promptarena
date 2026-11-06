@@ -1,0 +1,116 @@
+{
+ "page": "docs/src/content/docs/arena/how-to/deploy/ci-cd.md",
+ "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "deploy compiles the pack from arena.yaml automatically",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/config.go:37-56"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "Go version 1.26",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 3,
+   "claim": "go install github.com/AltairaLabs/promptarena/v2/arena/cmd/promptarena@latest",
+   "verdict": "true",
+   "evidence": [
+    "Makefile:59-64"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "promptarena deploy adapter install omnia|agentcore",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/adapter_registry.json:1-28"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "promptarena deploy --env production",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_interactive.go:53-56"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "OMNIA_API_TOKEN supplies the Omnia token",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/config.go:70-74"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "deploy plan --env production",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_plan_interactive.go:13-24"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "--pack with the same file gives byte-identical deploys",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/config.go:43-50"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "go install github.com/AltairaLabs/promptarena/v2/packc@latest",
+   "verdict": "true",
+   "evidence": [
+    "Makefile:59-64"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "packc compile --config arena.yaml --output app.pack.json --id my-app",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:120-124"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "PromptArena does not ship a Makefile",
+   "verdict": "false",
+   "evidence": [
+    "Makefile:59-64"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "state file .promptarena/deploy.state stored locally",
+   "verdict": "true",
+   "evidence": [
+    "deploy/state.go:13-20"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "download-artifact without path restores state",
+   "verdict": "false",
+   "evidence": [
+    "deploy/state.go:45-48"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "without state each CI run treats the deployment as new",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/session.go:76-99"
+   ]
+  }
+ ]
+}
