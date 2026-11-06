@@ -2,7 +2,7 @@
 title: Generate a red-team suite from objectives
 description: Turn a file of objectives, or a public set such as JailbreakBench, into reviewable red-team scenarios with promptarena redteam generate.
 verified:
-  commit: 60cd1a146e6224c0d66c972d18f329a0ce76c522
+  commit: 3df344ffbc8c604e1a8935929c28499d778d19f0
   sources:
     - arena/arenaconfig/taxonomy.go
     - arena/arenaconfig/transform.go

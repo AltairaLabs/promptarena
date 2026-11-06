@@ -2,7 +2,7 @@
 title: Assert Voice Latency Budgets
 description: Gate scenarios on measured provider latency with the latency_budget assertion, which reads each turn's latency_ms from the assistant message.
 verified:
-  commit: 631d3c353c2c9d71b362ae5cd20c137d42b19d5b
+  commit: 3df344ffbc8c604e1a8935929c28499d778d19f0
   sources:
     - arena/arenaconfig/types.go
     - arena/cmd/promptarena/run.go

@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/scenarios/generate-red-team-scenarios.md",
- "commit": "60cd1a146e6224c0d66c972d18f329a0ce76c522",
+ "commit": "3df344ffbc8c604e1a8935929c28499d778d19f0",
  "claims": [
   {
    "id": 1,
@@ -399,7 +399,7 @@
    "claim": "Printed config uses top-level `spec.scenarios[].file` list",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:412",
+    "arena/arenaconfig/types.go:415",
     "arena/arenaconfig/types.go:98",
     "arena/redteam/generate.go:633"
    ]
@@ -410,8 +410,8 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:183",
-    "arena/arenaconfig/types.go:428",
-    "arena/arenaconfig/types.go:448",
+    "arena/arenaconfig/types.go:431",
+    "arena/arenaconfig/types.go:451",
     "arena/redteam/generate.go:639"
    ]
   },
@@ -421,7 +421,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:183",
-    "arena/arenaconfig/types.go:428"
+    "arena/arenaconfig/types.go:431"
    ]
   },
   {
@@ -429,8 +429,8 @@
    "claim": "Field `self_play.roles` is a list of role entries with `id` and `provider`",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:435",
-    "arena/arenaconfig/types.go:453"
+    "arena/arenaconfig/types.go:438",
+    "arena/arenaconfig/types.go:456"
    ]
   },
   {
@@ -448,7 +448,7 @@
    "claim": "Field `judges` exists under spec with items having `name` and `provider`",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:393",
+    "arena/arenaconfig/types.go:396",
     "arena/arenaconfig/types.go:93",
     "arena/redteam/generate.go:645"
    ]
@@ -458,7 +458,8 @@
    "claim": "Command `promptarena run --formats json,objectives`",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:149"
+    "arena/cmd/promptarena/run.go:176",
+    "arena/cmd/promptarena/run.go:406"
    ]
   },
   {
@@ -466,8 +467,8 @@
    "claim": "Run flag `--formats` accepts `json` and `objectives` as values",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:149",
-    "arena/cmd/promptarena/run.go:32"
+    "arena/cmd/promptarena/run.go:176",
+    "arena/cmd/promptarena/run.go:406"
    ]
   },
   {
@@ -485,7 +486,7 @@
    "claim": "`out/objectives.md` is the produced objectives report file",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:68",
+    "arena/cmd/promptarena/run.go:67",
     "arena/results/objectives/repository.go:18"
    ]
   },
@@ -513,7 +514,6 @@
    "claim": "Objectives report breaks down results by taxonomy entry",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:152",
     "arena/results/objectives/report.go:255",
     "arena/results/objectives/report.go:258"
    ]
@@ -532,7 +532,7 @@
    "claim": "A successful attack is recorded as a failed run with its transcript",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1181",
+    "arena/arenaconfig/types.go:1187",
     "arena/engine/objective.go:151",
     "arena/redteam/generate.go:502"
    ]

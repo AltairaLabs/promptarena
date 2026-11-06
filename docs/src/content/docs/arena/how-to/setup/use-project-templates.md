@@ -2,7 +2,7 @@
 title: Use Project Templates
 description: Scaffold a PromptArena test project with promptarena init, using the built-in quick-start template or a community template.
 verified:
-  commit: 631d3c353c2c9d71b362ae5cd20c137d42b19d5b
+  commit: 3df344ffbc8c604e1a8935929c28499d778d19f0
   sources:
     - arena/cmd/promptarena/init.go
     - arena/cmd/promptarena/init_interactive.go

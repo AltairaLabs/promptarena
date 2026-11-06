@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/agents/provision-mcp-sandbox.md",
- "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "commit": "3df344ffbc8c604e1a8935929c28499d778d19f0",
  "claims": [
   {
    "id": 1,
@@ -39,7 +39,7 @@
    "claim": "name is the registry key and is used in qualified tool names",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:229",
+    "arena/engine/engine.go:228",
     "arena/engine/execution_mcpsource.go:86",
     "arena/engine/mcpsource_scope.go:138",
     "arena/engine/mcpsource_scope.go:161"
@@ -111,8 +111,8 @@
    "claim": "scope run opens once at arena startup and closes at arena shutdown",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:441",
-    "arena/engine/engine.go:464"
+    "arena/engine/engine.go:440",
+    "arena/engine/engine.go:463"
    ]
   },
   {
@@ -141,7 +141,7 @@
    "claim": "Inner scopes close before outer scopes",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:464",
+    "arena/engine/engine.go:463",
     "arena/engine/execution_mcpsource.go:89",
     "arena/engine/execution_mcpsource.go:90"
    ]
@@ -151,7 +151,7 @@
    "claim": "Closer errors are logged as warnings and never fail the parent scope",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:464",
+    "arena/engine/engine.go:463",
     "arena/engine/execution_mcpsource.go:65",
     "arena/engine/execution_mcpsource.go:78"
    ]
@@ -189,7 +189,7 @@
    "claim": "Scenario spec has a variables block containing repo and branch keys in the example",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:727",
+    "arena/arenaconfig/types.go:733",
     "arena/engine/execution_mcpsource.go:17"
    ]
   },
@@ -461,7 +461,7 @@
    "claim": "Ports listed under ports are published and exposed to session hooks as sandbox_ports in event metadata",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:234",
+    "arena/engine/engine.go:233",
     "arena/engine/execution_mcpsource.go:87",
     "arena/mcpsource/docker/source.go:88"
    ]
@@ -471,7 +471,7 @@
    "claim": "Event metadata also carries sandbox_containers next to sandbox_ports",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:229",
+    "arena/engine/engine.go:228",
     "arena/engine/execution_mcpsource.go:86"
    ]
   },
@@ -489,7 +489,7 @@
    "claim": "Metadata key sandbox_containers maps the source name to a container id",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:229",
+    "arena/engine/engine.go:228",
     "arena/engine/mcpsource_scope.go:168"
    ]
   },
@@ -498,7 +498,7 @@
    "claim": "Metadata key sandbox_ports maps the source name to a map of container port to http://localhost:<port>",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:234",
+    "arena/engine/engine.go:233",
     "arena/engine/mcpsource_scope.go:189",
     "arena/mcpsource/docker/source.go:93"
    ]
@@ -559,7 +559,7 @@
    "claim": "go build -o bin/promptarena ./arena/cmd/promptarena builds the binary",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:160"
+    "arena/cmd/promptarena/run.go:116"
    ]
   },
   {
@@ -567,7 +567,8 @@
    "claim": "promptarena run accepts --ci and --format markdown",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:160"
+    "arena/cmd/promptarena/run.go:169",
+    "arena/cmd/promptarena/run.go:174"
    ]
   },
   {
@@ -575,7 +576,7 @@
    "claim": "The run writes examples/codegen-sandbox/out/results.md",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:486",
+    "arena/cmd/promptarena/run.go:536",
     "arena/results/markdown/markdown_repository.go:25"
    ]
   },
@@ -584,8 +585,8 @@
    "claim": "promptarena run accepts --mock-provider and runs against canned LLM responses",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run.go:167",
-    "arena/engine/engine.go:742",
+    "arena/cmd/promptarena/run.go:192",
+    "arena/engine/engine.go:736",
     "arena/engine/execution.go:558"
    ]
   },
@@ -614,7 +615,7 @@
    "claim": "A spec.scenarios list entry takes a file key",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:412"
+    "arena/arenaconfig/types.go:415"
    ]
   },
   {
@@ -630,7 +631,7 @@
    "claim": "Scenario spec.id and metadata.name are fields; spec.task_type is codegen-agent in the example",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:678",
+    "arena/arenaconfig/types.go:684",
     "examples/codegen-sandbox/scenarios/simple-fix.scenario.yaml:9"
    ]
   },

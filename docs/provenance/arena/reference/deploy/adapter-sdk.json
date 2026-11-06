@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/reference/deploy/adapter-sdk.md",
- "commit": "60cd1a146e6224c0d66c972d18f329a0ce76c522",
+ "commit": "3df344ffbc8c604e1a8935929c28499d778d19f0",
  "claims": [
   {
    "id": 1,
@@ -16,8 +16,8 @@
    "claim": "The SDK handles JSON-RPC communication so an adapter only implements the Provider interface",
    "verdict": "true",
    "evidence": [
-    "deploy/adaptersdk/serve.go:144",
-    "deploy/adaptersdk/serve.go:85"
+    "deploy/adaptersdk/serve.go:131",
+    "deploy/adaptersdk/serve.go:86"
    ]
   },
   {
@@ -245,9 +245,8 @@
    "claim": "Serve starts a JSON-RPC server reading requests from stdin and writing responses to stdout",
    "verdict": "true",
    "evidence": [
-    "deploy/adaptersdk/serve.go:144",
-    "deploy/adaptersdk/serve.go:85",
-    "deploy/adaptersdk/serve.go:92"
+    "deploy/adaptersdk/serve.go:86",
+    "deploy/adaptersdk/serve.go:99"
    ]
   },
   {
@@ -255,9 +254,8 @@
    "claim": "Serve dispatches each JSON-RPC request to the matching Provider method",
    "verdict": "true",
    "evidence": [
-    "deploy/adaptersdk/serve.go:144",
-    "deploy/adaptersdk/serve.go:85",
-    "deploy/adaptersdk/serve.go:92"
+    "deploy/adaptersdk/serve.go:131",
+    "deploy/adaptersdk/serve.go:161"
    ]
   },
   {
@@ -265,9 +263,8 @@
    "claim": "Serve blocks until stdin is closed",
    "verdict": "true",
    "evidence": [
-    "deploy/adaptersdk/serve.go:144",
-    "deploy/adaptersdk/serve.go:85",
-    "deploy/adaptersdk/serve.go:92"
+    "deploy/adaptersdk/serve.go:106",
+    "deploy/adaptersdk/serve.go:138"
    ]
   },
   {
@@ -1017,8 +1014,8 @@
    "claim": "Login dispatches over the get_login_url and complete_login RPC methods",
    "verdict": "true",
    "evidence": [
-    "deploy/adaptersdk/serve.go:162",
-    "deploy/adaptersdk/serve.go:164"
+    "deploy/adaptersdk/serve.go:179",
+    "deploy/adaptersdk/serve.go:181"
    ]
   },
   {
@@ -1100,8 +1097,8 @@
    "claim": "Session sourcing dispatches over list_sessions and get_session RPC methods",
    "verdict": "true",
    "evidence": [
-    "deploy/adaptersdk/serve.go:166",
-    "deploy/adaptersdk/serve.go:168"
+    "deploy/adaptersdk/serve.go:183",
+    "deploy/adaptersdk/serve.go:185"
    ]
   },
   {
@@ -1204,7 +1201,7 @@
    "claim": "Redaction of session data is the platform's job and the adapter does none",
    "verdict": "true",
    "evidence": [
-    "deploy/adaptersdk/serve.go:375",
+    "deploy/adaptersdk/serve.go:392",
     "deploy/sessions.go:26"
    ]
   },

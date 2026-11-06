@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/agents/test-mcp-tools.md",
- "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "commit": "3df344ffbc8c604e1a8935929c28499d778d19f0",
  "claims": [
   {
    "id": 1,
@@ -23,7 +23,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:173",
-    "schemas/v1alpha1/arena.json:1809"
+    "schemas/v1alpha1/arena.json:1812"
    ]
   },
   {
@@ -31,8 +31,8 @@
    "claim": "MCP servers are configured by static HTTP+SSE via the 'url' field",
    "verdict": "false",
    "evidence": [
-    "schemas/v1alpha1/arena.json:1827",
-    "schemas/v1alpha1/arena.json:1836"
+    "schemas/v1alpha1/arena.json:1830",
+    "schemas/v1alpha1/arena.json:1839"
    ]
   },
   {
@@ -42,7 +42,7 @@
    "evidence": [
     "arena/engine/builder_integration.go:116",
     "arena/engine/builder_integration.go:86",
-    "arena/engine/engine.go:820",
+    "arena/engine/engine.go:814",
     "arena/mcp/config.go:43"
    ]
   },
@@ -74,7 +74,7 @@
    "claim": "metadata.name is a free-form string (example 'mcp-test')",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/arena.json"
+    "schemas/v1alpha1/arena.json:5181"
    ]
   },
   {
@@ -83,7 +83,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:173",
-    "schemas/v1alpha1/arena.json:730"
+    "schemas/v1alpha1/arena.json:732"
    ]
   },
   {
@@ -92,7 +92,7 @@
    "verdict": "true",
    "evidence": [
     "arena/mcp/config.go:58",
-    "schemas/v1alpha1/arena.json:1804"
+    "schemas/v1alpha1/arena.json:1807"
    ]
   },
   {
@@ -101,7 +101,7 @@
    "verdict": "true",
    "evidence": [
     "arena/mcp/config.go:58",
-    "schemas/v1alpha1/arena.json:1804"
+    "schemas/v1alpha1/arena.json:1807"
    ]
   },
   {
@@ -110,7 +110,7 @@
    "verdict": "true",
    "evidence": [
     "arena/mcp/config.go:58",
-    "schemas/v1alpha1/arena.json:1804"
+    "schemas/v1alpha1/arena.json:1807"
    ]
   },
   {
@@ -118,7 +118,7 @@
    "claim": "spec.prompt_configs is a list with id and file fields",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/arena.json:3082"
+    "schemas/v1alpha1/arena.json:3085"
    ]
   },
   {
@@ -126,7 +126,7 @@
    "claim": "spec.scenarios is a list with a file field",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/arena.json:3821"
+    "schemas/v1alpha1/arena.json:3824"
    ]
   },
   {
@@ -134,7 +134,7 @@
    "claim": "spec.providers is a list with a file field",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/arena.json:3248"
+    "schemas/v1alpha1/arena.json:3251"
    ]
   },
   {
@@ -152,7 +152,7 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/builder_integration.go:454",
-    "schemas/v1alpha1/arena.json:1870"
+    "schemas/v1alpha1/arena.json:1873"
    ]
   },
   {
@@ -161,7 +161,7 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/builder_integration.go:454",
-    "schemas/v1alpha1/arena.json:1882"
+    "schemas/v1alpha1/arena.json:1885"
    ]
   },
   {
@@ -179,7 +179,7 @@
    "evidence": [
     "arena/engine/builder_integration.go:454",
     "arena/mcp/config.go:73",
-    "schemas/v1alpha1/arena.json:1888"
+    "schemas/v1alpha1/arena.json:1891"
    ]
   },
   {
@@ -200,7 +200,7 @@
    "verdict": "true",
    "evidence": [
     "arena/mcp/config.go:58",
-    "schemas/v1alpha1/arena.json:1804"
+    "schemas/v1alpha1/arena.json:1807"
    ]
   },
   {
@@ -217,7 +217,7 @@
    "verdict": "true",
    "evidence": [
     "arena/mcp/config.go:64",
-    "schemas/v1alpha1/arena.json:1824"
+    "schemas/v1alpha1/arena.json:1827"
    ]
   },
   {
@@ -266,7 +266,7 @@
    "claim": "If a provider declares a capabilities list, it must include 'tools'",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:693",
+    "arena/arenaconfig/types.go:699",
     "arena/engine/builder_integration.go:403",
     "arena/engine/execution.go:306"
    ]
@@ -361,8 +361,8 @@
    "claim": "Scenario apiVersion promptkit.altairalabs.ai/v1alpha1 and kind Scenario",
    "verdict": "true",
    "evidence": [
-    "examples/mcp-everything-test/scenarios/echo-and-add.scenario.yaml:2",
-    "schemas/v1alpha1/scenario.json"
+    "examples/mcp-everything-test/scenarios/echo-and-add.scenario.yaml:1",
+    "schemas/v1alpha1/scenario.json:1060"
    ]
   },
   {
@@ -370,8 +370,8 @@
    "claim": "spec.id, spec.task_type and spec.description are Scenario fields",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/scenario.json:552",
-    "schemas/v1alpha1/scenario.json:569"
+    "schemas/v1alpha1/scenario.json:554",
+    "schemas/v1alpha1/scenario.json:571"
    ]
   },
   {
@@ -379,8 +379,8 @@
    "claim": "spec.tool_policy is a Scenario field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:930",
-    "schemas/v1alpha1/scenario.json:600"
+    "arena/arenaconfig/types.go:936",
+    "schemas/v1alpha1/scenario.json:602"
    ]
   },
   {
@@ -388,8 +388,8 @@
    "claim": "tool_policy.tool_choice accepts value 'auto'",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:933",
-    "schemas/v1alpha1/scenario.json:733"
+    "arena/arenaconfig/types.go:939",
+    "schemas/v1alpha1/scenario.json:735"
    ]
   },
   {
@@ -397,7 +397,7 @@
    "claim": "tool_policy.max_tool_calls_per_turn is an integer field",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/scenario.json:737"
+    "schemas/v1alpha1/scenario.json:739"
    ]
   },
   {
@@ -405,7 +405,7 @@
    "claim": "spec.turns is a list of turn objects with role and content",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/scenario.json:877"
+    "schemas/v1alpha1/scenario.json:879"
    ]
   },
   {
@@ -413,7 +413,7 @@
    "claim": "Turn field assertions is a list of assertion objects with type and params",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/scenario.json:940"
+    "schemas/v1alpha1/scenario.json:942"
    ]
   },
   {
@@ -511,7 +511,7 @@
    "claim": "spec.defaults.temperature is a field (value 0.7)",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/arena.json:920"
+    "schemas/v1alpha1/arena.json:922"
    ]
   },
   {
@@ -519,7 +519,7 @@
    "claim": "spec.defaults.max_tokens is a field (value 500)",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/arena.json:923"
+    "schemas/v1alpha1/arena.json:925"
    ]
   },
   {
@@ -527,7 +527,7 @@
    "claim": "spec.defaults.concurrency is a field (value 1)",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/arena.json:929"
+    "schemas/v1alpha1/arena.json:931"
    ]
   },
   {
@@ -535,7 +535,7 @@
    "claim": "spec.defaults.output.dir and output.formats are fields",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/arena.json:2460"
+    "schemas/v1alpha1/arena.json:2463"
    ]
   },
   {
@@ -543,7 +543,7 @@
    "claim": "Output formats json and markdown are accepted",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run_interactive.go:536",
+    "arena/cmd/promptarena/run_interactive.go:531",
     "examples/mcp-everything-test/config.arena.yaml:47"
    ]
   },
@@ -560,7 +560,7 @@
    "claim": "Binary promptarena has a run subcommand accepting -c for config",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:134"
+    "arena/cmd/promptarena/run.go:158"
    ]
   },
   {

@@ -1,138 +1,111 @@
 ---
 title: Session Recording Architecture
+description: How Arena captures runs to JSONL through RecordingStage, loads them as SessionRecordings, and replays them offline.
+verified:
+  commit: 3df344ffbc8c604e1a8935929c28499d778d19f0
+  sources:
+    - arena/adapters/session_recording.go
+    - arena/arenaconfig/types.go
+    - arena/cmd/promptarena/run_interactive.go
+    - arena/engine/builder_integration.go
+    - arena/engine/conversation_executor.go
+    - arena/engine/engine.go
+    - arena/engine/eval_orchestrator.go
+    - arena/engine/execution.go
+    - arena/tui/event_adapter.go
+    - arena/turnexecutors/pipeline_stages_integration.go
+    - arena/web/event_adapter.go
 ---
-This document explains how PromptKit's session recording system captures, stores, and replays LLM conversations with full fidelity.
+This document explains how Arena's session recording system captures, stores, and replays LLM conversations.
 
 ## Overview
 
-Session recording provides a complete audit trail of LLM interactions. Unlike simple logging, recordings capture:
+Session recording provides an audit trail of LLM interactions. Unlike simple logging, recordings capture:
 
-- **Precise timing**: Millisecond-accurate event timestamps
-- **Complete data**: All messages, tool calls, and media
-- **Reconstructable state**: Enough information to replay conversations exactly
+- Nanosecond-resolution event timestamps
+- Every message with its multimodal parts, tool calls and tool results
+- Enough information to replay a conversation turn by turn
+
+Arena writes a recording when `defaults.output.recording.enabled` is `true`. Arena adds `RecordingStage` to the pipeline itself. Duplex runs write no recording, because the duplex pipeline has no `RecordingStage`.
+
+The following diagram shows the path from a live run to a replay.
 
 ```mermaid
-flowchart TD
-    ls["Live Session<br/>(Emitter)"] --> es["Event Store<br/>(JSONL)"]
-    es --> rec["Recording<br/>(Replay)"]
-    ls --> lsd["Real-time events"]
-    es --> esd["Persistent storage"]
-    rec --> recd["Synchronized playback"]
+flowchart LR
+    pipe["Pipeline"] --> rs["RecordingStage"]
+    rs --> fes["FileEventStore<br/>(JSONL)"]
+    fes --> load["recording.Load"]
+    load --> sr["SessionRecording"]
+    sr --> rp["ReplayPlayer"]
+    sr --> prov["replay.Provider"]
 ```
 
 ## Event-Driven Architecture
 
 ### Event Emitter
 
-The `Emitter` captures events as they occur during a conversation:
+The `Emitter` publishes events to the EventBus as they occur during a conversation. `events.NewEmitter` takes the bus, an execution ID, a session ID and a conversation ID. Arena passes the run ID as both the execution ID and the session ID.
 
-```go
-emitter := events.NewEmitter(eventBus, runID, scenarioID, conversationID)
-
-// Events are emitted automatically during conversation
-emitter.ConversationStarted(systemPrompt)
-emitter.MessageCreated(role, content, index, parts, toolCalls, toolResult)
-emitter.AudioInput(audioData)
-emitter.ProviderCallStarted(provider, model)
-emitter.ToolCallStarted(toolName, args)
-// ...
-```
+`RecordingStage` does not use the Emitter or the EventBus. It appends `message.created` events straight to the `EventStore`. Each user message is recorded once.
 
 :::note[Binary data handling]
-The emitter's `MessageCreated()` automatically strips binary data (base64 `Data` and `FilePath`) from content parts, emitting only metadata (MIMEType, SizeKB, dimensions). This keeps observability events lightweight.
+The emitter's `MessageCreated()` strips binary data (base64 `Data` and `FilePath`) from content parts and emits only metadata (MIMEType, SizeKB, dimensions). This keeps observability events lightweight.
 
-**RecordingStage** bypasses the emitter and publishes events directly to the EventBus with full binary data intact. Use `sdk.WithRecording()` to enable this in SDK pipelines, or insert RecordingStages manually in Arena pipelines.
+`RecordingStage` writes to the store with full binary data intact.
 :::
 
-Events flow through an EventBus to registered subscribers:
+Two routes reach the event store and the other subscribers, as the following diagram shows.
 
 ```mermaid
 flowchart LR
+    rs["RecordingStage"] -->|message.created| fes["FileEventStore"]
     emitter["Emitter"] --> eventbus["EventBus"]
-    eventbus --> fes["FileEventStore<br/>(persistence)"]
-    eventbus --> mc["Metrics Collector"]
-    eventbus --> el["Eval Listener<br/>(auto-trigger pack evals)"]
-    eventbus --> ui["Real-time UI"]
+    mbs["MessageBroadcastStage"] --> eventbus
+    eventbus -->|stream.interrupted only| fes
+    eventbus --> mc["MetricContext"]
+    eventbus --> ui["TUI and web adapters"]
 ```
+
+The EventBus carries the `conversation.started`, `message.created`, `message.updated`, `audio.input`, `audio.output`, `provider.call.started`, `provider.call.completed`, `provider.call.failed`, `tool.call.started`, `tool.call.completed`, `tool.call.failed`, `validation.started`, `validation.passed` and `validation.failed` families that feed the TUI, the web adapters and `MetricContext`.
+
+The `FileEventStore` is the only bus subscription that writes recordings, and it receives `stream.interrupted` events from the bus. Message events reach it through `RecordingStage`. The bus copy of `message.created` comes from `MessageBroadcastStage`.
 
 ### Event Types
 
-Events are categorized by their domain:
-
-| Category | Events | Purpose |
-|----------|--------|---------|
-| Conversation | `started`, `ended` | Session lifecycle |
-| Message | `created`, `updated` | Content exchange |
-| Audio | `input`, `output` | Voice data |
-| Provider | `call.started`, `call.completed` | LLM API calls |
-| Tool | `call.started`, `call.completed` | Function execution |
-| Validation | `started`, `completed` | Guardrail checks |
+An Arena recording holds `message.created` and `stream.interrupted` events. See [Captured Events](/arena/how-to/scenarios/session-recording/#captured-events) for the table. Tool calls, tool results and media parts are fields of the `message.created` payload, not separate events.
 
 ### Event Structure
 
-Each event contains:
-
-```go
-type Event struct {
-    Type      EventType       // Event category
-    Timestamp time.Time       // When it occurred
-    SessionID string          // Session identifier
-    Sequence  int64           // Ordering guarantee
-    Data      interface{}     // Event-specific payload
-}
-```
+Each event carries a type, a timestamp, an execution ID, a session ID, a conversation ID, a user ID, a sequence number that gives ordering, a span context and an event-specific payload. The payload has type `events.EventData`, a marker interface implemented by each event's data type.
 
 ## Eval Integration
 
-The `EventBusEvalListener` subscribes to `message.created` events on the EventBus, enabling automatic eval execution on recorded conversations:
+Arena evaluates the live conversation through its `EvalOrchestrator`, not the recording file. At the end of each conversation, the orchestrator runs session-level evals (`on_session_complete`, `sample_sessions`) synchronously over the full message list.
 
-```mermaid
-flowchart TD
-    emitter["Emitter"] --> eventbus["EventBus"]
-    eventbus --> listener["EventBusEvalListener"]
-    listener --> acc["SessionAccumulator<br/>(builds conversation context)"]
-    acc --> dispatcher["EvalDispatcher"]
-    dispatcher --> runner["EvalRunner"]
-    runner --> writer["ResultWriter"]
-    writer --> metric["MetricContext<br/>(Prometheus)"]
-    writer --> meta["Message Metadata<br/>(pack_evals)"]
-```
-
-**How it works:**
-
-1. **RecordingStage** (in the pipeline) publishes `message.created` events as content flows through
-2. **EventBusEvalListener** receives these events and accumulates messages per session in a `SessionAccumulator`
-3. On each **assistant message**, turn-level evals (`every_turn`, `sample_turns`) are dispatched asynchronously
-4. On **session close**, session-level evals (`on_session_complete`, `sample_sessions`) run synchronously
-5. Results feed into `MetricContext` (for Prometheus export) and can be attached to message metadata
-
-This means pack evals run automatically against recorded conversations without any additional wiring — the EventBus handles the connection between recording and evaluation. For details on eval types and configuration, see [Eval Framework](/arena/explanation/eval-framework/).
+Pack eval results land in `ConversationResult.EvalResults` and the report. For details on eval types and configuration, see [Eval Framework](/arena/explanation/eval-framework/).
 
 ## Storage Format
 
 ### FileEventStore
 
-Events are persisted in JSONL (JSON Lines) format:
+Events are persisted in JSONL (JSON Lines) format, one file per run at `<out>/recordings/<run-id>.jsonl`:
 
 ```jsonl
 {"seq":1,"event":{"type":"message.created","timestamp":"2024-01-15T10:30:00Z",...}}
 {"seq":2,"event":{"type":"message.created","timestamp":"2024-01-15T10:30:00.1Z",...}}
-{"seq":3,"event":{"type":"audio.output","timestamp":"2024-01-15T10:30:00.2Z",...}}
+{"seq":3,"event":{"type":"stream.interrupted","timestamp":"2024-01-15T10:30:00.2Z",...}}
 ```
 
-Benefits:
-- **Append-only**: Safe for concurrent writes
-- **Streamable**: Process without loading entire file
-- **Human-readable**: Easy debugging
+The format is append-only, so concurrent writes are safe. You can stream it without loading the whole file, and you can read it by eye when debugging.
 
 ### SessionRecording Format
 
-For export/import, recordings use a structured format:
+For export/import, recordings use a structured format. The first line holds the metadata under a `metadata` key, and each event line nests the event under an `event` key. Offsets and durations are integer nanosecond counts:
 
 ```jsonl
-{"type":"metadata","session_id":"...","start_time":"...","duration":"..."}
-{"type":"event","offset":"100ms","event_type":"message.created",...}
-{"type":"event","offset":"200ms","event_type":"audio.input",...}
+{"type":"metadata","metadata":{"session_id":"...","start_time":"...","duration":300000000,...}}
+{"type":"event","event":{"seq":1,"type":"message.created","offset":100000000,...}}
+{"type":"event","event":{"seq":2,"type":"message.created","offset":200000000,...}}
 ```
 
 The loader auto-detects both formats:
@@ -143,7 +116,7 @@ rec, err := recording.Load("session.jsonl")  // Works with either format
 
 ## Media Timeline
 
-For recordings with audio/video, the `MediaTimeline` provides synchronized access:
+For recordings with audio or video events, the `MediaTimeline` provides synchronized access. Arena runs write only `message.created` and `stream.interrupted` events, so a timeline built from an Arena recording holds no audio tracks.
 
 ```mermaid
 flowchart TD
@@ -155,159 +128,40 @@ flowchart TD
 
 ### Track Structure
 
-Each track contains time-ordered segments:
-
-```go
-type MediaSegment struct {
-    Offset    time.Duration  // Start time relative to session
-    Duration  time.Duration  // Segment length
-    Data      []byte         // Raw media data
-    Format    AudioFormat    // Sample rate, channels, encoding
-}
-```
+Each track contains time-ordered segments. A `MediaSegment` has a `StartTime` and a `Duration` (both `time.Duration`), a `Payload` (inline bytes in `Payload.InlineData`, or a storage reference), and `Metadata`. For audio, `Metadata` is an `events.AudioMetadata` with `SampleRate`, `Channels`, `Encoding`, `BitsPerSample` and `DurationMs`.
 
 ### Audio Reconstruction
 
-Audio can be exported as standard WAV files:
-
-```go
-timeline := rec.ToMediaTimeline(nil)
-timeline.ExportAudioToWAV(events.TrackAudioInput, "user.wav")
-timeline.ExportAudioToWAV(events.TrackAudioOutput, "assistant.wav")
-```
-
-The export process:
-1. Collects all segments for the track
-2. Concatenates PCM data in time order
-3. Writes RIFF/WAVE header with format info
-4. Outputs standard 16-bit PCM WAV
+`ExportAudioToWAV` exports a track as a standard WAV file. It collects all segments for the track, concatenates the PCM data in time order, writes a RIFF/WAVE header with the format info and outputs 16-bit PCM. See [Synchronized Playback](/arena/how-to/scenarios/session-recording/#synchronized-playback) for the code.
 
 ## Replay System
 
 ### ReplayPlayer
 
-The `ReplayPlayer` provides synchronized access to recordings:
-
-```go
-player, _ := recording.NewReplayPlayer(rec)
-
-// Seek to any position
-player.Seek(5 * time.Second)
-
-// Query state at current position
-state := player.GetState()
-// state.CurrentEvents - events at this moment
-// state.RecentEvents - events in last 2 seconds
-// state.Messages - all messages up to this point
-// state.AudioInputActive - is user speaking?
-// state.AudioOutputActive - is assistant speaking?
-```
+The `ReplayPlayer` provides time-synchronized access to a loaded recording: you seek to a position and read the state there. See [Synchronized Playback](/arena/how-to/scenarios/session-recording/#synchronized-playback) for the code.
 
 ### Playback State
 
-At any position, you can access:
-
-| Field | Description |
-|-------|-------------|
-| `Position` | Current offset from session start |
-| `Timestamp` | Absolute timestamp |
-| `CurrentEvents` | Events within 50ms of position |
-| `RecentEvents` | Events in last 2 seconds |
-| `Messages` | Accumulated conversation |
-| `AudioInputActive` | User audio present |
-| `AudioOutputActive` | Assistant audio present |
-| `ActiveAnnotations` | Annotations in scope |
+At any position the player reports the current events, recent events, accumulated messages, audio activity and active annotations. See [Synchronized Playback](/arena/how-to/scenarios/session-recording/#synchronized-playback) for the field table.
 
 ### Annotation Correlation
 
-Annotations can be attached to recordings for review:
-
-```go
-player.SetAnnotations([]*annotations.Annotation{
-    // Session-level annotation
-    annotations.ForSession().WithScore("quality", 0.92),
-
-    // Time-range annotation
-    annotations.InTimeRange(start, end).WithComment("Good response"),
-
-    // Event-targeted annotation
-    annotations.ForEvent(eventSeq).WithLabel("category", "greeting"),
-})
-```
-
-During playback, active annotations are included in state queries.
+Annotations attach to a session, a time range or an event, and the player includes the active ones in each state query. See [Add Annotations](/arena/how-to/scenarios/session-recording/#add-annotations) for the code.
 
 ## Replay Provider
 
-For deterministic replay, the `ReplayProvider` simulates the original provider:
+For deterministic replay, the `replay.Provider` simulates the original provider. It returns the recorded assistant responses turn by turn, offline. See [Replay Provider](/arena/how-to/scenarios/session-recording/#replay-provider) for the code.
 
-```go
-// rec is a *recording.SessionRecording; nil config uses replay.DefaultConfig().
-provider, _ := replay.NewProvider(rec, nil)
-// Or load the recording file directly:
-// provider, _ := replay.NewProviderFromFile("recordings/<run-id>.jsonl", nil)
-
-// Returns the recorded assistant responses, turn by turn
-response, _ := provider.Predict(ctx, providers.PredictionRequest{Messages: messages})
-```
-
-Use cases:
-- **Regression testing**: Verify behavior against known-good responses
-- **Debugging**: Reproduce exact conversation flows
-- **Offline testing**: No API calls needed
-
-## Data Flow Summary
-
-```mermaid
-flowchart TD
-    subgraph live["LIVE SESSION"]
-        user["User"] --> pipeline["Pipeline"] --> provider["Provider"] --> response["Response"] --> user2["User"]
-        pipeline --> emitter["Emitter"]
-        response --> eventbus["EventBus"]
-        emitter --> eventbus
-    end
-    eventbus --> storage
-    eventbus --> evals
-    eventbus --> replay
-    subgraph storage["STORAGE"]
-        fes["FileEventStore"] --> jsonl[".jsonl"]
-    end
-    subgraph evals["EVALS"]
-        el["EvalListener"] --> runner["Runner"] --> metrics["Metrics"] --> prom["Prom"]
-    end
-    subgraph replay["REPLAY"]
-        sj["session.jsonl"] --> sr["SessionRecording"] --> rp["ReplayPlayer"] --> mt["MediaTimeline"]
-    end
-```
+The replay provider supports regression testing against known-good responses, reproducing exact conversation flows when debugging, and offline testing without API calls.
 
 ## Performance Considerations
 
-### Recording Overhead
+`RecordingStage` appends each event synchronously under a mutex, so a slow disk back-pressures the pipeline. Disk use grows with conversation length. Base64 encoding adds about 33% to binary parts. Arena duplex runs write no recording.
 
-- **CPU**: Minimal - events are queued and written asynchronously
-- **Memory**: Bounded - segments are written incrementally
-- **Disk**: Proportional to conversation length and audio duration
-
-### Audio Data Size
-
-Audio is stored as base64-encoded PCM:
-- Input: 16kHz, 16-bit mono = ~32KB/second
-- Output: 24kHz, 16-bit mono = ~48KB/second
-- Base64 encoding adds ~33% overhead
-
-A 5-minute voice conversation generates approximately:
-- Raw audio: ~24MB
-- JSONL with metadata: ~32MB
-
-### Optimization Tips
-
-1. **Disable for CI**: Skip recording for quick validation runs
-2. **Compress archives**: JSONL compresses well (70-80% reduction)
-3. **Retention policies**: Auto-delete old recordings
-4. **Selective recording**: Only enable for specific scenarios
+Recording is a global switch (`defaults.output.recording.enabled` and `dir`). There is no retention policy or per-scenario setting. See [Recording Storage](/arena/how-to/scenarios/session-recording/#recording-storage) for housekeeping tips.
 
 ## Next Steps
 
-- **[Session Recording How-To](/arena/how-to/scenarios/session-recording/)** - Practical usage guide
-- **[Duplex Architecture](/arena/explanation/duplex-architecture/)** - Voice conversation system
-- **[Testing Philosophy](/arena/explanation/testing-philosophy/)** - Why test prompts?
+- [Session Recording How-To](/arena/how-to/scenarios/session-recording/): practical usage guide
+- [Duplex Architecture](/arena/explanation/duplex-architecture/): voice conversation system
+- [Testing Philosophy](/arena/explanation/testing-philosophy/): why test prompts

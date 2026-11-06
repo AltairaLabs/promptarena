@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/setup/use-project-templates.md",
- "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "commit": "3df344ffbc8c604e1a8935929c28499d778d19f0",
  "claims": [
   {
    "id": 1,
@@ -599,7 +599,7 @@
    "claim": "Scenario spec.task_type and spec.description are fields",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/scenario.json:569"
+    "schemas/v1alpha1/scenario.json:571"
    ]
   },
   {
@@ -607,7 +607,7 @@
    "claim": "Scenario spec.turns is a list whose entries have role and content fields",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/scenario.json:588"
+    "schemas/v1alpha1/scenario.json:590"
    ]
   },
   {
@@ -658,7 +658,7 @@
    "claim": "promptarena run runs the tests in a generated project",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:160"
+    "arena/cmd/promptarena/run.go:119"
    ]
   },
   {
@@ -666,7 +666,7 @@
    "claim": "promptarena run writes output/results.json",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run.go:486"
+    "arena/cmd/promptarena/run.go:536"
    ]
   },
   {

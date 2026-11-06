@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/voice/voice-latency-budget.md",
- "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "commit": "3df344ffbc8c604e1a8935929c28499d778d19f0",
  "claims": [
   {
    "id": 1,
@@ -74,7 +74,8 @@
    "claim": "promptarena run --ci --formats json,markdown; open out/results.md",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:144"
+    "arena/cmd/promptarena/run.go:176",
+    "arena/cmd/promptarena/run.go:536"
    ]
   },
   {
@@ -128,7 +129,7 @@
    "claim": "../../bin/promptarena run --ci --formats json from the example dir",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:144"
+    "arena/cmd/promptarena/run.go:176"
    ]
   },
   {
@@ -136,8 +137,8 @@
    "claim": "Assertion config can include when: clauses to apply different budgets per provider",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:49",
-    "schemas/v1alpha1/scenario.json"
+    "arena/arenaconfig/types.go:44",
+    "arena/arenaconfig/types.go:46"
    ]
   }
  ]

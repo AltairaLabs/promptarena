@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/explanation/duplex-architecture.md",
- "commit": "c67065389ccbc6e76babad54b4345e1c76bb633e",
+ "commit": "3df344ffbc8c604e1a8935929c28499d778d19f0",
  "claims": [
   {
    "id": 1,
@@ -29,8 +29,8 @@
    "claim": "duplex.turn_detection.mode field can be set to 'asm'",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1015",
-    "arena/arenaconfig/types.go:884",
+    "arena/arenaconfig/types.go:1099",
+    "arena/arenaconfig/types.go:968",
     "arena/engine/duplex_conversation_executor.go:117"
    ]
   },
@@ -39,8 +39,8 @@
    "claim": "duplex.turn_detection.mode field can be set to 'vad'",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1015",
-    "arena/arenaconfig/types.go:882",
+    "arena/arenaconfig/types.go:1099",
+    "arena/arenaconfig/types.go:966",
     "arena/engine/duplex_conversation_executor.go:117"
    ]
   },
@@ -49,7 +49,7 @@
    "claim": "duplex.turn_detection.vad.silence_threshold_ms field exists with example value 600",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:926",
+    "arena/arenaconfig/types.go:1010",
     "arena/engine/duplex_conversation_executor.go:131"
    ]
   },
@@ -58,7 +58,7 @@
    "claim": "duplex.turn_detection.vad.min_speech_ms field exists with example value 200",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:928",
+    "arena/arenaconfig/types.go:1012",
     "arena/engine/duplex_conversation_executor.go:134"
    ]
   },
@@ -69,7 +69,7 @@
    "evidence": [
     "arena/engine/duplex_conversation_executor.go:29",
     "arena/engine/duplex_executor_pipeline_integration.go:386",
-    "arena/engine/duplex_executor_turns_integration.go:539"
+    "arena/engine/duplex_executor_turns_integration.go:577"
    ]
   },
   {
@@ -77,7 +77,7 @@
    "claim": "Audio bit depth requirement is 16-bit",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_turns_integration.go:540",
+    "arena/engine/duplex_executor_turns_integration.go:578",
     "arena/turnexecutors/audio_file_source.go:276"
    ]
   },
@@ -86,7 +86,7 @@
    "claim": "Audio must be mono (single channel)",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_turns_integration.go:539",
+    "arena/engine/duplex_executor_turns_integration.go:577",
     "arena/turnexecutors/audio_file_source.go:45"
    ]
   },
@@ -96,7 +96,7 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/duplex_conversation_executor.go:25",
-    "arena/engine/duplex_executor_turns_integration.go:525"
+    "arena/engine/duplex_executor_turns_integration.go:563"
    ]
   },
   {
@@ -104,7 +104,7 @@
    "claim": "duplex.resilience.max_retries field exists with default value 2",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:903",
+    "arena/arenaconfig/types.go:987",
     "arena/engine/duplex_executor_pipeline_integration.go:57",
     "arena/engine/duplex_executor_types.go:15"
    ]
@@ -114,7 +114,7 @@
    "claim": "duplex.resilience.retry_delay_ms field exists with value 2000",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:905",
+    "arena/arenaconfig/types.go:989",
     "arena/engine/duplex_executor_pipeline_integration.go:58"
    ]
   },
@@ -123,8 +123,8 @@
    "claim": "duplex.resilience.inter_turn_delay_ms field exists with value 500",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:898",
-    "schemas/v1alpha1/scenario.json:265"
+    "arena/arenaconfig/types.go:982",
+    "schemas/v1alpha1/scenario.json:306"
    ]
   },
   {
@@ -132,7 +132,7 @@
    "claim": "duplex.resilience.partial_success_min_turns field exists with value 2",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:908",
+    "arena/arenaconfig/types.go:992",
     "arena/engine/duplex_executor_turns_integration.go:106"
    ]
   },
@@ -141,7 +141,7 @@
    "claim": "duplex.resilience.ignore_last_turn_session_end field exists with value true",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:912",
+    "arena/arenaconfig/types.go:996",
     "arena/engine/duplex_executor_turns_integration.go:107"
    ]
   },
@@ -150,7 +150,7 @@
    "claim": "resilience.partial_success_min_turns can be set to 3",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:908",
+    "arena/arenaconfig/types.go:992",
     "arena/engine/duplex_executor_turns_integration.go:106"
    ]
   },
@@ -159,7 +159,7 @@
    "claim": "runtime/streaming package provides shared utilities for duplex streaming",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_turns_integration.go:512"
+    "arena/engine/duplex_executor_turns_integration.go:550"
    ]
   },
   {

@@ -2,7 +2,7 @@
 title: Test a Voice IVR with a Workflow State Machine
 description: Drive a bank IVR through workflow state transitions and assert the tool-call pattern of each path, keyless against a mock provider.
 verified:
-  commit: 631d3c353c2c9d71b362ae5cd20c137d42b19d5b
+  commit: 3df344ffbc8c604e1a8935929c28499d778d19f0
   sources:
     - arena/arenaconfig/types.go
     - arena/cmd/promptarena/run.go

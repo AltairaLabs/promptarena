@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/voice/voice-console.md",
- "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "commit": "3df344ffbc8c604e1a8935929c28499d778d19f0",
  "claims": [
   {
    "id": 1,
@@ -193,7 +193,7 @@
    "claim": "The response_modalities: [AUDIO] setting enables stream input",
    "verdict": "false",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:516",
+    "arena/engine/duplex_executor_pipeline_integration.go:544",
     "arena/engine/duplex_interactive.go:65",
     "arena/tui/app/page.go:88"
    ]
@@ -257,7 +257,7 @@
    "claim": "--voice-stt must match a provider declared under stt_providers: in the Arena config",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:683",
+    "arena/arenaconfig/loader.go:692",
     "arena/arenaconfig/types.go:209",
     "arena/tui/app/chatpage_voice.go:115"
    ]

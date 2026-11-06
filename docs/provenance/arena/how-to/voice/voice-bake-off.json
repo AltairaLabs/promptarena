@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/voice/voice-bake-off.md",
- "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "commit": "3df344ffbc8c604e1a8935929c28499d778d19f0",
  "claims": [
   {
    "id": 1,
@@ -132,8 +132,8 @@
    "claim": "Command: promptarena run --ci --formats json,markdown",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:145",
-    "arena/cmd/promptarena/run.go:150"
+    "arena/cmd/promptarena/run.go:169",
+    "arena/cmd/promptarena/run.go:176"
    ]
   },
   {
@@ -141,7 +141,8 @@
    "claim": "Flag --ci exists on run",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:145"
+    "arena/cmd/promptarena/run.go:169",
+    "arena/cmd/promptarena/run.go:331"
    ]
   },
   {
@@ -149,7 +150,7 @@
    "claim": "Flag --formats exists on run and accepts json and markdown values",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:150",
+    "arena/cmd/promptarena/run.go:176",
     "arena/results/markdown/markdown_repository.go:25"
    ]
   },
@@ -158,7 +159,8 @@
    "claim": "A headless run writes out/results.md under the example directory",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:144",
+    "arena/arenaconfig/helpers.go:38",
+    "arena/cmd/promptarena/run.go:532",
     "arena/results/markdown/markdown_repository.go:25"
    ]
   },
@@ -201,7 +203,7 @@
    "claim": "Provider list entries use a file: key",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:385",
+    "arena/arenaconfig/types.go:388",
     "examples/voice-bake-off/config.arena.yaml:25"
    ]
   },
@@ -305,7 +307,7 @@
    "claim": "Example file path providers/openai-realtime.provider.yaml is a valid provider config location",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:385",
+    "arena/arenaconfig/types.go:388",
     "examples/voice-bake-off/config.arena.yaml:25"
    ]
   },
@@ -384,7 +386,7 @@
    "claim": "A scenario takes a duplex: block",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/scenario.json:302"
+    "schemas/v1alpha1/scenario.json:304"
    ]
   },
   {
@@ -470,7 +472,8 @@
    "claim": "Command: ../../bin/promptarena run --ci --formats json,markdown",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:145"
+    "arena/cmd/promptarena/run.go:169",
+    "arena/cmd/promptarena/run.go:176"
    ]
   },
   {
@@ -502,8 +505,8 @@
    "claim": "Upload path examples/voice-bake-off/out/ is where a run writes its report",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:144",
-    "examples/voice-bake-off/config.arena.yaml:35"
+    "arena/arenaconfig/helpers.go:38",
+    "examples/voice-bake-off/config.arena.yaml:33"
    ]
   },
   {
@@ -511,7 +514,7 @@
    "claim": "Uploaded report lets reviewers see per-provider responses on the PR",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:150"
+    "arena/cmd/promptarena/run.go:176"
    ]
   },
   {
@@ -528,7 +531,7 @@
    "verdict": "false",
    "evidence": [
     "examples/voice-bake-off/config.arena.yaml:10",
-    "schemas/v1alpha1/scenario.json:302"
+    "schemas/v1alpha1/scenario.json:304"
    ]
   },
   {

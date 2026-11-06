@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/voice/voice-guardrails.md",
- "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "commit": "3df344ffbc8c604e1a8935929c28499d778d19f0",
  "claims": [
   {
    "id": 1,
@@ -16,8 +16,8 @@
    "claim": "The runtime catches the agent's would-be-spoken PII before it reaches the TTS layer",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:741",
-    "arena/turnexecutors/pipeline_stages_integration.go:833"
+    "arena/turnexecutors/pipeline_stages_integration.go:728",
+    "arena/turnexecutors/pipeline_stages_integration.go:839"
    ]
   },
   {
@@ -33,7 +33,7 @@
    "claim": "The runtime wraps the validator as a ProviderHook (runtime/hooks/guardrails/factory.go)",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:741"
+    "arena/turnexecutors/pipeline_stages_integration.go:747"
    ]
   },
   {
@@ -41,7 +41,7 @@
    "claim": "On every assistant message, the regex pre-pass scans the would-be-output",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:741"
+    "arena/turnexecutors/pipeline_stages_integration.go:747"
    ]
   },
   {
@@ -49,7 +49,7 @@
    "claim": "On hit, the runtime replaces resp.Message.Content with the safe message before the duplex / TTS stage; the agent does not speak the PII",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:833"
+    "arena/turnexecutors/pipeline_stages_integration.go:839"
    ]
   },
   {
@@ -57,7 +57,7 @@
    "claim": "The hook records a validations: block on the message capturing what the guardrail did",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:833"
+    "arena/turnexecutors/pipeline_stages_integration.go:839"
    ]
   },
   {
@@ -81,8 +81,8 @@
    "claim": "The recording shows the pre-enforcement content (what the agent tried to say)",
    "verdict": "false",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:833",
-    "examples/voice-guardrails/mock-responses.yaml:11"
+    "arena/turnexecutors/pipeline_stages_integration.go:839",
+    "arena/turnexecutors/pipeline_stages_integration.go:846"
    ]
   },
   {
@@ -90,7 +90,7 @@
    "claim": "The recording shows the validations: block (what the guardrail did)",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:833"
+    "arena/turnexecutors/pipeline_stages_integration.go:846"
    ]
   },
   {
@@ -98,7 +98,7 @@
    "claim": "The recording is useful for incident investigation without leaking PII to consumers that don't need it",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:833"
+    "arena/turnexecutors/pipeline_stages_integration.go:846"
    ]
   },
   {
@@ -106,8 +106,8 @@
    "claim": "promptarena run --ci --formats json,markdown is valid and runs headless",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:144",
-    "arena/cmd/promptarena/run.go:145"
+    "arena/cmd/promptarena/run.go:169",
+    "arena/cmd/promptarena/run.go:176"
    ]
   },
   {
@@ -115,7 +115,7 @@
    "claim": "open out/results.md: the run writes out/results.md",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:486",
+    "arena/cmd/promptarena/run.go:536",
     "examples/voice-guardrails/config.arena.yaml:46"
    ]
   },
@@ -157,7 +157,7 @@
    "claim": "DeepEval has a pii_leakage metric that scores transcripts post-hoc",
    "verdict": "unverified",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:741"
+    "arena/turnexecutors/pipeline_stages_integration.go:747"
    ]
   },
   {
@@ -174,7 +174,7 @@
    "verdict": "false",
    "evidence": [
     "arena/engine/duplex_executor_pipeline_integration.go:307",
-    "arena/turnexecutors/pipeline_stages_integration.go:912"
+    "arena/turnexecutors/pipeline_stages_integration.go:918"
    ]
   },
   {
@@ -196,7 +196,7 @@
    "claim": "../../bin/promptarena run --ci --formats json from examples/voice-guardrails",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:145"
+    "arena/cmd/promptarena/run.go:176"
    ]
   },
   {
@@ -213,7 +213,7 @@
    "claim": "bias, toxicity and role_violation are LLM-judged primitives",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:741"
+    "arena/turnexecutors/pipeline_stages_integration.go:747"
    ]
   }
  ]

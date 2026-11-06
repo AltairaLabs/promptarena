@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/agents/rag-agent.md",
- "commit": "60cd1a146e6224c0d66c972d18f329a0ce76c522",
+ "commit": "3df344ffbc8c604e1a8935929c28499d778d19f0",
  "claims": [
   {
    "id": 1,
@@ -137,7 +137,7 @@
    "claim": "Field: turns (scenario list of turns)",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:686"
+    "arena/arenaconfig/types.go:692"
    ]
   },
   {
@@ -145,7 +145,7 @@
    "claim": "Field: assertions on a turn",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1175"
+    "arena/arenaconfig/types.go:1181"
    ]
   },
   {
@@ -317,7 +317,7 @@
    "claim": "Command: promptarena run",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:160"
+    "arena/cmd/promptarena/run.go:116"
    ]
   },
   {
@@ -325,7 +325,7 @@
    "claim": "Flag: --ci on promptarena run",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:160"
+    "arena/cmd/promptarena/run.go:169"
    ]
   },
   {
@@ -333,7 +333,7 @@
    "claim": "Flag: --formats on promptarena run",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:30"
+    "arena/cmd/promptarena/run.go:29"
    ]
   },
   {
@@ -341,7 +341,7 @@
    "claim": "--formats accepts json and markdown",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:30"
+    "arena/cmd/promptarena/run.go:29"
    ]
   },
   {
@@ -349,7 +349,7 @@
    "claim": "Run writes out/results.md",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:486",
+    "arena/cmd/promptarena/run.go:536",
     "arena/results/markdown/markdown_repository.go:25"
    ]
   },
@@ -401,7 +401,7 @@
    "claim": "A real LLM judge is swapped in by replacing the mock judge provider",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:959",
+    "arena/arenaconfig/loader.go:968",
     "examples/rag-agent/config.arena.yaml:28"
    ]
   },
@@ -450,7 +450,7 @@
    "claim": "Provider type openai is a registered provider type",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/completion_interactive.go:354"
+    "arena/cmd/promptarena/completion_interactive.go:333"
    ]
   },
   {
@@ -483,7 +483,7 @@
    "claim": "Field: judges[].name",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:394"
+    "arena/arenaconfig/types.go:397"
    ]
   },
   {
@@ -491,8 +491,8 @@
    "claim": "Field: judges[].provider references a provider by name",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:959",
-    "arena/arenaconfig/types.go:395"
+    "arena/arenaconfig/loader.go:968",
+    "arena/arenaconfig/types.go:398"
    ]
   },
   {
@@ -560,7 +560,7 @@
    "claim": "Command: go build -o bin/promptarena ./arena/cmd/promptarena",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:160"
+    "arena/cmd/promptarena/run.go:116"
    ]
   },
   {
@@ -576,7 +576,7 @@
    "claim": "Command: ../../bin/promptarena run --ci --formats json",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:30"
+    "arena/cmd/promptarena/run.go:29"
    ]
   },
   {

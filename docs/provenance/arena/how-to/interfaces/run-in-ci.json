@@ -1,0 +1,952 @@
+{
+ "page": "docs/src/content/docs/arena/how-to/interfaces/run-in-ci.md",
+ "commit": "3df344ffbc8c604e1a8935929c28499d778d19f0",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "Mock providers make CI runs deterministic and zero-cost",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:736",
+    "arena/engine/engine.go:760"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "Link to /arena/how-to/interfaces/use-the-tui/ exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 3,
+   "claim": "Link to /arena/how-to/interfaces/use-the-web-ui/ exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 4,
+   "claim": "promptarena run --ci disables the terminal UI and emits plain line-based logs",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:169",
+    "arena/cmd/promptarena/run_interactive.go:323",
+    "arena/cmd/promptarena/run_interactive.go:414"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "Command: promptarena run --ci",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:169"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "Flag --ci exists on the run command",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:169"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "Without --ci the run tries to render the TUI",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/run_interactive.go:315",
+    "arena/cmd/promptarena/run_interactive.go:322",
+    "arena/tui/tui.go:1037"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "With --ci, promptarena run exits 0 when every scenario's assertions pass",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/main_integration.go:124",
+    "arena/cmd/promptarena/run_interactive.go:134",
+    "arena/cmd/promptarena/run_interactive.go:142"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "With --ci, promptarena run exits non-zero when any assertion fails or a run errors",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/main_integration.go:124",
+    "arena/cmd/promptarena/run_interactive.go:136",
+    "arena/cmd/promptarena/run_interactive.go:139",
+    "arena/cmd/promptarena/run_interactive.go:142"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "Without --ci, promptarena run exits 0 whatever the results",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run_interactive.go:134"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "Flag --simple disables the TUI",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:171",
+    "arena/cmd/promptarena/run_interactive.go:323"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "--simple prints a styled summary and keeps exit status 0",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:171",
+    "arena/cmd/promptarena/run_interactive.go:134",
+    "arena/cmd/promptarena/run_interactive.go:478"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "Command: promptarena run --ci --mock-provider --mock-config mock-responses.yaml",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:169",
+    "arena/cmd/promptarena/run.go:192",
+    "arena/cmd/promptarena/run.go:193"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "Flag --mock-provider exists",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:192"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "Flag --mock-config exists",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:193"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "Flag --format exists on promptarena run",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:174"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "--format has alias --formats",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:176",
+    "arena/cmd/promptarena/run.go:407"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "--format accepts a comma-separated list of formats",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:174",
+    "arena/cmd/promptarena/run.go:413"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "When --format is omitted, Arena uses defaults.output.formats from config, falling back to json",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:417",
+    "arena/cmd/promptarena/run.go:422"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "csv and objectives are available output formats",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:175",
+    "arena/cmd/promptarena/run.go:446"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "Output formats for CI are json, junit and markdown",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:175",
+    "arena/cmd/promptarena/run.go:520"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "json format writes per-run JSON files plus an index.json summary in the out dir",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/json/json_repository.go:74",
+    "arena/results/json/json_repository.go:92"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "Output dir for json defaults to defaults.output.dir, else out/",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/helpers.go:38",
+    "arena/arenaconfig/helpers.go:55",
+    "arena/cmd/promptarena/run.go:361"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "Flag --junit-file defaults to defaults.output.junit.file, else <out>/junit.xml",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:181",
+    "arena/cmd/promptarena/run.go:523",
+    "arena/cmd/promptarena/run.go:527"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "Flag --markdown-file defaults to <out>/results.md",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:187",
+    "arena/cmd/promptarena/run.go:531",
+    "arena/cmd/promptarena/run.go:536"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "Example command promptarena run --ci --format junit,json,markdown is valid",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:174",
+    "arena/cmd/promptarena/run.go:471"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "Output directory is --out, else defaults.output.dir, else out/",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/helpers.go:38",
+    "arena/cmd/promptarena/run.go:168"
+   ]
+  },
+  {
+   "id": 28,
+   "claim": "Per-run JSON is written as <run-id>.json in the output directory",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/json/json_repository.go:74"
+   ]
+  },
+  {
+   "id": 29,
+   "claim": "index.json summary contains total_runs",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/json/json_repository.go:99"
+   ]
+  },
+  {
+   "id": 30,
+   "claim": "index.json summary contains successful",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/json/json_repository.go:100"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "index.json summary contains errors",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/json/json_repository.go:101"
+   ]
+  },
+  {
+   "id": 32,
+   "claim": "index.json summary contains total_cost",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/json/json_repository.go:106"
+   ]
+  },
+  {
+   "id": 33,
+   "claim": "index.json summary contains per-scenario metadata",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/json/json_repository.go:114",
+    "arena/results/json/json_repository.go:97"
+   ]
+  },
+  {
+   "id": 34,
+   "claim": "Deprecated --html flag is still accepted and produces markdown output",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:173",
+    "arena/cmd/promptarena/run.go:485",
+    "arena/cmd/promptarena/run.go:491"
+   ]
+  },
+  {
+   "id": 35,
+   "claim": "Arena emits no HTML report",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:173",
+    "arena/cmd/promptarena/run.go:479"
+   ]
+  },
+  {
+   "id": 36,
+   "claim": "The html format name is accepted and produces markdown output",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:503",
+    "arena/cmd/promptarena/run.go:507"
+   ]
+  },
+  {
+   "id": 37,
+   "claim": "The html_report config key is accepted and produces markdown output",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:488",
+    "arena/cmd/promptarena/run.go:495"
+   ]
+  },
+  {
+   "id": 38,
+   "claim": "Flag --html-file does not name the output; --markdown-file is used instead",
+   "verdict": "dead",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:183",
+    "arena/cmd/promptarena/run.go:186"
+   ]
+  },
+  {
+   "id": 39,
+   "claim": "promptarena run --ci already exits non-zero on any assertion failure",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/main_integration.go:124",
+    "arena/cmd/promptarena/run_interactive.go:142"
+   ]
+  },
+  {
+   "id": 40,
+   "claim": "Scenario field trials runs the scenario several times",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:736",
+    "arena/engine/trials.go:31"
+   ]
+  },
+  {
+   "id": 41,
+   "claim": "Assertion field pass_threshold sets the share of trials that must pass",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:30",
+    "arena/engine/trials.go:454"
+   ]
+  },
+  {
+   "id": 42,
+   "claim": "YAML field spec.trials",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:736",
+    "schemas/v1alpha1/scenario.json:666"
+   ]
+  },
+  {
+   "id": 43,
+   "claim": "YAML field spec.turns",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:692",
+    "schemas/v1alpha1/scenario.json:590"
+   ]
+  },
+  {
+   "id": 44,
+   "claim": "YAML field turns[].role accepts user",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1135"
+   ]
+  },
+  {
+   "id": 45,
+   "claim": "YAML field turns[].content",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1136"
+   ]
+  },
+  {
+   "id": 46,
+   "claim": "YAML field turns[].assertions",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1134"
+   ]
+  },
+  {
+   "id": 47,
+   "claim": "Assertion type 'assertion' is a registered assertion type wrapping an eval",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/types.go:27",
+    "examples/llm-judge/scenarios/helpfulness.yaml:17",
+    "schemas/v1alpha1/common/assertions.json:35"
+   ]
+  },
+  {
+   "id": 48,
+   "claim": "params.eval_type accepts llm_judge",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/types.go:63",
+    "schemas/v1alpha1/common/assertions.json:74"
+   ]
+  },
+  {
+   "id": 49,
+   "claim": "params.eval_params.criteria field exists for llm_judge",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 50,
+   "claim": "params.min_score field exists",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/types.go:55",
+    "arena/assertions/types.go:56"
+   ]
+  },
+  {
+   "id": 51,
+   "claim": "Assertion-level pass_threshold field exists on turn assertions",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:30",
+    "arena/stages/assertions.go:383"
+   ]
+  },
+  {
+   "id": 52,
+   "claim": "YAML field spec.conversation_assertions",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:707",
+    "schemas/v1alpha1/scenario.json:630"
+   ]
+  },
+  {
+   "id": 53,
+   "claim": "Conversation assertion type tools_called is registered",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/common/assertions.json:115"
+   ]
+  },
+  {
+   "id": 54,
+   "claim": "params.tool_names field is accepted by tools_called",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 55,
+   "claim": "Conversation assertion pass_threshold field exists",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/conversation.go:18",
+    "arena/engine/trials.go:244"
+   ]
+  },
+  {
+   "id": 56,
+   "claim": "An assertion without pass_threshold must pass in every trial",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/trials.go:18"
+   ]
+  },
+  {
+   "id": 57,
+   "claim": "Run verdict carries across trials, and exit code, JUnit and CSV fail when any assertion is below its threshold",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run_interactive.go:688",
+    "arena/engine/trials.go:461",
+    "arena/engine/trials.go:476",
+    "arena/engine/trials.go:523"
+   ]
+  },
+  {
+   "id": 58,
+   "claim": "Assertion types tools_called, tool_calls_with_args and tool_call_sequence are registered",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/common/assertions.json:105",
+    "schemas/v1alpha1/common/assertions.json:107",
+    "schemas/v1alpha1/common/assertions.json:115"
+   ]
+  },
+  {
+   "id": 59,
+   "claim": "guardrail_triggered assertion type reads recorded validations without LLM cost",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 60,
+   "claim": "Assertion types content_includes, outcome_equivalent and max_length are registered",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/common/assertions.json:49",
+    "schemas/v1alpha1/common/assertions.json:78",
+    "schemas/v1alpha1/common/assertions.json:83"
+   ]
+  },
+  {
+   "id": 61,
+   "claim": "latency_budget assertion reads LatencyMs from the assistant message",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/eval_orchestrator.go:356",
+    "arena/engine/eval_orchestrator.go:395"
+   ]
+  },
+  {
+   "id": 62,
+   "claim": "llm_judge eval uses min_score and pass_threshold",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/types.go:55"
+   ]
+  },
+  {
+   "id": 63,
+   "claim": "index.json exposes total_runs, successful and errors for downstream steps",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/json/json_repository.go:100",
+    "arena/results/json/json_repository.go:101",
+    "arena/results/json/json_repository.go:99"
+   ]
+  },
+  {
+   "id": 64,
+   "claim": "GitHub Action outputs passed, failed, total and success exist",
+   "verdict": "true",
+   "evidence": [
+    ".github/actions/promptarena-action/action.yml:50",
+    ".github/actions/promptarena-action/action.yml:53",
+    ".github/actions/promptarena-action/action.yml:56",
+    ".github/actions/promptarena-action/action.yml:60"
+   ]
+  },
+  {
+   "id": 65,
+   "claim": "Packaged GitHub Action lives at .github/actions/promptarena-action/",
+   "verdict": "true",
+   "evidence": [
+    ".github/actions/promptarena-action/action.yml:1"
+   ]
+  },
+  {
+   "id": 66,
+   "claim": "Action installs the requested Arena version, runs config headless, surfaces pass/fail counts as step outputs, and fails the job on test failures by default",
+   "verdict": "true",
+   "evidence": [
+    ".github/actions/promptarena-action/action.yml:40",
+    ".github/actions/promptarena-action/src/main.ts:29",
+    ".github/actions/promptarena-action/src/main.ts:64",
+    ".github/actions/promptarena-action/src/main.ts:67",
+    ".github/actions/promptarena-action/src/runner.ts:35"
+   ]
+  },
+  {
+   "id": 67,
+   "claim": "Action reference AltairaLabs/promptarena/v2/.github/actions/promptarena-action@v1 is valid",
+   "verdict": "false",
+   "evidence": [
+    ".github/actions/promptarena-action/action.yml:1"
+   ]
+  },
+  {
+   "id": 68,
+   "claim": "Action input config-file exists and is required",
+   "verdict": "true",
+   "evidence": [
+    ".github/actions/promptarena-action/action.yml:10",
+    ".github/actions/promptarena-action/action.yml:12",
+    ".github/actions/promptarena-action/src/main.ts:10"
+   ]
+  },
+  {
+   "id": 69,
+   "claim": "Action input version exists",
+   "verdict": "true",
+   "evidence": [
+    ".github/actions/promptarena-action/action.yml:13",
+    ".github/actions/promptarena-action/src/main.ts:11"
+   ]
+  },
+  {
+   "id": 70,
+   "claim": "Action input formats exists",
+   "verdict": "true",
+   "evidence": [
+    ".github/actions/promptarena-action/action.yml:30",
+    ".github/actions/promptarena-action/src/main.ts:16"
+   ]
+  },
+  {
+   "id": 71,
+   "claim": "Environment variables OPENAI_API_KEY and ANTHROPIC_API_KEY are read by providers",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 72,
+   "claim": "External action dorny/test-reporter@v2 with reporter java-junit reads out/junit.xml",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 73,
+   "claim": "Action input scenarios exists",
+   "verdict": "true",
+   "evidence": [
+    ".github/actions/promptarena-action/action.yml:17"
+   ]
+  },
+  {
+   "id": 74,
+   "claim": "Action input providers exists",
+   "verdict": "true",
+   "evidence": [
+    ".github/actions/promptarena-action/action.yml:20"
+   ]
+  },
+  {
+   "id": 75,
+   "claim": "Action input regions exists",
+   "verdict": "true",
+   "evidence": [
+    ".github/actions/promptarena-action/action.yml:23"
+   ]
+  },
+  {
+   "id": 76,
+   "claim": "Action input output-dir exists",
+   "verdict": "true",
+   "evidence": [
+    ".github/actions/promptarena-action/action.yml:26"
+   ]
+  },
+  {
+   "id": 77,
+   "claim": "Action input junit-output exists",
+   "verdict": "true",
+   "evidence": [
+    ".github/actions/promptarena-action/action.yml:34",
+    ".github/actions/promptarena-action/src/runner.ts:41"
+   ]
+  },
+  {
+   "id": 78,
+   "claim": "Action input override-providers exists",
+   "verdict": "true",
+   "evidence": [
+    ".github/actions/promptarena-action/action.yml:37",
+    ".github/actions/promptarena-action/src/runner.ts:70"
+   ]
+  },
+  {
+   "id": 79,
+   "claim": "Action input formats defaults to json,junit",
+   "verdict": "true",
+   "evidence": [
+    ".github/actions/promptarena-action/action.yml:33",
+    ".github/actions/promptarena-action/src/main.ts:16"
+   ]
+  },
+  {
+   "id": 80,
+   "claim": "Action input fail-on-error defaults to true",
+   "verdict": "true",
+   "evidence": [
+    ".github/actions/promptarena-action/action.yml:43",
+    ".github/actions/promptarena-action/src/main.ts:19"
+   ]
+  },
+  {
+   "id": 81,
+   "claim": "Action input working-directory exists",
+   "verdict": "true",
+   "evidence": [
+    ".github/actions/promptarena-action/action.yml:44",
+    ".github/actions/promptarena-action/src/main.ts:20"
+   ]
+  },
+  {
+   "id": 82,
+   "claim": "Setting fail-on-error 'false' lets the job read steps.arena.outputs.success",
+   "verdict": "true",
+   "evidence": [
+    ".github/actions/promptarena-action/src/main.ts:67",
+    ".github/actions/promptarena-action/src/main.ts:69",
+    ".github/actions/promptarena-action/src/outputs.ts:173"
+   ]
+  },
+  {
+   "id": 83,
+   "claim": "Action output success exists and is the string 'false' on failure",
+   "verdict": "true",
+   "evidence": [
+    ".github/actions/promptarena-action/action.yml:60",
+    ".github/actions/promptarena-action/src/outputs.ts:173",
+    ".github/actions/promptarena-action/src/outputs.ts:71"
+   ]
+  },
+  {
+   "id": 84,
+   "claim": "Action outputs failed and total exist",
+   "verdict": "true",
+   "evidence": [
+    ".github/actions/promptarena-action/action.yml:52",
+    ".github/actions/promptarena-action/action.yml:56",
+    ".github/actions/promptarena-action/src/outputs.ts:168",
+    ".github/actions/promptarena-action/src/outputs.ts:171",
+    ".github/actions/promptarena-action/src/outputs.ts:63"
+   ]
+  },
+  {
+   "id": 85,
+   "claim": "go build -o bin/promptarena ./arena/cmd/promptarena builds the CLI",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/main_integration.go:124"
+   ]
+  },
+  {
+   "id": 86,
+   "claim": "Go version 1.26 is used for setup-go in the example",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 87,
+   "claim": "Command ./bin/promptarena run --ci --mock-provider --format json,junit is valid",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:169",
+    "arena/cmd/promptarena/run.go:174",
+    "arena/cmd/promptarena/run.go:192"
+   ]
+  },
+  {
+   "id": 88,
+   "claim": "Real-provider job is skipped for fork PRs via head repo check",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 89,
+   "claim": "Command ./bin/promptarena run --ci --format markdown,json is valid",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:174",
+    "arena/cmd/promptarena/run.go:175"
+   ]
+  },
+  {
+   "id": 90,
+   "claim": "Run writes reports to out/ which the upload step archives",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/helpers.go:32",
+    "arena/arenaconfig/helpers.go:47"
+   ]
+  },
+  {
+   "id": 91,
+   "claim": "golang:1.26 is the image used in GitLab example",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 92,
+   "claim": "Go module path github.com/AltairaLabs/promptarena/v2/arena/cmd/promptarena is installable with go install",
+   "verdict": "true",
+   "evidence": [
+    ".goreleaser.yml:155"
+   ]
+  },
+  {
+   "id": 93,
+   "claim": "Command promptarena run --ci --format junit,json is valid",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:174"
+   ]
+  },
+  {
+   "id": 94,
+   "claim": "JUnit report is written to out/junit.xml by default",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:527"
+   ]
+  },
+  {
+   "id": 95,
+   "claim": "GitLab merge request widget surfaces the JUnit report via reports.junit",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 96,
+   "claim": "Module path github.com/AltairaLabs/promptarena/v2/arena/cmd/promptarena is installable with go install (Jenkins)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 97,
+   "claim": "Command promptarena run --ci --mock-provider --format junit is valid",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:169",
+    "arena/cmd/promptarena/run.go:192"
+   ]
+  },
+  {
+   "id": 98,
+   "claim": "Command promptarena run --ci --format junit,html is valid, html being accepted as markdown alias",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:503",
+    "arena/cmd/promptarena/run.go:507"
+   ]
+  },
+  {
+   "id": 99,
+   "claim": "JUnit XML is written under out/**/junit.xml for Jenkins junit step",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:527"
+   ]
+  },
+  {
+   "id": 100,
+   "claim": "Non-zero exit from promptarena run marks the Jenkins build failed",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/main_integration.go:124",
+    "arena/cmd/promptarena/run_interactive.go:142"
+   ]
+  },
+  {
+   "id": 101,
+   "claim": "--mock-provider replaces every configured provider with a canned-response mock",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:752",
+    "arena/engine/engine.go:760",
+    "arena/engine/engine.go:776"
+   ]
+  },
+  {
+   "id": 102,
+   "claim": "--mock-config points to a YAML file of scripted responses",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:740",
+    "arena/engine/engine.go:741"
+   ]
+  },
+  {
+   "id": 103,
+   "claim": "Tools still execute for real under --mock-provider",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:760"
+   ]
+  },
+  {
+   "id": 104,
+   "claim": "Command promptarena run --ci --concurrency 2 --format junit,json is valid",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:167",
+    "arena/cmd/promptarena/run.go:325",
+    "arena/cmd/promptarena/run.go:358"
+   ]
+  },
+  {
+   "id": 105,
+   "claim": "Flag --concurrency exists",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:167"
+   ]
+  },
+  {
+   "id": 106,
+   "claim": "Link to /arena/how-to/use-mock-providers/ exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 107,
+   "claim": "Link to /arena/how-to/generate-mock-responses-from-arena/ exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 108,
+   "claim": "Link to /arena/reference/output-formats/ exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 109,
+   "claim": "Link to /arena/reference/cli-commands/ exists and documents every run flag",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 110,
+   "claim": "Link to /arena/how-to/interfaces/use-the-tui/ (Related) exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 111,
+   "claim": "Link to /arena/how-to/interfaces/use-the-web-ui/ (Related) exists",
+   "verdict": "true",
+   "evidence": []
+  }
+ ]
+}

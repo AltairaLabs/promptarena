@@ -1,13 +1,13 @@
 {
  "page": "docs/src/content/docs/arena/how-to/deploy/configure.md",
- "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "commit": "3df344ffbc8c604e1a8935929c28499d778d19f0",
  "claims": [
   {
    "id": 1,
    "claim": "deploy section sits at the top level of arena.yaml",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/loader.go:197-216",
+    "arena/arenaconfig/loader.go:216",
     "arena/arenaconfig/types.go:170"
    ]
   },
@@ -16,7 +16,7 @@
    "claim": "provider is required; binary is promptarena-deploy-{provider}",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:361-368",
+    "arena/arenaconfig/types.go:364-371",
     "deploy/manager.go:27-29"
    ]
   },
@@ -34,7 +34,7 @@
    "claim": "environments holds per-environment config overrides",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:366-374"
+    "arena/arenaconfig/types.go:369-377"
    ]
   },
   {
@@ -51,7 +51,7 @@
    "verdict": "false",
    "evidence": [
     "arena/arenaconfig/loader.go:197-216",
-    "arena/deploy/flow/config.go:60-80"
+    "arena/deploy/flow/config.go:58-79"
    ]
   },
   {
