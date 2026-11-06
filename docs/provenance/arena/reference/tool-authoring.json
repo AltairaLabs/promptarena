@@ -1,0 +1,402 @@
+{
+ "page": "docs/src/content/docs/arena/reference/tool-authoring.md",
+ "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "Configuration Schema has a Tool section at /arena/reference/config-schema/#tool and the schema lives at schemas/v1alpha1/tool.json",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:1"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "mode values are mock, live, mcp, exec, client",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/builder_integration.go:109",
+    "schemas/v1alpha1/tool.json:321"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "mock (static) requires mock_result",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:326"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "mock (template) uses mock_template or mock_template_file",
+   "verdict": "false",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:308",
+    "schemas/v1alpha1/tool.json:355"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "live mode requires an http: block",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:109",
+    "schemas/v1alpha1/tool.json:339"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "mcp mode needs no further fields; tool is exposed by an MCP server configured at the arena level and auto-discovered",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:421",
+    "arena/engine/builder_integration.go:431"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "exec mode requires an exec: block (tool shells out to a local subprocess)",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/builder_integration.go:109",
+    "schemas/v1alpha1/tool.json:342"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "client mode requires a client: block",
+   "verdict": "false",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:308",
+    "schemas/v1alpha1/tool.json:357"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "mock_result and mock_template are mutually exclusive on a single tool",
+   "verdict": "false",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:326",
+    "schemas/v1alpha1/tool.json:329"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "Static mock example (get-weather) is valid Tool YAML with metadata.name, spec.name, description, mode, timeout_ms, input_schema, output_schema, mock_result",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:308",
+    "schemas/v1alpha1/tool.json:326"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "Static mock returns the same response for every call",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:326"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "Args are parsed as a JSON map and exposed as the template data context; the rendered output is parsed back as JSON",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:329"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "The template executor already exists, so no custom executor is needed for input-branching mocks",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:329"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "Input-branching example (lookup-order) is valid Tool YAML",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:329"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "mock_template is rendered with Go text/template using Option(\"missingkey=zero\")",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:331"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "The args map is the data context so .order_id accesses the call's order_id field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:331"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "if/else if/else/end and range control flow are supported",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:331"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "Comparison helpers eq, ne, lt, gt, le, ge are available",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:331"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "printf, index and the rest of the standard template functions are available",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:331"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "{{- ... -}} trims surrounding whitespace so rendered output parses as JSON",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:331"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "mock_template_file points at a file whose path is relative to the tool YAML",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/builder_integration.go:600",
+    "schemas/v1alpha1/tool.json:355"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "mock_template_file example (spec: mode: mock, mock_template_file: templates/lookup-order.tmpl) is valid",
+   "verdict": "false",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:308",
+    "schemas/v1alpha1/tool.json:355"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "mock_parts returns image/audio/video/document content alongside JSON and works with both mock_result and mock_template",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:150",
+    "schemas/v1alpha1/tool.json:333"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "Full mock_parts structure is documented in Configuration Schema -> Tool",
+   "verdict": "false",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:123",
+    "schemas/v1alpha1/tool.json:150"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "Live mode calls a real HTTP endpoint; args are sent as JSON and the response is the parsed JSON body",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:109",
+    "schemas/v1alpha1/tool.json:76"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "http fields url, method, headers, headers_from_env, timeout_ms, redact exist",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:78",
+    "schemas/v1alpha1/tool.json:81",
+    "schemas/v1alpha1/tool.json:84",
+    "schemas/v1alpha1/tool.json:90",
+    "schemas/v1alpha1/tool.json:93",
+    "schemas/v1alpha1/tool.json:99"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "headers_from_env: [API_TOKEN] sets \"Authorization: Bearer ${API_TOKEN}\"",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/builder_integration.go:109",
+    "schemas/v1alpha1/tool.json:84"
+   ]
+  },
+  {
+   "id": 28,
+   "claim": "http.redact lists fields stripped from logs",
+   "verdict": "false",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:93"
+   ]
+  },
+  {
+   "id": 29,
+   "claim": "http.timeout_ms: 5000 bounds the request",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:90"
+   ]
+  },
+  {
+   "id": 30,
+   "claim": "Live example YAML (spec fragment) is valid",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:76"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "For mcp mode, the Tool YAML only declares the contract and the MCP client provides the executor",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:421",
+    "arena/engine/builder_integration.go:431"
+   ]
+  },
+  {
+   "id": 32,
+   "claim": "mcp example (spec: mode: mcp) is valid",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:319"
+   ]
+  },
+  {
+   "id": 33,
+   "claim": "Exec mode calls a local subprocess; args on stdin, response read from stdout",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/builder_integration.go:109",
+    "schemas/v1alpha1/tool.json:342"
+   ]
+  },
+  {
+   "id": 34,
+   "claim": "Exec example (mode: exec, exec.command, exec.args, exec.timeout_ms) is valid",
+   "verdict": "false",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:26",
+    "schemas/v1alpha1/tool.json:342"
+   ]
+  },
+  {
+   "id": 35,
+   "claim": "Client mode hands the tool call back to the SDK consumer or external system for execution",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/builder_integration.go:109",
+    "schemas/v1alpha1/tool.json:345"
+   ]
+  },
+  {
+   "id": 36,
+   "claim": "client fields timeout_ms, categories, consent (required, message, decline_strategy), validate_output exist",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:269",
+    "schemas/v1alpha1/tool.json:290"
+   ]
+  },
+  {
+   "id": 37,
+   "claim": "decline_strategy: error is a valid value",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:298"
+   ]
+  },
+  {
+   "id": 38,
+   "claim": "Client example YAML is valid",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:269"
+   ]
+  },
+  {
+   "id": 39,
+   "claim": "Diagram: deterministic fixture + same response -> mock + mock_result",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:326"
+   ]
+  },
+  {
+   "id": 40,
+   "claim": "Diagram: response depends on args -> mock + mock_template",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:329"
+   ]
+  },
+  {
+   "id": 41,
+   "claim": "Diagram: HTTP API -> live + http",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:109",
+    "schemas/v1alpha1/tool.json:339"
+   ]
+  },
+  {
+   "id": 42,
+   "claim": "Diagram: Tool from an MCP server -> mcp",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:421"
+   ]
+  },
+  {
+   "id": 43,
+   "claim": "Diagram: Local CLI or script -> exec",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/builder_integration.go:109",
+    "schemas/v1alpha1/tool.json:342"
+   ]
+  },
+  {
+   "id": 44,
+   "claim": "Diagram: Caller SDK or app handles it -> client",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/builder_integration.go:109",
+    "schemas/v1alpha1/tool.json:345"
+   ]
+  },
+  {
+   "id": 45,
+   "claim": "examples/voice-refund-demo uses mock_template branching across three personas, linked at github.com/AltairaLabs/promptarena/v2/tree/main/examples/voice-refund-demo",
+   "verdict": "false",
+   "evidence": [
+    "examples/voice-refund-demo/tools/lookup-order.tool.yaml:32"
+   ]
+  },
+  {
+   "id": 46,
+   "claim": "examples/customer-support uses mode: mock with static results, linked at github.com/AltairaLabs/promptarena/v2/tree/main/examples/customer-support",
+   "verdict": "false",
+   "evidence": [
+    "examples/customer-support/tools/example-tool.tool.yaml:29",
+    "examples/customer-support/tools/example-tool.tool.yaml:31"
+   ]
+  }
+ ]
+}

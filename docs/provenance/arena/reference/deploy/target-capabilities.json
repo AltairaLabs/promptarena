@@ -1,0 +1,735 @@
+{
+ "page": "docs/src/content/docs/arena/reference/deploy/target-capabilities.md",
+ "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "There are three first-party adapters (Omnia, AgentCore, Vertex)",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/adapter_registry.json:2",
+    "arena/cmd/promptarena/adapter_registry.json:21"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "Omnia substrate is an Omnia Kubernetes workspace",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/adapter_registry.json:11"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "AgentCore substrate is AWS Bedrock AgentCore",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/adapter_registry.json:5"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "Vertex substrate is Google Agent Runtime",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/adapter_registry.json:23"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "Omnia deploys CRDs in a workspace",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 6,
+   "claim": "AgentCore deploys runtimes plus supporting resources",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 7,
+   "claim": "Vertex deploys one engine per agent",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 8,
+   "claim": "Maturity: Omnia most complete, AgentCore feature-rich/older, Vertex newest/narrowest",
+   "verdict": "unverified",
+   "evidence": [
+    "arena/cmd/promptarena/adapter_registry.json:12",
+    "arena/cmd/promptarena/adapter_registry.json:24",
+    "arena/cmd/promptarena/adapter_registry.json:6"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "get_provider_info is implemented by all three",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 10,
+   "claim": "validate_config is implemented by all three",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 11,
+   "claim": "plan is implemented by all three",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 12,
+   "claim": "apply is implemented by all three",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 13,
+   "claim": "destroy: Omnia Yes, AgentCore Yes, Vertex No",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 14,
+   "claim": "status: Omnia Yes, AgentCore Yes, Vertex No",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 15,
+   "claim": "import is not supported by any of the three",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 16,
+   "claim": "All three reject import with an error saying it is unsupported",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 17,
+   "claim": "Vertex is the only adapter where tearing down a deployment is a manual step",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 18,
+   "claim": "Agent runtime resource type is agent_runtime on all three",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 19,
+   "claim": "Omnia packs are deployed as a prompt_pack CRD",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 20,
+   "claim": "AgentCore injects the pack as env",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 21,
+   "claim": "Vertex injects the pack as env, or stages a pack_object in GCS when over the inline limit",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 22,
+   "claim": "Omnia tools become a tool_registry CRD",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 23,
+   "claim": "AgentCore tools become tool_gateway (MCP targets)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 24,
+   "claim": "Vertex tools are injected as env (PROMPTPACK_TOOL_SPECS)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 25,
+   "claim": "Omnia policy is an agent_policy CRD",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 26,
+   "claim": "AgentCore policy is cedar_policy",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 27,
+   "claim": "Vertex has no policy resource",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 28,
+   "claim": "Omnia memory is config on the runtime",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 29,
+   "claim": "AgentCore memory is a memory resource",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 30,
+   "claim": "Vertex has no memory resource",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 31,
+   "claim": "Omnia evals are config on the runtime",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 32,
+   "claim": "AgentCore evals create evaluator and online_eval_config resources",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 33,
+   "claim": "Vertex evals run in-process from the pack",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 34,
+   "claim": "Omnia A2A is handled via the platform",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 35,
+   "claim": "AgentCore A2A is an a2a_endpoint resource",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 36,
+   "claim": "Vertex has no A2A",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 37,
+   "claim": "Omnia and AgentCore model capabilities as platform resources; Vertex ships everything inside the container as environment",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 38,
+   "claim": "All three adapters read the arena's tool_specs",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:192"
+   ]
+  },
+  {
+   "id": 39,
+   "claim": "Omnia runs tools on the platform via a tool_registry CRD",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 40,
+   "claim": "AgentCore runs tools on the platform via tool_gateway targets",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 41,
+   "claim": "Vertex runs tools in the agent's own container",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 42,
+   "claim": "Omnia does not dispatch on the spec's mode",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 43,
+   "claim": "AgentCore does not dispatch on the spec's mode",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 44,
+   "claim": "Vertex dispatches on the spec's mode",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 45,
+   "claim": "Omnia supports HTTP with full request/response mapping",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 46,
+   "claim": "AgentCore HTTP transports: HTTP, Lambda ARN, API Gateway, OpenAPI, Smithy",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 47,
+   "claim": "Vertex HTTP supports url and method only",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 48,
+   "claim": "Omnia additional handler types: openapi, grpc, mcp, client via its own tools: block",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 49,
+   "claim": "AgentCore MCP is supported via the gateway",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 50,
+   "claim": "Vertex has no additional handler types",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 51,
+   "claim": "Omnia credential support: headers from env, static headers, redaction",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 52,
+   "claim": "AgentCore credential providers: GATEWAY_IAM_ROLE, OAUTH, API_KEY",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 53,
+   "claim": "Vertex has no credential providers",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 54,
+   "claim": "Omnia does not forward mock_result / mock_template",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 55,
+   "claim": "AgentCore does not forward mock_result / mock_template",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 56,
+   "claim": "Vertex forwards mock_result / mock_template",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 57,
+   "claim": "Only Vertex runs mock tools; the AgentCore runtime has no mock handling",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 58,
+   "claim": "Vertex is the only target that reproduces promptarena run behaviour for mocked tools",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 59,
+   "claim": "Only Omnia and AgentCore authenticate live tools",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 60,
+   "claim": "Vertex forwards URL and method and nothing else (no headers, timeouts, redaction, mapping)",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 61,
+   "claim": "If tool_specs never reaches the adapter, tools are advertised with nothing to run them, on every target",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 62,
+   "claim": "Omnia unary request/response is supported",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 63,
+   "claim": "AgentCore unary is POST /invocations",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 64,
+   "claim": "Vertex unary is POST /api/reasoning_engine",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 65,
+   "claim": "Omnia server-streamed output is platform-dependent (unverified)",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 66,
+   "claim": "AgentCore streams SSE on /invocations",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 67,
+   "claim": "Vertex streams ndjson on /api/stream_reasoning_engine",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 68,
+   "claim": "Omnia persistent bidirectional socket is unverified",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 69,
+   "claim": "AgentCore persistent socket is a GET /ws upgrade carrying text messages",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 70,
+   "claim": "Vertex has no persistent bidirectional socket",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 71,
+   "claim": "Omnia server-side sessions are provided via the platform",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 72,
+   "claim": "AgentCore sessions use the X-Amzn-Bedrock-AgentCore-Runtime-Session-Id header",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 73,
+   "claim": "Vertex does not use server-side sessions in the adapter",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 74,
+   "claim": "No target does duplex voice (AgentCore and Vertex)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 75,
+   "claim": "No target does duplex voice (Omnia)",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 76,
+   "claim": "AgentCore /ws upgrades, holds the connection, and processWSMessage unmarshals a text request with prompt/input and writes one response",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 77,
+   "claim": "No adapter runtime calls PromptKit's OpenDuplex()",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 78,
+   "claim": "sdk.OpenDuplex() exists alongside Open()",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 79,
+   "claim": "Conversation has SendChunk, SendFrame, SendVideoChunk",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 80,
+   "claim": "PromptKit duplex includes VAD and barge-in handling",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 81,
+   "claim": "For Vertex the reasoningEngines REST surface has query, streamQuery, asyncQuery and no bidirectional method in v1beta1",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 82,
+   "claim": "Whether AWS/Google control planes proxy a WebSocket upgrade to a custom container is unverified",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 83,
+   "claim": "Only AgentCore carries multi-turn context for you",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 84,
+   "claim": "Vertex opens a fresh PromptKit conversation per request and holds no state between calls",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 85,
+   "claim": "Agent Runtime exposes a sessions API but the adapter does not use it",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 86,
+   "claim": "Omnia observability config surface is cluster-provided",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 87,
+   "claim": "AgentCore config surface is observability.tracing_enabled",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 88,
+   "claim": "Vertex config surface is observability.tracing_enabled + otlp_endpoint",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 89,
+   "claim": "AgentCore traces go to CloudWatch",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 90,
+   "claim": "Vertex traces go to any OTLP collector",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 91,
+   "claim": "AgentCore metrics are CloudWatch metrics from evals",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 92,
+   "claim": "Vertex emits no metrics",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 93,
+   "claim": "AgentCore eval scores in telemetry via online_eval_config",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 94,
+   "claim": "Vertex eval scores appear as gen_ai.evaluation.score spans",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 95,
+   "claim": "Vertex guardrail firings are logged only, never traced (PromptKit guardrail hook adapter emits no event)",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 96,
+   "claim": "Declaring an evals section produces scores in telemetry",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 97,
+   "claim": "Omnia adapter authenticates to the control plane with OMNIA_API_TOKEN",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 98,
+   "claim": "AgentCore adapter uses AWS credentials",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 99,
+   "claim": "Vertex adapter uses Application Default Credentials",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 100,
+   "claim": "Omnia agent authenticates to model provider via Provider CRD reference",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 101,
+   "claim": "AgentCore agent uses AWS IAM for models (Bedrock)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 102,
+   "claim": "Vertex agent uses ADC as the engine's service account",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 103,
+   "claim": "Omnia API keys in config are avoidable via the env var",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 104,
+   "claim": "AgentCore and Vertex have no API keys in config",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 105,
+   "claim": "Each target deploys one deployment per agent",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 106,
+   "claim": "Omnia routes between agents via the platform",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 107,
+   "claim": "AgentCore routes between agents through a2a_endpoint wiring",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 108,
+   "claim": "Vertex has no routing between agents",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 109,
+   "claim": "A multi-agent Vertex pack becomes independent engines that cannot call each other",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 110,
+   "claim": "Vertex agent cards are generated but cannot be attached",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 111,
+   "claim": "spec.agentCard exists in v1beta1 REST discovery doc, is absent from published protobufs, so the Go client has no field",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 112,
+   "claim": "Omnia has the richest tool handler support and full lifecycle",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 113,
+   "claim": "AgentCore provides memory, Cedar policies, A2A wiring, session continuity as managed resources",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 114,
+   "claim": "Vertex gives Gemini models with the least moving parts",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 115,
+   "claim": "Choose Vertex if you accept that teardown is manual",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 116,
+   "claim": "Choose Vertex if you accept there is no A2A",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 117,
+   "claim": "With Vertex live tools cannot authenticate",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 118,
+   "claim": "Vertex is the pick if your pack depends on mocked tools",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 119,
+   "claim": "None of the targets do duplex voice today",
+   "verdict": "unverified",
+   "evidence": []
+  }
+ ]
+}

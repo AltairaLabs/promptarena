@@ -1,0 +1,881 @@
+{
+ "page": "docs/src/content/docs/arena/reference/scenario-format.md",
+ "commit": "0dbee6290db4e4de3bff3101f260fd614f81c924",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "PromptArena supports PromptPack v1.1 with multimodal support (images, audio, video)",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/loader.go:137",
+    "packc/schema_validator_test.go:14"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "Kubernetes-style resource kind Arena is supported",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:478",
+    "schemas/v1alpha1/arena.json:1"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "Kubernetes-style resource kind PromptConfig is supported",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:478",
+    "schemas/v1alpha1/promptconfig.json:1"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "Kubernetes-style resource kind Scenario is supported",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:478",
+    "schemas/v1alpha1/scenario.json:1"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "Kubernetes-style resource kind Provider is supported",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:478",
+    "schemas/v1alpha1/provider.json:1"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "Kubernetes-style resource kind Tool is supported",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:478",
+    "schemas/v1alpha1/tool.json:1"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "Kubernetes-style resource kind Persona is supported",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:478",
+    "schemas/v1alpha1/persona.json:1"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "Provider OpenAI is a supported testing provider",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:318",
+    "arena/turnexecutors/pipeline_stages_integration.go:177"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "Provider Anthropic is a supported testing provider",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:170"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "Provider Google Gemini is a supported testing provider",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:318",
+    "arena/turnexecutors/pipeline_stages_integration.go:177"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "Provider Azure is a supported testing provider",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:170"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "Provider Bedrock is a supported testing provider",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:170"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "Provider Mock is a supported testing provider",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:318",
+    "arena/turnexecutors/pipeline_stages_integration.go:177"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "PromptArena supports MCP (Model Context Protocol) server integration",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:173"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "PromptArena has a comprehensive assertion framework for validation",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/validate_types.go:27"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "Output formats are JSON, Markdown and JUnit",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:34"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "promptarena serve starts an interactive web UI",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:109"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "promptarena run <arena.yaml> runs a test scenario",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:119",
+    "arena/cmd/promptarena/run.go:158"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "examples/arena-media-test/arena.yaml exists",
+   "verdict": "false",
+   "evidence": [
+    "examples/arena-media-test/config.arena.yaml:1"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "promptarena run accepts --provider with a comma-separated list",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:162"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "promptarena run accepts --format with value markdown",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:34"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "apiVersion value is promptkit.altairalabs.ai/v1alpha1",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:137"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "Arena resource has metadata.name",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1432"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "Arena spec.prompt_configs entries have an id field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/arena.json:1"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "Arena spec.prompt_configs entries have a file field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/arena.json:1"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "Arena spec.providers entries have a file field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/arena.json:1"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "Arena spec.scenarios entries have a file field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/arena.json:1"
+   ]
+  },
+  {
+   "id": 28,
+   "claim": "Arena spec.mcp_servers is a list",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:173"
+   ]
+  },
+  {
+   "id": 29,
+   "claim": "Each mcp_servers entry has a name field",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:173"
+   ]
+  },
+  {
+   "id": 30,
+   "claim": "Each mcp_servers entry has a command field",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:173"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "Each mcp_servers entry has an args field",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:173"
+   ]
+  },
+  {
+   "id": 32,
+   "claim": "Arena spec.defaults.output.dir is a valid field",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:180",
+    "arena/cmd/promptarena/run.go:168"
+   ]
+  },
+  {
+   "id": 33,
+   "claim": "Arena spec.defaults.output.formats accepts markdown and json",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:34"
+   ]
+  },
+  {
+   "id": 34,
+   "claim": "PromptArena extends standard assertions with testing-specific validators",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/validate_types.go:27"
+   ]
+  },
+  {
+   "id": 35,
+   "claim": "Turn-level assertions key 'assertions' is valid on a turn",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1181"
+   ]
+  },
+  {
+   "id": 36,
+   "claim": "content_includes is a registered assertion type",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/validate_types.go:27"
+   ]
+  },
+  {
+   "id": 37,
+   "claim": "content_matches is a registered assertion type",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/validate_types.go:27"
+   ]
+  },
+  {
+   "id": 38,
+   "claim": "tools_called is a registered assertion type",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/validate_types.go:27"
+   ]
+  },
+  {
+   "id": 39,
+   "claim": "tools_not_called is a registered assertion type",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/validate_types.go:27"
+   ]
+  },
+  {
+   "id": 40,
+   "claim": "is_valid_json is a registered assertion type",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/validate_types.go:27"
+   ]
+  },
+  {
+   "id": 41,
+   "claim": "json_schema is a registered assertion type",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/validate_types.go:27"
+   ]
+  },
+  {
+   "id": 42,
+   "claim": "json_path is a registered assertion type",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/validate_types.go:27"
+   ]
+  },
+  {
+   "id": 43,
+   "claim": "image_format is a registered assertion type",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/validate_types.go:27"
+   ]
+  },
+  {
+   "id": 44,
+   "claim": "image_dimensions is a registered assertion type",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/validate_types.go:27"
+   ]
+  },
+  {
+   "id": 45,
+   "claim": "audio_format is a registered assertion type",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/validate_types.go:27"
+   ]
+  },
+  {
+   "id": 46,
+   "claim": "audio_duration is a registered assertion type",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/validate_types.go:27"
+   ]
+  },
+  {
+   "id": 47,
+   "claim": "video_resolution is a registered assertion type",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/validate_types.go:27"
+   ]
+  },
+  {
+   "id": 48,
+   "claim": "video_duration is a registered assertion type",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/validate_types.go:27"
+   ]
+  },
+  {
+   "id": 49,
+   "claim": "state_is is a registered assertion type",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/validate_types.go:27"
+   ]
+  },
+  {
+   "id": 50,
+   "claim": "transitioned_to is a registered assertion type",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/validate_types.go:27"
+   ]
+  },
+  {
+   "id": 51,
+   "claim": "workflow_complete is a registered assertion type",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/validate_types.go:27"
+   ]
+  },
+  {
+   "id": 52,
+   "claim": "llm_judge is a registered assertion type",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/validate_types.go:27"
+   ]
+  },
+  {
+   "id": 53,
+   "claim": "rest_eval is a registered assertion type",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/validate_types.go:27"
+   ]
+  },
+  {
+   "id": 54,
+   "claim": "a2a_eval is a registered assertion type",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/validate_types.go:27"
+   ]
+  },
+  {
+   "id": 55,
+   "claim": "Conversation-level assertions use the conversation_assertions field",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:44",
+    "arena/engine/conversation_executor.go:1078"
+   ]
+  },
+  {
+   "id": 56,
+   "claim": "tools_called is valid as a conversation-level assertion",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/validator_tools.go:14",
+    "arena/assertions/validate_types.go:27"
+   ]
+  },
+  {
+   "id": 57,
+   "claim": "tools_not_called is valid as a conversation-level assertion",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/validate_types.go:27",
+    "arena/engine/conversation_executor.go:1078"
+   ]
+  },
+  {
+   "id": 58,
+   "claim": "tool_calls_with_args is a registered conversation-level assertion type",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/validate_types.go:27",
+    "arena/engine/conversation_executor.go:1078"
+   ]
+  },
+  {
+   "id": 59,
+   "claim": "A workflow scenario is an ordinary kind: Scenario using standard turns; there is no WorkflowScenario kind",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/execution_workflow_integration.go:217"
+   ]
+  },
+  {
+   "id": 60,
+   "claim": "The workflow state machine is declared under spec.workflow in config.arena.yaml",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:127"
+   ]
+  },
+  {
+   "id": 61,
+   "claim": "spec.workflow auto-registers the workflow__transition tool",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/execution_workflow_integration.go:83"
+   ]
+  },
+  {
+   "id": 62,
+   "claim": "spec.workflow dynamically selects the prompt per turn",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/execution_workflow_integration.go:223",
+    "arena/engine/workflow_state_resolver.go:222"
+   ]
+  },
+  {
+   "id": 63,
+   "claim": "Workflow state transitions are LLM-initiated via the workflow__transition tool call, not scripted in the scenario",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/workflow_tool_executor.go:340"
+   ]
+  },
+  {
+   "id": 64,
+   "claim": "spec.task_type sets the workflow entry state",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:684",
+    "arena/engine/execution_workflow_integration.go:233"
+   ]
+  },
+  {
+   "id": 65,
+   "claim": "Scenario spec.variables is a valid field",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:733"
+   ]
+  },
+  {
+   "id": 66,
+   "claim": "Scenario spec.turns is a valid field",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:692"
+   ]
+  },
+  {
+   "id": 67,
+   "claim": "A turn accepts an assertions list",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1181"
+   ]
+  },
+  {
+   "id": 68,
+   "claim": "state_is and transitioned_to take params.state",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/eval_orchestrator.go:350"
+   ]
+  },
+  {
+   "id": 69,
+   "claim": "Assertions accept a message field",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1181"
+   ]
+  },
+  {
+   "id": 70,
+   "claim": "content_includes takes params.patterns",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/validate_types.go:27"
+   ]
+  },
+  {
+   "id": 71,
+   "claim": "workflow__transition takes an event argument and a context argument",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/workflow_tool_executor.go:340"
+   ]
+  },
+  {
+   "id": 72,
+   "claim": "The workflow__transition event must match a transition defined in the state machine",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/workflow_tool_executor.go:340"
+   ]
+  },
+  {
+   "id": 73,
+   "claim": "The transition context is available as {{workflow_context}} in the new state's system prompt",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/workflow_state_resolver.go:18",
+    "arena/engine/workflow_state_resolver.go:222"
+   ]
+  },
+  {
+   "id": 74,
+   "claim": "Workflow assertions (state_is, transitioned_to, workflow_complete) are available in turn-level assertions",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/eval_orchestrator.go:350"
+   ]
+  },
+  {
+   "id": 75,
+   "claim": "PromptConfig spec.media.enabled is a valid field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/promptconfig.json:283"
+   ]
+  },
+  {
+   "id": 76,
+   "claim": "PromptConfig spec.media.supported_types accepts image, audio, video and document",
+   "verdict": "unverified",
+   "evidence": [
+    "schemas/v1alpha1/promptconfig.json:303"
+   ]
+  },
+  {
+   "id": 77,
+   "claim": "PromptConfig spec.media.image.max_size_mb is a valid field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/promptconfig.json:259"
+   ]
+  },
+  {
+   "id": 78,
+   "claim": "PromptConfig spec.media.image.allowed_formats accepts jpeg, png and webp",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/promptconfig.json:261"
+   ]
+  },
+  {
+   "id": 79,
+   "claim": "PromptConfig spec.media.document.max_size_mb is a valid field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/promptconfig.json:45"
+   ]
+  },
+  {
+   "id": 80,
+   "claim": "PromptConfig spec.media.document.allowed_formats accepts pdf",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/promptconfig.json:47"
+   ]
+  },
+  {
+   "id": 81,
+   "claim": "Scenario content parts support type text",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1140",
+    "arena/arenaconfig/types.go:1409"
+   ]
+  },
+  {
+   "id": 82,
+   "claim": "Scenario content parts support type image",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1409",
+    "arena/turnexecutors/media_loader.go:186"
+   ]
+  },
+  {
+   "id": 83,
+   "claim": "A text content part accepts a patterns field",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:1409",
+    "schemas/v1alpha1/scenario.json:847"
+   ]
+  },
+  {
+   "id": 84,
+   "claim": "An image content part uses image_url.url",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:1418"
+   ]
+  },
+  {
+   "id": 85,
+   "claim": "image_url.detail accepts the value high",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1424"
+   ]
+  },
+  {
+   "id": 86,
+   "claim": "Scenario content parts support type document",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/media_loader.go:35",
+    "examples/document-analysis/scenarios/pdf-summary.scenario.yaml:15"
+   ]
+  },
+  {
+   "id": 87,
+   "claim": "A document content part uses document_url.url",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:1418",
+    "examples/document-analysis/scenarios/pdf-summary.scenario.yaml:16"
+   ]
+  },
+  {
+   "id": 88,
+   "claim": "examples/arena-media-test/ and examples/document-analysis/ exist as complete examples",
+   "verdict": "true",
+   "evidence": [
+    "examples/arena-media-test/config.arena.yaml:1",
+    "examples/document-analysis/scenarios/pdf-summary.scenario.yaml:1"
+   ]
+  },
+  {
+   "id": 89,
+   "claim": "Provider resource kind is used with apiVersion promptkit.altairalabs.ai/v1alpha1",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:137"
+   ]
+  },
+  {
+   "id": 90,
+   "claim": "Provider spec.type value mock selects the Mock provider",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:318"
+   ]
+  },
+  {
+   "id": 91,
+   "claim": "Provider spec.model accepts mock-model for the mock provider",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/provider.json:108"
+   ]
+  },
+  {
+   "id": 92,
+   "claim": "Mock provider responses are configured in providers/mock-responses.yaml",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/builder_integration.go:265",
+    "arena/engine/builder_integration.go:321"
+   ]
+  },
+  {
+   "id": 93,
+   "claim": "Persona spec.id is a valid field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/persona.json:1"
+   ]
+  },
+  {
+   "id": 94,
+   "claim": "Persona spec.description is a valid field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/persona.json:1"
+   ]
+  },
+  {
+   "id": 95,
+   "claim": "Persona spec.system_prompt is a valid field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/persona.json:1"
+   ]
+  },
+  {
+   "id": 96,
+   "claim": "Persona spec.goals is a list field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/persona.json:1"
+   ]
+  },
+  {
+   "id": 97,
+   "claim": "Persona spec.constraints is a list field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/persona.json:1"
+   ]
+  },
+  {
+   "id": 98,
+   "claim": "Persona spec.defaults.temperature is a valid field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/persona.json:1"
+   ]
+  },
+  {
+   "id": 99,
+   "claim": "A self-play turn uses role gemini-user",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/conversation_executor.go:1300",
+    "examples/assertions-test/config.arena.yaml:31"
+   ]
+  },
+  {
+   "id": 100,
+   "claim": "A self-play turn accepts a persona field referencing a Persona by name",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1143"
+   ]
+  },
+  {
+   "id": 101,
+   "claim": "A self-play turn accepts a turns field",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1145"
+   ]
+  },
+  {
+   "id": 102,
+   "claim": "A self-play turn accepts a max_turns field",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1147"
+   ]
+  },
+  {
+   "id": 103,
+   "claim": "Generated reports are written to out/ by default",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:168"
+   ]
+  },
+  {
+   "id": 104,
+   "claim": "PromptPack v1.0 is fully supported by PromptArena",
+   "verdict": "unverified",
+   "evidence": [
+    "packc/schema_validator.go:15"
+   ]
+  },
+  {
+   "id": 105,
+   "claim": "PromptPack v1.1 is fully supported with multimodal support for images, audio and video",
+   "verdict": "false",
+   "evidence": [
+    "packc/schema_validator.go:15"
+   ]
+  },
+  {
+   "id": 106,
+   "claim": "The v1alpha1 Kubernetes-style resource format is fully supported",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:137"
+   ]
+  }
+ ]
+}

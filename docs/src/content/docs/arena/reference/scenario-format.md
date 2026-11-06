@@ -1,144 +1,159 @@
 ---
 title: Test Scenario Format
+description: The structure of a Scenario file, its main spec and turn fields, and examples of multimodal, workflow and self-play turns.
+verified:
+  commit: 0dbee6290db4e4de3bff3101f260fd614f81c924
+  sources:
+    - arena/arenaconfig/loader.go
+    - arena/arenaconfig/types.go
+    - arena/arenaconfig/validator_tools.go
+    - arena/assertions/validate_types.go
+    - arena/cmd/promptarena/run.go
+    - arena/cmd/promptarena/serve_interactive.go
+    - arena/engine/builder_integration.go
+    - arena/engine/conversation_executor.go
+    - arena/engine/eval_orchestrator.go
+    - arena/engine/execution_workflow_integration.go
+    - arena/engine/workflow_state_resolver.go
+    - arena/engine/workflow_tool_executor.go
+    - arena/turnexecutors/media_loader.go
+    - arena/turnexecutors/pipeline_stages_integration.go
+    - examples/arena-media-test/config.arena.yaml
+    - examples/assertions-test/config.arena.yaml
+    - examples/document-analysis/scenarios/pdf-summary.scenario.yaml
+    - packc/schema_validator.go
+    - packc/schema_validator_test.go
+    - schemas/v1alpha1/arena.json
+    - schemas/v1alpha1/persona.json
+    - schemas/v1alpha1/promptconfig.json
+    - schemas/v1alpha1/provider.json
+    - schemas/v1alpha1/scenario.json
+    - schemas/v1alpha1/tool.json
 ---
-PromptPack is an **open-source specification** for defining LLM prompts, test scenarios, and configurations in a portable, version-controllable format.
+A scenario file declares the conversation `promptarena run` plays against your providers: the turns to send, the assertions to check and the variables to inject. Scenarios are Kubernetes-style YAML resources that `promptarena validate` checks against `schemas/v1alpha1/scenario.json`. PromptArena and `packc` validate packs against the embedded schema of the open [PromptPack](https://promptpack.org) specification, version 1.9.0.
 
-## Official Documentation
+## File structure
 
-For complete specification documentation, please visit:
-
-### **[PromptPack.org](https://promptpack.org)**
-
-The official PromptPack specification site includes:
-
-- **[Specification Overview](https://promptpack.org/docs/spec/overview)** - Understanding the PromptPack format
-- **[File Format & Structure](https://promptpack.org/docs/spec/structure)** - Pack JSON structure
-- **[Schema Reference](https://promptpack.org/docs/spec/schema-reference)** - JSON schema validation
-- **[Real-World Examples](https://promptpack.org/docs/spec/examples)** - Complete example packs
-- **[Getting Started Guide](https://promptpack.org/docs/getting-started)** - Quick start instructions
-- **[Version History](https://promptpack.org/docs/spec/versions)** - v1.0, v1.1, etc.
-
----
-
-## PromptArena Implementation
-
-**PromptArena** is a reference implementation and testing tool for PromptPack files.
-
-### Supported Features
-
-- **PromptPack v1.1** with multimodal support (images, audio, video)
-- Kubernetes-style YAML resources: `Arena`, `PromptConfig`, `Scenario`, `Provider`, `Tool`, `Persona`
-- Multi-provider testing: OpenAI, Anthropic, Google Gemini, Azure, Bedrock, and Mock
-- MCP (Model Context Protocol) server integration
-- Comprehensive assertion framework for validation
-- JSON, Markdown, and JUnit output formats (plus interactive web UI via `promptarena serve`)
-
-### Quick Start
-
-```bash
-# Run a test scenario
-promptarena run examples/arena-media-test/arena.yaml
-
-# Test across multiple providers
-promptarena run arena.yaml --provider openai,anthropic --format markdown
-```
-
-### Quick Links
-
-- **Schema**: [v1.1 JSON Schema](https://promptpack.org/schema/v1.1/promptpack.schema.json)
-- **Examples**: [Example projects](/arena/examples/) — working Arena configs you can copy
-- **Arena Guides**: [Writing Scenarios](/arena/how-to/scenarios/write-scenarios/) | [Assertions](/arena/reference/assertions/) | [Self-Play](/arena/how-to/scenarios/write-scenarios/)
-- **Community**: [GitHub Discussions](https://github.com/altairalabs/promptpack-spec/discussions)
-
----
-
-## PromptArena-Specific Extensions
-
-While implementing the PromptPack specification, PromptArena adds these testing-focused features:
-
-### 1. Arena Configuration Resource
-
-The `Arena` resource orchestrates testing across multiple prompts, providers, and scenarios:
+| Key | Type | Description |
+|---|---|---|
+| `apiVersion` | string | `promptkit.altairalabs.ai/v1alpha1`. |
+| `kind` | string | `Scenario`. |
+| `metadata` | object | `name` and optional `labels`. Labels are copied onto the scenario for stratified reporting. |
+| `spec` | object | The scenario body. See [Spec fields](#spec-fields). |
 
 ```yaml
 apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Arena
+kind: Scenario
 metadata:
-  name: my-test-suite
+  name: order-tracking
 spec:
-  prompt_configs:
-    - id: support
-      file: prompts/support-bot.yaml
-  
-  providers:
-    - file: providers/openai-gpt4o.yaml
-    - file: providers/claude-sonnet.yaml
-  
-  scenarios:
-    - file: scenarios/test-1.yaml
-  
-  # MCP server integration (mcp_servers is a list; each entry has a name)
-  mcp_servers:
-    - name: filesystem
-      command: npx
-      args: ["@modelcontextprotocol/server-filesystem", "/data"]
-  
-  defaults:
-    output:
-      dir: out
-      formats: ["markdown", "json"]
+  id: order-tracking
+  task_type: support
+  description: "Track an order"
+  turns:
+    - role: user
+      content: "Where is order #12345?"
 ```
 
-PromptArena extends standard assertions with testing-specific validators:
+## Spec fields
+
+| Field | Type | Description |
+|---|---|---|
+| `id` | string | Scenario identifier. |
+| `task_type` | string | Prompt task type the scenario runs against. |
+| `description` | string | What the scenario tests. Required. |
+| `turns` | list | Conversation turns. See [Turn fields](#turn-fields). |
+| `variables` | map | Template variables injected into the pack. |
+| `conversation_assertions` | list | Assertions evaluated after the whole conversation completes. |
+| `providers` | list | Provider ids to run against. Empty means the providers in `provider_group` (default `default`), or every provider when none is in that group. |
+| `provider_group` | string | Provider group to run against. |
+| `required_capabilities` | list | Keeps only providers that support every listed capability: `text`, `streaming`, `vision`, `tools`, `json`, `audio`, `video`, `documents`. |
+| `streaming` | bool | Streams every turn by default. A turn's `streaming` overrides it. |
+| `trials` | int | Number of times to run the scenario. Above 1, assertion results aggregate across trials as pass rates and flakiness scores. |
+| `trial_budget` | object | Stops trials early once one achieves every objective, or once they have cost a set amount. |
+| `data` | object | Runs the scenario once per row of a JSONL or CSV file, substituting columns as `{column}`. |
+| `context_policy` | object | Context management for long conversations. |
+| `context_metadata` | object | `domain`, `user_role` and `project_stage`. |
+| `context`, `constraints` | map | Free-form scenario context and constraints. |
+| `tool_policy` | object | Tool-call limits for the scenario. |
+| `tool_result_transforms` | list | Rewrites named tools' results before the agent sees them. |
+| `seed_memories` | list | Memories written to the memory store before the first turn. Each has `content`, and optionally `type`, `confidence` and `metadata`. |
+| `duplex` | object | Bidirectional streaming for voice and audio scenarios. |
+| `voice`, `voices` | string, list | Arena voice ids that synthesize scripted user turns. `voices` cycles one voice per trial and cannot be set with `voice`. |
+
+Every field, including nested objects, is documented in the [Scenario reference](/arena/reference/config-schema/#scenario).
+
+## Turn fields
+
+| Field | Type | Description |
+|---|---|---|
+| `role` | string | `user`, `assistant`, or a provider selector such as `gemini-user` for a self-play turn. Required. |
+| `content` | string | Turn text. |
+| `parts` | list | Multimodal content parts. Takes precedence over `content` when non-empty. |
+| `assertions` | list | Assertions evaluated on this turn. |
+| `persona` | string | Persona id for a self-play turn. |
+| `turns` | int | Self-play exchange count. The exact count when `max_turns` is absent. |
+| `max_turns` | int | Self-play upper bound. Enables natural termination when above `turns`. |
+| `assistant_temp`, `user_temp` | float | Temperature overrides for the assistant and the self-play user. |
+| `seed` | int | Overrides the self-play persona's seed. |
+| `streaming` | bool | Overrides the scenario's `streaming` for this turn. |
+| `consent_overrides` | map | Consent simulation for client-side tools. Keys are tool names; values are `grant`, `deny` or `timeout`. |
+| `perturbations` | map | Placeholder name to list of variants. Each variant runs as its own trial with `{name}` substituted in `content`. |
+| `chaos` | object | Fault injection for resilience testing. |
+| `objective` | object | Goal for a self-play turn, checked after every exchange. |
+| `transforms` | list | Rewrites each persona message before the agent receives it. |
+| `audio_transforms` | list | Rewrites the audio of a spoken user message. Duplex scenarios only. |
+
+### Content parts
+
+| Field | Type | Description |
+|---|---|---|
+| `type` | string | `text`, `image`, `audio` or `video`. |
+| `text` | string | Text, for `type: text`. |
+| `media` | object | Media for the other types. |
+
+`media` takes one source (`file_path`, `url`, `data` or `storage_reference`) and a required `mime_type`. `detail` (`low`, `high` or `auto`) and `caption` are optional.
+
+## Examples
+
+### Multimodal turn
+
+A `parts` list mixes text with images from a file path or a URL:
 
 ```yaml
-# Turn-level assertions
-assertions:
-  # Content validation
-  - type: content_includes
-  - type: content_matches
-
-  # Tool usage validation
-  - type: tools_called
-  - type: tools_not_called
-
-  # JSON validation
-  - type: is_valid_json
-  - type: json_schema
-  - type: json_path
-
-  # Multimodal validation
-  - type: image_format
-  - type: image_dimensions
-  - type: audio_format
-  - type: audio_duration
-  - type: video_resolution
-  - type: video_duration
-
-  # Workflow assertions
-  - type: state_is
-  - type: transitioned_to
-  - type: workflow_complete
-
-  # LLM Judge
-  - type: llm_judge
-
-  # External Evals
-  - type: rest_eval
-  - type: a2a_eval
-
-# Conversation-level assertions (in conversation_assertions field)
-conversation_assertions:
-  - type: tools_called
-  - type: tools_not_called
-  - type: tool_calls_with_args
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Scenario
+metadata:
+  name: describe-image
+spec:
+  id: describe-image
+  task_type: media-analysis
+  description: "Describe two images"
+  turns:
+    - role: user
+      parts:
+        - type: text
+          text: "What is in this image?"
+        - type: image
+          media:
+            file_path: media/photo.jpg
+            mime_type: image/jpeg
+            detail: high
+        - type: image
+          media:
+            url: https://example.com/chart.png
+            mime_type: image/png
+      assertions:
+        - type: content_includes
+          params:
+            patterns: ["image"]
 ```
 
-See the [Assertions Guide](/arena/reference/assertions/) for complete documentation.
+The prompt's `spec.media` block enables media types and sets size limits per type.
 
-### 3. Workflow Testing
+### Workflow scenario
 
-PromptArena supports testing workflow-based packs. A workflow scenario is an ordinary `kind: Scenario` that uses the standard `turns` format — there is no separate `WorkflowScenario` kind. The workflow state machine is declared in `config.arena.yaml` (under `spec.workflow`), which auto-registers the `workflow__transition` tool and dynamically selects the prompt per turn. State transitions are **LLM-initiated** via the `workflow__transition` tool call rather than scripted in the scenario. Each user turn can carry state-aware assertions (`state_is`, `transitioned_to`, `workflow_complete`):
+A workflow scenario is a `kind: Scenario` with ordinary `turns`. The state machine is declared in the arena config under `spec.workflow`, which registers the `workflow__transition` tool and selects the prompt per turn. The LLM initiates each transition by calling that tool with an `event` and a `context` string, and the context is available as `{{workflow_context}}` in the new state's system prompt. Turn assertions `state_is`, `transitioned_to` and `workflow_complete` check the state:
 
 ```yaml
 apiVersion: promptkit.altairalabs.ai/v1alpha1
@@ -152,7 +167,6 @@ spec:
   variables:
     company_name: "Acme Corp"
   turns:
-    # Turn 1: Send a message in the initial state
     - role: user
       content: "I need help with my billing"
       assertions:
@@ -160,8 +174,6 @@ spec:
           params:
             state: "intake"
           message: "Should be in intake state"
-
-    # Turn 2: The LLM should decide to escalate
     - role: user
       content: "My invoice shows a duplicate charge of $49.99"
       assertions:
@@ -169,11 +181,6 @@ spec:
           params:
             state: "specialist"
           message: "Should have transitioned to specialist"
-        - type: content_includes
-          params:
-            patterns: ["invoice"]
-
-    # Turn 3: Resolve and verify completion
     - role: user
       content: "Thank you, the refund looks correct!"
       assertions:
@@ -181,92 +188,15 @@ spec:
           message: "Workflow should be complete"
 ```
 
-**How transitions work**: The LLM calls the `workflow__transition` tool with an `event` (matching the state machine's defined transitions) and a `context` string that carries forward relevant information to the next state. The driver processes the transition internally and makes the context available via `{{workflow_context}}` in the new state's system prompt.
+| Assertion | Checks |
+|---|---|
+| `state_is` | The current workflow state. |
+| `transitioned_to` | That a state appears in the transition history. |
+| `workflow_complete` | That the workflow reached a terminal state. |
 
-**Workflow Assertions** (available in turn-level `assertions`):
-- **`state_is`** — Checks current workflow state
-- **`transitioned_to`** — Checks if a state was visited in the transition history
-- **`workflow_complete`** — Checks if the workflow reached a terminal state
+### Self-play turn
 
-See the [Assertions Reference](/arena/reference/assertions/#workflow-assertions) for full details.
-
-### 4. Multimodal Testing
-
-PromptArena implements PromptPack v1.1 multimodal support with comprehensive testing capabilities:
-
-```yaml
-# In PromptConfig
-spec:
-  media:
-    enabled: true
-    supported_types: [image, audio, video, document]
-    image:
-      max_size_mb: 20
-      allowed_formats: [jpeg, png, webp]
-    document:
-      max_size_mb: 32
-      allowed_formats: [pdf]
-```
-
-```yaml
-# In Scenario
-turns:
-  - role: user
-    content:
-      - type: text
-        patterns: ["What's in this image?"]
-      - type: image
-        image_url:
-          url: "path/to/image.jpg"
-          detail: "high"
-      - type: document
-        document_url:
-          url: "path/to/document.pdf"
-```
-
-See [`examples/arena-media-test/`](/arena/examples/arena-media-test/) and [`examples/document-analysis/`](/arena/examples/document-analysis/) for complete examples.
-
-### 5. Mock Provider Support
-
-Test without API costs using the Mock provider with configurable responses:
-
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Provider
-metadata:
-  name: mock-provider
-spec:
-  type: mock
-  model: mock-model
-```
-
-Configure responses in `providers/mock-responses.yaml`. See [Mock Provider Usage](/arena/how-to/providers/use-mock-providers/).
-
-### 6. Self-Play Testing
-
-Define AI personas to automatically generate user messages in conversations:
-
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Persona
-metadata:
-  name: frustrated-customer
-spec:
-  id: frustrated-customer
-  description: A frustrated customer with a delayed order
-  system_prompt: |
-    You are a frustrated customer whose order hasn't arrived.
-    Ask about delivery status and express your concerns.
-  goals:
-    - Get an update on order status
-    - Express frustration appropriately
-  constraints:
-    - Keep messages to 1-2 sentences
-  defaults:
-    temperature: 0.8
-```
-
-Then reference the persona in a scenario turn:
+A turn whose `role` is a provider selector generates the user message from a persona:
 
 ```yaml
 turns:
@@ -278,58 +208,13 @@ turns:
     max_turns: 8
 ```
 
----
+See [Persona (Self-Play)](/arena/reference/config-schema/#persona-self-play) for the persona resource.
 
-## Directory Structure
+## Related pages
 
-Recommended project layout for PromptArena tests:
-
-```text
-my-project/
-├── arena.yaml           # Main Arena configuration
-├── prompts/
-│   ├── support.yaml
-│   └── sales.yaml
-├── scenarios/
-│   ├── smoke-tests/
-│   └── regression/
-├── providers/
-│   ├── mock.yaml
-│   └── openai.yaml
-├── tools/
-│   └── weather.yaml
-└── out/                 # Generated reports (add to .gitignore)
-```
-
----
-
-## Version Support
-
-| PromptPack Version | PromptArena Support | Key Features |
-|-------------------|-------------------|--------------|
-| v1.0 | Full | Core specification |
-| v1.1 | Full | Multimodal support (images, audio, video) |
-| v1alpha1 | Full | Kubernetes-style resource format |
-
----
-
-## Learn More
-
-### PromptPack Specification
-- **[PromptPack.org](https://promptpack.org)** - Official specification
-- **[GitHub Repository](https://github.com/altairalabs/promptpack-spec)** - Spec source and discussions
-
-### PromptArena Guides
-- **[Writing Scenarios](/arena/how-to/scenarios/write-scenarios/)** - Create effective test cases
-- **[Assertions Reference](/arena/reference/assertions/)** - Complete assertion documentation
-- **[Self-Play Testing](/arena/how-to/scenarios/write-scenarios/)** - AI-driven testing with personas
-- **[MCP Integration](/arena/how-to/agents/test-mcp-tools/)** - Model Context Protocol servers
-
-### Examples
-- [`examples/customer-support/`](/arena/examples/customer-support/) - Basic support bot
-- [`examples/arena-media-test/`](/arena/examples/arena-media-test/) - Multimodal testing
-- [`examples/mcp-chatbot/`](/arena/examples/mcp-chatbot/) - MCP server integration
-
----
-
-**Questions?** Visit [PromptPack.org](https://promptpack.org) or [GitHub Discussions](https://github.com/altairalabs/promptpack-spec/discussions)
+- [Scenario reference](/arena/reference/config-schema/#scenario): every scenario field, with nested objects.
+- [Assertions](/arena/reference/assertions/): assertion types and parameters, including the workflow assertions.
+- [Write scenarios](/arena/how-to/scenarios/write-scenarios/): author a scenario step by step.
+- [Workflow regression](/arena/how-to/scenarios/workflow-regression/): test workflow-based packs.
+- [Mock providers](/arena/how-to/providers/use-mock-providers/): run scenarios without API costs.
+- [PromptPack.org](https://promptpack.org): the PromptPack specification.

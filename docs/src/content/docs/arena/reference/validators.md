@@ -1,88 +1,29 @@
 ---
 title: Guardrails Reference
+verified:
+  commit: 631d3c353c2c9d71b362ae5cd20c137d42b19d5b
+  sources:
+    - arena/agentkb/evalmeta.yaml
+    - arena/turnexecutors/pipeline_stages_integration.go
+    - examples/guardrails-test/prompts/content-filter.yaml
+    - examples/guardrails-test/scenarios/guardrail-should-trigger.scenario.yaml
+    - packc/main.go
+    - schemas/v1alpha1/promptconfig.json
 ---
 
-Guardrails are runtime checks that enforce policies on LLM responses. They use the same check types as assertions and evals, but run during generation and can actively modify or block content.
+Guardrails are runtime checks that enforce policies on LLM responses. They use the same check types as assertions and evals, run during generation, and rewrite the response content when they trigger.
 
-:::note[Check Types]
-For the complete list of check types and their parameters, see the [Checks Reference](https://promptkit.altairalabs.ai/reference/checks/). This page covers guardrail-specific configuration and behavior.
-:::
+For the complete list of check types and their parameters, see the [Checks Reference](https://promptkit.altairalabs.ai/reference/checks/).
 
 ## Guardrails vs Assertions
-
-```mermaid
-graph TB
-    subgraph "Guardrails"
-        V1["Runtime Enforcement"]
-        V2["Can Abort Streaming"]
-        V3["Policy Compliance"]
-        V4["Defined in PromptConfig"]
-    end
-
-    subgraph "Assertions"
-        A1["Test Verification"]
-        A2["Check After Complete"]
-        A3["Verify Expectations"]
-        A4["Defined in Scenario"]
-    end
-
-    style V1 fill:#f99
-    style A1 fill:#9f9
-```
-
-**Key Differences**:
 
 | Aspect | Guardrails | Assertions |
 |--------|-----------|------------|
 | Purpose | Enforce policies | Verify behavior |
-| When | During generation | After generation |
-| Streaming | Can abort early | Runs after complete |
-| Defined In | PromptConfig | Scenario |
-| Failure | Policy violation | Test failure |
-
-## How Guardrails Work
-
-### Non-Streaming Mode
-
-```mermaid
-sequenceDiagram
-    participant LLM
-    participant Response
-    participant Guardrails
-    participant Result
-
-    LLM->>Response: Generate Complete Response
-    Response->>Guardrails: Validate Content
-
-    alt Validation Passes
-        Guardrails-->>Result: Return Response
-    else Validation Fails
-        Guardrails-->>Result: Validation Error
-    end
-```
-
-### Streaming Mode
-
-```mermaid
-sequenceDiagram
-    participant LLM
-    participant Stream
-    participant Guardrails
-    participant Result
-
-    LLM->>Stream: Start Streaming
-
-    loop Each Chunk
-        Stream->>Guardrails: Validate Chunk
-
-        alt Validation OK
-            Guardrails-->>Result: Forward Chunk
-        else Validation Fails
-            Guardrails->>Stream: Abort Stream
-            Stream-->>Result: Return Partial + Error
-        end
-    end
-```
+| When | During generation | After the turn completes |
+| Streaming | Streaming-capable checks run on each chunk | Run after the stream completes |
+| Defined in | PromptConfig `validators` | Scenario `assertions` |
+| On failure | Rewrites the assistant message; the run continues | Test failure |
 
 ## Guardrail Structure
 
@@ -95,88 +36,85 @@ spec:
       params:
         param1: value1
       message: "Policy description"
-      fail_on_violation: true
 ```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `type` | string | Check type. Required. |
+| `params` | object | Parameters of the check type. Required. |
+| `message` | string | Text that replaces the response when the guardrail fires (the length guardrails truncate instead). Defaults to a policy message. |
+| `enabled` | boolean | Set to `false` to turn the guardrail off. |
+| `id` | string | Identifier for the guardrail. |
+
+An unregistered `type` fails the turn. A judge-backed type needs a `provider` param.
 
 ### The `message` Field
 
-The `message` field sets the user-facing text shown when a content-blocking guardrail fires. If omitted, a default policy message is used.
-
-During pack compilation, `packc` folds `message` into `params["message"]` to conform to the [PromptPack schema](https://promptpack.org/schema/latest/promptpack.schema.json), which does not have a top-level `message` property on validators. You should always declare `message` at the top level in your PromptConfig YAML — the compiler handles the rest.
+During pack compilation, `packc` folds `message` into `params["message"]` when `params` has no `message` of its own. This conforms to the [PromptPack schema](https://promptpack.org/schema/latest/promptpack.schema.json), which has no top-level `message` property on validators. Declare `message` at the top level in your PromptConfig YAML.
 
 ### Enforcement Behavior
 
-When a guardrail triggers and `fail_on_violation` is `true` (the default):
+When a guardrail triggers, it rewrites the assistant message in place. The pipeline continues and no error is returned.
 
-- **Content blockers** (`banned_words` / `content_excludes`) replace content with the `message` (or a default policy message)
-- **Length guards** (`max_length` / `length`) truncate content to the configured maximum
-- Other check types log the violation but do not modify content
+| Check type | Rewrite |
+|-----------|---------|
+| `content_excludes` / `banned_words` | Replaces the content with `message`, or the default policy message. |
+| `max_length` / `length` | Truncates the content to the configured maximum. |
+| Any other check type that triggers | Replaces the content with `message`, or the check's own replacement, or the default blocked message. |
 
-When `fail_on_violation` is `false`, the guardrail evaluates and records results in `message.Validations` but does not modify content -- equivalent to monitor-only mode.
+`max_tokens` is an estimate of 4 characters per token. `banned_words` matches whole words by default.
 
 ## Guardrail-Compatible Check Types
 
-Any check type can technically be used as a guardrail, but only certain built-in types have specific enforcement behavior. Others evaluate and record results without modifying content.
+Any registered check type can be a guardrail. A guardrail triggers when its check scores below 1.0.
 
 | Check Type | Aliases | Streaming | Enforcement |
 |-----------|---------|-----------|-------------|
 | `content_excludes` | `banned_words` | Yes | Replaces content |
 | `max_length` | `length` | Yes | Truncates |
-| `sentence_count` | `max_sentences` | No | Logs violation |
-| `field_presence` | `required_fields` | No | Logs violation |
+| `field_presence` | `required_fields` | No | Replaces content when any field is missing |
 
-See the [Checks Reference](https://promptkit.altairalabs.ai/reference/checks/) for the full list of check types and their parameters.
+`banned_words` accepts `words` as an alias of `patterns`. `max_length` accepts `max_characters` as an alias of `max`.
 
 ## Streaming Guardrail Behavior
 
-Streaming-capable guardrails abort generation immediately when a violation is detected:
+Streaming-capable guardrails (`content_excludes`, `max_length`) run on each chunk. When one triggers:
 
-```mermaid
-graph LR
-    Start["Start"] --> C1["Chunk 1<br/>OK"]
-    C1 --> C2["Chunk 2<br/>OK"]
-    C2 --> C3["Chunk 3<br/>Banned Word!"]
-    C3 --> Abort["Abort Stream"]
+- The chunk content is replaced with the blocked text or truncated to the maximum length.
+- The stage stops reading the stream.
+- The turn completes normally with no error.
 
-    style C3 fill:#f99
-    style Abort fill:#f99
-```
+Chunks already emitted cannot be recalled. Streaming matching is substring-based.
 
-Benefits of streaming guardrails:
-- Catch violations immediately, preventing bad content from reaching users
-- Save API costs by aborting early (no wasted tokens on a response that will be blocked)
-- Faster failure detection
+Guardrails that are not streaming-capable allow every chunk and run on the completed response.
+
+The stage stops using the stream but reads the remainder in the background, so the provider still generates the remaining tokens.
 
 ## Combining Guardrails
 
-Multiple guardrails can enforce different policies simultaneously:
+Multiple guardrails enforce different policies at once:
 
 ```yaml
 validators:
-  # Content safety (streaming)
   - type: banned_words
     params:
       words: ["guarantee", "promise", "definitely"]
     message: "Avoid absolute promises"
 
-  # Length control (streaming)
   - type: max_length
     params:
       max_characters: 1000
       max_tokens: 250
     message: "Stay concise"
-
-  # Structure (post-completion)
-  - type: max_sentences
-    params:
-      max_sentences: 5
-    message: "Maximum 5 sentences"
 ```
 
-**Execution order**:
-1. Streaming guardrails run during generation
-2. Non-streaming guardrails run after completion
-3. First failure stops the validation chain
+Execution order:
+
+1. Streaming-capable guardrails run on each chunk during the stream.
+2. Every guardrail runs on the completed response, in declaration order.
+3. The first guardrail that triggers on the completed response stops the chain; later guardrails do not run on that response.
+
+Declaration order does not change when streaming guardrails fire.
 
 ## Examples
 
@@ -207,7 +145,7 @@ validators:
 
 ### Testing Guardrails in Arena
 
-Create scenarios that verify guardrails fire correctly:
+The `guardrail_triggered` assertion checks whether a guardrail fired:
 
 ```yaml
 spec:
@@ -217,21 +155,19 @@ spec:
       assertions:
         - type: guardrail_triggered
           params:
-            guardrail: banned_words
-            assertions: true
-            message: "Should catch 'definitely'"
+            validator: banned_words
+            should_trigger: true
 ```
 
-## Best Practices
-
-1. **Order by speed** -- put streaming guardrails (e.g., `banned_words`, `max_length`) before post-completion checks (e.g., `max_sentences`).
-2. **Use specific messages** -- give actionable guidance, not generic "invalid content" errors.
-3. **Avoid overly broad rules** -- banning common words like "can" or "will" makes the system unusable.
-4. **Mirror policies in the system prompt** -- tell the LLM about the same constraints so it self-corrects before guardrails need to fire.
+| Param | Type | Default | Description |
+|-------|------|---------|-------------|
+| `validator_type` (or `validator`) | string | none | Guardrail type to check. Required. |
+| `should_trigger` | boolean | `true` | Whether the guardrail is expected to fire. |
+| `direction` | string | none | Optional direction filter. |
 
 ## Custom Guardrails
 
-For custom enforcement logic beyond the built-in check types, implement the `hooks.ProviderHook` interface and register it via the SDK:
+For custom enforcement logic, implement the `hooks.ProviderHook` interface and register it through the SDK:
 
 ```go
 conv, _ := sdk.Open("./app.pack.json", "chat",
@@ -239,12 +175,12 @@ conv, _ := sdk.Open("./app.pack.json", "chat",
 )
 ```
 
-See [Hooks Reference](https://promptkit.altairalabs.ai/runtime/reference/hooks/) for the `ProviderHook` API and [Checks Reference extensibility](https://promptkit.altairalabs.ai/reference/checks/#extending-the-check-system) for adding new check types.
+See the [Hooks Reference](https://promptkit.altairalabs.ai/runtime/reference/hooks/) for the `ProviderHook` API and [Checks Reference extensibility](https://promptkit.altairalabs.ai/reference/checks/#extending-the-check-system) for adding check types.
 
 ## See Also
 
-- [Checks Reference](https://promptkit.altairalabs.ai/reference/checks/) -- All check types and parameters
-- [Unified Check Model](https://promptkit.altairalabs.ai/concepts/validation/) -- How guardrails, assertions, and evals relate
-- [Assertions Reference](/arena/reference/assertions/) -- Test-time checks
-- [Hooks & Guardrails](https://promptkit.altairalabs.ai/runtime/reference/hooks/) -- Runtime hook system API
-- [Validation Tutorial](https://promptkit.altairalabs.ai/runtime/tutorials/04-validation-guardrails/) -- Step-by-step guardrails tutorial
+- [Checks Reference](https://promptkit.altairalabs.ai/reference/checks/): all check types and parameters
+- [Unified Check Model](https://promptkit.altairalabs.ai/concepts/validation/): how guardrails, assertions, and evals relate
+- [Assertions Reference](/arena/reference/assertions/): test-time checks
+- [Hooks & Guardrails](https://promptkit.altairalabs.ai/runtime/reference/hooks/): runtime hook system API
+- [Validation Tutorial](https://promptkit.altairalabs.ai/runtime/tutorials/04-validation-guardrails/): step-by-step guardrails tutorial

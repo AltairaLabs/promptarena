@@ -1,9 +1,28 @@
 ---
 title: Go API Reference
-description: Complete API reference for using Arena as a Go library
+description: Exported types, functions and methods for using Arena as a Go library
+verified:
+  commit: 0dbee6290db4e4de3bff3101f260fd614f81c924
+  sources:
+    - arena/arenaconfig/loader.go
+    - arena/arenaconfig/types.go
+    - arena/cmd/promptarena/run_interactive.go
+    - arena/deploy/flow/sessions.go
+    - arena/engine/builder_integration.go
+    - arena/engine/engine.go
+    - arena/engine/execution.go
+    - arena/engine/types.go
+    - arena/generate/adapter.go
+    - arena/generate/converter.go
+    - arena/generate/decision.go
+    - arena/generate/expectation.go
+    - arena/generate/generate.go
+    - arena/generate/sources/recordings.go
+    - arena/statestore/metadata.go
+    - arena/statestore/store.go
 ---
 
-Reference documentation for the Arena Go API, covering all exported types, functions, and methods for programmatic usage.
+Exported types, functions and methods of the Arena Go packages. For a walkthrough, see [Programmatic Usage](/arena/tutorials/07-programmatic-usage/).
 
 ## Core Packages
 
@@ -22,7 +41,7 @@ func BuildEngineComponents(cfg *arenaconfig.Config, providerFilter []string) (
     adapterRegistry *adapters.Registry,
     a2aCleanup func(),
     toolRegistry *tools.Registry,
-    skillExecutor *skills.Executor,
+    skillFactory *SkillsFactory,
     err error,
 )
 ```
@@ -36,9 +55,9 @@ providers have credentials resolved; `nil` or empty initializes all of them.
 - `mcpRegistry` - Registry for Model Context Protocol servers (`nil` when none are configured)
 - `convExecutor` - Executor for running conversations, with the eval orchestrator already injected
 - `adapterRegistry` - Recording-format readers used by eval scenarios
-- `a2aCleanup` - Releases any A2A agent connections; call it if you do not go on to build an engine (`nil` when there are none)
+- `a2aCleanup` - Releases any A2A agent connections (`nil` when there are none). `NewEngine` does not take it, so when you build the engine with `NewEngine`, call it yourself when you are done; `NewEngineFromConfig` stores it and `Close` calls it
 - `toolRegistry` - Registry of tools the runtime can execute
-- `skillExecutor` - Executor for skill activation (`nil` when the config has no skills)
+- `skillFactory` - Factory for skill activation (`nil` when no skill sources are loaded)
 - `err` - Error if component building fails
 
 **Example:**
@@ -51,6 +70,9 @@ if err != nil {
 providerReg, promptReg, mcpReg, executor, adapterReg, cleanup, toolReg, _, err := engine.BuildEngineComponents(cfg, nil)
 if err != nil {
     log.Fatal(err)
+}
+if cleanup != nil {
+    defer cleanup()
 }
 ```
 
@@ -73,12 +95,11 @@ func NewEngine(
 Creates a new Engine from pre-built components. The engine adopts the eval
 orchestrator that `BuildEngineComponents` injected into `convExecutor`, so an
 engine built this way wires evals identically to `NewEngineFromConfig`:
-calling `SetEventBus` forwards the bus to the evals and `eval.completed`
+`SetEventBus` forwards the bus to the evals and `eval.completed`
 events reach subscribers.
 
 `NewEngine` does not initialize the workflow state machine, the memory
-subsystem or runtime hooks from the config; `NewEngineFromConfig` does. Prefer
-`NewEngineFromConfig` unless you are substituting components.
+subsystem or runtime hooks from the config; `NewEngineFromConfig` does.
 
 **Parameters:**
 - `cfg` - Configuration object
@@ -97,8 +118,8 @@ func NewEngineFromConfig(cfg *arenaconfig.Config, providerFilter ...string) (*En
 
 Builds the components and the engine from a pre-loaded config in one call, then
 initializes the workflow state machine, the memory subsystem and runtime hooks
-the config declares. This is the constructor the CLI uses. Modify `cfg` before
-calling it to override what was loaded from disk.
+the config declares. This is the constructor the CLI uses. Changes made to
+`cfg` before the call override what was loaded from disk.
 
 ---
 
@@ -134,9 +155,10 @@ defer eng.Close()
 
 ```go
 func (e *Engine) GenerateRunPlan(
-    regionFilter, 
-    providerFilter, 
-    scenarioFilter []string,
+    regionFilter,
+    providerFilter,
+    scenarioFilter,
+    evalFilter []string,
 ) (*RunPlan, error)
 ```
 
@@ -146,6 +168,7 @@ Creates a test execution plan from filter criteria.
 - `regionFilter` - Regions to include (nil = all)
 - `providerFilter` - Providers to include (nil = all)
 - `scenarioFilter` - Scenarios to include (nil = all)
+- `evalFilter` - Evals to include (nil = all)
 
 **Returns:**
 - `*RunPlan` - Execution plan with all matching combinations
@@ -158,6 +181,7 @@ plan, err := eng.GenerateRunPlan(
     nil,                           // all regions
     []string{"openai", "claude"},  // specific providers
     nil,                           // all scenarios
+    nil,                           // all evals
 )
 ```
 
@@ -343,7 +367,7 @@ Contains complete results of a test execution.
 
 ```go
 type Config struct {
-    LoadedProviders     map[string]*Provider
+    LoadedProviders     map[string]*config.Provider
     LoadedScenarios     map[string]*Scenario
     LoadedPromptConfigs map[string]*PromptConfigData
     Defaults            Defaults
@@ -358,6 +382,7 @@ Main Arena configuration structure.
 #### `Provider`
 
 ```go
+// package config: github.com/AltairaLabs/PromptKit/pkg/v2/config
 type Provider struct {
     ID    string
     Type  string  // "openai", "claude", "gemini", "mock"
@@ -366,7 +391,7 @@ type Provider struct {
 }
 ```
 
-Provider configuration.
+Provider configuration. `arenaconfig.Config.LoadedProviders` holds `*config.Provider` values.
 
 ---
 
@@ -438,10 +463,10 @@ State store implementation for Arena results.
 
 ---
 
-#### `GetRunResult`
+#### `GetResult`
 
 ```go
-func (s *ArenaStateStore) GetRunResult(
+func (s *ArenaStateStore) GetResult(
     ctx context.Context,
     runID string,
 ) (*RunResult, error)
@@ -459,7 +484,7 @@ Retrieves detailed results for a specific run.
 
 **Example:**
 ```go
-result, err := arenaStore.GetRunResult(ctx, runID)
+result, err := arenaStore.GetResult(ctx, runID)
 if err != nil {
     log.Printf("Failed to get result: %v", err)
     continue
@@ -614,23 +639,23 @@ if err != nil {
 }
 defer eng.Close()
 
-// 4. Generate plan
-plan, err := eng.GenerateRunPlan(nil, nil, nil)
+// 3. Generate plan
+plan, err := eng.GenerateRunPlan(nil, nil, nil, nil)
 if err != nil {
     return err
 }
 
-// 5. Execute
+// 4. Execute
 ctx := context.Background()
 runIDs, err := eng.ExecuteRuns(ctx, plan, 4)
 if err != nil {
     return err
 }
 
-// 6. Get results
+// 5. Get results
 store := eng.GetStateStore().(*statestore.ArenaStateStore)
 for _, runID := range runIDs {
-    result, _ := store.GetRunResult(ctx, runID)
+    result, _ := store.GetResult(ctx, runID)
     // Process result
 }
 ```
