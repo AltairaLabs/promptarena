@@ -1,0 +1,597 @@
+{
+ "page": "docs/src/content/docs/arena/how-to/agents/test-mcp-tools.md",
+ "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "Frontmatter description: 'Configure MCP servers in Arena scenarios for integration testing'",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 2,
+   "claim": "Arena connects real MCP servers and verifies tool calls in scenarios",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:423",
+    "arena/engine/builder_integration.go:482"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "MCP servers are configured by stdio via the 'command' field",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:173",
+    "schemas/v1alpha1/arena.json:1809"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "MCP servers are configured by static HTTP+SSE via the 'url' field",
+   "verdict": "false",
+   "evidence": [
+    "schemas/v1alpha1/arena.json:1827",
+    "schemas/v1alpha1/arena.json:1836"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "Stdio and HTTP+SSE servers are long-lived processes shared across all scenarios",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:116",
+    "arena/engine/builder_integration.go:86",
+    "arena/engine/engine.go:820",
+    "arena/mcp/config.go:43"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "Per-scenario/per-session MCP containers are covered by provision-mcp-sandbox",
+   "verdict": "true",
+   "evidence": [
+    "arena/mcp/config.go:43"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "apiVersion promptkit.altairalabs.ai/v1alpha1",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 8,
+   "claim": "kind Arena",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:203",
+    "schemas/v1alpha1/arena.json:4"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "metadata.name is a free-form string (example 'mcp-test')",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/arena.json"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "spec.mcp_servers is a list field on the Arena spec",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:173",
+    "schemas/v1alpha1/arena.json:730"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "mcp_servers entry field name",
+   "verdict": "true",
+   "evidence": [
+    "arena/mcp/config.go:58",
+    "schemas/v1alpha1/arena.json:1804"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "mcp_servers entry field command",
+   "verdict": "true",
+   "evidence": [
+    "arena/mcp/config.go:58",
+    "schemas/v1alpha1/arena.json:1804"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "mcp_servers entry field args is a list of strings",
+   "verdict": "true",
+   "evidence": [
+    "arena/mcp/config.go:58",
+    "schemas/v1alpha1/arena.json:1804"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "spec.prompt_configs is a list with id and file fields",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/arena.json:3082"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "spec.scenarios is a list with a file field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/arena.json:3821"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "spec.providers is a list with a file field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/arena.json:3248"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "Arena starts the MCP server, discovers its tools and registers them for scenarios",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:437",
+    "arena/engine/builder_integration.go:482"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "Field tool_filter limits which MCP tools are available",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:454",
+    "schemas/v1alpha1/arena.json:1870"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "tool_filter.allowlist is a list of tool names",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:454",
+    "schemas/v1alpha1/arena.json:1882"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "Allowlist example names echo and get-sum",
+   "verdict": "true",
+   "evidence": [
+    "examples/mcp-everything-test/config.arena.yaml:22"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "tool_filter.blocklist is a list of tool names",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:454",
+    "arena/mcp/config.go:73",
+    "schemas/v1alpha1/arena.json:1888"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "Blocklist example names drop_table and truncate_table",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 23,
+   "claim": "Example runs python mcp_db_server.py",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 24,
+   "claim": "mcp_servers entry field env is a map of environment variables",
+   "verdict": "true",
+   "evidence": [
+    "arena/mcp/config.go:58",
+    "schemas/v1alpha1/arena.json:1804"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "Values of the form ${VAR} in env are expanded from the host environment",
+   "verdict": "false",
+   "evidence": [
+    "arena/mcp/config.go:64"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "mcp_servers entry field working_dir sets the server process working directory",
+   "verdict": "true",
+   "evidence": [
+    "arena/mcp/config.go:64",
+    "schemas/v1alpha1/arena.json:1824"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "mcp_servers entry field timeout_ms is in milliseconds",
+   "verdict": "true",
+   "evidence": [
+    "arena/mcp/config.go:68"
+   ]
+  },
+  {
+   "id": 28,
+   "claim": "timeout_ms applies per request",
+   "verdict": "true",
+   "evidence": [
+    "arena/mcp/config.go:68"
+   ]
+  },
+  {
+   "id": 29,
+   "claim": "MCP tools are named mcp__{serverName}__{toolName}",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:482"
+   ]
+  },
+  {
+   "id": 30,
+   "claim": "A prompt reaches only the tools named in allowed_tools; no entry means no tools",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/validator.go:358",
+    "examples/mcp-everything-test/prompts/mcp-assistant.yaml:20"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "Without tool access, the model writes tool-shaped text into content instead of issuing tool calls",
+   "verdict": "unverified",
+   "evidence": [
+    "examples/mcp-everything-test/prompts/mcp-assistant.yaml:20"
+   ]
+  },
+  {
+   "id": 32,
+   "claim": "If a provider declares a capabilities list, it must include 'tools'",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:693",
+    "arena/engine/builder_integration.go:403",
+    "arena/engine/execution.go:306"
+   ]
+  },
+  {
+   "id": 33,
+   "claim": "PromptConfig kind with apiVersion promptkit.altairalabs.ai/v1alpha1",
+   "verdict": "true",
+   "evidence": [
+    "examples/mcp-everything-test/prompts/mcp-assistant.yaml:2",
+    "schemas/v1alpha1/promptconfig.json"
+   ]
+  },
+  {
+   "id": 34,
+   "claim": "spec.task_type, spec.version and spec.description are PromptConfig fields",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/promptconfig.json:670",
+    "schemas/v1alpha1/promptconfig.json:674"
+   ]
+  },
+  {
+   "id": 35,
+   "claim": "spec.allowed_tools is a list of tool names on PromptConfig",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/promptconfig.json:705"
+   ]
+  },
+  {
+   "id": 36,
+   "claim": "Tool name mcp__everything__echo is valid in allowed_tools",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/validator.go:358",
+    "examples/mcp-everything-test/prompts/mcp-assistant.yaml:21"
+   ]
+  },
+  {
+   "id": 37,
+   "claim": "Tool name mcp__everything__get-sum is valid in allowed_tools",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:482",
+    "examples/mcp-everything-test/prompts/mcp-assistant.yaml:22"
+   ]
+  },
+  {
+   "id": 38,
+   "claim": "spec.system_template is a PromptConfig field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/promptconfig.json:690"
+   ]
+  },
+  {
+   "id": 39,
+   "claim": "Mock responses file has a top-level scenarios map keyed by scenario id",
+   "verdict": "true",
+   "evidence": [
+    "examples/mcp-everything-test/mock-responses.yaml:3",
+    "examples/mcp-everything-test/providers/mock-provider.yaml:14"
+   ]
+  },
+  {
+   "id": 40,
+   "claim": "Mock scenario entries have a turns map keyed by turn number",
+   "verdict": "true",
+   "evidence": [
+    "examples/mcp-everything-test/mock-responses.yaml:5"
+   ]
+  },
+  {
+   "id": 41,
+   "claim": "Mock turn field tool_calls is a list with name and arguments",
+   "verdict": "true",
+   "evidence": [
+    "examples/mcp-everything-test/mock-responses.yaml:8"
+   ]
+  },
+  {
+   "id": 42,
+   "claim": "Mock turn field response sets assistant text",
+   "verdict": "true",
+   "evidence": [
+    "examples/mcp-everything-test/mock-responses.yaml:7"
+   ]
+  },
+  {
+   "id": 43,
+   "claim": "Scenario apiVersion promptkit.altairalabs.ai/v1alpha1 and kind Scenario",
+   "verdict": "true",
+   "evidence": [
+    "examples/mcp-everything-test/scenarios/echo-and-add.scenario.yaml:2",
+    "schemas/v1alpha1/scenario.json"
+   ]
+  },
+  {
+   "id": 44,
+   "claim": "spec.id, spec.task_type and spec.description are Scenario fields",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json:552",
+    "schemas/v1alpha1/scenario.json:569"
+   ]
+  },
+  {
+   "id": 45,
+   "claim": "spec.tool_policy is a Scenario field",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:930",
+    "schemas/v1alpha1/scenario.json:600"
+   ]
+  },
+  {
+   "id": 46,
+   "claim": "tool_policy.tool_choice accepts value 'auto'",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:933",
+    "schemas/v1alpha1/scenario.json:733"
+   ]
+  },
+  {
+   "id": 47,
+   "claim": "tool_policy.max_tool_calls_per_turn is an integer field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json:737"
+   ]
+  },
+  {
+   "id": 48,
+   "claim": "spec.turns is a list of turn objects with role and content",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json:877"
+   ]
+  },
+  {
+   "id": 49,
+   "claim": "Turn field assertions is a list of assertion objects with type and params",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json:940"
+   ]
+  },
+  {
+   "id": 50,
+   "claim": "tools_called is a registered assertion type",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/validator_tools.go:14",
+    "examples/mcp-everything-test/scenarios/echo-and-add.scenario.yaml:19"
+   ]
+  },
+  {
+   "id": 51,
+   "claim": "tools_called params take a tools list",
+   "verdict": "true",
+   "evidence": [
+    "examples/mcp-everything-test/scenarios/echo-and-add.scenario.yaml:21"
+   ]
+  },
+  {
+   "id": 52,
+   "claim": "content_includes is a registered assertion type",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 53,
+   "claim": "content_includes params take a patterns list",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 54,
+   "claim": "Second MCP server in the same config accepts the same tool_filter.allowlist form",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:451",
+    "arena/mcp/config.go:41"
+   ]
+  },
+  {
+   "id": 55,
+   "claim": "Filesystem example uses the @modelcontextprotocol/server-filesystem package with a ./data directory argument",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 56,
+   "claim": "Filesystem example tool names read_file and list_directory",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 57,
+   "claim": "Complete example uses mcp_servers timeout_ms: 10000",
+   "verdict": "true",
+   "evidence": [
+    "examples/mcp-everything-test/config.arena.yaml:19"
+   ]
+  },
+  {
+   "id": 58,
+   "claim": "Complete example allowlist is [echo, get-sum]",
+   "verdict": "true",
+   "evidence": [
+    "examples/mcp-everything-test/config.arena.yaml:22"
+   ]
+  },
+  {
+   "id": 59,
+   "claim": "Complete example prompt_configs id mcp-assistant with file prompts/mcp-assistant.yaml",
+   "verdict": "true",
+   "evidence": [
+    "examples/mcp-everything-test/config.arena.yaml:28"
+   ]
+  },
+  {
+   "id": 60,
+   "claim": "Complete example scenario file scenarios/echo-and-add.scenario.yaml",
+   "verdict": "true",
+   "evidence": [
+    "examples/mcp-everything-test/config.arena.yaml:33"
+   ]
+  },
+  {
+   "id": 61,
+   "claim": "Complete example provider file providers/mock-provider.yaml",
+   "verdict": "true",
+   "evidence": [
+    "examples/mcp-everything-test/config.arena.yaml:37"
+   ]
+  },
+  {
+   "id": 62,
+   "claim": "spec.defaults.temperature is a field (value 0.7)",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/arena.json:920"
+   ]
+  },
+  {
+   "id": 63,
+   "claim": "spec.defaults.max_tokens is a field (value 500)",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/arena.json:923"
+   ]
+  },
+  {
+   "id": 64,
+   "claim": "spec.defaults.concurrency is a field (value 1)",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/arena.json:929"
+   ]
+  },
+  {
+   "id": 65,
+   "claim": "spec.defaults.output.dir and output.formats are fields",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/arena.json:2460"
+   ]
+  },
+  {
+   "id": 66,
+   "claim": "Output formats json and markdown are accepted",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run_interactive.go:536",
+    "examples/mcp-everything-test/config.arena.yaml:47"
+   ]
+  },
+  {
+   "id": 67,
+   "claim": "Example directory is examples/mcp-everything-test",
+   "verdict": "true",
+   "evidence": [
+    "examples/mcp-everything-test/config.arena.yaml:1"
+   ]
+  },
+  {
+   "id": 68,
+   "claim": "Binary promptarena has a run subcommand accepting -c for config",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:134"
+   ]
+  },
+  {
+   "id": 69,
+   "claim": "Link target /arena/how-to/agents/provision-mcp-sandbox/ exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 70,
+   "claim": "External link https://promptkit.altairalabs.ai/sdk/how-to/configure-mcp/ exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 71,
+   "claim": "External link https://promptkit.altairalabs.ai/runtime/how-to/integrate-mcp/ exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 72,
+   "claim": "Link target /arena/how-to/agents/test-a2a-agents/ exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 73,
+   "claim": "Link target /arena/how-to/scenarios/write-scenarios/ exists",
+   "verdict": "true",
+   "evidence": []
+  }
+ ]
+}

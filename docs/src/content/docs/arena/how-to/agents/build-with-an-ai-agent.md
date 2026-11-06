@@ -3,16 +3,34 @@ title: Build a PromptPack with an AI coding agent
 description: Brief Claude Code, Codex, or another coding agent with PromptArena's conventions, then let it author, validate, and test a kit against mocks before you try real providers.
 sidebar:
   order: 20
+verified:
+  commit: 631d3c353c2c9d71b362ae5cd20c137d42b19d5b
+  sources:
+    - arena/agentkb/catalog.yaml
+    - arena/agentkb/skill.go
+    - arena/agentmcp/server.go
+    - arena/agentmcp/tools.go
+    - arena/cmd/promptarena/agent_brief.go
+    - arena/cmd/promptarena/chat.go
+    - arena/cmd/promptarena/deploy_adapter_interactive.go
+    - arena/cmd/promptarena/init.go
+    - arena/cmd/promptarena/mcp_cmd.go
+    - arena/cmd/promptarena/run.go
+    - arena/cmd/promptarena/run_interactive.go
+    - arena/cmd/promptarena/validate.go
+    - arena/cmd/promptarena/validate_json.go
+    - arena/configschema/configschema.go
+    - arena/engine/engine.go
+    - arena/tui/tui.go
+    - schemas/v1alpha1/tool.json
 ---
 
-A coding agent such as Claude Code can write a PromptArena kit for you: the prompts,
-scenarios, assertions, tools, and mock responses. It works best when it knows the
-config format and the idioms up front, so it doesn't have to guess field names. PromptArena
-ships that knowledge inside the binary and writes it into your project as an **authoring
-brief**.
+Have a coding agent such as Claude Code write a PromptArena kit (prompts, scenarios, assertions, tools and mock responses) and test it against mocks. PromptArena ships the config format and its idioms inside the binary, and writes them into your project as an authoring brief so the agent does not guess field names.
 
-This guide covers briefing the agent, what to ask it for, the build-and-test loop it
-runs, and the steps that still need you.
+## Prerequisites
+
+- The `promptarena` binary.
+- A coding agent, such as Claude Code or Codex.
 
 ## 1. Brief the agent
 
@@ -23,7 +41,7 @@ promptarena init my-kit --quick
 ```
 
 `init` scaffolds a sample kit and writes the brief next to it. Pass `--template <name>` to
-start from a different template (`promptarena examples list` shows the catalog), or
+start from a different built-in template (`promptarena examples list` shows them), or
 `--no-agent` to skip the brief.
 
 ### Existing project
@@ -45,8 +63,8 @@ project you already have.
 | `.claude/skills/promptarena-authoring/reference/` | Catalogs generated from the binary: `evals-and-assertions.md`, `config-fields.md`, `mock-responses.md`, and `cli.md`. |
 
 If `AGENTS.md` already exists, the brief is appended once and your own content is kept.
-The skill and reference files are overwritten each time, so **re-run `promptarena
-agent-brief` after upgrading PromptArena** to keep the catalogs in step with the binary
+The skill and reference files are overwritten each time. Re-run `promptarena
+agent-brief` after you upgrade PromptArena, so the catalogs match the binary
 that validates your configs.
 
 ## 2. Connect the agent (optional MCP server)
@@ -65,13 +83,12 @@ For Claude Code, add it to `.mcp.json` in the project:
 }
 ```
 
-Any MCP client can use the same command. This is also the easiest route for agents that
-don't read `AGENTS.md` or `.claude/skills/`.
+Any MCP client can use the same command. Use it for agents that do not read `AGENTS.md` or `.claude/skills/`.
 
 ## 3. Open the agent and describe the kit
 
-- **Claude Code** loads `.claude/skills/` and `AGENTS.md` from the project.
-- **Codex** and other agents that read `AGENTS.md` pick it up from there.
+- Claude Code loads `.claude/skills/` and `AGENTS.md` from the project.
+- Codex and other agents that read `AGENTS.md` pick it up from there.
 - For anything else, tell the agent to read `AGENTS.md` first.
 
 Then describe what the agent under test should do, and how you'll know it works. For
@@ -82,14 +99,12 @@ example:
 > checking the order. Test the happy path, an over-limit refund, and a customer who
 > tries to talk it into skipping the check.
 
-The skill tells the agent to settle **measurable success criteria** before writing any
-prompts, so expect questions like these:
+The skill tells the agent to settle measurable success criteria before it writes any
+prompts. Expect it to ask:
 
-- **What counts as success?** Each answer becomes an assertion or eval, and those are
-  the spec.
-- **What should the assistant sound like?** It asks you for identity, tone, and
-  guidelines rather than making them up.
-- **Where do the tools' data come from?** When you name something that lives in a backend,
+- What counts as success. Each answer becomes an assertion or eval.
+- What the assistant should sound like: identity, tone and guidelines.
+- Where the tools' data comes from. When you name something that lives in a backend,
   such as an order or a customer record, it asks for an MCP server, an API or OpenAPI
   spec, or sample payloads so the tool schemas match the real system.
 
@@ -107,58 +122,44 @@ promptarena validate config.arena.yaml
 promptarena run --ci --formats json,markdown
 ```
 
-`validate` checks each file against the JSON schema embedded in the binary, checks that
-every assertion type exists, and then builds the pack in memory and runs every check
-`packc` runs, so a config that passes `validate` compiles with `packc`. It reports every
-problem in one pass rather than stopping at the first. `validate --json` gives the same
-report as JSON, and each problem names the stage that found it and the file to edit.
-`run --ci` runs every scenario headless and writes results to `out/`. The agent reads `out/results.md` for the summary and the per-run JSON files for
+`validate` checks each file against the JSON schema embedded in the binary, checks that every assertion type exists, then builds the pack in memory and runs every check `packc` runs. A config that passes `validate` compiles with `packc`. It reports every problem in one pass. `validate --json` gives the same report as JSON; each problem names the stage that found it, and names the file to edit when that differs from the file being validated. `run --ci` runs every scenario headless and writes results to `out/`. The agent reads `out/results.md` for the summary and the per-run JSON files for
 detail, fixes what failed, and runs again.
 
-Things the agent will set up along the way:
+Along the way the agent sets up:
 
-- **A mock provider and `mock-responses.yaml`**, keyed by each scenario's
-  `metadata.name`, so every turn has a known reply. Tools, workflow state, and memory
+- A mock provider and `mock-responses.yaml`, keyed by each scenario's
+  `metadata.name`, so every turn has a known reply. Tools, workflow state and memory
   still execute for real against the mocked model output.
-- **Self-play personas** (cooperative, confused, impatient, adversarial) to exercise the
-  guardrails. If the adversarial persona doesn't trip an assertion, the assertions are
-  too weak.
+- Self-play personas (cooperative, confused, impatient, adversarial) to exercise the
+  guardrails. If the adversarial persona does not trip an assertion, strengthen the assertions.
 
-Prefer a `type: mock` provider in the kit over the `--mock-provider` flag. The flag
-replaces every provider with a generic mock that ignores your canned responses, so
-assertions that expect specific content will fail.
+Give the kit a `type: mock` provider that declares `additional_config.mock_config`. The `--mock-provider` flag replaces each provider with a mock: a provider that declares `mock_config` keeps its canned responses, and `--mock-config` overrides them for all providers. A provider that declares neither gets a generic reply, so assertions that expect specific content fail.
 
-## 5. Tools: definitions, not implementations
+## 5. Define the tools
 
-A PromptPack defines tools; it doesn't implement them. A `kind: Tool` config is a
-contract (`name`, `description`, `input_schema`, `output_schema`) plus a binding, never
-backend code. For each tool, the agent will:
+A `kind: Tool` config is a contract (`name`, `description`, `input_schema`, `output_schema`) plus a binding; the implementation lives outside the pack. See [Tool authoring](/arena/reference/tool-authoring/). For each tool, the agent either:
 
-- **mock it** (`mode: mock`) for testing,
-- **bind an existing service** (`mode: live` with an `http` block, `mode: mcp`, or
+- mocks it (`mode: mock`) for testing,
+- binds an existing service (`mode: live` with an `http` block, `mode: mcp`, or
   `mode: exec`), or
-- **write a new service** that you deploy separately from the pack.
-
-Whichever you choose, the implementation lives outside the pack.
+- writes a new service that you deploy separately from the pack.
 
 ## 6. Watch it run
 
 The agent can run everything headless. To watch results yourself:
 
-- **Terminal UI**: run `promptarena run` in **your own terminal**. The interactive TUI
-  can't run inside an agent session.
-- **Web UI**: `promptarena serve` (add `--open` to launch a browser). The agent can
+- Terminal UI: run `promptarena run` in your own terminal. Inside an agent session, with no TTY, `run` falls back to plain output.
+- Web UI: `promptarena serve` (add `--open` to launch a browser). The agent can
   start it as a background task.
-- **Conversation**: `promptarena chat` lets you talk to the agent under test.
+- Conversation: `promptarena chat` lets you talk to the agent under test.
 
 ## 7. Real providers and deploy
 
-When the kit passes against mocks, add a real provider and run it again. Expect some
-assertions to need tuning, because real model output varies more than mocks do.
+When the kit passes against mocks, add a real provider and run it again. Real model output varies more than mock output, so expect to tune some assertions.
 Then ship it with `promptarena deploy`, or have the agent write a CI workflow that
 validates, runs, and deploys the kit.
 
-## See also
+## Related pages
 
 - [Use mock providers](/arena/how-to/providers/use-mock-providers/)
 - [Configure providers](/arena/how-to/providers/configure-providers/)

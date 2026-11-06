@@ -1,43 +1,46 @@
 ---
 title: Provision an MCP Sandbox per Scenario
-description: Stand up an MCP server (e.g. a containerised codegen sandbox) on demand at run, scenario, or session scope.
+description: Open an MCP server (for example a containerised codegen sandbox) on demand at run, scenario or session scope.
 sidebar:
   order: 13
+verified:
+  commit: 631d3c353c2c9d71b362ae5cd20c137d42b19d5b
+  sources:
+    - arena/arenaconfig/types.go
+    - arena/arenaconfig/validator.go
+    - arena/cmd/promptarena/run.go
+    - arena/engine/builder_integration.go
+    - arena/engine/engine.go
+    - arena/engine/execution.go
+    - arena/engine/execution_mcpsource.go
+    - arena/engine/mcpsource_scope.go
+    - arena/mcp/config.go
+    - arena/mcpsource/docker/cli.go
+    - arena/mcpsource/docker/cli_interactive.go
+    - arena/mcpsource/docker/register/register.go
+    - arena/mcpsource/docker/source.go
+    - arena/mcpsource/registry.go
+    - arena/mcpsource/source.go
+    - arena/results/markdown/markdown_repository.go
+    - examples/codegen-sandbox/config.arena.yaml
+    - examples/codegen-sandbox/mock-responses.yaml
+    - examples/codegen-sandbox/prompts/codegen-agent.yaml
+    - examples/codegen-sandbox/scenarios/simple-fix.scenario.yaml
 ---
 
-Some MCP servers can't run as a singleton — codegen sandboxes, browser
-automation, ephemeral DB fixtures, or any tool that needs a fresh
-workspace per test. Arena provisions these via **MCPSources**: named
-factories that open an MCP endpoint at a chosen lifecycle boundary and
-tear it down when the boundary closes.
+Open an MCP server per run, scenario or session (a codegen sandbox, for example) through an MCPSource, and have Arena tear it down when that scope closes. Source-backed entries are the third MCP transport, alongside stdio (`command`) and static HTTP+SSE (`url`). For long-lived shared servers, use [Test MCP Tools](/arena/how-to/agents/test-mcp-tools/).
 
-This is the third MCP transport, alongside stdio (`command`) and static
-HTTP+SSE (`url`). For long-lived shared servers, see
-[Test MCP Tools](/arena/how-to/agents/test-mcp-tools/).
+## Prerequisites
 
----
+- Docker on the host running `promptarena`.
+- An image that serves an MCP HTTP+SSE endpoint on port 8080.
 
-## When to use this
-
-Use a source-backed entry when **any** of the following hold:
-
-- The server requires per-test isolation (filesystems, side effects).
-- The server is provisioned by infrastructure you control (containers,
-  reserved hosts) rather than spawned in-process.
-- The server's URL or auth varies per scenario — e.g. a different repo
-  or branch per test case.
-
-If a static `url:` or stdio `command:` is enough, prefer that — it has
-fewer moving parts.
-
----
-
-## Anatomy of a source-backed entry
+## 1. Declare the entry
 
 ```yaml
 spec:
   mcp_servers:
-    - name: sandbox            # registry key — used in qualified tool names
+    - name: sandbox            # MCP registry key; also the key in sandbox_* metadata
       source: docker           # name of a registered MCPSource
       scope: session           # when to open and close
       source_args:             # opaque, source-specific
@@ -48,41 +51,27 @@ spec:
           DEV_MODE: "1"
 ```
 
-Three fields drive the lifecycle:
+| Field | Purpose |
+| --- | --- |
+| `source` | Name of a registered `MCPSource` (e.g. `docker`). |
+| `scope` | `run`, `scenario` or `session`. |
+| `source_args` | Free-form map handed to the source's `Open()`. |
 
-| Field         | Purpose                                                              |
-| ------------- | -------------------------------------------------------------------- |
-| `source`      | Name of an `MCPSource` registered in the running binary (e.g. `docker`). |
-| `scope`       | When to open and close. One of `run`, `scenario`, `session`.         |
-| `source_args` | Free-form map handed to the source's `Open()`. Schema is per-source. |
+An entry with `source` set is opened as a source, and `url` and `command` on the same entry are ignored.
 
-`source` and `url`/`command` are mutually exclusive — pick one transport
-per entry.
+## 2. Choose a scope
 
----
+| Scope | Opens | Closes | Use for |
+| --- | --- | --- | --- |
+| `run` | Once at arena startup | At arena shutdown | Infrastructure shared across all tests. |
+| `scenario` | Each run, before session sources | Each run, after session sources | Per-scenario fixtures. |
+| `session` | Each run (each repetition) | After that run's assertions | Sandboxes that must be fresh per agent run. |
 
-## Scopes
+Scenario scope opens once per run (each repetition, provider and region combination), so it behaves like session scope apart from ordering. Inner scopes close before outer scopes. Closer errors are logged as warnings. If `Open()` fails partway through a scope's entries, the entries already opened in that scope are torn down before the error propagates.
 
-| Scope      | Opens                              | Closes                                | Use for                                                          |
-| ---------- | ---------------------------------- | ------------------------------------- | ---------------------------------------------------------------- |
-| `run`      | Once at arena startup              | At arena shutdown                     | Heavy infra shared across all tests (a warm DB, a model server). |
-| `scenario` | Each scenario start                | Each scenario end                     | Per-test fixtures that survive multiple repetitions.             |
-| `session`  | Each repetition (each `executeRun`) | After that repetition's assertions    | Codegen sandboxes, anything that must be fresh per agent run.    |
+## 3. Template from scenario variables
 
-Inner scopes always close before outer scopes. Closer errors are logged
-as warnings; they never fail the parent scope.
-
-If `Open()` fails partway through a scope's entries, the
-already-opened entries in that scope are torn down before the error
-propagates — so the host doesn't leak containers on a partial failure.
-
----
-
-## Templating from scenario variables
-
-`source_args` is templated against each scenario's `variables` block
-before the source sees it. `{{scenario.<key>}}` substitution is the only
-form supported (no fallbacks, no expressions).
+`source_args` is expanded against each scenario's `variables` block before the source sees it. `{{scenario.<key>}}` is the only supported form: no fallbacks, no expressions. Expansion applies at `scenario` and `session` scope.
 
 ```yaml
 # scenario
@@ -90,45 +79,18 @@ variables:
   repo: https://github.com/example/foo
   branch: feature-x
 
-# arena config
-mcp_servers:
-  - name: sandbox
-    source: docker
-    scope: session
-    source_args:
-      image: ghcr.io/altairalabs/codegen-sandbox:latest
-      repo: "{{scenario.repo}}"
-      branch: "{{scenario.branch}}"
+# arena config, under the entry's source_args
+repo: "{{scenario.repo}}"
+branch: "{{scenario.branch}}"
 ```
 
-Each session opens a fresh container with that scenario's repo cloned
-into `/workspace`.
+Each session opens a fresh container with that scenario's repo cloned into `/workspace`.
 
----
+## 4. Allow the tools
 
-## How tools become callable
+When `Open()` returns, Arena registers the URL and headers in the runtime MCP registry under the entry's `name`, calls `tools/list`, and registers each discovered tool in the tools registry under its raw MCP name (`Read`, `Edit`, ...). The names are not qualified with `mcp__<server>__`, so `name` does not appear in them.
 
-When the source's `Open()` returns, Arena:
-
-1. Registers the resulting URL + headers in the runtime MCP registry
-   under the `name:` you gave.
-2. Calls `tools/list` against that server and registers each discovered
-   tool as a `ToolDescriptor` in the tools registry under its **raw**
-   MCP name (`Read`, `Edit`, …) — not the namespaced
-   `mcp__server__tool` form used by static MCP entries. This keeps
-   pack-author ergonomics simple: the sandbox is another set of
-   tools.
-3. Routing is unchanged — `MCPExecutor` looks up the owning server via
-   the registry's tool index, regardless of namespace.
-
-Reference these tools in your prompt config's `allowed_tools`:
-
-:::note[allowed_tools is an allowlist]
-A prompt only reaches the tools it names here — no entry, no tools. Keep it in step with your system prompt: if the prompt says the model can look things up but the allowlist is empty, the model has an instruction it cannot carry out and will usually improvise, writing convincing-looking tool calls and results into its reply as plain text. Check for a real `tool` role in the messages, not tool-shaped text in `content`.
-
-The provider must allow tools too: if it declares a `capabilities` list, that list must include `tools`.
-:::
-
+List the tools in the prompt config's `allowed_tools`:
 
 ```yaml
 allowed_tools:
@@ -138,128 +100,65 @@ allowed_tools:
   - run_tests
 ```
 
-If two source-backed servers expose tools with the same name, the
-second registration wins and overwrites the first. For sandboxes this
-is rarely an issue (one sandbox per pack); use stdio/url MCP entries
-when you need namespaced isolation.
+:::note[allowed_tools is an allowlist]
+A prompt only reaches the tools it names here. With no entry, the model has no tools and usually improvises, writing convincing-looking tool calls and results into its reply as plain text. Check for a real `tool` role in the messages, not tool-shaped text in `content`.
+:::
 
----
+If two source-backed servers expose a tool with the same name, the second registration overwrites the first. Stdio and url entries are namespaced as `mcp__<server>__<tool>`.
 
-## Reference: the `docker` source
+## The `docker` source
 
-PromptArena ships with a `docker` source registered automatically. It
-shells out to the local `docker` CLI to run, exec, and stop the
-container.
+PromptArena registers a `docker` source automatically. It drives the container with the local `docker` CLI.
 
-| Arg                | Type                | Required | Default     | Notes                                                                                                                  |
-| ------------------ | ------------------- | -------- | ----------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `image`            | string              | yes      | —           | Image reference. The container must expose an MCP HTTP+SSE server on port 8080.                                        |
-| `repo`             | string              | no       | —           | If set, after the container starts the source runs `docker exec <cid> git clone [--branch <branch>] <repo> /workspace`. |
-| `branch`           | string              | no       | repo default | Branch to clone. Ignored when `repo` is empty.                                                                         |
-| `env`              | map\<string,string> | no       | —           | Environment variables passed via `-e`.                                                                                 |
-| `mounts`           | list of objects     | no       | —           | Bind mounts. Each entry takes `source` (host path), `target` (container path), `readonly` (bool).                       |
-| `ports`            | list of ints        | no       | —           | Extra container ports to publish, each on a free host port. `8080` (the MCP port) is rejected.                          |
-| `network`          | string              | no       | Docker default | Passed to `--network`. `none` and `host` are rejected — both drop the published MCP port.                            |
-| `cpus`             | string or number    | no       | unlimited   | Passed to `--cpus` (e.g. `1.5`).                                                                                        |
-| `memory`           | string              | no       | unlimited   | Passed to `--memory` (e.g. `2g`).                                                                                       |
+| Arg | Type | Default | Notes |
+| --- | --- | --- | --- |
+| `image` | string, required |  | Image reference. The container must serve MCP HTTP+SSE on port 8080. |
+| `repo` | string |  | Cloned with `docker exec <cid> git clone [--branch <branch>] <repo> /workspace`. |
+| `branch` | string | repo default | Ignored when `repo` is empty. |
+| `env` | map of string |  | Passed via `-e`. |
+| `mounts` | list of objects |  | Bind mounts with `source`, `target` and `readonly`. |
+| `ports` | list of ints |  | Extra container ports, each published on a free host port. `8080` is rejected. |
+| `network` | string | Docker default | Passed to `--network`. `none` and `host` are rejected. |
+| `cpus` | string or number | unlimited | Passed to `--cpus`. |
+| `memory` | string | unlimited | Passed to `--memory` (for example `2g`). |
 
-The source picks a free local port, publishes the container's `8080`
-to it, polls `<url>/sse` until the server is ready (20s budget), then
-returns `MCPConn{URL: "http://localhost:<port>"}`. On `Close()`, the
-container is stopped and removed.
+The source publishes the container's `8080` on a free local port, polls `<url>/sse` until it returns 2xx (20s budget), then returns `http://localhost:<port>`. On close it stops and removes the container.
 
-### Reaching services the agent starts
+The clone is unauthenticated, so a private repo needs credentials baked into the image. See [Configuration Schema](/arena/reference/config-schema/#mcp_servers) for the other `mcp_servers` fields.
 
-A web service the agent starts inside the sandbox is only reachable
-from the host if its port is listed under `ports`. Arena publishes each
-one and exposes the mapping to session hooks as `sandbox_ports` in the
-event metadata, next to `sandbox_containers`:
+### Reach services the agent starts
+
+A web service the agent starts inside the sandbox is reachable from the host only if its port is listed under `ports`:
 
 ```yaml
 source_args:
   image: ghcr.io/altairalabs/codegen-sandbox:latest
   ports: [3000]
-  cpus: 2
-  memory: 2g
 ```
+
+Session hooks receive the mapping as `sandbox_ports` in the event metadata, next to `sandbox_containers`:
 
 ```json
 {"sandbox_containers": {"sandbox": "<cid>"},
  "sandbox_ports": {"sandbox": {"3000": "http://localhost:54321"}}}
 ```
 
-A `session_end` hook can then point a DAST scanner or load generator at
-`http://localhost:54321` from the host, so it doesn't compete with the
-app for the sandbox's CPU. To restrict egress, put the container on a
-user-defined bridge network routed through a filtering proxy.
+A `session_end` hook can point a scanner or load generator at that URL from the host. To restrict egress, put the container on a user-defined bridge network routed through a filtering proxy.
 
-Cloning a private repo requires either credentials baked into the
-image or a host-side wrapper around the source — the built-in source
-runs `git clone` unauthenticated.
+## 5. Mount skills
 
----
+For every source-backed entry, Arena sets `source_args.mounts` from the skill sources that have a `path` and an explicit `name:`. Skill sources without a `name:` are skipped. This assignment overwrites any `mounts` you set by hand on the entry.
 
-## Worked example
+Each entry has `source` (absolute host path of the skill directory), `target` (`/skills/<name>`) and `readonly: true`. The docker source passes it as `-v <src>:<tgt>:ro`, so skill scripts run in the sandbox as `Bash /skills/<name>/scripts/<script>`.
 
-The repo includes a runnable end-to-end demo at
-[`examples/codegen-sandbox/`](https://github.com/AltairaLabs/promptarena/v2/tree/main/examples/codegen-sandbox)
-that:
+## 6. Gate on a sandbox tool
 
-- Provisions `ghcr.io/altairalabs/codegen-sandbox:latest` per session.
-- Mounts the local `skills/codegen/` directory read-only at
-  `/skills/codegen` inside the container.
-- Runs a mock-LLM scenario that seeds a buggy Go module via `Bash`,
-  reads + edits the file, and verifies via `run_tests`.
+The [`tool_exec` check](https://promptkit.altairalabs.ai/reference/checks/#tool-invocation-checks) invokes a registered tool at the end of the session and asserts the call succeeded. Codegen sandboxes typically expose `run_tests`, `run_lint` and `run_typecheck`, so the check gates the run on whether the agent's edits pass.
 
-Run it:
-
-```bash
-go build -o bin/promptarena ./arena/cmd/promptarena
-(cd examples/codegen-sandbox && ../../bin/promptarena run --ci --format markdown)
-open examples/codegen-sandbox/out/results.md
-```
-
-For a no-Docker variant against the canned LLM responses, run
-`promptarena run --mock-provider --ci --format markdown` from
-`examples/codegen-sandbox/`.
-
----
-
-## Hard gating on a sandbox tool
-
-Once the sandbox is wired, the natural pairing is the [`tool_exec`
-check](https://promptkit.altairalabs.ai/reference/checks/#tool-invocation-checks) — it invokes a
-registered tool at the end of the session and asserts the call
-succeeded. Codegen sandboxes typically expose `run_tests` /
-`run_lint` / `run_typecheck`, all of which return structured
-success/failure that `tool_exec` reads directly. The result is a
-hard "did the agent's edits actually pass tests" gate on the run:
+Add the assertion to a scenario that uses the `session`-scoped sandbox from step 1:
 
 ```yaml
 spec:
-  mcp_servers:
-    - name: sandbox
-      source: docker
-      scope: session
-      source_args:
-        image: ghcr.io/altairalabs/codegen-sandbox:latest
-
-  scenarios:
-    - file: scenarios/fix-the-bug.scenario.yaml
-```
-
-```yaml
-# scenarios/fix-the-bug.scenario.yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: fix-the-bug
-spec:
-  id: fix-the-bug
-  task_type: codegen-agent
-  turns:
-    - role: user
-      content: "There's a bug in /workspace/add.go. Fix it."
   conversation_assertions:
     - type: tool_exec
       params:
@@ -267,48 +166,32 @@ spec:
       message: "Hidden test suite must pass"
 ```
 
-The session-scoped MCP source keeps the container alive across both
-the agent's tool calls and the `tool_exec` gate's call — the gate
-runs `run_tests` one more time after the agent declares done,
-and the test result drives the hard gate.
+The session-scoped container stays alive across the agent's tool calls and the gate. The gate runs `run_tests` once more after the agent finishes.
 
----
+## Verify
 
-## Skill staging
+[`examples/codegen-sandbox/`](https://github.com/AltairaLabs/promptarena/tree/main/examples/codegen-sandbox) is a runnable end-to-end demo. It provisions the sandbox per session and runs a mock-LLM scenario that seeds a buggy Go module, edits it, and verifies via `run_tests`.
 
-When a pack declares skills and the source supports it, Arena
-automatically populates `source_args.mounts` with one entry per skill
-directory:
+```bash
+go build -o bin/promptarena ./arena/cmd/promptarena
+(cd examples/codegen-sandbox && ../../bin/promptarena run --ci --format markdown)
+open examples/codegen-sandbox/out/results.md
+```
 
-| Field      | Value                                              |
-| ---------- | -------------------------------------------------- |
-| `source`   | Absolute host path to the skill directory.         |
-| `target`   | `/skills/<skill-name>` inside the container.       |
-| `readonly` | `true`.                                            |
+`--mock-provider` swaps in the canned LLM responses but still opens the Docker sandbox, so Docker is required either way.
 
-The docker source translates each entry into a `-v <src>:<tgt>:ro` flag
-on `docker run`, so any scripts shipped with the skill are runnable
-inside the sandbox via `Bash /skills/<name>/scripts/<script>`.
+## Troubleshooting
 
-You don't need to write the `mounts` block by hand for this case —
-declare the skill in the pack and Arena does the rest.
+| Symptom | Likely cause |
+| --- | --- |
+| `unknown source "X"` | The source is not registered in the running binary. The error lists the registered names and appears when the source opens: at engine construction for `run` scope, as a failed run for `scenario` and `session`. |
+| `container not healthy: health timeout after 20s` | The image is not serving HTTP+SSE on port 8080, or `/sse` returns non-2xx. |
+| `tool <name> validation error (args_invalid)` | Tool call args do not match the MCP server's input schema. |
+| `tool not found: <name>` after a successful open | `tools/list` returned nothing for that server, or two source-backed servers collided. |
 
----
+## Related pages
 
-## Failure modes
-
-| Symptom                                               | Likely cause                                                                                  |
-| ----------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| `unknown source "X"` at config load                   | The named source isn't registered in the running binary. The error lists the registered names. |
-| `container not healthy: health timeout after 20s`     | The image isn't serving HTTP+SSE on port 8080, or `/sse` returns non-2xx.                      |
-| `tool <name> validation error (args_invalid)`         | Tool call args don't match the MCP server's input schema. Check the server's tool definitions. |
-| `tool not found: <name>` after a successful Open      | Either `tools/list` returned nothing for that server, or two source-backed servers collided.   |
-
----
-
-## See also
-
-- [Test MCP Tools](/arena/how-to/agents/test-mcp-tools/) — static stdio / url MCP servers.
-- [Configuration Schema](/arena/reference/config-schema/#mcp_servers) — full field reference.
-- [Write Scenarios](/arena/how-to/scenarios/write-scenarios/) — `variables:` block used for templating.
-- [Integrate MCP (Runtime)](https://promptkit.altairalabs.ai/runtime/how-to/integrate-mcp/) — low-level MCP registry API.
+- [Test MCP Tools](/arena/how-to/agents/test-mcp-tools/): static stdio and url MCP servers.
+- [Configuration Schema](/arena/reference/config-schema/#mcp_servers): full field reference.
+- [Write Scenarios](/arena/how-to/scenarios/write-scenarios/): the `variables:` block.
+- [Integrate MCP (Runtime)](https://promptkit.altairalabs.ai/runtime/how-to/integrate-mcp/): low-level MCP registry API.

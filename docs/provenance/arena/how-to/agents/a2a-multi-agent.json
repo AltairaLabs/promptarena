@@ -1,0 +1,563 @@
+{
+ "page": "docs/src/content/docs/arena/how-to/agents/a2a-multi-agent.md",
+ "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "examples/multi-agent-demo/ exists",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/config.arena.yaml:1"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "The example's supervisor routes research queries to a research agent and translation queries to a translation agent",
+   "verdict": "false",
+   "evidence": [
+    "examples/multi-agent-demo/mock-responses.yaml:12",
+    "examples/multi-agent-demo/prompts/assistant.yaml:9",
+    "examples/multi-agent-demo/providers/mock-provider.yaml:14"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "examples/multi-agent-demo/ is a supervisor assistant that routes user requests to two specialised A2A agents (research, translation)",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/config.arena.yaml:17",
+    "examples/multi-agent-demo/prompts/assistant.yaml:14"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "The scenario asserts that research queries hit the research agent, translation queries hit the translation agent, and both produce expected content",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/scenarios/multi-agent-delegation.yaml:14"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "PromptArena asserts which agent got invoked and what the agent returned",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/scenarios/multi-agent-delegation.yaml:19"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "The pack registers two mock A2A agents named research_agent and translation_agent",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/config.arena.yaml:18",
+    "examples/multi-agent-demo/config.arena.yaml:45"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "The supervisor is a single assistant prompt that decides which agent to call from the user's request",
+   "verdict": "false",
+   "evidence": [
+    "examples/multi-agent-demo/mock-responses.yaml:12",
+    "examples/multi-agent-demo/prompts/assistant.yaml:9"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "The assertions check both the routing and the specialist response",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/scenarios/multi-agent-delegation.yaml:19",
+    "examples/multi-agent-demo/scenarios/multi-agent-delegation.yaml:24"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "examples/multi-agent-demo/scenarios/multi-agent-delegation.yaml exists",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/scenarios/multi-agent-delegation.yaml:1"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "A scenario has a top-level turns list",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:686"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "A turn has role, content and assertions fields",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:745"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "agent_invoked is an assertion type",
+   "verdict": "true",
+   "evidence": [
+    "arena/agentkb/schemas/common/assertions.json:31"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "agent_invoked takes params.agents, a list of tool names",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 14,
+   "claim": "agent_response_contains is an assertion type",
+   "verdict": "true",
+   "evidence": [
+    "arena/agentkb/schemas/common/assertions.json:33"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "agent_response_contains takes params.agent",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 16,
+   "claim": "agent_response_contains takes params.contains",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 17,
+   "claim": "A scenario has a top-level conversation_assertions list",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:701"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "Conversation-level agent_invoked with several agents checks that every listed agent was called during the run",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/scenarios/multi-agent-delegation.yaml:46"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "The user message 'Search for papers about quantum computing' contains the fragment the research mock matches on",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/config.arena.yaml:30",
+    "examples/multi-agent-demo/mock-responses.yaml:16"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "The string 'Quantum Computing Fundamentals' appears in the research mock response",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/config.arena.yaml:35"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "The user message 'Translate the summary to French' matches the translation mock",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/config.arena.yaml:57",
+    "examples/multi-agent-demo/mock-responses.yaml:28"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "The string 'informatique quantique' appears in the translation mock response",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/config.arena.yaml:61"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "The A2A tool name a2a__translation_agent__translate is the translate skill of translation_agent",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/config.arena.yaml:45"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "The A2A tool name a2a__research_agent__search_papers follows the a2a__<agent>__<skill> naming pattern",
+   "verdict": "false",
+   "evidence": [
+    "examples/multi-agent-demo/config.arena.yaml:20"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "A per-turn agent_invoked assertion checks routing",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 26,
+   "claim": "A per-turn agent_response_contains assertion checks specialist content",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 27,
+   "claim": "A conversation-level agent_invoked checks that both agents were exercised across the run",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/scenarios/multi-agent-delegation.yaml:46"
+   ]
+  },
+  {
+   "id": 28,
+   "claim": "Agents are defined inline with responses blocks that match on input",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:282",
+    "arena/arenaconfig/types.go:337"
+   ]
+  },
+  {
+   "id": 29,
+   "claim": "The arena config has a top-level a2a_agents list",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:175"
+   ]
+  },
+  {
+   "id": 30,
+   "claim": "An a2a_agents entry has a name field",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:280"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "An a2a_agents entry has a card field",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:281"
+   ]
+  },
+  {
+   "id": 32,
+   "claim": "The card has name, description and skills fields",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:322"
+   ]
+  },
+  {
+   "id": 33,
+   "claim": "A card skill has id, name and tags fields",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:329"
+   ]
+  },
+  {
+   "id": 34,
+   "claim": "An a2a_agents entry has a responses list",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:282"
+   ]
+  },
+  {
+   "id": 35,
+   "claim": "A response has a skill field that names a skill id on the card",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:338",
+    "arena/engine/builder_integration.go:1196"
+   ]
+  },
+  {
+   "id": 36,
+   "claim": "A response has match.contains, matched against the input",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:339",
+    "arena/engine/builder_integration.go:1198"
+   ]
+  },
+  {
+   "id": 37,
+   "claim": "A response has a response.parts list whose entries have a text field",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:340",
+    "arena/engine/builder_integration.go:1205"
+   ]
+  },
+  {
+   "id": 38,
+   "claim": "A response can fall back to a default response when no match applies",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:1195",
+    "examples/multi-agent-demo/config.arena.yaml:38"
+   ]
+  },
+  {
+   "id": 39,
+   "claim": "A response can return structured parts",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:1205"
+   ]
+  },
+  {
+   "id": 40,
+   "claim": "The mock A2A server runs in-process, with no external server, no Docker and no provider keys",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:1076",
+    "arena/engine/builder_integration.go:1077"
+   ]
+  },
+  {
+   "id": 41,
+   "claim": "examples/multi-agent-demo is a directory that you can cd into",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/config.arena.yaml:1"
+   ]
+  },
+  {
+   "id": 42,
+   "claim": "The command promptarena serve starts the example",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 43,
+   "claim": "The command promptarena run runs the scenarios",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 44,
+   "claim": "promptarena run accepts a --ci flag",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 45,
+   "claim": "promptarena run accepts a --formats flag with the value json,markdown",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 46,
+   "claim": "json and markdown are valid output format names",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 47,
+   "claim": "The supervisor is mocked using the mock-assistant provider",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/providers/mock-provider.yaml:4",
+    "examples/multi-agent-demo/providers/mock-provider.yaml:7"
+   ]
+  },
+  {
+   "id": 48,
+   "claim": "The example needs no provider keys because the supervisor and the A2A agents are both mocked",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/config.arena.yaml:17",
+    "examples/multi-agent-demo/providers/mock-provider.yaml:7"
+   ]
+  },
+  {
+   "id": 49,
+   "claim": "The inline a2a_agents block is removable when switching to real servers",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:175"
+   ]
+  },
+  {
+   "id": 50,
+   "claim": "a2a_servers is a config field that takes endpoint URLs for real A2A servers",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:279",
+    "arena/arenaconfig/types.go:286",
+    "arena/engine/builder_integration.go:1062"
+   ]
+  },
+  {
+   "id": 51,
+   "claim": "Supervisor and assertions are unchanged whether the A2A endpoint is mocked or remote",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/builder_integration.go:1232",
+    "examples/multi-agent-demo/prompts/assistant.yaml:14"
+   ]
+  },
+  {
+   "id": 52,
+   "claim": "The link /arena/how-to/agents/test-a2a-agents/ resolves to docs/src/content/docs/arena/how-to/agents/test-a2a-agents.md",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 53,
+   "claim": "The linked page covers authentication, headers and skill filtering for A2A servers",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:289"
+   ]
+  },
+  {
+   "id": 54,
+   "claim": "The a2a_agents entries live in config.arena.yaml",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/config.arena.yaml:17"
+   ]
+  },
+  {
+   "id": 55,
+   "claim": "tool_call_sequence is an assertion type",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 56,
+   "claim": "tool_call_sequence over a2a__* tool names asserts the order in which the supervisor called the agents",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 57,
+   "claim": "tool_calls_with_args is an assertion type",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 58,
+   "claim": "tool_calls_with_args asserts the arguments the supervisor passed to each agent",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 59,
+   "claim": "The translation agent receives a target_language argument with value French",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/builder_integration.go:1247",
+    "examples/multi-agent-demo/mock-responses.yaml:28"
+   ]
+  },
+  {
+   "id": 60,
+   "claim": ".github/workflows/multi-agent-demo.yml is the CI workflow file for the example",
+   "verdict": "false",
+   "evidence": [
+    ".github/workflows/ci.yml:347",
+    "scripts/test-examples.sh:93"
+   ]
+  },
+  {
+   "id": 61,
+   "claim": "The workflow triggers on pull_request with a paths filter of examples/multi-agent-demo/**",
+   "verdict": "false",
+   "evidence": [
+    ".github/workflows/ci.yml:3",
+    ".github/workflows/ci.yml:350",
+    ".github/workflows/ci.yml:71"
+   ]
+  },
+  {
+   "id": 62,
+   "claim": "The workflow runs on ubuntu-latest",
+   "verdict": "true",
+   "evidence": [
+    ".github/workflows/ci.yml:351"
+   ]
+  },
+  {
+   "id": 63,
+   "claim": "The workflow uses actions/checkout@v4 and actions/setup-go@v5",
+   "verdict": "false",
+   "evidence": [
+    ".github/workflows/ci.yml:357",
+    ".github/workflows/ci.yml:358"
+   ]
+  },
+  {
+   "id": 64,
+   "claim": "The Go version used in the workflow is 1.26",
+   "verdict": "false",
+   "evidence": [
+    ".github/workflows/ci.yml:360"
+   ]
+  },
+  {
+   "id": 65,
+   "claim": "go build -o bin/promptarena ./arena/cmd/promptarena builds the binary",
+   "verdict": "true",
+   "evidence": [
+    "Makefile:61"
+   ]
+  },
+  {
+   "id": 66,
+   "claim": "The workflow step runs in working-directory examples/multi-agent-demo",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/config.arena.yaml:1"
+   ]
+  },
+  {
+   "id": 67,
+   "claim": "../../bin/promptarena run --ci --formats json runs the example headlessly and writes JSON output",
+   "verdict": "true",
+   "evidence": [
+    "scripts/test-examples.sh:93"
+   ]
+  },
+  {
+   "id": 68,
+   "claim": "The CI gate is keyless: it needs no provider keys or secrets",
+   "verdict": "true",
+   "evidence": [
+    ".github/workflows/ci.yml:347",
+    "examples/multi-agent-demo/providers/mock-provider.yaml:7"
+   ]
+  },
+  {
+   "id": 69,
+   "claim": "The CI gate is fork-safe",
+   "verdict": "true",
+   "evidence": [
+    ".github/workflows/ci.yml:6",
+    ".github/workflows/ci.yml:8"
+   ]
+  },
+  {
+   "id": 70,
+   "claim": "The mock A2A servers run in-process",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:1076",
+    "arena/engine/builder_integration.go:1077"
+   ]
+  }
+ ]
+}

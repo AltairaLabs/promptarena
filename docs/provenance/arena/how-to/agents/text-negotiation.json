@@ -1,0 +1,514 @@
+{
+ "page": "docs/src/content/docs/arena/how-to/agents/text-negotiation.md",
+ "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "examples/text-negotiation/ is the example directory the page walks through",
+   "verdict": "true",
+   "evidence": [
+    "examples/text-negotiation/config.arena.yaml:10"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "The default config runs deterministically against a mock landlord",
+   "verdict": "true",
+   "evidence": [
+    "examples/text-negotiation/config.arena.yaml:20",
+    "examples/text-negotiation/providers/mock-provider.yaml:7"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "The scenario is a four-turn rental-price negotiation",
+   "verdict": "true",
+   "evidence": [
+    "examples/text-negotiation/scenarios/rental-negotiation.scenario.yaml:10",
+    "examples/text-negotiation/scenarios/rental-negotiation.scenario.yaml:25"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "Scenarios encode a sequence of user turns that conversation_assertions evaluate at the end state",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/eval_orchestrator.go:278",
+    "examples/text-negotiation/scenarios/rental-negotiation.scenario.yaml:28"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "The tenant side can be the selfplay-user role with a persona",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1129",
+    "arena/selfplay/registry.go:192"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "The landlord side is defined by the prompt config",
+   "verdict": "true",
+   "evidence": [
+    "examples/text-negotiation/config.arena.yaml:16",
+    "examples/text-negotiation/prompts/landlord-agent.yaml:10"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "conversation_assertions is a scenario field",
+   "verdict": "true",
+   "evidence": [
+    "examples/text-negotiation/scenarios/rental-negotiation.scenario.yaml:28",
+    "schemas/v1alpha1/scenario.json:628"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "promptarena serve is a subcommand",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:108"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "serve loads the scenario",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:111"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "The TUI is the default mode of promptarena run",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run_interactive.go:327"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "promptarena run is a subcommand",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:134"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "promptarena run accepts the --ci flag",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:145"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "promptarena run accepts --formats with values json and markdown",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:160"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "The markdown result is written to out/results.md",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:144",
+    "arena/cmd/promptarena/run.go:486"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "open out/results.md is a usable command on the reader's machine",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:486"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "The default config uses a mock landlord with scripted responses and needs no API key",
+   "verdict": "true",
+   "evidence": [
+    "examples/text-negotiation/mock-responses.yaml:5",
+    "examples/text-negotiation/providers/mock-provider.yaml:10",
+    "examples/text-negotiation/providers/mock-provider.yaml:7"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "conversation_assertions is a key in the scenario file",
+   "verdict": "true",
+   "evidence": [
+    "examples/text-negotiation/scenarios/rental-negotiation.scenario.yaml:28",
+    "schemas/v1alpha1/scenario.json:628"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "content_includes is an assertion type",
+   "verdict": "true",
+   "evidence": [
+    "examples/text-negotiation/scenarios/rental-negotiation.scenario.yaml:30"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "content_includes takes a params.patterns list",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 20,
+   "claim": "Each assertion takes a message field",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/types.go:38",
+    "schemas/v1alpha1/scenario.json:30"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "content_includes is an assertion type (second use)",
+   "verdict": "true",
+   "evidence": [
+    "examples/text-negotiation/scenarios/rental-negotiation.scenario.yaml:36"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "The scripted landlord reply contains the pattern twelve-month in the final transcript",
+   "verdict": "true",
+   "evidence": [
+    "examples/text-negotiation/mock-responses.yaml:11",
+    "examples/text-negotiation/scenarios/rental-negotiation.scenario.yaml:36"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "The scripted landlord reply contains the pattern twenty-four fifty in the final transcript",
+   "verdict": "true",
+   "evidence": [
+    "examples/text-negotiation/mock-responses.yaml:11",
+    "examples/text-negotiation/scenarios/rental-negotiation.scenario.yaml:30"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "content_excludes is an assertion type",
+   "verdict": "true",
+   "evidence": [
+    "examples/text-negotiation/scenarios/rental-negotiation.scenario.yaml:42"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "The patterns 'I accept twenty-three hundred' and 'twenty-three hundred works' never appear in the scripted landlord output",
+   "verdict": "true",
+   "evidence": [
+    "examples/text-negotiation/mock-responses.yaml:10",
+    "examples/text-negotiation/mock-responses.yaml:11",
+    "examples/text-negotiation/mock-responses.yaml:8",
+    "examples/text-negotiation/mock-responses.yaml:9"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "All three assertions above are conversation-level assertions",
+   "verdict": "true",
+   "evidence": [
+    "examples/text-negotiation/scenarios/rental-negotiation.scenario.yaml:28"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "llm_judge_session is an eval type",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 28,
+   "claim": "Assertion entries take type: assertion with params.eval_type, params.eval_params and params.min_score",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/types.go:27",
+    "arena/assertions/types.go:63"
+   ]
+  },
+  {
+   "id": 29,
+   "claim": "eval_params accepts criteria",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 30,
+   "claim": "eval_params accepts judge with value default",
+   "verdict": "dead",
+   "evidence": [
+    "arena/engine/conversation_executor.go:917"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "A judge score of 1.0 means the criteria passed and the score range is 0 to 1",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 32,
+   "claim": "min_score is a field and 0.8 is a valid value",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/eval_adapter.go:171",
+    "arena/assertions/types.go:55"
+   ]
+  },
+  {
+   "id": 33,
+   "claim": "llm_judge_session requires a judge provider",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/conversation_executor.go:917"
+   ]
+  },
+  {
+   "id": 34,
+   "claim": "The standard judge params are documented at https://promptkit.altairalabs.ai/reference/checks/",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 35,
+   "claim": "A persona file is placed at personas/savvy-tenant.persona.yaml",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/loader.go:917",
+    "examples/adaptive-persona/config.arena.yaml:46"
+   ]
+  },
+  {
+   "id": 36,
+   "claim": "apiVersion promptkit.altairalabs.ai/v1alpha1 is the persona apiVersion",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/persona.go:274"
+   ]
+  },
+  {
+   "id": 37,
+   "claim": "kind Persona is a valid kind",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/persona.go:355"
+   ]
+  },
+  {
+   "id": 38,
+   "claim": "Persona metadata.name is a field",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/persona.go:360"
+   ]
+  },
+  {
+   "id": 39,
+   "claim": "Persona spec.id is a field",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/persona.go:31",
+    "arena/arenaconfig/persona.go:314"
+   ]
+  },
+  {
+   "id": 40,
+   "claim": "Persona spec.description is a field",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/persona.go:32"
+   ]
+  },
+  {
+   "id": 41,
+   "claim": "Persona spec.system_template is a field",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/persona.go:37"
+   ]
+  },
+  {
+   "id": 42,
+   "claim": "kind Provider is a valid kind",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/provider.json:304"
+   ]
+  },
+  {
+   "id": 43,
+   "claim": "Provider spec.type accepts the value openai",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/provider.json:315"
+   ]
+  },
+  {
+   "id": 44,
+   "claim": "Provider spec.model accepts gpt-4o-mini",
+   "verdict": "true",
+   "evidence": [
+    "examples/assertions-test/providers/openai.provider.yaml:9"
+   ]
+  },
+  {
+   "id": 45,
+   "claim": "A turn role selfplay-user is valid",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1129",
+    "arena/selfplay/registry.go:192"
+   ]
+  },
+  {
+   "id": 46,
+   "claim": "A selfplay-user turn takes a persona field naming a persona",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1137",
+    "arena/selfplay/registry.go:187"
+   ]
+  },
+  {
+   "id": 47,
+   "claim": "A selfplay-user turn takes a turns field (count)",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1139"
+   ]
+  },
+  {
+   "id": 48,
+   "claim": "OPENAI_API_KEY is the environment variable read by the openai provider",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 49,
+   "claim": "Assertions stay the same when switching to self-play",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/execution.go:786"
+   ]
+  },
+  {
+   "id": 50,
+   "claim": "The persona-driver LLM generates new content each turn and the landlord responds",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/conversation_executor.go:1292",
+    "arena/selfplay/registry.go:208"
+   ]
+  },
+  {
+   "id": 51,
+   "claim": "The report shows each persona-driven turn",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:486"
+   ]
+  },
+  {
+   "id": 52,
+   "claim": "The workflow triggers on pull_request for paths examples/text-negotiation/**",
+   "verdict": "false",
+   "evidence": [
+    ".github/workflows/ci.yml:347",
+    "scripts/test-examples.sh:96"
+   ]
+  },
+  {
+   "id": 53,
+   "claim": "The Go version used in the CI example is 1.26",
+   "verdict": "true",
+   "evidence": [
+    ".github/workflows/ci.yml:358"
+   ]
+  },
+  {
+   "id": 54,
+   "claim": "go build -o bin/promptarena ./arena/cmd/promptarena builds the CLI",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:108"
+   ]
+  },
+  {
+   "id": 55,
+   "claim": "The CI step working directory is examples/text-negotiation",
+   "verdict": "true",
+   "evidence": [
+    "examples/text-negotiation/config.arena.yaml:10"
+   ]
+  },
+  {
+   "id": 56,
+   "claim": "../../bin/promptarena run --ci --formats json runs the binary built at bin/promptarena",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:134",
+    "arena/cmd/promptarena/run.go:145"
+   ]
+  },
+  {
+   "id": 57,
+   "claim": "The CI run is keyless and fork-safe with the default scripted config",
+   "verdict": "true",
+   "evidence": [
+    "examples/text-negotiation/providers/mock-provider.yaml:7"
+   ]
+  },
+  {
+   "id": 58,
+   "claim": "tool_calls_with_args is an assertion type",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 59,
+   "claim": "record_agreement is a tool name the agent can call with an amount argument",
+   "verdict": "unverified",
+   "evidence": [
+    "examples/text-negotiation/config.arena.yaml:16"
+   ]
+  },
+  {
+   "id": 60,
+   "claim": "A scripted tenant offer of 2000 causes the landlord to end the conversation",
+   "verdict": "true",
+   "evidence": [
+    "examples/text-negotiation/mock-responses.yaml:5",
+    "examples/text-negotiation/scenarios/rental-negotiation.scenario.yaml:10"
+   ]
+  },
+  {
+   "id": 61,
+   "claim": "The phrases won't be able to make this work and not the right fit are the walk-away wording",
+   "verdict": "false",
+   "evidence": [
+    "examples/text-negotiation/mock-responses.yaml:8"
+   ]
+  },
+  {
+   "id": 62,
+   "claim": "Persona variants (aggressive, indecisive, deadline-pressured) can be used with the same landlord",
+   "verdict": "true",
+   "evidence": [
+    "examples/text-negotiation/prompts/landlord-agent.yaml:10"
+   ]
+  }
+ ]
+}

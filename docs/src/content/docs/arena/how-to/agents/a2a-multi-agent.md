@@ -1,22 +1,36 @@
 ---
 title: Test Multi-Agent A2A Delegation
-description: Assert which A2A agents the supervisor invokes for which user requests. Walk through examples/multi-agent-demo/ — supervisor routes research queries to a research agent and translation queries to a translation agent.
+description: Assert which A2A agents an assistant invokes and what they return, using examples/multi-agent-demo/ with a research agent and a translation agent.
+verified:
+  commit: 631d3c353c2c9d71b362ae5cd20c137d42b19d5b
+  sources:
+    - .github/workflows/ci.yml
+    - Makefile
+    - arena/agentkb/schemas/common/assertions.json
+    - arena/arenaconfig/types.go
+    - arena/engine/builder_integration.go
+    - examples/multi-agent-demo/config.arena.yaml
+    - examples/multi-agent-demo/mock-responses.yaml
+    - examples/multi-agent-demo/prompts/assistant.yaml
+    - examples/multi-agent-demo/providers/mock-provider.yaml
+    - examples/multi-agent-demo/scenarios/multi-agent-delegation.yaml
+    - scripts/test-examples.sh
 ---
 
-This how-to walks through `examples/multi-agent-demo/` — a supervisor assistant routes user requests to two specialised A2A agents (research, translation). The scenario asserts the delegation pattern: research queries hit the research agent, translation queries hit the translation agent, and both produce the expected content.
+Use `examples/multi-agent-demo/` to assert that an assistant calls the right A2A agents and that each agent returns the expected content.
 
-## What it proves
+## Prerequisites
 
-Multi-agent systems fail in two distinct ways:
+- The `promptarena` binary.
+- The `examples/multi-agent-demo/` directory. The default config needs no API key.
 
-- **Routing failure** — the supervisor delegates to the wrong specialist (or no specialist at all).
-- **Specialist failure** — the right specialist gets called but produces unusable output.
+## What it covers
 
-Pure single-agent eval misses the first; pure agent-output eval misses the supervisor's contribution. PromptArena asserts both: which agent got invoked AND what the agent returned.
+Multi-agent systems fail in two ways: the assistant delegates to the wrong specialist, or the right specialist returns unusable output. `agent_invoked` checks the first and `agent_response_contains` checks the second. See the [eval framework](/arena/explanation/eval-framework/) for how assertions fit into evaluation.
 
-The pack registers two mock A2A agents (`research_agent`, `translation_agent`). The supervisor (a single assistant prompt) decides which to call based on the user's request. Assertions check both the routing and the specialist response.
+The demo config has one assistant prompt (`prompts/assistant.yaml`) and two mock A2A agents, `research_agent` and `translation_agent`. The `mock-assistant` provider scripts the tool calls from `mock-responses.yaml` by turn number: turn 1 calls `a2a__research_agent__search_papers` and turn 3 calls `a2a__translation_agent__translate`. With a real provider, the prompt decides which agent to call.
 
-## The assertion shape
+## 1. Assert delegation in the scenario
 
 `examples/multi-agent-demo/scenarios/multi-agent-delegation.yaml`:
 
@@ -54,11 +68,13 @@ conversation_assertions:
         - a2a__translation_agent__translate
 ```
 
-Per-turn `agent_invoked` checks routing. Per-turn `agent_response_contains` checks specialist content. Conversation-level `agent_invoked` checks both agents were exercised across the run.
+Per-turn `agent_invoked` checks routing. Per-turn `agent_response_contains` checks specialist content. Conversation-level `agent_invoked` passes only when every listed agent was called during the run.
 
-## Mock A2A agents
+Tool names follow `a2a__<agent card name>__<skill id>`, with the card name lowercased and non-alphanumerics replaced by `_`. The card name `Research Agent` becomes `research_agent`.
 
-The pack defines the agents inline with `responses:` blocks that match on input:
+## 2. Define the mock agents
+
+`config.arena.yaml` defines each agent inline. A `responses` rule returns its `response` when the input matches:
 
 ```yaml
 a2a_agents:
@@ -82,43 +98,55 @@ a2a_agents:
                 ...
 ```
 
-Each response can match on input fragments, fall back to a default, or return structured parts. The mock A2A server runs in-process; no external server, no Docker, no provider keys.
+A rule without `match` acts as the default response for its skill. Rules are evaluated in order and the first match wins. `contains` is case-insensitive and is matched against the tool's `query` argument. The mock server runs in the `promptarena` process, so no external server, Docker or provider key is needed.
 
-## Run it
+## 3. Run it
 
-```bash
-cd examples/multi-agent-demo
-promptarena serve
-```
+1. Change into the example and start the web UI, which serves on port 8080:
 
-Headless / CI:
+   ```bash
+   cd examples/multi-agent-demo
+   promptarena serve
+   ```
 
-```bash
-promptarena run --ci --formats json,markdown
-```
+2. Or run headless, as CI does:
 
-Keyless: both the supervisor (mock-assistant) and the A2A agents are mocked.
+   ```bash
+   promptarena run --ci --formats json,markdown
+   ```
+
+## 4. Verify
+
+The headless run exits 0 and writes `out/results.md` and the JSON results. Every per-turn and conversation assertion passes.
 
 ## Switching to real A2A servers
 
-To test against a real A2A server (running locally or remote):
-
-1. Drop the inline `a2a_agents:` block.
-2. Add `a2a_servers:` pointing at the real endpoint URLs.
-3. The supervisor and assertions stay the same — they don't know whether the A2A endpoint is mocked or remote.
-
-See [Test A2A Agents](/arena/how-to/agents/test-a2a-agents/) for the full reference covering authentication, headers, and skill filtering.
-
-## Adding agents
-
-- **Add a third specialist**: drop another `a2a_agents:` entry in `config.arena.yaml` with its skills + canned responses. Add a turn to the scenario asserting on the new agent.
-- **Stricter ordering**: `tool_call_sequence` over the `a2a__*` tool names asserts the supervisor called the agents in a specific order.
-- **Tool-arg assertions**: `tool_calls_with_args` lets you assert the supervisor passed the right arguments to each agent (e.g., the translation agent must receive `target_language: French`).
-
-## CI gate
+1. Remove the inline `card` and `responses` from the `a2a_agents` entry.
+2. Add `url:` with the server's endpoint. The runtime fetches the agent card from `/.well-known/agent-card.json`, and falls back to `/.well-known/agent.json` on a 404 or 405.
+3. Keep the assertions in step with the real card. Tool names come from the card name and skill ids, so the card must sanitize to `research_agent` and `search_papers` (and so on), or you rename the tool names in the mock responses and scenario.
 
 ```yaml
-# .github/workflows/multi-agent-demo.yml
+a2a_agents:
+  - name: research_agent
+    url: https://research.example.com
+```
+
+The same entry accepts `auth`, `headers`, `headers_from_env`, `timeout_ms` and `skill_filter`. See [Test A2A Agents](/arena/how-to/agents/test-a2a-agents/) for authentication, headers and skill filtering.
+
+## Adding agents and assertions
+
+- Add a third specialist: add another `a2a_agents` entry in `config.arena.yaml` with its skills and responses, and add a turn that asserts on it.
+- Assert ordering: `tool_call_sequence` over the `a2a__*` tool names checks the order in which the assistant called the agents.
+- Assert arguments: A2A tools take a `query` string argument, so use `tool_calls_with_args` with `args_match` on `query` (for example a regex matching `French`) to check what the assistant sent to the translation agent.
+
+## Run it in CI
+
+The example runs in the `test-examples` job of `.github/workflows/ci.yml` through `make test-examples`, which calls `scripts/test-examples.sh`. That script runs `promptarena run --config config.arena.yaml --ci --formats json` from inside `examples/multi-agent-demo`.
+
+To gate your own repository, adapt this sample workflow. It builds `promptarena` from source; replace that step with however you install the binary.
+
+```yaml
+# Sample: .github/workflows/multi-agent-demo.yml
 name: A2A multi-agent
 
 on:
@@ -130,14 +158,19 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
         with:
-          go-version: '1.26'
+          go-version: '1.26.0'
       - run: go build -o bin/promptarena ./arena/cmd/promptarena
       - name: Run multi-agent demo
         working-directory: examples/multi-agent-demo
         run: ../../bin/promptarena run --ci --formats json
 ```
 
-Keyless and fork-safe. The mock A2A servers run in-process.
+The job needs no secrets, so it runs on pull requests from forks.
+
+## Related pages
+
+- [Test A2A Agents](/arena/how-to/agents/test-a2a-agents/) covers real A2A servers, authentication and skill filtering.
+- [Eval framework](/arena/explanation/eval-framework/) explains how evals and assertions relate.

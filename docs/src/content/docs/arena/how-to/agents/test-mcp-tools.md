@@ -1,20 +1,41 @@
 ---
 title: Test MCP Tools
-description: Configure MCP servers in Arena scenarios for integration testing
+description: Connect stdio and HTTP MCP servers to an Arena config, filter their tools, and assert on the tool calls a scenario makes.
 sidebar:
   order: 12
+verified:
+  commit: 631d3c353c2c9d71b362ae5cd20c137d42b19d5b
+  sources:
+    - arena/arenaconfig/loader.go
+    - arena/arenaconfig/types.go
+    - arena/arenaconfig/validator.go
+    - arena/arenaconfig/validator_tools.go
+    - arena/cmd/promptarena/run.go
+    - arena/cmd/promptarena/run_interactive.go
+    - arena/engine/builder_integration.go
+    - arena/engine/engine.go
+    - arena/engine/execution.go
+    - arena/mcp/config.go
+    - examples/mcp-everything-test/config.arena.yaml
+    - examples/mcp-everything-test/mock-responses.yaml
+    - examples/mcp-everything-test/prompts/mcp-assistant.yaml
+    - examples/mcp-everything-test/providers/mock-provider.yaml
+    - examples/mcp-everything-test/scenarios/echo-and-add.scenario.yaml
+    - schemas/v1alpha1/arena.json
+    - schemas/v1alpha1/promptconfig.json
+    - schemas/v1alpha1/scenario.json
 ---
 
-Test MCP tool integrations in Arena by connecting real MCP servers and verifying tool calls in your scenarios.
+Connect real MCP servers to an Arena config and assert on the tool calls your scenarios make.
 
-This guide covers **stdio** (`command`) and **static HTTP+SSE** (`url`)
-servers — long-lived processes shared across all scenarios. For per-scenario
-or per-session containers (e.g. codegen sandboxes), see
-[Provision an MCP Sandbox per Scenario](/arena/how-to/agents/provision-mcp-sandbox/).
+## Prerequisites
 
----
+- The `promptarena` binary.
+- Node.js with `npx`, for the `@modelcontextprotocol/server-everything` server used below.
 
-## Configure MCP Servers
+This guide covers stdio servers (`command`) and static HTTP servers (`url`): long-lived processes shared across all scenarios. A `url` server uses Streamable HTTP, and falls back to HTTP+SSE when the server hosts only SSE. Set `transport` (`stdio`, `sse` or `streamable_http`) to choose explicitly. For per-scenario or per-session containers, such as codegen sandboxes, see [Provision an MCP Sandbox per Scenario](/arena/how-to/agents/provision-mcp-sandbox/).
+
+## 1. Configure MCP servers
 
 Add an `mcp_servers` block to your Arena config:
 
@@ -43,11 +64,9 @@ spec:
 
 Arena starts the MCP server, discovers its tools, and registers them for use in scenarios.
 
----
+## 2. Filter tools
 
-## Tool Filtering
-
-MCP servers often expose many tools. Use `tool_filter` to limit which tools are available:
+Use `tool_filter` to limit which of a server's tools Arena registers.
 
 ### Allowlist
 
@@ -64,6 +83,8 @@ mcp_servers:
 
 ### Blocklist
 
+In this example, `mcp_db_server.py` stands for your own server:
+
 ```yaml
 mcp_servers:
   - name: database
@@ -75,13 +96,11 @@ mcp_servers:
         - truncate_table
 ```
 
----
+## 3. Set server options
 
-## Server Configuration
+### Environment variables
 
-### Environment Variables
-
-Pass environment variables to the server process:
+The server process inherits the environment of the shell that runs `promptarena`, so a token you export there reaches the server. Use `env` to set extra variables. Values pass to the server literally: `${VAR}` is not expanded.
 
 ```yaml
 mcp_servers:
@@ -89,10 +108,10 @@ mcp_servers:
     command: npx
     args: ["-y", "@modelcontextprotocol/server-github"]
     env:
-      GITHUB_TOKEN: "${GITHUB_TOKEN}"
+      LOG_LEVEL: "debug"
 ```
 
-### Working Directory
+### Working directory
 
 ```yaml
 mcp_servers:
@@ -114,18 +133,13 @@ mcp_servers:
     timeout_ms: 10000
 ```
 
----
-
-## Prompt Config
+## 4. Write the prompt config
 
 Enable MCP tools in your prompt config with `allowed_tools`. MCP tools follow the naming pattern `mcp__{serverName}__{toolName}`:
 
 :::note[allowed_tools is an allowlist]
-A prompt only reaches the tools it names here — no entry, no tools. Keep it in step with your system prompt: if the prompt says the model can look things up but the allowlist is empty, the model has an instruction it cannot carry out and will usually improvise, writing convincing-looking tool calls and results into its reply as plain text. Check for a real `tool` role in the messages, not tool-shaped text in `content`.
-
-The provider must allow tools too: if it declares a `capabilities` list, that list must include `tools`.
+A prompt reaches only the tools it names here. Keep the list in step with your system prompt. If the prompt says the model can look things up and the allowlist is empty, the model usually improvises, writing tool-shaped calls and results into its reply as plain text. Check the messages for a real `tool` role.
 :::
-
 
 ```yaml
 # prompts/assistant.yaml
@@ -142,11 +156,9 @@ spec:
     You are a helpful assistant with access to echo and math tools.
 ```
 
----
+## 5. Script the mock LLM
 
-## Mock LLM Responses
-
-Configure the mock LLM to issue tool calls against MCP tools:
+Script the mock LLM to issue tool calls against MCP tools:
 
 ```yaml
 # mock-responses.yaml
@@ -162,9 +174,7 @@ scenarios:
         response: "The echo tool returned: Hello from Arena!"
 ```
 
----
-
-## Scenario with Assertions
+## 6. Write the scenario
 
 ```yaml
 # scenarios/echo-test.yaml
@@ -193,11 +203,9 @@ spec:
               - "Hello from Arena"
 ```
 
----
+## Use several servers
 
-## Multiple MCP Servers
-
-Register multiple servers in the same config:
+Register several servers in the same config:
 
 ```yaml
 mcp_servers:
@@ -214,9 +222,9 @@ mcp_servers:
       allowlist: [read_file, list_directory]
 ```
 
----
+## Verify
 
-## Complete Example
+`examples/mcp-everything-test/` combines these steps:
 
 ```yaml
 # config.arena.yaml
@@ -249,19 +257,19 @@ spec:
       formats: ["json", "markdown"]
 ```
 
-Run it:
+Run it from the repository root:
 
 ```bash
 cd examples/mcp-everything-test
 promptarena run -c config.arena.yaml
 ```
 
----
+The run passes with no API key: the mock LLM calls `echo` and `get-sum`, the tools execute against the real server, and the results land in `out/`.
 
-## Next Steps
+## Related pages
 
-- [Provision an MCP Sandbox per Scenario](/arena/how-to/agents/provision-mcp-sandbox/) — host-managed servers with run / scenario / session lifecycle
-- [Configure MCP Servers (SDK)](https://promptkit.altairalabs.ai/sdk/how-to/configure-mcp/) — use MCP servers in the Go SDK
-- [Integrate MCP (Runtime)](https://promptkit.altairalabs.ai/runtime/how-to/integrate-mcp/) — low-level MCP registry API
-- [Test A2A Agents](/arena/how-to/agents/test-a2a-agents/) — test agent-to-agent delegation
-- [Write Scenarios](/arena/how-to/scenarios/write-scenarios/) — general scenario authoring
+- [Provision an MCP Sandbox per Scenario](/arena/how-to/agents/provision-mcp-sandbox/): host-managed servers with run / scenario / session lifecycle
+- [Configure MCP Servers (SDK)](https://promptkit.altairalabs.ai/sdk/how-to/configure-mcp/): use MCP servers in the Go SDK
+- [Integrate MCP (Runtime)](https://promptkit.altairalabs.ai/runtime/how-to/integrate-mcp/): low-level MCP registry API
+- [Test A2A Agents](/arena/how-to/agents/test-a2a-agents/): test agent-to-agent delegation
+- [Write Scenarios](/arena/how-to/scenarios/write-scenarios/): general scenario authoring

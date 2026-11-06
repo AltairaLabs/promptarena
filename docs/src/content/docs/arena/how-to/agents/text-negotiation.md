@@ -1,43 +1,73 @@
 ---
 title: Test Agent Negotiation
-description: Two agents over many turns, with conversation-outcome assertions. Same scenario shape works for scripted CI and real LLM-driven self-play.
+description: Test a multi-turn negotiation with conversation-level assertions, scripted for CI or driven by a real LLM in self-play.
+verified:
+  commit: 631d3c353c2c9d71b362ae5cd20c137d42b19d5b
+  sources:
+    - .github/workflows/ci.yml
+    - arena/arenaconfig/loader.go
+    - arena/arenaconfig/persona.go
+    - arena/arenaconfig/types.go
+    - arena/assertions/eval_adapter.go
+    - arena/assertions/types.go
+    - arena/cmd/promptarena/run.go
+    - arena/cmd/promptarena/run_interactive.go
+    - arena/cmd/promptarena/serve_interactive.go
+    - arena/engine/conversation_executor.go
+    - arena/engine/eval_orchestrator.go
+    - arena/engine/execution.go
+    - arena/selfplay/registry.go
+    - examples/adaptive-persona/config.arena.yaml
+    - examples/assertions-test/providers/openai.provider.yaml
+    - examples/text-negotiation/config.arena.yaml
+    - examples/text-negotiation/mock-responses.yaml
+    - examples/text-negotiation/prompts/landlord-agent.yaml
+    - examples/text-negotiation/providers/mock-provider.yaml
+    - examples/text-negotiation/scenarios/rental-negotiation.scenario.yaml
+    - schemas/v1alpha1/provider.json
+    - schemas/v1alpha1/scenario.json
+    - scripts/test-examples.sh
 ---
 
-This how-to walks through `examples/text-negotiation/` — a four-turn rental-price negotiation. The default config runs deterministically against a mock landlord; the how-to documents the swap to real LLM-driven self-play.
+Use `examples/text-negotiation/` to test a four-turn rental-price negotiation: the default config runs deterministically against a mock landlord, and the self-play steps swap in an LLM-driven tenant.
 
-## What it proves
+## Prerequisites
 
-Single-turn eval misses negotiation entirely: the failure mode is *trajectory*, not response quality. Did the agent cave under pressure? Did it secure the term commitment? Did it stop above its reservation price?
+- The `promptarena` binary.
+- The `examples/text-negotiation/` directory. The default config needs no API key.
+- For self-play: an `OPENAI_API_KEY`.
 
-PromptArena tests negotiations as conversations:
+## What it checks
 
-- **Both sides** are first-class. The tenant side is either scripted (deterministic CI) or `selfplay-user` with a persona (real LLM-driven). The landlord side is your prompt config.
-- **Multi-turn** is the default. Scenarios encode a sequence of user turns; conversation_assertions evaluate the end state.
-- **Outcome assertions** catch what matters: did the deal land above the reservation, did the term commitment get secured, did either side make a forbidden capitulation move.
+A negotiation fails on its trajectory: the agent caves under pressure, drops the term commitment, or ends below its reservation price. The scenario scripts the tenant's turns, and `conversation_assertions` check the deal that lands. See [Scenario design](/arena/explanation/scenario-design/) and [Testing philosophy](/arena/explanation/testing-philosophy/) for why these checks sit at conversation level.
 
 ## Run it
 
-```bash
-cd examples/text-negotiation
-promptarena serve
-```
+1. Change into the example and start the web UI on port 8080 (add `--open` to launch the browser):
 
-`serve` loads the scenario. The TUI is the default and is good for the dev loop:
+   ```bash
+   cd examples/text-negotiation
+   promptarena serve
+   ```
 
-```bash
-promptarena run
-```
+2. Or run in the terminal. The TUI is the default and suits the dev loop:
 
-Headless / CI:
+   ```bash
+   promptarena run
+   ```
 
-```bash
-promptarena run --ci --formats json,markdown
-open out/results.md
-```
+3. Or run headless, as CI does:
 
-Keyless: the default config uses a mock landlord with scripted responses.
+   ```bash
+   promptarena run --ci --formats json,markdown
+   open out/results.md
+   ```
 
-## The assertion shape
+The landlord is a mock provider with scripted responses, so no key is needed.
+
+## Add the assertions
+
+The scenario's `conversation_assertions` check the end state:
 
 ```yaml
 conversation_assertions:
@@ -57,9 +87,9 @@ conversation_assertions:
     message: "Landlord must not capitulate on the below-reservation offer"
 ```
 
-All three at conversation level — they check the *end state*, not per-turn behaviour. Negotiations succeed or fail by the deal that lands; per-turn checks tend to over-constrain the agent.
+Per-turn checks tend to over-constrain a negotiation, so all three run once over the whole conversation.
 
-For stricter contracts, layer in `llm_judge_session` with criteria over the full conversation:
+For a stricter contract, add `llm_judge_session` with criteria over the full conversation:
 
 ```yaml
 - type: assertion
@@ -70,20 +100,18 @@ For stricter contracts, layer in `llm_judge_session` with criteria over the full
         Did the landlord maintain a professional negotiation posture
         across all turns, avoiding capitulation while reaching an
         acceptable deal? Score 1.0 if yes.
-      judge: default
     min_score: 0.8
 ```
 
-(That assertion needs a judge provider — see [the assertion catalog](https://promptkit.altairalabs.ai/reference/checks/) for the standard judge params.)
+This assertion needs a judge provider. Define one under `judges:` in `config.arena.yaml`; [Test RAG Agents](/arena/how-to/agents/rag-agent/) shows the setup. The [assertions reference](/arena/reference/assertions/) lists the assertion types, and the [Checks Reference](https://promptkit.altairalabs.ai/reference/checks/) lists the judge params.
 
-## Switching to real self-play
+## Switch to real self-play
 
-The default scenario uses scripted user turns. To run with a real LLM driving the tenant side:
+The default scenario uses scripted user turns. These steps hand the tenant side to an LLM.
 
-1. Add a persona file:
+1. Create `personas/savvy-tenant.persona.yaml`:
 
    ```yaml
-   # personas/savvy-tenant.persona.yaml
    apiVersion: promptkit.altairalabs.ai/v1alpha1
    kind: Persona
    metadata:
@@ -97,10 +125,9 @@ The default scenario uses scripted user turns. To run with a real LLM driving th
        $2500. If the landlord won't budge below $2500, walk away.
    ```
 
-2. Add a real text-LLM provider:
+2. Create `providers/openai-gpt4o-mini-text.provider.yaml`:
 
    ```yaml
-   # providers/openai-gpt4o-mini-text.provider.yaml
    apiVersion: promptkit.altairalabs.ai/v1alpha1
    kind: Provider
    metadata:
@@ -111,7 +138,26 @@ The default scenario uses scripted user turns. To run with a real LLM driving th
      model: gpt-4o-mini
    ```
 
-3. Replace the scripted user turns with a `selfplay-user` block:
+3. In `config.arena.yaml`, list the provider in the `selfplay` group, then add a `self_play` block that loads the persona and declares the `selfplay-user` role:
+
+   ```yaml
+   spec:
+     providers:
+       - file: providers/mock-provider.yaml
+       - file: providers/openai-gpt4o-mini-text.provider.yaml
+         group: selfplay
+
+     self_play:
+       personas:
+         - file: personas/savvy-tenant.persona.yaml
+       roles:
+         - id: selfplay-user
+           provider: openai-gpt4o-mini-text
+   ```
+
+   Arena loads personas only from `self_play.personas`. It does not scan the `personas/` directory.
+
+4. In the scenario, replace the scripted user turns with a `selfplay-user` turn:
 
    ```yaml
    turns:
@@ -120,14 +166,20 @@ The default scenario uses scripted user turns. To run with a real LLM driving th
        turns: 4
    ```
 
-4. Run with `OPENAI_API_KEY` in your environment.
+5. Run with `OPENAI_API_KEY` set:
 
-The assertions stay the same. The persona-driver LLM generates new content per turn; the landlord responds; the conversation evolves dynamically. The report shows each persona-driven turn — useful for spotting cases where the persona behaves unexpectedly.
+   ```bash
+   promptarena run --ci --formats json,markdown
+   ```
 
-## CI gate
+The assertions stay the same. The persona LLM generates each tenant turn and the landlord responds. The report shows every persona-driven turn, which helps when the persona behaves unexpectedly.
+
+## Run it in CI
+
+The repository runs this example in CI through `make test-examples`, which calls `scripts/test-examples.sh`. To gate your own repository, adapt this sample workflow. It builds `promptarena` from source; replace that step with however you install the binary.
 
 ```yaml
-# .github/workflows/text-negotiation.yml
+# .github/workflows/text-negotiation.yml (sample)
 name: Text negotiation
 
 on:
@@ -149,10 +201,16 @@ jobs:
         run: ../../bin/promptarena run --ci --formats json
 ```
 
-Keyless and fork-safe with the default scripted config.
+With the default scripted config the job needs no secrets, so it runs on fork pull requests.
 
-## Extending it
+## Extend it
 
-- **Reservation-price assertions**: instead of asserting on specific phrases, parse the final agreed amount and assert numerically. `tool_calls_with_args` works well if the agent ends the negotiation with a `record_agreement(amount: ...)` tool call.
-- **Walk-away scenarios**: scripted tenant offers $2000; assert the landlord ends the conversation. `content_includes` with words like "won't be able to make this work" / "not the right fit."
-- **Adversarial tenants**: persona variants — aggressive, indecisive, deadline-pressured. Same landlord, different self-play personas, different outcome profiles.
+- Reservation-price assertions: parse the final agreed amount and assert numerically. `tool_calls_with_args` works well if the agent ends the negotiation with a `record_agreement(amount: ...)` tool call.
+- Walk-away scenarios: script a tenant offer of $2000 and assert the landlord ends the conversation. Write mock responses with walk-away wording, then match it with `content_includes`.
+- Adversarial tenants: add persona variants (aggressive, indecisive, deadline-pressured) to `self_play.personas` and point a `selfplay-user` turn at each. The landlord stays the same, so the outcome profiles differ by persona.
+
+## Related pages
+
+- [Test RAG Agents](/arena/how-to/agents/rag-agent/) sets up a judge provider.
+- [Scenario design](/arena/explanation/scenario-design/) covers multi-turn scenario structure.
+- [Assertions reference](/arena/reference/assertions/) lists every assertion type.

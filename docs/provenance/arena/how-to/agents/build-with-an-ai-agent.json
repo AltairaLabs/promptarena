@@ -1,0 +1,522 @@
+{
+ "page": "docs/src/content/docs/arena/how-to/agents/build-with-an-ai-agent.md",
+ "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "A coding agent such as Claude Code can write a PromptArena kit: prompts, scenarios, assertions, tools and mock responses.",
+   "verdict": "true",
+   "evidence": [
+    "arena/agentkb/skill.go:21"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "PromptArena ships the config format and idioms inside the binary and writes them into the project as an authoring brief.",
+   "verdict": "true",
+   "evidence": [
+    "arena/agentkb/skill.go:49",
+    "arena/cmd/promptarena/agent_brief.go:72"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "promptarena init my-kit --quick",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:65"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "init accepts --quick",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:65"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "init scaffolds a sample kit and writes the brief next to it",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/agent_brief.go:132",
+    "arena/cmd/promptarena/init.go:119"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "init accepts --template <name>",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:64"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "promptarena examples list lists the template catalog",
+   "verdict": "true",
+   "evidence": [
+    "arena/agentkb/catalog.yaml:1",
+    "arena/cmd/promptarena/init.go:64"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "init accepts --no-agent, which skips writing the brief",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:119",
+    "arena/cmd/promptarena/init.go:77"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "promptarena agent-brief writes the brief into the current directory by default",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/agent_brief.go:47"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "promptarena agent-brief ./my-kit accepts a target directory argument",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/agent_brief.go:45"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "agent-brief writes only the brief, with no sample kit",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/agent_brief.go:46",
+    "arena/cmd/promptarena/agent_brief.go:72"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "The brief writes AGENTS.md, a short pointer to the skill, workflow and common mistakes",
+   "verdict": "true",
+   "evidence": [
+    "arena/agentkb/skill.go:53"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "The brief writes .claude/skills/promptarena-authoring/SKILL.md with a step-by-step workflow and minimal valid skeletons per config kind",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/agent_brief.go:23"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "The skill reference directory holds evals-and-assertions.md, config-fields.md, mock-responses.md and cli.md, generated from the binary",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/agent_brief.go:107"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "If AGENTS.md already exists, the brief is appended once and the user's content is kept",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/agent_brief.go:159"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "The skill and reference files are overwritten on each agent-brief run",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/agent_brief.go:122",
+    "arena/cmd/promptarena/agent_brief.go:82"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "promptarena mcp runs a stdio MCP server",
+   "verdict": "true",
+   "evidence": [
+    "arena/agentmcp/server.go:58",
+    "arena/cmd/promptarena/mcp_cmd.go:11"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "The MCP server exposes four tools: explain, get_schema, list_examples, show_example",
+   "verdict": "true",
+   "evidence": [
+    "arena/agentmcp/tools.go:20",
+    "arena/agentmcp/tools.go:31",
+    "arena/agentmcp/tools.go:42",
+    "arena/agentmcp/tools.go:53"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": ".mcp.json is the project file Claude Code reads for MCP servers",
+   "verdict": "unverified",
+   "evidence": [
+    "arena/cmd/promptarena/mcp_cmd.go:12"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "The .mcp.json example uses mcpServers.promptarena with command \"promptarena\" and args [\"mcp\"]",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/mcp_cmd.go:12"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "Any MCP client can run the same promptarena mcp command",
+   "verdict": "true",
+   "evidence": [
+    "arena/agentmcp/server.go:1",
+    "arena/agentmcp/server.go:58"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "Claude Code loads .claude/skills/ and AGENTS.md from the project",
+   "verdict": "unverified",
+   "evidence": [
+    "arena/agentkb/skill.go:9"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "Codex and other agents that read AGENTS.md pick up the brief from it",
+   "verdict": "unverified",
+   "evidence": [
+    "arena/agentkb/skill.go:53"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "The skill tells the agent to settle measurable success criteria before writing any prompts",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 25,
+   "claim": "Each success-criteria answer becomes an assertion or eval, and those are the spec",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 26,
+   "claim": "The agent asks for identity, tone and guidelines rather than inventing them",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 27,
+   "claim": "The agent asks for an MCP server, an API or OpenAPI spec, or sample payloads when tool data lives in a backend",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 28,
+   "claim": "In a non-interactive run (claude -p, CI) the agent writes mode: mock tools and lists invented contracts as assumptions",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 29,
+   "claim": "mode: mock",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:319"
+   ]
+  },
+  {
+   "id": 30,
+   "claim": "promptarena validate config.arena.yaml",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/validate.go:51",
+    "arena/cmd/promptarena/validate.go:80"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "promptarena run --ci --formats json,markdown",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:145"
+   ]
+  },
+  {
+   "id": 32,
+   "claim": "run accepts --ci",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:145"
+   ]
+  },
+  {
+   "id": 33,
+   "claim": "run accepts --formats with values json and markdown",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:145"
+   ]
+  },
+  {
+   "id": 34,
+   "claim": "validate checks each file against the JSON schema embedded in the binary",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/validate.go:183",
+    "arena/configschema/configschema.go:44"
+   ]
+  },
+  {
+   "id": 35,
+   "claim": "validate checks that every assertion type exists",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/validate_json.go:27"
+   ]
+  },
+  {
+   "id": 36,
+   "claim": "validate builds the pack in memory and runs every check packc runs",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/validate_json.go:11",
+    "arena/cmd/promptarena/validate_json.go:28"
+   ]
+  },
+  {
+   "id": 37,
+   "claim": "A config that passes validate compiles with packc",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/validate.go:24",
+    "arena/cmd/promptarena/validate_json.go:20"
+   ]
+  },
+  {
+   "id": 38,
+   "claim": "validate reports every problem in one pass rather than stopping at the first",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/validate.go:21",
+    "arena/cmd/promptarena/validate_json.go:55"
+   ]
+  },
+  {
+   "id": 39,
+   "claim": "validate --json gives the same report as JSON",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/validate_json.go:55"
+   ]
+  },
+  {
+   "id": 40,
+   "claim": "Each validate problem names the stage that found it and the file to edit",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/validate_json.go:33",
+    "arena/cmd/promptarena/validate_json.go:35",
+    "arena/cmd/promptarena/validate_json.go:36"
+   ]
+  },
+  {
+   "id": 41,
+   "claim": "run --ci runs every scenario headless",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run_interactive.go:327"
+   ]
+  },
+  {
+   "id": 42,
+   "claim": "run --ci writes results to the out/ directory",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:145"
+   ]
+  },
+  {
+   "id": 43,
+   "claim": "out/results.md holds the summary and per-run JSON files hold detail",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:145"
+   ]
+  },
+  {
+   "id": 44,
+   "claim": "Mock responses in mock-responses.yaml are keyed by each scenario's metadata.name",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:798"
+   ]
+  },
+  {
+   "id": 45,
+   "claim": "Tools, workflow state and memory run for real against mocked model output",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:766"
+   ]
+  },
+  {
+   "id": 46,
+   "claim": "Self-play personas include cooperative, confused, impatient and adversarial",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 47,
+   "claim": "A provider with type: mock is a valid provider config",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 48,
+   "claim": "run accepts --mock-provider",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:167"
+   ]
+  },
+  {
+   "id": 49,
+   "claim": "--mock-provider replaces every provider with a generic mock that ignores canned responses",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:721",
+    "arena/engine/engine.go:742",
+    "arena/engine/engine.go:797"
+   ]
+  },
+  {
+   "id": 50,
+   "claim": "A kind: Tool config is a contract with name, description, input_schema and output_schema plus a binding",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:317",
+    "schemas/v1alpha1/tool.json:319"
+   ]
+  },
+  {
+   "id": 51,
+   "claim": "Tool mode mock is a valid tool mode",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:321"
+   ]
+  },
+  {
+   "id": 52,
+   "claim": "Tool mode live takes an http block",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:321"
+   ]
+  },
+  {
+   "id": 53,
+   "claim": "Tool mode mcp is a valid tool mode",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:321"
+   ]
+  },
+  {
+   "id": 54,
+   "claim": "Tool mode exec is a valid tool mode",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:321",
+    "schemas/v1alpha1/tool.json:342"
+   ]
+  },
+  {
+   "id": 55,
+   "claim": "Tool implementations live outside the pack",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 56,
+   "claim": "promptarena run opens an interactive terminal UI when run in a terminal",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run_interactive.go:327",
+    "arena/cmd/promptarena/run_interactive.go:344"
+   ]
+  },
+  {
+   "id": 57,
+   "claim": "The interactive TUI cannot run inside an agent session",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run_interactive.go:332",
+    "arena/tui/tui.go:1018"
+   ]
+  },
+  {
+   "id": 58,
+   "claim": "promptarena serve starts the web UI",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 59,
+   "claim": "serve accepts --open to launch a browser",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 60,
+   "claim": "The agent can start promptarena serve as a background task",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 61,
+   "claim": "promptarena chat lets the user talk to the agent under test",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/chat.go:5"
+   ]
+  },
+  {
+   "id": 62,
+   "claim": "promptarena deploy ships the kit",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:134"
+   ]
+  },
+  {
+   "id": 63,
+   "claim": "The agent can write a CI workflow that validates, runs and deploys the kit",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 64,
+   "claim": "Link target /arena/how-to/providers/use-mock-providers/ exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 65,
+   "claim": "Link target /arena/how-to/providers/configure-providers/ exists",
+   "verdict": "true",
+   "evidence": []
+  }
+ ]
+}

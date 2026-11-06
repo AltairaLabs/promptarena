@@ -1,0 +1,856 @@
+{
+ "page": "docs/src/content/docs/arena/how-to/agents/test-a2a-agents.md",
+ "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "Arena has built-in mock A2A infrastructure, and you define mock agents in the Arena config.",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:279",
+    "arena/engine/builder_integration.go:1029"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "The executor is named a2aExecutor.",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/builder_integration.go:1034"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "Diagram nodes: User Turn, Mock LLM, a2aExecutor, Mock A2A Server.",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/builder_integration.go:1034"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "The mock LLM emits a tool_call named a2a__research_agent__search_papers.",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/config.arena.yaml:20",
+    "examples/multi-agent-demo/scenarios/multi-agent-delegation.yaml:22"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "a2aExecutor sends a JSON-RPC message/send request to the mock A2A server.",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 6,
+   "claim": "The mock A2A server returns a Task with state completed and artifacts.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 7,
+   "claim": "a2aExecutor returns the task result to the mock LLM as a tool result.",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:1034"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "The mock LLM then produces the reply to the user turn.",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/config.arena.yaml:1",
+    "examples/multi-agent-demo/scenarios/multi-agent-delegation.yaml:14"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "Arena starts mock A2A servers from the config.",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:1050",
+    "arena/engine/builder_integration.go:1077"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "Agent skills are registered as tools via the Tool Bridge.",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:1247"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "Mock A2A responses are deterministic because you control both the LLM and agent responses.",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:1195"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "The Arena config takes an a2a_agents block.",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:175"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "Arena config apiVersion is promptkit.altairalabs.ai/v1alpha1.",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/config.arena.yaml:2"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "Arena config kind is Arena.",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/config.arena.yaml:3"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "metadata.name is a field of the Arena config.",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/config.arena.yaml:5"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "spec.providers is a list where each entry has a file.",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/config.arena.yaml:11-12"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "providers/mock-provider.yaml is a provider file used by the example.",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/config.arena.yaml:12",
+    "examples/multi-agent-demo/providers/mock-provider.yaml:1"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "spec.prompt_configs is a list with id and file fields.",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/config.arena.yaml:7-9"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "spec.scenarios is a list with file entries.",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/config.arena.yaml:14-15"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "spec.a2a_agents is a list.",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:175"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "a2a_agents[].name is the agent name used in the tool name.",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/builder_integration.go:1179",
+    "arena/engine/builder_integration.go:1194"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "a2a_agents[].card is an agent card object.",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:281"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "card.name is a field of the agent card.",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:323"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "card.description is a field of the agent card.",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:324"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "card.skills is a list of skill objects.",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:325"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "skills[].id is a field of a skill.",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:330"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "skills[].name is a field of a skill.",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:331"
+   ]
+  },
+  {
+   "id": 28,
+   "claim": "skills[].description is a field of a skill.",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:332"
+   ]
+  },
+  {
+   "id": 29,
+   "claim": "skills[].tags is a list field of a skill.",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:333"
+   ]
+  },
+  {
+   "id": 30,
+   "claim": "a2a_agents[].responses is a list of response rules.",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:282"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "responses[].skill selects the skill a rule answers.",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:338"
+   ]
+  },
+  {
+   "id": 32,
+   "claim": "responses[].match.contains is a field, matched case-insensitively against message text.",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:346",
+    "arena/engine/builder_integration.go:1199"
+   ]
+  },
+  {
+   "id": 33,
+   "claim": "responses[].response.parts is a list of parts.",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:352"
+   ]
+  },
+  {
+   "id": 34,
+   "claim": "parts[].text is a field holding the response text.",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:357"
+   ]
+  },
+  {
+   "id": 35,
+   "claim": "A response rule with no match applies when no earlier rule matches.",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:1195",
+    "arena/engine/builder_integration.go:1203"
+   ]
+  },
+  {
+   "id": 36,
+   "claim": "Each agent produces a tool named a2a__{name}__{skillId}.",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/builder_integration.go:1179"
+   ]
+  },
+  {
+   "id": 37,
+   "claim": "The prompt config takes allowed_tools, a list of tool names.",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/validator.go:397",
+    "examples/multi-agent-demo/prompts/assistant.yaml:14"
+   ]
+  },
+  {
+   "id": 38,
+   "claim": "A prompt reaches only the tools named in allowed_tools; with no entry it has no tools.",
+   "verdict": "false",
+   "evidence": [
+    "examples/multi-agent-demo/prompts/assistant.yaml:14"
+   ]
+  },
+  {
+   "id": 39,
+   "claim": "If a provider declares a capabilities list, that list must include tools for the provider to use tools.",
+   "verdict": "dead",
+   "evidence": [
+    "arena/engine/execution.go:326"
+   ]
+  },
+  {
+   "id": 40,
+   "claim": "PromptConfig kind is PromptConfig.",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/prompts/assistant.yaml:2"
+   ]
+  },
+  {
+   "id": 41,
+   "claim": "spec.task_type is a field of PromptConfig.",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/prompts/assistant.yaml:8"
+   ]
+  },
+  {
+   "id": 42,
+   "claim": "spec.version is a field of PromptConfig.",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/prompts/assistant.yaml:6"
+   ]
+  },
+  {
+   "id": 43,
+   "claim": "spec.description is a field of PromptConfig.",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/prompts/assistant.yaml:7"
+   ]
+  },
+  {
+   "id": 44,
+   "claim": "spec.system_template is a field of PromptConfig.",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/prompts/assistant.yaml:9"
+   ]
+  },
+  {
+   "id": 45,
+   "claim": "mock-responses.yaml has a scenarios map keyed by scenario name, with a turns map keyed by turn number.",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/mock-responses.yaml:7"
+   ]
+  },
+  {
+   "id": 46,
+   "claim": "turns[].tool_calls[].name and arguments are fields of a mock tool call.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 47,
+   "claim": "turns[].response is a field giving the mock assistant text for that turn.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 48,
+   "claim": "On turn 1 the mock LLM emits the tool call and a2aExecutor routes it to the mock server, which matches the quantum rule and returns the canned response.",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/config.arena.yaml:28-37"
+   ]
+  },
+  {
+   "id": 49,
+   "claim": "On turn 2 the mock LLM sees the tool result and produces the final summary.",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/mock-responses.yaml:18"
+   ]
+  },
+  {
+   "id": 50,
+   "claim": "Scenario kind is Scenario.",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/scenarios/multi-agent-delegation.yaml:2"
+   ]
+  },
+  {
+   "id": 51,
+   "claim": "Scenario metadata.name is a field.",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/scenarios/multi-agent-delegation.yaml:4"
+   ]
+  },
+  {
+   "id": 52,
+   "claim": "spec.id is a field of Scenario.",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/scenarios/multi-agent-delegation.yaml:6"
+   ]
+  },
+  {
+   "id": 53,
+   "claim": "Scenario spec.task_type must match a prompt config task_type to bind to it.",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:529",
+    "arena/engine/builder_integration.go:555"
+   ]
+  },
+  {
+   "id": 54,
+   "claim": "spec.description is a field of Scenario.",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/scenarios/multi-agent-delegation.yaml:8"
+   ]
+  },
+  {
+   "id": 55,
+   "claim": "spec.tool_policy is a field of Scenario.",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/scenarios/multi-agent-delegation.yaml:10"
+   ]
+  },
+  {
+   "id": 56,
+   "claim": "tool_policy.tool_choice accepts the value auto.",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:931"
+   ]
+  },
+  {
+   "id": 57,
+   "claim": "tool_policy.max_tool_calls_per_turn is a field limiting tool calls per turn.",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:937"
+   ]
+  },
+  {
+   "id": 58,
+   "claim": "turns[].role accepts the value user.",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1129"
+   ]
+  },
+  {
+   "id": 59,
+   "claim": "turns[].content is a field holding the user message.",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/scenarios/multi-agent-delegation.yaml:17"
+   ]
+  },
+  {
+   "id": 60,
+   "claim": "turns[].assertions is a field of a turn.",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/scenarios/multi-agent-delegation.yaml:18"
+   ]
+  },
+  {
+   "id": 61,
+   "claim": "tools_called is an assertion type with params.tools as a list.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 62,
+   "claim": "content_includes is an assertion type with params.patterns as a list.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 63,
+   "claim": "The assertion table lists tools_called, content_includes, agent_invoked, agent_not_invoked and agent_response_contains as assertion types.",
+   "verdict": "true",
+   "evidence": [
+    "arena/agentkb/evalmeta.yaml:166-177"
+   ]
+  },
+  {
+   "id": 64,
+   "claim": "agent_invoked checks for agent tool calls.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 65,
+   "claim": "agent_not_invoked verifies that the named agents were not delegated to.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 66,
+   "claim": "agent_response_contains checks that an agent's response contains expected text.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 67,
+   "claim": "agent_invoked and agent_response_contains are higher-level alternatives to tools_called for delegation tests.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 68,
+   "claim": "agent_invoked takes params.agents as a list.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 69,
+   "claim": "agent_response_contains takes params.agent.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 70,
+   "claim": "agent_response_contains takes params.contains.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 71,
+   "claim": "promptarena run is the command that runs the example.",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:147"
+   ]
+  },
+  {
+   "id": 72,
+   "claim": "promptarena run accepts -c as the config flag.",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:147"
+   ]
+  },
+  {
+   "id": 73,
+   "claim": "examples/multi-agent-demo exists and contains arena/config.arena.yaml.",
+   "verdict": "false",
+   "evidence": [
+    "examples/multi-agent-demo/config.arena.yaml:1"
+   ]
+  },
+  {
+   "id": 74,
+   "claim": "Arena starts the mock A2A server from the config before running scenarios.",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:139",
+    "arena/engine/builder_integration.go:142"
+   ]
+  },
+  {
+   "id": 75,
+   "claim": "Arena runs each scenario turn with the mock LLM.",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/providers/mock-provider.yaml:7"
+   ]
+  },
+  {
+   "id": 76,
+   "claim": "Tool calls are routed through the a2aExecutor to the mock server.",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:1034"
+   ]
+  },
+  {
+   "id": 77,
+   "claim": "Arena evaluates assertions and produces a report.",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:456"
+   ]
+  },
+  {
+   "id": 78,
+   "claim": "Results are written to the arena/out/ directory.",
+   "verdict": "false",
+   "evidence": [
+    "examples/multi-agent-demo/config.arena.yaml:73"
+   ]
+  },
+  {
+   "id": 79,
+   "claim": "The HTML report file is named report-<timestamp>.html.",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:147",
+    "arena/cmd/promptarena/run.go:456"
+   ]
+  },
+  {
+   "id": 80,
+   "claim": "The JSON data file is named report-<timestamp>-data.json.",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:456"
+   ]
+  },
+  {
+   "id": 81,
+   "claim": "The second agent's name is translation_agent.",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/config.arena.yaml:45"
+   ]
+  },
+  {
+   "id": 82,
+   "claim": "The translation agent exposes a skill with id translate.",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/config.arena.yaml:50"
+   ]
+  },
+  {
+   "id": 83,
+   "claim": "Two agents register a2a__research_agent__search_papers and a2a__translation_agent__translate as tools.",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/config.arena.yaml:20",
+    "examples/multi-agent-demo/config.arena.yaml:47"
+   ]
+  },
+  {
+   "id": 84,
+   "claim": "agent_invoked and agent_not_invoked assertions are used in turns with params.agents.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 85,
+   "claim": "Assertions accept a params-level or assertion-level message field.",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:25",
+    "arena/stages/assertions.go:271"
+   ]
+  },
+  {
+   "id": 86,
+   "claim": "agent_response_contains takes agent, contains and message fields.",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:25"
+   ]
+  },
+  {
+   "id": 87,
+   "claim": "conversation_assertions is a scenario-level key that holds assertions evaluated across the whole conversation.",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:701",
+    "examples/multi-agent-demo/scenarios/multi-agent-delegation.yaml:46"
+   ]
+  },
+  {
+   "id": 88,
+   "claim": "agent_invoked and agent_not_invoked are valid in conversation_assertions.",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/scenarios/multi-agent-delegation.yaml:46-52"
+   ]
+  },
+  {
+   "id": 89,
+   "claim": "When url is set, Arena discovers skills from the agent's /.well-known/agent.json endpoint.",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 90,
+   "claim": "a2a_agents[].url is a field that makes the agent a remote agent.",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:286",
+    "arena/engine/builder_integration.go:1062"
+   ]
+  },
+  {
+   "id": 91,
+   "claim": "When url is set, card and responses are ignored.",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:284",
+    "arena/engine/builder_integration.go:1060"
+   ]
+  },
+  {
+   "id": 92,
+   "claim": "auth.scheme accepts Bearer.",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:308",
+    "arena/engine/builder_integration.go:1145"
+   ]
+  },
+  {
+   "id": 93,
+   "claim": "auth.token is a field holding an inline token.",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:310",
+    "arena/engine/builder_integration.go:1115"
+   ]
+  },
+  {
+   "id": 94,
+   "claim": "auth.token_env is a field naming an environment variable that holds the token.",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:312",
+    "arena/engine/builder_integration.go:1139"
+   ]
+  },
+  {
+   "id": 95,
+   "claim": "headers is a map of static headers.",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:292"
+   ]
+  },
+  {
+   "id": 96,
+   "claim": "headers_from_env is a list of Header=ENV_VAR entries.",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:296",
+    "arena/engine/builder_integration.go:1163"
+   ]
+  },
+  {
+   "id": 97,
+   "claim": "If the env var named in headers_from_env is unset, the header is silently skipped.",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:1167"
+   ]
+  },
+  {
+   "id": 98,
+   "claim": "skill_filter.allowlist limits exposed skills to the listed IDs.",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:1106"
+   ]
+  },
+  {
+   "id": 99,
+   "claim": "skill_filter.blocklist excludes the listed skills.",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:1108"
+   ]
+  },
+  {
+   "id": 100,
+   "claim": "timeout_ms is a per-request timeout in milliseconds.",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:299",
+    "arena/engine/builder_integration.go:1127"
+   ]
+  },
+  {
+   "id": 101,
+   "claim": "The complete remote agent example uses only fields listed earlier on the page.",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:280",
+    "arena/arenaconfig/types.go:302"
+   ]
+  },
+  {
+   "id": 102,
+   "claim": "match.contains is a case-insensitive substring match on message text.",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:1199"
+   ]
+  },
+  {
+   "id": 103,
+   "claim": "match.regex is a regular expression match on message text.",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:1200"
+   ]
+  },
+  {
+   "id": 104,
+   "claim": "A response rule with an error field returns a failed task.",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:341",
+    "arena/engine/builder_integration.go:1196"
+   ]
+  },
+  {
+   "id": 105,
+   "claim": "The URL https://promptkit.altairalabs.ai/concepts/a2a/ is a live concept page.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 106,
+   "claim": "The URL https://promptkit.altairalabs.ai/runtime/how-to/use-a2a-mock-server/ documents the programmatic mock server.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 107,
+   "claim": "The link /arena/how-to/scenarios/write-scenarios/ resolves to a page in this site.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 108,
+   "claim": "The link /arena/reference/assertions/ resolves to a page in this site.",
+   "verdict": "true",
+   "evidence": []
+  }
+ ]
+}
