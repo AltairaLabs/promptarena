@@ -6,6 +6,7 @@ import (
 	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
 	"github.com/AltairaLabs/promptarena/v2/arena/assertions"
 	arenaaudio "github.com/AltairaLabs/promptarena/v2/arena/audio"
+	"github.com/AltairaLabs/promptarena/v2/arena/turnexecutors"
 
 	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
 	audioseam "github.com/AltairaLabs/PromptKit/runtime/v2/audio"
@@ -79,7 +80,7 @@ type ConversationRequest struct {
 	// perturbation variant (-1 for none); with the trial they seed best_of_n.
 	DataRowIndex int
 	Perturbation int
-	Metadata   map[string]string // Additional metadata for debugging/tracing
+	Metadata     map[string]string // Additional metadata for debugging/tracing
 
 	// Event bus for runtime/TUI events
 	EventBus events.Bus
@@ -111,6 +112,11 @@ type ConversationRequest struct {
 	// conversation and collects each self-play turn's state result.
 	// ExecuteConversation sets it.
 	personaState *personaStateRecorder
+
+	// contextBuilder is the conversation's context-builder stage, shared by
+	// all its turns so relevance embeddings are cached across them.
+	// ExecuteConversation sets it.
+	contextBuilder *turnexecutors.ConversationContextBuilder
 
 	// VoiceSTT is the STT provider for the VAD voice path (Task 7). Nil in ASM mode.
 	// Set from --voice-stt by the chat command; consumed by runInteractiveVADVoice.

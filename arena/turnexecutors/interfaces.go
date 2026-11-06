@@ -154,6 +154,12 @@ type TurnRequest struct {
 	// Only set on workflow composition turns; nil on non-composition turns.
 	CompositionRecorder *stage.CompositionRecorder
 
+	// ContextBuilder, when non-nil, is the conversation's context-builder
+	// stage, reused on every turn so its relevance embedding cache carries
+	// over. One per conversation, never shared. Nil builds a new stage per
+	// turn.
+	ContextBuilder *ConversationContextBuilder
+
 	// CallPack is the pack a composition turn's steps are routed against
 	// (RFC 0017): a step's `provider`, else its prompt's, names the requires
 	// key that runs it. Nil routes every step on Provider.
