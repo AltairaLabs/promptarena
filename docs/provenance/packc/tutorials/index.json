@@ -1,0 +1,26 @@
+{
+ "page": "docs/src/content/docs/packc/tutorials/index.md",
+ "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "packc installs with go install, which needs Go 1.26",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 2,
+   "claim": "the tutorials use the compile, inspect and validate commands",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:29-37"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "old: GitHub Discussions link github.com/AltairaLabs/promptarena/v2/issues",
+   "verdict": "false",
+   "evidence": []
+  }
+ ]
+}

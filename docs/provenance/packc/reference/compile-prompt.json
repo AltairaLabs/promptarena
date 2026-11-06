@@ -1,0 +1,154 @@
+{
+ "page": "docs/src/content/docs/packc/reference/compile-prompt.md",
+ "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "compile-prompt takes -p/--prompt and -o/--output, both required",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:178-190"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "parent directory of --output must exist",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:239"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "pack id is task_type with _ replaced by -; name metadata.name; version spec.version; description; template_engine; metadata",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:239"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "allowed_tools becomes the prompt's tools",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 5,
+   "claim": "compiled_with packc-<version>",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:239"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "pack has no $schema field",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 7,
+   "claim": "prints 'Compiling prompt ...' then '\u2713 Pack compiled successfully'",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:237",
+    "packc/main_interactive.go:244"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "checks only that the file parses; no schema or structural validation",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:193-245"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "media warnings when spec.media.enabled, relative to prompt dir",
+   "verdict": "true",
+   "evidence": [
+    "packc/main.go:297-340",
+    "packc/main_interactive.go:207-215"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "error messages: required flags, reading, parsing, write failure",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:186-203",
+    "packc/main_interactive.go:239-242"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "exit 2 when a required flag is missing or unknown flag",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:177",
+    "packc/main_interactive.go:186-190"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "old: output must end with .json or .pack.json",
+   "verdict": "false",
+   "evidence": [
+    "packc/main_interactive.go:179"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "old: parent directory will be created",
+   "verdict": "false",
+   "evidence": [
+    "packc/main_interactive.go:239"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "old: step 'Validate Structure - ensure PromptConfig is valid'",
+   "verdict": "false",
+   "evidence": [
+    "packc/main_interactive.go:199"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "old: error 'missing required field: task_type'",
+   "verdict": "false",
+   "evidence": [
+    "packc/main_interactive.go:199-203"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "old: template parse error on compile",
+   "verdict": "false",
+   "evidence": [
+    "packc/main_interactive.go:239"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "old: 'Failed to write pack file: no such file or directory'",
+   "verdict": "false",
+   "evidence": [
+    "packc/main_interactive.go:239-242"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "old: output example includes pack-level fields from compile",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 19,
+   "claim": "old: GitHub workflow uses `for file in $;` (broken expression)",
+   "verdict": "false",
+   "evidence": []
+  }
+ ]
+}

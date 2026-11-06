@@ -1,37 +1,33 @@
 ---
 title: 'Tutorial 5: CI/CD Pipeline'
+description: Compile and validate a pack on every push with GitHub Actions, and attach the pack to a GitHub release when you push a version tag.
 sidebar:
   order: 5
+verified:
+  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  sources:
+    - arena/arenaconfig/loader.go
+    - arena/arenaconfig/types.go
+    - packc/main.go
+    - packc/main_interactive.go
+    - schemas/v1alpha1/arena.json
 ---
-Automate pack compilation, validation, and deployment in CI/CD.
-
-## Learning Objectives
-
-- Set up GitHub Actions for pack builds
-- Automate validation in CI
-- Deploy packs automatically
-- Handle multi-environment deployments
-
-## Time Required
-
-**45 minutes**
+In this tutorial we set up two GitHub Actions workflows for a pack project. The first compiles and validates the pack on every push and pull request. The second attaches the pack to a GitHub release when we push a version tag.
 
 ## Prerequisites
 
-- Completed [Tutorial 4: Pack Management](/packc/tutorials/04-pack-management/)
-- GitHub account
-- Git repository
+- [Tutorial 4: Pack Management](/packc/tutorials/04-pack-management/) completed
+- A GitHub account and an empty GitHub repository you can push to
+- Git, with `user.name` and `user.email` set
 
-## Step 1: Initialize Repository
+## Step 1: Create the project
 
 ```bash
 mkdir cicd-packs
 cd cicd-packs
-git init
-mkdir -p prompts config packs .github/workflows
+git init -b main
+mkdir -p prompts config .github/workflows
 ```
-
-## Step 2: Create Prompt and Config
 
 ```bash
 cat > prompts/assistant.yaml <<'EOF'
@@ -56,15 +52,35 @@ spec:
 EOF
 
 cat > config/arena.yaml <<'EOF'
-prompt_configs:
-  - id: assistant
-    file: ../prompts/assistant.yaml
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Arena
+metadata:
+  name: cicd-packs
+spec:
+  prompt_configs:
+    - id: assistant
+      file: ../prompts/assistant.yaml
+  providers: []
+  defaults: {}
 EOF
 ```
 
-## Step 3: Basic CI Workflow
+## Step 2: Run the build locally
 
-Create GitHub Actions workflow:
+The workflows run these two commands. Run them first to confirm the project builds:
+
+```bash
+packc compile --config config/arena.yaml --output packs/assistant.pack.json --id assistant
+packc validate packs/assistant.pack.json
+```
+
+The output ends with `✓ Pack structure is valid`. Keep build output out of Git:
+
+```bash
+echo "packs/" > .gitignore
+```
+
+## Step 3: Add the build workflow
 
 ```bash
 cat > .github/workflows/build-packs.yml <<'EOF'
@@ -72,332 +88,104 @@ name: Build and Validate Packs
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main]
   pull_request:
     branches: [main]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-      
-      - name: Set up Go
-        uses: actions/setup-go@v4
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
         with:
           go-version: '1.26'
-      
+
       - name: Install packc
         run: go install github.com/AltairaLabs/promptarena/v2/packc@latest
-      
-      - name: Compile packs
-        run: |
-          mkdir -p packs
-          packc compile \
-            --config config/arena.yaml \
-            --output packs/assistant.pack.json \
-            --id assistant
-      
-      - name: Validate packs
+
+      - name: Compile pack
+        run: packc compile --config config/arena.yaml --output packs/assistant.pack.json --id assistant
+
+      - name: Validate pack
         run: packc validate packs/assistant.pack.json
-      
-      - name: Upload packs
-        uses: actions/upload-artifact@v3
+
+      - name: Upload pack
+        uses: actions/upload-artifact@v7
         with:
           name: compiled-packs
           path: packs/*.pack.json
-          retention-days: 30
 EOF
 ```
 
-## Step 4: Multi-Environment Workflow
+`actions/setup-go` puts Go's bin directory on the `PATH`, so the steps after `go install` find `packc`. A compile or validation failure fails the job, which fails the check on the pull request.
 
-```bash
-cat > .github/workflows/multi-env.yml <<'EOF'
-name: Multi-Environment Build
-
-on:
-  push:
-    branches:
-      - develop  # Dev environment
-      - staging  # Staging environment
-      - main     # Production environment
-
-jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
-    
-    steps:
-      - uses: actions/checkout@v3
-      
-      - uses: actions/setup-go@v4
-        with:
-          go-version: '1.26'
-      
-      - name: Install packc
-        run: go install github.com/AltairaLabs/promptarena/v2/packc@latest
-      
-      - name: Determine environment
-        id: env
-        run: |
-          if [[ "$" == "refs/heads/main" ]]; then
-            echo "environment=prod" >> $GITHUB_OUTPUT
-          elif [[ "$" == "refs/heads/staging" ]]; then
-            echo "environment=staging" >> $GITHUB_OUTPUT
-          else
-            echo "environment=dev" >> $GITHUB_OUTPUT
-          fi
-      
-      - name: Compile pack
-        run: |
-          mkdir -p packs/$
-          packc compile \
-            --config config/arena.yaml \
-            --output packs/$/assistant.pack.json \
-            --id assistant-$
-      
-      - name: Validate pack
-        run: packc validate packs/$/assistant.pack.json
-      
-      - name: Deploy to $
-        run: |
-          echo "Deploying to $"
-          # Add your deployment command here
-          # aws s3 cp packs/$/assistant.pack.json s3://bucket/
-EOF
-```
-
-## Step 5: Release Workflow
+## Step 4: Add the release workflow
 
 ```bash
 cat > .github/workflows/release.yml <<'EOF'
-name: Release Packs
+name: Release Pack
 
 on:
   push:
-    tags:
-      - 'v*.*.*'
+    tags: ['v*.*.*']
+
+permissions:
+  contents: write
 
 jobs:
   release:
     runs-on: ubuntu-latest
-    
     steps:
-      - uses: actions/checkout@v3
-      
-      - uses: actions/setup-go@v4
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
         with:
           go-version: '1.26'
-      
+
       - name: Install packc
         run: go install github.com/AltairaLabs/promptarena/v2/packc@latest
-      
-      - name: Get version
-        id: version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-      
-      - name: Compile production pack
-        run: |
-          mkdir -p packs/prod
-          packc compile \
-            --config config/arena.yaml \
-            --output packs/prod/assistant-v$.pack.json \
-            --id assistant
-      
+
+      - name: Compile pack
+        run: packc compile --config config/arena.yaml --output "packs/assistant-${{ github.ref_name }}.pack.json" --id assistant
+
       - name: Validate pack
-        run: packc validate packs/prod/assistant-v$.pack.json
-      
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: packs/prod/*.pack.json
-          body: |
-            ## Pack Release v$
-            
-            Compiled production packs.
-            
-            ### Installation
-            ```bash
-            # Download pack
-            curl -L https://github.com/$/releases/download/v$/assistant-v$.pack.json -o assistant.pack.json
-            ```
+        run: packc validate "packs/assistant-${{ github.ref_name }}.pack.json"
+
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "${{ github.ref_name }}" "packs/assistant-${{ github.ref_name }}.pack.json" --title "${{ github.ref_name }}" --notes "Compiled pack for ${{ github.ref_name }}."
 EOF
 ```
 
-## Step 6: Test Workflow
+`github.ref_name` is the tag, for example `v1.0.0`. The `contents: write` permission lets the job create the release.
 
-Commit and push:
+## Step 5: Push and watch the build
+
+Replace `<owner>/<repo>` with your repository:
 
 ```bash
 git add .
-git commit -m "Add CI/CD workflows"
-git remote add origin https://github.com/yourusername/cicd-packs.git
+git commit -m "Add pack project and CI workflows"
+git remote add origin https://github.com/<owner>/<repo>.git
 git push -u origin main
 ```
 
-Watch the workflow run on GitHub Actions.
+Open the repository's **Actions** tab. The **Build and Validate Packs** run compiles and validates the pack, and its summary page offers the `compiled-packs` artifact for download.
 
-## Step 7: Add Status Badges
-
-Update README.md:
+## Step 6: Release a version
 
 ```bash
-cat > README.md <<'EOF'
-# CI/CD Packs
-
-![Build Status](https://github.com/yourusername/cicd-packs/workflows/Build%20and%20Validate%20Packs/badge.svg)
-
-Automated pack compilation and deployment.
-
-## Workflows
-
-- **Build and Validate** - Runs on every push/PR
-- **Multi-Environment** - Deploys based on branch
-- **Release** - Creates versioned releases on tags
-
-## Usage
-
-```bash
-# Development
-git push origin develop
-
-# Staging
-git push origin staging
-
-# Production
 git tag v1.0.0
 git push origin v1.0.0
 ```
-EOF
-```
 
-## Step 8: Local Testing
+The **Release Pack** run creates a release named `v1.0.0` on the repository's **Releases** page, with `assistant-v1.0.0.pack.json` attached.
 
-Test workflows locally with act:
+## Next steps
 
-```bash
-# Install act
-brew install act  # macOS
-# or
-curl https://raw.githubusercontent.com/nektos/act/master/install.sh | sudo bash
-
-# Test build workflow
-act -j build
-
-# Test with specific event
-act push -j build
-```
-
-## What You Learned
-
-- Set up GitHub Actions workflows
-- Automated pack compilation
-- Multi-environment deployments
-- Release automation
-- Status badges
-
-## Best Practices
-
-### 1. Cache Dependencies
-
-```yaml
-- name: Cache Go modules
-  uses: actions/cache@v3
-  with:
-    path: ~/go/pkg/mod
-    key: $-go-$
-```
-
-### 2. Matrix Builds
-
-```yaml
-strategy:
-  matrix:
-    environment: [dev, staging, prod]
-```
-
-### 3. Required Status Checks
-
-Configure branch protection to require passing builds before merge.
-
-### 4. Automated Deployments
-
-Only deploy from specific branches:
-
-```yaml
-if: github.ref == 'refs/heads/main'
-```
-
-## Advanced Patterns
-
-### Parallel Builds
-
-```yaml
-jobs:
-  build-dev:
-    # ...
-  build-staging:
-    # ...
-  build-prod:
-    needs: [build-dev, build-staging]  # Sequential
-```
-
-### Conditional Steps
-
-```yaml
-- name: Deploy
-  if: github.ref == 'refs/heads/main'
-  run: ./deploy.sh
-```
-
-### Manual Approvals
-
-```yaml
-environment:
-  name: production
-  # Requires manual approval in GitHub
-```
-
-## Troubleshooting
-
-### packc not found
-
-```yaml
-- name: Add to PATH
-  run: echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
-```
-
-### Permission denied
-
-```yaml
-- name: Set permissions
-  run: chmod +x scripts/*.sh
-```
-
-### Validation fails
-
-```yaml
-- name: Show validation errors
-  if: failure()
-  run: packc validate packs/*.pack.json || true
-```
-
-## Next Steps
-
-Congratulations! You've completed all PackC tutorials. Continue with:
-
-- **[PackC Explanation](/packc/explanation/)** - Deep dive into pack concepts
-- **[SDK Integration](https://promptkit.altairalabs.ai/sdk/)** - Use packs in applications
-- **[Arena Testing](/arena/)** - Test prompts interactively
-
-## Summary
-
-You now have:
-- Fully automated pack builds
-- Multi-environment deployments
-- Versioned releases
-- Production-ready CI/CD
-
-Excellent work completing all tutorials!
+- [CI/CD integration](/packc/how-to/ci-cd-integration/): other CI systems, caching and multi-environment builds
+- [PackC explanation](/packc/explanation/): how compilation and validation work
+- [PromptArena](/arena/): test the prompts in your pack before you release it

@@ -1,0 +1,250 @@
+{
+ "page": "docs/src/content/docs/packc/reference/compile.md",
+ "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "compile takes -c/--config, default config.arena.yaml",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:121",
+    "packc/main_interactive.go:153"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "compile takes -o/--output, default <id>.pack.json",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:122",
+    "packc/main_interactive.go:136-139"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "compile takes --id, default current directory name sanitized",
+   "verdict": "true",
+   "evidence": [
+    "packc/compiler/helpers_integration.go:205-218",
+    "packc/main_interactive.go:110-116",
+    "packc/main_interactive.go:123"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "missing parent directories of --output are created",
+   "verdict": "true",
+   "evidence": [
+    "packc/main.go:28-35",
+    "packc/main_interactive.go:168"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "--id is written to the pack id and name",
+   "verdict": "true",
+   "evidence": [
+    "packc/compiler/compiler.go:128-132"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "explicit --id must match ^[a-z][a-z0-9-]*$ or the compile fails at the pack_id stage",
+   "verdict": "true",
+   "evidence": [
+    "packc/compiler/check.go:96-99",
+    "packc/compiler/compiler.go:89-92",
+    "packc/compiler/helpers_integration.go:196",
+    "packc/compiler/helpers_integration.go:222-228"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "default ID sanitization: lowercase, spaces to hyphens, strip others, collapse hyphens, pack- prefix, pack when empty",
+   "verdict": "true",
+   "evidence": [
+    "packc/compiler/helpers_integration.go:192-218"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "Arena config is a kind: Arena manifest; schema requires spec.providers and spec.defaults",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:180",
+    "arena/arenaconfig/types.go:91",
+    "schemas/v1alpha1/arena.json:839"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "arena prompt_configs entries take id and file",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:61-65",
+    "arena/arenaconfig/types.go:88"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "file paths resolve relative to the Arena config directory",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:540-552"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "prompt_configs/prompt_specs become prompts keyed by task_type",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:172-190",
+    "packc/compiler/compiler.go:103-112"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "tools become pack tools keyed by name",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:102",
+    "packc/compiler/helpers_integration.go:116-140"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "pack_evals, workflow, agents, compositions, skills reach the pack",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:104-130",
+    "arena/arenaconfig/types.go:157",
+    "packc/compiler/compiler.go:210-242",
+    "packc/compiler/helpers_integration.go:143-182"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "pack_metadata becomes metadata; otherwise promoted from first prompt by ID with a warning",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:167",
+    "packc/compiler/compiler.go:164-207"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "template_engine copied from one prompt that sets it; agreement not checked",
+   "verdict": "true",
+   "evidence": [
+    "packc/compiler/compiler.go:127-132"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "pack version is v1.0.0 and description 'Pack containing <n> prompts'",
+   "verdict": "true",
+   "evidence": [
+    "packc/compiler/compiler.go:127-132"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "compiled_with is packc-<version>",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:151",
+    "packc/main_interactive.go:155"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "success summary prints prompts, tools, evals, workflow, agents lines",
+   "verdict": "true",
+   "evidence": [
+    "packc/main.go:274-294"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "compile runs validate's checks plus compositions before writing",
+   "verdict": "true",
+   "evidence": [
+    "packc/compiler/check.go:149-192",
+    "packc/compiler/check.go:83-131",
+    "packc/compiler/compiler.go:64-74"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "stage names pack_id, load, compile, skills, workflow, compositions, agents, governance, pack, pack_schema",
+   "verdict": "true",
+   "evidence": [
+    "packc/compiler/check.go:16-27"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "errors go to stderr as 'Compilation failed:' with [stage] message or numbered list; warnings '\u26a0 [stage] msg' on stdout",
+   "verdict": "true",
+   "evidence": [
+    "packc/compiler/check.go:42-72",
+    "packc/main_interactive.go:157-165"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "exit 0 success, 1 failure, 2 unknown flag",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:120",
+    "packc/main_interactive.go:157-171"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "old: arena.yaml example with top-level prompt_configs/tools (no manifest)",
+   "verdict": "false",
+   "evidence": [
+    "schemas/v1alpha1/arena.json:839"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "old: error 'Error loading arena config: open arena.yaml'",
+   "verdict": "false",
+   "evidence": [
+    "packc/compiler/check.go:101-104"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "old: error 'Error: prompt file not found'",
+   "verdict": "false",
+   "evidence": [
+    "packc/compiler/check.go:101-104"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "old: '\u26a0 Media validation warnings for <task>' and template-variable warning",
+   "verdict": "false",
+   "evidence": [
+    "packc/compiler/helpers_integration.go:50-68"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "old: arena.yaml top-level version/metadata.pack_version sets pack version",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:84-180"
+   ]
+  },
+  {
+   "id": 28,
+   "claim": "old: performance numbers <100ms etc.",
+   "verdict": "unverified",
+   "evidence": []
+  }
+ ]
+}

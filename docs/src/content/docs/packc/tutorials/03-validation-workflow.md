@@ -1,38 +1,52 @@
 ---
 title: 'Tutorial 3: Validation Workflows'
+description: See what packc compile and packc validate catch, then wire both into a build script and a Git pre-commit hook.
 sidebar:
   order: 3
+verified:
+  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  sources:
+    - arena/arenaconfig/loader.go
+    - arena/arenaconfig/types.go
+    - packc/compiler/check.go
+    - packc/main.go
+    - packc/main_interactive.go
+    - schemas/v1alpha1/arena.json
 ---
-Build a workflow that ensures pack quality before deployment.
-
-## Learning Objectives
-
-- Create automated validation workflows
-- Catch errors before deployment
-- Integrate validation in development
-- Set up pre-commit validation
-
-## Time Required
-
-**25 minutes**
+In this tutorial we break a prompt and a pack to see what `packc` catches, then build a script and a Git pre-commit hook that stop a broken pack from being committed.
 
 ## Prerequisites
 
-- Completed [Tutorial 2: Multi-Prompt Packs](/packc/tutorials/02-multi-prompt/)
-- Git installed
+- [Tutorial 2: Multi-Prompt Packs](/packc/tutorials/02-multi-prompt/) completed
+- Git, with `user.name` and `user.email` set
 
-## Step 1: Setup Project
+## Step 1: Create the project
 
 ```bash
 mkdir validation-workflow
 cd validation-workflow
-mkdir -p prompts config packs scripts .git/hooks
 git init
+mkdir -p prompts config packs scripts
 ```
 
-## Step 2: Create Prompts
+```bash
+cat > config/arena.yaml <<'EOF'
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Arena
+metadata:
+  name: validation-workflow
+spec:
+  prompt_configs:
+    - id: assistant
+      file: ../prompts/assistant.yaml
+  providers: []
+  defaults: {}
+EOF
+```
 
-Create a sample prompt:
+## Step 2: Compile a broken prompt
+
+This prompt uses `{{user_message}}` but declares no variables:
 
 ```bash
 cat > prompts/assistant.yaml <<'EOF'
@@ -50,6 +64,27 @@ spec:
   template_engine:
     version: v1
     syntax: "{{variable}}"
+EOF
+```
+
+```bash
+packc compile --config config/arena.yaml --output packs/assistant.pack.json --id assistant
+```
+
+The compile fails and writes nothing:
+
+```text
+Compilation failed: [pack] prompt 'assistant': system_template references variables, but none are declared
+```
+
+`packc compile` runs every check `packc validate` runs before it writes a pack. The `[pack]` tag names the check that failed.
+
+## Step 3: Fix the prompt
+
+Append the variable declaration:
+
+```bash
+cat >> prompts/assistant.yaml <<'EOF'
   variables:
     - name: user_message
       type: string
@@ -57,273 +92,106 @@ spec:
 EOF
 ```
 
-Create arena.yaml:
-
 ```bash
-cat > config/arena.yaml <<'EOF'
-prompt_configs:
-  - id: assistant
-    file: ../prompts/assistant.yaml
-EOF
+packc compile --config config/arena.yaml --output packs/assistant.pack.json --id assistant
 ```
 
-## Step 3: Create Validation Script
+You see `✓ Pack compiled successfully: packs/assistant.pack.json`.
+
+## Step 4: Validate a damaged pack
+
+A pack can change after it is compiled, by hand or by another tool. We change both version strings in the pack to `1.0`, which is not a semantic version:
 
 ```bash
-cat > scripts/validate-pack.sh <<'EOF'
+sed -i.bak 's/"version": "v1.0.0"/"version": "1.0"/' packs/assistant.pack.json
+packc validate packs/assistant.pack.json
+```
+
+Validation fails on the pack's `version` and the prompt's `version` (the pattern is shortened here):
+
+```text
+Validating pack: packs/assistant.pack.json
+Validating against PromptPack schema...
+✗ Pack failed schema validation:
+  - prompts.assistant.version: Does not match pattern '^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)...' (value: 1.0)
+  - version: Does not match pattern '^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)...' (value: 1.0)
+```
+
+Restore the pack and validate again:
+
+```bash
+mv packs/assistant.pack.json.bak packs/assistant.pack.json
+packc validate packs/assistant.pack.json
+```
+
+You see `✓ Schema validation passed` and `✓ Pack structure is valid`.
+
+## Step 5: Write a build script
+
+The script compiles every pack and validates it, and stops at the first failure:
+
+```bash
+cat > scripts/build.sh <<'EOF'
 #!/bin/bash
 set -e
 
-PACK_FILE="$1"
+packc compile --config config/arena.yaml --output packs/assistant.pack.json --id assistant
+packc validate packs/assistant.pack.json
 
-if [ -z "$PACK_FILE" ]; then
-  echo "Usage: $0 <pack-file>"
-  exit 1
-fi
-
-echo "Validating: $PACK_FILE"
-
-# 1. Check file exists
-if [ ! -f "$PACK_FILE" ]; then
-  echo "Pack file not found"
-  exit 1
-fi
-
-# 2. Validate with packc
-if ! packc validate "$PACK_FILE"; then
-  echo "Pack validation failed"
-  exit 1
-fi
-
-# 3. Check pack size
-size=$(stat -f%z "$PACK_FILE" 2>/dev/null || stat -c%s "$PACK_FILE")
-max_size=$((1024 * 1024))  # 1MB
-
-if [ "$size" -gt "$max_size" ]; then
-  echo "⚠ Warning: Pack size ${size} bytes exceeds recommended ${max_size} bytes"
-fi
-
-# 4. Verify JSON structure
-if ! jq empty "$PACK_FILE" 2>/dev/null; then
-  echo "Invalid JSON"
-  exit 1
-fi
-
-# 5. Check required fields
-if ! jq -e '.id' "$PACK_FILE" >/dev/null; then
-  echo "Missing pack ID"
-  exit 1
-fi
-
-if ! jq -e '.prompts' "$PACK_FILE" >/dev/null; then
-  echo "Missing prompts"
-  exit 1
-fi
-
-echo "Pack validation passed"
+echo "Build complete"
 EOF
-
-chmod +x scripts/validate-pack.sh
+chmod +x scripts/build.sh
+./scripts/build.sh
 ```
 
-## Step 4: Build and Validate Workflow
+The output ends with `✓ Pack structure is valid` and `Build complete`.
 
-Create build script:
+## Step 6: Add a pre-commit hook
 
-```bash
-cat > scripts/build-and-validate.sh <<'EOF'
-#!/bin/bash
-set -e
-
-echo "=== Building Packs ==="
-mkdir -p packs
-
-packc compile \
-  --config config/arena.yaml \
-  --output packs/assistant.pack.json \
-  --id assistant
-
-echo ""
-echo "=== Validating Packs ==="
-./scripts/validate-pack.sh packs/assistant.pack.json
-
-echo ""
-echo "=== Inspecting Pack ==="
-packc inspect packs/assistant.pack.json
-
-echo ""
-echo "Build and validation complete"
-EOF
-
-chmod +x scripts/build-and-validate.sh
-```
-
-Run it:
-
-```bash
-./scripts/build-and-validate.sh
-```
-
-## Step 5: Pre-Commit Hook
-
-Set up automatic validation before commits:
+The hook runs the build script before every commit and blocks the commit if it fails:
 
 ```bash
 cat > .git/hooks/pre-commit <<'EOF'
 #!/bin/bash
-
-echo "Running pre-commit validation..."
-
-# Compile all packs
-mkdir -p packs
-packc compile --config config/arena.yaml --output packs/assistant.pack.json --id assistant
-
-# Validate
-if ! packc validate packs/assistant.pack.json; then
-  echo ""
-  echo "Pack validation failed!"
-  echo "Fix errors or use 'git commit --no-verify' to bypass"
+if ! ./scripts/build.sh; then
+  echo "Pack build failed: commit blocked"
   exit 1
 fi
-
-echo "Pre-commit validation passed"
-git add packs/assistant.pack.json
 EOF
-
 chmod +x .git/hooks/pre-commit
 ```
 
-Test it:
+Commit the project:
 
 ```bash
-git add prompts/ config/
+git add prompts config scripts
 git commit -m "Add assistant prompt"
 ```
 
-## Step 6: Makefile Workflow
+The hook's build output prints, then Git records the commit.
 
-Create a Makefile for common workflows:
+## Step 7: Watch the hook block a commit
 
-```bash
-cat > Makefile <<'EOF'
-.PHONY: build validate clean test all
-
-all: build validate
-
-build:
-	@echo "Building packs..."
-	@mkdir -p packs
-	@packc compile --config config/arena.yaml --output packs/assistant.pack.json --id assistant
-
-validate: build
-	@echo "Validating packs..."
-	@./scripts/validate-pack.sh packs/assistant.pack.json
-
-test: validate
-	@echo "Running pack tests..."
-	@# Add SDK tests here
-
-clean:
-	@echo "Cleaning build artifacts..."
-	@rm -rf packs/
-
-inspect: build
-	@packc inspect packs/assistant.pack.json
-EOF
-```
-
-Use it:
+Change the prompt's version to `1.0`:
 
 ```bash
-make build      # Build packs
-make validate   # Build and validate
-make all        # Build and validate
-make inspect    # Build and inspect
-make clean      # Clean up
+sed -i.bak 's/version: v1.0.0/version: "1.0"/' prompts/assistant.yaml
+rm prompts/assistant.yaml.bak
+git commit -am "Break the version"
 ```
 
-## Step 7: Continuous Validation
+The compile fails on the prompt config's schema, and the hook stops the commit:
 
-Create a validation loop for development:
-
-```bash
-cat > scripts/watch-and-validate.sh <<'EOF'
-#!/bin/bash
-
-echo "Watching for changes..."
-
-while true; do
-  # Watch for changes to prompt files
-  if find prompts/ -type f -mmin -0.1 | grep -q .; then
-    echo ""
-    echo "Changes detected, rebuilding..."
-    make validate
-  fi
-  
-  sleep 1
-done
-EOF
-
-chmod +x scripts/watch-and-validate.sh
+```text
+Compilation failed: [load] loading arena config: schema validation failed for ../prompts/assistant.yaml: promptconfig configuration does not match schema:
+  - spec.version: Does not match pattern ... (value: 1.0)
+Pack build failed: commit blocked
 ```
 
-Run in a separate terminal:
+`git log --oneline` still shows one commit. Put the version back to `v1.0.0` and the commit goes through.
 
-```bash
-./scripts/watch-and-validate.sh
-```
+## Next steps
 
-## What You Learned
-
-- Created validation scripts
-- Built automated workflows
-- Set up pre-commit hooks
-- Used Makefiles for consistency
-- Enabled continuous validation
-
-## Best Practices
-
-### 1. Always Validate
-
-```bash
-# Never deploy without validation
-packc compile ... && packc validate ...
-```
-
-### 2. Fail Fast
-
-```bash
-# Stop on first error
-set -e
-```
-
-### 3. Multiple Validation Levels
-
-```bash
-# Basic: packc validate
-# Medium: + size checks
-# Strict: + custom validation rules
-```
-
-### 4. Document Failures
-
-```bash
-# Log validation results
-packc validate pack.json 2>&1 | tee validation.log
-```
-
-## Next Steps
-
-- **[Tutorial 4: Pack Management](/packc/tutorials/04-pack-management/)** - Organize and version packs
-- **[How-To: Validate Packs](/packc/how-to/validate-packs/)** - More validation strategies
-- **[How-To: CI/CD Integration](/packc/how-to/ci-cd-integration/)** - Automate in CI/CD
-
-## Summary
-
-You now have:
-- Automated validation workflows
-- Pre-commit quality gates
-- Development validation loop
-- Production-ready validation
-
-Great work!
+- [Tutorial 4: Pack Management](/packc/tutorials/04-pack-management/): build and compare packs per environment
+- [validate](/packc/reference/validate/): every check and its message
+- [Validate packs](/packc/how-to/validate-packs/)

@@ -1,0 +1,65 @@
+{
+ "page": "docs/src/content/docs/packc/reference/index.md",
+ "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "commands compile, compile-prompt, validate, inspect, version, completion, help",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:29-48"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "completion supports bash, zsh, fish, powershell",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:368-391"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "unknown command or no command exits 1 with usage",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:22-25",
+    "packc/main_interactive.go:44-47"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "help, --help, -h print usage",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:42-43"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "validate and inspect treat --help as the pack path",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:247-254",
+    "packc/main_interactive.go:341-348"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "compiles with the PromptKit pack compiler, validates against the embedded schema",
+   "verdict": "true",
+   "evidence": [
+    "packc/compiler/compiler.go:127-132",
+    "packc/schema_validator.go:21-30"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "old: pack format example compiled_with packc-v0.1.0",
+   "verdict": "false",
+   "evidence": [
+    "packc/main_interactive.go:151"
+   ]
+  }
+ ]
+}

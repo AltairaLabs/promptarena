@@ -1,0 +1,76 @@
+{
+ "page": "docs/src/content/docs/packc/tutorials/05-ci-cd-pipeline.md",
+ "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "prompt config fields apiVersion/kind/metadata.name/spec.task_type/version/system_template/template_engine/variables",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:540-552"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "arena manifest with prompt_configs, providers: [], defaults: {} compiles",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:180",
+    "arena/arenaconfig/types.go:88-91",
+    "schemas/v1alpha1/arena.json:839"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "compile summary output",
+   "verdict": "true",
+   "evidence": [
+    "packc/main.go:274-294"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "validate success output",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:256-338"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "workflow runs go install then packc compile/validate",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:119-174"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "compile writes packs/assistant-<tag>.pack.json, creating packs/",
+   "verdict": "true",
+   "evidence": [
+    "packc/main.go:28-35"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "GitHub Actions run, artifact and release appear as described",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 8,
+   "claim": "old: actions/upload-artifact@v3 and stripped ${{ }} expressions",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 9,
+   "claim": "old: arena config without manifest compiles",
+   "verdict": "false",
+   "evidence": [
+    "schemas/v1alpha1/arena.json:839"
+   ]
+  }
+ ]
+}

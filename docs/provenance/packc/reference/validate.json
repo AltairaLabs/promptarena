@@ -1,0 +1,168 @@
+{
+ "page": "docs/src/content/docs/packc/reference/validate.md",
+ "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "validate takes one pack-file argument; extra args ignored; no flags",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:247-254"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "PROMPTKIT_SCHEMA_SOURCE selects embedded/remote/file/URL schema",
+   "verdict": "true",
+   "evidence": [
+    "packc/schema_validator.go:21-30"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "check order: read, schema, load, structure, skills",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:256-320"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "schema not performable prints a warning and continues",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:267-270"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "structural errors listed under '\u2717 Pack validation failed:' including warnings",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:287-306"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "pack/prompt structural rules (id, semver, prompts, template_engine, compilation, system_template, variables)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 7,
+   "claim": "workflow rules and warnings",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 8,
+   "claim": "agents rules block validate, including mode and tag warnings",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:287-306"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "governance errors block, undeclared-prefix warnings do not",
+   "verdict": "true",
+   "evidence": [
+    "packc/compiler/check.go:171-176",
+    "packc/main_interactive.go:293-298",
+    "packc/main_interactive.go:322-327"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "skills resolved relative to the pack file directory",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:309-320"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "validate does not check prompt tools against pack tools",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:287"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "output lines for success, warnings, schema failure",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:256-338"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "exit 0 valid (warnings included), 1 otherwise",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:248-338"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "old: exit 1 when pack has warnings",
+   "verdict": "false",
+   "evidence": [
+    "packc/main_interactive.go:329-338"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "old: validates tool references exist / tool names unique",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 16,
+   "claim": "old: orchestration one of internal, external, hybrid",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 17,
+   "claim": "old: no unreachable states check",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 18,
+   "claim": "old: '\u26a0 Template variable not defined' warning",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 19,
+   "claim": "old: '\u26a0 Tool referenced but not defined' warning",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 20,
+   "claim": "old: '\u26a0 Temperature exceeds maximum' warning",
+   "verdict": "false",
+   "evidence": [
+    "packc/main_interactive.go:267-275"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "old: '\u26a0 System prompt is empty' warning",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 22,
+   "claim": "old: 'Fail CI on warnings' via exit code",
+   "verdict": "false",
+   "evidence": [
+    "packc/main_interactive.go:329-338"
+   ]
+  }
+ ]
+}

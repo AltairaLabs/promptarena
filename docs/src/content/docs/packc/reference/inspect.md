@@ -1,9 +1,15 @@
 ---
 title: inspect
+description: Output sections and exit codes of packc inspect, which prints a readable summary of a compiled pack file.
 sidebar:
   order: 4
+verified:
+  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  sources:
+    - packc/main.go
+    - packc/main_interactive.go
 ---
-Display detailed information about a compiled pack file.
+`packc inspect` prints a readable summary of a compiled pack file: its identity, prompts, fragments, workflow, agents, metadata and compilation record. It does not validate the pack; use [`packc validate`](/packc/reference/validate/) for that.
 
 ## Synopsis
 
@@ -11,310 +17,69 @@ Display detailed information about a compiled pack file.
 packc inspect <pack-file>
 ```
 
-## Description
-
-The `inspect` command displays comprehensive information about a pack's structure, contents, and metadata. Use this to understand what's inside a pack without manually parsing the JSON.
-
 ## Arguments
 
-**`<pack-file>`** (required)
-- Path to the pack file to inspect
-- Must be a `.pack.json` file
+| Argument | Description |
+|---|---|
+| `<pack-file>` | Path to the pack JSON file. Required. Arguments after it are ignored. |
 
-## Examples
+`inspect` has no flags.
 
-### Basic Inspection
+## Output sections
+
+Sections print in this order. A section, or a line inside one, is omitted when the pack has no value for it.
+
+| Section | Lines |
+|---|---|
+| `=== Pack Information ===` | `Pack:` (the pack's `name`), `ID:`, `Version:`, `Description:` |
+| `Template Engine:` | `<version> (<syntax>)`, then `Features:` |
+| `=== Prompts (<n>) ===` | one `[<task_type>]` block per prompt, sorted by task type, with `Name:`, `Description:`, `Version:`, `Variables: <n> required, <n> optional`, `Required:`, `Tools (<n>):`, `Validators (<n>):` (each as `<type> (enabled)` or `<type> (disabled)`), and `Tested Models (<n>):` (each as `<provider>/<model>: <rate>% success, avg <n> tokens`) |
+| `Shared Fragments (<n>):` | fragment names, sorted |
+| `=== Workflow (v<n>) ===` | `Entry:`, `States (<n>):`, then per state, sorted: `[<name>] prompt_task=<task>`, `Description:`, one `on <Event> → <target>` line per event, `Persistence:`, `Orchestration:` |
+| `=== Agents ===` | `Entry:`, `Members (<n>):`, then per member, sorted: `[<name>]`, `Description:`, `Tags:`, `Input modes:`, `Output modes:` |
+| `Pack Metadata:` | `Domain:`, `Language:`, `Tags:` |
+| `Compilation:` | `<compiled_with>, <created_at>, Schema: <schema>` |
+
+The pack-level `tools`, `evals`, `skills` and `compositions` are not printed. The `Pack Information` and `Prompts` headings always print, even for a pack with no prompts.
+
+## Example
 
 ```bash
-packc inspect packs/app.pack.json
+packc inspect packs/greeting.pack.json
 ```
 
-**Output:**
+```text
 
-```
 === Pack Information ===
-Pack: Customer Support Assistant
-ID: customer-support
+Pack: greeting
+ID: greeting
 Version: v1.0.0
-Description: AI-powered customer support system
+Description: Pack containing 1 prompts
 
 Template Engine: v1 ({{variable}})
 
-=== Prompts (3) ===
+=== Prompts (1) ===
 
-[customer-support]
-  Name: Customer Support Agent
-  Description: Handles customer inquiries
+[greeting]
+  Name: Greeting Assistant
+  Description: A friendly assistant that greets users
   Version: v1.0.0
-  Variables: 2 required, 1 optional
-    Required: [customer_name, order_id]
-  Tools (2): [search_kb, create_ticket]
+  Variables: 1 required, 1 optional
+    Required: [user_name]
 
-[sales-assistant]
-  Name: Sales Assistant
-  Description: Assists with sales inquiries
-  Version: v1.0.0
-  Variables: 2 required, 0 optional
-    Required: [product_name, price]
-  Tools (2): [search_products, get_inventory]
-
-[technical-expert]
-  Name: Technical Expert
-  Description: Technical troubleshooting
-  Version: v1.0.0
-  Variables: 2 required, 0 optional
-    Required: [product_id, error_code]
-  Tools (2): [search_docs, run_diagnostics]
-
-Shared Fragments (2): [greeting, signature]
-
-Pack Metadata:
-  Domain: customer-service
-  Language: en
-  Tags: [support, production]
-
-Compilation: packc-v0.1.0, 2025-01-15T10:30:00Z, Schema: v1
-```
-
-### Pipe to File
-
-```bash
-packc inspect packs/app.pack.json > pack-info.txt
-```
-
-### Inspect Multiple Packs
-
-```bash
-for pack in packs/*.pack.json; do
-  echo "=== $pack ==="
-  packc inspect "$pack"
-  echo ""
-done
-```
-
-## Output Sections
-
-### Pack Information
-
-Basic pack metadata:
+Compilation: packc-dev, 2026-11-06T18:08:46Z, Schema: v1
 
 ```
-Pack: Name of the pack
-ID: unique-identifier
-Version: 1.0.0
-Description: Pack description
-```
 
-### Template Engine
+## Exit codes
 
-Template system used:
+| Code | Meaning |
+|---|---|
+| `0` | The file parsed as a pack and its summary printed. |
+| `1` | No pack file argument (stderr: `Error: pack file path required`), or the file cannot be read or is not valid pack JSON (stderr: `Error loading pack: ...`). |
 
-```
-Template Engine: v1 ({{variable}})
-```
+## Related
 
-Shows the template engine version and syntax format.
-
-### Prompts
-
-Detailed information for each prompt:
-
-```
-[prompt-name]
-  Name: Display Name
-  Description: Prompt description
-  Version: v1.0.0
-  Variables: 2 required, 1 optional
-    Required: [var1, var2]
-  Tools (2): [tool1, tool2]
-```
-
-### Shared Fragments
-
-Reusable prompt fragments:
-
-```
-Shared Fragments (2): greeting, signature
-```
-
-### Pack Metadata
-
-Additional pack information:
-
-```
-Pack Metadata:
-  Domain: customer-service
-  Language: en
-  Tags: [support, production]
-```
-
-### Compilation Info
-
-Build details:
-
-```
-Compilation: packc-v0.1.0, 2025-01-15T10:30:00Z, Schema: v1
-```
-
-## Use Cases
-
-### 1. Quick Pack Summary
-
-```bash
-packc inspect packs/app.pack.json | head -n 10
-```
-
-### 2. Find Available Prompts
-
-```bash
-packc inspect packs/app.pack.json | grep -A 5 "=== Prompts"
-```
-
-### 3. Check Pack Version
-
-```bash
-packc inspect packs/app.pack.json | grep "Version:"
-```
-
-### 4. List All Tools
-
-```bash
-packc inspect packs/app.pack.json | grep "Tools:" | sort -u
-```
-
-### 5. Compare Packs
-
-```bash
-diff <(packc inspect packs/v1.pack.json) <(packc inspect packs/v2.pack.json)
-```
-
-### 6. Document Pack Contents
-
-```bash
-# Generate documentation
-packc inspect packs/prod.pack.json > docs/pack-contents.md
-```
-
-## Exit Codes
-
-- `0` - Success
-- `1` - Error (pack not found, invalid format, etc.)
-
-## Common Errors
-
-### Pack Not Found
-
-```bash
-$ packc inspect missing.pack.json
-Error loading pack: open missing.pack.json: no such file or directory
-```
-
-**Solution:** Check file path is correct
-
-### Invalid Pack Format
-
-```bash
-$ packc inspect invalid.json
-Error loading pack: invalid pack format
-```
-
-**Solution:** Ensure file is a valid pack (use `validate` first)
-
-## Integration Examples
-
-### Pre-deployment Check
-
-```bash
-#!/bin/bash
-# Check pack before deploying
-
-echo "Inspecting pack..."
-packc inspect packs/prod.pack.json
-
-read -p "Deploy this pack? (y/n) " -n 1 -r
-echo
-if [[ $REPLY =~ ^[Yy]$ ]]; then
-  ./deploy.sh packs/prod.pack.json
-fi
-```
-
-### Pack Comparison Script
-
-```bash
-#!/bin/bash
-# Compare two pack versions
-
-OLD_PACK=$1
-NEW_PACK=$2
-
-echo "=== Old Pack ==="
-packc inspect "$OLD_PACK"
-
-echo ""
-echo "=== New Pack ==="
-packc inspect "$NEW_PACK"
-
-echo ""
-echo "=== Differences ==="
-diff <(packc inspect "$OLD_PACK") <(packc inspect "$NEW_PACK")
-```
-
-### Pack Inventory
-
-```bash
-#!/bin/bash
-# Generate inventory of all packs
-
-echo "# Pack Inventory" > inventory.md
-echo "" >> inventory.md
-
-for pack in packs/*.pack.json; do
-  echo "## $(basename $pack)" >> inventory.md
-  packc inspect "$pack" | head -n 20 >> inventory.md
-  echo "" >> inventory.md
-done
-```
-
-## Best Practices
-
-### 1. Inspect Before Using
-
-Always inspect new packs:
-
-```bash
-packc inspect unknown.pack.json
-```
-
-### 2. Document Pack Contents
-
-Keep pack documentation up-to-date:
-
-```bash
-packc inspect packs/app.pack.json > docs/PACK.md
-git add docs/PACK.md
-git commit -m "docs: update pack documentation"
-```
-
-### 3. Verify After Download
-
-Inspect downloaded packs:
-
-```bash
-curl -O https://example.com/packs/app.pack.json
-packc inspect app.pack.json
-packc validate app.pack.json
-```
-
-### 4. Compare Environments
-
-```bash
-# Compare dev vs prod
-diff <(packc inspect packs/app.dev.pack.json) \
-     <(packc inspect packs/app.prod.pack.json)
-```
-
-## See Also
-
-- [compile](/packc/reference/compile/) - Compile packs
-- [validate](/packc/reference/validate/) - Validate packs
-- [How to Compile Packs](/packc/how-to/compile-packs/)
+- [validate](/packc/reference/validate/): validate a pack file
+- [compile](/packc/reference/compile/): compile a pack
+- [Pack format](/packc/explanation/pack-format/)

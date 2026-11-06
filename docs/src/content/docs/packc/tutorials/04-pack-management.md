@@ -1,76 +1,34 @@
 ---
 title: 'Tutorial 4: Pack Management'
+description: Build a versioned pack per environment from one prompt, then release a new prompt version and compare the two packs.
 sidebar:
   order: 4
+verified:
+  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  sources:
+    - arena/arenaconfig/loader.go
+    - arena/arenaconfig/types.go
+    - packc/compiler/compiler.go
+    - packc/main.go
+    - packc/main_interactive.go
+    - schemas/v1alpha1/arena.json
 ---
-Learn to organize, version, and manage packs effectively.
-
-## Learning Objectives
-
-- Organize packs by environment
-- Version packs properly
-- Manage pack lifecycle
-- Deploy packs safely
-
-## Time Required
-
-**30 minutes**
+In this tutorial we build a dev pack and a prod pack from one prompt, with a version in each file name, then release a new prompt version and compare it with the previous one.
 
 ## Prerequisites
 
-- Completed [Tutorial 3: Validation Workflows](/packc/tutorials/03-validation-workflow/)
+- [Tutorial 3: Validation Workflows](/packc/tutorials/03-validation-workflow/) completed
+- A shell with `bash` or `zsh`
 
-## Step 1: Create Project Structure
+## Step 1: Create the project
 
 ```bash
 mkdir pack-management
 cd pack-management
-mkdir -p prompts config/{dev,staging,prod} packs/{dev,staging,prod}
+mkdir -p prompts config/dev config/prod packs scripts
 ```
 
-## Step 2: Environment-Specific Configs
-
-### Development Config
-
-```bash
-cat > config/dev/arena.yaml <<'EOF'
-prompt_configs:
-  - id: assistant
-    file: ../../prompts/assistant.yaml
-
-# Development settings
-environment: dev
-debug: true
-EOF
-```
-
-### Staging Config
-
-```bash
-cat > config/staging/arena.yaml <<'EOF'
-prompt_configs:
-  - id: assistant
-    file: ../../prompts/assistant.yaml
-
-environment: staging
-debug: false
-EOF
-```
-
-### Production Config
-
-```bash
-cat > config/prod/arena.yaml <<'EOF'
-prompt_configs:
-  - id: assistant
-    file: ../../prompts/assistant.yaml
-
-environment: prod
-debug: false
-EOF
-```
-
-## Step 3: Create Prompt
+## Step 2: Write the prompt
 
 ```bash
 cat > prompts/assistant.yaml <<'EOF'
@@ -95,299 +53,155 @@ spec:
 EOF
 ```
 
-## Step 4: Build Script
+The prompt's `version` is the version we release.
+
+## Step 3: Write one Arena config per environment
+
+Both configs use the same prompt. `pack_metadata` tags each pack with its environment:
+
+```bash
+cat > config/dev/arena.yaml <<'EOF'
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Arena
+metadata:
+  name: assistant-dev
+spec:
+  prompt_configs:
+    - id: assistant
+      file: ../../prompts/assistant.yaml
+  pack_metadata:
+    tags: [dev]
+  providers: []
+  defaults: {}
+EOF
+
+cat > config/prod/arena.yaml <<'EOF'
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Arena
+metadata:
+  name: assistant-prod
+spec:
+  prompt_configs:
+    - id: assistant
+      file: ../../prompts/assistant.yaml
+  pack_metadata:
+    tags: [prod]
+  providers: []
+  defaults: {}
+EOF
+```
+
+## Step 4: Write the build script
+
+The script takes a version, compiles one pack per environment into `packs/<env>/`, and validates each:
 
 ```bash
 cat > scripts/build-all.sh <<'EOF'
 #!/bin/bash
 set -e
 
-VERSION="${1:-1.0.0}"
-TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+VERSION="$1"
+if [ -z "$VERSION" ]; then
+  echo "Usage: $0 <version>"
+  exit 1
+fi
 
-echo "Building version: $VERSION"
-
-for env in dev staging prod; do
-  echo ""
-  echo "=== Building $env ==="
-  
-  packc compile \
-    --config "config/$env/arena.yaml" \
-    --output "packs/$env/assistant-v${VERSION}.pack.json" \
-    --id "assistant-$env"
-  
-  # Create latest symlink
-  ln -sf "assistant-v${VERSION}.pack.json" "packs/$env/assistant-latest.pack.json"
-  
-  # Validate
-  packc validate "packs/$env/assistant-v${VERSION}.pack.json"
-  
-  echo "Built: packs/$env/assistant-v${VERSION}.pack.json"
+for env in dev prod; do
+  pack="packs/$env/assistant-$VERSION.pack.json"
+  packc compile --config "config/$env/arena.yaml" --output "$pack" --id "assistant-$env"
+  packc validate "$pack"
 done
-
-echo ""
-echo "All environments built: v${VERSION}"
 EOF
-
 chmod +x scripts/build-all.sh
 ```
 
-Run it:
+`packc compile` creates `packs/dev/` and `packs/prod/` when they do not exist.
+
+## Step 5: Build version 1.0.0
 
 ```bash
 ./scripts/build-all.sh 1.0.0
+ls packs/*
 ```
 
-## Step 5: Version Management
+You see one pack per environment:
 
-Create version tracking:
+```text
+packs/dev:
+assistant-1.0.0.pack.json
+
+packs/prod:
+assistant-1.0.0.pack.json
+```
+
+Inspect the prod pack:
 
 ```bash
-cat > VERSION <<'EOF'
-1.0.0
-EOF
-
-cat > scripts/bump-version.sh <<'EOF'
-#!/bin/bash
-
-CURRENT=$(cat VERSION)
-echo "Current version: $CURRENT"
-
-# Parse version
-IFS='.' read -r major minor patch <<< "$CURRENT"
-
-# Determine bump type
-case "${1:-patch}" in
-  major)
-    major=$((major + 1))
-    minor=0
-    patch=0
-    ;;
-  minor)
-    minor=$((minor + 1))
-    patch=0
-    ;;
-  patch)
-    patch=$((patch + 1))
-    ;;
-esac
-
-NEW_VERSION="$major.$minor.$patch"
-echo "New version: $NEW_VERSION"
-
-# Update VERSION file
-echo "$NEW_VERSION" > VERSION
-
-# Build with new version
-./scripts/build-all.sh "$NEW_VERSION"
-
-echo ""
-echo "Version bumped to $NEW_VERSION"
-EOF
-
-chmod +x scripts/bump-version.sh
+packc inspect packs/prod/assistant-1.0.0.pack.json
 ```
 
-Bump versions:
+The summary shows the environment's ID and tag:
+
+```text
+=== Pack Information ===
+Pack: assistant-prod
+ID: assistant-prod
+Version: v1.0.0
+Description: Pack containing 1 prompts
+...
+Pack Metadata:
+  Tags: [prod]
+```
+
+The dev pack shows `assistant-dev` and `[dev]`.
+
+## Step 6: Release version 1.1.0
+
+Change the prompt and bump its version:
 
 ```bash
-./scripts/bump-version.sh patch   # 1.0.0 -> 1.0.1
-./scripts/bump-version.sh minor   # 1.0.1 -> 1.1.0
-./scripts/bump-version.sh major   # 1.1.0 -> 2.0.0
+sed -i.bak -e 's/version: v1.0.0/version: v1.1.0/' -e 's/You are a helpful AI assistant./You are a concise AI assistant./' prompts/assistant.yaml
+rm prompts/assistant.yaml.bak
+./scripts/build-all.sh 1.1.0
 ```
 
-## Step 6: Deployment Script
+Each environment directory now holds both versions.
+
+## Step 7: Compare the two prod packs
 
 ```bash
-cat > scripts/deploy.sh <<'EOF'
-#!/bin/bash
-set -e
-
-ENVIRONMENT="$1"
-VERSION="$2"
-
-if [ -z "$ENVIRONMENT" ] || [ -z "$VERSION" ]; then
-  echo "Usage: $0 <environment> <version>"
-  echo "Example: $0 prod 1.0.0"
-  exit 1
-fi
-
-PACK_FILE="packs/$ENVIRONMENT/assistant-v${VERSION}.pack.json"
-
-echo "=== Deploying to $ENVIRONMENT ==="
-
-# 1. Verify pack exists
-if [ ! -f "$PACK_FILE" ]; then
-  echo "Pack not found: $PACK_FILE"
-  exit 1
-fi
-
-# 2. Validate pack
-echo "Validating pack..."
-packc validate "$PACK_FILE"
-
-# 3. Backup current pack
-if [ -f "/deployment/$ENVIRONMENT/assistant.pack.json" ]; then
-  cp "/deployment/$ENVIRONMENT/assistant.pack.json" \
-     "/deployment/$ENVIRONMENT/backups/assistant-$(date +%Y%m%d-%H%M%S).pack.json"
-  echo "Backed up current pack"
-fi
-
-# 4. Deploy new pack
-mkdir -p "/deployment/$ENVIRONMENT"
-cp "$PACK_FILE" "/deployment/$ENVIRONMENT/assistant.pack.json"
-
-echo "Deployed: $PACK_FILE to $ENVIRONMENT"
-EOF
-
-chmod +x scripts/deploy.sh
+diff <(packc inspect packs/prod/assistant-1.0.0.pack.json) \
+     <(packc inspect packs/prod/assistant-1.1.0.pack.json)
 ```
 
-Deploy to staging:
+The diff shows the prompt's new version:
+
+```text
+15c15
+<   Version: v1.0.0
+---
+>   Version: v1.1.0
+```
+
+The `Compilation:` line differs too when the two builds ran in different seconds. The pack-level `Version:` stays `v1.0.0`: `packc compile` always writes that value, so the prompt version and the file name carry the release number. To see the prompt text change, compare the JSON (it also shows `created_at` when the builds ran in different seconds):
 
 ```bash
-./scripts/deploy.sh staging 1.0.0
+diff packs/prod/assistant-1.0.0.pack.json packs/prod/assistant-1.1.0.pack.json
 ```
 
-Deploy to production:
-
-```bash
-./scripts/deploy.sh prod 1.0.0
+```text
+50c50
+<       "system_template": "You are a helpful AI assistant.\nUser: {{user_message}}\n",
+---
+>       "system_template": "You are a concise AI assistant.\nUser: {{user_message}}\n",
+58c58
+<       "version": "v1.0.0"
+---
+>       "version": "v1.1.0"
 ```
 
-## Step 7: Cleanup Old Versions
+## Next steps
 
-```bash
-cat > scripts/cleanup-old-versions.sh <<'EOF'
-#!/bin/bash
-
-ENVIRONMENT="$1"
-KEEP_VERSIONS="${2:-3}"
-
-if [ -z "$ENVIRONMENT" ]; then
-  echo "Usage: $0 <environment> [keep_versions]"
-  exit 1
-fi
-
-cd "packs/$ENVIRONMENT"
-
-echo "Keeping latest $KEEP_VERSIONS versions in $ENVIRONMENT"
-
-# List versions, sort, keep latest N
-ls -t assistant-v*.pack.json | tail -n +$((KEEP_VERSIONS + 1)) | while read file; do
-  echo "Removing: $file"
-  rm "$file"
-done
-
-echo "Cleanup complete"
-EOF
-
-chmod +x scripts/cleanup-old-versions.sh
-```
-
-Clean up:
-
-```bash
-./scripts/cleanup-old-versions.sh dev 3
-./scripts/cleanup-old-versions.sh staging 5
-./scripts/cleanup-old-versions.sh prod 10
-```
-
-## Step 8: Pack Inventory
-
-Track what's deployed:
-
-```bash
-cat > scripts/inventory.sh <<'EOF'
-#!/bin/bash
-
-echo "=== Pack Inventory ==="
-echo ""
-
-for env in dev staging prod; do
-  echo "Environment: $env"
-  echo "---"
-  
-  if [ -d "packs/$env" ]; then
-    ls -lh "packs/$env/"*.pack.json | awk '{print "  " $9, "(" $5 ")"}'
-    
-    latest="packs/$env/assistant-latest.pack.json"
-    if [ -L "$latest" ]; then
-      target=$(readlink "$latest")
-      echo "  Latest -> $target"
-    fi
-  fi
-  
-  echo ""
-done
-EOF
-
-chmod +x scripts/inventory.sh
-```
-
-View inventory:
-
-```bash
-./scripts/inventory.sh
-```
-
-## What You Learned
-
-- Organized packs by environment
-- Implemented versioning strategy
-- Created deployment workflows
-- Managed pack lifecycle
-- Automated cleanup
-
-## Best Practices
-
-### 1. Semantic Versioning
-
-```
-MAJOR.MINOR.PATCH
-2.1.3
-
-MAJOR: Breaking changes
-MINOR: New features
-PATCH: Bug fixes
-```
-
-### 2. Environment Isolation
-
-```
-Separate configs per environment
-Test in dev → staging → prod
-Never skip staging
-```
-
-### 3. Always Backup
-
-```bash
-# Before deployment
-cp current.pack.json backups/
-cp new.pack.json current.pack.json
-```
-
-### 4. Track Deployments
-
-```bash
-# Log deployments
-echo "$(date): Deployed v1.0.0 to prod" >> deployments.log
-```
-
-## Next Steps
-
-- **[Tutorial 5: CI/CD Pipeline](/packc/tutorials/05-ci-cd-pipeline/)** - Automate everything
-- **[How-To: Organize Packs](/packc/how-to/organize-packs/)** - More organization strategies
-- **[Explanation: Pack Format](/packc/explanation/pack-format/)** - Understand pack structure
-
-## Summary
-
-You now can:
-- Manage packs across environments
-- Version packs properly
-- Deploy safely with backups
-- Track pack inventory
-- Clean up old versions
-
-Excellent progress!
+- [Tutorial 5: CI/CD Pipeline](/packc/tutorials/05-ci-cd-pipeline/): build and release packs in GitHub Actions
+- [Organize packs](/packc/how-to/organize-packs/): more layouts for environments and versions
+- [Pack format](/packc/explanation/pack-format/)
