@@ -41,8 +41,12 @@ describe("CommandStrip", () => {
 
   it("marks selected scenarios active and unselected inactive", () => {
     setup({ selected: ["checkout"] });
-    expect(screen.getByText("Checkout").closest("button")).toHaveStyle({ background: "var(--starlight-tint)" });
-    expect(screen.getByText("refund").closest("button")).not.toHaveStyle({ background: "var(--starlight-tint)" });
+    // Read the inline declaration, not toHaveStyle: jsdom 30 computes the
+    // cascaded style, and an unresolved var() in the background shorthand
+    // computes to the initial value, so toHaveStyle can never match it.
+    const pill = (text: string) => screen.getByText(text).closest("button") as HTMLButtonElement;
+    expect(pill("Checkout").style.background).toBe("var(--starlight-tint)");
+    expect(pill("refund").style.background).not.toBe("var(--starlight-tint)");
   });
 
   it("emits the narrowed scenario selection when a pill is clicked", () => {
