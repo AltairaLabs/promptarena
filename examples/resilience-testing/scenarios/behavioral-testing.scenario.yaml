@@ -35,7 +35,7 @@ spec:
           params:
             check: similar_content
             baseline_content: "Your order is being processed and will ship soon"
-            threshold: 0.15
+            min_score: 0.15
           message: "Response should be directionally similar to baseline"
 
         # Directional: same tool calls as baseline
@@ -66,7 +66,7 @@ spec:
           params:
             check: similar_content
             baseline_content: "Our return policy allows returns within 30 days for a full refund"
-            threshold: 0.15
+            min_score: 0.15
           message: "Should give directionally similar return policy info"
 
   # --- Conversation-level assertions ---
