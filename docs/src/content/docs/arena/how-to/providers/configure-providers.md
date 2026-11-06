@@ -442,7 +442,7 @@ conversation_assertions:
       min_score: 0.6
 ```
 
-(See [Classify-backed Checks](https://promptkit.altairalabs.ai/reference/checks/#classify-backed-checks) for the full convention.)
+(See [Inference-backed checks](https://promptkit.altairalabs.ai/reference/checks/#inference-backed-checks) for the full convention.)
 
 When HuggingFace returns a 503 "model is loading" the assertion is
 recorded as **skipped**, not failed — the model isn't broken, it
