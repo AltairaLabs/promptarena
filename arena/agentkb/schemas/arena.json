@@ -439,6 +439,8 @@
         },
         "pass_threshold": {
           "type": "number",
+          "maximum": 1,
+          "minimum": 0,
           "description": "PassThreshold is the minimum pass rate (0.0-1.0) required across trials.\nOnly meaningful when the parent scenario has Trials \u003e 1.\nIf unset, defaults to 1.0 (must pass every trial)."
         }
       },
@@ -1703,7 +1705,7 @@
       "properties": {
         "file": {
           "type": "string",
-          "description": "Custom JUnit output file name"
+          "description": "File is the JUnit XML file. A relative path is relative to the output\ndirectory; --junit-file overrides it. Default: junit.xml."
         }
       },
       "additionalProperties": false,
