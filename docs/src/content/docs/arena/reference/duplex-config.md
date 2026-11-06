@@ -2,22 +2,26 @@
 title: Duplex Configuration Reference
 description: Scenario fields, voice catalog, audio input format and pipeline stages for duplex (bidirectional) streaming runs.
 verified:
-  commit: c67065389ccbc6e76babad54b4345e1c76bb633e
+  commit: 60cd1a146e6224c0d66c972d18f329a0ce76c522
   sources:
     - arena/arenaconfig/loader.go
     - arena/arenaconfig/persona.go
     - arena/arenaconfig/types.go
     - arena/arenaconfig/voice.go
-    - arena/engine/composite_conversation_executor.go
-    - arena/engine/conversation_executor.go
+    - arena/cmd/promptarena/run.go
+    - arena/cmd/promptarena/run_interactive.go
+    - arena/engine/builder_integration.go
     - arena/engine/duplex_conversation_executor.go
-    - arena/engine/duplex_executor_assertions_integration.go
     - arena/engine/duplex_executor_pipeline_integration.go
     - arena/engine/duplex_executor_turns_integration.go
     - arena/engine/duplex_executor_types.go
     - arena/selfplay/registry.go
+    - arena/selfplay/tts_registry.go
     - arena/turnexecutors/audio_file_source.go
     - arena/turnexecutors/media_validator.go
+    - examples/duplex-streaming/providers/mock-tts.provider.yaml
+    - examples/duplex-streaming/providers/openai-alloy.provider.yaml
+    - examples/voice-refund-demo/config.arena.yaml
     - schemas/v1alpha1/provider.json
     - schemas/v1alpha1/scenario.json
 ---
@@ -52,7 +56,17 @@ spec:
     resilience:
       max_retries: 2
       partial_success_min_turns: 2
+
+  turns:
+    - role: user
+      parts:
+        - type: audio
+          media:
+            file_path: audio/greeting.pcm
+            mime_type: audio/L16
 ```
+
+A scenario file needs a `turns` list. The schema check at load rejects a spec without one.
 
 ---
 
@@ -95,7 +109,7 @@ Configures how turn boundaries are detected during duplex streaming.
 
 | Mode | Name | Description |
 |------|------|-------------|
-| `asm` | Provider-Native | The provider handles turn detection internally with its own automatic speech detection (for example Gemini's `automaticActivityDetection`). The arena adds no `AudioTurnStage`. |
+| `asm` | Provider-Native | The provider handles turn detection internally with its own automatic speech detection (for example Gemini's `automaticActivityDetection`). The arena adds no `AudioTurnStage`. In a scenario with self-play turns, when the arena's `self_play` section is enabled, the arena turns the provider's speech detection off for the session. |
 | `vad` | Voice Activity Detection | Client-side VAD with configurable silence thresholds. The arena adds an `AudioTurnStage`. |
 
 Turn detection defaults to client-side VAD when the `turn_detection` block is omitted. A `turn_detection` block whose `mode` is empty or `asm` uses ASM.
@@ -136,14 +150,7 @@ duplex:
       max_turn_duration_s: 30     # Limit long turns
 ```
 
-### Tuning Guidelines
-
-| Scenario | silence_threshold_ms | min_speech_ms |
-|----------|---------------------|---------------|
-| Quick responses | 400-500 | 150-200 |
-| Natural conversation | 600-800 | 200-300 |
-| TTS with pauses | 1000-1500 | 500-800 |
-| Slow/deliberate speech | 1200-2000 | 800-1000 |
+See [Tuning Turn Detection](/arena/how-to/voice/setup-voice-testing/#tuning-turn-detection) for choosing values.
 
 ---
 
@@ -194,8 +201,18 @@ With `false`, the final turn must complete without session termination.
 ## Voice Catalog
 
 [Text-to-speech (TTS)](https://promptkit.altairalabs.ai/glossary#tts) for self-play audio generation comes from the
-arena voice catalog. TTS providers are declared in `tts_providers:` and bound to voice IDs in
-`voices:`. Personas and scripted-text scenarios reference those IDs.
+arena voice catalog. TTS providers are `providers:` entries with `role: tts`, or entries in the
+`tts_providers:` list; both load into the same catalog. `voices:` binds a voice ID to each one.
+Personas and scripted-text scenarios reference those IDs.
+
+### TTS Provider Types
+
+| `type` | `spec.voice` |
+|--------|--------------|
+| `openai` | `alloy`, `echo`, `fable`, `onyx`, `nova` or `shimmer` |
+| `elevenlabs` | A voice ID from your ElevenLabs account |
+| `cartesia` | A voice ID from your Cartesia account |
+| `mock` | - |
 
 ### Arena-Level Declaration
 
@@ -250,20 +267,9 @@ spec:
 
 To change how each voice sounds as well, see [audio transforms](/arena/reference/config-schema/#audio-transforms).
 
-### CI vs Recording Mode
+### Real or Mock TTS
 
-The `provider` of a `voices:` entry selects real vendor TTS or mock TTS. Personas and scenarios reference the voice ID only:
-
-```yaml
-voices:
-  # Real vendor TTS:
-  - id: alloy
-    provider: openai-alloy
-
-  # Mock TTS:
-  # - id: alloy
-  #   provider: mock-tts
-```
+The `provider` of a `voices:` entry selects real vendor TTS or mock TTS. Personas and scenarios reference the voice ID only. See [Run the Test](/arena/how-to/voice/setup-voice-testing/#6-run-the-test) for a keyless run.
 
 ---
 
@@ -291,20 +297,7 @@ turns:
 | Channels | Mono | Every chunk is labelled one channel, WAV or raw; audio is not downmixed |
 | MIME Type | any `audio/` type | `mime_type` is required by the schema and needs an `audio/` prefix where validated. Decoding follows the file extension; `mime_type` labels the stored audio |
 
-Source files are 16 kHz mono: 16-bit for raw files, 16/24/32-bit or float32 for WAV.
-
-### Converting Audio Files
-
-```bash
-# WAV to raw PCM
-ffmpeg -i input.wav -f s16le -ar 16000 -ac 1 output.pcm
-
-# MP3 to PCM
-ffmpeg -i input.mp3 -f s16le -ar 16000 -ac 1 output.pcm
-
-# Check a WAV file's sample rate, channels and sample format
-ffprobe -show_streams input.wav
-```
+See [Prepare the Audio](/arena/how-to/voice/setup-voice-testing/#prepare-the-audio) to convert files to this format.
 
 ---
 
@@ -445,6 +438,9 @@ Common configuration errors and solutions:
 | `persona <name>: voice id "<id>" not found in spec.voices` | Persona references a voice ID not declared in `voices:` | Add the voice binding to the arena `voices:` list |
 | `scenario <name>: voice id "X" not found in spec.voices` | Scenario references an undeclared voice ID | Add the voice binding to the arena `voices:` list |
 | `voice "X" binds to provider "Y" which is not loaded in spec.tts_providers` | Scenario voice binds to a provider that is not loaded | List the provider file in `tts_providers:` |
+| `scenario <name>: set voice or voices, not both` | A scenario sets both `voice` and `voices` | Keep one of them |
+| `scenario <name>: voices need a duplex scenario` | A scenario sets `voices` without a `duplex` block | Add `duplex:` or remove `voices` |
+| `turns[N].objective is not supported in duplex scenarios` | A duplex scenario's turn sets `objective` | Remove the objective from the duplex scenario |
 
 ---
 

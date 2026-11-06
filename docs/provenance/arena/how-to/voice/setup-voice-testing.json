@@ -1,369 +1,933 @@
 {
  "page": "docs/src/content/docs/arena/how-to/voice/setup-voice-testing.md",
- "commit": "c67065389ccbc6e76babad54b4345e1c76bb633e",
+ "commit": "60cd1a146e6224c0d66c972d18f329a0ce76c522",
  "claims": [
   {
    "id": 1,
-   "claim": "Arena config has tts_providers field accepting file entries",
+   "claim": "Self-play persona speaks through TTS in the voice test run",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:526",
-    "arena/arenaconfig/types.go:197"
+    "arena/engine/duplex_executor_turns_integration.go:366",
+    "arena/selfplay/audio_generator.go:117",
+    "arena/selfplay/registry.go:152"
    ]
   },
   {
    "id": 2,
-   "claim": "Arena config has voices field accepting id and provider",
+   "claim": "Real-provider run needs a Gemini API key, used by the duplex model; env var GEMINI_API_KEY",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:636",
-    "arena/arenaconfig/types.go:205",
-    "arena/arenaconfig/voice.go:12"
+    "arena/arenaconfig/types.go:208"
    ]
   },
   {
    "id": 3,
-   "claim": "Provider resource apiVersion is promptkit.altairalabs.ai/v1alpha1",
+   "claim": "Real-provider run needs an OpenAI API key for the self-play text model and TTS; env var OPENAI_API_KEY",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/provider.json:311"
+    "arena/selfplay/tts_registry.go:223",
+    "arena/selfplay/tts_registry.go:27"
    ]
   },
   {
    "id": 4,
-   "claim": "Provider resource kind is Provider",
+   "claim": "A keyless run works because the project includes mock providers (type mock)",
    "verdict": "true",
-   "evidence": []
+   "evidence": [
+    "arena/selfplay/mock_tts_interactive.go:21",
+    "arena/selfplay/tts_registry.go:183"
+   ]
   },
   {
    "id": 5,
-   "claim": "Provider spec.type can be openai",
+   "claim": "Audio files must be PCM, 16kHz, 16-bit, mono",
    "verdict": "true",
    "evidence": [
-    "arena/selfplay/tts_registry.go:158",
-    "arena/selfplay/tts_registry.go:17"
+    "arena/engine/duplex_executor_turns_integration.go:576",
+    "arena/turnexecutors/audio_file_source.go:104",
+    "arena/turnexecutors/audio_file_source.go:92"
    ]
   },
   {
    "id": 6,
-   "claim": "Provider spec.role can be tts",
+   "claim": "Every path in the guide is relative to the project directory",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:534"
+    "arena/arenaconfig/loader.go:520",
+    "arena/arenaconfig/loader.go:553",
+    "arena/engine/duplex_executor_pipeline_integration.go:210"
    ]
   },
   {
    "id": 7,
-   "claim": "Provider spec has voice field for TTS voice identifier",
+   "claim": "config.arena.yaml loads each file by the path shown in its heading",
    "verdict": "true",
    "evidence": [
-    "arena/selfplay/audio_generator.go:122"
+    "arena/arenaconfig/loader.go:520",
+    "arena/arenaconfig/loader.go:553",
+    "arena/arenaconfig/loader.go:920"
    ]
   },
   {
    "id": 8,
-   "claim": "Provider spec has sample_rate field with integer value",
+   "claim": "examples/duplex-streaming/ holds a larger project with the same layout",
    "verdict": "true",
    "evidence": [
-    "arena/selfplay/audio_generator.go:123"
+    "examples/duplex-streaming/config.arena.yaml"
    ]
   },
   {
    "id": 9,
-   "claim": "Provider spec.type can be gemini",
+   "claim": "Project file layout: config.arena.yaml, audio/greeting.pcm, prompts/voice-assistant.prompt.yaml, providers/{gemini-live,openai-gpt4o-mini-text,openai-alloy,mock-tts,mock-duplex}.provider.yaml, personas/test-user.persona.yaml, scenarios/voice-selfplay.scenario.yaml",
    "verdict": "true",
-   "evidence": []
+   "evidence": [
+    "examples/duplex-streaming/providers/mock-duplex.provider.yaml",
+    "examples/duplex-streaming/providers/mock-tts.provider.yaml"
+   ]
   },
   {
    "id": 10,
-   "claim": "Provider spec.model can be set to gemini-2.0-flash-exp",
-   "verdict": "unverified",
+   "claim": "greeting.pcm can be copied from examples/duplex-streaming/audio/",
+   "verdict": "true",
    "evidence": []
   },
   {
    "id": 11,
-   "claim": "Provider spec.additional_config can have audio_enabled boolean field",
-   "verdict": "dead",
+   "claim": "TTS providers are declared under tts_providers: at the arena level",
+   "verdict": "true",
    "evidence": [
-    "examples/duplex-streaming/providers/gemini-2-flash.provider.yaml:25"
+    "arena/arenaconfig/loader.go:662",
+    "arena/arenaconfig/types.go:208"
    ]
   },
   {
    "id": 12,
-   "claim": "Provider spec.additional_config can have response_modalities array",
+   "claim": "Voice IDs are bound under voices:",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:516"
+    "arena/arenaconfig/loader.go:770",
+    "arena/arenaconfig/types.go:217"
    ]
   },
   {
    "id": 13,
-   "claim": "response_modalities can have enum value AUDIO",
+   "claim": "Personas and scenarios reference voice IDs from voices:, so one edit to voices: swaps between a real vendor and mock TTS",
    "verdict": "true",
-   "evidence": []
+   "evidence": [
+    "arena/arenaconfig/loader.go:791",
+    "arena/arenaconfig/loader.go:817",
+    "arena/arenaconfig/voice.go:12",
+    "arena/engine/duplex_executor_turns_integration.go:347"
+   ]
   },
   {
    "id": 14,
-   "claim": "Persona resource kind is Persona",
+   "claim": "prompt_configs: entry supplies the prompt whose task_type the scenario names",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/persona.go:172"
+    "arena/arenaconfig/loader.go:540",
+    "arena/arenaconfig/types.go:88",
+    "arena/arenaconfig/validator.go:313"
    ]
   },
   {
    "id": 15,
-   "claim": "Persona spec has voice field accepting voice ID",
+   "claim": "scenarios: lists the scenario file that --scenario voice-selfplay resolves",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go",
-    "arena/arenaconfig/persona.go:48",
-    "arena/engine/duplex_executor_turns_integration.go:355"
+    "arena/arenaconfig/loader.go:551",
+    "arena/arenaconfig/types.go:98",
+    "arena/cmd/promptarena/run.go:285"
    ]
   },
   {
    "id": 16,
-   "claim": "Scenario resource kind is Scenario",
+   "claim": "Arena config header: apiVersion promptkit.altairalabs.ai/v1alpha1, kind Arena",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:344"
+    "arena/arenaconfig/loader.go:137",
+    "schemas/v1alpha1/arena.json"
    ]
   },
   {
    "id": 17,
-   "claim": "Scenario spec.task_type can be voice-assistant",
+   "claim": "Arena config field metadata.name",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:667",
-    "arena/engine/duplex_executor_pipeline_integration.go:282"
+    "arena/arenaconfig/types.go:71"
    ]
   },
   {
    "id": 18,
-   "claim": "Scenario spec.streaming is a boolean field",
+   "claim": "Arena config field spec.prompt_configs[] with keys id and file",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:686",
-    "arena/engine/conversation_executor.go:285"
+    "arena/arenaconfig/loader.go:540",
+    "arena/arenaconfig/types.go:61"
    ]
   },
   {
    "id": 19,
-   "claim": "Scenario spec has duplex field",
+   "claim": "Arena config field spec.providers[] with key file",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:692",
-    "arena/engine/composite_conversation_executor.go:129"
+    "arena/arenaconfig/loader.go:576",
+    "arena/arenaconfig/types.go:385"
    ]
   },
   {
    "id": 20,
-   "claim": "Duplex config has timeout field accepting duration values",
+   "claim": "Arena config field spec.tts_providers[] with key file",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:891",
-    "arena/arenaconfig/types.go:957",
-    "arena/engine/duplex_conversation_executor.go:96"
+    "arena/arenaconfig/loader.go:662",
+    "arena/arenaconfig/types.go:385"
    ]
   },
   {
    "id": 21,
-   "claim": "Duplex config has turn_detection field",
+   "claim": "Arena config field spec.voices[] with keys id and provider",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:893",
-    "arena/engine/duplex_conversation_executor.go:122"
+    "arena/arenaconfig/loader.go:770",
+    "arena/arenaconfig/types.go:217"
    ]
   },
   {
    "id": 22,
-   "claim": "TurnDetection mode can be vad",
+   "claim": "Arena config field spec.scenarios[] with key file",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1015",
-    "arena/arenaconfig/types.go:882",
-    "arena/engine/duplex_conversation_executor.go:122"
+    "arena/arenaconfig/loader.go:551",
+    "arena/arenaconfig/types.go:412"
    ]
   },
   {
    "id": 23,
-   "claim": "TurnDetection has vad sub-object field",
+   "claim": "Arena config field spec.self_play.personas[] with key file",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:920",
-    "arena/engine/duplex_conversation_executor.go:131"
+    "arena/arenaconfig/loader.go:919",
+    "arena/arenaconfig/types.go:448"
    ]
   },
   {
    "id": 24,
-   "claim": "VAD config has silence_threshold_ms integer field",
+   "claim": "Arena config field spec.self_play.roles[] with keys id and provider",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:926",
+    "arena/arenaconfig/loader.go:941",
+    "arena/arenaconfig/types.go:453"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "Arena config field spec.defaults.temperature",
+   "verdict": "dead",
+   "evidence": [
+    "arena/arenaconfig/types.go:460",
+    "arena/engine/conversation_executor.go:434",
+    "arena/selfplay/generator.go:425"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "Arena config field spec.defaults.max_tokens",
+   "verdict": "dead",
+   "evidence": [
+    "arena/arenaconfig/types.go:461",
+    "arena/engine/conversation_executor.go:453",
+    "arena/selfplay/generator.go:451"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "Arena config field spec.defaults.concurrency",
+   "verdict": "dead",
+   "evidence": [
+    "arena/arenaconfig/types.go:463",
+    "arena/cmd/promptarena/run.go:143",
+    "arena/cmd/promptarena/run.go:291"
+   ]
+  },
+  {
+   "id": 28,
+   "claim": "Arena config field spec.defaults.output.dir",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:514",
+    "arena/engine/engine.go:1019",
+    "arena/engine/engine.go:703"
+   ]
+  },
+  {
+   "id": 29,
+   "claim": "Arena config field spec.defaults.output.formats accepts json and markdown",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:515",
+    "arena/cmd/promptarena/run.go:372",
+    "arena/cmd/promptarena/run.go:426"
+   ]
+  },
+  {
+   "id": 30,
+   "claim": "The self_play.roles entry defines the selfplay-user role used by the scenario in step 5",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:453",
+    "arena/engine/duplex_conversation_executor.go:170",
+    "arena/engine/duplex_conversation_executor.go:178"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "A self_play role's provider must be a text LLM provider listed under providers:",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:940",
+    "arena/arenaconfig/loader.go:947"
+   ]
+  },
+  {
+   "id": 32,
+   "claim": "Provider manifest kind Provider with metadata.name gemini-live",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/provider.json:277"
+   ]
+  },
+  {
+   "id": 33,
+   "claim": "Provider spec.type gemini is a registered provider type",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/provider.json:105"
+   ]
+  },
+  {
+   "id": 34,
+   "claim": "Provider spec.model gemini-2.0-flash-exp (model for gemini-live)",
+   "verdict": "unverified",
+   "evidence": [
+    "examples/duplex-streaming/providers/gemini-2-flash.provider.yaml:14"
+   ]
+  },
+  {
+   "id": 35,
+   "claim": "Provider spec.additional_config.response_modalities accepts AUDIO for the gemini provider",
+   "verdict": "true",
+   "evidence": [
+    "examples/duplex-streaming/providers/gemini-2-flash.provider.yaml:29",
+    "schemas/v1alpha1/provider.json:160"
+   ]
+  },
+  {
+   "id": 36,
+   "claim": "gemini-live is the duplex-capable model that the guide calls the duplex model",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_conversation_executor.go:105",
+    "examples/duplex-streaming/providers/gemini-2-flash.provider.yaml"
+   ]
+  },
+  {
+   "id": 37,
+   "claim": "Provider spec.type openai with spec.model gpt-4o-mini (openai-gpt4o-mini-text)",
+   "verdict": "true",
+   "evidence": [
+    "examples/duplex-streaming/providers/openai-gpt4o-mini-text.provider.yaml",
+    "schemas/v1alpha1/provider.json:105"
+   ]
+  },
+  {
+   "id": 38,
+   "claim": "Provider spec.role accepts tts",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:662",
+    "schemas/v1alpha1/provider.json:123"
+   ]
+  },
+  {
+   "id": 39,
+   "claim": "Provider spec.voice field (value alloy for openai TTS)",
+   "verdict": "true",
+   "evidence": [
+    "arena/selfplay/audio_generator.go:122",
+    "schemas/v1alpha1/provider.json:111"
+   ]
+  },
+  {
+   "id": 40,
+   "claim": "Provider spec.sample_rate field (value 24000 in openai-alloy and mock-tts)",
+   "verdict": "true",
+   "evidence": [
+    "arena/selfplay/audio_generator.go:123",
+    "schemas/v1alpha1/provider.json:114"
+   ]
+  },
+  {
+   "id": 41,
+   "claim": "openai-alloy is a real TTS vendor provider (type openai, role tts)",
+   "verdict": "true",
+   "evidence": [
+    "arena/selfplay/tts_registry.go:177",
+    "arena/selfplay/tts_registry.go:222"
+   ]
+  },
+  {
+   "id": 42,
+   "claim": "Provider spec.type mock is a registered provider type, and mock-tts uses role tts with sample_rate 24000",
+   "verdict": "true",
+   "evidence": [
+    "arena/selfplay/mock_tts_interactive.go:21",
+    "arena/selfplay/tts_registry.go:183",
+    "schemas/v1alpha1/provider.json:123"
+   ]
+  },
+  {
+   "id": 43,
+   "claim": "Provider spec.model mock-duplex-model and spec.type mock for the mock duplex provider",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/provider.json:105",
+    "schemas/v1alpha1/provider.json:108"
+   ]
+  },
+  {
+   "id": 44,
+   "claim": "Provider additional_config.auto_respond is a supported option of the mock duplex provider",
+   "verdict": "true",
+   "evidence": [
+    "examples/duplex-streaming/providers/mock-duplex.provider.yaml:27"
+   ]
+  },
+  {
+   "id": 45,
+   "claim": "Provider additional_config.response_text is a supported option of the mock duplex provider",
+   "verdict": "true",
+   "evidence": [
+    "examples/duplex-streaming/providers/mock-duplex.provider.yaml:28"
+   ]
+  },
+  {
+   "id": 46,
+   "claim": "With auto_respond true, the mock duplex model answers each user turn with response_text",
+   "verdict": "true",
+   "evidence": [
+    "examples/duplex-streaming/providers/mock-duplex.provider.yaml:27"
+   ]
+  },
+  {
+   "id": 47,
+   "claim": "The scenario task_type must match the task_type of a loaded prompt config",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/validator.go:313",
+    "arena/engine/duplex_executor_pipeline_integration.go:280"
+   ]
+  },
+  {
+   "id": 48,
+   "claim": "PromptConfig kind with metadata.name voice-assistant",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1423",
+    "schemas/v1alpha1/promptconfig.json"
+   ]
+  },
+  {
+   "id": 49,
+   "claim": "PromptConfig spec.task_type field",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:543",
+    "schemas/v1alpha1/promptconfig.json:670"
+   ]
+  },
+  {
+   "id": 50,
+   "claim": "PromptConfig spec.version field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/promptconfig.json:674"
+   ]
+  },
+  {
+   "id": 51,
+   "claim": "PromptConfig spec.description field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/promptconfig.json"
+   ]
+  },
+  {
+   "id": 52,
+   "claim": "PromptConfig spec.system_template field",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_executor_pipeline_integration.go:287",
+    "schemas/v1alpha1/promptconfig.json:690"
+   ]
+  },
+  {
+   "id": 53,
+   "claim": "The voice-assistant prompt asks the assistant to end each answer by asking what else it can help with (so the final reply contains help)",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_executor_pipeline_integration.go:285"
+   ]
+  },
+  {
+   "id": 54,
+   "claim": "A persona voice ID is resolved from the catalog to the correct TTS provider at run time",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/voice.go:12",
+    "arena/engine/duplex_executor_turns_integration.go:347",
+    "arena/engine/duplex_executor_turns_integration.go:366"
+   ]
+  },
+  {
+   "id": 55,
+   "claim": "Persona manifest kind Persona with metadata.name test-user",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/persona.go:27"
+   ]
+  },
+  {
+   "id": 56,
+   "claim": "Persona spec.id field",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/persona.go:36"
+   ]
+  },
+  {
+   "id": 57,
+   "claim": "Persona spec.voice field referencing a voice ID",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:817",
+    "arena/arenaconfig/persona.go:56"
+   ]
+  },
+  {
+   "id": 58,
+   "claim": "Persona spec.description field",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/persona.go:37"
+   ]
+  },
+  {
+   "id": 59,
+   "claim": "Persona spec.system_template field",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/persona.go:42",
+    "arena/selfplay/generator.go"
+   ]
+  },
+  {
+   "id": 60,
+   "claim": "The scenario references the persona by ID and needs no inline tts: block; the voice resolves through the catalog",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/voice.go:12",
+    "arena/engine/duplex_executor_turns_integration.go:347"
+   ]
+  },
+  {
+   "id": 61,
+   "claim": "conversation_assertions entry of type content_includes passes when the assistant's final reply contains help",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:701",
+    "schemas/v1alpha1/scenario.json"
+   ]
+  },
+  {
+   "id": 62,
+   "claim": "Assertion type content_includes is a registered conversation assertion type",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:701"
+   ]
+  },
+  {
+   "id": 63,
+   "claim": "content_includes takes params.patterns as a list",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:24"
+   ]
+  },
+  {
+   "id": 64,
+   "claim": "conversation_assertions entries accept a message field",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:25"
+   ]
+  },
+  {
+   "id": 65,
+   "claim": "Scenario manifest kind Scenario with metadata.name voice-selfplay",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:676"
+   ]
+  },
+  {
+   "id": 66,
+   "claim": "Scenario spec.id field",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:677"
+   ]
+  },
+  {
+   "id": 67,
+   "claim": "Scenario spec.task_type field",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:678",
+    "arena/arenaconfig/validator.go:313"
+   ]
+  },
+  {
+   "id": 68,
+   "claim": "Scenario spec.description field",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:680"
+   ]
+  },
+  {
+   "id": 69,
+   "claim": "Scenario spec.duplex block exists",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:703",
+    "arena/arenaconfig/types.go:967"
+   ]
+  },
+  {
+   "id": 70,
+   "claim": "duplex.timeout accepts a duration string such as 5m",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1018",
+    "arena/arenaconfig/types.go:969",
+    "arena/engine/duplex_executor_pipeline_integration.go:331"
+   ]
+  },
+  {
+   "id": 71,
+   "claim": "duplex.turn_detection.mode accepts vad",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1093",
+    "arena/arenaconfig/types.go:960",
+    "arena/engine/duplex_conversation_executor.go:122"
+   ]
+  },
+  {
+   "id": 72,
+   "claim": "duplex.turn_detection.vad.silence_threshold_ms field (value 1200)",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1004",
     "arena/engine/duplex_conversation_executor.go:131",
     "arena/engine/duplex_executor_pipeline_integration.go:606"
    ]
   },
   {
-   "id": 25,
-   "claim": "VAD config has min_speech_ms integer field",
+   "id": 73,
+   "claim": "duplex.turn_detection.vad.min_speech_ms field (value 500)",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:928",
+    "arena/arenaconfig/types.go:1006",
     "arena/engine/duplex_conversation_executor.go:134",
     "arena/engine/duplex_executor_pipeline_integration.go:609"
    ]
   },
   {
-   "id": 26,
-   "claim": "Duplex resilience config has partial_success_min_turns field",
+   "id": 74,
+   "claim": "duplex.resilience.partial_success_min_turns field (value 2)",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:908",
+    "arena/arenaconfig/types.go:986",
     "arena/engine/duplex_executor_turns_integration.go:106"
    ]
   },
   {
-   "id": 27,
-   "claim": "Duplex resilience config has ignore_last_turn_session_end boolean field",
+   "id": 75,
+   "claim": "duplex.resilience.ignore_last_turn_session_end field (value true)",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:912",
+    "arena/arenaconfig/types.go:990",
     "arena/engine/duplex_executor_turns_integration.go:107"
    ]
   },
   {
-   "id": 28,
-   "claim": "Turn role can be user",
+   "id": 76,
+   "claim": "Scenario spec.conversation_assertions[] list exists",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1051",
-    "arena/engine/duplex_executor_turns_integration.go:322"
+    "arena/arenaconfig/types.go:701"
    ]
   },
   {
-   "id": 29,
-   "claim": "Turn has parts field accepting part objects",
+   "id": 77,
+   "claim": "Scenario spec.turns[] entries accept role, parts, persona, and turns keys",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1057",
-    "arena/engine/duplex_executor_turns_integration.go:396"
+    "arena/arenaconfig/types.go:1128",
+    "arena/arenaconfig/types.go:1134",
+    "arena/arenaconfig/types.go:1137",
+    "arena/arenaconfig/types.go:1139"
    ]
   },
   {
-   "id": 30,
-   "claim": "Part type can be audio",
+   "id": 78,
+   "claim": "Turn parts[].type accepts audio",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1107",
-    "arena/engine/duplex_executor_turns_integration.go:32",
-    "arena/engine/duplex_executor_turns_integration.go:343"
+    "arena/arenaconfig/types.go:1404",
+    "schemas/v1alpha1/scenario.json:835"
    ]
   },
   {
-   "id": 31,
-   "claim": "Audio part has media field",
+   "id": 79,
+   "claim": "Turn part media.file_path field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1111",
-    "arena/engine/duplex_executor_turns_integration.go:408"
+    "arena/arenaconfig/types.go:1413",
+    "arena/engine/duplex_executor_turns_integration.go:451"
    ]
   },
   {
-   "id": 32,
-   "claim": "Media has file_path field",
+   "id": 80,
+   "claim": "Turn part media.mime_type accepts audio/L16",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1116",
-    "arena/engine/duplex_executor_turns_integration.go:413"
+    "arena/arenaconfig/types.go:1417",
+    "arena/turnexecutors/media_validator.go:219"
    ]
   },
   {
-   "id": 33,
-   "claim": "Media mime_type can be audio/L16",
+   "id": 81,
+   "claim": "Turn role selfplay-user matches the self_play role defined in config",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1121",
-    "examples/duplex-streaming/scenarios/duplex-selfplay.scenario.yaml:41"
-   ]
-  },
-  {
-   "id": 34,
-   "claim": "Turn role can be selfplay-user",
-   "verdict": "false",
-   "evidence": [
-    "arena/arenaconfig/types.go:442",
+    "arena/engine/duplex_conversation_executor.go:170",
     "arena/engine/duplex_conversation_executor.go:178",
-    "arena/engine/duplex_executor_turns_integration.go:326",
-    "arena/engine/duplex_executor_turns_integration.go:338",
-    "arena/selfplay/registry.go:169"
+    "arena/selfplay/registry.go:168"
    ]
   },
   {
-   "id": 35,
-   "claim": "SelfPlay turn has persona field accepting persona ID",
+   "id": 82,
+   "claim": "Self-play turn field persona references a persona ID (test-user)",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1058",
-    "arena/engine/duplex_executor_turns_integration.go:626",
-    "arena/selfplay/registry.go:84"
+    "arena/arenaconfig/types.go:1137",
+    "arena/engine/duplex_conversation_executor.go:188"
    ]
   },
   {
-   "id": 36,
-   "claim": "SelfPlay turn has turns field accepting integer count",
+   "id": 83,
+   "claim": "Self-play turn field turns sets the number of self-play turns (3)",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1060",
+    "arena/arenaconfig/types.go:1138",
     "arena/engine/duplex_executor_turns_integration.go:132"
    ]
   },
   {
-   "id": 37,
-   "claim": "promptarena CLI has run subcommand",
+   "id": 84,
+   "claim": "Command promptarena validate accepts a config file path positional argument",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:110"
+    "arena/cmd/promptarena/validate.go"
    ]
   },
   {
-   "id": 38,
-   "claim": "run subcommand accepts --scenario flag",
+   "id": 85,
+   "claim": "Command promptarena run accepts --scenario and --provider flags",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:111",
-    "arena/cmd/promptarena/run.go:250"
+    "arena/cmd/promptarena/run.go:282",
+    "arena/cmd/promptarena/run.go:285"
    ]
   },
   {
-   "id": 39,
-   "claim": "run subcommand accepts --provider flag",
+   "id": 86,
+   "claim": "promptarena validate checks the config and its files before any API calls are made",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:110",
-    "arena/cmd/promptarena/run.go:247"
+    "arena/arenaconfig/loader.go:248",
+    "arena/arenaconfig/validator.go"
    ]
   },
   {
-   "id": 40,
-   "claim": "Assertion type content_matches is registered",
+   "id": 87,
+   "claim": "Setting voices: test-voice provider to mock-tts makes the run keyless for TTS",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/voice.go:12",
+    "arena/selfplay/tts_registry.go:183"
+   ]
+  },
+  {
+   "id": 88,
+   "claim": "Setting self_play.roles selfplay-user provider to mock-duplex makes the self-play text model keyless",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:940",
+    "arena/selfplay/registry.go:179"
+   ]
+  },
+  {
+   "id": 89,
+   "claim": "Command promptarena run --scenario voice-selfplay --provider mock-duplex --ci",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:285",
+    "arena/cmd/promptarena/run.go:297"
+   ]
+  },
+  {
+   "id": 90,
+   "claim": "The --ci flag produces plain log output",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:297",
+    "arena/cmd/promptarena/run.go:303"
+   ]
+  },
+  {
+   "id": 91,
+   "claim": "promptarena run accepts a --mock-provider flag",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:167"
+   ]
+  },
+  {
+   "id": 92,
+   "claim": "The --mock-provider mocks do not answer duplex audio, so the run waits until duplex.timeout and fails",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run_interactive.go:290",
+    "arena/engine/duplex_executor_pipeline_integration.go:331"
+   ]
+  },
+  {
+   "id": 93,
+   "claim": "The run writes output to out/, the defaults.output.dir value",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:514",
+    "arena/cmd/promptarena/run.go:144",
+    "arena/cmd/promptarena/run.go:294",
+    "arena/engine/engine.go:1019"
+   ]
+  },
+  {
+   "id": 94,
+   "claim": "The run writes out/results.md",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:486"
+   ]
+  },
+  {
+   "id": 95,
+   "claim": "results.md shows voice-selfplay row as Pass and a Conversation Assertions table with content_includes passed",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/markdown/markdown_repository.go:455",
+    "arena/results/markdown/markdown_repository.go:522"
+   ]
+  },
+  {
+   "id": 96,
+   "claim": "The per-run JSON file in out/ holds results under a conversation_assertions key",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/types.go:90"
+   ]
+  },
+  {
+   "id": 97,
+   "claim": "A failed assertion fails the run and promptarena run exits non-zero",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:297",
+    "arena/cmd/promptarena/run_interactive.go:139",
+    "arena/cmd/promptarena/run_interactive.go:147"
+   ]
+  },
+  {
+   "id": 98,
+   "claim": "New checks are added by appending entries to conversation_assertions: in the scenario",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:701"
+   ]
+  },
+  {
+   "id": 99,
+   "claim": "Link /arena/reference/assertions/ exists and documents every assertion type",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 100,
+   "claim": "silence_threshold_ms controls when a turn is cut off; raising it to 1500-2000 fixes mid-sentence cutoffs",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_conversation_executor.go:131",
+    "arena/engine/duplex_executor_pipeline_integration.go:606"
+   ]
+  },
+  {
+   "id": 101,
+   "claim": "Decreasing silence_threshold_ms to 800-1000 shortens pauses before response",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_conversation_executor.go:131",
+    "arena/engine/duplex_executor_pipeline_integration.go:606"
+   ]
+  },
+  {
+   "id": 102,
+   "claim": "Decreasing min_speech_ms to 200-300 stops short utterances being ignored",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_conversation_executor.go:134",
+    "arena/engine/duplex_executor_pipeline_integration.go:609"
+   ]
+  },
+  {
+   "id": 103,
+   "claim": "Link /arena/tutorials/06-duplex-testing/ exists",
    "verdict": "true",
    "evidence": []
   },
   {
-   "id": 41,
-   "claim": "content_matches assertion has params.pattern field",
+   "id": 104,
+   "claim": "Link /arena/reference/duplex-config/ exists and documents all duplex configuration options",
    "verdict": "true",
    "evidence": []
   },
   {
-   "id": 42,
-   "claim": "Assertion type content_includes is registered",
-   "verdict": "true",
-   "evidence": []
-  },
-  {
-   "id": 43,
-   "claim": "content_includes assertion has params.patterns array field",
+   "id": 105,
+   "claim": "Link /arena/explanation/duplex-architecture/ exists",
    "verdict": "true",
    "evidence": []
   }
