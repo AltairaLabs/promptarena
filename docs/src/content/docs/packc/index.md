@@ -1,281 +1,174 @@
 ---
 title: PackC
-description: Compiler for the PromptPack open standard - create portable, framework-agnostic prompt packages
+description: packc compiles a PromptArena config and the prompts, tools and workflow it references into one PromptPack JSON file, and validates pack files against the PromptPack schema.
 sidebar:
   order: 0
+verified:
+  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  sources:
+    - packc/compiler/compiler.go
+    - packc/main_interactive.go
+    - packc/schema_validator.go
 ---
 
-**Compiler for the [PromptPack](https://promptpack.org) open standard**
+`packc` compiles a PromptArena configuration into a [PromptPack](https://promptpack.org): one JSON file holding the prompts, tools, workflow, agents and validators that the configuration references. It also validates and inspects pack files.
 
----
+## What packc does
 
-## What is PackC?
+A PromptArena project keeps each prompt, tool and provider in its own YAML file, tied together by an arena config. That layout suits testing. A running application needs one artifact to load, with a schema it can check before it starts. `packc` builds that artifact.
 
-PackC compiles prompt source files into [PromptPack](https://promptpack.org)-compliant packages—a **vendor-neutral, framework-agnostic** format that works with any AI runtime or provider.
+```mermaid
+flowchart LR
+  config["config.arena.yaml"]
+  prompts["prompt and tool YAML"]
+  packc["packc compile"]
+  pack["*.pack.json (PromptPack)"]
+  sdk["PromptKit SDK"]
+  other["other PromptPack readers"]
+  config --> packc
+  prompts --> packc
+  packc --> pack
+  pack --> sdk
+  pack --> other
+```
 
-### Why PromptPack?
+The commands are:
 
-Today's AI prompt development is fragmented. Each framework has its own format for prompts, tools, conversations, and test scenarios. When teams switch providers or frameworks, they rebuild their entire prompt infrastructure from scratch.
+- `packc compile` compiles every prompt in an arena config into one pack.
+- `packc compile-prompt` compiles a single prompt file into a pack.
+- `packc validate` checks a pack file against the PromptPack schema and the pack's structural rules.
+- `packc inspect` prints a summary of a pack's contents.
+- `packc version` prints the version, and `packc completion` prints a shell completion script.
 
-[PromptPack](https://promptpack.org) solves this with an open specification built on three principles:
+`packc` validates against the PromptPack schema embedded in the binary, so it works offline. A pack is plain JSON, so any program that implements the PromptPack schema can read it. The [PromptKit SDK](https://promptkit.altairalabs.ai/sdk/) is the Go runtime that loads packs.
 
-- **Vendor Neutrality**: A framework-agnostic JSON format that works across any runtime
-- **Completeness**: Prompts, tools, guardrails, and resources in a single file
-- **Discipline**: Treating prompts as version-controlled, testable engineering artifacts
+## Quick start
 
-PackC is the reference compiler for this standard.
-
-### What PackC Does
-
-- **Compiles** YAML/JSON sources into `.pack.json` files conforming to [PromptPack spec](https://promptpack.org)
-- **Validates** structure against the official schema
-- **Outputs** readable, 2-space indented JSON that any PromptPack runtime can consume
-- **Versions** packages for distribution and deployment
-
----
-
-## Quick Start
+Install `packc` (see [Install PackC](/packc/how-to/install/) for npm, Homebrew and release archives):
 
 ```bash
-# Install with Go
 go install github.com/AltairaLabs/promptarena/v2/packc@latest
+```
 
-# Create a prompt source file
-cat > greeting.yaml <<EOF
+Write a prompt file:
+
+```yaml
+# greeting.yaml
 apiVersion: promptkit.altairalabs.ai/v1alpha1
 kind: PromptConfig
 metadata:
   name: Greeting Assistant
 spec:
   task_type: greeting
+  version: v1.0.0
   description: A friendly assistant that greets users
   system_template: |
     You are a friendly assistant. Greet the user warmly.
   template_engine:
     version: v1
     syntax: "{{variable}}"
-EOF
+```
 
-# Compile to PromptPack format
+Compile it and validate the result:
+
+```bash
 packc compile-prompt --prompt greeting.yaml --output greeting.pack.json
-
-# Validate against the spec
 packc validate greeting.pack.json
 ```
 
-The resulting `.pack.json` can be used with **any** PromptPack-compatible runtime, not only PromptKit.
+`packc validate` prints:
 
-**Next**: [Your First Pack Tutorial](/packc/tutorials/01-first-pack/)
-
----
-
-## Framework Agnostic
-
-A key benefit of PromptPack is **portability**. Packs compiled with PackC work with:
-
-- **PromptKit SDK** (Go)
-- **Any PromptPack-compatible runtime** in other languages
-- **Custom integrations** that read the standard JSON format
-
-Build once, deploy everywhere. No vendor lock-in.
-
-```mermaid
-flowchart LR
-  sources["YAML Sources<br/>(your prompts)"]
-  packc["PackC<br/>(compiler)"]
-  pack[".pack.json<br/>(PromptPack)"]
-  promptkit["PromptKit (Go SDK)"]
-  other["Other Frameworks"]
-  custom["Custom Integration"]
-  sources --> packc --> pack
-  pack --> promptkit
-  pack --> other
-  pack --> custom
+```text
+Validating pack: greeting.pack.json
+Validating against PromptPack schema...
+✓ Schema validation passed
+✓ Pack structure is valid
 ```
 
----
-
-## Documentation by Type
-
-### Tutorials (Learn by Doing)
-
-Step-by-step guides for learning PackC:
-
-1. [First Pack](/packc/tutorials/01-first-pack/) - Create your first PromptPack
-2. [Multi-Prompt Packs](/packc/tutorials/02-multi-prompt/) - Bundle multiple prompts
-3. [Validation Workflow](/packc/tutorials/03-validation-workflow/) - Ensure pack quality
-4. [Pack Management](/packc/tutorials/04-pack-management/) - Organize and version packs
-5. [CI/CD Pipeline](/packc/tutorials/05-ci-cd-pipeline/) - Automate pack builds
-
-### How-To Guides (Accomplish Specific Tasks)
-
-Focused guides for specific tasks:
-
-- [Installation](/packc/how-to/install/) - Get PackC running
-- [Compile Packs](/packc/how-to/compile-packs/) - Compilation options
-- [Validate Packs](/packc/how-to/validate-packs/) - Validation strategies
-- [Organize Packs](/packc/how-to/organize-packs/) - Project structure
-- [CI/CD Integration](/packc/how-to/ci-cd-integration/) - Automate builds
-
-### Explanation (Understand the Concepts)
-
-Deep dives into PackC and PromptPack:
-
-- [Pack Format](/packc/explanation/pack-format/) - Understanding the PromptPack structure
-- [Compilation](/packc/explanation/compilation/) - How compilation works
-- [Validation](/packc/explanation/validation/) - Schema validation details
-
-### Reference (Look Up Details)
-
-Complete command and format specifications:
-
-- [compile](/packc/reference/compile/) - Compile command reference
-- [validate](/packc/reference/validate/) - Validate command reference
-- [inspect](/packc/reference/inspect/) - Inspect command reference
-- [compile-prompt](/packc/reference/compile-prompt/) - Single prompt compilation
-
----
-
-## Key Features
-
-### Compilation to Open Standard
-
-Transform YAML/JSON prompts into [PromptPack](https://promptpack.org)-compliant packages:
+For a project with an arena config, `packc compile` builds one pack from all of its prompts:
 
 ```bash
-packc compile \
-  --config arena.yaml \
-  --output dist/my-app.pack.json \
-  --id my-app
+packc compile --config config.arena.yaml --output dist/my-app.pack.json --id my-app
 ```
 
-### Schema Validation
+Next: [Your first pack](/packc/tutorials/01-first-pack/).
 
-Ensure packs conform to the [PromptPack specification](https://promptpack.org):
+## A compiled pack
 
-```bash
-packc validate my-app.pack.json
-```
-
-Checks:
-- Schema compliance with PromptPack spec
-- Required fields present
-- Template syntax valid
-- Tool definitions complete
-
-### Production Optimization
-
-Production-ready output:
-
-```bash
-packc compile --config arena.yaml --output app.pack.json --id my-app
-```
-
-- Readable, 2-space indented JSON output
-- Validate templates
-- Check for common errors
-- Schema validation against the PromptPack spec
-
----
-
-## PromptPack Format
-
-A compiled pack follows the [PromptPack specification](https://promptpack.org):
+`packc compile` writes indented JSON. This is the pack it produces for an arena config with one prompt:
 
 ```json
 {
   "$schema": "https://promptpack.org/schema/latest/promptpack.schema.json",
+  "compilation": {
+    "compiled_with": "packc-2.4.0",
+    "created_at": "2026-11-06T18:08:37Z",
+    "schema": "v1"
+  },
+  "description": "Pack containing 1 prompts",
   "id": "my-app",
   "name": "my-app",
-  "version": "v1.0.0",
-  "template_engine": {
-    "version": "v1",
-    "syntax": "{{variable}}"
-  },
   "prompts": {
     "greeting": {
+      "description": "A friendly assistant that greets users",
       "id": "greeting",
       "name": "Greeting Assistant",
-      "system_template": "You are helpful.",
+      "pipeline": {
+        "middleware": [
+          { "config": { "allow_undefined": true, "strict_mode": false }, "type": "template" },
+          { "config": { "retry_attempts": 3, "timeout": 30 }, "type": "provider" },
+          { "config": { "fail_fast": false }, "type": "validator" }
+        ],
+        "stages": ["template", "provider", "validator"]
+      },
+      "system_template": "You are a friendly assistant. Greet the user warmly.\n",
       "version": "v1.0.0"
     }
   },
-  "compilation": {
-    "compiled_with": "packc-v0.1.0",
-    "created_at": "2025-01-15T10:30:00Z",
-    "schema": "v1"
-  }
+  "template_engine": {
+    "syntax": "{{variable}}",
+    "version": "v1"
+  },
+  "version": "v1.0.0"
 }
 ```
 
-This format is:
-- **Self-contained**: Everything needed to run the prompt
-- **Portable**: Works with any compatible runtime
-- **Versionable**: Track changes with semantic versioning
-- **Testable**: Include test metadata for validation
+[Pack format](/packc/explanation/pack-format/) describes each part.
 
-Learn more at [promptpack.org](https://promptpack.org).
+## Documentation
 
----
+### Tutorials
 
-## CI/CD Integration
+1. [First pack](/packc/tutorials/01-first-pack/): create and compile a pack.
+2. [Multi-prompt packs](/packc/tutorials/02-multi-prompt/): bundle several prompts.
+3. [Validation workflow](/packc/tutorials/03-validation-workflow/): check pack quality.
+4. [Pack management](/packc/tutorials/04-pack-management/): organize and version packs.
+5. [CI/CD pipeline](/packc/tutorials/05-ci-cd-pipeline/): build packs automatically.
 
-Automate pack builds in your pipeline:
+### How-to guides
 
-### GitHub Actions
+- [Install PackC](/packc/how-to/install/)
+- [Compile packs](/packc/how-to/compile-packs/)
+- [Validate packs](/packc/how-to/validate-packs/)
+- [Organize pack files](/packc/how-to/organize-packs/)
+- [CI/CD integration](/packc/how-to/ci-cd-integration/)
 
-```yaml
-- name: Compile PromptPacks
-  run: |
-    packc compile --config arena.yaml --output dist/app.pack.json --id my-app
-    packc validate dist/app.pack.json
-```
+### Explanation
 
-### Makefile
+- [Pack format](/packc/explanation/pack-format/): what a pack file contains.
+- [Compilation](/packc/explanation/compilation/): how `packc compile` turns a config into a pack.
+- [Validation](/packc/explanation/validation/): what each command checks, and what blocks.
 
-```makefile
-.PHONY: build-packs
-build-packs:
-    packc compile --config arena.yaml --output dist/packs/app.pack.json --id my-app
+### Reference
 
-.PHONY: validate-packs
-validate-packs:
-    packc validate dist/packs/app.pack.json
-```
+- [compile](/packc/reference/compile/)
+- [compile-prompt](/packc/reference/compile-prompt/)
+- [validate](/packc/reference/validate/)
+- [inspect](/packc/reference/inspect/)
+- [version](/packc/reference/version/)
 
----
+## Related
 
-## Best Practices
-
-### Use the Open Standard
-
-- Follow the [PromptPack specification](https://promptpack.org) for maximum portability
-- Don't add custom fields outside the spec
-- Test packs with multiple runtimes if possible
-
-### Version Management
-
-- Use semantic versioning (MAJOR.MINOR.PATCH)
-- Update version on breaking changes
-- Keep changelog of prompt changes
-
-### Quality Assurance
-
-- Always validate after compilation
-- Validate packs in CI/CD before deployment
-- Test packs with Arena before distribution
-
----
-
-## Resources
-
-- **PromptPack Specification**: [promptpack.org](https://promptpack.org)
-- **Questions**: [GitHub Discussions](https://github.com/AltairaLabs/promptarena/v2/issues)
-- **Issues**: [Report a Bug](https://github.com/AltairaLabs/promptarena/v2/issues)
-
----
-
-## Related Tools
-
-- **Arena**: [Test prompts before compiling](/arena/) - Validate prompt behavior
-- **SDK**: [Use compiled packs in Go applications](https://promptkit.altairalabs.ai/sdk/) - One of many possible runtimes
+- [PromptArena](/arena/): test the prompts before you compile them.
+- [PromptPack specification](https://promptpack.org)
+- [Report a bug](https://github.com/AltairaLabs/promptarena/issues)

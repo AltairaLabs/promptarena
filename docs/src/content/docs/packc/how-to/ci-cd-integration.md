@@ -1,24 +1,42 @@
 ---
 title: CI/CD Integration
+description: Compile and validate packs on every change in GitHub Actions, GitLab CI or any other CI system, and attach them to releases.
 sidebar:
   order: 5
+verified:
+  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  sources:
+    - .github/actions/packc-action/action.yml
+    - .github/actions/packc-action/src/compiler.ts
+    - .github/actions/packc-action/src/installer.ts
+    - arena/arenaconfig/types.go
+    - npm/packc/lib/resolve.js
+    - npm/packc/package.json
+    - packc/compiler/check.go
+    - packc/compiler/compiler.go
+    - packc/main.go
+    - packc/main_interactive.go
+    - schemas/v1alpha1/arena.json
 ---
-Automate pack compilation, validation, and deployment in your CI/CD pipeline.
-
-## Goal
-
-Set up automated pack builds that compile, validate, and deploy packs on every code change.
+Compile and validate your packs in CI, so a broken prompt fails the build instead of a deployment.
 
 ## Prerequisites
 
-- packc installed locally
-- CI/CD platform (GitHub Actions, GitLab CI, Jenkins, etc.)
-- Version control repository
-- Basic CI/CD knowledge
+- A repository with an arena config that `packc compile` accepts locally.
+- A CI system that can run shell commands. Installing with `go install` needs Go 1.26 or later on the runner, and installing with npm needs Node.js.
 
-## GitHub Actions
+Every example runs the same two commands. Both exit 1 on failure, which fails the CI step:
 
-### Basic Pack Build
+```bash
+packc compile --config config.arena.yaml --output packs/app.pack.json --id app
+packc validate packs/app.pack.json
+```
+
+`packc compile` creates `packs/` if it is missing.
+
+## GitHub Actions with packc-action
+
+The PromptArena repository ships a JavaScript action that downloads a `packc` release binary, compiles, and validates:
 
 ```yaml
 # .github/workflows/build-packs.yml
@@ -26,580 +44,184 @@ name: Build Packs
 
 on:
   push:
-    branches: [main, develop]
-    paths:
-      - 'prompts/**'
-      - 'config/**'
-  pull_request:
     branches: [main]
+  pull_request:
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-      
-      - name: Set up Go
-        uses: actions/setup-go@v4
+      - uses: actions/checkout@v4
+
+      - id: pack
+        uses: AltairaLabs/promptarena/.github/actions/packc-action@v2.4.0
+        with:
+          config-file: config.arena.yaml
+          pack-id: app
+          output: packs/app.pack.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: packs
+          path: ${{ steps.pack.outputs.pack-file }}
+```
+
+`validate` defaults to `true`, and `packc-version` defaults to the latest release. The action's outputs include `pack-file`, `pack-id`, `prompts` and `tools`. It can also push the pack to an OCI registry and sign it; see the action's `action.yml` for those inputs.
+
+## GitHub Actions with go install
+
+```yaml
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
         with:
           go-version: '1.26'
-      
+
       - name: Install packc
-        run: go install github.com/AltairaLabs/promptarena/v2/packc@latest
-      
-      - name: Compile packs
+        run: go install github.com/AltairaLabs/promptarena/v2/packc@v2.4.0
+
+      - name: Compile and validate
         run: |
-          mkdir -p packs
-          packc compile --config arena.yaml --output packs/app.pack.json --id app
-      
-      - name: Validate packs
-        run: |
+          packc compile --config config.arena.yaml --output packs/app.pack.json --id app
           packc validate packs/app.pack.json
-      
-      - name: Upload packs
-        uses: actions/upload-artifact@v3
+
+      - uses: actions/upload-artifact@v4
         with:
-          name: compiled-packs
+          name: packs
           path: packs/*.pack.json
 ```
 
-### Multi-Environment Build
+`actions/setup-go` puts Go's bin directory on `PATH`, so `packc` runs straight after the install. Pin a release tag instead of `@latest` so that every build uses the same compiler.
+
+### One pack per environment
+
+Use a matrix when each environment has its own arena config:
 
 ```yaml
-# .github/workflows/build-multi-env.yml
-name: Build Multi-Environment Packs
-
-on: [push, pull_request]
-
 jobs:
   build:
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         environment: [dev, staging, prod]
-    
-    runs-on: ubuntu-latest
-    
     steps:
-      - uses: actions/checkout@v3
-      
-      - uses: actions/setup-go@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
         with:
           go-version: '1.26'
-      
-      - name: Install packc
-        run: go install github.com/AltairaLabs/promptarena/v2/packc@latest
-      
-      - name: Compile $ pack
-        run: |
-          mkdir -p packs/$
+      - run: go install github.com/AltairaLabs/promptarena/v2/packc@v2.4.0
+      - run: |
           packc compile \
-            --config config/arena.$.yaml \
-            --output packs/$/app.pack.json \
-            --id app-$
-      
-      - name: Validate pack
-        run: packc validate packs/$/app.pack.json
-      
-      - name: Upload pack
-        uses: actions/upload-artifact@v3
+            --config config/arena.${{ matrix.environment }}.yaml \
+            --output packs/${{ matrix.environment }}/app.pack.json \
+            --id app-${{ matrix.environment }}
+          packc validate packs/${{ matrix.environment }}/app.pack.json
+      - uses: actions/upload-artifact@v4
         with:
-          name: pack-$
-          path: packs/$/*.pack.json
+          name: pack-${{ matrix.environment }}
+          path: packs/${{ matrix.environment }}/app.pack.json
 ```
 
-### Production Release
+### Attach packs to a release
+
+`packc compile` always writes `v1.0.0` as the pack's `version` field, so carry the release version in the file name:
 
 ```yaml
-# .github/workflows/release-packs.yml
-name: Release Packs
-
 on:
   push:
-    tags:
-      - 'v*.*.*'
+    tags: ['v*.*.*']
 
 jobs:
   release:
     runs-on: ubuntu-latest
-    
+    permissions:
+      contents: write
     steps:
-      - uses: actions/checkout@v3
-      
-      - uses: actions/setup-go@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
         with:
           go-version: '1.26'
-      
-      - name: Install packc
-        run: go install github.com/AltairaLabs/promptarena/v2/packc@latest
-      
-      - name: Get version
-        id: version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
-      
-      - name: Compile production pack
-        run: |
-          mkdir -p packs/prod
-          packc compile \
-            --config config/arena.prod.yaml \
-            --output packs/prod/app-v$.pack.json \
-            --id app
-      
-      - name: Validate pack
-        run: packc validate packs/prod/app-v$.pack.json
-      
-      - name: Create release
-        uses: softprops/action-gh-release@v1
+      - run: go install github.com/AltairaLabs/promptarena/v2/packc@v2.4.0
+      - run: |
+          packc compile --config config.arena.yaml --output "packs/app-${GITHUB_REF_NAME}.pack.json" --id app
+          packc validate "packs/app-${GITHUB_REF_NAME}.pack.json"
+      - uses: softprops/action-gh-release@v2
         with:
-          files: packs/prod/*.pack.json
-          body: |
-            ## Prompt Pack Release v$
-            
-            Compiled packs for production deployment.
-            
-            Compiler: $(packc version)
+          files: packs/*.pack.json
 ```
 
 ## GitLab CI
 
-### Basic Pipeline
+The `golang` image has Go on `PATH` and `$GOPATH/bin` on `PATH`:
 
 ```yaml
 # .gitlab-ci.yml
-stages:
-  - build
-  - validate
-  - deploy
-
-variables:
-  PACK_ID: app
-  GO_VERSION: "1.26"
-
-before_script:
-  - apt-get update && apt-get install -y golang-$GO_VERSION
-  - go install github.com/AltairaLabs/promptarena/v2/packc@latest
-  - export PATH=$PATH:$(go env GOPATH)/bin
-
-build:packs:
-  stage: build
+build-packs:
+  image: golang:1.26
   script:
-    - mkdir -p packs
-    - packc compile --config arena.yaml --output packs/app.pack.json --id $PACK_ID
+    - go install github.com/AltairaLabs/promptarena/v2/packc@v2.4.0
+    - packc compile --config config.arena.yaml --output packs/app.pack.json --id app
+    - packc validate packs/app.pack.json
   artifacts:
     paths:
       - packs/*.pack.json
-    expire_in: 1 day
-
-validate:packs:
-  stage: validate
-  dependencies:
-    - build:packs
-  script:
-    - packc validate packs/app.pack.json
-
-deploy:production:
-  stage: deploy
-  dependencies:
-    - build:packs
-  only:
-    - main
-  script:
-    - ./scripts/deploy-pack.sh packs/app.pack.json
-  environment:
-    name: production
 ```
 
-### Multi-Environment Pipeline
+For an image without Go, install with npm instead: `npm install -g @altairalabs/packc`.
 
-```yaml
-# .gitlab-ci.yml
-.build_template:
-  stage: build
-  script:
-    - mkdir -p packs/$ENVIRONMENT
-    - packc compile --config config/arena.$ENVIRONMENT.yaml --output packs/$ENVIRONMENT/app.pack.json --id app-$ENVIRONMENT
-    - packc validate packs/$ENVIRONMENT/app.pack.json
-  artifacts:
-    paths:
-      - packs/$ENVIRONMENT/*.pack.json
+## Other CI systems
 
-build:dev:
-  extends: .build_template
-  variables:
-    ENVIRONMENT: dev
-  only:
-    - develop
-
-build:staging:
-  extends: .build_template
-  variables:
-    ENVIRONMENT: staging
-  only:
-    - staging
-
-build:prod:
-  extends: .build_template
-  variables:
-    ENVIRONMENT: prod
-  only:
-    - main
-```
-
-## Jenkins
-
-### Declarative Pipeline
+Jenkins, CircleCI and the rest need the same three steps: install `packc`, compile, validate. A Jenkins declarative stage:
 
 ```groovy
-// Jenkinsfile
-pipeline {
-    agent any
-    
-    environment {
-        PACK_ID = 'app'
-        GO_VERSION = '1.26'
-    }
-    
-    stages {
-        stage('Setup') {
-            steps {
-                sh 'go version'
-                sh 'go install github.com/AltairaLabs/promptarena/v2/packc@latest'
-                sh 'packc version'
-            }
-        }
-        
-        stage('Compile') {
-            steps {
-                sh 'mkdir -p packs'
-                sh "packc compile --config arena.yaml --output packs/app.pack.json --id ${PACK_ID}"
-            }
-        }
-        
-        stage('Validate') {
-            steps {
-                sh 'packc validate packs/app.pack.json'
-            }
-        }
-        
-        stage('Archive') {
-            steps {
-                archiveArtifacts artifacts: 'packs/*.pack.json', fingerprint: true
-            }
-        }
-        
-        stage('Deploy') {
-            when {
-                branch 'main'
-            }
-            steps {
-                sh './scripts/deploy-pack.sh packs/app.pack.json'
-            }
-        }
-    }
-    
-    post {
-        success {
-            echo 'Pack build successful!'
-        }
-        failure {
-            echo 'Pack build failed!'
-        }
-    }
+stage('Packs') {
+  steps {
+    sh 'npm install -g @altairalabs/packc'
+    sh 'packc compile --config config.arena.yaml --output packs/app.pack.json --id app'
+    sh 'packc validate packs/app.pack.json'
+    archiveArtifacts artifacts: 'packs/*.pack.json', fingerprint: true
+  }
 }
 ```
 
-### Multi-Branch Pipeline
-
-```groovy
-// Jenkinsfile
-pipeline {
-    agent any
-    
-    stages {
-        stage('Compile') {
-            steps {
-                script {
-                    def environment = env.BRANCH_NAME == 'main' ? 'prod' : env.BRANCH_NAME
-                    
-                    sh "mkdir -p packs/${environment}"
-                    sh "packc compile --config config/arena.${environment}.yaml --output packs/${environment}/app.pack.json --id app-${environment}"
-                    sh "packc validate packs/${environment}/app.pack.json"
-                }
-            }
-        }
-    }
-}
-```
-
-## CircleCI
-
-```yaml
-# .circleci/config.yml
-version: 2.1
-
-orbs:
-  go: circleci/go@1.9
-
-jobs:
-  build-packs:
-    docker:
-      - image: cimg/go:1.26
-    steps:
-      - checkout
-      
-      - run:
-          name: Install packc
-          command: go install github.com/AltairaLabs/promptarena/v2/packc@latest
-      
-      - run:
-          name: Compile packs
-          command: |
-            mkdir -p packs
-            packc compile --config arena.yaml --output packs/app.pack.json --id app
-      
-      - run:
-          name: Validate packs
-          command: packc validate packs/app.pack.json
-      
-      - store_artifacts:
-          path: packs
-          destination: compiled-packs
-      
-      - persist_to_workspace:
-          root: .
-          paths:
-            - packs/*.pack.json
-
-  deploy-packs:
-    docker:
-      - image: cimg/base:stable
-    steps:
-      - attach_workspace:
-          at: .
-      
-      - run:
-          name: Deploy packs
-          command: ./scripts/deploy-pack.sh packs/app.pack.json
-
-workflows:
-  build-and-deploy:
-    jobs:
-      - build-packs
-      - deploy-packs:
-          requires:
-            - build-packs
-          filters:
-            branches:
-              only: main
-```
-
-## Docker Integration
-
-### Build in Docker
-
-```dockerfile
-# Dockerfile.packc-build
-FROM golang:1.26 AS builder
-
-# Install packc
-RUN go install github.com/AltairaLabs/promptarena/v2/packc@latest
-
-# Copy source files
-WORKDIR /workspace
-COPY . .
-
-# Compile packs
-RUN mkdir -p packs && \
-    packc compile --config arena.yaml --output packs/app.pack.json --id app && \
-    packc validate packs/app.pack.json
-
-# Runtime image
-FROM alpine:latest
-COPY --from=builder /workspace/packs /packs
-
-CMD ["ls", "-la", "/packs"]
-```
-
-Build and extract packs:
-
-```bash
-# Build image
-docker build -f Dockerfile.packc-build -t packc-builder .
-
-# Extract packs
-docker run --rm -v $(pwd)/output:/output packc-builder cp -r /packs/. /output/
-```
-
-### Use in CI
-
-```yaml
-# .github/workflows/docker-build.yml
-- name: Build packs with Docker
-  run: |
-    docker build -f Dockerfile.packc-build -t packc-builder .
-    docker run --rm -v $(pwd)/packs:/output packc-builder cp -r /packs/. /output/
-```
-
-## Makefile CI Integration
+A Makefile keeps the commands identical locally and in CI:
 
 ```makefile
-# Makefile for CI/CD
-
-.PHONY: ci-build
-ci-build: clean install compile validate
-
-.PHONY: install
-install:
-	@echo "Installing packc..."
-	@go install github.com/AltairaLabs/promptarena/v2/packc@latest
-	@packc version
-
-.PHONY: compile
-compile:
-	@echo "Compiling packs..."
-	@mkdir -p packs
-	@packc compile --config arena.yaml --output packs/app.pack.json --id app
-
-.PHONY: validate
-validate:
-	@echo "Validating packs..."
-	@packc validate packs/app.pack.json
-
-.PHONY: clean
-clean:
-	@echo "Cleaning build artifacts..."
-	@rm -rf packs/
-
-.PHONY: deploy
-deploy: ci-build
-	@echo "Deploying packs..."
-	@./scripts/deploy-pack.sh packs/app.pack.json
+.PHONY: packs
+packs:
+	packc compile --config config.arena.yaml --output packs/app.pack.json --id app
+	packc validate packs/app.pack.json
 ```
 
-CI usage:
+## Verify
 
-```yaml
-# GitHub Actions
-- name: Build and deploy
-  run: make deploy
-
-# GitLab CI
-script:
-  - make ci-build
-```
-
-## Best Practices
-
-### 1. Cache Dependencies
-
-**GitHub Actions:**
-
-```yaml
-- name: Cache Go modules
-  uses: actions/cache@v3
-  with:
-    path: ~/go/pkg/mod
-    key: $-go-$
-```
-
-**GitLab CI:**
-
-```yaml
-cache:
-  paths:
-    - .go/pkg/mod
-```
-
-### 2. Version Pinning
-
-Pin packc version for reproducible builds:
-
-```yaml
-- name: Install packc
-  run: go install github.com/AltairaLabs/promptarena/v2/packc@v0.1.0
-```
-
-### 3. Fail Fast
-
-Stop pipeline on validation failure:
-
-```yaml
-- name: Validate packs
-  run: |
-    for pack in packs/*.pack.json; do
-      packc validate "$pack" || exit 1
-    done
-```
-
-### 4. Artifact Management
-
-Store and version pack artifacts:
-
-```yaml
-- name: Upload with version
-  uses: actions/upload-artifact@v3
-  with:
-    name: packs-$
-    path: packs/*.pack.json
-    retention-days: 30
-```
-
-### 5. Notifications
-
-Send build notifications:
-
-```yaml
-- name: Notify on success
-  if: success()
-  run: ./scripts/notify-success.sh
-
-- name: Notify on failure
-  if: failure()
-  run: ./scripts/notify-failure.sh
-```
+Push a change and check that the job is green and the pack artifact is attached. To confirm the job can fail, set a prompt's `spec.version` to `latest` on a branch. Compile fails with a `[load]` schema error and the job goes red.
 
 ## Troubleshooting
 
-### packc not found in CI
+### packc: command not found
 
-**Problem:** Command not found after install
-
-**Solution:** Add to PATH:
+The install directory is not on `PATH`. After `go install`, add Go's bin directory:
 
 ```yaml
-- name: Add to PATH
-  run: echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+- run: echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
 ```
 
-### Compilation fails in CI
+### The config is not found in CI
 
-**Problem:** Files not found
+`--config` and the default pack ID both depend on the working directory. Run `packc` from the directory you run it from locally, or pass `--config` and `--id` explicitly. With packc-action, set `working-directory`.
 
-**Solution:** Check working directory:
+### Validating a glob checks only one pack
 
-```yaml
-- name: List files
-  run: |
-    pwd
-    ls -la
-    ls -la config/
-```
+`packc validate` checks only its first argument. Loop over the files, as shown in [Validate packs](/packc/how-to/validate-packs/#validate-several-packs).
 
-### Permission denied
+## Related
 
-**Problem:** Can't create directories
-
-**Solution:** Ensure write permissions:
-
-```yaml
-- name: Create directories
-  run: mkdir -p packs && chmod -R 755 packs
-```
-
-## Next Steps
-
-- [Organize Pack Files](/packc/how-to/organize-packs/) - Structure your packs
-## See Also
-
-- [Pack Format Explanation](/packc/explanation/pack-format/) - Pack structure and versioning
+- [Validate packs](/packc/how-to/validate-packs/)
+- [Organize pack files](/packc/how-to/organize-packs/)
+- [CI/CD pipeline tutorial](/packc/tutorials/05-ci-cd-pipeline/)
+- [compile reference](/packc/reference/compile/)

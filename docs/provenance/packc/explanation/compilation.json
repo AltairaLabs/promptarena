@@ -1,0 +1,154 @@
+{
+ "page": "docs/src/content/docs/packc/explanation/compilation.md",
+ "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "promptarena validate and promptarena export use packc/compiler",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/export.go:46-51",
+    "arena/cmd/promptarena/validate_json.go:99-160"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "compiler.Check stages pack_id, load, compile, skills, workflow, compositions, agents, governance, pack, pack_schema; early stages stop, later collect all",
+   "verdict": "true",
+   "evidence": [
+    "packc/compiler/check.go:149-192",
+    "packc/compiler/check.go:16-27",
+    "packc/compiler/check.go:92-131"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "compile prints warnings as '\u26a0 [stage] message' and fails with 'Compilation failed:'",
+   "verdict": "true",
+   "evidence": [
+    "packc/compiler/check.go:42-48",
+    "packc/compiler/check.go:60-72",
+    "packc/main_interactive.go:157-165"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "arena config, prompt configs and tool files are schema-validated on load; arena config requires providers and defaults",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:88-180",
+    "packc/compiler/check.go:101-105",
+    "schemas/v1alpha1/arena.json:837-840"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "each prompt gets the default template/provider/validator pipeline",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 6,
+   "claim": "arena tools/workflow/agents/compositions/skills/pack_evals/pack_metadata map to pack tools/workflow/agents/compositions/skills/evals/metadata",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:100-167",
+    "packc/compiler/compiler.go:103-142",
+    "packc/compiler/compiler.go:210-242",
+    "packc/compiler/helpers_integration.go:116-182",
+    "packc/compiler/helpers_integration.go:19-24"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "a tool file that fails to load fails the compile",
+   "verdict": "true",
+   "evidence": [
+    "packc/compiler/helpers_integration.go:113-130"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "skill directory paths are made relative to the config directory",
+   "verdict": "true",
+   "evidence": [
+    "packc/compiler/helpers_integration.go:163-182"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "packc compile sets name=id, version v1.0.0, description 'Pack containing N prompts', $schema latest URL, compilation block",
+   "verdict": "true",
+   "evidence": [
+    "packc/compiler/compiler.go:127-132"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "default id from current directory name via SanitizePackID; non-letter start gets pack- prefix",
+   "verdict": "true",
+   "evidence": [
+    "packc/compiler/helpers_integration.go:205-218",
+    "packc/main_interactive.go:109-116"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "pack_metadata wins over spec.metadata with a warning; otherwise first spec.metadata by prompt_configs id is promoted with a warning",
+   "verdict": "true",
+   "evidence": [
+    "packc/compiler/compiler.go:164-207"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "missing media example files warn 'media(<task>): Media file not found: ...' relative to config dir (compile) or prompt dir (compile-prompt)",
+   "verdict": "true",
+   "evidence": [
+    "packc/compiler/helpers_integration.go:48-111",
+    "packc/main.go:297-340",
+    "packc/main_interactive.go:207-215"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "compiled fragments map holds {{name}} placeholders, not fragment content",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 14,
+   "claim": "templates are not parsed; only check is variables declared when template contains {{",
+   "verdict": "true",
+   "evidence": [
+    "packc/compiler/check.go:178-191"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "compile-prompt: id from task type (_ to -), name/version/description from prompt, no $schema",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:205-245"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "two compiles of the same inputs differ only in compilation.created_at (RFC3339 seconds); template_engine picked from map-ordered prompts",
+   "verdict": "true",
+   "evidence": [
+    "packc/compiler/check.go:120-125"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "go install/source builds report version 'dev' (packc dev, compiled_with packc-dev); release builds set main.version",
+   "verdict": "true",
+   "evidence": [
+    ".goreleaser.yml:41-57",
+    "packc/main.go:21",
+    "packc/main_interactive.go:40-41"
+   ]
+  }
+ ]
+}

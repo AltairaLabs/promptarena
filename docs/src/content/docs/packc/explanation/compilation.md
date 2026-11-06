@@ -1,391 +1,143 @@
 ---
 title: Compilation Architecture
+description: How packc compile loads an arena config, builds a pack from it with the PromptKit pack compiler, validates the result and writes it.
 sidebar:
   order: 2
+verified:
+  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  sources:
+    - .goreleaser.yml
+    - arena/arenaconfig/types.go
+    - arena/cmd/promptarena/export.go
+    - arena/cmd/promptarena/validate_json.go
+    - packc/compiler/check.go
+    - packc/compiler/compiler.go
+    - packc/compiler/helpers_integration.go
+    - packc/main.go
+    - packc/main_interactive.go
+    - schemas/v1alpha1/arena.json
 ---
-Understanding how PackC compiles prompts into packs.
+This page explains what happens between `packc compile` and the `.pack.json` file it writes: where each part of the pack comes from, what `packc` fills in, and what it checks.
 
-## Overview
+## Where the compiler lives
 
-PackC transforms human-friendly YAML configurations into validated JSON packs through a multi-stage compilation pipeline.
+`packc` is a thin command over the `packc/compiler` package in this repository. That package loads the arena config with PromptArena's config loader, then hands the prompts to the PromptKit runtime's pack compiler (`prompt.NewPackCompiler` and `CompileFromRegistryWithOptions`), which assembles the pack. `promptarena validate` and `promptarena export` call the same package, so a config that passes `promptarena validate` compiles with `packc compile`.
 
-## Compilation Pipeline
+## The pipeline
+
+`compiler.Compile` runs `compiler.Check` and keeps its output. `Check` runs these stages in order:
 
 ```mermaid
-flowchart LR
-    yaml["YAML Files"] --> parser["Parser"] --> validator["Validator"] --> builder["Pack Builder"] --> json["JSON Output"]
+flowchart TD
+  id["pack_id: resolve or validate --id"]
+  load["load: arena config and referenced files, schema-checked"]
+  compile["compile: registry, tools, workflow, agents, skills, metadata"]
+  checks["skills, workflow, compositions, agents, governance, pack"]
+  schema["pack_schema: compiled JSON against the PromptPack schema"]
+  out["packc writes the file"]
+  id --> load --> compile --> checks --> schema --> out
 ```
 
-### Stage 1: Configuration Loading
+Each finding carries its stage name, which `packc` prints in brackets, for example `[workflow]` or `[pack_schema]`.
 
-**Input**: arena.yaml + prompt YAML files
+The first three stages stop the run when they fail, because nothing after them has a pack to check. Once a pack exists, `Check` runs every remaining stage and collects all of their findings before it returns. A config with three problems reports all three in one run. `packc compile` exits 1 if any finding is an error, and writes no file.
 
-```yaml
-# arena.yaml
-prompt_configs:
-  - id: support
-    file: prompts/support.yaml
-  - id: sales
-    file: prompts/sales.yaml
+### Loading
+
+`load` reads the arena config and every file it references. The arena config, prompt configs and tool files are each validated against their PromptArena schema as they load, and a failure stops the compile here:
+
+```text
+Compilation failed: [load] loading arena config: schema validation failed: arena configuration does not match schema:
+  - spec: providers is required (value: ...)
+  - spec: defaults is required (value: ...)
 ```
 
-**Process**:
-1. Read arena.yaml
-2. Resolve file paths (relative to arena.yaml)
-3. Load each prompt YAML
-4. Parse YAML to PromptConfig structs
+An arena config must declare `providers` and `defaults` even though the pack does not use them. A config written for `promptarena run` already has both.
 
-**Output**: In-memory PromptConfig objects
+### Building the pack
 
-### Stage 2: Prompt Registry
+`compile` registers every prompt config in an in-memory prompt registry and passes the registry to the PromptKit pack compiler. That compiler adds one entry to `prompts` per prompt config, keyed by `spec.task_type`, and copies the prompt's fields across: system template, variables, allowed tools, tool policy, parameters, validators, evals, media, tested models and model overrides. Every prompt also gets the default pipeline (template, provider and validator stages).
 
-**Purpose**: Central repository of all prompts
+The pack-level parts come from the arena config:
 
-```go
-repo := memory.NewPromptRepository()
-registry := prompt.NewRegistryWithRepository(repo)
+| From | To |
+|---|---|
+| `spec.tools` files (`kind: Tool`) | `tools`, keyed by tool name |
+| `spec.workflow` | `workflow` |
+| `spec.agents` | `agents` |
+| `spec.compositions` | `compositions` |
+| `spec.skills` | `skills`, with directory paths made relative to the config's directory |
+| `spec.pack_evals` | `evals` |
+| `spec.pack_metadata` | `metadata` |
+
+The workflow, agents and compositions blocks are typed as the generated PromptPack types in the arena config, so the compiler copies them without conversion. A tool file that fails to load fails the compile, since dropping the tool would only move the error to run time.
+
+`packc` also fills in fields that have no source in the config:
+
+- `id` is the `--id` flag, or the current directory's name made to fit the pack ID pattern.
+- `name` is the same value as `id`.
+- `version` is `v1.0.0`. `packc compile` has no flag or config field that sets it.
+- `description` is `Pack containing <n> prompts`.
+- `$schema` is `https://promptpack.org/schema/latest/promptpack.schema.json`.
+- `template_engine` is copied from a prompt that declares one. The prompts are visited in no fixed order, so give every prompt the same `template_engine`.
+- `compilation` records `compiled_with` (`packc-<version>`), `created_at` (the time of the compile, RFC 3339, to the second) and `schema` (`v1`).
+
+### Metadata from prompt configs
+
+If the arena config has a `pack_metadata` block, it becomes the pack's `metadata`, and any prompt's `spec.metadata` is ignored with a warning. If there is no `pack_metadata`, the compiler takes `spec.metadata` from the first prompt that has one, ordered by `prompt_configs` id, and warns that it did so. It names every other prompt whose metadata it passed over. Promoting one prompt's metadata to the whole pack is a guess, so the compiler reports it instead of doing it silently.
+
+### Media and fragments
+
+For each prompt with `media.enabled: true`, the compiler checks that every `file_path` in its media examples exists, relative to the arena config's directory. A missing file is a warning:
+
+```text
+⚠ [compile] media(customer-support): Media file not found: images/logo.png (example: logo-example, part 0)
 ```
 
-**Features**:
-- Deduplication by task_type
-- Fast lookup by ID
-- Validation on registration
+For each fragment a prompt config references, the pack's `fragments` map gets an entry named after the fragment whose value is the placeholder `{{<name>}}`. The fragment's content is not copied into the pack.
 
-### Stage 3: Validation
+### Templates
 
-**Checks**:
-- Required fields present (task_type, system_template)
-- Template syntax valid
-- Parameter types correct
-- Tool references valid
-- Media files exist
+The compiler stores `system_template` as text. It does not parse or render it, so a malformed placeholder compiles. Its only template check is that a template containing `{{` declares at least one variable. A template that references variables with none declared fails the `pack` stage:
 
-**Output**: Validated PromptConfig objects or errors
-
-### Stage 4: Pack Assembly
-
-**Process**:
-1. Create pack structure
-2. Add each prompt to prompts map
-3. Add fragments map
-4. Add metadata (compiler version, timestamp)
-5. Assign pack ID and version
-
-**Output**: Complete Pack object
-
-### Stage 5: JSON Serialization
-
-**Format**: Indented JSON for readability
-
-```go
-json.MarshalIndent(pack, "", "  ")
+```text
+Compilation failed: [pack] prompt 'support': system_template references variables, but none are declared
 ```
 
-**Options**:
-- Indent: 2 spaces
-- Escape HTML: false
-- Sort keys: consistent ordering
+Rendering happens in the runtime that loads the pack, with the variable values it is given.
 
-**Output**: .pack.json file
+## compile and compile-prompt
 
-## Compiler Components
+`packc compile-prompt` takes one prompt file and calls the PromptKit compiler's single-prompt path directly. It skips the arena config loader and every check after it. The pack it writes differs from a `packc compile` pack:
 
-### PromptConfig Parser
+- `id` is the task type with underscores replaced by hyphens.
+- `name`, `version` and `description` come from the prompt's `metadata.name`, `spec.version` and `spec.description`.
+- `metadata` is the prompt's `spec.metadata`.
+- There is no `$schema`.
 
-Parses YAML to PromptConfig:
+Beyond parsing the file, `compile-prompt` checks only media references, relative to the prompt file's directory. A prompt without `spec.version` compiles, and the pack then fails `packc validate`. Run `packc validate` on every `compile-prompt` output.
 
-```go
-func ParseConfig(data []byte) (*Config, error)
-```
+## Repeatable output
 
-Handles:
-- YAML unmarshaling
-- Type conversion
-- Default values
-- Validation
-
-### Pack Compiler
-
-Orchestrates compilation:
-
-```go
-compiler := prompt.NewPackCompiler(registry)
-pack, err := compiler.CompileFromRegistry(packID, compilerVersion)
-```
-
-Responsibilities:
-- Iterate through registry
-- Transform prompts
-- Build pack structure
-- Add metadata
-
-### Validator
-
-Validates prompts and packs:
-
-```go
-warnings := pack.Validate()
-```
-
-Returns list of validation warnings (non-fatal) or errors (fatal).
-
-## Template Processing
-
-### Go Templates
-
-Default template engine:
-
-```yaml
-system_template: |
-  You are a helpful assistant.
-  User: {{user_name}}
-  Message: {{message}}
-```
-
-**Processing**:
-1. Parse template text
-2. Check syntax errors
-3. Store as string (runtime parsing)
-
-**Why not pre-compile?**
-- Templates need runtime data
-- Keeps packs language-agnostic
-- SDK handles execution
-
-### Template Validation
-
-PackC validates template syntax:
-
-```go
-_, err := template.New("test").Parse(tmpl)
-```
-
-But doesn't execute (no runtime data available).
-
-## Fragment Handling
-
-### Fragment Definition
-
-```yaml
-# fragment.yaml
-fragments:
-  company-info:
-    content: "Company: "
-    description: "Standard company info"
-```
-
-### Fragment Compilation
-
-Two strategies:
-
-**1. Inline (default)**
-
-Fragment content embedded in prompt:
-
-```json
-{
-  "prompts": {
-    "support": {
-      "system_template": "Company: {{company_name}}\n\nYou are support..."
-    }
-  }
-}
-```
-
-**2. Reference**
-
-Fragment stored separately:
-
-```json
-{
-  "fragments": {
-    "company-info": "Company: {{company_name}}..."
-  },
-  "prompts": {
-    "support": {
-      "system_template": "{{company-info}}\n\nYou are support..."
-    }
-  }
-}
-```
-
-**Tradeoff**:
-- Inline: Faster execution, larger size
-- Reference: Smaller size, runtime lookup
-
-## Error Handling
-
-### Fatal Errors
-
-Stop compilation immediately:
-
-- Invalid YAML syntax
-- Missing required fields
-- Template parse errors
-- File not found
-
-### Warnings
-
-Allow compilation but report issues:
-
-- Missing descriptions
-- Undefined tools
-- Missing media files
-- Large prompt size
-
-### Error Context
-
-Provide helpful error messages:
-
-```
-Error parsing prompt config: yaml: line 5: mapping values are not allowed
-File: prompts/support.yaml
-Line: 5
-```
-
-## Memory Management
-
-### Small Footprint
-
-PackC uses minimal memory:
-
-1. **Streaming YAML parsing** - Process files one at a time
-2. **Lazy loading** - Load prompts on demand
-3. **Garbage collection** - Release after compilation
-4. **No caching** - Don't hold data post-compile
-
-### Large Projects
-
-For projects with 100+ prompts:
-
-- Use single-prompt compilation for testing
-- Compile subsets during development
-- Full compilation only for releases
-
-## Compilation Modes
-
-### Standard Mode
+The output is indented JSON with two-space indentation. Object keys come out in a fixed order, so two compiles of the same inputs with the same `packc` version produce the same bytes except for `compilation.created_at` (and `template_engine`, if your prompts declare different ones). That field records when the compile ran. To compare two builds, strip it first:
 
 ```bash
-packc compile --config arena.yaml --output pack.json --id app
+jq 'del(.compilation.created_at)' app.pack.json | sha256sum
 ```
 
-- Full validation
-- Complete metadata
+`compiled_with` records the `packc` version. A `go install` build reports `packc-dev`, because only release builds set the version string.
 
-## Deterministic Builds
+## Trade-offs
 
-PackC produces deterministic output:
+Validating at compile time moves failures from deployment to the build: an unknown workflow state or a missing skill directory fails `packc compile` instead of the first conversation that reaches it. The cost is that `packc` needs the whole arena config, including the `providers` and `defaults` that only `promptarena run` uses.
 
-**Given**:
-- Same source files
-- Same packc version
-- Same compilation flags
+Collecting every finding before failing costs a little time on a broken config. In return, a person or a coding agent fixing the config gets the full list in one pass.
 
-**Result**:
-- Identical pack.json output
-- Same checksums
-- Reproducible builds
+Leaving templates unparsed keeps the pack independent of any template engine. The pack declares its `template_engine`, and the runtime that reads it does the rendering. The compiler therefore cannot catch a typo in a placeholder.
 
-**Implementation**:
-- Sorted keys in JSON
-- Fixed timestamp format
-- Consistent whitespace
+## Related
 
-## Debugging Compilation
-
-Use `packc inspect` to view the contents of a compiled pack:
-
-```bash
-packc inspect packs/app.pack.json
-```
-
-Use `packc validate` to check a pack for errors:
-
-```bash
-packc validate packs/app.pack.json
-```
-
-## Build Reproducibility
-
-### Version Locking
-
-Lock packc version:
-
-```yaml
-# .packc-version
-0.1.0
-```
-
-### Input Hashing
-
-Track source file changes:
-
-```bash
-find prompts/ -type f -exec sha256sum {} \; > prompts.sha256
-```
-
-### Build Manifest
-
-Generate build info:
-
-```json
-{
-  "packc_version": "0.1.0",
-  "source_files": ["prompts/support.yaml"],
-  "file_hashes": {"prompts/support.yaml": "abc123..."},
-  "build_time": "2025-01-16T10:30:00Z",
-  "build_machine": "ci-runner-01"
-}
-```
-
-## Compiler Architecture
-
-### Modular Design
-
-```
-PackCompiler
-├── Parser (YAML → PromptConfig)
-├── Validator (checks)
-├── Assembler (build pack)
-└── Serializer (write JSON)
-```
-
-Each component is:
-- Independent
-- Testable
-- Replaceable
-
-## Comparison with Other Compilers
-
-### vs. TypeScript Compiler
-
-| Feature | PackC | tsc |
-|---------|-------|-----|
-| Input | YAML | TypeScript |
-| Output | JSON | JavaScript |
-| Type checking | Limited | Full |
-| Optimization | Minimal | Extensive |
-| Speed | ~100ms | ~1-10s |
-
-### vs. Babel
-
-| Feature | PackC | Babel |
-|---------|-------|-------|
-| Input | YAML | JavaScript |
-| Output | JSON | JavaScript |
-| Transformations | Few | Many |
-| Plugins | None | Extensive |
-| Speed | Fast | Moderate |
-
-## Summary
-
-PackC's compilation architecture is:
-
-- **Pipeline-based** - Clear stages from YAML to JSON
-- **Validated** - Multiple validation checkpoints
-- **Extensible** - Modular components
-- **Deterministic** - Reproducible builds
-- **Fast** - Milliseconds for typical projects
-
-This design ensures reliable, consistent pack generation for production use.
+- [Validation](/packc/explanation/validation/): every check, and which ones block.
+- [Pack format](/packc/explanation/pack-format/): the structure of the output.
+- [compile reference](/packc/reference/compile/)
+- [compile-prompt reference](/packc/reference/compile-prompt/)

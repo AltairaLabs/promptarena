@@ -1,48 +1,21 @@
 ---
 title: Explanation
+description: Background on the PromptPack format and on how packc compiles and validates packs.
 sidebar:
   order: 0
+verified:
+  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  sources:
+    - packc/main_interactive.go
 ---
-Deep-dive documentation on PackC concepts, architecture, and design decisions.
+These pages explain what a pack contains and what `packc` does to build and check one. For the steps, see the [how-to guides](/packc/how-to/). For each command's flags, see the [reference](/packc/reference/).
 
-## Understanding PackC
+- [Pack format](/packc/explanation/pack-format/): the parts of a `.pack.json` file, and why prompts ship as one compiled file.
+- [Compilation](/packc/explanation/compilation/): how `packc compile` turns an arena config into a pack, and what it fills in.
+- [Validation](/packc/explanation/validation/): what `packc compile`, `packc validate` and `promptarena validate` check, and which findings block.
 
-These articles explain the "why" behind PackC's design and how it works internally.
+## Related
 
-### Core Concepts
-
-- [**Pack Format**](/packc/explanation/pack-format/) - Understanding the pack.json structure
-- [**Compilation Architecture**](/packc/explanation/compilation/) - How PackC compiles prompts
-- [**Validation Strategy**](/packc/explanation/validation/) - Pack validation approach
-
-## Purpose
-
-Explanation documentation helps you understand:
-
-- **Why** PackC was designed this way
-- **How** the compilation process works
-- **When** to use specific features
-- **What** tradeoffs were made
-
-## Who Should Read This
-
-- Developers integrating PackC into workflows
-- Teams designing pack strategies
-- Contributors to PromptKit
-- Anyone wanting deeper understanding
-
-## Format
-
-Each explanation includes:
-
-- **Background** - Context and motivation
-- **Design Principles** - Core design decisions
-- **Architecture** - How components work together
-- **Tradeoffs** - Benefits and limitations
-- **Alternatives** - Other approaches considered
-
-## See Also
-
-- [Reference](/packc/reference/) - Command specifications
-- [How-To Guides](/packc/how-to/) - Practical tasks
-- [Tutorials](/packc/tutorials/) - Learning path
+- [Reference](/packc/reference/)
+- [How-to guides](/packc/how-to/)
+- [Tutorials](/packc/tutorials/)

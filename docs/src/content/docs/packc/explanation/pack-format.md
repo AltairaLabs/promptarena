@@ -1,38 +1,48 @@
 ---
 title: Pack Format
-description: Understanding the PromptPack specification and .pack.json structure
+description: What a PromptPack .pack.json file contains, how its workflow block is shaped, and what compiling prompts into one file buys you.
 sidebar:
   order: 1
+verified:
+  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  sources:
+    - arena/arenaconfig/types.go
+    - packc/compiler/check.go
+    - packc/compiler/compiler.go
+    - packc/compiler/helpers_integration.go
+    - packc/main_interactive.go
 ---
 
-Understanding the [PromptPack](https://promptpack.org) specification and `.pack.json` structure.
+This page explains what a `.pack.json` file contains and why prompts ship as one compiled file. The [PromptPack specification](https://promptpack.org) is the authority on every field. `packc` embeds version 1.9.0 of its schema and validates against it.
 
-## The PromptPack Standard
+## The PromptPack standard
 
-[PromptPack](https://promptpack.org) is an **open specification** for packaging AI prompts in a vendor-neutral, framework-agnostic format. PackC compiles source files into packs that conform to this standard.
+[PromptPack](https://promptpack.org) is an open specification for packaging prompts as one JSON document. A pack holds prompts, the variables they take, the tools they may call, validators, evals, and optionally a workflow and a set of agents. Nothing in it is specific to one runtime or one provider. `packc` writes packs, and the [PromptKit SDK](https://promptkit.altairalabs.ai/sdk/) is the Go runtime that reads them. Any program that implements the schema can read one too.
 
-### Why a Standard?
+```mermaid
+flowchart LR
+  packc["packc compile"]
+  pack[".pack.json"]
+  sdk["PromptKit SDK (Go)"]
+  custom["your own reader"]
+  packc --> pack
+  pack --> sdk
+  pack --> custom
+```
 
-Today's AI prompt development is fragmented:
+## What a pack contains
 
-- Each framework uses its own format
-- Switching providers means rebuilding prompts
-- No consistent way to version or test prompts
-- Prompts are treated as disposable, not engineered assets
+A pack is one JSON object. The schema requires five top-level fields:
 
-[PromptPack](https://promptpack.org) solves this with a universal JSON format that works across **any** runtime or provider.
+- `id`: the pack identifier. It starts with a lowercase letter and contains only lowercase letters, digits and hyphens (`^[a-z][a-z0-9-]*$`).
+- `name`: a human-readable name.
+- `version`: a semantic version, with an optional `v` prefix (`v1.0.0` or `1.0.0`).
+- `template_engine`: the template engine's `version` and the variable `syntax`, such as `{{variable}}`.
+- `prompts`: the prompts, keyed by task type.
 
-### Core Principles
+Everything else is optional: `$schema`, `description`, `fragments`, `tools`, `metadata`, `compilation`, `evals`, `workflow`, `agents`, `skills`, `compositions` and `requires`. `packc` writes `compilation` itself, recording the compiler version, the time and the schema version. `packc validate` is stricter than the schema here: it rejects a pack without `compilation`.
 
-From the [PromptPack specification](https://promptpack.org):
-
-1. **Vendor Neutrality**: Works with any AI framework or provider
-2. **Completeness**: Everything needed in a single file—prompts, tools, guardrails
-3. **Discipline**: Treat prompts as version-controlled, testable engineering artifacts
-
-## Pack Structure
-
-A PromptPack-compliant `.pack.json` file:
+A minimal pack that passes the schema (add a `compilation` block for `packc validate`):
 
 ```json
 {
@@ -48,47 +58,29 @@ A PromptPack-compliant `.pack.json` file:
     "greeting": {
       "id": "greeting",
       "name": "Greeting",
+      "version": "v1.0.0",
       "system_template": "You are a helpful support agent. Help the user with: {{query}}",
-      "version": "v1.0.0"
+      "variables": [
+        { "name": "query", "type": "string", "required": true }
+      ]
     }
   }
 }
 ```
 
-### Top-Level Fields
+### Prompts
 
-| Field | Description |
-|-------|-------------|
-| `id` | Unique pack identifier |
-| `name` | Human-readable pack name |
-| `version` | Pack version (semver) |
-| `prompts` | Map of prompt definitions |
+Each entry in `prompts` requires `id`, `name`, `version` and `system_template`. The `id` matches the task type key and follows `^[a-z][a-z0-9_-]*$`, so it may contain underscores where a pack `id` may not. A prompt's `version` is independent of the pack's, so one prompt can change without the others.
 
-### Prompt Structure
+A prompt can also carry `description`, `variables`, `tools` (names of pack-level tools it may call), `tool_policy`, `parameters`, `validators`, `evals`, `media`, `tested_models`, `model_overrides` and `pipeline`. `packc` fills `pipeline` with a default of template, provider and validator stages.
 
-Each prompt in the `prompts` map (keyed by task type):
+### Tools
 
-```json
-{
-  "id": "task-id",
-  "name": "Display Name",
-  "description": "What this prompt does",
-  "version": "v1.0.0",
-  "system_template": "System prompt text with {{variables}}",
-  "variables": [
-    {
-      "name": "variable_name",
-      "type": "string",
-      "required": true
-    }
-  ],
-  "tools": ["tool1", "tool2"]
-}
-```
+`tools` is an object keyed by tool name. Each tool requires a `name` and a `description`, and usually has `parameters` (a JSON Schema for its input). `packc compile` builds it from the arena config's `kind: Tool` files. A prompt's `tools` list names entries in this object.
 
 ## Workflows
 
-Packs can include a `workflow` section that defines an event-driven state machine over prompts. Each state references a prompt task type, and transitions are triggered by named events.
+A `workflow` block is an event-driven state machine over the pack's prompts. Each state names a prompt, and named events move the conversation from one state to another.
 
 ```json
 {
@@ -99,213 +91,75 @@ Packs can include a `workflow` section that defines an event-driven state machin
       "intake": {
         "prompt_task": "greeting",
         "description": "Initial customer contact",
-        "on_event": {
-          "Escalate": "specialist",
-          "Resolve": "closed"
-        },
-        "orchestration": "internal"
+        "on_event": { "Escalate": "specialist", "Resolve": "closed" }
       },
       "specialist": {
         "prompt_task": "specialist",
-        "description": "Specialized support handling",
-        "on_event": {
-          "Resolve": "closed"
-        },
+        "on_event": { "Resolve": "closed" },
         "persistence": "persistent",
         "orchestration": "external"
       },
       "closed": {
         "prompt_task": "farewell",
-        "description": "Conversation complete"
+        "terminal": true
       }
     }
   }
 }
 ```
 
-### Workflow Fields
-
-| Field | Description |
-|-------|-------------|
-| `version` | Workflow spec version (`1`) |
-| `entry` | Name of the initial state |
-| `states` | Map of state definitions |
-
-### State Fields
-
-| Field | Description |
-|-------|-------------|
-| `prompt_task` | References a prompt in the `prompts` map |
-| `description` | Human-readable state description |
-| `on_event` | Map of event name to target state |
-| `persistence` | `"transient"` or `"persistent"` (storage hint) |
-| `orchestration` | `"internal"`, `"external"`, or `"hybrid"` (control mode) |
-
-A state with no `on_event` entries is a **terminal state** — the workflow is complete when it reaches one.
-
-### Orchestration Modes
-
-- **`internal`** (default) — The agent drives transitions automatically
-- **`external`** — External callers (HTTP, queues) drive transitions via the SDK
-- **`hybrid`** — Mixed control; both agent and external callers can trigger transitions
-
-## Portability
-
-The key benefit of PromptPack is **portability**. A pack compiled with PackC works with:
-
-- **PromptKit SDK** (Go) — The reference implementation
-- **Other PromptPack runtimes** — Any language that reads the spec
-- **Custom integrations** — Parse the JSON directly
+The diagram shows the states and transitions in this example:
 
 ```mermaid
-flowchart TD
-    pack[".pack.json (PromptPack)<br/>Vendor-Neutral, Portable"]
-    pack --> promptkit["PromptKit<br/>(Go)"]
-    pack --> python["Python<br/>Runtime"]
-    pack --> custom["Your Custom<br/>Integration"]
+stateDiagram-v2
+  [*] --> intake
+  intake --> specialist: Escalate
+  intake --> closed: Resolve
+  specialist --> closed: Resolve
+  closed --> [*]
 ```
 
-No vendor lock-in. Build once, deploy everywhere.
+A workflow requires `version`, `entry` and `states`. `entry` names the starting state. `engine` is optional and holds runtime settings such as a `budget`.
 
-## Why JSON?
+A state usually sets `prompt_task`, which names a key in `prompts`. The schema defines these state fields:
 
-The [PromptPack spec](https://promptpack.org) uses JSON because:
+- `on_event` maps an event name to a target state. Event names are PascalCase by convention, and `packc` warns about any that are not.
+- `persistence` says whether conversation context is kept (`persistent`) or reset (`transient`) when the state is entered.
+- `orchestration` says who drives transitions. `internal` (the default) means the agent does, `external` means the calling system does, and `hybrid` means both can. `composition` hands the state to the composition named in `composition`.
+- `control` says who holds the next turn after entering the state: `user` or `agent`. The specification's default is `user`. The PromptKit runtime treats an absent `control` as the agent keeping the turn, so set it explicitly when it matters.
+- `terminal: true` ends the workflow after the state's prompt runs. A state with no `on_event` entries is also terminal.
+- `max_visits` caps how often a state can be entered, and `on_max_visits` names where to go when the cap is reached.
+- `skills` scopes which skills are available in the state, as a path or `none`.
+- `artifacts` declares named slots for small structured values that carry across state visits.
 
-1. **Universal** — Supported by all programming languages
-2. **Human-readable** — Easy to inspect and debug
-3. **Fast** — Native parsing in most runtimes
-4. **Standard** — Well-defined (RFC 8259)
-5. **Tooling** — jq, validators, formatters
-
-### Alternatives Considered
-
-| Format | Why Not |
-|--------|---------|
-| YAML | Slower parsing, more edge cases |
-| Binary (Protobuf) | Not human-readable, requires codegen |
-| TOML | Limited nesting support |
+The PromptKit runtime accepts workflow `version` 1 or 2. Version 2 also warns about any state that has no transitions, no `max_visits` and no `terminal: true`.
 
 ## Fragments
 
-Reusable prompt components, defined once and referenced by multiple prompts:
+`fragments` is an object of named text blocks that prompts share. The specification defines each value as the fragment's content, resolved at compile time. `packc` records the names of the fragments that prompts reference, with each value set to the placeholder `{{<name>}}` rather than the fragment's text. See [Compilation](/packc/explanation/compilation/#media-and-fragments).
 
-```json
-{
-  "fragments": {
-    "company-info": "You work for Acme Corp, a leader in..."
-  },
-  "prompts": {
-    "support": {
-      "id": "support",
-      "system_template": "{{company-info}}\n\nYou are a support agent...",
-      "version": "v1.0.0"
-    }
-  }
-}
-```
+## Versions
 
-Benefits:
-- **DRY** — Define once, use many times
-- **Consistency** — Same content across prompts
-- **Maintainability** — Update in one place
+A pack carries two kinds of version. `version` is the pack's own semantic version, and each prompt has its own. `packc compile` writes `v1.0.0` as the pack version on every build. `packc compile-prompt` uses the prompt's `spec.version`. To distinguish builds of the same pack, put the version in the output file name or the artifact tag.
 
-## Versioning
-
-### Semantic Versioning
-
-Packs use semantic versioning:
-
-```
-MAJOR.MINOR.PATCH
-
-2.1.3
-│ │ │
-│ │ └─ Patch: Bug fixes, no API changes
-│ └─── Minor: New features, backward compatible
-└───── Major: Breaking changes
-```
-
-### Schema Versions
-
-The PromptPack format itself is versioned via `$schema` and `compilation.schema`:
-
-```json
-{
-  "$schema": "https://promptpack.org/schema/latest/promptpack.schema.json",
-  "compilation": {
-    "schema": "v1"
-  }
-}
-```
-
-This allows the specification to evolve while maintaining compatibility.
+The format itself is versioned through `$schema` and `compilation.schema`. `packc compile` writes `$schema` as `https://promptpack.org/schema/latest/promptpack.schema.json` and `compilation.schema` as `v1`.
 
 ## What the format buys you
 
-The properties below are the reason for a compiled pack rather than prompts kept
-as loose files or embedded in application code. Whether they matter depends on
-what you are building — a single prompt in one service needs none of them.
+Prompts kept as loose files, or embedded in application code, work for a single prompt in one service. A compiled pack adds four properties that matter once several prompts ship together.
 
-**A published schema.** Packs validate against
-[the PromptPack spec](https://promptpack.org) before they ship, so a malformed
-prompt is a build failure rather than a runtime one. Anything that can read the
-schema can read the pack; nothing about the format is specific to this toolchain
-or to Go.
+The pack has a published schema. Packs validate against [the PromptPack spec](https://promptpack.org) before they ship, so a malformed prompt fails the build. Anything that can read the schema can read the pack.
 
-**A version on the artifact.** The pack carries its own version, so a deployment
-can name exactly which prompts it is running and a rollback is a version change
-rather than a code change.
+The pack carries versions. The pack and each prompt have a version, so a deployment can name exactly which prompts it runs, and a rollback swaps a file.
 
-**One artifact per bundle.** Related prompts, their variables and their
-validators travel together in a single file, so there is no set of loose files to
-keep in step and no import path to resolve at runtime.
+The pack is one artifact. Related prompts, their variables, their tools and their validators travel together in one file. There is no set of loose files to keep in step and no import path to resolve at runtime.
 
-**No code dependency.** A pack is data. Reading one does not require the library
-that produced it, which is what makes it usable from a language this toolchain
-does not ship a client for.
+The pack is data. Reading one does not require the library that produced it, so a language this toolchain ships no client for can still use it. JSON makes that practical: every language parses it, and `jq` or a text editor can read a pack. The cost is that a pack is more verbose than the YAML it was compiled from.
 
-## Best Practices
+## Related
 
-### 1. Follow the Specification
-
-Use the [PromptPack spec](https://promptpack.org) for maximum portability:
-
-```json
-{
-  "$schema": "https://promptpack.org/schema/latest/promptpack.schema.json",
-  "id": "my-pack",
-  "name": "My Pack",
-  "version": "v1.0.0"
-}
-```
-
-### 2. Keep Packs Focused
-
-One pack per application or feature:
-
-```
-customer-support.pack.json
-sales-automation.pack.json
-
-all-prompts.pack.json
-```
-
-### 3. Use Semantic Versioning
-
-```
-1.0.0 → 1.0.1  // Bug fix
-1.0.1 → 1.1.0  // New prompt added
-1.1.0 → 2.0.0  // Breaking change
-```
-
-### 4. Validate Before Deploy
-
-```bash
-packc validate pack.json
-```
-
-## Learn More
-
-- **PromptPack Specification**: [promptpack.org](https://promptpack.org)
-- **PackC Reference**: [Compile Command](/packc/reference/compile/)
-- **Validation**: [Validate Command](/packc/reference/validate/)
+- [Compilation](/packc/explanation/compilation/): how each field gets its value.
+- [Validation](/packc/explanation/validation/): which rules `packc` enforces.
+- [compile reference](/packc/reference/compile/)
+- [validate reference](/packc/reference/validate/)
+- [PromptPack specification](https://promptpack.org)

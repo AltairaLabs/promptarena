@@ -1,188 +1,85 @@
 ---
 title: Validate Packs
+description: Check a compiled pack against the PromptPack schema and packc's structural rules, in a script, a pre-commit hook or CI, and fix the common failures.
 sidebar:
   order: 3
+verified:
+  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  sources:
+    - arena/cmd/promptarena/export.go
+    - arena/cmd/promptarena/validate_json.go
+    - packc/compiler/check.go
+    - packc/main_interactive.go
+    - packc/skills_validator.go
 ---
-Ensure your compiled packs are correct and production-ready.
-
-## Goal
-
-Verify pack structure, catch errors, and enforce quality standards before deployment.
+Check that a `.pack.json` file is valid before you ship it.
 
 ## Prerequisites
 
-- packc installed
-- Compiled pack file (.pack.json)
+- `packc` installed ([Install PackC](/packc/how-to/install/)).
+- A pack file. `packc compile` runs the same checks before it writes one, so `packc validate` matters most for packs built elsewhere or edited since, and for `packc compile-prompt` output, which is not checked when it is written.
 
-## Basic Validation
+## Validate a pack
 
-### Steps
-
-1. **Compile your pack** (if not already done)
-
-   ```bash
-   packc compile --config arena.yaml --output packs/app.pack.json --id app
-   ```
-
-2. **Run validation**
+1. Run `packc validate` on the file:
 
    ```bash
    packc validate packs/app.pack.json
    ```
 
-3. **Check the result**
+2. Read the result. A valid pack prints:
 
-   **Success:**
-   ```
+   ```text
    Validating pack: packs/app.pack.json
    Validating against PromptPack schema...
    ✓ Schema validation passed
    ✓ Pack structure is valid
    ```
 
-   **With warnings:**
+   Non-blocking findings follow with a `⚠` prefix, and the exit code stays 0:
 
-   Non-fatal issues (such as skill or workflow warnings) are printed with a
-   `⚠` prefix while validation still succeeds:
-   ```
-   Validating pack: packs/app.pack.json
-   Validating against PromptPack schema...
-   ✓ Schema validation passed
+   ```text
    ✓ Pack structure is valid
    ⚠ Workflow warnings:
-     - <warning message>
+     - workflow.states["intake"].on_event["escalate"]: event name should be PascalCase
    ```
 
-   Blocking problems (missing required fields, invalid template variables, and
-   similar structural issues) are instead printed under `✗ Pack validation
-   failed:` and cause a non-zero exit code.
+   Blocking findings are printed to stderr under `✗ Pack failed schema validation:`, `✗ Pack validation failed:` or `✗ Skill validation errors:`, and the exit code is 1.
 
-## Validation Checks
+[Validation](/packc/explanation/validation/) lists every check and whether it blocks.
 
-PackC validates:
+## Validate several packs
 
-- **Schema compliance** - Pack structure matches spec
-- **Required fields** - All mandatory fields present
-- **Prompt references** - Prompts referenced in pack exist
-- **Tool definitions** - Tools are properly defined
-- **Template syntax** - Go templates are parseable
-- **Parameter types** - Parameters have correct types
-
-## Validation Patterns
-
-### Pattern 1: Validate After Every Compile
+`packc validate` checks one file per run and ignores any further arguments, so `packc validate packs/*.pack.json` checks only the first match. Loop over the files instead:
 
 ```bash
 #!/bin/bash
-set -e
-
-packc compile --config arena.yaml --output packs/app.pack.json --id app
-packc validate packs/app.pack.json
-
-echo "✓ Pack compiled and validated"
-```
-
-### Pattern 2: Validate All Packs
-
-```bash
-#!/bin/bash
-# validate-all.sh
-
+status=0
 for pack in packs/*.pack.json; do
-  echo "Validating: $pack"
-  packc validate "$pack"
+  packc validate "$pack" || status=1
 done
-
-echo "✓ All packs validated"
+exit $status
 ```
 
-### Pattern 3: Validate with Exit Codes
+This checks every pack and fails if any of them fail.
+
+## Validate before each commit
+
+To block a commit that stages an invalid pack, save this as `.git/hooks/pre-commit` and make it executable with `chmod +x .git/hooks/pre-commit`:
 
 ```bash
 #!/bin/bash
-# Validate and handle errors
-
-if packc validate packs/app.pack.json; then
-  echo "✓ Pack is valid"
-  exit 0
-else
-  echo "✗ Pack validation failed"
-  exit 1
-fi
-```
-
-### Pattern 4: Pre-Deployment Validation
-
-```bash
-#!/bin/bash
-# deploy.sh
-
-echo "Pre-deployment checks..."
-
-# Validate pack
-if ! packc validate packs/prod/app.pack.json; then
-  echo "✗ Pack validation failed - aborting deployment"
-  exit 1
-fi
-
-# Additional checks
-./scripts/test-pack.sh packs/prod/app.pack.json
-
-echo "✓ Validation passed - proceeding with deployment"
-./scripts/deploy-pack.sh packs/prod/app.pack.json
-```
-
-## Integration Patterns
-
-### Pre-commit Hook
-
-Validate packs before committing:
-
-```bash
-#!/bin/bash
-# .git/hooks/pre-commit
-
-echo "Validating packs before commit..."
-
-for pack in $(git diff --cached --name-only | grep '\.pack\.json$'); do
-  echo "Checking: $pack"
-  
+for pack in $(git diff --cached --name-only --diff-filter=ACM | grep '\.pack\.json$'); do
   if ! packc validate "$pack"; then
-    echo "✗ Validation failed for $pack"
-    echo "Fix issues or use 'git commit --no-verify' to bypass"
+    echo "✗ $pack is invalid. Fix it, or commit with --no-verify to skip this check."
     exit 1
   fi
 done
-
-echo "✓ All packs valid"
 ```
 
-Make it executable:
+## Validate in CI
 
-```bash
-chmod +x .git/hooks/pre-commit
-```
-
-### Makefile Target
-
-```makefile
-.PHONY: validate
-validate:
-	@echo "Validating all packs..."
-	@for pack in packs/*.pack.json; do \
-		echo "Checking $$pack..."; \
-		packc validate $$pack || exit 1; \
-	done
-	@echo "✓ All packs validated"
-
-.PHONY: validate-strict
-validate-strict: validate
-	@echo "Running additional checks..."
-	@./scripts/check-pack-size.sh
-	@./scripts/check-prompt-quality.sh
-```
-
-### CI/CD Pipeline
+Compile and validate in the same job. A failing `packc` command exits 1, which fails the step:
 
 ```yaml
 # .github/workflows/validate-packs.yml
@@ -191,277 +88,87 @@ name: Validate Packs
 on:
   pull_request:
     paths:
-      - 'packs/*.pack.json'
       - 'prompts/**'
-      - 'config/**'
+      - 'config.arena.yaml'
 
 jobs:
   validate:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      
-      - name: Install packc
-        run: go install github.com/AltairaLabs/promptarena/v2/packc@latest
-      
-      - name: Compile packs
-        run: |
-          packc compile --config arena.yaml --output packs/app.pack.json --id app
-      
-      - name: Validate packs
-        run: |
-          for pack in packs/*.pack.json; do
-            echo "Validating: $pack"
-            packc validate "$pack"
-          done
-      
-      - name: Check pack quality
-        run: |
-          ./scripts/check-pack-quality.sh packs/*.pack.json
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.26'
+      - run: go install github.com/AltairaLabs/promptarena/v2/packc@latest
+      - run: packc compile --config config.arena.yaml --output packs/app.pack.json --id app
+      - run: packc validate packs/app.pack.json
 ```
 
-## Advanced Validation
+[CI/CD integration](/packc/how-to/ci-cd-integration/) covers other CI systems and the `packc-action` GitHub Action.
 
-### Custom Validation Scripts
+## Check the source config instead
 
-Create additional validation:
+`promptarena validate` runs the pack checks on an arena config without writing a pack, and adds PromptArena's own checks:
 
 ```bash
-#!/bin/bash
-# scripts/validate-pack-quality.sh
-
-pack_file="$1"
-
-echo "Running quality checks on $pack_file..."
-
-# Check pack size
-size=$(stat -f%z "$pack_file" 2>/dev/null || stat -c%s "$pack_file")
-max_size=$((1024 * 1024))  # 1MB
-
-if [ "$size" -gt "$max_size" ]; then
-  echo "✗ Pack too large: ${size} bytes (max: ${max_size})"
-  exit 1
-fi
-
-# Validate JSON syntax
-if ! jq empty "$pack_file" 2>/dev/null; then
-  echo "✗ Invalid JSON"
-  exit 1
-fi
-
-# Check for required metadata
-if ! jq -e '.compilation.compiled_with' "$pack_file" >/dev/null; then
-  echo "✗ Missing compilation.compiled_with"
-  exit 1
-fi
-
-echo "✓ Quality checks passed"
+promptarena validate config.arena.yaml
 ```
 
-### Validation Matrix
+Use it while editing prompts. Use `packc validate` on the compiled artifact.
 
-Test packs across environments:
-
-```yaml
-# .github/workflows/validate-matrix.yml
-name: Validate Across Environments
-
-on: [push, pull_request]
-
-jobs:
-  validate:
-    strategy:
-      matrix:
-        environment: [dev, staging, prod]
-        
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      
-      - name: Install packc
-        run: go install github.com/AltairaLabs/promptarena/v2/packc@latest
-      
-      - name: Compile $ pack
-        run: |
-          packc compile \
-            --config config/arena.$.yaml \
-            --output packs/$/app.pack.json \
-            --id app-$
-      
-      - name: Validate pack
-        run: packc validate packs/$/app.pack.json
-```
-
-## Verification
-
-### Check Validation Status
+## Verify
 
 ```bash
-# Exit code 0 = valid, 1 = invalid
 packc validate packs/app.pack.json
-echo $?  # Should be 0
+echo $?
 ```
 
-### Inspect Validation Results
-
-```bash
-# Capture output
-output=$(packc validate packs/app.pack.json 2>&1)
-
-# Check for warnings
-if echo "$output" | grep -q "⚠"; then
-  echo "Pack has warnings"
-fi
-```
+`0` means the pack is valid. `1` means it is not, or the file could not be read.
 
 ## Troubleshooting
 
-### Validation fails with structural errors
+### The file cannot be read
 
-**Problem:**
-
+```text
+Validating pack: packs/app.pack.json
+Error reading pack file: open packs/app.pack.json: no such file or directory
 ```
+
+Check the path, or compile the pack first.
+
+### Schema validation fails
+
+```text
+✗ Pack failed schema validation:
+  - (root): id is required (value: map[])
+  - prompts.greeting.version: Does not match pattern '^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)...' (value: )
+```
+
+Each line gives the JSON path of the problem. Fix the source config and recompile rather than editing the pack. A missing prompt `version` is the usual cause in `packc compile-prompt` output: add `spec.version` to the prompt config.
+
+A file that is not valid JSON can also fail here. For example, a stray closing brace after the pack (`{}}`) is reported as schema errors about the leading `{}`, not as a parse error.
+
+### Structural validation fails
+
+```text
 ✗ Pack validation failed:
-  - prompt 'support': missing version
+  - missing compilation metadata
 ```
 
-**Solution:** Fix the flagged fields in the source YAML:
+A pack that was not written by `packc` may lack the `compilation` block. The schema allows that, but `packc validate` does not. Recompile it with `packc compile`.
 
-```yaml
-spec:
-  task_type: support
-  version: v1.0.0  # Add the missing version
+### A skill path does not exist
+
+```text
+✗ Skill validation errors:
+  - skills[0]: directory "skills/billing" does not exist
 ```
 
-Then recompile and validate:
+`packc validate` resolves skill paths relative to the pack file's directory. Validate the pack where it sits next to its `skills/` directory, or move the directory.
 
-```bash
-packc compile --config arena.yaml --output packs/app.pack.json --id app
-packc validate packs/app.pack.json
-```
+## Related
 
-### Pack file not found
-
-**Problem:**
-
-```
-Error loading pack: open packs/app.pack.json: no such file or directory
-```
-
-**Solution:** Compile pack first:
-
-```bash
-packc compile --config arena.yaml --output packs/app.pack.json --id app
-packc validate packs/app.pack.json
-```
-
-### Invalid JSON
-
-**Problem:**
-
-```
-Error loading pack: invalid character '}' after top-level value
-```
-
-**Solution:** Recompile pack (don't edit JSON manually):
-
-```bash
-packc compile --config arena.yaml --output packs/app.pack.json --id app
-```
-
-### Tool not defined
-
-**Problem:**
-
-```
-⚠ Tool 'search_kb' not defined
-```
-
-**Solution:** Define tool in tools directory or prompt config:
-
-```yaml
-# prompts/support.yaml
-tools:
-  - name: search_kb
-    description: Search knowledge base
-    input_schema:
-      type: object
-      properties:
-        query:
-          type: string
-```
-
-## Best Practices
-
-### 1. Validate on Every Build
-
-```bash
-# Always pair compile with validate
-packc compile --config arena.yaml --output packs/app.pack.json --id app && \
-packc validate packs/app.pack.json
-```
-
-### 2. Fail Fast in CI
-
-```yaml
-- name: Validate packs
-  run: |
-    packc validate packs/*.pack.json
-  # Fail pipeline if validation fails
-```
-
-### 3. Track Validation History
-
-```bash
-# Log validation results
-packc validate packs/app.pack.json 2>&1 | tee validation-$(date +%Y%m%d).log
-```
-
-### 4. Validate Before Tagging Releases
-
-```bash
-#!/bin/bash
-# scripts/release.sh
-
-# Validate all packs
-for pack in packs/prod/*.pack.json; do
-  packc validate "$pack" || exit 1
-done
-
-# Tag release
-git tag -a "v1.2.0" -m "Release v1.2.0"
-```
-
-### 5. Create Validation Reports
-
-```bash
-#!/bin/bash
-# Generate validation report
-
-cat > validation-report.txt <<EOF
-Pack Validation Report
-=====================
-Date: $(date)
-Compiler: $(packc version)
-
-EOF
-
-for pack in packs/*.pack.json; do
-  echo "Pack: $pack" >> validation-report.txt
-  packc validate "$pack" 2>&1 >> validation-report.txt
-  echo "" >> validation-report.txt
-done
-
-cat validation-report.txt
-```
-
-## Next Steps
-
-- [Organize Pack Files](/packc/how-to/organize-packs/) - Structure your packs
-- [CI/CD Integration](/packc/how-to/ci-cd-integration/) - Automate validation
-- [Inspect Packs](/packc/reference/inspect/) - View pack details
-
-## See Also
-
-- [validate command reference](/packc/reference/validate/)
-- [Pack format explanation](/packc/explanation/pack-format/)
+- [Validation](/packc/explanation/validation/)
+- [validate reference](/packc/reference/validate/)
+- [inspect reference](/packc/reference/inspect/)
+- [CI/CD integration](/packc/how-to/ci-cd-integration/)

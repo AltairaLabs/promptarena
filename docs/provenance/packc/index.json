@@ -1,0 +1,73 @@
+{
+ "page": "docs/src/content/docs/packc/index.md",
+ "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "packc commands are compile, compile-prompt, validate, inspect, version, help, completion",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:29-48",
+    "packc/main_interactive.go:51-100"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "validation uses the embedded PromptPack schema by default; PROMPTKIT_SCHEMA_SOURCE local/remote/path overrides",
+   "verdict": "true",
+   "evidence": [
+    "packc/schema_validator.go:15-31"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "packc compile-prompt flags -p/--prompt and -o/--output, both required",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:176-190"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "packc compile flags: -c/--config (default config.arena.yaml), -o/--output (default <id>.pack.json), --id (default current folder name sanitized)",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:119-146"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "validate prints 'Validating pack', schema result, '\u2713 Pack structure is valid'; blocking findings exit 1",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:247-339"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "packc compile sets name=id, version v1.0.0, description 'Pack containing N prompts', $schema latest URL, compilation block",
+   "verdict": "true",
+   "evidence": [
+    "packc/compiler/compiler.go:127-132"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "each prompt gets the default template/provider/validator pipeline",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 8,
+   "claim": "go install github.com/AltairaLabs/promptarena/v2/packc@latest; go 1.26",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 9,
+   "claim": "PromptPack schema requires id, name, version, template_engine, prompts; optional $schema, description, fragments, tools, metadata, compilation, evals, workflow, agents, skills, compositions, requires",
+   "verdict": "true",
+   "evidence": []
+  }
+ ]
+}

@@ -1,501 +1,179 @@
 ---
 title: Validation Strategy
+description: What packc compile, packc validate and promptarena validate each check, which findings block, and what no command checks.
 sidebar:
   order: 3
+verified:
+  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  sources:
+    - arena/arenaconfig/types.go
+    - arena/cmd/promptarena/export.go
+    - arena/cmd/promptarena/validate_json.go
+    - packc/compiler/check.go
+    - packc/compiler/compiler.go
+    - packc/compiler/helpers_integration.go
+    - packc/main_interactive.go
+    - packc/schema_validator.go
+    - packc/skills_validator.go
+    - schemas/v1alpha1/arena.json
+    - schemas/v1alpha1/promptconfig.json
+    - schemas/v1alpha1/tool.json
 ---
-Understanding PackC's approach to pack validation and quality assurance.
+This page explains which checks run when you build or validate a pack, which of their findings stop the build, and which mistakes get through.
 
-## Overview
+## Three entry points, one set of checks
 
-PackC implements multi-level validation to catch errors early and ensure pack quality before deployment.
+Three commands validate packs, at different points:
 
-## Validation Philosophy
+- `packc compile` checks the source config as it builds the pack, then checks the pack before writing it.
+- `packc validate` checks a pack file that already exists, wherever it came from.
+- `promptarena validate` checks an arena config. For a config with `prompt_configs`, it runs the same function `packc compile` runs (`compiler.Check`) without writing a file.
 
-### Fail Fast
+All three share the pack checks from the PromptKit runtime and this repository's skill checks. The differences are noted in each section below.
 
-Catch errors at compile time, not runtime:
+```mermaid
+flowchart TD
+  src["arena config + prompt, tool files"]
+  schemaSrc["PromptArena schemas"]
+  build["compiler.Check: build the pack"]
+  packChecks["pack checks: skills, workflow, agents, governance, structure"]
+  packSchema["PromptPack schema"]
+  file["*.pack.json"]
+  src --> schemaSrc --> build --> packChecks --> packSchema
+  file -- "packc validate" --> packSchema
+  packSchema -- "packc validate" --> packChecks
+```
+
+The checks catch a mistake in the build, when the author is still at the keyboard. A runtime that loads a bad pack fails later, often on the first conversation that reaches the broken part.
+
+## What each stage checks
+
+### Source schemas
+
+`packc compile` and `promptarena validate` load the arena config with PromptArena's loader, which validates the arena config, every prompt config and every tool file against its JSON schema. The patterns there mirror the PromptPack ones, so a value the pack would reject fails before anything compiles:
+
+- `spec.task_type` starts with a lowercase letter, then lowercase letters, digits, hyphens and underscores (`^[a-z][a-z0-9_-]*$`). The task type becomes the prompt's `id` in the pack.
+- `spec.version` is a semantic version, such as `v1.0.0` or `1.0.0`.
+- `spec.description` is required on a prompt config.
+- Each variable has a `name` matching `^[a-zA-Z_][a-zA-Z0-9_]*$` and a `required` field.
+- `metadata.language` is two lowercase letters.
+- Tool names match `^[a-zA-Z_][a-zA-Z0-9_]*$`.
+
+### Pack ID
+
+A pack ID starts with a lowercase letter and contains only lowercase letters, digits and hyphens (`^[a-z][a-z0-9-]*$`):
 
 ```yaml
-# Invalid prompt caught by packc
-task_type: ""  # Error: task_type cannot be empty
+id: "customer-support"     # valid
+id: "Customer Support!"    # invalid characters
+id: "app-v1.2.0"           # invalid: no dots
+id: "2024-demo"            # invalid: must start with a letter
 ```
 
-Better than runtime failure:
+`packc compile` rejects an invalid `--id` before it loads anything. Without `--id`, it derives the ID from the current directory's name and normalizes it to this pattern: `My Project` becomes `my-project`, and a name that does not start with a letter gets a `pack-` prefix (`2024-demo` becomes `pack-2024-demo`).
 
-```go
-// Runtime error (bad!)
-conv, err := manager.NewConversation(ctx, pack, config)
-// Error: prompt not found
-```
+### Skills
 
-### Progressive Validation
+Each skill source in the pack is checked against the directory the paths are relative to: the arena config's directory for `packc compile`, and the pack file's directory for `packc validate`. These are errors:
 
-Multiple checkpoints throughout compilation:
+- a skill directory that does not exist, or a path that resolves outside that directory;
+- a `SKILL.md` that does not parse;
+- two skills with the same name in different places;
+- an inline skill without `name`, `description` or `instructions`;
+- a workflow state whose `skills` path does not exist (glob patterns and `none` are skipped).
 
-```
-Parse → Validate Syntax → Validate Structure → Validate References → Final Check
-```
+A skill whose `allowed-tools` names a tool the pack does not define is a warning.
 
-Each stage catches different error types.
+### Workflow
 
-### Warnings vs. Errors
+The workflow check comes from the PromptKit runtime. These are errors:
 
-**Errors** - Fatal, stop compilation:
+- `version` other than 1 or 2, or an empty `states` map;
+- an `entry` that is not a key in `states`;
+- a state whose `prompt_task` is not a key in `prompts` (except composition states);
+- an `on_event` or `on_max_visits` target that is not a state;
+- a `persistence`, `orchestration` or `control` value outside its set;
+- `composition` set without `orchestration: composition`, or the reverse.
 
-```
-Error: Missing required field 'task_type'
-Error: Invalid template syntax
-```
+These are warnings:
 
-**Warnings** - Non-fatal, allow compilation:
+- an event name that is not PascalCase;
+- a cycle in the state graph;
+- a terminal state that still has `on_event` transitions;
+- an `on_max_visits` target that has its own `max_visits`;
+- in a version 2 workflow, a non-terminal state with no transitions and no `max_visits`;
+- a cycle of `control: agent` states that never yields to the user and has no budget, terminal state or visit cap.
 
-```
-Warning: Missing description for prompt 'support'
-Warning: Tool 'search' not defined
-```
+Real messages name the state and field:
 
-Warnings indicate potential issues that should be reviewed.
-
-## Validation Levels
-
-### Level 1: Syntax Validation
-
-**What**: Valid YAML/JSON syntax
-
-**When**: During parsing
-
-**Examples**:
-
-```yaml
-# Invalid YAML
-prompts
-  - support.yaml  # Missing colon
-```
-
-**Error**:
-
-```
-Error parsing config: yaml: line 2: did not find expected key
-```
-
-### Level 2: Schema Validation
-
-**What**: Required fields present, correct types
-
-**When**: After parsing
-
-**Check**:
-
-```go
-type Spec struct {
-  TaskType       string `yaml:"task_type"`       // Required
-  SystemTemplate string `yaml:"system_template"` // Required
-  Version        string `yaml:"version"`         // Required
-}
-```
-
-**Errors**:
-
-```
-Error: Missing required field 'task_type'
-Error: Field 'temperature' must be number, got string
-```
-
-### Level 3: Template Validation
-
-**What**: Template syntax valid
-
-**When**: During compilation
-
-**Check**:
-
-```go
-tmpl, err := template.New("test").Parse(userTemplate)
-if err != nil {
-  return fmt.Errorf("Invalid template: %w", err)
-}
-```
-
-**Examples**:
-
-```yaml
-# Invalid Go template
-system_template: "
-```
-
-**Error**:
-
-```
-Error: Template parse error: unclosed action
-```
-
-### Level 4: Reference Validation
-
-**What**: Referenced resources exist
-
-**When**: After pack assembly
-
-**Check**:
-- Tools referenced in prompts are defined
-- Fragments referenced exist
-- Media files exist on disk
-
-**Warnings**:
-
-```
-Warning: Tool 'search_kb' referenced but not defined
-Warning: Image file not found: images/logo.png
-```
-
-### Level 5: Workflow Validation
-
-**What**: Workflow state machine integrity
-
-**When**: After reference validation
-
-**Check**:
-- Entry state exists in the states map
-- All transition targets reference valid states
-- Each state's `prompt_task` references a prompt in the pack
-- Orchestration and persistence values are valid enums
-- No unreachable states
-
-**Errors**:
-
-```
-Error: workflow entry state "unknown" not found in states
-Error: state "intake" transition "Escalate" targets unknown state "missing"
-```
-
-**Warnings**:
-
-```
-Warning: state "archived" is unreachable from entry state
-Warning: state "specialist" references unknown prompt_task "missing-prompt"
-```
-
-### Level 6: Semantic Validation
-
-**What**: Logical consistency
-
-**When**: Final validation pass
-
-**Check**:
-- No duplicate prompt IDs
-- No circular fragment references
-- Reasonable parameter values
-- Pack size within limits
-
-**Warnings**:
-
-```
-Warning: temperature=2.0 exceeds recommended max of 1.0
-Warning: Pack size 2MB exceeds recommended 1MB
-```
-
-## Validation Rules
-
-### Required Fields
-
-**Pack Level**:
-
-```json
-{
-  "id": "required",
-  "version": "required",
-  "prompts": "required"
-}
-```
-
-**Prompt Level**:
-
-```json
-{
-  "id": "required",
-  "name": "optional but recommended",
-  "description": "optional but recommended",
-  "version": "required",
-  "system_template": "required",
-  "variables": "optional but recommended"
-}
-```
-
-### Type Validation
-
-**String fields**:
-
-```yaml
-task_type: "support"  # Valid
-task_type: 123        # Error: must be string
-```
-
-**Numeric parameters**:
-
-```yaml
-temperature: 0.7      # Valid
-temperature: "0.7"    # Error: must be number
-```
-
-**Boolean fields**:
-
-```yaml
-debug: true          # Valid
-debug: "true"        # Error: must be boolean
-```
-
-### Range Validation
-
-**Temperature**: 0.0 to 2.0
-
-```yaml
-temperature: 0.7     # Valid
-temperature: -1.0    # Warning: below 0
-temperature: 3.0     # Warning: above 2.0
-```
-
-**Max tokens**: 1 to 100,000
-
-```yaml
-max_tokens: 1000     # Valid
-max_tokens: 0        # Error: must be positive
-max_tokens: 200000   # Warning: very large
-```
-
-### Pattern Validation
-
-**Pack ID**: starts with a lowercase letter, then lowercase letters, digits and hyphens (`^[a-z][a-z0-9-]*$`)
-
-```yaml
-id: "customer-support"     # Valid
-id: "Customer Support!"    # Error: invalid characters
-id: "app-v1.2.0"           # Error: no dots
-id: "2024-demo"            # Error: must start with a letter
-```
-
-When no `--id` is given, packc derives one from the config's directory name and
-normalizes it to this pattern: `My Project` becomes `my-project`, and a name
-that doesn't start with a letter gets a `pack-` prefix (`2024-demo` becomes
-`pack-2024-demo`).
-
-**Task Type**: starts with a lowercase letter, then lowercase letters, digits, hyphens and underscores (`^[a-z][a-z0-9_-]*$`). The task type becomes the prompt's ID in the pack.
-
-```yaml
-task_type: "support-agent"    # Valid
-task_type: "support_agent"    # Valid
-task_type: "support agent"    # Error: no spaces
-task_type: "CustomerSupport"  # Error: lowercase only
-```
-
-`promptarena validate` checks these patterns, along with prompt `version`
-(semver, e.g. `1.0.0`), variable names, `metadata.language` (two lowercase
-letters) and tool names, so a value the pack would reject fails before you compile.
-
-### Template Validation
-
-**Go Templates**:
-
-```yaml
-# Valid
-system_template: "User: {{user_name}}"
-system_template: "{{message}}"
-
-# Invalid
-system_template: "{{.unclosed"
-system_template: "{{unknown_func .x}}"  # Unknown function
-```
-
-**Variable References**:
-
-```yaml
-# Warning if variables not documented
-system_template: "{{undocumented_var}}"  # Variable not in variables list
-```
-
-## Validation Implementation
-
-### Validation Pipeline
-
-```go
-func (p *Pack) Validate() []string {
-  warnings := []string{}
-  warnings = append(warnings, p.validatePackFields()...)
-  warnings = append(warnings, p.validateTemplateEngine()...)
-  warnings = append(warnings, p.validatePrompts()...)
-  warnings = append(warnings, p.validateCompilation()...)
-  return warnings
-}
-```
-
-### Validation Output
-
-Validation returns a list of warning strings:
-
-```go
-warnings := pack.Validate()
-// Returns: []string{"missing required field: id", "prompt 'support': missing system_template"}
-```
-
-**Example output**:
-
-Because these are structural issues, `packc validate` reports them as blocking
-errors and exits non-zero:
-
-```
+```text
 ✗ Pack validation failed:
-  - missing required field: id
-  - prompt 'support': missing system_template
+  - workflow.entry "unknown" does not reference a key in states
+  - workflow.states["intake"].on_event["Escalate"] target "missing" does not exist in states
 ```
 
-## Validation Strategies
+### Agents, compositions and governance
 
-### Default Mode
+The agents check rejects an `agents` block with no members, an `entry` that is not a member, or a member that is not a prompt in the pack. It warns about an input or output mode that is not a MIME type, or an empty tag. `packc compile` treats those as warnings, but `packc validate` counts them as errors. The governance check rejects an obligation or review that names an eval, validator, field or obligation the pack does not declare, and warns about an undeclared vocabulary prefix. `packc compile` also checks compositions: their step graphs, their references to prompts, tools and evals, and the workflow states that use them. `packc validate` does not run the composition check.
 
-Allow warnings:
+### Pack structure
 
-```bash
-packc compile
+The structural check covers what the schema alone does not:
+
+- the pack has an `id`, a semantic `version` and at least one prompt;
+- `template_engine` is present with `version` and `syntax`;
+- each prompt has a `system_template` and a semantic `version`;
+- a prompt whose template contains `{{` declares at least one variable;
+- the pack has a `compilation` block.
+
+`packc` treats every structural finding as blocking:
+
+```text
+✗ Pack validation failed:
+  - missing compilation metadata
 ```
 
-Warnings are reported but do not stop compilation. Use for development and production builds alike. Review warnings to improve pack quality.
+### PromptPack schema
 
-## Pre-Deployment Validation
+Last, the pack JSON is validated against the PromptPack schema (version 1.9.0, embedded in the binary). The schema covers required fields, types, enums and patterns throughout the pack. Each violation is reported with its path:
 
-### Validation Checklist
-
-Before deploying to production:
-
-**1. Schema valid**
-
-```bash
-packc validate pack.json
+```text
+✗ Pack failed schema validation:
+  - prompts.greeting.version: Does not match pattern '^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)...' (value: )
 ```
 
-**2. Size acceptable**
+`packc validate` runs this check first. `packc compile` runs it last, on the JSON it is about to write.
 
-```bash
-du -h pack.json
-# Should be < 1MB
+By default the embedded schema is used, so validation works offline. The `PROMPTKIT_SCHEMA_SOURCE` environment variable changes the source: `remote` fetches the URL in the pack's `$schema`, and a path starting with `/` or `./` loads a schema file. If the schema cannot be loaded, `packc compile` fails, while `packc validate` prints a `⚠` line and carries on with the other checks.
+
+## Errors and warnings
+
+An error blocks: `packc compile` writes no file and exits 1, and `packc validate` exits 1. A warning is printed with a `⚠` prefix and changes nothing. `packc compile` prints each warning with its stage:
+
+```text
+⚠ [workflow] workflow.states["intake"].on_event["escalate"]: event name should be PascalCase
+✓ Pack compiled successfully: app.pack.json
 ```
 
-**3. JSON valid**
+When a compile fails, only its errors are printed. Fix them and compile again to see the warnings.
 
-```bash
-jq empty pack.json
-```
+The split broadly follows whether the pack can run. A transition to a state that does not exist cannot be taken, so it is an error. A lowercase event name works, but breaks the specification's naming convention, so it is a warning.
 
-**4. Required metadata present**
+## What is not checked
 
-```bash
-jq -e '.compilation.compiled_with' pack.json
-jq -e '.version' pack.json
-```
+No command checks these, so they reach the runtime:
 
-**5. Load test**
+- Template syntax. `system_template` is stored as text, and a malformed placeholder compiles. Only the "variables declared at all" rule applies.
+- Whether every placeholder in a template has a declared variable, once at least one variable is declared.
+- Whether a prompt's `tools` list names tools defined in the pack's `tools` object.
+- Unreachable workflow states.
+- Pack size.
 
-```bash
-# Test with SDK
-go run test-pack.go pack.json
-```
+Test the prompts with `promptarena run` before you compile them. A scenario that exercises each prompt catches what the static checks miss.
 
-### Automated Validation
+## Related
 
-In CI/CD:
-
-```yaml
-- name: Validate packs
-  run: |
-    packc compile --config arena.yaml --output pack.json --id app
-    packc validate pack.json
-    
-    # Additional checks
-    ./scripts/check-pack-size.sh pack.json
-    ./scripts/test-pack-load.sh pack.json
-```
-
-## Validation Reports
-
-### Summary Report
-
-```bash
-packc validate pack.json
-```
-
-**Output**:
-
-```
-Validating pack: pack.json
-Validating against PromptPack schema...
-✓ Schema validation passed
-✓ Pack structure is valid
-```
-
-To see a detailed breakdown of a pack's contents (prompts, tools, workflow,
-metadata), use `packc inspect` instead.
-
-## Validation Best Practices
-
-### 1. Validate Early
-
-```bash
-# During development
-packc compile && packc validate
-```
-
-### 2. Validate Often
-
-```bash
-# Pre-commit hook
-packc validate pack.json || exit 1
-```
-
-### 3. Automate Validation
-
-```makefile
-.PHONY: validate
-validate:
-	packc validate packs/*.pack.json
-```
-
-### 4. Track Warnings
-
-```bash
-# Log warnings
-packc validate pack.json 2>&1 | tee validation.log
-```
-
-### 5. Fix Warnings
-
-Don't ignore warnings - they indicate potential issues:
-
-```yaml
-# Bad
-task_type: support
-# Warning: Missing description
-
-# Good
-task_type: support
-description: "Handles customer support inquiries"
-```
-
-## Validation Capabilities
-
-PackC's validation covers:
-
-- Schema validation
-- Template syntax checking
-- Reference checking (tools, fragments, media)
-- Workflow state-machine integrity
-- Size warnings
-
-## Summary
-
-PackC's validation strategy:
-
-- **Multi-level** - Syntax, schema, references, semantics
-- **Progressive** - Validation at each pipeline stage
-- **Informative** - Clear error messages with context
-- **Flexible** - Warnings vs. errors
-- **Automated** - Easy to integrate in workflows
-- **Evolving** - Continuous improvement
-
-This ensures packs are correct, complete, and production-ready before deployment.
+- [Validate packs](/packc/how-to/validate-packs/): run the checks locally and in CI.
+- [Compilation](/packc/explanation/compilation/): the stages in build order.
+- [validate reference](/packc/reference/validate/)
+- [`promptarena validate`](/arena/reference/cli-commands/)

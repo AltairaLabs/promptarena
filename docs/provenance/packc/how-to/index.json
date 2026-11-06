@@ -1,0 +1,15 @@
+{
+ "page": "docs/src/content/docs/packc/how-to/index.md",
+ "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "packc commands are compile, compile-prompt, validate, inspect, version, help, completion",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:29-48",
+    "packc/main_interactive.go:51-100"
+   ]
+  }
+ ]
+}
