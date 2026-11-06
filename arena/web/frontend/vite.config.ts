@@ -21,7 +21,7 @@ import path from "node:path";
 // other developer, and for any build that ships — stays the published package,
 // so nothing can accidentally release against unpublished source.
 const atlasLocal = process.env.ATLAS_LOCAL === "1";
-const atlasRoot = path.resolve(__dirname, "../../../../atlas-components/packages");
+const atlasRoot = path.resolve(import.meta.dirname, "../../../../atlas-components/packages");
 
 // ATLAS_LOCAL consumes the local checkout's BUILD OUTPUT, never its source.
 //
@@ -104,7 +104,7 @@ export default defineConfig({
   resolve: {
     alias: {
       ...localAtlasAliases,
-      "@": path.resolve(__dirname, "./src"),
+      "@": path.resolve(import.meta.dirname, "./src"),
       // Every package tsup marks external in atlas-components must resolve to
       // THIS app's copy. The atlas bundle lives outside this tree, so a bare
       // external import resolves against atlas-components' node_modules
@@ -114,16 +114,16 @@ export default defineConfig({
       // "Cannot read properties of null (reading 'useState')" on the Workflow
       // tab. react/react-dom were already pinned here; the rest were not.
       // Keep this list in step with packages/react/tsup.config.ts externals.
-      "@xyflow/react": path.resolve(__dirname, "node_modules/@xyflow/react"),
-      "@dagrejs/dagre": path.resolve(__dirname, "node_modules/@dagrejs/dagre"),
-      "react-markdown": path.resolve(__dirname, "node_modules/react-markdown"),
-      "remark-gfm": path.resolve(__dirname, "node_modules/remark-gfm"),
-      "lucide-react": path.resolve(__dirname, "node_modules/lucide-react"),
-      react: path.resolve(__dirname, "node_modules/react"),
-      "react-dom": path.resolve(__dirname, "node_modules/react-dom"),
-      "react/jsx-runtime": path.resolve(__dirname, "node_modules/react/jsx-runtime"),
-      "react/jsx-dev-runtime": path.resolve(__dirname, "node_modules/react/jsx-dev-runtime"),
-      "react-dom/client": path.resolve(__dirname, "node_modules/react-dom/client"),
+      "@xyflow/react": path.resolve(import.meta.dirname, "node_modules/@xyflow/react"),
+      "@dagrejs/dagre": path.resolve(import.meta.dirname, "node_modules/@dagrejs/dagre"),
+      "react-markdown": path.resolve(import.meta.dirname, "node_modules/react-markdown"),
+      "remark-gfm": path.resolve(import.meta.dirname, "node_modules/remark-gfm"),
+      "lucide-react": path.resolve(import.meta.dirname, "node_modules/lucide-react"),
+      react: path.resolve(import.meta.dirname, "node_modules/react"),
+      "react-dom": path.resolve(import.meta.dirname, "node_modules/react-dom"),
+      "react/jsx-runtime": path.resolve(import.meta.dirname, "node_modules/react/jsx-runtime"),
+      "react/jsx-dev-runtime": path.resolve(import.meta.dirname, "node_modules/react/jsx-dev-runtime"),
+      "react-dom/client": path.resolve(import.meta.dirname, "node_modules/react-dom/client"),
     },
     dedupe: ["react", "react-dom"],
   },
