@@ -81,7 +81,6 @@ func RegisterRunCompletions() {
 	// Dynamic completion for --region flag
 	_ = runCmd.RegisterFlagCompletionFunc("region", completeRegions)
 
-
 	// Dynamic completion for --config flag (yaml files)
 	_ = runCmd.RegisterFlagCompletionFunc("config", completeConfigFiles)
 
