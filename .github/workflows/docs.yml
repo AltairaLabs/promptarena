@@ -238,3 +238,8 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
+        with:
+          # The 10-minute default is too short: Pages has held deploys queued
+          # ~4 min and then syncing ~5 min, so the action cancelled a deploy
+          # that was still progressing.
+          timeout: 1800000
