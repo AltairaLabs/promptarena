@@ -1,0 +1,222 @@
+{
+ "page": "docs/src/content/docs/arena/how-to/deploy/plan-and-apply.md",
+ "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "prerequisite: a compiled .pack.json file",
+   "verdict": "false",
+   "evidence": [
+    "arena/deploy/flow/config.go:37-56"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "deploy plan [--env] previews without modifying",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_plan_interactive.go:26-52"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "plan example output (Planning deployment..., Provider line, Changes:, Summary:)",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_interactive.go:141-159",
+    "arena/cmd/promptarena/deploy_plan_interactive.go:37-51"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "plan symbols + ~ - ! and blank for NO_CHANGE",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/render.go:6-19",
+    "deploy/provider.go:9-15"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "plan is saved for a later apply",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_plan_interactive.go:47-51",
+    "deploy/state.go:120-148"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "deploy runs plan then apply",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_interactive.go:199-248"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "loads arena.yaml and merges env config",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/config.go:60-80",
+    "arena/deploy/flow/session.go:40-63"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "auto-detects or uses the specified pack file",
+   "verdict": "false",
+   "evidence": [
+    "arena/deploy/flow/config.go:37-56"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "sends plan request to the adapter",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/session.go:101-112"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "apply request with streaming progress",
+   "verdict": "false",
+   "evidence": [
+    "deploy/client.go:306-325"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "saves state to .promptarena/deploy.state",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/session.go:114-131",
+    "deploy/state.go:13-20"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "--pack and --config flags",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_interactive.go:53-56"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "status example output",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_interactive.go:181-195",
+    "arena/cmd/promptarena/deploy_status_interactive.go:37-77"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "status values deployed/not_deployed/degraded/unknown",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:118-126"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "resource health healthy/unhealthy/missing",
+   "verdict": "true",
+   "evidence": [
+    "deploy/provider.go:128-136"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "destroy loads prior state, exits if none, sends destroy, deletes state",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_destroy_interactive.go:28-89"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "plan shows ~ for updates and blank for no change",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/render.go:6-19"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "deploy apply --env production applies the reviewed plan",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_apply_interactive.go:48-67",
+    "arena/deploy/flow/session.go:156-159"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "refresh example output with Provider line and ! marker",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_refresh_interactive.go:46-91"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "state is refreshed automatically before deploy plan and deploy",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/session.go:76-99"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "deploy import <type> <name> <id> [--env]",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_import_interactive.go:16-33"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "import example output",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_import_interactive.go:56"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "after import the resource appears in plan and status and is managed by deploy/destroy",
+   "verdict": "unverified",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_import_interactive.go:101-107"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "Error: no prior state found for status and destroy",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_destroy_interactive.go:58-62",
+    "arena/cmd/promptarena/deploy_status_interactive.go:53-57"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "Error: no pack file found",
+   "verdict": "false",
+   "evidence": [
+    "arena/deploy/flow/config.go:43-56"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "TUI runs plan/confirm/apply/status; destroy, import, refresh CLI-only",
+   "verdict": "true",
+   "evidence": [
+    "arena/tui/app/deploypage.go:444"
+   ]
+  }
+ ]
+}

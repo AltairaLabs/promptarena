@@ -1,74 +1,84 @@
 ---
 title: 'Deploy: Adapter Architecture'
+description: Why deploy targets are separate adapter binaries, and how the CLI drives them over JSON-RPC on stdio.
+verified:
+  commit: 631d3c353c2c9d71b362ae5cd20c137d42b19d5b
+  sources:
+    - arena/cmd/promptarena/adapter_registry.json
+    - arena/cmd/promptarena/deploy_adapter_interactive.go
+    - arena/cmd/promptarena/deploy_config_interactive.go
+    - arena/deploy/flow/connect.go
+    - arena/deploy/flow/session.go
+    - deploy/adaptersdk/serve.go
+    - deploy/client.go
+    - deploy/manager.go
+    - deploy/provider.go
 ---
 
 ## Overview
 
-Deploy uses a **plugin architecture** where adapter binaries handle provider-specific logic. The CLI communicates with adapters via JSON-RPC 2.0 over stdio, creating a clean separation between the deployment workflow and cloud provider integration.
+Deploy keeps provider-specific logic in adapter binaries. The CLI starts an adapter as a child process and talks to it with JSON-RPC 2.0 over stdio. The CLI owns the workflow (config, pack, state, locking), and the adapter owns the cloud provider integration.
 
 ## Why Plugins?
 
-Cloud providers have vastly different APIs, resource models, authentication mechanisms, and deployment patterns. Embedding all provider logic in the CLI would create:
+Cloud providers have different APIs, resource models, authentication mechanisms and deployment patterns. Building all of that into the CLI would cost:
 
-- **Dependency bloat** — Every provider SDK linked into one binary
-- **Release coupling** — Provider changes require CLI updates
-- **Testing complexity** — Integration tests for every cloud provider
+- Dependency weight: every provider SDK linked into one binary.
+- Release coupling: a provider change would need a CLI release.
+- Test scope: integration tests for every cloud provider in one repository.
 
-The plugin pattern avoids these problems. Each adapter is an independent binary with its own dependencies, release cycle, and test suite.
+Each adapter is instead an independent binary with its own dependencies, release cycle and test suite.
 
 ## Communication Model
+
+The CLI writes one JSON-RPC request per line to the adapter's stdin and reads one response per line from its stdout:
 
 ```mermaid
 flowchart LR
   cli["promptarena deploy<br/>(parent process)"]
-  stdin["JSON-RPC<br/>request"]
-  stdout["JSON-RPC<br/>response"]
+  stdin["stdin:<br/>JSON-RPC request"]
+  stdout["stdout:<br/>JSON-RPC response"]
   adapter["promptarena-deploy-(provider)<br/>(child process)"]
   cli --> stdin --> adapter
   adapter --> stdout --> cli
 ```
 
-The CLI launches the adapter binary as a child process. Communication flows through:
+- stdin carries requests from the CLI.
+- stdout carries responses from the adapter.
+- stderr is not connected. The CLI discards anything the adapter writes there, so adapter log output does not reach your terminal.
 
-- **stdin** — CLI sends JSON-RPC requests
-- **stdout** — Adapter sends JSON-RPC responses
-- **stderr** — Available for adapter debug logging (not captured by CLI)
-
-This model is simple, portable, and requires no network configuration. The adapter binary is a standalone executable with no shared memory or sockets.
+The model needs no network configuration: no ports, no sockets and no TLS between the two processes.
 
 ## Adapter Discovery
 
-When the CLI needs an adapter, it searches three locations in order:
+When the CLI needs an adapter, it uses the first executable it finds:
 
-1. **Project-local**: `.promptarena/adapters/promptarena-deploy-{provider}`
-2. **User-level**: `~/.promptarena/adapters/promptarena-deploy-{provider}`
-3. **System PATH**: Standard `$PATH` lookup
+1. Project-local: `.promptarena/adapters/promptarena-deploy-{provider}`
+2. User-level: `~/.promptarena/adapters/promptarena-deploy-{provider}`
+3. System PATH: standard `$PATH` lookup
 
-This precedence lets you:
-
-- Pin a project to a specific adapter version (project-local)
-- Install adapters once for all projects (user-level)
-- Use system-installed adapters (PATH)
+This order lets you pin a project to a specific adapter version (project-local), install adapters once for all projects (user-level), or use adapters installed system-wide (PATH).
 
 ## Binary Naming Convention
 
-All adapter binaries follow the naming pattern:
+Every adapter binary is named:
 
-```
+```text
 promptarena-deploy-{provider}
 ```
 
-For example:
+The built-in registry holds four:
 
-- `promptarena-deploy-agentcore` — AWS Bedrock AgentCore
-- `promptarena-deploy-cloudrun` — Google Cloud Run
-- `promptarena-deploy-lambda` — AWS Lambda
+- `promptarena-deploy-omnia`: Omnia Kubernetes platform
+- `promptarena-deploy-agentcore`: AWS Bedrock AgentCore
+- `promptarena-deploy-vertex`: Google Agent Runtime
+- `promptarena-deploy-foundry`: Azure AI Foundry hosted agents
 
-During installation, platform-specific suffixes (`_darwin_arm64`, `_linux_amd64`) are stripped to the canonical name.
+Release assets carry a platform suffix (`_darwin_arm64`, `_linux_amd64`). `promptarena deploy adapter install` saves the binary under the name without the suffix.
 
 ## The Provider Interface
 
-Every adapter implements the `Provider` interface:
+Every adapter implements the `Provider` interface from the `deploy` package:
 
 ```go
 type Provider interface {
@@ -78,85 +88,91 @@ type Provider interface {
     Apply(ctx context.Context, req *PlanRequest, callback ApplyCallback) (adapterState string, err error)
     Destroy(ctx context.Context, req *DestroyRequest, callback DestroyCallback) error
     Status(ctx context.Context, req *StatusRequest) (*StatusResponse, error)
+    Import(ctx context.Context, req *ImportRequest) (*ImportResponse, error)
 }
 ```
+
+An adapter can also implement the optional `LoginProvider` interface (`GetLoginURL`, `CompleteLogin`) and advertise the `login` capability. `promptarena deploy login` uses it.
 
 ### Method Responsibilities
 
 | Method | Purpose |
 |--------|---------|
-| `GetProviderInfo` | Return adapter name, version, and capabilities |
-| `ValidateConfig` | Check that provider config is valid before planning |
-| `Plan` | Analyze pack + config and report what resources will change |
-| `Apply` | Create, update, or delete resources on the cloud provider |
+| `GetProviderInfo` | Return adapter name, version and capabilities |
+| `ValidateConfig` | Check that provider config is valid. `promptarena deploy config import` calls it. `plan` does not, and the Omnia and AgentCore adapters validate again inside `Plan`. |
+| `Plan` | Analyze pack and config and report which resources will change |
+| `Apply` | Create, update or delete resources on the cloud provider |
 | `Destroy` | Remove all managed resources |
 | `Status` | Query current resource health from the cloud provider |
+| `Import` | Adopt an existing resource into the adapter's state |
 
 ### Data Flow
 
 Each method receives structured input and returns structured output:
 
-1. **Plan** receives the serialized pack, deployment config, environment name, and prior adapter state. It returns a list of resource changes with actions (CREATE, UPDATE, DELETE, NO_CHANGE).
-
-2. **Apply** receives the same input as Plan. It performs the actual resource operations and returns an opaque state string that the CLI persists for future operations.
-
-3. **Destroy** receives the deployment config, environment, and prior state. It removes all resources and returns no state.
-
-4. **Status** receives the deployment config, environment, and prior state. It returns the overall deployment status and per-resource health.
+1. Plan receives the pack JSON, the merged deploy config, the serialized arena config, the environment name and the prior adapter state. It returns a list of resource changes, each with an action (`CREATE`, `UPDATE`, `DELETE`, `NO_CHANGE` or `DRIFT`), and a summary line.
+2. Apply receives the same input as Plan. It performs the resource operations and returns an opaque state string, which the CLI persists for later operations.
+3. Destroy receives the deploy config, environment and prior state. It removes the resources and returns no state.
+4. Status receives the deploy config, environment and prior state. It returns the overall deployment status, per-resource health, and optionally an updated state string.
+5. Import receives a resource type, name and provider identifier along with the deploy config, environment and prior state. It returns the resource's health and a new state string.
 
 ## Adapter State
 
-The state string returned by `Apply` is **opaque** to the CLI. The CLI stores it in the state file and passes it back to the adapter on subsequent operations. The adapter can encode whatever it needs:
+The state string returned by `Apply` is **opaque** to the CLI. The CLI stores it in the state file and passes it back to the adapter on later operations. The adapter can encode whatever it needs:
 
 - Resource IDs and ARNs
 - Configuration hashes
 - Deployment metadata
 - Version information
 
-This design lets each adapter track state in whatever format suits its provider, without the CLI needing to understand provider-specific resource models.
+Each adapter tracks state in the format that suits its provider, and the CLI needs no knowledge of provider resource models.
 
 ## Adapter Lifecycle
 
-```
-CLI starts adapter binary
-  ↓
-Adapter reads JSON-RPC requests from stdin
-  ↓
-Adapter calls Provider methods
-  ↓
-Adapter writes JSON-RPC responses to stdout
-  ↓
-CLI closes stdin → adapter exits
+One CLI command drives one adapter process:
+
+```mermaid
+sequenceDiagram
+  participant CLI as promptarena deploy
+  participant A as promptarena-deploy-(provider)
+  CLI->>A: start process
+  loop each call the command needs
+    CLI->>A: JSON-RPC request (stdin)
+    A-->>CLI: JSON-RPC response (stdout)
+  end
+  CLI->>A: close stdin
+  A-->>CLI: exit
 ```
 
-The adapter process lives only for the duration of a single CLI command. It is not a long-running daemon. This keeps the model simple and avoids issues with stale connections or process management.
+The adapter is not a long-running daemon, so there are no stale connections or background processes to manage.
 
 ## Buffer Management
 
-The JSON-RPC communication uses buffered I/O with:
+Both sides read the stream line by line with a buffered scanner:
 
-- **Initial buffer**: 64 KB
-- **Max line size**: 10 MB
+- Initial buffer: 64 KB
+- Max line size: 10 MB
 
-The large max size accommodates pack payloads, which can be substantial for projects with many prompts, tools, and resources.
+The 10 MB ceiling leaves room for plan and apply requests, which carry the whole pack and arena config in one line.
 
 ## Tradeoffs
 
 ### Benefits
 
-- **Independent releases** — Adapter bugs don't require CLI updates
-- **Language flexibility** — Adapters can be written in any language (though the Go SDK is provided)
-- **Simple protocol** — JSON-RPC over stdio is easy to debug and test
-- **No network dependencies** — Local IPC, no ports or TLS needed
+- Independent releases: an adapter fix does not need a CLI release.
+- Language flexibility: an adapter is any executable that speaks the protocol. The Go `adaptersdk` package provides `Serve()` for Go adapters.
+- Simple protocol: line-delimited JSON-RPC over stdio is easy to debug and test.
+- No network dependencies: local IPC, with no ports or TLS.
 
 ### Limitations
 
-- **Process overhead** — Each command spawns a new process
-- **No streaming** — Current protocol collects events in final response rather than true streaming
-- **Binary distribution** — Users must download platform-specific binaries
+- Process overhead: each command spawns a new process.
+- No streaming: the adapter returns all apply and destroy events in its final response, and the CLI prints them after the call completes.
+- Binary distribution: you download a platform-specific binary for each adapter.
+- No adapter logs: stderr is discarded, so an adapter can only report through its responses.
 
 ## See Also
 
-- [Protocol](/arena/reference/deploy/protocol/) — JSON-RPC method specifications
-- [Adapter SDK](/arena/reference/deploy/adapter-sdk/) — Build your own adapter
-- [State Management](/arena/explanation/deploy/state-management/) — How state is persisted
+- [Protocol](/arena/reference/deploy/protocol/): JSON-RPC method specifications
+- [Adapter SDK](/arena/reference/deploy/adapter-sdk/): build your own adapter
+- [State Management](/arena/explanation/deploy/state-management/): how state is persisted

@@ -1,0 +1,191 @@
+{
+ "page": "docs/src/content/docs/arena/explanation/deploy/state-management.md",
+ "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "state in .promptarena/deploy.state",
+   "verdict": "true",
+   "evidence": [
+    "deploy/state.go:13-20"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "dir 0750, file 0600, indented JSON",
+   "verdict": "true",
+   "evidence": [
+    "deploy/state.go:18-19"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "directory created when state is first saved",
+   "verdict": "true",
+   "evidence": [
+    "deploy/lock.go:36-39",
+    "deploy/state.go:77-80"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "state JSON fields",
+   "verdict": "true",
+   "evidence": [
+    "deploy/state.go:22-33"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "pack_version is the version string from the deployed pack",
+   "verdict": "false",
+   "evidence": [
+    "arena/deploy/flow/session.go:124"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "pack_checksum sha256:{hex}",
+   "verdict": "true",
+   "evidence": [
+    "deploy/state.go:103-107"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "last_refreshed omitted if never refreshed",
+   "verdict": "true",
+   "evidence": [
+    "deploy/state.go:31"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "state created after deploy or deploy apply",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/session.go:114-131"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "state built from provider, env, pack version and checksum, adapter version, apply state",
+   "verdict": "false",
+   "evidence": [
+    "arena/deploy/flow/session.go:120-125"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "plan/apply/status/destroy pass prior state",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_destroy_interactive.go:70-74",
+    "arena/deploy/flow/session.go:76-99"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "state deleted after destroy",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_destroy_interactive.go:82-84"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "adapter can compare pack checksum against prior state",
+   "verdict": "false",
+   "evidence": [
+    "deploy/provider.go:39-46"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "checksum verifies deployed matches repository",
+   "verdict": "false",
+   "evidence": [
+    "deploy/state.go:103-107"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "environments share one state file; env name recorded",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_status_interactive.go:48-57",
+    "deploy/state.go:45-48"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "deploy and deploy plan refresh state before planning",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/session.go:76-99"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "refresh calls Status, updates state, records last_refreshed",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_refresh_interactive.go:71-86"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "refresh reports drifted resources with DRIFT (!)",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_interactive.go:181-195",
+    "arena/cmd/promptarena/deploy_refresh_interactive.go:88-90"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "import calls adapter Import and updates state",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_import_interactive.go:80-107"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "lock file .promptarena/deploy.lock",
+   "verdict": "true",
+   "evidence": [
+    "deploy/lock.go:9"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "flock LOCK_EX|LOCK_NB; LockFileEx EXCLUSIVE|FAIL_IMMEDIATELY",
+   "verdict": "true",
+   "evidence": [
+    "deploy/lock_unix.go:12-23",
+    "deploy/lock_windows.go:12-27"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "deploy, apply, destroy, refresh, import take the lock; fail immediately",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_apply_interactive.go:33-38",
+    "arena/cmd/promptarena/deploy_destroy_interactive.go:38-43",
+    "arena/cmd/promptarena/deploy_import_interactive.go:49-54",
+    "arena/cmd/promptarena/deploy_interactive.go:204-209",
+    "arena/cmd/promptarena/deploy_refresh_interactive.go:39-44"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "state local only; lock does not coordinate across machines",
+   "verdict": "true",
+   "evidence": [
+    "deploy/lock.go:11-14"
+   ]
+  }
+ ]
+}

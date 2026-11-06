@@ -1,0 +1,114 @@
+{
+ "page": "docs/src/content/docs/arena/how-to/deploy/login.md",
+ "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "provider must advertise login capability",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/login.go:142-153",
+    "deploy/provider.go:185-187"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "api_endpoint must be set; login fills in the rest",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/login.go:90-95",
+    "deploy/provider.go:192-199"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "login works without an existing deploy section",
+   "verdict": "false",
+   "evidence": [
+    "arena/deploy/flow/config.go:23-25",
+    "arena/deploy/flow/login.go:90-93"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "deploy login --provider; omit to use deploy.provider",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_login_interactive.go:32-50"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "CLI opens browser to authorize page; prints URL",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_login_interactive.go:58-63",
+    "arena/deploy/flow/login.go:113-126"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "browser redirects back to the CLI loopback",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/login.go:173-199"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "profile merged under deploy.config; no secret written",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/login.go:203-208"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "~/.promptarena/credentials mode 0600, keyed to config file",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/credentials.go:10-15"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "token precedence: config api_token > env var > credentials store",
+   "verdict": "false",
+   "evidence": [
+    "arena/deploy/flow/config.go:70-74"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "adapter does not support login error",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/login.go:152"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "CLI prints URL if browser does not open",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/login.go:119-125"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "login timed out after a few minutes",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/login.go:24"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "TUI offers login with [l]",
+   "verdict": "true",
+   "evidence": [
+    "arena/tui/app/deploypage.go:444"
+   ]
+  }
+ ]
+}

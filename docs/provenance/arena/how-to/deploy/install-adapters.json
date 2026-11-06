@@ -1,0 +1,137 @@
+{
+ "page": "docs/src/content/docs/arena/how-to/deploy/install-adapters.md",
+ "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "deploy adapter install {provider}[@version]",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:118-131"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "looks up adapter in built-in registry",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/adapter_registry.json:1-28",
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:346-360"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "version: pinned, else newest GitHub release, else registry fallback with warning",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:283-302"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "fallback refreshed automatically whenever an adapter releases",
+   "verdict": "false",
+   "evidence": [
+    ".github/workflows/sync-adapter-registry.yml:22-25",
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:23-32"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "downloads from GitHub Releases for OS/arch",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:86-94"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "installs to ~/.promptarena/adapters/promptarena-deploy-{provider}",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:379-410"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "sets permissions 0755",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:51"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "download URL format",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:86-94"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "omnia repo AltairaLabs/PromptArena-deploy-omnia, v1.4.0 darwin_arm64 asset",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/adapter_registry.json:9-14"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "list output 'Installed adapters:' with name/path columns",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:413-437"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "list searches project-local and user-level",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:470-495"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "remove deletes from ~/.promptarena/adapters/",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:439-461"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "discovery order project-local, user-level, PATH",
+   "verdict": "true",
+   "evidence": [
+    "deploy/manager.go:31-62"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "available adapters omnia, agentcore, vertex",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/adapter_registry.json:1-28"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "exec format error means wrong architecture; reinstall",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:373-377"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "TUI preflight detects missing adapter and prints install command",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/connect.go:10-13",
+    "arena/deploy/flow/preflight.go:50-66"
+   ]
+  }
+ ]
+}
