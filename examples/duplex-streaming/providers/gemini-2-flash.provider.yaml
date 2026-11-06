@@ -21,8 +21,6 @@ spec:
 
   # Gemini-specific configuration for audio streaming
   additional_config:
-    # Enable audio modality for duplex mode
-    audio_enabled: true
     # Response modalities - Gemini Live API only supports ONE modality at a time
     # AUDIO mode returns audio + text transcription (via outputAudioTranscription)
     # TEXT mode returns text only (no audio)

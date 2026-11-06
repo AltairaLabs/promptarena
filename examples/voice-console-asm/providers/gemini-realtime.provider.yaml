@@ -29,8 +29,6 @@ spec:
     # realtime: true makes the voice console treat this as a native-realtime
     # (ASM) provider, identical to openai-realtime.
     realtime: true
-    # Enable the audio modality for bidirectional Live streaming.
-    audio_enabled: true
     # Gemini Live returns ONE modality at a time; AUDIO yields audio plus an
     # output transcription.
     response_modalities:

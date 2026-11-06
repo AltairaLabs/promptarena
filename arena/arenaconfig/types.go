@@ -1004,11 +1004,11 @@ type TurnDetectionConfig struct {
 
 // VADConfig configures voice activity detection for turn detection.
 type VADConfig struct {
-	// SilenceThresholdMs is the silence duration in milliseconds to trigger turn end (default: 500).
+	// SilenceThresholdMs is the silence duration in milliseconds to trigger turn end (default: 800).
 	SilenceThresholdMs int `json:"silence_threshold_ms,omitempty" yaml:"silence_threshold_ms,omitempty"`
-	// MinSpeechMs is the minimum speech duration before silence counts (default: 1000).
+	// MinSpeechMs is the minimum speech duration before silence counts (default: 200).
 	MinSpeechMs int `json:"min_speech_ms,omitempty" yaml:"min_speech_ms,omitempty"`
-	// MaxTurnDurationS forces turn end after this duration in seconds (default: 60).
+	// MaxTurnDurationS forces turn end after this duration in seconds (default: 30).
 	MaxTurnDurationS int `json:"max_turn_duration_s,omitempty" yaml:"max_turn_duration_s,omitempty"`
 }
 
