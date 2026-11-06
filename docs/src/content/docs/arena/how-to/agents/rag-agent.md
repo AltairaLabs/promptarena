@@ -46,7 +46,7 @@ turns:
       # ... contextual_recall, contextual_relevancy, hallucination
 ```
 
-All six assertions share the same shape — the inner eval primitive does the work; the `type: assertion` wrapper supplies the threshold. See [the eval/assertion/guardrail split](https://promptkit.altairalabs.ai/reference/checks/#classify-backed-checks) for why this layering matters.
+All six assertions share the same shape — the inner eval primitive does the work; the `type: assertion` wrapper supplies the threshold. See [the eval/assertion/guardrail split](https://promptkit.altairalabs.ai/reference/checks/#roles) for why this layering matters.
 
 ## Three context sources
 

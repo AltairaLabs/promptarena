@@ -74,7 +74,7 @@ The table below lists the most commonly used assertion types. For full details a
 | `tool_exec` | Invoke a registered tool (e.g. a sandbox's `run_tests`) at session end and assert it succeeded |
 
 :::note[Type aliases]
-Assertions support both canonical and alias names. For example, `content_includes` is an alias for `contains`. See the [Checks Reference](https://promptkit.altairalabs.ai/reference/checks/#assertion-aliases) for the full alias table.
+Assertions support both canonical and alias names. For example, `content_includes` is an alias for `contains`. See the [Checks Reference](https://promptkit.altairalabs.ai/reference/checks/#type-aliases) for the full alias table.
 :::
 
 ## Session vs Turn-Level Assertions
