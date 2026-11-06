@@ -90,3 +90,12 @@ The same pipeline is a library: `generate.Generate` takes any
 per-eval decisions, and `flow.OpenSessionSource` wraps an installed deploy
 adapter as one. A platform running in-process can implement the adapter
 against its own store and call `Generate` directly.
+
+`Generate` re-checks `ListOptions.Expectations` against every session it
+fetches, so a source that does not filter gets the same scenarios as one that
+does; the others land in `Result.Skipped`. To map stored records onto a
+`SessionDetail`, use the shared helpers in `arena/generate` rather than your
+own copies: `ViolatesAny` for the expectation check, `UserTurnIndex` and
+`EvalResultsFromRows` to number evals by the user turn they answer, and
+`HasFailedVerdict` for a summary's `HasFailures`. An in-process source and a
+deploy adapter that use them produce the same scenarios from the same records.

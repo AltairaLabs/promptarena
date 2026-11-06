@@ -53,6 +53,15 @@ func TestExpectation_Violated(t *testing.T) {
 	assert.False(t, e.Violated(f(0.2)))
 }
 
+func TestExpectation_String(t *testing.T) {
+	assert.Equal(t, "faith>=0.8", Expectation{EvalID: "faith", Min: f(0.8)}.String())
+	assert.Equal(t, "tox<=0.2", Expectation{EvalID: "tox", Max: f(0.2)}.String())
+	assert.Equal(t, "x==1", Expectation{EvalID: "x", Min: f(1), Max: f(1)}.String())
+	assert.Equal(t, "x in [0.2, 0.8]", Expectation{EvalID: "x", Min: f(0.2), Max: f(0.8)}.String())
+	assert.Equal(t, "x", Expectation{EvalID: "x"}.String())
+	assert.Equal(t, "a>=1, b<=2", describeExpectations([]Expectation{{EvalID: "a", Min: f(1)}, {EvalID: "b", Max: f(2)}}))
+}
+
 func TestBoundsFromThreshold(t *testing.T) {
 	tests := []struct {
 		op       string

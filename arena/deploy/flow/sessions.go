@@ -136,7 +136,8 @@ func (s *SessionSource) Close() error {
 
 // List pages through the adapter's sessions until it reports no more or Limit
 // is reached. Filters are passed through; the adapter decides whether it
-// applies them server-side, and the library re-checks client-side anyway.
+// applies them server-side, and generate.Generate re-checks Expectations on
+// every fetched session anyway.
 func (s *SessionSource) List(ctx context.Context, opts generate.ListOptions) ([]generate.SessionSummary, error) {
 	req := &deploy.ListSessionsRequest{
 		DeployConfig:   s.configJSON,

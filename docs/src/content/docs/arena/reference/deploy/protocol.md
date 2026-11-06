@@ -586,8 +586,10 @@ for `promptarena generate --source <adapter>`.
 | `sessions` | object[] | Summaries: `id`, `scenario_id`, `provider_id`, `timestamp`, `turn_count`, `has_failures`, `tags`, `metadata` |
 | `next_cursor` | string | Non-empty when more pages follow |
 
-Whether a filter is applied server-side is the adapter's choice; the CLI re-checks
-client-side, so the result is the same either way.
+Whether a filter is applied server-side is the adapter's choice. The CLI re-checks
+`expectations` against every session it fetches, so an adapter that ignores them
+yields the same scenarios as one that applies them; a fetched session that
+violates none is reported as skipped.
 
 ---
 

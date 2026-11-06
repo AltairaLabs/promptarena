@@ -14,6 +14,8 @@ import (
 
 	"github.com/AltairaLabs/promptarena/v2/arena/generate"
 	"github.com/AltairaLabs/promptarena/v2/deploy"
+
+	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )
 
 // fakeSessions is an in-process sessionsClient.
@@ -256,3 +258,130 @@ func TestOpenSessionSource_AdapterMissing(t *testing.T) {
 }
 
 func f(v float64) *float64 { return &v }
+
+// storedSession is what a platform's store holds: messages with the store's
+// own ids, and eval rows keyed by message id.
+type storedSession struct {
+	id    string
+	msgs  []types.Message
+	ids   []string
+	evals []generate.EvalRow
+}
+
+func (s storedSession) detail() *generate.SessionDetail {
+	evals := generate.EvalResultsFromRows(s.evals, generate.UserTurnIndex(s.msgs, s.ids))
+	return &generate.SessionDetail{
+		SessionSummary: generate.SessionSummary{ID: s.id, Source: s.id, TurnCount: len(s.msgs), HasFailures: generate.HasFailedVerdict(evals)},
+		Messages:       s.msgs,
+		Evals:          evals,
+	}
+}
+
+// inProcessStore is an in-process SessionSourceAdapter over the records that
+// filters by Expectations itself, as the contract invites.
+type inProcessStore struct{ sessions []storedSession }
+
+func (s *inProcessStore) Name() string { return "store" }
+func (s *inProcessStore) List(_ context.Context, opts generate.ListOptions) ([]generate.SessionSummary, error) {
+	var out []generate.SessionSummary
+	for _, rec := range s.sessions {
+		d := rec.detail()
+		if len(opts.Expectations) > 0 && !generate.ViolatesAny(d.Evals, opts.Expectations) {
+			continue
+		}
+		out = append(out, d.SessionSummary)
+	}
+	return out, nil
+}
+func (s *inProcessStore) Get(_ context.Context, id string) (*generate.SessionDetail, error) {
+	for _, rec := range s.sessions {
+		if rec.id == id {
+			return rec.detail(), nil
+		}
+	}
+	return nil, errors.New("not found")
+}
+
+// lazyAdapter serves the same records over the wire and ignores every filter,
+// which the sessions contract allows.
+type lazyAdapter struct{ sessions []storedSession }
+
+func (a *lazyAdapter) GetProviderInfo(context.Context) (*deploy.ProviderInfo, error) {
+	return withSessions(), nil
+}
+func (a *lazyAdapter) ListSessions(context.Context, *deploy.ListSessionsRequest) (*deploy.ListSessionsResponse, error) {
+	resp := &deploy.ListSessionsResponse{}
+	for _, rec := range a.sessions {
+		resp.Sessions = append(resp.Sessions, deploy.SessionSummary{ID: rec.id})
+	}
+	return resp, nil
+}
+func (a *lazyAdapter) GetSession(_ context.Context, req *deploy.GetSessionRequest) (*deploy.GetSessionResponse, error) {
+	for _, rec := range a.sessions {
+		if rec.id != req.SessionID {
+			continue
+		}
+		d := rec.detail()
+		msgs, err := json.Marshal(d.Messages)
+		if err != nil {
+			return nil, err
+		}
+		w := deploy.SessionDetail{
+			SessionSummary: deploy.SessionSummary{ID: d.ID, TurnCount: d.TurnCount, HasFailures: d.HasFailures},
+			Messages:       msgs,
+		}
+		for _, e := range d.Evals {
+			w.Evals = append(w.Evals, deploy.SessionEval{
+				ID: e.ID, Type: e.Type, Kind: e.Kind, Score: e.Score, Passed: e.Passed,
+				Params: e.Params, Message: e.Message, Details: e.Details, Turn: e.Turn,
+			})
+		}
+		return &deploy.GetSessionResponse{Session: w}, nil
+	}
+	return nil, errors.New("not found")
+}
+func (a *lazyAdapter) Close() error { return nil }
+
+// The deploy-adapter path and an in-process source fed the same records yield
+// the same scenarios, even when the adapter applies no filter at all.
+func TestSessionSource_SameScenariosAsInProcessSource(t *testing.T) {
+	msgs := func(q string) []types.Message {
+		return []types.Message{
+			{Role: "user", Content: q},
+			{Role: "assistant", ToolCalls: []types.MessageToolCall{{ID: "c1", Name: "lookup", Args: json.RawMessage(`{}`)}}},
+			{Role: "tool", ToolResult: &types.MessageToolResult{ID: "c1", Name: "lookup", Parts: []types.ContentPart{types.NewTextPart("found")}}},
+			{Role: "assistant", Content: "here you go"},
+		}
+	}
+	ids := []string{"u", "a", "t", "a2"}
+	no := false
+	records := []storedSession{
+		{id: "low", msgs: msgs("refund?"), ids: ids, evals: []generate.EvalRow{
+			{ID: "faith", Type: "faithfulness", Kind: "eval", Score: f(0.3), MessageID: "a2"},
+			{ID: "cite", Type: "content_includes", Kind: "assertion", Passed: &no, MessageID: "a2", Params: map[string]any{"patterns": []any{"policy"}}},
+		}},
+		{id: "high", msgs: msgs("hours?"), ids: ids, evals: []generate.EvalRow{
+			{ID: "faith", Type: "faithfulness", Kind: "eval", Score: f(0.95), MessageID: "a2"},
+		}},
+	}
+	exp := []generate.Expectation{{EvalID: "faith", Min: f(0.8)}}
+
+	inProc, err := generate.Generate(context.Background(), generate.Request{
+		Source: &inProcessStore{sessions: records}, List: generate.ListOptions{Expectations: exp},
+	})
+	require.NoError(t, err)
+
+	src, err := newSessionSource(context.Background(), &lazyAdapter{sessions: records}, "omnia", "default", "{}")
+	require.NoError(t, err)
+	viaAdapter, err := generate.Generate(context.Background(), generate.Request{
+		Source: src, List: generate.ListOptions{Expectations: exp},
+	})
+	require.NoError(t, err)
+
+	require.Len(t, inProc.Scenarios, 1)
+	assert.Equal(t, "low", inProc.Scenarios[0].Metadata.Name)
+	assert.Equal(t, inProc.Scenarios, viaAdapter.Scenarios)
+	assert.Equal(t, inProc.Decisions, viaAdapter.Decisions)
+	require.Len(t, viaAdapter.Skipped, 1, "the session the adapter did not filter is reported, not converted")
+	assert.Equal(t, "high", viaAdapter.Skipped[0].SessionID)
+}

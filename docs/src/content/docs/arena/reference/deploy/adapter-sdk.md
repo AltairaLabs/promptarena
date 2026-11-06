@@ -411,7 +411,8 @@ unsupported and tells the user to upgrade the adapter.
 ```go
 type SessionSourceProvider interface {
     // ListSessions returns one page of session summaries. Filters may be applied
-    // server-side; the CLI re-checks them client-side either way.
+    // server-side; the CLI re-checks Expectations on every fetched session
+    // either way.
     ListSessions(ctx context.Context, req *ListSessionsRequest) (*ListSessionsResponse, error)
 
     // GetSession returns one session in full: messages, pack identity,
@@ -429,6 +430,18 @@ Report evals as the platform recorded them: a measurement has a `Score` and a ni
 `Passed`; a judged assertion or guardrail has a verdict. Do not invent verdicts.
 Include the pack's declared `threshold` when the platform knows it. Redaction is
 the platform's job before it serves session data; the adapter does none of its own.
+
+An eval's `Turn` is the index of the user turn it answers, not the message
+position: the assistant reply and any tool traffic after a user message belong to
+that user's turn. A Go adapter can use the same helpers an in-process source uses,
+from `github.com/AltairaLabs/promptarena/v2/arena/generate`:
+
+| Helper | Does |
+|--------|------|
+| `ViolatesAny(evals, expectations)` | The expectation check, if you filter server-side. A session that never measured the eval violates it. |
+| `UserTurns(messages)` / `UserTurnIndex(messages, ids)` | User turn per message position, or keyed by your store's message ids. |
+| `EvalResultsFromRows(rows, turnIndex)` | Stored eval rows (keyed by message id) to evals with `Turn` resolved; an unknown id is conversation-level. A score without a verdict keeps `Passed` nil. |
+| `HasFailedVerdict(evals)` | `has_failures` for a summary: true only for a recorded negative verdict. |
 
 ## Types
 

@@ -22,7 +22,8 @@ const SessionsCapability = "sessions"
 // which surfaces as ErrMethodNotSupported.
 //
 // The adapter decides whether a filter is applied server-side; the caller
-// re-checks client-side, so the result is the same either way. Redaction is
+// re-checks Expectations on every fetched session, so the result is the same
+// either way. Redaction is
 // the platform's responsibility before it serves session data — an adapter
 // does none of its own.
 type SessionSourceProvider interface {

@@ -52,7 +52,10 @@ type Result struct {
 }
 
 // Generate lists sessions from the source, fetches each, optionally
-// deduplicates, and converts each into a scenario. A session that fails to
+// deduplicates, and converts each into a scenario. When List.Expectations is
+// set, every fetched session is re-checked against it (ViolatesAny), so a
+// source that does not filter gives the same result as one that does; a
+// session that violates none is recorded in Skipped. A session that fails to
 // load or convert is recorded in Skipped rather than failing the run; a
 // failure to list is fatal. It never prints and never writes files.
 func Generate(ctx context.Context, req Request) (*Result, error) {
@@ -74,6 +77,13 @@ func Generate(ctx context.Context, req Request) (*Result, error) {
 		detail, getErr := req.Source.Get(ctx, summaries[i].ID)
 		if getErr != nil {
 			res.Skipped = append(res.Skipped, Skipped{SessionID: summaries[i].ID, Reason: getErr.Error()})
+			continue
+		}
+		if len(req.List.Expectations) > 0 && !ViolatesAny(detail.Evals, req.List.Expectations) {
+			res.Skipped = append(res.Skipped, Skipped{
+				SessionID: summaries[i].ID,
+				Reason:    "violates none of the expectations (" + describeExpectations(req.List.Expectations) + ")",
+			})
 			continue
 		}
 		enrichFromPack(detail, req.Pack)
