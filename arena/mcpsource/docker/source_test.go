@@ -190,6 +190,35 @@ func TestMountsFromArgs_Nil(t *testing.T) {
 	assert.Nil(t, mountsFromArgs(nil))
 }
 
+// The kernel can hand a just-released ephemeral port straight back, so a
+// collision with an already-taken port must be retried, not returned.
+func TestPickDistinctFreePort_SkipsTakenPorts(t *testing.T) {
+	seq := []int{5000, 5000, 5001}
+	pick := func() (int, error) {
+		p := seq[0]
+		seq = seq[1:]
+		return p, nil
+	}
+	used := map[int]bool{5000: true}
+	p, err := pickDistinctFreePort(pick, used)
+	require.NoError(t, err)
+	assert.Equal(t, 5001, p)
+	assert.True(t, used[5001])
+}
+
+func TestPickDistinctFreePort_GivesUpAfterRepeatedCollisions(t *testing.T) {
+	pick := func() (int, error) { return 5000, nil }
+	_, err := pickDistinctFreePort(pick, map[int]bool{5000: true})
+	require.Error(t, err)
+}
+
+func TestPickDistinctFreePort_PropagatesPickError(t *testing.T) {
+	boom := errors.New("boom")
+	pick := func() (int, error) { return 0, boom }
+	_, err := pickDistinctFreePort(pick, map[int]bool{})
+	require.ErrorIs(t, err, boom)
+}
+
 func sseHealthServer(t *testing.T) *httptest.Server {
 	t.Helper()
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
