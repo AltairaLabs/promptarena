@@ -1,0 +1,437 @@
+{
+ "page": "docs/src/content/docs/arena/how-to/scenarios/workflow-regression.md",
+ "commit": "0dbee6290db4e4de3bff3101f260fd614f81c924",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "The how-to walks through examples/workflow-support/ and examples/workflow-order-processing/",
+   "verdict": "true",
+   "evidence": [
+    "examples/workflow-order-processing/config.arena.yaml",
+    "examples/workflow-support/config.arena.yaml"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "The two scenarios use PromptKit's workflow primitive: a state machine in the pack and a workflow__transition tool the agent calls",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/workflow_tool_executor.go:195",
+    "arena/engine/workflow_tool_executor.go:340",
+    "examples/workflow-support/mock-responses.yaml"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "Scenarios assert that the agent drives the expected lifecycle",
+   "verdict": "true",
+   "evidence": [
+    "examples/workflow-support/scenarios/basic-flow.scenario.yaml:9"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "The state machine is a pack primitive, so assertions read the machine's own state rather than logs or tool calls",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/workflow_tool_executor.go:289"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "examples/workflow-support/ is a three-state workflow (intake, specialist, closed)",
+   "verdict": "true",
+   "evidence": [
+    "examples/workflow-support/config.arena.yaml:21"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "examples/workflow-support/ has two scenarios covering different paths",
+   "verdict": "true",
+   "evidence": [
+    "examples/workflow-support/scenarios/basic-flow.scenario.yaml",
+    "examples/workflow-support/scenarios/state-assertions.scenario.yaml"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "examples/workflow-order-processing/ is a four-state order lifecycle (new_order, payment, fulfillment, complete)",
+   "verdict": "true",
+   "evidence": [
+    "examples/workflow-order-processing/config.arena.yaml:24"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "examples/workflow-order-processing/ has full and partial-flow scenarios",
+   "verdict": "true",
+   "evidence": [
+    "examples/workflow-order-processing/scenarios/order-flow.scenario.yaml",
+    "examples/workflow-order-processing/scenarios/unit-fulfillment-stage.scenario.yaml"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "A transition takes effect within the turn that made it",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/workflow_state_resolver.go:59",
+    "arena/engine/workflow_tool_executor.go:332",
+    "arena/engine/workflow_tool_executor.go:38"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "On a transition the destination state's prompt and tools are swapped in and the agent answers on the next round without waiting for another user message",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/execution_workflow_integration.go:408",
+    "arena/engine/execution_workflow_integration.go:96",
+    "arena/engine/workflow_tool_executor.go:38"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "One user turn can span several states",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/workflow_state_resolver.go:51",
+    "arena/engine/workflow_tool_executor.go:38"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "Turn-level assertions block: turns[].role, turns[].content, turns[].assertions with type and params",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:44",
+    "examples/workflow-support/scenarios/basic-flow.scenario.yaml:9"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "Assertion type transitioned_to with param state",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 14,
+   "claim": "Assertion type state_is with param state",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 15,
+   "claim": "Assertion type workflow_complete with empty params",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 16,
+   "claim": "Assertion type workflow_transition_order with param sequence",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 17,
+   "claim": "transitioned_to asserts the machine advanced into a given state on this turn",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/workflow_tool_executor.go:203",
+    "arena/engine/workflow_tool_executor.go:295"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "state_is asserts the current state after the turn",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/workflow_tool_executor.go:299"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "workflow_complete asserts the machine reached a terminal state",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/workflow_tool_executor.go:300"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "workflow_transition_order asserts the exact ordered sequence of states the agent drove",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 21,
+   "claim": "Assertion type spoke_in_state asserts a state produced assistant output",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 22,
+   "claim": "All five assertion types pass deterministically against the mock provider's scripted workflow__transition responses",
+   "verdict": "true",
+   "evidence": [
+    "examples/workflow-order-processing/mock-responses.yaml",
+    "examples/workflow-support/mock-responses.yaml"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "The first four assertion types (transitioned_to, state_is, workflow_complete, workflow_transition_order) read the state machine's transition history",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 24,
+   "claim": "A transition that produces no assistant output satisfies the first four assertion types",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 25,
+   "claim": "Scenario field conversation_assertions accepts transitioned_to and spoke_in_state entries with params.state",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:44",
+    "examples/workflow-agent-loops/scenarios/loop-converges.scenario.yaml:31"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "spoke_in_state passes only when the destination state replies",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/conversation_executor.go:185"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "examples/workflow-agent-loops/ runs its whole loop from a single opening turn",
+   "verdict": "true",
+   "evidence": [
+    "examples/workflow-agent-loops/scenarios/loop-converges.scenario.yaml:22",
+    "examples/workflow-agent-loops/scenarios/loop-hits-max-visits.scenario.yaml:16"
+   ]
+  },
+  {
+   "id": 28,
+   "claim": "Command: cd examples/workflow-support then ../../bin/promptarena run --ci --formats json,markdown",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 29,
+   "claim": "Flag --ci exists on promptarena run",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 30,
+   "claim": "Flag --formats accepts the values json and markdown",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 31,
+   "claim": "Results are written to out/results.md relative to the example directory",
+   "verdict": "true",
+   "evidence": [
+    "examples/workflow-support/config.arena.yaml:44"
+   ]
+  },
+  {
+   "id": 32,
+   "claim": "The Markdown report shows each turn's assertion results alongside the transition path",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 33,
+   "claim": "promptarena serve gives a full timeline view with interactive filtering",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 34,
+   "claim": "Command: cd examples/workflow-order-processing then ../../bin/promptarena run --ci --formats json,markdown",
+   "verdict": "true",
+   "evidence": [
+    "examples/workflow-order-processing/config.arena.yaml"
+   ]
+  },
+  {
+   "id": 35,
+   "claim": "content_includes and content_excludes are per-turn content check assertion types",
+   "verdict": "true",
+   "evidence": [
+    "arena/redteam/generate.go:544"
+   ]
+  },
+  {
+   "id": 36,
+   "claim": "CI example: GitHub Actions workflow triggered on pull_request with paths filter on the two example directories",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 37,
+   "claim": "actions/checkout@v4 and actions/setup-go@v5 are used in the CI example",
+   "verdict": "false",
+   "evidence": [
+    ".github/workflows/ci.yml:28",
+    ".github/workflows/ci.yml:96"
+   ]
+  },
+  {
+   "id": 38,
+   "claim": "CI example Go version is 1.26",
+   "verdict": "true",
+   "evidence": [
+    ".github/workflows/ci.yml:98"
+   ]
+  },
+  {
+   "id": 39,
+   "claim": "Build command: go build -o bin/promptarena ./arena/cmd/promptarena",
+   "verdict": "true",
+   "evidence": [
+    "Makefile:61"
+   ]
+  },
+  {
+   "id": 40,
+   "claim": "CI example runs promptarena run --ci --formats json in each example directory",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 41,
+   "claim": "Both examples are keyless: they use mock providers with scripted workflow__transition calls",
+   "verdict": "true",
+   "evidence": [
+    "examples/workflow-order-processing/providers/mock-provider.yaml:7",
+    "examples/workflow-support/mock-responses.yaml",
+    "examples/workflow-support/providers/mock-provider.yaml:7"
+   ]
+  },
+  {
+   "id": 42,
+   "claim": "Pinning a scenario's task_type to a stage's prompt_task runs that stage in isolation",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/execution_workflow_integration.go:233",
+    "arena/engine/execution_workflow_integration.go:253",
+    "arena/engine/execution_workflow_integration.go:34"
+   ]
+  },
+  {
+   "id": 43,
+   "claim": "Scenario spec field task_type sets the start stage of the workflow",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go",
+    "arena/engine/execution_workflow_integration.go:233"
+   ]
+  },
+  {
+   "id": 44,
+   "claim": "Scenario spec.id is a valid scenario identifier field",
+   "verdict": "true",
+   "evidence": [
+    "examples/workflow-order-processing/scenarios/unit-fulfillment-stage.scenario.yaml:6"
+   ]
+  },
+  {
+   "id": 45,
+   "claim": "The per-run state machine starts in the pinned stage instead of the workflow entry state",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/execution_workflow_integration.go:253",
+    "arena/engine/workflow_tool_executor.go:94"
+   ]
+  },
+  {
+   "id": 46,
+   "claim": "A task_type that names no workflow state's prompt_task is a hard error at run time and is not rerouted to the entry state",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/execution_workflow_integration.go:233",
+    "arena/engine/execution_workflow_integration.go:54"
+   ]
+  },
+  {
+   "id": 47,
+   "claim": "Workflow states declare a prompt_task field",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/execution_workflow_integration.go:44",
+    "examples/workflow-support/config.arena.yaml:26"
+   ]
+  },
+  {
+   "id": 48,
+   "claim": "examples/workflow-order-processing shows both full-lifecycle and single-stage scenario shapes",
+   "verdict": "true",
+   "evidence": [
+    "examples/workflow-order-processing/scenarios/order-flow.scenario.yaml:7",
+    "examples/workflow-order-processing/scenarios/unit-fulfillment-stage.scenario.yaml:11"
+   ]
+  },
+  {
+   "id": 49,
+   "claim": "The pack's workflow: block declares states with on_event mappings",
+   "verdict": "true",
+   "evidence": [
+    "examples/workflow-support/config.arena.yaml:21",
+    "examples/workflow-support/config.arena.yaml:28"
+   ]
+  },
+  {
+   "id": 50,
+   "claim": "workflow_tool_access is an assertion type that asserts which tools are used in which states",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 51,
+   "claim": "Multiple scenarios can exercise different lifecycle branches and the state-aware assertions work per scenario",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/execution_workflow_integration.go:253",
+    "arena/engine/workflow_tool_executor.go:94"
+   ]
+  },
+  {
+   "id": 52,
+   "claim": "Link target /arena/how-to/voice/voice-ivr/ exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 53,
+   "claim": "The voice IVR how-to pairs the workflow state machine with the voice harness",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 54,
+   "claim": "The voice-ivr scenario asserts with state_is, transitioned_to and workflow_complete",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-ivr/scenarios/balance-check.scenario.yaml:14",
+    "examples/voice-ivr/scenarios/balance-check.scenario.yaml:21",
+    "examples/voice-ivr/scenarios/balance-check.scenario.yaml:43"
+   ]
+  },
+  {
+   "id": 55,
+   "claim": "Heading anchor #asserting-that-a-state-spoke resolves on this page",
+   "verdict": "true",
+   "evidence": []
+  }
+ ]
+}

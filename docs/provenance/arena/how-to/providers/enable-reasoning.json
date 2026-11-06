@@ -1,0 +1,505 @@
+{
+ "page": "docs/src/content/docs/arena/how-to/providers/enable-reasoning.md",
+ "commit": "0dbee6290db4e4de3bff3101f260fd614f81c924",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "Reasoning can be turned on for Gemini, Claude and OpenAI providers",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 2,
+   "claim": "PromptArena captures reasoning as the Message.Reasoning field",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 3,
+   "claim": "Message.Reasoning is a sibling of content and is not mixed into the answer, the exports, or the context passed to later turns",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:959"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "A wrong provider reasoning control usually yields an empty trace and a passing run rather than an error",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 5,
+   "claim": "examples/reasoning-test/ is a worked example directory",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 6,
+   "claim": "Reasoning is configured per provider under spec.additional_config",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:398",
+    "schemas/v1alpha1/provider.json:160"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "Model gemini-3.7-flash is a valid Gemini 3 model name in the example",
+   "verdict": "true",
+   "evidence": [
+    "examples/reasoning-test/providers/gemini-3-flash.provider.yaml:10"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "additional_config.include_thoughts: true enables Gemini thought summaries",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 9,
+   "claim": "additional_config.thinking_level is a Gemini 3 field",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 10,
+   "claim": "thinking_level accepts low, medium or high",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 11,
+   "claim": "Model gemini-2.5-flash is a valid Gemini 2.5 model name in the example",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 12,
+   "claim": "additional_config.thinking_budget is a Gemini 2.5 field that caps reasoning tokens and counts toward max_tokens",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 13,
+   "claim": "thinking_budget on a Gemini 3 model returns no thought summaries and the run still passes with empty reasoning",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 14,
+   "claim": "thinking_level on a Gemini 2.5 model is rejected by the API with HTTP 400",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 15,
+   "claim": "Gemini omits the thought summary on some calls even when include_thoughts is configured",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 16,
+   "claim": "Model claude-sonnet-4-6 is a valid Claude model name in the example",
+   "verdict": "true",
+   "evidence": [
+    "examples/reasoning-test/providers/claude-sonnet.provider.yaml:10"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "spec.defaults is the block where temperature, max_tokens and top_p are set for the provider",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/provider.json:148",
+    "schemas/v1alpha1/provider.json:206-222"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "defaults.temperature is dropped from the request while thinking is on",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 19,
+   "claim": "defaults.max_tokens of 4096 is the example value and max_tokens is a defaults field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/provider.json:214"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "defaults.top_p is a defaults field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/provider.json:211"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "additional_config.thinking_budget is a Claude field and must be at least 1024",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 22,
+   "claim": "PromptKit selects the Claude thinking wire format from the model generation, not from configuration",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 23,
+   "claim": "Claude 4.5 and older models use the enabled plus budget_tokens thinking shape",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 24,
+   "claim": "Claude 4.6 models accept either the enabled shape or the adaptive shape",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 25,
+   "claim": "Claude 5-series models use the adaptive thinking shape and reject the enabled shape",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 26,
+   "claim": "Sending the wrong thinking shape to Claude produces an HTTP 400 response",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 27,
+   "claim": "PromptKit drops temperature while thinking is on for Claude",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 28,
+   "claim": "The provider schema still requires a value for defaults.temperature",
+   "verdict": "false",
+   "evidence": [
+    "schemas/v1alpha1/provider.json:200-222",
+    "schemas/v1alpha1/provider.json:202-204"
+   ]
+  },
+  {
+   "id": 29,
+   "claim": "PromptKit raises max_tokens when the thinking budget leaves no headroom for the answer",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 30,
+   "claim": "Reasoning summaries are a Responses API feature for OpenAI",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 31,
+   "claim": "PromptArena defaults every OpenAI model that is not a -pro model to Chat Completions",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 32,
+   "claim": "gpt-5.2 is a valid OpenAI model name in the example",
+   "verdict": "true",
+   "evidence": [
+    "examples/reasoning-test/providers/openai-gpt5.provider.yaml:10"
+   ]
+  },
+  {
+   "id": 33,
+   "claim": "unsupported_params is a spec field that takes a list of parameter names",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:402",
+    "schemas/v1alpha1/provider.json:175-180"
+   ]
+  },
+  {
+   "id": 34,
+   "claim": "gpt-5.2 rejects top_p",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 35,
+   "claim": "additional_config.api_mode accepts responses, and responses is required for any visible reasoning trace on OpenAI",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 36,
+   "claim": "additional_config.reasoning_effort accepts minimal, low, medium or high",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 37,
+   "claim": "additional_config.reasoning_summary accepts auto, concise or detailed",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 38,
+   "claim": "Without api_mode responses, reasoning_summary has no effect and reasoning comes back empty",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 39,
+   "claim": "Requesting reasoning summaries requires a verified OpenAI organisation",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 40,
+   "claim": "With an unverified org the model still reasons and reasoning tokens are billed, but the trace is not returned",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 41,
+   "claim": "promptarena run accepts --ci and --formats flags",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 42,
+   "claim": "--formats accepts the value json",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 43,
+   "claim": "promptarena run --ci --formats json writes JSON result files under out/",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/json/json_repository.go:22",
+    "arena/results/json/json_repository.go:74"
+   ]
+  },
+  {
+   "id": 44,
+   "claim": "Assistant messages in the JSON result have top-level role, content and reasoning fields under a Messages array",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/types.go:61"
+   ]
+  },
+  {
+   "id": 45,
+   "claim": "A short content value alongside a populated reasoning value shows the trace did not leak into the reply",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 46,
+   "claim": "Reasoning is shown in JSON results",
+   "verdict": "true",
+   "evidence": [
+    "arena/statestore/store.go:483-491",
+    "arena/turnexecutors/pipeline_stages_integration.go:959"
+   ]
+  },
+  {
+   "id": 47,
+   "claim": "The TUI shows a reasoning section labelled with a thinking emoji in the turn detail when promptarena run runs without --ci",
+   "verdict": "true",
+   "evidence": [
+    "arena/tui/panels/conversation.go:550",
+    "arena/tui/panels/conversation_render.go:364-369"
+   ]
+  },
+  {
+   "id": 48,
+   "claim": "Interactive and voice TUI sessions stream reasoning live",
+   "verdict": "true",
+   "evidence": [
+    "arena/tui/app/livefeed.go:63-73",
+    "arena/tui/event_adapter.go:115-117",
+    "arena/tui/panels/conversation_render.go:61-62"
+   ]
+  },
+  {
+   "id": 49,
+   "claim": "promptarena serve starts the web UI",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 50,
+   "claim": "The web UI shows a collapsible reasoning disclosure on messages for live runs and historical results, on either side of a tool call",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/event_adapter.go:575-597",
+    "arena/web/event_adapter.go:651-658",
+    "arena/web/frontend/src/lib/atlasAdapter.ts:238-258"
+   ]
+  },
+  {
+   "id": 51,
+   "claim": "The web UI does not stream reasoning token by token; the trace appears once when the message lands",
+   "verdict": "false",
+   "evidence": [
+    "arena/web/event_adapter.go:439-444",
+    "arena/web/event_adapter.go:624-640",
+    "arena/web/frontend/src/components/InteractiveChat.tsx:198-235",
+    "arena/web/frontend/src/hooks/useArenaEvents.ts:175-190"
+   ]
+  },
+  {
+   "id": 52,
+   "claim": "The markdown report at out/results.md contains only the summary, per-run and cost tables",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/markdown/markdown_repository.go:409",
+    "arena/results/markdown/markdown_repository.go:496",
+    "arena/results/markdown/markdown_repository.go:517",
+    "arena/results/markdown/markdown_repository.go:737",
+    "arena/results/markdown/markdown_repository.go:964"
+   ]
+  },
+  {
+   "id": 53,
+   "claim": "The markdown report prints a reasoning value against assertions that is the LLM judge's reasoning",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/markdown/markdown_repository.go:582-583"
+   ]
+  },
+  {
+   "id": 54,
+   "claim": "The arena save stage stores reasoning on the message",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:959"
+   ]
+  },
+  {
+   "id": 55,
+   "claim": "Run results are rebuilt from the conversation store",
+   "verdict": "true",
+   "evidence": [
+    "arena/statestore/store.go:1103"
+   ]
+  },
+  {
+   "id": 56,
+   "claim": "Saved reasoning includes opaque provider-native signatures and encrypted blocks kept for intra-turn round trip",
+   "verdict": "true",
+   "evidence": [
+    "arena/statestore/store.go:483-491"
+   ]
+  },
+  {
+   "id": 57,
+   "claim": "Opaque reasoning entries are 536 to 1288 bytes per message against Claude",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 58,
+   "claim": "Opaque reasoning entries are stripped before reaching the browser",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/event_adapter.go:575-597",
+    "arena/web/event_adapter.go:599-622"
+   ]
+  },
+  {
+   "id": 59,
+   "claim": "The saved JSON holds the model's full chain-of-thought text",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 60,
+   "claim": "A one-step question often yields an empty reasoning trace",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 61,
+   "claim": "examples/reasoning-test/ turn 3 is a single addition that returns an empty trace while turns 1 and 2 do not",
+   "verdict": "unverified",
+   "evidence": [
+    "examples/reasoning-test/scenarios/reasoning.scenario.yaml:54-61"
+   ]
+  },
+  {
+   "id": 62,
+   "claim": "Reasoning is captured on both sides of a tool loop, before the call and after the results",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 63,
+   "claim": "examples/reasoning-test/scenarios/reasoning-tools.scenario.yaml exists",
+   "verdict": "true",
+   "evidence": [
+    "examples/reasoning-test/scenarios/reasoning-tools.scenario.yaml"
+   ]
+  },
+  {
+   "id": 64,
+   "claim": "The prompt config allowed_tools field is an allowlist; a prompt with no entry gets no tools",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/validator_tools.go:19-41"
+   ]
+  },
+  {
+   "id": 65,
+   "claim": "A seed is sent only when defaults.seed is set to a non-zero value",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/conversation_executor.go:1338-1343",
+    "arena/engine/conversation_executor.go:395",
+    "schemas/v1alpha1/arena.json:920-930",
+    "schemas/v1alpha1/provider.json:206-222"
+   ]
+  },
+  {
+   "id": 66,
+   "claim": "The OpenAI Responses API path never sends a seed and logs a warning when one was configured",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 67,
+   "claim": "api_mode: completions is a valid OpenAI api_mode value",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 68,
+   "claim": "Reasoning summaries are returned only by the Responses path, so seed and summaries cannot be used together",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 69,
+   "claim": "unsupported_params is honoured for sampling parameters on both OpenAI API paths",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 70,
+   "claim": "unsupported_params is the spec field that withholds a parameter a model refuses",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:402",
+    "schemas/v1alpha1/provider.json:175"
+   ]
+  }
+ ]
+}

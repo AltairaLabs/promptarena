@@ -1,37 +1,53 @@
 ---
 title: Run Workflow Regression Tests
-description: Workflow state machines are first-class test subjects in PromptArena. Drive an agent through a stateful conversation, assert the transitions, and gate merges on the lifecycle reaching the expected end state.
+description: Drive a workflow agent through a stateful conversation, assert the state transitions, and gate merges on the lifecycle reaching its end state.
+verified:
+  commit: 0dbee6290db4e4de3bff3101f260fd614f81c924
+  sources:
+    - .github/workflows/ci.yml
+    - Makefile
+    - arena/arenaconfig/types.go
+    - arena/engine/conversation_executor.go
+    - arena/engine/execution_workflow_integration.go
+    - arena/engine/workflow_state_resolver.go
+    - arena/engine/workflow_tool_executor.go
+    - arena/redteam/generate.go
+    - examples/voice-ivr/scenarios/balance-check.scenario.yaml
+    - examples/workflow-agent-loops/scenarios/loop-converges.scenario.yaml
+    - examples/workflow-agent-loops/scenarios/loop-hits-max-visits.scenario.yaml
+    - examples/workflow-order-processing/config.arena.yaml
+    - examples/workflow-order-processing/mock-responses.yaml
+    - examples/workflow-order-processing/providers/mock-provider.yaml
+    - examples/workflow-order-processing/scenarios/order-flow.scenario.yaml
+    - examples/workflow-order-processing/scenarios/unit-fulfillment-stage.scenario.yaml
+    - examples/workflow-support/config.arena.yaml
+    - examples/workflow-support/mock-responses.yaml
+    - examples/workflow-support/providers/mock-provider.yaml
+    - examples/workflow-support/scenarios/basic-flow.scenario.yaml
+    - examples/workflow-support/scenarios/state-assertions.scenario.yaml
 ---
 
-This how-to walks through `examples/workflow-support/` and `examples/workflow-order-processing/` — two scenarios that use PromptKit's workflow primitive (state machine in the pack, `workflow__transition` tool the agent calls). Scenarios assert that the agent drives the expected lifecycle.
+Assert that an agent drives a PromptKit workflow state machine through the expected lifecycle, and fail CI when it does not. The steps use `examples/workflow-support/` (intake, specialist, closed; two scenarios) and `examples/workflow-order-processing/` (new_order, payment, fulfillment, complete; three scenarios). The agent advances the machine by calling the `workflow__transition` tool.
 
-## What it proves
+Workflow assertions read the state machine's own state, so they catch an agent that lands in the wrong state, skips a transition or stalls, without parsing logs or tool calls.
 
-Workflow-driven agents fail in ways single-turn eval can't catch: the agent reaches the wrong terminal state, skips a required transition, or loops forever. The state machine is a pack primitive here, so assertions read the machine's own state rather than scraping logs or inferring intent from tool calls.
+## Prerequisites
 
-Two examples ship with the runtime:
+- A pack with a `workflow:` block and a scenario set that uses it.
+- A built `promptarena` binary (the examples call `../../bin/promptarena`).
 
-- `examples/workflow-support/` — three-state support workflow (intake → specialist → closed) with two scenarios covering different paths.
-- `examples/workflow-order-processing/` — four-state order lifecycle (new_order → payment → fulfillment → complete) with full and partial-flow scenarios.
+## Assert the lifecycle
 
-## The assertion shape
+A transition takes effect within the turn that made it. The destination state's prompt and tools are swapped in, and the state answers in the same turn. One user turn can therefore span several states.
 
-The agent calls `workflow__transition` to advance the state machine, and state-aware assertions observe the machine directly.
-
-A transition takes effect **within the turn that made it**: the destination state's
-prompt and tools are swapped in, and it answers on the next round without waiting
-for another user message. One user turn can therefore span several states. Scenarios
-do not need a scripted turn per state, and a scenario written that way is weaker
-than it looks — see [Asserting that a state spoke](#asserting-that-a-state-spoke).
-
-Five assertion types cover the lifecycle:
+Add these assertions to the turns of a scenario:
 
 ```yaml
 turns:
   - role: user
     content: "I just placed an order. Can you confirm?"
     assertions:
-      # A transition happened on this turn (the machine advanced into `payment`).
+      # The machine has advanced into `payment`.
       - type: transitioned_to
         params:
           state: payment
@@ -53,44 +69,49 @@ turns:
       # The machine reached a terminal state.
       - type: workflow_complete
         params: {}
-      # The full ordered path the agent drove, start to finish.
+      # The states the agent drove, in order.
       - type: workflow_transition_order
         params:
           sequence: ["payment", "fulfillment", "complete"]
 ```
 
-- `transitioned_to` — assert the machine advanced into a given state on this turn.
-- `state_is` — assert the current state after the turn (useful when a turn should *not* transition).
-- `workflow_complete` — assert the machine reached a terminal state.
-- `workflow_transition_order` — assert the exact ordered sequence of states the agent drove.
-- `spoke_in_state` — assert a state actually produced assistant output, not merely that it was entered.
+| Assertion | Passes when |
+|---|---|
+| `transitioned_to` | Any transition recorded so far in the run entered the given state. The record accumulates across turns. |
+| `state_is` | The current state after the turn is the given state. Use it for turns that must not transition. |
+| `workflow_complete` | The machine reached a terminal state. |
+| `workflow_transition_order` | `sequence` appears, in order, among the states the recorded transitions entered. Extra intermediate transitions are allowed. |
+| `spoke_in_state` | The given state produced a non-blank assistant message. |
+| `workflow_tool_access` | The agent called only the allowed tools in each state (`rules: [{state, allowed: [tools]}]`). States without a rule are unrestricted. |
 
-These observe the workflow metadata directly, so they assert on actual state rather than on the tool call that drives it. All five pass deterministically against the mock provider's scripted `workflow__transition` responses.
+Each class of regression maps to an assertion:
+
+- Wrong or missing state: `transitioned_to`, `state_is`.
+- Skipped or reversed state: `workflow_transition_order`.
+- Stalled before the end: `workflow_complete`.
+- Wrong tool in a state, such as a refund tool before verification: `workflow_tool_access`.
+
+Add `content_includes` or `content_excludes` on each turn to check what the agent said.
 
 ### Asserting that a state spoke
 
-The first four all read the state machine's transition history. A transition that
-advances the machine and then produces **no output at all** satisfies every one of
-them — the agent hands off to a specialist and the specialist never speaks, and the
-suite stays green.
+The first four assertions read only the transition history. A handoff whose destination state produces no output passes all of them, and the suite stays green.
 
-`spoke_in_state` is the one that closes that gap:
+Pair `transitioned_to` with `spoke_in_state` wherever a handoff matters:
 
 ```yaml
 conversation_assertions:
   - type: transitioned_to
     params: { state: handoff }     # the machine advanced
   - type: spoke_in_state
-    params: { state: handoff }     # ...and the destination actually replied
+    params: { state: handoff }     # the destination replied
 ```
 
-Pair them wherever a handoff matters. It is worth being deliberate about the turns
-too: if a scenario has a scripted user turn after the transition, that turn gives
-the destination state somewhere to speak regardless, and `spoke_in_state` passes
-whether or not the handoff itself works. `examples/workflow-agent-loops/` runs its
-whole loop from a single opening turn for exactly this reason.
+A scripted user turn after the transition gives the destination state somewhere to speak, so `spoke_in_state` passes even if the handoff itself fails. To test the handoff, run the scenario from a single opening turn, as `examples/workflow-agent-loops/` does.
 
-## Running
+## Run the scenarios
+
+Run each example from its own directory:
 
 ```bash
 cd examples/workflow-support
@@ -98,26 +119,35 @@ cd examples/workflow-support
 open out/results.md
 ```
 
-The Markdown report shows each turn's assertion results alongside the transition path. For the full timeline view with interactive filtering, run `promptarena serve`.
-
-Same shape for the order-processing example:
-
 ```bash
 cd examples/workflow-order-processing
 ../../bin/promptarena run --ci --formats json,markdown
 ```
 
-## What's a regression suite, then?
+`out/results.md` is an overview table with one row per run: provider, scenario, status, duration, turns, assertion pass count and tool-call count. Per-assertion results and transitions are in the JSON result files in `out/`. To see the transitions as a state graph, run `promptarena serve` and open a run's Workflow tab, which has Live and Path modes.
 
-Three questions the assertions answer, each catching a distinct class of regression:
+## Test a single stage
 
-1. **Did the agent reach the right states?** — `transitioned_to` / `state_is` per turn. Catches "agent stopped driving the state machine" or "landed in the wrong state" regressions.
-2. **In the right order?** — `workflow_transition_order` with the expected lifecycle. Catches "agent skipped a state" or "went backwards" regressions.
-3. **Did it finish?** — `workflow_complete`. Catches "agent stalled before the terminal state" regressions.
+To exercise one stage without walking the agent through every earlier transition, set the scenario's `task_type` to that stage's `prompt_task`:
 
-Combine with content checks (`content_includes`, `content_excludes`) on each turn for "agent confirmed payment received" / "agent provided tracking number" assertions, and the suite gives a deterministic deploy gate for any prompt change that might break the workflow.
+```yaml
+spec:
+  id: unit-fulfillment-stage
+  task_type: fulfillment   # start in the non-entry 'fulfillment' stage
+  turns:
+    - role: user
+      content: "Where is my package?"
+      assertions:
+        - type: state_is
+          params:
+            state: fulfillment
+```
 
-## CI gate
+The per-run state machine starts in that stage, so the turn runs its prompt directly. Full-lifecycle scenarios and single-stage tests can share one config; `examples/workflow-order-processing` has both. A `task_type` that matches no workflow state's `prompt_task`, or matches several non-entry states, is a hard error at run time.
+
+## Gate merges in CI
+
+Add this workflow to your repository. Both examples use mock providers with scripted `workflow__transition` calls, so the job needs no API keys.
 
 ```yaml
 # .github/workflows/workflow-regression.yml
@@ -133,8 +163,8 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
         with:
           go-version: '1.26'
       - run: go build -o bin/promptarena ./arena/cmd/promptarena
@@ -145,41 +175,11 @@ jobs:
           done
 ```
 
-Keyless: both examples use mock providers with scripted `workflow__transition` calls.
+## Extend the suite
 
-## Unit-testing a single stage
+- Add a state: put it in the pack's `workflow:` block with `on_event:` mappings, add a scenario that exercises the path, and extend the `workflow_transition_order` sequence.
+- Cover each lifecycle branch (happy path, escalation, error) with its own scenario. The same assertions apply to each.
 
-The scenarios above drive the whole lifecycle from the entry state. To exercise
-**one** stage in isolation, without first walking the agent through every earlier
-transition, pin the scenario's `task_type` to that stage's `prompt_task`:
+## Related pages
 
-```yaml
-spec:
-  id: unit-fulfillment-stage
-  task_type: fulfillment   # start in the non-entry 'fulfillment' stage
-  turns:
-    - role: user
-      content: "Where is my package?"
-      assertions:
-        - type: state_is
-          params:
-            state: fulfillment
-```
-
-The per-run state machine starts in that stage instead of the workflow entry, so
-the turn runs the `fulfillment` prompt directly. Full-lifecycle scenarios (no
-`task_type`, or `task_type` set to the entry) and single-stage unit tests can live
-in the same config. A `task_type` that names no workflow state's `prompt_task` is a
-hard error at run time — it is never silently rerouted through the entry. See
-`examples/workflow-order-processing` for both shapes side by side.
-
-## Extending it
-
-- **Add a new state**: drop it in the pack's `workflow:` block with `on_event:` mappings. Add a scenario that exercises the new path. Extend the `workflow_transition_order` sequence to include it.
-- **Assert per-state tool access**: `workflow_tool_access` asserts that the agent only uses certain tools in certain states — useful for enforcing "no refund tool before the verification stage".
-- **Multi-path scenarios**: register multiple scenarios that exercise different lifecycle branches (e.g., happy-path, escalation-path, error-path). The same state-aware assertions work per scenario.
-
-## Related how-tos
-
-- [Voice IVR with workflow state machine](/arena/how-to/voice/voice-ivr/) — the same workflow primitive paired with the voice harness, asserted with the same `state_is` / `transitioned_to` / `workflow_complete` shape.
-- The voice-ivr scenario is the reference for the workflow + voice pairing; the workflow-support / workflow-order-processing scenarios are the reference for the text-only workflow lifecycle pattern.
+- [Voice IVR with workflow state machine](/arena/how-to/voice/voice-ivr/): the same workflow primitive with the voice harness, asserted with `state_is`, `transitioned_to` and `workflow_complete`.

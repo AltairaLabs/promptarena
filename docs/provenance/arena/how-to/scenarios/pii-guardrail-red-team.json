@@ -1,0 +1,285 @@
+{
+ "page": "docs/src/content/docs/arena/how-to/scenarios/pii-guardrail-red-team.md",
+ "commit": "0dbee6290db4e4de3bff3101f260fd614f81c924",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "The walkthrough covers examples/pii-guardrail-red-team/",
+   "verdict": "true",
+   "evidence": [
+    "examples/pii-guardrail-red-team/config.arena.yaml:14"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "Two scenarios probe the support agent, with the pii_leakage guardrail wired into the pack",
+   "verdict": "true",
+   "evidence": [
+    "examples/pii-guardrail-red-team/config.arena.yaml:39",
+    "examples/pii-guardrail-red-team/prompts/hardened-support-agent.yaml:29"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "The guardrail enforces at runtime by replacing leaking content with a safe message",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 4,
+   "claim": "The guardrail fires as a guardrail_triggered signal that a test can assert on",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 5,
+   "claim": "Scenario pii-extraction-attempt, caller asks to read out email and card details",
+   "verdict": "true",
+   "evidence": [
+    "examples/pii-guardrail-red-team/scenarios/pii-extraction-attempt.scenario.yaml:14"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "Scenario legitimate-question, caller asks what time branches close",
+   "verdict": "true",
+   "evidence": [
+    "examples/pii-guardrail-red-team/scenarios/legitimate-question.scenario.yaml:11"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "pii_leakage fires for pii-extraction-attempt because the regex pre-pass catches the leak",
+   "verdict": "true",
+   "evidence": [
+    "examples/pii-guardrail-red-team/mock-responses.yaml:15"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "Both scenarios are scripted text turns against a mock agent, with fixed caller lines",
+   "verdict": "true",
+   "evidence": [
+    "examples/pii-guardrail-red-team/mock-responses.yaml:7",
+    "examples/pii-guardrail-red-team/scenarios/pii-extraction-attempt.scenario.yaml:10"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "Self-play with an adversarial persona and a turn objective drives the user side with an LLM",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/persona.json:375",
+    "schemas/v1alpha1/scenario.json:924"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "Command promptarena run with flags --ci and --formats json,markdown",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:187"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "Run writes out/results.md",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:536",
+    "arena/results/markdown/markdown_repository.go:25",
+    "examples/pii-guardrail-red-team/config.arena.yaml:46"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "The run needs no API keys",
+   "verdict": "true",
+   "evidence": [
+    "examples/pii-guardrail-red-team/config.arena.yaml:24",
+    "examples/pii-guardrail-red-team/config.arena.yaml:35"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "pii_leakage regex pre-pass covers emails, US-style SSNs and 16-digit card-shaped numbers, and is deterministic",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 14,
+   "claim": "The pack names a judge for the LLM-judged second layer and the arena config points that judge at a mock provider",
+   "verdict": "true",
+   "evidence": [
+    "examples/pii-guardrail-red-team/config.arena.yaml:35",
+    "examples/pii-guardrail-red-team/prompts/hardened-support-agent.yaml:33"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "Pack file prompts/hardened-support-agent.yaml contains the validators block",
+   "verdict": "true",
+   "evidence": [
+    "examples/pii-guardrail-red-team/prompts/hardened-support-agent.yaml:29"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "Prompt config field validators: is a list of entries with type and params",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/promptconfig.json:714",
+    "schemas/v1alpha1/promptconfig.json:813"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "Validator type pii_leakage",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 18,
+   "claim": "params.direction accepts value output",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 19,
+   "claim": "params.provider names a judge (redaction-judge)",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:93"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "The runtime wraps the pii_leakage eval handler as a provider hook that runs on every agent output",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 21,
+   "claim": "On a high-confidence match the hook replaces content with the safe message and records the validation result on the message",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 22,
+   "claim": "provider names a judge that the arena config declares under judges:",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:93",
+    "examples/pii-guardrail-red-team/config.arena.yaml:35"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "A judge-backed guardrail that names no judge is refused at load",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 24,
+   "claim": "conversation_assertions is a scenario field whose entries have type and params",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/scenario_data.go:306",
+    "examples/pii-guardrail-red-team/scenarios/pii-extraction-attempt.scenario.yaml:17"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "Assertion type guardrail_triggered",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 26,
+   "claim": "guardrail_triggered params accept validator and should_trigger",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 27,
+   "claim": "guardrail_triggered reads validations recorded on each message and does not re-run the eval",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 28,
+   "claim": "bias, toxicity, role_violation and pii_leakage second layer are LLM-judged primitives that need a judge",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 29,
+   "claim": "Validator type toxicity with direction output and provider redaction-judge",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 30,
+   "claim": "Validator type role_violation with direction output and provider redaction-judge",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 31,
+   "claim": "min_score and max_score thresholds are rejected on the inner safety handler",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 32,
+   "claim": "The inner safety handler emits a raw judge score and the guardrail decides whether to fire",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 33,
+   "claim": "Wrapping the primitive in type: assertion is where the threshold goes for scenario pass/fail",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 34,
+   "claim": "Workflow file .github/workflows/pii-guardrail-red-team.yml with pull_request paths filter on examples/pii-guardrail-red-team/**",
+   "verdict": "true",
+   "evidence": [
+    "examples/pii-guardrail-red-team/config.arena.yaml:14"
+   ]
+  },
+  {
+   "id": 35,
+   "claim": "Go version 1.26 used by setup-go",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 36,
+   "claim": "Build command go build -o bin/promptarena ./arena/cmd/promptarena",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:187"
+   ]
+  },
+  {
+   "id": 37,
+   "claim": "Command ../../bin/promptarena run --ci --formats json",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:187"
+   ]
+  },
+  {
+   "id": 38,
+   "claim": "Default scenarios need no keys, so the job is safe on fork pull requests",
+   "verdict": "true",
+   "evidence": [
+    "examples/pii-guardrail-red-team/config.arena.yaml:24",
+    "examples/pii-guardrail-red-team/config.arena.yaml:35"
+   ]
+  }
+ ]
+}

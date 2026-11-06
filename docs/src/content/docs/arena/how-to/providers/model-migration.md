@@ -1,15 +1,29 @@
 ---
 title: Gate Model Migrations
 description: Run the same scenarios against the old and new model side by side. CI fails if the new model breaks an assertion the old one passed.
+verified:
+  commit: 0dbee6290db4e4de3bff3101f260fd614f81c924
+  sources:
+    - arena/cmd/promptarena/run.go
+    - arena/cmd/promptarena/run_interactive.go
+    - arena/web/frontend/src/App.tsx
+    - arena/web/frontend/src/components/arena/TrialMatrix.tsx
+    - examples/model-migration/config.arena.yaml
+    - examples/model-migration/mock-responses-v2.yaml
+    - examples/model-migration/providers/model-v1.provider.yaml
+    - examples/model-migration/providers/model-v2.provider.yaml
+    - examples/model-migration/scenarios/billing-inquiry.scenario.yaml
+    - examples/model-migration/scenarios/tech-inquiry.scenario.yaml
+    - schemas/v1alpha1/common/assertions.json
 ---
 
-This how-to walks through `examples/model-migration/` — a small regression suite that runs the same scenarios against two mock providers simulating a model upgrade. The pattern works for any "did this swap break anything" question: GPT-4o → 4o-mini, Claude 3.5 → 4, OpenAI → Anthropic.
+Gate a model swap in CI with `examples/model-migration/`, a regression suite that runs the same scenarios against two mock providers simulating a model upgrade. The pattern works for any "did this swap break anything" question: GPT-4o to 4o-mini, Claude 3.5 to 4, OpenAI to Anthropic.
 
 ## What it proves
 
-Migration testing has a sneaky failure mode: most prompts still work after a model swap, so you trust the change. The 5% that broke produce subtly wrong outputs that pass visual review and only get caught in production.
+Most prompts still work after a model swap, so the change gets trusted. The few that broke produce subtly wrong outputs that pass visual review and surface in production.
 
-PromptArena makes migration a real gate:
+The suite makes migration a gate:
 
 - One scenario set, multiple providers registered, one report.
 - Identical assertions per scenario; each must pass on every registered model.
@@ -32,44 +46,54 @@ promptarena run --ci --formats json,markdown
 open out/results.md
 ```
 
-Keyless: both providers are mock. The report shows side-by-side results.
+Both providers are mock, so the example runs without API keys. The report shows side-by-side results.
 
 ## What a regression looks like
 
-The default config has both mock providers passing all assertions. To see how a regression surfaces, edit `mock-responses-v2.yaml` to make the new model break the one-word format:
+The default config has both mock providers passing all assertions. To see a regression surface, edit `mock-responses-v2.yaml` so the new model breaks the one-word format. Responses are keyed by the scenario's `metadata.name` under `scenarios:`, with turns keyed by turn number:
 
 ```yaml
-# Was: "technical"
-# Now: model adds explanation despite the prompt's instruction
-tech-inquiry:
-  turns:
-    1: "This sounds like a technical issue with the application."
+scenarios:
+  tech-inquiry:
+    turns:
+      1: "This sounds like a technical issue with the application."
 ```
 
-Re-run: the `max_length` assertion fires on v2 but not v1 — the regression is caught:
+Re-run. The `max_length` assertion fails on `model-v2` and passes on `model-v1`. The run summary lists the failing run as `scenario/provider/region`, and the command exits 1:
 
-```
-v1 / billing-inquiry: ✓ content_includes(billing) ✓ max_length(<30)
-v1 / tech-inquiry:    ✓ content_includes(technical) ✓ max_length(<30)
-v2 / billing-inquiry: ✓ content_includes(billing) ✓ max_length(<30)
-v2 / tech-inquiry:    ✓ content_includes(technical) ✗ max_length(60 > 30)
+```text
+Run Summary
+===========
+
+Total Runs:       4
+Successful:       3 (75.0%)
+Failed:           1 (25.0%)
+...
+Providers:        model-v1 (2), model-v2 (2)
+Scenarios:        2 scenarios
+Regions:          default
+
+Errors:
+  • tech-inquiry/model-v2/default: pipeline execution failed: validation failed: [assertion 1 (max_length) failed: length 56, max 30]
+
+Results saved to: out
+
 Error: execution failed: 1 runs had errors
 ```
 
-The CI snippet below uses `set -e` so the migration PR fails until the prompt is reworked or the new model swapped out.
+The non-zero exit fails the CI step below, so the migration PR stays red until you rework the prompt or swap the new model out.
 
 ## Adding real models
 
-Swap the mock providers in `config.arena.yaml`:
+The example ships only `providers/model-v1.provider.yaml` and `providers/model-v2.provider.yaml`. To test real models, add a provider file for each model, then replace the mock entries in `config.arena.yaml`. The file names below are examples you create:
 
 ```yaml
 providers:
   - file: providers/openai-gpt4o.provider.yaml         # incumbent
   - file: providers/openai-gpt4o-mini.provider.yaml    # candidate
-  - file: providers/anthropic-claude-haiku.provider.yaml  # alternate candidate
 ```
 
-Same scenarios, same assertions. The report fans out across every provider; CI gates on all of them passing.
+Same scenarios, same assertions. The report fans out across every provider, and CI gates on all of them passing.
 
 ## CI gate
 
@@ -86,8 +110,8 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
         with:
           go-version: '1.26'
       - run: go build -o bin/promptarena ./arena/cmd/promptarena
@@ -96,16 +120,16 @@ jobs:
         run: ../../bin/promptarena run --ci --formats json,markdown
       - name: Upload report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: model-migration-report
           path: examples/model-migration/out/
 ```
 
-Uploading the report as an artifact lets reviewers eyeball the per-model output on the PR — useful when the question is "did this prompt regress on the new model?" rather than only "did anything fail?"
+GitHub Actions `run:` steps use `bash -e`, so the non-zero exit from `promptarena` fails the step. Uploading the report as an artifact lets reviewers read the per-model output on the PR.
 
 ## Extending it
 
-- **Add a third model**: drop in `providers/anthropic-claude-haiku.provider.yaml`, register it, run. The fan-out scales automatically.
-- **Behavior-equivalent assertions**: `outcome_equivalent` lets you assert that the agent's tool-call pattern (or workflow state, or content hash) matches an expected outcome — useful for migrating between models without the prompt changing.
-- **Per-model thresholds**: if a new model has known stricter / looser behaviour on certain assertions, use `when:` clauses to scope thresholds per provider (see [the bake-off how-to](/arena/how-to/voice/voice-bake-off/) for the pattern).
+- To add a third model, add another provider file, register it in `config.arena.yaml`, and run. Every scenario runs against every registered provider.
+- `outcome_equivalent` checks a run's outcome against an expected value. Set `metric` to `tool_calls` (with `expected_tools`), `final_state` (with `expected_state`) or `content_hash` (with `expected_content`). It suits migrations where the prompt does not change.
+- If a new model has known stricter or looser behaviour on certain assertions, use `when:` clauses to scope thresholds per provider (see [the bake-off how-to](/arena/how-to/voice/voice-bake-off/) for the pattern).

@@ -1,28 +1,62 @@
 ---
 title: Use the TUI
-description: Launch Arena's interactive terminal hub to run tests, browse results, and chat with agents.
+description: Launch Arena's interactive terminal hub to run tests, browse results, chat with agents and deploy.
 sidebar:
   order: 10
+verified:
+  commit: 0dbee6290db4e4de3bff3101f260fd614f81c924
+  sources:
+    - arena/cmd/promptarena/chat.go
+    - arena/cmd/promptarena/chat_interactive.go
+    - arena/cmd/promptarena/config_inspect_interactive.go
+    - arena/cmd/promptarena/deploy_interactive.go
+    - arena/cmd/promptarena/deploy_login_interactive.go
+    - arena/cmd/promptarena/main_integration.go
+    - arena/cmd/promptarena/run.go
+    - arena/cmd/promptarena/run_interactive.go
+    - arena/cmd/promptarena/view.go
+    - arena/cmd/promptarena/view_interactive.go
+    - arena/deploy/flow/config.go
+    - arena/deploy/flow/connect.go
+    - arena/deploy/flow/login.go
+    - arena/deploy/flow/preflight.go
+    - arena/deploy/flow/render.go
+    - arena/tui/app/app.go
+    - arena/tui/app/chatpage.go
+    - arena/tui/app/chatpage_voice.go
+    - arena/tui/app/config.go
+    - arena/tui/app/configswitch.go
+    - arena/tui/app/deploypage.go
+    - arena/tui/app/home.go
+    - arena/tui/app/inspectpage.go
+    - arena/tui/app/launch_interactive.go
+    - arena/tui/app/menu.go
+    - arena/tui/app/runpage.go
+    - arena/tui/app/viewpage.go
+    - arena/tui/pages/file_browser.go
+    - arena/tui/views/deploytable.go
+    - arena/tui/views/plandiff.go
+    - arena/voice/portaudio/portaudio_discovery.go
+    - arena/voice/portaudio/portaudio_io_interactive.go
+    - arena/voice/session_audioio_interactive.go
 ---
 
-Arena ships a full-screen terminal UI (TUI) — an interactive hub for running
-scenarios, browsing past results, and chatting with an agent, all without leaving
-the terminal. This guide shows how to launch the hub, move between its pages, and
-deep-link straight into the page you want.
+Arena ships a full-screen terminal UI (TUI): a hub for running scenarios, browsing
+past results, chatting with an agent and deploying. This guide shows how to launch
+the hub, move between its pages, and deep-link straight into the page you want.
 
 ## Launch the hub
 
-Run `promptarena` with **no subcommand** from any directory:
+Run `promptarena` with no subcommand from any directory:
 
 ```bash
 promptarena
 ```
 
-The hub opens in the alternate screen. On startup it looks for an Arena config
-in the working directory (for example `config.arena.yaml`) and loads it if found.
-No config is required to launch — the hub still opens, but pages that need one
-(Run, Chat, Inspect) stay disabled until a config is present. Results default to
-the `out/` directory beside the config.
+The hub opens in the alternate screen behind a brief splash (any key dismisses it).
+It loads `config.arena.yaml` from the working directory if one exists. No config is
+required to launch, but Run, Chat, Inspect and Deploy stay greyed out until one is
+loaded. Results default to the `out/` directory in the working directory.
 
 ![The TUI hub menu with five entries (View, Run, Chat, Inspect and Deploy), each with a one-line description, and the loaded config shown above.](/screenshots/tui-hub.png)
 
@@ -31,55 +65,56 @@ the `out/` directory beside the config.
 The hub menu has five entries:
 
 ```text
-View     — browse past test results
-Run      — run scenarios against providers
-Chat     — interactive multi-turn session
-Inspect  — explore config and state
-Deploy   — walk through preflight, plan, confirm, apply, and status
+View     - browse past test results
+Run      - run scenarios against providers
+Chat     - interactive multi-turn session
+Inspect  - explore config and state
+Deploy   - deploy this pack to a target environment
 ```
-
-Navigation keys are consistent across the whole hub:
 
 | Key | Action |
 |-----|--------|
-| `↑` / `↓` | Move the menu selection |
+| `↑` / `↓` (or `j` / `k`) | Move the menu selection |
 | `Enter` | Open the highlighted page |
-| `Esc` | Go back one page (pops the navigation stack) |
-| `q` | Quit — only at the root menu; inside a page, use `Esc` to go back |
+| `Esc` | Go back one page; quits at the root menu |
+| `q` | Quit from the root menu |
+| `c` | Open the config switcher (Home page) |
 | `Ctrl-C` | Quit from anywhere |
 
-**View** is always available, because it only needs a results directory. **Run**, **Chat**,
-and **Inspect** require a loaded config; if none was discovered, opening one shows
-a notice explaining why. **Deploy** additionally requires the loaded config to have
-a `deploy:` section — see [Deploy from the TUI](#deploy-from-the-tui) below. Switching
-the active config from within the hub rebuilds the engine so the new config takes
-effect immediately.
+Run, Chat, Inspect and Deploy need a loaded config. Without one, they are greyed out
+and `Enter` does nothing; the config line prompts you to press `c` to pick a config or run
+`promptarena init`. Switching config rebuilds the engine
+so the new config takes effect immediately.
 
 ### Inspect config and state
 
 The **Inspect** page shows the resolved config and live state (providers, agents,
 scenarios, and workflow/memory state) so you can confirm what Arena will actually
-run before you launch it.
+run before you launch it. Scroll with `↑` / `↓` or `j` / `k`, `PgUp` / `PgDn` for half
+a page, and `g` / `G` for top and bottom.
 
 ![The Inspect page listing the resolved config: prompt configs, scenarios with task and turn counts, the three registered providers with their models and files, and the declared tools.](/screenshots/tui-inspect.png)
 
 ## Browse results with `view`
 
-To jump straight to the results browser without going through the menu, use the
-`view` subcommand:
+To jump straight to the results browser, use the `view` subcommand:
 
 ```bash
 promptarena view            # browse ./ (current directory)
 promptarena view out/       # browse a specific results directory
 ```
 
-`view` opens a file browser over past JSON result files. Select a run to preview
-its metadata, then drill into the full conversation transcript for any completed
-test. The directory argument is optional and defaults to the current directory;
-the path must exist and be a directory or the command errors out.
+`view` opens a file browser over `.json` result files. The directory argument
+defaults to the current directory and must exist. Navigate with `↑` / `↓`, open with
+`Enter`, and go to the parent directory with `←` or `h`.
 
-Because `view` deep-links with the results page as the root of the navigation
-stack, `Esc` or `q` **exits the program** rather than returning to the hub menu.
+- `Enter` on `index.json` opens the Results page: a runs table, a log panel and a
+  result panel. `Tab` cycles focus between them, and `Enter` on a run opens its
+  conversation.
+- `Enter` on any other `.json` file opens that run's conversation directly.
+
+The file browser is the root of the navigation stack, so `Esc` or `q` there exits
+the program instead of returning to the hub. Deeper in, `Esc` goes back one page.
 
 ![The results browser with the conversation transcript open: a numbered turn list on the left showing alternating user and assistant roles, and the selected turn's full message rendered on the right.](/screenshots/tui-results.png)
 
@@ -93,157 +128,143 @@ promptarena chat                              # uses config.arena.yaml
 promptarena chat --config config.arena.yaml   # explicit config path
 ```
 
-Type a message and press `Enter` to send; the agent replies turn by turn, keeping
-conversation state between turns. Add `-v` / `--verbose` to tee raw provider events
-and transcription to `promptarena.log` for debugging. As with `view`, the chat page
-is the stack root, so `Esc` / `q` exits back to the shell.
+Chat opens on an agent picker if the config has more than one agent, then a
+provider picker if it has more than one provider. Choose with the number key, since
+the pickers read digits as selections. With one of each, chat starts straight away.
+It then asks for any required variables, and whether to run evals if the config
+defines them (`y` / `n`).
 
-`chat` opens on a provider picker — choose one with its number key before
-typing, since the picker reads digits as selections.
+Type a message and press `Enter` to send; the agent replies turn by turn, keeping
+conversation state. `Tab` moves focus between the conversation and the input, and
+`Ctrl-L` toggles a runtime-log overlay. Add `-v` / `--verbose` to tee raw provider
+events and transcription to `promptarena.log` for debugging. The chat page is the
+stack root, so `Esc` / `q` exits back to the shell.
 
 ![A chat session seven turns deep: the numbered turn list shows the system prompt, two user messages, the assistant's replies, a get_order_status tool call and its result, and the final answer rendered on the right with token and cost totals.](/screenshots/tui-chat.png)
 
 ### Voice mode
 
-Add `--voice` for a hands-free voice conversation. This requires **PortAudio**
-installed on the host (loaded on demand only when a voice session starts):
+Add `--voice` for a hands-free voice conversation. This requires PortAudio on the
+host, loaded only when a voice session starts:
 
 ```bash
 promptarena chat --voice --config config.arena.yaml
 ```
 
-Speak naturally — the agent responds with synthesized audio. If PortAudio is
-missing, only voice is unavailable; the command prints an install hint and every
-other feature keeps working. For turn-detection modes, echo guarding, and STT/TTS
-flags, see [Use the Voice Console](/arena/how-to/voice-console/).
+If PortAudio is missing, the command prints an install hint and every other feature
+keeps working. For turn-detection modes, echo guarding and STT/TTS flags, see
+[Use the Voice Console](/arena/how-to/voice/voice-console/).
 
 ## Watch a run live
 
-The `run` command shows a **live progress TUI by default** — you do not need bare
+The `run` command shows a live progress TUI by default, so you do not need bare
 `promptarena` to get it:
 
 ```bash
 promptarena run --config config.arena.yaml
 ```
 
-While scenarios execute you get a live feed of runs as they progress, a log panel,
-and results as they complete. It updates in place until every combination finishes.
+The display shows runs as they progress, a log panel, and results as they complete.
+The log panel shows pipeline stage events: each stage logs `Stage started` and
+`Stage completed` lines at DEBUG, and a failing stage logs `Stage failed` at ERROR.
 
 ![A run in progress: an Active Runs table listing each provider with status, scenario, region and duration, a live log panel streaming turn and provider-call events, and a results pane awaiting selection.](/screenshots/tui-run.png)
 
 ### Disable the live TUI
 
-For non-interactive environments (CI, log capture, piping output), turn the TUI
-off with `--ci` (or its alias `--simple`) to fall back to plain streaming logs:
+For CI, log capture or piped output, turn the TUI off with `--ci`:
 
 ```bash
 promptarena run --ci --config config.arena.yaml
 ```
 
-In `--ci` mode Arena also fails the process with a non-zero exit code when any run
-errors or an assertion fails, which is what you want in a pipeline. See
+`--ci` prints deterministic plain output and exits non-zero when any run errors or
+an assertion fails. `--simple` also disables the TUI, with human-friendly linear
+output, but does not set the failure exit codes. See
 [Run Arena in CI](/arena/how-to/interfaces/run-in-ci/) for the full CI workflow.
 
 ## Deploy from the TUI
 
-The **Deploy** entry walks you through the same deploy lifecycle as
-`promptarena deploy` on the CLI, but as a guided wizard: preflight, plan, confirm,
-apply, and status. It's enabled once the loaded config has a `deploy:` section —
-see [Configure Deploy](/arena/how-to/deploy/configure/) to set one up.
-
-`Deploy` is the fifth entry on the [hub menu](#launch-the-hub) shown above,
-below `Inspect`. It only appears as selectable when the loaded config has a
-`deploy:` section.
+The **Deploy** entry walks the deploy lifecycle as a wizard: preflight, plan,
+confirm, apply and status. It is selectable with any loaded config. Without a
+`deploy:` section it opens a "Deploy failed" screen; see
+[Configure Deploy](/arena/how-to/deploy/configure/) to set one up. The wizard always
+targets the `default` environment. For another environment, use
+`promptarena deploy --env <name>`.
 
 ### Preflight
 
-Opening Deploy starts on a readiness gate, before anything is planned or applied:
+Opening Deploy starts on a readiness gate that shows:
 
-- **Target provider** and **environment** — the environment name is shown loudly,
-  so a production target is visually unmistakable before you go any further.
-- **Adapter presence** — `✓ <provider> vX.Y.Z` if the adapter binary is installed,
-  `✗ not installed` if it isn't.
-- **Auth** — `✓` or `✗` depending on whether the adapter has a valid token.
+- The target provider and environment.
+- Adapter presence: `✓ <provider> vX.Y.Z` if installed, `✗ not installed` if not.
+- Auth: `✓ authenticated` or `✗ not authenticated`.
 
-If the adapter isn't installed, preflight blocks and prints the command to run:
+If the adapter is missing, preflight blocks and prints the command to run:
 
 ```text
 promptarena deploy adapter install <provider>
 ```
 
-Installing, listing, and removing adapters is CLI-only in v1 — the TUI detects the
-gap and points you at the CLI rather than installing anything itself. See
+Adapter management is CLI-only. See
 [Install Adapters](/arena/how-to/deploy/install-adapters/).
 
 ### Log in, if needed
 
-When the adapter supports login and you aren't authenticated yet, preflight offers
-a **Login** step with `[l]`. It runs the same in-TUI loopback OAuth flow as
-`promptarena deploy login`: authenticate in your browser, and the config and token
-are written for you. See [Deploy: Log In](/arena/how-to/deploy/login/) for exactly
-what gets written and where.
+When the adapter supports login and you are not authenticated, press `l` to log in.
+It runs the same loopback OAuth flow as `promptarena deploy login`. See
+[Deploy: Log In](/arena/how-to/deploy/login/) for what gets written and where.
 
 ### Plan
 
-Press `[p]` to render the plan — a colored, Terraform-style diff of what will
-change:
+Press `p` to render the plan, a Terraform-style diff of what will change. Resources
+already matching the config are hidden by default.
 
 | Key | Action |
 |-----|--------|
-| `[space]` | Expand the collapsed "no change" section |
-| `[a]` | Accept the plan and move to Confirm |
+| `space` | Show or hide the "no change" section |
+| `a` | Accept the plan and move to Confirm |
 
-Drifted resources are badged `⚠ N drifted` so they stand out from ordinary
-creates, updates, and deletes. The diff uses the same `+` / `~` / `-` / `!`
-vocabulary as the CLI's plan output — see
-[Deploy: Plan and Apply](/arena/how-to/deploy/plan-and-apply/#reading-the-plan)
-for how to read it.
+Drifted resources are badged `⚠ N drifted`. The diff uses the same `+` / `~` / `-` /
+`!` symbols as the CLI; see
+[Deploy: Plan and Apply](/arena/how-to/deploy/plan-and-apply/#reading-the-plan).
 
 ![The deploy plan page: a "0 to create, 2 to update, 0 to delete" summary, two adapter warnings, and the changed resources listed with ~ markers — a PromptPack and an AgentRuntime that have drifted from the declared config.](/screenshots/tui-deploy-plan.png)
 
-Resources already matching the config are hidden by default; `space` toggles
-them into the list, and `a` applies the plan.
-
 ### Confirm
 
-Confirm is the wrong-environment guardrail:
-
-- **Default environment** — a simple `[y/N]` prompt.
-- **Any non-default environment** (including production) — you must **type the
-  environment name exactly** to proceed. There's no single keypress that can
-  apply to a non-default environment by accident.
+Confirm shows a `[y/N]` prompt. Press `y` to apply; any other key returns to the plan.
 
 ### Apply
 
-Once confirmed (`[y]`, or the typed environment name), Deploy acquires a deploy
-lock and applies, showing live resource progress and logs as it runs — the
-in-TUI equivalent of `promptarena deploy`'s streaming output.
+Deploy acquires a deploy lock and applies. The screen shows a spinner and
+`Applying...` until resource events arrive, then the resource table and log panel.
+The result screen reads `Apply completed successfully`, `with N failure(s)` or
+`with errors`.
 
 ### Status
 
-Press `[s]` to check status, after applying or on its own. Each managed resource
-shows its health: `✓` healthy, `✗` unhealthy, `?` unknown.
+From the apply-result screen, press `s` to check status. Each managed resource shows
+its health: `✓` healthy, `✗` unhealthy, `?` missing. `Esc` or `q` goes back.
 
-### What's still CLI-only
+### CLI-only operations
 
-`destroy`, `import`, `refresh`, and `adapter install` / `list` / `remove` aren't
-part of the wizard in v1. Reach for the CLI for these — see
-[Deploy: Plan and Apply](/arena/how-to/deploy/plan-and-apply/) for destroy,
-import, and refresh, and [Install Adapters](/arena/how-to/deploy/install-adapters/)
-for adapter management.
+`destroy`, `import`, `refresh` and `adapter install` / `list` / `remove` are not
+part of the wizard. See [Deploy: Plan and Apply](/arena/how-to/deploy/plan-and-apply/)
+for destroy, import and refresh, and [Install Adapters](/arena/how-to/deploy/install-adapters/)
+for adapters.
 
 ## Recover a wedged terminal
 
-If a session ever hangs, `Ctrl-C` starts a 5-second watchdog and prints a hint.
-Press `Ctrl-C` again (or wait out the 5 seconds) and Arena force-exits, restoring
-the cursor, primary screen buffer, and terminal attributes on the way out. If the
-terminal is still off afterward, `reset` or `stty sane` will finish the cleanup.
+If a session hangs, `Ctrl-C` starts a 5-second watchdog and prints a hint. Press
+`Ctrl-C` again (or wait) and Arena force-exits, restoring the cursor, screen buffer
+and terminal attributes. If the terminal is still off, run `reset` or `stty sane`.
 
 ## See also
 
-- [CLI Command Reference](/arena/reference/cli-commands/) — every command and flag
-- [Use the Web UI](/arena/how-to/interfaces/use-the-web-ui/) — the browser-based dashboard
-- [Run Arena in CI](/arena/how-to/interfaces/run-in-ci/) — headless runs and exit codes
-- [Use the Voice Console](/arena/how-to/voice-console/) — live voice conversations
-- [Configure Deploy](/arena/how-to/deploy/configure/) — set up the `deploy:` section the Deploy page needs
-- [Deploy: Plan and Apply](/arena/how-to/deploy/plan-and-apply/) — the CLI equivalent of plan, apply, and status
+- [CLI Command Reference](/arena/reference/cli-commands/): every command and flag
+- [Use the Web UI](/arena/how-to/interfaces/use-the-web-ui/): the browser-based dashboard
+- [Run Arena in CI](/arena/how-to/interfaces/run-in-ci/): headless runs and exit codes
+- [Use the Voice Console](/arena/how-to/voice/voice-console/): live voice conversations
+- [Configure Deploy](/arena/how-to/deploy/configure/): set up the `deploy:` section
+- [Deploy: Plan and Apply](/arena/how-to/deploy/plan-and-apply/): the CLI equivalent of plan, apply and status

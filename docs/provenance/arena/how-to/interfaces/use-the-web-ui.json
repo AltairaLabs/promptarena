@@ -1,0 +1,656 @@
+{
+ "page": "docs/src/content/docs/arena/how-to/interfaces/use-the-web-ui.md",
+ "commit": "0dbee6290db4e4de3bff3101f260fd614f81c924",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "Arena serves an embedded React single-page app backed by a REST API and Server-Sent Events (SSE)",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/embed.go",
+    "arena/web/server.go:141",
+    "arena/web/spa.go"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "The UI lets you hold an interactive chat with a configured agent",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/frontend/src/components/InteractiveChat.tsx",
+    "arena/web/server.go:136-139"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "The server binds to localhost (127.0.0.1) only",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:36-37",
+    "arena/cmd/promptarena/serve_interactive.go:72-105"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "serve accepts a directory containing config.arena.yaml or the config file itself as its argument",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:148-160"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "promptarena serve --open launches the browser automatically",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:133",
+    "arena/cmd/promptarena/serve_interactive.go:254-256",
+    "arena/cmd/promptarena/serve_interactive.go:284-301"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "If config-path is a directory, Arena looks for config.arena.yaml inside it",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:158-160"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "With no argument serve loads the config from the current directory",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:148"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "promptarena serve with no argument is a valid invocation",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:109"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "promptarena serve ./my-scenario is a valid invocation that loads config from a directory",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:109"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "On startup the server prints its URL and config path",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:250-252"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "The server runs until Ctrl+C is pressed",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:275"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "The default port is 8080",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:29"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "The UI is served at http://localhost:8080 by default",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:29"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "The port is overridden with -p or --port",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:132"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "promptarena serve --port 3000 is a valid invocation",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:132"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "If the port is in use, serve does not fail and falls back to the next free port",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:72-105"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "Startup prints the message 'Port 8080 is in use - serving on 8083 instead'",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:246"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "Startup prints the line 'Arena Web UI: http://localhost:8083' for the fallback port",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:249-250"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "Opening the UI lands on the dashboard",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/frontend/src/App.tsx:132"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "The dashboard reads the loaded config and saved results",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/frontend/src/hooks/useArenaAPI.ts:24-44",
+    "arena/web/server.go:341-348"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "On startup Arena hydrates *.json result files from the config's output directory",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:224-229",
+    "arena/web/server_loader_integration.go:25-50"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "The dashboard shows providers, scenarios and regions from the loaded config",
+   "verdict": "false",
+   "evidence": [
+    "arena/web/frontend/src/App.tsx",
+    "arena/web/server.go:130",
+    "arena/web/server_picker_integration.go"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "The dashboard lists completed runs, each opening a detailed results viewer",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/frontend/src/App.tsx:266",
+    "arena/web/frontend/src/components/HistoricalResults.tsx"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "The dashboard has controls to start a new run and to clear stored results",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/frontend/src/components/HistoricalResults.tsx:195-196",
+    "arena/web/frontend/src/components/arena/CommandStrip.tsx",
+    "arena/web/frontend/src/hooks/useArenaAPI.ts:10"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "The dashboard screenshot shows a scenario picker with run cost and duration estimate, a pass-rate dial, tiles for trials, spend, latency and tokens, a provider standings table and a trial matrix",
+   "verdict": "unverified",
+   "evidence": [
+    "arena/web/frontend/src/components/arena/CommandStrip.tsx",
+    "arena/web/frontend/src/components/arena/Hero.tsx",
+    "arena/web/frontend/src/components/arena/InstrumentBand.tsx",
+    "arena/web/frontend/src/components/arena/Standings.tsx",
+    "arena/web/frontend/src/components/arena/TrialMatrix.tsx"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "Selecting a trial opens the detailed results viewer for that run",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/frontend/src/App.tsx:500-545"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "The results viewer shows the transcript with tool calls and their results inline",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/frontend/src/App.tsx:531",
+    "arena/web/frontend/src/lib/atlasAdapter.ts:382"
+   ]
+  },
+  {
+   "id": 28,
+   "claim": "The results viewer shows per-turn token, cost and latency figures",
+   "verdict": "unverified",
+   "evidence": [
+    "arena/web/frontend/src/lib/atlasAdapter.ts"
+   ]
+  },
+  {
+   "id": 29,
+   "claim": "The results viewer has a scrubber that replays the conversation turn by turn",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/frontend/src/App.tsx:151",
+    "arena/web/frontend/src/lib/atlasAdapter.ts:193-199"
+   ]
+  },
+  {
+   "id": 30,
+   "claim": "The run detail view shows message, tool-call, token, cost and latency totals and a replay timeline",
+   "verdict": "unverified",
+   "evidence": [
+    "arena/web/frontend/src/App.tsx:531"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "The UI subscribes to GET /api/events, an SSE stream of run events",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/frontend/src/hooks/useArenaEvents.ts:347",
+    "arena/web/server.go:127"
+   ]
+  },
+  {
+   "id": 32,
+   "claim": "The SSE stream stays open for the life of the page",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/frontend/src/hooks/useArenaEvents.ts:346-370"
+   ]
+  },
+  {
+   "id": 33,
+   "claim": "The SSE stream reconnects automatically if dropped",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/frontend/src/hooks/useArenaEvents.ts:347-356"
+   ]
+  },
+  {
+   "id": 34,
+   "claim": "The status badge in the header switches from Online to Live while a run is in flight",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/frontend/src/components/arena/TopBar.tsx:42-43"
+   ]
+  },
+  {
+   "id": 35,
+   "claim": "The summary tiles update as each trial lands",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/frontend/src/App.tsx:435",
+    "arena/web/frontend/src/hooks/useArenaEvents.ts:82-280"
+   ]
+  },
+  {
+   "id": 36,
+   "claim": "Run controls select providers, scenarios and regions to execute",
+   "verdict": "false",
+   "evidence": [
+    "arena/web/frontend/src/components/arena/CommandStrip.tsx",
+    "arena/web/frontend/src/components/arena/FieldPicker.tsx",
+    "arena/web/server.go:207-215"
+   ]
+  },
+  {
+   "id": 37,
+   "claim": "Starting a run issues POST /api/run",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/frontend/src/hooks/useArenaAPI.ts:10",
+    "arena/web/server.go:135"
+   ]
+  },
+  {
+   "id": 38,
+   "claim": "The run launches in the background and the request returns immediately",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/server.go:250-263"
+   ]
+  },
+  {
+   "id": 39,
+   "claim": "At most 4 runs execute concurrently",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/server.go:31-32"
+   ]
+  },
+  {
+   "id": 40,
+   "claim": "Each background run has a 30-minute timeout",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/server.go:28-29"
+   ]
+  },
+  {
+   "id": 41,
+   "claim": "Progress streams back over the SSE connection",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/frontend/src/hooks/useArenaEvents.ts",
+    "arena/web/server.go:127"
+   ]
+  },
+  {
+   "id": 42,
+   "claim": "Each completed run is persisted to the output directory so it survives a restart",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/server.go:122-126"
+   ]
+  },
+  {
+   "id": 43,
+   "claim": "Interactive chat lets you pick an agent and provider and supply required template variables",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/frontend/src/components/InteractiveChat.tsx",
+    "arena/web/frontend/src/hooks/useInteractiveChat.ts:28",
+    "arena/web/server.go:55-77"
+   ]
+  },
+  {
+   "id": 44,
+   "claim": "Starting an interactive session issues POST /api/interactive/session",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/frontend/src/hooks/useInteractiveChat.ts:42",
+    "arena/web/server.go:137"
+   ]
+  },
+  {
+   "id": 45,
+   "claim": "Each message is sent with POST /api/interactive/message",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/frontend/src/hooks/useInteractiveChat.ts:60",
+    "arena/web/server.go:138"
+   ]
+  },
+  {
+   "id": 46,
+   "claim": "The agent reply renders live over the same SSE stream",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/frontend/src/hooks/useArenaEvents.ts:195-232",
+    "arena/web/interactive.go:159",
+    "arena/web/server.go:123-160"
+   ]
+  },
+  {
+   "id": 47,
+   "claim": "Evals can optionally be enabled to score the conversation as it runs",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/frontend/src/components/InteractiveChat.tsx:43",
+    "arena/web/interactive.go:88"
+   ]
+  },
+  {
+   "id": 48,
+   "claim": "The active agent, provider and connection status sit in a bar above the transcript",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/frontend/src/components/InteractiveChat.tsx:390"
+   ]
+  },
+  {
+   "id": 49,
+   "claim": "Selecting a message opens an inspector on the right",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/frontend/src/components/InteractiveChat.tsx:379"
+   ]
+  },
+  {
+   "id": 50,
+   "claim": "The inspector has Overview, Checks, Raw and Tools tabs",
+   "verdict": "unverified",
+   "evidence": [
+    "arena/web/frontend/src/lib/arenaInspectorTabs.tsx:1-14"
+   ]
+  },
+  {
+   "id": 51,
+   "claim": "The Raw tab shows the exact message object, including the resolved tool descriptors sent to the provider",
+   "verdict": "unverified",
+   "evidence": [
+    "arena/web/frontend/src/lib/arenaInspectorTabs.tsx:103-146",
+    "arena/web/server.go:88-105"
+   ]
+  },
+  {
+   "id": 52,
+   "claim": "The chat screenshot shows a header bar with agent, provider and connection status, the system prompt, a user/assistant exchange, and an inspector showing the raw system message JSON",
+   "verdict": "unverified",
+   "evidence": [
+    "arena/web/frontend/src/components/InteractiveChat.tsx"
+   ]
+  },
+  {
+   "id": 53,
+   "claim": "The server can relay real-time duplex audio for both caller and agent sides to the browser over SSE",
+   "verdict": "unverified",
+   "evidence": [
+    "arena/web/event_adapter.go:98-123",
+    "arena/web/server.go:165-173"
+   ]
+  },
+  {
+   "id": 54,
+   "claim": "Audio is opt-in per client",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/server.go:168-173"
+   ]
+  },
+  {
+   "id": 55,
+   "claim": "The frontend requests audio by connecting to GET /api/events?audio=1",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/frontend/src/audio/player.ts:48",
+    "arena/web/server.go:170"
+   ]
+  },
+  {
+   "id": 56,
+   "claim": "promptarena serve --audio-monitor on --audio-rate 24000 is a valid invocation",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:134-137"
+   ]
+  },
+  {
+   "id": 57,
+   "claim": "--audio-monitor accepts auto (default), on or off",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:134-135"
+   ]
+  },
+  {
+   "id": 58,
+   "claim": "--audio-rate accepts 16000, 24000 (default) or 48000",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:136-137"
+   ]
+  },
+  {
+   "id": 59,
+   "claim": "--mock-provider replaces every configured provider with mocks",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:138-141",
+    "arena/engine/engine.go:738-782"
+   ]
+  },
+  {
+   "id": 60,
+   "claim": "Mock replacement covers the assistant, the self-play user role, and any TTS path",
+   "verdict": "unverified",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:176-180",
+    "arena/engine/engine.go:738-782"
+   ]
+  },
+  {
+   "id": 61,
+   "claim": "--mock-config serves canned scenario responses when used with --mock-provider",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:142-143",
+    "arena/engine/engine.go:741-748"
+   ]
+  },
+  {
+   "id": 62,
+   "claim": "promptarena serve --mock-provider --mock-config mock-responses.yaml --open is a valid invocation",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:133-143"
+   ]
+  },
+  {
+   "id": 63,
+   "claim": "In mock mode runs execute end to end with tools still running for real",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:762"
+   ]
+  },
+  {
+   "id": 64,
+   "claim": "In mock mode no vendor APIs are called or billed",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:183-188",
+    "arena/engine/engine.go:750-779"
+   ]
+  },
+  {
+   "id": 65,
+   "claim": "GET /api/events streams live run events; ?audio=1 enables audio relay",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/server.go:127"
+   ]
+  },
+  {
+   "id": 66,
+   "claim": "GET /api/config returns the loaded Arena config",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/server.go:128"
+   ]
+  },
+  {
+   "id": 67,
+   "claim": "GET /api/run-options lists available providers, scenarios and regions",
+   "verdict": "false",
+   "evidence": [
+    "arena/web/server.go:130",
+    "arena/web/server_picker_integration.go"
+   ]
+  },
+  {
+   "id": 68,
+   "claim": "GET /api/results lists completed runs as run_id, scenario_id and provider_id locators",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/server.go:131"
+   ]
+  },
+  {
+   "id": 69,
+   "claim": "GET /api/results/{id} fetches a single run result",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/server.go:132"
+   ]
+  },
+  {
+   "id": 70,
+   "claim": "DELETE /api/results clears stored results from memory and disk",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/server.go:134"
+   ]
+  },
+  {
+   "id": 71,
+   "claim": "GET /api/media/{path...} serves a media artifact such as recorded audio",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/frontend/src/lib/atlasAdapter.ts:382",
+    "arena/web/server.go:133"
+   ]
+  },
+  {
+   "id": 72,
+   "claim": "POST /api/run starts a run in the background",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/server.go:135"
+   ]
+  },
+  {
+   "id": 73,
+   "claim": "GET /api/interactive/options lists agents and providers for interactive chat",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/server.go:136"
+   ]
+  },
+  {
+   "id": 74,
+   "claim": "POST /api/interactive/session opens an interactive chat session",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/server.go:137"
+   ]
+  },
+  {
+   "id": 75,
+   "claim": "POST /api/interactive/message sends a message to a session",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/server.go:138"
+   ]
+  },
+  {
+   "id": 76,
+   "claim": "GET / serves the embedded React SPA",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/server.go:141",
+    "arena/web/spa.go"
+   ]
+  }
+ ]
+}
