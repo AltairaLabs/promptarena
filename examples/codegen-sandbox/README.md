@@ -1,58 +1,59 @@
 # Codegen Sandbox Example
 
-A runnable demo of an agent doing real codegen inside a
-[codegen-sandbox](https://github.com/AltairaLabs/CodeGen-Sandbox) container.
+A coding agent fixes a bug inside a
+[codegen-sandbox](https://github.com/AltairaLabs/CodeGen-Sandbox) container
+that Arena starts and stops for each session.
 
 ## What this demonstrates
 
-- Arena's new `source: docker` MCP entry — a host-provisioned MCP server
-  whose lifecycle is managed per-session.
-- Scope-level lifecycle: one fresh sandbox container per scenario session,
-  torn down when the session ends.
-- Skill staging: `skills/codegen/` is bind-mounted read-only into the
-  sandbox at `/skills/codegen/`, so the agent can `Bash` any scripts
-  shipped with the skill.
-- The HTTP+SSE MCP transport (from the SSE MCP client work).
+- A `source: docker` MCP entry: Arena runs the MCP server as a container and
+  manages its lifecycle.
+- `scope: session`: one fresh container per scenario session, stopped and
+  removed when the session ends.
+- The HTTP+SSE MCP transport.
+- A preloaded skill (`skills/codegen/SKILL.md`) that gives the agent its
+  working discipline.
 
-## Live demo (requires Docker)
+The only provider is a mock (`providers/mock-provider.yaml`), so the LLM's
+decisions come from `mock-responses.yaml`. The tool calls are real: they run
+inside the sandbox container.
+
+## Run it
+
+You need Docker. No API key is needed.
 
 ```bash
-make -C ../.. build-arena
+make -C ../.. build-go
 docker pull ghcr.io/altairalabs/codegen-sandbox:latest
 ../../bin/promptarena run --ci --format markdown
 open out/results.md
 ```
 
+`--mock-provider` gives the same run, because the configured provider is
+already a mock. Both start the sandbox container.
+
 What happens:
 
-1. Arena reads `config.arena.yaml`, sees `source: docker` on the `sandbox`
-   MCP entry, resolves the `docker` source from the in-process registry.
-2. For each scenario session, the docker source runs the image, publishes a
-   free host port, polls `/health`, returns the MCP URL.
-3. Arena registers the URL in the runtime MCP registry; the HTTP+SSE MCP
-   client connects and discovers the 13 codegen tools.
-4. `skills/codegen/` is bind-mounted at `/skills/codegen/` inside the
-   container so the agent can reach skill scripts via `Bash`.
-5. Agent runs the scenario, verifies with `run_tests`, container is
-   stopped + removed when the session ends.
-
-## Offline (CI) demo
-
-```bash
-../../bin/promptarena run --mock-provider --ci --format markdown
-```
-
-Uses `mock-responses.yaml` to simulate the LLM's decisions. The
-`--mock-provider` flag replaces real LLM calls with canned responses; no
-sandbox is launched, so this works in CI without Docker.
-
-Top-level shortcut: `make codegen-demo` from the repo root.
+1. Arena reads `config.arena.yaml` and finds `source: docker` on the
+   `sandbox` MCP entry.
+2. For the session, the docker source runs the image, publishes the
+   container's port 8080 on a free host port, and polls `/sse` until the
+   server answers.
+3. Arena connects over HTTP+SSE and discovers the sandbox's tools (32 with
+   the current image).
+4. The mock agent seeds `/workspace` with a buggy Go function and a failing
+   test, reads the file with `Read`, fixes it with `Edit`, and runs
+   `run_tests`.
+5. The two `tools_called` assertions check that `Read` and `run_tests` were
+   called. The container is stopped and removed when the session ends.
 
 ## Files
 
-- `config.arena.yaml` — the arena config. Source-backed MCP entry lives here.
-- `prompts/codegen-agent.yaml` — pack wiring the codegen skill + sandbox tools.
-- `scenarios/simple-fix.scenario.yaml` — one bugfix scenario.
-- `skills/codegen/SKILL.md` — the reusable codegen discipline skill.
-- `providers/mock-provider.yaml` — mock provider for offline demos.
-- `mock-responses.yaml` — canned LLM responses.
+| File | Purpose |
+|---|---|
+| `config.arena.yaml` | Arena config, including the `source: docker` MCP entry and the skill sources |
+| `prompts/codegen-agent.yaml` | Prompt and the sandbox tools the agent may call |
+| `scenarios/simple-fix.scenario.yaml` | One bug-fix scenario |
+| `skills/codegen/SKILL.md` | The codegen skill, preloaded into the agent |
+| `providers/mock-provider.yaml` | Mock provider |
+| `mock-responses.yaml` | Canned LLM turns, including the tool calls |

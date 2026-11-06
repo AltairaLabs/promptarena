@@ -1,82 +1,64 @@
 ---
 title: 'Tutorial 1: Your First Test'
+description: Install PromptArena, write a prompt, a provider and a two-turn scenario by hand, and run it against OpenAI.
+verified:
+  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  sources:
+    - .goreleaser.yml
+    - arena/assertions/types.go
+    - arena/cmd/promptarena/init.go
+    - arena/cmd/promptarena/run.go
+    - arena/cmd/promptarena/version.go
+    - arena/engine/builder_integration.go
+    - arena/engine/conversation_executor.go
+    - arena/results/json/json_repository.go
+    - arena/results/markdown/markdown_repository.go
+    - arena/tui/tui.go
+    - schemas/v1alpha1/arena.json
+    - schemas/v1alpha1/promptconfig.json
+    - schemas/v1alpha1/provider.json
+    - schemas/v1alpha1/scenario.json
 ---
-Learn the basics of PromptArena by creating and running your first LLM test.
+In this tutorial we build and run a two-turn greeting test against OpenAI's `gpt-4o-mini`. We create every file by hand, so you see what each one does.
 
-## What You'll Learn
+## What we will build
 
-- Install PromptArena
-- Create a basic configuration
-- Write your first test scenario
-- Configure an LLM provider
-- Run tests and review results
+A project with four YAML files and a passing run:
+
+```text
+my-first-test/
+├── config.arena.yaml
+├── prompts/greeter.yaml
+├── providers/openai.yaml
+└── scenarios/greeting-test.yaml
+```
 
 ## Prerequisites
 
-- An OpenAI API key (free tier works)
+- Homebrew
+- An OpenAI API key
 
 ## Step 1: Install PromptArena
 
-Choose your preferred installation method:
-
-**Option 1: Homebrew (Recommended)**
-
 ```bash
 brew install altairalabs/tap/promptarena
-```
-
-**Option 2: Go Install (builds from source — needs a C compiler + audio dev headers)**
-
-```bash
-go install github.com/AltairaLabs/promptarena/v2/arena/cmd/promptarena@latest
-```
-
-**Verify installation:**
-
-```bash
 promptarena --version
 ```
 
-You should see the PromptArena version information.
+The second command prints `promptarena version` followed by a version string.
 
-## Step 2: Create Your Test Project
+For other install methods, see [Install PromptArena](/arena/how-to/setup/installation/).
 
-**The Easy Way: Use the Template Generator**
+## Step 2: Create the project directory
 
 ```bash
-# Create a complete test project in seconds
-promptarena init my-first-test --quick --provider openai
-
-# Navigate to your project
+mkdir -p my-first-test/prompts my-first-test/providers my-first-test/scenarios
 cd my-first-test
 ```
 
-That's it! The `init` command created everything you need:
+## Step 3: Create a prompt
 
-- Arena configuration (`config.arena.yaml`)
-- Prompt setup (`prompts/assistant.yaml`)
-- Provider configuration (`providers/openai.yaml`)
-- Sample test scenario (`scenarios/basic-test.yaml`)
-- Environment setup (`.env`)
-
-**The Manual Way: Create Files Step-by-Step**
-
-If you prefer to understand each component:
-
-```bash
-# Create a new directory
-mkdir my-first-test
-cd my-first-test
-
-# Create the directory structure
-mkdir -p prompts providers scenarios
-```
-
-## Step 3: Create a Prompt Configuration
-
-**If you used `promptarena init`:** You already have `prompts/assistant.yaml`. Feel free to edit it!
-
-**If creating manually:** Create `prompts/greeter.yaml`:
+Create `prompts/greeter.yaml`:
 
 ```yaml
 apiVersion: promptkit.altairalabs.ai/v1alpha1
@@ -86,19 +68,17 @@ metadata:
 
 spec:
   task_type: greeting
-  
+  version: v1.0.0
+  description: Greets users warmly
+
   system_template: |
     You are a friendly assistant who greets users warmly.
     Keep responses brief and welcoming.
 ```
 
-**What's happening here?**
-- `apiVersion` and `kind`: Standard PromptKit resource identifiers
-- `metadata.name`: Identifies this prompt configuration (we'll reference it later)
-- `spec.task_type`: Categorizes the prompt's purpose
-- `spec.system_template`: System instructions sent to the LLM
+`spec.task_type` is how a scenario selects this prompt, and `spec.system_template` is the system message sent to the model.
 
-## Step 4: Configure a Provider
+## Step 4: Configure a provider
 
 Create `providers/openai.yaml`:
 
@@ -109,34 +89,26 @@ metadata:
   name: openai-gpt4o-mini
 
 spec:
+  id: openai-gpt4o-mini
   type: openai
   model: gpt-4o-mini
-  
+
   defaults:
     temperature: 0.7
     max_tokens: 150
 ```
 
-**What's happening here?**
-- `apiVersion` and `kind`: Standard PromptKit resource identifiers
-- `metadata.name`: Friendly name for this provider configuration
-- `spec.type`: The provider type (openai, anthropic, gemini)
-- `spec.model`: Specific model to use
-- `spec.defaults`: Model parameters like temperature and max_tokens
-- Authentication uses environment variable `OPENAI_API_KEY` automatically
+`spec.type` selects the provider implementation and `spec.model` the model. The `openai` provider reads its key from the `OPENAI_API_KEY` environment variable.
 
-## Step 5: Set Your API Key
+## Step 5: Set your API key
+
+`promptarena` does not read `.env` files, so export the key in the shell you run it from:
 
 ```bash
-# Set the OpenAI API key
 export OPENAI_API_KEY="sk-your-api-key-here"
-
-# Or add to your shell profile (~/.zshrc or ~/.bashrc)
-echo 'export OPENAI_API_KEY="sk-your-key"' >> ~/.zshrc
-source ~/.zshrc
 ```
 
-## Step 6: Write Your First Test Scenario
+## Step 6: Write the scenario
 
 Create `scenarios/greeting-test.yaml`:
 
@@ -149,8 +121,10 @@ metadata:
     category: basic
 
 spec:
+  id: greeting-test
+  description: Greets the user and stays brief
   task_type: greeting  # Links to prompts/greeter.yaml
-  
+
   turns:
     - role: user
       content: "Hello!"
@@ -158,33 +132,27 @@ spec:
         - type: content_includes
           params:
             patterns: ["hello"]
-            message: "Should include greeting"
+          message: "Should include greeting"
 
         - type: content_matches
           params:
             pattern: "^.{1,100}$"
-            message: "Response should be brief"
-    
+          message: "Response should be brief"
+
     - role: user
       content: "How are you?"
       assertions:
-        - type: content_includes
+        - type: content_matches
           params:
-            patterns: ["good"]
-            message: "Should respond positively"
+            pattern: "."
+          message: "Should reply"
 ```
 
-**What's happening here?**
-- `apiVersion` and `kind`: Standard PromptKit resource identifiers
-- `metadata.name`: Identifies this scenario
-- `spec.task_type`: Links to the prompt configuration with matching task_type
-- `spec.turns`: Array of conversation exchanges
-- `role: user`: Each user turn triggers an LLM response
-- `assertions`: Checks to validate the LLM's response
+Each `role: user` turn sends a message and gets a model reply. The `assertions` check that reply: `content_includes` matches case-insensitively, so `hello` matches `Hello!`, and `content_matches` takes a regular expression. The `message` belongs beside `type` and `params`, not inside `params`.
 
-## Step 7: Create Main Configuration
+## Step 7: Create the arena configuration
 
-Create `config.arena.yaml` in your project root:
+Create `config.arena.yaml` in the project root:
 
 ```yaml
 apiVersion: promptkit.altairalabs.ai/v1alpha1
@@ -196,115 +164,74 @@ spec:
   prompt_configs:
     - id: greeter
       file: prompts/greeter.yaml
-  
+
   providers:
     - file: providers/openai.yaml
-  
+
   scenarios:
     - file: scenarios/greeting-test.yaml
+
+  defaults:
+    temperature: 0.7
+    max_tokens: 1500
+    output:
+      dir: out
+      formats: [json, markdown]
 ```
 
-This tells Arena which configurations to load and how to connect them.
+This file tells Arena which prompts, providers and scenarios to load. `defaults` is required, and its `temperature` and `max_tokens` override the provider's. `output` writes a JSON and a Markdown report to `out/`.
 
-## Step 8: Run Your First Test
+## Step 8: Run the test
 
 ```bash
-promptarena run
+promptarena run --simple
 ```
 
-You should see output like:
+`--simple` prints plain output instead of the interactive terminal UI. Log lines scroll past, then a progress bar and a summary:
 
+```text
+Done  [████████████████████████]  1/1
+
+Run Summary
+────────────────────────────────────────────────────
+
+Total runs      1
+Passed          1 (100.0%)
+Failed          0 (0.0%)
+
+Total cost      $0.0000
+Total tokens    121
+Total duration  2.3s
+Avg duration    2.3s per run
+
+Providers       openai-gpt4o-mini (1)
+Scenarios       1 scenarios
+Regions         default
+
+Saved to        out
 ```
-PromptArena Starting...
 
-Loading configuration...
-  ✓ Loaded 1 prompt config
-  ✓ Loaded 1 provider
-  ✓ Loaded 1 scenario
+A run is one scenario against one provider, so both turns count as one run. Cost, tokens and duration vary from run to run.
 
-Running tests...
-  ✓ Basic Greeting - Turn 1 [openai-gpt4o-mini] (1.2s)
-  ✓ Basic Greeting - Turn 2 [openai-gpt4o-mini] (1.1s)
+## Step 9: Review the results
 
-Results:
-  Total: 2 turns
-  Passed: 2
-  Failed: 0
-  Pass Rate: 100%
-
-Reports generated:
-  - out/results.json
-```
-
-## Step 9: Review Results
-
-View the JSON results:
+The summary of the whole run is in `out/index.json`:
 
 ```bash
-cat out/results.json
+cat out/index.json
 ```
 
-Or generate a Markdown report:
+It lists `total_runs`, `successful`, `errors`, the providers and scenarios, and the `run_ids`. Each run also has its own file, `out/<run-id>.json`, holding every message including the assistant replies and the result of each assertion. Open the Markdown report:
 
 ```bash
-promptarena run --format markdown
-
-# Open the report
 open out/results.md
 ```
 
-## Understanding Your First Test
+It shows a pass/fail overview and one table row for the scenario. For why tests check behaviour this way, see [Testing Philosophy](/arena/explanation/testing-philosophy/).
 
-Let's break down what happened:
+## Step 10: Add an edge case
 
-### 1. Configuration Loading
-Arena loaded your prompt, provider, and scenario files.
-
-### 2. Prompt Assembly
-For each turn, Arena:
-- Took the system prompt from `greeter.yaml`
-- Filled in the user message template
-- Sent the complete prompt to OpenAI
-
-### 3. Response Validation
-Arena checked each response against your assertions:
-- **content_includes**: Verified greeting words were present
-- **content_matches**: Ensured response matched expected patterns
-
-### 4. Report Generation
-Arena saved results in multiple formats for analysis.
-
-## Experiment: Modify the Test
-
-### Add More Assertions
-
-Edit `scenarios/greeting-test.yaml` to add more checks:
-
-```yaml
-spec:
-  turns:
-    - role: user
-      content: "Hello!"
-      assertions:
-        - type: content_includes
-          params:
-            patterns: ["hello"]
-
-        - type: content_matches
-          params:
-            pattern: "^.{1,100}$"
-            message: "Response should be brief"
-```
-
-Run again:
-
-```bash
-promptarena run
-```
-
-### Test Edge Cases
-
-Create a new scenario file `scenarios/edge-cases.yaml`:
+Create `scenarios/edge-cases.yaml`:
 
 ```yaml
 apiVersion: promptkit.altairalabs.ai/v1alpha1
@@ -315,8 +242,9 @@ metadata:
     category: edge-case
 
 spec:
+  description: Sends an empty message
   task_type: greeting
-  
+
   turns:
     - role: user
       content: ""
@@ -324,87 +252,40 @@ spec:
         - type: content_matches
           params:
             pattern: "^.{10,}$"
-            message: "Response should be at least 10 characters"
+          message: "Response should be at least 10 characters"
 ```
 
-Add it to `config.arena.yaml`:
+Add it to the `scenarios` list in `config.arena.yaml`:
 
 ```yaml
-spec:
   scenarios:
     - file: scenarios/greeting-test.yaml
     - file: scenarios/edge-cases.yaml
 ```
 
-### Adjust Temperature
-
-Edit `providers/openai.yaml`:
-
-```yaml
-spec:
-  defaults:
-    temperature: 0.2  # More deterministic
-    max_tokens: 150
-```
-
-Run and compare:
+Run again:
 
 ```bash
-promptarena run
+promptarena run --simple
 ```
 
-Lower temperature = more consistent responses.
+The summary now shows `Total runs      2`, one per scenario.
 
-## Common Issues
+## Common issues
 
-### "command not found: promptarena"
+### `spec: defaults is required`
 
-```bash
-# Ensure Go bin is in PATH
-export PATH=$PATH:$(go env GOPATH)/bin
-```
+The arena configuration needs a `defaults` block. Add the one from Step 7. The error reads `arena configuration does not match schema`.
 
-### "API key not found"
+### `spec: version is required` or `spec: description is required`
 
-```bash
-# Verify environment variable is set
-echo $OPENAI_API_KEY
+Schema validation names the file and the missing field. Prompts need `spec.version` and `spec.description`, and scenarios need `spec.description`.
 
-# Should output: sk-...
-```
+## Next steps
 
-### "No scenarios found"
+You have written and run your first test.
 
-Check your `config.arena.yaml` paths match your directory structure:
-
-```bash
-# List your files
-ls prompts/
-ls providers/
-ls scenarios/
-```
-
-### "Assertion failed"
-
-This is expected! Assertions validate quality. If one fails:
-1. Check the error message in the output
-2. Review the actual response in `out/results.json`
-3. Adjust your assertions or prompt as needed
-
-## Next Steps
-
-Congratulations! You've run your first LLM test. 
-
-**Continue learning:**
-- **[Tutorial 2: Multi-Provider Testing](/arena/tutorials/02-multi-provider/)** - Test across OpenAI, Claude, and Gemini
-- **[Tutorial 3: Multi-Turn Conversations](/arena/tutorials/03-multi-turn/)** - Build complex dialog flows
-- **[How-To: Write Scenarios](/arena/how-to/scenarios/write-scenarios/)** - Advanced scenario patterns
-
-**Quick wins:**
-- Try different models: `gpt-4o`, `gpt-4o-mini`
-- Add more test cases to your scenario
-- Generate Markdown reports: `promptarena run --format markdown`
-
-## What's Next?
-
-In Tutorial 2, you'll learn how to test the same scenario across multiple LLM providers (OpenAI, Claude, Gemini) and compare their responses.
+- [Tutorial 2: Multi-Provider Testing](/arena/tutorials/02-multi-provider/): run the same scenario across OpenAI, Claude and Gemini.
+- [Tutorial 3: Multi-Turn Conversations](/arena/tutorials/03-multi-turn/): build longer dialogs.
+- [Write Scenarios](/arena/how-to/scenarios/write-scenarios/): more scenario patterns.
+- [Use project templates](/arena/how-to/setup/use-project-templates/): generate a project like this one with `promptarena init`.

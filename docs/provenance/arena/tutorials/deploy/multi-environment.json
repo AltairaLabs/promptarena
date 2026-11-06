@@ -1,0 +1,82 @@
+{
+ "page": "docs/src/content/docs/arena/tutorials/deploy/multi-environment.md",
+ "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "environments.<name>.config overrides base config per top-level key (shallow)",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:370",
+    "arena/arenaconfig/types.go:374",
+    "arena/deploy/flow/config.go:60"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "--env selects the environment",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_interactive.go:53"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "saved plan holds request.deploy_config with the merged config",
+   "verdict": "true",
+   "evidence": [
+    "deploy/state.go:110",
+    "deploy/state.go:117"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "one deploy.state per working directory regardless of --env; status/destroy act on it",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_destroy_interactive.go:52",
+    "deploy/state.go:46"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "plan output for dev/production",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_plan_interactive.go:37"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "runtime name comes from directory name (my_first_test_production)",
+   "verdict": "true",
+   "evidence": [
+    "packc/compiler/compiler.go:97"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "status header 'Deployment status for environment: <env> (provider: agentcore)'",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_status_interactive.go:37"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "destroy ends with 'Deployment destroyed.'",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_destroy_interactive.go:87"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "deploy with no subcommand plans then applies",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_interactive.go:199"
+   ]
+  }
+ ]
+}

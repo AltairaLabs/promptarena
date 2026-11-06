@@ -1,0 +1,696 @@
+{
+ "page": "docs/src/content/docs/arena/tutorials/07-programmatic-usage.md",
+ "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "Arena can be used as a Go library instead of a CLI tool",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:388"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "The program creates Arena configurations programmatically",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:85"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "The program executes test scenarios",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:886"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "The program retrieves and processes results from the state store",
+   "verdict": "true",
+   "evidence": [
+    "arena/statestore/metadata.go:43"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "The program runs without YAML files",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:85",
+    "arena/engine/engine.go:388"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "Go 1.21 or later is required",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 7,
+   "claim": "mkdir arena-lib-demo",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 8,
+   "claim": "cd arena-lib-demo",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 9,
+   "claim": "go mod init arena-lib-demo",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 10,
+   "claim": "go get github.com/AltairaLabs/PromptKit/pkg/v2/config",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 11,
+   "claim": "go get github.com/AltairaLabs/PromptKit/runtime/v2/prompt",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 12,
+   "claim": "go get github.com/AltairaLabs/promptarena/v2/arena/engine",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 13,
+   "claim": "go get github.com/AltairaLabs/promptarena/v2/arena/statestore",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 14,
+   "claim": "The go get commands on lines 37-40 are run in one bash block",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 15,
+   "claim": "Package github.com/AltairaLabs/PromptKit/pkg/v2/config is imported as config",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:221"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "config.Config is a type in package pkg/v2/config",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:220",
+    "arena/arenaconfig/types.go:85"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "config.Config has field LoadedProviders",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:221"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "config.Provider is a type in package pkg/v2/config",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:221"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "config.Provider has field ID",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 20,
+   "claim": "config.Provider has field Type",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 21,
+   "claim": "config.Provider has field Model",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 22,
+   "claim": "Provider type \"mock\" is a valid provider type",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:71"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "config.Config has field LoadedPromptConfigs",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:220"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "LoadedPromptConfigs value type is PromptConfigData",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:380"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "PromptConfigData has field Config",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:381"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "PromptConfigData has field TaskType",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:383"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "config.Config has field LoadedScenarios",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:228"
+   ]
+  },
+  {
+   "id": 28,
+   "claim": "LoadedScenarios value type is Scenario",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:682"
+   ]
+  },
+  {
+   "id": 29,
+   "claim": "Scenario has field ID",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:683"
+   ]
+  },
+  {
+   "id": 30,
+   "claim": "Scenario has field TaskType",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:684"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "Scenario has field Description",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:686"
+   ]
+  },
+  {
+   "id": 32,
+   "claim": "Scenario has field Turns of type TurnDefinition",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:1134",
+    "arena/arenaconfig/types.go:692"
+   ]
+  },
+  {
+   "id": 33,
+   "claim": "TurnDefinition has field Role",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1135"
+   ]
+  },
+  {
+   "id": 34,
+   "claim": "TurnDefinition has field Content",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1136"
+   ]
+  },
+  {
+   "id": 35,
+   "claim": "config.Config has field Defaults",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:180"
+   ]
+  },
+  {
+   "id": 36,
+   "claim": "Defaults has field Temperature",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:463"
+   ]
+  },
+  {
+   "id": 37,
+   "claim": "Defaults has field MaxTokens",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:464"
+   ]
+  },
+  {
+   "id": 38,
+   "claim": "Defaults has field Output",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:469"
+   ]
+  },
+  {
+   "id": 39,
+   "claim": "Output has field Dir",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:519"
+   ]
+  },
+  {
+   "id": 40,
+   "claim": "prompt.Config is a type in runtime/v2/prompt",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 41,
+   "claim": "prompt.Config has field Spec of type prompt.Spec",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 42,
+   "claim": "prompt.Spec has field TaskType",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 43,
+   "claim": "prompt.Spec has field Version",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 44,
+   "claim": "prompt.Spec has field Description",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 45,
+   "claim": "prompt.Spec has field SystemTemplate",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 46,
+   "claim": "engine.BuildEngineComponents takes one argument (cfg)",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/builder_integration.go:71"
+   ]
+  },
+  {
+   "id": 47,
+   "claim": "engine.BuildEngineComponents returns five values (providerReg, promptReg, mcpReg, executor, err)",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/builder_integration.go:71"
+   ]
+  },
+  {
+   "id": 48,
+   "claim": "engine.NewEngine takes five arguments (cfg, providerReg, promptReg, mcpReg, executor)",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:388"
+   ]
+  },
+  {
+   "id": 49,
+   "claim": "Engine has method Close",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:456"
+   ]
+  },
+  {
+   "id": 50,
+   "claim": "Engine method GenerateRunPlan takes three arguments",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/execution.go:55"
+   ]
+  },
+  {
+   "id": 51,
+   "claim": "RunPlan has field Combinations",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/types.go:15"
+   ]
+  },
+  {
+   "id": 52,
+   "claim": "Engine method ExecuteRuns takes a context, a plan and a worker count, and returns run IDs and error",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:886"
+   ]
+  },
+  {
+   "id": 53,
+   "claim": "Engine method GetStateStore returns *statestore.ArenaStateStore by type assertion",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:987"
+   ]
+  },
+  {
+   "id": 54,
+   "claim": "ArenaStateStore has method GetRunResult",
+   "verdict": "false",
+   "evidence": [
+    "arena/statestore/metadata.go:43"
+   ]
+  },
+  {
+   "id": 55,
+   "claim": "RunResult has field ScenarioID",
+   "verdict": "true",
+   "evidence": [
+    "arena/statestore/store.go:1099"
+   ]
+  },
+  {
+   "id": 56,
+   "claim": "RunResult has field Error",
+   "verdict": "true",
+   "evidence": [
+    "arena/statestore/store.go:1111"
+   ]
+  },
+  {
+   "id": 57,
+   "claim": "RunResult has field Duration",
+   "verdict": "true",
+   "evidence": [
+    "arena/statestore/store.go:1110"
+   ]
+  },
+  {
+   "id": 58,
+   "claim": "RunResult has field Messages",
+   "verdict": "true",
+   "evidence": [
+    "arena/statestore/store.go:1103"
+   ]
+  },
+  {
+   "id": 59,
+   "claim": "Program prints Generated N test combinations, where N is len(plan.Combinations)",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/execution.go:55"
+   ]
+  },
+  {
+   "id": 60,
+   "claim": "Output line 'Generated 1 test combinations' for one scenario and one provider",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/execution.go:55"
+   ]
+  },
+  {
+   "id": 61,
+   "claim": "Output line 'Test 1: basic-test' for scenario basic-test",
+   "verdict": "true",
+   "evidence": [
+    "arena/statestore/store.go:1099"
+   ]
+  },
+  {
+   "id": 62,
+   "claim": "Output line 'Status: Success' when result.Error is empty",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 63,
+   "claim": "Output line 'Duration: 2.5ms' is a plausible run duration",
+   "verdict": "true",
+   "evidence": [
+    "arena/statestore/store.go:1110"
+   ]
+  },
+  {
+   "id": 64,
+   "claim": "Output line 'Turns: 5' for a two-user-turn scenario on the mock provider (len(result.Messages))",
+   "verdict": "true",
+   "evidence": [
+    "arena/statestore/store.go:1103"
+   ]
+  },
+  {
+   "id": 65,
+   "claim": "go run main.go",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 66,
+   "claim": "Step 5 adds a real provider by changing the provider Type to openai",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 67,
+   "claim": "The openai provider reads the API key from the OPENAI_API_KEY environment variable by default",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 68,
+   "claim": "export OPENAI_API_KEY=sk-...",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 69,
+   "claim": "go run main.go with OPENAI_API_KEY set runs the scenario against OpenAI",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:71"
+   ]
+  },
+  {
+   "id": 70,
+   "claim": "LoadedScenarios entry math-test with fields ID, TaskType, Description, Turns",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:682"
+   ]
+  },
+  {
+   "id": 71,
+   "claim": "TurnDefinition has field Assertions",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1181"
+   ]
+  },
+  {
+   "id": 72,
+   "claim": "Assertions element type is asrt.AssertionConfig",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:19",
+    "arena/assertions/types.go:15"
+   ]
+  },
+  {
+   "id": 73,
+   "claim": "Assertion type content_includes is a registered assertion type",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 74,
+   "claim": "content_includes accepts a params map with key patterns",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 75,
+   "claim": "AssertionConfig has field Message",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:25"
+   ]
+  },
+  {
+   "id": 76,
+   "claim": "AssertionConfig has field Params",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:24"
+   ]
+  },
+  {
+   "id": 77,
+   "claim": "AssertionConfig has field Type",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:20"
+   ]
+  },
+  {
+   "id": 78,
+   "claim": "Import path github.com/AltairaLabs/promptarena/v2/arena/assertions exists",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/types.go:15"
+   ]
+  },
+  {
+   "id": 79,
+   "claim": "Next step link /arena/how-to/setup/use-as-go-library/ resolves to a page",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 80,
+   "claim": "Reference link /arena/reference/api-reference/ resolves to a page",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 81,
+   "claim": "config.Scenario map key pattern scenarios[fmt.Sprintf(\"test-%d\", i)] with ID, TaskType, Turns fields",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:682"
+   ]
+  },
+  {
+   "id": 82,
+   "claim": "config.TurnDefinition is used with Role and Content",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:1134"
+   ]
+  },
+  {
+   "id": 83,
+   "claim": "cfg.LoadedScenarios accepts the scenarios map",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:228"
+   ]
+  },
+  {
+   "id": 84,
+   "claim": "Provider Type openai is valid",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 85,
+   "claim": "Provider Type anthropic is valid",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 86,
+   "claim": "Provider Type gemini is valid",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 87,
+   "claim": "cfg.LoadedProviders accepts a map of config.Provider",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:221"
+   ]
+  },
+  {
+   "id": 88,
+   "claim": "arenaStore.GetRunResult is called with ctx and runID",
+   "verdict": "false",
+   "evidence": [
+    "arena/statestore/metadata.go:43"
+   ]
+  },
+  {
+   "id": 89,
+   "claim": "RunResult has field ProviderID",
+   "verdict": "true",
+   "evidence": [
+    "arena/statestore/store.go:1100"
+   ]
+  },
+  {
+   "id": 90,
+   "claim": "RunResult.Duration has method Milliseconds",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 91,
+   "claim": "RunResult has field Cost of type CostInfo with TotalCost",
+   "verdict": "true",
+   "evidence": [
+    "arena/statestore/store.go:1105"
+   ]
+  },
+  {
+   "id": 92,
+   "claim": "CostInfo has field InputTokens",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 93,
+   "claim": "CostInfo has field OutputTokens",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 94,
+   "claim": "Result Error empty string means success",
+   "verdict": "true",
+   "evidence": [
+    "arena/statestore/store.go:1111"
+   ]
+  }
+ ]
+}

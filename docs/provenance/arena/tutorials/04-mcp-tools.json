@@ -1,0 +1,659 @@
+{
+ "page": "docs/src/content/docs/arena/tutorials/04-mcp-tools.md",
+ "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "Link to /arena/tutorials/01-first-test/ resolves to an existing page (Tutorial 1-3 prerequisite)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 2,
+   "claim": "The tutorial's MCP servers need Node.js installed",
+   "verdict": "true",
+   "evidence": [
+    "examples/mcp-filesystem-test/config.arena.yaml:13",
+    "examples/mcp-memory-test/config.arena.yaml:11"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "PromptKit ships a built-in MCP memory server",
+   "verdict": "false",
+   "evidence": [
+    "examples/mcp-memory-test/config.arena.yaml:11"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "PromptKit module path is github.com/altairalabs/promptkit (cd target directory)",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 5,
+   "claim": "`go install ./runtime/mcp/servers/memory` installs the memory server",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 6,
+   "claim": "`npm install -g @modelcontextprotocol/server-filesystem` installs the filesystem MCP server",
+   "verdict": "true",
+   "evidence": [
+    "examples/mcp-filesystem-test/config.arena.yaml:16"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "MCP servers are configured under the Arena config (spec.mcp_servers)",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:173",
+    "schemas/v1alpha1/arena.json:732"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "Arena auto-discovers the tools each configured MCP server provides",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:437",
+    "arena/engine/builder_integration.go:482"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "apiVersion value promptkit.altairalabs.ai/v1alpha1 for kind Arena",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/arena.json:1"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "kind: Arena is a valid kind",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/arena.json:1"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "metadata.name is a field of the Arena config",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:25"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "spec.prompt_configs is a list field on the Arena spec",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:98",
+    "schemas/v1alpha1/arena.json:1"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "prompt_configs entries accept an id field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/arena.json:1"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "prompt_configs entries accept a file field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/arena.json:1"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "spec.providers is a list whose entries take a file field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/arena.json:1"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "spec.scenarios is a list whose entries take a file field",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:98"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "spec.mcp_servers is a mapping keyed by server name (the tutorial uses the key memory)",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:173",
+    "examples/mcp-memory-test/config.arena.yaml:11",
+    "schemas/v1alpha1/arena.json:732"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "Each mcp_servers entry accepts a command field",
+   "verdict": "true",
+   "evidence": [
+    "arena/mcp/config.go:60"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "Each mcp_servers entry accepts an args list field",
+   "verdict": "true",
+   "evidence": [
+    "arena/mcp/config.go:61"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "Each mcp_servers entry accepts an env map field",
+   "verdict": "true",
+   "evidence": [
+    "arena/mcp/config.go:62"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "mcp-memory-server is an executable name on PATH after the Step 1 install",
+   "verdict": "false",
+   "evidence": [
+    "examples/mcp-memory-test/config.arena.yaml:11"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "LOG_LEVEL is an environment variable the memory server reads, with values such as info and debug",
+   "verdict": "false",
+   "evidence": [
+    "arena/mcp/config.go:62"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "apiVersion value promptkit.altairalabs.ai/v1alpha1 for kind PromptConfig",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/promptconfig.json:1"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "kind: PromptConfig is a valid kind",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/promptconfig.json:1"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "metadata.name is a field of PromptConfig",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/promptconfig.json:1"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "spec.task_type accepts the value assistant on PromptConfig",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/promptconfig.json:1"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "spec.system_template is a field of PromptConfig",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/promptconfig.json:1"
+   ]
+  },
+  {
+   "id": 28,
+   "claim": "The memory server exposes tools named store_memory and recall_memory",
+   "verdict": "false",
+   "evidence": [
+    "examples/mcp-memory-test/prompts/assistant.yaml:31"
+   ]
+  },
+  {
+   "id": 29,
+   "claim": "apiVersion value promptkit.altairalabs.ai/v1alpha1 for kind Scenario",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json:1"
+   ]
+  },
+  {
+   "id": 30,
+   "claim": "kind: Scenario is a valid kind",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json:1"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "metadata.name is a field of Scenario",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json:1"
+   ]
+  },
+  {
+   "id": 32,
+   "claim": "metadata.labels is a free-form map (keys category, protocol, complexity are used)",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json:1"
+   ]
+  },
+  {
+   "id": 33,
+   "claim": "spec.task_type accepts the value assistant on Scenario",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json:1"
+   ]
+  },
+  {
+   "id": 34,
+   "claim": "spec.turns is a list field of Scenario",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json:1"
+   ]
+  },
+  {
+   "id": 35,
+   "claim": "turns[].role accepts the value user",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json:1"
+   ]
+  },
+  {
+   "id": 36,
+   "claim": "turns[].content is a field of a turn",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json:1"
+   ]
+  },
+  {
+   "id": 37,
+   "claim": "turns[].assertions is a list field of a turn",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json:1"
+   ]
+  },
+  {
+   "id": 38,
+   "claim": "tools_called is a valid assertion type",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/validator_tools.go:14"
+   ]
+  },
+  {
+   "id": 39,
+   "claim": "tools_called takes a params.tools list",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/validator_tools.go:14"
+   ]
+  },
+  {
+   "id": 40,
+   "claim": "Assertions accept a params.message field",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:25"
+   ]
+  },
+  {
+   "id": 41,
+   "claim": "content_includes is a valid assertion type",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/validator_tools.go:14"
+   ]
+  },
+  {
+   "id": 42,
+   "claim": "content_includes takes a params.patterns list",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/validator_tools.go:14"
+   ]
+  },
+  {
+   "id": 43,
+   "claim": "`promptarena run --scenario <name>` runs a scenario selected by name",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:168"
+   ]
+  },
+  {
+   "id": 44,
+   "claim": "--scenario matches the scenario file name tool-calling-test, not the metadata.name basic-tool-calling",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/manifest_helpers.go:49",
+    "arena/engine/engine.go:427"
+   ]
+  },
+  {
+   "id": 45,
+   "claim": "`promptarena run` accepts a --verbose flag",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:168"
+   ]
+  },
+  {
+   "id": 46,
+   "claim": "kind: Tool is a valid kind",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:1"
+   ]
+  },
+  {
+   "id": 47,
+   "claim": "Tool spec.name is a field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:1"
+   ]
+  },
+  {
+   "id": 48,
+   "claim": "Tool spec.description is a field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:1"
+   ]
+  },
+  {
+   "id": 49,
+   "claim": "Tool spec.input_schema is a JSON schema object field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:1"
+   ]
+  },
+  {
+   "id": 50,
+   "claim": "input_schema.required is a list field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:1"
+   ]
+  },
+  {
+   "id": 51,
+   "claim": "Tool spec.mode accepts the value mock",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:321"
+   ]
+  },
+  {
+   "id": 52,
+   "claim": "Tool spec.mock_result is a free-form object field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:326"
+   ]
+  },
+  {
+   "id": 53,
+   "claim": "Tool spec.mock_template is a field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:329"
+   ]
+  },
+  {
+   "id": 54,
+   "claim": "The rendered mock_template output is parsed as JSON and returned as the tool result",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:329"
+   ]
+  },
+  {
+   "id": 55,
+   "claim": "spec.tools is a list field on the Arena spec",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:102"
+   ]
+  },
+  {
+   "id": 56,
+   "claim": "spec.tools entries accept a file field",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:102"
+   ]
+  },
+  {
+   "id": 57,
+   "claim": "tools_called with several tool names passes when each listed tool was called",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/validator_tools.go:14"
+   ]
+  },
+  {
+   "id": 58,
+   "claim": "tools_called checks that a tool was called, not how many times (the tutorial's Should call store_memory multiple times message)",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/validator_tools.go:14"
+   ]
+  },
+  {
+   "id": 59,
+   "claim": "tools_called does not check call order (the tutorial's Should call both tools in sequence message)",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/validator_tools.go:14"
+   ]
+  },
+  {
+   "id": 60,
+   "claim": "get_weather is a tool name the reader can expect to be defined (illustrative; used at lines 279 and 438)",
+   "verdict": "true",
+   "evidence": [
+    "examples/mcp-memory-test/config.arena.yaml:11"
+   ]
+  },
+  {
+   "id": 61,
+   "claim": "query_database is a tool name (illustrative)",
+   "verdict": "true",
+   "evidence": [
+    "examples/mcp-memory-test/config.arena.yaml:11"
+   ]
+  },
+  {
+   "id": 62,
+   "claim": "fetch_crypto_price is a tool name (illustrative)",
+   "verdict": "true",
+   "evidence": [
+    "examples/mcp-memory-test/config.arena.yaml:11"
+   ]
+  },
+  {
+   "id": 63,
+   "claim": "read_file is a tool name (illustrative)",
+   "verdict": "true",
+   "evidence": [
+    "examples/mcp-filesystem-test/config.arena.yaml:16"
+   ]
+  },
+  {
+   "id": 64,
+   "claim": "lookup_user and send_email are tool names (illustrative)",
+   "verdict": "true",
+   "evidence": [
+    "examples/mcp-memory-test/config.arena.yaml:11"
+   ]
+  },
+  {
+   "id": 65,
+   "claim": "Verbose run prints lines of the form [TOOL CALL] store_memory({...}) and [TOOL RESPONSE] {...}",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:168"
+   ]
+  },
+  {
+   "id": 66,
+   "claim": "`promptarena config-inspect` is a subcommand",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 67,
+   "claim": "`promptarena config-inspect` accepts a --verbose flag",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 68,
+   "claim": "config-inspect output lists the loaded tools",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 69,
+   "claim": "mcp-memory-server reads JSON-RPC requests from stdin and answers a tools/list method",
+   "verdict": "false",
+   "evidence": [
+    "examples/mcp-memory-test/config.arena.yaml:11"
+   ]
+  },
+  {
+   "id": 70,
+   "claim": "Setting LOG_LEVEL=debug in the environment changes the memory server log level",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:168"
+   ]
+  },
+  {
+   "id": 71,
+   "claim": "`promptarena run --scenario tool-test` runs a scenario named tool-test",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:427"
+   ]
+  },
+  {
+   "id": 72,
+   "claim": "run with an unknown --scenario name fails with an error",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:427"
+   ]
+  },
+  {
+   "id": 73,
+   "claim": "allowed_tools is a field of PromptConfig spec",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/promptconfig.json:1"
+   ]
+  },
+  {
+   "id": 74,
+   "claim": "A prompt reaches only the tools listed in allowed_tools; unlisted tools are not called",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:482"
+   ]
+  },
+  {
+   "id": 75,
+   "claim": "MCP tools are named mcp__<server>__<tool>",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:482"
+   ]
+  },
+  {
+   "id": 76,
+   "claim": "`promptarena run` writes results to out/results.json by default",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:168"
+   ]
+  },
+  {
+   "id": 77,
+   "claim": "results.json has a top-level results array",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:168"
+   ]
+  },
+  {
+   "id": 78,
+   "claim": "Each result entry has a tool_calls array whose items have a name field",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:168"
+   ]
+  },
+  {
+   "id": 79,
+   "claim": "Each tool_calls item has an arguments field",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:168"
+   ]
+  },
+  {
+   "id": 80,
+   "claim": "mcp-memory-server accepts a --help flag",
+   "verdict": "false",
+   "evidence": [
+    "examples/mcp-memory-test/config.arena.yaml:11"
+   ]
+  },
+  {
+   "id": 81,
+   "claim": "Link to /arena/tutorials/05-ci-integration/ resolves to an existing page",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 82,
+   "claim": "Link labelled How-To: MCP Tools points to /arena/how-to/providers/use-mock-providers/, a page about mock providers",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 83,
+   "claim": "External link https://promptkit.altairalabs.ai/runtime/reference/tools-mcp/ resolves",
+   "verdict": "true",
+   "evidence": []
+  }
+ ]
+}

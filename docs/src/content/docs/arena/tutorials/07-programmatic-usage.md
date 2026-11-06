@@ -1,27 +1,35 @@
 ---
 title: 'Tutorial 7: Using Arena as a Go Library'
-description: Learn how to integrate Arena into your Go applications for programmatic testing
+description: Build a Go program that configures PromptArena in code, runs a scenario against the mock provider and reads the results.
+verified:
+  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  sources:
+    - arena/arenaconfig/types.go
+    - arena/assertions/types.go
+    - arena/engine/builder_integration.go
+    - arena/engine/engine.go
+    - arena/engine/execution.go
+    - arena/engine/types.go
+    - arena/statestore/metadata.go
+    - arena/statestore/store.go
 ---
 
-In this tutorial, you'll learn how to use Arena as a Go library instead of a CLI tool. This is useful when you want to integrate LLM testing into your own applications, build custom testing tools, or generate test scenarios dynamically.
+In this tutorial we write a Go program that runs a PromptArena scenario without any YAML files.
 
-## What You'll Build
+## What we will build
 
-By the end of this tutorial, you'll have a working Go program that:
-- Creates Arena configurations programmatically
-- Executes test scenarios
-- Retrieves and processes results
-- All without touching YAML files
+A single `main.go` that:
+
+- builds the Arena configuration in Go
+- runs one scenario against the mock provider, so no API key is needed
+- reads the run result from the state store and prints it
 
 ## Prerequisites
 
-- Go 1.21 or later installed
-- Basic understanding of Go programming
-- Familiarity with Arena concepts (scenarios, providers)
+- Go 1.26 or later
+- Familiarity with scenarios and providers from the earlier tutorials
 
-## Step 1: Set Up Your Go Project
-
-Create a new directory and initialize a Go module:
+## Step 1: Create a Go module
 
 ```bash
 mkdir arena-lib-demo
@@ -29,20 +37,19 @@ cd arena-lib-demo
 go mod init arena-lib-demo
 ```
 
-## Step 2: Install Dependencies
+Go prints `go: creating new go.mod: module arena-lib-demo`.
 
-Add PromptKit as a dependency:
+## Step 2: Install the dependencies
 
 ```bash
-go get github.com/AltairaLabs/PromptKit/pkg/v2/config
-go get github.com/AltairaLabs/PromptKit/runtime/v2/prompt
 go get github.com/AltairaLabs/promptarena/v2/arena/engine
-go get github.com/AltairaLabs/promptarena/v2/arena/statestore
 ```
 
-## Step 3: Create Your First Programmatic Test
+Go prints `go: added ...` lines, including `github.com/AltairaLabs/promptarena/v2` (v2.4.0 or later) and the PromptKit modules `github.com/AltairaLabs/PromptKit/pkg/v2` and `github.com/AltairaLabs/PromptKit/runtime/v2` it depends on.
 
-Create a file named `main.go`:
+## Step 3: Write the program
+
+Create `main.go`:
 
 ```go
 package main
@@ -51,15 +58,23 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 
 	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/prompt"
+	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
 	"github.com/AltairaLabs/promptarena/v2/arena/engine"
 	"github.com/AltairaLabs/promptarena/v2/arena/statestore"
 )
 
 func main() {
-	// Step 1: Create a prompt configuration
+	// Pick the provider: mock by default, openai when ARENA_PROVIDER=openai.
+	provider := &config.Provider{ID: "mock-provider", Type: "mock", Model: "gpt-4"}
+	if os.Getenv("ARENA_PROVIDER") == "openai" {
+		provider = &config.Provider{ID: "openai-gpt4o-mini", Type: "openai", Model: "gpt-4o-mini"}
+	}
+
+	// Create a prompt configuration
 	promptConfig := &prompt.Config{
 		Spec: prompt.Spec{
 			TaskType:    "assistant",
@@ -70,36 +85,32 @@ Be concise and accurate in your responses.`,
 		},
 	}
 
-	// Step 2: Create the Arena configuration
-	cfg := &config.Config{
+	// Create the Arena configuration
+	cfg := &arenaconfig.Config{
 		LoadedProviders: map[string]*config.Provider{
-			"mock-provider": {
-				ID:    "mock-provider",
-				Type:  "mock",
-				Model: "gpt-4",
-			},
+			provider.ID: provider,
 		},
-		LoadedPromptConfigs: map[string]*config.PromptConfigData{
+		LoadedPromptConfigs: map[string]*arenaconfig.PromptConfigData{
 			"assistant": {
 				Config:   promptConfig,
 				TaskType: "assistant",
 			},
 		},
-		LoadedScenarios: map[string]*config.Scenario{
+		LoadedScenarios: map[string]*arenaconfig.Scenario{
 			"basic-test": {
 				ID:          "basic-test",
 				TaskType:    "assistant",
 				Description: "Basic conversation test",
-				Turns: []config.TurnDefinition{
+				Turns: []arenaconfig.TurnDefinition{
 					{Role: "user", Content: "What is 2+2?"},
 					{Role: "user", Content: "What's the capital of France?"},
 				},
 			},
 		},
-		Defaults: config.Defaults{
+		Defaults: arenaconfig.Defaults{
 			Temperature: 0.7,
 			MaxTokens:   500,
-			Output: config.OutputConfig{
+			Output: arenaconfig.OutputConfig{
 				Dir: "out",
 			},
 		},
@@ -107,39 +118,43 @@ Be concise and accurate in your responses.`,
 
 	fmt.Println("Building Arena engine...")
 
-	// Step 3: Build engine components
-	providerReg, promptReg, mcpReg, executor, err := engine.BuildEngineComponents(cfg)
+	// Build engine components
+	providerReg, promptReg, mcpReg, executor, adapterReg, _, toolReg, _, err :=
+		engine.BuildEngineComponents(cfg, nil)
 	if err != nil {
 		log.Fatalf("Failed to build components: %v", err)
 	}
 
-	// Step 4: Create the engine
-	eng, err := engine.NewEngine(cfg, providerReg, promptReg, mcpReg, executor)
+	// Create the engine
+	eng, err := engine.NewEngine(cfg, providerReg, promptReg, mcpReg, executor, adapterReg, toolReg)
 	if err != nil {
 		log.Fatalf("Failed to create engine: %v", err)
 	}
 	defer eng.Close()
 
-	// Step 5: Generate execution plan
-	plan, err := eng.GenerateRunPlan(nil, nil, nil)
+	// Generate execution plan
+	plan, err := eng.GenerateRunPlan(nil, nil, nil, nil)
 	if err != nil {
 		log.Fatalf("Failed to generate plan: %v", err)
 	}
 
 	fmt.Printf("Generated %d test combinations\n", len(plan.Combinations))
 
-	// Step 6: Execute tests
+	// Execute tests
 	ctx := context.Background()
 	runIDs, err := eng.ExecuteRuns(ctx, plan, 2)
 	if err != nil {
 		log.Fatalf("Failed to execute: %v", err)
 	}
 
-	// Step 7: Retrieve results
-	arenaStore := eng.GetStateStore().(*statestore.ArenaStateStore)
-	
+	// Retrieve results
+	arenaStore, ok := eng.GetStateStore().(*statestore.ArenaStateStore)
+	if !ok {
+		log.Fatalf("unexpected state store %T", eng.GetStateStore())
+	}
+
 	for i, runID := range runIDs {
-		result, err := arenaStore.GetRunResult(ctx, runID)
+		result, err := arenaStore.GetResult(ctx, runID)
 		if err != nil {
 			log.Printf("Failed to get result: %v", err)
 			continue
@@ -148,7 +163,7 @@ Be concise and accurate in your responses.`,
 		fmt.Printf("\nTest %d: %s\n", i+1, result.ScenarioID)
 		fmt.Printf("Status: %s\n", getStatus(result.Error))
 		fmt.Printf("Duration: %s\n", result.Duration)
-		fmt.Printf("Turns: %d\n", len(result.Messages))
+		fmt.Printf("Messages: %d\n", len(result.Messages))
 	}
 
 	fmt.Println("\nAll tests completed!")
@@ -162,147 +177,104 @@ func getStatus(errMsg string) string {
 }
 ```
 
-## Step 4: Run Your Program
+The program uses the `mock` provider unless `ARENA_PROVIDER=openai` is set. It sets `Defaults.Output.Dir` to `out`, so the engine creates `out/` and `media/` in the current directory.
+
+## Step 4: Run it
+
+`go mod tidy` records the remaining packages `main.go` imports:
 
 ```bash
-go run main.go
+go mod tidy
+go run .
 ```
 
-You should see output like:
+The program logs `INFO` lines from the engine as it works. With those lines removed, the output is:
 
-```
+```text
 Building Arena engine...
 Generated 1 test combinations
+
 Test 1: basic-test
 Status: Success
-Duration: 2.5ms
-Turns: 5
+Duration: 6.435875ms
+Messages: 5
 
 All tests completed!
 ```
 
-## Step 5: Add Real Provider Testing
+`Messages: 5` counts the system message plus the two user messages and two assistant replies. `Duration` varies from run to run.
 
-Let's enhance the example to use a real provider (OpenAI):
+## Step 5: Add assertions
 
-```go
-// Replace the mock provider with OpenAI
-LoadedProviders: map[string]*config.Provider{
-	"openai-gpt4": {
-		ID:    "openai-gpt4",
-		Type:  "openai",
-		Model: "gpt-4",
-		// API key is read from OPENAI_API_KEY env var by default
-	},
-},
-```
-
-Then run with your API key:
-
-```bash
-export OPENAI_API_KEY=sk-...
-go run main.go
-```
-
-## Step 6: Add Assertions
-
-Let's add validation to our scenario:
+Add the `asrt` import to the import block in `main.go`:
 
 ```go
-LoadedScenarios: map[string]*config.Scenario{
-	"math-test": {
-		ID:          "math-test",
-		TaskType:    "assistant",
-		Description: "Test math responses",
-		Turns: []config.TurnDefinition{
+asrt "github.com/AltairaLabs/promptarena/v2/arena/assertions"
+```
+
+Replace the `Turns` list of `basic-test` with one turn that carries two `content_includes` assertions:
+
+```go
+Turns: []arenaconfig.TurnDefinition{
+	{
+		Role:    "user",
+		Content: "What is 2+2?",
+		Assertions: []asrt.AssertionConfig{
 			{
-				Role:    "user",
-				Content: "What is 2+2?",
-				Assertions: []asrt.AssertionConfig{
-					{
-						Type:    "content_includes",
-						Params:  map[string]interface{}{"patterns": []string{"4"}},
-						Message: "Should contain the answer 4",
-					},
-				},
+				Type:    "content_includes",
+				Params:  map[string]interface{}{"patterns": []string{"4"}},
+				Message: "Should contain the answer 4",
+			},
+			{
+				Type:    "content_includes",
+				Params:  map[string]interface{}{"patterns": []string{"zebra"}},
+				Message: "Should contain the word zebra",
 			},
 		},
 	},
 },
 ```
 
-Don't forget to import the assertions package:
+Run it again:
 
-```go
-import (
-	// ... other imports
-	asrt "github.com/AltairaLabs/promptarena/v2/arena/assertions"
-)
+```bash
+go run .
 ```
 
-## What You've Learned
+The mock reply contains `4` but not `zebra`, so the second assertion fails and the run fails:
 
-How to create Arena configurations in Go code
-How to build engine components programmatically
-How to execute tests and retrieve results
-How to switch between mock and real providers
-How to add assertions to scenarios
-
-## Next Steps
-
-- [How-To: Use Arena as a Go Library](/arena/how-to/setup/use-as-go-library/) - Advanced integration patterns
-- [Reference: API Documentation](/arena/reference/api-reference/) - Complete API reference
-
-## Common Patterns
-
-### Dynamic Scenario Generation
-
-```go
-// Generate scenarios from test data
-scenarios := make(map[string]*config.Scenario)
-for i, testCase := range testCases {
-	scenarios[fmt.Sprintf("test-%d", i)] = &config.Scenario{
-		ID:       fmt.Sprintf("test-%d", i),
-		TaskType: "assistant",
-		Turns: []config.TurnDefinition{
-			{Role: "user", Content: testCase.Input},
-		},
-	}
-}
-
-cfg.LoadedScenarios = scenarios
+```text
+Test 1: basic-test
+Status: Failed: pipeline execution failed: validation failed: [assertion 1 (content_includes) failed: missing patterns: zebra]
+Duration: 4.853875ms
+Messages: 3
 ```
 
-### Multiple Provider Comparison
+Delete the `zebra` assertion and run again to get `Status: Success`.
 
-```go
-// Test against multiple providers
-providers := map[string]*config.Provider{
-	"openai":   {ID: "openai", Type: "openai", Model: "gpt-4"},
-	"claude":   {ID: "claude", Type: "anthropic", Model: "claude-3-5-sonnet-20241022"},
-	"gemini":   {ID: "gemini", Type: "gemini", Model: "gemini-2.0-flash-exp"},
-}
+## Step 6: Swap in a real provider
 
-cfg.LoadedProviders = providers
+Export your OpenAI key. The library does not read `.env` files.
+
+```bash
+export OPENAI_API_KEY=sk-...
+ARENA_PROVIDER=openai go run .
 ```
 
-### Custom Result Processing
+The program switches to `Type: "openai"` with `Model: "gpt-4o-mini"`, and the result has the same shape:
 
-```go
-// Process results with custom logic
-for _, runID := range runIDs {
-	result, _ := arenaStore.GetRunResult(ctx, runID)
-	
-	// Extract metrics
-	metrics := map[string]interface{}{
-		"provider":     result.ProviderID,
-		"duration_ms":  result.Duration.Milliseconds(),
-		"cost":         result.Cost.TotalCost,
-		"tokens":       result.Cost.InputTokens + result.Cost.OutputTokens,
-		"success":      result.Error == "",
-	}
-	
-	// Send to your analytics system
-	sendToAnalytics(metrics)
-}
+```text
+Test 1: basic-test
+Status: Success
+Duration: 2.45s
+Messages: 5
 ```
+
+## What we have built
+
+A Go program that builds `arenaconfig.Config` in code, runs it through `engine.NewEngine` and `ExecuteRuns`, and reads each run from the `ArenaStateStore`.
+
+## Next steps
+
+- [Use Arena as a Go library](/arena/how-to/setup/use-as-go-library/): generating scenarios from data, comparing providers and processing results
+- [API reference](/arena/reference/api-reference/): the full API

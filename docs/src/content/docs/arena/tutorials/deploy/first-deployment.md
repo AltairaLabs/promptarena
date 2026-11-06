@@ -1,246 +1,166 @@
 ---
 title: 'Deploy: Your First Deployment'
+description: Install the AgentCore deploy adapter, add a deploy section to the Tutorial 1 project, preview the plan, deploy it to AWS, check it and tear it down.
+verified:
+  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  sources:
+    - arena/arenaconfig/types.go
+    - arena/cmd/promptarena/deploy_adapter_interactive.go
+    - arena/cmd/promptarena/deploy_apply_interactive.go
+    - arena/cmd/promptarena/deploy_destroy_interactive.go
+    - arena/cmd/promptarena/deploy_interactive.go
+    - arena/cmd/promptarena/deploy_plan_interactive.go
+    - arena/cmd/promptarena/deploy_status_interactive.go
+    - arena/deploy/flow/config.go
+    - arena/deploy/flow/options.go
+    - arena/deploy/flow/render.go
+    - arena/deploy/flow/session.go
+    - deploy/state.go
+    - packc/compiler/compiler.go
+    - schemas/v1alpha1/arena.json
 ---
 
-Deploy a compiled prompt pack to a cloud provider in 20 minutes.
+In this tutorial we deploy the greeting agent from [Tutorial 1](/arena/tutorials/01-first-test/) to AWS Bedrock AgentCore with `promptarena deploy`. We install an adapter, describe the target in the arena config, preview a plan, apply it, check the deployment and destroy it.
 
-## What You'll Build
+## What we will build
 
-A fully deployed prompt pack running on a cloud provider, managed through the PromptKit CLI with state tracking and status monitoring.
-
-## Learning Objectives
-
-In this tutorial, you'll learn to:
-
-- Install a deploy adapter
-- Configure the deploy section in arena.yaml
-- Preview a deployment plan
-- Apply the deployment
-- Check deployment status
-- Tear down resources
-
-## Time Required
-
-**20 minutes**
+One AgentCore runtime running the `my-first-test` agent, plus a local record of the deployment in `.promptarena/deploy.state`.
 
 ## Prerequisites
 
-- PromptKit CLI (`promptarena`) installed
-- A compiled `.pack.json` file (see [Your First Pack](/packc/tutorials/01-first-pack/))
-- Access to AWS (for the agentcore adapter example)
-- AWS credentials configured in your environment
+- The `my-first-test` project from [Tutorial 1](/arena/tutorials/01-first-test/).
+- Go 1.26 or later and `git`, to build the runtime binary the adapter uploads.
+- An AWS account with Bedrock AgentCore enabled, and AWS credentials in your shell (`aws configure`, or the `AWS_*` environment variables).
+- An IAM role that AgentCore runtimes can assume. [AgentCore: first deployment](/arena/tutorials/deploy/agentcore/first-deployment/) shows how to create one. Note its ARN.
 
-## Step 1: Install an Adapter
+Steps 1 to 4 run without AWS credentials. Steps 5 to 7 create, inspect and delete real AWS resources.
 
-Adapters are plugin binaries that connect the deploy CLI to specific cloud providers. Install the AgentCore adapter for AWS Bedrock:
+## Step 1: Install the adapter
+
+An adapter is a separate binary that `promptarena deploy` launches to talk to one cloud. Install the AgentCore adapter:
 
 ```bash
 promptarena deploy adapter install agentcore
 ```
 
-**Expected output:**
+The CLI downloads the release binary for your OS and architecture:
 
-```
-Installed adapter: agentcore v0.2.0
-  Location: ~/.promptarena/adapters/promptarena-deploy-agentcore
+```text
+Installing adapter "agentcore" v0.3.2 (darwin/arm64)...
+  Downloading from: https://github.com/AltairaLabs/promptarena-deploy-agentcore/releases/download/v0.3.2/promptarena-deploy-agentcore_darwin_arm64
+  Installed to: /Users/you/.promptarena/adapters/promptarena-deploy-agentcore
 ```
 
-Verify the installation:
+List the installed adapters:
 
 ```bash
 promptarena deploy adapter list
 ```
 
-**Expected output:**
-
-```
-Installed adapters:
-  agentcore  ~/.promptarena/adapters/promptarena-deploy-agentcore
+```text
+user-level (/Users/you/.promptarena/adapters):
+  promptarena-deploy-agentcore
 ```
 
-**What happened:**
+## Step 2: Build the runtime binary
 
-1. The CLI fetched the adapter binary from the GitHub release
-2. Downloaded the correct binary for your OS and architecture
-3. Installed it to `~/.promptarena/adapters/` with execute permissions
+AgentCore runs your agent with a PromptKit runtime binary built for Linux ARM64. Build it from the adapter repository, next to your project:
 
-## Step 2: Add Deploy Configuration
+```bash
+cd ..
+git clone https://github.com/AltairaLabs/promptarena-deploy-agentcore.git
+make -C promptarena-deploy-agentcore build-runtime-arm64
+cd my-first-test
+```
 
-Add a `deploy` section to your `arena.yaml`:
+This writes `../promptarena-deploy-agentcore/promptkit-runtime`.
+
+## Step 3: Add the deploy section
+
+Add a `deploy` block under `spec:` in `config.arena.yaml`, after `defaults`. Replace the role ARN with yours:
 
 ```yaml
-# arena.yaml (add to existing config)
-deploy:
-  provider: agentcore
-  config:
-    region: us-west-2
+  deploy:
+    provider: agentcore
+    config:
+      region: us-west-2
+      runtime_role_arn: arn:aws:iam::123456789012:role/AgentCoreRuntime
+      runtime_binary_path: ../promptarena-deploy-agentcore/promptkit-runtime
 ```
 
-The `provider` field tells the CLI which adapter binary to use. The `config` section is passed directly to the adapter — its contents depend on the provider.
+`provider` names the adapter. Everything under `config` goes to the adapter unchanged; [AgentCore configuration](/arena/reference/deploy/agentcore/configuration/) lists its fields.
 
-## Step 3: Preview the Plan
+## Step 4: Preview the plan
 
-Before making any changes, preview what the deployment will do:
+`promptarena deploy` reads `arena.yaml` unless you pass `--config`, so we name our file:
 
 ```bash
-promptarena deploy plan
+promptarena deploy plan --config config.arena.yaml
 ```
 
-**Expected output:**
+The CLI compiles a pack from the config, sends it to the adapter, and prints what the adapter would create:
 
+```text
+Deploy plan for environment: default (provider: agentcore)
+  Adapter:     /Users/you/.promptarena/adapters/promptarena-deploy-agentcore
+
+Plan: 1 to create, 0 to update, 0 to delete
+
+  + agent_runtime.my_first_test (Create AgentCore runtime for my_first_test)
+
+Plan saved. Run 'promptarena deploy apply' to execute.
 ```
-Planning deployment...
-Provider: agentcore v0.2.0
 
-Changes:
-  + agent_runtime.greeting    Create agent runtime
-  + a2a_endpoint.greeting     Create A2A endpoint
+`+` marks a resource to create. Without `--env`, the environment is `default`. The plan is saved to `.promptarena/deploy.plan`.
 
-Summary: 2 resources to create, 0 to update, 0 to delete
-```
-
-**What happened:**
-
-1. The CLI loaded your arena.yaml and found the deploy config
-2. Auto-detected the `.pack.json` file in your project
-3. Launched the adapter binary and sent it the pack + config via JSON-RPC
-4. The adapter analyzed the pack and reported what resources need to be created
-
-The symbols indicate the action for each resource:
-
-| Symbol | Action |
-|--------|--------|
-| `+` | Create |
-| `~` | Update |
-| `-` | Delete |
-| ` ` | No change |
-
-## Step 4: Apply the Deployment
-
-Apply the plan to create the resources:
+## Step 5: Apply the plan
 
 ```bash
-promptarena deploy
+promptarena deploy apply --config config.arena.yaml
 ```
 
-**Expected output:**
+Apply reuses the saved plan while the pack and environment are unchanged:
 
-```
-Planning deployment...
-Applying...
-  Creating agent_runtime.greeting... done
-  Creating a2a_endpoint.greeting... done
-Deployment complete.
+```text
+Applying deployment to environment: default (provider: agentcore)
+  Using saved plan.
+  Adapter:     /Users/you/.promptarena/adapters/promptarena-deploy-agentcore
 ```
 
-**What happened:**
+The adapter then prints one line per resource as it creates it, and the command ends with `Apply complete.`. The CLI records the deployment in `.promptarena/deploy.state`.
 
-1. The CLI ran a plan (same as Step 3)
-2. Sent an apply request to the adapter
-3. The adapter created resources on the cloud provider
-4. State was saved to `.promptarena/deploy.state`
-
-## Step 5: Check Status
-
-Verify the deployment is healthy:
+## Step 6: Check the deployment
 
 ```bash
-promptarena deploy status
+promptarena deploy status --config config.arena.yaml
 ```
 
-**Expected output:**
+The output starts with `Deployment status for environment: default (provider: agentcore)`, then the adapter's overall status, one `type.name: status` line per resource, and the `Last deployed` time and `Pack checksum` from the state file.
 
-```
-Status: deployed
-Last deployed: 2026-02-16T10:30:00Z
-Pack checksum: sha256:abc123...
-
-Resources:
-  agent_runtime.greeting: healthy
-  a2a_endpoint.greeting: healthy
-```
-
-## Step 6: Clean Up
-
-When you're done, tear down the resources:
+## Step 7: Tear it down
 
 ```bash
-promptarena deploy destroy
+promptarena deploy destroy --config config.arena.yaml
 ```
 
-**Expected output:**
+The adapter deletes each resource, the CLI removes `.promptarena/deploy.state`, and the command ends with `Deployment destroyed.`.
 
-```
-Destroying deployment...
-  Deleting a2a_endpoint.greeting... done
-  Deleting agent_runtime.greeting... done
-Deployment destroyed.
-```
+## Common issues
 
-This removes cloud resources and deletes the local state file.
+### `deploy config "arena.yaml" not found`
 
-## What You Learned
+You ran a `deploy` command without `--config`. Pass `--config config.arena.yaml`.
 
-Congratulations! You've successfully:
+### `failed to create AWS client`
 
-- Installed a deploy adapter plugin
-- Configured deployment in arena.yaml
-- Previewed changes with `deploy plan`
-- Applied a deployment
-- Monitored deployment status
-- Torn down resources with `deploy destroy`
+`deploy apply` printed `apply failed: adapter error -32603: agentcore: failed to create AWS client` because the shell has no AWS credentials. Run `aws configure`, or export `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY` and `AWS_REGION`, and apply again.
 
-## Understanding the Workflow
+### `runtime_role_arn is required` or `runtime_binary_path is required`
 
-The deploy workflow follows a plan-apply pattern:
+The adapter validates its `config` before planning. Add the missing field from Step 3.
 
-1. **Plan** — Adapter analyzes the pack and config, reports what will change
-2. **Apply** — Adapter creates, updates, or deletes cloud resources
-3. **State** — CLI persists deployment state locally for future operations
-4. **Status** — Adapter queries the provider for current resource health
-5. **Destroy** — Adapter removes all managed resources
+## Next steps
 
-## Common Issues
-
-### Issue: adapter not found
-
-**Solution:** Install the adapter first:
-
-```bash
-promptarena deploy adapter install agentcore
-```
-
-### Issue: pack file not found
-
-`promptarena deploy` compiles the pack from `arena.yaml` automatically, so this usually only appears when you pass `--pack` pointing at a file that does not exist.
-
-**Solution:** Drop `--pack` to compile from `arena.yaml`, or point it at an existing pre-compiled pack:
-
-```bash
-# Compile from arena.yaml (default)
-promptarena deploy --env production
-
-# Or deploy a pre-compiled pack
-promptarena deploy --pack app.pack.json
-```
-
-### Issue: provider authentication failed
-
-**Solution:** Ensure your cloud credentials are configured:
-
-```bash
-# For AWS
-aws configure
-# Or set environment variables
-export AWS_ACCESS_KEY_ID=...
-export AWS_SECRET_ACCESS_KEY=...
-export AWS_REGION=us-west-2
-```
-
-## Next Steps
-
-Now that you've deployed your first pack, you're ready to:
-
-- **[Tutorial: Multi-Environment](/arena/tutorials/deploy/multi-environment/)** — Deploy to dev, staging, and production
-- **[How-To: Plan and Apply](/arena/how-to/deploy/plan-and-apply/)** — Learn advanced deployment workflows
-- **[Reference: CLI Commands](/arena/reference/deploy/cli-commands/)** — Complete command documentation
+- [Tutorial: Multi-Environment Deployments](/arena/tutorials/deploy/multi-environment/): give dev, staging and production their own config.
+- [Plan and apply](/arena/how-to/deploy/plan-and-apply/): the deploy workflow in day-to-day use.
+- [Deploy CLI commands](/arena/reference/deploy/cli-commands/): every deploy subcommand and flag.

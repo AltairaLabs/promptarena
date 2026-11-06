@@ -1,0 +1,158 @@
+{
+ "page": "docs/src/content/docs/arena/tutorials/deploy/first-deployment.md",
+ "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "`promptarena deploy adapter install agentcore` downloads the release binary for the OS/arch into ~/.promptarena/adapters/",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:393",
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:409",
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:77"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "`deploy adapter list` prints a 'user-level (<dir>):' group with promptarena-deploy-agentcore",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:413",
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:489"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "deploy block lives under spec: with provider/config/environments",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:170",
+    "arena/arenaconfig/types.go:364",
+    "schemas/v1alpha1/arena.json:728"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "agentcore config needs region, runtime_role_arn, runtime_binary_path (validated before plan)",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/config.go:60"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "runtime binary built with `make build-runtime-arm64` in promptarena-deploy-agentcore, output promptkit-runtime",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 6,
+   "claim": "`deploy` commands read arena.yaml unless --config is given",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_interactive.go:54",
+    "arena/deploy/flow/options.go:24"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "deploy plan output: 'Deploy plan for environment: default (provider: agentcore)', Adapter line, 'Plan: 1 to create...', '+ agent_runtime.my_first_test (...)', 'Plan saved...'",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_interactive.go:142",
+    "arena/cmd/promptarena/deploy_plan_interactive.go:37",
+    "arena/cmd/promptarena/deploy_plan_interactive.go:51",
+    "arena/deploy/flow/render.go:6"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "without --env the environment is 'default'",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/config.go:30",
+    "arena/deploy/flow/options.go:7"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "plan is saved to .promptarena/deploy.plan",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/session.go:149",
+    "deploy/state.go:16"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "the CLI compiles a pack from the config when --pack is not given",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/config.go:43"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "pack id / runtime name derives from the project directory name",
+   "verdict": "true",
+   "evidence": [
+    "packc/compiler/compiler.go:97"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "apply prints 'Applying deployment to environment...', 'Using saved plan.', Adapter line, per-resource lines, 'Apply complete.'",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_apply_interactive.go:46",
+    "arena/cmd/promptarena/deploy_apply_interactive.go:56",
+    "arena/cmd/promptarena/deploy_apply_interactive.go:88",
+    "arena/cmd/promptarena/deploy_interactive.go:164"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "state is recorded in .promptarena/deploy.state",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/session.go:126",
+    "deploy/state.go:14",
+    "deploy/state.go:15"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "status prints header, Status, type.name: status lines, Last deployed, Pack checksum",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_interactive.go:181",
+    "arena/cmd/promptarena/deploy_status_interactive.go:37",
+    "arena/cmd/promptarena/deploy_status_interactive.go:75"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "destroy deletes resources, removes deploy.state, prints 'Deployment destroyed.'",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_destroy_interactive.go:70",
+    "arena/cmd/promptarena/deploy_destroy_interactive.go:82",
+    "arena/cmd/promptarena/deploy_destroy_interactive.go:87"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "apply without AWS credentials fails 'apply failed: adapter error -32603: agentcore: failed to create AWS client'",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 17,
+   "claim": "deploy with no subcommand plans then applies",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_interactive.go:199"
+   ]
+  }
+ ]
+}

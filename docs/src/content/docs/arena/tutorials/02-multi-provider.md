@@ -1,125 +1,140 @@
 ---
 title: 'Tutorial 2: Multi-Provider Testing'
+description: Run one customer-support scenario against OpenAI, Claude and Gemini in a single command, then read each provider's replies from the run output.
+verified:
+  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  sources:
+    - arena/arenaconfig/ignored_fields.go
+    - arena/arenaconfig/loader.go
+    - arena/arenaconfig/types.go
+    - arena/cmd/promptarena/config_inspect_interactive.go
+    - arena/cmd/promptarena/run.go
+    - arena/inspect/collector.go
+    - examples/capability-matrix/providers/anthropic-haiku45.provider.yaml
+    - examples/capability-matrix/providers/anthropic-sonnet46.provider.yaml
+    - examples/capability-matrix/providers/gemini-25-flash.provider.yaml
+    - schemas/v1alpha1/arena.json
+    - schemas/v1alpha1/promptconfig.json
+    - schemas/v1alpha1/provider.json
+    - schemas/v1alpha1/scenario.json
 ---
-Learn how to test the same scenario across multiple LLM providers and compare their responses.
+In this tutorial we run one scenario against three providers and read how each one answered. We build on [Tutorial 1: Your First Test](/arena/tutorials/01-first-test/), so we reuse its `config.arena.yaml` layout and `promptarena run --simple`. For why the comparison is worth making, see [Provider comparison](/arena/explanation/provider-comparison/).
 
-## What You'll Learn
+## What we will build
 
-- Configure multiple LLM providers (OpenAI, Claude, Gemini)
-- Run the same test across all providers
-- Compare provider responses
-- Understand provider-specific behaviors
+A project with one prompt, one scenario and three providers. One run produces one result per provider:
+
+```text
+multi-provider/
+├── config.arena.yaml
+├── prompts/support.yaml
+├── providers/
+│   ├── openai.yaml
+│   ├── claude.yaml
+│   └── gemini.yaml
+└── scenarios/customer-support.yaml
+```
 
 ## Prerequisites
 
-- Completed [Tutorial 1: Your First Test](/arena/tutorials/01-first-test/)
-- API keys for providers you want to test (at least 2)
+- PromptArena installed, as in Tutorial 1
+- An OpenAI API key (`OPENAI_API_KEY`)
+- An Anthropic API key (`ANTHROPIC_API_KEY`)
+- A Gemini API key (`GEMINI_API_KEY`)
 
-## Why Multi-Provider Testing?
-
-Different LLM providers have unique strengths:
-- **Response style**: Formal vs. conversational
-- **Accuracy**: Factual correctness varies
-- **Speed**: Response time differences
-- **Cost**: Pricing varies significantly
-- **Capabilities**: Tool calling, vision, etc.
-
-Testing across providers helps you:
-- Choose the best model for your use case
-- Validate consistency across providers
-- Build fallback strategies
-- Optimize cost vs. quality
-
-## Step 1: Get API Keys
-
-You'll need API keys for the providers you want to test:
-
-### OpenAI
-Visit [platform.openai.com](https://platform.openai.com/api-keys)
-
-### Anthropic (Claude)
-Visit [console.anthropic.com](https://console.anthropic.com/)
-
-### Google (Gemini)
-Visit [aistudio.google.com](https://aistudio.google.com/app/apikey)
-
-## Step 2: Set Up Environment
+## Step 1: Create the project and export your keys
 
 ```bash
-# Add all API keys to your environment
-export OPENAI_API_KEY="sk-..."
-export ANTHROPIC_API_KEY="sk-ant-..."
-export GOOGLE_API_KEY="..."
-
-# Or add to ~/.zshrc for persistence
-cat >> ~/.zshrc << 'EOF'
-export OPENAI_API_KEY="sk-..."
-export ANTHROPIC_API_KEY="sk-ant-..."
-export GOOGLE_API_KEY="..."
-EOF
-
-source ~/.zshrc
+mkdir -p multi-provider/prompts multi-provider/providers multi-provider/scenarios
+cd multi-provider
 ```
 
-## Step 3: Configure Multiple Providers
+`promptarena` does not read `.env` files, so export the keys in the shell you run it from:
 
-Create provider configurations:
+```bash
+export OPENAI_API_KEY="sk-your-openai-key"
+export ANTHROPIC_API_KEY="sk-ant-your-anthropic-key"
+export GEMINI_API_KEY="your-gemini-key"
+```
 
-### OpenAI
+## Step 2: Create a prompt
 
-`providers/openai.yaml`:
+Create `prompts/support.yaml`:
+
+```yaml
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: PromptConfig
+metadata:
+  name: support
+
+spec:
+  version: v1.0.0
+  description: Customer support assistant
+  task_type: support
+
+  system_template: |
+    You are a helpful customer support assistant.
+    Keep responses brief.
+```
+
+All three providers receive this same system message.
+
+## Step 3: Configure three providers
+
+Create `providers/openai.yaml`:
 
 ```yaml
 apiVersion: promptkit.altairalabs.ai/v1alpha1
 kind: Provider
 metadata:
   name: openai-gpt4o-mini
+
 spec:
   type: openai
   model: gpt-4o-mini
-  
+
   defaults:
     temperature: 0.7
     max_tokens: 500
 ```
 
-### Anthropic Claude
-
-`providers/claude.yaml`:
+Create `providers/claude.yaml`:
 
 ```yaml
 apiVersion: promptkit.altairalabs.ai/v1alpha1
 kind: Provider
 metadata:
-  name: claude-sonnet
+  name: claude-haiku
+
 spec:
   type: claude
-  model: claude-3-5-sonnet-20241022
-  
+  model: claude-haiku-4-5-20251001
+
   defaults:
     temperature: 0.7
     max_tokens: 500
 ```
 
-### Google Gemini
-
-`providers/gemini.yaml`:
+Create `providers/gemini.yaml`:
 
 ```yaml
 apiVersion: promptkit.altairalabs.ai/v1alpha1
 kind: Provider
 metadata:
   name: gemini-flash
+
 spec:
   type: gemini
-  model: gemini-1.5-flash
-  
+  model: gemini-2.5-flash
+
   defaults:
     temperature: 0.7
     max_tokens: 500
 ```
 
-## Step 4: Create a Comparison Test
+The three files differ only in `spec.type` and `spec.model`. `metadata.name` is the provider ID that appears in the run output. The `openai`, `claude` and `gemini` providers read `OPENAI_API_KEY`, `ANTHROPIC_API_KEY` and `GEMINI_API_KEY`.
+
+## Step 4: Write the scenario
 
 Create `scenarios/customer-support.yaml`:
 
@@ -128,39 +143,34 @@ apiVersion: promptkit.altairalabs.ai/v1alpha1
 kind: Scenario
 metadata:
   name: customer-support
-  labels:
-    category: customer-service
-    priority: comparison
 
 spec:
+  description: Customer support comparison
   task_type: support
-  
+
   turns:
     - role: user
       content: "I'm having trouble logging into my account. Can you help?"
       assertions:
-        - type: content_includes
-          params:
-            patterns: ["account"]
-            message: "Should acknowledge account issue"
-
         - type: content_matches
           params:
-            pattern: "^.{1,300}$"
-            message: "Keep response concise"
-    
+            pattern: "(?s)^.{1,1000}$"
+          message: "Keep response concise"
+
     - role: user
       content: "I've tried resetting my password but didn't receive an email."
       assertions:
         - type: content_includes
           params:
             patterns: ["email"]
-            message: "Should address email issue"
+          message: "Should address email issue"
 ```
 
-## Step 5: Update Arena Configuration
+Every provider answers the same two turns and the same assertions check every answer. The assertions stay loose because the providers word their replies differently. The `(?s)` flag lets `.` match newlines, so a reply with line breaks still matches `content_matches`. Regular expression repeat counts are limited to 1000.
 
-Edit `arena.yaml`:
+## Step 5: Create the arena configuration
+
+Create `config.arena.yaml`:
 
 ```yaml
 apiVersion: promptkit.altairalabs.ai/v1alpha1
@@ -172,349 +182,101 @@ spec:
   prompt_configs:
     - id: support
       file: prompts/support.yaml
-  
+
   providers:
     - file: providers/openai.yaml
     - file: providers/claude.yaml
     - file: providers/gemini.yaml
-  
+
   scenarios:
     - file: scenarios/customer-support.yaml
-```
 
-## Step 6: Run Multi-Provider Tests
-
-```bash
-# Run tests across ALL configured providers
-promptarena run
-```
-
-Output:
-
-```
-PromptArena Starting...
-
-Loading configuration...
-  ✓ Loaded 1 prompt config
-  ✓ Loaded 3 providers (openai-gpt4o-mini, claude-sonnet, gemini-flash)
-  ✓ Loaded 1 scenario
-
-Running tests (3 providers × 1 scenario × 2 turns = 6 test executions)...
-  ✓ Product Inquiry - Turn 1 [openai-gpt4o-mini] (1.2s)
-  ✓ Product Inquiry - Turn 1 [claude-sonnet] (1.5s)
-  ✓ Product Inquiry - Turn 1 [gemini-flash] (0.8s)
-  ✓ Product Inquiry - Turn 2 [openai-gpt4o-mini] (1.3s)
-  ✓ Product Inquiry - Turn 2 [claude-sonnet] (1.4s)
-  ✓ Product Inquiry - Turn 2 [gemini-flash] (0.9s)
-
-Results by Provider:
-  openai-gpt4o-mini:     2/2 passed (100%)
-  claude-sonnet:   2/2 passed (100%)
-  gemini-flash:    2/2 passed (100%)
-
-Overall: 6/6 passed (100%)
-```
-
-## Step 7: Generate Comparison Report
-
-```bash
-# Generate a Markdown report with all provider results
-promptarena run --format markdown
-
-# Open the report
-open out/results.md
-```
-
-The Markdown report shows side-by-side provider results. For an interactive view with filtering and conversation detail, run `promptarena serve`.
-
-## Step 8: Test Specific Providers
-
-Sometimes you want to test only one or two providers:
-
-```bash
-# Test only OpenAI
-promptarena run --provider openai-gpt4o-mini
-
-# Test OpenAI and Claude
-promptarena run --provider openai-gpt4o-mini,claude-sonnet
-
-# Test everything except Gemini
-promptarena run --provider openai-gpt4o-mini,claude-sonnet
-```
-
-## Analyzing Provider Differences
-
-### Response Style Comparison
-
-Create `scenarios/style-test.yaml`:
-
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: style-test
-
-spec:
-  task_type: support
-  
-  turns:
-    - role: user
-      content: "Explain how your product works"
-      assertions:
-        - type: content_includes
-          params:
-            patterns: ["feature"]
-            message: "Should explain features"
-        
-        - type: content_matches
-          params:
-            pattern: "^.{50,500}$"
-            message: "Response should be substantial but not excessive"
-```
-
-Run and compare:
-
-```bash
-promptarena run --scenario style-test --format json
-
-# View detailed responses
-cat out/results.json | jq '.results[] | {provider: .provider, response: .response}'
-```
-
-### Performance Comparison
-
-Check response times:
-
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: performance-test
-
-spec:
-  task_type: support
-  
-  turns:
-    - role: user
-      content: "Quick question: what's your return policy?"
-      assertions:
-        - type: content_matches
-          params:
-            pattern: ".+"
-            message: "All providers should respond with content"
-```
-
-### Cost Analysis
-
-Different providers have different pricing:
-
-| Provider | Model | Cost (per 1M tokens) |
-|----------|-------|---------------------|
-| OpenAI | gpt-4o-mini | Input: $0.15, Output: $0.60 |
-| Anthropic | claude-3-5-sonnet | Input: $3.00, Output: $15.00 |
-| Google | gemini-1.5-flash | Input: $0.075, Output: $0.30 |
-
-Generate a cost report:
-
-```bash
-promptarena run --format json
-
-# Calculate costs (example with jq)
-cat out/results.json | jq '
-  .results | 
-  group_by(.provider) | 
-  map({
-    provider: .[0].provider,
-    total_turns: length,
-    avg_response_time: (map(.response_time) | add / length)
-  })
-'
-```
-
-## Advanced: Provider-Specific Tests
-
-Test provider-specific features:
-
-### Testing Structured Output (OpenAI)
-
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: json-response-test
-  labels:
-    provider-specific: openai
-
-spec:
-  task_type: support
-  
-  turns:
-    - role: user
-      content: "Return user info as JSON with name and email"
-      assertions:
-        - type: is_valid_json
-          params:
-            message: "Response should be valid JSON"
-```
-
-### Testing Long Context (Claude)
-
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: long-context-test
-  labels:
-    provider-specific: claude
-
-spec:
-  task_type: support
-  description: "Claude excels at long context"
-  
-  turns:
-    - role: user
-      content: "Summarize this document"
-      assertions:
-        - type: content_includes
-          params:
-            patterns: ["key points"]
-            message: "Should identify key points"
-```
-
-## Best Practices
-
-### 1. Keep Parameters Consistent
-
-Use the same temperature and max_tokens across providers for fair comparison:
-
-```yaml
-# All providers
-spec:
   defaults:
     temperature: 0.7
     max_tokens: 500
+    output:
+      dir: out
+      formats: [json, markdown]
 ```
 
-### 2. Provider-Agnostic Assertions
+Listing three files under `providers` is all it takes: `promptarena run` runs every scenario against every provider.
 
-Write assertions that work across all providers:
-
-```yaml
-# Good - flexible
-assertions:
-  - type: content_includes
-    params:
-      patterns: ["help"]
-      message: "Should offer help"
-
-# Avoid - too specific to one provider's style
-assertions:
-      patterns: ["I'd be happy to help you with that!"]
-```
-
-### 3. Use Meaningful Names
-
-Give providers descriptive names:
-
-```yaml
-# providers/openai-creative.yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Provider
-metadata:
-  name: openai-creative
-
-spec:
-  type: openai
-  model: gpt-4o-mini
-  defaults:
-    temperature: 0.9
-
-# providers/openai-precise.yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Provider
-metadata:
-  name: openai-precise
-
-spec:
-  type: openai
-  model: gpt-4o-mini
-  defaults:
-    temperature: 0.1
-```
-
-Test configuration variants:
+## Step 6: Run against all providers
 
 ```bash
-promptarena run --provider openai-creative,openai-precise
+promptarena run --simple
 ```
 
-### 4. Document Provider Behavior
+Log lines scroll past, then a progress bar and a summary (trimmed here):
 
-Add comments to your scenarios:
+```text
+Generated 3 run combinations
+Starting execution…
 
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: customer-support-response
-  annotations:
-    notes: |
-      Claude tends to be more verbose
-      OpenAI more concise, Gemini fastest
+Done  [████████████████████████]  3/3
 
-spec:
-  task_type: support
-  
-  turns:
-    - role: user
-      content: "Help with order tracking"
+Run Summary
+────────────────────────────────────────────────────
+
+Total runs      3
+
+Providers       claude-haiku (1), gemini-flash (1), openai-gpt4o-mini (1)
+Scenarios       1 scenarios
+Regions         default
+
+Saved to        out
 ```
 
-## Common Issues
+A run is one scenario against one provider, so three providers and one scenario make three runs. The `Passed` and `Failed` lines, cost, tokens and durations also appear and vary from run to run. If one provider's key is missing or out of credit, only that run fails and the summary lists the error under `FAILURES`.
 
-### Missing API Key
+## Step 7: Compare the providers
+
+Open the Markdown report:
 
 ```bash
-# Verify keys are set
-echo $OPENAI_API_KEY
-echo $ANTHROPIC_API_KEY
-echo $GOOGLE_API_KEY
+open out/results.md
 ```
 
-### Provider Not Found
+Its Test Results table has one row per provider, with status, duration, cost and the number of assertions. The Cost Breakdown table lists the total cost per provider.
+
+The replies themselves are in the run files. `out/index.json` lists the `run_ids`, and each `out/<run-id>.json` holds the messages, including each assistant reply with its `latency_ms` and `cost_info`. Print the assistant replies of every run:
 
 ```bash
-# Check provider configuration
-promptarena config-inspect
-
-# Should list all providers
+python3 -c "
+import glob, json
+for path in sorted(glob.glob('out/20*.json')):
+    run = json.load(open(path))
+    print('==', run['ProviderID'])
+    for message in run['Messages']:
+        if message['role'] == 'assistant':
+            print(message['content'][:200])
+"
 ```
 
-### Rate Limiting
+The providers answer the same prompt in different lengths and styles: in one run Claude replied with a numbered list of steps, while `gpt-4o-mini` asked for more detail.
+
+## Step 8: Run a subset of providers
+
+Pass provider IDs to `--provider` to run only those:
 
 ```bash
-# Reduce concurrency to avoid rate limits
-promptarena run --concurrency 1
-
-# Or test one provider at a time
-promptarena run --provider openai-gpt4o-mini
+promptarena run --simple --provider openai-gpt4o-mini,claude-haiku
 ```
 
-## Next Steps
+The summary now shows two runs and lists only those providers:
 
-You now know how to test across multiple providers!
+```text
+Total runs      2
+Passed          2 (100.0%)
+Failed          0 (0.0%)
 
-**Continue learning:**
-- **[Tutorial 3: Multi-Turn Conversations](/arena/tutorials/03-multi-turn/)** - Build complex dialog flows
-- **[Tutorial 4: MCP Tools](/arena/tutorials/04-mcp-tools/)** - Test tool/function calling
-- **[How-To: Configure Providers](/arena/how-to/providers/configure-providers/)** - Advanced provider setup
+Providers       openai-gpt4o-mini (1), claude-haiku (1)
+```
 
-**Try this:**
-- Add more providers (Azure OpenAI, Groq, etc.)
-- Create provider-specific test suites
-- Build a cost optimization analysis
-- Test the same prompt across different model versions
+## Next steps
 
-## What's Next?
+You have run one scenario against three providers.
 
-In Tutorial 3, you'll learn how to create multi-turn conversation tests that maintain context across multiple exchanges.
+- [Tutorial 3: Multi-Turn Conversations](/arena/tutorials/03-multi-turn/): build longer dialogs.
+- [Tutorial 4: MCP Tools](/arena/tutorials/04-mcp-tools/): test tool calling.
+- [Configure Providers](/arena/how-to/providers/configure-providers/): every provider option, including Azure OpenAI and other OpenAI-compatible endpoints.

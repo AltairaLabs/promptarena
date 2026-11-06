@@ -1,217 +1,90 @@
 ---
 title: 'Tutorial 3: Multi-Turn Conversations'
+description: Test that an assistant keeps context across a conversation, walk it through a multi-step flow, and let a persona play the customer.
+verified:
+  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  sources:
+    - arena/arenaconfig/loader.go
+    - arena/arenaconfig/types.go
+    - arena/cmd/promptarena/run.go
+    - arena/engine/conversation_executor.go
+    - arena/engine/execution.go
+    - arena/stages/scenario_context_extraction.go
+    - schemas/v1alpha1/arena.json
+    - schemas/v1alpha1/scenario.json
 ---
-Learn how to test complex multi-turn conversations that maintain context across exchanges.
+In this tutorial we test conversations rather than single questions. We write a support assistant, check that it remembers a name across five turns, check that it walks a customer through a booking, and finally let an AI persona play the customer.
 
-## What You'll Learn
+## What we will build
 
-- Create multi-turn conversation flows
-- Test context retention across turns
-- Handle conversation state
-- Validate conversation coherence
-- Test conversation branching
+A project with one prompt, one provider and three scenarios, all passing against OpenAI's `gpt-4o-mini`:
+
+```text
+my-arena-tests/
+├── config.arena.yaml
+├── prompts/support.yaml
+├── providers/openai.yaml
+├── personas/frustrated-customer.persona.yaml
+└── scenarios/
+    ├── memory-test.yaml
+    ├── flight-booking.yaml
+    └── self-play.yaml
+```
 
 ## Prerequisites
 
-- Completed [Tutorial 1](/arena/tutorials/01-first-test/) and [Tutorial 2](/arena/tutorials/02-multi-provider/)
-- Basic understanding of conversation design
+- PromptArena installed (see [Tutorial 1](/arena/tutorials/01-first-test/))
+- An OpenAI API key
 
-## Why Multi-Turn Testing?
-
-Real LLM applications involve conversations as well as single Q&A:
-- **Customer support**: Back-and-forth troubleshooting
-- **Chatbots**: Building rapport over multiple exchanges
-- **Assistants**: Following complex instructions step-by-step
-- **Agents**: Maintaining task state across turns
-
-Multi-turn testing ensures:
-- Context is retained between messages
-- Responses reference previous exchanges
-- Conversation flow feels natural
-- State management works correctly
-
-## Step 1: Basic Multi-Turn Scenario
-
-Create `scenarios/support-conversation.yaml`:
-
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: account-issue-resolution
-  labels:
-    category: multi-turn
-    type: customer-service
-
-spec:
-  task_type: support
-  
-  turns:
-    # Turn 1: Initial problem statement
-    - role: user
-      content: "I can't access my account"
-      assertions:
-        - type: content_includes
-          params:
-            patterns: ["help"]
-            message: "Should offer help"
-    
-    # Turn 2: Providing details
-    - role: user
-      content: "I get an error message saying 'Invalid credentials'"
-      assertions:
-        - type: content_matches
-          params:
-            pattern: "(?i)(password|reset|credentials)"
-            message: "Should reference password reset"
-    
-    # Turn 3: Follow-up question
-    - role: user
-      content: "How long will it take?"
-      assertions:
-        - type: content_includes
-          params:
-            patterns: ["time"]
-            message: "Should provide timeframe"
-    
-    # Turn 4: Additional inquiry
-    - role: user
-      content: "Will I lose my saved preferences?"
-      assertions:
-        - type: content_includes
-          params:
-            patterns: ["preferences"]
-            message: "Should address preferences concern"
-```
-
-## Step 2: Test Context Retention
-
-Run the test:
+## Step 1: Create the project
 
 ```bash
-promptarena run --scenario support-conversation
+mkdir -p my-arena-tests/prompts my-arena-tests/providers my-arena-tests/personas my-arena-tests/scenarios
+cd my-arena-tests
 ```
 
-The `content_includes` assertion can check if the response demonstrates awareness of earlier turns by verifying keywords from previous exchanges appear in the response.
+## Step 2: Create a prompt and a provider
 
-## Step 3: Information Gathering Flow
-
-Create `scenarios/progressive-disclosure.yaml`:
+Create `prompts/support.yaml`:
 
 ```yaml
 apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
+kind: PromptConfig
 metadata:
-  name: flight-booking
-  labels:
-    category: progressive
-    type: multi-turn
+  name: support
 
 spec:
   task_type: support
-  description: "Step-by-step information collection"
-  
-  context_metadata:
-    domain: "travel"
-  
-  turns:
-    # Turn 1: Initial inquiry
-    - role: user
-      content: "I need to book a flight"
-      assertions:
-        - type: content_includes
-          params:
-            patterns: ["destination"]
-            message: "Should ask for destination"
-    
-    # Turn 2: Provide destination
-    - role: user
-      content: "To New York"
-      assertions:
-        - type: content_includes
-          params:
-            patterns: ["date"]
-            message: "Should ask for date"
-    
-    # Turn 3: Provide date
-    - role: user
-      content: "Next Friday"
-      assertions:
-        - type: content_includes
-          params:
-            patterns: ["class"]
-            message: "Should ask for class preferences"
-    
-    # Turn 4: Complete booking
-    - role: user
-      content: "Economy class, window seat"
-      assertions:
-        - type: content_includes
-          params:
-            patterns: ["confirm"]
-            message: "Should confirm booking details"
+  version: v1.0.0
+  description: Support assistant
+
+  system_template: |
+    You are a customer support assistant. Be concise and helpful.
 ```
 
-## Step 4: Conversation Branching
-
-Test different conversation paths:
+Create `providers/openai.yaml`:
 
 ```yaml
-# Path A: Successful resolution
 apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
+kind: Provider
 metadata:
-  name: happy-path-conversation
-  labels:
-    path: happy
+  name: openai-gpt4o-mini
 
 spec:
-  task_type: support
-  
-  turns:
-    - role: user
-      content: "My order hasn't arrived"
-    - role: user
-      content: "Order number is #12345"
-    - role: user
-      content: "Yes, the address is correct"
-    - role: user
-      content: "Great, thank you!"
-      assertions:
-        - type: content_includes
-          params:
-            patterns: ["welcome"]
-            message: "Should acknowledge thanks positively"
-
----
-# Path B: Escalation needed
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: escalation-path
-  labels:
-    path: escalation
-
-spec:
-  task_type: support
-  
-  turns:
-    - role: user
-      content: "My order hasn't arrived"
-    - role: user
-      content: "Order number is #12345"
-    - role: user
-      content: "No, I need it urgently"
-    - role: user
-      content: "This is unacceptable"
-      assertions:
-        - type: content_includes
-          params:
-            patterns: ["supervisor"]
-            message: "Should offer escalation"
+  id: openai-gpt4o-mini
+  type: openai
+  model: gpt-4o-mini
 ```
 
-## Step 5: Testing Conversation Memory
+`promptarena` does not read `.env` files, so export your key in the shell you run it from:
+
+```bash
+export OPENAI_API_KEY="sk-your-api-key-here"
+```
+
+## Step 3: Test that the assistant remembers
+
+Every `role: user` turn in a scenario is sent with the whole conversation so far, so a later turn can depend on an earlier one. We test that by telling the assistant our name in turn 1, changing the subject three times, and asking for the name back in turn 5.
 
 Create `scenarios/memory-test.yaml`:
 
@@ -220,426 +93,288 @@ apiVersion: promptkit.altairalabs.ai/v1alpha1
 kind: Scenario
 metadata:
   name: long-term-memory-test
-  labels:
-    category: memory
-    type: context-retention
 
 spec:
+  id: long-term-memory-test
+  description: Remembers the customer's name after several unrelated questions
   task_type: support
-  
+
   turns:
-    # Turn 1: Introduction
     - role: user
       content: "Hi, my name is Alice and I'm calling about my account"
       assertions:
         - type: content_includes
           params:
             patterns: ["Alice"]
-            message: "Should acknowledge name"
-    
-    # Turn 2-5: Other topics
+          message: "Should acknowledge the name"
+
     - role: user
       content: "What are your business hours?"
     - role: user
       content: "Do you offer international shipping?"
     - role: user
       content: "What's your return policy?"
-    
-    # Turn 6: Reference earlier context
+
     - role: user
       content: "What was my name again?"
       assertions:
         - type: content_includes
           params:
             patterns: ["Alice"]
-            message: "Should remember name from turn 1"
+          message: "Should remember the name from turn 1"
 ```
 
-## Step 6: Conditional Responses
+Turns without `assertions` still run, so they pad the conversation. Only the first and last turns are checked here.
 
-Test context-dependent responses:
+## Step 4: Create the arena configuration
+
+Create `config.arena.yaml`:
 
 ```yaml
-# Premium user scenario
 apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
+kind: Arena
 metadata:
-  name: premium-user-support
+  name: my-arena-tests
 
 spec:
-  task_type: support
-  
-  context_metadata:
-    user_tier: premium
-    account_id: "P-12345"
-  
-  turns:
-    - role: user
-      content: "I need help with my account"
-      assertions:
-        - type: content_includes
-          params:
-            patterns: ["premium"]
-            message: "Should recognize premium tier"
+  prompt_configs:
+    - id: support
+      file: prompts/support.yaml
 
----
-# Basic user scenario
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: basic-user-support
+  providers:
+    - file: providers/openai.yaml
 
-spec:
-  task_type: support
-  
-  context_metadata:
-    user_tier: basic
-    account_id: "B-67890"
-  
-  turns:
-    - role: user
-      content: "I need help with my account"
-      assertions:
-        - type: content_includes
-          params:
-            patterns: ["help"]
-            message: "Should offer helpful support"
+  scenarios:
+    - file: scenarios/memory-test.yaml
+
+  defaults:
+    temperature: 0.7
+    max_tokens: 500
+    concurrency: 1
+    output:
+      dir: out
+      formats: [json, markdown]
 ```
 
-## Step 7: Error Recovery
+Arena only runs scenarios listed under `spec.scenarios`; it does not scan the `scenarios/` directory.
 
-Test how the system handles conversation errors:
+## Step 5: Run it
+
+`--scenario` takes the scenario `id`, not the file name:
+
+```bash
+promptarena run --simple --scenario long-term-memory-test
+```
+
+`--simple` prints plain output instead of the interactive terminal UI. After the log lines you see the summary:
+
+```text
+Run Summary
+────────────────────────────────────────────────────
+
+Total runs      1
+Passed          1 (100.0%)
+Failed          0 (0.0%)
+```
+
+Cost, tokens and duration follow and vary from run to run.
+
+## Step 6: Read the conversation
+
+Each run writes a JSON file to `out/`, named after the scenario. Its `Messages` array holds every user and assistant message, and each assistant message carries its assertion results in `meta.assertions.results`:
+
+```bash
+jq -c '.Messages[] | select(.role == "assistant") | {content, results: [.meta.assertions.results[]? | {type, passed, message}]}' out/*_long-term-memory-test_*.json
+```
+
+The last line is the answer to "What was my name again?", with its passing check:
+
+```json
+{"content":"Your name is Alice. How can I assist you further?","results":[{"type":"content_includes","passed":true,"message":"Should remember the name from turn 1"}]}
+```
+
+The reply wording varies from run to run. Replies to turns without assertions show `"results":[]`. When an assertion fails, Arena stops that scenario and skips its remaining turns.
+
+## Step 7: Walk a multi-step flow
+
+Here the customer supplies information one piece at a time, and we check that the assistant asks for what is missing. Real model replies are worded differently each run, so each assertion accepts several phrasings with a regular expression.
+
+Create `scenarios/flight-booking.yaml`:
 
 ```yaml
-# Clarification scenario
 apiVersion: promptkit.altairalabs.ai/v1alpha1
 kind: Scenario
 metadata:
-  name: clarification-request
-  labels:
-    category: error-recovery
+  name: flight-booking
 
 spec:
+  id: flight-booking
+  description: Collects flight details step by step
   task_type: support
-  
+
   turns:
     - role: user
-      content: "I need that thing"
+      content: "I need to book a flight"
       assertions:
-        - type: content_includes
+        - type: content_matches
           params:
-            patterns: ["clarify"]
-            message: "Should ask for clarification"
-    
-    - role: user
-      content: "Sorry, I meant the refund policy"
-      assertions:
-        - type: content_includes
-          params:
-            patterns: ["refund"]
-            message: "Should proceed with clarified topic"
+            pattern: "(?i)(destination|where|from|depart)"
+          message: "Should ask where the trip is"
 
----
-# Misunderstanding correction
+    - role: user
+      content: "To New York"
+      assertions:
+        - type: content_matches
+          params:
+            pattern: "(?i)(date|when|depart|travel)"
+          message: "Should ask about timing"
+
+    - role: user
+      content: "Next Friday"
+      assertions:
+        - type: content_matches
+          params:
+            pattern: "(?i)(class|economy|return|round|passenger|how many)"
+          message: "Should ask for more details"
+```
+
+Add it to `config.arena.yaml`:
+
+```yaml
+  scenarios:
+    - file: scenarios/memory-test.yaml
+    - file: scenarios/flight-booking.yaml
+```
+
+Run both scenarios, naming them by id:
+
+```bash
+promptarena run --simple --scenario long-term-memory-test,flight-booking
+```
+
+The summary now reads `Total runs      2` and `Passed          2 (100.0%)`.
+
+## Step 8: Let a persona play the customer
+
+Scripted turns test the paths you thought of. A self-play turn hands the user's side to a second model that follows a persona, so the conversation goes where the persona takes it.
+
+Create `personas/frustrated-customer.persona.yaml`:
+
+```yaml
 apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
+kind: Persona
 metadata:
-  name: misunderstanding-correction
-  labels:
-    category: correction
+  name: frustrated-customer
 
 spec:
-  task_type: support
-  
-  turns:
-    - role: user
-      content: "When can I get my order?"
-    
-    - role: user
-      content: "Actually, I meant to ask about returns, not delivery"
-      assertions:
-        - type: content_includes
-          params:
-            patterns: ["return"]
-            message: "Should pivot to the corrected topic"
+  id: frustrated-customer
+  description: A customer whose order has not arrived
+  system_template: |
+    You are a frustrated customer whose order has not arrived. Write one short message at a time.
+  goals: [Get the order located]
+  constraints: [Stay in character]
+  style:
+    verbosity: short
+    challenge_level: medium
+    friction_tags: [impatient]
+  defaults:
+    temperature: 0.7
 ```
 
-## Step 8: Run Multi-Turn Tests
-
-```bash
-# Run all multi-turn tests
-promptarena run --scenario support-conversation,progressive-disclosure,memory-test
-
-# Generate detailed Markdown report
-promptarena run --format markdown
-
-# View conversation flows
-open out/results.md
-```
-
-## Analyzing Multi-Turn Results
-
-### Review JSON Output
-
-```bash
-cat out/results.json | jq '.results[] | select(.scenario == "Account Issue Resolution") | {
-  turn: .turn,
-  user_message: .user_message,
-  response: .response,
-  assertions_passed: .assertions_passed
-}'
-```
-
-### Check Context Retention
-
-```bash
-# Find tests with context retention issues
-cat out/results.json | jq '.results[] | select(.assertions[] |
-  select(.type == "content_includes" and .passed == false))'
-```
-
-## Advanced Patterns
-
-### Self-Play Testing
-
-Use self-play turns to have an AI persona generate user messages automatically. The persona LLM drives the conversation while the target assistant responds:
+Create `scenarios/self-play.yaml`:
 
 ```yaml
 apiVersion: promptkit.altairalabs.ai/v1alpha1
 kind: Scenario
 metadata:
   name: self-play-customer-interaction
-  labels:
-    category: self-play
 
 spec:
+  id: self-play-customer-interaction
+  description: A persona keeps a late-order conversation going
   task_type: support
 
   turns:
-    # Seed the conversation with a scripted opening
+    # A scripted opening
     - role: user
       content: "My order hasn't arrived and it's been a week."
 
-    # Self-play takes over: persona generates follow-up messages
-    - role: gemini-user               # Must match a role in arena.yaml self_play.roles
-      persona: frustrated-customer    # Must match a configured persona
-      turns: 3                        # Minimum exchanges
-      max_turns: 8                    # Upper bound (natural termination enabled)
+    # The persona writes the next user messages
+    - role: customer
+      persona: frustrated-customer
+      turns: 3
 ```
 
-Self-play requires configuration in your `arena.yaml`:
-
-```yaml
-self_play:
-  personas:
-    - file: personas/frustrated-customer.persona.yaml
-  roles:
-    - id: gemini-user
-      provider: selfplay              # Provider ID for persona LLM
-```
-
-### Conversation Patterns
-
-#### Information Extraction
-
-```yaml
-spec:
-  turns:
-    - role: user
-      content: "Book a table for 4 people tomorrow at 7pm"
-      assertions:
-        - type: content_includes
-          params:
-            patterns: ["4"]
-            message: "Should capture party size"
-```
-
-#### Confirmation Loop
-
-```yaml
-spec:
-  turns:
-    - role: user
-      content: "Cancel my subscription"
-    
-    - role: user
-      content: "Yes, I'm sure"
-      assertions:
-        - type: content_includes
-          params:
-            patterns: ["confirm"]
-            message: "Should confirm cancellation"
-    
-    - role: user
-      content: "Can you tell me what I'll lose?"
-      assertions:
-        - type: content_includes
-          params:
-            patterns: ["lose"]
-            message: "Should explain consequences"
-```
-
-## Best Practices
-
-### 1. Test Realistic Conversation Flows
-
-Model actual user interactions:
-
-```yaml
-# Good - natural conversation
-spec:
-  turns:
-    - role: user
-      content: "Hi, I have a question"
-    - role: user
-      content: "About shipping times"
-    - role: user
-      content: "To California"
-
-# Avoid - too structured
-spec:
-  turns:
-    - role: user
-      content: "Question: What are shipping times to California?"
-```
-
-### 2. Validate Context at Each Turn
-
-```yaml
-spec:
-  turns:
-    - role: user
-      content: "I'm having an issue"
-    
-    - role: user
-      content: "With my recent order"
-      assertions:
-        - type: content_includes
-          params:
-            patterns: ["order"]
-            message: "Should reference order context"
-```
-
-### 3. Test Edge Cases
-
-```yaml
-# Very long conversation
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: very-long-conversation
-
-spec:
-  task_type: support
-  turns:
-    # Define as many scripted turns as needed, or use self-play:
-    - role: user
-      content: "I have a complex issue..."
-    - role: gemini-user
-      persona: persistent-customer
-      turns: 10
-      max_turns: 20
-
----
-# Topic switching
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: topic-switching
-
-spec:
-  task_type: support
-  turns:
-    - role: user
-      content: "Question about billing"
-    - role: user
-      content: "Actually, never mind, tell me about features"
-
----
-# Ambiguous references
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: ambiguous-references
-
-spec:
-  task_type: support
-  turns:
-    - role: user
-      content: "Tell me about plans"
-    - role: user
-      content: "What about that one?"
-```
-
-### 4. Use Context Metadata for Complex State
+`role: customer` names a self-play role, which we define in `config.arena.yaml`. Its `provider` is the id of the model that plays the persona, and it must be one of the providers listed under `spec.providers`. Create `config.arena.yaml` again, now with the self-play block and all three scenarios:
 
 ```yaml
 apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
+kind: Arena
 metadata:
-  name: resume-conversation
+  name: my-arena-tests
 
 spec:
-  task_type: support
-  
-  context_metadata:
-    previous_topic: "billing"
-    unresolved_issues: ["payment failed"]
-    user_mood: "frustrated"
-  
-  turns:
-    - role: user
-      content: "Let's continue where we left off"
+  prompt_configs:
+    - id: support
+      file: prompts/support.yaml
+
+  providers:
+    - file: providers/openai.yaml
+
+  scenarios:
+    - file: scenarios/memory-test.yaml
+    - file: scenarios/flight-booking.yaml
+    - file: scenarios/self-play.yaml
+
+  self_play:
+    personas:
+      - file: personas/frustrated-customer.persona.yaml
+    roles:
+      - id: customer
+        provider: openai-gpt4o-mini
+
+  defaults:
+    temperature: 0.7
+    max_tokens: 500
+    concurrency: 1
+    output:
+      dir: out
+      formats: [json, markdown]
 ```
 
-## Common Issues
-
-### Context Not Maintained
+Run the whole suite:
 
 ```bash
-# Test with verbose logging
-promptarena run --verbose --scenario memory-test
-
-# Check if prompt includes conversation history
+promptarena run --simple
 ```
 
-### Assertions Too Strict
-
-```yaml
-# Too strict
-assertions:
-      patterns: ["I understand you mentioned your order number earlier."]
-
-# Better
-assertions:
-  - type: content_includes
-    params:
-      patterns: ["order number"]
-      message: "Should reference order"
-```
-
-### Long Conversations Timeout
+All three scenarios pass. Each self-play run writes different messages, so read the one it produced:
 
 ```bash
-# Increase concurrency limits or reduce scenarios for long conversations
-promptarena run --concurrency 1 --verbose
+jq -c '.Messages[] | {role, content}' out/*_self-play-customer-interaction_*.json
 ```
 
-## Next Steps
+After the system prompt and the scripted opening, the persona's messages appear as `user` entries, for example `My order number is 123456. Can you tell me where it is?`.
 
-You now know how to test complex multi-turn conversations!
+## Common issues
 
-**Continue learning:**
-- **[Tutorial 4: MCP Tools](/arena/tutorials/04-mcp-tools/)** - Test tool/function calling in conversations
-- **[Tutorial 5: CI Integration](/arena/tutorials/05-ci-integration/)** - Automate conversation testing
-- **[How-To: Write Scenarios](/arena/how-to/scenarios/write-scenarios/)** - Advanced patterns
+### `scenario <name> not found`
 
-**Try this:**
-- Create a 10+ turn conversation test
-- Build a conversation decision tree
-- Test conversation repair strategies
-- Implement self-play testing
+`--scenario` takes the scenario `id` (or `metadata.name` when there is no `id`), and the scenario's file must be listed under `spec.scenarios`.
 
-## What's Next?
+### `spec: description is required`
 
-In Tutorial 4, you'll learn how to test LLMs that use tools and function calling within conversations.
+Every scenario needs a `spec.description`.
+
+### An assertion fails and later turns never run
+
+Real replies vary. Match on a short word or a regular expression with alternatives, not a full sentence, as in Step 7.
+
+## Next steps
+
+You can now test context retention, guided flows and persona-driven conversations.
+
+- [Tutorial 4: MCP Tools](/arena/tutorials/04-mcp-tools/): test tool calling inside conversations.
+- [Tutorial 5: CI Integration](/arena/tutorials/05-ci-integration/): run these tests automatically.
+- [Write Scenarios](/arena/how-to/scenarios/write-scenarios/): more scenario patterns.
+- [Scenario format](/arena/reference/scenario-format/): every scenario field.

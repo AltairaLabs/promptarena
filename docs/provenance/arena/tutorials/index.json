@@ -1,0 +1,44 @@
+{
+ "page": "docs/src/content/docs/arena/tutorials/index.md",
+ "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "Tutorial 7 needs Go 1.26 (module requires go 1.26.0)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 2,
+   "claim": "Tutorial 6 runs keyless on a mock duplex provider",
+   "verdict": "true",
+   "evidence": [
+    "examples/duplex-streaming/providers/mock-duplex.provider.yaml:1"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "Tutorial 8 runs keyless on a mock provider",
+   "verdict": "true",
+   "evidence": [
+    "examples/client-tools/providers/mock-provider.yaml:1"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "Tutorial 4 uses an npm MCP server (Node.js) and OpenAI",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:460"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "Deploy tutorials target AWS Bedrock AgentCore and build the runtime with Go",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_adapter_interactive.go:77"
+   ]
+  }
+ ]
+}
