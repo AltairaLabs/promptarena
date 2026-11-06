@@ -1,24 +1,39 @@
 ---
 title: Set Up Voice Testing with Self-Play
 verified:
-  commit: c67065389ccbc6e76babad54b4345e1c76bb633e
+  commit: 60cd1a146e6224c0d66c972d18f329a0ce76c522
   sources:
     - arena/arenaconfig/loader.go
     - arena/arenaconfig/persona.go
     - arena/arenaconfig/types.go
+    - arena/arenaconfig/validator.go
     - arena/arenaconfig/voice.go
     - arena/cmd/promptarena/run.go
-    - arena/engine/composite_conversation_executor.go
+    - arena/cmd/promptarena/run_interactive.go
+    - arena/cmd/promptarena/validate.go
     - arena/engine/conversation_executor.go
     - arena/engine/duplex_conversation_executor.go
     - arena/engine/duplex_executor_pipeline_integration.go
     - arena/engine/duplex_executor_turns_integration.go
+    - arena/engine/engine.go
+    - arena/engine/types.go
+    - arena/results/markdown/markdown_repository.go
     - arena/selfplay/audio_generator.go
+    - arena/selfplay/generator.go
+    - arena/selfplay/mock_tts_interactive.go
     - arena/selfplay/registry.go
     - arena/selfplay/tts_registry.go
+    - arena/turnexecutors/audio_file_source.go
+    - arena/turnexecutors/media_validator.go
+    - examples/duplex-streaming/config.arena.yaml
     - examples/duplex-streaming/providers/gemini-2-flash.provider.yaml
-    - examples/duplex-streaming/scenarios/duplex-selfplay.scenario.yaml
+    - examples/duplex-streaming/providers/mock-duplex.provider.yaml
+    - examples/duplex-streaming/providers/mock-tts.provider.yaml
+    - examples/duplex-streaming/providers/openai-gpt4o-mini-text.provider.yaml
+    - schemas/v1alpha1/arena.json
+    - schemas/v1alpha1/promptconfig.json
     - schemas/v1alpha1/provider.json
+    - schemas/v1alpha1/scenario.json
 ---
 Run automated multi-turn voice tests, where a self-play persona speaks through TTS.
 
@@ -48,8 +63,21 @@ personas/test-user.persona.yaml
 scenarios/voice-selfplay.scenario.yaml
 ```
 
-Copy `greeting.pcm` from `examples/duplex-streaming/audio/`, or record your own in the format
-above.
+### Prepare the Audio
+
+Copy `greeting.pcm` from `examples/duplex-streaming/audio/`, or convert your own recording
+to raw 16 kHz mono 16-bit PCM:
+
+```bash
+# WAV or MP3 to raw PCM
+ffmpeg -i input.wav -f s16le -ar 16000 -ac 1 audio/greeting.pcm
+
+# Check a WAV file's sample rate, channels and sample format
+ffprobe -show_streams input.wav
+```
+
+See [Audio Requirements](/arena/reference/duplex-config/#audio-requirements) for the formats a
+turn accepts.
 
 ### 1. Declare the Arena Config
 
@@ -96,9 +124,6 @@ spec:
         provider: openai-gpt4o-mini-text  # keyless runs: mock-duplex (step 6)
 
   defaults:
-    temperature: 0.7
-    max_tokens: 1000
-    concurrency: 1
     output:
       dir: out
       formats:
@@ -280,17 +305,19 @@ spec:
 export GEMINI_API_KEY="your-key"
 export OPENAI_API_KEY="your-key"
 promptarena validate config.arena.yaml
-promptarena run --scenario voice-selfplay --provider gemini-live
+promptarena run --scenario voice-selfplay --provider gemini-live --ci
 ```
 
-`promptarena validate` checks the config and its files before you spend API calls.
+Run the commands from the project directory. `promptarena validate` checks the config and its
+files before you spend API calls. `--ci` prints plain log output and makes a failed assertion
+exit non-zero.
 
 To run without API keys, for example in CI, make two edits to `config.arena.yaml`:
 
 - under `voices:`, change `test-voice` to `provider: mock-tts`
 - under `self_play.roles`, change `selfplay-user` to `provider: mock-duplex`
 
-Then run against the mock duplex model, with `--ci` for plain log output:
+Then run against the mock duplex model:
 
 ```bash
 promptarena run --scenario voice-selfplay --provider mock-duplex --ci
@@ -301,13 +328,15 @@ answer duplex audio, so the run waits until `duplex.timeout` and fails.
 
 ### 7. Check the Result
 
-The run writes to `out/`, the `defaults.output.dir` from step 1. Open `out/results.md`: the
-`voice-selfplay` row should show `Pass`, and its Conversation Assertions table should show
-`content_includes` passed. The per-run JSON file in `out/` holds the same result under
-`conversation_assertions`. A failed assertion fails the run, and `promptarena run` exits non-zero.
+The run writes its results to `out/` in the current directory (set another directory with
+`-o`). Open `out/results.md`: the `voice-selfplay` row should show `Pass`, and its Conversation
+Assertions table should show `content_includes` passed. The per-run JSON file in `out/` holds
+the same result under `conversation_assertions`. With `--ci`, a failed assertion makes
+`promptarena run` exit non-zero.
 
 To add more checks, append entries to `conversation_assertions:` in the scenario. See
-[Assertions](/arena/reference/assertions/) for every assertion type.
+[Assertions](/arena/reference/assertions/) for common types, and the
+[Checks Reference](https://promptkit.altairalabs.ai/reference/checks/) for every type.
 
 ## Tuning Turn Detection
 
@@ -319,8 +348,17 @@ If turns are cutting off early or late, adjust VAD settings:
 | Long pauses before response | Decrease `silence_threshold_ms` to 800-1000 |
 | Short utterances ignored | Decrease `min_speech_ms` to 200-300 |
 
+Starting values by speech style:
+
+| Speech style | `silence_threshold_ms` | `min_speech_ms` |
+|--------------|------------------------|-----------------|
+| Quick responses | 400-500 | 150-200 |
+| Natural conversation | 600-800 | 200-300 |
+| TTS with pauses | 1000-1500 | 500-800 |
+| Slow or deliberate speech | 1200-2000 | 800-1000 |
+
 ## See Also
 
-- [Tutorial 6: Duplex Voice Testing](/arena/tutorials/06-duplex-testing/) - Complete learning path
-- [Duplex Configuration Reference](/arena/reference/duplex-config/) - All configuration options
+- [Tutorial 6: Duplex Voice Testing](/arena/tutorials/06-duplex-testing/)
+- [Duplex Configuration Reference](/arena/reference/duplex-config/) - Every configuration field
 - [Duplex Architecture](/arena/explanation/duplex-architecture/) - How duplex streaming works
