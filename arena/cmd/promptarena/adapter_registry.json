@@ -9,7 +9,7 @@
     "omnia": {
       "repo": "AltairaLabs/PromptArena-deploy-omnia",
       "description": "Omnia Kubernetes platform",
-      "latest": "1.5.2",
+      "latest": "1.5.3",
       "maintained_by": "AltairaLabs"
     },
     "foundry": {
