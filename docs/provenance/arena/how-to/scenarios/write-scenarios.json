@@ -1,0 +1,184 @@
+{
+ "page": "docs/src/content/docs/arena/how-to/scenarios/write-scenarios.md",
+ "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "promptarena init my-test --quick --provider mock (ran it)",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:68"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "init generates scenarios/basic-test.yaml",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:68"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "spec.task_type links the scenario to the prompt config with that task_type",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:678"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "message is placed inside params",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:25"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "metadata.labels on a scenario",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:684"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "metadata.annotations is accepted (ObjectMeta) (validated)",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:669"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "context_metadata takes arbitrary keys such as urgency and topic",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:651",
+    "arena/arenaconfig/types.go:685"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "required_capabilities runs the scenario only on providers whose capabilities include every entry",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:695",
+    "arena/engine/execution.go:306",
+    "arena/engine/execution.go:335"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "spec.streaming enables streaming for all turns",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:697"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "turn parts with type text / image and media.url, media.mime_type (validated)",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1403",
+    "arena/arenaconfig/types.go:1412"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "Available capabilities include duplex",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:694"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "tool_choice: none, auto (default), required, or a tool name",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:930",
+    "arena/turnexecutors/pipeline_stages_integration.go:280"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "tool_policy.max_tool_calls_per_turn",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:281"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "scenario tool_policy merges with the prompt tool_policy and only tightens; max_rounds/max_tool_calls_per_turn take the lower; blocklist union; tool_choice scenario wins; max_rounds default 50 (runtime pipeline/types.go:75)",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:252",
+    "arena/turnexecutors/pipeline_stages_integration.go:284"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "tools_called with params.tools (runtime evals/handlers/tools_called.go:48)",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/types.go:40"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "Scenario spec supports fixtures and system_template with {{fixtures.x}} interpolation",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:676"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "Conditional assertions section shows a plain assertion",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:26",
+    "arena/arenaconfig/types.go:47",
+    "arena/assertions/types.go:40"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "arena.yaml scenarios entries take path and providers",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:691",
+    "arena/engine/execution.go:280"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "scenarios have a tags list",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:684"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "promptarena run --scenario high-priority runs scenarios tagged high-priority",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:139",
+    "arena/engine/execution.go:280"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "content_matches takes params.pattern (runtime evals/handlers/regex.go:24)",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/types.go:40"
+   ]
+  }
+ ]
+}

@@ -1,427 +1,195 @@
 ---
 title: Validate Outputs
+description: Add assertions to scenario turns and conversations to check content, structure, tool use and quality, then read the results.
+verified:
+  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  sources:
+    - arena/arenaconfig/judge_param.go
+    - arena/arenaconfig/types.go
+    - arena/assertions/types.go
+    - arena/cmd/promptarena/run.go
+    - arena/engine/conversation_executor.go
 ---
-Learn how to use assertions and validators to verify LLM responses.
 
-## Overview
+Check that each response meets your requirements by adding assertions to a scenario's turns and to the whole conversation.
 
-PromptArena provides built-in assertions and custom validators to verify that LLM responses meet your quality requirements.
+## Prerequisites
 
-## Built-in Assertions
+- A scenario that runs. See [Write Test Scenarios](/arena/how-to/scenarios/write-scenarios/).
+- For `llm_judge` checks, a judge configured under `judges` in the arena config.
 
-### Content Assertions
+## Steps
 
-#### Contains
+1. Check content. `content_includes` needs every pattern (case-insensitive), `content_matches` takes a regular expression, and `content_excludes` fails when any pattern appears:
 
-Check if response includes specific text:
+   ```yaml
+   turns:
+     - role: user
+       content: "What's the support email?"
+       assertions:
+         - type: content_includes
+           params:
+             patterns: ["support"]
+           message: "Should mention support"
+         - type: content_matches
+           params:
+             pattern: '[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}'
+           message: "Should contain an email address"
+         - type: content_excludes
+           params:
+             patterns: ["competitor"]
+           message: "Should not mention competitors"
+   ```
 
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: business-hours-check
+   `message` sits beside `params` and appears in the report. Patterns use Go regular expressions, which have no lookahead, so check for absent text with `content_excludes`.
 
-spec:
-  turns:
-    - role: user
-      content: "What are your business hours?"
-      assertions:
-        - type: content_includes
-          params:
-            patterns: ["Monday"]
-            message: "Should mention Monday"
-        
-        - type: content_includes
-          params:
-            patterns: ["9 AM"]
-            message: "Should include opening time"
-```
+2. Check structure when the response should be JSON:
 
-#### Regex Match
+   ```yaml
+       assertions:
+         - type: is_valid_json
+           message: "Should return valid JSON"
+         - type: json_schema
+           params:
+             schema:
+               type: object
+               required: [name, email]
+               properties:
+                 name:
+                   type: string
+                 email:
+                   type: string
+           message: "Should match user schema"
+   ```
 
-Pattern matching:
+3. Check tool use. Assertions on a turn run after that turn; `conversation_assertions` run once, after the whole conversation:
 
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: email-validation
+   ```yaml
+   spec:
+     turns:
+       - role: user
+         content: "What's the weather in Paris?"
+         assertions:
+           - type: tools_called
+             params:
+               tools: ["get_weather"]
+             message: "Should call weather tool"
 
-spec:
-  turns:
-    - role: user
-      content: "What's the support email?"
-      assertions:
-        - type: content_matches
-          params:
-            pattern: '[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}'
-            message: "Should contain valid email"
-```
+     conversation_assertions:
+       - type: tool_calls_with_args
+         params:
+           tool_name: "get_weather"
+           expected_args:
+             location: "Paris"
+         message: "Should pass Paris as location"
+   ```
 
-#### Negative Pattern Matching
+4. Check context retention with a later turn that depends on an earlier one:
 
-Ensure specific content is absent using negative lookahead:
+   ```yaml
+   turns:
+     - role: user
+       content: "My name is Alice"
+     - role: user
+       content: "What's my name?"
+       assertions:
+         - type: content_includes
+           params:
+             patterns: ["Alice"]
+           message: "Should remember the user's name"
+   ```
 
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: product-description
+5. Check quality with an LLM judge. Arena grades with a judge from the arena config's `judges`: the one `judge` names, or the first by name when `judge` is unset. Put the score threshold in `params` as `min_score`:
 
-spec:
-  turns:
-    - role: user
-      content: "Describe our product"
-      assertions:
-        - type: content_matches
-          params:
-            pattern: "^(?!.*competitor).*$"
-            message: "Should not mention competitors"
-```
+   ```yaml
+       assertions:
+         - type: llm_judge
+           params:
+             judge: quality-judge
+             criteria: "Response maintains a professional, positive tone"
+             min_score: 0.7
+           message: "Must be professional"
+   ```
 
-### Structural Assertions
+   A `judge` that names no entry in `judges` fails at load.
 
-#### JSON Structure
+   To grade with an external service, use `rest_eval`. Header values expand `${VAR}` from the environment:
 
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: json-validation
+   ```yaml
+         - type: rest_eval
+           params:
+             url: "https://eval-service.example.com/evaluate"
+             headers:
+               Authorization: "Bearer ${EVAL_API_KEY}"
+             criteria: "Response meets compliance requirements"
+             min_score: 0.9
+           message: "External compliance check"
+   ```
 
-spec:
-  turns:
-    - role: user
-      content: "Return user data as JSON"
-      assertions:
-        - type: is_valid_json
-          params:
-            message: "Should return valid JSON"
-        
-        - type: json_schema
-          params:
-            schema:
-              type: object
-              required: [name, email]
-              properties:
-                name:
-                  type: string
-                email:
-                  type: string
-            message: "Should match user schema"
-```
+6. To run an assertion only when a condition holds, add `when`. An assertion whose condition is not met is skipped, not failed:
 
-### Behavioral Assertions
+   ```yaml
+         - type: content_includes
+           params:
+             patterns: ["shipped"]
+           when:
+             tool_called: lookup_order
+           message: "Should report shipping status after the lookup"
+   ```
 
-#### Tool Calling
+   Every assertion on a turn must pass for the turn to pass.
 
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: weather-tool-check
+7. Prefer several loose checks to one exact match. An exact sentence breaks on any rewording:
 
-spec:
-  turns:
-    - role: user
-      content: "What's the weather in Paris?"
-      assertions:
-        - type: tools_called
-          params:
-            tools: ["get_weather"]
-            message: "Should call weather tool"
-  
-  # Conversation-level assertion to check tool arguments
-  conversation_assertions:
-    - type: tool_calls_with_args
-      params:
-        tool: "get_weather"
-        expected_args:
-          location: "Paris"
-        message: "Should pass Paris as location"
-```
+   ```yaml
+   # Brittle
+   - type: content_matches
+     params:
+       pattern: "^Thank you for contacting AcmeCorp support\\.$"
 
-#### Context Retention
+   # Sturdier
+   - type: content_includes
+     params:
+       patterns: ["thank", "AcmeCorp", "support"]
+     message: "Must acknowledge support contact"
+   ```
 
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: context-memory
+## Verify
 
-spec:
-  turns:
-    - role: user
-      content: "My name is Alice"
-    
-    - role: user
-      content: "What's my name?"
-      assertions:
-        - type: content_includes
-          params:
-            patterns: ["Alice"]
-            message: "Should remember user's name"
-```
-
-## Assertion Combinations
-
-### AND Logic (All must pass)
-
-```yaml
-turns:
-  - user: "Provide customer support response"
-    assertions:
-      - type: content_includes
-        params:
-          patterns: ["thank you", "help"]
-          message: "Must be helpful"
-      - type: llm_judge
-        params:
-          criteria: "Response has positive sentiment"
-          judge_provider: "openai/gpt-4o-mini"
-          message: "Must be positive"
-      - type: content_matches
-        params:
-          pattern: "^.{1,500}$"
-          message: "Must be under 500 characters"
-    # All assertions must pass
-```
-
-### Conditional Assertions
-
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: order-status-conditional
-
-spec:
-  turns:
-    - role: user
-      content: "Check order status"
-      assertions:
-        # Always validate
-        - type: content_includes
-          params:
-            patterns: ["order"]
-            message: "Should mention order"
-        
-        # Additional checks based on order status
-        - type: content_includes
-          params:
-            patterns: ["shipped"]
-            message: "Should mention shipping if shipped"
-```
-
-## Testing Strategies
-
-### Progressive Validation
-
-Start with basic assertions, add complexity:
-
-```yaml
-# Level 1: Basic structure
-- type: content_matches
-  params:
-    pattern: ".+"
-    message: "Must not be empty"
-
-# Level 2: Content presence
-- type: content_includes
-  params:
-    patterns: ["customer service"]
-    message: "Must mention customer service"
-
-# Level 3: Quality checks
-- type: llm_judge
-  params:
-    criteria: "Response has positive sentiment"
-    judge_provider: "openai/gpt-4o-mini"
-    message: "Must be positive"
-- type: llm_judge
-  params:
-    criteria: "Response maintains professional tone"
-    judge_provider: "openai/gpt-4o-mini"
-    message: "Must be professional"
-
-# Level 4: Custom business logic
-- type: llm_judge
-  params:
-    criteria: "Response complies with brand guidelines"
-    judge_provider: "openai/gpt-4o-mini"
-    message: "Must meet brand compliance"
-
-# Level 5: External evaluation service
-- type: rest_eval
-  params:
-    url: "https://eval-service.example.com/evaluate"
-    headers:
-      Authorization: "Bearer ${EVAL_API_KEY}"
-    criteria: "Response meets compliance requirements"
-    min_score: 0.9
-    message: "External compliance check"
-```
-
-### Quality Gates
-
-Define must-pass criteria:
-
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: critical-path-test
-
-spec:
-  task_type: critical
-  
-  turns:
-    - role: user
-      content: "Important customer query"
-      assertions:
-        - type: content_includes
-          params:
-            patterns: ["critical terms"]
-            message: "Must include critical terms"
-```
-
-### Regression Testing
-
-Track quality over time:
-
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: baseline-quality-check
-
-spec:
-  turns:
-    - role: user
-      content: "Standard query"
-      assertions:
-        - type: llm_judge
-          params:
-            criteria: "Response quality is above baseline expectations"
-            judge_provider: "openai/gpt-4o-mini"
-            message: "Quality should be above baseline"
-```
-
-## Output Reports
-
-View validation results:
+Run the scenario and write the reports you need:
 
 ```bash
-# JSON report with detailed assertion results
-promptarena run --format json
-
-# Markdown report with visual pass/fail
-promptarena run --format markdown
-
-# JUnit XML for CI integration
-promptarena run --format junit
+promptarena run --scenario <name> --format json,markdown,junit
 ```
 
-Example JSON output:
+The Markdown report shows each assertion's pass or fail with its `message`. In the JSON result, each assistant message carries its turn's results under `meta.assertions`:
 
 ```json
-{
-  "test_case": "Customer Support Response",
-  "turn": 1,
-  "assertions": [
+"assertions": {
+  "passed": true,
+  "total": 1,
+  "failed": 0,
+  "results": [
     {
-      "type": "content_includes",
-      "expected": "thank you",
-      "passed": true
-    },
-    {
-      "type": "llm_judge",
-      "expected": "pass",
-      "actual": "pass",
-      "passed": true
+      "type": "min_length",
+      "passed": true,
+      "message": "Response should not be empty",
+      "details": { "explanation": "length 67, min 1", "score": 1 }
     }
-  ],
-  "overall_pass": true
+  ]
 }
 ```
 
-## Best Practices
+Conversation assertion results are under the result's `conversation_assertions`.
 
-### 1. Layer Assertions
+## Troubleshooting
 
-```yaml
-# Structure first
-- type: is_valid_json
-  params:
-    message: "Must be valid JSON"
-- type: content_matches
-  params:
-    pattern: ".+"
-    message: "Must not be empty"
+- To see the provider calls behind a failing assertion, run with `--verbose`: `promptarena run --verbose --scenario <name>`.
+- An `llm_judge` check that fails with `judge_provider not found` has no judge: add one under `judges` in the arena config.
 
-# Then content
-- type: content_includes
-  params:
-    patterns: ["expected data"]
-    message: "Must contain expected data"
+## Related pages
 
-# Finally quality
-- type: llm_judge
-  params:
-    criteria: "Response follows business rules and policies"
-    judge_provider: "openai/gpt-4o-mini"
-    message: "Must follow business rules"
-```
-
-### 2. Balance Strictness
-
-```yaml
-# Too strict (brittle)
-- type: content_matches
-  params:
-    pattern: "^Thank you for contacting AcmeCorp support\\.$"
-    message: "Exact match required"
-
-# Better (flexible)
-- type: content_includes
-  params:
-    patterns: ["thank", "AcmeCorp", "support"]
-    message: "Must acknowledge support contact"
-- type: llm_judge
-  params:
-    criteria: "Response has positive sentiment"
-    judge_provider: "openai/gpt-4o-mini"
-    message: "Must be positive"
-```
-
-### 3. Meaningful Error Messages
-
-```yaml
-assertions:
-  - type: content_includes
-    params:
-      patterns: ["30 days"]
-      message: "Refund responses must mention 30-day policy"
-```
-
-### 4. Test Validators
-
-```bash
-# Run with verbose output to debug validators
-promptarena run --verbose --scenario validator-test
-```
-
-## Next Steps
-
-- **[Checks Reference](https://promptkit.altairalabs.ai/reference/checks/)** -- All check types and parameters
-- **[Integrate CI/CD](/arena/how-to/interfaces/run-in-ci/)** -- Automate validation in pipelines
-- **[Assertions Reference](/arena/reference/assertions/)** -- Assertion syntax and configuration
-- **[Guardrails Reference](/arena/reference/validators/)** -- Runtime policy enforcement
-- **[Unified Check Model](https://promptkit.altairalabs.ai/concepts/validation/)** -- How assertions, guardrails, and evals relate
-
-## Examples
-
-See validation examples:
-- `examples/assertions-test/` -- All assertion types
-- `examples/guardrails-test/` -- Guardrail patterns
-- `examples/customer-support/` -- Real-world validation patterns
+- [Assertions Reference](/arena/reference/assertions/), for every assertion type and parameter
+- [Guardrails Reference](/arena/reference/validators/)
+- [Integrate CI/CD](/arena/how-to/interfaces/run-in-ci/)
+- Examples: `examples/assertions-test/`, `examples/guardrails-test/`, `examples/customer-support/`

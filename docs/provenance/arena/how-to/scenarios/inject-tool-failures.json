@@ -1,0 +1,132 @@
+{
+ "page": "docs/src/content/docs/arena/how-to/scenarios/inject-tool-failures.md",
+ "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "A turn's chaos block makes calls to a named tool fail during that turn",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1165",
+    "arena/engine/conversation_executor.go:403"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "chaos.tool_failures[].tool/mode/message fields",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1393",
+    "arena/arenaconfig/types.go:1399",
+    "arena/arenaconfig/types.go:1401",
+    "arena/arenaconfig/types.go:1405"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "mode error blocks the call; the tool never runs",
+   "verdict": "true",
+   "evidence": [
+    "arena/chaos/hook.go:68",
+    "arena/chaos/hook.go:73"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "Model receives \"Tool <name> blocked by hook: <message>\" as the tool result (runtime pipeline/stage/stages_provider.go:2832)",
+   "verdict": "true",
+   "evidence": [
+    "arena/chaos/hook.go:73",
+    "arena/turnexecutors/pipeline_stages_integration.go:647"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "message appears word for word after the prefix",
+   "verdict": "true",
+   "evidence": [
+    "arena/chaos/hook.go:61"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "A blocked call does not count for tools_called (runtime evals/handlers/tools_called.go:154 skips calls with Error)",
+   "verdict": "true",
+   "evidence": [
+    "arena/chaos/hook.go:73"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "no_tool_errors fails on a blocked call; tool result message carries chaos_injected: true in metadata (runtime stages_provider.go:2835-2839)",
+   "verdict": "true",
+   "evidence": [
+    "arena/chaos/hook.go:63"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "probability fails a share of calls; each call rolled separately; default always fires",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1403",
+    "arena/chaos/hook.go:102",
+    "arena/chaos/hook.go:45"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "trials and pass_threshold on spec / assertions",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:30",
+    "arena/arenaconfig/types.go:730"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "timeout blocks the call at once like error, with different default text and metadata (chaos_timeout)",
+   "verdict": "true",
+   "evidence": [
+    "arena/chaos/hook.go:75",
+    "arena/chaos/hook.go:79"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "slow adds a fixed 2-second delay then runs the tool",
+   "verdict": "true",
+   "evidence": [
+    "arena/chaos/hook.go:82",
+    "arena/chaos/hook.go:85"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "Duplex turns ignore chaos (only the pipeline turn executor reads it)",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/conversation_executor.go:403"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "A tool hook can block or delay a call but not replace a real tool's result",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:714",
+    "arena/toolresult/hook.go:1",
+    "arena/turnexecutors/pipeline_stages_integration.go:649"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "mock tools take mock_result or mock_template (runtime tools/types.go:124,128)",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:326",
+    "schemas/v1alpha1/tool.json:329"
+   ]
+  }
+ ]
+}
