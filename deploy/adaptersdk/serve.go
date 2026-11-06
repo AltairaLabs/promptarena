@@ -128,7 +128,7 @@ func ServeIO(
 			continue
 		}
 
-		resp := dispatch(provider, &req)
+		resp := dispatchValid(provider, &req)
 		if err := enc.Encode(resp); err != nil {
 			return fmt.Errorf("adaptersdk: write error: %w", err)
 		}
@@ -141,6 +141,23 @@ func ServeIO(
 }
 
 // dispatch routes a single JSON-RPC request to the appropriate Provider method.
+// dispatchValid answers a request that parsed but is not a JSON-RPC 2.0
+// request (wrong or missing "jsonrpc", no method) with CodeInvalidRequest,
+// and dispatches the rest.
+func dispatchValid(provider deploy.Provider, req *request) response {
+	if req.JSONRPC != jsonRPCVersion || req.Method == "" {
+		return response{
+			JSONRPC: jsonRPCVersion,
+			Error: &rpcError{
+				Code:    CodeInvalidRequest,
+				Message: `invalid request: need "jsonrpc": "2.0" and a method`,
+			},
+			ID: req.ID,
+		}
+	}
+	return dispatch(provider, req)
+}
+
 func dispatch(provider deploy.Provider, req *request) response {
 	ctx := context.Background()
 

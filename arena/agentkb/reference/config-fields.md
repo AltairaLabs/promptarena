@@ -11,7 +11,7 @@ Fields under `spec`:
 | `a2a_agents` | array |  | A2AAgents configures agent-to-agent (A2A) endpoints. |
 | `agents` | object |  | Agents configures named agents: the entry agent and each member's description, tags and delegation rules. |
 | `compositions` | object |  | Compositions declares named composition step graphs (RFC 0010), keyed by name, that a workflow state with `orchestration: composition` runs. |
-| `defaults` | object | ✓ | Defaults holds global defaults applied when a scenario does not specify its own (temperature, max_tokens, concurrency, output, fail_on, …). |
+| `defaults` | object | ✓ | Defaults holds global defaults applied when a scenario does not specify its own (temperature, max_tokens, concurrency, output, …). |
 | `deploy` | object |  | Deploy configures `promptarena deploy`: the target provider plus base and per-environment adapter config. |
 | `embedding_providers` | array |  | — |
 | `eval_specs` | object |  | — |
@@ -164,9 +164,9 @@ Fields under `spec`:
 | `conversation_assertions` | array |  | Conversation-level assertions |
 | `description` | string | ✓ | Human-readable description |
 | `id` | string |  | Unique identifier for this evaluation |
-| `mode` | string |  | Replay timing mode (instant |
+| `mode` | string |  | Ignored and will be removed |
 | `recording` | object | ✓ | Recording source |
-| `speed` | number |  | Playback speed (default 1.0) |
+| `speed` | number |  | Ignored and will be removed |
 | `tags` | array |  | Tags for categorization |
 | `turns` | array |  | Turn-level assertions |
 

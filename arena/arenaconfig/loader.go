@@ -215,6 +215,10 @@ func LoadConfig(filename string) (*Config, error) {
 
 	cfg := &arenaConfigK8s.Spec
 
+	if err := cfg.checkStateStore(); err != nil {
+		return nil, err
+	}
+
 	// Determine base directory for resolving relative paths
 	cfg.ConfigDir = ResolveConfigDir(cfg, filename)
 
@@ -251,6 +255,9 @@ func LoadConfig(filename string) (*Config, error) {
 	if err := cfg.validateGovernanceTaxonomy(); err != nil {
 		return nil, err
 	}
+	if err := cfg.resolveJudgeParams(); err != nil {
+		return nil, err
+	}
 
 	// Load pack file if specified
 	if cfg.PackFile != "" {
@@ -264,6 +271,7 @@ func LoadConfig(filename string) (*Config, error) {
 	validator := NewConfigValidatorWithPath(cfg, filename)
 	_ = validator.Validate()
 	cfg.ValidationWarnings = validator.GetWarnings()
+	cfg.recordIgnoredFields()
 
 	return cfg, nil
 }
@@ -457,6 +465,7 @@ func loadProvider(filename string) (*config.Provider, error) {
 	if err := checkFile(config.ConfigTypeProvider, filename); err != nil {
 		return nil, err
 	}
+	warnProviderLabels(filename)
 	return config.LoadProvider(filename)
 }
 

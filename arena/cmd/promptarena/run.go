@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
 	arenaaudio "github.com/AltairaLabs/promptarena/v2/arena/audio"
@@ -167,8 +166,10 @@ func init() {
 	// Execution settings
 	runCmd.Flags().IntP("concurrency", "j", 6, "Number of concurrent workers")
 	runCmd.Flags().StringP("out", "o", "out", "Output directory")
-	runCmd.Flags().Bool("ci", false, "CI mode (disable TUI, simple logs)")
-	runCmd.Flags().Bool("simple", false, "Simple mode (alias for --ci)")
+	runCmd.Flags().Bool("ci", false,
+		"CI mode: no TUI, plain output, exit non-zero when a run errors or an assertion fails")
+	runCmd.Flags().Bool("simple", false,
+		"Simple mode: no TUI, styled output with a live status bar; exits 0 on failures (use --ci to fail a build)")
 	runCmd.Flags().Bool("html", false, "Deprecated: the HTML report was removed; produces markdown instead")
 	runCmd.Flags().StringSlice("format", []string{},
 		"Output formats (json, junit, markdown, csv, objectives) - defaults from config")
@@ -184,9 +185,7 @@ func init() {
 	_ = runCmd.Flags().MarkDeprecated("html", "the HTML report was removed; markdown is produced instead")
 	_ = runCmd.Flags().MarkDeprecated("html-file", "the HTML report was removed; use --markdown-file")
 	runCmd.Flags().String("markdown-file", "", "Markdown report output file (default: out/results.md)")
-	runCmd.Flags().Float32("temperature", 0.6, "Override temperature")
 	runCmd.Flags().Int(flagMaxTokens, 0, "Override max tokens for all scenarios")
-	runCmd.Flags().IntP("seed", "s", 42, "Random seed")
 	runCmd.Flags().BoolP("verbose", "v", false, "Enable verbose debug logging for API calls")
 
 	// Mock provider settings
@@ -201,27 +200,35 @@ func init() {
 	runCmd.Flags().Bool("skip-pack-evals", false, "Disable pack eval execution")
 	runCmd.Flags().StringSlice("eval-types", []string{}, "Filter to specific eval types (e.g., contains,regex)")
 
-	// Self-play settings
-	runCmd.Flags().Bool("selfplay", false, "Enable self-play mode")
-	runCmd.Flags().StringSlice("roles", []string{}, "Self-play role configurations to use")
-
 	// Audio monitoring settings (real-time duplex audio)
 	runCmd.Flags().String("audio-monitor", string(arenaaudio.ModeAuto), "Audio monitoring: auto, on, off")
 	runCmd.Flags().Int("audio-rate", arenaaudio.Rate24k, "Audio canonical sample rate: 16000, 24000, or 48000")
 
-	// Bind flags to viper
-	_ = viper.BindPFlag("concurrency", runCmd.Flags().Lookup("concurrency"))
-	_ = viper.BindPFlag("out_dir", runCmd.Flags().Lookup("out"))
-	_ = viper.BindPFlag("ci_mode", runCmd.Flags().Lookup("ci"))
-	_ = viper.BindPFlag("html_report", runCmd.Flags().Lookup("html"))
-	_ = viper.BindPFlag("temperature", runCmd.Flags().Lookup("temperature"))
-	_ = viper.BindPFlag(flagMaxTokens, runCmd.Flags().Lookup(flagMaxTokens))
-	_ = viper.BindPFlag("seed", runCmd.Flags().Lookup("seed"))
-	_ = viper.BindPFlag("selfplay", runCmd.Flags().Lookup("selfplay"))
-	_ = viper.BindPFlag("roles", runCmd.Flags().Lookup("roles"))
+	registerIgnoredRunFlags()
 
 	// Register dynamic completions (must be after flags are defined)
 	RegisterRunCompletions()
+}
+
+// registerIgnoredRunFlags keeps flags that were accepted but never read, so
+// scripts that pass them still run. They are hidden, and cobra prints the
+// deprecation notice whenever one is set.
+func registerIgnoredRunFlags() {
+	const (
+		notice       = "it has no effect and will be removed"
+		temperature  = "temperature"
+		seed         = "seed"
+		selfplayFlag = "selfplay"
+		roles        = "roles"
+	)
+	flags := runCmd.Flags()
+	flags.Float32(temperature, 0, "")
+	flags.IntP(seed, "s", 0, "")
+	flags.Bool(selfplayFlag, false, "")
+	flags.StringSlice(roles, nil, "")
+	for _, f := range []string{temperature, seed, selfplayFlag, roles} {
+		_ = flags.MarkDeprecated(f, notice)
+	}
 }
 
 // NOTE: runSimulations, executeRuns, executeWithTUI, and executeSimple are defined in run_interactive.go

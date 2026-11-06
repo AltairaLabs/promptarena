@@ -193,4 +193,3 @@ spec:
         show_results_matrix: true
         show_failed_tests: true
         show_cost_summary: true
-    fail_on: []
