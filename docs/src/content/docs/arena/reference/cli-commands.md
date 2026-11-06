@@ -1,11 +1,150 @@
 ---
 title: CLI Commands
+description: Every promptarena command with its flags, defaults and examples.
+verified:
+  commit: 60cd1a146e6224c0d66c972d18f329a0ce76c522
+  sources:
+    - arena/adapters/adapter.go
+    - arena/adapters/arena_output.go
+    - arena/adapters/registry.go
+    - arena/adapters/session_recording.go
+    - arena/adapters/transcript.go
+    - arena/agentkb/catalog.yaml
+    - arena/agentkb/reference.go
+    - arena/agentmcp/resources.go
+    - arena/agentmcp/tools.go
+    - arena/arenaconfig/helpers.go
+    - arena/arenaconfig/loader.go
+    - arena/arenaconfig/taxonomy.go
+    - arena/arenaconfig/transform.go
+    - arena/arenaconfig/types.go
+    - arena/arenaconfig/validator.go
+    - arena/arenaconfig/validator_tools.go
+    - arena/assertions/refusal/refusal.go
+    - arena/assertions/register.go
+    - arena/assertions/types.go
+    - arena/assertions/validate_types.go
+    - arena/audio/types.go
+    - arena/calibrate/calibrate.go
+    - arena/calibrate/markdown.go
+    - arena/cmd/promptarena/agent_brief.go
+    - arena/cmd/promptarena/calibrate_cmd.go
+    - arena/cmd/promptarena/chat.go
+    - arena/cmd/promptarena/chat_interactive.go
+    - arena/cmd/promptarena/completion_interactive.go
+    - arena/cmd/promptarena/config_inspect_collector_interactive.go
+    - arena/cmd/promptarena/config_inspect_interactive.go
+    - arena/cmd/promptarena/debug.go
+    - arena/cmd/promptarena/deploy_adapter_interactive.go
+    - arena/cmd/promptarena/deploy_apply_interactive.go
+    - arena/cmd/promptarena/deploy_destroy_interactive.go
+    - arena/cmd/promptarena/deploy_import_interactive.go
+    - arena/cmd/promptarena/deploy_interactive.go
+    - arena/cmd/promptarena/deploy_plan_interactive.go
+    - arena/cmd/promptarena/deploy_refresh_interactive.go
+    - arena/cmd/promptarena/deploy_status_interactive.go
+    - arena/cmd/promptarena/examples_cmd.go
+    - arena/cmd/promptarena/explain_cmd.go
+    - arena/cmd/promptarena/export.go
+    - arena/cmd/promptarena/generate.go
+    - arena/cmd/promptarena/generate_integration.go
+    - arena/cmd/promptarena/init.go
+    - arena/cmd/promptarena/init_interactive.go
+    - arena/cmd/promptarena/main_integration.go
+    - arena/cmd/promptarena/mcp_cmd.go
+    - arena/cmd/promptarena/mocks.go
+    - arena/cmd/promptarena/personas_cmd.go
+    - arena/cmd/promptarena/prompt-debug_interactive.go
+    - arena/cmd/promptarena/provider_override.go
+    - arena/cmd/promptarena/redteam_cmd.go
+    - arena/cmd/promptarena/run.go
+    - arena/cmd/promptarena/run_interactive.go
+    - arena/cmd/promptarena/schema_cmd.go
+    - arena/cmd/promptarena/serve_interactive.go
+    - arena/cmd/promptarena/skill.go
+    - arena/cmd/promptarena/skill_interactive.go
+    - arena/cmd/promptarena/templates.go
+    - arena/deploy/flow/config.go
+    - arena/deploy/flow/connect.go
+    - arena/deploy/flow/options.go
+    - arena/deploy/flow/sessions.go
+    - arena/engine/conversation_executor.go
+    - arena/engine/engine.go
+    - arena/engine/engine_audio.go
+    - arena/engine/eval_orchestrator.go
+    - arena/engine/execution.go
+    - arena/engine/interactive.go
+    - arena/engine/objective.go
+    - arena/engine/trial_budget.go
+    - arena/generate/adapter.go
+    - arena/generate/converter.go
+    - arena/generate/decision.go
+    - arena/generate/expectation.go
+    - arena/generate/fingerprint.go
+    - arena/generate/generate.go
+    - arena/generate/mapping.go
+    - arena/generate/registry.go
+    - arena/generate/sources/recordings.go
+    - arena/inspect/collector.go
+    - arena/inspect/render_cache.go
+    - arena/inspect/render_defaults.go
+    - arena/inspect/render_judges.go
+    - arena/inspect/render_personas.go
+    - arena/inspect/render_providers.go
+    - arena/inspect/render_scenarios.go
+    - arena/inspect/render_validation.go
+    - arena/inspect/renderer.go
+    - arena/inspect/types.go
+    - arena/personas/builtin.go
+    - arena/personas/builtin/adversarial-scaffold.persona.yaml
+    - arena/personas/builtin/crescendo.persona.yaml
+    - arena/personas/builtin/direct.persona.yaml
+    - arena/personas/builtin/multi-technique.persona.yaml
+    - arena/personas/builtin/refine.persona.yaml
+    - arena/redteam/datasets.go
+    - arena/redteam/datasets_test.go
+    - arena/redteam/generate.go
+    - arena/redteam/objectives.go
+    - arena/results/junit/junit_repository.go
+    - arena/results/markdown/markdown_repository.go
+    - arena/selfplay/stt_registry.go
+    - arena/templates/builtin/code-assistant/template.yaml
+    - arena/templates/builtin/content-generation/template.yaml
+    - arena/templates/builtin/customer-support/template.yaml
+    - arena/templates/builtin/mcp-integration/template.yaml
+    - arena/templates/builtin/multimodal/template.yaml
+    - arena/templates/builtin/quick-start/template.yaml
+    - arena/templates/generator.go
+    - arena/templates/loader.go
+    - arena/templates/repos.go
+    - arena/tui/app/chatpage.go
+    - arena/turnexecutors/media_loader.go
+    - arena/turnexecutors/media_validator.go
+    - arena/turnexecutors/scripted_executor.go
+    - arena/web/frontend/package.json
+    - arena/web/frontend/src/App.tsx
+    - arena/web/frontend/src/lib/atlasAdapter.ts
+    - arena/web/frontend/vite.config.ts
+    - arena/web/server.go
+    - deploy/manager.go
+    - examples/arena-media-test/config.arena.yaml
+    - examples/arena-media-test/scenarios/audio-validation.scenario.yaml
+    - examples/arena-media-test/scenarios/image-validation.scenario.yaml
+    - examples/arena-media-test/scenarios/video-validation.scenario.yaml
+    - examples/customer-support/config.arena.yaml
+    - examples/redteam-generated/config.arena.yaml
+    - packc/compiler/check.go
+    - packc/compiler/compiler.go
+    - packc/main_interactive.go
+    - packc/schema_validator.go
+    - schemas/v1alpha1/arena.json
+    - schemas/v1alpha1/scenario.json
 ---
-Complete command-line interface reference for PromptArena, the LLM testing framework.
+Commands, flags and defaults of the `promptarena` CLI.
 
 ## Overview
 
-PromptArena (`promptarena`) is a CLI tool for running multi-turn conversation simulations across multiple LLM providers, validating conversation flows, and generating comprehensive test reports.
+`promptarena` runs multi-turn conversation simulations across LLM providers, validates conversation flows and writes test reports.
 
 ```bash
 promptarena [command] [flags]
@@ -36,27 +175,31 @@ promptarena [command] [flags]
 | `schema` | Print the embedded JSON schema for a config type |
 | `examples` | List and print the example kits embedded in the binary |
 | `personas` | Copy built-in self-play personas, such as red-team attackers, into a project |
+| `redteam` | Generate red-team scenarios from objective sets |
 | `skill` | Manage shared AgentSkills.io skills (install, list, remove) |
 | `completion` | Generate shell autocompletion script |
 | `help` | Help about any command |
 
 ## Global Flags
 
-```bash
--h, --help         help for promptarena
-```
+| Flag | Description |
+|------|-------------|
+| `-h, --help` | Help for `promptarena` |
+| `-v, --version` | Version for `promptarena` |
 
 ---
 
 ## `promptarena init`
 
-Initialize a new PromptArena test project from a built-in template.
+Create a PromptArena test project from a built-in or remote template.
 
 ### Usage
 
 ```bash
-promptarena init [directory] [flags]
+promptarena init [project-name] [flags]
 ```
+
+`project-name` defaults to `my-arena-tests` and is created under `--output`.
 
 ### Flags
 
@@ -67,7 +210,7 @@ promptarena init [directory] [flags]
 | `--template` | string | `quick-start` | Template to use for initialization |
 | `--template-index` | string | `community` | Template repo name or index URL/path for remote templates |
 | `--repo-config` | string | user config | Template repo config file |
-| `--template-cache` | string | temp dir | Cache directory for remote templates |
+| `--template-cache` | string | per-user cache directory (`promptarena/templates`) | Cache directory for remote templates |
 | `--output` | string | `.` | Output directory |
 | `--no-agent` | bool | `false` | Skip writing the AI-agent brief (`AGENTS.md` + `.claude/skills/`) |
 | `--no-env` | bool | `false` | Skip `.env` file creation |
@@ -80,12 +223,12 @@ PromptArena includes 6 built-in templates:
 
 | Template | Files Generated | Description |
 |----------|-----------------|-------------|
-| `quick-start` | 6 files | Minimal viable testing setup for rapid experimentation |
-| `customer-support` | 10 files | Support agent with KB search and order status tools |
-| `code-assistant` | 9 files | Code generation and review with separate prompts |
-| `content-generation` | 9 files | Creative content for blogs, products, social media |
-| `multimodal` | 7 files | Image analysis and vision testing |
-| `mcp-integration` | 7 files | MCP filesystem server integration |
+| `quick-start` | 8 files (7 with a non-mock provider) | Minimal viable testing setup for rapid experimentation |
+| `customer-support` | 11 files | Support agent with KB search and order status tools |
+| `code-assistant` | 10 files | Code generation and review with separate prompts |
+| `content-generation` | 10 files | Creative content for blogs, products, social media |
+| `multimodal` | 11 files | Image analysis and vision testing |
+| `mcp-integration` | 8 files | MCP filesystem server integration |
 
 ### Examples
 
@@ -143,53 +286,25 @@ Depending on the template, `init` creates:
 
 ### Template Comparison
 
-**quick-start** (6 files):
-
-- Best for: Beginners, simple testing
-- Includes: 1 prompt, 1 provider, 1 basic scenario
-
-**customer-support** (10 files):
-
-- Best for: Support agent testing, tool calling
-- Includes: 1 prompt, 3 scenarios, 2 tools (KB search, order status)
-
-**code-assistant** (9 files):
-
-- Best for: Code generation workflows
-- Includes: 2 prompts (generator, reviewer), 3 scenarios
-- Temperature: 0.3 (deterministic)
-
-**content-generation** (9 files):
-
-- Best for: Marketing, creative writing
-- Includes: 2 prompts (blog, marketing), 3 scenarios
-- Temperature: 0.8 (creative)
-
-**multimodal** (7 files):
-
-- Best for: Vision AI, image analysis
-- Includes: 1 vision prompt, 2 scenarios with sample images
-
-**mcp-integration** (7 files):
-
-- Best for: MCP server testing, tool integration
-- Includes: 1 prompt, 2 scenarios, MCP filesystem server config
+| Template | Includes |
+|----------|----------|
+| `quick-start` | 1 prompt, 1 provider, 1 basic scenario |
+| `customer-support` | 1 prompt, 3 scenarios, 2 tools (KB search, order status) |
+| `code-assistant` | 2 prompts (generator, reviewer), 3 scenarios; temperature 0.3 |
+| `content-generation` | 2 prompts (blog, marketing), 3 scenarios; temperature 0.8 |
+| `multimodal` | 1 vision prompt, 2 scenarios, sample images (`media/README.md` and 2 PNGs) |
+| `mcp-integration` | 1 prompt, 2 scenarios, MCP filesystem server config |
 
 ### After Initialization
 
 ```bash
-# Navigate to project
 cd my-test
-
-# Add your API key to .env
-echo "OPENAI_API_KEY=sk-..." >> .env
-
-# Run tests
+export OPENAI_API_KEY=sk-...
 promptarena run
-
-# View results in the web UI
 promptarena serve --open
 ```
+
+The OpenAI provider reads `OPENAI_API_KEY` from the process environment. `promptarena` does not load `.env`, so export or source it in your shell.
 
 ---
 
@@ -249,9 +364,7 @@ promptarena mocks generate --input out --dry-run
 
 ## `promptarena generate`
 
-Generate Arena scenario YAML files from recorded sessions or external session sources. Uses pluggable `SessionSourceAdapter` implementations to load session data and convert it into reproducible test scenarios.
-
-This is particularly useful for turning production conversations with failing assertions into reproducible test scenarios.
+Generate Arena scenario YAML files from recorded sessions or from sessions pulled through an installed deploy adapter. Each session becomes a reproducible test scenario.
 
 ### Usage
 
@@ -267,14 +380,12 @@ promptarena generate [flags]
 | `--source` | string | - | Installed deploy adapter to pull sessions from (e.g. `omnia`). Needs the adapter's `sessions` capability and a `deploy:` section in `--config` for endpoint, workspace and token |
 | `--workspace` | string | - | Override the deploy profile's workspace when using `--source` |
 | `--filter-passed` | bool | - | Filter by pass/fail status (tri-state: omit for all, `true` for passed, `false` for failed) |
-| `--filter-eval-type` | string | - | Filter sessions by assertion failure type (e.g., `content_matches`) |
+| `--filter-eval-type` | string | - | Filter sessions by assertion failure type (e.g., `content_matches`). Applies to `--source` only; `--from-recordings` ignores it |
 | `--expect` | string (repeatable) | - | Expected range for a measured eval, e.g. `faithfulness>=0.8`. Selects sessions whose score fell outside it, and becomes the generated assertion's `min_score`/`max_score`. |
 | `--config` | string | - | Arena config whose pack supplies eval params and declared thresholds for recorded measurements |
-| `--task-type` | string | `conversation` | `task_type` to set on the generated scenarios (a recorded workflow entry state's `prompt_task` wins over it) |
+| `--task-type` | string | `conversation` | `task_type` to set on the generated scenarios. A `--source` session with a recorded workflow entry state takes that state's `prompt_task` instead |
 | `--output` | string | `.` | Output directory for generated scenario files |
 | `--dedup` | bool | `true` | Deduplicate sessions by failure pattern fingerprint |
-
-`--pack` is a deprecated alias for `--task-type`; it only ever set the task type.
 
 :::note
 You must specify either `--from-recordings` or `--source`. `--from-recordings` reads local files. `--source <name>` resolves the installed deploy adapter of that name (`~/.promptarena/adapters/promptarena-deploy-<name>`, or project-local), checks it advertises the `sessions` capability, and hands it the merged deploy config from `--config`, including the token stored by `promptarena deploy login`. An adapter without the capability is reported with the upgrade command.
@@ -290,17 +401,13 @@ You must specify either `--from-recordings` or `--source`. `--from-recordings` r
 | PromptKit session recording | `*.recording.json`, or the event store's `*.jsonl` (see [Session Recording](/arena/how-to/scenarios/session-recording/)) | Messages, including tool calls and multimodal parts. No assertion results, so `--filter-passed` treats every session as passing. |
 | Transcript | `*.transcript.yaml` | Messages only. |
 
-Run output is the everyday input: point the command at the `out/` directory of a run that had failures and it produces one scenario per failing run.
+For run output, `--from-recordings "out/*.json" --filter-passed=false` produces one scenario per failing run. Without the filter, every run becomes a scenario. A path without a glob character is read as one file.
 
-Every user turn in a session becomes a scenario turn, with any attached images, documents or audio. A session with several user turns is generated in full, with a warning in the output and the scenario description: later turns were written against the recorded answers, and the model will not give the same answers twice, so the replay may not behave as recorded. The recorded pack identity and template variables are carried into the scenario, and a recorded workflow entry state becomes the scenario's `task_type`.
+Every user turn in a session becomes a scenario turn, with any attached images, documents or audio. A session with several user turns is generated in full, with a warning in the output and the scenario description (see [Generate regression scenarios from production sessions](/arena/how-to/scenarios/generate-from-production-sessions/#when-this-works-well)). The recorded pack identity and template variables are carried into the scenario. For `--source` sessions, a recorded workflow entry state sets the scenario's `task_type`; local recordings keep only the entry state, so their scenarios use `--task-type`.
 
 ### How recorded evals become assertions
 
-Real sessions record measurements, not verdicts: an eval such as `faithfulness`
-produces a score, and whether that score is acceptable is a threshold the pack
-author or you decide. A scenario assertion is the same eval type and params
-plus `min_score` / `max_score`. `generate` makes one decision per recorded
-eval and prints it:
+A recorded session carries each eval's score and, where stored, its verdict. A scenario assertion is the same eval type and params plus `min_score` / `max_score`. `generate` makes one decision per recorded eval and prints it. A failed verdict becomes an assertion. A score becomes one when the pack declares a threshold or you pass `--expect`. Passed verdicts are dropped.
 
 | Situation | Result |
 |-----------|--------|
@@ -311,13 +418,13 @@ eval and prints it:
 | None of the above | Reported with its score and the `--expect` to pass. Never asserted against an invented bound. |
 
 `>=` and `>` become `min_score`; `<=` and `<` become `max_score`; `==` sets both.
-Bounds are inclusive, so a strict operator is widened and the decision says so.
+Bounds are inclusive. A pack threshold with a strict operator is widened to the inclusive bound and the decision says so. An `--expect` with `>` or `<` is converted to the inclusive bound without a note.
 `--expect` also selects: only sessions whose measurement fell outside the range
 (or never produced one) are generated. This holds whether or not the source
 filters on its side: every fetched session is checked again, and one inside
 every range is skipped with a warning naming the expectations.
 
-```
+```text
 session run-1 eval faithfulness (faithfulness) scored 0.42: asserted-threshold min_score 0.8 — pack threshold gte 0.8 (recorded score 0.42)
 session run-1 eval answer_relevancy (answer_relevancy) scored 0.9: reported — scored 0.9 in session run-1; no threshold known — pass --expect answer_relevancy>=<value> (or <=) or declare threshold on the eval in the pack
 ```
@@ -341,22 +448,13 @@ promptarena generate \
   --output scenarios/generated
 ```
 
-Filter by a specific assertion failure type:
-
-```bash
-promptarena generate \
-  --from-recordings "out/*.json" \
-  --filter-eval-type content_matches \
-  --output scenarios/content-failures
-```
-
 Turn sessions where `faithfulness` fell below 0.8 into scenarios that assert it, lending the pack's eval params from the arena config:
 
 ```bash
 promptarena generate \
   --from-recordings "out/*.json" \
   --config config.arena.yaml \
-  --expect faithfulness>=0.8 \
+  --expect "faithfulness>=0.8" \
   --output scenarios/faithfulness-regressions
 ```
 
@@ -376,7 +474,7 @@ promptarena generate \
   --source omnia \
   --config arena.yaml \
   --filter-passed=false \
-  --expect faithfulness>=0.8 \
+  --expect "faithfulness>=0.8" \
   --output scenarios/production-failures
 ```
 
@@ -409,7 +507,7 @@ When `--dedup` is enabled (default), sessions with identical failure patterns an
 
 ### Pluggable Adapters
 
-The `generate` command supports pluggable session source adapters via the `SessionSourceAdapter` interface:
+`--source <name>` resolves the installed deploy adapter of that name. The adapter implements the `SessionSourceAdapter` interface; see the [generate package](https://github.com/AltairaLabs/promptarena/tree/main/arena/generate) for its definition.
 
 ```go
 type SessionSourceAdapter interface {
@@ -418,8 +516,6 @@ type SessionSourceAdapter interface {
     Get(ctx context.Context, sessionID string) (*SessionDetail, error)
 }
 ```
-
-External adapters register themselves with the global registry in `init()` functions and are selected via `--source <name>`. See the [generate package](https://github.com/AltairaLabs/promptarena/v2/tree/main/arena/generate) for the full interface definition.
 
 ---
 
@@ -446,9 +542,8 @@ promptarena run [flags]
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `-j, --concurrency` | int | `6` | Number of concurrent workers |
-| `-s, --seed` | int | `42` | Random seed for reproducibility |
-| `--ci` | bool | `false` | CI mode (disable TUI, simple logs) |
-| `--simple` | bool | `false` | Simple mode (alias for `--ci`) |
+| `--ci` | bool | `false` | CI mode: disables the TUI and writes deterministic machine output; exits non-zero on errored runs or failed assertions |
+| `--simple` | bool | `false` | Simple mode: disables the TUI and writes linear human-readable output; does not set the failure exit code |
 
 #### Filtering
 
@@ -458,20 +553,12 @@ promptarena run [flags]
 | `--scenario` | []string | all | Scenarios to run (comma-separated) |
 | `--region` | []string | all | Regions to run (comma-separated) |
 | `--eval` | []string | all | Evaluations to run (comma-separated) |
-| `--roles` | []string | all | Self-play role configurations to use |
 
-#### Parameter Overrides
+#### Parameter Override
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--temperature` | float32 | `0.6` | Override temperature for all scenarios |
 | `--max-tokens` | int | - | Override max tokens for all scenarios |
-
-#### Self-Play Mode
-
-| Flag | Type | Default | Description |
-|------|------|---------|-------------|
-| `--selfplay` | bool | `false` | Enable self-play mode |
 
 #### Mock Testing
 
@@ -500,15 +587,9 @@ promptarena run [flags]
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `-o, --out` | string | `out` | Output directory |
-| `--format` | []string | from config | Output formats: json, junit, markdown, csv |
+| `--format` | []string | from config | Output formats: json, junit, markdown, csv, objectives |
 | `--formats` | []string | from config | Alias for --format |
-
-#### Legacy Output Flags (Deprecated)
-
-| Flag | Type | Default | Description |
-|------|------|---------|-------------|
-| `--html` | bool | `false` | Deprecated: accepted but produces markdown instead |
-| `--html-file` | string | — | Deprecated: use `--markdown-file` |
+| `--objectives-group-by` | []string | `scenario` | Groupings for the objectives report: `scenario`, `provider`, `objective`, `taxonomy`, `taxonomy.<framework>`, `label.<key>`, `data.<column>` |
 | `--junit-file` | string | `out/junit.xml` | JUnit XML output file |
 | `--markdown-file` | string | `out/results.md` | Markdown report output file |
 
@@ -553,17 +634,10 @@ promptarena run --concurrency 3
 promptarena run --concurrency 1
 ```
 
-#### Override Parameters
+#### Override Max Tokens
 
 ```bash
-# Override temperature for all tests
-promptarena run --temperature 0.8
-
-# Override max tokens
 promptarena run --max-tokens 500
-
-# Combined overrides
-promptarena run --temperature 0.9 --max-tokens 1000
 ```
 
 #### Output Formats
@@ -572,8 +646,8 @@ promptarena run --temperature 0.9 --max-tokens 1000
 # Generate JSON and Markdown reports
 promptarena run --format json,markdown
 
-# Generate all available formats
-promptarena run --format json,junit,markdown
+# Generate every format
+promptarena run --format json,junit,markdown,csv,objectives
 
 # Custom output directory
 promptarena run --out test-results-2024-01-15
@@ -592,25 +666,9 @@ promptarena run --mock-provider
 promptarena run --mock-config mock-responses.yaml
 ```
 
-#### Self-Play Mode
-
-```bash
-# Enable self-play testing
-promptarena run --selfplay
-
-# Self-play with specific roles
-promptarena run --selfplay --roles frustrated-customer,tech-support
-```
-
 #### CI/CD Mode
 
-```bash
-# Headless mode for CI pipelines
-promptarena run --ci --format junit,json
-
-# With specific quality gates
-promptarena run --ci --concurrency 3 --format junit
-```
+See [Run in CI](/arena/how-to/interfaces/run-in-ci/) for CI recipes.
 
 #### Debugging
 
@@ -620,16 +678,6 @@ promptarena run --verbose
 
 # Verbose with specific scenario
 promptarena run --verbose --scenario failing-test
-```
-
-#### Reproducible Tests
-
-```bash
-# Use specific seed for reproducibility
-promptarena run --seed 12345
-
-# Same seed across runs produces same results
-promptarena run --seed 12345 --provider openai
 ```
 
 ---
@@ -677,11 +725,11 @@ One JSON object per line:
 
 The command prints the Markdown report and writes it, with the JSON, to the output directory.
 
-- **Agreement.** The share of evaluated examples whose verdict matches the label, with a 95% Wilson interval.
-- **Per label.** How often the check passes pass-labeled examples and fails fail-labeled ones, each with an interval. A check can agree often and still miss most of one kind.
-- **Cohen's kappa.** Agreement corrected for what chance alone would give: 1 is perfect, 0 no better than chance. It is the figure to gate on when one label is much more common than the other.
-- **Counts.** A 2×2 table of the check's verdicts against the labels.
-- **Disagreements.** Every example the check got wrong, with its message and note.
+- The share of evaluated examples whose verdict matches the label, with a 95% Wilson interval.
+- How often the check passes pass-labeled examples and fails fail-labeled ones, each with an interval.
+- Cohen's kappa is agreement corrected for what chance alone would give: 1 is perfect, 0 no better than chance.
+- A 2×2 table of the check's verdicts against the labels.
+- Every example the check got wrong, with its message and note.
 
 An example the check can't evaluate, such as a judge call that fails, is listed and left out of every figure. With no example evaluated, the command fails.
 
@@ -710,6 +758,14 @@ promptarena personas add <name> [--dir personas] [--force]
 ```
 
 `add` writes `<dir>/<name>.persona.yaml`, refuses to replace an existing file unless `--force` is given, and prints the `self_play.personas` entry to add to your arena config.
+
+### Flags
+
+| Subcommand | Flag | Type | Default | Description |
+|------------|------|------|---------|-------------|
+| `list` | `--json` | bool | `false` | Output JSON |
+| `add` | `--dir` | string | `personas` | Directory to write the persona into |
+| `add` | `--force` | bool | `false` | Replace an existing file |
 
 ### Built-in personas
 
@@ -762,7 +818,7 @@ self_play:
 
 ## `promptarena redteam`
 
-Generate red-team scenarios from a set of objectives. `generate` crosses the objectives with attack strategies and converters and writes the result into your project as ordinary scenario YAML, with the objectives in a data file. Review it and commit it: an attack that gets through then stays in the suite as a regression test.
+Generate red-team scenarios from a set of objectives. `generate` crosses the objectives with attack strategies and converters and writes the result into your project as ordinary scenario YAML, with the objectives in a data file.
 
 ### Usage
 
@@ -773,27 +829,29 @@ promptarena redteam generate (--objectives <file> | --dataset <name>) [flags]
 
 ### Flags
 
-| Flag | Default | Description |
-|------|---------|-------------|
-| `--objectives` | – | A `.jsonl` or `.csv` file of objectives. See [Objectives files](#objectives-files). |
-| `--dataset` | – | A public set to fetch: `harmbench` or `jbb`. See [Public datasets](#public-datasets). |
-| `--dataset-file` | – | A local copy of the `--dataset`'s behaviors file, read instead of fetching. The benign split is not read. |
-| `--cache-dir` | the user cache directory's `promptarena/datasets` | Where fetched datasets are kept. |
-| `--refresh` | `false` | Fetch the dataset again even when it is cached. |
-| `--limit` | all | Use only the first N objectives, and the first N benign requests. |
-| `--name` | the dataset or file name | Prefix for the scenario IDs and file names. |
-| `--dir` | `.` | The project directory to write into. |
-| `--strategies` | `scripted` | `scripted`, or built-in adversarial personas: `crescendo`, `refine`, `multi-technique`, `adversarial-scaffold`. |
-| `--converters` | `none` | One scenario per converter: `none` or a [built-in converter](/arena/reference/config-schema/#message-transforms). `base64`, `rot13` and `reverse` are followed by a template that tells the agent how to read the message. |
-| `--judge` | – | A configured judge that decides whether an attack got through, with an `llm_judge` check. |
-| `--task-type` | `conversation` | The scenarios' `task_type`. |
-| `--role` | `attacker` | The self-play role the personas speak as. |
-| `--turns` | `6` | Exchanges a persona strategy gets. |
-| `--trials` | `1` | Trials per objective. Above 1, the persona and baseline scenarios get a `trial_budget` that stops at the first trial that gets through. |
-| `--max-cost-usd` | – | The budget's cost cap for one objective's trials. |
-| `--baseline` | `true` | Add a no-attack baseline scenario. |
-| `--taxonomy` | – | [Taxonomy entries](/arena/reference/config-schema/#framework-mapping) for every objective, such as `owasp-llm:LLM01,atlas:AML.T0054`. |
-| `--force` | `false` | Replace existing scenario and data files. |
+| Flag | Type | Default | Description |
+|------|------|---------|-------------|
+| `--objectives` | string | – | A `.jsonl` or `.csv` file of objectives. See [Objectives files](#objectives-files). |
+| `--dataset` | string | – | A public set to fetch: `harmbench` or `jbb`. See [Public datasets](#public-datasets). |
+| `--dataset-file` | string | – | A local copy of the `--dataset`'s behaviors file, read instead of fetching. The benign split is not read. |
+| `--cache-dir` | string | the user cache directory's `promptarena/datasets` | Where fetched datasets are kept. |
+| `--refresh` | bool | `false` | Fetch the dataset again even when it is cached. |
+| `--limit` | int | all | Use only the first N objectives, and the first N benign requests. |
+| `--name` | string | the dataset or file name | Prefix for the scenario IDs and file names. |
+| `--dir` | string | `.` | The project directory to write into. |
+| `--strategies` | []string | `scripted` | `scripted`, or built-in adversarial personas: `crescendo`, `refine`, `multi-technique`, `adversarial-scaffold`. |
+| `--converters` | []string | `none` | One scenario per converter: `none` or a [built-in converter](/arena/reference/config-schema/#message-transforms). `base64`, `rot13` and `reverse` are followed by a template that tells the agent how to read the message. |
+| `--judge` | string | – | A configured judge that decides whether an attack got through, with an `llm_judge` check. |
+| `--task-type` | string | `conversation` | The scenarios' `task_type`. |
+| `--role` | string | `attacker` | The self-play role the personas speak as. |
+| `--turns` | int | `6` | Exchanges a persona strategy gets. |
+| `--trials` | int | `1` | Trials per objective. Above 1, the persona and baseline scenarios get a `trial_budget` that stops at the first trial that gets through. |
+| `--max-cost-usd` | float | – | The budget's cost cap for one objective's trials. |
+| `--baseline` | bool | `true` | Add a no-attack baseline scenario. |
+| `--taxonomy` | []string | – | [Taxonomy entries](/arena/reference/config-schema/#framework-mapping) for every objective, such as `owasp-llm:LLM01,atlas:AML.T0054`. |
+| `--force` | bool | `false` | Replace existing scenario and data files. |
+
+`redteam datasets` takes `--json` (bool, default `false`) to output JSON.
 
 ### What it writes
 
@@ -806,14 +864,14 @@ promptarena redteam generate (--objectives <file> | --dataset <name>) [flags]
 | `scenarios/<name>-over-refusal.scenario.yaml` | The benign requests, which the agent should answer. |
 | `personas/<persona>.persona.yaml` | The built-in personas the scenarios use, as `personas add` writes them. |
 
-Each scenario runs once per row of its data file, so the number of files depends on the strategies and converters, not on the number of objectives. Each starts with a comment naming the generator, the objectives' source and, for a public set, its license. The command writes nothing if a scenario or data file already exists, unless `--force` is given. An existing persona file is always kept, since it may hold your edits. At the end the command prints the `scenarios`, `self_play` and `judges` entries to add to your arena config.
+Each scenario runs once per row of its data file, so the number of files depends on the strategies and converters, not on the number of objectives. Each starts with a comment naming the generator, the objectives' source and, for a public set, its license. The command writes nothing if a scenario or data file already exists, unless `--force` is given. An existing persona file is always kept. At the end the command prints the `scenarios`, `self_play` and `judges` entries to add to your arena config.
 
 The scenarios:
 
-- **`scripted`** sends the row's `prompt`, or its `objective` when it has none, as a scripted user turn through the converter. A scripted turn can't carry an objective, so the turn's assertions check that the agent held out: `content_excludes` on the success pattern, the judge scoring below 0.5, or, with neither, `refusal`.
-- **A persona strategy** puts the built-in persona on a self-play turn with an [objective](/arena/reference/config-schema/#objectives): `description` from the row, `expect: not_achieved`, and a `rewind` on `refusal` (at most 3). Its `success` checks are `content_includes` on the row's `success_pattern` and, with `--judge`, an `llm_judge` scoring 0.5 or more; all of them must pass. A persona strategy needs at least one of the two, because an agent that answers a harmless opening step hasn't been broken.
-- **The baseline** asks for the same objective once, with the [`direct`](#built-in-personas) persona and `baseline: true`, and the same checks, so the objectives report sets each attack's rate against it. With no success pattern and no judge, its check is `refusal` with `max_score: 0`.
-- **The over-refusal scenario** sends each benign request with a `refusal` assertion at `max_score: 0`, which passes when the agent answers.
+- `scripted` sends the row's `prompt`, or its `objective` when it has none, as a scripted user turn through the converter. A scripted turn can't carry an objective, so the turn's assertions check that the agent held out: `content_excludes` on the success pattern, the judge scoring below 0.5, or, with neither, `refusal`.
+- A persona strategy puts the built-in persona on a self-play turn with an [objective](/arena/reference/config-schema/#objectives): `description` from the row, `expect: not_achieved`, and a `rewind` on `refusal` (at most 3). Its `success` checks are `content_includes` on the row's `success_pattern` and, with `--judge`, an `llm_judge` scoring 0.5 or more; all of them must pass. A persona strategy needs at least one of the two.
+- The baseline asks for the same objective once, with the [`direct`](#built-in-personas) persona and `baseline: true`, and the same checks. The objectives report sets each attack's rate against it. With no success pattern and no judge, its check is `refusal` with `max_score: 0`.
+- The over-refusal scenario sends each benign request with a `refusal` assertion at `max_score: 0`, which passes when the agent answers.
 
 ### Objectives files
 
@@ -903,8 +961,8 @@ promptarena export | jq '.prompts | keys'
 
 ### Notes
 
-- The config must contain `prompt_configs` (inline prompts). Configs that reference pre-built pack files cannot be exported.
-- Schema validation is performed against the embedded PromptPack schema. The `PROMPTKIT_SCHEMA_SOURCE=local` environment variable validates against in-repo schemas when developing new fields that are not published to the hosted schema location.
+- The config must define at least one prompt, through `prompt_configs` file references or `prompt_specs`. A config with no prompts fails with `no prompts found in registry`.
+- Schema validation is performed against the embedded PromptPack schema. The `PROMPTKIT_SCHEMA_SOURCE` environment variable selects the schema: `local` (or unset) uses the schema embedded in the PromptKit runtime, `remote` fetches the pack's `$schema` URL, and a path starting with `/` or `./` loads a schema file.
 - Skill validation and workflow validation are run automatically. Errors are fatal; warnings are printed to stderr.
 
 ---
@@ -921,18 +979,7 @@ promptarena deploy [subcommand] [flags]
 
 ### Subcommands
 
-| Subcommand | Description |
-|------------|-------------|
-| *(none)* | Run plan + apply sequentially (default) |
-| `plan` | Preview changes without modifying resources |
-| `apply` | Apply changes (called automatically by `deploy`) |
-| `status` | Show deployment status and resource health |
-| `destroy` | Tear down all managed resources |
-| `refresh` | Refresh local state from the live environment |
-| `import` | Import a pre-existing resource into state |
-| `adapter install` | Install an adapter plugin |
-| `adapter list` | List installed adapters |
-| `adapter remove` | Remove an installed adapter |
+With no subcommand, `deploy` runs plan, then apply. See [Deploy: CLI Commands](/arena/reference/deploy/cli-commands/) for every subcommand.
 
 ### Global Deploy Flags
 
@@ -940,7 +987,7 @@ promptarena deploy [subcommand] [flags]
 |------|-------|---------|-------------|
 | `--env` | `-e` | `"default"` | Target environment name |
 | `--config` | | `arena.yaml` | Path to config file |
-| `--pack` | | Auto-detected | Path to `.pack.json` file |
+| `--pack` | | Compiled from `--config` | Path to a pre-compiled `.pack.json` file |
 
 ### Examples
 
@@ -1042,7 +1089,7 @@ The command displays styled boxes with:
 
 **Example Output**:
 
-```
+```text
 ✨ PromptArena Configuration Inspector ✨
 
 ╭──────────────────────────────────────────────────────────────────────────────╮
@@ -1089,7 +1136,7 @@ Roles:
 │ ✓ Configuration is valid                                                     │
 │                                                                              │
 │ Connectivity Checks:                                                         │
-│   Tools are used by prompts                                                │
+│   Tools connected to prompts                                               │
 │   Unique task types per prompt                                             │
 │   Scenario task types exist                                                │
 │   Allowed tools are defined                                                │
@@ -1101,7 +1148,7 @@ Roles:
 
 ## `promptarena debug`
 
-Debug command shows loaded configuration, prompt packs, scenarios, and providers to help troubleshoot configuration issues.
+Print a configuration overview, each scenario and each provider entry, to help troubleshoot configuration issues.
 
 ### Usage
 
@@ -1125,18 +1172,17 @@ promptarena debug
 promptarena debug --config test-arena.yaml
 ```
 
-### Use Cases
+### Output
 
-- Troubleshoot configuration loading issues
-- Verify all files are found and parsed correctly
-- Check prompt pack assembly
-- Validate provider initialization
+- A configuration overview: counts of prompt configs, providers and scenarios, and the defaults
+- Each scenario
+- Each provider entry: type, model, base URL, rate limit and defaults
 
 ---
 
 ## `promptarena prompt-debug`
 
-Test prompt generation with specific regions, task types, and contexts. Useful for validating prompt assembly before running full tests.
+Print the prompt generated for a region and task type, or for a persona, with a given context. Without `--persona`, both `--region` and `--task-type` are required.
 
 ### Usage
 
@@ -1169,76 +1215,64 @@ promptarena prompt-debug [flags]
 # List available configurations
 promptarena prompt-debug --list
 
-# Test prompt generation for task type
-promptarena prompt-debug --task-type support
-
-# Test with region
+# Test with region and task type
 promptarena prompt-debug --task-type support --region us
 
 # Test with persona
 promptarena prompt-debug --persona us-hustler-v1
 
-# Test with scenario file
-promptarena prompt-debug --scenario scenarios/customer-support.yaml
+# Test with scenario file (--region is still required)
+promptarena prompt-debug --region us --scenario scenarios/customer-support.yaml
 
 # Test with custom context
-promptarena prompt-debug --task-type support --context "urgent billing issue"
+promptarena prompt-debug --task-type support --region us --context "urgent billing issue"
 
 # JSON output for parsing
-promptarena prompt-debug --task-type support --json
+promptarena prompt-debug --task-type support --region us --json
 
 # Minimal output (just the prompt)
-promptarena prompt-debug --task-type support --show-meta=false --show-stats=false
+promptarena prompt-debug --task-type support --region us --show-meta=false --show-stats=false
 ```
 
 ### Output
 
-The command shows:
-- Assembled system prompt
-- Metadata (task type, region, persona)
-- Statistics (character count, estimated tokens)
-- Configuration used
+The command prints three sections:
+- Prompt generation results: prompt type, config file, variables, and counts of loaded prompt configs, providers and scenarios
+- Prompt statistics: length in characters, lines, approximate words and estimated tokens (`Tokens (est)`)
+- The generated system prompt
 
 **Example Output**:
 
-```
-=== Prompt Debug ===
+```text
+🎯 Prompt Generation Results
+=============================
+Prompt Type: region 'us', task-type 'support'
+Config File: config.arena.yaml
+Prompt Configs: 1 loaded
+Providers: 3 loaded
+Scenarios: 6 loaded
 
-Task Type: support
-Region: us
-Persona: default
+📊 Prompt Statistics
+--------------------
+Length: 774 characters
+Lines: 18
+Words (approx): 102
+Tokens (est): 193
 
---- System Prompt ---
-You are a helpful customer support agent for TechCo.
-
-Your role:
-- Answer product questions
-- Help track orders
-- Process returns and refunds
+📄 Generated System Prompt
+===========================
 ...
-
---- Statistics ---
-Characters: 1,234
-Estimated Tokens: 308
-Lines: 42
-
---- Metadata ---
-Prompt Config: support
-Version: v1.0.0
-Validators: 3
 ```
 
 ---
 
 ## `promptarena serve`
 
-Start a local web server with the Arena live UI. Streams run events to the browser via Server-Sent Events (SSE) and provides a REST API for starting runs, viewing results, and inspecting configuration.
-
-The web UI loads any existing results from the output directory on startup, so previous runs are immediately visible. New runs can be started from the browser and their progress streams in real time.
+Start a local web server with the Arena live UI. The server streams run events to the browser over Server-Sent Events (SSE) and exposes a REST API for starting runs, reading results and inspecting configuration. On startup it loads any existing results from the output directory.
 
 ### Interactive chat
 
-The web UI also includes an **Interactive Chat** tab to talk live to an agent defined in the config. Pick an agent (prompt config) and provider, fill in any required prompt variables, optionally enable evals, then chat — your message drives a turn and the reply streams into the **same** conversation view a run uses (tool calls, guardrail firings, and cost included). Guardrails are enforced; assertions don't apply. Use `--mock-provider` to try it without API keys.
+The web UI has an Interactive Chat tab for live conversation with an agent defined in the config. You select an agent (prompt config) and a provider, fill in required prompt variables and optionally enable evals. Each message drives a turn, and the reply streams into the same conversation view a run uses (tool calls, guardrail firings and cost). Guardrails are enforced; assertions do not apply. `--mock-provider` runs the tab without API keys.
 
 ### Usage
 
@@ -1246,7 +1280,7 @@ The web UI also includes an **Interactive Chat** tab to talk live to an agent de
 promptarena serve [config-path] [flags]
 ```
 
-If `config-path` is a directory, looks for `config.arena.yaml` inside it. Defaults to the current directory.
+If `config-path` is a directory, `serve` looks for `config.arena.yaml` inside it. It defaults to the current directory.
 
 ### Flags
 
@@ -1274,8 +1308,6 @@ promptarena serve -p 3000 --open
 
 ### REST API
 
-The server exposes these endpoints:
-
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | `GET` | `/api/events` | SSE stream of live run events |
@@ -1299,16 +1331,15 @@ curl -X POST http://localhost:8080/api/run \
 
 ### Development Mode
 
-For frontend development with hot module replacement, run the Go backend and Vite dev server separately:
+The Go backend and the Vite dev server (hot module replacement) run as separate processes. Vite proxies `/api` to the backend.
 
 ```bash
 # Terminal 1: Go backend
 promptarena serve -p 8080
 
-# Terminal 2: Vite dev server (proxies /api to backend)
+# Terminal 2: Vite dev server at http://localhost:5173
 cd arena/web/frontend
 npm run dev
-# Open http://localhost:5173
 ```
 
 ---
@@ -1329,17 +1360,17 @@ promptarena chat [flags]
 |------|------|---------|-------------|
 | `--config` | string | `config.arena.yaml` | Path to the Arena config file |
 | `--mock-provider` | bool | `false` | Replace all providers with a generic mock (no API keys needed) |
-| `--mock-config` | string | — | Path to a mock-responses YAML file (used with `--mock-provider`) |
+| `--mock-config` | string | - | Path to a mock-responses YAML file (used with `--mock-provider`) |
 | `--voice` | bool | `false` | Hands-free voice mode (requires PortAudio installed) |
-| `--voice-stt` | string | — | STT provider id for voice over text agents (VAD mode) |
-| `--voice-output-voice` | string | — | TTS voice id the agent speaks in (VAD mode) |
+| `--voice-stt` | string | - | STT provider id for voice over text agents (VAD mode) |
+| `--voice-output-voice` | string | - | TTS voice id the agent speaks in (VAD mode) |
 | `--echo-guard` | bool | `false` | Gate mic while the agent speaks (for laptop speakers) |
 | `--barge-in` | bool | `false` | Allow interrupting the agent mid-reply (needs headphones/AEC) |
 | `-v, --verbose` | bool | `false` | Enable verbose debug logging (raw provider events, transcription) |
 
 ### Setup flow
 
-When the config declares more than one prompt config (agent) or more than one provider, `chat` presents selection menus before opening the chat window. Required prompt variables are collected interactively before the session starts. You can also opt in to live eval scores after each reply.
+When the config declares more than one prompt config (agent) or more than one provider, `chat` presents selection menus before opening the chat window. It collects required prompt variables interactively before the session starts, and offers live eval scores after each reply.
 
 ### Examples
 
@@ -1356,7 +1387,7 @@ promptarena chat --mock-provider
 
 ### Guardrails and evals
 
-Guardrails are enforced on every turn exactly as they are in `promptarena run`. Assertions (test-only checks that compare model output against expected values) do not apply in a live chat session — they require a fixed expected output. If your config declares evals, the setup flow offers an optional toggle to display live scores after each reply.
+Guardrails are enforced on every turn, as in `promptarena run`. Assertions do not apply in a live chat session. If the config declares evals, the setup flow offers a toggle to display live scores after each reply.
 
 ---
 
@@ -1380,7 +1411,7 @@ promptarena agent-brief [dir]
 | `.claude/skills/promptarena-authoring/SKILL.md` | The authoring skill: workflow and minimal valid skeletons for each config kind. |
 | `.claude/skills/promptarena-authoring/reference/` | Catalogs generated from the binary: `evals-and-assertions.md`, `config-fields.md`, `mock-responses.md`, `cli.md`. |
 
-The skill and reference files are overwritten on every run. Re-run `agent-brief` after upgrading PromptArena to keep them in step with the binary.
+The skill and reference files are overwritten on every run.
 
 ### Examples
 
@@ -1403,13 +1434,13 @@ Run a stdio MCP server that exposes PromptArena's authoring knowledge (concepts,
 promptarena mcp
 ```
 
-**Tools:** `explain`, `get_schema`, `list_examples`, `show_example`
+Tools: `explain`, `get_schema`, `list_examples`, `show_example`.
 
-**Resources:** `promptarena://concepts/<id>`, `promptarena://schemas/<type>`, `promptarena://catalog`
+Resources: `promptarena://concepts/<id>`, `promptarena://schemas/<type>`, `promptarena://catalog`.
 
 ### Client Configuration
 
-Claude Code (`.mcp.json` in the project):
+Claude Code reads `.mcp.json` in the project:
 
 ```json
 {
@@ -1511,43 +1542,25 @@ Generate shell autocompletion script for bash, zsh, fish, or PowerShell.
 promptarena completion [bash|zsh|fish|powershell]
 ```
 
-### Examples
-
-```bash
-# Bash
-promptarena completion bash > /etc/bash_completion.d/promptarena
-
-# Zsh
-promptarena completion zsh > "${fpath[1]}/_promptarena"
-
-# Fish
-promptarena completion fish > ~/.config/fish/completions/promptarena.fish
-
-# PowerShell
-promptarena completion powershell > promptarena.ps1
-```
+See [Configure Shell Completions](/arena/how-to/setup/shell-completions/) for install commands per shell.
 
 ---
 
 ## Environment Variables
 
-PromptArena respects the following environment variables:
+PromptArena reads the following environment variables:
 
 | Variable | Description |
 |----------|-------------|
 | `OPENAI_API_KEY` | OpenAI API authentication |
 | `ANTHROPIC_API_KEY` | Anthropic API authentication |
 | `GOOGLE_API_KEY` | Google AI API authentication |
-| `PROMPTARENA_CONFIG` | Default configuration file (overrides `config.arena.yaml`) |
-| `PROMPTARENA_OUTPUT` | Default output directory (overrides `out`) |
 
 ### Example
 
 ```bash
 export OPENAI_API_KEY="sk-..."
 export ANTHROPIC_API_KEY="sk-ant-..."
-export PROMPTARENA_CONFIG="staging-arena.yaml"
-export PROMPTARENA_OUTPUT="test-results"
 
 promptarena run
 ```
@@ -1558,19 +1571,10 @@ promptarena run
 
 | Code | Meaning |
 |------|---------|
-| `0` | Success - all tests passed |
-| `1` | Failure - one or more tests failed or error occurred |
+| `0` | The command completed. Without `--ci`, failed assertions and errored runs still exit `0`. |
+| `1` | With `--ci`: one or more assertions failed or a run errored. In any mode: a setup error such as an invalid config or an output write failure. |
 
-Check exit code in scripts:
-
-```bash
-if promptarena run --ci; then
-  echo "Tests passed"
-else
-  echo "Tests failed"
-  exit 1
-fi
-```
+See [Run in CI](/arena/how-to/interfaces/run-in-ci/) for scripts that branch on the exit code.
 
 ---
 
@@ -1591,13 +1595,7 @@ promptarena config-inspect --verbose
 
 ### CI/CD Pipeline
 
-```bash
-# Run in headless CI mode
-promptarena run --ci --format junit,json
-
-# Check specific providers
-promptarena run --ci --provider openai,claude --format junit
-```
+See [Run in CI](/arena/how-to/interfaces/run-in-ci/) for headless runs, report formats and pipeline examples.
 
 ### Debugging
 
@@ -1606,7 +1604,7 @@ promptarena run --ci --provider openai,claude --format junit
 promptarena config-inspect
 
 # Debug prompt assembly
-promptarena prompt-debug --task-type support --verbose
+promptarena prompt-debug --task-type support --region us --verbose
 
 # Run with verbose logging
 promptarena run --verbose --scenario failing-test
@@ -1617,32 +1615,25 @@ promptarena debug
 
 ### Reviewing Results Later
 
-```bash
-# Run tests, keeping the JSON results
-promptarena run --format json,markdown
-
-# Review interactively in the browser (reads the JSON in out/)
-promptarena serve --open
-
-# Or browse past runs in the terminal
-promptarena view
-```
+See [Use the Web UI](/arena/how-to/interfaces/use-the-web-ui/) for `promptarena serve --open` and [Use the TUI](/arena/how-to/interfaces/use-the-tui/) for `promptarena view`.
 
 ### Multi-Provider Comparison
 
+`--provider` takes provider ids from the loaded config.
+
 ```bash
-# Test all providers and generate a Markdown report
+# Test all configured providers and generate a Markdown report
 promptarena run --format markdown,json
 
-# Test specific providers
-promptarena run --provider openai,claude,gemini --format markdown
+# Test specific providers by id
+promptarena run --provider <id>,<id> --format markdown
 ```
 
 ---
 
 ## Configuration File
 
-PromptArena uses a YAML configuration file (default: `config.arena.yaml`). See the [Configuration Reference](/arena/reference/config-schema/) for complete documentation.
+PromptArena reads a YAML configuration file (default: `config.arena.yaml`). See the [Configuration Reference](/arena/reference/config-schema/) for every field.
 
 ### Basic Structure
 
@@ -1668,11 +1659,15 @@ spec:
       formats: ["json", "markdown"]
 ```
 
-PromptArena supports multimodal content (images, audio, video) in test scenarios with comprehensive media rendering in all output formats.
+---
+
+## Media Content
+
+Scenarios carry multimodal content (images, audio, video) in a turn's `parts` array.
 
 ### Media Content in Scenarios
 
-Test scenarios can include multimodal content using the `parts` array:
+A text part takes `text`. A media part takes `media`.
 
 ```yaml
 apiVersion: promptkit.altairalabs.ai/v1alpha1
@@ -1680,45 +1675,46 @@ kind: Scenario
 metadata:
   name: image-analysis
 spec:
+  description: Ask the model to describe an image.
+  task_type: vision
   turns:
     - role: user
       parts:
         - type: text
-          patterns: ["What's in this image?"]
+          text: "What's in this image?"
         - type: image
           media:
             file_path: test-data/sample.jpg
+            mime_type: image/jpeg
             detail: high
 ```
 
-#### Supported Media Types
+### Supported Media Types
 
-- **Images**: JPEG, PNG, GIF, WebP
-- **Audio**: MP3, WAV, OGG, M4A
-- **Video**: MP4, WebM, MOV
+- Images: JPEG, PNG, GIF, WebP
+- Audio: MP3, WAV, OGG, M4A
+- Video: MP4, WebM, MOV
 
-#### Media Sources
+### Media Sources
 
-Media can be loaded from three sources:
+A media part loads from a local file, a URL or inline Base64 data.
 
-**1. Local Files**
 ```yaml
+# Local file
 - type: image
   media:
     file_path: images/diagram.png
+    mime_type: image/png
     detail: high
-```
 
-**2. URLs** (fetched during test execution)
-```yaml
+# URL, fetched during test execution
 - type: image
   media:
     url: https://example.com/photo.jpg
+    mime_type: image/jpeg
     detail: auto
-```
 
-**3. Inline Base64 Data**
-```yaml
+# Inline Base64 data
 - type: image
   media:
     data: "iVBORw0KGgoAAAANSUhEUgAAAAUA..."
@@ -1726,33 +1722,21 @@ Media can be loaded from three sources:
     detail: low
 ```
 
+URL downloads time out after 30 seconds and are limited to 50 MB.
+
 ### Media Rendering in Reports
 
-All output formats include media statistics and rendering:
+Media statistics appear in the JUnit and Markdown outputs. The JSON output carries the raw message parts. The CSV and objectives outputs contain no media data.
 
 #### Web UI (via `promptarena serve`)
 
-The live web UI includes a media dashboard:
+The web UI renders media parts inline in conversation messages. Each media item shows:
 
-**Media Summary Dashboard**
-- Visual statistics cards showing:
-  - Total images, audio, and video files
-  - Successfully loaded vs. failed media
-  - Total media size in human-readable format
-  - Media type icons (🖼️ 🎵 🎬)
-
-**Media Badges**
-```
-🖼️ x3  🎵 x2  5  0  💾 1.2 MB
-```
-
-**Media Items Display**
-- Individual media items with:
-  - Type icon and format badge
-  - Source (file path, URL, or "inline")
-  - MIME type
-  - File size
-  - Load status (loaded / error)
+- Type icon and format badge
+- Source (file path, URL, or "inline")
+- MIME type
+- File size
+- Load status (loaded / error)
 
 #### JUnit XML Reports
 
@@ -1763,25 +1747,21 @@ JUnit XML includes media metadata as test suite properties:
   <properties>
     <property name="media.images.total" value="5"/>
     <property name="media.audio.total" value="3"/>
-    <property name="media.video.total" value="0"/>
     <property name="media.loaded.success" value="8"/>
-    <property name="media.loaded.errors" value="0"/>
     <property name="media.size.total_bytes" value="1245678"/>
   </properties>
   <testcase name="test-001" classname="image-analysis" time="2.34"/>
 </testsuite>
 ```
 
-**Property Naming Convention**:
-- `media.{type}.total` - Count by media type (images, audio, video)
-- `media.loaded.success` - Successfully loaded media items
-- `media.loaded.errors` - Failed media loads
-- `media.size.total_bytes` - Total size in bytes
+| Property | Value |
+|----------|-------|
+| `media.{type}.total` | Count by media type (images, audio, video) |
+| `media.loaded.success` | Media parts with `data`, `file_path` or `url`. Written when the suite has any media parts. |
+| `media.loaded.errors` | Media parts with no `data`, `file_path` or `url` |
+| `media.size.total_bytes` | Total size in bytes |
 
-These properties are useful for:
-- CI/CD metrics and tracking
-- Test result analysis
-- Media resource monitoring
+The other properties are written only when their count is above 0. An absent property means a count of 0.
 
 #### Markdown Reports
 
@@ -1813,52 +1793,22 @@ Markdown reports include a media statistics table in the overview section:
 
 ### Media Loading Options
 
-Control how media is loaded and processed:
-
-#### HTTP Media Loader
-
-For URL-based media, configure the HTTP loader:
+Relative `file_path` values resolve from the configuration file directory:
 
 ```yaml
-spec:
-  defaults:
-    media:
-      http:
-        timeout: 30s
-        max_file_size: 50MB
-```
-
-#### Local File Paths
-
-Relative paths are resolved from the configuration file directory:
-
-```yaml
-# If arena.yaml is in /project/tests/
+# If config.arena.yaml is in /project/tests/
 # This resolves to /project/tests/images/sample.jpg
 - type: image
   media:
     file_path: images/sample.jpg
+    mime_type: image/jpeg
 ```
 
 ### Media Validation
 
-PromptArena validates media content:
-
-**Path Security**
-- Prevents path traversal attacks (`..` sequences)
-- Validates file paths are within allowed directories
-- Checks symlink targets
-
-**File Validation**
-- Verifies MIME types match content types
-- Checks file existence
-- Validates file sizes against limits
-- Ensures files are regular files (not directories)
-
-**Error Handling**
-- Media load failures are captured in test results
-- Errors reported in all output formats
-- Tests can continue with partial media failures
+- The loader checks that a local file exists.
+- URL downloads are limited to 50 MB.
+- A media load failure fails the user turn, and that scenario run is reported as errored. Other runs continue.
 
 ### Examples
 
@@ -1870,19 +1820,22 @@ kind: Scenario
 metadata:
   name: product-image-analysis
 spec:
+  description: Analyze a product image for defects.
   task_type: vision
   turns:
     - role: user
       parts:
         - type: text
-          patterns: ["Analyze this product image for defects"]
+          text: "Analyze this product image for defects"
         - type: image
           media:
             file_path: test-data/product-123.jpg
+            mime_type: image/jpeg
             detail: high
-  assertions:
-    - type: content_includes
-      patterns: ["quality", "inspection"]
+      assertions:
+        - type: content_includes
+          params:
+            patterns: ["quality", "inspection"]
 ```
 
 #### Testing Audio Transcription
@@ -1893,18 +1846,21 @@ kind: Scenario
 metadata:
   name: audio-transcription
 spec:
+  description: Transcribe an audio recording.
   task_type: transcription
   turns:
     - role: user
       parts:
         - type: text
-          patterns: ["Transcribe this audio"]
+          text: "Transcribe this audio"
         - type: audio
           media:
             file_path: test-data/meeting-recording.mp3
-  assertions:
-    - type: content_includes
-      patterns: ["meeting", "agenda"]
+            mime_type: audio/mpeg
+      assertions:
+        - type: content_includes
+          params:
+            patterns: ["meeting", "agenda"]
 ```
 
 #### Mixed Multimodal Content
@@ -1915,20 +1871,25 @@ kind: Scenario
 metadata:
   name: multimodal-analysis
 spec:
+  description: Compare charts and audio in one turn.
+  task_type: vision
   turns:
     - role: user
       parts:
         - type: text
-          patterns: ["Compare these media files"]
+          text: "Compare these media files"
         - type: image
           media:
             file_path: charts/q1-results.png
+            mime_type: image/png
         - type: image
           media:
             file_path: charts/q2-results.png
+            mime_type: image/png
         - type: audio
           media:
             file_path: presentations/summary.mp3
+            mime_type: audio/mpeg
 ```
 
 ### Generate Media-Rich Reports
@@ -1937,13 +1898,10 @@ spec:
 # Run multimodal tests with multiple formats
 promptarena run --format junit,markdown
 
-# View in the live web UI (includes interactive media dashboard)
-promptarena serve --open
+# Inspect media metrics in the JUnit output
+grep "media\." out/junit.xml
 
-# JUnit XML includes media metrics for CI
-cat out/junit.xml | grep "media\."
-
-# Markdown shows media statistics
+# Read the media statistics in the Markdown report
 cat out/results.md
 ```
 
@@ -1952,49 +1910,33 @@ cat out/results.md
 Extract media metrics from JUnit XML:
 
 ```bash
-# Count total images tested
-xmllint --xpath "//property[@name='media.images.total']/@value" out/junit.xml
+# Count total images tested (0 when the property is absent)
+xmllint --xpath "sum(//property[@name='media.images.total']/@value)" out/junit.xml
 
-# Check for media load errors
-xmllint --xpath "//property[@name='media.loaded.errors']/@value" out/junit.xml
+# Count media parts with no source (0 when the property is absent)
+xmllint --xpath "sum(//property[@name='media.loaded.errors']/@value)" out/junit.xml
 ```
 
-### Best Practices
+### Project layout
 
-**File Organization**
-```
+A project layout for multimodal tests:
+
+```text
 project/
-├── arena.yaml
-├── test-data/
-│   ├── images/
-│   │   ├── valid/
-│   │   └── invalid/
-│   ├── audio/
-│   └── video/
-└── scenarios/
-    └── multimodal-tests.yaml
+  config.arena.yaml
+  test-data/
+    images/
+    audio/
+    video/
+  scenarios/
+    multimodal-tests.yaml
 ```
-
-**Size Limits**
-- Keep test media files small (<10MB recommended)
-- Use compressed formats (WebP for images, MP3 for audio)
-- Consider using thumbnails for image tests
-
-**URL Loading**
-- Use reliable, stable URLs for CI/CD
-- Consider local copies for critical tests
-- Set appropriate timeouts for remote resources
-
-**Assertions**
-- Validate media is processed in responses
-- Check for expected content types
-- Verify quality/accuracy of analysis
 
 ---
 
 ## Media Assertions
 
-Arena provides six specialized media validators to test media content in LLM responses. These assertions validate format, dimensions, duration, and resolution of images, audio, and video outputs.
+Arena provides six media validators that check format, dimensions, duration and resolution of images, audio and video in assistant responses. They run on assistant responses only and make no API calls.
 
 ### Image Assertions
 
@@ -2002,19 +1944,17 @@ Arena provides six specialized media validators to test media content in LLM res
 
 Validates that images in assistant responses match allowed formats.
 
-**Parameters:**
-
-- `formats` ([]string, required): List of allowed formats (e.g., `png`, `jpeg`, `jpg`, `webp`, `gif`)
-
-**Example:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `formats` | []string | yes | Allowed formats (e.g., `png`, `jpeg`, `jpg`, `webp`, `gif`) |
 
 ```yaml
 turns:
   - role: user
     parts:
       - type: text
-        patterns: ["Generate a PNG image of a sunset"]
-    
+        text: "Generate a PNG image of a sunset"
+
     assertions:
       - type: image_format
         params:
@@ -2022,34 +1962,26 @@ turns:
             - png
 ```
 
-**Use Cases:**
-
-- Validate model outputs correct image format
-- Test format conversion capabilities
-- Ensure compatibility with downstream systems
-
 #### `image_dimensions`
 
 Validates image dimensions (width and height) in assistant responses.
 
-**Parameters:**
-
-- `width` (int, optional): Exact required width in pixels
-- `height` (int, optional): Exact required height in pixels
-- `min_width` (int, optional): Minimum width in pixels
-- `max_width` (int, optional): Maximum width in pixels
-- `min_height` (int, optional): Minimum height in pixels
-- `max_height` (int, optional): Maximum height in pixels
-
-**Example:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `width` | int | no | Exact required width in pixels |
+| `height` | int | no | Exact required height in pixels |
+| `min_width` | int | no | Minimum width in pixels |
+| `max_width` | int | no | Maximum width in pixels |
+| `min_height` | int | no | Minimum height in pixels |
+| `max_height` | int | no | Maximum height in pixels |
 
 ```yaml
 turns:
   - role: user
     parts:
       - type: text
-        patterns: ["Create a 1920x1080 wallpaper"]
-    
+        text: "Create a 1920x1080 wallpaper"
+
     assertions:
       # Exact dimensions
       - type: image_dimensions
@@ -2063,8 +1995,8 @@ turns:
   - role: user
     parts:
       - type: text
-        patterns: ["Generate a thumbnail"]
-    
+        text: "Generate a thumbnail"
+
     assertions:
       # Size range
       - type: image_dimensions
@@ -2075,32 +2007,23 @@ turns:
           max_height: 400
 ```
 
-**Use Cases:**
-
-- Validate exact resolution requirements
-- Test minimum/maximum size constraints
-- Verify thumbnail generation
-- Ensure HD/4K resolution compliance
-
 ### Audio Assertions
 
 #### `audio_format`
 
 Validates audio format in assistant responses.
 
-**Parameters:**
-
-- `formats` ([]string, required): List of allowed formats (e.g., `mp3`, `wav`, `ogg`, `m4a`, `flac`)
-
-**Example:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `formats` | []string | yes | Allowed formats (e.g., `mp3`, `wav`, `ogg`, `m4a`, `flac`) |
 
 ```yaml
 turns:
   - role: user
     parts:
       - type: text
-        patterns: ["Generate an audio clip"]
-    
+        text: "Generate an audio clip"
+
     assertions:
       - type: audio_format
         params:
@@ -2109,30 +2032,22 @@ turns:
             - wav
 ```
 
-**Use Cases:**
-
-- Validate audio output format
-- Test format compatibility
-- Ensure codec requirements
-
 #### `audio_duration`
 
 Validates audio duration in assistant responses.
 
-**Parameters:**
-
-- `min_seconds` (float, optional): Minimum duration in seconds
-- `max_seconds` (float, optional): Maximum duration in seconds
-
-**Example:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `min_seconds` | float | no | Minimum duration in seconds |
+| `max_seconds` | float | no | Maximum duration in seconds |
 
 ```yaml
 turns:
   - role: user
     parts:
       - type: text
-        patterns: ["Create a 30-second audio clip"]
-    
+        text: "Create a 30-second audio clip"
+
     assertions:
       - type: audio_duration
         params:
@@ -2145,20 +2060,13 @@ turns:
   - role: user
     parts:
       - type: text
-        patterns: ["Generate a brief notification sound"]
-    
+        text: "Generate a brief notification sound"
+
     assertions:
       - type: audio_duration
         params:
           max_seconds: 5
 ```
-
-**Use Cases:**
-
-- Validate exact duration requirements
-- Test length constraints
-- Verify podcast/music length
-- Ensure compliance with platform limits
 
 ### Video Assertions
 
@@ -2166,32 +2074,32 @@ turns:
 
 Validates video resolution in assistant responses.
 
-**Parameters:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `presets` | []string | no | List of resolution presets |
+| `min_width` | int | no | Minimum width in pixels |
+| `max_width` | int | no | Maximum width in pixels |
+| `min_height` | int | no | Minimum height in pixels |
+| `max_height` | int | no | Maximum height in pixels |
 
-- `presets` ([]string, optional): List of resolution presets
-- `min_width` (int, optional): Minimum width in pixels
-- `max_width` (int, optional): Maximum width in pixels
-- `min_height` (int, optional): Minimum height in pixels
-- `max_height` (int, optional): Maximum height in pixels
+Supported presets:
 
-**Supported Presets:**
+- `480p`, `sd`: Standard Definition (480 height)
+- `720p`, `hd`: HD (720 height)
+- `1080p`, `fhd`, `full_hd`: Full HD (1080 height)
+- `1440p`, `2k`, `qhd`: QHD (1440 height)
+- `2160p`, `4k`, `uhd`: 4K Ultra HD (2160 height)
+- `4320p`, `8k`: 8K (4320 height)
 
-- `480p`, `sd` - Standard Definition (480 height)
-- `720p`, `hd` - HD (720 height)
-- `1080p`, `fhd`, `full_hd` - Full HD (1080 height)
-- `1440p`, `2k`, `qhd` - QHD (1440 height)
-- `2160p`, `4k`, `uhd` - 4K Ultra HD (2160 height)
-- `4320p`, `8k` - 8K (4320 height)
-
-**Example with Presets:**
+With presets:
 
 ```yaml
 turns:
   - role: user
     parts:
       - type: text
-        patterns: ["Generate a 1080p video"]
-    
+        text: "Generate a 1080p video"
+
     assertions:
       - type: video_resolution
         params:
@@ -2200,15 +2108,15 @@ turns:
             - fhd
 ```
 
-**Example with Dimensions:**
+With dimensions:
 
 ```yaml
 turns:
   - role: user
     parts:
       - type: text
-        patterns: ["Create a high-resolution video"]
-    
+        text: "Create a high-resolution video"
+
     assertions:
       - type: video_resolution
         params:
@@ -2216,31 +2124,22 @@ turns:
           min_height: 1080
 ```
 
-**Use Cases:**
-
-- Validate exact resolution requirements
-- Test HD/4K compliance
-- Verify minimum quality standards
-- Validate aspect ratios
-
 #### `video_duration`
 
 Validates video duration in assistant responses.
 
-**Parameters:**
-
-- `min_seconds` (float, optional): Minimum duration in seconds
-- `max_seconds` (float, optional): Maximum duration in seconds
-
-**Example:**
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `min_seconds` | float | no | Minimum duration in seconds |
+| `max_seconds` | float | no | Maximum duration in seconds |
 
 ```yaml
 turns:
   - role: user
     parts:
       - type: text
-        patterns: ["Create a 1-minute video clip"]
-    
+        text: "Create a 1-minute video clip"
+
     assertions:
       - type: video_duration
         params:
@@ -2248,38 +2147,28 @@ turns:
           max_seconds: 61
 ```
 
-**Use Cases:**
-
-- Validate exact duration requirements
-- Test length constraints
-- Verify platform compliance (e.g., TikTok 60s limit)
-- Ensure streaming segment sizes
-
 ### Combining Media Assertions
 
-You can combine multiple media assertions on a single turn:
+Several media assertions can share one turn:
 
 ```yaml
 turns:
   - role: user
     parts:
       - type: text
-        patterns: ["Create a 30-second 4K video in MP4 format"]
-    
+        text: "Create a 30-second 4K video in MP4 format"
+
     assertions:
-      # Validate format (if you add video_format validator)
       - type: content_includes
         params:
           patterns: ["video"]
-      
-      # Validate resolution
+
       - type: video_resolution
         params:
           presets:
             - 4k
             - uhd
-      
-      # Validate duration
+
       - type: video_duration
         params:
           min_seconds: 29
@@ -2293,99 +2182,72 @@ apiVersion: promptkit.altairalabs.ai/v1alpha1
 kind: Scenario
 metadata:
   name: media-validation-complete
-  description: Comprehensive media validation testing
 spec:
-  provider: gpt-4-vision
-  
+  description: Check the format, size and duration of generated media.
+  task_type: media
   turns:
     # Image validation
     - role: user
       parts:
         - type: text
-          patterns: ["Generate a 1920x1080 PNG wallpaper"]
-      
+          text: "Generate a 1920x1080 PNG wallpaper"
+
       assertions:
         - type: image_format
           params:
             formats: [png]
-        
+
         - type: image_dimensions
           params:
             width: 1920
             height: 1080
-    
+
     # Audio validation
     - role: user
       parts:
         - type: text
-          patterns: ["Create a 10-second MP3 audio clip"]
-      
+          text: "Create a 10-second MP3 audio clip"
+
       assertions:
         - type: audio_format
           params:
             formats: [mp3]
-        
+
         - type: audio_duration
           params:
             min_seconds: 9
             max_seconds: 11
-    
+
     # Video validation
     - role: user
       parts:
         - type: text
-          patterns: ["Generate a 30-second 4K video"]
-      
+          text: "Generate a 30-second 4K video"
+
       assertions:
         - type: video_resolution
           params:
             presets: [4k, uhd]
-        
+
         - type: video_duration
           params:
             min_seconds: 29
             max_seconds: 31
 ```
 
-### Media Assertion Best Practices
-
-#### Format Validation
-
-- Always specify multiple acceptable formats when possible
-- Use lowercase format names for consistency
-- Test format conversion capabilities
-
-#### Dimension/Resolution Testing
-
-- Use min/max ranges to allow for encoding variations
-- Test common aspect ratios (16:9, 4:3, 9:16)
-- Validate minimum quality standards
-
-#### Duration Testing
-
-- Allow small tolerance ranges (±1-2 seconds)
-- Test edge cases (very short/long durations)
-- Verify platform-specific limits
-
-#### Performance
-
-- Media assertions execute on assistant responses only
-- No API calls are made for validation
-- Assertions run in parallel with other validators
-
 ### Example Test Scenarios
 
-See complete examples in `examples/arena-media-test/`:
+The files in `examples/arena-media-test/scenarios/` cover the media assertions:
 
-- `image-validation.yaml` - Image format and dimension testing
-- `audio-validation.yaml` - Audio format and duration testing
-- `video-validation.yaml` - Video resolution and duration testing
+- `image-validation.scenario.yaml`: image format and dimensions
+- `audio-validation.scenario.yaml`: audio format and duration
+- `video-validation.scenario.yaml`: video resolution and duration
 
 ---
 
 ## `promptarena skill`
 
-Manage shared skills — install from Git repositories or local paths, list installed skills, and remove them.
+Manage shared skills: install from Git repositories or local paths, list installed skills, and remove them.
 
 ### Usage
 
@@ -2426,15 +2288,15 @@ promptarena skill install <ref> [flags]
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `--project` | bool | `false` | Install to project-level (`.promptkit/skills/`) instead of user-level |
-| `--into` | string | — | Install directly into a specific directory (mutually exclusive with `--project`) |
+| `--into` | string | - | Install directly into a specific directory (mutually exclusive with `--project`) |
 
 #### Installation Locations
 
 | Scope | Directory |
 |-------|-----------|
-| **User-level** (default) | `~/.config/promptkit/skills/org/name/` |
-| **Project-level** (`--project`) | `.promptkit/skills/org/name/` |
-| **Custom** (`--into <dir>`) | `<dir>/name/` |
+| User-level (default) | `~/.config/promptkit/skills/org/name/` |
+| Project-level (`--project`) | `.promptkit/skills/org/name/` |
+| Custom (`--into <dir>`) | `<dir>/name/` |
 
 The user-level directory respects `XDG_CONFIG_HOME` if set.
 
@@ -2461,7 +2323,7 @@ promptarena skill install @anthropic/pci-compliance --into ./skills/billing
 
 ### `promptarena skill list`
 
-List all installed skills, grouped by location.
+List all installed skills, grouped by location. Each entry shows the absolute path of the installed skill.
 
 #### Usage
 
@@ -2471,19 +2333,19 @@ promptarena skill list
 
 #### Example Output
 
-```
+```text
 Project:
-  @anthropic/pci-compliance  (.promptkit/skills/anthropic/pci-compliance)
+  @anthropic/pci-compliance  (/work/proj/.promptkit/skills/anthropic/pci-compliance)
 
 User:
-  @anthropic/pdf-processing  (~/.config/promptkit/skills/anthropic/pdf-processing)
+  @anthropic/pdf-processing  (/home/user/.config/promptkit/skills/anthropic/pdf-processing)
 ```
 
 ---
 
 ### `promptarena skill remove`
 
-Remove an installed skill.
+Remove an installed skill. `remove` checks the project level first, then the user level. It takes no flags.
 
 #### Usage
 
@@ -2494,71 +2356,19 @@ promptarena skill remove <ref>
 #### Examples
 
 ```bash
-# Remove a user-level skill
 promptarena skill remove @anthropic/pdf-processing
-
-# Remove a project-level skill
-promptarena skill remove @anthropic/pci-compliance --project
-```
-
----
-
-## Tips & Best Practices
-
-### Execution Performance
-
-```bash
-# Increase concurrency for faster execution
-promptarena run --concurrency 10
-
-# Reduce concurrency for stability
-promptarena run --concurrency 1
-```
-
-### Cost Control
-
-```bash
-# Use mock provider during development
-promptarena run --mock-provider
-
-# Test with cheaper models first
-promptarena run --provider gpt-3.5-turbo
-```
-
-### Reproducibility
-
-```bash
-# Always use same seed for consistent results
-promptarena run --seed 42
-
-# Document seed in test reports
-promptarena run --seed 42 --format json,markdown
-```
-
-### Debugging Tips
-
-```bash
-# Always start with config validation
-promptarena config-inspect --verbose
-
-# Use verbose mode to see API calls
-promptarena run --verbose --scenario problematic-test
-
-# Test prompt generation separately
-promptarena prompt-debug --scenario scenarios/test.yaml
+promptarena skill remove @anthropic/pci-compliance
 ```
 
 ---
 
 ## Next Steps
 
-- **[PromptArena Getting Started](/arena/tutorials/01-first-test/)** - First project walkthrough
-- **[Configuration Reference](/arena/reference/config-schema/)** - Complete config documentation
-- **[CI/CD Integration](/arena/how-to/interfaces/run-in-ci/)** - Running in pipelines
+- [PromptArena Getting Started](/arena/tutorials/01-first-test/): first project walkthrough
+- [Configuration Reference](/arena/reference/config-schema/): complete config documentation
+- [Run in CI](/arena/how-to/interfaces/run-in-ci/): running in pipelines
 
----
-
-**Need Help?**
+## Need Help?
 
 ```bash
 # General help
