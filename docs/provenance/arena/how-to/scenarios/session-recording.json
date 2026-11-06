@@ -1,13 +1,13 @@
 {
  "page": "docs/src/content/docs/arena/how-to/scenarios/session-recording.md",
- "commit": "60cd1a146e6224c0d66c972d18f329a0ce76c522",
+ "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
  "claims": [
   {
    "id": 1,
    "claim": "Deep debugging: see exact event sequences and timing in recordings",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:515",
+    "arena/engine/engine.go:514",
     "arena/turnexecutors/pipeline_stages_integration.go:601"
    ]
   },
@@ -17,7 +17,7 @@
    "verdict": "false",
    "evidence": [
     "arena/engine/duplex_executor_pipeline_integration.go:370",
-    "arena/engine/engine.go:515"
+    "arena/engine/engine.go:514"
    ]
   },
   {
@@ -33,7 +33,7 @@
    "claim": "Performance analysis: per-event timing and latency are available for analysis",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:515"
+    "arena/engine/engine.go:514"
    ]
   },
   {
@@ -41,7 +41,7 @@
    "claim": "Annotation support: labels, scores and comments can be added to recordings",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:515"
+    "arena/engine/engine.go:514"
    ]
   },
   {
@@ -65,8 +65,8 @@
    "claim": "spec.defaults.output is a valid config block for arena defaults",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:466",
-    "arena/engine/engine.go:696"
+    "arena/arenaconfig/types.go:469",
+    "arena/engine/engine.go:695"
    ]
   },
   {
@@ -74,8 +74,8 @@
    "claim": "output.dir field sets the output directory (example value out)",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:510",
-    "arena/engine/engine.go:703"
+    "arena/arenaconfig/types.go:515",
+    "arena/engine/engine.go"
    ]
   },
   {
@@ -83,7 +83,7 @@
    "claim": "output.formats accepts json and markdown",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:511"
+    "arena/arenaconfig/types.go:516"
    ]
   },
   {
@@ -91,8 +91,8 @@
    "claim": "output.recording.enabled is a boolean field that turns recording on",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:552",
-    "arena/engine/engine.go:697"
+    "arena/arenaconfig/types.go:558",
+    "arena/engine/engine.go:696"
    ]
   },
   {
@@ -100,8 +100,8 @@
    "claim": "output.recording.dir field sets the recordings subdirectory",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:554",
-    "arena/engine/engine.go:706"
+    "arena/arenaconfig/types.go:560",
+    "arena/engine/engine.go"
    ]
   },
   {
@@ -114,11 +114,11 @@
   },
   {
    "id": 14,
-   "claim": "Recordings are saved to out/recordings/ as JSONL files",
+   "claim": "Recordings are saved to <output directory>/recordings/ as JSONL files",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:684",
-    "arena/engine/engine.go:696"
+    "arena/engine/engine.go:702",
+    "arena/engine/engine.go:707"
    ]
   },
   {
@@ -126,7 +126,7 @@
    "claim": "Each recording is a JSONL file whose first line is a metadata line",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:587"
+    "arena/engine/engine.go:586"
    ]
   },
   {
@@ -134,7 +134,7 @@
    "claim": "Each recording is a JSONL file followed by event lines",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:587"
+    "arena/engine/engine.go:586"
    ]
   },
   {
@@ -142,7 +142,7 @@
    "claim": "Metadata line example fields: type metadata, session_id, start_time, duration",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:587"
+    "arena/engine/engine.go:586"
    ]
   },
   {
@@ -150,7 +150,7 @@
    "claim": "Event line example fields: type event, timestamp, event_type",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:587"
+    "arena/engine/engine.go:586"
    ]
   },
   {
@@ -158,8 +158,8 @@
    "claim": "Session recordings capture a comprehensive event stream covering all runtime activity",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:515",
-    "arena/engine/engine.go:611",
+    "arena/engine/engine.go:514",
+    "arena/engine/engine.go:610",
     "arena/turnexecutors/pipeline_stages_integration.go:601"
    ]
   },
@@ -168,8 +168,8 @@
    "claim": "conversation.started is emitted at session initialization and includes the system prompt",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:516",
-    "arena/engine/engine.go:612"
+    "arena/engine/engine.go:515",
+    "arena/engine/engine.go:611"
    ]
   },
   {
@@ -186,7 +186,7 @@
    "claim": "message.updated is emitted for metadata updates (latency, token counts, cost)",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:515"
+    "arena/engine/engine.go:514"
    ]
   },
   {
@@ -194,7 +194,7 @@
    "claim": "pipeline.started is emitted at pipeline start and includes the middleware count",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:515"
+    "arena/engine/engine.go:514"
    ]
   },
   {
@@ -202,7 +202,7 @@
    "claim": "pipeline.completed is emitted at pipeline completion with total cost and tokens",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:515"
+    "arena/engine/engine.go:514"
    ]
   },
   {
@@ -210,7 +210,7 @@
    "claim": "pipeline.failed is emitted on pipeline failure with the error",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:515"
+    "arena/engine/engine.go:514"
    ]
   },
   {
@@ -218,7 +218,7 @@
    "claim": "stage.started is emitted once per stage per turn with the stage name and type",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:515"
+    "arena/engine/engine.go:514"
    ]
   },
   {
@@ -226,7 +226,7 @@
    "claim": "stage.completed is emitted at stage completion with duration",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:515"
+    "arena/engine/engine.go:514"
    ]
   },
   {
@@ -234,7 +234,7 @@
    "claim": "stage.failed is emitted on stage failure with the error and duration",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:515"
+    "arena/engine/engine.go:514"
    ]
   },
   {
@@ -242,7 +242,7 @@
    "claim": "provider.call.started is emitted with provider, model and message count",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:515"
+    "arena/engine/engine.go:514"
    ]
   },
   {
@@ -250,7 +250,7 @@
    "claim": "provider.call.completed is emitted with tokens, cost and cached tokens",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:515"
+    "arena/engine/engine.go:514"
    ]
   },
   {
@@ -258,7 +258,7 @@
    "claim": "provider.call.failed is emitted on LLM API call failure with the error",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:515"
+    "arena/engine/engine.go:514"
    ]
   },
   {
@@ -274,7 +274,7 @@
    "claim": "tool.call.completed is emitted with duration and status",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:515"
+    "arena/engine/engine.go:514"
    ]
   },
   {
@@ -282,7 +282,7 @@
    "claim": "tool.call.failed is emitted with the error and duration",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:515"
+    "arena/engine/engine.go:514"
    ]
   },
   {
@@ -290,7 +290,7 @@
    "claim": "tool.client.request is emitted for client-side tool requests with consent message and categories",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:515"
+    "arena/engine/engine.go:514"
    ]
   },
   {
@@ -298,7 +298,7 @@
    "claim": "validation.started is emitted at validator execution start",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:515"
+    "arena/engine/engine.go:514"
    ]
   },
   {
@@ -306,7 +306,7 @@
    "claim": "validation.passed is emitted on validation success with duration",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:515"
+    "arena/engine/engine.go:514"
    ]
   },
   {
@@ -314,7 +314,7 @@
    "claim": "validation.failed is emitted on validation failure with violations",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:515"
+    "arena/engine/engine.go:514"
    ]
   },
   {
@@ -322,7 +322,7 @@
    "claim": "context.built is emitted for context window assembly with token count, budget and truncation",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:515"
+    "arena/engine/engine.go:514"
    ]
   },
   {
@@ -330,7 +330,7 @@
    "claim": "context.token_budget_exceeded is emitted on token budget overflow with required vs budget",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:515"
+    "arena/engine/engine.go:514"
    ]
   },
   {
@@ -338,7 +338,7 @@
    "claim": "state.loaded is emitted when conversation state is loaded from the store",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:515"
+    "arena/engine/engine.go:514"
    ]
   },
   {
@@ -346,7 +346,7 @@
    "claim": "state.saved is emitted when conversation state is persisted",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:515"
+    "arena/engine/engine.go:514"
    ]
   },
   {
@@ -354,8 +354,8 @@
    "claim": "stream.interrupted is emitted on stream interruption with the reason",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:517",
-    "arena/engine/engine.go:613"
+    "arena/engine/engine.go:516",
+    "arena/engine/engine.go:612"
    ]
   },
   {
@@ -363,7 +363,7 @@
    "claim": "workflow.transitioned is emitted with from and to states, event and prompt task",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:515",
+    "arena/engine/engine.go:514",
     "arena/engine/execution_workflow_integration.go:246"
    ]
   },
@@ -372,7 +372,7 @@
    "claim": "workflow.completed is emitted on reaching a terminal state with final state and transition count",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:515",
+    "arena/engine/engine.go:514",
     "arena/engine/execution_workflow_integration.go:246"
    ]
   },
@@ -399,7 +399,7 @@
    "claim": "audio.transcription is emitted with the speech-to-text transcription result",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:515"
+    "arena/engine/engine.go:514"
    ]
   },
   {
@@ -407,7 +407,7 @@
    "claim": "video.frame is emitted for video frame capture",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:577"
+    "arena/engine/engine.go:576"
    ]
   },
   {
@@ -415,7 +415,7 @@
    "claim": "image.input is emitted for image input from user or environment",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:577"
+    "arena/engine/engine.go:576"
    ]
   },
   {
@@ -423,7 +423,7 @@
    "claim": "image.output is emitted for image output from the agent",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:577"
+    "arena/engine/engine.go:576"
    ]
   },
   {
@@ -431,7 +431,7 @@
    "claim": "screenshot is emitted for screenshot capture",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:515"
+    "arena/engine/engine.go:514"
    ]
   },
   {
@@ -439,7 +439,7 @@
    "claim": "middleware.started, middleware.completed and middleware.failed appear only in recordings made before PromptKit replaced its middleware chain with pipeline stages",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:515"
+    "arena/engine/engine.go:514"
    ]
   },
   {
@@ -447,7 +447,7 @@
    "claim": "Current runs emit stage.* events instead of middleware.* events",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:515"
+    "arena/engine/engine.go:514"
    ]
   },
   {
@@ -495,7 +495,7 @@
    "claim": "Audio, video and image events use BinaryPayload for content storage",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:577"
+    "arena/engine/engine.go:576"
    ]
   },
   {
@@ -503,7 +503,7 @@
    "claim": "BinaryPayload has an InlineData field holding raw bytes for small payloads",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:577"
+    "arena/engine/engine.go:576"
    ]
   },
   {
@@ -511,7 +511,7 @@
    "claim": "BinaryPayload has a StorageReference field for externalized content",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:577"
+    "arena/engine/engine.go:576"
    ]
   },
   {
@@ -519,7 +519,7 @@
    "claim": "BinaryPayload has a MIMEType field (e.g. audio/pcm, image/png)",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:577"
+    "arena/engine/engine.go:576"
    ]
   },
   {
@@ -527,7 +527,7 @@
    "claim": "Audio events include AudioMetadata with sample rate, channels, encoding and duration",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:577"
+    "arena/engine/engine.go:576"
    ]
   },
   {
@@ -535,7 +535,7 @@
    "claim": "Video events include VideoMetadata with width, height and frame rate",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:577"
+    "arena/engine/engine.go:576"
    ]
   },
   {
@@ -813,7 +813,7 @@
    "claim": "kind value Eval for the saved-conversation eval document",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:500"
+    "arena/arenaconfig/loader.go:509"
    ]
   },
   {
@@ -821,7 +821,7 @@
    "claim": "spec.id field identifies the eval",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1466"
+    "arena/arenaconfig/types.go:1472"
    ]
   },
   {
@@ -829,7 +829,7 @@
    "claim": "spec.description field is a free-text description of the eval",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1468"
+    "arena/arenaconfig/types.go:1474"
    ]
   },
   {
@@ -837,7 +837,7 @@
    "claim": "spec.recording block points the eval at a saved recording",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1470"
+    "arena/arenaconfig/types.go:1476"
    ]
   },
   {
@@ -845,8 +845,8 @@
    "claim": "spec.recording.path field takes the recording file path",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:506",
-    "arena/arenaconfig/types.go:1498"
+    "arena/arenaconfig/loader.go:515",
+    "arena/arenaconfig/types.go:1504"
    ]
   },
   {
@@ -854,7 +854,7 @@
    "claim": "spec.recording.type accepts the value session",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1501"
+    "arena/arenaconfig/types.go:1507"
    ]
   },
   {
@@ -862,7 +862,7 @@
    "claim": "spec.judge_targets is a map of named judge providers",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/loader.go:975",
+    "arena/arenaconfig/loader.go:984",
     "arena/arenaconfig/types.go:93",
     "arena/engine/conversation_executor.go:930"
    ]
@@ -872,7 +872,7 @@
    "claim": "judge target type openai is a valid provider type",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:393"
+    "arena/arenaconfig/types.go:396"
    ]
   },
   {
@@ -880,7 +880,7 @@
    "claim": "judge target model gpt-4o field",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:393-406"
+    "arena/arenaconfig/types.go:396-409"
    ]
   },
   {
@@ -888,7 +888,7 @@
    "claim": "judge target id field",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:393-406"
+    "arena/arenaconfig/types.go:396-409"
    ]
   },
   {
@@ -936,7 +936,7 @@
    "claim": "spec.providers[].file references a provider YAML file",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:578"
+    "arena/arenaconfig/loader.go:587"
    ]
   },
   {
@@ -952,8 +952,8 @@
    "claim": "spec.evals[].file references an eval YAML file",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:566",
-    "arena/arenaconfig/types.go:417"
+    "arena/arenaconfig/loader.go:575",
+    "arena/arenaconfig/types.go:420"
    ]
   },
   {
@@ -1033,7 +1033,7 @@
    "claim": "Recordings are written as one JSONL file per test run under out/recordings/",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:684"
+    "arena/engine/engine.go:683"
    ]
   },
   {
@@ -1041,7 +1041,7 @@
    "claim": "Audio data in recordings is base64-encoded",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:515"
+    "arena/engine/engine.go:514"
    ]
   },
   {
@@ -1065,8 +1065,8 @@
    "claim": "Example workflow uploads path out/recordings/",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:696",
-    "arena/engine/engine.go:706"
+    "arena/engine/engine.go",
+    "arena/engine/engine.go:695"
    ]
   },
   {
@@ -1074,7 +1074,7 @@
    "claim": "Recordings capture the complete event stream with precise timestamps",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:515"
+    "arena/engine/engine.go:514"
    ]
   },
   {
@@ -1083,7 +1083,7 @@
    "verdict": "false",
    "evidence": [
     "arena/engine/duplex_executor_pipeline_integration.go:370",
-    "arena/engine/engine.go:515"
+    "arena/engine/engine.go:514"
    ]
   },
   {
@@ -1107,7 +1107,7 @@
    "claim": "Recordings capture client tool requests with consent information",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:515"
+    "arena/engine/engine.go:514"
    ]
   },
   {
@@ -1115,7 +1115,7 @@
    "claim": "Recordings capture provider call timing and token usage",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:515"
+    "arena/engine/engine.go:514"
    ]
   },
   {
@@ -1123,7 +1123,7 @@
    "claim": "Recordings capture stage and middleware execution lifecycle",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:515"
+    "arena/engine/engine.go:514"
    ]
   },
   {
@@ -1131,7 +1131,7 @@
    "claim": "Recordings capture workflow state transitions and completion",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:515"
+    "arena/engine/engine.go:514"
    ]
   },
   {
@@ -1139,7 +1139,7 @@
    "claim": "Recordings capture validation results",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:515"
+    "arena/engine/engine.go:514"
    ]
   },
   {
@@ -1147,7 +1147,7 @@
    "claim": "Post-run human feedback (UserFeedback) is not captured in recordings",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:515"
+    "arena/engine/engine.go:514"
    ]
   },
   {
@@ -1155,7 +1155,7 @@
    "claim": "Session tags added after completion are not captured in recordings",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:515"
+    "arena/engine/engine.go:514"
    ]
   },
   {
@@ -1163,7 +1163,7 @@
    "claim": "External annotations are stored in separate files, not in recordings",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:515"
+    "arena/engine/engine.go:514"
    ]
   }
  ]

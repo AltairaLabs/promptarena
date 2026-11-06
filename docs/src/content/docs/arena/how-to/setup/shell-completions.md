@@ -1,8 +1,8 @@
 ---
 title: Configure Shell Completions
-description: Enable tab completion for promptarena and packc in Bash, Zsh, Fish and PowerShell, including config-driven values for scenarios, providers and roles.
+description: Enable tab completion for promptarena and packc in Bash, Zsh, Fish and PowerShell, including config-driven values for scenarios and providers.
 verified:
-  commit: 631d3c353c2c9d71b362ae5cd20c137d42b19d5b
+  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
   sources:
     - .goreleaser.yml
     - arena/cmd/promptarena/completion_interactive.go
@@ -21,7 +21,6 @@ Both binaries complete commands, subcommands and flag names. `promptarena` also 
 |---|---|
 | `run --scenario` | scenarios in your `config.arena.yaml` |
 | `run --provider` | provider IDs in your `config.arena.yaml` |
-| `run --roles` | self-play role IDs in your `config.arena.yaml` |
 | `run --region` | `us`, `uk`, `au`, `eu`, `asia`, `latam` |
 | `run --format`, `run --formats` | `json`, `junit`, `html`, `markdown`, `csv`, `objectives` |
 | `config-inspect --section` | config sections |
@@ -216,9 +215,9 @@ promptarena init --template <Tab>
    exec $SHELL
    ```
 
-### No values for scenarios, providers or roles
+### No values for scenarios or providers
 
-These completions read a valid `config.arena.yaml` in the current directory or a parent directory. With no config found, they return no values. Roles are also empty when the config has no self-play block.
+These completions read a valid `config.arena.yaml` in the current directory or a parent directory. With no config found, they return no values.
 
 ```bash
 # Check that the config is found

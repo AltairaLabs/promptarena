@@ -14,11 +14,10 @@ Jenkins. It also covers how to make runs deterministic and zero-cost with mock p
 For the interactive alternatives, see [Use the TUI](/arena/how-to/interfaces/use-the-tui/)
 and [Use the web UI](/arena/how-to/interfaces/use-the-web-ui/).
 
-## Headless mode: `--ci` (alias `--simple`)
+## Headless mode: `--ci`
 
 `promptarena run --ci` disables the terminal UI and emits plain line-based logs
-suitable for CI log capture. `--simple` is an exact alias — either flag sets the
-same headless mode.
+suitable for CI log capture.
 
 ```bash
 promptarena run --ci
@@ -28,9 +27,11 @@ Use it whenever there is no interactive terminal: GitHub Actions runners, GitLab
 executors, Jenkins agents, Docker builds, cron jobs. Without `--ci` the run tries
 to render the TUI, which produces garbage in a non-TTY log.
 
-The gate itself is the **exit code**: `promptarena run` exits `0` when every
-scenario's assertions pass, and non-zero when any assertion fails or a run errors.
-That is what fails the build — you do not need to parse a report to gate a merge.
+The gate itself is the **exit code**: with `--ci`, `promptarena run` exits `0`
+when every scenario's assertions pass, and non-zero when any assertion fails or a
+run errors. Without `--ci` it exits `0` whatever the results, so always pass
+`--ci` in a pipeline. `--simple` also disables the TUI, but it prints a styled
+summary and keeps the `0` exit status.
 
 Pair `--ci` with mock providers for fast, deterministic, no-API-cost runs (see
 [Zero-cost runs](#zero-cost-runs-with-mock-providers) below):
@@ -42,21 +43,22 @@ promptarena run --ci --mock-provider --mock-config mock-responses.yaml
 ## Report formats
 
 Pass `--format` (alias `--formats`) a comma-separated list. When omitted, Arena
-uses `defaults.output.formats` from your config, falling back to `json`. There are
-exactly three supported formats — there is no SARIF, CSV, or TAP output.
+uses `defaults.output.formats` from your config, falling back to `json`. The
+formats for CI are below; `csv` and `objectives` are also available (see the
+[output formats reference](/arena/reference/output-formats/)).
 
 | Format | Output | Path flag (default) |
 |---|---|---|
-| `json` | Per-run JSON files plus an `index.json` summary in the out dir | `--out` dir (default `out/`) |
-| `junit` | JUnit XML — consumable by most CI test reporters | `--junit-file` (default `out/junit.xml`) |
-| `markdown` | Markdown report | `--markdown-file` (default `out/results.md`) |
+| `json` | Per-run JSON files plus an `index.json` summary in the out dir | `--out` dir (default `defaults.output.dir`, else `out/`) |
+| `junit` | JUnit XML, read by most CI test reporters | `--junit-file` (default `defaults.output.junit.file`, else `<out>/junit.xml`) |
+| `markdown` | Markdown report | `--markdown-file` (default `<out>/results.md`) |
 
 ```bash
 # JUnit for the CI test reporter, JSON for archival, Markdown for humans
 promptarena run --ci --format junit,json,markdown
 ```
 
-The output directory defaults to `out/` and is set with `--out`. Per-run JSON is
+The output directory is `--out`, else `defaults.output.dir`, else `out/`. Per-run JSON is
 written as `<run-id>.json` in that directory, alongside an `index.json` summary
 containing `total_runs`, `successful`, `errors`, `total_cost`, and per-scenario
 metadata. The deprecated `--html` flag is still accepted and produces `markdown`

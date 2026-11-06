@@ -502,12 +502,12 @@ providers:
 
 # Claude: JSON via prompting
 providers:
-  - type: anthropic
+  - type: claude
     # Must prompt for JSON in system message
 
 # Gemini: JSON via schema
 providers:
-  - type: google
+  - type: gemini
     # Supports schema-based generation
 ```
 

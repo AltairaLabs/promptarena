@@ -1,8 +1,9 @@
 ---
 title: Set Up Voice Testing with Self-Play
 verified:
-  commit: 60cd1a146e6224c0d66c972d18f329a0ce76c522
+  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
   sources:
+    - arena/arenaconfig/helpers.go
     - arena/arenaconfig/loader.go
     - arena/arenaconfig/persona.go
     - arena/arenaconfig/types.go
@@ -10,6 +11,7 @@ verified:
     - arena/arenaconfig/voice.go
     - arena/cmd/promptarena/run.go
     - arena/cmd/promptarena/run_interactive.go
+    - arena/cmd/promptarena/serve_interactive.go
     - arena/cmd/promptarena/validate.go
     - arena/engine/conversation_executor.go
     - arena/engine/duplex_conversation_executor.go
@@ -24,7 +26,6 @@ verified:
     - arena/selfplay/registry.go
     - arena/selfplay/tts_registry.go
     - arena/turnexecutors/audio_file_source.go
-    - arena/turnexecutors/media_validator.go
     - examples/duplex-streaming/config.arena.yaml
     - examples/duplex-streaming/providers/gemini-2-flash.provider.yaml
     - examples/duplex-streaming/providers/mock-duplex.provider.yaml
@@ -328,8 +329,8 @@ answer duplex audio, so the run waits until `duplex.timeout` and fails.
 
 ### 7. Check the Result
 
-The run writes its results to `out/` in the current directory (set another directory with
-`-o`). Open `out/results.md`: the `voice-selfplay` row should show `Pass`, and its Conversation
+The run writes its results to `defaults.output.dir`, `out/` here, relative to the current directory
+(`-o` sets another directory). Open `out/results.md`: the `voice-selfplay` row should show `Pass`, and its Conversation
 Assertions table should show `content_includes` passed. The per-run JSON file in `out/` holds
 the same result under `conversation_assertions`. With `--ci`, a failed assertion makes
 `promptarena run` exit non-zero.

@@ -39,21 +39,17 @@ spec:
   recording:
     path: path/to/recording.json
     type: session  # session, arena_output, transcript, or generic
-  judge_targets:
-    default:
-      type: openai
-      model: gpt-4o
-      id: gpt-4o-judge
-  assertions:
-    - type: llm_judge
+  conversation_assertions:
+    - type: assertion
       params:
-        judge: default
-        criteria: "Your evaluation criteria here"
-        expected: pass
+        eval_type: llm_judge_session
+        eval_params:
+          criteria: "Your evaluation criteria here"
+          judge: gpt-4o-judge   # a name from spec.judges in the arena config
+        min_score: 0.8
   tags:
     - test
     - category
-  mode: instant  # instant, realtime, or accelerated
 ```
 
 ## Recording Types

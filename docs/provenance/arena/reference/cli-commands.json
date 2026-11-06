@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/reference/cli-commands.md",
- "commit": "60cd1a146e6224c0d66c972d18f329a0ce76c522",
+ "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
  "claims": [
   {
    "id": 1001,
@@ -775,7 +775,7 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/init.go:252",
-    "arena/cmd/promptarena/run.go:119"
+    "arena/cmd/promptarena/run.go:118"
    ]
   },
   {
@@ -1727,15 +1727,16 @@
    "claim": "`promptarena run` runs multi-turn conversation simulations across multiple LLM providers",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:119"
+    "arena/cmd/promptarena/run.go:118"
    ]
   },
   {
    "id": 1210,
-   "claim": "Command form `promptarena run [flags]`",
+   "claim": "Command form promptarena run [config-path] [flags]",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:120"
+    "arena/cmd/promptarena/run.go:119",
+    "arena/cmd/promptarena/run.go:126"
    ]
   },
   {
@@ -1743,8 +1744,8 @@
    "claim": "Flag `-c, --config` (string) sets the configuration file path",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:134",
-    "arena/cmd/promptarena/run_interactive.go:68"
+    "arena/cmd/promptarena/run.go:158",
+    "arena/cmd/promptarena/run_interactive.go"
    ]
   },
   {
@@ -1752,7 +1753,7 @@
    "claim": "Flag `--config` defaults to config.arena.yaml",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:134"
+    "arena/cmd/promptarena/run.go:158"
    ]
   },
   {
@@ -1760,16 +1761,17 @@
    "claim": "Flag `-j, --concurrency` (int) sets the number of concurrent workers",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:143",
-    "arena/cmd/promptarena/run_interactive.go:463"
+    "arena/cmd/promptarena/run.go:167",
+    "arena/cmd/promptarena/run_interactive.go:458"
    ]
   },
   {
    "id": 1214,
-   "claim": "Flag `--concurrency` defaults to 6",
+   "claim": "--concurrency defaults to defaults.concurrency, else 6",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:143"
+    "arena/arenaconfig/types.go:466",
+    "arena/cmd/promptarena/run.go:358"
    ]
   },
   {
@@ -1777,7 +1779,7 @@
    "claim": "Flag `-s, --seed` (int) sets the random seed for reproducibility",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:163"
+    "arena/cmd/promptarena/run.go"
    ]
   },
   {
@@ -1785,8 +1787,7 @@
    "claim": "Flag `--seed` defaults to 42",
    "verdict": "dead",
    "evidence": [
-    "arena/cmd/promptarena/run.go:163",
-    "arena/cmd/promptarena/run.go:193"
+    "arena/cmd/promptarena/run.go"
    ]
   },
   {
@@ -1794,9 +1795,9 @@
    "claim": "Flag `--ci` (bool) enables CI mode, disabling the TUI and using simple logs",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:145",
-    "arena/cmd/promptarena/run_interactive.go:139",
-    "arena/cmd/promptarena/run_interactive.go:338"
+    "arena/cmd/promptarena/run.go",
+    "arena/cmd/promptarena/run_interactive.go:134",
+    "arena/cmd/promptarena/run_interactive.go:333"
    ]
   },
   {
@@ -1804,17 +1805,17 @@
    "claim": "Flag `--ci` defaults to false",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:145"
+    "arena/cmd/promptarena/run.go"
    ]
   },
   {
    "id": 1219,
-   "claim": "Flag `--simple` (bool) is an alias for --ci",
-   "verdict": "false",
+   "claim": "--simple disables the TUI and keeps the 0 exit status; it is not an alias for --ci",
+   "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:146",
-    "arena/cmd/promptarena/run.go:303",
-    "arena/cmd/promptarena/run_interactive.go:45"
+    "arena/cmd/promptarena/run.go:170",
+    "arena/cmd/promptarena/run.go:172",
+    "arena/cmd/promptarena/run_interactive.go:134"
    ]
   },
   {
@@ -1822,7 +1823,7 @@
    "claim": "Flag `--simple` defaults to false",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:146"
+    "arena/cmd/promptarena/run.go"
    ]
   },
   {
@@ -1830,8 +1831,8 @@
    "claim": "Flag `--provider` (string list) selects providers to use, comma-separated",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:138",
-    "arena/cmd/promptarena/run_interactive.go:250"
+    "arena/cmd/promptarena/run.go:162",
+    "arena/cmd/promptarena/run_interactive.go:245"
    ]
   },
   {
@@ -1839,7 +1840,7 @@
    "claim": "Flag `--provider` on run defaults to all providers",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:138"
+    "arena/cmd/promptarena/run.go:162"
    ]
   },
   {
@@ -1847,8 +1848,8 @@
    "claim": "Flag `--scenario` (string list) selects scenarios to run, comma-separated",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:139",
-    "arena/cmd/promptarena/run_interactive.go:285"
+    "arena/cmd/promptarena/run.go:163",
+    "arena/cmd/promptarena/run_interactive.go:280"
    ]
   },
   {
@@ -1856,7 +1857,7 @@
    "claim": "Flag `--scenario` on run defaults to all scenarios",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:139"
+    "arena/cmd/promptarena/run.go:163"
    ]
   },
   {
@@ -1864,8 +1865,8 @@
    "claim": "Flag `--region` (string list) selects regions to run, comma-separated",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:137",
-    "arena/cmd/promptarena/run_interactive.go:285"
+    "arena/cmd/promptarena/run.go:161",
+    "arena/cmd/promptarena/run_interactive.go:280"
    ]
   },
   {
@@ -1873,7 +1874,7 @@
    "claim": "Flag `--region` defaults to all regions",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:137"
+    "arena/cmd/promptarena/run.go:161"
    ]
   },
   {
@@ -1881,8 +1882,8 @@
    "claim": "Flag `--eval` (string list) selects evaluations to run, comma-separated",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:140",
-    "arena/cmd/promptarena/run_interactive.go:285"
+    "arena/cmd/promptarena/run.go:164",
+    "arena/cmd/promptarena/run_interactive.go:280"
    ]
   },
   {
@@ -1890,7 +1891,7 @@
    "claim": "Flag `--eval` defaults to all evaluations",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:140"
+    "arena/cmd/promptarena/run.go:164"
    ]
   },
   {
@@ -1898,8 +1899,7 @@
    "claim": "Flag `--roles` (string list) selects self-play role configurations to use",
    "verdict": "dead",
    "evidence": [
-    "arena/cmd/promptarena/run.go:180",
-    "arena/cmd/promptarena/run.go:195"
+    "arena/cmd/promptarena/run.go"
    ]
   },
   {
@@ -1907,8 +1907,7 @@
    "claim": "Flag `--roles` defaults to all roles",
    "verdict": "dead",
    "evidence": [
-    "arena/cmd/promptarena/run.go:180",
-    "arena/cmd/promptarena/run.go:195"
+    "arena/cmd/promptarena/run.go"
    ]
   },
   {
@@ -1916,8 +1915,7 @@
    "claim": "Flag `--temperature` (float32) overrides temperature for all scenarios",
    "verdict": "dead",
    "evidence": [
-    "arena/cmd/promptarena/run.go:161",
-    "arena/cmd/promptarena/run.go:191"
+    "arena/cmd/promptarena/run.go"
    ]
   },
   {
@@ -1925,8 +1923,7 @@
    "claim": "Flag `--temperature` defaults to 0.6",
    "verdict": "dead",
    "evidence": [
-    "arena/cmd/promptarena/run.go:161",
-    "arena/cmd/promptarena/run.go:191"
+    "arena/cmd/promptarena/run.go"
    ]
   },
   {
@@ -1934,8 +1931,8 @@
    "claim": "Flag `--max-tokens` (int) overrides max tokens for all scenarios",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:162",
-    "arena/cmd/promptarena/run.go:499",
+    "arena/cmd/promptarena/run.go:188",
+    "arena/cmd/promptarena/run.go:549",
     "arena/engine/conversation_executor.go:449"
    ]
   },
@@ -1944,7 +1941,7 @@
    "claim": "Flag `--max-tokens` has no default",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:162"
+    "arena/cmd/promptarena/run.go:188"
    ]
   },
   {
@@ -1952,8 +1949,7 @@
    "claim": "Flag `--selfplay` (bool) enables self-play mode",
    "verdict": "dead",
    "evidence": [
-    "arena/cmd/promptarena/run.go:179",
-    "arena/cmd/promptarena/run.go:194"
+    "arena/cmd/promptarena/run.go"
    ]
   },
   {
@@ -1961,8 +1957,7 @@
    "claim": "Flag `--selfplay` defaults to false",
    "verdict": "dead",
    "evidence": [
-    "arena/cmd/promptarena/run.go:179",
-    "arena/cmd/promptarena/run.go:194"
+    "arena/cmd/promptarena/run.go"
    ]
   },
   {
@@ -1970,8 +1965,8 @@
    "claim": "Flag `--mock-provider` (bool) replaces all providers with MockProvider",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:167",
-    "arena/cmd/promptarena/run_interactive.go:259"
+    "arena/cmd/promptarena/run.go:192",
+    "arena/cmd/promptarena/run_interactive.go:254"
    ]
   },
   {
@@ -1979,7 +1974,7 @@
    "claim": "Flag `--mock-provider` defaults to false",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:167"
+    "arena/cmd/promptarena/run.go:192"
    ]
   },
   {
@@ -1987,8 +1982,8 @@
    "claim": "Flag `--mock-config` (string) takes the path to a mock provider configuration YAML",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:168",
-    "arena/cmd/promptarena/run_interactive.go:263"
+    "arena/cmd/promptarena/run.go:193",
+    "arena/cmd/promptarena/run_interactive.go:258"
    ]
   },
   {
@@ -1996,7 +1991,7 @@
    "claim": "Flag `--mock-config` has no default",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:168"
+    "arena/cmd/promptarena/run.go:193"
    ]
   },
   {
@@ -2005,8 +2000,8 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/provider_override.go",
-    "arena/cmd/promptarena/run.go:171",
-    "arena/cmd/promptarena/run_interactive.go:246"
+    "arena/cmd/promptarena/run.go:196",
+    "arena/cmd/promptarena/run_interactive.go:241"
    ]
   },
   {
@@ -2014,7 +2009,7 @@
    "claim": "Flag `--override-provider` has no default",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:171"
+    "arena/cmd/promptarena/run.go:196"
    ]
   },
   {
@@ -2022,8 +2017,8 @@
    "claim": "Flag `--skip-pack-evals` (bool) disables pack eval execution",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:175",
-    "arena/cmd/promptarena/run_interactive.go:240"
+    "arena/cmd/promptarena/run.go:200",
+    "arena/cmd/promptarena/run_interactive.go:235"
    ]
   },
   {
@@ -2031,7 +2026,7 @@
    "claim": "Flag `--skip-pack-evals` defaults to false",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:175"
+    "arena/cmd/promptarena/run.go:200"
    ]
   },
   {
@@ -2039,8 +2034,8 @@
    "claim": "Flag `--eval-types` (string list) filters to specific eval types, e.g. contains,regex",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:176",
-    "arena/cmd/promptarena/run_interactive.go:241"
+    "arena/cmd/promptarena/run.go:201",
+    "arena/cmd/promptarena/run_interactive.go:236"
    ]
   },
   {
@@ -2048,7 +2043,7 @@
    "claim": "Flag `--eval-types` defaults to all eval types",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:176"
+    "arena/cmd/promptarena/run.go:201"
    ]
   },
   {
@@ -2056,8 +2051,8 @@
    "claim": "Flag `--audio-monitor` (string) sets audio monitoring mode",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:183",
-    "arena/cmd/promptarena/run_interactive.go:269"
+    "arena/cmd/promptarena/run.go:204",
+    "arena/cmd/promptarena/run_interactive.go:264"
    ]
   },
   {
@@ -2066,7 +2061,7 @@
    "verdict": "true",
    "evidence": [
     "arena/audio/types.go:59",
-    "arena/cmd/promptarena/run.go:183",
+    "arena/cmd/promptarena/run.go:204",
     "arena/engine/engine_audio.go:30"
    ]
   },
@@ -2075,7 +2070,7 @@
    "claim": "Flag `--audio-monitor` defaults to auto",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:183"
+    "arena/cmd/promptarena/run.go:204"
    ]
   },
   {
@@ -2083,8 +2078,8 @@
    "claim": "Flag `--audio-rate` (int) sets the audio canonical sample rate",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:184",
-    "arena/engine/engine.go:639"
+    "arena/cmd/promptarena/run.go:205",
+    "arena/engine/engine.go:638"
    ]
   },
   {
@@ -2093,7 +2088,7 @@
    "verdict": "true",
    "evidence": [
     "arena/audio/types.go:121",
-    "arena/engine/engine.go:640"
+    "arena/engine/engine.go:639"
    ]
   },
   {
@@ -2102,7 +2097,7 @@
    "verdict": "true",
    "evidence": [
     "arena/audio/types.go",
-    "arena/cmd/promptarena/run.go:184"
+    "arena/cmd/promptarena/run.go:205"
    ]
   },
   {
@@ -2110,16 +2105,21 @@
    "claim": "Flag `-o, --out` (string) sets the output directory",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:144",
-    "arena/cmd/promptarena/run_interactive.go:116"
+    "arena/cmd/promptarena/run.go:168",
+    "arena/cmd/promptarena/run_interactive.go:111"
    ]
   },
   {
    "id": 1254,
-   "claim": "Flag `--out` defaults to `out`",
+   "claim": "--out defaults to defaults.output.dir, else out",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:144"
+    "arena/arenaconfig/helpers.go:38",
+    "arena/arenaconfig/helpers.go:55",
+    "arena/cmd/promptarena/run.go:361",
+    "arena/cmd/promptarena/serve_interactive.go:222",
+    "arena/engine/engine.go:1015",
+    "arena/engine/engine.go:702"
    ]
   },
   {
@@ -2127,8 +2127,8 @@
    "claim": "Flag `--format` (string list) sets output formats",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:148",
-    "arena/cmd/promptarena/run.go:358"
+    "arena/cmd/promptarena/run.go:174",
+    "arena/cmd/promptarena/run.go:403"
    ]
   },
   {
@@ -2136,8 +2136,8 @@
    "claim": "Flag `--format` accepts the values json, junit, markdown, csv",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run.go:148",
-    "arena/cmd/promptarena/run.go:57"
+    "arena/cmd/promptarena/run.go:174",
+    "arena/cmd/promptarena/run.go:56"
    ]
   },
   {
@@ -2145,7 +2145,7 @@
    "claim": "Flag `--format` defaults to the formats set in the config",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:372"
+    "arena/cmd/promptarena/run.go:417"
    ]
   },
   {
@@ -2153,8 +2153,8 @@
    "claim": "Flag `--formats` is an alias for --format",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:150",
-    "arena/cmd/promptarena/run.go:362"
+    "arena/cmd/promptarena/run.go:176",
+    "arena/cmd/promptarena/run.go:407"
    ]
   },
   {
@@ -2162,8 +2162,8 @@
    "claim": "Flag `--formats` defaults to the formats set in the config",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:150",
-    "arena/cmd/promptarena/run.go:366"
+    "arena/cmd/promptarena/run.go:176",
+    "arena/cmd/promptarena/run.go:411"
    ]
   },
   {
@@ -2171,8 +2171,8 @@
    "claim": "Flag `--html` (bool) is deprecated, is accepted, and produces markdown instead",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:147",
-    "arena/cmd/promptarena/run.go:439"
+    "arena/cmd/promptarena/run.go:173",
+    "arena/cmd/promptarena/run.go:484"
    ]
   },
   {
@@ -2180,7 +2180,7 @@
    "claim": "Flag `--html` defaults to false",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:147"
+    "arena/cmd/promptarena/run.go:173"
    ]
   },
   {
@@ -2188,8 +2188,8 @@
    "claim": "Flag `--html-file` is deprecated in favour of --markdown-file",
    "verdict": "dead",
    "evidence": [
-    "arena/cmd/promptarena/run.go:156",
-    "arena/cmd/promptarena/run.go:159"
+    "arena/cmd/promptarena/run.go:183",
+    "arena/cmd/promptarena/run.go:186"
    ]
   },
   {
@@ -2197,7 +2197,7 @@
    "claim": "Flag `--html-file` has no default",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:156"
+    "arena/cmd/promptarena/run.go:183"
    ]
   },
   {
@@ -2205,17 +2205,18 @@
    "claim": "Flag `--junit-file` (string) sets the JUnit XML output file",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:155",
-    "arena/cmd/promptarena/run.go:382",
-    "arena/cmd/promptarena/run.go:62"
+    "arena/cmd/promptarena/run.go",
+    "arena/cmd/promptarena/run.go:427",
+    "arena/cmd/promptarena/run.go:61"
    ]
   },
   {
    "id": 1265,
-   "claim": "Flag `--junit-file` defaults to out/junit.xml",
+   "claim": "--junit-file defaults to defaults.output.junit.file, else <out>/junit.xml",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:477"
+    "arena/arenaconfig/types.go:550",
+    "arena/cmd/promptarena/run.go:524"
    ]
   },
   {
@@ -2223,9 +2224,9 @@
    "claim": "Flag `--markdown-file` (string) sets the Markdown report output file",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:160",
-    "arena/cmd/promptarena/run.go:385",
-    "arena/cmd/promptarena/run.go:87"
+    "arena/cmd/promptarena/run.go:187",
+    "arena/cmd/promptarena/run.go:430",
+    "arena/cmd/promptarena/run.go:86"
    ]
   },
   {
@@ -2233,7 +2234,7 @@
    "claim": "Flag `--markdown-file` defaults to out/results.md",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:482"
+    "arena/cmd/promptarena/run.go:532"
    ]
   },
   {
@@ -2241,9 +2242,9 @@
    "claim": "Flag `-v, --verbose` (bool) enables verbose debug logging for API calls",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:164",
-    "arena/cmd/promptarena/run.go:307",
-    "arena/cmd/promptarena/run.go:494"
+    "arena/cmd/promptarena/run.go:189",
+    "arena/cmd/promptarena/run.go:341",
+    "arena/cmd/promptarena/run.go:544"
    ]
   },
   {
@@ -2251,7 +2252,7 @@
    "claim": "Flag `--verbose` on run defaults to false",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:164"
+    "arena/cmd/promptarena/run.go:189"
    ]
   },
   {
@@ -2259,7 +2260,7 @@
    "claim": "`promptarena run` with no flags runs all tests with the default configuration",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run_interactive.go:158"
+    "arena/cmd/promptarena/run_interactive.go"
    ]
   },
   {
@@ -2267,7 +2268,7 @@
    "claim": "`promptarena run` runs all tests with default configuration",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run_interactive.go:158"
+    "arena/cmd/promptarena/run_interactive.go"
    ]
   },
   {
@@ -2275,8 +2276,8 @@
    "claim": "`promptarena run --config my-arena.yaml` runs tests using the named config file",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:134",
-    "arena/cmd/promptarena/run_interactive.go:68"
+    "arena/cmd/promptarena/run.go:158",
+    "arena/cmd/promptarena/run_interactive.go"
    ]
   },
   {
@@ -2284,8 +2285,8 @@
    "claim": "`promptarena run --provider openai,claude` runs only the openai and claude providers",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:138",
-    "arena/cmd/promptarena/run_interactive.go:250"
+    "arena/cmd/promptarena/run.go:162",
+    "arena/cmd/promptarena/run_interactive.go:245"
    ]
   },
   {
@@ -2293,8 +2294,8 @@
    "claim": "`promptarena run --scenario basic-qa,edge-cases` runs only the basic-qa and edge-cases scenarios",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:139",
-    "arena/cmd/promptarena/run_interactive.go:285"
+    "arena/cmd/promptarena/run.go:163",
+    "arena/cmd/promptarena/run_interactive.go:280"
    ]
   },
   {
@@ -2302,7 +2303,7 @@
    "claim": "`promptarena run --provider openai --scenario customer-support` combines provider and scenario filters",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run_interactive.go:285"
+    "arena/cmd/promptarena/run_interactive.go:280"
    ]
   },
   {
@@ -2310,7 +2311,7 @@
    "claim": "`promptarena run --concurrency 3` runs with 3 concurrent workers",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run_interactive.go:463"
+    "arena/cmd/promptarena/run_interactive.go:458"
    ]
   },
   {
@@ -2318,7 +2319,7 @@
    "claim": "`promptarena run --concurrency 1` runs sequentially with no parallelism",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run_interactive.go:463"
+    "arena/cmd/promptarena/run_interactive.go:458"
    ]
   },
   {
@@ -2326,8 +2327,7 @@
    "claim": "`promptarena run --temperature 0.8` overrides temperature for all tests",
    "verdict": "dead",
    "evidence": [
-    "arena/cmd/promptarena/run.go:161",
-    "arena/cmd/promptarena/run.go:191"
+    "arena/cmd/promptarena/run.go"
    ]
   },
   {
@@ -2335,7 +2335,7 @@
    "claim": "`promptarena run --max-tokens 500` overrides max tokens for all tests",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:499"
+    "arena/cmd/promptarena/run.go:549"
    ]
   },
   {
@@ -2343,8 +2343,8 @@
    "claim": "`promptarena run --temperature 0.9 --max-tokens 1000` combines both overrides",
    "verdict": "dead",
    "evidence": [
-    "arena/cmd/promptarena/run.go:161",
-    "arena/cmd/promptarena/run.go:499"
+    "arena/cmd/promptarena/run.go",
+    "arena/cmd/promptarena/run.go:549"
    ]
   },
   {
@@ -2352,8 +2352,8 @@
    "claim": "`promptarena run --format json,markdown` generates JSON and Markdown reports",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:358",
-    "arena/cmd/promptarena/run.go:57"
+    "arena/cmd/promptarena/run.go:403",
+    "arena/cmd/promptarena/run.go:56"
    ]
   },
   {
@@ -2361,7 +2361,7 @@
    "claim": "`promptarena run --format json,junit,markdown` generates all available formats",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run.go:57"
+    "arena/cmd/promptarena/run.go:56"
    ]
   },
   {
@@ -2369,8 +2369,8 @@
    "claim": "`promptarena run --out test-results-2024-01-15` writes output to a custom directory",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:144",
-    "arena/cmd/promptarena/run_interactive.go:116"
+    "arena/cmd/promptarena/run.go:168",
+    "arena/cmd/promptarena/run_interactive.go:111"
    ]
   },
   {
@@ -2378,8 +2378,8 @@
    "claim": "`promptarena run --format markdown --markdown-file custom-results.md` writes the Markdown report to a custom filename",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:160",
-    "arena/cmd/promptarena/run.go:87"
+    "arena/cmd/promptarena/run.go:187",
+    "arena/cmd/promptarena/run.go:86"
    ]
   },
   {
@@ -2387,8 +2387,8 @@
    "claim": "`promptarena run --mock-provider` uses the mock provider instead of real APIs",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:167",
-    "arena/cmd/promptarena/run_interactive.go:259"
+    "arena/cmd/promptarena/run.go:192",
+    "arena/cmd/promptarena/run_interactive.go:254"
    ]
   },
   {
@@ -2396,8 +2396,8 @@
    "claim": "`promptarena run --mock-config mock-responses.yaml` uses a custom mock configuration",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:168",
-    "arena/cmd/promptarena/run_interactive.go:263"
+    "arena/cmd/promptarena/run.go:193",
+    "arena/cmd/promptarena/run_interactive.go:258"
    ]
   },
   {
@@ -2405,8 +2405,7 @@
    "claim": "`promptarena run --selfplay` enables self-play testing",
    "verdict": "dead",
    "evidence": [
-    "arena/cmd/promptarena/run.go:179",
-    "arena/cmd/promptarena/run.go:194"
+    "arena/cmd/promptarena/run.go"
    ]
   },
   {
@@ -2414,8 +2413,7 @@
    "claim": "`promptarena run --selfplay --roles frustrated-customer,tech-support` runs self-play with those roles",
    "verdict": "dead",
    "evidence": [
-    "arena/cmd/promptarena/run.go:180",
-    "arena/cmd/promptarena/run.go:195"
+    "arena/cmd/promptarena/run.go"
    ]
   },
   {
@@ -2423,8 +2421,8 @@
    "claim": "--ci runs headless for CI pipelines",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run_interactive.go:139",
-    "arena/cmd/promptarena/run_interactive.go:338"
+    "arena/cmd/promptarena/run_interactive.go:134",
+    "arena/cmd/promptarena/run_interactive.go:333"
    ]
   },
   {
@@ -2432,8 +2430,8 @@
    "claim": "`promptarena run --ci --format junit,json` runs in CI mode and writes JUnit and JSON reports",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:62",
-    "arena/cmd/promptarena/run_interactive.go:139"
+    "arena/cmd/promptarena/run.go:61",
+    "arena/cmd/promptarena/run_interactive.go:134"
    ]
   },
   {
@@ -2441,7 +2439,7 @@
    "claim": "--ci with --format junit applies specific quality gates",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run_interactive.go:138"
+    "arena/cmd/promptarena/run_interactive.go:133"
    ]
   },
   {
@@ -2449,8 +2447,8 @@
    "claim": "`promptarena run --ci --concurrency 3 --format junit` runs in CI mode with 3 workers and JUnit output",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run_interactive.go:139",
-    "arena/cmd/promptarena/run_interactive.go:463"
+    "arena/cmd/promptarena/run_interactive.go:134",
+    "arena/cmd/promptarena/run_interactive.go:458"
    ]
   },
   {
@@ -2458,8 +2456,8 @@
    "claim": "`promptarena run --verbose` enables verbose output for troubleshooting",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:164",
-    "arena/cmd/promptarena/run.go:494"
+    "arena/cmd/promptarena/run.go:189",
+    "arena/cmd/promptarena/run.go:544"
    ]
   },
   {
@@ -2467,8 +2465,8 @@
    "claim": "`promptarena run --verbose --scenario failing-test` runs verbose output for a single scenario",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:139",
-    "arena/cmd/promptarena/run.go:164"
+    "arena/cmd/promptarena/run.go:163",
+    "arena/cmd/promptarena/run.go:189"
    ]
   },
   {
@@ -2476,8 +2474,7 @@
    "claim": "`promptarena run --seed 12345` uses seed 12345 for reproducibility",
    "verdict": "dead",
    "evidence": [
-    "arena/cmd/promptarena/run.go:163",
-    "arena/cmd/promptarena/run.go:193"
+    "arena/cmd/promptarena/run.go"
    ]
   },
   {
@@ -2485,7 +2482,7 @@
    "claim": "The same seed across runs produces the same results",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run.go:163",
+    "arena/cmd/promptarena/run.go",
     "arena/engine/conversation_executor.go:395"
    ]
   },
@@ -2494,8 +2491,7 @@
    "claim": "`promptarena run --seed 12345 --provider openai` runs the openai provider with seed 12345",
    "verdict": "dead",
    "evidence": [
-    "arena/cmd/promptarena/run.go:163",
-    "arena/cmd/promptarena/run.go:193"
+    "arena/cmd/promptarena/run.go"
    ]
   },
   {
@@ -3097,7 +3093,7 @@
    "claim": "objective field `baseline: true` marks an objective for the direct persona",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1209",
+    "arena/arenaconfig/types.go:1215",
     "arena/engine/objective.go:173"
    ]
   },
@@ -3114,7 +3110,7 @@
    "claim": "config field `self_play.personas` is a list of persona entries",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:433"
+    "arena/arenaconfig/types.go:436"
    ]
   },
   {
@@ -3122,7 +3118,7 @@
    "claim": "config field `self_play.personas[].file` points to a persona YAML file",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:448"
+    "arena/arenaconfig/types.go:451"
    ]
   },
   {
@@ -3130,7 +3126,7 @@
    "claim": "config field `self_play.roles` is a list of roles",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:435",
+    "arena/arenaconfig/types.go:438",
     "arena/inspect/collector.go:360"
    ]
   },
@@ -3139,7 +3135,7 @@
    "claim": "config field `self_play.roles[].id` names the role",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:454"
+    "arena/arenaconfig/types.go:457"
    ]
   },
   {
@@ -3147,7 +3143,7 @@
    "claim": "config field `self_play.roles[].provider` names a configured provider",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:455"
+    "arena/arenaconfig/types.go:458"
    ]
   },
   {
@@ -3155,7 +3151,7 @@
    "claim": "scenario turn field `role` selects a self-play role",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1129"
+    "arena/arenaconfig/types.go:1135"
    ]
   },
   {
@@ -3163,7 +3159,7 @@
    "claim": "scenario turn field `persona` names a persona",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1137"
+    "arena/arenaconfig/types.go:1143"
    ]
   },
   {
@@ -3171,7 +3167,7 @@
    "claim": "scenario turn field `turns` sets the number of turns",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1139"
+    "arena/arenaconfig/types.go:1145"
    ]
   },
   {
@@ -3179,8 +3175,8 @@
    "claim": "scenario turn field `objective` is an object",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1164",
-    "arena/arenaconfig/types.go:1189"
+    "arena/arenaconfig/types.go:1170",
+    "arena/arenaconfig/types.go:1195"
    ]
   },
   {
@@ -3188,7 +3184,7 @@
    "claim": "objective field `description` sets the goal text",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1192"
+    "arena/arenaconfig/types.go:1198"
    ]
   },
   {
@@ -3196,8 +3192,8 @@
    "claim": "objective field `expect` accepts the value `not_achieved`",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1181",
-    "arena/arenaconfig/types.go:1363",
+    "arena/arenaconfig/types.go:1187",
+    "arena/arenaconfig/types.go:1369",
     "arena/engine/objective.go:191"
    ]
   },
@@ -3206,7 +3202,7 @@
    "claim": "objective field `success` is a list of assertions",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1195"
+    "arena/arenaconfig/types.go:1201"
    ]
   },
   {
@@ -3228,7 +3224,7 @@
    "claim": "objective field `stop_on_success` is a boolean",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1201",
+    "arena/arenaconfig/types.go:1207",
     "arena/engine/objective.go:312"
    ]
   },
@@ -3237,8 +3233,8 @@
    "claim": "objective field `rewind` is an object",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1204",
-    "arena/arenaconfig/types.go:1328"
+    "arena/arenaconfig/types.go:1210",
+    "arena/arenaconfig/types.go:1334"
    ]
   },
   {
@@ -3246,8 +3242,8 @@
    "claim": "rewind field `max` sets the maximum number of rewinds",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1332",
-    "arena/arenaconfig/types.go:1336"
+    "arena/arenaconfig/types.go:1338",
+    "arena/arenaconfig/types.go:1342"
    ]
   },
   {
@@ -3255,7 +3251,7 @@
    "claim": "rewind field `when` is a list of assertions that trigger a rewind",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1330"
+    "arena/arenaconfig/types.go:1336"
    ]
   },
   {
@@ -5199,7 +5195,7 @@
    "claim": "the serve web UI loads existing results from the output directory on startup",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:231"
+    "arena/cmd/promptarena/serve_interactive.go:226"
    ]
   },
   {
@@ -5276,7 +5272,7 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/serve_interactive.go:133",
-    "arena/cmd/promptarena/serve_interactive.go:259"
+    "arena/cmd/promptarena/serve_interactive.go:254"
    ]
   },
   {
@@ -5365,7 +5361,7 @@
    "verdict": "true",
    "evidence": [
     "arena/audio/types.go:121",
-    "arena/engine/engine.go:635"
+    "arena/engine/engine.go:634"
    ]
   },
   {
@@ -6378,7 +6374,7 @@
    "claim": "PROMPTARENA_CONFIG sets the default config file and overrides config.arena.yaml",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run.go:138"
+    "arena/cmd/promptarena/run.go:162"
    ]
   },
   {
@@ -6386,7 +6382,7 @@
    "claim": "PROMPTARENA_OUTPUT sets the default output directory and overrides out",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run.go:155"
+    "arena/cmd/promptarena/run.go"
    ]
   },
   {
@@ -6410,7 +6406,7 @@
    "claim": "The example exports PROMPTARENA_CONFIG",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run.go:138"
+    "arena/cmd/promptarena/run.go:162"
    ]
   },
   {
@@ -6418,7 +6414,7 @@
    "claim": "The example exports PROMPTARENA_OUTPUT",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run.go:155"
+    "arena/cmd/promptarena/run.go"
    ]
   },
   {
@@ -6426,7 +6422,7 @@
    "claim": "`promptarena run` is a valid command",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:138"
+    "arena/cmd/promptarena/run.go:162"
    ]
   },
   {
@@ -6435,7 +6431,7 @@
    "verdict": "false",
    "evidence": [
     "arena/cmd/promptarena/main_integration.go:124",
-    "arena/cmd/promptarena/run_interactive.go:139"
+    "arena/cmd/promptarena/run_interactive.go:134"
    ]
   },
   {
@@ -6443,8 +6439,8 @@
    "claim": "Exit code 1 means one or more tests failed or an error occurred",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run.go:303",
-    "arena/cmd/promptarena/run_interactive.go:139"
+    "arena/cmd/promptarena/run.go:337",
+    "arena/cmd/promptarena/run_interactive.go:134"
    ]
   },
   {
@@ -6452,7 +6448,7 @@
    "claim": "`promptarena run --ci` is a valid command",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:138"
+    "arena/cmd/promptarena/run.go:162"
    ]
   },
   {
@@ -6460,7 +6456,7 @@
    "claim": "run has a --ci flag",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:138"
+    "arena/cmd/promptarena/run.go:162"
    ]
   },
   {
@@ -6468,7 +6464,7 @@
    "claim": "`promptarena run --mock-provider` is a valid command",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:138"
+    "arena/cmd/promptarena/run.go:162"
    ]
   },
   {
@@ -6476,7 +6472,7 @@
    "claim": "run has a --mock-provider flag",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:138"
+    "arena/cmd/promptarena/run.go:162"
    ]
   },
   {
@@ -6484,7 +6480,7 @@
    "claim": "`promptarena run --scenario new-feature --verbose` is a valid command",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:138"
+    "arena/cmd/promptarena/run.go:162"
    ]
   },
   {
@@ -6492,7 +6488,7 @@
    "claim": "run has a --scenario flag",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:138"
+    "arena/cmd/promptarena/run.go:162"
    ]
   },
   {
@@ -6500,7 +6496,7 @@
    "claim": "run has a --verbose flag",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:138"
+    "arena/cmd/promptarena/run.go:162"
    ]
   },
   {
@@ -6508,7 +6504,7 @@
    "claim": "`promptarena config-inspect --verbose` is a valid command",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:138"
+    "arena/cmd/promptarena/run.go:162"
    ]
   },
   {
@@ -6516,7 +6512,7 @@
    "claim": "config-inspect has a --verbose flag",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:138"
+    "arena/cmd/promptarena/run.go:162"
    ]
   },
   {
@@ -6524,7 +6520,7 @@
    "claim": "`promptarena run --ci --format junit,json` is a valid command",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:138"
+    "arena/cmd/promptarena/run.go:162"
    ]
   },
   {
@@ -6532,7 +6528,7 @@
    "claim": "run --format accepts junit and json values",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:138"
+    "arena/cmd/promptarena/run.go:162"
    ]
   },
   {
@@ -6540,7 +6536,7 @@
    "claim": "`promptarena run --ci --provider openai,claude --format junit` is a valid command",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:138"
+    "arena/cmd/promptarena/run.go:162"
    ]
   },
   {
@@ -6548,7 +6544,7 @@
    "claim": "run has a --provider flag",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:138"
+    "arena/cmd/promptarena/run.go:162"
    ]
   },
   {
@@ -6556,7 +6552,7 @@
    "claim": "`promptarena config-inspect` is a valid command",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:138"
+    "arena/cmd/promptarena/run.go:162"
    ]
   },
   {
@@ -6564,7 +6560,7 @@
    "claim": "`promptarena prompt-debug --task-type support --verbose` is a valid command",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:138"
+    "arena/cmd/promptarena/run.go:162"
    ]
   },
   {
@@ -6572,7 +6568,7 @@
    "claim": "prompt-debug has a --task-type flag",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:138"
+    "arena/cmd/promptarena/run.go:162"
    ]
   },
   {
@@ -6580,7 +6576,7 @@
    "claim": "`promptarena run --verbose --scenario failing-test` is a valid command",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:138"
+    "arena/cmd/promptarena/run.go:162"
    ]
   },
   {
@@ -6588,7 +6584,7 @@
    "claim": "`promptarena debug` is a valid command",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:138"
+    "arena/cmd/promptarena/run.go:162"
    ]
   },
   {
@@ -6596,7 +6592,7 @@
    "claim": "`promptarena run --format json,markdown` is a valid command",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:138"
+    "arena/cmd/promptarena/run.go:162"
    ]
   },
   {
@@ -6604,7 +6600,7 @@
    "claim": "`promptarena serve --open` is a valid command",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:138"
+    "arena/cmd/promptarena/run.go:162"
    ]
   },
   {
@@ -6612,7 +6608,7 @@
    "claim": "serve has an --open flag",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:138"
+    "arena/cmd/promptarena/run.go:162"
    ]
   },
   {
@@ -6620,7 +6616,7 @@
    "claim": "`promptarena view` is a valid command",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:138"
+    "arena/cmd/promptarena/run.go:162"
    ]
   },
   {
@@ -6628,7 +6624,7 @@
    "claim": "`promptarena run --format markdown,json` is a valid command",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:138"
+    "arena/cmd/promptarena/run.go:162"
    ]
   },
   {
@@ -6636,7 +6632,7 @@
    "claim": "`promptarena run --provider openai,claude,gemini --format markdown` is a valid command",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:138"
+    "arena/cmd/promptarena/run.go:162"
    ]
   },
   {
@@ -6644,7 +6640,7 @@
    "claim": "openai, claude, and gemini are valid provider filter values",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run.go:138"
+    "arena/cmd/promptarena/run.go:162"
    ]
   },
   {
@@ -6652,7 +6648,7 @@
    "claim": "The default configuration file is config.arena.yaml",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:155"
+    "arena/cmd/promptarena/run.go"
    ]
   },
   {
@@ -6682,7 +6678,7 @@
    "claim": "spec.prompt_configs is a list field whose entries take id and file",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:513",
+    "arena/arenaconfig/types.go:518",
     "schemas/v1alpha1/arena.json"
    ]
   },
@@ -6691,7 +6687,7 @@
    "claim": "spec.providers is a list field whose entries take file",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:513",
+    "arena/arenaconfig/types.go:518",
     "schemas/v1alpha1/arena.json"
    ]
   },
@@ -6700,7 +6696,7 @@
    "claim": "spec.scenarios is a list field whose entries take file",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:513",
+    "arena/arenaconfig/types.go:518",
     "schemas/v1alpha1/arena.json"
    ]
   },
@@ -6709,7 +6705,7 @@
    "claim": "spec.defaults is a config field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:513",
+    "arena/arenaconfig/types.go:518",
     "schemas/v1alpha1/arena.json"
    ]
   },
@@ -6718,7 +6714,7 @@
    "claim": "spec.defaults.output.dir is a config field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:513",
+    "arena/arenaconfig/types.go:518",
     "schemas/v1alpha1/arena.json"
    ]
   },
@@ -6727,7 +6723,7 @@
    "claim": "spec.defaults.output.formats accepts json and markdown",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:513",
+    "arena/arenaconfig/types.go:518",
     "schemas/v1alpha1/arena.json"
    ]
   },
@@ -6736,7 +6732,7 @@
    "claim": "PromptArena supports multimodal content (images, audio, video) in test scenarios",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1403",
+    "arena/arenaconfig/types.go:1409",
     "arena/turnexecutors/media_loader.go:160"
    ]
   },
@@ -6745,7 +6741,7 @@
    "claim": "Scenario turns accept a parts array for multimodal content",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1403",
+    "arena/arenaconfig/types.go:1409",
     "arena/turnexecutors/media_loader.go:160"
    ]
   },
@@ -6754,7 +6750,7 @@
    "claim": "Scenario kind is Scenario",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/scenario.json:1032"
+    "schemas/v1alpha1/scenario.json:1034"
    ]
   },
   {
@@ -6762,7 +6758,7 @@
    "claim": "Scenario turns have a role field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1403",
+    "arena/arenaconfig/types.go:1409",
     "arena/turnexecutors/media_loader.go:160"
    ]
   },
@@ -6771,8 +6767,8 @@
    "claim": "A content part has type text with a patterns field",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:1403",
-    "schemas/v1alpha1/scenario.json:835"
+    "arena/arenaconfig/types.go:1409",
+    "schemas/v1alpha1/scenario.json:837"
    ]
   },
   {
@@ -6780,7 +6776,7 @@
    "claim": "A content part has type image",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1403",
+    "arena/arenaconfig/types.go:1409",
     "arena/turnexecutors/media_loader.go:160"
    ]
   },
@@ -6789,7 +6785,7 @@
    "claim": "media.file_path is a field of a media part",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1412"
+    "arena/arenaconfig/types.go:1418"
    ]
   },
   {
@@ -6797,7 +6793,7 @@
    "claim": "media.detail is a field of a media part",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1412"
+    "arena/arenaconfig/types.go:1418"
    ]
   },
   {
@@ -6837,7 +6833,7 @@
    "claim": "media.detail accepts high",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1418",
+    "arena/arenaconfig/types.go:1424",
     "arena/turnexecutors/media_loader.go:563"
    ]
   },
@@ -6846,7 +6842,7 @@
    "claim": "media.url is a field of a media part",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1412"
+    "arena/arenaconfig/types.go:1418"
    ]
   },
   {
@@ -6863,7 +6859,7 @@
    "claim": "media.detail accepts auto",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1418",
+    "arena/arenaconfig/types.go:1424",
     "arena/turnexecutors/media_loader.go:563"
    ]
   },
@@ -6872,7 +6868,7 @@
    "claim": "media.data is a field for inline base64 media",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1412"
+    "arena/arenaconfig/types.go:1418"
    ]
   },
   {
@@ -6880,7 +6876,7 @@
    "claim": "media.mime_type is a field of a media part",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1412"
+    "arena/arenaconfig/types.go:1418"
    ]
   },
   {
@@ -6888,7 +6884,7 @@
    "claim": "media.detail accepts low",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1418",
+    "arena/arenaconfig/types.go:1424",
     "arena/turnexecutors/media_loader.go:563"
    ]
   },
@@ -7003,7 +6999,7 @@
    "verdict": "true",
    "evidence": [
     "arena/results/junit/junit_repository.go:139",
-    "arena/results/junit/junit_repository.go:675"
+    "arena/results/junit/junit_repository.go:670"
    ]
   },
   {
@@ -7012,7 +7008,7 @@
    "verdict": "true",
    "evidence": [
     "arena/results/junit/junit_repository.go:139",
-    "arena/results/junit/junit_repository.go:675"
+    "arena/results/junit/junit_repository.go:670"
    ]
   },
   {
@@ -7021,7 +7017,7 @@
    "verdict": "true",
    "evidence": [
     "arena/results/junit/junit_repository.go:139",
-    "arena/results/junit/junit_repository.go:675"
+    "arena/results/junit/junit_repository.go:670"
    ]
   },
   {
@@ -7030,7 +7026,7 @@
    "verdict": "true",
    "evidence": [
     "arena/results/junit/junit_repository.go:139",
-    "arena/results/junit/junit_repository.go:675"
+    "arena/results/junit/junit_repository.go:670"
    ]
   },
   {
@@ -7039,7 +7035,7 @@
    "verdict": "true",
    "evidence": [
     "arena/results/junit/junit_repository.go:139",
-    "arena/results/junit/junit_repository.go:675"
+    "arena/results/junit/junit_repository.go:670"
    ]
   },
   {
@@ -7048,7 +7044,7 @@
    "verdict": "true",
    "evidence": [
     "arena/results/junit/junit_repository.go:139",
-    "arena/results/junit/junit_repository.go:675"
+    "arena/results/junit/junit_repository.go:670"
    ]
   },
   {
@@ -7057,7 +7053,7 @@
    "verdict": "true",
    "evidence": [
     "arena/results/junit/junit_repository.go:139",
-    "arena/results/junit/junit_repository.go:675"
+    "arena/results/junit/junit_repository.go:670"
    ]
   },
   {
@@ -7066,7 +7062,7 @@
    "verdict": "true",
    "evidence": [
     "arena/results/junit/junit_repository.go:139",
-    "arena/results/junit/junit_repository.go:675"
+    "arena/results/junit/junit_repository.go:670"
    ]
   },
   {
@@ -7074,8 +7070,8 @@
    "claim": "Markdown reports include a media statistics table in the overview section",
    "verdict": "true",
    "evidence": [
-    "arena/results/markdown/markdown_repository.go:413",
-    "arena/results/markdown/markdown_repository.go:447"
+    "arena/results/markdown/markdown_repository.go:408",
+    "arena/results/markdown/markdown_repository.go:442"
    ]
   },
   {
@@ -7083,8 +7079,8 @@
    "claim": "The markdown overview table has a Tests Run row",
    "verdict": "true",
    "evidence": [
-    "arena/results/markdown/markdown_repository.go:413",
-    "arena/results/markdown/markdown_repository.go:447"
+    "arena/results/markdown/markdown_repository.go:408",
+    "arena/results/markdown/markdown_repository.go:442"
    ]
   },
   {
@@ -7092,8 +7088,8 @@
    "claim": "The markdown overview table has a Passed row",
    "verdict": "true",
    "evidence": [
-    "arena/results/markdown/markdown_repository.go:413",
-    "arena/results/markdown/markdown_repository.go:447"
+    "arena/results/markdown/markdown_repository.go:408",
+    "arena/results/markdown/markdown_repository.go:442"
    ]
   },
   {
@@ -7101,8 +7097,8 @@
    "claim": "The markdown overview table has a Failed row",
    "verdict": "true",
    "evidence": [
-    "arena/results/markdown/markdown_repository.go:413",
-    "arena/results/markdown/markdown_repository.go:447"
+    "arena/results/markdown/markdown_repository.go:408",
+    "arena/results/markdown/markdown_repository.go:442"
    ]
   },
   {
@@ -7110,7 +7106,7 @@
    "claim": "The markdown overview table has a Success Rate row",
    "verdict": "true",
    "evidence": [
-    "arena/results/markdown/markdown_repository.go:421"
+    "arena/results/markdown/markdown_repository.go:416"
    ]
   },
   {
@@ -7118,7 +7114,7 @@
    "claim": "The markdown overview table has a Total Cost row",
    "verdict": "true",
    "evidence": [
-    "arena/results/markdown/markdown_repository.go:421"
+    "arena/results/markdown/markdown_repository.go:416"
    ]
   },
   {
@@ -7126,7 +7122,7 @@
    "claim": "The markdown overview table has a Total Duration row",
    "verdict": "true",
    "evidence": [
-    "arena/results/markdown/markdown_repository.go:421"
+    "arena/results/markdown/markdown_repository.go:416"
    ]
   },
   {
@@ -7134,8 +7130,8 @@
    "claim": "The markdown overview has a Media Content section",
    "verdict": "true",
    "evidence": [
-    "arena/results/markdown/markdown_repository.go:413",
-    "arena/results/markdown/markdown_repository.go:447"
+    "arena/results/markdown/markdown_repository.go:408",
+    "arena/results/markdown/markdown_repository.go:442"
    ]
   },
   {
@@ -7143,7 +7139,7 @@
    "claim": "The Media Content table has an Images row",
    "verdict": "true",
    "evidence": [
-    "arena/results/markdown/markdown_repository.go:451"
+    "arena/results/markdown/markdown_repository.go:446"
    ]
   },
   {
@@ -7151,7 +7147,7 @@
    "claim": "The Media Content table has an Audio Files row",
    "verdict": "true",
    "evidence": [
-    "arena/results/markdown/markdown_repository.go:451"
+    "arena/results/markdown/markdown_repository.go:446"
    ]
   },
   {
@@ -7159,7 +7155,7 @@
    "claim": "The Media Content table has a Videos row",
    "verdict": "true",
    "evidence": [
-    "arena/results/markdown/markdown_repository.go:451"
+    "arena/results/markdown/markdown_repository.go:446"
    ]
   },
   {
@@ -7167,7 +7163,7 @@
    "claim": "The Media Content table has a Loaded row",
    "verdict": "true",
    "evidence": [
-    "arena/results/markdown/markdown_repository.go:451"
+    "arena/results/markdown/markdown_repository.go:446"
    ]
   },
   {
@@ -7175,7 +7171,7 @@
    "claim": "The Media Content table has an Errors row",
    "verdict": "true",
    "evidence": [
-    "arena/results/markdown/markdown_repository.go:451"
+    "arena/results/markdown/markdown_repository.go:446"
    ]
   },
   {
@@ -7183,7 +7179,7 @@
    "claim": "The Media Content table has a Total Size row",
    "verdict": "true",
    "evidence": [
-    "arena/results/markdown/markdown_repository.go:451"
+    "arena/results/markdown/markdown_repository.go:446"
    ]
   },
   {
@@ -7192,7 +7188,7 @@
    "verdict": "false",
    "evidence": [
     "arena/turnexecutors/scripted_executor.go:20",
-    "schemas/v1alpha1/arena.json:1970"
+    "schemas/v1alpha1/arena.json:1973"
    ]
   },
   {
@@ -7201,7 +7197,7 @@
    "verdict": "false",
    "evidence": [
     "arena/turnexecutors/scripted_executor.go:20",
-    "schemas/v1alpha1/arena.json:1970"
+    "schemas/v1alpha1/arena.json:1973"
    ]
   },
   {
@@ -7210,7 +7206,7 @@
    "verdict": "false",
    "evidence": [
     "arena/turnexecutors/scripted_executor.go:20",
-    "schemas/v1alpha1/arena.json:1970"
+    "schemas/v1alpha1/arena.json:1973"
    ]
   },
   {
@@ -7234,37 +7230,33 @@
   {
    "id": 3204,
    "claim": "Media path validation prevents path traversal via .. sequences",
-   "verdict": "dead",
+   "verdict": "removed",
    "evidence": [
-    "arena/turnexecutors/media_validator.go:23",
-    "arena/turnexecutors/media_validator.go:56"
+    "arena/turnexecutors/media_loader.go"
    ]
   },
   {
    "id": 3205,
    "claim": "Media file paths are validated to be within allowed directories",
-   "verdict": "dead",
+   "verdict": "removed",
    "evidence": [
-    "arena/turnexecutors/media_validator.go:23",
-    "arena/turnexecutors/media_validator.go:56"
+    "arena/turnexecutors/media_loader.go"
    ]
   },
   {
    "id": 3206,
    "claim": "Media validation checks symlink targets",
-   "verdict": "dead",
+   "verdict": "removed",
    "evidence": [
-    "arena/turnexecutors/media_validator.go:23",
-    "arena/turnexecutors/media_validator.go:56"
+    "arena/turnexecutors/media_loader.go"
    ]
   },
   {
    "id": 3207,
    "claim": "Media validation verifies MIME types match content types",
-   "verdict": "dead",
+   "verdict": "removed",
    "evidence": [
-    "arena/turnexecutors/media_validator.go:23",
-    "arena/turnexecutors/media_validator.go:56"
+    "arena/turnexecutors/media_loader.go"
    ]
   },
   {
@@ -7280,17 +7272,15 @@
    "claim": "Media validation enforces file size limits",
    "verdict": "false",
    "evidence": [
-    "arena/turnexecutors/media_loader.go:459",
-    "arena/turnexecutors/media_validator.go:176"
+    "arena/turnexecutors/media_loader.go:459"
    ]
   },
   {
    "id": 3210,
    "claim": "Media validation ensures files are regular files, not directories",
-   "verdict": "dead",
+   "verdict": "removed",
    "evidence": [
-    "arena/turnexecutors/media_validator.go:23",
-    "arena/turnexecutors/media_validator.go:56"
+    "arena/turnexecutors/media_loader.go"
    ]
   },
   {
@@ -7324,7 +7314,7 @@
    "claim": "Scenario spec.task_type is a field",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/scenario.json:569"
+    "schemas/v1alpha1/scenario.json:571"
    ]
   },
   {
@@ -7332,8 +7322,8 @@
    "claim": "Scenario spec.assertions is a field",
    "verdict": "false",
    "evidence": [
-    "schemas/v1alpha1/scenario.json:628",
-    "schemas/v1alpha1/scenario.json:940"
+    "schemas/v1alpha1/scenario.json:630",
+    "schemas/v1alpha1/scenario.json:942"
    ]
   },
   {
@@ -7357,7 +7347,7 @@
    "claim": "Scenario spec.task_type accepts transcription in the audio example",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/scenario.json:569"
+    "schemas/v1alpha1/scenario.json:571"
    ]
   },
   {
@@ -7365,7 +7355,7 @@
    "claim": "A content part has type audio",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1403",
+    "arena/arenaconfig/types.go:1409",
     "arena/turnexecutors/media_loader.go:160"
    ]
   },
@@ -7374,7 +7364,7 @@
    "claim": "An audio media part accepts media.file_path with an mp3 file",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1413"
+    "arena/arenaconfig/types.go:1419"
    ]
   },
   {
@@ -7390,7 +7380,7 @@
    "claim": "A single turn can mix multiple image parts and audio parts",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1403",
+    "arena/arenaconfig/types.go:1409",
     "arena/turnexecutors/media_loader.go:160"
    ]
   },
@@ -7399,7 +7389,7 @@
    "claim": "`promptarena run --format junit,markdown` is a valid command",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:138"
+    "arena/cmd/promptarena/run.go:162"
    ]
   },
   {
@@ -7407,7 +7397,7 @@
    "claim": "run --format accepts junit and markdown values",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:138"
+    "arena/cmd/promptarena/run.go:162"
    ]
   },
   {
@@ -7415,7 +7405,7 @@
    "claim": "`promptarena serve --open` is a valid command",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:138"
+    "arena/cmd/promptarena/run.go:162"
    ]
   },
   {
@@ -7423,7 +7413,7 @@
    "claim": "`cat out/junit.xml | grep` reads a junit.xml file written to the out directory",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:478"
+    "arena/cmd/promptarena/run.go"
    ]
   },
   {
@@ -7439,7 +7429,7 @@
    "claim": "xmllint XPath //property[@name='media.images.total']/@value reads the media image count from out/junit.xml",
    "verdict": "true",
    "evidence": [
-    "arena/results/junit/junit_repository.go:680"
+    "arena/results/junit/junit_repository.go:675"
    ]
   },
   {
@@ -7447,7 +7437,7 @@
    "claim": "JUnit output contains a property named media.images.total",
    "verdict": "true",
    "evidence": [
-    "arena/results/junit/junit_repository.go:680"
+    "arena/results/junit/junit_repository.go:675"
    ]
   },
   {
@@ -7455,8 +7445,7 @@
    "claim": "The JUnit XML file is written to out/junit.xml by promptarena run",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:155",
-    "arena/cmd/promptarena/run.go:478"
+    "arena/cmd/promptarena/run.go"
    ]
   },
   {
@@ -7464,7 +7453,7 @@
    "claim": "xmllint XPath //property[@name='media.loaded.errors']/@value reads the media load error count from out/junit.xml",
    "verdict": "true",
    "evidence": [
-    "arena/results/junit/junit_repository.go:708"
+    "arena/results/junit/junit_repository.go:703"
    ]
   },
   {
@@ -7472,7 +7461,7 @@
    "claim": "JUnit output contains a property named media.loaded.errors",
    "verdict": "true",
    "evidence": [
-    "arena/results/junit/junit_repository.go:708"
+    "arena/results/junit/junit_repository.go:703"
    ]
   },
   {
@@ -7481,7 +7470,7 @@
    "verdict": "false",
    "evidence": [
     "arena/cmd/promptarena/deploy_interactive.go:54",
-    "arena/cmd/promptarena/run.go:134"
+    "arena/cmd/promptarena/run.go:158"
    ]
   },
   {
@@ -8188,7 +8177,7 @@
    "claim": "promptarena run --concurrency 10 is a valid command",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:134"
+    "arena/cmd/promptarena/run.go:158"
    ]
   },
   {
@@ -8196,7 +8185,7 @@
    "claim": "run accepts a --concurrency flag",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:134"
+    "arena/cmd/promptarena/run.go:158"
    ]
   },
   {
@@ -8204,7 +8193,7 @@
    "claim": "promptarena run --concurrency 1 is a valid command",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:134"
+    "arena/cmd/promptarena/run.go:158"
    ]
   },
   {
@@ -8212,7 +8201,7 @@
    "claim": "promptarena run --mock-provider is a valid command",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:134"
+    "arena/cmd/promptarena/run.go:158"
    ]
   },
   {
@@ -8220,7 +8209,7 @@
    "claim": "run accepts a --mock-provider flag",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:134"
+    "arena/cmd/promptarena/run.go:158"
    ]
   },
   {
@@ -8228,7 +8217,7 @@
    "claim": "--mock-provider avoids real provider API calls, so it incurs no provider cost",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:134"
+    "arena/cmd/promptarena/run.go:158"
    ]
   },
   {
@@ -8236,7 +8225,7 @@
    "claim": "promptarena run --provider gpt-3.5-turbo is a valid command",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:134"
+    "arena/cmd/promptarena/run.go:158"
    ]
   },
   {
@@ -8244,7 +8233,7 @@
    "claim": "run accepts a --provider flag",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:134"
+    "arena/cmd/promptarena/run.go:158"
    ]
   },
   {
@@ -8252,7 +8241,7 @@
    "claim": "gpt-3.5-turbo is a recognised model or provider name",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run.go:134"
+    "arena/cmd/promptarena/run.go:158"
    ]
   },
   {
@@ -8260,7 +8249,7 @@
    "claim": "promptarena run --seed 42 is a valid command",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:163"
+    "arena/cmd/promptarena/run.go"
    ]
   },
   {
@@ -8268,7 +8257,7 @@
    "claim": "run accepts a --seed flag",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:163"
+    "arena/cmd/promptarena/run.go"
    ]
   },
   {
@@ -8284,7 +8273,7 @@
    "claim": "promptarena run --seed 42 --format json,markdown is a valid command",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:163"
+    "arena/cmd/promptarena/run.go"
    ]
   },
   {
@@ -8292,7 +8281,7 @@
    "claim": "--format accepts the values json and markdown",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:35"
+    "arena/cmd/promptarena/run.go:34"
    ]
   },
   {
@@ -8332,7 +8321,7 @@
    "claim": "promptarena run --verbose --scenario problematic-test is a valid command",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:134"
+    "arena/cmd/promptarena/run.go:158"
    ]
   },
   {
@@ -8340,7 +8329,7 @@
    "claim": "run accepts a --verbose flag",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:134"
+    "arena/cmd/promptarena/run.go:158"
    ]
   },
   {
@@ -8348,7 +8337,7 @@
    "claim": "run accepts a --scenario flag",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:134"
+    "arena/cmd/promptarena/run.go:158"
    ]
   },
   {
@@ -8356,7 +8345,7 @@
    "claim": "--verbose shows the API calls made to providers",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:134"
+    "arena/cmd/promptarena/run.go:158"
    ]
   },
   {
@@ -8406,7 +8395,7 @@
    "claim": "promptarena --help is a valid command",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:134"
+    "arena/cmd/promptarena/run.go:158"
    ]
   },
   {
@@ -8414,7 +8403,7 @@
    "claim": "promptarena run --help is a valid command",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:134"
+    "arena/cmd/promptarena/run.go:158"
    ]
   },
   {
@@ -8423,6 +8412,33 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/config_inspect_interactive.go:71"
+   ]
+  },
+  {
+   "id": 4125,
+   "claim": "The config path can be the one positional argument or -c, not both; more than one argument is an error",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:126",
+    "arena/cmd/promptarena/run.go:139"
+   ]
+  },
+  {
+   "id": 4126,
+   "claim": "With --ci, run exits non-zero when a run errors or an assertion fails; without it, it exits 0",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:170",
+    "arena/cmd/promptarena/run.go:172",
+    "arena/cmd/promptarena/run_interactive.go:134"
+   ]
+  },
+  {
+   "id": 4127,
+   "claim": "promptarena run my-arena.yaml uses my-arena.yaml as the config",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:139"
    ]
   }
  ]

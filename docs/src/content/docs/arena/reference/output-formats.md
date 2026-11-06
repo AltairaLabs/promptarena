@@ -1,10 +1,11 @@
 ---
 title: Output Formats
 verified:
-  commit: 60cd1a146e6224c0d66c972d18f329a0ce76c522
+  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
   sources:
     - arena/agentkb/schemas/common/assertions.json
     - arena/arenaconfig/governance_taxonomy.go
+    - arena/arenaconfig/helpers.go
     - arena/arenaconfig/loader.go
     - arena/arenaconfig/scenario_data.go
     - arena/arenaconfig/taxonomy.go
@@ -25,6 +26,7 @@ verified:
     - arena/results/junit/junit_repository.go
     - arena/results/junit/junit_types.go
     - arena/results/markdown/markdown_repository.go
+    - arena/results/media.go
     - arena/results/objectives/report.go
     - arena/results/objectives/repository.go
     - arena/results/utils.go
@@ -58,10 +60,10 @@ verified:
 
 | Flag | Default | Description |
 |------|---------|-------------|
-| `-o`, `--out` | `out` | Directory that receives `index.json`, the run JSON files, `results.md`, `results.csv`, the objectives files and `junit.xml`. |
+| `-o`, `--out` | `defaults.output.dir`, else `out` | Output directory: `index.json`, the run JSON files, `results.md`, `results.csv`, the objectives files, `junit.xml`, `media/` and recordings. |
 | `--format` | none | Output formats, comma-separated or repeated. |
 | `--formats` | none | Output formats, comma-separated. Takes precedence over `--format`. |
-| `--junit-file` | `<out>/junit.xml` | JUnit XML output path. |
+| `--junit-file` | `defaults.output.junit.file`, else `<out>/junit.xml` | JUnit XML output path. |
 | `--markdown-file` | `<out>/results.md` | Markdown report output path. |
 | `--objectives-group-by` | `scenario` | Grouping keys for the objectives report. See [Objectives Format](#objectives-format). |
 
@@ -93,7 +95,17 @@ Arena creates a `media/` directory to store large media content (images, audio, 
 - File names: `<sha256-of-content>.<ext>`.
 - Deduplication: enabled. Shared media is stored once.
 - Metadata: each media file has a `<file>.<ext>.meta` sidecar with context.
-- Location: `<defaults.output.dir>/media/runs/<run-id>/`, where `defaults.output.dir` defaults to `out`. The `--out` flag does not move `media/`.
+- Location: `<output directory>/media/runs/<run-id>/`.
+
+### Which directory
+
+`promptarena run`, `promptarena serve`, media storage and session recordings use one output directory:
+
+1. `--out`, when you set it (`run` only; `serve` has no `--out`).
+2. `defaults.output.dir`.
+3. `out`.
+
+A relative path is relative to the working directory.
 
 ## Configuration
 
@@ -101,9 +113,10 @@ Output settings live under `defaults.output` in the arena config.
 
 | Field | Type | Default | Description |
 |-------|------|---------|-------------|
-| `dir` | string | `out` | Location of `media/` and recordings. `promptarena serve` loads results from this directory. |
+| `dir` | string | `out` | Output directory for results, `media/` and recordings. `--out` overrides it. `promptarena serve` loads results from it. |
 | `formats` | list of strings | unset | Formats written on every run. Values: `json`, `markdown`, `junit`, `csv`, `objectives`. |
 | `markdown` | object | see [Markdown Format](#markdown-format) | Markdown report options. |
+| `junit.file` | string | `junit.xml` | JUnit XML file, relative to the output directory. `--junit-file` overrides it. |
 
 ```yaml
 defaults:
@@ -283,7 +296,9 @@ The `markdown` format writes `results.md`, a report for GitHub, documentation an
 | agent-mock | $0.0256 | 2 | $0.0128 |
 ```
 
-The Overview shows Total Cost and Total Duration when they are above 0, and adds media tables when the run has media. The report contains no per-turn transcripts.
+The Overview shows Total Cost and Total Duration when they are above 0, and adds media tables when the run has media. Media stored under `media/` counts as loaded. The report contains no per-turn transcripts.
+
+A run is `✅ Pass` in `results.md` when it has no error, no guardrail violation and no failed turn or conversation assertion. A violation counts even when a passing assertion expects it, so such a run passes in the JSON summary counts and fails here.
 
 ### Configuration Options
 
@@ -300,7 +315,7 @@ Fields of `defaults.output.markdown`. When no `markdown` block is present, all b
 
 ## JUnit XML Format
 
-The `junit` format writes `junit.xml`, a standard format for CI/CD systems. The path is `<out>/junit.xml`; `--junit-file` sets another.
+The `junit` format writes `junit.xml`, a standard format for CI/CD systems. The path is `--junit-file`, else `defaults.output.junit.file` relative to the output directory, else `<out>/junit.xml`.
 
 ### Structure
 
@@ -356,7 +371,7 @@ Every row starts with the same fixed columns:
 | Column | Meaning |
 |---|---|
 | `run_id`, `scenario_id`, `provider_id`, `region` | Which run this is |
-| `passed` | `true` when the run is not skipped and passes the run pass rule shared with the JSON summary counts and the console summary. Skipped runs are `false`. The Markdown and JUnit reports apply their own pass mappings. |
+| `passed` | `true` when the run is not skipped and passes the run pass rule the JSON summary counts use. Skipped runs are `false`. The Markdown and JUnit reports apply their own pass mappings. |
 | `skipped` | Run was skipped (e.g. a transient provider error) rather than failed |
 | `stop_reason` | Why a failed run stopped when it hit a cap, e.g. `max_rounds`; empty otherwise |
 | `error` | Error message, if any |

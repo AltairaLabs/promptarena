@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/reference/assertions.md",
- "commit": "60cd1a146e6224c0d66c972d18f329a0ce76c522",
+ "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
  "claims": [
   {
    "id": 1,
@@ -49,11 +49,11 @@
   },
   {
    "id": 6,
-   "claim": "Assertion field 'pass_threshold' is optional and documented as a 0.0-1.0 pass rate for trial runs",
+   "claim": "pass_threshold is an optional 0..1 pass rate; values outside the range fail at load",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:27",
-    "arena/engine/trials.go:351"
+    "arena/arenaconfig/types.go:30",
+    "schemas/v1alpha1/common/assertions.json"
    ]
   },
   {
@@ -177,7 +177,7 @@
    "claim": "tool_exec assertion type exists and invokes a registered tool at session end",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:221",
+    "arena/engine/engine.go:220",
     "examples/test-a-codegen-agent/config.arena.yaml:57"
    ]
   },
@@ -194,8 +194,8 @@
    "claim": "Assertions can be scoped to a single turn or to the entire conversation session",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1175",
-    "arena/arenaconfig/types.go:701"
+    "arena/arenaconfig/types.go:1181",
+    "arena/arenaconfig/types.go:707"
    ]
   },
   {
@@ -203,7 +203,7 @@
    "claim": "Turn-level assertions are declared on individual turns under an 'assertions' key and check only that turn's response",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1175",
+    "arena/arenaconfig/types.go:1181",
     "arena/stages/assertions.go:208"
    ]
   },
@@ -212,7 +212,7 @@
    "claim": "Session-level assertions are declared at scenario level using 'conversation_assertions'",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:701"
+    "arena/arenaconfig/types.go:707"
    ]
   },
   {
@@ -525,8 +525,8 @@
    "claim": "Red-team objective block accepts description, expect (value not_achieved) and success list",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1189",
-    "arena/arenaconfig/types.go:1198"
+    "arena/arenaconfig/types.go:1195",
+    "arena/arenaconfig/types.go:1204"
    ]
   },
   {
@@ -621,11 +621,11 @@
   },
   {
    "id": 74,
-   "claim": "memory_contains requires spec.memory.enabled: true",
-   "verdict": "false",
+   "claim": "memory_contains requires a memory block; enabled: false creates no store, a block without enabled turns memory on",
+   "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:143",
-    "arena/engine/execution_memory_integration.go:18"
+    "arena/arenaconfig/memory.go:7",
+    "arena/engine/execution_memory_integration.go:19"
    ]
   },
   {
@@ -633,8 +633,8 @@
    "claim": "Objectives are checked after every exchange and work with stop_on_success",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1161",
-    "arena/arenaconfig/types.go:1199"
+    "arena/arenaconfig/types.go:1167",
+    "arena/arenaconfig/types.go:1205"
    ]
   },
   {
@@ -652,7 +652,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/taxonomy.go:45",
-    "arena/arenaconfig/types.go:1210"
+    "arena/arenaconfig/types.go:1216"
    ]
   },
   {
@@ -703,7 +703,7 @@
    "verdict": "true",
    "evidence": [
     "arena/assertions/memorystate/memorystate.go:91",
-    "arena/engine/execution_memory_integration.go:65"
+    "arena/engine/execution_memory_integration.go:66"
    ]
   },
   {
@@ -720,7 +720,7 @@
    "claim": "Memory writes survive an objective's rewind",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1326",
+    "arena/arenaconfig/types.go:1332",
     "arena/engine/objective.go:392"
    ]
   },
@@ -857,7 +857,7 @@
    "claim": "pass_threshold example on a content_includes turn assertion with value 0.8",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:30",
+    "arena/arenaconfig/types.go",
     "arena/engine/trials.go:351"
    ]
   },
@@ -960,7 +960,7 @@
    "claim": "Scenario field trial_budget can stop trials early and is documented at config-schema trial_budget",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:733"
+    "arena/arenaconfig/types.go:739"
    ]
   },
   {
@@ -1039,6 +1039,15 @@
    "claim": "Diagram edge: Result sends Aggregate Results to Scenario",
    "verdict": "true",
    "evidence": []
+  },
+  {
+   "id": 126,
+   "claim": "judge: <name> in eval_params grades with that spec.judges entry; an unknown name fails at load",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/judge_param.go:38",
+    "arena/arenaconfig/judge_param.go:47"
+   ]
   }
  ]
 }

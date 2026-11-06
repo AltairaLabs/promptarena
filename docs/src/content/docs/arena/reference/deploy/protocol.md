@@ -1,7 +1,7 @@
 ---
 title: 'Deploy: Protocol'
 verified:
-  commit: 60cd1a146e6224c0d66c972d18f329a0ce76c522
+  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
   sources:
     - arena/cmd/promptarena/deploy_config_interactive.go
     - arena/cmd/promptarena/deploy_interactive.go
@@ -646,6 +646,7 @@ Standard JSON-RPC 2.0 error codes:
 | Code | Name | Description |
 |------|------|-------------|
 | `-32700` | Parse Error | Invalid JSON or invalid params |
+| `-32600` | Invalid Request | Valid JSON that is not a JSON-RPC 2.0 request: `jsonrpc` is not `"2.0"`, or `method` is missing |
 | `-32601` | Method Not Found | Unknown method name |
 | `-32603` | Internal Error | Provider method returned an error |
 

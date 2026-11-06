@@ -1,9 +1,11 @@
 ---
 title: Assertions Reference
 verified:
-  commit: 60cd1a146e6224c0d66c972d18f329a0ce76c522
+  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
   sources:
     - arena/agentkb/reference_evals.go
+    - arena/arenaconfig/judge_param.go
+    - arena/arenaconfig/memory.go
     - arena/arenaconfig/taxonomy.go
     - arena/arenaconfig/types.go
     - arena/arenaconfig/validator_tools.go
@@ -28,6 +30,7 @@ verified:
     - arena/stages/assertions.go
     - examples/rag-agent/scenarios/paris-capital.scenario.yaml
     - examples/test-a-codegen-agent/config.arena.yaml
+    - schemas/v1alpha1/common/assertions.json
     - schemas/v1alpha1/scenario.json
 ---
 
@@ -78,7 +81,7 @@ assertions:
 | `params` | no | Parameters specific to the check type |
 | `message` | no | Description shown in reports |
 | `when` | no | Conditions that must be met for the assertion to run (see [Conditional Filtering](#conditional-filtering-when)) |
-| `pass_threshold` | no | Pass rate threshold when using trials. Defaults to `1.0` (all trials must pass). |
+| `pass_threshold` | no | Pass rate threshold when using trials, from `0` to `1`; a value outside that range fails at load. Defaults to `1.0` (all trials must pass). |
 
 ## Common Assertion Types
 
@@ -243,6 +246,8 @@ A mock provider returns the tool calls its response file names whether or not th
 
 `llm_judge` is an eval primitive. `type: assertion` wraps it to apply the threshold. An inner `llm_judge` handler that receives `min_score` returns an error result when it runs, so the assertion fails at evaluation. In a scenario assertion written as `type: llm_judge`, `min_score` and `max_score` in `params` move to the wrapper.
 
+`judge: <name>` in `eval_params` grades with that entry of `spec.judges`. A name that is not in `spec.judges` fails at load. Without `judge`, the lowest-sorted judge name grades the check.
+
 ### Refusal
 
 `refusal` scores the latest reply 1 when it refuses or declines the request, and 0 when it does what was asked. As an assertion it passes on a refusal. With `max_score: 0` it passes when the agent answered, which tests for over-refusal: a benign request the agent should not turn down.
@@ -321,7 +326,7 @@ Matching ignores spacing and punctuation, so a short canary can match by chance.
 
 ### Memory contains
 
-`memory_contains` checks the agent's long-term memory instead of the transcript. It reads the run's memory store when the check runs, and scores 1 when a stored memory matches and 0 when none does. It requires a `memory` block under `spec` in the arena config.
+`memory_contains` checks the agent's long-term memory instead of the transcript. It reads the run's memory store when the check runs, and scores 1 when a stored memory matches and 0 when none does. It requires a `memory` block under `spec` in the arena config. A block with `enabled: false` (or `memory: false`) creates no store and offers no memory tools; a block without `enabled` turns memory on.
 
 As an objective's success check, it marks the attack achieved once the entry lands. Objectives are checked after every exchange, so with `stop_on_success` the self-play turn stops on the exchange that poisoned the memory. As an assertion with `max_score: 0`, it passes when nothing matching was stored.
 
