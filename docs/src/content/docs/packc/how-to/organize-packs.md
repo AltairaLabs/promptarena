@@ -1,534 +1,172 @@
 ---
 title: Organize Pack Files
+description: Lay out arena configs and compiled packs by environment, feature or version, name pack IDs that packc accepts, and decide which packs to commit.
 sidebar:
   order: 4
+verified:
+  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  sources:
+    - packc/compiler/check.go
+    - packc/compiler/compiler.go
+    - packc/compiler/helpers_integration.go
+    - packc/main.go
+    - packc/main_interactive.go
 ---
-Structure and manage your pack files for maintainability and scalability.
-
-## Goal
-
-Create a clear, maintainable organization system for your pack files that scales with your project.
+Set up a directory layout for your configs and compiled packs that a build script can follow.
 
 ## Prerequisites
 
-- packc installed
-- Understanding of your project structure
-- Multiple pack files or environments
+- `packc` installed ([Install PackC](/packc/how-to/install/)).
+- More than one pack to build: several environments, features or released versions.
 
-## Organization Strategies
+## Steps
 
-### Strategy 1: By Environment
+### 1. Choose a layout
 
-Separate packs by deployment environment:
+`packc compile` writes one pack per arena config, so the layout of `packs/` follows the layout of your configs. `packc` creates any missing output directory. Pick the axis your deployments vary along.
 
-```
+#### By environment
+
+Use this when dev, staging and prod use different configs:
+
+```text
+config/
+├── arena.dev.yaml
+├── arena.staging.yaml
+└── arena.prod.yaml
 packs/
-├── dev/
-│   ├── app.pack.json
-│   └── admin.pack.json
-├── staging/
-│   ├── app.pack.json
-│   └── admin.pack.json
-└── prod/
-    ├── app.pack.json
-    └── admin.pack.json
+├── dev/app.pack.json
+├── staging/app.pack.json
+└── prod/app.pack.json
 ```
-
-**Setup:**
 
 ```bash
-# Create structure
-mkdir -p packs/{dev,staging,prod}
-
-# Compile for each environment
-packc compile --config config/arena.dev.yaml \
-  --output packs/dev/app.pack.json --id app-dev
-
-packc compile --config config/arena.staging.yaml \
-  --output packs/staging/app.pack.json --id app-staging
-
-packc compile --config config/arena.prod.yaml \
-  --output packs/prod/app.pack.json --id app-prod
+for env in dev staging prod; do
+  packc compile --config "config/arena.$env.yaml" \
+    --output "packs/$env/app.pack.json" --id "app-$env"
+done
 ```
 
-### Strategy 2: By Feature
+#### By feature
 
-Organize by application feature or module:
+Use this when each feature ships its own pack:
 
-```
+```text
+config/
+├── customer-support/config.arena.yaml
+└── sales/config.arena.yaml
 packs/
-├── customer-support/
-│   ├── chat.pack.json
-│   └── email.pack.json
-├── sales/
-│   ├── leads.pack.json
-│   └── opportunities.pack.json
-└── marketing/
-    ├── campaigns.pack.json
-    └── analytics.pack.json
+├── customer-support.pack.json
+└── sales.pack.json
 ```
-
-**Setup:**
 
 ```bash
-# Create feature directories
-mkdir -p packs/{customer-support,sales,marketing}
-
-# Compile feature packs
-packc compile --config config/customer-support/arena.yaml \
-  --output packs/customer-support/chat.pack.json --id cs-chat
-
-packc compile --config config/sales/arena.yaml \
-  --output packs/sales/leads.pack.json --id sales-leads
+for feature in customer-support sales; do
+  packc compile --config "config/$feature/config.arena.yaml" \
+    --output "packs/$feature.pack.json" --id "$feature"
+done
 ```
 
-### Strategy 3: By Version
+#### By version
 
-Version control your packs:
+Use this when you keep released packs side by side:
 
-```
+```text
 packs/
-├── v1.0.0/
-│   └── app.pack.json
-├── v1.1.0/
-│   └── app.pack.json
-├── v1.2.0/
-│   └── app.pack.json
-└── latest -> v1.2.0/
+├── v1.1.0/app.pack.json
+├── v1.2.0/app.pack.json
+└── latest -> v1.2.0
 ```
-
-**Setup:**
 
 ```bash
-VERSION="1.2.0"
-
-# Create version directory
-mkdir -p "packs/v${VERSION}"
-
-# Compile to versioned location
-packc compile --config arena.yaml \
-  --output "packs/v${VERSION}/app.pack.json" --id app
-
-# Update latest symlink
-ln -sf "v${VERSION}" packs/latest
+VERSION=1.2.0
+packc compile --config config.arena.yaml \
+  --output "packs/v$VERSION/app.pack.json" --id app
+ln -sfn "v$VERSION" packs/latest
 ```
 
-### Strategy 4: Hybrid Organization
+Combine axes when you need to, for example `packs/prod/customer-support.pack.json`.
 
-Combine strategies for complex projects:
+### 2. Name pack IDs
 
-```
-packs/
-├── dev/
-│   ├── customer-support/
-│   │   └── v1.0.0/
-│   │       └── app.pack.json
-│   └── sales/
-│       └── v1.0.0/
-│           └── app.pack.json
-├── staging/
-│   ├── customer-support/
-│   │   └── v1.0.0/
-│   │       └── app.pack.json
-│   └── sales/
-│       └── v1.0.0/
-│           └── app.pack.json
-└── prod/
-    ├── customer-support/
-    │   └── v1.0.0/
-    │       └── app.pack.json
-    └── sales/
-        └── v1.0.0/
-            └── app.pack.json
-```
-
-## Naming Conventions
-
-### Pack File Names
-
-Use descriptive, consistent names:
+A pack ID must start with a lowercase letter and contain only lowercase letters, digits and hyphens. `packc compile` rejects any other `--id` before compiling.
 
 ```bash
-# Good naming
-customer-support.pack.json
-sales-leads-v1.pack.json
-marketing-campaigns-prod.pack.json
-
-# Avoid
-pack1.json
-temp.pack.json
-test.json
+--id customer-support        # valid
+--id customer-support-prod   # valid
+--id customer-support-v1     # valid
+--id customer-support-1.2.0  # rejected: dots are not allowed
+--id 2024-demo               # rejected: must start with a letter
 ```
 
-### Pack IDs
+Keep semantic versions in the output path, as in the version layout above. `packc compile` sets every pack's `version` field to `v1.0.0`, so the path or the artifact tag is where a release version lives.
 
-Match IDs to purpose and environment:
+For file names, use the ID with a `.pack.json` suffix. `--output` defaults to `<id>.pack.json`, and the default keeps names and IDs in step.
 
-```bash
-# Development
---id customer-support-dev
+### 3. Script the build
 
-# Staging
---id customer-support-staging
-
-# Production
---id customer-support-prod
-
-# Versioned
---id customer-support-v1
-```
-
-A pack ID must start with a lowercase letter and contain only lowercase
-letters, digits and hyphens. Dots are not allowed, so keep a semantic version
-like `1.2.0` in the output path rather than the ID. `packc compile` rejects an
-invalid `--id` before compiling.
-
-## Build Scripts
-
-### Environment-Based Build
+Put the loop in one script or Makefile target, so developers and CI build the same way:
 
 ```bash
 #!/bin/bash
 # scripts/build-packs.sh
-
 set -e
 
-ENVIRONMENTS=("dev" "staging" "prod")
-
-for env in "${ENVIRONMENTS[@]}"; do
-  echo "Building packs for $env..."
-  
-  mkdir -p "packs/$env"
-  
-  packc compile \
-    --config "config/arena.$env.yaml" \
-    --output "packs/$env/app.pack.json" \
-    --id "app-$env"
-  
+for env in dev staging prod; do
+  packc compile --config "config/arena.$env.yaml" \
+    --output "packs/$env/app.pack.json" --id "app-$env"
   packc validate "packs/$env/app.pack.json"
 done
-
-echo "✓ All packs built successfully"
 ```
 
-### Feature-Based Build
+`packc validate` checks one file per run, so validate inside the loop rather than with a glob.
 
-```bash
-#!/bin/bash
-# scripts/build-features.sh
+### 4. Decide what to commit
 
-set -e
-
-FEATURES=("customer-support" "sales" "marketing")
-
-for feature in "${FEATURES[@]}"; do
-  echo "Building $feature packs..."
-  
-  mkdir -p "packs/$feature"
-  
-  for config in "config/$feature"/*.yaml; do
-    name=$(basename "$config" .yaml)
-    
-    packc compile \
-      --config "$config" \
-      --output "packs/$feature/$name.pack.json" \
-      --id "$feature-$name"
-  done
-done
-
-echo "✓ All feature packs built"
-```
-
-### Versioned Build
-
-```bash
-#!/bin/bash
-# scripts/build-versioned.sh
-
-set -e
-
-VERSION="${1:-$(date +%Y%m%d)}"
-
-echo "Building version: $VERSION"
-
-mkdir -p "packs/v$VERSION"
-
-packc compile \
-  --config arena.yaml \
-  --output "packs/v$VERSION/app.pack.json" \
-  --id "app-v$VERSION"
-
-# Update latest
-ln -sf "v$VERSION" packs/latest
-
-echo "✓ Version $VERSION built"
-echo "Latest points to: $(readlink packs/latest)"
-```
-
-## Makefile Organization
-
-```makefile
-# Variables
-VERSION ?= $(shell date +%Y%m%d)
-ENVIRONMENTS := dev staging prod
-FEATURES := customer-support sales marketing
-
-.PHONY: build-all
-build-all: build-by-env build-by-feature build-versioned
-
-# Build by environment
-.PHONY: build-by-env
-build-by-env:
-	@for env in $(ENVIRONMENTS); do \
-		mkdir -p packs/$$env; \
-		packc compile --config config/arena.$$env.yaml \
-		  --output packs/$$env/app.pack.json --id app-$$env; \
-	done
-
-# Build by feature
-.PHONY: build-by-feature
-build-by-feature:
-	@for feature in $(FEATURES); do \
-		mkdir -p packs/$$feature; \
-		packc compile --config config/$$feature/arena.yaml \
-		  --output packs/$$feature/app.pack.json --id $$feature-app; \
-	done
-
-# Build versioned
-.PHONY: build-versioned
-build-versioned:
-	@mkdir -p packs/v$(VERSION)
-	@packc compile --config arena.yaml \
-	  --output packs/v$(VERSION)/app.pack.json --id app-v$(VERSION)
-	@ln -sf v$(VERSION) packs/latest
-
-# Clean
-.PHONY: clean
-clean:
-	rm -rf packs/
-
-.PHONY: clean-env
-clean-env:
-	rm -rf packs/$(ENV)/
-
-# Validate
-.PHONY: validate-all
-validate-all:
-	@find packs -name '*.pack.json' -exec packc validate {} \;
-```
-
-## Configuration Organization
-
-Mirror your pack organization in configs:
-
-```
-config/
-├── dev/
-│   └── arena.yaml
-├── staging/
-│   └── arena.yaml
-├── prod/
-│   └── arena.yaml
-└── features/
-    ├── customer-support/
-    │   └── arena.yaml
-    ├── sales/
-    │   └── arena.yaml
-    └── marketing/
-        └── arena.yaml
-```
-
-## Metadata Files
-
-Track pack information:
-
-```bash
-# Create pack inventory
-cat > packs/inventory.json <<EOF
-{
-  "environments": {
-    "dev": {
-      "packs": ["app.pack.json"],
-      "last_build": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-    },
-    "prod": {
-      "packs": ["app.pack.json"],
-      "last_build": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-    }
-  }
-}
-EOF
-```
-
-## Git Configuration
-
-### .gitignore
+Compiled packs are build output. Rebuild them in CI and keep them out of version control:
 
 ```gitignore
-# Ignore compiled packs in development
-packs/dev/*.pack.json
-packs/staging/*.pack.json
-
-# Keep production packs in version control
-# (Comment out the line below to track prod packs)
-packs/prod/*.pack.json
-
-# Ignore temporary builds
-packs/tmp/
-packs/*.tmp.json
-
-# Keep directory structure
-!packs/dev/.gitkeep
-!packs/staging/.gitkeep
-!packs/prod/.gitkeep
+packs/
 ```
 
-### Track Pack Metadata
+To commit only the production packs, ignore the rest:
 
-```bash
-# Create .gitkeep files
-touch packs/{dev,staging,prod}/.gitkeep
-
-# Create README
-cat > packs/README.md <<EOF
-# Prompt Packs
-
-This directory contains compiled prompt packs organized by environment.
-
-## Structure
-
-- \`dev/\` - Development packs
-- \`staging/\` - Staging packs  
-- \`prod/\` - Production packs
-
-## Building
-
-Run \`make build-all\` to compile all packs.
-
-See [build instructions](/packc/how-to/compile-packs/) for details.
-EOF
-
-git add packs/.gitkeep packs/README.md
-```
-
-## Best Practices
-
-### 1. Consistent Directory Structure
-
-```
-project/
-├── config/          # Source configurations
-│   ├── dev/
-│   ├── staging/
-│   └── prod/
-├── packs/           # Compiled packs
-│   ├── dev/
-│   ├── staging/
-│   └── prod/
-└── prompts/         # Source prompts
-    ├── customer-support/
-    ├── sales/
-    └── marketing/
-```
-
-### 2. Document Organization
-
-Create a pack organization guide:
-
-```markdown
-# Pack Organization Guide
-
-## Directory Structure
-
-- `packs/dev/` - Development builds
-- `packs/staging/` - QA/testing builds
-- `packs/prod/` - Production releases
-
-## Naming Conventions
-
-- Use kebab-case: `customer-support.pack.json`
-- Include version: `app-v1.2.0.pack.json`
-- Add environment suffix: `app-prod.pack.json`
-
-## Build Process
-
-1. Update prompt configurations
-2. Run `make build-by-env`
-3. Validate with `make validate-all`
-4. Commit to version control
-```
-
-### 3. Automate Organization
-
-```bash
-#!/bin/bash
-# scripts/organize-packs.sh
-
-# Create structure
-mkdir -p packs/{dev,staging,prod}/{customer-support,sales,marketing}
-
-# Build into organized structure
-for env in dev staging prod; do
-  for feature in customer-support sales marketing; do
-    packc compile \
-      --config "config/$env/$feature/arena.yaml" \
-      --output "packs/$env/$feature/app.pack.json" \
-      --id "$feature-$env"
-  done
-done
-```
-
-### 4. Version Control Strategy
-
-Choose what to track:
-
-**Option A: Track all packs**
 ```gitignore
-# Track everything
-!packs/**/*.pack.json
-```
-
-**Option B: Track only production**
-```gitignore
-# Ignore dev/staging
 packs/dev/
 packs/staging/
-
-# Keep production
-!packs/prod/**/*.pack.json
 ```
 
-**Option C: Track none (build in CI)**
-```gitignore
-# Ignore all packs
-packs/**/*.pack.json
-
-# Keep structure
-!packs/**/.gitkeep
-```
-
-### 5. Cleanup Old Versions
+If you commit packs, rebuild them in CI and fail when the result differs from the committed file. Two builds of the same inputs with the same `packc` version differ only in `compilation.created_at`, so compare without it:
 
 ```bash
-#!/bin/bash
-# scripts/cleanup-old-packs.sh
-
-KEEP_VERSIONS=3
-
-cd packs
-
-# Remove old versioned packs, keep latest N
-ls -dt v* | tail -n +$((KEEP_VERSIONS + 1)) | xargs rm -rf
-
-echo "Kept latest $KEEP_VERSIONS versions"
+packc compile --config config/arena.prod.yaml --output /tmp/app.pack.json --id app-prod
+diff <(jq 'del(.compilation.created_at)' /tmp/app.pack.json) \
+     <(jq 'del(.compilation.created_at)' packs/prod/app.pack.json)
 ```
 
-## Next Steps
+### 5. Remove old versions
 
-- [CI/CD Integration](/packc/how-to/ci-cd-integration/) - Automate pack builds
-- [Validate Packs](/packc/how-to/validate-packs/) - Quality assurance
-- [Pack Management Tutorial](/packc/tutorials/04-pack-management/)
+With the version layout, delete all but the newest few directories. This keeps the three most recent:
 
-## See Also
+```bash
+cd packs
+ls -d v*/ | sort -V | head -n -3 | xargs rm -rf
+```
 
-- [Pack format explanation](/packc/explanation/pack-format/)
+`head -n -3` needs GNU coreutils. On macOS, install `coreutils` and use `ghead`.
+
+## Verify
+
+```bash
+find packs -name '*.pack.json' -print0 | xargs -0 -n1 packc validate
+```
+
+Each pack prints `✓ Pack structure is valid`. `xargs` exits non-zero if any pack fails.
+
+## Related
+
+- [Compile packs](/packc/how-to/compile-packs/)
+- [Validate packs](/packc/how-to/validate-packs/)
+- [CI/CD integration](/packc/how-to/ci-cd-integration/)
+- [Pack management tutorial](/packc/tutorials/04-pack-management/)
+- [Pack format](/packc/explanation/pack-format/)

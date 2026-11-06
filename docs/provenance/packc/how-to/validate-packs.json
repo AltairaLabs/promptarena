@@ -1,0 +1,77 @@
+{
+ "page": "docs/src/content/docs/packc/how-to/validate-packs.md",
+ "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "validate prints 'Validating pack', schema result, '\u2713 Pack structure is valid'; blocking findings exit 1",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:247-339"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "packc validate checks only its first argument (os.Args[2])",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:248-254"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "schema failure prints '\u2717 Pack failed schema validation:' with path per line; schema-load failure: compile errors, validate warns and continues",
+   "verdict": "true",
+   "evidence": [
+    "packc/compiler/check.go:196-219",
+    "packc/main_interactive.go:265-278"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "pack structure checks id, semver version, prompts, template_engine, system_template, prompt version, variables-declared, compilation; all blocking in packc",
+   "verdict": "true",
+   "evidence": [
+    "packc/compiler/check.go:178-191",
+    "packc/main_interactive.go:296-306"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "skill checks: missing dir, path outside, SKILL.md parse, duplicate names, inline fields, workflow state skills path errors; allowed-tools warning; relative to config dir (compile) or pack dir (validate)",
+   "verdict": "true",
+   "evidence": [
+    "packc/compiler/check.go:150-152",
+    "packc/main_interactive.go:308-320",
+    "packc/skills_validator.go:45-238"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "validate on missing file prints 'Error reading pack file: open ...'",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:258-263"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "promptarena validate and promptarena export use packc/compiler",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/export.go:46-51",
+    "arena/cmd/promptarena/validate_json.go:99-160"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "compile prints warnings as '\u26a0 [stage] message' and fails with 'Compilation failed:'",
+   "verdict": "true",
+   "evidence": [
+    "packc/compiler/check.go:42-48",
+    "packc/compiler/check.go:60-72",
+    "packc/main_interactive.go:157-165"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,96 @@
+{
+ "page": "docs/src/content/docs/packc/explanation/pack-format.md",
+ "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "PromptPack schema requires id, name, version, template_engine, prompts; optional $schema, description, fragments, tools, metadata, compilation, evals, workflow, agents, skills, compositions, requires",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 2,
+   "claim": "embedded PromptPack schema is version 1.9.0 (identical to promptpack-spec schema)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 3,
+   "claim": "pack structure checks id, semver version, prompts, template_engine, system_template, prompt version, variables-declared, compilation; all blocking in packc",
+   "verdict": "true",
+   "evidence": [
+    "packc/compiler/check.go:178-191",
+    "packc/main_interactive.go:296-306"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "prompt requires id, name, version, system_template; id pattern ^[a-z][a-z0-9_-]*$; optional fields list; tool requires name, description",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 5,
+   "claim": "each prompt gets the default template/provider/validator pipeline",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 6,
+   "claim": "arena tools/workflow/agents/compositions/skills/pack_evals/pack_metadata map to pack tools/workflow/agents/compositions/skills/evals/metadata",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:100-167",
+    "packc/compiler/compiler.go:103-142",
+    "packc/compiler/compiler.go:210-242",
+    "packc/compiler/helpers_integration.go:116-182",
+    "packc/compiler/helpers_integration.go:19-24"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "workflow requires version, entry, states; state fields on_event, persistence, orchestration internal|external|hybrid|composition, control user|agent, terminal, max_visits, on_max_visits, skills, artifacts, composition; terminal = terminal:true or no on_event",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 8,
+   "claim": "workflow errors/warnings: version 1|2, entry, prompt_task, targets, enums, composition, PascalCase, cycles, terminal, v2 dead-end, agent loops",
+   "verdict": "true",
+   "evidence": [
+    "packc/compiler/check.go:154-156"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "compiled fragments map holds {{name}} placeholders, not fragment content",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 10,
+   "claim": "packc compile sets name=id, version v1.0.0, description 'Pack containing N prompts', $schema latest URL, compilation block",
+   "verdict": "true",
+   "evidence": [
+    "packc/compiler/compiler.go:127-132"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "compile-prompt: id from task type (_ to -), name/version/description from prompt, no $schema",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:205-245"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "pack id pattern ^[a-z][a-z0-9-]*$; invalid --id rejected before compile with [pack_id] error",
+   "verdict": "true",
+   "evidence": [
+    "packc/compiler/compiler.go:89-99",
+    "packc/compiler/helpers_integration.go:192-228"
+   ]
+  }
+ ]
+}

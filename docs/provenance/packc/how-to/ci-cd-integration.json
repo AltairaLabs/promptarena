@@ -1,0 +1,76 @@
+{
+ "page": "docs/src/content/docs/packc/how-to/ci-cd-integration.md",
+ "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "packc compile flags: -c/--config (default config.arena.yaml), -o/--output (default <id>.pack.json), --id (default current folder name sanitized)",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:119-146"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "packc compile creates the output directory; compile-prompt does not",
+   "verdict": "true",
+   "evidence": [
+    "packc/main.go:28-35",
+    "packc/main_interactive.go:168",
+    "packc/main_interactive.go:239"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "packc-action inputs config-file, pack-id, output, validate (default true), packc-version (default latest), working-directory; outputs pack-file, pack-id, prompts, tools; downloads release binary",
+   "verdict": "true",
+   "evidence": [
+    ".github/actions/packc-action/action.yml:9-80",
+    ".github/actions/packc-action/src/compiler.ts:166",
+    ".github/actions/packc-action/src/compiler.ts:22-52",
+    ".github/actions/packc-action/src/installer.ts:137-161"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "go install github.com/AltairaLabs/promptarena/v2/packc@latest; go 1.26",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 5,
+   "claim": "npm package @altairalabs/packc ships prebuilt binaries for linux/darwin/windows amd64/arm64",
+   "verdict": "true",
+   "evidence": [
+    "npm/packc/lib/resolve.js:13-26",
+    "npm/packc/package.json:2-8"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "packc compile sets name=id, version v1.0.0, description 'Pack containing N prompts', $schema latest URL, compilation block",
+   "verdict": "true",
+   "evidence": [
+    "packc/compiler/compiler.go:127-132"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "packc validate checks only its first argument (os.Args[2])",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:248-254"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "arena config, prompt configs and tool files are schema-validated on load; arena config requires providers and defaults",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:88-180",
+    "packc/compiler/check.go:101-105",
+    "schemas/v1alpha1/arena.json:837-840"
+   ]
+  }
+ ]
+}

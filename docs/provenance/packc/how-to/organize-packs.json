@@ -1,0 +1,57 @@
+{
+ "page": "docs/src/content/docs/packc/how-to/organize-packs.md",
+ "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "packc compile creates the output directory; compile-prompt does not",
+   "verdict": "true",
+   "evidence": [
+    "packc/main.go:28-35",
+    "packc/main_interactive.go:168",
+    "packc/main_interactive.go:239"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "pack id pattern ^[a-z][a-z0-9-]*$; invalid --id rejected before compile with [pack_id] error",
+   "verdict": "true",
+   "evidence": [
+    "packc/compiler/compiler.go:89-99",
+    "packc/compiler/helpers_integration.go:192-228"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "packc compile sets name=id, version v1.0.0, description 'Pack containing N prompts', $schema latest URL, compilation block",
+   "verdict": "true",
+   "evidence": [
+    "packc/compiler/compiler.go:127-132"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "packc compile flags: -c/--config (default config.arena.yaml), -o/--output (default <id>.pack.json), --id (default current folder name sanitized)",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:119-146"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "packc validate checks only its first argument (os.Args[2])",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:248-254"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "two compiles of the same inputs differ only in compilation.created_at (RFC3339 seconds); template_engine picked from map-ordered prompts",
+   "verdict": "true",
+   "evidence": [
+    "packc/compiler/check.go:120-125"
+   ]
+  }
+ ]
+}

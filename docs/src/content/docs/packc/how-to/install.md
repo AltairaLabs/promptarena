@@ -1,295 +1,129 @@
 ---
 title: Install PackC
+description: Install the packc compiler with npm, Homebrew, go install or a release archive, and enable shell completions.
 sidebar:
   order: 1
+verified:
+  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  sources:
+    - .goreleaser.yml
+    - Makefile
+    - npm/packc/lib/resolve.js
+    - npm/packc/package.json
+    - packc/main.go
+    - packc/main_interactive.go
 ---
-Install the packc compiler on your system.
+Install the `packc` binary and check that it runs.
 
-## Goal
+## Prerequisites
 
-Get packc installed and ready to compile prompt packs.
+- For `go install` or a source build: Go 1.26 or later.
+- For npm: Node.js and npm, yarn or pnpm.
 
-## Installation
+## Install
 
-### Go Install
+Pick one method.
 
-Install via `go install` (the only supported installation method):
+### npm
+
+The npm package ships prebuilt binaries for Linux, macOS and Windows on amd64 and arm64, so it needs no Go toolchain.
 
 ```bash
-# Install latest version
+# Install globally
+npm install -g @altairalabs/packc
+
+# Or run without installing
+npx @altairalabs/packc version
+```
+
+### Homebrew (macOS and Linux)
+
+```bash
+brew install altairalabs/tap/packc
+```
+
+### go install
+
+```bash
 go install github.com/AltairaLabs/promptarena/v2/packc@latest
-
-# Verify installation
-packc version
 ```
 
-**To install a specific version:**
+The binary goes to `$GOBIN`, or `$GOPATH/bin` when `GOBIN` is unset. To pin a release, replace `latest` with its tag, for example `@v2.4.0`.
+
+### Release archive
+
+Download `packc_<version>_<Os>_<arch>.tar.gz` from the [PromptArena releases](https://github.com/AltairaLabs/promptarena/releases) page. `<Os>` is `Darwin`, `Linux` or `Windows`, and `<arch>` is `x86_64` or `arm64`. Each release also attaches `checksums.txt`.
 
 ```bash
-# Install specific version
-go install github.com/AltairaLabs/promptarena/v2/packc@v0.1.0
+curl -LO https://github.com/AltairaLabs/promptarena/releases/download/v2.4.0/packc_2.4.0_Darwin_arm64.tar.gz
+tar -xzf packc_2.4.0_Darwin_arm64.tar.gz packc
+sudo mv packc /usr/local/bin/packc
 ```
 
-### Build from Source
-
-For development or custom builds:
+### Build from a checkout
 
 ```bash
-# Clone repository
 git clone https://github.com/AltairaLabs/promptarena.git
 cd promptarena
-
-# Build packc
-make build-packc
-
-# Binary is at ./bin/packc
-./bin/packc version
+go build -o bin/packc ./packc
 ```
 
-## Verify Installation
+`make build-go` builds both `bin/promptarena` and `bin/packc`.
 
-Check that packc is properly installed:
+## Verify
 
 ```bash
-# Check version
 packc version
-
-# Check help
-packc help
-
-# Check location
-which packc
 ```
 
-Expected outputs:
+A release build (npm, Homebrew or an archive) prints its version, for example `packc 2.4.0`. A `go install` or source build prints `packc dev`, because only the release build sets the version string.
 
-```
-packc dev
-packc - PromptKit Pack Compiler
-Usage:
-  packc compile [options]         Compile ALL prompts from arena.yaml into a single pack
-  ...
-/Users/yourname/go/bin/packc
-```
+`packc help` prints the command list.
 
-Note: a `go install` build reports its version as `packc dev` because the
-version string is only injected via build flags (for example by
-`make build-packc`).
+## Enable shell completions
 
-## Enable Shell Completions (Optional)
-
-Enable tab completion for commands and flags:
+`packc completion <shell>` prints a completion script for `bash`, `zsh`, `fish` or `powershell`:
 
 ```bash
 # Bash
 packc completion bash > ~/.local/share/bash-completion/completions/packc
 
-# Zsh
+# Zsh (the directory must be on your fpath)
 packc completion zsh > ~/.zsh/completions/_packc
 
 # Fish
 packc completion fish > ~/.config/fish/completions/packc.fish
 ```
 
-See [Configure Shell Completions](/arena/how-to/setup/shell-completions) for detailed setup instructions.
-
-## Add to PATH
-
-If `packc` is not found, add Go's bin directory to your PATH:
-
-### macOS/Linux
-
-Add to `~/.zshrc` or `~/.bashrc`:
-
-```bash
-export PATH="$PATH:$(go env GOPATH)/bin"
-```
-
-Apply changes:
-
-```bash
-source ~/.zshrc  # or ~/.bashrc
-```
-
-### Windows
-
-Add to PATH in System Environment Variables:
-
-1. Open System Properties > Environment Variables
-2. Edit `Path` variable
-3. Add: `%USERPROFILE%\go\bin`
-4. Restart terminal
-
-## Update PackC
-
-### Update to Latest Version
-
-```bash
-# Reinstall latest
-go install github.com/AltairaLabs/promptarena/v2/packc@latest
-
-# Verify new version
-packc version
-```
-
-### Update from Source
-
-```bash
-cd promptarena
-git pull origin main
-make build-packc
-```
-
-## Uninstall
-
-### Remove Binary
-
-```bash
-# Find packc location
-which packc
-
-# Remove binary
-rm $(which packc)
-```
-
-### Clean Go Cache
-
-```bash
-# Clean module cache
-go clean -modcache
-```
-
-## Configuration
-
-### Set Default Config Path
-
-Create an alias for convenience:
-
-```bash
-# Add to ~/.zshrc or ~/.bashrc
-alias packc-compile='packc compile --config ./config/arena.yaml'
-```
-
-### Environment Variables
-
-Configure default behavior:
-
-```bash
-# Set default output directory
-export PACKC_OUTPUT_DIR="./packs"
-
-# Use in scripts
-packc compile --config arena.yaml --output "$PACKC_OUTPUT_DIR/app.pack.json" --id app
-```
-
-## Platform-Specific Notes
-
-### macOS / Linux
-
-Use `go install`:
-
-```bash
-go install github.com/AltairaLabs/promptarena/v2/packc@latest
-```
-
-### Windows (PowerShell)
-
-```powershell
-go install github.com/AltairaLabs/promptarena/v2/packc@latest
-```
-
-## CI/CD Installation
-
-### GitHub Actions
-
-```yaml
-- name: Install packc
-  run: go install github.com/AltairaLabs/promptarena/v2/packc@latest
-
-- name: Verify installation
-  run: packc version
-```
-
-### GitLab CI
-
-```yaml
-install_packc:
-  script:
-    - go install github.com/AltairaLabs/promptarena/v2/packc@latest
-    - packc version
-```
-
-### Jenkins
-
-```groovy
-stage('Install packc') {
-  steps {
-    sh 'go install github.com/AltairaLabs/promptarena/v2/packc@latest'
-    sh 'packc version'
-  }
-}
-```
+Start a new shell to load it. [Configure shell completions](/arena/how-to/setup/shell-completions/) covers fpath and bash-completion setup in detail.
 
 ## Troubleshooting
 
-### packc: command not found
+### packc: command not found after go install
 
-**Problem**: packc not in PATH
-
-**Solution**: Add Go's bin directory to PATH:
+Go's bin directory is not on your `PATH`. Add it to `~/.zshrc` or `~/.bashrc`:
 
 ```bash
 export PATH="$PATH:$(go env GOPATH)/bin"
 ```
 
-### Permission denied
+On Windows, add `%USERPROFILE%\go\bin` to the `Path` environment variable and restart the terminal.
 
-**Problem**: Binary not executable
+### go install fails with a Go version error
 
-**Solution**: Make binary executable:
+The module needs Go 1.26 or later. Check with `go version`, and upgrade from [go.dev/dl](https://go.dev/dl/) or with your package manager. Alternatively, install with npm or Homebrew, which need no Go toolchain.
 
-```bash
-chmod +x $(which packc)
-```
-
-### Go version too old
-
-**Problem**: Go version < 1.26
-
-**Solution**: Update Go:
+## Uninstall
 
 ```bash
-# macOS
-brew upgrade go
-
-# Linux
-# Download from https://go.dev/dl/
-
-# Verify
-go version
+npm uninstall -g @altairalabs/packc     # npm
+brew uninstall altairalabs/tap/packc    # Homebrew
+rm "$(go env GOPATH)/bin/packc"         # go install
 ```
 
-### Installation fails
+## Related
 
-**Problem**: Network or dependency issues
-
-**Solution**: Check network and clean cache:
-
-```bash
-# Clean cache
-go clean -modcache
-
-# Try again
-go install github.com/AltairaLabs/promptarena/v2/packc@latest
-```
-
-## Next Steps
-
-- [Compile Your First Pack](/packc/how-to/compile-packs/)
-- [Validate Packs](/packc/how-to/validate-packs/)
-- [First Pack Tutorial](/packc/tutorials/01-first-pack/)
-
-## See Also
-
-- [version command](/packc/reference/version/) - Check packc version
-- [PackC Documentation](/packc/) - Main PackC overview
+- [Compile packs](/packc/how-to/compile-packs/)
+- [First pack tutorial](/packc/tutorials/01-first-pack/)
+- [version reference](/packc/reference/version/)
+- [Install PromptArena](/arena/how-to/setup/installation/)
