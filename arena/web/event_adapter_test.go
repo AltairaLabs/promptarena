@@ -2,6 +2,7 @@ package web
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"testing"
 	"time"
@@ -446,6 +447,75 @@ func TestAdapter_MapConversationStarted(t *testing.T) {
 		}
 	case <-time.After(time.Second):
 		t.Fatal("timed out")
+	}
+}
+
+func TestAdapter_MapStageEvents(t *testing.T) {
+	adapter := NewEventAdapter()
+
+	testCases := []struct {
+		name string
+		evt  *events.Event
+		want map[string]interface{}
+	}{
+		{
+			name: "started pointer",
+			evt: &events.Event{Type: events.EventStageStarted, Data: &events.StageEventData{
+				Name: "provider", StageType: "generate",
+			}},
+			want: map[string]interface{}{"name": "provider", "stageType": "generate", "duration": 0.0, "error": ""},
+		},
+		{
+			name: "completed value",
+			evt: &events.Event{Type: events.EventStageCompleted, Data: events.StageEventData{
+				Name: "provider", Duration: 1500 * time.Millisecond,
+			}},
+			want: map[string]interface{}{"name": "provider", "stageType": "", "duration": 1.5, "error": ""},
+		},
+		{
+			name: "failed",
+			evt: &events.Event{Type: events.EventStageFailed, Data: &events.StageEventData{
+				Name: "guardrail", Duration: 250 * time.Millisecond, Error: errors.New("blocked"),
+			}},
+			want: map[string]interface{}{"name": "guardrail", "stageType": "", "duration": 0.25, "error": "blocked"},
+		},
+		{
+			name: "legacy middleware pointer",
+			evt: &events.Event{Type: events.EventMiddlewareFailed, Data: &events.MiddlewareEventData{
+				Name: "auth", Duration: time.Second, Error: errors.New("denied"),
+			}},
+			want: map[string]interface{}{"name": "auth", "duration": 1.0, "error": "denied"},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			sse := adapter.mapEvent(tc.evt)
+			if sse.Type != string(tc.evt.Type) {
+				t.Errorf("type = %q, want %q", sse.Type, tc.evt.Type)
+			}
+			got, ok := sse.Data.(map[string]interface{})
+			if !ok {
+				t.Fatalf("data = %T, want map", sse.Data)
+			}
+			if len(got) != len(tc.want) {
+				t.Errorf("data = %v, want %v", got, tc.want)
+			}
+			for k, v := range tc.want {
+				if got[k] != v {
+					t.Errorf("%s = %v, want %v", k, got[k], v)
+				}
+			}
+		})
+	}
+
+	var nilStage *events.StageEventData
+	if sse := adapter.mapEvent(&events.Event{Type: events.EventStageStarted, Data: nilStage}); sse.Data != nil {
+		t.Errorf("nil stage payload mapped to %v", sse.Data)
+	}
+	var nilMiddleware *events.MiddlewareEventData
+	if sse := adapter.mapEvent(&events.Event{Type: events.EventMiddlewareStarted, Data: nilMiddleware}); sse.Data != nil {
+		t.Errorf("nil middleware payload mapped to %v", sse.Data)
 	}
 }
 

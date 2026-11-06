@@ -464,11 +464,20 @@ func (a *EventAdapter) mapEvent(event *events.Event) *SSEEvent {
 		sse.Data = map[string]interface{}{
 			jsonKeySystemPrompt: data.SystemPrompt,
 		}
-	case events.MiddlewareCompletedData:
-		sse.Data = map[string]interface{}{
-			"name":     data.Name,
-			"duration": data.Duration.Seconds(),
+	case *events.StageEventData:
+		if data != nil {
+			sse.Data = stagePayload(data)
 		}
+	case events.StageEventData:
+		sse.Data = stagePayload(&data)
+	case *events.MiddlewareEventData:
+		// Legacy: PromptKit emits stage.* now; middleware.* survive only in
+		// older recordings, which load as pointers.
+		if data != nil {
+			sse.Data = middlewarePayload(data)
+		}
+	case events.MiddlewareEventData:
+		sse.Data = middlewarePayload(&data)
 	case events.ToolCallEventData:
 		sse.Data = map[string]interface{}{
 			"toolName": data.ToolName,
@@ -522,6 +531,32 @@ func errorString(err error) string {
 		return ""
 	}
 	return err.Error()
+}
+
+// JSON keys shared by the stage and legacy middleware payloads.
+const (
+	jsonKeyName     = "name"
+	jsonKeyDuration = "duration"
+)
+
+// stagePayload renders a pipeline stage lifecycle event (stage.started,
+// stage.completed, stage.failed). duration and error are zero on started.
+func stagePayload(data *events.StageEventData) map[string]interface{} {
+	return map[string]interface{}{
+		jsonKeyName:     data.Name,
+		"stageType":     data.StageType,
+		jsonKeyDuration: data.Duration.Seconds(),
+		jsonKeyError:    errorString(data.Error),
+	}
+}
+
+// middlewarePayload renders a legacy middleware.* event from an old recording.
+func middlewarePayload(data *events.MiddlewareEventData) map[string]interface{} {
+	return map[string]interface{}{
+		jsonKeyName:     data.Name,
+		jsonKeyDuration: data.Duration.Seconds(),
+		jsonKeyError:    errorString(data.Error),
+	}
 }
 
 // validationPayload renders a guardrail firing for the SSE channel.

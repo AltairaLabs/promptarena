@@ -316,7 +316,7 @@ func (de *DuplexConversationExecutor) buildDuplexPipeline(
 
 	stages = de.appendDuplexOutputStages(stages, req, turnState)
 
-	return builder.Chain(stages...).Build()
+	return builder.WithEventEmitter(emitter).Chain(stages...).Build()
 }
 
 // buildDuplexPipelineConfig builds the StreamPipeline configuration for a duplex
