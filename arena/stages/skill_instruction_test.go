@@ -1,13 +1,83 @@
 package stages
 
 import (
+	"context"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/AltairaLabs/PromptKit/runtime/v2/pipeline/stage"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/prompt"
 )
+
+// SystemPrompt belongs to the upstream TemplateStage until it closes its
+// output: it re-reads the field on every element. The instruction stage must
+// neither write it nor forward anything while upstream is still open.
+func TestSkillInstructionStage_WaitsForUpstreamBeforeAppending(t *testing.T) {
+	turnState := stage.NewTurnState()
+	turnState.SystemPrompt = "Base."
+	s := NewSkillInstructionStageWithTurnState(" Skills.", turnState)
+
+	input := make(chan stage.StreamElement, 2)
+	output := make(chan stage.StreamElement, 2)
+	done := make(chan error, 1)
+	go func() { done <- s.Process(context.Background(), input, output) }()
+
+	input <- stage.StreamElement{}
+	select {
+	case <-output:
+		t.Fatal("forwarded an element before upstream closed")
+	case <-time.After(50 * time.Millisecond):
+	}
+
+	input <- stage.StreamElement{}
+	close(input)
+	require.NoError(t, <-done)
+	assert.Len(t, output, 2)
+	assert.Equal(t, "Base. Skills.", turnState.SystemPrompt)
+}
+
+func TestSkillInstructionStage_NoElementsAppendsNothing(t *testing.T) {
+	turnState := stage.NewTurnState()
+	turnState.SystemPrompt = "Base."
+	s := NewSkillInstructionStageWithTurnState(" Skills.", turnState)
+
+	results := runStage(t, s, nil)
+	assert.Empty(t, results)
+	assert.Equal(t, "Base.", turnState.SystemPrompt)
+}
+
+// The production shape: TemplateStage renders into the shared TurnState and
+// re-reads it for every history element while the instruction stage appends.
+// Under -race this is the regression test for that data race.
+func TestSkillInstructionStage_AfterTemplateStageMultiElementTurn(t *testing.T) {
+	turnState := stage.NewTurnState()
+	turnState.Template = &prompt.Template{RawTemplate: "Hello {{name}}.", TaskType: "chat"}
+	turnState.Variables = map[string]string{"name": "Ada"}
+
+	pl, err := stage.NewPipelineBuilder().Chain(
+		stage.NewTemplateStageWithTurnState(nil, turnState),
+		NewSkillInstructionStageWithTurnState(" Skills.", turnState),
+	).Build()
+	require.NoError(t, err)
+
+	input := make(chan stage.StreamElement, 5)
+	for range 5 {
+		input <- stage.StreamElement{}
+	}
+	close(input)
+
+	out, err := pl.Execute(context.Background(), input)
+	require.NoError(t, err)
+	count := 0
+	for range out {
+		count++
+	}
+	assert.Equal(t, 5, count)
+	assert.Equal(t, "Hello Ada. Skills.", turnState.SystemPrompt)
+}
 
 func TestSkillInstructionStage_TurnStateAppendsOnce(t *testing.T) {
 	turnState := stage.NewTurnState()
