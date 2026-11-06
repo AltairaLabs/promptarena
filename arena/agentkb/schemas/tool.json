@@ -46,7 +46,7 @@
           },
           "type": "array",
           "title": "Env",
-          "description": "Required environment variable names"
+          "description": "Environment variable names to pass from the host. A one-shot exec tool that lists any gets only those variables; server tools / eval handlers / exec hooks get the host environment plus the listed ones"
         },
         "args": {
           "items": {
