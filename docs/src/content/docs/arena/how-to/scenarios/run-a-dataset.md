@@ -1,6 +1,15 @@
 ---
 title: Run a Scenario Over a Dataset
 description: Load scenario inputs and expected answers from a JSONL or CSV file, and get one result per row.
+verified:
+  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  sources:
+    - arena/arenaconfig/scenario_data.go
+    - arena/arenaconfig/types.go
+    - arena/cmd/promptarena/run.go
+    - arena/engine/execution.go
+    - arena/engine/trials.go
+    - arena/statestore/store.go
 ---
 
 Run one scenario against every row of a JSONL or CSV file, with each row's values filled into the prompt and the assertions.

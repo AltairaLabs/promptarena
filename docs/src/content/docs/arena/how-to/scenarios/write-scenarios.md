@@ -1,442 +1,184 @@
 ---
 title: Write Test Scenarios
+description: Create a scenario file, add turns and assertions, and choose which providers it runs against.
+verified:
+  commit: 631d3c353c2c9d71b362ae5cd20c137d42b19d5b
+  sources:
+    - arena/arenaconfig/types.go
+    - arena/assertions/types.go
+    - arena/cmd/promptarena/init.go
+    - arena/cmd/promptarena/run.go
+    - arena/engine/execution.go
+    - arena/turnexecutors/pipeline_stages_integration.go
 ---
-Learn how to create and structure test scenarios for LLM testing.
 
-## Overview
+Write a scenario: the scripted conversation Arena sends to a provider, with the assertions each response must pass.
 
-Test scenarios define the conversation flows, expected behaviors, and validation criteria for your LLM applications. Each scenario is a YAML file in the PromptPack format.
+## Prerequisites
 
-## Quick Start with Templates
+- The `promptarena` CLI.
+- An arena config with a prompt and a provider, or a new project from `promptarena init`.
 
-The fastest way to create scenarios is using the project generator:
+## Steps
+
+1. Start from a generated project:
+
+   ```bash
+   promptarena init my-test --quick --provider mock
+   ```
+
+   This writes a working scenario to `my-test/scenarios/basic-test.scenario.yaml`, listed under `spec.scenarios` in `my-test/config.arena.yaml`. Edit it, or add your own file next to it.
+
+2. Write the scenario file. `spec.task_type` selects the prompt config with the same `task_type`:
+
+   ```yaml
+   apiVersion: promptkit.altairalabs.ai/v1alpha1
+   kind: Scenario
+   metadata:
+     name: basic-customer-inquiry
+     labels:
+       category: customer-service
+       priority: basic
+
+   spec:
+     task_type: support
+     description: "Tests customer support responses"
+
+     turns:
+       - role: user
+         content: "What are your business hours?"
+         assertions:
+           - type: content_includes
+             params:
+               patterns: ["Monday"]
+             message: "Should mention business days"
+
+       - role: user
+         content: "Do you offer weekend support?"
+         assertions:
+           - type: content_includes
+             params:
+               patterns: ["Saturday"]
+             message: "Should mention weekend availability"
+   ```
+
+   Each turn is one user message. The turns run in order in one conversation, so later turns test context retention. `message` sits beside `params`, not inside it.
+
+3. Add the scenario to the arena config:
+
+   ```yaml
+   spec:
+     scenarios:
+       - file: scenarios/basic-customer-inquiry.yaml
+   ```
+
+4. Assert on tool use where the turn should call a tool:
+
+   ```yaml
+   turns:
+     - role: user
+       content: "What's the weather in San Francisco?"
+       assertions:
+         - type: tools_called
+           params:
+             tools: ["get_weather"]
+           message: "Should call weather tool"
+         - type: content_includes
+           params:
+             patterns: ["temperature"]
+           message: "Should mention temperature"
+   ```
+
+   To run an assertion only when a condition holds, add `when`. The assertion is skipped, not failed, when the condition is not met:
+
+   ```yaml
+         - type: content_includes
+           params:
+             patterns: ["shipped"]
+           when:
+             tool_called: lookup_order
+   ```
+
+   `when` takes `tool_called`, `tool_called_pattern`, `any_tool_called` and `min_tool_calls`.
+
+5. Prefer loose assertions to exact ones. An exact sentence breaks on any rewording; a phrase plus a format check does not:
+
+   ```yaml
+   assertions:
+     - type: content_includes
+       params:
+         patterns: ["account balance"]
+       message: "Should mention balance"
+     - type: content_matches
+       params:
+         pattern: '\$\d+\.\d{2}'
+       message: "Should include dollar amount"
+   ```
+
+6. If the scenario needs a feature only some providers have, list it in `required_capabilities`. The scenario then runs only against providers whose `capabilities` list contains every entry:
+
+   ```yaml
+   spec:
+     task_type: capability-test
+     description: "Test vision with streaming"
+     required_capabilities:
+       - vision
+       - streaming
+     streaming: true
+
+     turns:
+       - role: user
+         parts:
+           - type: text
+             text: "Describe this image"
+           - type: image
+             media:
+               url: "https://example.com/image.png"
+               mime_type: "image/png"
+   ```
+
+   Capability names: `text`, `streaming`, `vision`, `tools`, `json`, `audio`, `video`, `documents`.
+
+7. To run the scenario against named providers only, list their IDs in the scenario's `providers`. Without it, the scenario runs against every provider in its provider group:
+
+   ```yaml
+   spec:
+     providers: [openai-gpt4, claude-sonnet, gemini-pro]
+   ```
+
+8. To control tool calling, set `tool_policy`:
+
+   ```yaml
+   spec:
+     tool_policy:
+       tool_choice: required
+       max_tool_calls_per_turn: 3
+   ```
+
+   `tool_choice` is `auto`, `required`, `none` or a tool name. The scenario's `tool_policy` is merged with the `tool_policy` of the prompt under test, and the merge only tightens:
+
+   - `max_rounds` and `max_tool_calls_per_turn`: the lower of the scenario's and the prompt's value applies. With neither set, `max_rounds` defaults to 50.
+   - `blocklist`: the scenario's and the prompt's lists are combined.
+   - `tool_choice`: the scenario's value is used when it sets one, otherwise the prompt's, otherwise `auto`.
+
+   A scenario can lower the prompt's limits, but cannot raise them.
+
+## Verify
+
+Run the scenario by its `metadata.name`:
 
 ```bash
-# Create a new test project with sample scenario
-promptarena init my-test --quick --provider mock
-
-# This generates scenarios/basic-test.yaml for you
-cd my-test
-cat scenarios/basic-test.yaml
+promptarena run --scenario basic-customer-inquiry
 ```
 
-The generated scenario includes working examples of assertions, multi-turn conversations, and best practices. Use it as a starting point and customize for your needs.
-
-## Manual Scenario Creation
-
-If you prefer to create scenarios from scratch or need custom structures, create a file `scenarios/basic-test.yaml`:
-
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: basic-customer-inquiry
-  labels:
-    category: customer-service
-    priority: basic
-
-spec:
-  task_type: support  # Links to prompt configuration
-  description: "Tests customer support responses"
-  
-  # The conversation turns
-  turns:
-    - role: user
-      content: "What are your business hours?"
-      assertions:
-        - type: content_includes
-          params:
-            patterns: ["Monday"]
-            message: "Should mention business days"
-    
-    - role: user
-      content: "Do you offer weekend support?"
-      assertions:
-        - type: content_includes
-          params:
-            patterns: ["Saturday"]
-            message: "Should mention weekend availability"
-```
-
-## Key Components
-
-### Scenario Metadata
-
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: support-test
-  labels:
-    category: support
-    region: us
-  annotations:
-    description: "Tests customer support responses"
-```
-
-### Spec Section
-
-The spec section contains your test configuration:
-
-```yaml
-spec:
-  task_type: support
-  description: "Conversation flow test"
-
-  context_metadata:
-    urgency: high
-    topic: billing
-
-  turns:
-    # Conversation turns go here
-```
-
-### Required Capabilities
-
-Use `required_capabilities` to ensure scenarios only run against providers that support specific features:
-
-```yaml
-spec:
-  task_type: capability-test
-  description: "Test vision with streaming"
-  required_capabilities:
-    - vision
-    - streaming
-  streaming: true
-
-  turns:
-    - role: user
-      parts:
-        - type: text
-          text: "Describe this image"
-        - type: image
-          media:
-            url: "https://example.com/image.png"
-            mime_type: "image/png"
-```
-
-**Available Capabilities**: `text`, `streaming`, `vision`, `tools`, `json`, `audio`, `video`, `documents`, `duplex`
-
-This scenario will only run against providers that have both `vision` AND `streaming` in their `capabilities` list.
-
-### Tool Policy
-
-Use `tool_policy` to control tool calling behavior:
-
-```yaml
-spec:
-  task_type: test
-  description: "Text-only test without tools"
-  tool_policy:
-    tool_choice: none           # Disable tool calling
-
-  turns:
-    - role: user
-      content: "Just respond with text, no tools"
-```
-
-**Tool Choice Options**:
-- `none` - Disable tool calling entirely
-- `auto` - Let the model decide (default)
-- `required` - Force tool use
-- `<tool_name>` - Force specific tool
-
-**Example - Require tool use**:
-```yaml
-spec:
-  tool_policy:
-    tool_choice: required
-    max_tool_calls_per_turn: 3
-```
-
-This is useful when:
-- Testing scenarios that should NOT use tools (text, streaming, vision tests)
-- Forcing tool usage for tool-specific tests
-- Limiting tool calls to prevent runaway loops
-
-**How it combines with the prompt's `tool_policy`**: the prompt under test can declare its own `tool_policy` (for example `max_rounds: 200` for a long-running agent), and that policy ships in the pack. A scenario's `tool_policy` is applied on top of it and can only make it stricter:
-
-- `max_rounds` and `max_tool_calls_per_turn`: the lower of the scenario's and the prompt's value applies. Leave them unset to test the prompt's own limits. With neither set, `max_rounds` defaults to 50.
-- `blocklist`: the scenario's and the prompt's lists are combined.
-- `tool_choice`: the scenario's value is used when it sets one.
-
-So Arena always tests a prompt within the limits it ships with. A scenario can lower them, but can't raise them.
-
-### Conversation Turns
-
-Define user messages and expected responses:
-
-```yaml
-spec:
-  turns:
-    # Basic turn
-    - role: user
-      content: "Hello, I need help"
-    
-    # Turn with assertions
-    - role: user
-      content: "What's the refund policy?"
-      assertions:
-        - type: content_includes
-          params:
-            patterns: ["30 days"]
-            message: "Should mention refund period"
-```
-
-## Common Patterns
-
-### Multi-turn Conversations
-
-Test conversation flow and context retention:
-
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: multi-turn-support-dialog
-
-spec:
-  task_type: support
-  
-  turns:
-    - role: user
-      content: "I'm having issues with my account"
-    
-    - role: user
-      content: "It won't let me log in"
-      assertions:
-        - type: content_includes
-          params:
-            patterns: ["password"]
-            message: "Should offer password reset"
-    
-    - role: user
-      content: "I already tried that"
-      assertions:
-        - type: content_includes
-          params:
-            patterns: ["help"]
-            message: "Should provide alternative help"
-```
-
-### Tool/Function Calling
-
-Test tool integration:
-
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: weather-query-with-tool
-
-spec:
-  task_type: assistant
-  
-  turns:
-    - role: user
-      content: "What's the weather in San Francisco?"
-      assertions:
-        - type: tools_called
-          params:
-            tools: ["get_weather"]
-            message: "Should call weather tool"
-        
-        - type: content_includes
-          params:
-            patterns: ["temperature"]
-            message: "Should mention temperature"
-```
-
-## Advanced Features
-
-### Fixtures
-
-Reuse common data across scenarios:
-
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: account-specific-test
-
-spec:
-  task_type: support
-  
-  fixtures:
-    sample_user:
-      name: "Jane Smith"
-      account_id: "12345"
-      plan: "Premium"
-  
-  system_template: |
-    You are helping user {{fixtures.sample_user.name}} 
-    (Account: {{fixtures.sample_user.account_id}}).
-  
-  turns:
-    - role: user
-      content: "What's my current plan?"
-      assertions:
-        - type: content_includes
-          params:
-            patterns: ["Premium"]
-            message: "Should reference user's Premium plan"
-```
-
-### Conditional Assertions
-
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: order-status-check
-
-spec:
-  task_type: support
-  
-  turns:
-    - role: user
-      content: "Check my order status"
-      assertions:
-        - type: content_includes
-          params:
-            patterns: ["shipped"]
-            message: "Should mention shipped status"
-```
-
-### Multiple Providers
-
-Test the same scenario across different models:
-
-```yaml
-# In arena.yaml
-scenarios:
-  - path: ./scenarios/cross-provider.yaml
-    providers: [openai-gpt4, claude-sonnet, gemini-pro]
-```
-
-## Best Practices
-
-### 1. Use Descriptive Names
-
-```yaml
-# Good
-- name: "Escalation: Frustrated customer with billing issue"
-
-# Avoid
-- name: "Test 1"
-```
-
-### 2. Tag Appropriately
-
-```yaml
-tags: [billing, high-priority, multi-turn, tool-calling]
-```
-
-Useful for selective test runs:
-
-```bash
-# Run only high-priority tests
-promptarena run --scenario high-priority
-```
-
-### 3. Balance Specificity
-
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: balance-check-flexible
-
-spec:
-  task_type: support
-  
-  turns:
-    # Too specific (brittle)
-    - role: user
-      content: "What's my account balance?"
-      assertions:
-        - type: content_includes
-          params:
-            patterns: ["Your account balance is exactly $42.00"]
-            message: "Exact match - too brittle"
-    
-    # Better (flexible)
-    - role: user
-      content: "What's my account balance?"
-      assertions:
-        - type: content_includes
-          params:
-            patterns: ["account balance"]
-            message: "Should mention balance"
-        
-        - type: content_matches
-          params:
-            pattern: '\$\d+\.\d{2}'
-            message: "Should include dollar amount"
-```
-
-### 4. Test Edge Cases
-
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: edge-case-testing
-
-spec:
-  task_type: support
-  
-  fixtures:
-    long_text: ["Very long text here..."]  # 10,000 chars
-  
-  turns:
-    - role: user
-      content: ""
-      assertions:
-        - type: content_includes
-          params:
-            patterns: ["help"]
-            message: "Should handle empty input gracefully"
-    
-    - role: user
-      content: "{{fixtures.long_text}}"
-      assertions:
-        - type: content_includes
-          params:
-            patterns: [" "]
-            message: "Should respond to very long input"
-```
-
-## File Organization
-
-Structure your scenarios for maintainability:
-
-```text
-scenarios/
-├── customer-support/
-│   ├── basic-inquiries.yaml
-│   ├── billing-issues.yaml
-│   └── escalations.yaml
-├── content-generation/
-│   ├── blog-posts.yaml
-│   └── social-media.yaml
-└── tool-integration/
-    ├── weather.yaml
-    └── database.yaml
-```
-
-## Examples
-
-See complete working examples in the [examples directory](/arena/examples/).
-
-## Next Steps
-
-- **[Configure Providers](/arena/how-to/providers/configure-providers/)** - Set up LLM providers
-- **[Validate Outputs](/arena/how-to/scenarios/validate-outputs/)** - Use assertions and validators
-- **[Scenario Format Reference](/arena/reference/scenario-format/)** - Complete format specification
-
-## Related Documentation
-
-- **[Assertions Reference](/arena/reference/assertions/)** - All available assertion types
-- **[Validators Reference](/arena/reference/validators/)** - Custom validation logic
-- **[Tutorial: First Test](/arena/tutorials/01-first-test/)** - Step-by-step guide
+The run summary lists one result per provider, and `out/results.md` shows each assertion's outcome and `message`. `--scenario` matches scenario names only. Labels in `metadata.labels` appear in the results, and `promptarena run --objectives-group-by label.<key>` groups the objectives report by them.
+
+## Related pages
+
+- [Scenario Format Reference](/arena/reference/scenario-format/)
+- [Configuration schema: Scenario](/arena/reference/config-schema/#scenario), for every field
+- [Assertions Reference](/arena/reference/assertions/)
+- [Validate Outputs](/arena/how-to/scenarios/validate-outputs/)
+- [Run a Scenario Over a Dataset](/arena/how-to/scenarios/run-a-dataset/)
+- [Configure Providers](/arena/how-to/providers/configure-providers/)
+- [Examples](/arena/examples/)

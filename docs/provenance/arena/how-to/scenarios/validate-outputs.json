@@ -1,0 +1,152 @@
+{
+ "page": "docs/src/content/docs/arena/how-to/scenarios/validate-outputs.md",
+ "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "content_includes with params.patterns (runtime evals/handlers/contains.go:24; case-insensitive, all patterns required)",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/types.go:30"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "message placed inside params",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:25",
+    "arena/assertions/types.go:38"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "content_matches with params.pattern (runtime evals/handlers/regex.go:24)",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/types.go:30"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "content_matches with negative lookahead ^(?!.*competitor).*$ ensures text is absent",
+   "verdict": "false",
+   "evidence": [
+    "arena/assertions/types.go:30"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "is_valid_json is an assertion type (runtime alias of json_valid, evals/handlers/register.go)",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/types.go:30"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "json_schema with params.schema (runtime evals/handlers/json_schema.go:27)",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/types.go:30"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "tools_called with params.tools (runtime evals/handlers/tools_called.go:50)",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/types.go:30"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "conversation_assertions on the scenario spec",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:707"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "tool_calls_with_args takes params.tool and expected_args",
+   "verdict": "false",
+   "evidence": [
+    "arena/assertions/types.go:30"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "turn written as - user: \"...\"",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:1409"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "llm_judge takes params.judge_provider \"openai/gpt-4o-mini\"",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/judge_param.go:38",
+    "arena/arenaconfig/types.go:93",
+    "arena/engine/conversation_executor.go:917"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "All assertions on a turn must pass",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/types.go:36"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "Conditional assertions shown as plain assertions",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:47",
+    "arena/assertions/types.go:40"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "rest_eval with url, headers (env-expanded), criteria and min_score (runtime evals/handlers/rest_eval.go:90,127; external_eval.go:63)",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/types.go:55"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "promptarena run --format json|markdown|junit",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:174"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "JSON output has test_case, turn, assertions[expected, actual], overall_pass",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/conversation_executor.go:910"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "promptarena run --verbose --scenario",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:189"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "examples/assertions-test, guardrails-test, customer-support exist",
+   "verdict": "true",
+   "evidence": []
+  }
+ ]
+}

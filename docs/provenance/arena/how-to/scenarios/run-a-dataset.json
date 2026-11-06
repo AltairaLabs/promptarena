@@ -1,0 +1,148 @@
+{
+ "page": "docs/src/content/docs/arena/how-to/scenarios/run-a-dataset.md",
+ "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "Datasets are JSONL (one object per line) or CSV (header row then records)",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/scenario_data.go:106",
+    "arena/arenaconfig/scenario_data.go:198"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "The id column names each row; without it rows are named 1, 2, ...",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/scenario_data.go:23",
+    "arena/arenaconfig/scenario_data.go:242"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "Scenario spec.data block with file",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/scenario_data.go:36",
+    "arena/arenaconfig/types.go:742"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "{column} placeholders are substituted into turn content and assertion params",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/scenario_data.go:309",
+    "arena/arenaconfig/scenario_data.go:321"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "data.file path is relative to the scenario file",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/scenario_data.go:80"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "Placeholders also work in conversation_assertions, seed_memories content and variables",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/scenario_data.go:339",
+    "arena/arenaconfig/scenario_data.go:340",
+    "arena/arenaconfig/scenario_data.go:343"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "Values are substituted into regex patterns as written (no escaping)",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/scenario_data.go:398"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "data.field unwraps each JSONL row to the object under that key",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/scenario_data.go:138",
+    "arena/arenaconfig/scenario_data.go:39"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "trials run per row; pass rate and pass_threshold computed per row",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:736",
+    "arena/engine/trials.go:148"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "promptarena run --scenario --ci --formats exist",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:163",
+    "arena/cmd/promptarena/run.go:169",
+    "arena/cmd/promptarena/run.go:176"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "Each row is its own result named scenario[row-id] in summary and Markdown report (ran it)",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/execution.go:1274"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "JSON result carries label data_row and the row values under Params.data (ran it)",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/execution.go:1005",
+    "arena/engine/execution.go:987",
+    "arena/statestore/store.go:1155"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "Error \"row <id> has no column for {x}\" when a row lacks a placeholder column (ran it)",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/scenario_data.go:279"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "Error \"data and perturbations are mutually exclusive\"",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/scenario_data.go:62"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "Accepted extensions .jsonl, .ndjson, .csv; else \"unsupported extension\" (ran it)",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/scenario_data.go:107",
+    "arena/arenaconfig/scenario_data.go:112"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "Every {word} in a dataset scenario is a placeholder that must name a column",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/scenario_data.go:258",
+    "arena/arenaconfig/scenario_data.go:389"
+   ]
+  }
+ ]
+}
