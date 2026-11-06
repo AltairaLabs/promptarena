@@ -3077,11 +3077,7 @@
         }
       },
       "additionalProperties": false,
-      "type": "object",
-      "required": [
-        "input_cost_per_1k",
-        "output_cost_per_1k"
-      ]
+      "type": "object"
     },
     "PromptConfigRef": {
       "properties": {
@@ -3247,12 +3243,7 @@
         }
       },
       "additionalProperties": false,
-      "type": "object",
-      "required": [
-        "temperature",
-        "top_p",
-        "max_tokens"
-      ]
+      "type": "object"
     },
     "ProviderRef": {
       "properties": {
@@ -3280,11 +3271,7 @@
         }
       },
       "additionalProperties": false,
-      "type": "object",
-      "required": [
-        "rps",
-        "burst"
-      ]
+      "type": "object"
     },
     "RecordingConfig": {
       "properties": {

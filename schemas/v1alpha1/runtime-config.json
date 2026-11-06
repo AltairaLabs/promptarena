@@ -647,11 +647,7 @@
         }
       },
       "additionalProperties": false,
-      "type": "object",
-      "required": [
-        "input_cost_per_1k",
-        "output_cost_per_1k"
-      ]
+      "type": "object"
     },
     "Provider": {
       "properties": {
@@ -775,12 +771,7 @@
         }
       },
       "additionalProperties": false,
-      "type": "object",
-      "required": [
-        "temperature",
-        "top_p",
-        "max_tokens"
-      ]
+      "type": "object"
     },
     "RateLimit": {
       "properties": {
@@ -792,11 +783,7 @@
         }
       },
       "additionalProperties": false,
-      "type": "object",
-      "required": [
-        "rps",
-        "burst"
-      ]
+      "type": "object"
     },
     "RedisConfig": {
       "properties": {
