@@ -74,9 +74,6 @@ apiVersion: promptkit.altairalabs.ai/v1alpha1
 kind: Provider
 metadata:
   name: openai-gpt4o-mini
-  labels:
-    provider: openai
-
 spec:
   type: openai
   model: gpt-4o-mini
@@ -95,11 +92,8 @@ apiVersion: promptkit.altairalabs.ai/v1alpha1
 kind: Provider
 metadata:
   name: claude-sonnet
-  labels:
-    provider: anthropic
-
 spec:
-  type: anthropic
+  type: claude
   model: claude-3-5-sonnet-20241022
   
   defaults:
@@ -116,9 +110,6 @@ apiVersion: promptkit.altairalabs.ai/v1alpha1
 kind: Provider
 metadata:
   name: gemini-flash
-  labels:
-    provider: google
-
 spec:
   type: gemini
   model: gemini-1.5-flash

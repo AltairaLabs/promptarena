@@ -277,9 +277,9 @@ PromptArena abstracts provider differences:
 providers:
   - type: openai
     model: gpt-4o
-  - type: anthropic
+  - type: claude
     model: claude-3-5-sonnet
-  - type: google
+  - type: gemini
     model: gemini-1.5-pro
 ```
 

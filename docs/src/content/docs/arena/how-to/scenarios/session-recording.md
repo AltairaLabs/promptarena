@@ -2,7 +2,7 @@
 title: Session Recording
 description: Record Arena scenario runs to JSONL, then load, replay, annotate and evaluate them.
 verified:
-  commit: 60cd1a146e6224c0d66c972d18f329a0ce76c522
+  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
   sources:
     - .github/workflows/ci.yml
     - arena/arenaconfig/loader.go
@@ -57,7 +57,7 @@ Run your tests:
 promptarena run --scenario my-test
 ```
 
-Recordings are saved to `out/recordings/` as JSONL files.
+Recordings are saved to `<output directory>/recordings/` as JSONL files: `out/recordings/` here, or under `--out` when you pass it.
 
 ## Recording Format
 

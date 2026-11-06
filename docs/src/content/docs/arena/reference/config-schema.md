@@ -1,13 +1,15 @@
 ---
 title: Configuration Schema
 verified:
-  commit: 60cd1a146e6224c0d66c972d18f329a0ce76c522
+  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
   sources:
     - arena/adapters/arena_output.go
     - arena/adapters/registry.go
     - arena/adapters/session_recording.go
     - arena/adapters/transcript.go
     - arena/arenaconfig/governance_taxonomy.go
+    - arena/arenaconfig/helpers.go
+    - arena/arenaconfig/judge_param.go
     - arena/arenaconfig/loader.go
     - arena/arenaconfig/persona.go
     - arena/arenaconfig/persona_state.go
@@ -22,6 +24,7 @@ verified:
     - arena/assertions/memorystate/memorystate.go
     - arena/chaos/hook.go
     - arena/cmd/promptarena/run.go
+    - arena/cmd/promptarena/serve_interactive.go
     - arena/cmd/promptarena/validate_json.go
     - arena/engine/builder_integration.go
     - arena/engine/conversation_executor.go
@@ -205,14 +208,17 @@ spec:
                                     # Omit (or 0) to send no seed at all.
     # Execution settings
     run_timeout: 5m                 # Default: 5m (per run)
+    concurrency: 3                  # Default: 6; `run -j` overrides it
 
     # Output configuration
     output:
-      dir: out                      # Default: "out"
+      dir: out                      # Default: "out"; `run --out` overrides it
       formats:                      # Default: ["json"]
         - json
         - markdown
         - junit
+      junit:
+        file: junit.xml             # Default: junit.xml, relative to output.dir
 
       # Format-specific options (the `json` format has no configurable options;
       # each result is written to <run-id>.json)
@@ -621,15 +627,16 @@ carries a complete block.
 Output configuration for test results.
 
 **Fields**:
-- `dir` (string): Output directory path
+- `dir` (string): Output directory for results, `media/` and recordings (default: `out`). `run --out` overrides it, and `promptarena serve` reads results from it. A relative path is relative to the working directory.
 - `formats` (array): Output formats to generate
   - `json`: JSON results file
-  - `markdown`: Markdown report (default output: `out/results.md`)
+  - `markdown`: Markdown report (default output: `<dir>/results.md`)
   - `junit`: JUnit XML (for CI/CD)
   - `csv`: CSV export
   - `objectives`: Objectives report
   - `html`: accepted as an alias for `markdown`
 - `markdown` (object, optional): `file` plus the booleans `include_details`, `show_overview`, `show_results_matrix`, `show_failed_tests` and `show_cost_summary`. A `markdown` block must set all five booleans.
+- `junit` (object, optional): `file` (string), the JUnit XML file relative to `dir` (default: `junit.xml`). `run --junit-file` overrides it.
 - `recording` (object, optional): Session recording configuration
   - `enabled` (bool): Enable session recording (default: false)
   - `dir` (string): Subdirectory for recordings (default: "recordings")
@@ -1264,7 +1271,7 @@ Free-form provider-specific settings. This is where thinking and reasoning contr
 - `providers[*].group` (optional): Logical group label; defaults to `default`.
 - `scenario.provider_group` (optional): Choose which provider group to use for assistant runs; defaults to `default`.
 - Put judge-only providers in a separate group (e.g., `group: judge`) so they are not used as assistants, while still referencing them from `spec.judges`.
-- `judges` / `judge_defaults` (optional): Map judge names to providers and set default judge prompt/registry for LLM-as-judge assertions.
+- `judges` / `judge_defaults` (optional): Map judge names to providers and set default judge prompt/registry for LLM-as-judge assertions. A judge-backed check selects a judge with `judge: <name>` in its params (or `eval_params`); a name not in `judges` is a load error.
 
 ### Provider Types
 
@@ -1623,7 +1630,7 @@ recording:
 Assertions evaluated against the replayed conversation.
 
 **Common Assertion Types**:
-- `llm_judge`: Use an LLM to evaluate conversation quality. The judge comes from the arena config's `spec.judges`; with several judges, the lowest-sorted name is used. The handler reads `criteria` from `params`.
+- `llm_judge`: Use an LLM to evaluate conversation quality. The judge comes from the arena config's `spec.judges`: `judge: <name>` in `params` picks one (an unknown name is a load error), and without it the lowest-sorted name is used. The handler reads `criteria` from `params`.
 - `contains`: Check that all `patterns` (a string list) appear in the output (case-insensitive)
 - `tools_called`: Verify tool usage
 

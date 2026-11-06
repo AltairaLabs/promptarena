@@ -39,7 +39,7 @@ promptarena run --provider mock-duplex --scenario duplex-noisy-line
 promptarena run --provider mock-duplex --scenario duplex-voice-best-of-n
 ```
 
-`promptarena run --provider mock-duplex` with no `--scenario` runs all 10 scenarios. Without API keys, `duplex-interactive`, `duplex-selfplay`, `duplex-selfplay-mock`, `duplex-tools` and `duplex-scripted-text-openai` fail, and the command exits non-zero.
+`promptarena run --provider mock-duplex` with no `--scenario` runs all 10 scenarios. Without API keys, `duplex-interactive`, `duplex-selfplay`, `duplex-selfplay-mock`, `duplex-tools` and `duplex-scripted-text-openai` fail. The command exits non-zero only with `--ci`.
 
 ### Run with Real Providers
 

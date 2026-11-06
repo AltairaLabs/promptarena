@@ -23,7 +23,7 @@ for whichever fits the task in front of you.
 |-----------|-------------------|----------|
 | **TUI** | `promptarena` (bare), or `promptarena view` / `promptarena chat` to deep-link | Local interactive development, exploring past results, ad-hoc chat |
 | **Web UI** | `promptarena serve` (opens `http://127.0.0.1:8080`) | Visual monitoring, sharing a run view, demos |
-| **CI / headless** | `promptarena run --ci` (alias `--simple`) | Automation, regression gates, pipelines |
+| **CI / headless** | `promptarena run --ci` | Automation, regression gates, pipelines |
 
 ## One engine, three surfaces
 

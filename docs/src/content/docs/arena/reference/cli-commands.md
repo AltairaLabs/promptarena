@@ -2,7 +2,7 @@
 title: CLI Commands
 description: Every promptarena command with its flags, defaults and examples.
 verified:
-  commit: 60cd1a146e6224c0d66c972d18f329a0ce76c522
+  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
   sources:
     - arena/adapters/adapter.go
     - arena/adapters/arena_output.go
@@ -119,7 +119,6 @@ verified:
     - arena/templates/repos.go
     - arena/tui/app/chatpage.go
     - arena/turnexecutors/media_loader.go
-    - arena/turnexecutors/media_validator.go
     - arena/turnexecutors/scripted_executor.go
     - arena/web/frontend/package.json
     - arena/web/frontend/src/App.tsx
@@ -526,8 +525,12 @@ Run multi-turn conversation simulations across multiple LLM providers.
 ### Usage
 
 ```bash
-promptarena run [flags]
+promptarena run [config-path] [flags]
 ```
+
+`config-path` is the arena config, or a directory holding `config.arena.yaml`. Give it as the argument or with `-c`, not both. More than one argument is an error.
+
+Exit status: with `--ci`, `run` exits non-zero when a run errors or an assertion fails. Without `--ci` it exits 0 once the reports are written, whatever the results.
 
 ### Flags
 
@@ -541,7 +544,7 @@ promptarena run [flags]
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `-j, --concurrency` | int | `6` | Number of concurrent workers |
+| `-j, --concurrency` | int | `defaults.concurrency`, else `6` | Number of concurrent workers |
 | `--ci` | bool | `false` | CI mode: disables the TUI and writes deterministic machine output; exits non-zero on errored runs or failed assertions |
 | `--simple` | bool | `false` | Simple mode: disables the TUI and writes linear human-readable output; does not set the failure exit code |
 
@@ -586,12 +589,12 @@ promptarena run [flags]
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `-o, --out` | string | `out` | Output directory |
+| `-o, --out` | string | `defaults.output.dir`, else `out` | Output directory for results, `media/` and recordings |
 | `--format` | []string | from config | Output formats: json, junit, markdown, csv, objectives |
 | `--formats` | []string | from config | Alias for --format |
 | `--objectives-group-by` | []string | `scenario` | Groupings for the objectives report: `scenario`, `provider`, `objective`, `taxonomy`, `taxonomy.<framework>`, `label.<key>`, `data.<column>` |
-| `--junit-file` | string | `out/junit.xml` | JUnit XML output file |
-| `--markdown-file` | string | `out/results.md` | Markdown report output file |
+| `--junit-file` | string | `defaults.output.junit.file`, else `<out>/junit.xml` | JUnit XML output file |
+| `--markdown-file` | string | `<out>/results.md` | Markdown report output file |
 
 #### Debugging
 
@@ -608,6 +611,7 @@ promptarena run [flags]
 promptarena run
 
 # Specify configuration file
+promptarena run my-arena.yaml
 promptarena run --config my-arena.yaml
 ```
 

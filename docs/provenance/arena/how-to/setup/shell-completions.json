@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/setup/shell-completions.md",
- "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
  "claims": [
   {
    "id": 1,
@@ -34,7 +34,7 @@
    "claim": "Flag names complete with a `--` prefix",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:137"
+    "arena/cmd/promptarena/run.go:161"
    ]
   },
   {
@@ -42,7 +42,7 @@
    "claim": "`--scenario` lists scenarios from `config.arena.yaml`",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/completion_interactive.go:133",
+    "arena/cmd/promptarena/completion_interactive.go:130",
     "arena/cmd/promptarena/completion_interactive.go:76"
    ]
   },
@@ -51,17 +51,16 @@
    "claim": "`--provider` lists configured providers",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/completion_interactive.go:149",
+    "arena/cmd/promptarena/completion_interactive.go:146",
     "arena/cmd/promptarena/completion_interactive.go:79"
    ]
   },
   {
    "id": 7,
-   "claim": "`--roles` lists self-play role configurations",
+   "claim": "run --roles has no completion",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/completion_interactive.go:180",
-    "arena/cmd/promptarena/completion_interactive.go:85"
+    "arena/cmd/promptarena/completion_interactive.go:76"
    ]
   },
   {
@@ -69,7 +68,7 @@
    "claim": "`--region` suggests prompt regions",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/completion_interactive.go:165",
+    "arena/cmd/promptarena/completion_interactive.go:162",
     "arena/cmd/promptarena/completion_interactive.go:82"
    ]
   },
@@ -78,8 +77,8 @@
    "claim": "`--format` offers the output formats json, junit, markdown, csv",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/completion_interactive.go:316",
-    "arena/cmd/promptarena/run.go:30"
+    "arena/cmd/promptarena/completion_interactive.go:295",
+    "arena/cmd/promptarena/run.go:29"
    ]
   },
   {
@@ -87,8 +86,8 @@
    "claim": "`--section` lists config sections for `config-inspect`",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/completion_interactive.go:213",
-    "arena/cmd/promptarena/completion_interactive.go:330"
+    "arena/cmd/promptarena/completion_interactive.go:192",
+    "arena/cmd/promptarena/completion_interactive.go:309"
    ]
   },
   {
@@ -96,8 +95,8 @@
    "claim": "`--template` lists available project templates for `init`",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/completion_interactive.go:220",
-    "arena/cmd/promptarena/completion_interactive.go:228"
+    "arena/cmd/promptarena/completion_interactive.go:199",
+    "arena/cmd/promptarena/completion_interactive.go:207"
    ]
   },
   {
@@ -334,7 +333,7 @@
    "claim": "`promptarena r<Tab>` completes to `promptarena run`",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run.go:198"
+    "arena/cmd/promptarena/run.go:210"
    ]
   },
   {
@@ -342,7 +341,7 @@
    "claim": "`promptarena run --sc<Tab>` completes to `--scenario`",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:137"
+    "arena/cmd/promptarena/run.go:161"
    ]
   },
   {
@@ -350,7 +349,7 @@
    "claim": "`promptarena run --scenario <Tab>` lists scenario names from the config (example output basic-chat, edge-cases, multi-turn)",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/completion_interactive.go:133"
+    "arena/cmd/promptarena/completion_interactive.go:130"
    ]
   },
   {
@@ -358,7 +357,7 @@
    "claim": "`promptarena run --provider <Tab>` offers openai, anthropic, google, mock",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/completion_interactive.go:354",
+    "arena/cmd/promptarena/completion_interactive.go:333",
     "arena/cmd/promptarena/completion_interactive.go:79"
    ]
   },
@@ -367,7 +366,7 @@
    "claim": "`promptarena config-inspect --section` accepts prompts, providers, scenarios, tools, selfplay, judges, defaults, validation",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/completion_interactive.go:335",
+    "arena/cmd/promptarena/completion_interactive.go:314",
     "arena/cmd/promptarena/config_inspect_interactive.go:60"
    ]
   },
@@ -376,7 +375,7 @@
    "claim": "`promptarena init --template` offers quick-start, customer-support, code-assistant, multimodal, mcp-integration",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/completion_interactive.go:245",
+    "arena/cmd/promptarena/completion_interactive.go:224",
     "arena/templates/loader.go:142"
    ]
   },
@@ -414,11 +413,11 @@
   },
   {
    "id": 52,
-   "claim": "Dynamic completions (scenarios, providers, roles) need a valid `config.arena.yaml` in the current or a parent directory, and return empty results without one",
+   "claim": "Dynamic completions (scenarios, providers) need a valid config.arena.yaml in the current or a parent directory, and return empty results without one",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/completion_interactive.go:134",
-    "arena/cmd/promptarena/completion_interactive.go:96"
+    "arena/cmd/promptarena/completion_interactive.go:76",
+    "arena/cmd/promptarena/completion_interactive.go:79"
    ]
   },
   {
@@ -426,7 +425,7 @@
    "claim": "`ls config.arena.yaml` checks for the config file in the current directory",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/completion_interactive.go:100"
+    "arena/cmd/promptarena/completion_interactive.go:97"
    ]
   },
   {

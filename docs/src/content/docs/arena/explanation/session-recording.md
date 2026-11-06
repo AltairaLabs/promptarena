@@ -115,9 +115,9 @@ This means pack evals run automatically against recorded conversations without a
 Events are persisted in JSONL (JSON Lines) format:
 
 ```jsonl
-{"seq":1,"event":{"type":"conversation.started","timestamp":"2024-01-15T10:30:00Z",...}}
+{"seq":1,"event":{"type":"message.created","timestamp":"2024-01-15T10:30:00Z",...}}
 {"seq":2,"event":{"type":"message.created","timestamp":"2024-01-15T10:30:00.1Z",...}}
-{"seq":3,"event":{"type":"audio.input","timestamp":"2024-01-15T10:30:00.2Z",...}}
+{"seq":3,"event":{"type":"audio.output","timestamp":"2024-01-15T10:30:00.2Z",...}}
 ```
 
 Benefits:
@@ -242,10 +242,13 @@ During playback, active annotations are included in state queries.
 For deterministic replay, the `ReplayProvider` simulates the original provider:
 
 ```go
-provider, _ := replay.NewProviderFromRecording(rec)
+// rec is a *recording.SessionRecording; nil config uses replay.DefaultConfig().
+provider, _ := replay.NewProvider(rec, nil)
+// Or load the recording file directly:
+// provider, _ := replay.NewProviderFromFile("recordings/<run-id>.jsonl", nil)
 
-// Returns the same responses as the original session
-response, _ := provider.Complete(ctx, messages, opts)
+// Returns the recorded assistant responses, turn by turn
+response, _ := provider.Predict(ctx, providers.PredictionRequest{Messages: messages})
 ```
 
 Use cases:

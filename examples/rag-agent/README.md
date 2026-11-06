@@ -51,22 +51,9 @@ judges:
 
 Run with `OPENAI_API_KEY` in your environment. Each assertion now goes to the real LLM judge.
 
-## Dynamic retrieval
+## Context forms
 
-The demo passes contexts inline in the scenario assertions. For a live RAG agent that decides what to retrieve at runtime, pass the chunks through metadata:
-
-1. The retrieval tool writes its results to `evalCtx.Metadata` (e.g. `metadata["retrieved_chunks"]`).
-2. The assertion uses `context_field`:
-
-```yaml
-- type: faithfulness
-  params:
-    context_field: retrieved_chunks
-    judge: rag-judge
-    min_score: 0.8
-```
-
-The RAG handlers all support three context forms in priority order: `contexts` (`[]string`), `context` (string), `context_field` (metadata key).
+The RAG handlers read the retrieved context from, in priority order: `contexts` (`[]string`), `context` (string), or `context_field`, a key in the eval context's metadata. An Arena run puts no retrieval results into that metadata, so in Arena pass the chunks with `contexts` or `context`, as this demo does. `context_field` is for code that calls the PromptKit eval handlers directly and fills the metadata itself.
 
 ## File layout
 

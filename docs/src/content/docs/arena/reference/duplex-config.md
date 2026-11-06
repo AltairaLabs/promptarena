@@ -2,7 +2,7 @@
 title: Duplex Configuration Reference
 description: Scenario fields, voice catalog, audio input format and pipeline stages for duplex (bidirectional) streaming runs.
 verified:
-  commit: 60cd1a146e6224c0d66c972d18f329a0ce76c522
+  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
   sources:
     - arena/arenaconfig/loader.go
     - arena/arenaconfig/persona.go
@@ -18,7 +18,6 @@ verified:
     - arena/selfplay/registry.go
     - arena/selfplay/tts_registry.go
     - arena/turnexecutors/audio_file_source.go
-    - arena/turnexecutors/media_validator.go
     - examples/duplex-streaming/providers/mock-tts.provider.yaml
     - examples/duplex-streaming/providers/openai-alloy.provider.yaml
     - examples/voice-refund-demo/config.arena.yaml
@@ -295,7 +294,7 @@ turns:
 | Sample Rate | 16000 Hz | Every chunk read from a file, WAV or raw, is labelled 16000 Hz; the WAV header's rate is not used. The Gemini encoder accepts only 16000 Hz |
 | Bit Depth | 16-bit | Raw `.pcm`/`.raw` files hold 16-bit samples. WAV files with 24-bit, 32-bit or float32 samples are converted to 16-bit PCM by `AudioFileSource` |
 | Channels | Mono | Every chunk is labelled one channel, WAV or raw; audio is not downmixed |
-| MIME Type | any `audio/` type | `mime_type` is required by the schema and needs an `audio/` prefix where validated. Decoding follows the file extension; `mime_type` labels the stored audio |
+| MIME Type | any `audio/` type | `mime_type` is required by the schema. Decoding follows the file extension; `mime_type` labels the stored audio |
 
 See [Prepare the Audio](/arena/how-to/voice/setup-voice-testing/#prepare-the-audio) to convert files to this format.
 
@@ -317,15 +316,13 @@ spec:
   type: gemini
   model: gemini-2.0-flash-exp
 
-  defaults:
-    temperature: 0.7
-    max_tokens: 1000
-
   # Gemini-specific configuration
   additional_config:
     response_modalities:
       - AUDIO   # Returns audio + text transcription
 ```
+
+A duplex session takes its sampling from the arena config: `defaults.temperature` and `defaults.max_tokens` (`run --max-tokens` overrides the latter). Unset or `0` leaves the value to the provider. The provider sends the parameters its realtime API accepts and logs a warning for the rest. A turn's `assistant_temp` does not apply, because one session spans the whole conversation. A provider file's own `defaults` block is not sent.
 
 ### Response Modalities
 

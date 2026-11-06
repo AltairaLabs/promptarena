@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/reference/deploy/protocol.md",
- "commit": "60cd1a146e6224c0d66c972d18f329a0ce76c522",
+ "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
  "claims": [
   {
    "id": 1,
@@ -103,7 +103,7 @@
    "claim": "get_provider_info returns adapter metadata",
    "verdict": "true",
    "evidence": [
-    "deploy/adaptersdk/serve.go:183"
+    "deploy/adaptersdk/serve.go:200"
    ]
   },
   {
@@ -111,7 +111,7 @@
    "claim": "get_provider_info request uses an empty params object",
    "verdict": "false",
    "evidence": [
-    "deploy/adaptersdk/serve.go:183",
+    "deploy/adaptersdk/serve.go:200",
     "deploy/client.go:271",
     "deploy/client.go:47"
    ]
@@ -262,7 +262,7 @@
    "claim": "plan analyzes the pack and config to determine which resources need to change",
    "verdict": "true",
    "evidence": [
-    "deploy/adaptersdk/serve.go:213",
+    "deploy/adaptersdk/serve.go:230",
     "deploy/provider.go:178"
    ]
   },
@@ -371,7 +371,7 @@
    "claim": "apply executes the deployment plan, creating, updating or deleting resources",
    "verdict": "true",
    "evidence": [
-    "deploy/adaptersdk/serve.go:230",
+    "deploy/adaptersdk/serve.go:247",
     "deploy/provider.go:179"
    ]
   },
@@ -380,7 +380,7 @@
    "claim": "apply request params are pack_json, deploy_config, environment and prior_state",
    "verdict": "true",
    "evidence": [
-    "deploy/adaptersdk/serve.go:235",
+    "deploy/adaptersdk/serve.go:252",
     "deploy/provider.go:40"
    ]
   },
@@ -465,7 +465,7 @@
    "claim": "destroy tears down all managed resources",
    "verdict": "true",
    "evidence": [
-    "deploy/adaptersdk/serve.go:254",
+    "deploy/adaptersdk/serve.go:271",
     "deploy/provider.go:180"
    ]
   },
@@ -482,7 +482,7 @@
    "claim": "destroy response example has status destroyed and an events array with progress and complete events",
    "verdict": "true",
    "evidence": [
-    "deploy/adaptersdk/serve.go:272",
+    "deploy/adaptersdk/serve.go:289",
     "deploy/adaptersdk/serve.go:77"
    ]
   },
@@ -499,7 +499,7 @@
    "claim": "destroy result status is always destroyed on success",
    "verdict": "true",
    "evidence": [
-    "deploy/adaptersdk/serve.go:272"
+    "deploy/adaptersdk/serve.go:289"
    ]
   },
   {
@@ -525,7 +525,7 @@
    "claim": "status queries current deployment status from the cloud provider",
    "verdict": "true",
    "evidence": [
-    "deploy/adaptersdk/serve.go:276",
+    "deploy/adaptersdk/serve.go:293",
     "deploy/provider.go:181"
    ]
   },
@@ -607,7 +607,7 @@
    "claim": "import imports a pre-existing resource into deployment state so the CLI can manage it",
    "verdict": "true",
    "evidence": [
-    "deploy/adaptersdk/serve.go:293",
+    "deploy/adaptersdk/serve.go:310",
     "deploy/provider.go:182"
    ]
   },
@@ -690,7 +690,7 @@
    "verdict": "true",
    "evidence": [
     "arena/deploy/flow/login.go:134",
-    "deploy/adaptersdk/serve.go:317",
+    "deploy/adaptersdk/serve.go:334",
     "deploy/provider.go:187"
    ]
   },
@@ -769,7 +769,7 @@
    "claim": "complete_login is optional and exchanges the captured callback parameters for a deploy profile and a scoped token",
    "verdict": "true",
    "evidence": [
-    "deploy/adaptersdk/serve.go:334",
+    "deploy/adaptersdk/serve.go:351",
     "deploy/provider.go:217"
    ]
   },
@@ -838,7 +838,7 @@
    "claim": "list_sessions is served only by adapters that advertise the sessions capability and implement the SessionSourceProvider interface; other adapters return method-not-found",
    "verdict": "true",
    "evidence": [
-    "deploy/adaptersdk/serve.go:384",
+    "deploy/adaptersdk/serve.go:401",
     "deploy/sessions.go:13"
    ]
   },
@@ -974,7 +974,7 @@
    "claim": "get_session is optional and returns one session in full",
    "verdict": "true",
    "evidence": [
-    "deploy/adaptersdk/serve.go:401",
+    "deploy/adaptersdk/serve.go:418",
     "deploy/sessions.go:84"
    ]
   },
@@ -1056,10 +1056,11 @@
   },
   {
    "id": 125,
-   "claim": "Error code -32600 is Invalid Request",
-   "verdict": "dead",
+   "claim": "Error code -32600 is Invalid Request, sent for a request with no jsonrpc 2.0 or no method",
+   "verdict": "true",
    "evidence": [
-    "deploy/adaptersdk/serve.go:35"
+    "deploy/adaptersdk/serve.go:147",
+    "deploy/adaptersdk/serve.go:152"
    ]
   },
   {
@@ -1067,7 +1068,7 @@
    "claim": "Error code -32601 is Method Not Found",
    "verdict": "true",
    "evidence": [
-    "deploy/adaptersdk/serve.go:174",
+    "deploy/adaptersdk/serve.go:191",
     "deploy/adaptersdk/serve.go:36",
     "deploy/client.go:72"
    ]
@@ -1077,7 +1078,7 @@
    "claim": "Error code -32603 is Internal Error for provider method errors",
    "verdict": "true",
    "evidence": [
-    "deploy/adaptersdk/serve.go:190",
+    "deploy/adaptersdk/serve.go:207",
     "deploy/adaptersdk/serve.go:37"
    ]
   },
@@ -1095,7 +1096,7 @@
    "claim": "Example adapter error response uses code -32603 with an AWS AccessDeniedException message",
    "verdict": "true",
    "evidence": [
-    "deploy/adaptersdk/serve.go:190"
+    "deploy/adaptersdk/serve.go:207"
    ]
   },
   {
@@ -1112,8 +1113,8 @@
    "claim": "The adapter must include the matching id in each response",
    "verdict": "true",
    "evidence": [
-    "deploy/adaptersdk/serve.go:177",
-    "deploy/adaptersdk/serve.go:359"
+    "deploy/adaptersdk/serve.go:194",
+    "deploy/adaptersdk/serve.go:376"
    ]
   },
   {

@@ -1,13 +1,13 @@
 {
  "page": "docs/src/content/docs/arena/reference/output-formats.md",
- "commit": "60cd1a146e6224c0d66c972d18f329a0ce76c522",
+ "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
  "claims": [
   {
    "id": 1,
    "claim": "PromptArena supports multiple output formats for test results",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:57"
+    "arena/cmd/promptarena/run.go:56"
    ]
   },
   {
@@ -15,7 +15,7 @@
    "claim": "Multiple formats can be generated simultaneously from a single test run",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:57",
+    "arena/cmd/promptarena/run.go:56",
     "arena/results/composite.go"
    ]
   },
@@ -24,7 +24,7 @@
    "claim": "Format registry name 'json' with file extension .json",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:59",
+    "arena/cmd/promptarena/run.go:58",
     "arena/results/json/json_repository.go:22"
    ]
   },
@@ -33,7 +33,7 @@
    "claim": "Format registry name 'markdown' with file extension .md",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:72",
+    "arena/cmd/promptarena/run.go:71",
     "arena/results/markdown/markdown_repository.go:25"
    ]
   },
@@ -42,8 +42,8 @@
    "claim": "Format registry name 'junit' with file extension .xml",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:478",
-    "arena/cmd/promptarena/run.go:62"
+    "arena/cmd/promptarena/run.go",
+    "arena/cmd/promptarena/run.go:61"
    ]
   },
   {
@@ -51,7 +51,7 @@
    "claim": "Format registry name 'csv' with file extension .csv",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:65",
+    "arena/cmd/promptarena/run.go:64",
     "arena/results/csv/csv_repository.go:23"
    ]
   },
@@ -60,7 +60,7 @@
    "claim": "Format registry name 'objectives' writes .json and .md files",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:67",
+    "arena/cmd/promptarena/run.go:66",
     "arena/results/objectives/repository.go:17"
    ]
   },
@@ -69,8 +69,8 @@
    "claim": "There is no HTML report output (report.html is no longer produced)",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:36",
-    "arena/cmd/promptarena/run.go:458"
+    "arena/cmd/promptarena/run.go:35",
+    "arena/cmd/promptarena/run.go:503"
    ]
   },
   {
@@ -96,8 +96,8 @@
    "claim": "'html' is still accepted as a format for backwards compatibility",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:40",
-    "arena/cmd/promptarena/run.go:458"
+    "arena/cmd/promptarena/run.go:39",
+    "arena/cmd/promptarena/run.go:503"
    ]
   },
   {
@@ -105,8 +105,8 @@
    "claim": "Passing --format html produces a Markdown report silently",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:426",
-    "arena/cmd/promptarena/run.go:458"
+    "arena/cmd/promptarena/run.go:471",
+    "arena/cmd/promptarena/run.go:503"
    ]
   },
   {
@@ -114,8 +114,8 @@
    "claim": "Setting html in defaults.output.formats silently produces a Markdown report",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:373",
-    "arena/cmd/promptarena/run.go:426"
+    "arena/cmd/promptarena/run.go:418",
+    "arena/cmd/promptarena/run.go:471"
    ]
   },
   {
@@ -123,8 +123,8 @@
    "claim": "The run command has a --format flag (singular)",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:148",
-    "arena/cmd/promptarena/run.go:368"
+    "arena/cmd/promptarena/run.go:174",
+    "arena/cmd/promptarena/run.go:413"
    ]
   },
   {
@@ -142,7 +142,7 @@
    "claim": "Output file results.md (Markdown report) is written to the output directory",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:486",
+    "arena/cmd/promptarena/run.go:536",
     "arena/results/markdown/markdown_repository.go:25"
    ]
   },
@@ -151,7 +151,7 @@
    "claim": "Output file junit.xml (JUnit XML) is written to the output directory",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:478"
+    "arena/cmd/promptarena/run.go"
    ]
   },
   {
@@ -184,7 +184,7 @@
    "claim": "A media/ directory is created under the output directory for media storage",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:1024"
+    "arena/engine/engine.go"
    ]
   },
   {
@@ -192,7 +192,7 @@
    "claim": "Media layout is media/run-<timestamp>/<session>/<conv>/ with image files and .meta sidecars (image1.png, image1.png.meta)",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:1027"
+    "arena/engine/engine.go:1018"
    ]
   },
   {
@@ -200,7 +200,7 @@
    "claim": "Arena automatically creates a media/ directory to store large media content (images, audio, video)",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:1017"
+    "arena/engine/engine.go:1013"
    ]
   },
   {
@@ -208,7 +208,7 @@
    "claim": "Media deduplication is enabled (shared media stored once)",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:1030"
+    "arena/engine/engine.go:1021"
    ]
   },
   {
@@ -216,7 +216,7 @@
    "claim": "Media organization is by-run (each run isolated under its own run-<timestamp> directory)",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:1029"
+    "arena/engine/engine.go:1020"
    ]
   },
   {
@@ -224,7 +224,7 @@
    "claim": "Each media file has a .meta sidecar file with context",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:1027"
+    "arena/engine/engine.go:1018"
    ]
   },
   {
@@ -232,8 +232,7 @@
    "claim": "Media location is {output_dir}/media/run-{timestamp}/",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:1019",
-    "arena/engine/engine.go:1024"
+    "arena/engine/engine.go"
    ]
   },
   {
@@ -247,19 +246,20 @@
    "claim": "Configuration key path defaults.output",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:466"
+    "arena/arenaconfig/types.go:469"
    ]
   },
   {
    "id": 30,
-   "claim": "Field defaults.output.dir sets the output directory",
-   "verdict": "false",
+   "claim": "defaults.output.dir sets the output directory unless --out is set",
+   "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:514",
-    "arena/cmd/promptarena/run.go:294",
-    "arena/cmd/promptarena/serve_interactive.go:221",
-    "arena/engine/engine.go:1019",
-    "arena/engine/engine.go:703"
+    "arena/arenaconfig/helpers.go:38",
+    "arena/arenaconfig/helpers.go:55",
+    "arena/cmd/promptarena/run.go:361",
+    "arena/cmd/promptarena/serve_interactive.go:222",
+    "arena/engine/engine.go:1015",
+    "arena/engine/engine.go:702"
    ]
   },
   {
@@ -267,8 +267,8 @@
    "claim": "Field defaults.output.formats is a list of format names, example value ['json','markdown','junit']",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:515",
-    "arena/cmd/promptarena/run.go:373"
+    "arena/arenaconfig/types.go:520",
+    "arena/cmd/promptarena/run.go:418"
    ]
   },
   {
@@ -276,7 +276,7 @@
    "claim": "Config block defaults.output.markdown exists",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:518"
+    "arena/arenaconfig/types.go:523"
    ]
   },
   {
@@ -284,8 +284,8 @@
    "claim": "Field markdown.file sets custom Markdown output filename",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:536",
-    "arena/cmd/promptarena/run.go:483"
+    "arena/arenaconfig/types.go:541",
+    "arena/cmd/promptarena/run.go:533"
    ]
   },
   {
@@ -293,7 +293,7 @@
    "claim": "Field markdown.include_details (boolean) includes detailed test information",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:537",
+    "arena/arenaconfig/types.go:542",
     "arena/results/markdown/markdown_repository.go:166"
    ]
   },
@@ -302,7 +302,7 @@
    "claim": "Field markdown.show_overview (boolean) shows executive overview section",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:538",
+    "arena/arenaconfig/types.go:543",
     "arena/results/markdown/markdown_repository.go:156"
    ]
   },
@@ -311,7 +311,7 @@
    "claim": "Field markdown.show_results_matrix (boolean) shows results matrix table",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:539",
+    "arena/arenaconfig/types.go:544",
     "arena/results/markdown/markdown_repository.go:161"
    ]
   },
@@ -320,7 +320,7 @@
    "claim": "Field markdown.show_failed_tests (boolean) shows failed tests section",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:540",
+    "arena/arenaconfig/types.go:545",
     "arena/results/markdown/markdown_repository.go:171"
    ]
   },
@@ -329,7 +329,7 @@
    "claim": "Field markdown.show_cost_summary (boolean) shows cost analysis section",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:541",
+    "arena/arenaconfig/types.go:546",
     "arena/results/markdown/markdown_repository.go:176"
    ]
   },
@@ -338,16 +338,16 @@
    "claim": "Config block defaults.output.junit exists",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:519"
+    "arena/arenaconfig/types.go:524"
    ]
   },
   {
    "id": 40,
-   "claim": "Field junit.file sets custom JUnit output filename",
-   "verdict": "dead",
+   "claim": "junit.file sets the JUnit file, relative to the output directory",
+   "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:546",
-    "arena/cmd/promptarena/run.go:477"
+    "arena/arenaconfig/types.go:550",
+    "arena/cmd/promptarena/run.go:524"
    ]
   },
   {
@@ -599,8 +599,8 @@
    "claim": "Turn field assertions (array)",
    "verdict": "false",
    "evidence": [
-    "arena/results/markdown/markdown_repository.go:357",
-    "arena/results/markdown/markdown_repository.go:373"
+    "arena/results/markdown/markdown_repository.go:352",
+    "arena/results/markdown/markdown_repository.go:368"
    ]
   },
   {
@@ -616,7 +616,7 @@
    "claim": "Assertion field passed (boolean)",
    "verdict": "true",
    "evidence": [
-    "arena/results/markdown/markdown_repository.go:403"
+    "arena/results/markdown/markdown_repository.go:398"
    ]
   },
   {
@@ -624,7 +624,7 @@
    "claim": "Assertion field message (example value 'Should mention Paris')",
    "verdict": "true",
    "evidence": [
-    "arena/results/markdown/markdown_repository.go:378"
+    "arena/results/markdown/markdown_repository.go:373"
    ]
   },
   {
@@ -632,7 +632,7 @@
    "claim": "Assertion field details (null in example)",
    "verdict": "true",
    "evidence": [
-    "arena/results/markdown/markdown_repository.go:378"
+    "arena/results/markdown/markdown_repository.go:373"
    ]
   },
   {
@@ -672,7 +672,7 @@
    "claim": "JSON output has no format-specific options",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:524"
+    "arena/arenaconfig/types.go:529"
    ]
   },
   {
@@ -680,8 +680,8 @@
    "claim": "JSON format is enabled by adding json to defaults.output.formats",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:377",
-    "arena/cmd/promptarena/run.go:59"
+    "arena/cmd/promptarena/run.go:422",
+    "arena/cmd/promptarena/run.go:58"
    ]
   },
   {
@@ -932,8 +932,8 @@
    "claim": "Turn.assertions is an optional Assertion array",
    "verdict": "false",
    "evidence": [
-    "arena/results/markdown/markdown_repository.go:357",
-    "arena/results/markdown/markdown_repository.go:373"
+    "arena/results/markdown/markdown_repository.go:352",
+    "arena/results/markdown/markdown_repository.go:368"
    ]
   },
   {
@@ -941,7 +941,7 @@
    "claim": "Assertion.type is a string",
    "verdict": "true",
    "evidence": [
-    "arena/results/markdown/markdown_repository.go:378"
+    "arena/results/markdown/markdown_repository.go:373"
    ]
   },
   {
@@ -949,7 +949,7 @@
    "claim": "Assertion.passed is a boolean",
    "verdict": "true",
    "evidence": [
-    "arena/results/markdown/markdown_repository.go:403"
+    "arena/results/markdown/markdown_repository.go:398"
    ]
   },
   {
@@ -957,7 +957,7 @@
    "claim": "Assertion.message is a string",
    "verdict": "true",
    "evidence": [
-    "arena/results/markdown/markdown_repository.go:378"
+    "arena/results/markdown/markdown_repository.go:373"
    ]
   },
   {
@@ -965,7 +965,7 @@
    "claim": "Assertion.details is optional any",
    "verdict": "true",
    "evidence": [
-    "arena/results/markdown/markdown_repository.go:378"
+    "arena/results/markdown/markdown_repository.go:373"
    ]
   },
   {
@@ -1059,7 +1059,7 @@
    "claim": "Previous (historical) results load alongside the current run",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:231",
+    "arena/cmd/promptarena/serve_interactive.go:226",
     "arena/web/frontend/src/App.tsx:276"
    ]
   },
@@ -1086,7 +1086,7 @@
    "claim": "promptarena serve loads existing results and can start new runs",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:231",
+    "arena/cmd/promptarena/serve_interactive.go:226",
     "arena/web/server.go:135"
    ]
   },
@@ -1104,7 +1104,7 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/serve_interactive.go:133",
-    "arena/cmd/promptarena/serve_interactive.go:259"
+    "arena/cmd/promptarena/serve_interactive.go:254"
    ]
   },
   {
@@ -1137,8 +1137,8 @@
    "claim": "Markdown report has a Summary section with Total Tests, Passed, Failed, Duration, Cost and Tokens bullets",
    "verdict": "false",
    "evidence": [
-    "arena/results/markdown/markdown_repository.go:414",
-    "arena/results/markdown/markdown_repository.go:417"
+    "arena/results/markdown/markdown_repository.go:409",
+    "arena/results/markdown/markdown_repository.go:412"
    ]
   },
   {
@@ -1146,7 +1146,7 @@
    "claim": "Markdown report formats token counts with thousands separators (4,521)",
    "verdict": "false",
    "evidence": [
-    "arena/results/markdown/markdown_repository.go:413"
+    "arena/results/markdown/markdown_repository.go:408"
    ]
   },
   {
@@ -1154,8 +1154,8 @@
    "claim": "Markdown report has a Results by Provider section with per-provider headings and per-scenario subheadings (Scenario: name)",
    "verdict": "false",
    "evidence": [
-    "arena/results/markdown/markdown_repository.go:501",
-    "arena/results/markdown/markdown_repository.go:502"
+    "arena/results/markdown/markdown_repository.go:496",
+    "arena/results/markdown/markdown_repository.go:497"
    ]
   },
   {
@@ -1163,7 +1163,7 @@
    "claim": "Markdown per-scenario block shows Status in upper case (PASSED), Duration and Cost",
    "verdict": "false",
    "evidence": [
-    "arena/results/markdown/markdown_repository.go:502"
+    "arena/results/markdown/markdown_repository.go:497"
    ]
   },
   {
@@ -1172,7 +1172,7 @@
    "verdict": "false",
    "evidence": [
     "arena/results/markdown/markdown_repository.go:166",
-    "arena/results/markdown/markdown_repository.go:502"
+    "arena/results/markdown/markdown_repository.go:497"
    ]
   },
   {
@@ -1180,8 +1180,8 @@
    "claim": "Markdown assertion list shows assertion type and message (content_includes: Should mention Paris)",
    "verdict": "false",
    "evidence": [
-    "arena/results/markdown/markdown_repository.go:537",
-    "arena/results/markdown/markdown_repository.go:555"
+    "arena/results/markdown/markdown_repository.go:532",
+    "arena/results/markdown/markdown_repository.go:550"
    ]
   },
   {
@@ -1197,7 +1197,7 @@
    "claim": "Markdown options block accepts keys file, include_details, show_overview, show_results_matrix, show_failed_tests, show_cost_summary under output.markdown",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:535-541",
+    "arena/arenaconfig/types.go:540-546",
     "arena/results/markdown/markdown_repository.go:156-179"
    ]
   },
@@ -1206,7 +1206,7 @@
    "claim": "Field markdown.include_details (example report.md) includes full conversation details",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:537",
+    "arena/arenaconfig/types.go:542",
     "arena/results/markdown/markdown_repository.go:166-168"
    ]
   },
@@ -1215,7 +1215,7 @@
    "claim": "Field markdown.show_cost_summary in the Markdown options block",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:541",
+    "arena/arenaconfig/types.go:546",
     "arena/results/markdown/markdown_repository.go:176"
    ]
   },
@@ -1224,8 +1224,8 @@
    "claim": "markdown.file default example value report.md",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:536",
-    "arena/cmd/promptarena/run.go:483-486"
+    "arena/arenaconfig/types.go:541",
+    "arena/cmd/promptarena/run.go:533-536"
    ]
   },
   {
@@ -1233,8 +1233,8 @@
    "claim": "GitHub Actions example step runs promptarena run arena.yaml",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run.go:144",
-    "arena/cmd/promptarena/run.go:294"
+    "arena/cmd/promptarena/run.go:168",
+    "arena/cmd/promptarena/run.go:328"
    ]
   },
   {
@@ -1242,7 +1242,7 @@
    "claim": "Example reads out/results.md, the Markdown report file",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:486"
+    "arena/cmd/promptarena/run.go:536"
    ]
   },
   {
@@ -1332,10 +1332,10 @@
   {
    "id": 160,
    "claim": "Config block junit with file key (example junit.xml)",
-   "verdict": "dead",
+   "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:545-548",
-    "arena/cmd/promptarena/run.go:476-478"
+    "arena/arenaconfig/types.go:550",
+    "arena/cmd/promptarena/run.go:524"
    ]
   },
   {
@@ -1343,7 +1343,7 @@
    "claim": "CI example runs promptarena run arena.yaml",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run.go:144"
+    "arena/cmd/promptarena/run.go:168"
    ]
   },
   {
@@ -1384,8 +1384,8 @@
    "claim": "Example formats list ['json','csv'] is valid for defaults.output.formats",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:358-380",
-    "arena/cmd/promptarena/run.go:60-66"
+    "arena/cmd/promptarena/run.go:403-425",
+    "arena/cmd/promptarena/run.go:59-65"
    ]
   },
   {
@@ -1422,13 +1422,11 @@
   },
   {
    "id": 172,
-   "claim": "CSV fixed column passed uses the same pass rule as JUnit and Markdown reports, false for skipped runs",
-   "verdict": "false",
+   "claim": "CSV passed column uses the run pass rule shared with the JSON summary counts; false for skipped runs",
+   "verdict": "true",
    "evidence": [
     "arena/results/csv/csv_repository.go:41",
-    "arena/results/junit/junit_repository.go:223-250",
-    "arena/results/markdown/markdown_repository.go:230-234",
-    "arena/results/utils.go:89-101"
+    "arena/results/utils.go:94"
    ]
   },
   {
@@ -1511,7 +1509,7 @@
    "claim": "Dynamic CSV column label.<key> comes from scenario metadata.labels (example label.arm)",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:487-488",
+    "arena/arenaconfig/loader.go:496-497",
     "arena/engine/execution.go:970-976",
     "arena/results/csv/csv_repository.go:149-151"
    ]
@@ -1593,7 +1591,7 @@
    "claim": "Command promptarena run with --ci flag",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:145"
+    "arena/cmd/promptarena/run.go"
    ]
   },
   {
@@ -1601,8 +1599,8 @@
    "claim": "Flag --formats on promptarena run accepts comma-separated list including json and objectives",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:150-151",
-    "arena/cmd/promptarena/run.go:361-364"
+    "arena/cmd/promptarena/run.go:176-177",
+    "arena/cmd/promptarena/run.go:406-409"
    ]
   },
   {
@@ -1610,8 +1608,8 @@
    "claim": "Flag --objectives-group-by on promptarena run",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:152-154",
-    "arena/cmd/promptarena/run.go:28"
+    "arena/cmd/promptarena/run.go:178-180",
+    "arena/cmd/promptarena/run.go:27"
    ]
   },
   {
@@ -1636,8 +1634,8 @@
    "claim": "One objectives table is produced per --objectives-group-by key, defaulting to scenario",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:152",
-    "arena/cmd/promptarena/run.go:392"
+    "arena/cmd/promptarena/run.go:178",
+    "arena/cmd/promptarena/run.go:437"
    ]
   },
   {
@@ -1660,7 +1658,7 @@
    "claim": "The --objectives-group-by flag only applies to the objectives format; otherwise it is ignored and a warning is printed",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:397-406"
+    "arena/cmd/promptarena/run.go:442-451"
    ]
   },
   {
@@ -1742,7 +1740,7 @@
    "claim": "An unknown --objectives-group-by key is an error",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:410-412",
+    "arena/cmd/promptarena/run.go:455-457",
     "arena/results/objectives/report.go:130-141"
    ]
   },
@@ -1929,7 +1927,7 @@
    "claim": "Scenario field trial_budget (link /arena/reference/config-schema/#trial_budget)",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:733"
+    "arena/arenaconfig/types.go:739"
    ]
   },
   {
@@ -1971,7 +1969,7 @@
    "claim": "Objective field baseline: true marks a baseline objective",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1209"
+    "arena/arenaconfig/types.go:1215"
    ]
   },
   {
@@ -2052,7 +2050,7 @@
    "claim": "A scenario with trials contributes one attempt per trial and its cost covers every trial",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:730",
+    "arena/arenaconfig/types.go:736",
     "arena/results/objectives/report.go:365-373",
     "arena/results/objectives/report.go:607-614"
    ]
@@ -2117,7 +2115,7 @@
    "claim": "Generating all formats in one run uses defaults.output.formats list of json, markdown, junit",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:57-93"
+    "arena/cmd/promptarena/run.go:56-92"
    ]
   },
   {
@@ -2125,20 +2123,22 @@
    "claim": "Multiple-format output tree shows results.json, results.md and junit.xml",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run.go:486",
+    "arena/cmd/promptarena/run.go:536",
     "arena/results/json/json_repository.go:22",
     "arena/results/junit/junit_repository.go:157"
    ]
   },
   {
    "id": 256,
-   "claim": "Config key defaults.output.dir accepts a custom directory name (example test-results-2024-01-15)",
-   "verdict": "false",
+   "claim": "defaults.output.dir accepts a custom directory name",
+   "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:116",
-    "arena/cmd/promptarena/run.go:294",
-    "arena/cmd/promptarena/serve_interactive.go:221",
-    "arena/engine/engine.go:1019-1025"
+    "arena/arenaconfig/helpers.go:38",
+    "arena/arenaconfig/helpers.go:55",
+    "arena/cmd/promptarena/run.go:361",
+    "arena/cmd/promptarena/serve_interactive.go:222",
+    "arena/engine/engine.go:1015",
+    "arena/engine/engine.go:702"
    ]
   },
   {
@@ -2146,15 +2146,16 @@
    "claim": "Flag --out on promptarena run overrides the output directory",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:144"
+    "arena/cmd/promptarena/run.go:168"
    ]
   },
   {
    "id": 258,
-   "claim": "Command promptarena run arena.yaml --out custom-dir",
-   "verdict": "false",
+   "claim": "Command promptarena run -c arena.yaml --out custom-dir",
+   "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:144"
+    "arena/cmd/promptarena/run.go:119",
+    "arena/cmd/promptarena/run.go:139"
    ]
   },
   {
@@ -2250,7 +2251,7 @@
    "claim": "Each format in defaults.output.formats is written on every run",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:55-93"
+    "arena/cmd/promptarena/run.go:54-92"
    ]
   },
   {
@@ -2258,7 +2259,7 @@
    "claim": "Example formats ['json'] is valid for defaults.output.formats",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:60-62"
+    "arena/cmd/promptarena/run.go:59-61"
    ]
   },
   {
@@ -2282,8 +2283,8 @@
    "claim": "Format names markdown, junit, json used in best-practice examples are valid format names",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:513-515",
-    "arena/cmd/promptarena/run.go:57-93"
+    "arena/arenaconfig/types.go:518-520",
+    "arena/cmd/promptarena/run.go:56-92"
    ]
   },
   {
@@ -2318,6 +2319,46 @@
    "verdict": "true",
    "evidence": [
     "examples/tap-search/config.arena.yaml:1"
+   ]
+  },
+  {
+   "id": 281,
+   "claim": "run, serve, media storage and recordings share one output directory: --out, else defaults.output.dir, else out",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/helpers.go:38",
+    "arena/arenaconfig/helpers.go:55",
+    "arena/cmd/promptarena/run.go:361",
+    "arena/cmd/promptarena/serve_interactive.go:222",
+    "arena/engine/engine.go:1015",
+    "arena/engine/engine.go:702"
+   ]
+  },
+  {
+   "id": 282,
+   "claim": "Media stored under media/ counts as loaded in the Markdown media tables",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/markdown/markdown_repository.go",
+    "arena/results/media.go:9"
+   ]
+  },
+  {
+   "id": 283,
+   "claim": "A run is Pass in results.md when it has no error, no guardrail violation and no failed assertion",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/markdown/markdown_repository.go:230",
+    "arena/results/utils.go:94"
+   ]
+  },
+  {
+   "id": 284,
+   "claim": "The CSV passed column uses the run pass rule the JSON summary counts use",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/csv/csv_repository.go:41",
+    "arena/results/utils.go:94"
    ]
   }
  ]
