@@ -1,0 +1,756 @@
+{
+ "page": "docs/src/content/docs/arena/explanation/testing-philosophy.md",
+ "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "Example block (lines 32-56, behavioural testing) is valid PromptArena scenario/assertion YAML: an assertions list with type/params entries",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:25",
+    "arena/assertions/types.go:38"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "A turn or test accepts an 'assertions:' list key",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1181"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "content_matches is a registered assertion type",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 4,
+   "claim": "content_matches takes a 'pattern' param",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 5,
+   "claim": "Assertions accept a 'message' param used as the failure text",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:25",
+    "arena/assertions/types.go:38"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "content_includes is a registered assertion type",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 7,
+   "claim": "content_includes takes a 'patterns' param that is a list of strings",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 8,
+   "claim": "content_includes passes only when every listed pattern is present in the response",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 9,
+   "claim": "content_includes matching is case-insensitive (example lists lowercase 'thank' against a response beginning 'Thank you')",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 10,
+   "claim": "llm_judge is a registered assertion type",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 11,
+   "claim": "llm_judge takes a 'criteria' param (string)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 12,
+   "claim": "llm_judge takes a 'judge_provider' param",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/judge_param.go:42"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "judge_provider accepts the value form 'openai/gpt-4o-mini' (type/model)",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/judge_param.go:42"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "Multi-dimensional example block (lines 71-92) is valid assertion YAML using content_includes, llm_judge, content_matches, is_valid_json",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:25",
+    "arena/assertions/types.go:38"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "content_matches pattern ^(?!.*(offensive|inappropriate)).*$ uses a negative lookahead and enforces that the response contains neither word",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 16,
+   "claim": "is_valid_json is a registered assertion type",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 17,
+   "claim": "is_valid_json accepts a 'message' param and no other required param",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 18,
+   "claim": "Comparative example block (lines 102-110) uses a scenario-level 'providers' list of provider ids",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:695",
+    "arena/engine/execution.go:280"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "A scenario accepts a top-level 'providers' list field",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:695",
+    "schemas/v1alpha1/scenario.json:605"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "The same scenario runs against each listed provider and results can be compared per provider",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/execution.go:271",
+    "arena/engine/execution.go:280",
+    "arena/engine/types.go:55"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "Contextual example block (lines 116-148) is valid scenario YAML with named turn groups containing context, nested turns and assertions",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:1134",
+    "arena/arenaconfig/types.go:693"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "A 'turns' list entry may be a named group with 'name', 'context' and nested 'turns'",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:1134",
+    "arena/arenaconfig/types.go:1145"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "A turn group accepts a 'context' map with arbitrary keys (user_type, urgency)",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:1134",
+    "arena/arenaconfig/types.go:693"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "A turn entry accepts role 'user'",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1135"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "A turn entry accepts a 'content' string",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1136"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "A turn entry accepts its own 'assertions' list",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1181"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "Layered testing pyramid diagram has four nodes: Exploratory Testing, Integration Tests, Scenario Tests, Smoke Tests with the labels given",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 28,
+   "claim": "Pyramid diagram edge: Exploratory Testing (A) --> Integration Tests (B)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 29,
+   "claim": "Pyramid diagram edge: Integration Tests (B) --> Scenario Tests (C)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 30,
+   "claim": "Pyramid diagram edge: Scenario Tests (C) --> Smoke Tests (D)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 31,
+   "claim": "Smoke tests run on mock providers",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:192",
+    "arena/engine/engine.go:738"
+   ]
+  },
+  {
+   "id": 32,
+   "claim": "Smoke test tier runs in under 30 seconds",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 33,
+   "claim": "Scenario test tier runs in under 5 minutes",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 34,
+   "claim": "Integration test tier runs in under 20 minutes",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 35,
+   "claim": "Progressive validation example block (lines 204-248) is valid assertion YAML across four levels",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:25",
+    "arena/assertions/types.go:38"
+   ]
+  },
+  {
+   "id": 36,
+   "claim": "content_matches 'pattern' is a regular expression, and bounded repetition ^.{50,}$ is supported",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 37,
+   "claim": "Custom business-logic validators are not built in and would need to be implemented as extensions",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 38,
+   "claim": "PromptArena uses the PromptPack specification format for test scenarios",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/loader.go:478"
+   ]
+  },
+  {
+   "id": 39,
+   "claim": "Test scenarios are authored as YAML files",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:478",
+    "arena/arenaconfig/types.go:683"
+   ]
+  },
+  {
+   "id": 40,
+   "claim": "Provider abstraction example block (lines 275-284) is valid provider config YAML with type and model entries",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:388",
+    "schemas/v1alpha1/arena.json:645"
+   ]
+  },
+  {
+   "id": 41,
+   "claim": "Each provider entry accepts 'type' and 'model' fields",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/provider.json:1"
+   ]
+  },
+  {
+   "id": 42,
+   "claim": "Provider type 'openai' is a valid enum value",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 43,
+   "claim": "Provider type 'anthropic' is a valid enum value",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 44,
+   "claim": "Provider type 'google' is a valid enum value",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 45,
+   "claim": "Model id 'gpt-4o' is accepted for provider type openai",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 46,
+   "claim": "Model id 'claude-3-5-sonnet' is accepted for provider type anthropic",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 47,
+   "claim": "Model id 'gemini-1.5-pro' is accepted for provider type google",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 48,
+   "claim": "Declarative assertions example block (lines 296-307) is valid YAML using content_includes and llm_judge",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/judge_param.go:42",
+    "arena/arenaconfig/types.go:25",
+    "arena/assertions/types.go:38"
+   ]
+  },
+  {
+   "id": 49,
+   "claim": "Mock-provider command block (lines 330-336) is valid promptarena invocation syntax",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:192"
+   ]
+  },
+  {
+   "id": 50,
+   "claim": "CLI command 'promptarena run' exists",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:192"
+   ]
+  },
+  {
+   "id": 51,
+   "claim": "CLI flag '--mock-provider' exists on 'promptarena run'",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:192"
+   ]
+  },
+  {
+   "id": 52,
+   "claim": "CLI flag '--provider' exists on 'promptarena run'",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:192"
+   ]
+  },
+  {
+   "id": 53,
+   "claim": "Provider id 'openai-gpt4o-mini' is a valid provider id that a config can define and select",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/execution.go:271"
+   ]
+  },
+  {
+   "id": 54,
+   "claim": "promptarena run --mock-provider validates scenario structure without making API calls",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:738",
+    "arena/engine/engine.go:762"
+   ]
+  },
+  {
+   "id": 55,
+   "claim": "promptarena run --mock-provider finishes in under 10 seconds at zero cost",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 56,
+   "claim": "promptarena run --provider openai-gpt4o-mini takes about 5 minutes and costs about 0.05 per run",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 57,
+   "claim": "Mock providers return predictable, deterministic responses",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:716",
+    "arena/engine/engine.go:762"
+   ]
+  },
+  {
+   "id": 58,
+   "claim": "Mock providers make no API calls, so configuration can be tested without network spend",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:738",
+    "arena/engine/engine.go:762"
+   ]
+  },
+  {
+   "id": 59,
+   "claim": "Mock providers allow development offline without internet access",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:738",
+    "arena/engine/engine.go:762"
+   ]
+  },
+  {
+   "id": 60,
+   "claim": "Over-specification example block (lines 342-349) is valid assertion YAML",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:25",
+    "arena/assertions/types.go:38"
+   ]
+  },
+  {
+   "id": 61,
+   "claim": "Over-specification 'Better' example block (lines 354-365) is valid assertion YAML",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/judge_param.go:42",
+    "arena/arenaconfig/types.go:25",
+    "arena/assertions/types.go:38"
+   ]
+  },
+  {
+   "id": 62,
+   "claim": "Under-specification example block (lines 369-376) is valid assertion YAML",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:25",
+    "arena/assertions/types.go:38"
+   ]
+  },
+  {
+   "id": 63,
+   "claim": "Under-specification 'Better' example block (lines 381-400) is valid assertion YAML",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/judge_param.go:42",
+    "arena/arenaconfig/types.go:25",
+    "arena/assertions/types.go:38"
+   ]
+  },
+  {
+   "id": 64,
+   "claim": "Flaky tests example block (lines 404-411) is valid assertion YAML",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:25",
+    "arena/assertions/types.go:38"
+   ]
+  },
+  {
+   "id": 65,
+   "claim": "content_matches anchors ^ and $ against the full response string",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 66,
+   "claim": "Flaky tests 'Better' example block (lines 416-427) is valid assertion YAML",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/judge_param.go:42",
+    "arena/arenaconfig/types.go:25",
+    "arena/assertions/types.go:38"
+   ]
+  },
+  {
+   "id": 67,
+   "claim": "Implementation-testing example block (lines 431-448) is valid assertion YAML using tools_called and conversation_assertions",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 68,
+   "claim": "tools_called is a registered assertion type",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 69,
+   "claim": "tools_called takes a 'tools' list param",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 70,
+   "claim": "Scenario accepts a top-level 'conversation_assertions' list key",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:707"
+   ]
+  },
+  {
+   "id": 71,
+   "claim": "tool_calls_with_args is a registered conversation-level assertion type",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 72,
+   "claim": "tool_calls_with_args takes 'tool' and 'expected_args' params, where expected_args is a map",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 73,
+   "claim": "Implementation-testing 'Better' example block (lines 454-465) is valid assertion YAML",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/judge_param.go:42",
+    "arena/arenaconfig/types.go:25",
+    "arena/assertions/types.go:38"
+   ]
+  },
+  {
+   "id": 74,
+   "claim": "Pass rate is reported as the percentage of assertions that pass",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/types.go:119",
+    "arena/engine/types.go:238",
+    "arena/results/json/json_repository.go:97"
+   ]
+  },
+  {
+   "id": 75,
+   "claim": "Response time (latency) is recorded per response",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/types.go:68"
+   ]
+  },
+  {
+   "id": 76,
+   "claim": "API cost per test run is recorded",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/types.go:63",
+    "arena/results/json/json_repository.go:97"
+   ]
+  },
+  {
+   "id": 77,
+   "claim": "Coverage (scenarios tested vs total scenarios) is reported",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/interfaces.go:36",
+    "arena/results/json/json_repository.go:97"
+   ]
+  },
+  {
+   "id": 78,
+   "claim": "Setting Thresholds example block (lines 485-492) is conceptual and does not match real Arena config",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/arena.json:645"
+   ]
+  },
+  {
+   "id": 79,
+   "claim": "Arena has no quality_gates configuration block",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/arena.json:645"
+   ]
+  },
+  {
+   "id": 80,
+   "claim": "quality_gates fields min_pass_rate, max_cost_per_run and min_scenarios are not Arena config fields",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/arena.json:645"
+   ]
+  },
+  {
+   "id": 81,
+   "claim": "CI can gate on the JSON run summary using jq '.summary.pass_rate'",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/types.go:119",
+    "arena/results/json/json_repository.go:97"
+   ]
+  },
+  {
+   "id": 82,
+   "claim": "CI/CD integration guide exists at /arena/tutorials/05-ci-integration/",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 83,
+   "claim": "Arena has no baseline or compare_to_baseline fields",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1215"
+   ]
+  },
+  {
+   "id": 84,
+   "claim": "A/B testing example block (lines 500-509) is conceptual and not real Arena config",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1134"
+   ]
+  },
+  {
+   "id": 85,
+   "claim": "Turn entries accept a 'prompt_version' field",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1134"
+   ]
+  },
+  {
+   "id": 86,
+   "claim": "A/B comparison works by running two prompt versions as separate configs or providers and diffing their JSON summary pass rates",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/json/json_repository.go:97"
+   ]
+  },
+  {
+   "id": 87,
+   "claim": "Hybrid diagram edge: Human Eval --> Ground Truth",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 88,
+   "claim": "Hybrid diagram edge: Ground Truth --> Automated Tests",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 89,
+   "claim": "Hybrid diagram edge: Automated Tests --> Continuous Validation",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 90,
+   "claim": "Human-in-the-loop example block (lines 533-548) is conceptual and not real Arena config",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/loader.go:478",
+    "arena/arenaconfig/types.go:683"
+   ]
+  },
+  {
+   "id": 91,
+   "claim": "Arena has no human_evaluation field",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:683"
+   ]
+  },
+  {
+   "id": 92,
+   "claim": "apiVersion promptkit.altairalabs.ai/v1alpha1 is the apiVersion for Scenario documents",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:137",
+    "arena/arenaconfig/types.go:665"
+   ]
+  },
+  {
+   "id": 93,
+   "claim": "kind 'Scenario' is a valid document kind",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:478"
+   ]
+  },
+  {
+   "id": 94,
+   "claim": "Scenario metadata accepts a 'labels' map (example label review: human)",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:690"
+   ]
+  },
+  {
+   "id": 95,
+   "claim": "Scenario spec accepts 'task_type' (value test) and 'description' fields",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:684",
+    "arena/arenaconfig/types.go:686"
+   ]
+  },
+  {
+   "id": 96,
+   "claim": "Scenario spec accepts 'turns' entries with 'role' and 'content' fields",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1135",
+    "arena/arenaconfig/types.go:1136"
+   ]
+  },
+  {
+   "id": 97,
+   "claim": "Link /arena/explanation/scenario-design/ resolves to an existing page",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 98,
+   "claim": "Link /arena/explanation/provider-comparison/ resolves to an existing page",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 99,
+   "claim": "Link /arena/explanation/validation-strategies/ resolves to an existing page",
+   "verdict": "true",
+   "evidence": []
+  }
+ ]
+}

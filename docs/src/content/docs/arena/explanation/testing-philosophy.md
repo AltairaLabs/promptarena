@@ -1,166 +1,124 @@
 ---
 title: LLM Testing Philosophy
+description: The reasoning behind PromptArena's behavior-based tests, and how it shapes scenarios, assertions and providers.
+verified:
+  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  sources:
+    - arena/arenaconfig/judge_param.go
+    - arena/arenaconfig/loader.go
+    - arena/arenaconfig/types.go
+    - arena/assertions/types.go
+    - arena/cmd/promptarena/run.go
+    - arena/engine/engine.go
+    - arena/engine/execution.go
+    - arena/engine/types.go
+    - arena/results/interfaces.go
+    - arena/results/json/json_repository.go
+    - schemas/v1alpha1/arena.json
+    - schemas/v1alpha1/provider.json
+    - schemas/v1alpha1/scenario.json
 ---
-Understanding the principles and rationale behind PromptArena's approach to LLM testing.
+PromptArena asserts on the behavior of a model's response and leaves its exact wording free. This page explains the reasoning behind that choice and the design decisions that follow from it.
 
-## Why Test LLMs Differently?
+## Equality checks fail on correct LLM answers
 
-Traditional software testing assumes deterministic behavior: given the same input, you get the same output. LLMs break this assumption.
+Traditional tests assume the same input gives the same output. An LLM given "Greet the user" can answer "Hello! How can I help?", "Hi there! What can I do for you?" or "Greetings! How may I assist you today?". Each response is valid and each is different, so an equality check fails on correct answers.
 
-### The LLM Testing Challenge
+## Core testing principles
 
-**Traditional Testing:**
-```
-input("2+2") → output("4")  // Always
-```
+### Behavioral testing over exact matching
 
-**LLM Testing:**
-```
-input("Greet the user") → output("Hello! How can I help?")
-                        → output("Hi there! What can I do for you?")
-                        → output("Greetings! How may I assist you today?")
-```
-
-Each response is valid but different. This requires a fundamentally different testing approach.
-
-## Core Testing Principles
-
-### 1. Behavioral Testing Over Exact Matching
-
-Instead of testing for exact outputs, test for desired behaviors:
+Assert on the behavior you need: the response acknowledges the contact, sounds professional, stays positive. Pin exact wording only when the wording is the requirement.
 
 ```yaml
-# Brittle: Exact match
+# Brittle: exact match
 assertions:
   - type: content_matches
     params:
       pattern: "^Thank you for contacting AcmeCorp support\\.$"
-      message: "Exact wording required"
+    message: "Exact wording required"
 
-# Robust: Behavior validation
+# Robust: behavior validation
 assertions:
   - type: content_includes
     params:
       patterns: ["thank", "AcmeCorp", "support"]
-      message: "Must acknowledge contact"
+    message: "Must acknowledge contact"
   - type: llm_judge
     params:
       criteria: "Response has a professional tone"
-      judge_provider: "openai/gpt-4o-mini"
-      message: "Must be professional"
-  - type: llm_judge
-    params:
-      criteria: "Response has a positive sentiment"
-      judge_provider: "openai/gpt-4o-mini"
-      message: "Must be positive"
+      judge: quality-judge
+    message: "Must be professional"
 ```
 
-**Why:** LLMs generate varied responses. Testing behavior allows flexibility while ensuring quality.
+The `message` field sits next to `params` and supplies the failure text. `content_includes` matches case-insensitively and passes only when every listed pattern appears. `llm_judge` picks its judge with `params.judge` (a name from the Arena config's `spec.judges`) or `params.provider` (a provider id). LLMs generate varied responses, so testing behavior leaves room for variation while still catching real regressions.
 
-### 2. Multi-Dimensional Quality
+### Multi-dimensional quality
 
-LLM quality isn't binary (pass/fail). It's multi-dimensional:
-
-- **Correctness**: Factually accurate?
-- **Relevance**: Addresses the query?
-- **Tone**: Appropriate style?
-- **Safety**: No harmful content?
-- **Consistency**: Maintains context?
-- **Performance**: Fast enough?
+LLM quality is more than a single pass or fail. A response can be accurate and rude, polite and wrong, or correct and too slow. A scenario can cover correctness, relevance, tone, safety, consistency across turns and performance, each with the assertion type that fits it:
 
 ```yaml
 assertions:
   - type: content_includes   # Correctness
     params:
       patterns: ["30-day return"]
-      message: "Must mention return policy"
-  
+    message: "Must mention return policy"
+
   - type: llm_judge          # Tone
     params:
       criteria: "Response is helpful and supportive"
-      judge_provider: "openai/gpt-4o-mini"
-      message: "Must be helpful"
-  
-  - type: content_matches    # Safety (negative lookahead)
+      judge: quality-judge
+    message: "Must be helpful"
+
+  - type: content_matches    # Safety: fails if either word appears
     params:
-      pattern: "^(?!.*(offensive|inappropriate)).*$"
-      message: "Must not contain inappropriate content"
+      pattern: "offensive|inappropriate"
+      expect_match: false
+    message: "Must not contain inappropriate content"
 
   - type: is_valid_json      # Format
-    params:
-      message: "Response must be valid JSON"
+    message: "Response must be valid JSON"
 ```
 
-### 3. Comparative Testing
+Go's regular expression engine (RE2) has no lookahead, so a "must not contain" check uses `expect_match: false` rather than a negative lookahead pattern.
 
-Since absolute correctness is elusive, compare:
-- **Across providers**: OpenAI vs. Claude vs. Gemini
-- **Across versions**: GPT-4 vs. GPT-4o-mini
-- **Across time**: Regression detection
-- **Against baselines**: Human evaluation benchmarks
+### Comparative testing
+
+Absolute correctness is hard to define, so relative comparison is often the more useful measure. Useful comparisons are across providers (OpenAI, Claude and Gemini on the same scenario), across model versions (a larger model against a cheaper one), across time (a regression shows up as a change from the last run) and against human judgment, which supplies the ground truth that automated checks approximate.
+
+A scenario lists the providers it runs against, and every provider produces its own result:
 
 ```yaml
-# Test same scenario across providers
-providers: [openai-gpt4, claude-sonnet, gemini-pro]
-
-# Compare results
-# Which handles edge cases better?
-# Which is faster?
-# Which is more cost-effective?
+spec:
+  providers: [openai-gpt4, claude-sonnet, gemini-pro]
 ```
 
-### 4. Contextual Validation
+The comparison then shows which provider handles edge cases better, which is faster and which costs less.
 
-Context matters in LLM testing:
+### Contextual validation
+
+The same question can need a different answer depending on who is asking. Two scenario fields carry that audience into the prompt. `spec.variables` supplies template variables that are rendered into the prompt, and a scenario's values override variables of the same name from the prompt config. `spec.context_metadata` with `domain` and `user_role` fills the `domain`, `user_role` and `user_context` template variables.
 
 ```yaml
-# Same question, different contexts
-turns:
-  - name: "Technical Support Context"
-    context:
-      user_type: "developer"
-      urgency: "high"
-    turns:
-      - role: user
-        content: "How do I fix this error?"
-        assertions:
-          - type: content_includes
-            params:
-              patterns: ["code", "debug", "solution"]
-  
-  - name: "General Inquiry Context"
-    context:
-      user_type: "general"
-      urgency: "low"
-    turns:
-      - role: user
-        content: "How do I fix this error?"
-        assertions:
-          - type: content_includes
-            params:
-              patterns: ["help", "guide", "steps"]
-              message: "Must provide helpful guidance"
-          - type: llm_judge
-            params:
-              criteria: "Response is beginner-friendly and easy to understand"
-              judge_provider: "openai/gpt-4o-mini"
-              message: "Must be beginner-friendly"
+# Fragment: a developer audience; the prompt template references {{user_type}}
+spec:
+  variables:
+    user_type: developer
+  context_metadata:
+    user_role: developer
 ```
 
-### 5. Failure is Data
+You express two audiences as two scenarios. The developer scenario asserts on `"code"`, `"debug"` and `"solution"` with `content_includes`, and the general-user scenario asserts a beginner-friendly tone with `llm_judge`.
 
-In LLM testing, failures are learning opportunities as well as bugs:
+### Failures across runs show patterns
 
-- **Pattern detection**: What types of queries fail?
-- **Edge case discovery**: Where do models struggle?
-- **Quality tracking**: How does performance change over time?
-- **Provider insights**: Which model handles what best?
+A failing assertion is a bug report, and many runs of them show more. They reveal which kinds of queries fail, where models struggle with edge cases, how quality changes over time and which provider handles which task best.
 
-## Testing Strategies
+## Testing strategies
 
-### Layered Testing Pyramid
+### Layered testing pyramid
 
-The pyramid runs from exploratory testing at the top down to smoke tests at the base:
+Tests are layered by cost and breadth, from cheap smoke tests at the base to exploratory work at the top.
 
 ```mermaid
 flowchart TB
@@ -171,127 +129,37 @@ flowchart TB
     A --> B --> C --> D
 ```
 
-**Implementation:**
+Smoke tests run on mock providers and check that configuration, scenario structure and assertions load. Scenario tests cover the common user journeys with expected inputs. Integration tests add multi-turn conversations and tool calling. Exploratory testing is human-driven: adversarial prompts, creative edge cases and open-ended quality assessment.
 
-1. **Smoke Tests** (Fast, Mock)
-   - Validate configuration
-   - Test scenario structure
-   - Verify assertions work
-   - Run in < 30 seconds
+### Progressive validation
 
-2. **Scenario Tests** (Common Cases)
-   - Core user journeys
-   - Expected inputs
-   - Standard behaviors
-   - Run in < 5 minutes
+Start with structural checks, then add content, quality and business-rule assertions as a scenario matures. [Validation strategies](/arena/explanation/validation-strategies/) describes the layers and how to combine them.
 
-3. **Integration Tests** (Complex)
-   - Multi-turn conversations
-   - Tool calling
-   - Edge cases
-   - Run in < 20 minutes
+When a business rule needs logic that no built-in assertion expresses, `rest_eval` calls an external REST endpoint, `a2a_eval` delegates to an A2A evaluator, and an exec handler runs an external command.
 
-4. **Exploratory** (Human-in-loop)
-   - Adversarial testing
-   - Creative edge cases
-   - Quality assessment
-   - Ongoing
+## Design decisions
 
-### Progressive Validation
+### Scenarios are YAML manifests
 
-Start simple, add complexity:
+Scenarios are Arena's own Kubernetes-style manifests (`apiVersion: promptkit.altairalabs.ai/v1alpha1`, `kind: Scenario`), written in YAML. PromptPacks are a separate artifact: `packc` compiles prompts into them, and they have no scenario concept.
+
+YAML keeps diffs readable in Git, lets scenarios go through code review, and lets people who do not write Go author and read test cases.
+
+### Providers are abstracted from scenarios
+
+Scenarios name provider ids and never hard-code a vendor. The Arena config's `providers:` list points at `kind: Provider` manifests, and each manifest holds the `type` and `model`:
 
 ```yaml
-# Level 1: Structural
-assertions:
-  - type: content_matches
-    params:
-      pattern: ".+"
-      message: "Response must not be empty"
-  - type: is_valid_json  # If expecting JSON
-    params:
-      message: "Must be valid JSON"
-
-# Level 2: Content
-assertions:
-  - type: content_includes
-    params:
-      patterns: ["key information"]
-      message: "Must contain key information"
-  - type: content_matches
-    params:
-      pattern: "^.{50,}$"
-      message: "Must be at least 50 characters"
-
-# Level 3: Quality
-assertions:
-  - type: llm_judge
-    params:
-      criteria: "Response has appropriate sentiment and tone for the context"
-      judge_provider: "openai/gpt-4o-mini"
-      message: "Must have appropriate quality"
-  - type: llm_judge
-    params:
-      criteria: "Response maintains a professional tone"
-      judge_provider: "openai/gpt-4o-mini"
-      message: "Must be professional"
-
-# Level 4: Custom Business Logic
-# Note: Custom validators would need to be implemented as extensions
-# For now, use pattern matching or LLM judge for business rules
-assertions:
-  - type: llm_judge
-    params:
-      criteria: "Response complies with brand guidelines and voice"
-      judge_provider: "openai/gpt-4o-mini"
-      message: "Must meet brand compliance"
-```
-
-## Design Decisions
-
-### Why PromptPack Format?
-
-PromptArena uses the PromptPack specification for test scenarios. Why?
-
-**Portability**: Test scenarios work across:
-- Different testing tools
-- Different providers
-- Different environments
-
-**Version Control**: YAML format means:
-- Git-friendly diffs
-- Code review workflows
-- Change tracking
-
-**Human Readable**: Non-developers can:
-- Write test scenarios
-- Review test cases
-- Understand failures
-
-### Why Provider Abstraction?
-
-PromptArena abstracts provider differences:
-
-```yaml
-# Same scenario, different providers
+# arena config
 providers:
-  - type: openai
-    model: gpt-4o
-  - type: claude
-    model: claude-3-5-sonnet
-  - type: gemini
-    model: gemini-1.5-pro
+  - file: providers/openai.yaml
+  - file: providers/claude.yaml
+  - file: providers/gemini.yaml
 ```
 
-**Benefits:**
-- Test portability across providers
-- Easy provider switching
-- Cost optimization
-- Vendor independence
+The provider `type` values include `openai`, `claude` and `gemini`. The same scenario runs on each, so you can switch providers, optimize cost and avoid depending on a single vendor.
 
-### Why Declarative Assertions?
-
-Instead of code, use declarations:
+### Assertions are declarative
 
 ```yaml
 # Declarative (PromptArena)
@@ -299,228 +167,100 @@ assertions:
   - type: content_includes
     params:
       patterns: ["customer service"]
-      message: "Must mention customer service"
-  - type: llm_judge
-    params:
-      criteria: "Response has positive sentiment"
-      judge_provider: "openai/gpt-4o-mini"
-      message: "Must be positive"
+    message: "Must mention customer service"
 
-# vs. Imperative (traditional)
+# Imperative (traditional)
 # assert "customer service" in response
-# assert analyze_sentiment(response) == "positive"
 ```
 
-**Advantages:**
-- Non-programmers can write tests
-- Consistent validation across scenarios
-- Easier to maintain
-- Better reporting
+Declarations let non-programmers write tests, apply the same validation across scenarios, and give the reporter structured failures instead of a stack trace.
 
-### Why Mock Providers?
+### Mock providers answer from memory
 
-Mock providers enable:
+Mock providers make no network calls. That gives fast configuration checks, no spend while iterating, offline development and quick CI validation.
 
-1. **Fast Development**: Test configuration without API calls
-2. **Cost Control**: Iterate without spending
-3. **Deterministic Testing**: Predictable responses
-4. **Offline Development**: Work without internet
-5. **CI/CD Efficiency**: Fast pipeline validation
+`--mock-provider` replaces each reply with a generic mock response ("Mock response from provider") unless a mock config supplies responses, so content assertions see that text and a mock run verifies structure. [Use mock providers](/arena/how-to/providers/use-mock-providers/) covers the flags and mock config.
 
-```bash
-# Validate structure (< 10 seconds, $0)
-promptarena run --mock-provider
+## Anti-patterns to avoid
 
-# Validate quality (~ 5 minutes, ~$0.05)
-promptarena run --provider openai-gpt4o-mini
-```
+### Over-specification
 
-## Anti-Patterns to Avoid
+A pattern like `^Thank you for contacting support\. Our business hours are 9am-5pm\.$` breaks on any wording change. Assert the required facts and judge the tone instead:
 
-### Over-Specification
-
-```yaml
-# Too rigid
-assertions:
-  - type: content_matches
-    params:
-      pattern: "^Thank you for contacting support\\. Our business hours are 9am-5pm\\.$"
-      message: "Exact match required"
-```
-
-**Problem**: Brittle. Any wording change breaks the test.
-
-**Better:**
 ```yaml
 assertions:
   - type: content_includes
     params:
       patterns: ["thank", "support", "business hours"]
-      message: "Must acknowledge support contact"
+    message: "Must acknowledge support contact"
   - type: llm_judge
     params:
       criteria: "Response has a professional tone"
-      judge_provider: "openai/gpt-4o-mini"
-      message: "Must be professional"
+      judge: quality-judge
+    message: "Must be professional"
 ```
 
-### Under-Specification
+### Under-specification
+
+A lone `content_matches` with `pattern: ".+"` accepts any non-empty output, including garbage. Combine the emptiness check with required content and a judged quality criterion. A length check such as `^.{50,}$` does not match multi-line replies because `.` excludes newlines. Use `(?s)^.{50,}$` for those.
+
+### Flaky tests
+
+A pattern that assumes a layout, such as `^Hello.*\nHow can I help\?$`, fails whenever the model reformats its greeting. Check for `"hello"` and `"help"` with `content_includes`, and judge the welcoming tone with `llm_judge`.
+
+### Coupling tests to implementation
+
+Asserting that the model called `calculate` with `operation: multiply` couples the test to one implementation path:
 
 ```yaml
-# Too loose
-assertions:
-  - type: content_matches
-    params:
-      pattern: ".+"
-      message: "Must not be empty"
-```
-
-**Problem**: Accepts any garbage output.
-
-**Better:**
-```yaml
-assertions:
-  - type: content_matches
-    params:
-      pattern: ".+"
-      message: "Must not be empty"
-  - type: content_includes
-    params:
-      patterns: ["relevant", "keywords"]
-      message: "Must contain relevant content"
-  - type: content_matches
-    params:
-      pattern: "^.{50,}$"
-      message: "Must be at least 50 characters"
-  - type: llm_judge
-    params:
-      criteria: "Response is appropriate and helpful for the context"
-      judge_provider: "openai/gpt-4o-mini"
-      message: "Must be appropriate"
-```
-
-### Flaky Tests
-
-```yaml
-# Assumes specific response structure
-assertions:
-  - type: content_matches
-    params:
-      pattern: "^Hello.*\\nHow can I help\\?$"
-      message: "Exact format required"
-```
-
-**Problem**: LLMs vary formatting.
-
-**Better:**
-```yaml
-assertions:
-  - type: content_includes
-    params:
-      patterns: ["hello", "help"]
-      message: "Must greet and offer help"
-  - type: llm_judge
-    params:
-      criteria: "Response has a welcoming tone"
-      judge_provider: "openai/gpt-4o-mini"
-      message: "Must be welcoming"
-```
-
-### Testing Implementation, Not Behavior
-
-```yaml
-# Tests how, not what - too implementation-focused
-assertions:
-  - type: tools_called
-    params:
-      tools: ["calculate"]
-      message: "Must use calculator tool"
-
 conversation_assertions:
   - type: tool_calls_with_args
     params:
-      tool: "calculate"
+      tool_name: calculate
       expected_args:
-        operation: "multiply"
+        operation: multiply
         x: 2
         y: 2
-      message: "Must pass exact args"
+    message: "Must pass exact args"
 ```
 
-**Problem**: Couples test to implementation details.
+Tool assertions are right when the call itself is the requirement, such as an agent that must call a refund tool. When the requirement is the answer, assert the outcome:
 
-**Better:**
 ```yaml
-# Tests outcome - focuses on behavior
 assertions:
   - type: content_includes
     params:
       patterns: ["4"]
-      message: "Must provide correct answer"
+    message: "Must provide correct answer"
   - type: llm_judge
     params:
       criteria: "Response correctly states that 2 times 2 equals 4"
-      judge_provider: "openai/gpt-4o-mini"
-      message: "Must be factually correct"
+      judge: quality-judge
+    message: "Must be factually correct"
 ```
 
-## Quality Metrics
+## Quality metrics
 
-### What to Measure
+Each run records response latency and API cost, and across `spec.trials` it records a per-scenario `pass_rate`: the fraction of trials where every assertion passed. The run index reports `total_runs`, `successful` and `errors`. Beyond those, the signals worth tracking are failure patterns by query type, provider comparisons and whether results are improving or degrading between runs.
 
-**Primary Metrics:**
-- **Pass Rate**: Percentage of assertions passing
-- **Response Time**: Latency of responses
-- **Cost**: API spending per test run
-- **Coverage**: Scenarios tested vs. total scenarios
+### Setting thresholds
 
-**Secondary Metrics:**
-- **Failure Patterns**: Which types of tests fail most?
-- **Provider Comparison**: Which model performs best?
-- **Regression Detection**: Are we improving or degrading?
-- **Edge Case Coverage**: How many corner cases tested?
+Arena has no threshold configuration block. The gate is the exit code of `promptarena run --ci`; [Run in CI](/arena/how-to/interfaces/run-in-ci/) covers wiring it into a pipeline.
 
-### Setting Thresholds
+## Testing in production
 
-```yaml
-# Conceptual — Arena has no quality_gates block. These thresholds are
-# illustrative; enforce them in CI against the JSON run summary.
-quality_gates:
-  min_pass_rate: 0.95      # 95% of assertions must pass
-  max_cost_per_run: 0.50   # $0.50 per test run
-  min_scenarios: 50        # At least 50 scenarios
-```
+### A/B testing LLM changes
 
-*This is a conceptual sketch, not real config — Arena has no `quality_gates` field. Gate in CI on the JSON `summary` (e.g. `jq '.summary.pass_rate'`); see [CI/CD Integration](/arena/tutorials/05-ci-integration/).*
+To compare a baseline prompt with a candidate, run both versions as separate configs and compare the `index.json` that `--format json` writes (`successful`, `errors`, `total_cost`). Running with `spec.trials` above 1 adds per-assertion pass rates, which smooths out run-to-run variation.
 
-## Testing in Production
+## The human factor
 
-### A/B Testing LLM Changes
+### When to use human evaluation
 
-```yaml
-# Conceptual — Arena has no baseline/compare_to_baseline fields.
-# In practice, run the two prompt versions as separate configs (or
-# providers) and diff their JSON summaries.
-turns:
-  - name: "Baseline Prompt"
-    prompt_version: "v1.0"
-  - name: "Candidate Prompt"
-    prompt_version: "v2.0"
-```
+Automated checks cannot settle everything. Human judgment covers subjective quality, creative content, nuanced errors that are technically correct but contextually wrong, and benchmark creation, where a person supplies ground truth for the automated tests.
 
-*Conceptual, not real config. To A/B a prompt change, run both versions and compare the JSON `summary` pass rates in CI.*
+Human evaluation produces ground truth, ground truth shapes the automated tests, and the automated tests then validate continuously.
 
-## The Human Factor
-
-### When to Use Human Evaluation
-
-LLMs require human judgment for:
-- **Subjective quality**: Is this response "good"?
-- **Creative content**: Is this engaging/interesting?
-- **Nuanced errors**: Technically correct but contextually wrong
-- **Benchmark creation**: Ground truth for automated tests
-
-**Hybrid Approach:**
 ```mermaid
 flowchart LR
     he["Human Eval"] --> gt["Ground Truth"]
@@ -528,41 +268,12 @@ flowchart LR
     at --> cv["Continuous Validation"]
 ```
 
-### Human-in-the-Loop Testing
+### Human-in-the-loop testing
 
-```yaml
-# Conceptual — Arena has no human_evaluation field. Flag scenarios for
-# manual review with labels, then route them to a human step in CI.
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: requires-human-review
-  labels:
-    review: human
-spec:
-  task_type: test
-  description: "Requires Human Review"
-  turns:
-    - role: user
-      content: "Complex ethical question"
-```
+Arena has no human-evaluation step. To route scenarios to a person, tag them with `metadata.labels` (for example `review: human`); labels are carried into reports, and your own review step in CI picks those scenarios up.
 
-*Conceptual, not real config — there is no `human_evaluation` block. Tag scenarios that need judgement (via `metadata.labels`) and gate them in your own review step.*
+## Further reading
 
-## Conclusion
-
-LLM testing is fundamentally different from traditional testing:
-
-- **Embrace non-determinism**: Test behaviors, not exact outputs
-- **Think multi-dimensionally**: Quality has many facets
-- **Compare relatively**: Benchmark against alternatives
-- **Iterate continuously**: Quality improves over time
-- **Balance automation and human judgment**: Both are essential
-
-PromptArena embodies these principles, providing a framework for robust, maintainable LLM testing that scales from development to production.
-
-## Further Reading
-
-- **[Scenario Design Principles](/arena/explanation/scenario-design/)** - How to structure effective test scenarios
-- **[Provider Comparison Guide](/arena/explanation/provider-comparison/)** - Understanding provider differences
-- **[Validation Strategies](/arena/explanation/validation-strategies/)** - Choosing the right assertions
+- [Scenario design principles](/arena/explanation/scenario-design/) covers how to structure test scenarios.
+- [Provider comparison guide](/arena/explanation/provider-comparison/) covers provider differences.
+- [Validation strategies](/arena/explanation/validation-strategies/) covers choosing assertions.

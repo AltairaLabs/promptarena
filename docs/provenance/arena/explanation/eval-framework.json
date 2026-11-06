@@ -1,0 +1,782 @@
+{
+ "page": "docs/src/content/docs/arena/explanation/eval-framework.md",
+ "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "Evals are defined in pack files and execute automatically during conversations or against recorded sessions.",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:763",
+    "arena/engine/eval_conversation_executor.go:73"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "Evals use the same check types as assertions and guardrails.",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/eval_orchestrator.go:250"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "Evals can fire on every turn, on a sampled subset, or at session close.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 4,
+   "claim": "Assertions only run during Arena tests.",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/eval_conversation_executor.go:285",
+    "arena/engine/eval_orchestrator.go:254"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "Guardrails run inline before the response is delivered.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 6,
+   "claim": "Eval handlers produce scores only, in the range 0.0 to 1.0.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 7,
+   "claim": "Eval handlers never determine pass/fail; pass/fail belongs to assertion and guardrail wrappers.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 8,
+   "claim": "When used as standalone evals, the score is recorded as a metric and emitted as an event.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 9,
+   "claim": "Diagram edge: the Pack File (evals) feeds the EvalRunner.",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:763"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "Diagram edge: EvalRunner feeds the ResultWriter.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 11,
+   "claim": "Diagram edge: ResultWriter writes to Metrics / Metadata.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 12,
+   "claim": "Pack evals and scenario assertions share the same underlying check types.",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/eval_orchestrator.go:250"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "Pack evals are defined in the pack file under an evals array.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 14,
+   "claim": "Scenario assertions are defined in Arena scenario YAML.",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/types.go:36",
+    "arena/engine/eval_conversation_executor.go:148"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "Pack evals run in production and in testing.",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:768"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "Scenario assertions run in testing only.",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/eval_conversation_executor.go:285",
+    "arena/engine/eval_orchestrator.go:254"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "Pack eval trigger is configurable with every turn, sampling, and session close options.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 18,
+   "claim": "Scenario assertions run every turn or at conversation end.",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/types.go:36",
+    "arena/engine/eval_conversation_executor.go:180",
+    "arena/engine/eval_conversation_executor.go:285"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "Pack evals travel with the pack and run in production, in Arena tests, and anywhere the pack is used.",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:763"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "Scenario assertions are Arena-specific test expectations that validate conversation flows defined in test scenarios.",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/eval_conversation_executor.go:285",
+    "arena/engine/eval_orchestrator.go:246"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "Each eval is an EvalDef object in the pack's evals array.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 22,
+   "claim": "EvalDef field id is required and must be unique within the pack.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 23,
+   "claim": "EvalDef field type is required and holds a check type from the checks reference.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 24,
+   "claim": "EvalDef field trigger is required.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 25,
+   "claim": "EvalDef field params is parameters specific to the check type.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 26,
+   "claim": "EvalDef field threshold is optional and holds a pass/fail threshold such as min_score.",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 27,
+   "claim": "EvalDef field enabled is optional and defaults to true.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 28,
+   "claim": "EvalDef field sample_percentage is optional and gives the percentage of turns or sessions to evaluate.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 29,
+   "claim": "EvalDef field groups is optional and used for eval group filtering.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 30,
+   "claim": "EvalDef field metric is optional and holds Prometheus metric configuration.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 31,
+   "claim": "The example JSON eval definition uses id quality_check, type contains, trigger every_turn, params patterns thank you, threshold min_score 0.8, enabled true, sample_percentage 10, and a metric block.",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 32,
+   "claim": "The metric object in an eval definition has name, type, and labels fields.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 33,
+   "claim": "Trigger value every_turn fires after each assistant response.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 34,
+   "claim": "Trigger value on_session_complete fires when a session closes.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 35,
+   "claim": "Trigger value sample_turns samples a percentage of turns using a hash.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 36,
+   "claim": "Trigger value sample_sessions samples a percentage of sessions using a hash.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 37,
+   "claim": "Trigger value on_conversation_complete fires when a multi-session conversation closes.",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 38,
+   "claim": "Trigger value on_workflow_step fires after a workflow state transition.",
+   "verdict": "dead",
+   "evidence": []
+  },
+  {
+   "id": 39,
+   "claim": "Sampling is deterministic: the same session ID and turn index always produce the same sampling decision.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 40,
+   "claim": "Sampling uses an FNV-1a hash.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 41,
+   "claim": "The toxicity_check example uses trigger sample_turns with sample_percentage 10 and params patterns harmful and offensive.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 42,
+   "claim": "When no explicit groups are set, evals are automatically classified by handler type.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 43,
+   "claim": "Group value default is assigned to all evals with no explicit groups.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 44,
+   "claim": "Group value fast-running is assigned to contains, regex, json_valid, tools_called, and workflow checks.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 45,
+   "claim": "Group value long-running is assigned to llm_judge, cosine_similarity, outcome_equivalent, a2a_eval, rest_eval, and exec handlers.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 46,
+   "claim": "Group value external is assigned to llm_judge, a2a_eval, rest_eval, and exec handlers.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 47,
+   "claim": "A contains eval with no explicit groups receives the groups default and fast-running.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 48,
+   "claim": "An llm_judge eval with no explicit groups receives the groups default, long-running, and external.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 49,
+   "claim": "Setting groups on an eval definition overrides the automatic classification entirely.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 50,
+   "claim": "The compliance_check example uses type llm_judge, trigger every_turn, and groups compliance and safety.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 51,
+   "claim": "An eval with explicit groups matches only filters for those groups and does not match default, long-running, or external.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 52,
+   "claim": "The SDK uses EvalGroups to select which eval groups to run.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 53,
+   "claim": "sdk.Evaluate takes a context and an sdk.EvaluateOpts value and returns results and an error.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 54,
+   "claim": "sdk.EvaluateOpts has fields PackPath, Messages, and EvalGroups.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 55,
+   "claim": "When EvalGroups is nil or empty, all evals run regardless of group.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 56,
+   "claim": "The eval system supports three dispatch patterns: InProcDispatcher, EventDispatcher, and EventBusEvalListener.",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/eval_orchestrator.go:29"
+   ]
+  },
+  {
+   "id": 57,
+   "claim": "InProcDispatcher runs evals synchronously in the same process.",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 58,
+   "claim": "InProcDispatcher is used by Arena and simple SDK deployments.",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/eval_orchestrator.go:199",
+    "arena/engine/eval_orchestrator.go:69"
+   ]
+  },
+  {
+   "id": 59,
+   "claim": "Diagram edges for InProcDispatcher: Conversation to InProcDispatcher, InProcDispatcher to EvalRunner, EvalRunner to Handlers, Handlers to ResultWriter.",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/eval_orchestrator.go:223"
+   ]
+  },
+  {
+   "id": 60,
+   "claim": "EventDispatcher publishes eval requests to an event bus for async processing by workers.",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 61,
+   "claim": "EventDispatcher is used in production SDK deployments.",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 62,
+   "claim": "Diagram edges for EventDispatcher: Conversation to EventDispatcher, EventDispatcher to Event Bus, Event Bus to EvalWorker, EvalWorker to EvalRunner, EvalRunner to ResultWriter.",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 63,
+   "claim": "EventBusEvalListener subscribes to message.created EventBus events.",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 64,
+   "claim": "EventBusEvalListener triggers evals automatically without explicit middleware.",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 65,
+   "claim": "Diagram edges for EventBusEvalListener: RecordingStage to EventBus, EventBus to EventBusEvalListener, EventBusEvalListener to SessionAccumulator, SessionAccumulator to Dispatcher, Dispatcher to Runner.",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 66,
+   "claim": "SessionAccumulator accumulates messages per session and builds EvalContext on demand.",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/eval_orchestrator.go:198"
+   ]
+  },
+  {
+   "id": 67,
+   "claim": "Sessions in the SessionAccumulator expire after a configurable TTL whose default is 30 minutes.",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 68,
+   "claim": "EvalConversationExecutor evaluates saved conversations from recordings.",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/eval_conversation_executor.go:25"
+   ]
+  },
+  {
+   "id": 69,
+   "claim": "EvalConversationExecutor step 1 loads the recording via the adapter registry.",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/eval_conversation_executor.go:115",
+    "arena/engine/eval_conversation_executor.go:60"
+   ]
+  },
+  {
+   "id": 70,
+   "claim": "EvalConversationExecutor step 2 builds conversation context from recorded messages.",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/eval_conversation_executor.go:230",
+    "arena/engine/eval_conversation_executor.go:65"
+   ]
+  },
+  {
+   "id": 71,
+   "claim": "EvalConversationExecutor step 3 applies turn-level assertions to each assistant message.",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/eval_conversation_executor.go:128",
+    "arena/engine/eval_conversation_executor.go:66"
+   ]
+  },
+  {
+   "id": 72,
+   "claim": "EvalConversationExecutor step 4 evaluates conversation-level assertions.",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/eval_conversation_executor.go:156",
+    "arena/engine/eval_conversation_executor.go:67"
+   ]
+  },
+  {
+   "id": 73,
+   "claim": "EvalConversationExecutor step 5 runs pack session evals if configured.",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/eval_conversation_executor.go:73",
+    "arena/engine/eval_orchestrator.go:209"
+   ]
+  },
+  {
+   "id": 74,
+   "claim": "EvalConversationExecutor step 6 returns aggregated results.",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/eval_conversation_executor.go:78"
+   ]
+  },
+  {
+   "id": 75,
+   "claim": "The EvalConversationExecutor enables offline evaluation of historical conversations without re-running them against a live LLM.",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/eval_conversation_executor.go:100",
+    "arena/engine/eval_conversation_executor.go:19"
+   ]
+  },
+  {
+   "id": 76,
+   "claim": "Eval results are recorded as Prometheus metrics through the unified metrics.Collector into a prometheus.Registry, alongside pipeline metrics.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 77,
+   "claim": "Import path github.com/prometheus/client_golang/prometheus is used for the Prometheus registry.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 78,
+   "claim": "Import path github.com/AltairaLabs/PromptKit/runtime/v2/metrics exists at the version pinned in go.mod.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 79,
+   "claim": "Import path github.com/AltairaLabs/PromptKit/sdk/v2 exists at the version pinned in go.mod.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 80,
+   "claim": "metrics.NewCollector takes a metrics.CollectorOpts value and returns a collector.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 81,
+   "claim": "metrics.CollectorOpts has a Registerer field.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 82,
+   "claim": "metrics.CollectorOpts has a Namespace field.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 83,
+   "claim": "metrics.CollectorOpts has a ConstLabels field of type prometheus.Labels.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 84,
+   "claim": "sdk.Open takes a pack path, a prompt name, and options, and returns a conversation.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 85,
+   "claim": "sdk.WithMetrics takes a collector and a second argument, and is passed as an option to sdk.Open.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 86,
+   "claim": "When WithMetrics is configured, all eval results are automatically recorded as Prometheus metrics alongside pipeline metrics.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 87,
+   "claim": "Evals with an explicit metric definition use that configuration; evals without one get an auto-generated gauge metric named after the eval ID.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 88,
+   "claim": "Eval metrics are namespaced under {namespace}_eval_.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 89,
+   "claim": "A metric named response_quality_score with namespace myapp becomes myapp_eval_response_quality_score.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 90,
+   "claim": "An eval with ID check-tone and no explicit metric becomes myapp_eval_check-tone.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 91,
+   "claim": "Metric type gauge is set to the eval score value.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 92,
+   "claim": "Metric type counter increments the count on each execution.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 93,
+   "claim": "Metric type histogram observes the value with configurable buckets and tracks sum and count.",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 94,
+   "claim": "Metric type boolean records 1.0 if score is at least 1.0 and 0.0 otherwise.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 95,
+   "claim": "Metric types are gauge, counter, histogram, and boolean.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 96,
+   "claim": "Pack-author labels are declared in the metric.labels field of each eval definition.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 97,
+   "claim": "The response_quality example metric uses name response_quality_score, type histogram, range min 0 and max 1.",
+   "verdict": "dead",
+   "evidence": []
+  },
+  {
+   "id": 98,
+   "claim": "The response_quality example metric labels are eval_type and category.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 99,
+   "claim": "Const labels are set via CollectorOpts.ConstLabels and are process-level dimensions such as env and region.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 100,
+   "claim": "Instance labels are set via CollectorOpts.InstanceLabels and bound per conversation, such as tenant and prompt_name.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 101,
+   "claim": "Label names must match the regular expression ^[a-zA-Z_][a-zA-Z0-9_]*$.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 102,
+   "claim": "Label names must not start with a double underscore.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 103,
+   "claim": "Invalid label names are caught during pack validation.",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/builder_integration.go:716"
+   ]
+  },
+  {
+   "id": 104,
+   "claim": "Event eval.completed uses the constant EventEvalCompleted.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 105,
+   "claim": "Event eval.failed uses the constant EventEvalFailed.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 106,
+   "claim": "eval.completed is emitted when an eval finishes successfully, regardless of score.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 107,
+   "claim": "eval.failed is emitted when an eval handler returns an error.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 108,
+   "claim": "EvalCompletedData payload carries the eval ID, type, score, and a derived Passed field.",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 109,
+   "claim": "IsPassed returns true when score is nil or at least 1.0.",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 110,
+   "claim": "A working eval that returns score 0.0 emits eval.completed, not eval.failed.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 111,
+   "claim": "When both pack-level and prompt-level evals are defined, they are merged.",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:772"
+   ]
+  },
+  {
+   "id": 112,
+   "claim": "Prompt evals override pack evals where IDs match.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 113,
+   "claim": "Pack-only evals are preserved in the merged set.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 114,
+   "claim": "Prompt-only evals are appended to the merged set.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 115,
+   "claim": "An eval-test example exists at examples/eval-test in the promptarena repository.",
+   "verdict": "true",
+   "evidence": [
+    "examples/eval-test/config.arena.yaml"
+   ]
+  },
+  {
+   "id": 116,
+   "claim": "The eval-test example evaluates saved conversations with both deterministic assertions and llm_judge evals.",
+   "verdict": "true",
+   "evidence": [
+    "examples/eval-test/evals/basic-eval.eval.yaml:33"
+   ]
+  },
+  {
+   "id": 117,
+   "claim": "Internal link /arena/reference/assertions/ resolves to a page in this docs site.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 118,
+   "claim": "Internal link /arena/explanation/session-recording/ resolves to a page in this docs site.",
+   "verdict": "true",
+   "evidence": []
+  }
+ ]
+}

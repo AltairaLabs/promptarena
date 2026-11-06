@@ -1,0 +1,547 @@
+{
+ "page": "docs/src/content/docs/arena/explanation/validation-strategies.md",
+ "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "content_matches is an assertion type",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 2,
+   "claim": "content_matches takes params.pattern as a regular expression string",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 3,
+   "claim": "params.message is accepted on content_matches",
+   "verdict": "dead",
+   "evidence": [
+    "arena/assertions/types.go:30",
+    "arena/assertions/types.go:63-84",
+    "arena/engine/eval_orchestrator.go:312-321"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "An anchored pattern ^The capital of France is Paris\\.$ rejects the paraphrase 'Paris is the capital of France.' (regex match is whole-string when anchored, not fuzzy)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 5,
+   "claim": "content_includes is an assertion type",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 6,
+   "claim": "content_includes takes params.patterns as a list of strings",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 7,
+   "claim": "content_includes params.patterns also accepts a single scalar string (example patterns: 'Paris' with no list)",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 8,
+   "claim": "content_includes requires all listed patterns to be present (implicit AND across the list)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 9,
+   "claim": "A regex alternation inside content_matches passes if any one of the alternatives is present",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 10,
+   "claim": "content_matches treats pattern as a regular expression (Regular Expressions section)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 11,
+   "claim": "The pattern ^.{100}$ matches exactly 100 characters of response, so it can be used for an exact length check",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 12,
+   "claim": "The pattern ^.{50,200}$ enforces a 50 to 200 character length range via content_matches",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 13,
+   "claim": "The pattern ^.{50,}$ enforces a minimum length of 50 characters",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 14,
+   "claim": "content_matches supports the (?i) inline case-insensitive regex flag",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 15,
+   "claim": "is_valid_json is an assertion type",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 16,
+   "claim": "is_valid_json accepts params.message",
+   "verdict": "dead",
+   "evidence": [
+    "arena/assertions/types.go:30"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "json_schema is an assertion type",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 18,
+   "claim": "json_schema takes params.schema holding a JSON Schema object (type, properties, required)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 19,
+   "claim": "json_schema property type 'integer' is a valid JSON Schema type accepted by the validator",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 20,
+   "claim": "json_schema enforces the 'format: email' keyword on the email property",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 21,
+   "claim": "The example apiVersion value is promptkit.altairalabs.ai/v1alpha1",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "The example kind value is Scenario",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "Scenario resources have metadata.name",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "Scenario spec accepts a task_type field, and 'extraction', 'security' and 'test' are used as values in examples",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:684",
+    "arena/arenaconfig/validator.go:312-315"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "Scenario spec accepts a description field",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:686"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "Scenario spec accepts a turns list",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:692"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "Each turn accepts role and content fields",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1135-1136"
+   ]
+  },
+  {
+   "id": 28,
+   "claim": "Each turn accepts an assertions list whose items have type and params",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1181",
+    "arena/arenaconfig/types.go:19-25"
+   ]
+  },
+  {
+   "id": 29,
+   "claim": "turn role values include user and assistant",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/conversation_executor.go:232-236",
+    "arena/engine/conversation_executor.go:526-536",
+    "schemas/v1alpha1/scenario.json:863"
+   ]
+  },
+  {
+   "id": 30,
+   "claim": "The YAML example pattern \"(^#{1,6} |\\*\\*|\\*|`|\\[.*\\]\\(.*\\))\" is a valid double-quoted YAML scalar (contains backslash-star escapes)",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 31,
+   "claim": "The example pattern ```python[\\s\\S]*?``` matches a fenced Python code block in response content",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 32,
+   "claim": "content_matches supports negative lookahead (?!...) so that ^(?!.*(inappropriate|offensive|harmful)).*$ fails when a banned word is present",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 33,
+   "claim": "content_matches regex supports word boundary \\b and character class api[_-]?key within negative lookahead examples",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 34,
+   "claim": "content_not_includes is an assertion type",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 35,
+   "claim": "Conversation-level assertions exist and are distinct from per-turn assertions",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:707",
+    "arena/engine/eval_orchestrator.go:287-296"
+   ]
+  },
+  {
+   "id": 36,
+   "claim": "content_not_includes accepts params.patterns",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 37,
+   "claim": "The no-pii-leakage example is a valid Scenario document (apiVersion, kind, metadata.name, spec.task_type, spec.description, spec.turns with assertions)",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json"
+   ]
+  },
+  {
+   "id": 38,
+   "claim": "The SSN and credit-card regexes in the no-pii-leakage example are patterns that a content_matches assertion evaluates against the response",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 39,
+   "claim": "The context-retention example is a valid Scenario document",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 40,
+   "claim": "In the context-retention example, turns is indented four spaces under spec (after task_type at two spaces), which is malformed YAML and does not parse",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 41,
+   "claim": "An assertion placed on a role: user turn is evaluated against the assistant reply to that turn",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/conversation_executor.go:316-318"
+   ]
+  },
+  {
+   "id": 42,
+   "claim": "llm_judge is an assertion type",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 43,
+   "claim": "llm_judge accepts params.criteria, params.judge_provider and params.message",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/judge_param.go:39-48"
+   ]
+  },
+  {
+   "id": 44,
+   "claim": "judge_provider value 'openai/gpt-4o-mini' is a valid provider/model reference (provider openai, model gpt-4o-mini)",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/judge_param.go:43-48"
+   ]
+  },
+  {
+   "id": 45,
+   "claim": "rest_eval is an assertion type",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 46,
+   "claim": "rest_eval accepts params.url",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 47,
+   "claim": "rest_eval accepts params.headers as a map of header name to value",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 48,
+   "claim": "${EVAL_API_KEY} inside a rest_eval header value is expanded from the environment at run time",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 49,
+   "claim": "rest_eval accepts params.criteria and params.min_score (a float threshold such as 0.9)",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/types.go:30"
+   ]
+  },
+  {
+   "id": 50,
+   "claim": "json_path is an assertion type",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 51,
+   "claim": "json_path accepts params.jmespath_expression (a JMESPath query string)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 52,
+   "claim": "The progressive-validation example uses apiVersion promptkit.altairalabs.ai/v1alpha1, kind Scenario and metadata.name progressive-validation",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json"
+   ]
+  },
+  {
+   "id": 53,
+   "claim": "In the progressive-validation example, the turns list is indented four spaces under spec, which is malformed YAML and does not parse",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 54,
+   "claim": "Multiple assertions on one turn combine with implicit AND: all must pass for the turn to pass",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/trials.go:558-576",
+    "arena/results/utils.go:142-155"
+   ]
+  },
+  {
+   "id": 55,
+   "claim": "Arena does not support conditional assertions (an assertion cannot be gated on context variables)",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:26",
+    "arena/assertions/types.go:40-49"
+   ]
+  },
+  {
+   "id": 56,
+   "claim": "Scenario entries accept a context.variables map (example sets user_tier)",
+   "verdict": "dead",
+   "evidence": [
+    "arena/arenaconfig/types.go:693",
+    "arena/cmd/promptarena/prompt-debug_interactive.go:223"
+   ]
+  },
+  {
+   "id": 57,
+   "claim": "The context-variable example is a top-level list of scenario entries that each have name, context and turns, a shape the Scenario schema accepts",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:682",
+    "schemas/v1alpha1/scenario.json"
+   ]
+  },
+  {
+   "id": 58,
+   "claim": "An assistant-role turn can have assertions and no content field",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/conversation_executor.go:236",
+    "arena/engine/conversation_executor.go:536"
+   ]
+  },
+  {
+   "id": 59,
+   "claim": "Scenario spec accepts a runs field, and runs: 10 requests ten repetitions",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:736"
+   ]
+  },
+  {
+   "id": 60,
+   "claim": "Arena has no built-in statistical aggregation across runs; runs only repeats the scenario and results must be analysed externally",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:736",
+    "arena/engine/trials.go:113-133",
+    "arena/engine/trials.go:580-583"
+   ]
+  },
+  {
+   "id": 61,
+   "claim": "The patterns field can be given as a bare string (patterns: answer) and is accepted by the parser",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 62,
+   "claim": "is_valid_json is used with a top-level value: true key rather than under params",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:19-31"
+   ]
+  },
+  {
+   "id": 63,
+   "claim": "validation_tests is a top-level Scenario or config key with good_responses and bad_responses lists",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:682-746"
+   ]
+  },
+  {
+   "id": 64,
+   "claim": "An assertions key with no entries (null value) is valid and results in no assertions",
+   "verdict": "false",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json"
+   ]
+  },
+  {
+   "id": 65,
+   "claim": "Semantic validation can be implemented using custom validators, which Arena supports",
+   "verdict": "unverified",
+   "evidence": [
+    "arena/assertions/register.go:3-9"
+   ]
+  },
+  {
+   "id": 66,
+   "claim": "Sentiment checks in the example are done with content_matches and content_includes only (no sentiment model)",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/eval_adapter.go:114"
+   ]
+  },
+  {
+   "id": 67,
+   "claim": "llm_judge is run against the judge_provider model during the scenario run",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/judge_param.go:38-49"
+   ]
+  },
+  {
+   "id": 68,
+   "claim": "External evaluation via rest_eval delegates the decision to a service at the configured URL",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 69,
+   "claim": "A negative-lookahead content_matches pattern passes only when none of the listed words appear in the response",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 70,
+   "claim": "content_not_includes is a conversation-level assertion type, i.e. it is valid in spec-level assertions as well as per turn",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:707",
+    "arena/engine/eval_orchestrator.go:287-296"
+   ]
+  },
+  {
+   "id": 71,
+   "claim": "A page exists at arena/explanation/testing-philosophy",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 72,
+   "claim": "A page exists at arena/explanation/scenario-design",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 73,
+   "claim": "A page exists at arena/explanation/provider-comparison",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 74,
+   "claim": "The PromptKit checks reference lives at promptkit.altairalabs.ai/reference/checks and lists all check types and parameters",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 75,
+   "claim": "A page exists at arena/reference/assertions",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 76,
+   "claim": "A page exists at arena/reference/validators and it documents guardrails as runtime policy enforcement",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 77,
+   "claim": "The PromptKit concepts/validation page explains how assertions, guardrails and evals relate (Unified Check Model)",
+   "verdict": "unverified",
+   "evidence": []
+  }
+ ]
+}

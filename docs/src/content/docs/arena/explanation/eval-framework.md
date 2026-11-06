@@ -1,49 +1,56 @@
 ---
 title: Eval Framework
+verified:
+  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  sources:
+    - arena/assertions/types.go
+    - arena/engine/builder_integration.go
+    - arena/engine/eval_conversation_executor.go
+    - arena/engine/eval_orchestrator.go
+    - examples/eval-test/config.arena.yaml
+    - examples/eval-test/evals/basic-eval.eval.yaml
 ---
 
-Understanding PromptKit's automated evaluation system for LLM outputs.
+How PromptKit's evals score LLM output, and where they run in Arena, the SDK and an event-driven worker.
 
-## Overview
+## What evals are
 
-Evals are automated quality checks that run against LLM outputs. They answer questions like "Did the assistant stay on topic?", "Was the JSON valid?", or "Did it call the right tools?". Evals are defined in pack files and execute automatically during conversations or against recorded sessions.
+Evals are automated quality checks that run against LLM output. They answer questions such as "Did the assistant stay on topic?", "Was the JSON valid?" and "Did it call the right tools?". You define them in the pack file, and they run during conversations or against recorded sessions.
 
-Evals use the same [check types](https://promptkit.altairalabs.ai/reference/checks/) as assertions and guardrails. The difference is *when* and *where* they run: evals can fire in production on every turn, on a sampled subset, or at session close, whereas assertions only run during Arena tests and guardrails run inline before the response is delivered.
+Evals use the same [check types](https://promptkit.altairalabs.ai/reference/checks/) as assertions and guardrails. They differ in when and where they run. An eval can fire in production on every turn, on a sampled subset, or at session close. An assertion runs only during Arena tests, and a guardrail runs inline before the response is delivered.
 
-Eval handlers produce **scores only** (0.0–1.0). They never determine pass/fail — that responsibility belongs to assertion and guardrail wrappers. When used as standalone evals, the score is recorded as a metric and emitted as an event.
+Eval handlers produce scores only (0.0 to 1.0). Pass/fail belongs to the `assertion` and `guardrail` wrapper types, which wrap an inner eval and compare its score to `min_score` and `max_score` in the wrapper's `params`. A plain eval records its score as a metric and emits an event.
+
+The `EvalRunner` runs the handlers. Its caller decides where the results go: the SDK passes them to a `ResultWriter` (`MetricResultWriter`, which writes Prometheus metrics), and Arena reads them directly into the run report.
 
 ```mermaid
 flowchart LR
-    pack["Pack File (evals)"] --> runner["EvalRunner"]
-    runner --> writer["ResultWriter"]
-    writer --> out["Metrics / Metadata"]
+    pack["Pack file (evals)"] --> runner["EvalRunner"]
+    runner --> handlers["Eval handlers"]
+    handlers --> runner
+    runner --> writer["ResultWriter (SDK)"]
+    runner --> report["Run report (Arena)"]
+    writer --> metrics["Prometheus metrics"]
 ```
 
-:::note
-For the complete list of check types available as evals, see the [Checks Reference](https://promptkit.altairalabs.ai/reference/checks/).
-:::
+For the check types available as evals, see the [Checks Reference](https://promptkit.altairalabs.ai/reference/checks/).
 
-## Pack Evals vs Scenario Assertions
+## Pack evals and scenario assertions
 
-PromptKit offers two complementary evaluation mechanisms that share the same underlying [check types](https://promptkit.altairalabs.ai/reference/checks/):
+PromptKit has two mechanisms that share the same check types:
 
-| | Pack Evals | Scenario Assertions |
+| | Pack evals | Scenario assertions |
 |---|---|---|
-| **Defined in** | Pack file (`evals` array) | Arena scenario YAML |
-| **Scope** | Any conversation using the pack | Specific test scenarios |
-| **When** | Production + testing | Testing only |
-| **Check types** | Any check from the [unified catalog](https://promptkit.altairalabs.ai/reference/checks/) | Any check from the [unified catalog](https://promptkit.altairalabs.ai/reference/checks/) |
-| **Trigger** | Configurable (every turn, sampling, session close) | Every turn / conversation end |
+| Defined in | Pack file (`evals` array) | Arena scenario YAML |
+| Scope | Any conversation using the pack | Specific test scenarios |
+| Runs | Production and testing | Testing only |
+| Trigger | Configurable (every turn, sampling, session close) | Every turn or conversation end |
 
-**Pack evals** travel with your pack — they run in production, in Arena tests, and anywhere the pack is used. Think of them as built-in quality monitors.
+Pack evals travel with the pack, so they run in production, in Arena tests and anywhere else the pack is used. They work as built-in quality monitors. Scenario assertions are Arena test expectations for specific conversation flows. Both can coexist: pack evals give baseline monitoring and assertions verify specific behaviours. See [Unified Check Model](https://promptkit.altairalabs.ai/concepts/validation/) for how evals, assertions and guardrails relate.
 
-**Scenario assertions** are Arena-specific test expectations. They validate specific conversation flows defined in your test scenarios.
+## Eval definitions
 
-Both can coexist: pack evals provide baseline quality monitoring while scenario assertions verify specific behaviors. See [Unified Check Model](https://promptkit.altairalabs.ai/concepts/validation/) for how evals, assertions, and guardrails relate.
-
-## Eval Definition Structure
-
-Each eval is an `EvalDef` object in the pack's `evals` array. The structure combines a check type with trigger, sampling, threshold, and metric configuration:
+Each eval is an entry in the pack's `evals` array with an `id`, a check `type`, a `trigger` and optional `params`, `metric` and `groups`. The [Pack Evals reference](/arena/reference/pack-evals/) lists the fields, triggers, groups and metric types the runtime acts on.
 
 ```json
 {
@@ -51,9 +58,7 @@ Each eval is an `EvalDef` object in the pack's `evals` array. The structure comb
   "type": "contains",
   "trigger": "every_turn",
   "params": { "patterns": ["thank you"] },
-  "threshold": { "min_score": 0.8 },
   "enabled": true,
-  "sample_percentage": 10,
   "metric": {
     "name": "response_quality",
     "type": "gauge",
@@ -62,32 +67,15 @@ Each eval is an `EvalDef` object in the pack's `evals` array. The structure comb
 }
 ```
 
-| Field | Required | Description |
-|-------|----------|-------------|
-| `id` | Yes | Unique identifier for the eval within the pack |
-| `type` | Yes | Check type from the [Checks Reference](https://promptkit.altairalabs.ai/reference/checks/) |
-| `trigger` | Yes | When the eval fires (see [Triggers](#triggers)) |
-| `params` | Varies | Parameters specific to the check type |
-| `threshold` | No | Pass/fail threshold (e.g. `min_score`) |
-| `enabled` | No | Whether the eval is active (default: `true`) |
-| `sample_percentage` | No | Percentage of turns/sessions to evaluate (for sampling triggers) |
-| `groups` | No | Eval groups for filtering (see [Eval Groups](#eval-groups)) |
-| `metric` | No | Prometheus metric configuration (see [Metrics & Prometheus](#metrics--prometheus)) |
+To gate on a score, wrap the check in the `assertion` or `guardrail` type and set `min_score` and `max_score` in its `params`, with the inner check in `eval_type` and `eval_params`. With neither set, `min_score` defaults to 1.0.
 
-## Triggers
+## Triggers and sampling
 
-Each eval specifies when it should fire:
+The trigger decides how often an eval costs something. `every_turn` evals run after each assistant response, and `on_session_complete` and `on_conversation_complete` evals run once at the end. `sample_turns` and `sample_sessions` evaluate a percentage, 5 by default, which keeps a judge-backed check affordable in production.
 
-| Trigger | Description | Use Case |
-|---------|-------------|----------|
-| `every_turn` | After each assistant response | Real-time quality checks |
-| `on_session_complete` | When session closes | Summary evaluations |
-| `sample_turns` | Percentage of turns (hash-based) | Production sampling |
-| `sample_sessions` | Percentage of sessions (hash-based) | Production sampling |
-| `on_conversation_complete` | When multi-session conversation closes | Final evaluation |
-| `on_workflow_step` | After a workflow state transition | Workflow validation |
+Sampling is deterministic. The same session ID and turn index always give the same decision (FNV-1a hash), so runs are reproducible. For `sample_sessions` the decision depends on the session ID only.
 
-Sampling is **deterministic** — the same session ID and turn index always produce the same sampling decision (FNV-1a hash). This ensures reproducible behavior across runs.
+`on_conversation_complete` evals run in Arena and in `sdk.Evaluate` with `Trigger` set. A live SDK conversation does not fire them.
 
 ```json
 {
@@ -95,30 +83,15 @@ Sampling is **deterministic** — the same session ID and turn index always prod
   "type": "contains",
   "trigger": "sample_turns",
   "sample_percentage": 10,
-  "params": {
-    "patterns": ["harmful", "offensive"]
-  }
+  "params": { "patterns": ["harmful", "offensive"] }
 }
 ```
 
-## Eval Groups
+## Eval groups
 
-Evals can belong to one or more groups, enabling selective execution. When no explicit groups are set, evals are automatically classified based on their handler type:
+Groups let you run a subset of a pack's evals. An eval with no explicit `groups` is classified by its handler type: deterministic checks such as `contains` and `regex` get `["default", "fast-running"]`, and `llm_judge` gets `["default", "long-running", "external"]`.
 
-| Group | Value | Assigned To |
-|-------|-------|-------------|
-| Default | `default` | All evals with no explicit groups |
-| Fast-running | `fast-running` | Deterministic checks: `contains`, `regex`, `json_valid`, `tools_called`, workflow checks, etc. |
-| Long-running | `long-running` | Compute/network-intensive: `llm_judge`, `cosine_similarity`, `outcome_equivalent`, `a2a_eval`, `rest_eval`, exec handlers |
-| External | `external` | External system calls: `llm_judge`, `a2a_eval`, `rest_eval`, exec handlers |
-
-### Automatic classification
-
-Evals with no explicit `groups` field receive `default` plus one or more well-known groups. For example, a `contains` eval gets `["default", "fast-running"]`, while an `llm_judge` eval gets `["default", "long-running", "external"]`.
-
-### Explicit groups
-
-Setting `groups` on an eval definition overrides the automatic classification entirely:
+Setting `groups` explicitly replaces the automatic classification. This eval matches a filter for `compliance` or `safety`, and does not match `default`, `long-running` or `external`:
 
 ```json
 {
@@ -130,11 +103,7 @@ Setting `groups` on an eval definition overrides the automatic classification en
 }
 ```
 
-This eval matches only when filtering for `compliance` or `safety`. It does not match `default`, `long-running`, or `external`.
-
-### Filtering by group
-
-In the SDK, use `EvalGroups` to select which groups to run:
+In the SDK, `EvalGroups` selects which groups run. A nil or empty list runs every eval.
 
 ```go
 // Only run fast evals in the hot path
@@ -145,68 +114,51 @@ results, _ := sdk.Evaluate(ctx, sdk.EvaluateOpts{
 })
 ```
 
-When `EvalGroups` is nil or empty, all evals run regardless of group.
+## Where evals run
 
-## Dispatch Patterns
+Three paths execute evals, and all of them go through `EvalRunner`.
 
-The eval system supports three dispatch patterns for different deployment scenarios:
+The SDK's `evalMiddleware` calls `EvalRunner` directly in the conversation's process. Turn evals run asynchronously in goroutines bounded by a semaphore, so they do not delay the response. Session evals run synchronously when you close the conversation. It builds the `EvalContext` from the conversation state and passes the results to the `ResultWriter`, which records metrics.
 
-### Pattern A: InProcDispatcher
+Arena's `EvalOrchestrator` wraps `EvalRunner` and calls its `Run*Evals` methods directly. It builds its own `EvalContext` and returns results to the run report.
 
-Runs evals synchronously in the same process. Used by Arena and simple SDK deployments.
-
-```mermaid
-flowchart LR
-    conv["Conversation"] --> disp["InProcDispatcher"]
-    disp --> runner["EvalRunner"]
-    runner --> handlers["Handlers"]
-    handlers --> writer["ResultWriter"]
-```
-
-### Pattern B: EventDispatcher
-
-Publishes eval requests to an event bus for async processing by workers. Used in production SDK deployments.
+`EvalWorker` is the event-driven path. It subscribes to `eval.turn.*` and `eval.session.*` events through an `EventSubscriber` that your platform supplies, runs `EvalRunner`, and writes the results through a `ResultWriter`. This path suits deployments where evals run in a separate process from the conversation.
 
 ```mermaid
 flowchart LR
-    conv["Conversation"] --> disp["EventDispatcher"]
-    disp --> bus["Event Bus"]
-    bus --> worker["EvalWorker"]
-    worker --> runner["EvalRunner"]
+    mw["SDK evalMiddleware"] --> runner["EvalRunner"]
+    orch["Arena EvalOrchestrator"] --> runner
+    sub["EventSubscriber (platform)"] --> worker["EvalWorker"]
+    worker --> runner
+    runner --> handlers["Eval handlers"]
     runner --> writer["ResultWriter"]
 ```
 
-### Pattern C: EventBusEvalListener
+## Eval executor (Arena)
 
-Subscribes to EventBus `message.created` events and triggers evals automatically. No explicit middleware needed.
+`EvalConversationExecutor` evaluates saved conversations from recordings, so you can score historical conversations without re-running them against a live LLM. No assistant turn is regenerated. Judge-backed evals such as `llm_judge` still call the configured judge provider.
 
 ```mermaid
-flowchart LR
-    stage["RecordingStage"] --> bus["EventBus"]
-    bus --> listener["EventBusEvalListener"]
-    listener --> acc["SessionAccumulator"]
-    acc --> disp["Dispatcher"]
-    disp --> runner["Runner"]
+sequenceDiagram
+    participant E as EvalConversationExecutor
+    participant A as Adapter registry
+    participant O as EvalOrchestrator
+    participant R as EvalRunner
+    E->>A: Load recording
+    A-->>E: Recorded messages
+    E->>E: Build conversation context
+    E->>E: Turn-level assertions on each assistant message
+    E->>E: Conversation-level assertions
+    E->>O: Pack session evals (if configured)
+    O->>R: RunSessionEvals
+    R-->>O: Eval results
+    O-->>E: Eval results
+    E->>E: Aggregate results
 ```
 
-The `EventBusEvalListener` uses a `SessionAccumulator` that accumulates messages per session and builds `EvalContext` on demand. Sessions expire after a configurable TTL (default: 30 minutes).
+## Metrics and Prometheus
 
-## Eval Executor (Arena)
-
-The `EvalConversationExecutor` evaluates **saved conversations** from recordings:
-
-1. Load recording via adapter registry
-2. Build conversation context from recorded messages
-3. Apply turn-level assertions to each assistant message
-4. Evaluate conversation-level assertions
-5. Run pack session evals (if configured)
-6. Return aggregated results
-
-This enables offline evaluation of historical conversations without re-running them against a live LLM.
-
-## Metrics & Prometheus
-
-Eval results can be recorded as Prometheus metrics using the unified `metrics.Collector`. The same collector records both pipeline operational metrics and eval metrics into a standard `prometheus.Registry`.
+The SDK records eval results as Prometheus metrics through the unified `metrics.Collector`, which also records pipeline metrics into a standard `prometheus.Registry`. Arena records no Prometheus metrics.
 
 ```go
 import (
@@ -227,46 +179,17 @@ conv, _ := sdk.Open("./app.pack.json", "chat",
 )
 ```
 
-When `WithMetrics()` is configured, all eval results are automatically recorded as Prometheus metrics alongside pipeline metrics. Evals with an explicit `metric` definition use that configuration; evals without one get an auto-generated gauge metric named after the eval ID. Eval metrics are namespaced under `{namespace}_eval_` to distinguish them from pipeline metrics. For example, a metric named `response_quality_score` with namespace `myapp` becomes `myapp_eval_response_quality_score`, and an eval with ID `check-tone` without an explicit metric becomes `myapp_eval_check-tone`. See [Metrics Reference](https://promptkit.altairalabs.ai/runtime/reference/metrics/) for the full catalog.
+With `WithMetrics()` set, every eval result is recorded. An eval with a `metric` definition uses it. An eval without one gets an auto-generated gauge named after the eval ID. Eval metrics are namespaced under `{namespace}_eval_`: a metric named `response_quality_score` in namespace `myapp` becomes `myapp_eval_response_quality_score`, and an eval with ID `check_tone` and no explicit metric becomes `myapp_eval_check_tone`. The eval ID is used as the metric name unchanged. A hyphenated ID such as `check-tone` still registers with the Prometheus client in this repo's `go.mod`, which validates names as UTF-8, but the name needs quoting in PromQL, so eval IDs written with underscores are easier to query. See the [Metrics Reference](https://promptkit.altairalabs.ai/runtime/reference/metrics/) for the full catalog.
 
-### Metric Types
+A metric's type is `gauge`, `counter`, `histogram` or `boolean`, and the [Pack Evals reference](/arena/reference/pack-evals/#metric-definition) describes each.
 
-| Type | Behavior |
-|------|----------|
-| `gauge` | Set to the eval's score value |
-| `counter` | Increment count on each execution |
-| `histogram` | Observe value with configurable buckets, track sum/count |
-| `boolean` | 1.0 if score ≥ 1.0, 0.0 otherwise |
+Labels come from three places:
 
-### Label Sources
+- Pack-author labels go in `metric.labels` on the eval definition, for example `{"eval_type": "llm_judge", "category": "quality"}`.
+- Const labels come from `CollectorOpts.ConstLabels` and are process-level dimensions such as env or region.
+- Instance labels come from `CollectorOpts.InstanceLabels` and bind per conversation, for dimensions such as tenant or prompt name.
 
-**Pack-author labels** are declared in the `metric.labels` field of each eval definition:
-
-```json
-{
-  "id": "response_quality",
-  "type": "llm_judge",
-  "trigger": "every_turn",
-  "metric": {
-    "name": "response_quality_score",
-    "type": "histogram",
-    "range": { "min": 0, "max": 1 },
-    "labels": {
-      "eval_type": "llm_judge",
-      "category": "quality"
-    }
-  },
-  "params": {
-    "criteria": "Rate the quality of the response"
-  }
-}
-```
-
-**Const labels** are set via `CollectorOpts.ConstLabels` — process-level dimensions (env, region) baked into the metric descriptor.
-
-**Instance labels** are set via `CollectorOpts.InstanceLabels` and bound per-conversation — conversation-level dimensions (tenant, prompt_name).
-
-Label names must match Prometheus naming rules (`^[a-zA-Z_][a-zA-Z0-9_]*$`) and must not start with `__` (reserved by Prometheus). Invalid label names are caught during pack validation.
+Label names must match `^[a-zA-Z_][a-zA-Z0-9_]*$` and must not start with `__`. Pack validation does not check them. An invalid name surfaces later as a failed Prometheus registration, logged as a warning.
 
 ## Events
 
@@ -274,36 +197,39 @@ Eval results emit events through the EventBus:
 
 | Event | Constant | When |
 |-------|----------|------|
-| `eval.completed` | `EventEvalCompleted` | Eval finished successfully (regardless of score) |
-| `eval.failed` | `EventEvalFailed` | Eval handler returned an error |
+| `eval.completed` | `EventEvalCompleted` | The eval finished, whatever the score |
+| `eval.failed` | `EventEvalFailed` | The handler returned an error |
 
-The `eval.completed` event carries an `EvalCompletedData` payload with the eval ID, type, score, and derived `Passed` field (`IsPassed()` — true when score is nil or ≥ 1.0). The `eval.failed` event indicates an infrastructure error (the handler itself errored), not a low score.
+The `eval.completed` payload (`EvalCompletedData`) carries the eval ID, type, kind, trigger, score, value and `passed`. `Passed` is a `*bool` copied from the result. The `assertion` and `guardrail` wrappers set it, and it is nil for plain evals.
 
 :::caution
-`eval.failed` means the eval **errored** — it does not mean the score was low. A working eval that returns score 0.0 emits `eval.completed`, not `eval.failed`.
+`eval.failed` means the eval errored, not that the score was low. A working eval that returns 0.0 emits `eval.completed`.
 :::
 
-## Pack Eval Resolution
+## Pack eval resolution
 
-When both pack-level and prompt-level evals are defined, they are **merged**:
+When a pack and a prompt both define evals, they are merged. A prompt eval overrides a pack eval with the same ID, pack-only evals are kept, and prompt-only evals are appended. Packs define baseline evals and individual prompts customise or extend them.
 
-1. Prompt evals override pack evals where IDs match
-2. Pack-only evals are preserved
-3. Prompt-only evals are appended
+## Trade-offs
 
-This allows packs to define baseline evals while individual prompts customize or extend them.
+Separating scoring from judgment lets one check serve as a metric in production and as a gate in a test. The cost is that a plain eval never fails by itself: to fail a run on a low score, wrap the check in `assertion`.
+
+Asynchronous turn evals keep latency out of the response path, but their results arrive after the turn completes. Session evals run synchronously on close, so a slow judge delays `Close`. Use the `fast-running` group on the hot path and leave judge-backed checks to sampling or to `EvalWorker`.
+
+Histograms use fixed default buckets, which suit latencies better than 0 to 1 scores. Prefer a gauge for scores unless you need a distribution.
 
 ## Example
 
-See the [`eval-test` example](https://github.com/AltairaLabs/promptarena/v2/tree/main/examples/eval-test) for a working Arena configuration that evaluates saved conversations with both deterministic assertions and LLM judge evals.
+The [`eval-test` example](/arena/examples/eval-test/) is a working Arena configuration that evaluates saved conversations with deterministic assertions and an LLM judge. The source is on [GitHub](https://github.com/AltairaLabs/promptarena/tree/main/examples/eval-test).
 
-## See Also
+## Related pages
 
-- [Checks Reference](https://promptkit.altairalabs.ai/reference/checks/) — All check types and parameters
-- [Unified Check Model](https://promptkit.altairalabs.ai/concepts/validation/) — How evals, assertions, and guardrails relate
-- [Run Evals](https://promptkit.altairalabs.ai/sdk/how-to/run-evals/) — Programmatic eval execution via SDK
-- [Assertions Reference](/arena/reference/assertions/) — Test-time checks
-- [Observability](https://promptkit.altairalabs.ai/sdk/explanation/observability/) — EventBus architecture
-- [Session Recording](/arena/explanation/session-recording/) — How recordings feed into evals
-- [Metrics Reference](https://promptkit.altairalabs.ai/runtime/reference/metrics/) — Complete catalog of all emitted metrics
-- [Monitor Events](https://promptkit.altairalabs.ai/sdk/how-to/monitor-events/) — Event hooks and Prometheus metrics in SDK
+- [Pack Evals](/arena/reference/pack-evals/): eval fields, triggers, groups and metric types
+- [Checks Reference](https://promptkit.altairalabs.ai/reference/checks/): all check types and parameters
+- [Unified Check Model](https://promptkit.altairalabs.ai/concepts/validation/): how evals, assertions and guardrails relate
+- [Run Evals](https://promptkit.altairalabs.ai/sdk/how-to/run-evals/): programmatic eval execution via the SDK
+- [Assertions Reference](/arena/reference/assertions/): test-time checks
+- [Observability](https://promptkit.altairalabs.ai/sdk/explanation/observability/): EventBus architecture
+- [Session Recording](/arena/explanation/session-recording/): how recordings feed into evals
+- [Metrics Reference](https://promptkit.altairalabs.ai/runtime/reference/metrics/): all emitted metrics
+- [Monitor Events](https://promptkit.altairalabs.ai/sdk/how-to/monitor-events/): event hooks and Prometheus metrics in the SDK
