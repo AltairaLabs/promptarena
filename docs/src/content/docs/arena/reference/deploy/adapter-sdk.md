@@ -1,7 +1,7 @@
 ---
 title: 'Deploy: Adapter SDK'
 verified:
-  commit: 60cd1a146e6224c0d66c972d18f329a0ce76c522
+  commit: 3df344ffbc8c604e1a8935929c28499d778d19f0
   sources:
     - arena/deploy/flow/config.go
     - arena/deploy/flow/login.go

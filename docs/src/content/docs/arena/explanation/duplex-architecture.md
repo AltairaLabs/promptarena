@@ -2,7 +2,7 @@
 title: Duplex Streaming Architecture
 description: How PromptArena streams bidirectional audio to a provider, from pipeline stages and session creation to turn detection and resilience.
 verified:
-  commit: c67065389ccbc6e76babad54b4345e1c76bb633e
+  commit: 3df344ffbc8c604e1a8935929c28499d778d19f0
   sources:
     - arena/arenaconfig/types.go
     - arena/engine/duplex_conversation_executor.go

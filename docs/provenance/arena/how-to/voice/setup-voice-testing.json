@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/voice/setup-voice-testing.md",
- "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "commit": "3df344ffbc8c604e1a8935929c28499d778d19f0",
  "claims": [
   {
    "id": 1,
@@ -255,8 +255,8 @@
    "claim": "Arena config field spec.defaults.output.dir",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:519",
-    "arena/engine/engine.go"
+    "arena/arenaconfig/helpers.go:38",
+    "arena/arenaconfig/types.go:519"
    ]
   },
   {
@@ -833,8 +833,8 @@
     "arena/arenaconfig/helpers.go:55",
     "arena/cmd/promptarena/run.go:361",
     "arena/cmd/promptarena/serve_interactive.go:222",
-    "arena/engine/engine.go:1015",
-    "arena/engine/engine.go:702"
+    "arena/engine/engine.go:1013",
+    "arena/engine/engine.go:700"
    ]
   },
   {

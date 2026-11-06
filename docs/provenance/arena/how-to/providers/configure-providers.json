@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/providers/configure-providers.md",
- "commit": "60cd1a146e6224c0d66c972d18f329a0ce76c522",
+ "commit": "3df344ffbc8c604e1a8935929c28499d778d19f0",
  "claims": [
   {
    "id": 1,
@@ -82,7 +82,7 @@
    "claim": "Provider files are placed in a providers/ directory and referenced from arena.yaml",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:586",
+    "arena/arenaconfig/loader.go:595",
     "arena/templates/builtin/quick-start/template.yaml:40"
    ]
   },
@@ -99,7 +99,7 @@
    "claim": "kind value Provider is a valid manifest kind",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:456",
+    "arena/arenaconfig/loader.go:464",
     "schemas/v1alpha1/provider.json:277"
    ]
   },
@@ -116,8 +116,8 @@
    "claim": "metadata.labels is a map field of a provider manifest, used with provider label values",
    "verdict": "dead",
    "evidence": [
-    "arena/arenaconfig/loader.go:456",
-    "schemas/v1alpha1/provider.json:47"
+    "arena/arenaconfig/ignored_fields.go:66",
+    "arena/arenaconfig/loader.go:468"
    ]
   },
   {
@@ -142,7 +142,7 @@
    "claim": "spec.capabilities is a list field of the provider spec",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:648",
+    "arena/arenaconfig/loader.go:657",
     "schemas/v1alpha1/provider.json:169"
    ]
   },
@@ -168,7 +168,7 @@
    "claim": "Scenarios accept a required_capabilities field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:695"
+    "arena/arenaconfig/types.go:701"
    ]
   },
   {
@@ -194,7 +194,7 @@
    "claim": "Example vision-capable openai provider uses model gpt-4o with capabilities text, streaming, vision, tools, json",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:648",
+    "arena/arenaconfig/loader.go:657",
     "schemas/v1alpha1/provider.json:105"
    ]
   },
@@ -203,7 +203,7 @@
    "claim": "Example audio-only openai provider uses model gpt-4o-audio-preview with capabilities audio and duplex",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:648"
+    "arena/arenaconfig/loader.go:657"
    ]
   },
   {
@@ -211,7 +211,7 @@
    "claim": "Example ollama provider with model llama3.2:3b declares capabilities text, streaming, tools, json",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:648"
+    "arena/arenaconfig/loader.go:657"
    ]
   },
   {
@@ -509,7 +509,7 @@
    "claim": "Inference providers power assertion handlers such as audio_emotion and do not participate in the LLM run matrix",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:625",
+    "arena/arenaconfig/loader.go:634",
     "arena/engine/classify_registry.go:21"
    ]
   },
@@ -534,7 +534,7 @@
    "claim": "spec.role accepts the value inference, which routes the provider into the classify registry",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:625",
+    "arena/arenaconfig/loader.go:634",
     "arena/engine/classify_registry.go:25",
     "schemas/v1alpha1/provider.json:123"
    ]
@@ -560,8 +560,8 @@
    "claim": "arena.yaml spec.providers entries take id and file fields",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:385",
-    "schemas/v1alpha1/arena.json"
+    "arena/arenaconfig/types.go:388",
+    "schemas/v1alpha1/arena.json:3251"
    ]
   },
   {
@@ -569,7 +569,7 @@
    "claim": "spec.defaults.inference accepts audio_classifier, text_classifier, image_classifier and embedder keys",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:727",
+    "arena/arenaconfig/loader.go:736",
     "arena/engine/classify_registry.go:58"
    ]
   },
@@ -595,7 +595,7 @@
    "claim": "Scenarios accept a conversation_assertions field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:701"
+    "arena/arenaconfig/types.go:707"
    ]
   },
   {
@@ -940,7 +940,7 @@
    "claim": "kind value Arena is a valid arena.yaml manifest kind",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/arena.json"
+    "schemas/v1alpha1/arena.json:5205"
    ]
   },
   {
@@ -956,8 +956,8 @@
    "claim": "Example arena.yaml references providers/openai.yaml, providers/claude.yaml and providers/gemini.yaml under spec.providers",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:586",
-    "arena/arenaconfig/types.go:385"
+    "arena/arenaconfig/loader.go:595",
+    "arena/arenaconfig/types.go:388"
    ]
   },
   {
@@ -965,7 +965,7 @@
    "claim": "arena.yaml spec.scenarios entries take a file field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:412"
+    "arena/arenaconfig/types.go:415"
    ]
   },
   {
@@ -997,7 +997,7 @@
    "claim": "promptarena does not load a .env file automatically; the user must export variables before running",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:79"
+    "arena/cmd/promptarena/run.go:78"
    ]
   },
   {
@@ -1005,7 +1005,7 @@
    "claim": "Command 'promptarena run' runs the arena tests",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:138"
+    "arena/cmd/promptarena/run.go:162"
    ]
   },
   {
@@ -1021,8 +1021,8 @@
    "claim": "Example providers openai-gpt4 and openai-mini use labels provider openai with tiers premium and cost-effective",
    "verdict": "dead",
    "evidence": [
-    "arena/arenaconfig/loader.go:456",
-    "arena/engine/execution.go:280"
+    "arena/arenaconfig/ignored_fields.go:66",
+    "arena/arenaconfig/loader.go:468"
    ]
   },
   {
@@ -1030,7 +1030,7 @@
    "claim": "A single providers file may contain multiple provider documents separated by ---",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/loader.go:456"
+    "arena/arenaconfig/loader.go:464"
    ]
   },
   {
@@ -1047,8 +1047,8 @@
    "claim": "promptarena run accepts a --provider flag selecting providers by name",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:138",
-    "arena/cmd/promptarena/run.go:282"
+    "arena/cmd/promptarena/run.go:162",
+    "arena/cmd/promptarena/run.go:316"
    ]
   },
   {
@@ -1056,7 +1056,7 @@
    "claim": "The --provider flag accepts a comma-separated list of provider names",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:138"
+    "arena/cmd/promptarena/run.go:162"
    ]
   },
   {
@@ -1073,7 +1073,7 @@
    "claim": "Scenario labels such as provider-specific constrain which providers run the scenario",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:695",
+    "arena/arenaconfig/types.go:701",
     "arena/engine/execution.go:280"
    ]
   },
@@ -1082,7 +1082,7 @@
    "claim": "Scenario kind manifest accepts spec.task_type and spec.turns",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:464"
+    "arena/arenaconfig/loader.go:473"
    ]
   },
   {
@@ -1090,7 +1090,7 @@
    "claim": "Scenario turns take role and content fields",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1129"
+    "arena/arenaconfig/types.go:1135"
    ]
   },
   {
@@ -1098,7 +1098,8 @@
    "claim": "promptarena run accepts a --temperature flag",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:161"
+    "arena/cmd/promptarena/run.go:207",
+    "arena/cmd/promptarena/run.go:225"
    ]
   },
   {
@@ -1106,8 +1107,8 @@
    "claim": "--temperature overrides the temperature for all providers at runtime",
    "verdict": "dead",
    "evidence": [
-    "arena/cmd/promptarena/run.go:161",
-    "arena/cmd/promptarena/run.go:191"
+    "arena/cmd/promptarena/run.go:216",
+    "arena/cmd/promptarena/run.go:225"
    ]
   },
   {
@@ -1115,8 +1116,8 @@
    "claim": "promptarena run accepts a --max-tokens flag that overrides max tokens at runtime",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:162",
-    "arena/cmd/promptarena/run.go:499"
+    "arena/cmd/promptarena/run.go:188",
+    "arena/cmd/promptarena/run.go:549"
    ]
   },
   {
@@ -1124,8 +1125,8 @@
    "claim": "Combined overrides --temperature 0.9 --max-tokens 4000 are accepted together",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:161",
-    "arena/cmd/promptarena/run.go:162"
+    "arena/cmd/promptarena/run.go:188",
+    "arena/cmd/promptarena/run.go:225"
    ]
   },
   {
@@ -1150,7 +1151,7 @@
    "claim": "promptarena run accepts a --verbose flag",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:164"
+    "arena/cmd/promptarena/run.go:189"
    ]
   },
   {
@@ -1166,7 +1167,8 @@
    "claim": "promptarena run accepts a --concurrency flag",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:143"
+    "arena/cmd/promptarena/run.go:167",
+    "arena/cmd/promptarena/run.go:274"
    ]
   },
   {
@@ -1174,8 +1176,8 @@
    "claim": "--concurrency 1 runs tests sequentially",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:291",
-    "arena/cmd/promptarena/run_interactive.go:463"
+    "arena/cmd/promptarena/run.go:325",
+    "arena/cmd/promptarena/run_interactive.go:458"
    ]
   },
   {

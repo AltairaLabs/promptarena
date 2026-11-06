@@ -1,13 +1,13 @@
 {
  "page": "docs/src/content/docs/arena/how-to/agents/test-a2a-agents.md",
- "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "commit": "3df344ffbc8c604e1a8935929c28499d778d19f0",
  "claims": [
   {
    "id": 1,
    "claim": "Arena has built-in mock A2A infrastructure, and you define mock agents in the Arena config.",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:279",
+    "arena/arenaconfig/types.go:282",
     "arena/engine/builder_integration.go:1029"
    ]
   },
@@ -177,7 +177,7 @@
    "claim": "a2a_agents[].card is an agent card object.",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:281"
+    "arena/arenaconfig/types.go:284"
    ]
   },
   {
@@ -185,7 +185,7 @@
    "claim": "card.name is a field of the agent card.",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:323"
+    "arena/arenaconfig/types.go:326"
    ]
   },
   {
@@ -193,7 +193,7 @@
    "claim": "card.description is a field of the agent card.",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:324"
+    "arena/arenaconfig/types.go:327"
    ]
   },
   {
@@ -201,7 +201,7 @@
    "claim": "card.skills is a list of skill objects.",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:325"
+    "arena/arenaconfig/types.go:328"
    ]
   },
   {
@@ -209,7 +209,7 @@
    "claim": "skills[].id is a field of a skill.",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:330"
+    "arena/arenaconfig/types.go:333"
    ]
   },
   {
@@ -217,7 +217,7 @@
    "claim": "skills[].name is a field of a skill.",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:331"
+    "arena/arenaconfig/types.go:334"
    ]
   },
   {
@@ -225,7 +225,7 @@
    "claim": "skills[].description is a field of a skill.",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:332"
+    "arena/arenaconfig/types.go:335"
    ]
   },
   {
@@ -233,7 +233,7 @@
    "claim": "skills[].tags is a list field of a skill.",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:333"
+    "arena/arenaconfig/types.go:336"
    ]
   },
   {
@@ -241,7 +241,7 @@
    "claim": "a2a_agents[].responses is a list of response rules.",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:282"
+    "arena/arenaconfig/types.go:285"
    ]
   },
   {
@@ -249,7 +249,7 @@
    "claim": "responses[].skill selects the skill a rule answers.",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:338"
+    "arena/arenaconfig/types.go:341"
    ]
   },
   {
@@ -257,7 +257,7 @@
    "claim": "responses[].match.contains is a field, matched case-insensitively against message text.",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:346",
+    "arena/arenaconfig/types.go:349",
     "arena/engine/builder_integration.go:1199"
    ]
   },
@@ -266,7 +266,7 @@
    "claim": "responses[].response.parts is a list of parts.",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:352"
+    "arena/arenaconfig/types.go:355"
    ]
   },
   {
@@ -274,7 +274,7 @@
    "claim": "parts[].text is a field holding the response text.",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:357"
+    "arena/arenaconfig/types.go:360"
    ]
   },
   {
@@ -449,7 +449,7 @@
    "claim": "tool_policy.tool_choice accepts the value auto.",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:931"
+    "arena/arenaconfig/types.go:937"
    ]
   },
   {
@@ -457,7 +457,7 @@
    "claim": "tool_policy.max_tool_calls_per_turn is a field limiting tool calls per turn.",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:937"
+    "arena/arenaconfig/types.go:943"
    ]
   },
   {
@@ -465,7 +465,7 @@
    "claim": "turns[].role accepts the value user.",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1129"
+    "arena/arenaconfig/types.go:1135"
    ]
   },
   {
@@ -551,7 +551,7 @@
    "claim": "promptarena run is the command that runs the example.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:147"
+    "arena/cmd/promptarena/run.go:116"
    ]
   },
   {
@@ -559,7 +559,7 @@
    "claim": "promptarena run accepts -c as the config flag.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:147"
+    "arena/cmd/promptarena/run.go:116"
    ]
   },
   {
@@ -600,7 +600,7 @@
    "claim": "Arena evaluates assertions and produces a report.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:456"
+    "arena/cmd/promptarena/run.go:501"
    ]
   },
   {
@@ -616,8 +616,9 @@
    "claim": "The HTML report file is named report-<timestamp>.html.",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run.go:147",
-    "arena/cmd/promptarena/run.go:456"
+    "arena/cmd/promptarena/run.go:178",
+    "arena/cmd/promptarena/run.go:187",
+    "arena/cmd/promptarena/run.go:536"
    ]
   },
   {
@@ -625,7 +626,7 @@
    "claim": "The JSON data file is named report-<timestamp>-data.json.",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run.go:456"
+    "arena/cmd/promptarena/run.go:501"
    ]
   },
   {
@@ -681,7 +682,7 @@
    "claim": "conversation_assertions is a scenario-level key that holds assertions evaluated across the whole conversation.",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:701",
+    "arena/arenaconfig/types.go:707",
     "examples/multi-agent-demo/scenarios/multi-agent-delegation.yaml:46"
    ]
   },
@@ -704,7 +705,7 @@
    "claim": "a2a_agents[].url is a field that makes the agent a remote agent.",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:286",
+    "arena/arenaconfig/types.go:289",
     "arena/engine/builder_integration.go:1062"
    ]
   },
@@ -713,7 +714,7 @@
    "claim": "When url is set, card and responses are ignored.",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:284",
+    "arena/arenaconfig/types.go:287",
     "arena/engine/builder_integration.go:1060"
    ]
   },
@@ -722,7 +723,7 @@
    "claim": "auth.scheme accepts Bearer.",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:308",
+    "arena/arenaconfig/types.go:311",
     "arena/engine/builder_integration.go:1145"
    ]
   },
@@ -731,7 +732,7 @@
    "claim": "auth.token is a field holding an inline token.",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:310",
+    "arena/arenaconfig/types.go:313",
     "arena/engine/builder_integration.go:1115"
    ]
   },
@@ -740,7 +741,7 @@
    "claim": "auth.token_env is a field naming an environment variable that holds the token.",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:312",
+    "arena/arenaconfig/types.go:315",
     "arena/engine/builder_integration.go:1139"
    ]
   },
@@ -749,7 +750,7 @@
    "claim": "headers is a map of static headers.",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:292"
+    "arena/arenaconfig/types.go:295"
    ]
   },
   {
@@ -757,7 +758,7 @@
    "claim": "headers_from_env is a list of Header=ENV_VAR entries.",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:296",
+    "arena/arenaconfig/types.go:299",
     "arena/engine/builder_integration.go:1163"
    ]
   },
@@ -790,7 +791,7 @@
    "claim": "timeout_ms is a per-request timeout in milliseconds.",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:299",
+    "arena/arenaconfig/types.go:302",
     "arena/engine/builder_integration.go:1127"
    ]
   },
@@ -799,8 +800,8 @@
    "claim": "The complete remote agent example uses only fields listed earlier on the page.",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:280",
-    "arena/arenaconfig/types.go:302"
+    "arena/arenaconfig/types.go:283",
+    "arena/arenaconfig/types.go:305"
    ]
   },
   {
@@ -824,7 +825,7 @@
    "claim": "A response rule with an error field returns a failed task.",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:341",
+    "arena/arenaconfig/types.go:344",
     "arena/engine/builder_integration.go:1196"
    ]
   },

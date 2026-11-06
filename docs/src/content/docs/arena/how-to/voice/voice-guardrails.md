@@ -2,7 +2,7 @@
 title: Add Voice PII Guardrails
 description: Wire the pii_leakage guardrail into a pack so it replaces a PII-bearing reply before it is spoken, and assert that it fired with guardrail_triggered.
 verified:
-  commit: 631d3c353c2c9d71b362ae5cd20c137d42b19d5b
+  commit: 3df344ffbc8c604e1a8935929c28499d778d19f0
   sources:
     - arena/cmd/promptarena/main_integration.go
     - arena/cmd/promptarena/run.go
@@ -11,7 +11,6 @@ verified:
     - arena/turnexecutors/pipeline_stages_integration.go
     - examples/pii-guardrail-red-team/scenarios/legitimate-question.scenario.yaml
     - examples/voice-guardrails/config.arena.yaml
-    - examples/voice-guardrails/mock-responses.yaml
     - examples/voice-guardrails/prompts/support-agent.yaml
     - examples/voice-guardrails/providers/mock-judge.yaml
     - examples/voice-guardrails/scenarios/pii-redaction.scenario.yaml

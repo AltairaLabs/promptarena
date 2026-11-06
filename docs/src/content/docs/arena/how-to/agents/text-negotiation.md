@@ -2,7 +2,7 @@
 title: Test Agent Negotiation
 description: Test a multi-turn negotiation with conversation-level assertions, scripted for CI or driven by a real LLM in self-play.
 verified:
-  commit: 631d3c353c2c9d71b362ae5cd20c137d42b19d5b
+  commit: 3df344ffbc8c604e1a8935929c28499d778d19f0
   sources:
     - .github/workflows/ci.yml
     - arena/arenaconfig/loader.go

@@ -1,0 +1,1076 @@
+{
+ "page": "docs/src/content/docs/arena/explanation/session-recording.md",
+ "commit": "3df344ffbc8c604e1a8935929c28499d778d19f0",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "PromptKit's session recording system captures, stores, and replays LLM conversations",
+   "verdict": "true",
+   "evidence": [
+    "arena/adapters/session_recording.go:39",
+    "arena/engine/builder_integration.go:45",
+    "arena/turnexecutors/pipeline_stages_integration.go:607"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "Recordings capture precise, millisecond-accurate event timestamps",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:607"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "Recordings capture all messages, tool calls, and media",
+   "verdict": "true",
+   "evidence": [
+    "arena/adapters/session_recording.go:94",
+    "arena/turnexecutors/pipeline_stages_integration.go:607"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "Recordings contain enough information to replay conversations exactly",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:45"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "Diagram edge: Live Session (Emitter) feeds the Event Store (JSONL)",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:515",
+    "arena/engine/engine.go:601",
+    "arena/turnexecutors/pipeline_stages_integration.go:607"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "Diagram edge: Event Store (JSONL) feeds the Recording (Replay)",
+   "verdict": "true",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "Diagram edge: Live Session emits real-time events",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:641"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "Diagram edge: Event Store writes to persistent storage",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:601"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "Diagram edge: Recording produces synchronized playback",
+   "verdict": "true",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "events.NewEmitter(eventBus, runID, scenarioID, conversationID) is the emitter constructor",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/execution.go:907",
+    "arena/turnexecutors/pipeline_stages_integration.go:641"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "Emitter method ConversationStarted(systemPrompt) exists",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:641"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "Emitter method MessageCreated(role, content, index, parts, toolCalls, toolResult) exists with this parameter list",
+   "verdict": "false",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:641"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "Emitter method AudioInput(audioData) exists",
+   "verdict": "false",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:641"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "Emitter method ProviderCallStarted(provider, model) exists",
+   "verdict": "false",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:641"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "Emitter method ToolCallStarted(toolName, args) exists",
+   "verdict": "false",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:641"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "Emitter MessageCreated() strips binary data (base64 Data and FilePath) from content parts and emits only metadata (MIMEType, SizeKB, dimensions)",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:641"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "RecordingStage bypasses the emitter and publishes events directly to the EventBus with full binary data intact",
+   "verdict": "false",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:607"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "sdk.WithRecording() enables recording in SDK pipelines",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 19,
+   "claim": "RecordingStages can be inserted manually into Arena pipelines",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:601",
+    "arena/engine/engine.go:693",
+    "arena/turnexecutors/pipeline_stages_integration.go:607"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "Events flow through an EventBus to registered subscribers",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:561",
+    "arena/tui/event_adapter.go:43"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "Diagram edge: Emitter publishes to EventBus",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:641"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "Diagram edge: EventBus delivers to FileEventStore (persistence)",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:515",
+    "arena/engine/engine.go:601"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "Diagram edge: EventBus delivers to a Metrics Collector",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:561",
+    "arena/engine/engine.go:563"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "Diagram edge: EventBus delivers to an Eval Listener that auto-triggers pack evals",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/conversation_executor.go:1028",
+    "arena/engine/eval_orchestrator.go:199"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "Diagram edge: EventBus delivers to the real-time UI",
+   "verdict": "true",
+   "evidence": [
+    "arena/tui/event_adapter.go:43",
+    "arena/web/event_adapter.go:76"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "Conversation category has event types started and ended",
+   "verdict": "false",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:641"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "Message category has event types created and updated",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:641"
+   ]
+  },
+  {
+   "id": 28,
+   "claim": "Audio category has event types input and output",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:607"
+   ]
+  },
+  {
+   "id": 29,
+   "claim": "Provider category has event types call.started and call.completed",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:641"
+   ]
+  },
+  {
+   "id": 30,
+   "claim": "Tool category has event types call.started and call.completed",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:641"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "Validation category has event types started and completed",
+   "verdict": "false",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:641"
+   ]
+  },
+  {
+   "id": 32,
+   "claim": "Event struct has a Type field of type EventType",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:641"
+   ]
+  },
+  {
+   "id": 33,
+   "claim": "Event struct has a Timestamp field of type time.Time",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:641"
+   ]
+  },
+  {
+   "id": 34,
+   "claim": "Event struct has a SessionID string field",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:641"
+   ]
+  },
+  {
+   "id": 35,
+   "claim": "Event struct has a Sequence int64 field",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:641"
+   ]
+  },
+  {
+   "id": 36,
+   "claim": "Event struct has a Data interface{} field",
+   "verdict": "false",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:641"
+   ]
+  },
+  {
+   "id": 37,
+   "claim": "EventBusEvalListener subscribes to message.created events on the EventBus",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/conversation_executor.go:1028",
+    "arena/engine/eval_orchestrator.go:69"
+   ]
+  },
+  {
+   "id": 38,
+   "claim": "Diagram edge: EventBus feeds EventBusEvalListener",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/conversation_executor.go:1028",
+    "arena/engine/eval_orchestrator.go:69"
+   ]
+  },
+  {
+   "id": 39,
+   "claim": "Diagram edge: EventBusEvalListener feeds SessionAccumulator (builds conversation context)",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/conversation_executor.go:1028",
+    "arena/engine/eval_orchestrator.go:69"
+   ]
+  },
+  {
+   "id": 40,
+   "claim": "Diagram edge: SessionAccumulator feeds EvalDispatcher",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/conversation_executor.go:1028",
+    "arena/engine/eval_orchestrator.go:69"
+   ]
+  },
+  {
+   "id": 41,
+   "claim": "Diagram edge: EvalDispatcher feeds EvalRunner",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/conversation_executor.go:1028",
+    "arena/engine/eval_orchestrator.go:69"
+   ]
+  },
+  {
+   "id": 42,
+   "claim": "Diagram edge: EvalRunner feeds ResultWriter",
+   "verdict": "unverified",
+   "evidence": [
+    "arena/engine/eval_orchestrator.go:69"
+   ]
+  },
+  {
+   "id": 43,
+   "claim": "Diagram edge: ResultWriter feeds MetricContext (Prometheus)",
+   "verdict": "unverified",
+   "evidence": [
+    "arena/engine/engine.go:561"
+   ]
+  },
+  {
+   "id": 44,
+   "claim": "Diagram edge: ResultWriter attaches results to message metadata (pack_evals)",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:525",
+    "arena/engine/builder_integration.go:777"
+   ]
+  },
+  {
+   "id": 45,
+   "claim": "RecordingStage publishes message.created events as content flows through the pipeline",
+   "verdict": "false",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:607"
+   ]
+  },
+  {
+   "id": 46,
+   "claim": "EventBusEvalListener accumulates messages per session in a SessionAccumulator",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/conversation_executor.go:1028",
+    "arena/engine/eval_orchestrator.go:209"
+   ]
+  },
+  {
+   "id": 47,
+   "claim": "On each assistant message, turn-level evals with trigger types every_turn and sample_turns are dispatched asynchronously",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/eval_orchestrator.go:199",
+    "arena/engine/eval_orchestrator.go:279"
+   ]
+  },
+  {
+   "id": 48,
+   "claim": "On session close, session-level evals with trigger types on_session_complete and sample_sessions run synchronously",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/conversation_executor.go:1028",
+    "arena/engine/eval_orchestrator.go:223"
+   ]
+  },
+  {
+   "id": 49,
+   "claim": "Eval results feed MetricContext (for Prometheus export) and can be attached to message metadata",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/conversation_executor.go:1028",
+    "arena/engine/engine.go:561"
+   ]
+  },
+  {
+   "id": 50,
+   "claim": "Pack evals run automatically against recorded conversations without additional wiring",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/builder_integration.go:777",
+    "arena/engine/conversation_executor.go:1028"
+   ]
+  },
+  {
+   "id": 51,
+   "claim": "Link target /arena/explanation/eval-framework/ exists as a docs page",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 52,
+   "claim": "FileEventStore persists events in JSONL (JSON Lines) format",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:601"
+   ]
+  },
+  {
+   "id": 53,
+   "claim": "JSONL event store lines have top-level fields seq and event, with event.type set to message.created",
+   "verdict": "true",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 54,
+   "claim": "JSONL event store event payloads carry a timestamp field",
+   "verdict": "true",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 55,
+   "claim": "Event type audio.output is a valid JSONL event type",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:607"
+   ]
+  },
+  {
+   "id": 56,
+   "claim": "FileEventStore storage is append-only and safe for concurrent writes",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:601"
+   ]
+  },
+  {
+   "id": 57,
+   "claim": "FileEventStore storage is streamable, processable without loading the whole file",
+   "verdict": "true",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 58,
+   "claim": "FileEventStore storage is human-readable JSON per line",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:601"
+   ]
+  },
+  {
+   "id": 59,
+   "claim": "SessionRecording export format first line has type metadata with session_id, start_time and duration fields",
+   "verdict": "false",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 60,
+   "claim": "SessionRecording event lines have type event, offset (e.g. \"100ms\") and event_type fields",
+   "verdict": "false",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 61,
+   "claim": "The recording loader auto-detects both the FileEventStore JSONL and SessionRecording JSONL formats",
+   "verdict": "true",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 62,
+   "claim": "recording.Load(path) loads a recording file and returns (rec, err)",
+   "verdict": "true",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 63,
+   "claim": "A MediaTimeline provides synchronized access to audio/video recording data",
+   "verdict": "true",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 64,
+   "claim": "Diagram edge: Recording produces a MediaTimeline",
+   "verdict": "true",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 65,
+   "claim": "Diagram edge: MediaTimeline exposes a TrackAudioInput track, which contains user speech segments",
+   "verdict": "true",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 66,
+   "claim": "Diagram edge: MediaTimeline exposes a TrackAudioOutput track, which contains assistant speech segments",
+   "verdict": "true",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 67,
+   "claim": "Diagram edge: MediaTimeline exposes a TrackVideo track containing video frames when present",
+   "verdict": "true",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 68,
+   "claim": "MediaSegment struct has an Offset field of type time.Duration",
+   "verdict": "false",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 69,
+   "claim": "MediaSegment struct has a Duration field of type time.Duration",
+   "verdict": "true",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 70,
+   "claim": "MediaSegment struct has a Data field of type []byte",
+   "verdict": "false",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 71,
+   "claim": "MediaSegment struct has a Format field of type AudioFormat",
+   "verdict": "false",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 72,
+   "claim": "AudioFormat carries sample rate, channels and encoding",
+   "verdict": "false",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 73,
+   "claim": "recording SessionRecording has a ToMediaTimeline(nil) method",
+   "verdict": "false",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 74,
+   "claim": "MediaTimeline has ExportAudioToWAV(track, path) method",
+   "verdict": "true",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 75,
+   "claim": "events.TrackAudioInput is an exported track constant",
+   "verdict": "true",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 76,
+   "claim": "events.TrackAudioOutput is an exported track constant",
+   "verdict": "true",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 77,
+   "claim": "Audio export collects all segments for the requested track",
+   "verdict": "true",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 78,
+   "claim": "Audio export concatenates PCM data in time order",
+   "verdict": "true",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 79,
+   "claim": "Audio export writes a RIFF/WAVE header with format info",
+   "verdict": "true",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 80,
+   "claim": "Audio export outputs standard 16-bit PCM WAV",
+   "verdict": "true",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 81,
+   "claim": "recording.NewReplayPlayer(rec) constructs a ReplayPlayer and returns (player, err)",
+   "verdict": "true",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 82,
+   "claim": "ReplayPlayer has a Seek(time.Duration) method",
+   "verdict": "true",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 83,
+   "claim": "ReplayPlayer has a GetState() method returning a state object",
+   "verdict": "true",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 84,
+   "claim": "Playback state has a CurrentEvents field",
+   "verdict": "true",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 85,
+   "claim": "Playback state has a RecentEvents field",
+   "verdict": "true",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 86,
+   "claim": "Playback state has a Messages field",
+   "verdict": "true",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 87,
+   "claim": "Playback state has an AudioInputActive field",
+   "verdict": "true",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 88,
+   "claim": "Playback state has an AudioOutputActive field",
+   "verdict": "true",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 89,
+   "claim": "Playback state table lists a Position field (offset from session start)",
+   "verdict": "true",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 90,
+   "claim": "Playback state table lists a Timestamp field (absolute timestamp)",
+   "verdict": "true",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 91,
+   "claim": "CurrentEvents holds events within 50ms of the current position",
+   "verdict": "true",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 92,
+   "claim": "RecentEvents holds events from the last 2 seconds",
+   "verdict": "true",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 93,
+   "claim": "Playback state Messages field holds the accumulated conversation up to the current position",
+   "verdict": "true",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 94,
+   "claim": "Playback state table lists an AudioInputActive field",
+   "verdict": "true",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 95,
+   "claim": "Playback state table lists an AudioOutputActive field",
+   "verdict": "true",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 96,
+   "claim": "Playback state table lists an ActiveAnnotations field",
+   "verdict": "true",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 97,
+   "claim": "ReplayPlayer has a SetAnnotations([]*annotations.Annotation) method",
+   "verdict": "true",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 98,
+   "claim": "annotations.ForSession().WithScore(name, value) builder exists",
+   "verdict": "false",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 99,
+   "claim": "annotations.InTimeRange(start, end).WithComment(text) builder exists",
+   "verdict": "false",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 100,
+   "claim": "annotations.ForEvent(seq).WithLabel(key, value) builder exists",
+   "verdict": "false",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 101,
+   "claim": "Active annotations are included in ReplayPlayer state queries during playback",
+   "verdict": "true",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 102,
+   "claim": "The rec argument to replay.NewProvider is a *recording.SessionRecording",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:45"
+   ]
+  },
+  {
+   "id": 103,
+   "claim": "replay.NewProvider(rec, nil) constructs a ReplayProvider and returns (provider, err)",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:45"
+   ]
+  },
+  {
+   "id": 104,
+   "claim": "A nil config passed to replay.NewProvider uses replay.DefaultConfig()",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:45"
+   ]
+  },
+  {
+   "id": 105,
+   "claim": "replay.NewProviderFromFile(path, nil) loads a recording file directly into a ReplayProvider",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:45"
+   ]
+  },
+  {
+   "id": 106,
+   "claim": "Recording files are conventionally stored under recordings/<run-id>.jsonl",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:681",
+    "arena/engine/engine.go:693"
+   ]
+  },
+  {
+   "id": 107,
+   "claim": "provider.Predict(ctx, providers.PredictionRequest{Messages: messages}) is the ReplayProvider prediction call",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:45"
+   ]
+  },
+  {
+   "id": 108,
+   "claim": "ReplayProvider returns the recorded assistant responses turn by turn",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:45"
+   ]
+  },
+  {
+   "id": 109,
+   "claim": "ReplayProvider supports regression testing against known-good responses",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:322",
+    "arena/engine/builder_integration.go:45"
+   ]
+  },
+  {
+   "id": 110,
+   "claim": "ReplayProvider runs with no API calls (offline testing)",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:45"
+   ]
+  },
+  {
+   "id": 111,
+   "claim": "Diagram edge: User feeds the Pipeline, which feeds the Provider, which produces a Response to the User",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:607",
+    "arena/turnexecutors/pipeline_stages_integration.go:641"
+   ]
+  },
+  {
+   "id": 112,
+   "claim": "Diagram edge: Pipeline feeds the Emitter",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:420"
+   ]
+  },
+  {
+   "id": 113,
+   "claim": "Diagram edge: Response feeds the EventBus",
+   "verdict": "false",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:607"
+   ]
+  },
+  {
+   "id": 114,
+   "claim": "Diagram edge: Emitter feeds the EventBus",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:641"
+   ]
+  },
+  {
+   "id": 115,
+   "claim": "Diagram edge: EventBus feeds storage, evals and replay subsystems",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:515",
+    "arena/engine/engine.go:561",
+    "arena/tui/event_adapter.go:43"
+   ]
+  },
+  {
+   "id": 116,
+   "claim": "Diagram edge: FileEventStore writes .jsonl files",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:681"
+   ]
+  },
+  {
+   "id": 117,
+   "claim": "Diagram edges: EvalListener -> Runner -> Metrics -> Prom (eval subsystem chain)",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:561",
+    "arena/engine/eval_orchestrator.go:199"
+   ]
+  },
+  {
+   "id": 118,
+   "claim": "Diagram edges: session.jsonl -> SessionRecording -> ReplayPlayer -> MediaTimeline (replay subsystem chain)",
+   "verdict": "true",
+   "evidence": [
+    "arena/adapters/session_recording.go:39"
+   ]
+  },
+  {
+   "id": 119,
+   "claim": "Recording CPU overhead is minimal because events are queued and written asynchronously",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:515",
+    "arena/turnexecutors/pipeline_stages_integration.go:607"
+   ]
+  },
+  {
+   "id": 120,
+   "claim": "Recording memory is bounded because segments are written incrementally",
+   "verdict": "unverified",
+   "evidence": [
+    "arena/engine/engine.go:601"
+   ]
+  },
+  {
+   "id": 121,
+   "claim": "Input audio is 16kHz, 16-bit mono (~32KB per second)",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 122,
+   "claim": "Output audio is 24kHz, 16-bit mono (~48KB per second)",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 123,
+   "claim": "Base64 encoding adds roughly 33% overhead to stored audio",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:601"
+   ]
+  },
+  {
+   "id": 124,
+   "claim": "A 5-minute voice conversation generates approximately 24MB of raw audio",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 125,
+   "claim": "A 5-minute voice conversation generates approximately 32MB of JSONL with metadata",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 126,
+   "claim": "Recording can be disabled for CI or quick validation runs",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:558",
+    "arena/cmd/promptarena/run_interactive.go:259",
+    "arena/engine/engine.go:693"
+   ]
+  },
+  {
+   "id": 127,
+   "claim": "JSONL recordings compress to a 70-80% reduction",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 128,
+   "claim": "Recordings support retention policies that auto-delete old recordings",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:558"
+   ]
+  },
+  {
+   "id": 129,
+   "claim": "Recording can be enabled selectively for specific scenarios",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:558",
+    "arena/engine/engine.go:693"
+   ]
+  },
+  {
+   "id": 130,
+   "claim": "Link target /arena/how-to/scenarios/session-recording/ exists as a docs page",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 131,
+   "claim": "Link target /arena/explanation/duplex-architecture/ exists as a docs page",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 132,
+   "claim": "Link target /arena/explanation/testing-philosophy/ exists as a docs page",
+   "verdict": "true",
+   "evidence": []
+  }
+ ]
+}

@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/agents/text-negotiation.md",
- "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "commit": "3df344ffbc8c604e1a8935929c28499d778d19f0",
  "claims": [
   {
    "id": 1,
@@ -42,7 +42,7 @@
    "claim": "The tenant side can be the selfplay-user role with a persona",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1129",
+    "arena/arenaconfig/types.go:1135",
     "arena/selfplay/registry.go:192"
    ]
   },
@@ -61,7 +61,7 @@
    "verdict": "true",
    "evidence": [
     "examples/text-negotiation/scenarios/rental-negotiation.scenario.yaml:28",
-    "schemas/v1alpha1/scenario.json:628"
+    "schemas/v1alpha1/scenario.json:630"
    ]
   },
   {
@@ -85,7 +85,7 @@
    "claim": "The TUI is the default mode of promptarena run",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run_interactive.go:327"
+    "arena/cmd/promptarena/run_interactive.go:322"
    ]
   },
   {
@@ -93,7 +93,7 @@
    "claim": "promptarena run is a subcommand",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:134"
+    "arena/cmd/promptarena/run.go:158"
    ]
   },
   {
@@ -101,7 +101,7 @@
    "claim": "promptarena run accepts the --ci flag",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:145"
+    "arena/cmd/promptarena/run.go:169"
    ]
   },
   {
@@ -109,7 +109,8 @@
    "claim": "promptarena run accepts --formats with values json and markdown",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:160"
+    "arena/cmd/promptarena/run.go:176",
+    "arena/cmd/promptarena/run.go:406"
    ]
   },
   {
@@ -117,8 +118,8 @@
    "claim": "The markdown result is written to out/results.md",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:144",
-    "arena/cmd/promptarena/run.go:486"
+    "arena/cmd/promptarena/run.go:533",
+    "arena/cmd/promptarena/run.go:535"
    ]
   },
   {
@@ -126,7 +127,7 @@
    "claim": "open out/results.md is a usable command on the reader's machine",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:486"
+    "arena/cmd/promptarena/run.go:536"
    ]
   },
   {
@@ -145,7 +146,7 @@
    "verdict": "true",
    "evidence": [
     "examples/text-negotiation/scenarios/rental-negotiation.scenario.yaml:28",
-    "schemas/v1alpha1/scenario.json:628"
+    "schemas/v1alpha1/scenario.json:630"
    ]
   },
   {
@@ -287,7 +288,7 @@
    "claim": "A persona file is placed at personas/savvy-tenant.persona.yaml",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/loader.go:917",
+    "arena/arenaconfig/loader.go:926",
     "examples/adaptive-persona/config.arena.yaml:46"
    ]
   },
@@ -369,7 +370,7 @@
    "claim": "A turn role selfplay-user is valid",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1129",
+    "arena/arenaconfig/types.go:1135",
     "arena/selfplay/registry.go:192"
    ]
   },
@@ -378,7 +379,7 @@
    "claim": "A selfplay-user turn takes a persona field naming a persona",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1137",
+    "arena/arenaconfig/types.go:1143",
     "arena/selfplay/registry.go:187"
    ]
   },
@@ -387,7 +388,7 @@
    "claim": "A selfplay-user turn takes a turns field (count)",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1139"
+    "arena/arenaconfig/types.go:1145"
    ]
   },
   {
@@ -418,7 +419,7 @@
    "claim": "The report shows each persona-driven turn",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:486"
+    "arena/cmd/promptarena/run.go:536"
    ]
   },
   {
@@ -459,8 +460,8 @@
    "claim": "../../bin/promptarena run --ci --formats json runs the binary built at bin/promptarena",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:134",
-    "arena/cmd/promptarena/run.go:145"
+    "arena/cmd/promptarena/run.go:119",
+    "arena/cmd/promptarena/run.go:169"
    ]
   },
   {

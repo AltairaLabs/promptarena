@@ -2,9 +2,10 @@
 title: 'Deploy: Overview'
 description: What promptarena deploy does, how adapters connect it to cloud targets, and where to find each deploy guide.
 verified:
-  commit: 631d3c353c2c9d71b362ae5cd20c137d42b19d5b
+  commit: 3df344ffbc8c604e1a8935929c28499d778d19f0
   sources:
     - arena/arenaconfig/loader.go
+    - arena/arenaconfig/types.go
     - arena/cmd/promptarena/adapter_registry.json
     - arena/cmd/promptarena/deploy_interactive.go
     - arena/deploy/flow/config.go

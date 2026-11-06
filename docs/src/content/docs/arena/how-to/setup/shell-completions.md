@@ -2,7 +2,7 @@
 title: Configure Shell Completions
 description: Enable tab completion for promptarena and packc in Bash, Zsh, Fish and PowerShell, including config-driven values for scenarios and providers.
 verified:
-  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  commit: 3df344ffbc8c604e1a8935929c28499d778d19f0
   sources:
     - .goreleaser.yml
     - arena/cmd/promptarena/completion_interactive.go
@@ -24,6 +24,7 @@ Both binaries complete commands, subcommands and flag names. `promptarena` also 
 | `run --region` | `us`, `uk`, `au`, `eu`, `asia`, `latam` |
 | `run --format`, `run --formats` | `json`, `junit`, `html`, `markdown`, `csv`, `objectives` |
 | `config-inspect --section` | config sections |
+| `init --provider` | `mock`, `openai`, `claude`, `gemini` |
 | `init --template` | built-in templates, then templates from configured template repos |
 
 `packc` completes from fixed lists only.

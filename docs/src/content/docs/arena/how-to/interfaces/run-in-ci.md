@@ -1,15 +1,38 @@
 ---
 title: Run in CI
-description: Run Arena headless in CI/CD — the --ci flag, JSON/JUnit/HTML/Markdown reports, quality gates, and the GitHub Action.
+description: Run Arena headless in CI/CD with the --ci flag, JSON, JUnit and Markdown reports, quality gates, and the GitHub Action.
 sidebar:
   order: 30
+verified:
+  commit: 3df344ffbc8c604e1a8935929c28499d778d19f0
+  sources:
+    - .github/actions/promptarena-action/action.yml
+    - .github/actions/promptarena-action/src/main.ts
+    - .github/actions/promptarena-action/src/outputs.ts
+    - .github/actions/promptarena-action/src/runner.ts
+    - .goreleaser.yml
+    - arena/arenaconfig/helpers.go
+    - arena/arenaconfig/types.go
+    - arena/assertions/conversation.go
+    - arena/assertions/types.go
+    - arena/cmd/promptarena/main_integration.go
+    - arena/cmd/promptarena/run.go
+    - arena/cmd/promptarena/run_interactive.go
+    - arena/engine/engine.go
+    - arena/engine/eval_orchestrator.go
+    - arena/engine/trials.go
+    - arena/results/json/json_repository.go
+    - arena/stages/assertions.go
+    - arena/tui/tui.go
+    - examples/llm-judge/scenarios/helpfulness.yaml
+    - schemas/v1alpha1/common/assertions.json
+    - schemas/v1alpha1/scenario.json
 ---
 
-Arena is built to run unattended. In CI you want headless output, machine-readable
-reports, and a non-zero exit code when something regresses so the pipeline fails
-loudly. This page is the definitive recipe for wiring `promptarena run` into any
-CI/CD system: GitHub Actions (raw binary or the packaged Action), GitLab CI, and
-Jenkins. It also covers how to make runs deterministic and zero-cost with mock providers.
+Wire `promptarena run` into CI so the pipeline produces machine-readable reports
+and fails on regressions. This page covers GitHub Actions (raw binary or the
+packaged Action), GitLab CI and Jenkins, and deterministic zero-cost runs with
+mock providers.
 
 For the interactive alternatives, see [Use the TUI](/arena/how-to/interfaces/use-the-tui/)
 and [Use the web UI](/arena/how-to/interfaces/use-the-web-ui/).
@@ -24,8 +47,9 @@ promptarena run --ci
 ```
 
 Use it whenever there is no interactive terminal: GitHub Actions runners, GitLab
-executors, Jenkins agents, Docker builds, cron jobs. Without `--ci` the run tries
-to render the TUI, which produces garbage in a non-TTY log.
+executors, Jenkins agents, Docker builds, cron jobs. Without `--ci`,
+`promptarena run` uses the TUI when it can detect a terminal and falls back to
+simple output otherwise.
 
 The gate itself is the **exit code**: with `--ci`, `promptarena run` exits `0`
 when every scenario's assertions pass, and non-zero when any assertion fails or a
@@ -58,24 +82,21 @@ formats for CI are below; `csv` and `objectives` are also available (see the
 promptarena run --ci --format junit,json,markdown
 ```
 
-The output directory is `--out`, else `defaults.output.dir`, else `out/`. Per-run JSON is
-written as `<run-id>.json` in that directory, alongside an `index.json` summary
-containing `total_runs`, `successful`, `errors`, `total_cost`, and per-scenario
-metadata. The deprecated `--html` flag is still accepted and produces `markdown`
-output. See the [output formats reference](/arena/reference/output-formats/)
-for the full schema of each report.
+The output directory is `--out`, else `defaults.output.dir`, else `out/`. The
+`index.json` summary in it carries `total_runs`, `successful` and `errors`, which
+a gating step can read. See the [output formats reference](/arena/reference/output-formats/) for the
+full schema of each report.
 
 :::note[There is no HTML report]
 Arena does not emit an HTML report; the markdown report covers it. The `html`
-format name, the `--html` flag and the `html_report` config key are accepted and
-produce **markdown**, so existing configs and CI scripts keep working. `--html-file`
-does not name the output; use `--markdown-file` instead.
+format name, the `--html` flag and the `html_report` config key produce
+**markdown**.
 :::
 
 ## Quality gates: fail the build on regressions
 
 A quality gate is a CI check that exits non-zero on the regressions you want to
-catch before merge — behavioural drift, tool-call regressions, safety guardrails
+catch before merge: behavioural drift, tool-call regressions, safety guardrails
 that stopped firing, or a latency budget breach. Because `promptarena run --ci`
 already exits non-zero on any assertion failure, wiring the gate is usually
 "make this step a required check."
@@ -119,7 +140,7 @@ JUnit and CSV fail when any assertion falls below its threshold.
 
 If you need to key a downstream step on the numbers rather than the exit code,
 read `index.json` from the out directory (`total_runs`, `successful`, `errors`),
-or use the GitHub Action's outputs (`passed`, `failed`, `total`, `success`).
+or use the GitHub Action's outputs (`passed`, `total`, `success`).
 
 ## The GitHub Action
 
@@ -144,7 +165,7 @@ jobs:
 
       - name: Run Arena tests
         id: arena
-        uses: AltairaLabs/promptarena/v2/.github/actions/promptarena-action@v1
+        uses: AltairaLabs/promptarena/.github/actions/promptarena-action@v1
         with:
           config-file: config.arena.yaml
           version: latest
@@ -178,7 +199,7 @@ instead of failing the job automatically:
 ```yaml
       - name: Run Arena tests (advisory)
         id: arena
-        uses: AltairaLabs/promptarena/v2/.github/actions/promptarena-action@v1
+        uses: AltairaLabs/promptarena/.github/actions/promptarena-action@v1
         with:
           config-file: config.arena.yaml
           fail-on-error: 'false'
@@ -186,7 +207,7 @@ instead of failing the job automatically:
       - name: Gate
         if: steps.arena.outputs.success == 'false'
         run: |
-          echo "::error::Arena gate failed: ${{ steps.arena.outputs.failed }} failed of ${{ steps.arena.outputs.total }}"
+          echo "::error::Arena gate failed: ${{ steps.arena.outputs.total }} runs, success is false"
           exit 1
 ```
 
@@ -210,7 +231,7 @@ jobs:
       - name: Run mock-provider scenarios
         run: ./bin/promptarena run --ci --mock-provider --format json,junit
 
-  # Skips for forks — the head repo check fails when secrets aren't available.
+  # Skips for forks: the head repo check fails when secrets aren't available.
   real-providers:
     runs-on: ubuntu-latest
     if: github.event.pull_request.head.repo.full_name == github.repository
@@ -288,7 +309,7 @@ pipeline {
         }
         stage('Provider tests') {
             steps {
-                sh 'promptarena run --ci --format junit,html'
+                sh 'promptarena run --ci --format junit,markdown'
             }
         }
     }
@@ -306,14 +327,14 @@ non-zero exit from `promptarena run` marks the build failed.
 
 ## Zero-cost runs with mock providers
 
-Mock providers make CI runs deterministic and free — no provider API keys, no
+Mock providers make CI runs deterministic and free: no provider API keys, no
 network, no per-run cost. `--mock-provider` replaces every configured provider
 with a canned-response mock; `--mock-config` points at a YAML file of scripted
 responses. Tools still execute for real, so tool-call and workflow assertions
 remain meaningful.
 
 ```bash
-# Deterministic gate — no API keys required
+# Deterministic gate, no API keys required
 promptarena run --ci --mock-provider --mock-config mock-responses.yaml
 ```
 
@@ -325,13 +346,13 @@ stable when you do hit real providers, drop concurrency to respect rate limits:
 promptarena run --ci --concurrency 2 --format junit,json
 ```
 
-See [Use mock providers](/arena/how-to/use-mock-providers/) for authoring mock
-response files, and [Generate mock responses](/arena/how-to/generate-mock-responses-from-arena/)
+See [Use mock providers](/arena/how-to/providers/use-mock-providers/) for authoring mock
+response files, and [Generate mock responses](/arena/how-to/scenarios/generate-mock-responses-from-arena/)
 to capture them from a live run.
 
 ## Related
 
-- [Output formats reference](/arena/reference/output-formats/) — the schema of each report
-- [CLI commands reference](/arena/reference/cli-commands/) — every `run` flag
-- [Use the TUI](/arena/how-to/interfaces/use-the-tui/) — the interactive terminal UI
-- [Use the web UI](/arena/how-to/interfaces/use-the-web-ui/) — the browser-based interface
+- [Output formats reference](/arena/reference/output-formats/): the schema of each report
+- [CLI commands reference](/arena/reference/cli-commands/): every `run` flag
+- [Use the TUI](/arena/how-to/interfaces/use-the-tui/): the interactive terminal UI
+- [Use the web UI](/arena/how-to/interfaces/use-the-web-ui/): the browser-based interface

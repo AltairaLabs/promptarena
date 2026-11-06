@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/setup/shell-completions.md",
- "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "commit": "3df344ffbc8c604e1a8935929c28499d778d19f0",
  "claims": [
   {
    "id": 1,
@@ -357,6 +357,8 @@
    "claim": "`promptarena run --provider <Tab>` offers openai, anthropic, google, mock",
    "verdict": "false",
    "evidence": [
+    "arena/cmd/promptarena/completion_interactive.go:146",
+    "arena/cmd/promptarena/completion_interactive.go:202",
     "arena/cmd/promptarena/completion_interactive.go:333",
     "arena/cmd/promptarena/completion_interactive.go:79"
    ]

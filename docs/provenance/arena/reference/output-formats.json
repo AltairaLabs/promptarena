@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/reference/output-formats.md",
- "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "commit": "3df344ffbc8c604e1a8935929c28499d778d19f0",
  "claims": [
   {
    "id": 1,
@@ -184,7 +184,8 @@
    "claim": "A media/ directory is created under the output directory for media storage",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go"
+    "arena/engine/engine.go:1013",
+    "arena/engine/engine.go:1017"
    ]
   },
   {
@@ -192,7 +193,7 @@
    "claim": "Media layout is media/run-<timestamp>/<session>/<conv>/ with image files and .meta sidecars (image1.png, image1.png.meta)",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:1018"
+    "arena/engine/engine.go:1016"
    ]
   },
   {
@@ -200,7 +201,7 @@
    "claim": "Arena automatically creates a media/ directory to store large media content (images, audio, video)",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:1013"
+    "arena/engine/engine.go:1011"
    ]
   },
   {
@@ -208,7 +209,7 @@
    "claim": "Media deduplication is enabled (shared media stored once)",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:1021"
+    "arena/engine/engine.go:1019"
    ]
   },
   {
@@ -216,7 +217,7 @@
    "claim": "Media organization is by-run (each run isolated under its own run-<timestamp> directory)",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:1020"
+    "arena/engine/engine.go:1018"
    ]
   },
   {
@@ -224,7 +225,7 @@
    "claim": "Each media file has a .meta sidecar file with context",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:1018"
+    "arena/engine/engine.go:1016"
    ]
   },
   {
@@ -232,7 +233,7 @@
    "claim": "Media location is {output_dir}/media/run-{timestamp}/",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go"
+    "arena/engine/engine.go:1018"
    ]
   },
   {
@@ -258,8 +259,8 @@
     "arena/arenaconfig/helpers.go:55",
     "arena/cmd/promptarena/run.go:361",
     "arena/cmd/promptarena/serve_interactive.go:222",
-    "arena/engine/engine.go:1015",
-    "arena/engine/engine.go:702"
+    "arena/engine/engine.go:1013",
+    "arena/engine/engine.go:700"
    ]
   },
   {
@@ -2137,8 +2138,8 @@
     "arena/arenaconfig/helpers.go:55",
     "arena/cmd/promptarena/run.go:361",
     "arena/cmd/promptarena/serve_interactive.go:222",
-    "arena/engine/engine.go:1015",
-    "arena/engine/engine.go:702"
+    "arena/engine/engine.go:1013",
+    "arena/engine/engine.go:700"
    ]
   },
   {
@@ -2330,8 +2331,8 @@
     "arena/arenaconfig/helpers.go:55",
     "arena/cmd/promptarena/run.go:361",
     "arena/cmd/promptarena/serve_interactive.go:222",
-    "arena/engine/engine.go:1015",
-    "arena/engine/engine.go:702"
+    "arena/engine/engine.go:1013",
+    "arena/engine/engine.go:700"
    ]
   },
   {

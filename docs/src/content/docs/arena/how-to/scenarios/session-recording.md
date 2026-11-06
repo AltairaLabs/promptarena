@@ -2,9 +2,10 @@
 title: Session Recording
 description: Record Arena scenario runs to JSONL, then load, replay, annotate and evaluate them.
 verified:
-  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  commit: 3df344ffbc8c604e1a8935929c28499d778d19f0
   sources:
     - .github/workflows/ci.yml
+    - arena/arenaconfig/helpers.go
     - arena/arenaconfig/loader.go
     - arena/arenaconfig/types.go
     - arena/cmd/promptarena/run_interactive.go
@@ -13,7 +14,6 @@ verified:
     - arena/engine/duplex_executor_pipeline_integration.go
     - arena/engine/engine.go
     - arena/engine/execution.go
-    - arena/engine/execution_workflow_integration.go
     - arena/turnexecutors/pipeline_stages_integration.go
     - examples/eval-test/config.arena.yaml
     - examples/session-replay/demo/main.go
@@ -149,6 +149,34 @@ for {
     }
 }
 ```
+
+To export audio from a recording as WAV files, build a media timeline and export each track:
+
+```go
+timeline, err := rec.ToMediaTimeline(nil)
+if err != nil {
+    panic(err)
+}
+if err := timeline.ExportAudioToWAV(events.TrackAudioInput, "user.wav"); err != nil {
+    panic(err)
+}
+if err := timeline.ExportAudioToWAV(events.TrackAudioOutput, "assistant.wav"); err != nil {
+    panic(err)
+}
+```
+
+`GetState()` and `GetStateAt()` return a state with these fields:
+
+| Field | Description |
+|-------|-------------|
+| `Position` | Current offset from session start |
+| `Timestamp` | Absolute timestamp |
+| `CurrentEvents` | Events within 50ms of position |
+| `RecentEvents` | Events in last 2 seconds |
+| `Messages` | Accumulated conversation |
+| `AudioInputActive` | User audio present |
+| `AudioOutputActive` | Assistant audio present |
+| `ActiveAnnotations` | Annotations in scope |
 
 ### Add Annotations
 
@@ -293,7 +321,13 @@ out/
     └── run-ghi789.jsonl
 ```
 
-See [Session Recording Architecture](/arena/explanation/session-recording/#performance-considerations) for size, retention and compression.
+There is no retention policy. To keep recordings small:
+
+- Skip recording for quick CI validation runs: set `defaults.output.recording.enabled` to `false`.
+- Compress archived recordings. JSONL compresses well.
+- Delete old files from `<out>/recordings/` yourself.
+
+See [Session Recording Architecture](/arena/explanation/session-recording/#performance-considerations) for the cost of recording.
 
 ### CI/CD Integration
 

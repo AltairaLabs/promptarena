@@ -4,7 +4,7 @@ description: Brief Claude Code, Codex, or another coding agent with PromptArena'
 sidebar:
   order: 20
 verified:
-  commit: 631d3c353c2c9d71b362ae5cd20c137d42b19d5b
+  commit: 3df344ffbc8c604e1a8935929c28499d778d19f0
   sources:
     - arena/agentkb/catalog.yaml
     - arena/agentkb/skill.go
@@ -22,6 +22,7 @@ verified:
     - arena/configschema/configschema.go
     - arena/engine/engine.go
     - arena/tui/tui.go
+    - examples/rag-agent/config.arena.yaml
     - schemas/v1alpha1/tool.json
 ---
 
@@ -122,7 +123,7 @@ promptarena validate config.arena.yaml
 promptarena run --ci --formats json,markdown
 ```
 
-`validate` checks each file against the JSON schema embedded in the binary, checks that every assertion type exists, then builds the pack in memory and runs every check `packc` runs. A config that passes `validate` compiles with `packc`. It reports every problem in one pass. `validate --json` gives the same report as JSON; each problem names the stage that found it, and names the file to edit when that differs from the file being validated. `run --ci` runs every scenario headless and writes results to `out/`. The agent reads `out/results.md` for the summary and the per-run JSON files for
+`validate` checks each file against the JSON schema embedded in the binary, checks that every assertion type exists, then builds the pack in memory and runs every check `packc` runs. A config that passes `validate` compiles with `packc`. It reports every problem in one pass. `validate --json` gives the same report as JSON; each problem names the stage that found it, and names the file to edit when that differs from the file being validated. `run --ci` runs every scenario headless, writes results to `--out`, else `defaults.output.dir`, else `out/`, and exits non-zero when a run errors or an assertion fails. The agent reads `out/results.md` for the summary and the per-run JSON files for
 detail, fixes what failed, and runs again.
 
 Along the way the agent sets up:

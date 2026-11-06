@@ -4,7 +4,7 @@ description: Open an MCP server (for example a containerised codegen sandbox) on
 sidebar:
   order: 13
 verified:
-  commit: 631d3c353c2c9d71b362ae5cd20c137d42b19d5b
+  commit: 3df344ffbc8c604e1a8935929c28499d778d19f0
   sources:
     - arena/arenaconfig/types.go
     - arena/arenaconfig/validator.go
