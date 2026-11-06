@@ -15,6 +15,5 @@ spec:
     max_tokens: 1000
 
   additional_config:
-    audio_enabled: true
     response_modalities:
       - AUDIO

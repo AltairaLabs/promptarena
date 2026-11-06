@@ -482,8 +482,36 @@ func (de *DuplexConversationExecutor) buildBaseSessionConfig(
 	de.applyScenarioVADConfig(cfg, req)
 	de.applyToolsConfig(cfg)
 	de.applyMockScenarioContext(cfg, req)
+	cfg.Sampling = duplexSampling(req)
 
 	return cfg
+}
+
+// duplexSampling carries the run's temperature and max_tokens into the
+// realtime session, with the non-duplex meaning: a per-request override wins,
+// else defaults.temperature / defaults.max_tokens, and 0 lets the provider
+// decide. A duplex session spans the whole conversation, so a turn's
+// assistant_temp has no session to apply to. The provider sends what its
+// realtime API takes and warns about the rest. Nil when nothing is set.
+func duplexSampling(req *ConversationRequest) *providers.StreamingSampling {
+	s := &providers.StreamingSampling{}
+	switch {
+	case req.Temperature != nil:
+		s.Temperature = float32(*req.Temperature)
+		s.TemperatureSet = true
+	case req.Config != nil:
+		s.Temperature = req.Config.Defaults.Temperature
+	}
+	switch {
+	case req.MaxTokens != nil:
+		s.MaxTokens = *req.MaxTokens
+	case req.Config != nil:
+		s.MaxTokens = req.Config.Defaults.MaxTokens
+	}
+	if !s.TemperatureSet && s.Temperature == 0 && s.MaxTokens == 0 {
+		return nil
+	}
+	return s
 }
 
 // applyMockScenarioContext threads the scenario ID through the streaming

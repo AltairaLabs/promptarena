@@ -4877,15 +4877,15 @@
       "properties": {
         "silence_threshold_ms": {
           "type": "integer",
-          "description": "SilenceThresholdMs is the silence duration in milliseconds to trigger turn end (default: 500)."
+          "description": "SilenceThresholdMs is the silence duration in milliseconds to trigger turn end (default: 800)."
         },
         "min_speech_ms": {
           "type": "integer",
-          "description": "MinSpeechMs is the minimum speech duration before silence counts (default: 1000)."
+          "description": "MinSpeechMs is the minimum speech duration before silence counts (default: 200)."
         },
         "max_turn_duration_s": {
           "type": "integer",
-          "description": "MaxTurnDurationS forces turn end after this duration in seconds (default: 60)."
+          "description": "MaxTurnDurationS forces turn end after this duration in seconds (default: 30)."
         }
       },
       "additionalProperties": false,
