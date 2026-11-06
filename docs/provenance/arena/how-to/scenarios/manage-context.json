@@ -1,0 +1,558 @@
+{
+ "page": "docs/src/content/docs/arena/how-to/scenarios/manage-context.md",
+ "commit": "60cd1a146e6224c0d66c972d18f329a0ce76c522",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "PromptKit provides context management strategies that handle long conversations automatically",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:107",
+    "arena/turnexecutors/pipeline_stages_integration.go:455"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "truncate_oldest removes the earliest messages first",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:356"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "relevance strategy uses embeddings to keep semantically relevant messages",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:120",
+    "arena/turnexecutors/pipeline_stages_integration.go:362"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "A scenario spec accepts a context_policy field",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:699",
+    "schemas/v1alpha1/scenario.json:258"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "apiVersion is promptkit.altairalabs.ai/v1alpha1",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:137"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "kind is Scenario",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:137"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "spec.task_type is a valid scenario field",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:678"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "context_policy is a field under spec",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:699"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "context_policy.token_budget is a field accepting an integer (8000 in example)",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:837",
+    "arena/turnexecutors/pipeline_stages_integration.go:113"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "context_policy.strategy accepts truncate_oldest",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:840",
+    "arena/turnexecutors/pipeline_stages_integration.go:354"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "spec.turns is a scenario field holding a list of turns",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:686"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "A turn accepts role and content fields",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1129",
+    "arena/arenaconfig/types.go:745"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "truncate_oldest is the default strategy",
+   "verdict": "false",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:364"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "truncate_oldest removes the oldest messages when approaching token_budget",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:356"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "truncate_oldest may remove contextually important early messages",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:356"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "relevance strategy uses embedding similarity to keep the most relevant messages",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:362"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "context_policy.strategy accepts relevance",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:840",
+    "arena/turnexecutors/pipeline_stages_integration.go:362"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "relevance is a nested block under context_policy",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:845"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "relevance.provider accepts openai",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:170"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "relevance.model accepts text-embedding-3-small",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:170"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "relevance.min_recent_messages is a field (3 in example)",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:859",
+    "arena/turnexecutors/pipeline_stages_integration.go:146"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "relevance.similarity_threshold is a field (0.3 in example)",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:867",
+    "arena/turnexecutors/pipeline_stages_integration.go:147"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "Relevance truncation requires embedding API calls, adding latency and cost",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:137"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "relevance.provider accepts openai",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:170"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "text-embedding-3-small and text-embedding-3-large are valid OpenAI embedding models",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:171"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "relevance.provider accepts gemini",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:177"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "text-embedding-004 is a valid Gemini embedding model",
+   "verdict": "false",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:177"
+   ]
+  },
+  {
+   "id": 28,
+   "claim": "relevance.provider accepts voyageai",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:892",
+    "arena/turnexecutors/pipeline_stages_integration.go:184"
+   ]
+  },
+  {
+   "id": 29,
+   "claim": "voyage-3.5 and voyage-code-3 are valid Voyage AI embedding models",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:184"
+   ]
+  },
+  {
+   "id": 30,
+   "claim": "relevance.provider is required and accepts openai, gemini, voyageai",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:892",
+    "schemas/v1alpha1/scenario.json:543"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "relevance.model defaults to the provider's default embedding model when omitted",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:172",
+    "arena/turnexecutors/pipeline_stages_integration.go:178"
+   ]
+  },
+  {
+   "id": 32,
+   "claim": "relevance.min_recent_messages is an int defaulting to 3",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:859",
+    "arena/turnexecutors/pipeline_stages_integration.go:146"
+   ]
+  },
+  {
+   "id": 33,
+   "claim": "relevance.similarity_threshold is a float defaulting to 0 (off), range 0-1",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:897",
+    "arena/turnexecutors/pipeline_stages_integration.go:147"
+   ]
+  },
+  {
+   "id": 34,
+   "claim": "relevance.always_keep_system_role is a bool defaulting to true",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:863",
+    "arena/turnexecutors/pipeline_stages_integration.go:152"
+   ]
+  },
+  {
+   "id": 35,
+   "claim": "relevance.cache_embeddings is a bool defaulting to false and reuses previous-turn embeddings when true",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:882",
+    "arena/engine/conversation_executor.go:92",
+    "arena/turnexecutors/context_builder.go:24",
+    "arena/turnexecutors/pipeline_stages_integration.go:151"
+   ]
+  },
+  {
+   "id": 36,
+   "claim": "Code assistant example is valid: voyageai with voyage-code-3, min_recent_messages 5, similarity_threshold 0.25, token_budget 16000",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:835",
+    "arena/arenaconfig/types.go:850"
+   ]
+  },
+  {
+   "id": 37,
+   "claim": "Customer support example is valid: openai with text-embedding-3-small, min_recent_messages 3, similarity_threshold 0.35, always_keep_system_role true",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:835",
+    "arena/arenaconfig/types.go:850"
+   ]
+  },
+  {
+   "id": 38,
+   "claim": "always_keep_system_role is accepted inside the relevance block",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:863"
+   ]
+  },
+  {
+   "id": 39,
+   "claim": "Relevance truncation computes a query embedding from the most recent user message(s)",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:871",
+    "arena/turnexecutors/pipeline_stages_integration.go:148"
+   ]
+  },
+  {
+   "id": 40,
+   "claim": "Relevance truncation scores each message by cosine similarity to the query",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:144"
+   ]
+  },
+  {
+   "id": 41,
+   "claim": "System messages are always kept when always_keep_system_role is true",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:152",
+    "arena/turnexecutors/pipeline_stages_integration.go:157"
+   ]
+  },
+  {
+   "id": 42,
+   "claim": "The last min_recent_messages messages are always kept",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:146"
+   ]
+  },
+  {
+   "id": 43,
+   "claim": "Messages with similarity >= similarity_threshold are kept",
+   "verdict": "false",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:147"
+   ]
+  },
+  {
+   "id": 44,
+   "claim": "Lowest-scoring remaining messages are removed until the conversation is under token_budget",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:144"
+   ]
+  },
+  {
+   "id": 45,
+   "claim": "OPENAI_API_KEY is the env var read for the OpenAI embedding provider",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:171"
+   ]
+  },
+  {
+   "id": 46,
+   "claim": "GEMINI_API_KEY is the env var read for the Gemini embedding provider",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:177"
+   ]
+  },
+  {
+   "id": 47,
+   "claim": "VOYAGE_API_KEY is the env var read for the Voyage AI embedding provider",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:184"
+   ]
+  },
+  {
+   "id": 48,
+   "claim": "Complete example is a valid Scenario document with relevance context_policy and turns",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:678",
+    "arena/arenaconfig/types.go:686",
+    "arena/arenaconfig/types.go:699"
+   ]
+  },
+  {
+   "id": 49,
+   "claim": "metadata.labels accepts arbitrary key/value labels such as category and context",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:684"
+   ]
+  },
+  {
+   "id": 50,
+   "claim": "spec.description is an accepted scenario field",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:680"
+   ]
+  },
+  {
+   "id": 51,
+   "claim": "A turn accepts an assertions list",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1175"
+   ]
+  },
+  {
+   "id": 52,
+   "claim": "content_includes is a registered assertion type",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 53,
+   "claim": "Assertions accept a params map",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:24"
+   ]
+  },
+  {
+   "id": 54,
+   "claim": "content_includes accepts params.patterns as a list of strings",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:24"
+   ]
+  },
+  {
+   "id": 55,
+   "claim": "Assertions accept a message param used as the failure message",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:25",
+    "arena/engine/duplex_executor_assertions_integration.go:82"
+   ]
+  },
+  {
+   "id": 56,
+   "claim": "With cache_embeddings true, each truncating turn embeds only messages and query without a cached vector",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/context_builder.go:24",
+    "arena/turnexecutors/pipeline_stages_integration.go:151"
+   ]
+  },
+  {
+   "id": 57,
+   "claim": "The embedding cache key is the exact message text plus embedding provider and model",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/context_builder.go:17"
+   ]
+  },
+  {
+   "id": 58,
+   "claim": "The embedding cache is scoped to one conversation, holds only the previous truncation's vectors, and is never shared across conversations or runs",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/conversation_executor.go:412",
+    "arena/engine/conversation_executor.go:790",
+    "arena/engine/conversation_executor.go:92",
+    "arena/turnexecutors/context_builder.go:12"
+   ]
+  },
+  {
+   "id": 59,
+   "claim": "Only turns over token_budget compute embeddings, so the cache helps only from the second such turn",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:120"
+   ]
+  },
+  {
+   "id": 60,
+   "claim": "Embeddings are computed in batches",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:137"
+   ]
+  },
+  {
+   "id": 61,
+   "claim": "Missing key error reads 'openai API key not found: set OPENAI_API_KEY environment variable'",
+   "verdict": "false",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:137",
+    "arena/turnexecutors/pipeline_stages_integration.go:139"
+   ]
+  },
+  {
+   "id": 62,
+   "claim": "Increasing similarity_threshold keeps fewer messages",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:867"
+   ]
+  },
+  {
+   "id": 63,
+   "claim": "Lowering similarity_threshold keeps more messages",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:867"
+   ]
+  },
+  {
+   "id": 64,
+   "claim": "Increasing min_recent_messages keeps more recent messages",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:859"
+   ]
+  },
+  {
+   "id": 65,
+   "claim": "Link target docs/src/content/docs/arena/how-to/scenarios/write-scenarios.md exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 66,
+   "claim": "Link target docs/src/content/docs/arena/how-to/providers/configure-providers.md exists",
+   "verdict": "true",
+   "evidence": []
+  }
+ ]
+}

@@ -1,14 +1,23 @@
 ---
 title: Manage Context
+description: Set a token budget and a truncation strategy so long scenario conversations stay within the model's context window.
+verified:
+  commit: 60cd1a146e6224c0d66c972d18f329a0ce76c522
+  sources:
+    - arena/arenaconfig/loader.go
+    - arena/arenaconfig/types.go
+    - arena/engine/conversation_executor.go
+    - arena/engine/duplex_executor_assertions_integration.go
+    - arena/turnexecutors/context_builder.go
+    - arena/turnexecutors/pipeline_stages_integration.go
+    - schemas/v1alpha1/scenario.json
 ---
-Learn how to configure context management and truncation strategies for long conversations.
+Configure `context_policy` so a long conversation stays within a token budget.
 
-## Overview
+## Prerequisites
 
-When conversations grow long, they may exceed the LLM's context window or token budget. PromptKit provides context management strategies to handle this automatically:
-
-- **Truncate oldest messages** - Remove earliest messages first (simple, fast)
-- **Truncate by relevance** - Use embeddings to keep semantically relevant messages (smarter)
+- A scenario with enough turns to exceed the budget. See [Write Scenarios](/arena/how-to/scenarios/write-scenarios/).
+- For `relevance` truncation, an API key for an embedding provider (see [Environment Variables](#environment-variables)).
 
 ## Basic Configuration
 
@@ -25,7 +34,7 @@ spec:
 
   context_policy:
     token_budget: 8000
-    strategy: truncate_oldest
+    strategy: oldest
 
   turns:
     - role: user
@@ -35,22 +44,21 @@ spec:
 
 ## Truncation Strategies
 
+`strategy` accepts `oldest`, `summarize`, `relevance` and `fail`. See [`context_policy`](/arena/reference/config-schema/#context_policy) for what each value does. The steps below cover `oldest` and `relevance`.
+
 ### Truncate Oldest (Default)
 
-Removes the oldest messages when approaching the token budget:
+Use `oldest` to drop the oldest messages first when the conversation exceeds the token budget. It is the default:
 
 ```yaml
 context_policy:
   token_budget: 8000
-  strategy: truncate_oldest
+  strategy: oldest
 ```
-
-**Pros:** Fast, predictable
-**Cons:** May remove contextually important early messages
 
 ### Relevance-Based Truncation
 
-Uses embedding similarity to keep the most relevant messages:
+Use `relevance` if early messages matter to later turns and you accept the extra embedding calls. It keeps the messages most similar to the latest user message:
 
 ```yaml
 context_policy:
@@ -62,9 +70,6 @@ context_policy:
     min_recent_messages: 3
     similarity_threshold: 0.3
 ```
-
-**Pros:** Preserves semantically important context
-**Cons:** Requires embedding API calls (additional latency/cost)
 
 ## Relevance Configuration
 
@@ -81,7 +86,7 @@ relevance:
 # Gemini
 relevance:
   provider: gemini
-  model: text-embedding-004
+  model: gemini-embedding-001  # or gemini-embedding-2
 
 # Voyage AI (recommended for retrieval tasks)
 relevance:
@@ -91,14 +96,7 @@ relevance:
 
 ### Parameters
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `provider` | string | required | Embedding provider: `openai`, `gemini`, `voyageai` |
-| `model` | string | provider default | Embedding model to use |
-| `min_recent_messages` | int | `3` | Always keep N most recent messages |
-| `similarity_threshold` | float | `0` (off) | Minimum similarity score (0-1) to keep message |
-| `always_keep_system_role` | bool | `true` | Never truncate system messages |
-| `cache_embeddings` | bool | `false` | Reuse message embeddings from the previous turn instead of re-embedding them |
+See [`context_policy`](/arena/reference/config-schema/#context_policy) in the config schema reference for every field, type and default.
 
 ### Example: Code Assistant
 
@@ -133,13 +131,7 @@ context_policy:
 
 ## How Relevance Truncation Works
 
-1. **Compute query embedding** - Embeds the most recent user message(s)
-2. **Score all messages** - Computes cosine similarity between query and each message
-3. **Apply rules**:
-   - Always keep system messages (if `always_keep_system_role: true`)
-   - Always keep last N messages (per `min_recent_messages`)
-   - Keep messages with similarity >= threshold
-4. **Truncate remaining** - Remove lowest-scoring messages until under budget
+The runtime embeds the latest user message as the query. It scores each message by cosine similarity to the query. It keeps system messages when `always_keep_system_role` is `true`, and it keeps the last `min_recent_messages` messages. It drops every other message that scores below `similarity_threshold`, even when budget remains. The rest fill the budget, highest score first, while they fit. See [`context_policy`](/arena/reference/config-schema/#context_policy) for each field.
 
 ## Environment Variables
 
@@ -157,6 +149,8 @@ export VOYAGE_API_KEY=...
 ```
 
 ## Complete Example
+
+Run this scenario to verify the setup. The last turn asserts that the billing context survives truncation.
 
 ```yaml
 apiVersion: promptkit.altairalabs.ai/v1alpha1
@@ -197,25 +191,24 @@ spec:
         - type: content_includes
           params:
             patterns: ["billing", "charge", "December"]
-            message: "Should remember billing context"
+          message: "Should remember billing context"
 ```
 
 ## Performance Considerations
 
-- **Caching**: Without `cache_embeddings`, every turn that truncates embeds the whole history again, so embedding cost grows with the conversation. With `cache_embeddings: true`, each turn embeds only the messages (and query) it has no vector for. A message is keyed on its exact text and the embedding provider and model, so an edited message is embedded again. The cache lasts for one conversation and holds only the previous truncation's vectors. It is never shared between conversations or runs. Only turns that go over `token_budget` embed anything, so the cache only helps from the second such turn onwards.
-- **Model size**: Smaller models (e.g., `text-embedding-3-small`) are faster
-- **Batch size**: Embeddings are computed in batches for efficiency
-- **Token budget**: Set appropriately for your LLM's context window
+- Set `cache_embeddings: true` to reuse embeddings within one conversation. See [`context_policy`](/arena/reference/config-schema/#context_policy).
+- Use a smaller embedding model, such as `text-embedding-3-small`, for faster calls.
+- Set `token_budget` to fit your LLM's context window.
 
 ## Troubleshooting
 
 ### Missing API Key
 
-```
-Error: openai API key not found: set OPENAI_API_KEY environment variable
+```text
+OpenAI API key not found: set OPENAI_API_KEY environment variable
 ```
 
-Set the required environment variable for your embedding provider.
+The log warning `failed to create embedding provider, relevance truncation will fall back to oldest` carries this message. The run then fails on the first over-budget turn with `strategy "relevance" requires RelevanceConfig with EmbeddingProvider; use "oldest" instead`. Set the required environment variable for your embedding provider.
 
 ### High Latency
 
@@ -231,7 +224,8 @@ If important context is being truncated:
 2. Increase `min_recent_messages`
 3. Ensure `always_keep_system_role: true`
 
-## See Also
+## Related pages
 
-- [Write Scenarios](/arena/how-to/scenarios/write-scenarios/) - Scenario configuration basics
-- [Configure Providers](/arena/how-to/providers/configure-providers/) - Provider setup
+- [Write Scenarios](/arena/how-to/scenarios/write-scenarios/)
+- [Configure Providers](/arena/how-to/providers/configure-providers/)
+- [Configuration Schema](/arena/reference/config-schema/#context_policy)
