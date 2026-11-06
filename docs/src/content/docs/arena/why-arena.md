@@ -1,124 +1,171 @@
 ---
 title: Why PromptArena
-description: PromptArena is a testing framework for LLM-driven systems — voice, multi-agent, workflow-driven, retrieval-augmented. How it differs from frameworks built for single-turn evaluation.
+description: What PromptArena tests that a single-turn eval library does not (voice, multi-turn self-play, workflows, multi-agent runs and runtime guardrails), with a runnable demo for each.
 sidebar:
   order: 2
+verified:
+  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  sources:
+    - arena/arenaconfig/types.go
+    - arena/assertions/register.go
+    - arena/cmd/promptarena/main_integration.go
+    - arena/cmd/promptarena/run.go
+    - arena/cmd/promptarena/run_interactive.go
+    - arena/engine/duplex_executor_pipeline_integration.go
+    - arena/engine/eval_orchestrator.go
+    - arena/engine/execution.go
+    - arena/engine/mock_default_audio.go
+    - arena/selfplay/audio_generator.go
+    - arena/turnexecutors/pipeline_stages_integration.go
+    - examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml
+    - examples/guardrails-test/prompts/content-filter.yaml
+    - examples/guardrails-test/scenarios/guardrail-should-trigger.scenario.yaml
+    - examples/model-migration/config.arena.yaml
+    - examples/multi-agent-demo/config.arena.yaml
+    - examples/pii-guardrail-red-team/prompts/hardened-support-agent.yaml
+    - examples/pii-guardrail-red-team/scenarios/pii-extraction-attempt.scenario.yaml
+    - examples/rag-agent/mock-responses-judge.yaml
+    - examples/rag-agent/providers/mock-judge.yaml
+    - examples/text-negotiation/scenarios/rental-negotiation.scenario.yaml
+    - examples/voice-bake-off/config.arena.yaml
+    - examples/voice-bake-off/providers/mock-fast.provider.yaml
+    - examples/voice-guardrails/scenarios/pii-redaction.scenario.yaml
+    - examples/voice-ivr/config.arena.yaml
+    - examples/voice-ivr/scenarios/balance-check.scenario.yaml
+    - examples/voice-ivr/scenarios/handoff-to-agent.scenario.yaml
+    - examples/voice-ivr/tools/check-balance.tool.yaml
+    - examples/voice-latency-budget/scenarios/turn-budget.scenario.yaml
+    - examples/voice-refund-demo/config.arena.yaml
+    - examples/voice-refund-demo/personas/aggressive-entitled.persona.yaml
+    - examples/voice-refund-demo/personas/impersonator.persona.yaml
+    - examples/voice-refund-demo/scenarios/aggressive-refund.scenario.yaml
+    - examples/voice-refund-demo/tools/lookup-order.tool.yaml
+    - schemas/v1alpha1/arena.json
+    - schemas/v1alpha1/promptconfig.json
 ---
 
-PromptArena is a **testing framework** for LLM-driven systems. Eval primitives are inputs; assertions over those primitives are the output. It covers a surface that frameworks built for single-turn evaluation do not reach:
+PromptArena is a testing framework for LLM-driven systems. It scores responses with eval primitives and turns those scores into pass/fail assertions. It covers a surface that frameworks built for single-turn evaluation do not reach:
 
-- **Voice** — duplex audio with self-play personas, runtime tools, and assertions that observe what got spoken and what got blocked.
-- **Multi-turn agents** — scripted or self-play opponents over many turns, with conversation-outcome assertions.
-- **Workflows** — state machines as first-class test subjects.
-- **Multi-agent (A2A)** — supervisor + specialist delegation, asserted per-turn.
-- **Guardrails as test signals** — production-side primitives observed via `guardrail_triggered`. Same code enforces in production and fires the test signal.
+- Voice: duplex audio with self-play personas, runtime tools, and assertions on what the agent said and how fast.
+- Multi-turn agents: scripted or self-play users over many turns, with conversation-outcome assertions.
+- Workflows: state machines as first-class test subjects.
+- Multi-agent (A2A): supervisor and specialist delegation, asserted per turn.
+- Guardrails as test signals: production-side guardrails observed with `guardrail_triggered`. The same code enforces in production and produces the test signal.
 
-It also ships the **standard eval-primitive catalog** (faithfulness, hallucination, contextual recall, etc.) so if you already work in DeepEval or Ragas vocabulary you will find what you expect — but those primitives are inputs to the testing framework, not the product surface.
+It also ships the standard eval-primitive catalog (faithfulness, hallucination, contextual recall and others), so if you already work in DeepEval or Ragas vocabulary you will find the names you expect. Scenarios use them as assertions.
 
-This page is organised by use case, and each section links to a runnable demo.
+This page is organised by use case, and most sections link to a runnable demo.
 
 ## Test a voice agent end to end
 
-A transcript is a lossy record of a voice call. It does not carry turn-taking, latency, expressiveness, tool calls made during audio, or a guardrail catch that happened before TTS — so scoring the transcript alone leaves the voice-specific behaviour untested.
+A transcript is a lossy record of a voice call. It does not carry turn-taking, latency, expressiveness or tool calls made during audio, so scoring the transcript alone leaves the voice-specific behaviour untested.
 
 PromptArena tests voice as a full conversation:
 
-- A scripted persona (LLM-driven via self-play, or scripted text) drives the user side. TTS makes it indistinguishable from a real call from the agent's perspective.
+- A persona (LLM-driven via self-play, or scripted text) drives the user side. TTS makes it indistinguishable from a real call from the agent's perspective.
 - The agent under test is a real duplex provider (OpenAI Realtime, Gemini Live) or a mock for CI.
-- Per-turn latency budgets, content checks, and guardrail observation run on real signals.
+- Per-turn latency budgets and content checks run on real signals.
+
+The duplex voice pipeline does not run pack guardrails. To test a guardrail on a voice agent's responses, use text turns, as the voice guardrails demo does.
 
 Demos:
 
-- [Voice customer support self-play](/arena/how-to/voice/voice-customer-support/) — four personas drive a refund agent. Asserts the tool-call pattern.
-- [Voice IVR with workflow](/arena/how-to/voice/voice-ivr/) — workflow state machine routes the call. Asserts transitions.
-- [Voice + tool calls](/arena/how-to/voice/voice-tool-calls/) — agent calls tools mid-conversation under live audio.
-- [Voice latency budget](/arena/how-to/voice/voice-latency-budget/) — assert `latency_budget(max_ms: ...)` per turn.
-- [Voice + guardrails](/arena/how-to/voice/voice-guardrails/) — PII redaction observed via `guardrail_triggered`.
-- [Voice provider bake-off](/arena/how-to/voice/voice-bake-off/) — same scenario, multiple duplex providers, side-by-side report.
-- [Expressive voice characterization](/arena/how-to/voice/voice-characterization/) — bracket-tag persona markup lowered into each provider's native dialect.
+- [Voice customer support self-play](/arena/how-to/voice/voice-customer-support/): four personas drive a refund agent. Asserts the tool-call pattern.
+- [Voice IVR with workflow](/arena/how-to/voice/voice-ivr/): a workflow state machine routes the call. Asserts transitions.
+- [Voice + tool calls](/arena/how-to/voice/voice-tool-calls/): the agent calls tools mid-conversation under live audio.
+- [Voice latency budget](/arena/how-to/voice/voice-latency-budget/): asserts `latency_budget(max_ms: ...)` per turn.
+- [Voice + guardrails](/arena/how-to/voice/voice-guardrails/): PII redaction observed with `guardrail_triggered`, on text turns.
+- [Voice provider bake-off](/arena/how-to/voice/voice-bake-off/): one scenario across two registered mock providers, with a per-provider report. Add your duplex providers to compare voice providers.
+- [Expressive voice characterization](/arena/how-to/voice/voice-characterization/): bracket-tag persona markup lowered into each provider's native dialect.
 
 ## Test multi-turn agent conversations with scripted users
 
-Single-turn evaluators miss the failure modes that only show up across multiple turns: agents that cave under pressure, agents that drift off-task, agents that loop. PromptArena's self-play makes the user side a first-class test subject — scripted text in CI, real LLM-driven personas in dev.
+Single-turn evaluators miss the failure modes that only show up across turns: agents that cave under pressure, drift off-task, or loop. Self-play makes the user side a first-class test subject, with scripted text in CI and LLM-driven personas in development.
 
 Demos:
 
-- [Voice customer support self-play](/arena/how-to/voice/voice-customer-support/) — multi-turn voice conversation with adversarial personas.
-- [Text negotiation](/arena/how-to/agents/text-negotiation/) — four-turn rental haggling with conversation-outcome assertions.
+- [Voice customer support self-play](/arena/how-to/voice/voice-customer-support/): a multi-turn voice conversation with adversarial personas.
+- [Text negotiation](/arena/how-to/agents/text-negotiation/): four-turn rental haggling with conversation-outcome assertions.
 
 ## Assert workflow state transitions
 
-Workflow state machines aren't an eval concern in any other framework — they're treated as agent internals or skipped entirely. PromptArena ships a workflow primitive in the pack; scenarios assert state transitions and tool-call patterns per state.
+Workflow state machines are usually treated as agent internals, or skipped. PromptArena ships a workflow primitive in the pack, and scenarios assert state transitions and tool-call patterns per state.
 
 Demos:
 
-- [Voice IVR with workflow](/arena/how-to/voice/voice-ivr/) — three-state IVR with the assertion pattern that catches misroutes.
+- [Voice IVR with workflow](/arena/how-to/voice/voice-ivr/): a three-state IVR with the assertion pattern that catches misroutes.
 
-## Observe runtime guardrails as test signals — the three-role model
+## Observe runtime guardrails as test signals
 
-This is the architectural differentiator. PromptArena keeps three roles distinct:
+PromptArena keeps three roles distinct:
 
-- **Eval** — primitive scoring function `(content) → result`. Stateless. Lives in `runtime/evals/handlers/`.
-- **Guardrail** — eval applied as production enforcement. Wired in the pack's `validators:` block, runs in production AND in tests, mutates content.
-- **Assertion** — eval or query applied as a test predicate. Observes guardrail firings via `guardrail_triggered`. Never mutates.
+- An eval is a primitive scoring function, `(content) → result`. It is stateless and lives in `runtime/evals/handlers/`.
+- A guardrail is an eval applied as production enforcement. It is wired in the pack's `validators:` block, runs in production and in tests, and changes content.
+- An assertion is an eval or query applied as a test predicate. It observes guardrail firings with `guardrail_triggered`, and never changes content.
 
-Same code, three roles. One implementation. Production catches in real time AND the test observes the firing, from the same primitive.
+The diagram shows one eval handler serving both production enforcement and the test that observes it.
 
-What this buys you is a test signal for enforcement that already exists. If a
-guardrail is only wired into production, the fact that it fired is visible in logs
-and nowhere a test can assert on. If scoring only happens over a finished
-transcript, a control that should have stopped the output cannot be distinguished
-from one that never ran. Here the same primitive does both, so the assertion is
-about the control itself rather than about its side effects.
+```mermaid
+flowchart LR
+    EVAL["Eval handler<br/>(runtime/evals/handlers)"]
+    GUARD["Guardrail<br/>(pack validators:)"]
+    MSG["Assistant message<br/>(validations recorded)"]
+    ASSERT["Assertion<br/>(guardrail_triggered)"]
+    EVAL --> GUARD
+    GUARD -->|"blocks or redacts"| MSG
+    MSG --> ASSERT
+    EVAL -->|"eval-backed assertion"| ASSERT
+```
+
+This gives you a test signal for enforcement that already exists. If a guardrail is wired only into production, the fact that it fired is visible in logs and nowhere a test can assert on. If scoring only happens over a finished transcript, a control that should have stopped the output cannot be told apart from one that never ran. In PromptArena the same primitive enforces the control and records that it fired, and the assertion reads that record.
 
 Demos:
 
-- [Guardrails as test signals](/arena/how-to/scenarios/guardrails-as-signals/) — the canonical demonstration: `banned_words` wired as a guardrail, asserted via `guardrail_triggered`.
-- [PII guardrail red-team](/arena/how-to/scenarios/pii-guardrail-red-team/) — scripted probes check that `pii_leakage` fires.
-- [Voice + guardrails](/arena/how-to/voice/voice-guardrails/) — focused PII redaction demo emphasising the runtime + test bridge.
+- [Guardrails as test signals](/arena/how-to/scenarios/guardrails-as-signals/): `banned_words` wired as a guardrail and asserted with `guardrail_triggered`.
+- [PII guardrail red-team](/arena/how-to/scenarios/pii-guardrail-red-team/): scripted probes check that `pii_leakage` fires.
+- [Voice + guardrails](/arena/how-to/voice/voice-guardrails/): a focused PII redaction demo of the runtime-to-test bridge.
 
 ## Run a real agent runtime under mock LLMs
 
-Mock-LLM testing usually means mocked everything (tools, state machines, downstream services), which makes it impossible to catch integration bugs. PromptArena runs the **real runtime** (real tools, real workflow state machine, real guardrails) with the LLM mocked. The result: a deterministic test environment where the agent's structural behaviour gets exercised even without provider keys.
+Mock-LLM testing usually means mocking everything (tools, state machines, downstream services), which hides integration bugs. PromptArena runs the real pipeline, workflow state machine, tool-call executor and pack guardrails with the LLM mocked. The agent's structural behaviour is exercised without provider keys. In the demos the tools themselves are mock-mode (`mode: mock` with a `mock_template`), and the A2A agents are in-process mocks.
 
-Every demo in this catalog uses this pattern. The CI snippets exit deterministically; the agent's tool-call patterns, workflow transitions, and guardrail firings are real.
+Most demos run this way in CI. The exceptions call live providers: voice customer support defaults to real realtime agents and TTS, voice tool calls and text negotiation need keys outside their mock modes, and voice characterization's `audio_emotion` check needs `HF_TOKEN`.
 
 ## Test multi-agent A2A delegation
 
-Multi-agent systems fail in two ways: the supervisor routes to the wrong specialist, or the right specialist produces wrong output. Single-agent eval frameworks miss the supervisor; agent-output eval misses the supervisor's contribution. PromptArena asserts both.
+Multi-agent systems fail in two ways: the supervisor routes to the wrong specialist, or the right specialist produces the wrong output. Evaluating only the final output misses the routing. PromptArena asserts both.
 
 Demos:
 
-- [A2A multi-agent](/arena/how-to/agents/a2a-multi-agent/) — supervisor delegates research and translation to two specialised A2A agents; assertions catch routing and content per turn.
+- [A2A multi-agent](/arena/how-to/agents/a2a-multi-agent/): a supervisor delegates research and translation to two A2A agents; assertions catch routing and content per turn.
 
 ## Compare providers across the same scenario
 
-Migrating models without a regression suite is how you ship bugs to production. PromptArena fans out scenarios across registered providers automatically; CI fails if any provider regresses on a shared assertion bar.
+Migrating models without a regression suite ships behavioural changes unnoticed. PromptArena fans scenarios out across the registered providers, and CI fails if any provider misses a shared assertion bar.
 
 Demos:
 
-- [Voice provider bake-off](/arena/how-to/voice/voice-bake-off/) — one scenario, multiple voice providers, side-by-side report.
-- [Model migration regression](/arena/how-to/providers/model-migration/) — same scenarios across two model versions; CI catches behavioural drift.
+- [Voice provider bake-off](/arena/how-to/voice/voice-bake-off/): one scenario across two registered mock providers, with a per-provider report.
+- [Model migration regression](/arena/how-to/providers/model-migration/): the same scenarios across two model versions; CI catches behavioural drift.
 
 ## Test RAG with the standard primitives
 
-The named RAG primitives people look for (`faithfulness`, `hallucination`, `contextual_precision`, `contextual_recall`, `contextual_relevancy`, `answer_relevancy`) ship as pure eval handlers and are exercisable as scenario assertions by wrapping each with `type: assertion` and a threshold. PromptArena's framing isn't "we ship the RAG primitives" — it's "we ship the testing framework that consumes them, on a live retrieval agent rather than a fixed transcript."
+The named RAG primitives (`faithfulness`, `hallucination`, `contextual_precision`, `contextual_recall`, `contextual_relevancy`, `answer_relevancy`) ship as registered eval handlers. Each is judge-backed: it makes an LLM judge call and needs a judge provider. You use one as a scenario assertion by wrapping it with `type: assertion` and a threshold. PromptArena runs them against a live retrieval agent rather than a fixed transcript.
 
 Demos:
 
-- [RAG agent assertions](/arena/how-to/agents/rag-agent/) — full named primitive suite as scenario assertions, keyless via a mock LLM judge.
+- [RAG agent assertions](/arena/how-to/agents/rag-agent/): the full named primitive suite as scenario assertions, keyless through a mock LLM judge.
 
 ## Wire it as a CI quality gate
 
-The work is unfinished until the gate works. `promptarena run --ci` exits non-zero on any assertion failure; the fork-safe split pattern keeps secrets out of fork PRs while still gating internal merges on real-provider runs. Report artifacts give reviewers per-scenario / per-provider visibility into what failed.
+`promptarena run --ci` exits non-zero on any assertion failure. A fork-safe split keeps secrets out of fork PRs while still gating internal merges on real-provider runs. Report artifacts show reviewers what failed, per scenario and per provider.
 
 Demos:
 
-- [Arena CI quality gate](/arena/how-to/interfaces/run-in-ci/) — fork-safe split, threshold strategies per gate type, branch-protection wiring.
-- [Integrate with CI/CD](/arena/how-to/interfaces/run-in-ci/) — broader CI integration story across GitHub Actions, GitLab CI, Jenkins.
+- [Arena CI quality gate](/arena/how-to/interfaces/run-in-ci/): the fork-safe split, threshold strategies per gate type, and branch-protection wiring, across GitHub Actions, GitLab CI and Jenkins.
 
 ## What to use something else for
 
-Single-turn text scoring over recorded transcripts, score-and-report dashboards, and formal benchmark suites against named datasets are well served by existing eval tooling. PromptArena covers those cases and ships a standard eval catalogue, so it can be the only tool in play — but if that is all you need, an eval library is a smaller dependency.
+Single-turn text scoring over recorded transcripts, score-and-report dashboards, and formal benchmark suites against named datasets are well served by existing eval tooling. PromptArena covers those cases and ships a standard eval catalogue, so it can be the only tool in play. If that is all you need, an eval library is a smaller dependency.
 
-Reach for PromptArena when the thing you need to assert doesn't fit a transcript: voice, multi-turn self-play, workflows, multi-agent runs, and runtime guardrails observed while the test executes.
+Use PromptArena when the thing you need to assert does not fit a transcript: voice, multi-turn self-play, workflows, multi-agent runs, and runtime guardrails observed while the test executes.

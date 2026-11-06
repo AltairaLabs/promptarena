@@ -1,0 +1,870 @@
+{
+ "page": "docs/src/content/docs/arena/explanation/provider-comparison.md",
+ "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "OpenAI model id gpt-4o is a supported model (balanced, multimodal)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 2,
+   "claim": "OpenAI model id gpt-4o-mini is a supported model",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 3,
+   "claim": "OpenAI model id gpt-4-turbo is a supported model",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 4,
+   "claim": "apiVersion promptkit.altairalabs.ai/v1alpha1 is the scenario apiVersion",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:478",
+    "schemas/v1alpha1/scenario.json:1060"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "kind Scenario is a valid resource kind",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:478",
+    "schemas/v1alpha1/scenario.json:1061"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "metadata.name is a field of a scenario",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:80",
+    "schemas/v1alpha1/scenario.json:1031"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "spec is the top-level body key of a scenario",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:682",
+    "schemas/v1alpha1/scenario.json:1031"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "spec.task_type is a scenario field",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:684"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "spec.description is a scenario field",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:686"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "spec.providers is a list of provider names on a scenario, restricting the run to those providers",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:697",
+    "arena/engine/execution.go:271",
+    "arena/engine/execution.go:281"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "spec.turns is a list of turns on a scenario",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:692"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "a turn has a role field, with user as a valid value",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1135"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "a turn has a content field holding the user message",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1136"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "a turn accepts an assertions list",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1181"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "content_matches is a registered assertion type",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 16,
+   "claim": "assertion params accepts a pattern key for content_matches",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 17,
+   "claim": "assertion params accepts a message key",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:25",
+    "arena/assertions/types.go:38"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "Claude context window is 200K tokens",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 19,
+   "claim": "anthropic model id claude-3-5-sonnet-20241022 is a supported model",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 20,
+   "claim": "anthropic model id claude-3-5-haiku-20241022 is a supported model",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 21,
+   "claim": "anthropic model id claude-3-opus-20240229 is a supported model",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 22,
+   "claim": "the Claude scenario example uses apiVersion promptkit.altairalabs.ai/v1alpha1 and kind Scenario",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:478",
+    "schemas/v1alpha1/scenario.json:1060"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "metadata.name claude-test is a valid scenario name",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:80"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "the Claude example's spec block is valid YAML and matches the scenario schema (providers and assertions nested under spec after description)",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:682",
+    "schemas/v1alpha1/scenario.json:1031"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "providers: [claude-sonnet] is a valid spec.providers entry in the Claude example",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:697",
+    "arena/engine/execution.go:271"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "assertions is a valid key placed directly under the scenario spec in the Claude example",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:1181",
+    "arena/arenaconfig/types.go:682",
+    "schemas/v1alpha1/scenario.json:1031"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "content_matches accepts pattern and message params at spec-level assertions",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:1181",
+    "arena/arenaconfig/types.go:707"
+   ]
+  },
+  {
+   "id": 28,
+   "claim": "content_includes is a registered assertion type",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 29,
+   "claim": "content_includes accepts a patterns list param",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 30,
+   "claim": "llm_judge is a registered assertion/eval type",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 31,
+   "claim": "llm_judge accepts a criteria param",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 32,
+   "claim": "llm_judge accepts a judge_provider param holding a provider id in the form openai/gpt-4o-mini",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:93"
+   ]
+  },
+  {
+   "id": 33,
+   "claim": "Claude Sonnet is available under the model id claude-sonnet-style alias in the examples (providers: claude-sonnet)",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:697"
+   ]
+  },
+  {
+   "id": 34,
+   "claim": "gemini model id gemini-1.5-pro is a supported model",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 35,
+   "claim": "gemini model id gemini-1.5-flash is a supported model",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 36,
+   "claim": "gemini model id gemini-2.0-flash-exp is a supported model",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 37,
+   "claim": "the Gemini scenario example uses apiVersion promptkit.altairalabs.ai/v1alpha1 and kind Scenario",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:478",
+    "schemas/v1alpha1/scenario.json:1060"
+   ]
+  },
+  {
+   "id": 38,
+   "claim": "providers: [gemini-flash] is a valid spec.providers entry, and the example's YAML nesting is valid",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:682"
+   ]
+  },
+  {
+   "id": 39,
+   "claim": "content_includes with a patterns param is used in the Gemini example",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 40,
+   "claim": "Ollama is a supported provider and llama3.2:1b is a supported model id",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 41,
+   "claim": "llama3.2:3b is a supported Ollama model id",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 42,
+   "claim": "mistral is a supported Ollama model id",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 43,
+   "claim": "llava is a supported Ollama vision model id",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 44,
+   "claim": "deepseek-r1 is a supported Ollama model id",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 45,
+   "claim": "the Ollama provider exposes an OpenAI-compatible API",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 46,
+   "claim": "Ollama runs with no rate limits on the local machine",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 47,
+   "claim": "providers: [ollama-llama] is a valid spec.providers entry in the Ollama example and the example YAML nesting is valid",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:682"
+   ]
+  },
+  {
+   "id": 48,
+   "claim": "content_includes with patterns param is used in the Ollama example",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 49,
+   "claim": "content_includes with a patterns list is an assertion for provider-agnostic checks",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 50,
+   "claim": "content_matches pattern param accepts a length-range regex such as ^.{50,500}$",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 51,
+   "claim": "llm_judge is used with criteria and judge_provider params in the tone example",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 52,
+   "claim": "Arena does not provide a built-in response time assertion",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/eval_orchestrator.go:395"
+   ]
+  },
+  {
+   "id": 53,
+   "claim": "Response latency can be observed in test output reports",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/eval_orchestrator.go:395",
+    "arena/engine/types.go:68"
+   ]
+  },
+  {
+   "id": 54,
+   "claim": "the long-document example uses a context.document field on a scenario",
+   "verdict": "dead",
+   "evidence": [
+    "arena/arenaconfig/types.go:693",
+    "arena/cmd/promptarena/prompt-debug_interactive.go:223"
+   ]
+  },
+  {
+   "id": 55,
+   "claim": "providers claude-sonnet and gemini-pro are used in the long-context example",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:697"
+   ]
+  },
+  {
+   "id": 56,
+   "claim": "the ${fixtures.<name>} variable syntax is supported in context values",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:693"
+   ]
+  },
+  {
+   "id": 57,
+   "claim": "llm_judge criteria string is used in the long-document example",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 58,
+   "claim": "OpenAI gpt-4o-mini pricing is $0.15 input and $0.60 output per 1M tokens",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 59,
+   "claim": "OpenAI gpt-4o pricing is $2.50 input and $10.00 output per 1M tokens",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 60,
+   "claim": "Anthropic claude-haiku pricing is $0.25 input and $1.25 output per 1M tokens",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 61,
+   "claim": "Anthropic claude-sonnet pricing is $3.00 input and $15.00 output per 1M tokens",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 62,
+   "claim": "Google gemini-flash pricing is $0.075 input and $0.30 output per 1M tokens",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 63,
+   "claim": "Google gemini-pro pricing is $1.25 input and $5.00 output per 1M tokens",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 64,
+   "claim": "Ollama local inference costs $0.00 per token",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 65,
+   "claim": "providers list accepts ollama-llama in a local tier",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:68"
+   ]
+  },
+  {
+   "id": 66,
+   "claim": "provider mock exists as a built-in provider type for smoke tests",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 67,
+   "claim": "providers openai-mini and gemini-flash are used in the integration tier",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:68"
+   ]
+  },
+  {
+   "id": 68,
+   "claim": "providers openai-gpt4o and claude-sonnet are used in the quality tier",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:68"
+   ]
+  },
+  {
+   "id": 69,
+   "claim": "the total estimated cost per run is about $1.10 excluding local tests (0.10 + 1.00)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 70,
+   "claim": "a turn can carry a name field",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:1134",
+    "schemas/v1alpha1/scenario.json:1031"
+   ]
+  },
+  {
+   "id": 71,
+   "claim": "a turn block can carry a providers list in the tool calling example",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:1134"
+   ]
+  },
+  {
+   "id": 72,
+   "claim": "tools_called is a registered assertion type",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 73,
+   "claim": "tools_called accepts a tools list param",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 74,
+   "claim": "conversation_assertions is a valid key on a scenario or turn",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:1134",
+    "arena/arenaconfig/types.go:707"
+   ]
+  },
+  {
+   "id": 75,
+   "claim": "tool_calls_with_args is a registered assertion type",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 76,
+   "claim": "tool_calls_with_args accepts tool and expected_args params",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 77,
+   "claim": "Gemini tool calling uses the Google AI Studio format",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 78,
+   "claim": "the OpenAI provider supports native JSON mode through a response_format option",
+   "verdict": "false",
+   "evidence": [
+    "schemas/v1alpha1/provider.json:1"
+   ]
+  },
+  {
+   "id": 79,
+   "claim": "json_object is a valid response_format value for OpenAI",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 80,
+   "claim": "type openai is a valid provider type in a providers list",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 81,
+   "claim": "the Anthropic provider has no native JSON mode and JSON is obtained by prompting",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 82,
+   "claim": "type anthropic is a valid provider type",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 83,
+   "claim": "the Gemini provider supports schema-based structured generation",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 84,
+   "claim": "type google is a valid provider type",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 85,
+   "claim": "all three providers (OpenAI, Claude, Gemini) accept image input",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 86,
+   "claim": "a turn accepts an image field pointing to a local file path",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:1134",
+    "arena/arenaconfig/types.go:1140"
+   ]
+  },
+  {
+   "id": 87,
+   "claim": "model short names gpt-4o, claude-opus and gemini-pro are used as providers in the image example",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:1134"
+   ]
+  },
+  {
+   "id": 88,
+   "claim": "content_includes accepts patterns objects, colors, scene in the image example",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 89,
+   "claim": "a scenario may list multiple providers to run the same scenario across them",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/execution.go:271",
+    "arena/engine/execution.go:281"
+   ]
+  },
+  {
+   "id": 90,
+   "claim": "providers openai-gpt4o-mini, claude-sonnet and gemini-flash are used in the cross-provider baseline",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:697"
+   ]
+  },
+  {
+   "id": 91,
+   "claim": "content_includes with patterns refund, policy, days is used in the baseline",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 92,
+   "claim": "a turn entry accepts a name field and a providers field in the provider-specific example",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:1134"
+   ]
+  },
+  {
+   "id": 93,
+   "claim": "providers claude-sonnet and gemini-flash with context.document are used in the provider-specific example",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:1134",
+    "arena/arenaconfig/types.go:693"
+   ]
+  },
+  {
+   "id": 94,
+   "claim": "context.document accepts a ${fixtures.100k_token_doc} reference",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:693"
+   ]
+  },
+  {
+   "id": 95,
+   "claim": "Arena has no primary_provider or fallback_providers failover",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:682",
+    "schemas/v1alpha1/scenario.json:1031"
+   ]
+  },
+  {
+   "id": 96,
+   "claim": "primary_provider is a scenario field",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:682"
+   ]
+  },
+  {
+   "id": 97,
+   "claim": "fallback_providers is a scenario field",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:682"
+   ]
+  },
+  {
+   "id": 98,
+   "claim": "spec.scenarios is a list field of per-provider scenario entries",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:682"
+   ]
+  },
+  {
+   "id": 99,
+   "claim": "a scenario entry accepts a provider key",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:682"
+   ]
+  },
+  {
+   "id": 100,
+   "claim": "a scenario entry accepts an expected_to_work key",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:682"
+   ]
+  },
+  {
+   "id": 101,
+   "claim": "content_includes with patterns key and llm_judge with criteria are the recommended provider-agnostic assertions",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 102,
+   "claim": "content_matches with a pattern like ^Here are 3 is an assertion pattern in the avoid example",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 103,
+   "claim": "a spec-level tags field accepts a list such as fast-providers",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:682",
+    "schemas/v1alpha1/scenario.json:1031"
+   ]
+  },
+  {
+   "id": 104,
+   "claim": "providers openai-mini, gemini-flash and claude-haiku are used in the tags example",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:697"
+   ]
+  },
+  {
+   "id": 105,
+   "claim": "a second scenario entry with name and tags premium-providers can be listed under spec in the tags example",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:682"
+   ]
+  },
+  {
+   "id": 106,
+   "claim": "promptarena run is a CLI command",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:162"
+   ]
+  },
+  {
+   "id": 107,
+   "claim": "promptarena run accepts a --provider flag",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:162",
+    "arena/cmd/promptarena/run.go:316"
+   ]
+  },
+  {
+   "id": 108,
+   "claim": "promptarena run --provider gemini-flash is a valid invocation (a provider id from the config)",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:316",
+    "arena/engine/execution.go:271"
+   ]
+  },
+  {
+   "id": 109,
+   "claim": "promptarena run --provider claude-sonnet is a valid invocation",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:316",
+    "arena/engine/execution.go:271"
+   ]
+  },
+  {
+   "id": 110,
+   "claim": "a top-level benchmark block with frequency, providers, scenarios, and track keys is a supported config",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:68",
+    "schemas/v1alpha1/arena.json:1"
+   ]
+  },
+  {
+   "id": 111,
+   "claim": "standard_benchmark_suite is a built-in scenario suite name",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:68"
+   ]
+  },
+  {
+   "id": 112,
+   "claim": "pass_rate is a tracked benchmark metric",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/trials.go:592",
+    "arena/engine/types.go:120"
+   ]
+  },
+  {
+   "id": 113,
+   "claim": "average_response_time is a tracked benchmark metric",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/types.go:68"
+   ]
+  },
+  {
+   "id": 114,
+   "claim": "cost_per_run is a tracked benchmark metric",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/types.go:68"
+   ]
+  },
+  {
+   "id": 115,
+   "claim": "quality_scores is a tracked benchmark metric",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/types.go:68"
+   ]
+  },
+  {
+   "id": 116,
+   "claim": "the link /arena/explanation/testing-philosophy/ resolves to an existing page",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 117,
+   "claim": "the link /arena/explanation/validation-strategies/ resolves to an existing page",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 118,
+   "claim": "the link /arena/how-to/providers/configure-providers/ resolves to an existing page",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 119,
+   "claim": "the link /arena/tutorials/02-multi-provider/ resolves to an existing page",
+   "verdict": "true",
+   "evidence": []
+  }
+ ]
+}

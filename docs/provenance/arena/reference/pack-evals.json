@@ -1,0 +1,226 @@
+{
+ "page": "docs/src/content/docs/arena/reference/pack-evals.md",
+ "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "Evals are entries in the evals array of a pack file or of a prompt; runtime reads them as EvalDef generated from the PromptPack schema",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 2,
+   "claim": "id: string, required, unique within pack or prompt; prompt eval with same id overrides pack eval",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 3,
+   "claim": "description: string, default none",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 4,
+   "claim": "type: string, required, check type",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 5,
+   "claim": "trigger: string, required",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 6,
+   "claim": "sample_percentage: number 0-100, default 5, read only by sample_turns and sample_sessions",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 7,
+   "claim": "enabled: boolean default true; controls whether eval runs",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 8,
+   "claim": "params: object default none, parameters for check type",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 9,
+   "claim": "metric: object, default auto-generated gauge",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 10,
+   "claim": "when: object; when conditions on tool calls not met the eval is skipped",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 11,
+   "claim": "groups: array of strings, default by type; setting replaces automatic classification",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 12,
+   "claim": "Eval with no metric records a gauge named after its id",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 13,
+   "claim": "assertion/guardrail check types take min_score and max_score in params",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 14,
+   "claim": "a plain eval records a score and never fails",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 15,
+   "claim": "every_turn fires after each assistant response",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 16,
+   "claim": "sample_turns fires on hash-selected percentage of turns",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 17,
+   "claim": "on_session_complete fires when session closes",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 18,
+   "claim": "sample_sessions hash-selected percentage of sessions at close",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 19,
+   "claim": "on_conversation_complete runs in Arena and sdk.Evaluate with Trigger set, not in live SDK conversation",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/eval_conversation_executor.go:285"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "Sampling uses FNV-1a hash of session ID and turn index, deterministic; sample_sessions depends on session ID only",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 21,
+   "claim": "sdk.EvaluateOpts.EvalGroups selects groups; empty runs all",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 22,
+   "claim": "default group assigned to every eval with no explicit groups",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 23,
+   "claim": "fast-running: every type not under long-running or external, e.g. contains, regex, json_valid, tools_called",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 24,
+   "claim": "long-running group membership list incl. exec handlers",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 25,
+   "claim": "external group membership list incl. exec handlers",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 26,
+   "claim": "Schema allows additional properties on metric; labels is read by runtime",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 27,
+   "claim": "metric.name string required pattern ^[a-zA-Z_:][a-zA-Z0-9_:]*$",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 28,
+   "claim": "collector prefixes name with {namespace}_eval_ unless already prefixed",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 29,
+   "claim": "metric.type required, one of gauge/counter/histogram/boolean",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 30,
+   "claim": "metric.labels map string->string; names match ^[a-zA-Z_][a-zA-Z0-9_]*$ and not start with __",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/builder_integration.go:716"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "gauge set to eval's value: score unless eval supplies another",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 32,
+   "claim": "counter incremented on each execution",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 33,
+   "claim": "histogram observes into prometheus.DefBuckets, not configurable",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 34,
+   "claim": "boolean 1.0 if value >= 1.0 else 0.0",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 35,
+   "claim": "eval id used as given as metric name; hyphen id yields name not allowed by schema pattern",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 36,
+   "claim": "Example JSON uses id, type contains, trigger every_turn, params.patterns, enabled, metric{name,type,labels}, all valid",
+   "verdict": "true",
+   "evidence": []
+  }
+ ]
+}

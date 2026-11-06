@@ -1,832 +1,238 @@
 ---
 title: Scenario Design Principles
+verified:
+  commit: f47e1e3a3e4621c2061a6e67995712d621bbfe79
+  sources:
+    - arena/arenaconfig/judge_param.go
+    - arena/arenaconfig/loader.go
+    - arena/arenaconfig/types.go
+    - arena/arenaconfig/validator.go
+    - arena/assertions/types.go
+    - arena/cmd/promptarena/prompt-debug_interactive.go
+    - arena/engine/builder_integration.go
+    - arena/stages/scenario_context_extraction.go
+    - arena/turnexecutors/pipeline_stages_integration.go
+    - arena/turnexecutors/scripted_executor.go
+    - schemas/v1alpha1/arena.json
+    - schemas/v1alpha1/scenario.json
 ---
-Understanding how to design effective, maintainable LLM test scenarios.
+How to design LLM test scenarios that stay focused, readable and stable as models vary.
 
-## What Makes a Good Test Scenario?
+## What makes a good test scenario
 
-A well-designed test scenario is:
-- **Clear**: Purpose is obvious
-- **Focused**: Tests one thing well
-- **Realistic**: Models actual use cases
-- **Maintainable**: Easy to update
-- **Robust**: Handles LLM variability
+A good scenario is clear (its purpose is obvious), focused (it tests one thing), realistic (it models an actual use case), maintainable (easy to update) and robust (it tolerates normal LLM variability). The sections below explain the design choices behind each quality.
 
-## Scenario Anatomy
+## How a scenario fits together
 
-### The Building Blocks
+A Scenario manifest names a `task_type` that selects the prompt configuration, lists the `turns` the user sends, and attaches assertions to the turns they judge.
 
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: descriptive-name
-  tags: [category, priority]
-
-spec:
-  task_type: support          # Links to prompt configuration
-  
-  fixtures:                   # Test-specific data
-    user_tier: "premium"
-  
-  turns:
-    - role: user
-      content: "User message"
-      assertions:             # Quality criteria
-        - type: content_includes
-          params:
-            patterns: ["expected content"]
-            message: "Should include expected content"
+```mermaid
+flowchart LR
+    S["Scenario manifest"] --> M["metadata: name, labels"]
+    S --> SP["spec"]
+    SP --> TT["task_type"]
+    SP --> V["variables"]
+    SP --> T["turns"]
+    TT --> PC["Prompt configuration"]
+    V --> PC
+    T --> A["assertions"]
+    A --> R["Pass or fail per turn"]
 ```
 
-**Each element serves a purpose:**
+See the [Scenario Format reference](/arena/reference/scenario-format/) for every field.
 
-- **apiVersion/kind**: Schema compatibility and resource type
-- **metadata**: Identifies the scenario with name and tags
-- **task_type**: Connects to prompt configuration
-- **fixtures**: Reusable test data and variables
-- **turns**: Conversation exchanges
-- **assertions**: Quality criteria with params and messages
+## Design patterns
 
-## Design Patterns
+### Single responsibility
 
-### Pattern 1: Single Responsibility
-
-Each test case should validate one specific behavior:
+Each scenario validates one behaviour. A scenario that greets, asks about refunds, asks for contact details and asks about opening hours fails for four unrelated reasons, and the failure does not say which. Focused scenarios are easier to debug, easier to maintain, and clearer as regression tests.
 
 ```yaml
-# Good: Tests one thing
 apiVersion: promptkit.altairalabs.ai/v1alpha1
 kind: Scenario
 metadata:
-  name: greeting-response
-
+  name: refund-policy-question
+  labels:
+    area: billing
+    priority: high
 spec:
+  id: refund-policy-question
+  task_type: support
+  description: Customer asks about the refund policy
   turns:
     - role: user
-      content: "Hello"
+      content: "What is your refund policy?"
       assertions:
         - type: content_includes
           params:
-            patterns: ["hello"]
-            message: "Should greet back"
-        
-        - type: content_matches
-          params:
-            pattern: "(?i)(hi|hello|welcome|nice)"
-            message: "Should use friendly language"
-
-# Avoid: Tests multiple unrelated things
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: everything-test
-
-spec:
-  turns:
-    - role: user
-      content: "Hello"
-    - role: user
-      content: "What's your refund policy?"
-    - role: user
-      content: "How do I contact support?"
-    - role: user
-      content: "What are your hours?"
+            patterns: ["refund", "policy"]
+          message: Should mention the refund policy
 ```
 
-**Why:** Single-responsibility tests are:
-- Easier to debug when they fail
-- More maintainable
-- Better for regression testing
-- Clearer in intent
+### Arrange, act, assert
 
-### Pattern 2: Arrange-Act-Assert
+Treat each scenario as three phases. Arrange sets the inputs: `task_type`, `variables` and the preceding turns. Act is the model responding to the user turn. Assert is the checks on that response. Keeping the phases distinct makes it obvious which part to change when a scenario breaks.
 
-Structure each turn with clear phases:
+### Progressive complexity
+
+Start with a single turn and a single assertion, then add turns and layers once that passes. A scenario that begins as a 10-turn conversation gives no signal about where the first failure is. The progression has three levels. All three fragments sit under `spec:` and assume the prompt configuration for `task_type` declares a `user_name` template variable.
+
+Level 1 sends one turn with no assertions, which proves the prompt and provider are wired up:
 
 ```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: order-issue-test
-
-spec:
-  fixtures:
-    order_id: "12345"
-    order_status: "shipped"
-  
-  turns:
-    # Arrange: Set up context (via fixtures)
-    # Act: LLM responds to user message
-    # Assert: Verify behavior
-    - role: user
-      content: "I'm having an issue with my order"
-      assertions:
-        - type: content_includes
-          params:
-            patterns: ["12345"]
-            message: "Should reference order ID"
-```
-
-### Pattern 3: Progressive Complexity
-
-Start simple, build up:
-
-```yaml
-# Level 1: Basic interaction
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: simple-greeting
-
-spec:
-  turns:
-    - role: user
-      content: "Hi"
-
-# Level 2: With fixtures
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: personalized-greeting
-
-spec:
-  fixtures:
-    user_name: "Alice"
-  
-  turns:
-    - role: user
-      content: "Hi"
-      assertions:
-        - type: content_includes
-          params:
-            patterns: ["Alice"]
-            message: "Should use user name"
-
-# Level 3: Multi-turn
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: greeting-conversation
-
-spec:
-  turns:
-    - role: user
-      content: "Hi, I'm Alice"
-    - role: user
-      content: "What's your name?"
-    - role: user
-      content: "Nice to meet you"
-```
-
-### Pattern 4: Edge Case Coverage
-
-Systematically test boundaries:
-
-```yaml
-# Happy path
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: standard-input
-
-spec:
-  turns:
-    - role: user
-      content: "What are your hours?"
-
-# Empty input
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: empty-message
-  tags: [edge-case]
-
-spec:
-  turns:
-    - role: user
-      content: ""
-      assertions:
-        - type: content_matches
-          params:
-            pattern: ".+"
-            message: "Should handle empty input gracefully"
-
-# Very long input
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: long-message
-  tags: [edge-case]
-
-spec:
-  fixtures:
-    long_patterns: ["Very long message..."]  # 10k chars
-  
-  turns:
-    - role: user
-      content: "{{fixtures.long_text}}"
-      assertions:
-        - type: content_matches
-          params:
-            pattern: ".+"
-            message: "Should handle long input"
-
-# Special characters
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: special-characters
-    tags: [edge-case]
-    turns:
-      - role: user
-        content: "Hello <script>alert('test')</script>"
-        assertions:
-          - type: content_matches
-            params:
-              pattern: "^(?!.*<script>).*$"
-              message: "Must not echo script tags"
-  
-  # Multiple languages
-  - name: "Non-English Input"
-    tags: [edge-case, i18n]
-    turns:
-      - role: user
-        content: "¿Cuáles son sus horas?"
-        assertions:
-          - type: llm_judge
-            params:
-              criteria: "Response is in Spanish or English"
-              judge_provider: "openai/gpt-4o-mini"
-              message: "Must respond in appropriate language"
-```
-
-## Scenario Organization
-
-### File Structure
-
-Organize scenarios logically:
-
-```
-scenarios/
-├── smoke/                  # Quick validation
-│   └── basic.yaml
-├── customer-support/       # Feature area
-│   ├── greetings.yaml
-│   ├── billing.yaml
-│   └── technical.yaml
-├── edge-cases/            # Special cases
-│   ├── input-validation.yaml
-│   └── error-handling.yaml
-└── regression/            # Known issues
-    └── bug-fixes.yaml
-```
-
-### Naming Conventions
-
-**Files:** `feature-area.yaml`
-```
-customer-support.yaml
-order-management.yaml
-account-settings.yaml
-```
-
-**Test Cases:** `"Action/State - Variation"`
-```yaml
-- name: "Greeting - First Time User"
-- name: "Greeting - Returning Customer"
-- name: "Refund Request - Within Policy"
-- name: "Refund Request - Outside Policy"
-```
-
-**Tags:** `[category, priority, type]`
-```yaml
-tags: [customer-service, high-priority, multi-turn]
-tags: [billing, critical, regression]
-tags: [onboarding, low-priority, smoke]
-```
-
-## Context Management
-
-### When to Use Context
-
-Context provides state for the LLM:
-
-```yaml
-# User profile context
-context:
-  user:
-    name: "Alice"
-    tier: "premium"
-    account_age_days: 730
-  
-  current_session:
-    device: "mobile"
-    location: "US-CA"
-
 turns:
   - role: user
-    content: "What benefits do I have?"
-    # LLM can use context in response
+    content: "Hi"
 ```
 
-### Context vs. Conversation History
+Level 2 adds a variable and one assertion on the response:
 
-**Context**: Explicit state
 ```yaml
-context:
-  order_id: "12345"
-  order_status: "shipped"
+variables:
+  user_name: "Alice"
+turns:
+  - role: user
+    content: "Hi"
+    assertions:
+      - type: content_includes
+        params:
+          patterns: ["Alice"]
+        message: Should use the user name
 ```
 
-**History**: Implicit from previous turns
+Level 3 adds turns, so the later ones test whether the model keeps what an earlier turn said:
+
+```yaml
+turns:
+  - role: user
+    content: "Hi, I'm Alice"
+  - role: user
+    content: "What's my name?"
+    assertions:
+      - type: content_includes
+        params:
+          patterns: ["Alice"]
+        message: Should remember the name from turn 1
+```
+
+### Edge case coverage
+
+Cover the boundaries: empty input, very long input, special characters and non-English input. Give each edge case its own scenario and tag it with `labels` such as `kind: edge-case`, so you can run the edge cases together.
+
+## Scenario organization
+
+Group scenario files by purpose so a failing directory points at the area at fault:
+
+```text
+scenarios/
+├── smoke/              # quick validation
+├── customer-support/   # one file per feature area
+├── edge-cases/         # input validation, error handling
+└── regression/         # known issues
+```
+
+Each file holds one Scenario manifest, and the Arena config lists every file under `scenarios:` explicitly. Name files after the feature area (`customer-support.yaml`, `order-management.yaml`).
+
+Tag scenarios with `metadata.labels`, which accepts string keys and values. Labels such as `area: billing` and `priority: critical` let you select and report on groups. Retire a scenario by removing it from the Arena config or by labelling it, since Scenario has no `deprecated` or `skip` field.
+
+## Context and conversation history
+
+Scenarios carry state in two ways. Explicit state is data you set up front, such as `variables` or `context_metadata`. Implicit state is the conversation history that earlier turns build up.
+
+This fragment sits under `spec:`:
+
 ```yaml
 turns:
   - role: user
     content: "My order number is 12345"
   - role: user
-    content: "What's the status?"  # Refers to previous turn
+    content: "What's the status?"   # refers to the previous turn
 ```
 
-**When to use each:**
-- Use **context** for: Known state, test fixtures, environment data
-- Use **history** for: Natural conversation flow, context retention testing
+Use explicit state for known facts and environment data. Use history when the point of the test is whether the model retains what was said earlier. `spec.context` is a free-form object that the engine does not pass to the model, so do not rely on it to steer a response. Two fields do reach the pipeline. `spec.variables` is a map of strings injected into the prompt's template variables. `spec.context_metadata` carries `domain` and `user_role`, which the engine turns into the `domain`, `user_context` and `user_role` template variables. When the history grows too long for the model, the [Manage Context](/arena/how-to/scenarios/manage-context/) how-to covers `context_policy` truncation.
 
-### Fixtures for Reusability
+## Assertion design
 
-Define common data once:
+### Layered assertions
 
-```yaml
-fixtures:
-  premium_user:
-    tier: "premium"
-    features: ["priority_support", "advanced_analytics"]
-  
-  basic_user:
-    tier: "basic"
-    features: ["standard_support"]
-  
-  long_text: |
-    (a long support transcript or document — paste the full 1000+ word
-    body here so every turn that references it stays in sync)
+Stack checks from cheap to expensive: structure first (is the response non-empty and a sensible length), then content (does it contain the key facts), then quality (an `llm_judge` for tone or sentiment), then business rules. Cheap layers fail fast and tell you exactly what broke. The [Validate Outputs](/arena/how-to/scenarios/validate-outputs/) how-to lists the assertion types.
 
-turns:
-  - name: "Premium User Support"
-    context:
-      user: ${fixtures.premium_user}
-  
-  - name: "Basic User Support"
-    context:
-      user: ${fixtures.basic_user}
-```
+### Specificity
 
-## Assertion Design
+Pick the level that matches what you care about. A pattern like `.+` accepts anything, including a useless reply. An exact-sentence match breaks when the model rephrases. Checking that the reply mentions `refund` and `policy` validates the behaviour without pinning the wording.
 
-### Layered Assertions
+### Negative assertions
 
-Apply multiple validation levels:
+Test what must not happen as well as what must. `content_excludes` fails the turn when any listed pattern appears, which is how you assert that a reply never mentions a competitor. Go regular expressions use RE2 and have no lookahead, so `(?!...)` does not compile.
+
+This fragment sits under a turn in `spec.turns`:
 
 ```yaml
 assertions:
-  # Layer 1: Structure
-  - type: content_matches
+  - type: content_excludes
     params:
-      pattern: ".+"
-      message: "Response must not be empty"
-  - type: content_matches
-    params:
-      pattern: "^.{1,500}$"
-      message: "Response must be under 500 characters"
-  
-  # Layer 2: Content
-  - type: content_includes
-    params:
-      patterns: ["key information"]
-      message: "Must contain key information"
-  
-  # Layer 3: Quality
+      patterns: ["CompetitorA", "CompetitorB"]
+    message: Must not mention competitors
   - type: llm_judge
     params:
-      criteria: "Response has positive sentiment"
-      judge_provider: "openai/gpt-4o-mini"
-      message: "Must be positive"
-  - type: llm_judge
-    params:
-      criteria: "Response maintains professional tone"
-      judge_provider: "openai/gpt-4o-mini"
-      message: "Must be professional"
-  
-  # Layer 4: Business Logic
-  - type: llm_judge
-    params:
-      criteria: "Response complies with brand guidelines"
-      judge_provider: "openai/gpt-4o-mini"
-      message: "Must meet brand compliance"
+      judge: default
+      criteria: "Response keeps a professional tone"
+    message: Must be professional
 ```
 
-### Assertion Specificity Spectrum
+The `message` is a sibling of `params`. The `judge` value names an entry in the Arena config's `spec.judges`.
 
-Choose the right level:
+## Multi-turn design
 
-```yaml
-# Too loose (accepts anything)
-assertions:
-  - type: content_matches
-    params:
-      pattern: ".+"
-      message: "Must not be empty"
+Model conversations as natural progressions: a problem statement, information gathering, a solution attempt and a resolution, with assertions on the turns where behaviour matters rather than on every turn. Assertions on the final turn check where the conversation ended up. Assertions on intermediate turns check the path.
 
-# Appropriate (validates behavior)
-assertions:
-  - type: content_includes
-    params:
-      patterns: ["refund", "policy"]
-      message: "Should mention refund policy"
+To test state transitions, assert on what the model says at each step (it asks for a destination, then a date, then confirms). To test branches, write one scenario per path: one where the customer is satisfied and one where they ask for a manager. Two short scenarios with a shared opening are easier to read than one that tries to cover both.
 
-# Too strict (brittle)
-assertions:
-  - type: content_matches
-    params:
-      pattern: "^Our refund policy allows returns within 30 days\\\\.$"
-      message: "Exact match - too rigid"
-```
+## Performance and cost
 
-### Negative Assertions
+Balance coverage against speed and spend by running different scenario sets at different depths. Run a fast smoke set on the mock provider on every change to validate structure. Run a broader set on a cheaper model for regression. Reserve the expensive models and the full provider matrix for critical paths and pre-release runs.
 
-Test what should NOT happen:
+The cost of a run scales with the number of scenarios, the number of turns, the number of providers and the model price. Fewer providers on short, targeted conversations cost the least.
 
-```yaml
-assertions:
-  # Should not mention competitors (negative lookahead)
-  - type: content_matches
-    params:
-      pattern: "^(?!.*(CompetitorA|CompetitorB)).*$"
-      message: "Must not mention competitors"
-  
-  # Should not be negative
-  - type: llm_judge
-    params:
-      criteria: "Response does not have negative sentiment"
-      judge_provider: "openai/gpt-4o-mini"
-      message: "Must not be negative"
-  
-  # Should not use inappropriate language
-  - type: content_matches
-    params:
-      pattern: "^(?!.*(inappropriate|offensive)).*$"
-      message: "Must not contain inappropriate language"
-```
+## Maintenance
 
-## Multi-Turn Design
+Keep scenarios maintainable by recording intent in `metadata.name`, `spec.description` and `labels`. Metadata accepts only `name`, `namespace`, `labels` and `annotations`, so keep version history in git rather than in the manifest.
 
-### Conversation Flow
-
-Design natural progressions:
+To avoid repeating a block of assertions, use a YAML anchor and alias. YAML anchors and merge keys both work in scenario files.
 
 ```yaml
 apiVersion: promptkit.altairalabs.ai/v1alpha1
 kind: Scenario
 metadata:
-  name: support-ticket-resolution
-
+  name: billing-conversation
+  labels:
+    area: billing
 spec:
-  task_type: test
-  description: "Support Ticket Resolution"
-  
-    tags: [multi-turn, support]
-    
-    turns:
-      # 1. Problem statement
-      - role: user
-        content: "I can't log into my account"
-        assertions:
-          - type: content_includes
-            params:
-              patterns: ["help", "account"]
-      
-      # 2. Information gathering
-      - role: user
-        content: "I get an 'invalid password' error"
-        assertions:
-          - type: content_includes
-            params:
-              patterns: ["reset", "password"]
-          - type: content_includes
-            params:
-              patterns: ["password", "reset"]
-              message: "Should reference password reset"
-      
-      # 3. Solution attempt
-      - role: user
-        content: "I tried resetting but didn't get the email"
-        assertions:
-          - type: content_includes
-            params:
-              patterns: ["spam", "check", "resend"]
-      
-      # 4. Resolution
-      - role: user
-        content: "Found it in spam, thank you!"
-        assertions:
-          - type: llm_judge
-            params:
-              criteria: "Response acknowledges resolution positively"
-              judge_provider: "openai/gpt-4o-mini"
-              message: "Must have positive sentiment"
+  id: billing-conversation
+  task_type: support
+  description: Billing questions that share one quality check
+  turns:
+    - role: user
+      content: "Question about my bill"
+      assertions: &helpful
+        - type: llm_judge
+          params:
+            judge: default
+            criteria: "Response is helpful and supportive"
+          message: Must be helpful
+    - role: user
+      content: "Can I get a refund?"
+      assertions: *helpful
 ```
 
-### State Transitions
+## Anti-patterns
 
-Test conversation state changes:
+A god scenario packs dozens of turns that test unrelated features. When it fails you cannot tell why, so split it into focused scenarios. Hardcoded data repeated across scenarios drifts out of sync, so move shared values into `variables`.
 
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: booking-flow-state-machine
+## Related pages
 
-spec:
-  task_type: test
-  description: "Booking Flow State Machine"
-  
-    
-    turns:
-      # State: INIT → COLLECTING_DESTINATION
-      - role: user
-        content: "I want to book a flight"
-        assertions:
-          - type: content_includes
-            params:
-              patterns: "destination"
-      
-      # State: COLLECTING_DESTINATION → COLLECTING_DATE
-      - role: user
-        content: "To London"
-        context:
-          booking_state: "collecting_date"
-        assertions:
-          - type: content_includes
-            params:
-              patterns: ["London", "date", "when"]
-      
-      # State: COLLECTING_DATE → CONFIRMING
-      - role: user
-        content: "Next Friday"
-        context:
-          booking_state: "confirming"
-        assertions:
-          - type: content_includes
-            params:
-              patterns: ["confirm", "London", "Friday"]
-```
-
-### Branch Testing
-
-Test conversation branches:
-
-```yaml
-turns:
-  # Path A: Customer satisfied
-turns:
-      - role: user
-        content: "Issue with order"
-      - role: user
-        content: "Order #12345"
-      - role: user
-        content: "That solved it, thanks!"
-        assertions:
-          - type: llm_judge
-            params:
-              criteria: "Response shows customer satisfaction"
-              judge_provider: "openai/gpt-4o-mini"
-              message: "Must have positive sentiment"
-  
-  # Path B: Customer needs escalation
-turns:
-      - role: user
-        content: "Issue with order"
-      - role: user
-        content: "Order #12345"
-      - role: user
-        content: "That doesn't help, I need a manager"
-        assertions:
-          - type: content_includes
-            params:
-              patterns: ["manager", "supervisor", "escalate"]
-```
-
-## Performance Considerations
-
-### Test Execution Speed
-
-Balance coverage with speed:
-
-```yaml
-# Fast: Smoke tests (mock provider)
-smoke_tests:
-  runtime: < 30 seconds
-  provider: mock
-  scenarios: 10
-
-# Medium: Integration tests
-integration_tests:
-  runtime: < 5 minutes
-  provider: gpt-4o-mini
-  scenarios: 50
-
-# Slow: Comprehensive tests
-comprehensive_tests:
-  runtime: < 20 minutes
-  provider: [gpt-4o, claude, gemini]
-  scenarios: 200
-```
-
-### Cost Optimization
-
-Design cost-effective scenarios:
-
-```yaml
-# Expensive: Multiple providers, long conversations
-turns:
-  - name: "Full Conversation Flow"
-    providers: [gpt-4o, claude-opus, gemini-pro]
-    turns: [10 multi-turn exchanges]
-    # Cost: ~$0.50 per run
-
-# Optimized: Targeted testing
-turns:
-  - name: "Critical Path Only"
-    providers: [gpt-4o-mini]
-    turns: [3 key exchanges]
-    # Cost: ~$0.05 per run
-```
-
-**Strategies:**
-- Use mock providers for structure validation
-- Use cheaper models (mini/flash) for regression tests
-- Reserve expensive models for critical tests
-- Batch similar tests together
-
-## Maintenance Patterns
-
-### Versioning Scenarios
-
-Track scenario changes:
-
-```yaml
-# Scenario metadata
-metadata:
-  version: "2.1"
-  last_updated: "2024-01-15"
-  author: "alice@example.com"
-  changelog:
-    - version: "2.1"
-      date: "2024-01-15"
-      changes: "Added tone validation"
-    - version: "2.0"
-      date: "2024-01-01"
-      changes: "Restructured multi-turn flow"
-```
-
-### Deprecation Strategy
-
-Handle outdated tests:
-
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: legacy-greeting-test
-
-spec:
-  task_type: test
-  description: "Legacy Greeting Test"
-  
-    # Conceptual — Arena has no deprecated/skip fields. Manage retired
-    # scenarios with labels, or remove them from the config.
-    deprecated: true
-    deprecated_reason: "Replaced by greeting-v2.yaml"
-    skip: true
-    
-  - name: "Current Greeting Test"
-    tags: [active, v2]
-```
-
-### DRY (Don't Repeat Yourself)
-
-Use templates and inheritance:
-
-```yaml
-# Base template
-templates:
-  support_base: &support_base
-    tags: [customer-support]
-    context:
-      department: "support"
-    assertions: &support_expected
-      - type: llm_judge
-        params:
-          criteria: "Response is helpful and supportive"
-          judge_provider: "openai/gpt-4o-mini"
-          message: "Must be helpful"
-      - type: llm_judge
-        params:
-          criteria: "Response has positive sentiment"
-          judge_provider: "openai/gpt-4o-mini"
-          message: "Must be positive"
-
-# Inherit template
-turns:
-  - name: "Billing Support"
-    <<: *support_base
-    turns:
-      - role: user
-        content: "Question about my bill"
-        assertions:
-          <<: *support_expected
-          - type: content_includes
-            params:
-              patterns: "billing"
-```
-
-## Anti-Patterns to Avoid
-
-### God Scenarios
-
-```yaml
-# Too much in one scenario
-turns:
-turns:
-      # 50+ turns testing unrelated features
-```
-
-**Fix:** Break into focused scenarios
-
-### Flaky Assertions
-
-```yaml
-# Unreliable tests - too rigid
-assertions:
-  - type: content_matches
-    params:
-      pattern: "^Exactly this format$"
-      message: "Exact format required - LLMs vary formatting"
-```
-
-**Fix:** Use flexible assertions
-```yaml
-# Better - flexible validation
-assertions:
-  - type: content_includes
-    params:
-      patterns: ["key", "terms"]
-      message: "Must contain key terms"
-  - type: llm_judge
-    params:
-      criteria: "Response follows expected format generally"
-      judge_provider: "openai/gpt-4o-mini"
-      message: "Should follow general format"
-```
-
-### Missing Context
-
-```yaml
-# Unclear purpose
-turns:
-turns:
-      - role: user
-        content: "something"
-```
-
-**Fix:** Add descriptive names and tags
-
-### Hardcoded Data
-
-```yaml
-# Brittle test data
-turns:
-  - role: user
-    content: "My order is #12345 placed on 2024-01-01 for $99.99"
-```
-
-**Fix:** Use fixtures and context
-
-## Best Practices Summary
-
-1. **One test, one purpose**: Each scenario tests a specific behavior
-2. **Use descriptive names**: Make intent clear
-3. **Tag appropriately**: Enable filtering and organization
-4. **Layer assertions**: From structure to business logic
-5. **Test edges**: Cover happy path and edge cases
-6. **Manage context**: Use fixtures for reusability
-7. **Design for maintenance**: Version, document, refactor
-8. **Balance cost and coverage**: Optimize test execution
-9. **Think in conversations**: Model real user interactions
-10. **Embrace variability**: Write robust assertions for LLM behavior
-
-## Further Reading
-
-- **[Testing Philosophy](/arena/explanation/testing-philosophy/)** - Why we test LLMs this way
-- **[Validation Strategies](/arena/explanation/validation-strategies/)** - Choosing assertions
-- **[Provider Comparison](/arena/explanation/provider-comparison/)** - Testing across providers
-- **[How-To: Write Scenarios](/arena/how-to/scenarios/write-scenarios/)** - Practical guide
+- [Testing Philosophy](/arena/explanation/testing-philosophy/): why we test LLMs this way
+- [Validation Strategies](/arena/explanation/validation-strategies/): choosing assertions
+- [Provider Comparison](/arena/explanation/provider-comparison/): testing across providers
+- [Write Scenarios](/arena/how-to/scenarios/write-scenarios/): the practical guide
+- [Scenario Format](/arena/reference/scenario-format/): every field

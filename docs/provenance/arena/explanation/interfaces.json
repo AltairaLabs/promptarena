@@ -1,0 +1,565 @@
+{
+ "page": "docs/src/content/docs/arena/explanation/interfaces.md",
+ "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "Arena is one engine with three front doors (TUI, Web UI, CI/headless)",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/main_integration.go:33",
+    "arena/cmd/promptarena/run_interactive.go:205",
+    "arena/cmd/promptarena/serve_interactive.go:171"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "The same config, providers, scenarios and assertions run underneath all three surfaces",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run_interactive.go:205",
+    "arena/cmd/promptarena/serve_interactive.go:166",
+    "arena/tui/app/runpage.go:132"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "The TUI is a full-screen interactive terminal hub for local development",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/main_integration.go:33",
+    "arena/tui/app/launch_interactive.go:48"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "The Web UI is a local web server with a dashboard and live streaming",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:108",
+    "arena/web/server.go:127"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "CI/headless mode gives plain-log, machine-readable execution for automation",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:169",
+    "arena/cmd/promptarena/run_interactive.go:134"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "Running bare `promptarena` (no subcommand) opens the TUI",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/main_integration.go:30",
+    "arena/cmd/promptarena/main_integration.go:39"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "`promptarena view` deep-links into the TUI results browser",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/view_interactive.go:51"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "`promptarena chat` opens an interactive chat session in the TUI",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/chat_interactive.go:73"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "`promptarena serve` starts the local web UI server",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:133",
+    "arena/cmd/promptarena/serve_interactive.go:249",
+    "arena/cmd/promptarena/serve_interactive.go:254"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "The web UI is served at http://127.0.0.1:8080 by default",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:249",
+    "arena/cmd/promptarena/serve_interactive.go:29",
+    "arena/cmd/promptarena/serve_interactive.go:72"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "`promptarena run --ci` is the headless CI invocation",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:169",
+    "arena/cmd/promptarena/run_interactive.go:134"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "`--ci` is a flag on the run subcommand",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:169",
+    "arena/cmd/promptarena/run.go:331"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "`--simple` is an alias for `--ci`",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:169",
+    "arena/cmd/promptarena/run.go:171",
+    "arena/cmd/promptarena/run.go:337",
+    "arena/cmd/promptarena/run_interactive.go:134",
+    "arena/cmd/promptarena/run_interactive.go:323"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "Diagram node TUI is labelled 'TUI hub (bare promptarena)'",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/main_integration.go:33"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "Diagram node WEB is labelled 'Web UI (promptarena serve)'",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:108"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "Diagram node CI is labelled 'CI / headless (promptarena run --ci)'",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:169"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "Diagram ENGINE node contains config, providers, scenarios and assertions",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:166",
+    "arena/engine/engine.go:719"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "Edge TUI --> ENGINE: the TUI hub runs on the Arena engine",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/main_integration.go:39",
+    "arena/tui/app/runpage.go:132"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "Edge WEB --> ENGINE: the web UI server runs on the Arena engine",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:171",
+    "arena/web/server.go:253"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "Edge CI --> ENGINE: CI/headless mode runs on the Arena engine",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run_interactive.go:205",
+    "arena/cmd/promptarena/run_interactive.go:216"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "Diagram RESULTS node lists out/, json, junit, html and markdown outputs, fed from the ENGINE",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:174",
+    "arena/cmd/promptarena/run.go:501",
+    "arena/web/server.go:266"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "None of the three surfaces is a wrapper around another; all are peers on the same execution engine",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run_interactive.go:205",
+    "arena/cmd/promptarena/serve_interactive.go:171",
+    "arena/tui/app/runpage.go:132"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "A run started from the TUI, browser or CI produces the same result artifacts",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/run_interactive.go:109",
+    "arena/tui/app/runpage.go:132",
+    "arena/web/server.go:266"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "Result artifacts from every surface are written to the same out/ directory",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/helpers.go:55",
+    "arena/cmd/promptarena/main_integration.go:73",
+    "arena/cmd/promptarena/run.go:168",
+    "arena/cmd/promptarena/serve_interactive.go:222"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "The TUI is built on Bubble Tea (github.com/charmbracelet/bubbletea)",
+   "verdict": "true",
+   "evidence": [
+    "arena/tui/app/launch_interactive.go:48"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "The TUI hub has exactly four pages",
+   "verdict": "false",
+   "evidence": [
+    "arena/tui/app/menu.go:16",
+    "arena/tui/app/menu.go:51"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "The View page browses and inspects past run results",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/view_interactive.go:51",
+    "arena/tui/app/menu.go:19"
+   ]
+  },
+  {
+   "id": 28,
+   "claim": "The Run page launches scenarios and shows turns executing live",
+   "verdict": "true",
+   "evidence": [
+    "arena/tui/app/menu.go:26",
+    "arena/tui/app/runpage.go:109"
+   ]
+  },
+  {
+   "id": 29,
+   "claim": "The Chat page talks to an agent from the config in text or hands-free voice",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/chat_interactive.go:56",
+    "arena/tui/app/menu.go:37"
+   ]
+  },
+  {
+   "id": 30,
+   "claim": "The Inspect page examines the resolved configuration",
+   "verdict": "true",
+   "evidence": [
+    "arena/tui/app/menu.go:44",
+    "arena/tui/app/menu.go:47"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "`promptarena chat` opens an interactive chat session",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/chat_interactive.go:73"
+   ]
+  },
+  {
+   "id": 32,
+   "claim": "`--voice` flag on `promptarena chat` enables hands-free voice mode",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/chat_interactive.go:20",
+    "arena/cmd/promptarena/chat_interactive.go:57"
+   ]
+  },
+  {
+   "id": 33,
+   "claim": "The TUI is fully keyboard-driven and runs entirely in the terminal",
+   "verdict": "true",
+   "evidence": [
+    "arena/tui/app/launch_interactive.go:48"
+   ]
+  },
+  {
+   "id": 34,
+   "claim": "The TUI is the default interface when no subcommand is given",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/main_integration.go:30"
+   ]
+  },
+  {
+   "id": 35,
+   "claim": "Link /arena/how-to/interfaces/use-the-tui/ resolves to an existing page",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 36,
+   "claim": "`promptarena serve` binds to 127.0.0.1:8080",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:237",
+    "arena/cmd/promptarena/serve_interactive.go:36",
+    "arena/cmd/promptarena/serve_interactive.go:72"
+   ]
+  },
+  {
+   "id": 37,
+   "claim": "The web UI is a React single-page app backed by a REST API",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/frontend/package.json:26",
+    "arena/web/server.go:127"
+   ]
+  },
+  {
+   "id": 38,
+   "claim": "Run events are streamed to the browser over Server-Sent Events (SSE)",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/server.go:127",
+    "arena/web/server.go:160"
+   ]
+  },
+  {
+   "id": 39,
+   "claim": "The web UI provides a dashboard",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/frontend/src/App.tsx:32",
+    "arena/web/frontend/src/App.tsx:378"
+   ]
+  },
+  {
+   "id": 40,
+   "claim": "A run can be started from the browser without using the terminal",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/server.go:135",
+    "arena/web/server.go:222"
+   ]
+  },
+  {
+   "id": 41,
+   "claim": "The web UI includes an interactive chat tab",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/frontend/src/App.tsx:447",
+    "arena/web/server.go:137"
+   ]
+  },
+  {
+   "id": 42,
+   "claim": "The web UI provides real-time audio monitoring for voice agents",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:199",
+    "arena/web/frontend/src/App.tsx:209"
+   ]
+  },
+  {
+   "id": 43,
+   "claim": "`--mock-provider` is a flag accepted by the run path used by serve",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:192",
+    "arena/cmd/promptarena/serve_interactive.go:138"
+   ]
+  },
+  {
+   "id": 44,
+   "claim": "With --mock-provider, canned responses drive the conversation while tools still execute for real",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:184",
+    "arena/engine/engine.go:719"
+   ]
+  },
+  {
+   "id": 45,
+   "claim": "The web server is bound to loopback only and is not a hosted, publicly exposed service",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:36",
+    "arena/cmd/promptarena/serve_interactive.go:97"
+   ]
+  },
+  {
+   "id": 46,
+   "claim": "Link /arena/how-to/interfaces/use-the-web-ui/ resolves to an existing page",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 47,
+   "claim": "`promptarena run --ci` disables the interactive TUI entirely",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run_interactive.go:323"
+   ]
+  },
+  {
+   "id": 48,
+   "claim": "`--simple` is accepted as an alias for `--ci`",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:171",
+    "arena/cmd/promptarena/run.go:337",
+    "arena/cmd/promptarena/run_interactive.go:134"
+   ]
+  },
+  {
+   "id": 49,
+   "claim": "CI mode emits plain, line-oriented, deterministic text logs",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:169",
+    "arena/cmd/promptarena/run_interactive.go:40"
+   ]
+  },
+  {
+   "id": 50,
+   "claim": "Report formats are selected with `--format`",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:174",
+    "arena/cmd/promptarena/run.go:413"
+   ]
+  },
+  {
+   "id": 51,
+   "claim": "`--formats` is an alias for `--format`",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:176",
+    "arena/cmd/promptarena/run.go:407"
+   ]
+  },
+  {
+   "id": 52,
+   "claim": "`--format` accepts any combination of the report formats",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:174",
+    "arena/cmd/promptarena/run.go:417",
+    "arena/cmd/promptarena/run.go:501"
+   ]
+  },
+  {
+   "id": 53,
+   "claim": "Format `json` produces structured results for downstream tooling",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:422"
+   ]
+  },
+  {
+   "id": 54,
+   "claim": "Format `junit` produces JUnit XML",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:174",
+    "arena/cmd/promptarena/run.go:523"
+   ]
+  },
+  {
+   "id": 55,
+   "claim": "Format `html` produces a self-contained HTML report",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:173",
+    "arena/cmd/promptarena/run.go:185",
+    "arena/cmd/promptarena/run.go:507"
+   ]
+  },
+  {
+   "id": 56,
+   "claim": "Format `markdown` produces a Markdown report",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:187",
+    "arena/cmd/promptarena/run.go:532"
+   ]
+  },
+  {
+   "id": 57,
+   "claim": "Regression gates fail the build when assertions break",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run_interactive.go:134"
+   ]
+  },
+  {
+   "id": 58,
+   "claim": "A packaged GitHub Action wraps the CI/headless mode",
+   "verdict": "true",
+   "evidence": [
+    ".github/actions/promptarena-action/action.yml:1",
+    ".github/actions/promptarena-action/src/runner.ts:35"
+   ]
+  },
+  {
+   "id": 59,
+   "claim": "Link /arena/how-to/interfaces/run-in-ci/ resolves to an existing page",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 60,
+   "claim": "Moving between surfaces costs nothing because they share an engine and config",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run_interactive.go:205",
+    "arena/cmd/promptarena/serve_interactive.go:166",
+    "arena/tui/app/runpage.go:249"
+   ]
+  },
+  {
+   "id": 61,
+   "claim": "Scenarios refined in the TUI are the same ones CI gates on",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run_interactive.go:205",
+    "arena/tui/app/runpage.go:249"
+   ]
+  },
+  {
+   "id": 62,
+   "claim": "Scenarios can be shown on screen with `promptarena serve`",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:108"
+   ]
+  },
+  {
+   "id": 63,
+   "claim": "Link /arena/reference/cli-commands/ resolves to an existing page",
+   "verdict": "true",
+   "evidence": []
+  }
+ ]
+}

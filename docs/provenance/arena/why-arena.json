@@ -1,0 +1,511 @@
+{
+ "page": "docs/src/content/docs/arena/why-arena.md",
+ "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "PromptArena is a testing framework for LLM-driven systems",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/main_integration.go:25"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "Eval primitives are inputs; assertions over those primitives are the output",
+   "verdict": "unverified",
+   "evidence": [
+    "arena/assertions/register.go"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "The framework covers a surface that frameworks built for single-turn evaluation do not reach",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 4,
+   "claim": "Voice support includes duplex audio with self-play personas, runtime tools, and assertions that observe what got spoken and what got blocked",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/duplex_executor_pipeline_integration.go:249",
+    "arena/turnexecutors/pipeline_stages_integration.go:495"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "Multi-turn agents support scripted or self-play opponents over many turns",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:720",
+    "examples/text-negotiation/scenarios/rental-negotiation.scenario.yaml:10",
+    "examples/voice-refund-demo/config.arena.yaml:60"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "Multi-turn agents support conversation-outcome assertions",
+   "verdict": "true",
+   "evidence": [
+    "examples/text-negotiation/scenarios/rental-negotiation.scenario.yaml:28"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "Workflows (state machines) are first-class test subjects",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:124",
+    "examples/voice-ivr/scenarios/balance-check.scenario.yaml:14",
+    "schemas/v1alpha1/arena.json:419"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "Multi-agent A2A supports supervisor plus specialist delegation, asserted per turn",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:175"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "Guardrails are observable as test signals via guardrail_triggered",
+   "verdict": "true",
+   "evidence": [
+    "examples/guardrails-test/scenarios/guardrail-should-trigger.scenario.yaml:17"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "The same code enforces guardrails in production and fires the test signal",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:495"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "PromptArena ships a standard eval-primitive catalog including faithfulness, hallucination, and contextual recall",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 12,
+   "claim": "The standard eval primitives are inputs to the testing framework, not the product surface",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 13,
+   "claim": "Each section of the page links to a runnable demo",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 14,
+   "claim": "A scripted persona (LLM-driven via self-play, or scripted text) drives the user side of a voice test",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:720",
+    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:56",
+    "examples/voice-refund-demo/config.arena.yaml:60"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "TTS is used to make the persona audio indistinguishable from a real call",
+   "verdict": "unverified",
+   "evidence": [
+    "arena/selfplay/audio_generator.go",
+    "examples/voice-refund-demo/config.arena.yaml:36"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "The agent under test can be a real duplex provider such as OpenAI Realtime or Gemini Live",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-refund-demo/config.arena.yaml:22"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "The agent under test can be a mock for CI",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:192",
+    "arena/engine/mock_default_audio.go",
+    "examples/voice-refund-demo/config.arena.yaml:24"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "Per-turn latency budgets are supported",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/eval_orchestrator.go:175"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "Content checks and guardrail observation run on real signals in voice tests",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/duplex_executor_pipeline_integration.go:249",
+    "arena/turnexecutors/pipeline_stages_integration.go:495"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "The voice-customer-support demo uses four personas to drive a refund agent",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-refund-demo/config.arena.yaml:61"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "The voice-customer-support demo asserts the tool-call pattern",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-refund-demo/scenarios/aggressive-refund.scenario.yaml"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "The voice-ivr demo uses a workflow state machine to route the call and asserts transitions",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-ivr/config.arena.yaml:41",
+    "examples/voice-ivr/scenarios/balance-check.scenario.yaml:21",
+    "examples/voice-ivr/scenarios/balance-check.scenario.yaml:51"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "The voice-tool-calls demo has the agent call tools mid-conversation under live audio",
+   "verdict": "true",
+   "evidence": [
+    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:56"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "The latency_budget assertion takes a max_ms parameter and is applied per turn",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-latency-budget/scenarios/turn-budget.scenario.yaml:1"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "The voice-guardrails demo observes PII redaction via guardrail_triggered",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-guardrails/scenarios/pii-redaction.scenario.yaml:18"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "The voice-bake-off demo runs one scenario across multiple duplex providers and produces a side-by-side report",
+   "verdict": "false",
+   "evidence": [
+    "examples/voice-bake-off/config.arena.yaml",
+    "examples/voice-bake-off/providers/mock-fast.provider.yaml"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "Bracket-tag persona markup is lowered into each provider's native dialect (voice-characterization demo)",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-refund-demo/personas/aggressive-entitled.persona.yaml"
+   ]
+  },
+  {
+   "id": 28,
+   "claim": "The voice-customer-support demo is a multi-turn voice conversation with adversarial personas",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-refund-demo/config.arena.yaml:61",
+    "examples/voice-refund-demo/personas/aggressive-entitled.persona.yaml",
+    "examples/voice-refund-demo/personas/impersonator.persona.yaml"
+   ]
+  },
+  {
+   "id": 29,
+   "claim": "The text-negotiation demo is four-turn rental haggling with conversation-outcome assertions",
+   "verdict": "true",
+   "evidence": [
+    "examples/text-negotiation/scenarios/rental-negotiation.scenario.yaml:10",
+    "examples/text-negotiation/scenarios/rental-negotiation.scenario.yaml:28"
+   ]
+  },
+  {
+   "id": 30,
+   "claim": "PromptArena ships a workflow primitive in the pack, and scenarios assert state transitions and tool-call patterns per state",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:124",
+    "examples/voice-ivr/scenarios/handoff-to-agent.scenario.yaml:21",
+    "schemas/v1alpha1/arena.json:419"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "The voice-ivr demo is a three-state IVR",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-ivr/config.arena.yaml:41"
+   ]
+  },
+  {
+   "id": 32,
+   "claim": "An Eval is a stateless primitive scoring function (content) -> result that lives in runtime/evals/handlers/",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 33,
+   "claim": "A Guardrail is an eval wired in the pack's validators: block",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:703",
+    "schemas/v1alpha1/promptconfig.json:714"
+   ]
+  },
+  {
+   "id": 34,
+   "claim": "A Guardrail runs in production and in tests and mutates content",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 35,
+   "claim": "An Assertion is an eval or query applied as a test predicate that observes guardrail firings via guardrail_triggered and never mutates",
+   "verdict": "true",
+   "evidence": [
+    "examples/guardrails-test/scenarios/guardrail-should-trigger.scenario.yaml:17"
+   ]
+  },
+  {
+   "id": 36,
+   "claim": "One implementation of a primitive serves all three roles (Eval, Guardrail, Assertion)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 37,
+   "claim": "The guardrails-as-signals demo wires banned_words as a guardrail and asserts it via guardrail_triggered",
+   "verdict": "true",
+   "evidence": [
+    "examples/guardrails-test/prompts/content-filter.yaml:18",
+    "examples/guardrails-test/scenarios/guardrail-should-trigger.scenario.yaml:17"
+   ]
+  },
+  {
+   "id": 38,
+   "claim": "The pii-guardrail-red-team demo uses scripted probes that check pii_leakage fires",
+   "verdict": "true",
+   "evidence": [
+    "examples/pii-guardrail-red-team/prompts/hardened-support-agent.yaml",
+    "examples/pii-guardrail-red-team/scenarios/pii-extraction-attempt.scenario.yaml:18"
+   ]
+  },
+  {
+   "id": 39,
+   "claim": "The voice-guardrails demo is a focused PII redaction demo emphasising the runtime and test bridge",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-guardrails/scenarios/pii-redaction.scenario.yaml:18"
+   ]
+  },
+  {
+   "id": 40,
+   "claim": "PromptArena runs the real runtime (real tools, real workflow state machine, real guardrails) with the LLM mocked",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:192",
+    "examples/multi-agent-demo/config.arena.yaml:17",
+    "examples/voice-ivr/tools/check-balance.tool.yaml:24",
+    "examples/voice-refund-demo/tools/lookup-order.tool.yaml:30"
+   ]
+  },
+  {
+   "id": 41,
+   "claim": "Every demo in the catalog uses the mock-LLM pattern",
+   "verdict": "false",
+   "evidence": [
+    "examples/voice-refund-demo/config.arena.yaml:21"
+   ]
+  },
+  {
+   "id": 42,
+   "claim": "The CI snippets in the demos exit deterministically",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 43,
+   "claim": "The a2a-multi-agent demo has a supervisor delegate research and translation to two specialised A2A agents",
+   "verdict": "true",
+   "evidence": [
+    "examples/multi-agent-demo/config.arena.yaml:17"
+   ]
+  },
+  {
+   "id": 44,
+   "claim": "PromptArena fans out scenarios across registered providers automatically",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/execution.go:172",
+    "arena/engine/execution.go:190",
+    "examples/voice-bake-off/config.arena.yaml"
+   ]
+  },
+  {
+   "id": 45,
+   "claim": "CI fails if any provider regresses on a shared assertion bar",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:685",
+    "arena/cmd/promptarena/run_interactive.go:134",
+    "arena/cmd/promptarena/run_interactive.go:143"
+   ]
+  },
+  {
+   "id": 46,
+   "claim": "The voice-bake-off demo runs one scenario across multiple voice providers with a side-by-side report",
+   "verdict": "false",
+   "evidence": [
+    "examples/voice-bake-off/config.arena.yaml",
+    "examples/voice-bake-off/providers/mock-fast.provider.yaml"
+   ]
+  },
+  {
+   "id": 47,
+   "claim": "The model-migration demo runs the same scenarios across two model versions so CI catches behavioural drift",
+   "verdict": "true",
+   "evidence": [
+    "examples/model-migration/config.arena.yaml"
+   ]
+  },
+  {
+   "id": 48,
+   "claim": "faithfulness ships as a pure eval handler",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 49,
+   "claim": "hallucination ships as a pure eval handler",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 50,
+   "claim": "contextual_precision ships as a pure eval handler",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 51,
+   "claim": "contextual_recall ships as a pure eval handler",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 52,
+   "claim": "contextual_relevancy ships as a pure eval handler",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 53,
+   "claim": "answer_relevancy ships as a pure eval handler",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 54,
+   "claim": "Each RAG primitive is exercisable as a scenario assertion by wrapping it with type: assertion and a threshold",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 55,
+   "claim": "The rag-agent demo runs the full named primitive suite as scenario assertions, keyless via a mock LLM judge",
+   "verdict": "true",
+   "evidence": [
+    "examples/rag-agent/mock-responses-judge.yaml",
+    "examples/rag-agent/providers/mock-judge.yaml"
+   ]
+  },
+  {
+   "id": 56,
+   "claim": "The promptarena binary exists",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/main_integration.go:25"
+   ]
+  },
+  {
+   "id": 57,
+   "claim": "promptarena run --ci exits non-zero on any assertion failure",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:169",
+    "arena/cmd/promptarena/run_interactive.go:134",
+    "arena/cmd/promptarena/run_interactive.go:143"
+   ]
+  },
+  {
+   "id": 58,
+   "claim": "The --ci flag exists on the run subcommand",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:169"
+   ]
+  },
+  {
+   "id": 59,
+   "claim": "The fork-safe split pattern keeps secrets out of fork PRs while gating internal merges on real-provider runs",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 60,
+   "claim": "Report artifacts give reviewers per-scenario and per-provider visibility into failures",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:192"
+   ]
+  },
+  {
+   "id": 61,
+   "claim": "The run-in-ci page exists at /arena/how-to/interfaces/run-in-ci/",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 62,
+   "claim": "The run-in-ci page documents threshold strategies per gate type",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 63,
+   "claim": "The run-in-ci page documents branch-protection wiring",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 64,
+   "claim": "The Integrate with CI/CD section covers GitHub Actions, GitLab CI, and Jenkins",
+   "verdict": "true",
+   "evidence": []
+  }
+ ]
+}

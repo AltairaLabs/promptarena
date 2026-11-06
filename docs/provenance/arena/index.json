@@ -1,0 +1,737 @@
+{
+ "page": "docs/src/content/docs/arena/index.md",
+ "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "Frontmatter title is 'PromptArena'",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 2,
+   "claim": "Frontmatter description key is present but empty (>- block with no content)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 3,
+   "claim": "Frontmatter sidebar.order is 0",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 4,
+   "claim": "PromptArena is a comprehensive testing framework for validating LLM prompts across multiple providers",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:91"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "Image /screenshots/tui-hub.png exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 6,
+   "claim": "The PromptArena TUI hub shows View, Run, Chat, Inspect and Deploy menu entries with the loaded config name above them",
+   "verdict": "true",
+   "evidence": [
+    "arena/tui/app/chatpage.go:164",
+    "arena/tui/app/deploypage.go:243",
+    "arena/tui/app/home.go:24",
+    "arena/tui/app/inspectpage.go:128",
+    "arena/tui/app/runpage.go:100",
+    "arena/tui/app/viewpage.go:171"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "PromptArena tests prompts across OpenAI, Anthropic and Google providers",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:91",
+    "arena/templates/builtin/quick-start/template.yaml:21"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "PromptArena compares provider performance side-by-side with detailed metrics",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/interfaces.go:42",
+    "arena/results/utils.go:200"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "PromptArena validates conversation flows with multi-turn scenarios",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:694"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "PromptArena integrates with CI/CD to catch prompt regressions",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/main_integration.go"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "PromptArena generates reports in HTML, JSON and markdown output formats",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 12,
+   "claim": "Command 'brew install altairalabs/tap/promptarena' installs PromptArena",
+   "verdict": "true",
+   "evidence": [
+    ".goreleaser.yml:201",
+    ".goreleaser.yml:207"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "Building from source with Go needs a C compiler and audio development headers",
+   "verdict": "unverified",
+   "evidence": [
+    "arena/audio/local_sink_integration_cgo.go:1",
+    "arena/audio/local_sink_nocgo_integration.go:6"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "Command 'go install github.com/AltairaLabs/promptarena/v2/arena/cmd/promptarena@latest' is a valid install path",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 15,
+   "claim": "Command 'promptarena init <name> --quick' creates a new test project",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:130",
+    "arena/cmd/promptarena/init.go:62"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "The init command accepts a --quick flag",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:65"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "Quick init provider choice 'mock' exists (no API calls)",
+   "verdict": "true",
+   "evidence": [
+    "arena/templates/builtin/quick-start/template.yaml:21"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "Quick init provider choice 'openai' exists",
+   "verdict": "true",
+   "evidence": [
+    "arena/templates/builtin/quick-start/template.yaml:21"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "Quick init provider choice 'anthropic' exists",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:162",
+    "arena/templates/builtin/quick-start/template.yaml:21"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "Quick init provider choice 'google' exists",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:63",
+    "arena/templates/builtin/quick-start/template.yaml:21"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "Built-in init template 'basic-chatbot' exists",
+   "verdict": "false",
+   "evidence": [
+    "arena/templates/loader.go:14"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "Built-in init template 'customer-support' exists",
+   "verdict": "true",
+   "evidence": [
+    "arena/templates/builtin/customer-support/template.yaml"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "Built-in init template 'code-assistant' exists",
+   "verdict": "true",
+   "evidence": [
+    "arena/templates/builtin/code-assistant/template.yaml"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "Built-in init template 'content-generation' exists",
+   "verdict": "true",
+   "evidence": [
+    "arena/templates/builtin/content-generation/template.yaml"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "Built-in init template 'multimodal' exists",
+   "verdict": "true",
+   "evidence": [
+    "arena/templates/builtin/multimodal/template.yaml"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "Built-in init template 'mcp-integration' exists",
+   "verdict": "true",
+   "evidence": [
+    "arena/templates/builtin/mcp-integration/template.yaml"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "Command 'promptarena run' runs the test project in the current directory",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/main_integration.go"
+   ]
+  },
+  {
+   "id": 28,
+   "claim": "'promptarena init' creates a complete Arena configuration, provider setup, sample test scenario, working prompt configuration and a README with next steps",
+   "verdict": "true",
+   "evidence": [
+    "arena/templates/builtin/quick-start/template.yaml:35",
+    "arena/templates/builtin/quick-start/template.yaml:54"
+   ]
+  },
+  {
+   "id": 29,
+   "claim": "Command 'promptarena init <project>' without --quick runs an interactive wizard",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:140",
+    "arena/cmd/promptarena/init_interactive.go:11"
+   ]
+  },
+  {
+   "id": 30,
+   "claim": "Interactive init prompts for project name and description, provider selection, system prompt customization and test scenario setup",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/init_interactive.go:21",
+    "arena/templates/builtin/quick-start/template.yaml:15"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "Link /arena/tutorials/01-first-test/ resolves to a page",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 32,
+   "claim": "Link /arena/tutorials/01-first-test/ resolves (tutorial 1 'Your First Test')",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 33,
+   "claim": "Link /arena/tutorials/02-multi-provider/ resolves",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 34,
+   "claim": "Link /arena/tutorials/03-multi-turn/ resolves",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 35,
+   "claim": "Link /arena/tutorials/04-mcp-tools/ resolves",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 36,
+   "claim": "Link /arena/tutorials/05-ci-integration/ resolves",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 37,
+   "claim": "Link /arena/how-to/setup/installation/ resolves",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 38,
+   "claim": "Link /arena/how-to/agents/build-with-an-ai-agent/ resolves",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 39,
+   "claim": "Link /arena/how-to/scenarios/write-scenarios/ resolves",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 40,
+   "claim": "Link /arena/how-to/providers/configure-providers/ resolves",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 41,
+   "claim": "Link /arena/how-to/providers/use-mock-providers/ resolves",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 42,
+   "claim": "Link /arena/how-to/scenarios/validate-outputs/ resolves",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 43,
+   "claim": "Link /arena/reference/output-formats/ resolves (listed under 'Customize Reports')",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 44,
+   "claim": "Link /arena/how-to/interfaces/run-in-ci/ resolves and the CI guide covers GitHub Actions and GitLab CI",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 45,
+   "claim": "Link /arena/how-to/scenarios/session-recording/ resolves",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 46,
+   "claim": "Link /arena/explanation/testing-philosophy/ resolves",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 47,
+   "claim": "Link /arena/explanation/scenario-design/ resolves",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 48,
+   "claim": "Link /arena/explanation/provider-comparison/ resolves",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 49,
+   "claim": "Link /arena/explanation/validation-strategies/ resolves",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 50,
+   "claim": "Link /arena/explanation/session-recording/ resolves",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 51,
+   "claim": "Link /arena/reference/cli-commands/ resolves",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 52,
+   "claim": "Link /arena/reference/config-schema/ resolves",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 53,
+   "claim": "Link /arena/reference/scenario-format/ resolves",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 54,
+   "claim": "Link /arena/reference/assertions/ resolves",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 55,
+   "claim": "Link /arena/reference/validators/ resolves",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 56,
+   "claim": "Link /arena/reference/output-formats/ resolves",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 57,
+   "claim": "Deploy is a PromptArena subcommand that ships prompt packs to cloud providers through adapter plugins",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_adapter_interactive.go",
+    "arena/cmd/promptarena/deploy_interactive.go"
+   ]
+  },
+  {
+   "id": 58,
+   "claim": "Link /arena/explanation/deploy/overview/ resolves",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 59,
+   "claim": "Link /arena/tutorials/deploy/first-deployment/ resolves",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 60,
+   "claim": "Link /arena/tutorials/deploy/multi-environment/ resolves",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 61,
+   "claim": "Link /arena/how-to/deploy/install-adapters/ resolves",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 62,
+   "claim": "Deploy supports install, list and manage operations for adapter plugins",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_adapter_interactive.go"
+   ]
+  },
+  {
+   "id": 63,
+   "claim": "Link /arena/how-to/deploy/plan-and-apply/ resolves",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 64,
+   "claim": "Deploy has plan, apply, status and destroy subcommands",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_apply_interactive.go",
+    "arena/cmd/promptarena/deploy_destroy_interactive.go",
+    "arena/cmd/promptarena/deploy_plan_interactive.go",
+    "arena/cmd/promptarena/deploy_status_interactive.go"
+   ]
+  },
+  {
+   "id": 65,
+   "claim": "Link /arena/reference/deploy/cli-commands/ resolves",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 66,
+   "claim": "Arena manifest apiVersion is promptkit.altairalabs.ai/v1alpha1",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 67,
+   "claim": "Arena manifest kind is 'Arena'",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 68,
+   "claim": "Arena manifest metadata.name field exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 69,
+   "claim": "Arena spec.providers is a list of entries with a path field",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:388",
+    "arena/arenaconfig/types.go:91"
+   ]
+  },
+  {
+   "id": 70,
+   "claim": "Arena spec.scenarios is a list of entries with a path field",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:415"
+   ]
+  },
+  {
+   "id": 71,
+   "claim": "Arena scenario entry accepts a providers list naming providers to run the scenario against",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:415",
+    "arena/arenaconfig/types.go:696"
+   ]
+  },
+  {
+   "id": 72,
+   "claim": "Provider names openai-gpt4, claude-sonnet and gemini-pro are defined as provider IDs in the referenced provider files",
+   "verdict": "unverified",
+   "evidence": [
+    "arena/arenaconfig/types.go:397"
+   ]
+  },
+  {
+   "id": 73,
+   "claim": "Scenario manifest apiVersion is promptkit.altairalabs.ai/v1alpha1",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 74,
+   "claim": "Scenario manifest kind is 'Scenario'",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 75,
+   "claim": "Scenario metadata.name field exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 76,
+   "claim": "Scenario spec.turns is a list of turn objects",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 77,
+   "claim": "Turn role accepts 'user'",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 78,
+   "claim": "Turn content field exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 79,
+   "claim": "Turn has an assertions list",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:19"
+   ]
+  },
+  {
+   "id": 80,
+   "claim": "Assertion type 'content_includes' exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 81,
+   "claim": "content_includes assertion takes a params.patterns list",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:24"
+   ]
+  },
+  {
+   "id": 82,
+   "claim": "content_includes assertion takes a params.message field",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:25"
+   ]
+  },
+  {
+   "id": 83,
+   "claim": "Assertion type 'content_matches' exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 84,
+   "claim": "content_matches assertion takes a params.pattern field",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:24"
+   ]
+  },
+  {
+   "id": 85,
+   "claim": "content_matches assertion takes a params.message field",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:25"
+   ]
+  },
+  {
+   "id": 86,
+   "claim": "PromptArena automatically tracks response time (latency)",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/interfaces.go:47",
+    "arena/results/utils.go:200"
+   ]
+  },
+  {
+   "id": 87,
+   "claim": "PromptArena automatically tracks token usage split into input and output tokens",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/utils.go:203"
+   ]
+  },
+  {
+   "id": 88,
+   "claim": "PromptArena automatically estimates cost",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/interfaces.go:48",
+    "arena/results/utils.go:202"
+   ]
+  },
+  {
+   "id": 89,
+   "claim": "PromptArena automatically tracks success and failure rates",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/interfaces.go:42"
+   ]
+  },
+  {
+   "id": 90,
+   "claim": "Command 'promptarena run --ci' runs tests in CI mode",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/main_integration.go"
+   ]
+  },
+  {
+   "id": 91,
+   "claim": "The run command accepts a --ci flag",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/main_integration.go"
+   ]
+  },
+  {
+   "id": 92,
+   "claim": "Link /arena/examples/customer-support/ resolves",
+   "verdict": "true",
+   "evidence": [
+    "scripts/prepare-examples-docs.sh:6"
+   ]
+  },
+  {
+   "id": 93,
+   "claim": "Link /arena/examples/mcp-chatbot/ resolves",
+   "verdict": "true",
+   "evidence": [
+    "scripts/prepare-examples-docs.sh:6"
+   ]
+  },
+  {
+   "id": 94,
+   "claim": "Link /arena/examples/guardrails-test/ resolves",
+   "verdict": "true",
+   "evidence": [
+    "scripts/prepare-examples-docs.sh:6"
+   ]
+  },
+  {
+   "id": 95,
+   "claim": "Link /arena/examples/customer-support-integrated/ resolves",
+   "verdict": "true",
+   "evidence": [
+    "scripts/prepare-examples-docs.sh:6"
+   ]
+  },
+  {
+   "id": 96,
+   "claim": "Link /arena/tutorials/01-first-test/ resolves (Getting Help)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 97,
+   "claim": "GitHub Discussions link https://github.com/AltairaLabs/promptarena/v2/issues points to a Discussions board",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 98,
+   "claim": "Issues link https://github.com/AltairaLabs/promptarena/v2/issues is a valid issues URL",
+   "verdict": "false",
+   "evidence": [
+    ".goreleaser.yml:210"
+   ]
+  },
+  {
+   "id": 99,
+   "claim": "Link /arena/examples/ resolves",
+   "verdict": "true",
+   "evidence": [
+    "scripts/prepare-examples-docs.sh:165"
+   ]
+  },
+  {
+   "id": 100,
+   "claim": "Link /packc/ resolves and PackC compiles tested prompts for production",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 101,
+   "claim": "SDK link https://promptkit.altairalabs.ai/sdk/ is a valid external page for using tested prompts in applications",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 102,
+   "claim": "Link / resolves to the site home page",
+   "verdict": "true",
+   "evidence": []
+  }
+ ]
+}

@@ -1,390 +1,99 @@
 ---
 title: Programmatic vs CLI Usage
-description: Understanding when to use Arena as a library versus the CLI
+description: How the promptarena CLI and the Go library share one engine, and when each fits.
+verified:
+  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  sources:
+    - arena/arenaconfig/types.go
+    - arena/cmd/promptarena/run.go
+    - arena/cmd/promptarena/run_interactive.go
+    - arena/engine/engine.go
 ---
 
-Arena can be used in two ways: as a command-line tool or as a Go library. This guide explains the differences, trade-offs, and when to choose each approach.
+Arena runs as a command-line tool or as a Go library. Both drive the same engine, so the choice depends on who writes the tests and how often they change, not on what Arena can do.
 
-## Overview
+## How the two paths relate
 
-### CLI Approach
+The CLI is a thin wrapper around the engine. `promptarena run` loads a YAML config, builds an `Engine` and calls `ExecuteRuns`. A Go program does the same calls itself.
 
-```bash
-promptarena run -c config.arena.yaml
+```mermaid
+flowchart LR
+    YAML["config.arena.yaml"] --> CLI["promptarena run"]
+    CLI --> Engine["engine.Engine"]
+    Code["Your Go program"] --> Cfg["arenaconfig.Config"]
+    Cfg --> Engine
+    Engine --> Plan["GenerateRunPlan"]
+    Plan --> Exec["ExecuteRuns"]
+    Exec --> Store["State store: run results"]
+    Store --> Out["Reports: json, junit, markdown, csv, objectives"]
+    Store --> Custom["Your own result handling"]
 ```
 
-**What it is:** Using Arena as a standalone command-line tool with YAML configuration files.
-
-### Programmatic Approach
+From the CLI you write `promptarena run -c config.arena.yaml`. From Go, `engine.NewEngineFromConfigFile("config.arena.yaml")` loads the same file, and `engine.NewEngine` takes registries you assemble yourself. Either way `ExecuteRuns(ctx, plan, concurrency)` returns the run IDs, and you read each result from the engine's state store.
 
 ```go
-eng, _ := engine.NewEngine(cfg, providerReg, promptReg, mcpReg, executor)
-runIDs, _ := eng.ExecuteRuns(ctx, plan, 4)
-```
-
-**What it is:** Importing Arena as a Go library and controlling it programmatically.
-
-## Decision Matrix
-
-| Use Case | CLI | Programmatic | Why |
-|----------|-----|--------------|-----|
-| Quick manual testing | Best | Overkill | CLI is faster for ad-hoc testing |
-| CI/CD pipelines | Good | Good | Both work well, CLI is simpler |
-| Integration with apps | Limited | Best | Need programmatic control |
-| Dynamic test generation | Hard | Best | Can't easily generate YAML |
-| Custom result processing | Via scripts | Best | Direct access to results |
-| Team collaboration | Best | Harder | YAML files are git-friendly |
-| Complex workflows | Limited | Best | Need conditional logic |
-| Learning Arena | Best | Harder | CLI has gentler learning curve |
-
-## CLI: When to Use
-
-### Good For:
-
-#### 1. Manual Testing and Exploration
-
-```bash
-# Quick iteration on prompts
-promptarena run --scenario greeting-test
-promptarena run --provider claude
-promptarena run --verbose
-```
-
-**Why:** Immediate feedback, no compilation needed.
-
-#### 2. Standard CI/CD Integration
-
-```yaml
-# .github/workflows/test.yml
-- name: Run Arena tests
-  run: promptarena run --ci --format junit
-```
-
-**Why:** Simple, declarative, version-controlled configuration.
-
-#### 3. Team Collaboration
-
-```yaml
-# config.arena.yaml (committed to git)
-scenarios:
-  - file: scenarios/customer-support.yaml
-  - file: scenarios/edge-cases.yaml
-```
-
-**Why:** Everyone uses the same config, changes are tracked, reviews are easy.
-
-#### 4. Interactive TUI
-
-```bash
-# Watch tests execute in real-time
-promptarena run
-```
-
-**Why:** Beautiful terminal UI with progress, logs, and results.
-
-### Not Good For:
-
-#### Dynamic Test Generation
-
-```bash
-# Can't do this with CLI:
-# Generate 1000 test scenarios from database
-# Run tests based on runtime conditions
-```
-
-#### Custom Result Processing
-
-```bash
-# Limited to built-in outputs:
-# - JSON, HTML, JUnit, Markdown
-# Can't easily pipe to custom analytics
-```
-
-#### Application Integration
-
-```bash
-# Can't embed in your app:
-# Have to shell out and parse output
-system("promptarena run ...")
-```
-
-## Programmatic: When to Use
-
-### Good For:
-
-#### 1. Integration with Applications
-
-```go
-// Embed testing in your app
-func validateUserPrompt(prompt string) error {
-    cfg := buildTestConfig(prompt)
-    eng, _ := setupEngine(cfg)
-    results := runTests(eng)
-    return validateResults(results)
+eng, err := engine.NewEngineFromConfigFile("config.arena.yaml")
+if err != nil {
+	return err
 }
-```
+defer eng.Close()
 
-**Why:** Direct integration, no external processes.
-
-#### 2. Dynamic Test Generation
-
-```go
-// Generate scenarios from data
-scenarios := make(map[string]*config.Scenario)
-for _, conversation := range loadFromDB() {
-    scenarios[conversation.ID] = buildScenario(conversation)
+plan, err := eng.GenerateRunPlan(nil, nil, nil, nil)
+if err != nil {
+	return err
 }
-cfg.LoadedScenarios = scenarios
+runIDs, err := eng.ExecuteRuns(ctx, plan, 4)
 ```
 
-**Why:** Can generate tests programmatically.
+The [Use Arena as a Go Library](/arena/how-to/setup/use-as-go-library/) guide covers building a config in code, reading results and the full engine setup.
 
-#### 3. Custom Workflows
+## What the CLI gives you
 
-```go
-// Complex conditional logic
-for attempt := 0; attempt < maxRetries; attempt++ {
-    results := runTests(eng)
-    if allPassed(results) {
-        break
-    }
-    adjustConfig(cfg, results)
-}
-```
+The CLI fits work where the tests are stable files that a team reviews together.
 
-**Why:** Full control over execution flow.
+- Fast iteration: Edit the YAML and run again, with no compile step. `promptarena run --scenario greeting-test` or `--provider <id>` narrows a run, and `--verbose` adds logging.
+- Team collaboration: Scenarios live in config files committed to git, so changes show up in review and everyone runs the same suite.
+- CI: `promptarena run --ci --format junit` produces a report your CI system reads. See [Run in CI](/arena/how-to/interfaces/run-in-ci/).
+- An interactive TUI: A plain `promptarena run` in a terminal shows progress, logs and results as they arrive.
+- Debugging commands: `promptarena debug --config arena.yaml` and `promptarena config-inspect` show how a config resolves.
 
-#### 4. Custom Result Processing
+The built-in outputs are json, junit, markdown, csv and objectives. If you need results in another system, you either parse those files or shell out to the binary and parse its output.
 
-```go
-// Send metrics to your system
-for _, result := range results {
-    metrics := extractMetrics(result)
-    sendToDatadog(metrics)
-    updateDashboard(metrics)
-}
-```
+## What the library gives you
 
-**Why:** Direct access to result objects.
-
-#### 5. Building Testing Tools
+The library fits work where the tests are produced or consumed by code.
 
-```go
-// Custom testing frameworks
-type TestRunner struct {
-    engine *engine.Engine
-}
+- Dynamic test generation: Build `arenaconfig.Scenario` values from a database or another source and assign them to `cfg.LoadedScenarios`. YAML is awkward to generate at that scale.
+- Application integration: Run Arena inside your service without launching a process.
+- Custom result handling: Read each result from the state store and send metrics to your own systems.
+- Conditional workflows: Retry, adjust the config between runs or branch on earlier results, all in ordinary Go.
+- Testing tools: Build specialised runners on top of the engine.
 
-func (r *TestRunner) RunWithRetry(...)
-func (r *TestRunner) CompareProviders(...)
-func (r *TestRunner) GenerateReport(...)
-```
+The cost is a compile step on every change and a need to know Go and the engine API, so onboarding is slower than with the CLI.
 
-**Why:** Build specialized tools on top of Arena.
+## Performance and debugging
 
-### Not Good For:
+A CLI run starts one process per execution, and memory stays isolated to that run. A library call runs in your process and shares its memory, which suits high-frequency testing. Configuration loading and provider setup cost the same on both paths.
 
-#### Quick Iteration
+For quick troubleshooting the CLI is easier: `--verbose`, `debug` and `config-inspect` need no code. For deep debugging the library lets you use standard Go tooling and log the config and results directly.
 
-```go
-// Every change requires:
-// 1. Edit code
-// 2. Recompile
-// 3. Run
-// vs CLI: just edit YAML and run
-```
+## Combining both
 
-#### Team Onboarding
+The two paths work side by side.
 
-```go
-// Steeper learning curve:
-// - Need to know Go
-// - Understand API
-// - Set up dev environment
-// vs CLI: just install and run
-```
+- CLI for the stable suite, code for the rest: Run regression tests with `promptarena run -c regression-tests.yaml --ci` and keep dynamic or experimental tests in a Go program.
+- Generate a config, run it with the CLI: Write a config file from your data, then run `promptarena run generated.arena.yaml`. You keep CLI reporting and avoid linking the library.
+- CLI during development, a custom runner in CI: Iterate with `promptarena run --verbose`, then run a Go binary with extra logic in your pipeline.
 
-## Hybrid Approach
+You can also move gradually. Load your existing YAML with `NewEngineFromConfigFile`, add result handling in Go, and build the config in code only when you need to. The [Go library how-to](/arena/how-to/setup/use-as-go-library/) walks through each of these.
 
-You can combine both approaches:
+## Choosing
 
-### Pattern: CLI for Standard Tests, Code for Custom
+Start with the CLI if you are new to Arena, your tests are stable and predefined, or your team does not write Go. Move to the library when you need to integrate with an application, generate tests at runtime, process results in custom ways or run conditional workflows. Use both when some tests are standard and others are custom.
 
-```bash
-# Standard regression tests (CLI)
-promptarena run -c regression-tests.yaml --ci
-
-# Custom dynamic tests (programmatic)
-go run custom-tests/main.go
-```
-
-### Pattern: Generate Config, Run with CLI
-
-```go
-// Generate config file
-cfg := buildConfigFromData()
-saveToYAML(cfg, "generated.arena.yaml")
-
-// Run with CLI
-exec.Command("promptarena", "run", "generated.arena.yaml").Run()
-```
-
-### Pattern: CLI for Development, Programmatic for Production
-
-```bash
-# During development
-promptarena run --verbose
-
-# In production CI/CD
-# Use Go binary with custom logic
-./custom-test-runner
-```
-
-## Migration Path
-
-### From CLI to Programmatic
-
-If you outgrow the CLI:
-
-1. **Keep existing YAML configs**
-   ```go
-   // Load existing configs
-   eng, _ := engine.NewEngineFromConfigFile("config.arena.yaml")
-   ```
-
-2. **Gradually add programmatic logic**
-   ```go
-   // Start with file loading
-   eng, _ := engine.NewEngineFromConfigFile("config.arena.yaml")
-   
-   // Add custom processing
-   results := executeAndProcess(eng)
-   ```
-
-3. **Eventually go fully programmatic**
-   ```go
-   // Build config in code
-   cfg := buildConfig()
-   eng, _ := setupEngine(cfg)
-   ```
-
-## Performance Considerations
-
-### CLI
-
-- **Startup time:** ~100-500ms (Go binary startup)
-- **Overhead:** Minimal (one process)
-- **Memory:** Isolated per execution
-
-### Programmatic
-
-- **Startup time:** 0ms (in same process)
-- **Overhead:** None (native function calls)
-- **Memory:** Shared with application
-
-**Winner:** Programmatic for high-frequency testing.
-
-## Debugging
-
-### CLI
-
-```bash
-# Easy debugging
-promptarena run --verbose
-promptarena debug --config arena.yaml
-promptarena config-inspect
-```
-
-### Programmatic
-
-```go
-// Standard Go debugging
-log.Printf("Config: %+v", cfg)
-err := eng.ExecuteRuns(ctx, plan, 4)
-log.Printf("Results: %+v", results)
-```
-
-**Winner:** CLI for quick troubleshooting, programmatic for deep debugging.
-
-## Recommendations
-
-### Start with CLI if:
-
-- You're new to Arena
-- You have standard testing needs
-- Your tests are stable and predefined
-- You want quick results
-- Your team isn't familiar with Go
-
-### Use Programmatic if:
-
-- You need to integrate with applications
-- You need dynamic test generation
-- You need custom result processing
-- You're building testing tools
-- You have complex conditional workflows
-- You need high-frequency testing
-
-### Use Both if:
-
-- You want flexibility
-- You have different use cases
-- Some tests are standard, some are custom
-- You want CLI for development, code for production
-
-## Real-World Examples
-
-### E-commerce: CLI Approach
-
-```bash
-# Test product recommendations daily
-promptarena run -c product-tests.yaml --ci
-```
-
-**Why:** Standard tests, CI/CD integration, team collaboration.
-
-### SaaS Platform: Programmatic Approach
-
-```go
-// Test each customer's custom prompt
-for _, customer := range customers {
-    cfg := buildConfigForCustomer(customer)
-    results := runTests(cfg)
-    notifyCustomer(customer, results)
-}
-```
-
-**Why:** Dynamic per-customer testing, custom notifications.
-
-### AI Research: Hybrid Approach
-
-```bash
-# Standard benchmarks (CLI)
-promptarena run -c benchmarks/suite.arena.yaml
-
-# Experimental tests (programmatic)
-go run experiments/ablation-study.go
-```
-
-**Why:** Standard tests for baselines, code for experiments.
-
-## Summary
-
-| Aspect | CLI | Programmatic |
-|--------|-----|--------------|
-| **Ease of use** | 5/5 | 3/5 |
-| **Flexibility** | 3/5 | 5/5 |
-| **Team collaboration** | 5/5 | 3/5 |
-| **Integration** | 2/5 | 5/5 |
-| **Custom logic** | 2/5 | 5/5 |
-| **Learning curve** | 5/5 | 3/5 |
-| **Performance** | 4/5 | 5/5 |
-
-**Golden Rule:** Start with CLI. Switch to programmatic when you hit limitations.
-
-## See Also
+## Related pages
 
 - [Tutorial: Programmatic Usage](/arena/tutorials/07-programmatic-usage/)
-- [How-To: Use as Go Library](/arena/how-to/setup/use-as-go-library/)
+- [How-to: Use as Go Library](/arena/how-to/setup/use-as-go-library/)
 - [Reference: CLI Commands](/arena/reference/cli-commands/)
 - [Reference: API Reference](/arena/reference/api-reference/)

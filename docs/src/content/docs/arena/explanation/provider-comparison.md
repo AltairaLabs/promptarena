@@ -1,783 +1,142 @@
 ---
 title: Provider Comparison Guide
+description: How providers differ in style, capability, context and cost, and how Arena runs one scenario against several of them.
+verified:
+  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  sources:
+    - arena/arenaconfig/loader.go
+    - arena/arenaconfig/types.go
+    - arena/assertions/types.go
+    - arena/cmd/promptarena/prompt-debug_interactive.go
+    - arena/cmd/promptarena/run.go
+    - arena/engine/eval_orchestrator.go
+    - arena/engine/execution.go
+    - arena/engine/trials.go
+    - arena/engine/types.go
+    - schemas/v1alpha1/arena.json
+    - schemas/v1alpha1/provider.json
+    - schemas/v1alpha1/scenario.json
 ---
-Understanding the differences between LLM providers and how to test effectively across them.
+Providers differ in quality, tone, capabilities, speed, cost and reliability. Arena runs the same scenario against each provider you list and scores every reply with the same assertions, so you can see those differences in your own workload instead of in a vendor's benchmark. This page explains how that comparison works and what to expect from each provider type.
 
-## Why Compare Providers?
+## How a cross-provider run works
 
-Different LLM providers have unique characteristics that affect your application:
+A scenario names the providers that run it in `spec.providers`. Each id must match a provider defined in the Arena config, and `promptarena run --provider <id>` narrows the set further. The same turns and assertions apply to every provider, and each provider gets its own result.
 
-- **Response quality**: Accuracy and relevance vary
-- **Response style**: Formal vs. conversational tone
-- **Capabilities**: Function calling, vision, multimodal support
-- **Performance**: Speed and latency
-- **Cost**: Pricing per token varies significantly
-- **Reliability**: Uptime and rate limits differ
+The diagram shows one scenario fanning out to the providers in an Arena config, then converging on the assertions.
 
-Testing across providers helps you:
-- Choose the best fit for your use case
-- Build fallback strategies
-- Optimize cost without sacrificing quality
-- Stay provider-agnostic
-
-## Major Provider Characteristics
-
-### OpenAI (GPT Series)
-
-**Strengths:**
-- Excellent general reasoning
-- Strong function calling support
-- Consistent performance
-- Good documentation
-- Fast iteration on new features
-
-**Models:**
-- `gpt-4o`: Balanced performance, multimodal
-- `gpt-4o-mini`: Cost-effective, fast
-- `gpt-4-turbo`: Extended context, reasoning
-
-**Best for:**
-- General purpose applications
-- Function/tool calling
-- Structured output (JSON mode)
-- Rapid prototyping
-
-**Response characteristics:**
-```yaml
-# Typical OpenAI response style
-- Length: Moderate (50-150 words for simple queries)
-- Tone: Professional, concise
-- Structure: Well-organized, bullet points common
-- Formatting: Clean markdown, code blocks
+```mermaid
+flowchart LR
+  Scenario["Scenario: refund-policy"] --> P1["openai-mini (openai)"]
+  Scenario --> P2["claude-sonnet (claude)"]
+  Scenario --> P3["gemini-flash (gemini)"]
+  P1 --> A1["Assertions"]
+  P2 --> A2["Assertions"]
+  P3 --> A3["Assertions"]
+  A1 --> R1["Result: openai-mini"]
+  A2 --> R2["Result: claude-sonnet"]
+  A3 --> R3["Result: gemini-flash"]
 ```
 
-**Testing considerations:**
+Provider types include `openai`, `claude`, `gemini`, `ollama`, `vllm`, `imagen`, `replay` and `mock` (for tests). This page compares the first four. The provider ids are free strings that you choose in each provider file.
+
+A scenario that compares three providers looks like this. Per-turn assertions go on the turn, and `message` sits beside `params`, not inside it.
+
 ```yaml
 apiVersion: promptkit.altairalabs.ai/v1alpha1
 kind: Scenario
 metadata:
-  name: openai-conciseness-test
-
+  name: refund-policy
+  labels:
+    suite: cross-provider
 spec:
-  task_type: general
-  description: "OpenAI Test - expects concise responses"
-  providers: [openai-gpt4o-mini]  # Test only this provider
-  
+  task_type: assistant
+  description: "Same question, every provider"
+  providers: [openai-mini, claude-sonnet, gemini-flash]
   turns:
     - role: user
-      content: "Explain quantum computing"
+      content: "What's your refund policy?"
       assertions:
-        - type: content_matches
+        - type: content_includes
           params:
-            pattern: "^.{1,300}$"
-            message: "Should be concise (under 300 chars)"
+            patterns: ["refund", "days"]
+          message: "Must mention refund policy details"
+        - type: llm_judge
+          params:
+            criteria: "Response is helpful and informative"
+            judge: quality
+          message: "Must be helpful"
+        - type: latency_budget
+          params:
+            max_ms: 5000
 ```
 
-### Anthropic (Claude Series)
+The `judge: quality` value names an entry in the Arena config's `spec.judges`, which maps a judge name to one of the configured providers. An `llm_judge` can also pick its judge with `params.provider`. Use `metadata.labels` to tag scenarios, for example to group a fast-provider suite apart from a premium one.
 
-**Strengths:**
-- Superior long-context handling (200K+ tokens)
-- Thoughtful, nuanced responses
-- Strong ethical guardrails
-- Excellent at following complex instructions
-- Detailed explanations
+## What differs between providers
 
-**Models:**
-- `claude-3-5-sonnet-20241022`: Best overall, fast
-- `claude-3-5-haiku-20241022`: Fast and affordable
-- `claude-3-opus-20240229`: Highest capability
+### OpenAI
 
-**Best for:**
-- Long document analysis
-- Complex reasoning tasks
-- Detailed explanations
-- Ethical/sensitive content
+The `openai` type covers `gpt-4o` and `gpt-4o-mini`. It is a good default for general reasoning, tool calling and structured output, and its context window is 128K tokens. Replies tend to be concise and well structured, often with bullet points. That makes it a natural baseline, and also a reason not to write assertions that depend on its exact phrasing.
 
-**Response characteristics:**
-```yaml
-# Typical Claude response style
-- Length: Longer, more detailed (100-300 words)
-- Tone: Thoughtful, conversational
-- Structure: Narrative style, detailed explanations
-- Formatting: Paragraphs over bullet points
-```
+### Claude
 
-**Testing considerations:**
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: claude-test
+The `claude` type covers the Claude families. The context window is 200K tokens for the Claude 4.5 family and 1M tokens for Claude 4.6 and later and for Claude 5, according to the runtime's table. Replies tend to be longer and more narrative, with paragraphs in place of lists. Claude supports structured output through a `json_schema` response format, and it follows long, complex instructions well. That makes it a strong choice for long-document analysis and for sensitive content.
 
-spec:
-  task_type: test
-  description: "Claude Test"
-  
-    providers: [claude-sonnet]
-    assertions:
-      # Expect more verbose responses
-      - type: content_matches
-        params:
-          pattern: "^.{100,}$"
-          message: "Should be at least 100 characters"
-      
-      # Excellent at context retention
-      - type: content_includes
-        params:
-          patterns: ["context", "previous"]
-          message: "Should reference context"
-      
-      # Strong safety filtering
-      - type: llm_judge
-        params:
-          criteria: "Response has appropriate tone"
-          judge_provider: "openai/gpt-4o-mini"
-          message: "Must be appropriate"
-```
+### Gemini
 
-### Google (Gemini Series)
+The `gemini` type covers the Gemini 2.x models such as `gemini-2.5-flash`. Gemini is fast and inexpensive, and its multimodal support covers vision and audio. Replies tend to be direct, mixing bullets and paragraphs. Gemini tools go out in the Google AI Studio format.
 
-**Strengths:**
-- Fast response times
-- Strong multimodal capabilities (vision, audio)
-- Google Search integration potential
-- Cost-effective
-- Large context windows
+### Ollama
 
-**Models:**
-- `gemini-1.5-pro`: High capability, multimodal
-- `gemini-1.5-flash`: Fast, cost-effective
-- `gemini-2.0-flash-exp`: Latest experimental
+The `ollama` type talks to a local server over an OpenAI-compatible API, so inference is free, private and works offline. Typical model ids are `llama3.2:1b`, `llama3.2:3b`, `mistral`, `llava` and `deepseek-r1`. There are no rate limits from the provider side. Response style depends entirely on the model you pull. Ollama suits local iteration and self-hosted CI runners, and it is a weak proxy for the hosted model you ship with.
 
-**Best for:**
-- Multimodal applications
-- High-throughput scenarios
-- Cost optimization
-- Real-time applications
+## Differences that affect assertions
 
-**Response characteristics:**
-```yaml
-# Typical Gemini response style
-- Length: Moderate (50-200 words)
-- Tone: Direct, informative
-- Structure: Mixed bullet points and paragraphs
-- Formatting: Good markdown support
-```
+### Style and tone
 
-**Testing considerations:**
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: gemini-test
+Asked to list three benefits of exercise, OpenAI tends to return a numbered list, Claude a short intro followed by prose, and Gemini a terse bulleted list. An assertion like `^1\. .+` passes for one and fails for the others. Assert on content (`content_includes` with the facts that must appear) or use `llm_judge` for qualities such as helpfulness and tone. Reserve `content_matches` for patterns every provider can satisfy.
 
-spec:
-  task_type: test
-  description: "Gemini Test"
+`content_includes` matches case-insensitively and requires every pattern. `content_matches` is an unanchored regular expression that you anchor yourself with `^` and `$`. The `.` does not match newlines, so a length check like `^.{50,500}$` fails on a multi-line reply.
 
-    providers: [gemini-flash]
-    assertions:
-      # Good at direct answers
-      - type: content_includes
-        params:
-          patterns: ["key information"]
-          message: "Should contain key information"
-```
+### Verbosity and speed
 
-### Ollama (Local LLMs)
+Claude tends to write more than OpenAI and Gemini, so a length assertion tuned on one provider fails on another. Choose wide bounds or assert on completeness.
 
-**Strengths:**
-- Zero API costs (local inference)
-- No rate limits
-- Data privacy (runs locally)
-- OpenAI-compatible API
-- Fast iteration during development
-- No internet required
+Speed varies by provider and by model size. The `latency_budget` assertion with `max_ms` fails a turn that exceeds your response-time ceiling, so a slow provider shows up as a failed assertion. Run results also record a duration for each run.
 
-**Models:**
-- `llama3.2:1b`: Lightweight, fast
-- `llama3.2:3b`: Good balance
-- `mistral`: Strong reasoning
-- `llava`: Vision capabilities
-- `deepseek-r1`: Advanced reasoning
+### Capabilities
 
-**Best for:**
-- Local development and testing
-- Privacy-sensitive applications
-- Cost-free experimentation
-- Offline development
-- CI/CD pipelines (with self-hosted runner)
+The `openai`, `claude` and `gemini` types accept images. The tool-call assertions work across providers: `tools_called` takes `tool_names`, and `tool_calls_with_args` takes `tool_name` and `expected_args`. Structured output depends on the provider. Attach images to a turn through `parts` with media content. Tests that need a capability only some providers have belong in a scenario whose `spec.providers` lists only those providers.
 
-**Response characteristics:**
-```yaml
-# Typical Ollama response style (varies by model)
-- Length: Model-dependent (similar to base model)
-- Tone: Varies by model
-- Structure: Varies by model
-- Formatting: Good markdown support
-```
+## Cost
 
-**Testing considerations:**
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: ollama-test
+Arena reports cost from the runtime's pricing table, so you do not maintain prices in your config. Prices change often, and the table is the authority. The shape of the trade-off is stable:
 
-spec:
-  task_type: test
-  description: "Ollama Local Test"
+- Small models cost cents per million tokens. `gpt-4o-mini` is $0.15 input and $0.60 output per million tokens, and Gemini 2.0 Flash is $0.10 and $0.40.
+- Mid-tier models run from about $1 to $3 per million input tokens and $5 to $15 output. `gpt-4o` is $2.50 and $10.00. Claude Sonnet is $3.00 and $15.00 from 3.5 through 4.6, and Sonnet 5.5 is $2.00 and $10.00. Claude Haiku 4.5 is $1.00 and $5.00, and `claude-3-5-haiku-20241022` is $0.80 and $4.00.
+- Ollama is $0, because the runtime prices local models at zero.
 
-    providers: [ollama-llama]
-    assertions:
-      # Good for iterative development
-      - type: content_includes
-        params:
-          patterns: ["key concepts"]
-          message: "Should contain key concepts"
-```
-
-## Response Style Comparison
-
-### Formatting Preferences
-
-Different providers format responses differently:
-
-```yaml
-# Test query: "List 3 benefits of exercise"
-
-# OpenAI tends toward:
-"""
-Here are 3 key benefits:
-1. Improved cardiovascular health
-2. Better mental well-being
-3. Increased energy levels
-"""
-
-# Claude tends toward:
-"""
-Exercise offers numerous benefits. Let me highlight three important ones:
-
-First, it significantly improves cardiovascular health by...
-Second, it enhances mental well-being through...
-Third, it boosts energy levels because...
-"""
-
-# Gemini tends toward:
-"""
-Here are 3 benefits:
-* Cardiovascular health improvement
-* Enhanced mental well-being  
-* Increased energy
-"""
-```
-
-**Test across styles:**
-```yaml
-assertions:
-  # Provider-agnostic content check
-  - type: content_includes
-    params:
-      patterns: ["cardiovascular", "mental", "energy"]
-  
-  # Not: format-specific assertion
-  # - type: content_matches
-  #   params:
-  #     pattern: "^1\\. .+"  # Too OpenAI-specific
-```
-
-### Verbosity Differences
-
-Response length varies significantly:
-
-| Provider | Typical Length | Tendency |
-|----------|---------------|----------|
-| OpenAI | 50-150 words | Concise, to the point |
-| Claude | 100-300 words | Detailed, explanatory |
-| Gemini | 50-200 words | Direct, informative |
-
-**Accommodate variation:**
-```yaml
-assertions:
-  # Instead of exact length (use regex)
-  - type: content_matches
-    params:
-      pattern: "^.{50,500}$"
-      message: "Should be 50-500 characters"
-  
-  # Focus on content completeness
-  - type: content_includes
-    params:
-      patterns: ["point1", "point2", "point3"]
-      message: "Must cover all key points"
-```
-
-### Tone and Personality
-
-Providers have distinct "personalities":
-
-```yaml
-# Same prompt: "Help me debug this error"
-
-# OpenAI: Professional, structured
-"""
-To debug this error, follow these steps:
-1. Check the error message
-2. Review the stack trace
-3. Verify your inputs
-"""
-
-# Claude: Empathetic, thorough
-"""
-I understand debugging can be frustrating. Let's work through 
-this systematically. First, let's examine the error message 
-to understand what's happening...
-"""
-
-# Gemini: Direct, solution-focused
-"""
-Error debugging steps:
-- Check error message for root cause
-- Verify inputs and configuration
-- Review recent code changes
-"""
-```
-
-**Test for appropriate tone:**
-```yaml
-assertions:
-  # Not provider-specific phrases
-  - type: llm_judge
-    params:
-      criteria: "Response is helpful and constructive"
-      judge_provider: "openai/gpt-4o-mini"
-      message: "Must be helpful"
-  
-  # Not exact wording
-  - type: llm_judge
-    params:
-      criteria: "Response is supportive and encouraging"
-      judge_provider: "openai/gpt-4o-mini"
-      message: "Must be supportive"
-```
-
-## Performance Characteristics
-
-### Response Time
-
-Typical latencies (approximate):
-
-```yaml
-# Single-turn, 100 token response
-openai-gpt4o-mini:     ~0.8-1.5 seconds
-claude-haiku:          ~1.0-2.0 seconds
-gemini-flash:          ~0.6-1.2 seconds
-
-openai-gpt4o:          ~1.5-3.0 seconds
-claude-sonnet:         ~1.5-2.5 seconds
-gemini-pro:            ~1.0-2.0 seconds
-```
-
-**Note:** Arena does not provide a built-in response time assertion. Response latency can be observed in test output reports and tracked over time as a metric.
-
-### Context Window Handling
-
-Maximum context varies:
-
-| Provider | Max Context | Best Use |
-|----------|-------------|----------|
-| GPT-4o | 128K tokens | General purpose |
-| Claude Sonnet | 200K tokens | Long documents |
-| Gemini Pro | 2M tokens | Massive context |
-
-**Test long context:**
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: long-document-analysis
-
-spec:
-  task_type: test
-  description: "Long Document Analysis"
-  
-    providers: [claude-sonnet, gemini-pro]  # Best for long context
-    context:
-      document: "${fixtures.50k_word_doc}"
-    turns:
-      - role: user
-        content: "Summarize the key points"
-        assertions:
-          - type: llm_judge
-            params:
-              criteria: "Response accurately references and summarizes the provided document"
-              judge_provider: "openai/gpt-4o-mini"
-              message: "Should reference document content"
-```
-
-## Cost Analysis
-
-### Pricing Comparison (per 1M tokens, approximate)
-
-| Provider | Model | Input | Output | Use Case |
-|----------|-------|-------|--------|----------|
-| OpenAI | gpt-4o-mini | $0.15 | $0.60 | Cost-effective |
-| OpenAI | gpt-4o | $2.50 | $10.00 | Balanced |
-| Anthropic | claude-haiku | $0.25 | $1.25 | Fast & cheap |
-| Anthropic | claude-sonnet | $3.00 | $15.00 | Premium |
-| Google | gemini-flash | $0.075 | $0.30 | Most affordable |
-| Google | gemini-pro | $1.25 | $5.00 | Mid-tier |
-| Ollama | Any model | $0.00 | $0.00 | Free (local) |
-
-### Cost-Effective Testing Strategy
-
-```yaml
-# Tier 0: Local development (Ollama, $0)
-local_tests:
-  providers: [ollama-llama]
-  scenarios: unlimited
-  cost: $0
-
-# Tier 1: Smoke tests (mock, $0)
-smoke_tests:
-  provider: mock
-  scenarios: 50
-  cost: $0
-
-# Tier 2: Integration (mini/flash, ~$0.10)
-integration_tests:
-  providers: [openai-mini, gemini-flash]
-  scenarios: 100
-  estimated_cost: $0.10
-
-# Tier 3: Quality validation (premium, ~$1.00)
-quality_tests:
-  providers: [openai-gpt4o, claude-sonnet]
-  scenarios: 50
-  estimated_cost: $1.00
-
-# Total per run: ~$1.10 (excluding local tests)
-```
-
-## Capability Differences
-
-### Function/Tool Calling
-
-Support varies:
-
-```yaml
-# OpenAI: Excellent
-turns:
-  - name: "Tool Calling Test"
-    providers: [openai-gpt4o]
-    turns:
-      - role: user
-        content: "What's the weather in Paris?"
-        assertions:
-          - type: tools_called
-            params:
-              tools: ["get_weather"]
-              message: "Should call weather tool"
-    conversation_assertions:
-      - type: tool_calls_with_args
-        params:
-          tool: "get_weather"
-          expected_args:
-            location: "Paris"
-          message: "Should pass correct location"
-
-# Claude: Good
-# Gemini: Good (Google AI Studio format)
-```
-
-### Structured Output
-
-JSON mode support:
-
-```yaml
-# OpenAI: Native JSON mode
-providers:
-  - type: openai
-    response_format: json_object
-
-# Claude: JSON via prompting
-providers:
-  - type: claude
-    # Must prompt for JSON in system message
-
-# Gemini: JSON via schema
-providers:
-  - type: gemini
-    # Supports schema-based generation
-```
-
-### Multimodal Capabilities
-
-Vision/image support:
-
-```yaml
-# All support images, but differently
-turns:
-  - name: "Image Analysis"
-    providers: [gpt-4o, claude-opus, gemini-pro]
-    turns:
-      - role: user
-        content: "Describe this image"
-        image: "./test-image.jpg"
-        assertions:
-          - type: content_includes
-            params:
-              patterns: ["objects", "colors", "scene"]
-```
-
-## Testing Strategy by Provider
-
-### Cross-Provider Baseline
-
-Test all providers with same scenario:
-
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: standard-support-query
-
-spec:
-  task_type: test
-  description: "Standard Support Query"
-  
-    providers: [openai-gpt4o-mini, claude-sonnet, gemini-flash]
-    
-    turns:
-      - role: user
-        content: "What's your refund policy?"
-        assertions:
-          # Common requirements for ALL providers
-          - type: content_includes
-            params:
-              patterns: ["refund", "policy", "days"]
-              message: "Must mention refund policy details"
-          - type: llm_judge
-            params:
-              criteria: "Response is helpful and informative"
-              judge_provider: "openai/gpt-4o-mini"
-              message: "Must be helpful"
-```
-
-### Provider-Specific Tests
-
-Test unique capabilities:
-
-```yaml
-# OpenAI: Function calling
-turns:
-  - name: "Function Calling"
-    providers: [openai-gpt4o]
-    assertions:
-      - type: tools_called
-        params:
-          tools: ["specific_function"]
-          message: "Should call the specific function"
-
-# Claude: Long context
-turns:
-  - name: "Long Document Processing"
-    providers: [claude-sonnet]
-    context:
-      document: "${fixtures.100k_token_doc}"
-
-# Gemini: Speed
-turns:
-  - name: "High Throughput"
-    providers: [gemini-flash]
-    assertions:
-      - type: content_includes
-        params:
-          patterns: ["result"]
-          message: "Should return a result"
-```
-
-### Fallback Testing
-
-Test provider redundancy:
-
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: provider-failover
-
-spec:
-  task_type: test
-  description: "Provider Failover"
-  
-    # Conceptual — Arena has no primary_provider/fallback_providers failover.
-    # Run the providers separately and compare their JSON summaries.
-    primary_provider: openai-gpt4o
-    fallback_providers: [claude-sonnet, gemini-pro]
-    
-    scenarios:
-      # Test primary
-      - provider: openai-gpt4o
-        expected_to_work: true
-      
-      # Test fallbacks
-      - provider: claude-sonnet
-        expected_to_work: true
-      - provider: gemini-pro
-        expected_to_work: true
-```
-
-## Best Practices
-
-### 1. Provider-Agnostic Assertions
-
-Write tests that work across providers:
-
-```yaml
-# Good: Works for all providers
-assertions:
-  - type: content_includes
-    params:
-      patterns: ["key", "terms"]
-      message: "Must contain key terms"
-  - type: llm_judge
-    params:
-      criteria: "Response is appropriate for the context"
-      judge_provider: "openai/gpt-4o-mini"
-      message: "Must be appropriate"
-
-# Avoid: Provider-specific expectations
-assertions:
-  - type: content_matches
-    params:
-      pattern: "^Here are 3"
-      message: "Exact phrase - too OpenAI-specific"
-```
-
-### 2. Normalize for Comparison
-
-Account for style differences:
-
-```yaml
-# Test content, not format
-assertions:
-  - type: llm_judge
-    params:
-      criteria: "Response covers the same key points as the expected content"
-      judge_provider: "openai/gpt-4o-mini"
-      message: "Should be similar to expected content"
-```
-
-### 3. Use Tags for Provider Categories
-
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: fast-provider-test
-
-spec:
-  task_type: test
-  description: "Fast Provider Test"
-  
-    tags: [fast-providers]
-    providers: [openai-mini, gemini-flash, claude-haiku]
-  
-  - name: "Premium Provider Test"
-    tags: [premium-providers]
-    providers: [openai-gpt4o, claude-sonnet, gemini-pro]
-```
-
-### 4. Cost-Aware Testing
+These prices point to a tiered strategy. Run local or mock providers while you write scenarios, run a small hosted model in routine CI, and reserve the premium models for pre-release validation. The `mock` provider and Ollama cost nothing, so they carry most of your iteration. Use `--provider` to select the tier:
 
 ```bash
-# Development: Use cheap/mock
 promptarena run --provider openai-mini
-
-# CI: Use cost-effective
-promptarena run --provider gemini-flash
-
-# Pre-production: Use target provider
 promptarena run --provider claude-sonnet
 ```
 
-### 5. Benchmark Regularly
+## Trade-offs and alternatives
 
-Track provider changes over time:
+A shared scenario makes the comparison fair, but its assertions must be provider-agnostic. If a provider needs special treatment, give it its own scenario with its own `spec.providers` list. Capability tests such as long context belong there too.
 
-```yaml
-# Monthly benchmark suite
-benchmark:
-  frequency: monthly
-  providers: [openai-gpt4o, claude-sonnet, gemini-pro]
-  scenarios: standard_benchmark_suite
-  track:
-    - pass_rate
-    - average_response_time
-    - cost_per_run
-    - quality_scores
-```
+Arena compares providers and does not route between them. Each provider runs separately and produces its own result, and you compare the JSON summaries. Failover belongs to your application, which you test by running the scenarios against each fallback you intend to use.
 
-## When to Switch Providers
+Provider behaviour and pricing change, so rerun the same scenarios on a schedule and compare the results. Arena supplies the per-run results, and trend tracking lives in your CI or reporting.
 
-### Reasons to Use Multiple Providers
+For a first choice, start with `openai` when you need tool calling, structured output or ease of use. Start with `claude` for long context and detailed explanations, `gemini` for speed, cost and multimodal work, and `ollama` for zero cost, privacy or offline development.
 
-**During Development:**
-- Test with cheap models (mini/flash)
-- Validate with target model (final choice)
-- Compare quality across options
+## Related pages
 
-**In Production:**
-- Primary + fallback for reliability
-- Route by use case (simple → mini, complex → premium)
-- Cost optimization per scenario
-
-### Decision Framework
-
-```yaml
-decision_matrix:
-  use_openai_when:
-    - need: function_calling
-    - need: structured_output
-    - priority: ease_of_use
-
-  use_claude_when:
-    - need: long_context
-    - need: detailed_explanations
-    - priority: quality
-
-  use_gemini_when:
-    - need: speed
-    - need: cost_optimization
-    - priority: throughput
-
-  use_ollama_when:
-    - need: zero_cost
-    - need: data_privacy
-    - need: offline_development
-    - priority: local_iteration
-```
-
-## Conclusion
-
-Provider choice affects:
-- Response quality and style
-- Performance and latency
-- Cost per interaction
-- Capabilities available
-
-Test across providers to:
-- Find the best fit
-- Build resilient systems
-- Optimize cost
-- Stay flexible
-
-PromptArena makes cross-provider testing straightforward, enabling data-driven provider decisions.
-
-## Further Reading
-
-- **[Testing Philosophy](/arena/explanation/testing-philosophy/)** - Core testing principles
-- **[Validation Strategies](/arena/explanation/validation-strategies/)** - Assertion design
-- **[How-To: Configure Providers](/arena/how-to/providers/configure-providers/)** - Provider setup
-- **[Tutorial: Multi-Provider Testing](/arena/tutorials/02-multi-provider/)** - Hands-on guide
+- [Testing Philosophy](/arena/explanation/testing-philosophy/) covers the principles behind provider-agnostic tests.
+- [Validation Strategies](/arena/explanation/validation-strategies/) covers assertion design.
+- [Configure Providers](/arena/how-to/providers/configure-providers/) covers provider setup.
+- [Multi-Provider Testing](/arena/tutorials/02-multi-provider/) is the hands-on guide.

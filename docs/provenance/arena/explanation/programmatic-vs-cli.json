@@ -1,0 +1,479 @@
+{
+ "page": "docs/src/content/docs/arena/explanation/programmatic-vs-cli.md",
+ "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "Arena can be used as a command-line tool or as a Go library",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:171",
+    "arena/engine/engine.go:71"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "promptarena is the CLI binary name",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:171"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "promptarena run is a subcommand that runs a config",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:171"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "The -c flag on promptarena run takes an arena config file path",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:171"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "The CLI is configured with YAML configuration files",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:415"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "engine.NewEngine takes five arguments: cfg, providerReg, promptReg, mcpReg, executor",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:285",
+    "arena/engine/engine.go:299",
+    "arena/engine/engine.go:388"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "eng.ExecuteRuns(ctx, plan, 4) returns two values: runIDs and an error",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:886"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "ExecuteRuns takes a context, a plan, and a concurrency integer (4 in example)",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:886"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "The programmatic approach means importing Arena as a Go library and controlling it from code",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:388",
+    "arena/engine/engine.go:71"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "promptarena run accepts a --scenario flag",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:171"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "promptarena run accepts a --provider flag",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:171"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "claude is a provider name the --provider flag accepts",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 13,
+   "claim": "promptarena run accepts a --verbose flag",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:171"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "The CLI needs no compilation step to run a test (prebuilt binary, YAML config)",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:171"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "promptarena run accepts a --ci flag",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:331"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "promptarena run accepts a --format flag with junit as a value",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:171"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "The arena config has a top-level scenarios list",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:415"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "Each scenarios entry takes a file key that points to a scenario YAML",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:415"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "Running promptarena run with no subcommand flags starts an interactive TUI",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run_interactive.go:322"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "The TUI shows progress, logs and results while tests run",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run_interactive.go:322"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "Built-in CLI outputs are JSON, HTML, JUnit and Markdown",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:171"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "Calling promptarena run from another program via a shell call (system) requires parsing its output",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run_interactive.go:475"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "The engine package can be imported from application code to embed a test run",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:71"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "buildTestConfig(prompt) is a function that builds a config from a prompt (illustrative helper)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 25,
+   "claim": "setupEngine(cfg) returns an engine (illustrative helper)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 26,
+   "claim": "runTests(eng) returns results from an engine (illustrative helper)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 27,
+   "claim": "validateResults(results) returns an error (illustrative helper)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 28,
+   "claim": "config.Scenario is a type in a package named config",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:682"
+   ]
+  },
+  {
+   "id": 29,
+   "claim": "A map of string to *config.Scenario is used to hold scenarios",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:228"
+   ]
+  },
+  {
+   "id": 30,
+   "claim": "cfg.LoadedScenarios is a field on the config that takes a map of scenarios",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:228"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "loadFromDB() returns a collection of conversations (illustrative helper)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 32,
+   "claim": "buildScenario(conversation) returns a *config.Scenario (illustrative helper)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 33,
+   "claim": "adjustConfig(cfg, results) and allPassed(results) are used to rerun a test with an adjusted config (illustrative helpers)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 34,
+   "claim": "Run results are returned as result objects that can be iterated directly",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:886"
+   ]
+  },
+  {
+   "id": 35,
+   "claim": "extractMetrics(result), sendToDatadog(metrics), updateDashboard(metrics) are helper functions (illustrative)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 36,
+   "claim": "engine.Engine is an exported type in the engine package",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:71"
+   ]
+  },
+  {
+   "id": 37,
+   "claim": "TestRunner methods RunWithRetry, CompareProviders, GenerateReport are user-defined (illustrative)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 38,
+   "claim": "Each programmatic change requires editing Go code, recompiling, then running",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 39,
+   "claim": "promptarena run -c regression-tests.yaml --ci is a valid CLI invocation",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:171",
+    "arena/cmd/promptarena/run.go:331"
+   ]
+  },
+  {
+   "id": 40,
+   "claim": "custom-tests/main.go is a Go program run with go run in the hybrid pattern (illustrative path)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 41,
+   "claim": "exec.Command('promptarena', 'run', 'generated.arena.yaml') runs the CLI on a generated config",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:171"
+   ]
+  },
+  {
+   "id": 42,
+   "claim": "buildConfigFromData() and saveToYAML(cfg, path) produce a YAML arena config (illustrative helpers)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 43,
+   "claim": "./custom-test-runner is a binary built from Go code (illustrative)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 44,
+   "claim": "engine.NewEngineFromConfigFile(path) loads an existing arena YAML config and returns an engine",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:285"
+   ]
+  },
+  {
+   "id": 45,
+   "claim": "Existing YAML arena configs can be reused unchanged by the programmatic API",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:285"
+   ]
+  },
+  {
+   "id": 46,
+   "claim": "executeAndProcess(eng) runs the engine and processes results (illustrative helper)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 47,
+   "claim": "buildConfig() constructs an arena config in Go code (illustrative helper)",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:228"
+   ]
+  },
+  {
+   "id": 48,
+   "claim": "CLI startup time is about 100-500ms (Go binary startup)",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 49,
+   "claim": "CLI overhead is minimal (one process per run)",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 50,
+   "claim": "CLI memory is isolated per execution (separate process)",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 51,
+   "claim": "Programmatic startup time is 0ms because the engine runs in the same process",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 52,
+   "claim": "Programmatic overhead is none (native function calls)",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 53,
+   "claim": "Programmatic memory is shared with the host application",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 54,
+   "claim": "promptarena run accepts a --verbose flag for debugging (repeat of flag claim, debugging section)",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:171"
+   ]
+  },
+  {
+   "id": 55,
+   "claim": "promptarena debug is a subcommand that accepts a --config flag",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 56,
+   "claim": "promptarena config-inspect is a subcommand",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 57,
+   "claim": "err := eng.ExecuteRuns(ctx, plan, 4) assigns a single return value (error) from ExecuteRuns",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/engine.go:886"
+   ]
+  },
+  {
+   "id": 58,
+   "claim": "promptarena run -c product-tests.yaml --ci is a valid CLI invocation (example)",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:331"
+   ]
+  },
+  {
+   "id": 59,
+   "claim": "buildConfigForCustomer(customer) and notifyCustomer(customer, results) are illustrative helpers",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 60,
+   "claim": "runTests(cfg) accepts a config, while line 122 uses runTests(eng) on an engine (signature inconsistency in examples)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 61,
+   "claim": "promptarena run -c benchmarks/suite.arena.yaml is a valid CLI invocation (example)",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:171"
+   ]
+  },
+  {
+   "id": 62,
+   "claim": "experiments/ablation-study.go is a Go file run with go run (illustrative path)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 63,
+   "claim": "Link /arena/tutorials/07-programmatic-usage/ points to an existing page",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 64,
+   "claim": "Link /arena/how-to/setup/use-as-go-library/ points to an existing page",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 65,
+   "claim": "Link /arena/reference/cli-commands/ points to an existing page",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 66,
+   "claim": "Link /arena/reference/api-reference/ points to an existing page",
+   "verdict": "true",
+   "evidence": []
+  }
+ ]
+}

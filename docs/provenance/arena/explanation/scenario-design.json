@@ -1,0 +1,461 @@
+{
+ "page": "docs/src/content/docs/arena/explanation/scenario-design.md",
+ "commit": "f47e1e3a3e4621c2061a6e67995712d621bbfe79",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "Scenario manifests use apiVersion promptkit.altairalabs.ai/v1alpha1 (repeated in every example)",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:478",
+    "schemas/v1alpha1/scenario.json:1060"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "kind is Scenario",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:478",
+    "arena/arenaconfig/types.go:664"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "metadata.name identifies the scenario",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json:358"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "metadata.tags is a list of strings used for filtering",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:664",
+    "schemas/v1alpha1/scenario.json:358"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "spec.task_type is a field that links the scenario to a prompt configuration",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:684",
+    "arena/arenaconfig/validator.go:312",
+    "arena/engine/builder_integration.go:481"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "spec.fixtures is a map of test-specific data available to the scenario",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:682",
+    "schemas/v1alpha1/scenario.json:567"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "spec.turns is a list of conversation turns",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:692"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "turn role accepts the value user",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1135"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "turn content is a string field holding the user message",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:1136"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "a turn accepts an assertions list",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json:942"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "content_includes is a registered assertion type",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 12,
+   "claim": "content_includes takes a params.patterns list of strings",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 13,
+   "claim": "assertion params accept a message field, and it is optional",
+   "verdict": "false",
+   "evidence": [
+    "arena/assertions/types.go:35"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "task_type connects the scenario to its prompt configuration",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/validator.go:312",
+    "arena/engine/builder_integration.go:481",
+    "arena/engine/builder_integration.go:529"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "content_matches is a registered assertion type (used with params.pattern at line 76)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 16,
+   "claim": "content_matches params.pattern is a Go regular expression that accepts the inline (?i) flag",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 17,
+   "claim": "fixtures are the mechanism that sets up context before a turn (Arrange phase)",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:682"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "{{fixtures.long_text}} interpolates a fixture into turn content",
+   "verdict": "false",
+   "evidence": [
+    "arena/turnexecutors/scripted_executor.go:81"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "Example defines fixture long_patterns but line 228 references fixtures.long_text (name mismatch, example is inconsistent)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 20,
+   "claim": "Multi-language example: llm_judge assertion with judge_provider openai/gpt-4o-mini under a second scenario entry (scenario list form)",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/loader.go:478",
+    "arena/arenaconfig/loader.go:560",
+    "arena/arenaconfig/types.go:415"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "a context block can sit at scenario level and holds named state (user, current_session)",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:693",
+    "schemas/v1alpha1/scenario.json:596"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "context values are passed to the LLM so it can use them in its response",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/prompt-debug_interactive.go:223",
+    "arena/stages/scenario_context_extraction.go:125"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "conversation history is implicit: earlier turns are carried into later turns' requests",
+   "verdict": "unverified",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "a fixtures entry can be a multi-line text block scalar (long_text)",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:682"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "a turn accepts a name field",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:1134",
+    "schemas/v1alpha1/scenario.json:859"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "${fixtures.premium_user} is the interpolation syntax inside a context block",
+   "verdict": "false",
+   "evidence": [
+    "arena/stages/scenario_context_extraction.go:125"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "llm_judge accepts a params.criteria string",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 28,
+   "claim": "llm_judge accepts judge_provider in the form openai/gpt-4o-mini and this provider is registered",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/judge_param.go:14"
+   ]
+  },
+  {
+   "id": 29,
+   "claim": "content_matches patterns support negative lookahead (?!...)",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 30,
+   "claim": "spec.description is a field on the scenario spec",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:686",
+    "schemas/v1alpha1/scenario.json:688"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "content_includes params.patterns accepts a bare string instead of a list",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 32,
+   "claim": "a turn accepts a context block (booking_state)",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:1134",
+    "schemas/v1alpha1/scenario.json:859"
+   ]
+  },
+  {
+   "id": 33,
+   "claim": "provider mock is a usable provider in Arena configs",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:318"
+   ]
+  },
+  {
+   "id": 34,
+   "claim": "providers can be given as a list of bare model names such as gpt-4o, claude and gemini",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:697",
+    "arena/arenaconfig/types.go:91"
+   ]
+  },
+  {
+   "id": 35,
+   "claim": "a turn accepts a providers list (Full Conversation Flow example)",
+   "verdict": "false",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json:859"
+   ]
+  },
+  {
+   "id": 36,
+   "claim": "turns can be written as a count placeholder such as [10 multi-turn exchanges]",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:1145"
+   ]
+  },
+  {
+   "id": 37,
+   "claim": "metadata accepts version, last_updated, author and changelog keys",
+   "verdict": "false",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json:358"
+   ]
+  },
+  {
+   "id": 38,
+   "claim": "a scenario accepts a deprecated: true field",
+   "verdict": "false",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json:550"
+   ]
+  },
+  {
+   "id": 39,
+   "claim": "a scenario accepts a deprecated_reason field",
+   "verdict": "false",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json:550"
+   ]
+  },
+  {
+   "id": 40,
+   "claim": "a scenario accepts a skip: true field",
+   "verdict": "false",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json:550"
+   ]
+  },
+  {
+   "id": 41,
+   "claim": "Arena has no deprecated or skip fields and retired scenarios are managed with labels or removal",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json:358",
+    "schemas/v1alpha1/scenario.json:550"
+   ]
+  },
+  {
+   "id": 42,
+   "claim": "a top-level templates key defines reusable blocks in an Arena config",
+   "verdict": "false",
+   "evidence": [
+    "schemas/v1alpha1/arena.json"
+   ]
+  },
+  {
+   "id": 43,
+   "claim": "YAML anchors (&name) and aliases (*name) are parsed in scenario files",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 44,
+   "claim": "the YAML merge key << is honoured when loading a scenario",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 45,
+   "claim": "scenario files may live in nested subdirectories such as smoke/ and customer-support/",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:560",
+    "arena/arenaconfig/types.go:415"
+   ]
+  },
+  {
+   "id": 46,
+   "claim": "link target /arena/explanation/testing-philosophy/ exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 47,
+   "claim": "link target /arena/explanation/validation-strategies/ exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 48,
+   "claim": "link target /arena/explanation/provider-comparison/ exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 49,
+   "claim": "link target /arena/how-to/scenarios/write-scenarios/ exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 50,
+   "claim": "Special characters example is a valid Scenario manifest (its indentation is broken, and tags, turns and name sit at the wrong level)",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/loader.go:478"
+   ]
+  },
+  {
+   "id": 51,
+   "claim": "Multi-turn Conversation Flow example is a valid Scenario (tags is indented under spec and turns is not a sibling of task_type)",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/loader.go:478"
+   ]
+  },
+  {
+   "id": 52,
+   "claim": "State transitions example is a valid Scenario (blank indented block between description and turns)",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/loader.go:478"
+   ]
+  },
+  {
+   "id": 53,
+   "claim": "Branch testing example is valid YAML (turns key appears twice in a row)",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/loader.go:478"
+   ]
+  },
+  {
+   "id": 54,
+   "claim": "Branch B example repeats the turns key under the same parent (duplicate key)",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/loader.go:478"
+   ]
+  },
+  {
+   "id": 55,
+   "claim": "Inherited turn example: merge key <<: *support_base is placed on a turn that also has its own name and nested turns list",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/loader.go:478",
+    "arena/arenaconfig/types.go:1145"
+   ]
+  },
+  {
+   "id": 56,
+   "claim": "God Scenarios anti-pattern example has a duplicate turns key",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/loader.go:478"
+   ]
+  },
+  {
+   "id": 57,
+   "claim": "Missing Context anti-pattern example has a duplicate turns key",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/loader.go:478"
+   ]
+  },
+  {
+   "id": 58,
+   "claim": "Cost example uses providers and turns as lists on a turn, which Arena would not run as written",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json:859"
+   ]
+  }
+ ]
+}
