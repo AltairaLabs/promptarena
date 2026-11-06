@@ -7,6 +7,6 @@ spec:
   type: replay
   model: "recorded-session"
   additional_config:
-    recording: examples/session-replay/recordings/geography-session.recording.json
+    recording: recordings/geography-session.recording.json
     timing: instant
     match: turn
