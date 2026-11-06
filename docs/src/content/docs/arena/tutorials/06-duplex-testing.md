@@ -1,152 +1,161 @@
 ---
 title: 'Tutorial 6: Duplex Voice Testing'
+description: Build a duplex voice test that streams audio files to a mock duplex provider and asserts on the replies, with no API key.
+verified:
+  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  sources:
+    - arena/arenaconfig/types.go
+    - arena/arenaconfig/voice.go
+    - arena/cmd/promptarena/run.go
+    - arena/engine/duplex_conversation_executor.go
+    - arena/engine/duplex_executor_pipeline_integration.go
+    - arena/engine/duplex_executor_turns_integration.go
+    - arena/turnexecutors/audio_file_source.go
+    - arena/turnexecutors/media_loader.go
+    - examples/duplex-streaming/config.arena.yaml
+    - examples/duplex-streaming/prompts/voice-assistant.prompt.yaml
+    - examples/duplex-streaming/providers/gemini-2-flash.provider.yaml
+    - examples/duplex-streaming/providers/mock-tts.provider.yaml
+    - examples/duplex-streaming/providers/openai-alloy.provider.yaml
+    - schemas/v1alpha1/arena.json
+    - schemas/v1alpha1/persona.json
+    - schemas/v1alpha1/promptconfig.json
+    - schemas/v1alpha1/provider.json
+    - schemas/v1alpha1/scenario.json
 ---
-Learn to test bidirectional voice conversations with real-time audio streaming.
+In this tutorial we build a duplex voice test: a scenario that streams audio files to a provider and asserts on what comes back.
 
-## What You'll Learn
+We run it against a mock duplex provider, so it needs no API key.
 
-- Understand [duplex](https://promptkit.altairalabs.ai/glossary#duplex) streaming vs traditional audio testing
-- Create duplex test scenarios with audio files
-- Configure turn detection modes ([VAD](https://promptkit.altairalabs.ai/glossary#vad) vs [ASM](https://promptkit.altairalabs.ai/glossary#asm))
-- Use self-play with [TTS](https://promptkit.altairalabs.ai/glossary#tts) for automated voice testing
-- Handle session resilience and error recovery
+## What we will build
+
+A small project with one duplex scenario of two audio turns:
+
+```text
+duplex-test/
+  config.arena.yaml
+  mock-responses.yaml
+  audio/greeting.pcm
+  audio/question.pcm
+  prompts/voice-assistant.prompt.yaml
+  providers/mock-duplex.provider.yaml
+  scenarios/basic-duplex.scenario.yaml
+```
+
+In duplex mode `promptarena` streams the audio in chunks and the provider decides when the turn ends, instead of receiving each file as a single blob.
 
 ## Prerequisites
 
-- Completed [Tutorial 1: Your First Test](/arena/tutorials/01-first-test/)
-- A Gemini API key (duplex streaming requires Gemini Live API)
-- Optional: OpenAI API key (for TTS in self-play mode)
+- `promptarena` installed, and [Tutorial 1: Your First Test](/arena/tutorials/01-first-test/) completed.
+- `python3`, to create the audio files.
 
-## Understanding Duplex Streaming
-
-Traditional audio testing sends entire audio files as blobs. **Duplex streaming** is different:
-
-| Aspect | Traditional | Duplex |
-|--------|-------------|--------|
-| Audio delivery | Entire file at once | Streamed in chunks |
-| Turn detection | Manual (per turn) | Dynamic (VAD or provider) |
-| Response timing | After full upload | Real-time as audio streams |
-| Use case | Transcription testing | Voice assistants, interviews |
-
-Duplex mode enables testing of **real-time voice conversations** where timing and turn-taking matter.
-
-## Step 1: Set Up Your Project
-
-Create a new duplex testing project:
+## Step 1: Create the project
 
 ```bash
 mkdir duplex-test
 cd duplex-test
-mkdir -p audio prompts providers scenarios
+mkdir audio prompts providers scenarios
 ```
 
-Create the arena configuration:
+Create `config.arena.yaml`:
 
 ```yaml
-# config.arena.yaml
 apiVersion: promptkit.altairalabs.ai/v1alpha1
 kind: Arena
 metadata:
   name: duplex-test
 
 spec:
-  prompts:
-    - path: ./prompts
+  prompt_configs:
+    - id: voice-assistant
+      file: prompts/voice-assistant.prompt.yaml
+
   providers:
-    - path: ./providers
+    - file: providers/mock-duplex.provider.yaml
+
   scenarios:
-    - path: ./scenarios
+    - file: scenarios/basic-duplex.scenario.yaml
+
   defaults:
+    concurrency: 1
     output:
-      dir: ./out
+      dir: out
+      formats:
+        - json
 ```
 
-## Step 2: Configure the Gemini Provider
+We run duplex scenarios one at a time, so `concurrency` is `1`.
 
-Duplex streaming requires Gemini's Live API:
+## Step 2: Create the prompt
+
+Create `prompts/voice-assistant.prompt.yaml`:
 
 ```yaml
-# providers/gemini-live.provider.yaml
 apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Provider
-metadata:
-  name: gemini-live
-
-spec:
-  id: gemini-live
-  type: gemini
-  api_key_env: GEMINI_API_KEY
-  model: gemini-2.0-flash-exp
-
-  # Enable streaming with audio output
-  streaming:
-    enabled: true
-    response_modalities:
-      - AUDIO
-      - TEXT
-```
-
-Set your API key:
-
-```bash
-export GEMINI_API_KEY="your-api-key"
-```
-
-## Step 3: Create a Voice Assistant Prompt
-
-```yaml
-# prompts/voice-assistant.prompt.yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Prompt
+kind: PromptConfig
 metadata:
   name: voice-assistant
 
 spec:
-  id: voice-assistant
   task_type: voice-assistant
-
-  system_prompt: |
-    You are Nova, a friendly voice assistant. Keep responses brief
-    and conversational since this is a voice interaction.
-
-    Guidelines:
-    - Speak naturally as if in conversation
-    - Keep responses under 2-3 sentences
-    - Be helpful and warm
+  version: "1.0.0"
+  description: "Voice assistant for duplex conversations"
+  system_template: |
+    You are Nova, a friendly voice assistant. Keep responses brief and
+    conversational, two or three sentences at most.
 ```
 
-## Step 4: Prepare Audio Files
+## Step 3: Create the audio files
 
-You'll need PCM audio files for testing. Audio requirements:
-
-| Parameter | Value |
-|-----------|-------|
-| Format | Raw PCM (no headers) |
-| Sample Rate | 16000 Hz |
-| Bit Depth | 16-bit |
-| Channels | Mono |
-
-Convert existing audio files using ffmpeg:
+Duplex audio files are raw PCM: 16 kHz, 16-bit, mono, no header. The mock provider does not decode speech, so we create two files of silence, about two seconds each:
 
 ```bash
-# Convert WAV to PCM
-ffmpeg -i input.wav -f s16le -ar 16000 -ac 1 audio/greeting.pcm
-
-# Convert MP3 to PCM
-ffmpeg -i input.mp3 -f s16le -ar 16000 -ac 1 audio/question.pcm
+python3 -c "open('audio/greeting.pcm', 'wb').write(bytes(64000))"
+python3 -c "open('audio/question.pcm', 'wb').write(bytes(64000))"
 ```
 
-Or record directly in the correct format:
+## Step 4: Create the mock duplex provider
 
-```bash
-# Record 5 seconds of audio (macOS)
-rec -r 16000 -b 16 -c 1 -e signed-integer audio/greeting.pcm trim 0 5
-```
-
-## Step 5: Create a Basic Duplex Scenario
+The mock provider replies to each audio turn with scripted text. Create `providers/mock-duplex.provider.yaml`:
 
 ```yaml
-# scenarios/basic-duplex.scenario.yaml
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Provider
+metadata:
+  name: mock-duplex
+
+spec:
+  id: mock-duplex
+  type: mock
+  model: mock-duplex-model
+  additional_config:
+    mock_config: mock-responses.yaml
+    auto_respond: true
+    duplex_scenario: basic-duplex
+```
+
+Create `mock-responses.yaml`, which holds the replies for `basic-duplex`, one per turn:
+
+```yaml
+defaultResponse: "I'm here to help! How can I assist you today?"
+
+scenarios:
+  basic-duplex:
+    defaultResponse: "I'm Nova, your voice assistant."
+    turns:
+      1:
+        text: "Hello! Yes, I can hear you. I'm Nova, your voice assistant."
+      2:
+        text: "My name is Nova, and I can answer questions and help with everyday tasks."
+```
+
+## Step 5: Create the duplex scenario
+
+The `duplex` block turns on duplex mode. With `mode: asm` the provider decides when each turn ends. Each turn sends an audio file instead of text.
+
+Create `scenarios/basic-duplex.scenario.yaml`:
+
+```yaml
 apiVersion: promptkit.altairalabs.ai/v1alpha1
 kind: Scenario
 metadata:
@@ -157,16 +166,14 @@ spec:
   task_type: voice-assistant
   description: "Basic duplex streaming test"
 
-  # Enable duplex mode
   duplex:
     timeout: "30s"
     turn_detection:
-      mode: asm  # Provider-native turn detection
+      mode: asm
 
   streaming: true
 
   turns:
-    # Turn 1: Greeting
     - role: user
       parts:
         - type: audio
@@ -178,7 +185,6 @@ spec:
           params:
             pattern: "(?i)(hello|hi|hey)"
 
-    # Turn 2: Question
     - role: user
       parts:
         - type: audio
@@ -186,273 +192,45 @@ spec:
             file_path: audio/question.pcm
             mime_type: audio/L16
       assertions:
-        - type: content_matches
+        - type: content_includes
           params:
-            pattern: ".{10,}"  # At least 10 chars response
+            patterns:
+              - "Nova"
 ```
 
-## Step 6: Run Your First Duplex Test
+The assertions run against the provider's reply to each turn. See the [assertions reference](/arena/reference/assertions/) for every type.
+
+## Step 6: Run the test
 
 ```bash
-promptarena run --scenario basic-duplex --provider gemini-live
+promptarena run --provider mock-duplex --scenario basic-duplex --simple
 ```
 
-You should see real-time streaming output as audio is processed.
+```text
+Generated 1 run combinations
+Starting execution…
 
-## Turn Detection Modes
+Done  [████████████████████████]  1/1
 
-Duplex supports two turn detection modes:
+Run Summary
+────────────────────────────────────────────────────
 
-### ASM Mode (Provider-Native)
+Total runs      1
+Passed          1 (100.0%)
+Failed          0 (0.0%)
 
-The provider (Gemini) handles turn detection internally:
+Providers       mock-duplex (1)
+Scenarios       1 scenarios
 
-```yaml
-duplex:
-  turn_detection:
-    mode: asm
+Saved to        out
 ```
 
-**Best for**: Simple tests, provider-specific behavior testing.
+The scenario passes: both replies matched their assertions. The run wrote its JSON results to `out/`. The duration lines in your output differ.
 
-### VAD Mode (Voice Activity Detection)
+## Next steps
 
-Client-side VAD with configurable thresholds:
-
-```yaml
-duplex:
-  turn_detection:
-    mode: vad
-    vad:
-      silence_threshold_ms: 600   # Silence to end turn
-      min_speech_ms: 200          # Minimum speech duration
-```
-
-**Best for**: Precise control over turn boundaries, testing interruption handling.
-
-## Step 7: Add Self-Play with TTS
-
-For fully automated testing, use self-play mode where an LLM generates user responses converted to audio via TTS:
-
-```yaml
-# scenarios/selfplay-duplex.scenario.yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: selfplay-duplex
-
-spec:
-  id: selfplay-duplex
-  task_type: voice-assistant
-  description: "Automated voice testing with TTS"
-
-  duplex:
-    timeout: "5m"
-    turn_detection:
-      mode: vad
-      vad:
-        silence_threshold_ms: 1200  # Longer for TTS pauses
-        min_speech_ms: 800
-    resilience:
-      max_retries: 2
-      partial_success_min_turns: 2
-      ignore_last_turn_session_end: true
-
-  streaming: true
-
-  turns:
-    # Initial audio greeting
-    - role: user
-      parts:
-        - type: audio
-          media:
-            file_path: audio/greeting.pcm
-            mime_type: audio/L16
-      assertions:
-        - type: content_matches
-          params:
-            pattern: "(?i)(help|assist)"
-
-    # Self-play: LLM generates questions, TTS converts to audio.
-    # Voice is resolved from the persona via the arena voice catalog.
-    - role: selfplay-user
-      persona: curious-customer
-      turns: 3  # Generate 3 follow-up turns
-      assertions:
-        - type: content_matches
-          params:
-            pattern: ".{10,}"
-
-  context:
-    goal: "Test multi-turn voice conversation"
-    user_type: "potential customer"
-```
-
-Create the persona and assign a voice from the catalog:
-
-```yaml
-# prompts/personas/curious-customer.persona.yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Persona
-metadata:
-  name: curious-customer
-
-spec:
-  id: curious-customer
-  voice: alloy   # references the voice catalog id in config.arena.yaml
-  description: "A curious customer asking follow-up questions"
-
-  system_prompt: |
-    You are a curious customer exploring a product or service.
-    Ask natural follow-up questions based on the assistant's responses.
-    Keep questions brief and conversational.
-```
-
-Declare the TTS provider and voice in the arena config:
-
-```yaml
-# config.arena.yaml (additions)
-spec:
-  tts_providers:
-    - file: providers/openai-alloy.provider.yaml
-    - file: providers/mock-tts.provider.yaml  # for CI / keyless runs
-
-  voices:
-    # Real TTS (requires OPENAI_API_KEY). For CI: change provider to mock-tts.
-    - id: alloy
-      provider: openai-alloy
-```
-
-```yaml
-# providers/openai-alloy.provider.yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Provider
-metadata:
-  name: openai-alloy
-spec:
-  id: openai-alloy
-  type: openai
-  role: tts
-  voice: alloy
-  sample_rate: 24000
-```
-
-Run the self-play test:
-
-```bash
-export OPENAI_API_KEY="your-openai-key"
-promptarena run --scenario selfplay-duplex --provider gemini-live
-```
-
-## Session Resilience Configuration
-
-Voice sessions can be interrupted by network issues or provider limits. Configure resilience:
-
-```yaml
-duplex:
-  resilience:
-    # Retry failed conversations
-    max_retries: 2
-    retry_delay_ms: 2000
-
-    # Delay between turns
-    inter_turn_delay_ms: 500
-    selfplay_inter_turn_delay_ms: 1000
-
-    # Accept partial success
-    partial_success_min_turns: 2
-
-    # Don't fail on final turn session end
-    ignore_last_turn_session_end: true
-```
-
-## Assertions for Voice Testing
-
-Common assertions for duplex tests:
-
-```yaml
-assertions:
-  # Content pattern matching
-  - type: content_matches
-    params:
-      pattern: "(?i)(hello|greeting)"
-
-  # Must include certain phrases
-  - type: content_includes
-    params:
-      patterns:
-        - "welcome"
-        - "help"
-
-  # Response length check
-  - type: content_matches
-    params:
-      pattern: ".{20,}"  # At least 20 characters
-
-  # Quality evaluation
-  - type: llm_judge
-    params:
-      criteria: "Response has positive sentiment"
-      judge_provider: "openai/gpt-4o-mini"
-```
-
-## Debugging Duplex Tests
-
-### Enable Verbose Logging
-
-```bash
-promptarena run --scenario basic-duplex --provider gemini-live --verbose
-```
-
-### Check Audio Format
-
-Ensure your audio files are correct:
-
-```bash
-# Check file info
-ffprobe audio/greeting.pcm
-
-# Play back (requires sox)
-play -r 16000 -b 16 -c 1 -e signed-integer audio/greeting.pcm
-```
-
-### Common Issues
-
-| Issue | Solution |
-|-------|----------|
-| "Session ended early" | Increase `partial_success_min_turns` |
-| "Empty response" | Check audio quality, increase `silence_threshold_ms` |
-| "Turn interrupted" | Increase `inter_turn_delay_ms` |
-| TTS pauses causing issues | Increase `silence_threshold_ms` to 1200ms+ |
-
-## Complete Example Project
-
-```
-duplex-test/
-├── config.arena.yaml
-├── audio/
-│   ├── greeting.pcm
-│   └── question.pcm
-├── prompts/
-│   ├── voice-assistant.prompt.yaml
-│   └── personas/
-│       └── curious-customer.persona.yaml
-├── providers/
-│   ├── gemini-live.provider.yaml
-│   └── openai-alloy.provider.yaml
-└── scenarios/
-    ├── basic-duplex.scenario.yaml
-    └── selfplay-duplex.scenario.yaml
-```
-
-## Next Steps
-
-- [Multi-Provider Testing](/arena/tutorials/02-multi-provider/) - Test across providers
-- [CI/CD Integration](/arena/tutorials/05-ci-integration/) - Automate voice tests
-- [Duplex Reference](/arena/reference/duplex-config/) - Full configuration options
-
-## See Also
-
-- [Arena CLI Reference](/arena/reference/cli-commands/) - Command options
-- [Assertions Reference](/arena/reference/assertions/) - All assertion types
-- [Validators Reference](/arena/reference/validators/) - Output validation
+- [Duplex streaming example](/arena/examples/duplex-streaming/): the same scenarios against Gemini Live and OpenAI Realtime, plus self-play, tools and noisy-line scenarios.
+- [Duplex configuration reference](/arena/reference/duplex-config/): turn detection modes, VAD thresholds and session resilience.
+- [Duplex architecture](/arena/explanation/duplex-architecture/): how duplex sessions stream audio.
+- [Assertions reference](/arena/reference/assertions/): every assertion type.
+- [CI/CD Integration](/arena/tutorials/05-ci-integration/): run these tests in CI.

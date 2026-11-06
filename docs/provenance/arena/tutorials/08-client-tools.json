@@ -1,0 +1,752 @@
+{
+ "page": "docs/src/content/docs/arena/tutorials/08-client-tools.md",
+ "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "Tutorial covers testing tools that execute on the caller's device, including consent simulation for grant and deny",
+   "verdict": "true",
+   "evidence": [
+    "arena/consent/hook.go:36"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "Client-mode tools are defined with mode: client",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:319"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "mock_result provides deterministic test data for tools",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:326"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "Client tools support consent simulation configured on the tool",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:271"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "Link target /arena/tutorials/01-first-test/ exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 6,
+   "claim": "Link target /arena/tutorials/04-mcp-tools/ exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 7,
+   "claim": "Client-side tools execute on the caller's device; the LLM requests the call and the end user's client runs it",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 8,
+   "claim": "Client tools typically require user consent before executing",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:292"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "PromptArena simulates the consent flow so granted and denied permissions can be tested",
+   "verdict": "true",
+   "evidence": [
+    "arena/consent/hook.go:62"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "Tool definition file is created at tools/get_location.tool.yaml",
+   "verdict": "true",
+   "evidence": [
+    "examples/client-tools/tools/get_location.tool.yaml"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "apiVersion is promptkit.altairalabs.ai/v1alpha1",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "kind is Tool",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "metadata.name is a field of the Tool object",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "Tool object has a spec field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "spec.description is a string field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "spec.mode accepts the value client",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "spec.timeout_ms is an integer field and is used with value 5000",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:323"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "spec.input_schema is a JSON-schema object with properties",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "input_schema property accuracy is a string with enum [high, low] and a description",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:317"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "spec.output_schema is a field of the Tool spec",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "spec.mock_result is a field whose value is an object returned to the LLM",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "spec.client is an object field on the Tool spec",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "client.consent.required is a boolean; value true is accepted",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:292"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "client.consent.message is a string field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "client.consent.decline_strategy accepts the value error",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:298"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "client.categories is a list field; the example uses the value location",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json:277"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "mode: client marks the tool as client-side rather than server-executed",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 28,
+   "claim": "mock_result provides a fixed response when running in test mode and the LLM receives it as device data",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 29,
+   "claim": "decline_strategy: error returns an error to the LLM when consent is denied",
+   "verdict": "true",
+   "evidence": [
+    "arena/consent/hook.go:51"
+   ]
+  },
+  {
+   "id": 30,
+   "claim": "PromptConfig file is created at prompts/chat.yaml",
+   "verdict": "true",
+   "evidence": [
+    "examples/client-tools/prompts/chat.yaml"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "apiVersion is promptkit.altairalabs.ai/v1alpha1 for PromptConfig",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/promptconfig.json"
+   ]
+  },
+  {
+   "id": 32,
+   "claim": "kind is PromptConfig",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/promptconfig.json"
+   ]
+  },
+  {
+   "id": 33,
+   "claim": "spec.task_type field accepts the value chat",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/promptconfig.json"
+   ]
+  },
+  {
+   "id": 34,
+   "claim": "spec.version is a string field and is set to v1.0.0",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/promptconfig.json"
+   ]
+  },
+  {
+   "id": 35,
+   "claim": "spec.description is a field of PromptConfig",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/promptconfig.json"
+   ]
+  },
+  {
+   "id": 36,
+   "claim": "spec.system_template is a field of PromptConfig",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/promptconfig.json"
+   ]
+  },
+  {
+   "id": 37,
+   "claim": "spec.allowed_tools is a list field of PromptConfig",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/promptconfig.json"
+   ]
+  },
+  {
+   "id": 38,
+   "claim": "allowed_tools entry get_location references the tool by metadata name or spec name",
+   "verdict": "true",
+   "evidence": [
+    "examples/client-tools/prompts/chat.yaml:20",
+    "schemas/v1alpha1/tool.json"
+   ]
+  },
+  {
+   "id": 39,
+   "claim": "Scenario file is created at scenarios/consent-grant.scenario.yaml",
+   "verdict": "true",
+   "evidence": [
+    "examples/client-tools/scenarios/consent-grant.scenario.yaml"
+   ]
+  },
+  {
+   "id": 40,
+   "claim": "apiVersion is promptkit.altairalabs.ai/v1alpha1 for Scenario and kind is Scenario",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json"
+   ]
+  },
+  {
+   "id": 41,
+   "claim": "spec.id is a field of Scenario",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json"
+   ]
+  },
+  {
+   "id": 42,
+   "claim": "spec.task_type accepts the value chat for Scenario",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json"
+   ]
+  },
+  {
+   "id": 43,
+   "claim": "spec.description is a field of Scenario",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json"
+   ]
+  },
+  {
+   "id": 44,
+   "claim": "spec.turns is a list of turn objects",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json"
+   ]
+  },
+  {
+   "id": 45,
+   "claim": "turn role accepts the value user",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json"
+   ]
+  },
+  {
+   "id": 46,
+   "claim": "turn content is a string field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json"
+   ]
+  },
+  {
+   "id": 47,
+   "claim": "turn assertions is a list field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json"
+   ]
+  },
+  {
+   "id": 48,
+   "claim": "assertion type tool_called is a registered assertion type",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/validate_types_test.go:43"
+   ]
+  },
+  {
+   "id": 49,
+   "claim": "assertion params accepts tool_name and message for tool_called",
+   "verdict": "false",
+   "evidence": [
+    "arena/assertions/validate_types_test.go:43",
+    "examples/client-tools/scenarios/consent-grant.scenario.yaml:16"
+   ]
+  },
+  {
+   "id": 50,
+   "claim": "assertion type content_matches is a registered assertion type",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/validate_types_test.go:45"
+   ]
+  },
+  {
+   "id": 51,
+   "claim": "assertion params accepts pattern and message for content_matches",
+   "verdict": "false",
+   "evidence": [
+    "arena/assertions/types.go:24",
+    "examples/client-tools/scenarios/consent-grant.scenario.yaml:24"
+   ]
+  },
+  {
+   "id": 52,
+   "claim": "pattern (?i)(san francisco|37\\.77|location) is a valid regular expression",
+   "verdict": "true",
+   "evidence": [
+    "examples/client-tools/scenarios/consent-grant.scenario.yaml:26"
+   ]
+  },
+  {
+   "id": 53,
+   "claim": "When no consent_overrides are specified, consent defaults to grant",
+   "verdict": "true",
+   "evidence": [
+    "arena/consent/hook.go:38",
+    "arena/consent/hook.go:62"
+   ]
+  },
+  {
+   "id": 54,
+   "claim": "The LLM calls get_location, receives mock_result data and uses it in its response",
+   "verdict": "true",
+   "evidence": [
+    "examples/client-tools/mock-responses.yaml:14"
+   ]
+  },
+  {
+   "id": 55,
+   "claim": "Deny scenario uses apiVersion promptkit.altairalabs.ai/v1alpha1 and kind Scenario",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json"
+   ]
+  },
+  {
+   "id": 56,
+   "claim": "turns[].consent_overrides is a field of a turn",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json"
+   ]
+  },
+  {
+   "id": 57,
+   "claim": "consent_overrides maps a tool name to deny",
+   "verdict": "true",
+   "evidence": [
+    "arena/consent/hook.go:47",
+    "schemas/v1alpha1/scenario.json:903"
+   ]
+  },
+  {
+   "id": 58,
+   "claim": "consent_overrides with deny simulates the user declining the consent prompt",
+   "verdict": "true",
+   "evidence": [
+    "arena/consent/hook.go:48",
+    "arena/engine/conversation_executor.go:402"
+   ]
+  },
+  {
+   "id": 59,
+   "claim": "LLM responds gracefully to denial rather than crashing or ignoring the error",
+   "verdict": "unverified",
+   "evidence": [
+    "examples/client-tools/mock-responses.yaml:24"
+   ]
+  },
+  {
+   "id": 60,
+   "claim": "Arena file uses apiVersion promptkit.altairalabs.ai/v1alpha1 and kind Arena",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/arena.json"
+   ]
+  },
+  {
+   "id": 61,
+   "claim": "metadata.name is a field of Arena",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/arena.json"
+   ]
+  },
+  {
+   "id": 62,
+   "claim": "spec.prompt_configs is a list of objects with id and file",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/arena.json"
+   ]
+  },
+  {
+   "id": 63,
+   "claim": "prompt_configs entry id: chat",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/arena.json"
+   ]
+  },
+  {
+   "id": 64,
+   "claim": "prompt_configs entry file",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/arena.json"
+   ]
+  },
+  {
+   "id": 65,
+   "claim": "spec.providers is a list with file entries",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/arena.json"
+   ]
+  },
+  {
+   "id": 66,
+   "claim": "providers/mock-provider.yaml is a provider file path",
+   "verdict": "false",
+   "evidence": [
+    "examples/client-tools/mock-responses.yaml",
+    "examples/client-tools/providers/mock-provider.yaml"
+   ]
+  },
+  {
+   "id": 67,
+   "claim": "spec.scenarios is a list with file entries",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/arena.json"
+   ]
+  },
+  {
+   "id": 68,
+   "claim": "spec.tools is a list with file entries",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/arena.json"
+   ]
+  },
+  {
+   "id": 69,
+   "claim": "spec.defaults is an object field of Arena",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/arena.json"
+   ]
+  },
+  {
+   "id": 70,
+   "claim": "defaults.temperature is a field set to 0.0",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/arena.json"
+   ]
+  },
+  {
+   "id": 71,
+   "claim": "defaults.max_tokens is a field set to 500",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/arena.json"
+   ]
+  },
+  {
+   "id": 72,
+   "claim": "defaults.seed is a field set to 42",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/arena.json"
+   ]
+  },
+  {
+   "id": 73,
+   "claim": "defaults.output is an object field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/arena.json"
+   ]
+  },
+  {
+   "id": 74,
+   "claim": "defaults.output.dir is a field and the value out is accepted",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/arena.json"
+   ]
+  },
+  {
+   "id": 75,
+   "claim": "defaults.output.formats accepts the values json and markdown",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:174",
+    "schemas/v1alpha1/arena.json"
+   ]
+  },
+  {
+   "id": 76,
+   "claim": "Arena registers the tool with the pipeline and handles consent simulation automatically from scenario overrides",
+   "verdict": "true",
+   "evidence": [
+    "arena/consent/hook.go:36",
+    "arena/turnexecutors/pipeline_stages_integration.go:760"
+   ]
+  },
+  {
+   "id": 77,
+   "claim": "Command promptarena run exists",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go"
+   ]
+  },
+  {
+   "id": 78,
+   "claim": "promptarena run accepts the --ci flag",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:169"
+   ]
+  },
+  {
+   "id": 79,
+   "claim": "promptarena run accepts --format with the value markdown",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:174"
+   ]
+  },
+  {
+   "id": 80,
+   "claim": "Running from the project directory finds config.arena.yaml by default",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:158"
+   ]
+  },
+  {
+   "id": 81,
+   "claim": "Run output shows both scenarios executed",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/run.go"
+   ]
+  },
+  {
+   "id": 82,
+   "claim": "Scenario consent-grant calls the tool, returns mock_result, and the LLM uses the coordinates",
+   "verdict": "true",
+   "evidence": [
+    "arena/consent/hook.go:62",
+    "examples/client-tools/mock-responses.yaml:6"
+   ]
+  },
+  {
+   "id": 83,
+   "claim": "Scenario consent-deny attempts the tool call, consent is denied, and the LLM responds with a fallback message",
+   "verdict": "true",
+   "evidence": [
+    "arena/consent/hook.go:48",
+    "examples/client-tools/mock-responses.yaml:16"
+   ]
+  },
+  {
+   "id": 84,
+   "claim": "Results are written to out/results.md",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go"
+   ]
+  },
+  {
+   "id": 85,
+   "claim": "Command promptarena serve exists and serves an interactive web UI",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:109"
+   ]
+  },
+  {
+   "id": 86,
+   "claim": "Summary item: client-mode tool defined with mode: client",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json"
+   ]
+  },
+  {
+   "id": 87,
+   "claim": "Summary item: mock_result provides deterministic data without a device",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json"
+   ]
+  },
+  {
+   "id": 88,
+   "claim": "Summary item: consent simulation configured with client.consent settings on the tool",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json"
+   ]
+  },
+  {
+   "id": 89,
+   "claim": "Summary item: grant path is the default behaviour",
+   "verdict": "true",
+   "evidence": [
+    "arena/consent/hook.go:38",
+    "arena/consent/hook.go:62"
+   ]
+  },
+  {
+   "id": 90,
+   "claim": "Summary item: deny path uses consent_overrides",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/tool.json"
+   ]
+  },
+  {
+   "id": 91,
+   "claim": "examples/client-tools/ directory exists in the PromptKit repository",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 92,
+   "claim": "Link target /arena/tutorials/05-ci-integration/ exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 93,
+   "claim": "Link target /arena/tutorials/04-mcp-tools/ exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 94,
+   "claim": "Link target /arena/reference/tool-authoring/ Client section covers client mode (cross-reference from concept section)",
+   "verdict": "true",
+   "evidence": []
+  }
+ ]
+}

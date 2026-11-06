@@ -1,29 +1,43 @@
 ---
 title: 'Tutorial 8: Client-Side Tools'
+description: 'Test a client-mode tool in PromptArena with a mock provider, and simulate consent grant and consent deny.'
+verified:
+  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  sources:
+    - arena/assertions/types.go
+    - arena/assertions/validate_types_test.go
+    - arena/cmd/promptarena/run.go
+    - arena/cmd/promptarena/serve_interactive.go
+    - arena/consent/hook.go
+    - arena/engine/conversation_executor.go
+    - arena/turnexecutors/pipeline_stages_integration.go
+    - examples/client-tools/mock-responses.yaml
+    - examples/client-tools/prompts/chat.yaml
+    - examples/client-tools/providers/mock-provider.yaml
+    - examples/client-tools/scenarios/consent-grant.scenario.yaml
+    - examples/client-tools/tools/get_location.tool.yaml
+    - schemas/v1alpha1/arena.json
+    - schemas/v1alpha1/promptconfig.json
+    - schemas/v1alpha1/scenario.json
+    - schemas/v1alpha1/tool.json
 ---
-Learn how to test tools that execute on the caller's device, including consent simulation for grant and deny scenarios.
+We will test a tool that runs on the caller's device, and simulate the user granting and denying consent.
 
-## What You'll Learn
+## What we will build
 
-- Define client-mode tools that run on the user's device
-- Use `mock_result` to provide deterministic test data
-- Configure consent simulation for client-side tools
-- Test both consent grant and consent deny scenarios
+A project with one client-mode tool, `get_location`, two scenarios that exercise it, and a mock provider that replies without an API key. At the end, `promptarena run --simple` passes both scenarios and writes `out/results.md`.
 
 ## Prerequisites
 
-- Completed [Tutorials 1-3](/arena/tutorials/01-first-test/)
-- Understanding of tool calling in LLMs (see [Tutorial 4](/arena/tutorials/04-mcp-tools/))
+- `promptarena` installed ([Tutorial 1](/arena/tutorials/01-first-test/), Step 1)
 
-## What are Client-Side Tools?
+No provider key is needed.
 
-Most tools execute server-side -- the LLM calls them, and the server runs the logic. **Client-side tools** are different: they execute on the caller's device. Think GPS location, camera access, biometric sensors, or local file pickers. The LLM requests the tool call, but the actual execution happens on the end user's client.
+A client-mode tool is handled outside the runtime and executes on the caller's device; see [Tool authoring](/arena/reference/tool-authoring/) for the details. PromptArena simulates the consent prompt, so we can test both granted and denied permission.
 
-Because these tools access sensitive device capabilities, they typically require **user consent** before executing. PromptArena lets you simulate this consent flow so you can test how your LLM handles both granted and denied permissions.
+## Step 1: Define a client-mode tool
 
-## Step 1: Define a Client-Mode Tool
-
-Create a tool definition file at `tools/get_location.tool.yaml`:
+Create `tools/get_location.tool.yaml`:
 
 ```yaml
 apiVersion: promptkit.altairalabs.ai/v1alpha1
@@ -60,16 +74,11 @@ spec:
       - location
 ```
 
-Key fields to note:
+`mode: client` makes this a client-side tool, `mock_result` is what the model receives when the call goes through, and `client.consent` makes the call wait for the user's permission.
 
-- **`mode: client`** -- marks this tool as client-side rather than server-executed.
-- **`mock_result`** -- provides a fixed response when running in test mode. This is the data the LLM receives as if the device returned it.
-- **`client.consent.required: true`** -- indicates the tool needs user permission before executing.
-- **`client.consent.decline_strategy: error`** -- controls what happens when consent is denied. With `error`, the tool returns an error to the LLM so it can respond accordingly.
+## Step 2: Create a prompt
 
-## Step 2: Create a Prompt Configuration
-
-Create `prompts/chat.yaml` to tell the LLM about the available tool:
+Create `prompts/chat.yaml`:
 
 ```yaml
 apiVersion: promptkit.altairalabs.ai/v1alpha1
@@ -95,11 +104,11 @@ spec:
     - get_location
 ```
 
-## Step 3: Write Scenarios
+## Step 3: Write the scenarios
 
-You need two scenarios: one where the user grants consent and one where they deny it.
+We write two scenarios: one where the user grants consent and one where they deny it.
 
-### Consent Grant Scenario
+### Consent granted
 
 Create `scenarios/consent-grant.scenario.yaml`:
 
@@ -119,8 +128,8 @@ spec:
       assertions:
         - type: tool_called
           params:
-            tool_name: get_location
-            message: "Should call get_location tool when user asks for location"
+            tool_names: [get_location]
+          message: "Should call get_location tool when user asks for location"
 
     - role: user
       content: "Tell me more about this area"
@@ -128,12 +137,12 @@ spec:
         - type: content_matches
           params:
             pattern: "(?i)(san francisco|37\\.77|location)"
-            message: "Should reference the location data from the tool result"
+          message: "Should reference the location data from the tool result"
 ```
 
-When no `consent_overrides` are specified, consent defaults to **grant**. The LLM calls `get_location`, receives the `mock_result` data, and uses it in its response.
+When no `consent_overrides` are specified, consent defaults to grant. The model calls `get_location`, receives the `mock_result` data, and uses it in its response.
 
-### Consent Deny Scenario
+### Consent denied
 
 Create `scenarios/consent-deny.scenario.yaml`:
 
@@ -153,10 +162,11 @@ spec:
       consent_overrides:
         get_location: deny
       assertions:
-        - type: tool_called
+        - type: tool_call_count
           params:
-            tool_name: get_location
-            message: "Should attempt to call get_location tool"
+            tool: get_location
+            min: 1
+          message: "Should attempt to call get_location tool"
 
     - role: user
       content: "Can you try again?"
@@ -164,14 +174,60 @@ spec:
         - type: content_matches
           params:
             pattern: "(?i)(unable|denied|provide|manually|sorry)"
-            message: "Should explain that location access was denied and suggest alternatives"
+          message: "Should explain that location access was denied and suggest alternatives"
 ```
 
-The key line is `consent_overrides: { get_location: deny }`. This simulates the user declining the consent prompt. The LLM should detect the denial and respond gracefully rather than crashing or ignoring the error.
+`consent_overrides: { get_location: deny }` simulates the user declining the consent prompt on that turn.
 
-## Step 4: Configure Arena
+The first assertion is `tool_call_count` because `tool_called` counts only calls that succeed, and a denied call does not.
 
-Create `config.arena.yaml` to tie everything together:
+## Step 4: Add a mock provider
+
+The mock provider replays scripted replies, so the run needs no API key. Create `providers/mock-provider.yaml`:
+
+```yaml
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Provider
+metadata:
+  name: mock-client-tools
+spec:
+  id: mock-client-tools
+  type: mock
+  model: mock-model
+  additional_config:
+    mock_config: mock-responses.yaml
+```
+
+Create `mock-responses.yaml` in the project root. Each scenario's replies are keyed by the scenario's `metadata.name`. Turn 1 asks for the tool, and turn 2 is plain text:
+
+```yaml
+defaultResponse: "I can help you with that."
+
+scenarios:
+  consent-grant:
+    defaultResponse: "Here is your location information."
+    turns:
+      1:
+        tool_calls:
+          - name: "get_location"
+            arguments:
+              accuracy: "high"
+      2: "Based on your location at latitude 37.7749, longitude -122.4194, you appear to be in San Francisco, California."
+
+  consent-deny:
+    defaultResponse: "I'm unable to access your location."
+    turns:
+      1:
+        tool_calls:
+          - name: "get_location"
+            arguments:
+              accuracy: "high"
+      2: "I'm sorry, I was unable to access your location because the request was denied. Could you please provide your location manually so I can assist you?"
+```
+
+## Step 5: Create the arena configuration
+
+Create `config.arena.yaml`:
 
 ```yaml
 apiVersion: promptkit.altairalabs.ai/v1alpha1
@@ -202,38 +258,49 @@ spec:
       formats: ["json", "markdown"]
 ```
 
-Arena registers the tool with the pipeline and handles consent simulation automatically based on your scenario overrides.
-
-## Step 5: Run the Tests
-
-Run the tests from your project directory:
+## Step 6: Run the tests
 
 ```bash
-promptarena run --ci --format markdown
+promptarena run --simple
 ```
 
-You should see output indicating both scenarios were executed:
+The log lines include a `tool hook denied` warning, which is the consent-deny scenario declining the call. The run ends with a summary:
 
-- **consent-grant** -- the tool is called, `mock_result` is returned, and the LLM uses the coordinates in its response.
-- **consent-deny** -- the tool call is attempted, consent is denied, and the LLM responds with a helpful fallback message.
+```text
+Run Summary
+────────────────────────────────────────────────────
 
-Open `out/results.md` to view the full results, or run `promptarena serve` for the interactive web UI.
+Total runs      2
+Passed          2 (100.0%)
+Failed          0 (0.0%)
 
-## Summary
+Total cost      $0.0029
+Total tokens    285
+Total duration  13ms
+Avg duration    6ms per run
 
-In this tutorial you learned how to:
+Providers       mock-client-tools (2)
+Scenarios       2 scenarios
+Regions         default
 
-1. Define a **client-mode tool** with `mode: client` that represents device-side functionality
-2. Use **`mock_result`** to provide deterministic data during testing without a real device
-3. Configure **consent simulation** with `client.consent` settings on the tool
-4. Test the **consent grant** path (default behavior) to verify the tool executes correctly
-5. Test the **consent deny** path using `consent_overrides` to verify graceful degradation
+Saved to        out
+```
 
-Testing consent flows is important because real users will sometimes deny permissions. Your LLM should always handle denial gracefully -- offering alternatives rather than failing silently.
+Open `out/results.md`. It has one row per scenario, `consent-grant` and `consent-deny`, each with a pass status, two passing assertions and one tool call.
 
-For a complete working example, see the [`examples/client-tools/`](https://github.com/AltairaLabs/promptarena/v2/tree/main/examples/client-tools) directory in the PromptKit repository.
+To browse the results in the web UI, run `promptarena serve` from the project directory.
 
-## Next Steps
+## What we built
 
-- **[Tutorial 5: CI Integration](/arena/tutorials/05-ci-integration/)** -- automate client-tool tests in your CI/CD pipeline
-- **[Tutorial 4: MCP Tools](/arena/tutorials/04-mcp-tools/)** -- learn about server-side tool testing for comparison
+1. A client-mode tool with `mode: client` and a `mock_result`.
+2. Consent simulation through `client.consent` on the tool and `consent_overrides` on a turn.
+3. A grant scenario and a deny scenario, run against a mock provider.
+
+The mock provider scripts the replies, so the run shows that the tool call is made and that the assertions match.
+
+For a complete working example, see the [`examples/client-tools/`](https://github.com/AltairaLabs/promptarena/tree/main/examples/client-tools) directory in the PromptArena repository.
+
+## Next steps
+
+- [Tutorial 5: CI Integration](/arena/tutorials/05-ci-integration/) automates client-tool tests in your CI/CD pipeline.
+- [Tutorial 4: MCP Tools](/arena/tutorials/04-mcp-tools/) covers server-side tool testing for comparison.

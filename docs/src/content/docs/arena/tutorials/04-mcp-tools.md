@@ -1,78 +1,75 @@
 ---
 title: 'Tutorial 4: Testing MCP Tools'
+description: Connect the npm memory MCP server to Arena, let OpenAI call its tools, and assert on the tool calls.
+verified:
+  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  sources:
+    - arena/arenaconfig/manifest_helpers.go
+    - arena/arenaconfig/types.go
+    - arena/arenaconfig/validator_tools.go
+    - arena/cmd/promptarena/run.go
+    - arena/engine/builder_integration.go
+    - arena/engine/engine.go
+    - arena/mcp/config.go
+    - examples/mcp-filesystem-test/config.arena.yaml
+    - examples/mcp-memory-test/config.arena.yaml
+    - examples/mcp-memory-test/prompts/assistant.yaml
+    - schemas/v1alpha1/arena.json
+    - schemas/v1alpha1/promptconfig.json
+    - schemas/v1alpha1/scenario.json
+    - schemas/v1alpha1/tool.json
 ---
-Learn how to test LLMs that use Model Context Protocol (MCP) tools and function calling.
+In this tutorial we test a model that stores and recalls a fact through a Model Context Protocol (MCP) server. Arena starts the server, offers its tools to the model, and checks which tools the model called.
 
-## What You'll Learn
+## What we will build
 
-- Configure MCP tool servers
-- Test tool/function calling
-- Validate tool arguments
-- Mock tool responses for testing
-- Debug tool integration issues
+A project that runs two turns against OpenAI and the `memory` MCP server:
+
+```text
+mcp-test/
+├── config.arena.yaml
+├── prompts/assistant-with-tools.yaml
+├── providers/openai.yaml
+└── scenarios/tool-calling-test.yaml
+```
 
 ## Prerequisites
 
-- Completed [Tutorial 1-3](/arena/tutorials/01-first-test/)
-- Understanding of function calling in LLMs
-- Node.js installed (for MCP servers)
+- `promptarena` installed ([Tutorial 1](/arena/tutorials/01-first-test/))
+- Node.js, so that `npx` is available
+- An OpenAI API key
 
-## What are MCP Tools?
+This tutorial pins the server version it was tested with: `@modelcontextprotocol/server-memory@2025.4.25`.
 
-Model Context Protocol (MCP) enables LLMs to interact with external systems:
-- **Database queries**: Read/write data
-- **API calls**: External service integration
-- **File operations**: Read/write files
-- **System commands**: Execute scripts
-
-MCP standardizes how LLMs call tools across providers.
-
-## Step 1: Install MCP Server
+## Step 1: Create the project directory
 
 ```bash
-# Install the MCP filesystem server (example)
-npm install -g @modelcontextprotocol/server-filesystem
-
-# Or use PromptKit's built-in MCP memory server
-cd $GOPATH/src/github.com/altairalabs/promptkit
-go install ./runtime/mcp/servers/memory
+mkdir -p mcp-test/prompts mcp-test/providers mcp-test/scenarios
+cd mcp-test
+export OPENAI_API_KEY="sk-your-api-key-here"
 ```
 
-## Step 2: Configure MCP Server
+`promptarena` does not read `.env` files, so the key is exported in the shell you run it from.
 
-MCP servers are configured directly in your Arena configuration. The tools they provide are auto-discovered.
+## Step 2: Create the provider
 
-## Step 3: Configure Tools in Arena
-
-Edit `arena.yaml`:
+Create `providers/openai.yaml`:
 
 ```yaml
 apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Arena
+kind: Provider
 metadata:
-  name: mcp-tools-test
-
+  name: openai
 spec:
-  prompt_configs:
-    - id: assistant
-      file: prompts/assistant-with-tools.yaml
-  
-  providers:
-    - file: providers/openai.yaml
-  
-  scenarios:
-    - file: scenarios/tool-calling-test.yaml
-  
-  # Add MCP server configuration
-  mcp_servers:
-    memory:
-      command: mcp-memory-server
-      args: []
-      env:
-        LOG_LEVEL: info
+  id: openai
+  type: openai
+  model: gpt-4o-mini
+  defaults:
+    temperature: 0.2
+    max_tokens: 500
 ```
 
-## Step 4: Create Tool-Enabled Prompt
+## Step 3: Create a prompt that may use the tools
 
 Create `prompts/assistant-with-tools.yaml`:
 
@@ -84,17 +81,24 @@ metadata:
 
 spec:
   task_type: assistant
-  
+  version: "v1.0.0"
+  description: "Assistant with MCP memory tools"
+
   system_template: |
-    You are a helpful assistant with access to memory storage tools.
-    
-    When users ask you to remember information, use the store_memory tool.
-    When users ask you to recall information, use the recall_memory tool.
-    
+    You are a helpful assistant with access to a knowledge graph memory.
+
+    When users ask you to remember information, use the create_entities tool.
+    When users ask you to recall information, use the read_graph tool.
+
     Always confirm when you've stored or retrieved information.
+
+  allowed_tools:
+    - mcp__memory__*
 ```
 
-## Step 5: Create Tool-Calling Test
+Arena names every MCP tool `mcp__<server>__<tool>`. A prompt only offers the tools listed in `allowed_tools`, so `mcp__memory__*` offers every tool of the server named `memory`. Without it, the model sees no tools.
+
+## Step 4: Create the scenario
 
 Create `scenarios/tool-calling-test.yaml`:
 
@@ -109,477 +113,126 @@ metadata:
 
 spec:
   task_type: assistant
-  
+  description: Store and recall a fact through the MCP memory server
+
   turns:
-    # Turn 1: Request to store information
     - role: user
       content: "Remember that my favorite color is blue"
       assertions:
         - type: tools_called
           params:
-            tools: ["store_memory"]
-            message: "Should call store_memory tool"
-        
+            tools: ["mcp__memory__create_entities"]
+          message: "Should call create_entities"
         - type: content_includes
           params:
-            patterns: ["remember"]
-            message: "Should confirm storage"
-    
-    # Turn 2: Request to recall information
+            patterns: ["blue"]
+          message: "Should confirm storage"
+
     - role: user
       content: "What's my favorite color?"
       assertions:
         - type: tools_called
           params:
-            tools: ["recall_memory"]
-            message: "Should call recall_memory tool"
-        
+            tools: ["mcp__memory__read_graph"]
+          message: "Should call read_graph"
         - type: content_includes
           params:
             patterns: ["blue"]
-            message: "Should include recalled information"
+          message: "Should include recalled information"
 ```
 
-## Step 6: Run Tool Tests
+`tools_called` passes when every listed tool was called at least once in that turn. It matches the qualified name, so a bare `create_entities` fails.
+
+## Step 5: Declare the MCP server
+
+Create `config.arena.yaml`:
+
+```yaml
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Arena
+metadata:
+  name: mcp-tools-test
+
+spec:
+  prompt_configs:
+    - id: assistant
+      file: prompts/assistant-with-tools.yaml
+
+  providers:
+    - file: providers/openai.yaml
+
+  scenarios:
+    - file: scenarios/tool-calling-test.yaml
+
+  mcp_servers:
+    - name: memory
+      command: npx
+      args: ["-y", "@modelcontextprotocol/server-memory@2025.4.25"]
+
+  defaults:
+    temperature: 0.2
+    max_tokens: 500
+    output:
+      dir: out
+      formats: ["json", "markdown"]
+```
+
+`mcp_servers` is a list. Each entry has a `name` (the `<server>` in the tool names), a `command` and its `args`. Arena starts the process over stdio and discovers its tools.
+
+## Step 6: Run the test
 
 ```bash
-# Run with tools enabled
-promptarena run --scenario tool-calling-test
-
-# View detailed tool execution
-promptarena run --verbose --scenario tool-calling-test
+promptarena run --simple --scenario basic-tool-calling
 ```
 
-## Step 7: Mock Tool Responses
+`--scenario` takes the scenario `id` (or `metadata.name` when there is no `id`), not its file name. Our scenario has no `id`, so it is `basic-tool-calling`. The first run downloads the server, so it takes longer. The run ends with a summary:
 
-For testing without real tool execution, create mock tool definitions:
+```text
+Done  [████████████████████████]  1/1
 
-Create `tools/store-memory-mock.yaml`:
+Run Summary
+────────────────────────────────────────────────────
 
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Tool
-metadata:
-  name: store-memory-mock
-
-spec:
-  name: store_memory
-  description: "Store information in memory"
-  
-  input_schema:
-    type: object
-    properties:
-      key:
-        type: string
-        description: "Memory key"
-      value:
-        type: string
-        description: "Value to store"
-    required: [key, value]
-  
-  mode: mock
-  mock_result:
-    success: true
-    message: "Stored successfully"
+Total runs      1
+Passed          1 (100.0%)
+Failed          0 (0.0%)
 ```
 
-Create `tools/recall-memory-mock.yaml`:
+## Step 7: See the tool calls
 
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Tool
-metadata:
-  name: recall-memory-mock
-
-spec:
-  name: recall_memory
-  description: "Recall stored information"
-  
-  input_schema:
-    type: object
-    properties:
-      key:
-        type: string
-        description: "Memory key to recall"
-    required: [key]
-  
-  mode: mock
-  mock_template: |
-    {
-      "success": true,
-      "value": "blue"
-    }
-```
-
-Update `arena.yaml`:
-
-```yaml
-spec:
-  # Use mock tools instead of MCP servers for testing
-  tools:
-    - file: tools/store-memory-mock.yaml
-    - file: tools/recall-memory-mock.yaml
-```
-
-## Step 8: Complex Tool Scenarios
-
-### Sequential Tool Calls
-
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: multiple-tool-operations
-  labels:
-    category: tools
-    complexity: complex
-
-spec:
-  task_type: assistant
-  
-  turns:
-    - role: user
-      content: "Remember: my name is Alice, email is alice@example.com, and I'm a developer"
-      assertions:
-        - type: tools_called
-          params:
-            tools: ["store_memory"]
-            message: "Should call store_memory multiple times"
-```
-
-### Conditional Tool Use
-
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: conditional-tool-calling
-  labels:
-    category: conditional
-
-spec:
-  task_type: assistant
-  
-  turns:
-    # Scenario where no tool is needed
-    - role: user
-      content: "What's 2+2?"
-      assertions:
-        - type: content_includes
-          params:
-            patterns: ["4"]
-            message: "Should answer directly"
-    
-    # Scenario where tool is needed
-    - role: user
-      content: "Look up the weather in San Francisco"
-      assertions:
-        - type: tools_called
-          params:
-            tools: ["get_weather"]
-            message: "Should call weather tool"
-```
-
-### Error Handling
-
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: tool-error-handling
-  labels:
-    category: error-handling
-
-spec:
-  task_type: assistant
-  
-  turns:
-    - role: user
-      content: "Recall my favorite food"
-      assertions:
-        - type: tools_called
-          params:
-            tools: ["recall_memory"]
-            message: "Should attempt to recall"
-        
-        - type: content_includes
-          params:
-            patterns: ["don't have"]
-            message: "Should handle gracefully when not found"
-```
-
-## Step 9: Testing Different Tool Types
-
-### Database Tools
-
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: database-query
-  labels:
-    category: database
-
-spec:
-  task_type: assistant
-  
-  turns:
-    - role: user
-      content: "Find all users with role 'admin'"
-      assertions:
-        - type: tools_called
-          params:
-            tools: ["query_database"]
-            message: "Should query database"
-        
-        - type: content_includes
-          params:
-            patterns: ["admin"]
-            message: "Should mention admin users"
-```
-
-### API Integration
-
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: external-api-call
-  labels:
-    category: api
-
-spec:
-  task_type: assistant
-  
-  turns:
-    - role: user
-      content: "Get the current Bitcoin price"
-      assertions:
-        - type: tools_called
-          params:
-            tools: ["fetch_crypto_price"]
-            message: "Should call crypto API"
-        
-        - type: content_includes
-          params:
-            patterns: ["Bitcoin"]
-            message: "Should mention Bitcoin"
-```
-
-### File Operations
-
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: file-read-operation
-  labels:
-    category: filesystem
-
-spec:
-  task_type: assistant
-  
-  turns:
-    - role: user
-      content: "Read the contents of data.json"
-      assertions:
-        - type: tools_called
-          params:
-            tools: ["read_file"]
-            message: "Should call read_file"
-```
-
-## Step 10: Advanced Tool Testing
-
-### Tool Call Chains
-
-Test when one tool call leads to another:
-
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: tool-call-chain
-  labels:
-    category: chain
-
-spec:
-  task_type: assistant
-  
-  turns:
-    - role: user
-      content: "Find Alice's email and send her a welcome message"
-      assertions:
-        - type: tools_called
-          params:
-            tools: ["lookup_user", "send_email"]
-            message: "Should call both tools in sequence"
-```
-
-### Parallel Tool Calls
-
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: parallel-tool-execution
-  labels:
-    category: parallel
-
-spec:
-  task_type: assistant
-  
-  turns:
-    - role: user
-      content: "Check the weather in New York, London, and Tokyo"
-      assertions:
-        - type: tools_called
-          params:
-            tools: ["get_weather"]
-            message: "Should call weather tool for multiple locations"
-```
-
-## Debugging Tool Issues
-
-### Check Tool Configuration
+Each run is saved as `out/<run-id>.json`. List the tool calls in it with `jq`:
 
 ```bash
-# Inspect tool configuration
-promptarena config-inspect --verbose
-
-# Should show loaded tools
+jq '.Messages[] | select(.tool_calls != null) | .tool_calls[] | {name, args}' out/*_basic-tool-calling_*.json
 ```
 
-### Verbose Tool Execution
+The output has one object per call, with the qualified `name` and the `args` the model sent:
 
-```bash
-# See detailed tool calls and responses
-promptarena run --verbose --scenario tool-calling-test
-
-# Output shows:
-# [TOOL CALL] store_memory({"key": "favorite_color", "value": "blue"})
-# [TOOL RESPONSE] {"success": true, "message": "Stored successfully"}
+```text
+{"name":"mcp__memory__create_entities","args":{"entities":[{"entityType":"UserPreference","name":"FavoriteColor","observations":["User's favorite color is blue."]}]}}
+{"name":"mcp__memory__read_graph","args":{}}
 ```
 
-### Debug MCP Server
+The arguments vary from run to run. For the file layout, see [Output formats](/arena/reference/output-formats/).
 
-```bash
-# Test MCP server directly
-echo '{"method": "tools/list"}' | mcp-memory-server
+## Common issues
 
-# Check server logs
-export LOG_LEVEL=debug
-promptarena run --scenario tool-test
-```
+### The model does not call a tool
 
-## Tool Testing Best Practices
+Check that the prompt lists the tool under `allowed_tools`, using the `mcp__<server>__<tool>` form.
 
-### 1. Test Tool Selection
+### `tools not called enough`
 
-```yaml
-# Verify correct tool is chosen
-assertions:
-  - type: tools_called
-    params:
-      tools: ["correct_tool_name"]
-      message: "Should call the right tool"
-```
+The assertion names a tool the model did not call, or used the bare tool name. Use the qualified name from Step 7.
 
-### 2. Validate Tool Calls
+### `scenario ... not found`
 
-```yaml
-# Check that tools are called appropriately
-assertions:
-  - type: tools_called
-    params:
-      tools: ["expected_tool"]
-      message: "Should use the expected tool"
-```
+`--scenario` takes the scenario `id` (or `metadata.name` when there is no `id`). Use `basic-tool-calling`.
 
-### 3. Mock External Dependencies
+## Next steps
 
-```yaml
-# Use mock tools for external services
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Tool
-metadata:
-  name: mock-external-api
+You have tested a model against a real MCP server.
 
-spec:
-  name: external_api
-  description: "Mock external API"
-  mode: mock
-  mock_result:
-    status: "success"
-```
-
-### 4. Test Error Scenarios
-
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: tool-failure-handling
-
-spec:
-  task_type: assistant
-  
-  turns:
-    - role: user
-      content: "Do something that requires a tool"
-      assertions:
-        - type: content_includes
-          params:
-            patterns: ["error"]
-            message: "Should handle tool errors gracefully"
-```
-
-## Common Issues
-
-### Tool Not Called
-
-```bash
-# Check the prompt declares the MCP tools it needs
-cat prompts/assistant-with-tools.yaml | grep -A5 allowed_tools
-
-# Each MCP tool must be listed under allowed_tools, e.g. mcp__<server>__<tool>
-```
-
-### Wrong Tool Arguments
-
-```bash
-# View actual tool calls
-cat out/results.json | jq '.results[] | select(.tool_calls != null) | {
-  tool: .tool_calls[].name,
-  args: .tool_calls[].arguments
-}'
-```
-
-### MCP Server Connection Failed
-
-```bash
-# Verify MCP server is running
-ps aux | grep mcp
-
-# Test MCP server directly
-mcp-memory-server --help
-```
-
-## Next Steps
-
-You now know how to test LLMs with tool calling!
-
-**Continue learning:**
-- **[Tutorial 5: CI Integration](/arena/tutorials/05-ci-integration/)** - Automate tool testing in CI/CD
-- **[How-To: MCP Tools](/arena/how-to/providers/use-mock-providers/)** - Advanced tool configuration
-- **[Runtime: Tools & MCP](https://promptkit.altairalabs.ai/runtime/reference/tools-mcp/)** - Complete tool reference
-
-**Try this:**
-- Create custom MCP tools
-- Test tool calling across multiple providers
-- Build a tool call chain test
-- Mock complex external APIs
-
-## What's Next?
-
-In Tutorial 5, you'll learn how to integrate all these tests into your CI/CD pipeline for automated quality gates.
+- [Test MCP tools](/arena/how-to/agents/test-mcp-tools/): more MCP server configurations and troubleshooting.
+- [Write Scenarios](/arena/how-to/scenarios/write-scenarios/): more assertion patterns.
+- [Tutorial 5: CI Integration](/arena/tutorials/05-ci-integration/): run these tests on every commit.

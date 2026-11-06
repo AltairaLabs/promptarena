@@ -1,0 +1,605 @@
+{
+ "page": "docs/src/content/docs/arena/tutorials/05-ci-integration.md",
+ "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "Tutorials 1-4 exist at /arena/tutorials/01-first-test/ through /arena/tutorials/04-mcp-tools/ (link target)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 2,
+   "claim": "The npm package @altairalabs/promptarena is published and is the recommended CI install",
+   "verdict": "true",
+   "evidence": [
+    "npm/promptarena/package.json:2"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "The npm route needs no Go toolchain (prebuilt binaries per platform)",
+   "verdict": "true",
+   "evidence": [
+    "npm/promptarena/lib/resolve.js:1",
+    "npm/promptarena/package.json:16"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "The npm package works on Linux, macOS and Windows",
+   "verdict": "true",
+   "evidence": [
+    "npm/promptarena/lib/resolve.js:17"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "npm install -g @altairalabs/promptarena puts a promptarena binary on PATH (repeated at lines 133, 411, 459, 504, 527, 566)",
+   "verdict": "true",
+   "evidence": [
+    "npm/promptarena/package.json:6"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "go install is a supported installation route for promptarena",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:1"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "go install github.com/AltairaLabs/promptarena/v2/arena/cmd/promptarena@latest installs the CLI (module path has /v2)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 8,
+   "claim": "go-version '1.23' is a valid setup-go input for this module",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 9,
+   "claim": "promptarena run is a subcommand",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:163"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "--scenario <name> selects scenarios by the name 'smoke' so that scenarios/smoke/basic.yaml runs",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/loader.go:567",
+    "arena/cmd/promptarena/run.go:163",
+    "arena/engine/execution.go:193",
+    "arena/engine/execution.go:86"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "--mock-provider flag exists and makes no API calls",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:192",
+    "arena/engine/engine.go:793"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "--ci flag exists and changes output for CI",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:169",
+    "arena/cmd/promptarena/run.go:337"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "--format accepts a comma-separated list containing junit and json",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:174",
+    "arena/results/json/json_repository.go",
+    "arena/results/junit/junit_repository.go"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "A run writes its output to tests/out/ (default --out, relative to the working directory)",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/helpers.go:38",
+    "arena/cmd/promptarena/run.go:168"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "--concurrency flag exists and takes an integer",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:171"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "--format accepts markdown",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:174",
+    "arena/results/markdown/markdown_repository.go"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "promptarena reads OPENAI_API_KEY from the environment",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 18,
+   "claim": "promptarena reads ANTHROPIC_API_KEY from the environment",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 19,
+   "claim": "promptarena reads GOOGLE_API_KEY from the environment",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 20,
+   "claim": "A JUnit report is written to tests/out/junit.xml",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:521",
+    "arena/results/junit/junit_repository.go"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "A results file tests/out/results.json is written, containing a summary object with pass_rate",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:59",
+    "arena/results/json/json_repository.go"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "pass_rate is a fraction between 0 and 1 (the gate compares it to 0.95)",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/json/json_repository.go"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "results.json summary has total and failed fields",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/json/json_repository.go"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "results.json summary has passed field",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/json/json_repository.go"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "--format json writes results to out/results.json relative to the working directory",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:59",
+    "arena/results/json/json_repository.go"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "bash tests/quality-gates.sh run from the repository root reads out/results.json (the script assumes the tests/ working directory)",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:361",
+    "arena/results/json/json_repository.go"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "apiVersion promptkit.altairalabs.ai/v1alpha1 is the scenario apiVersion",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json"
+   ]
+  },
+  {
+   "id": 28,
+   "claim": "kind: Scenario is a valid kind",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json"
+   ]
+  },
+  {
+   "id": 29,
+   "claim": "metadata.labels is a map that accepts free-form keys such as category and speed",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json"
+   ]
+  },
+  {
+   "id": 30,
+   "claim": "metadata.name is a required field of a scenario",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/loader.go:567",
+    "schemas/v1alpha1/scenario.json"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "spec.task_type is a field and 'support' is an accepted value",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json"
+   ]
+  },
+  {
+   "id": 32,
+   "claim": "spec.turns[].role accepts 'user'",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json"
+   ]
+  },
+  {
+   "id": 33,
+   "claim": "spec.turns[].content is a string field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json"
+   ]
+  },
+  {
+   "id": 34,
+   "claim": "spec.turns[].assertions is a list field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json"
+   ]
+  },
+  {
+   "id": 35,
+   "claim": "content_matches is a registered assertion type",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 36,
+   "claim": "content_matches takes params with pattern and message",
+   "verdict": "false",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json"
+   ]
+  },
+  {
+   "id": 37,
+   "claim": "content_matches pattern '^.{1,200}$' is valid regex and the message param is named message",
+   "verdict": "false",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json"
+   ]
+  },
+  {
+   "id": 38,
+   "claim": "metadata.labels accepts category: critical and priority: must-pass labels",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json"
+   ]
+  },
+  {
+   "id": 39,
+   "claim": "content_includes is a registered assertion type",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 40,
+   "claim": "content_includes takes params.patterns as a list and params.message",
+   "verdict": "false",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json"
+   ]
+  },
+  {
+   "id": 41,
+   "claim": "spec.turns[] entries take role user with content and assertions, as in the critical scenario",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json"
+   ]
+  },
+  {
+   "id": 42,
+   "claim": "promptarena run --ci --format json is a valid command",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:169",
+    "arena/cmd/promptarena/run.go:174"
+   ]
+  },
+  {
+   "id": 43,
+   "claim": "promptarena run --concurrency 2 --ci is a valid command",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:171"
+   ]
+  },
+  {
+   "id": 44,
+   "claim": "Caching ~/.cache/go-build and ~/go/pkg/mod speeds up the npm-installed promptarena",
+   "verdict": "false",
+   "evidence": [
+    "npm/promptarena/lib/resolve.js:1"
+   ]
+  },
+  {
+   "id": 45,
+   "claim": "promptarena run --scenario critical --ci is a valid command that selects the critical scenario",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/execution.go:193",
+    "arena/engine/execution.go:86"
+   ]
+  },
+  {
+   "id": 46,
+   "claim": "promptarena run --ci with no scenario flag runs the full suite",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/execution.go:91"
+   ]
+  },
+  {
+   "id": 47,
+   "claim": "The github-script step reads tests/out/results.json and its results.summary object",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/json/json_repository.go"
+   ]
+  },
+  {
+   "id": 48,
+   "claim": "summary.pass_rate is a number that the script multiplies by 100",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/json/json_repository.go"
+   ]
+  },
+  {
+   "id": 49,
+   "claim": "summary.total exists in results.json",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/json/json_repository.go"
+   ]
+  },
+  {
+   "id": 50,
+   "claim": "summary.failed exists in results.json",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/json/json_repository.go"
+   ]
+  },
+  {
+   "id": 51,
+   "claim": "promptarena run --config <file> selects a config file other than arena.yaml",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:166"
+   ]
+  },
+  {
+   "id": 52,
+   "claim": "promptarena run --out <dir> sets the output directory",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:168"
+   ]
+  },
+  {
+   "id": 53,
+   "claim": "promptarena run --ci --format json,markdown is a valid command",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:174"
+   ]
+  },
+  {
+   "id": 54,
+   "claim": "promptarena run --scenario critical --ci is a valid deploy gate command",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/execution.go:193"
+   ]
+  },
+  {
+   "id": 55,
+   "claim": "promptarena run --scenario smoke --mock-provider --ci --format junit is a valid command",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/execution.go:193"
+   ]
+  },
+  {
+   "id": 56,
+   "claim": "promptarena run --scenario critical --ci --concurrency 2 --format junit,json,markdown is a valid command",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/execution.go:193"
+   ]
+  },
+  {
+   "id": 57,
+   "claim": "The quality gate in the complete example reads out/results.json with .summary.pass_rate",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/json/json_repository.go"
+   ]
+  },
+  {
+   "id": 58,
+   "claim": "promptarena run --ci --concurrency 3 --format junit,json,markdown is a valid command",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:171",
+    "arena/cmd/promptarena/run.go:174"
+   ]
+  },
+  {
+   "id": 59,
+   "claim": "--ci gives optimized output for CI",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:337"
+   ]
+  },
+  {
+   "id": 60,
+   "claim": "timeout-minutes is a GitHub Actions job key (not a promptarena setting)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 61,
+   "claim": "--mock-provider is useful for structure validation when rate limited",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:192"
+   ]
+  },
+  {
+   "id": 62,
+   "claim": "An OpenAI API key is 51 characters long",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 63,
+   "claim": "/arena/how-to/ is a link target (index page exists)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 64,
+   "claim": "/arena/reference/ is a link target (index page exists)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 65,
+   "claim": "The link labelled SDK Tutorials points to /arena/tutorials/, the Arena tutorials index",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 66,
+   "claim": "All Arena tutorials are complete at tutorial 5",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 67,
+   "claim": "Trend analysis is a supported Arena feature",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 68,
+   "claim": "Custom quality metrics are a supported Arena feature",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 69,
+   "claim": "Building deployment pipelines is a supported Arena feature (see the deploy how-to)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 70,
+   "claim": "A/B testing is a supported Arena feature",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 71,
+   "claim": "Arena runs can build production-grade LLM testing pipelines",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 72,
+   "claim": "With working-directory tests, promptarena run writes results under tests/out/ (out/ is relative to the config directory)",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/helpers.go:35",
+    "arena/cmd/promptarena/run.go:361"
+   ]
+  },
+  {
+   "id": 73,
+   "claim": "External action checkout@v4 exists at that major version (lines 101, 130, 152, 456, 501, 524, 563)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 74,
+   "claim": "External action actions/setup-go@v5 exists (line 66 and deploy snippet)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 75,
+   "claim": "External action actions/upload-artifact@v4 exists (lines 116, 143, 156, 514, 550, 581)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 76,
+   "claim": "External action dorny/test-reporter@v1 accepts reporter: java-junit",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 77,
+   "claim": "External action actions/cache@v3 exists (line 316)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 78,
+   "claim": "External action actions/github-script@v7 exists (line 342)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 79,
+   "claim": "External action slackapi/slack-github-action@v1 exists and accepts payload and SLACK_WEBHOOK_URL",
+   "verdict": "true",
+   "evidence": []
+  }
+ ]
+}

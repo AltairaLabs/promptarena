@@ -1,255 +1,166 @@
 ---
 title: 'Deploy: Multi-Environment Deployments'
+description: Give dev and production their own deploy config with environments overrides, preview each one, and deploy each from its own working directory.
+verified:
+  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  sources:
+    - arena/arenaconfig/types.go
+    - arena/cmd/promptarena/deploy_destroy_interactive.go
+    - arena/cmd/promptarena/deploy_interactive.go
+    - arena/cmd/promptarena/deploy_plan_interactive.go
+    - arena/cmd/promptarena/deploy_status_interactive.go
+    - arena/deploy/flow/config.go
+    - deploy/state.go
+    - packc/compiler/compiler.go
 ---
 
-Deploy the same prompt pack to dev, staging, and production environments from a single configuration.
+In this tutorial we extend the deployment from [Your First Deployment](/arena/tutorials/deploy/first-deployment/) with a `dev` and a `production` environment. Each environment overrides part of the base adapter config, and we deploy each one from its own working directory.
 
-## What You'll Build
+## What we will build
 
-A multi-environment deployment setup where each environment has its own configuration overrides, independent state tracking, and separate cloud resources.
-
-## Learning Objectives
-
-In this tutorial, you'll learn to:
-
-- Configure multiple environments in arena.yaml
-- Override base config per environment
-- Deploy to a specific environment
-- Manage independent environment state
-- Promote packs across environments
-
-## Time Required
-
-**25 minutes**
+Two AgentCore deployments of the `my-first-test` agent: `dev` in `us-west-2` and `production` in `us-east-1`, each tagged with its environment name.
 
 ## Prerequisites
 
-- Completed [Tutorial: First Deployment](/arena/tutorials/deploy/first-deployment/)
-- An installed deploy adapter
-- A compiled `.pack.json` file
+- Everything from [Your First Deployment](/arena/tutorials/deploy/first-deployment/), with its resources destroyed (Step 7 there).
+- `jq`, to read the saved plan.
 
-## Step 1: Configure Environments
+## Step 1: Add the environments
 
-Update your `arena.yaml` deploy section with environment-specific overrides:
+Replace the `deploy` block in `config.arena.yaml` with this one:
 
 ```yaml
-deploy:
-  provider: agentcore
-  config:
-    region: us-west-2
-    instance_type: t3.medium
-    timeout: 300
-  environments:
-    dev:
-      config:
-        instance_type: t3.small
-        timeout: 60
-    staging:
-      config:
-        instance_type: t3.medium
-        timeout: 300
-    production:
-      config:
-        region: us-east-1
-        instance_type: c5.large
-        timeout: 600
-        enable_autoscaling: true
+  deploy:
+    provider: agentcore
+    config:
+      region: us-west-2
+      runtime_role_arn: arn:aws:iam::123456789012:role/AgentCoreRuntime
+      runtime_binary_path: ../promptarena-deploy-agentcore/promptkit-runtime
+      tags:
+        environment: default
+    environments:
+      dev:
+        config:
+          tags:
+            environment: dev
+      production:
+        config:
+          region: us-east-1
+          tags:
+            environment: production
 ```
 
-**How config merging works:**
+For each environment, the CLI starts from the base `config` and replaces each top-level key the environment sets. A key the environment sets replaces the whole base value, so `tags` is replaced, not merged.
 
-The base `config` provides defaults. Each environment's `config` is merged on top, overriding matching keys and adding new ones.
+## Step 2: Preview each environment
 
-For the `production` environment, the effective config is:
+`--env` picks the environment:
+
+```bash
+promptarena deploy plan --config config.arena.yaml --env dev
+```
+
+```text
+Deploy plan for environment: dev (provider: agentcore)
+  Adapter:     /Users/you/.promptarena/adapters/promptarena-deploy-agentcore
+
+Plan: 1 to create, 0 to update, 0 to delete
+
+  + agent_runtime.my_first_test (Create AgentCore runtime for my_first_test)
+
+Plan saved. Run 'promptarena deploy apply' to execute.
+```
+
+The saved plan holds the merged config the adapter received. Print it:
+
+```bash
+jq -r .request.deploy_config .promptarena/deploy.plan
+```
 
 ```json
-{
-  "region": "us-east-1",
-  "instance_type": "c5.large",
-  "timeout": 600,
-  "enable_autoscaling": true
-}
+{"region":"us-west-2","runtime_binary_path":"../promptarena-deploy-agentcore/promptkit-runtime","runtime_role_arn":"arn:aws:iam::123456789012:role/AgentCoreRuntime","tags":{"environment":"dev"}}
 ```
 
-## Step 2: Deploy to Dev
-
-Start by deploying to the dev environment:
+Now preview production and print its config:
 
 ```bash
-promptarena deploy plan --env dev
+promptarena deploy plan --config config.arena.yaml --env production
+jq -r .request.deploy_config .promptarena/deploy.plan
 ```
 
-**Expected output:**
-
-```
-Planning deployment (env: dev)...
-Provider: agentcore v0.2.0
-
-Changes:
-  + agent_runtime.greeting    Create agent runtime
-  + a2a_endpoint.greeting     Create A2A endpoint
-
-Summary: 2 resources to create, 0 to update, 0 to delete
+```json
+{"region":"us-east-1","runtime_binary_path":"../promptarena-deploy-agentcore/promptkit-runtime","runtime_role_arn":"arn:aws:iam::123456789012:role/AgentCoreRuntime","tags":{"environment":"production"}}
 ```
 
-Apply the dev deployment:
+Production has its own region and tag, and keeps the base role and binary.
+
+## Step 3: Deploy dev
 
 ```bash
-promptarena deploy --env dev
+promptarena deploy --config config.arena.yaml --env dev
 ```
 
-## Step 3: Deploy to Staging
+`deploy` with no subcommand plans and then applies. The CLI records the deployment in `.promptarena/deploy.state`.
 
-Deploy the same pack to staging with different configuration:
+:::caution
+A working directory holds one deployment record, `.promptarena/deploy.state`, whatever `--env` you pass. Deploying production from this directory would replace dev's record, and a later `status` or `destroy` would act on production's resources. Deploy each environment from its own working directory.
+:::
+
+## Step 4: Deploy production from its own directory
+
+Make a copy of the project for production, without its deploy state:
 
 ```bash
-promptarena deploy --env staging
+cd ..
+cp -R my-first-test my-first-test-production
+rm -rf my-first-test-production/.promptarena
+cd my-first-test-production
+promptarena deploy plan --config config.arena.yaml --env production
 ```
 
-Each environment maintains its own state independently. Deploying to staging does not affect the dev deployment.
+```text
+Deploy plan for environment: production (provider: agentcore)
+  Adapter:     /Users/you/.promptarena/adapters/promptarena-deploy-agentcore
 
-## Step 4: Check Environment Status
+Plan: 1 to create, 0 to update, 0 to delete
 
-Check the status of each environment:
+  + agent_runtime.my_first_test_production (Create AgentCore runtime for my_first_test_production)
+
+Plan saved. Run 'promptarena deploy apply' to execute.
+```
+
+The runtime name comes from the directory name, so the production runtime is `my_first_test_production`. Apply it:
 
 ```bash
-# Check dev
-promptarena deploy status --env dev
-
-# Check staging
-promptarena deploy status --env staging
+promptarena deploy apply --config config.arena.yaml --env production
 ```
 
-**Expected output (dev):**
+## Step 5: Check both environments
 
-```
-Status: deployed
-Last deployed: 2026-02-16T10:30:00Z
-Pack checksum: sha256:abc123...
-
-Resources:
-  agent_runtime.greeting: healthy
-  a2a_endpoint.greeting: healthy
-```
-
-## Step 5: Promote to Production
-
-After validating in dev and staging, deploy to production:
+Each directory reports its own deployment:
 
 ```bash
-# Preview production changes
-promptarena deploy plan --env production
-
-# Apply to production
-promptarena deploy --env production
+promptarena deploy status --config config.arena.yaml --env production
+cd ../my-first-test
+promptarena deploy status --config config.arena.yaml --env dev
 ```
 
-Production uses different instance types and enables autoscaling as configured in Step 1.
+Each starts with `Deployment status for environment: <env> (provider: agentcore)`, followed by that deployment's resources.
 
-## Step 6: Update a Single Environment
+## Step 6: Clean up
 
-When you update your pack, you can redeploy to a single environment:
+Destroy each environment from its own directory:
 
 ```bash
-# Deploy updated pack to dev first (recompiles from arena.yaml automatically)
-promptarena deploy --env dev
-
-# Plan will show updates instead of creates
-promptarena deploy plan --env dev
+promptarena deploy destroy --config config.arena.yaml --env dev
+cd ../my-first-test-production
+promptarena deploy destroy --config config.arena.yaml --env production
 ```
 
-**Expected output:**
+Each ends with `Deployment destroyed.`.
 
-```
-Planning deployment (env: dev)...
+## Next steps
 
-Changes:
-  ~ agent_runtime.greeting    Update agent runtime
-    a2a_endpoint.greeting     No change
-
-Summary: 0 to create, 1 to update, 0 to delete
-```
-
-## Step 7: Clean Up Environments
-
-Tear down environments you do not need:
-
-```bash
-# Destroy dev
-promptarena deploy destroy --env dev
-
-# Destroy staging
-promptarena deploy destroy --env staging
-
-# Destroy production
-promptarena deploy destroy --env production
-```
-
-Each destroy only affects the targeted environment.
-
-## What You Learned
-
-Congratulations! You've successfully:
-
-- Configured multiple environments with overrides
-- Deployed independently to dev, staging, and production
-- Managed per-environment state
-- Promoted packs across environments
-- Updated and torn down individual environments
-
-## Environment Strategy Tips
-
-### Keep Base Config Minimal
-
-Put shared defaults in the base `config`. Only override what differs per environment:
-
-```yaml
-deploy:
-  provider: agentcore
-  config:
-    region: us-west-2          # shared default
-  environments:
-    production:
-      config:
-        region: us-east-1      # only override what's different
-```
-
-### Use Consistent Naming
-
-The `--env` flag value is passed directly to the adapter as the environment name. Use consistent, lowercase names:
-
-```bash
-# Good
-promptarena deploy --env production
-promptarena deploy --env staging
-
-# Avoid
-promptarena deploy --env PROD
-promptarena deploy --env Staging-v2
-```
-
-### Default Environment
-
-When no `--env` flag is provided, the environment defaults to `"default"`. This is fine for single-environment projects.
-
-## Common Issues
-
-### Issue: wrong environment deployed
-
-**Solution:** Always use `deploy plan` before `deploy` to preview the target environment:
-
-```bash
-promptarena deploy plan --env production
-```
-
-### Issue: environments sharing state
-
-Each environment is tracked independently. If you see unexpected state, check that you're using the correct `--env` flag consistently.
-
-## Next Steps
-
-Now that you understand multi-environment deployments, explore:
-
-- **[How-To: Configure Deploy](/arena/how-to/deploy/configure/)** — Advanced configuration patterns
-- **[How-To: CI/CD Integration](/arena/how-to/deploy/ci-cd/)** — Automate multi-environment deployments
-- **[Explanation: State Management](/arena/explanation/deploy/state-management/)** — How state tracking works per environment
+- [Configure deploy](/arena/how-to/deploy/configure/): the `deploy` block and environment overrides in day-to-day use.
+- [Deploy from CI/CD](/arena/how-to/deploy/ci-cd/): deploy each environment from its own CI job.
+- [State management](/arena/explanation/deploy/state-management/): what the state file holds and how the CLI uses it.

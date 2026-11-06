@@ -1,0 +1,758 @@
+{
+ "page": "docs/src/content/docs/arena/tutorials/01-first-test.md",
+ "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "brew install altairalabs/tap/promptarena installs PromptArena (Homebrew tap altairalabs/tap)",
+   "verdict": "true",
+   "evidence": [
+    ".goreleaser.yml:201",
+    ".goreleaser.yml:207"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "go install github.com/AltairaLabs/promptarena/v2/arena/cmd/promptarena@latest builds the promptarena binary",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 3,
+   "claim": "Go install builds from source and needs a C compiler and audio dev headers",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 4,
+   "claim": "promptarena --version prints version information",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/version.go:37"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "promptarena --version output includes PromptArena version information",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/version.go:37"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "promptarena init [project-name] is a valid command",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:190"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "promptarena init has a --quick flag that uses defaults and skips interactive prompts",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:190"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "promptarena init has a --provider flag; openai is an accepted value",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:190"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "init creates a project directory named after the project-name argument (my-first-test) that the reader then cd's into",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:190"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "init creates a complete test project in seconds",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:190"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "init creates config.arena.yaml (arena configuration) in the project",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:190"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "init creates prompts/assistant.yaml",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:190"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "init creates providers/openai.yaml",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:190"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "init creates scenarios/basic-test.yaml",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:190"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "init creates a .env file for environment setup",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:190"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "mkdir -p prompts providers scenarios creates the directories used by the manual path",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 17,
+   "claim": "The manual path creates prompts/greeter.yaml",
+   "verdict": "false",
+   "evidence": [
+    "schemas/v1alpha1/promptconfig.json:1"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "apiVersion value promptkit.altairalabs.ai/v1alpha1 is the accepted apiVersion for PromptConfig, Provider, Scenario and Arena kinds",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:190"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "kind: PromptConfig is a valid kind",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/promptconfig.json:1"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "metadata.name is a field of a PromptConfig resource",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/provider.json:280"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "spec.task_type is a string field of PromptConfig",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/conversation_executor.go:481"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "spec.system_template is a PromptConfig field holding the system instructions",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/promptconfig.json:1"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "metadata.name identifies the prompt config and is referenced by the arena config (id: greeter)",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/builder_integration.go:536",
+    "arena/engine/conversation_executor.go:481"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "spec.task_type links a scenario to the prompt config with the matching task_type",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:536",
+    "arena/engine/conversation_executor.go:389",
+    "arena/engine/conversation_executor.go:481"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "kind: Provider is a valid kind",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/provider.json:277"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "spec.type is a Provider field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/provider.json:105",
+    "schemas/v1alpha1/provider.json:202"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "spec.model is a Provider field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/provider.json:108"
+   ]
+  },
+  {
+   "id": 28,
+   "claim": "gpt-4o-mini is a model name the openai provider accepts",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:405"
+   ]
+  },
+  {
+   "id": 29,
+   "claim": "spec.defaults is a Provider field holding model parameters",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:405",
+    "schemas/v1alpha1/provider.json:206"
+   ]
+  },
+  {
+   "id": 30,
+   "claim": "spec.defaults.temperature is a float parameter and 0.7 is accepted",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/provider.json:208"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "spec.defaults.max_tokens is an integer parameter and 150 is accepted",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/provider.json:214"
+   ]
+  },
+  {
+   "id": 32,
+   "claim": "spec.type accepts the values openai, anthropic and gemini",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:190"
+   ]
+  },
+  {
+   "id": 33,
+   "claim": "OPENAI_API_KEY is read automatically by the openai provider with no config field",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 34,
+   "claim": "OPENAI_API_KEY is the environment variable name for the OpenAI API key",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 35,
+   "claim": "scenario spec.task_type links the scenario to prompts/greeter.yaml (task_type greeting)",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/conversation_executor.go:481"
+   ]
+  },
+  {
+   "id": 36,
+   "claim": "metadata.labels is a Scenario field accepting key-value labels",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json:1"
+   ]
+  },
+  {
+   "id": 37,
+   "claim": "label category: basic is accepted on a Scenario",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json:1"
+   ]
+  },
+  {
+   "id": 38,
+   "claim": "kind: Scenario is a valid kind",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json:550"
+   ]
+  },
+  {
+   "id": 39,
+   "claim": "spec.turns is a Scenario field holding an array of turns",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json:553"
+   ]
+  },
+  {
+   "id": 40,
+   "claim": "role: user is a valid turn role and each user turn triggers an LLM response",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json:952"
+   ]
+  },
+  {
+   "id": 41,
+   "claim": "turn content is a string field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json:859"
+   ]
+  },
+  {
+   "id": 42,
+   "claim": "a turn accepts an assertions list",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json:5"
+   ]
+  },
+  {
+   "id": 43,
+   "claim": "content_includes is a registered assertion type",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json:31"
+   ]
+  },
+  {
+   "id": 44,
+   "claim": "assertion params is a field on each assertion",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/types.go:63",
+    "schemas/v1alpha1/scenario.json:120"
+   ]
+  },
+  {
+   "id": 45,
+   "claim": "content_includes accepts params.patterns as a list of strings",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 46,
+   "claim": "assertion params.message is an accepted field used as the failure message",
+   "verdict": "false",
+   "evidence": [
+    "arena/assertions/types.go:38",
+    "arena/assertions/types.go:55",
+    "schemas/v1alpha1/scenario.json:124"
+   ]
+  },
+  {
+   "id": 47,
+   "claim": "content_matches is a registered assertion type",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 48,
+   "claim": "content_matches accepts params.pattern as a regular expression",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 49,
+   "claim": "params.message on content_matches is the failure message",
+   "verdict": "false",
+   "evidence": [
+    "arena/assertions/types.go:38",
+    "schemas/v1alpha1/scenario.json:124"
+   ]
+  },
+  {
+   "id": 50,
+   "claim": "apiVersion and kind are standard PromptKit resource identifiers for Scenario resources",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json:1051"
+   ]
+  },
+  {
+   "id": 51,
+   "claim": "kind: Arena is a valid kind for config.arena.yaml",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/arena.json:1"
+   ]
+  },
+  {
+   "id": 52,
+   "claim": "spec.prompt_configs is an Arena field, a list of entries with id and file",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/arena.json:1"
+   ]
+  },
+  {
+   "id": 53,
+   "claim": "prompt_configs entries accept an id field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/arena.json:1"
+   ]
+  },
+  {
+   "id": 54,
+   "claim": "prompt_configs entries accept a file field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/arena.json:1"
+   ]
+  },
+  {
+   "id": 55,
+   "claim": "spec.providers is an Arena field, a list of entries with a file field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/arena.json:1"
+   ]
+  },
+  {
+   "id": 56,
+   "claim": "spec.scenarios is an Arena field, a list of entries with a file field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/arena.json:1"
+   ]
+  },
+  {
+   "id": 57,
+   "claim": "config.arena.yaml tells Arena which configurations to load and how to connect them",
+   "verdict": "false",
+   "evidence": [
+    "schemas/v1alpha1/arena.json:1"
+   ]
+  },
+  {
+   "id": 58,
+   "claim": "promptarena run with no arguments uses config.arena.yaml in the current directory",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:168"
+   ]
+  },
+  {
+   "id": 59,
+   "claim": "promptarena run is a valid command",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:168"
+   ]
+  },
+  {
+   "id": 60,
+   "claim": "promptarena run prints 'PromptArena Starting...' before loading",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:168"
+   ]
+  },
+  {
+   "id": 61,
+   "claim": "run prints 'Loading configuration...' and per-kind counts ('Loaded 1 prompt config', 'Loaded 1 provider', 'Loaded 1 scenario')",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:168"
+   ]
+  },
+  {
+   "id": 62,
+   "claim": "run prints 'Running tests...' and one line per turn in the form 'Scenario Name - Turn N [provider-name] (time)'",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:168"
+   ]
+  },
+  {
+   "id": 63,
+   "claim": "the scenario is displayed as 'Basic Greeting' in run output",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:168"
+   ]
+  },
+  {
+   "id": 64,
+   "claim": "run prints a Results summary with Total turns, Passed, Failed and Pass Rate",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:168"
+   ]
+  },
+  {
+   "id": 65,
+   "claim": "run prints 'Reports generated' and lists out/results.json",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:168"
+   ]
+  },
+  {
+   "id": 66,
+   "claim": "default output directory is out",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:168"
+   ]
+  },
+  {
+   "id": 67,
+   "claim": "the JSON report is written to out/results.json",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/json/json_repository.go:1"
+   ]
+  },
+  {
+   "id": 68,
+   "claim": "cat out/results.json shows the JSON results",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/json/json_repository.go:1"
+   ]
+  },
+  {
+   "id": 69,
+   "claim": "promptarena run --format markdown is valid and produces a Markdown report",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:174"
+   ]
+  },
+  {
+   "id": 70,
+   "claim": "the Markdown report is written to out/results.md",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:536",
+    "arena/results/markdown/markdown_repository.go:1"
+   ]
+  },
+  {
+   "id": 71,
+   "claim": "Arena loads the prompt, provider and scenario files on run",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:168"
+   ]
+  },
+  {
+   "id": 72,
+   "claim": "For each turn Arena takes the system prompt from greeter.yaml",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/conversation_executor.go:389",
+    "arena/engine/conversation_executor.go:481"
+   ]
+  },
+  {
+   "id": 73,
+   "claim": "For each turn Arena fills in the user message template",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 74,
+   "claim": "Arena sends the complete prompt to OpenAI",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 75,
+   "claim": "Arena checks each response against the turn assertions",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/types.go:34"
+   ]
+  },
+  {
+   "id": 76,
+   "claim": "content_matches ensures the response matches the expected pattern",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 77,
+   "claim": "Arena saves results in multiple formats",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:174"
+   ]
+  },
+  {
+   "id": 78,
+   "claim": "an assertion block with type content_includes and content_matches is valid in a turn without a message on content_includes",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json:124"
+   ]
+  },
+  {
+   "id": 79,
+   "claim": "promptarena run re-runs the edited scenario",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:168"
+   ]
+  },
+  {
+   "id": 80,
+   "claim": "labels.category: edge-case is accepted on a Scenario",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json:1"
+   ]
+  },
+  {
+   "id": 81,
+   "claim": "a turn with role user and empty content is accepted by the schema and runner",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json:859"
+   ]
+  },
+  {
+   "id": 82,
+   "claim": "content_matches pattern ^.{10,}$ matches responses of at least 10 characters",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 83,
+   "claim": "config.arena.yaml scenarios list accepts multiple entries",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/arena.json:1"
+   ]
+  },
+  {
+   "id": 84,
+   "claim": "spec.defaults.temperature accepts 0.2",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/provider.json:208"
+   ]
+  },
+  {
+   "id": 85,
+   "claim": "temperature 0.2 is more deterministic",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 86,
+   "claim": "Lower temperature gives more consistent responses",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 87,
+   "claim": "export PATH=$PATH:$(go env GOPATH)/bin fixes 'command not found' for a go install",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 88,
+   "claim": "echo $OPENAI_API_KEY should output a value beginning with sk-",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 89,
+   "claim": "the error 'No scenarios found' is printed when config.arena.yaml scenario paths do not match the directory structure",
+   "verdict": "false",
+   "evidence": [
+    "arena/tui/tui.go:428"
+   ]
+  },
+  {
+   "id": 90,
+   "claim": "the reader's prompts/, providers/ and scenarios/ directories are the paths the config references",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:168"
+   ]
+  },
+  {
+   "id": 91,
+   "claim": "a failed assertion prints the message in the output",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 92,
+   "claim": "the failure output shows the actual response",
+   "verdict": "false",
+   "evidence": [
+    "arena/results/json/json_repository.go:1"
+   ]
+  },
+  {
+   "id": 93,
+   "claim": "link /arena/tutorials/02-multi-provider/ targets Tutorial 2 (Multi-Provider Testing)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 94,
+   "claim": "link /arena/tutorials/03-multi-turn/ targets Tutorial 3 (Multi-Turn Conversations)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 95,
+   "claim": "link /arena/how-to/scenarios/write-scenarios/ targets How-To: Write Scenarios",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 96,
+   "claim": "gpt-4o and gpt-4o-mini are valid model names for the openai provider",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 97,
+   "claim": "promptarena run --format markdown generates a Markdown report",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:174"
+   ]
+  },
+  {
+   "id": 98,
+   "claim": "Tutorial 2 tests the same scenario across OpenAI, Claude and Gemini providers",
+   "verdict": "true",
+   "evidence": []
+  }
+ ]
+}

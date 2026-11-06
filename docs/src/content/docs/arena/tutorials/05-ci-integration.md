@@ -1,232 +1,118 @@
 ---
 title: 'Tutorial 5: CI/CD Integration'
+description: Build a keyless Arena test suite with a mock provider, see a failed assertion fail the run, and run the suite in GitHub Actions.
+verified:
+  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  sources:
+    - arena/arenaconfig/helpers.go
+    - arena/arenaconfig/loader.go
+    - arena/cmd/promptarena/run.go
+    - arena/engine/engine.go
+    - arena/engine/execution.go
+    - arena/results/json/json_repository.go
+    - arena/results/junit/junit_repository.go
+    - arena/results/markdown/markdown_repository.go
+    - npm/promptarena/lib/resolve.js
+    - npm/promptarena/package.json
+    - schemas/v1alpha1/scenario.json
 ---
-Learn how to integrate PromptArena testing into your CI/CD pipeline for automated quality gates.
+In this tutorial we build a test suite that runs without an API key, watch a failing assertion turn the exit code to 1, and run the same command in a GitHub Actions workflow.
 
-## What You'll Learn
+## What we will build
 
-- Set up Arena in GitHub Actions
-- Configure quality gates
-- Generate CI-friendly reports
-- Handle API keys securely
-- Optimize test execution for CI
-- Create deployment gates
+```text
+my-ci-project/
+  .github/workflows/arena.yml
+  tests/
+    config.arena.yaml
+    mock-responses.yaml
+    prompts/assistant.yaml
+    providers/mock.yaml
+    scenarios/hours.yaml
+```
 
 ## Prerequisites
 
-- Completed [Tutorials 1-4](/arena/tutorials/01-first-test/)
-- GitHub repository
-- Basic CI/CD knowledge
+- `promptarena` installed ([Tutorial 1](/arena/tutorials/01-first-test/), Step 1)
+- A GitHub repository to push the project to
 
-## Why Automate LLM Testing?
+No provider key is needed. The mock provider replies from a file.
 
-Manual testing doesn't scale. Automated testing in CI/CD:
-- **Catches regressions** before deployment
-- **Enforces quality standards** automatically
-- **Validates changes** on every commit
-- **Provides confidence** for releases
-- **Documents behavior** over time
-
-## Step 1: Prepare Your Tests
-
-Organize tests for CI execution:
+## Step 1: Create the project
 
 ```bash
-my-project/
-├── .github/
-│   └── workflows/
-│       └── llm-tests.yml
-├── tests/
-│   ├── arena.yaml
-│   ├── prompts/
-│   ├── providers/
-│   └── scenarios/
-│       ├── critical/       # Must-pass tests
-│       │   └── core.yaml
-│       ├── integration/    # Full suite
-│       │   └── full.yaml
-│       └── smoke/          # Quick validation
-│           └── basic.yaml
+mkdir -p my-ci-project/tests/prompts my-ci-project/tests/providers my-ci-project/tests/scenarios my-ci-project/.github/workflows
+cd my-ci-project/tests
 ```
 
-## Step 2: Choose Installation Method
+All commands from here run in `tests/`.
 
-For CI/CD, we recommend using npm for PromptArena installation:
+## Step 2: Create a prompt and a mock provider
 
-**Why npm for CI?**
-- No Go toolchain required (faster setup)
-- Works on all platforms (Linux, macOS, Windows)
-- Simpler workflow (one command)
-- Node.js typically already in CI environments
-- Faster installation time
-
-**Alternative: Go Install** (if you prefer):
-```yaml
-- name: Set up Go
-  uses: actions/setup-go@v5
-  with:
-    go-version: '1.23'
-
-- name: Install PromptArena
-  run: go install github.com/AltairaLabs/promptarena/v2/arena/cmd/promptarena@latest
-```
-
-For this tutorial, we'll use npm as it's simpler and faster.
-
-## Step 3: Create GitHub Actions Workflow
-
-Create `.github/workflows/llm-tests.yml`:
+Create `prompts/assistant.yaml`:
 
 ```yaml
-name: LLM Quality Tests
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: PromptConfig
+metadata:
+  name: assistant
 
-on:
-  # Run on every push to main and PRs
-  push:
-    branches: [main]
-  pull_request:
-    branches: [main]
-  
-  # Allow manual trigger
-  workflow_dispatch:
+spec:
+  task_type: support
+  version: v1.0.0
+  description: Answers support questions
 
-jobs:
-  # Fast smoke tests (< 1 minute)
-  smoke-tests:
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Install PromptArena
-        run: npm install -g @altairalabs/promptarena
-      
-      - name: Run smoke tests with mock provider
-        working-directory: tests
-        run: |
-          promptarena run \
-            --scenario smoke \
-            --mock-provider \
-            --ci \
-            --format junit,json
-      
-      - name: Upload smoke test results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: smoke-test-results
-          path: tests/out/
-  
-  # Comprehensive tests (with real LLMs)
-  integration-tests:
-    runs-on: ubuntu-latest
-    needs: smoke-tests  # Only run if smoke tests pass
-    timeout-minutes: 15
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Install PromptArena
-        run: npm install -g @altairalabs/promptarena
-      
-      - name: Run integration tests
-        working-directory: tests
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: |
-          promptarena run \
-            --scenario integration \
-            --ci \
-            --concurrency 2 \
-            --format junit,json,markdown
-      
-      - name: Publish test results
-        uses: dorny/test-reporter@v1
-        if: always()
-        with:
-          name: LLM Integration Tests
-          path: tests/out/junit.xml
-          reporter: java-junit
-      
-      - name: Upload test artifacts
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: integration-test-results
-          path: tests/out/
-      
-      - name: Check quality gate
-        run: |
-          PASS_RATE=$(jq '.summary.pass_rate' tests/out/results.json)
-          echo "Pass rate: $PASS_RATE"
-          
-          if (( $(echo "$PASS_RATE < 0.95" | bc -l) )); then
-            echo "Quality gate failed: Pass rate $PASS_RATE < 95%"
-            exit 1
-          fi
-          
-          echo "Quality gate passed: $PASS_RATE >= 95%"
+  system_template: |
+    You are a support assistant. Keep answers brief.
 ```
 
-## Step 4: Configure API Keys as Secrets
+Create `providers/mock.yaml`:
 
-In your GitHub repository:
+```yaml
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Provider
+metadata:
+  name: mock
 
-1. Go to **Settings** → **Secrets and variables** → **Actions**
-2. Click **New repository secret**
-3. Add your API keys:
-   - `OPENAI_API_KEY`
-   - `ANTHROPIC_API_KEY`
-   - `GOOGLE_API_KEY`
+spec:
+  id: mock-provider
+  type: mock
+  model: mock-model
+  additional_config:
+    mock_config: mock-responses.yaml
+```
 
-## Step 5: Create Test Suites for CI
+The `mock` provider reads its replies from `mock_config`, a path relative to the directory holding the arena configuration.
 
-### Smoke Tests (Fast Validation)
+Create `mock-responses.yaml`:
 
-`scenarios/smoke/basic.yaml`:
+```yaml
+defaultResponse: "This is a mock response for testing."
+
+scenarios:
+  business-hours:
+    turns:
+      1: "We are open Monday to Friday, 9am to 5pm."
+      2: "You can contact support by email at help@example.com."
+```
+
+Scenario keys are scenario names. The numbers count model calls within the scenario.
+
+## Step 3: Create a scenario and the configuration
+
+Create `scenarios/hours.yaml`:
 
 ```yaml
 apiVersion: promptkit.altairalabs.ai/v1alpha1
 kind: Scenario
 metadata:
-  name: basic-response-test
-  labels:
-    category: smoke
-    speed: fast
+  name: business-hours
 
 spec:
+  id: business-hours
+  description: Answers questions about hours and contact details
   task_type: support
-  
-  turns:
-    - role: user
-      content: "Hello"
-      assertions:
-        - type: content_matches
-          params:
-            pattern: "^.{1,200}$"
-            message: "Response should be brief"
-```
 
-### Critical Path Tests
-
-`scenarios/critical/core.yaml`:
-
-```yaml
-apiVersion: promptkit.altairalabs.ai/v1alpha1
-kind: Scenario
-metadata:
-  name: core-functionality
-  labels:
-    category: critical
-    priority: must-pass
-
-spec:
-  task_type: support
-  
   turns:
     - role: user
       content: "What are your business hours?"
@@ -234,440 +120,136 @@ spec:
         - type: content_includes
           params:
             patterns: ["Monday"]
-            message: "Should mention business days"
-    
+          message: "Should mention business days"
+
     - role: user
       content: "How do I contact support?"
       assertions:
         - type: content_includes
           params:
             patterns: ["email"]
-            message: "Should provide contact methods"
+          message: "Should provide contact methods"
 ```
 
-## Step 6: Add Quality Gates
+Create `config.arena.yaml`:
 
-Create `tests/quality-gates.sh`:
+```yaml
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Arena
+metadata:
+  name: ci-tests
+
+spec:
+  prompt_configs:
+    - id: assistant
+      file: prompts/assistant.yaml
+
+  providers:
+    - file: providers/mock.yaml
+
+  scenarios:
+    - file: scenarios/hours.yaml
+
+  defaults:
+    temperature: 0.7
+    max_tokens: 1500
+    output:
+      dir: out
+      formats: [json]
+```
+
+## Step 4: Run the suite in CI mode
 
 ```bash
-#!/bin/bash
-set -e
-
-RESULTS_FILE="out/results.json"
-
-# Extract metrics
-PASS_RATE=$(jq '.summary.pass_rate' $RESULTS_FILE)
-TOTAL=$(jq '.summary.total' $RESULTS_FILE)
-FAILED=$(jq '.summary.failed' $RESULTS_FILE)
-
-echo "Test Results:"
-echo "  Total: $TOTAL"
-echo "  Pass Rate: $PASS_RATE"
-echo "  Failed: $FAILED"
-
-# Quality gates
-MIN_PASS_RATE=0.95
-MAX_FAILURES=5
-
-echo ""
-echo "Quality Gates:"
-
-# Check pass rate
-if (( $(echo "$PASS_RATE < $MIN_PASS_RATE" | bc -l) )); then
-  echo "Pass rate $PASS_RATE < $MIN_PASS_RATE"
-  exit 1
-fi
-echo "Pass rate: $PASS_RATE >= $MIN_PASS_RATE"
-
-# Check failure count
-if [ "$FAILED" -gt "$MAX_FAILURES" ]; then
-  echo "Too many failures: $FAILED > $MAX_FAILURES"
-  exit 1
-fi
-echo "Failure count: $FAILED <= $MAX_FAILURES"
-
-echo ""
-echo "All quality gates passed!"
+promptarena run --ci --format junit,json
 ```
 
-Use in workflow:
+`--ci` turns off the interactive terminal UI and prints a plain summary. `--format` replaces the formats in the configuration, so this run writes `out/junit.xml` and `out/index.json`. The summary reads:
 
-```yaml
-- name: Run tests
-  run: promptarena run --ci --format json
+```text
+Run Summary
+===========
 
-- name: Check quality gates
-  run: bash tests/quality-gates.sh
+Total Runs:       1
+Successful:       1 (100.0%)
+Failed:           0 (0.0%)
 ```
 
-## Step 7: Optimize for CI Performance
-
-### Use Concurrency Control
+Check the exit code:
 
 ```bash
-# Respect rate limits
-promptarena run --concurrency 2 --ci
+echo $?
 ```
 
-### Cache Test Results
+It prints `0`. A CI job passes when the command exits `0`.
 
-```yaml
-- name: Cache test dependencies
-  uses: actions/cache@v3
-  with:
-    path: |
-      ~/.cache/go-build
-      ~/go/pkg/mod
-    key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-```
+## Step 5: Break an assertion
 
-### Selective Testing
+In `scenarios/hours.yaml`, change the first pattern from `Monday` to `Sunday`, then run again:
 
 ```bash
-# Only run changed scenarios
-if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
-  promptarena run --scenario critical --ci
-else
-  promptarena run --ci  # Full suite on main
-fi
+promptarena run --ci --format junit,json
+echo $?
 ```
 
-## Step 8: PR Comments with Results
+The mock reply does not contain `Sunday`. The summary ends with the failed assertion, and the exit code is `1`:
 
-Add test results to PR comments:
+```text
+Errors:
+  • business-hours/mock-provider/default: pipeline execution failed: validation failed: [assertion 0 (content_includes) failed: missing patterns: Sunday]
 
-```yaml
-- name: Comment PR with results
-  if: github.event_name == 'pull_request'
-  uses: actions/github-script@v7
-  with:
-    script: |
-      const fs = require('fs');
-      const results = JSON.parse(fs.readFileSync('tests/out/results.json', 'utf8'));
-      
-      const summary = results.summary;
-      const passRate = (summary.pass_rate * 100).toFixed(1);
-      
-      const comment = `
-      ## LLM Test Results
-      
-      | Metric | Value |
-      |--------|-------|
-      | Total Tests | ${summary.total} |
-      | Passed | ${summary.passed} |
-      | Failed | ${summary.failed} |
-      | Pass Rate | ${passRate}% |
-      
-      ${passRate >= 95 ? 'Quality gate: PASSED' : 'Quality gate: FAILED'}
-      
-      [View detailed report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-      `;
-      
-      github.rest.issues.createComment({
-        issue_number: context.issue.number,
-        owner: context.repo.owner,
-        repo: context.repo.repo,
-        body: comment
-      });
+Error: execution failed: 1 runs had errors
 ```
 
-## Step 9: Multi-Environment Testing
+A CI job fails on that exit code. In `out/junit.xml` the failed run is recorded as an `<error>` element, not `<failure>`.
 
-Test across dev, staging, production:
+Change `Sunday` back to `Monday` and run once more to see `0` again.
 
-```yaml
-strategy:
-  matrix:
-    environment: [dev, staging, prod]
+## Step 6: Add the workflow
 
-steps:
-  - name: Run tests in ${{ matrix.environment }}
-    env:
-      OPENAI_API_KEY: ${{ secrets[format('{0}_OPENAI_API_KEY', matrix.environment)] }}
-    run: |
-      promptarena run \
-        --config arena-${{ matrix.environment }}.yaml \
-        --ci \
-        --out out/${{ matrix.environment }}
-```
-
-## Step 10: Scheduled Testing
-
-Run tests on a schedule:
+Create `.github/workflows/arena.yml` in the project root, one level above `tests/`:
 
 ```yaml
-on:
-  schedule:
-    # Every 6 hours
-    - cron: '0 */6 * * *'
-
-jobs:
-  scheduled-tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Install PromptArena
-        run: npm install -g @altairalabs/promptarena
-      
-      - name: Run full test suite
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        run: |
-          promptarena run --ci --format json,markdown
-      
-      - name: Notify on failure
-        if: failure()
-        uses: slackapi/slack-github-action@v1
-        with:
-          payload: |
-            {
-              "text": "Scheduled LLM tests failed",
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*Scheduled LLM Tests Failed*\n<https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Details>"
-                  }
-                }
-              ]
-            }
-        env:
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-```
-
-## Step 11: Deployment Gates
-
-Block deployments on test failures:
-
-```yaml
-# .github/workflows/deploy.yml
-name: Deploy
+name: Arena tests
 
 on:
   push:
     branches: [main]
-
-jobs:
-  test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Install PromptArena
-        run: npm install -g @altairalabs/promptarena
-      
-      - name: Run LLM tests
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        run: |
-          promptarena run --scenario critical --ci
-  
-  deploy:
-    needs: test  # Only deploy if tests pass
-    runs-on: ubuntu-latest
-    steps:
-      - name: Deploy to production
-        run: |
-          echo "Deploying..."
-          # Your deployment commands
-```
-
-## Complete Example Workflow
-
-Here's a production-ready workflow:
-
-```yaml
-name: LLM Quality Pipeline
-
-on:
-  push:
-    branches: [main, develop]
   pull_request:
-    branches: [main]
-  schedule:
-    - cron: '0 */6 * * *'
-
-env:
-  GO_VERSION: '1.23'
 
 jobs:
-  smoke:
-    name: Smoke Tests (Mock)
+  arena:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
-      
-      - name: Install Arena
-        run: npm install -g @altairalabs/promptarena
-      
-      - name: Smoke tests
-        working-directory: tests
-        run: promptarena run --scenario smoke --mock-provider --ci --format junit
-      
-      - name: Publish results
-        uses: dorny/test-reporter@v1
-        if: always()
+
+      - uses: actions/setup-node@v4
         with:
-          name: Smoke Tests
-          path: tests/out/junit.xml
-          reporter: java-junit
-  
-  critical:
-    name: Critical Path Tests
-    needs: smoke
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Install Arena
+          node-version: 20
+
+      - name: Install PromptArena
         run: npm install -g @altairalabs/promptarena
-      
-      - name: Critical tests
+
+      - name: Run Arena tests
         working-directory: tests
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        run: |
-          promptarena run \
-            --scenario critical \
-            --ci \
-            --concurrency 2 \
-            --format junit,json,markdown
-      
-      - name: Quality gate
-        working-directory: tests
-        run: |
-          PASS_RATE=$(jq '.summary.pass_rate' out/results.json)
-          if (( $(echo "$PASS_RATE < 0.95" | bc -l) )); then
-            echo "Quality gate failed: $PASS_RATE < 95%"
-            exit 1
-          fi
-      
+        run: promptarena run --ci --format junit,json
+
       - name: Upload results
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: critical-test-results
-          path: tests/out/
-  
-  integration:
-    name: Integration Tests
-    needs: critical
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v4
-      
-      - name: Install Arena
-        run: npm install -g @altairalabs/promptarena
-      
-      - name: Full test suite
-        working-directory: tests
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
-        run: |
-          promptarena run \
-            --ci \
-            --concurrency 3 \
-            --format junit,json,markdown
-      
-      - name: Upload results
-        uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: integration-test-results
+          name: arena-results
           path: tests/out/
 ```
 
-## Best Practices
+`working-directory: tests` matches where we ran the command locally. `if: always()` uploads `out/` even when the run step fails.
 
-### 1. Fast Feedback Loop
+Commit the project and push it. The workflow runs on the push, and the `arena-results` artifact holds `junit.xml` and `index.json`.
 
-```yaml
-# Stage 1: Mock tests (< 1 min)
-# Stage 2: Critical tests (< 5 min)
-# Stage 3: Full suite (< 20 min)
-```
+## Next steps
 
-### 2. Fail Fast
+You have a keyless Arena suite gating a GitHub Actions workflow.
 
-```yaml
-timeout-minutes: 10  # Kill hung tests
---concurrency 2      # Respect rate limits
---ci                 # Optimized output
-```
-
-### 3. Secure Secrets
-
-```yaml
-# Use GitHub Secrets
-env:
-  OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-
-# Never commit keys
-env:
-  OPENAI_API_KEY: "sk-..."  # WRONG!
-```
-
-### 4. Informative Reports
-
-```bash
-# Generate multiple formats
---format junit,json,markdown
-
-# Upload for review
-uses: actions/upload-artifact@v4
-```
-
-## Troubleshooting
-
-### Tests Timeout
-
-```yaml
-# Increase timeout
-timeout-minutes: 20
-
-# Reduce concurrency
---concurrency 1
-```
-
-### Rate Limiting
-
-```bash
-# Lower concurrency
---concurrency 1
-
-# Use mock providers for structure validation
---mock-provider
-```
-
-### Secrets Not Working
-
-```bash
-# Check secret is set
-echo "Key length: ${#OPENAI_API_KEY}"
-# Should output: Key length: 51 (not 0)
-```
-
-## Next Steps
-
-Congratulations! You've completed all Arena tutorials.
-
-**What's next:**
-- **[Arena How-To Guides](/arena/how-to/)** - Practical recipes
-- **[Arena Reference](/arena/reference/)** - Complete API docs
-- **[SDK Tutorials](/arena/tutorials/)** - Integrate Arena with your app
-
-**Advanced topics:**
-- Set up trend analysis
-- Create custom quality metrics
-- Build deployment pipelines
-- Implement A/B testing
-
-You're now ready to build production-grade LLM testing pipelines!
+- [Run Arena in CI](/arena/how-to/interfaces/run-in-ci/): use real provider keys as repository secrets.
+- [Tutorial 6: Duplex Testing](/arena/tutorials/06-duplex-testing/): test streaming voice conversations.
+- [Arena How-To Guides](/arena/how-to/) and [Arena Reference](/arena/reference/).

@@ -1,108 +1,42 @@
 ---
 title: Arena Tutorials
+description: Lessons that build a working PromptArena test suite step by step, from a first scenario to deploying an agent.
 sidebar:
   order: 0
+verified:
+  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  sources:
+    - arena/cmd/promptarena/deploy_adapter_interactive.go
+    - arena/engine/builder_integration.go
+    - examples/client-tools/providers/mock-provider.yaml
+    - examples/duplex-streaming/providers/mock-duplex.provider.yaml
 ---
-Step-by-step learning paths to master PromptArena from beginner to advanced.
+Each tutorial builds something that runs, one step at a time. Start with Tutorial 1: it installs the CLI and introduces the file layout the others reuse. The deploy tutorials build on Tutorial 1's project.
 
-## Learning Path
+## Testing
 
-Work through these tutorials in order for the best learning experience:
+| Tutorial | What we build | Needs |
+|---|---|---|
+| [1: Your First Test](/arena/tutorials/01-first-test/) | A prompt, a provider and a two-turn scenario, run against `gpt-4o-mini` | OpenAI key |
+| [2: Multi-Provider Testing](/arena/tutorials/02-multi-provider/) | One scenario run against OpenAI, Claude and Gemini | OpenAI, Anthropic and Gemini keys |
+| [3: Multi-Turn Conversations](/arena/tutorials/03-multi-turn/) | Scenarios that check context across turns, and a self-play run | OpenAI key |
+| [4: Testing MCP Tools](/arena/tutorials/04-mcp-tools/) | A scenario that calls an MCP memory server's tools | OpenAI key, Node.js |
+| [5: CI/CD Integration](/arena/tutorials/05-ci-integration/) | A GitHub Actions workflow that runs the suite and fails on a broken assertion | GitHub repository |
+| [6: Duplex Voice Testing](/arena/tutorials/06-duplex-testing/) | A duplex audio scenario on a mock provider | Nothing |
+| [7: Using Arena as a Go Library](/arena/tutorials/07-programmatic-usage/) | A Go program that builds a scenario, runs it and reads the result | Go 1.26 |
+| [8: Client-Side Tools](/arena/tutorials/08-client-tools/) | Scenarios for a client-side tool with consent granted and denied | Nothing |
 
-### Beginner
+## Deploying
 
-**[Tutorial 1: Your First Test](/arena/tutorials/01-first-test/)**
+| Tutorial | What we build | Needs |
+|---|---|---|
+| [Your First Deployment](/arena/tutorials/deploy/first-deployment/) | The Tutorial 1 agent deployed to AWS Bedrock AgentCore | AWS account, Go 1.26 |
+| [Multi-Environment Deployments](/arena/tutorials/deploy/multi-environment/) | Separate dev and production deployments with config overrides | AWS account |
 
-Install PromptArena, write your first test scenario, configure a provider, and run tests. Perfect starting point for newcomers.
+Every tutorial needs the `promptarena` CLI; [Tutorial 1](/arena/tutorials/01-first-test/) installs it.
 
-*Time: 20 minutes*
+## Other sections
 
-### Intermediate
-
-**[Tutorial 2: Multi-Provider Testing](/arena/tutorials/02-multi-provider/)**
-
-Test the same scenario across OpenAI, Claude, and Gemini. Learn to compare providers and optimize for cost vs. quality.
-
-*Time: 30 minutes*
-
-**[Tutorial 3: Multi-Turn Conversations](/arena/tutorials/03-multi-turn/)**
-
-Build complex conversation flows with context retention. Test customer support dialogs, information gathering, and conversation branching.
-
-*Time: 45 minutes*
-
-### Advanced
-
-**[Tutorial 4: Testing MCP Tools](/arena/tutorials/04-mcp-tools/)**
-
-Test LLMs that use Model Context Protocol tools for database queries, API calls, and system interactions.
-
-*Time: 45 minutes*
-
-**[Tutorial 5: CI/CD Integration](/arena/tutorials/05-ci-integration/)**
-
-Integrate Arena into GitHub Actions, GitLab CI, and other pipelines. Set up quality gates and deployment automation.
-
-*Time: 60 minutes*
-
-**[Tutorial 6: Duplex Voice Testing](/arena/tutorials/06-duplex-testing/)**
-
-Test bidirectional voice conversations with real-time audio streaming. Learn duplex mode, turn detection, and self-play with TTS.
-
-*Time: 45 minutes*
-
-**[Tutorial 7: Using Arena as a Go Library](/arena/tutorials/07-programmatic-usage/)**
-
-Integrate Arena into your Go applications — build scenarios, run them, and inspect results programmatically instead of via the CLI.
-
-*Time: 30 minutes*
-
-**[Tutorial 8: Client-Side Tools](/arena/tutorials/08-client-tools/)**
-
-Test tools that execute on the caller's device, including consent simulation for grant and deny scenarios.
-
-*Time: 30 minutes*
-
-## What's the Difference?
-
-**Tutorials** are learning-oriented lessons that guide you through completing projects:
-
-- "Build your first LLM test from scratch"
-- "Set up multi-provider testing step-by-step"
-- "Create a CI/CD pipeline for LLM tests"
-
-Looking for something else?
-
-- **[How-To Guides](/arena/how-to/)** - Task-focused recipes for specific problems
-- **[Explanation](/arena/)** - Conceptual understanding and design decisions
-- **[Reference](/arena/reference/)** - Complete technical specifications
-
-## Prerequisites
-
-Before starting, ensure you have:
-
-- **Go 1.23+** installed
-- **Git** for cloning the repository
-- At least one **LLM API key** (OpenAI, Anthropic, or Google)
-- Basic command-line knowledge
-
-## Getting Help
-
-Stuck on a tutorial?
-
-1. Check the **[How-To Guides](/arena/how-to/)** for specific solutions
-2. Review the **[Reference Documentation](/arena/reference/)** for complete specs
-3. Open an issue on **[GitHub](https://github.com/AltairaLabs/promptarena/v2/issues)**
-
-## What You'll Build
-
-By completing all tutorials, you'll have:
-
-- A working LLM test suite
-- Multi-provider comparison tests
-- Complex conversation flows
-- Tool/function calling tests
-- Automated CI/CD pipeline
-- Voice/duplex streaming tests
-
-Ready to get started? **[Begin with Tutorial 1 →](/arena/tutorials/01-first-test/)**
+- [How-to guides](/arena/how-to/): steps for a task you already have.
+- [Reference](/arena/reference/): commands, config fields and assertion types.
+- [Explanation](/arena/): how Arena works and why.
