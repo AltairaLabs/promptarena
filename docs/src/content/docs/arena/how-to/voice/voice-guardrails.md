@@ -1,19 +1,31 @@
 ---
 title: Add Voice PII Guardrails
-description: Same primitive enforces in production AND fires as a test signal. A focused walk through the runtime + test bridge for one of the most-asked-for voice safety features.
+description: Wire the pii_leakage guardrail into a pack so it replaces a PII-bearing reply before it is spoken, and assert that it fired with guardrail_triggered.
+verified:
+  commit: 631d3c353c2c9d71b362ae5cd20c137d42b19d5b
+  sources:
+    - arena/cmd/promptarena/main_integration.go
+    - arena/cmd/promptarena/run.go
+    - arena/cmd/promptarena/serve_interactive.go
+    - arena/engine/duplex_executor_pipeline_integration.go
+    - arena/turnexecutors/pipeline_stages_integration.go
+    - examples/pii-guardrail-red-team/scenarios/legitimate-question.scenario.yaml
+    - examples/voice-guardrails/config.arena.yaml
+    - examples/voice-guardrails/mock-responses.yaml
+    - examples/voice-guardrails/prompts/support-agent.yaml
+    - examples/voice-guardrails/providers/mock-judge.yaml
+    - examples/voice-guardrails/scenarios/pii-redaction.scenario.yaml
 ---
 
-This how-to walks through `examples/voice-guardrails/` — a focused demonstration of the `pii_leakage` guardrail wired in the pack. The runtime catches the agent's would-be-spoken PII before it reaches the TTS layer; the test observes the firing via `guardrail_triggered`. Same primitive, two roles.
+This how-to walks through `examples/voice-guardrails/`: one scenario with the `pii_leakage` guardrail declared in the pack. The runtime catches PII in the agent's reply before it reaches the TTS layer, and the test observes the firing with the `guardrail_triggered` assertion.
 
 ## What it proves
 
-Voice agents that leak PII fail in a particularly bad way: the leak goes out as audio, where redaction-after-the-fact is impossible. Production-side guardrails have to fire *before* TTS — and you have to be able to test that they did.
-
-PromptArena's three-role model handles both ends from one primitive:
+A voice agent's PII leak goes out as audio, so the guardrail has to fire before TTS, and the test has to show that it did:
 
 - The pack's `validators:` block declares `pii_leakage`.
-- The runtime wraps it as a `ProviderHook` (`runtime/hooks/guardrails/factory.go`). On every assistant message, the regex pre-pass scans the would-be-output. On hit, the runtime replaces `resp.Message.Content` with the safe message *before* the duplex / TTS stage. The agent does not speak the PII.
-- The hook also records a `validations:` block on the message capturing what the guardrail did. The test reads that block via `guardrail_triggered` — no re-running of the eval, no race with the runtime.
+- The runtime wraps it as a `ProviderHook`. On every assistant message, a regex pre-pass scans the reply. On a hit, the runtime replaces `resp.Message.Content` with the safe message before any later stage speaks it.
+- The hook also records a `validations:` block on the message with what the guardrail did. The `guardrail_triggered` assertion reads that block; it does not re-run the eval.
 
 ## Run it
 
@@ -22,7 +34,7 @@ cd examples/voice-guardrails
 promptarena serve
 ```
 
-`serve` loads the single scenario. The recording shows the pre-enforcement content (what the agent tried to say) plus the `validations:` block (what the guardrail did) — useful for incident investigation without leaking PII to consumers that don't need it.
+`serve` loads the single scenario. The recorded assistant message holds the replaced, safe content, plus the `validations:` block (what the guardrail did). The PII the agent tried to say does not appear in the recording.
 
 Headless / CI:
 
@@ -31,7 +43,7 @@ promptarena run --ci --formats json,markdown
 open out/results.md
 ```
 
-Keyless: `pii_leakage`'s regex pre-pass works without any LLM key.
+The run needs no LLM key: `pii_leakage`'s regex pre-pass catches the PII, and the example's judge is a mock provider.
 
 ## The assertion shape
 
@@ -44,24 +56,15 @@ conversation_assertions:
     message: "pii_leakage guardrail must fire on the agent's would-be-spoken response"
 ```
 
-`guardrail_triggered` reads `validations:` on the message — the runtime emits these, the assertion observes them. Cheap, deterministic, and tells you exactly whether the production primitive caught what it should have.
-
-## Why this matters (vs. eval-only or guardrail-only frameworks)
-
-Most safety frameworks force a choice:
-
-- **Guardrail-only** (content filters): the runtime catches PII, but you can't write tests against what it catches without parsing logs or building a parallel eval pipeline.
-- **Eval-only** (DeepEval `pii_leakage` as a score): you can compute scores on transcripts, but in production the agent has already spoken the PII — the eval is a post-hoc grade, not a defence.
-
-PromptArena's three-role model collapses that: the eval primitive IS the guardrail IS the test signal. One implementation. Production catches in real time AND the test observes the firing, from the same code.
+`guardrail_triggered` reads the `validations:` block the runtime records on the message. The result is deterministic: it tells you whether the production guardrail caught the PII.
 
 ## Side-by-side with red-team
 
-This demo is intentionally focused — one scenario, one assertion. For a second scenario that checks the guardrail stays quiet on a legitimate question, see [Red-team a support agent for PII leakage](/arena/how-to/scenarios/pii-guardrail-red-team/).
+This demo has one scenario and one assertion. For a second scenario that checks the guardrail stays quiet on a legitimate question, see [Red-team a support agent for PII leakage](/arena/how-to/scenarios/pii-guardrail-red-team/).
 
 ## Switching to live voice
 
-Add a duplex provider, add a `duplex:` block to the scenario, run with provider keys. The guardrail fires identically — the audio path receives the safe message, the test observes the firing through the same `validations:` block on the recorded message.
+Arena's duplex voice path does not run pack guardrails. Its pipeline wires no guardrail hooks, so a scenario with a `duplex:` block runs without `pii_leakage` enforcement. Test guardrails with text turns, as this example does.
 
 ## CI gate
 
@@ -88,4 +91,9 @@ jobs:
         run: ../../bin/promptarena run --ci --formats json
 ```
 
-Keyless and fork-safe — the demo is one scenario with one regex-based assertion. Wire in the LLM-judged primitives (bias, toxicity, role_violation) with a secret-gated additional job.
+The demo is one scenario with one regex-based assertion, so the job needs no secrets and is safe for PRs from forks. To add the LLM-judged guardrails (`bias`, `toxicity`, `role_violation`), put them in a separate job that reads provider keys from secrets.
+
+## Related pages
+
+- [Red-team a support agent for PII leakage](/arena/how-to/scenarios/pii-guardrail-red-team/)
+- [Run in CI](/arena/how-to/interfaces/run-in-ci/)

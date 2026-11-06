@@ -1,23 +1,31 @@
 ---
 title: Test Voice Tool Calls
-description: Assert that a voice agent calls the right tools, with the right arguments, in the right order — during a duplex audio conversation.
+description: Assert that a voice agent calls the right tools, with the right arguments, in the right order, during a duplex audio conversation.
+verified:
+  commit: 631d3c353c2c9d71b362ae5cd20c137d42b19d5b
+  sources:
+    - arena/cmd/promptarena/run.go
+    - arena/engine/mock_default_audio.go
+    - examples/duplex-streaming/config.arena.yaml
+    - examples/duplex-streaming/mock-responses.yaml
+    - examples/duplex-streaming/prompts/voice-assistant-tools.prompt.yaml
+    - examples/duplex-streaming/providers/gemini-2-flash.provider.yaml
+    - examples/duplex-streaming/providers/mock-duplex.provider.yaml
+    - examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml
+    - examples/duplex-streaming/tools/set_reminder.tool.yaml
+    - examples/voice-ivr/mock-responses.yaml
 ---
 
-This how-to walks through the tool-calling scenarios in `examples/duplex-streaming/`. The differentiator: tool calls happen *during* a real-time voice conversation, and the assertions catch them at conversation level — not in isolation.
+This how-to walks through the tool-calling scenarios in `examples/duplex-streaming/`. The agent calls tools during a real-time voice conversation, and conversation-level assertions check the calls across the whole conversation.
 
 ## What it proves
 
-Voice agents that call tools have two interacting failure modes:
-
-- **Conversation failure** — the agent talks fine but never reaches for the tool when it should.
-- **Tool failure** — the agent calls the right tool but with wrong arguments, or hangs because the result comes back during ongoing audio output.
-
-Pure text eval misses the first because it doesn't sustain the conversation; pure tool-call eval misses the second because it doesn't run under the audio pipeline. PromptArena does both in one scenario:
+A voice agent that calls tools can fail in two ways: it never reaches for the tool when it should, or it calls the tool with the wrong arguments or stalls when the result comes back during ongoing audio output. One scenario covers both:
 
 - A scripted persona drives a sustained voice conversation via self-play + TTS.
 - The voice agent under test (OpenAI Realtime, Gemini Live) handles audio and decides when to call tools.
-- The tool registry executes real handlers — mock-backed for the demo, real services for production.
-- **Conversation-level assertions** check the tool-call pattern: which tools fired, with what args, in what order, with what results.
+- The tool registry executes real handlers: mock-backed for the demo, real services for production.
+- Conversation-level assertions check the tool-call pattern: which tools fired, with what args, in what order, with what results.
 
 ## Run it
 
@@ -26,17 +34,19 @@ cd examples/duplex-streaming
 promptarena serve
 ```
 
-`serve` loads all duplex-streaming scenarios. The tool-call scenario is `duplex-tools` — a busy-professional persona that asks about weather, calendar, and reminders, exercising three tools in a single conversation.
+`serve` loads all duplex-streaming scenarios. The tool-call scenario is `duplex-tools`: a busy-professional persona that asks about weather, calendar, and reminders, exercising three tools in a single conversation.
 
 For headless / CI use:
 
 ```bash
-# Real provider (requires GEMINI_API_KEY or OPENAI_API_KEY)
+# Real provider (requires GEMINI_API_KEY, plus OPENAI_API_KEY for the self-play persona)
 promptarena run --scenario duplex-tools --provider gemini-2-flash --ci
 
-# Mock provider (no keys; smoke-tests the pipeline; see "Mock mode limits" below)
+# Mock provider (smoke-tests the pipeline; see "Mock mode limits" below)
 promptarena run --scenario duplex-tools --provider mock-duplex --ci
 ```
+
+The `selfplay-user` role in `config.arena.yaml` uses `openai-gpt4o-mini-text`, so both commands need `OPENAI_API_KEY`. To run the mock command without keys, set that role's provider to `mock-duplex`, as the config comment says.
 
 ## The assertion shape
 
@@ -53,7 +63,8 @@ turns:
     assertions:
       - type: content_matches
         params:
-          pattern: "(?i)(hello|hi|help|assist)"
+          pattern: "(?i)(hello|hi|help|assist|Nova)"
+          message: "Assistant should greet or offer help"
 
   - role: selfplay-user
     persona: busy-professional
@@ -74,20 +85,24 @@ conversation_assertions:
       min_calls: 1
 ```
 
-The headline checks live at the conversation level: each of the three tools fired at least once over the four-turn self-play conversation. Layering in `tool_calls_with_args` or `tool_call_sequence` lets you tighten the contract:
+The headline checks live at the conversation level: each of the three tools fired at least once over the four-turn self-play conversation. Add `tool_calls_with_args` or `tool_call_sequence` to tighten the contract:
 
 ```yaml
 - type: tool_calls_with_args
   params:
     tool_name: set_reminder
     expected_args:
-      time: "9am"
+      time: "in 30 minutes"
 - type: tool_call_sequence
   params:
     sequence: [get_calendar_events, set_reminder]
 ```
 
+`tool_calls_with_args` compares argument values exactly. In the example, the scripted `set_reminder` call passes `time: "in 30 minutes"`.
+
 ## CI gate
+
+See [Run in CI](/arena/how-to/interfaces/run-in-ci/) for the general setup.
 
 ```yaml
 # .github/workflows/voice-tool-calls.yml
@@ -132,15 +147,18 @@ The fork-aware `if:` check keeps the secret-bearing job from running on PRs from
 
 ## Mock mode limits
 
-The mock-duplex provider emits a fixed `auto_respond` text instead of executing the scripted tool calls in `mock-responses.yaml`. That means conversation-level tool-call assertions fail in mock mode — useful for smoke-testing the pipeline (does everything wire up, does the conversation execute end-to-end), not for asserting correctness.
+The `mock-duplex` provider sets `duplex_scenario: duplex-basic`, so its replies come from the `duplex-basic` scripted turns and audio. The `tool_calls` scripted for `duplex-tools` in `mock-responses.yaml` are never looked up, so no tools fire, and the conversation-level tool-call assertions cannot pass. Use the mock run to smoke-test the pipeline (does everything wire up, does the conversation execute end to end), not to assert correctness.
 
-For deterministic mock runs where assertions can pass, see [examples/voice-ivr/](/arena/how-to/voice/voice-ivr/), which uses a text-mode mock provider that does execute scripted tool calls.
-
-There is no fully-mocked duplex provider that scripts both audio output and tool calls, so real providers are the only path to assertion-passing tool-call evaluation under voice.
+The mock streaming provider emits audio fixtures and `tool_calls` in the same turn when its `duplex_scenario` names a scenario that scripts them. For deterministic mock runs where tool assertions pass, see [Test a Voice IVR](/arena/how-to/voice/voice-ivr/), which uses a text-mode mock provider that executes scripted tool calls.
 
 ## Extending it
 
-- **More tools**: drop a new `.tool.yaml` into `tools/`, reference it in `config.arena.yaml`, mention it in the system prompt at `prompts/voice-assistant-tools.prompt.yaml`.
-- **Argument validation**: replace `tools_called` with `tool_calls_with_args` and specify `expected_args` for the values the agent must pass.
-- **Ordering**: add `tool_call_sequence` to assert the order the agent calls them in.
-- **No-call assertions**: pair with `tools_not_called` to catch tools the agent should *not* invoke in a given path (e.g., `set_reminder` on a read-only query).
+- To add a tool, drop a new `.tool.yaml` into `tools/`, reference it in `config.arena.yaml`, and mention it in the system prompt at `prompts/voice-assistant-tools.prompt.yaml`.
+- To check the values the agent passes, replace `tools_called` with `tool_calls_with_args` and list them under `expected_args`.
+- To assert call order, add `tool_call_sequence`.
+- To catch tools the agent should not invoke in a given path (for example `set_reminder` on a read-only query), add `tools_not_called`.
+
+## Related pages
+
+- [Test a Voice Customer Support Agent with Self-Play](/arena/how-to/voice/voice-customer-support/)
+- [Set Up Voice Testing with Self-Play](/arena/how-to/voice/setup-voice-testing/)

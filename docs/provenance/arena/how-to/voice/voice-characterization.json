@@ -1,0 +1,359 @@
+{
+ "page": "docs/src/content/docs/arena/how-to/voice/voice-characterization.md",
+ "commit": "0dbee6290db4e4de3bff3101f260fd614f81c924",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "Walk-through is examples/voice-refund-demo/ expressive persona path",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-refund-demo/config.arena.yaml:1"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "ElevenLabs v3 consumes the tags natively (pass-through)",
+   "verdict": "true",
+   "evidence": [
+    "arena/selfplay/audio_generator.go:101"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "OpenAI gpt-4o-mini-tts receives tags in the instructions field",
+   "verdict": "true",
+   "evidence": [
+    "arena/selfplay/audio_generator.go:101"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "Cartesia receives an emotion array",
+   "verdict": "false",
+   "evidence": [
+    "arena/selfplay/audio_generator.go:101"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "SSML is used for Google/Azure TTS adapters",
+   "verdict": "false",
+   "evidence": [
+    "arena/selfplay/audio_generator.go:101"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "One persona drives every provider with no per-provider prompt forks",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/persona.go:463"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "Canonical tags include [shouts], [laughs], [pause:500ms]",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/persona.go:225"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "Adapters lower tags natively: pass-through ElevenLabs v3, instructions gpt-4o-mini-tts, emotion[] Cartesia, SSML Google/Azure",
+   "verdict": "false",
+   "evidence": [
+    "arena/selfplay/audio_generator.go:101"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "Persona file examples/voice-refund-demo/personas/aggressive-entitled.persona.yaml",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-refund-demo/personas/aggressive-entitled.persona.yaml:1"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "spec.id aggressive-entitled, spec.voice confident-man",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-refund-demo/personas/aggressive-entitled.persona.yaml:10-12"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "style.verbosity: short and style.challenge_level: high",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/persona.go:218-219"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "style.formality: casual",
+   "verdict": "dead",
+   "evidence": [
+    "examples/voice-refund-demo/personas/aggressive-entitled.persona.yaml:42"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "style.expressive: true opts persona into tag emission",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/persona.go:229",
+    "arena/arenaconfig/persona.go:481"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "With expressive true the runtime prepends a rubric to the persona system prompt",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/persona.go:474",
+    "arena/stages/persona_assembly.go:72"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "LLM emits '[furious] ... [shouts] ...'",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/persona.go:225"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "Text without brackets reaches eval handlers; content_matches/content_includes operate on plain text",
+   "verdict": "false",
+   "evidence": [
+    "arena/engine/duplex_executor_turns_integration.go:715"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "content_matches, content_includes are valid assertion types",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/types.go:27"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "cd examples/voice-refund-demo; promptarena serve",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 19,
+   "claim": "Pick the aggressive-refund scenario",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-refund-demo/config.arena.yaml:57",
+    "examples/voice-refund-demo/scenarios/aggressive-refund.scenario.yaml:13-15"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "Agent under test (Gemini Live, OpenAI Realtime) hears the expressive caller and replies in voice",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-refund-demo/config.arena.yaml:29-30"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "promptarena run --scenario aggressive-refund --formats json,markdown",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:1"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "Markdown report shows each persona-side turn with its assertion results",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 23,
+   "claim": "promptarena serve shows full conversation detail including parsed expressive tags",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 24,
+   "claim": "Per-trait personas aggressive-entitled and anxious-recipient exist",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-refund-demo/personas/anxious-recipient.persona.yaml:8"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "Mood-shifting persona via per-turn guidance in system prompt",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/persona.go:495"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "llm_judge_session is an eval type for cross-turn consistency",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:182"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "content_includes_any and content_excludes are valid types",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/types.go:27"
+   ]
+  },
+  {
+   "id": 28,
+   "claim": "conversation_assertions entry type: assertion with params.eval_type, eval_params, min_score",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-refund-demo/scenarios/aggressive-refund.scenario.yaml:94-109"
+   ]
+  },
+  {
+   "id": 29,
+   "claim": "eval_params.criteria is the judge criteria",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:182"
+   ]
+  },
+  {
+   "id": 30,
+   "claim": "eval_params.judge: default selects the judge",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/judge_param.go:21",
+    "arena/arenaconfig/judge_param.go:43",
+    "arena/arenaconfig/loader.go"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "min_score: 0.8 placed in assertion params beside eval_type",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-refund-demo/scenarios/aggressive-refund.scenario.yaml:107"
+   ]
+  },
+  {
+   "id": 32,
+   "claim": "The only audio-side assertions are structural (audio_duration, audio_format)",
+   "verdict": "false",
+   "evidence": [
+    "examples/voice-refund-demo/config.arena.yaml:41",
+    "examples/voice-refund-demo/scenarios/aggressive-refund.scenario.yaml:94-109"
+   ]
+  },
+  {
+   "id": 33,
+   "claim": "Content-of-audio assertions go through LLM judge on the text representation",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:182"
+   ]
+  },
+  {
+   "id": 34,
+   "claim": "Tag reference is in PromptKit runtime/tts/markup package doc",
+   "verdict": "true",
+   "evidence": [
+    "arena/selfplay/audio_generator.go:91"
+   ]
+  },
+  {
+   "id": 35,
+   "claim": "Scenario turns[].tts: {provider, voice} override exists",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:724",
+    "schemas/v1alpha1/scenario.json:646-660"
+   ]
+  },
+  {
+   "id": 36,
+   "claim": "scenarios/aggressive-refund.scenario.yaml exists",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-refund-demo/scenarios/aggressive-refund.scenario.yaml:1"
+   ]
+  },
+  {
+   "id": 37,
+   "claim": "voice: cartesia-confident-man is a voice id",
+   "verdict": "false",
+   "evidence": [
+    "examples/voice-refund-demo/config.arena.yaml:39-41"
+   ]
+  },
+  {
+   "id": 38,
+   "claim": "The persona's voice was elevenlabs / openai before the switch",
+   "verdict": "false",
+   "evidence": [
+    "examples/voice-refund-demo/config.arena.yaml:39-41",
+    "examples/voice-refund-demo/personas/aggressive-entitled.persona.yaml:12"
+   ]
+  },
+  {
+   "id": 39,
+   "claim": "Bracket tags reach the new provider and its adapter lowers them",
+   "verdict": "true",
+   "evidence": [
+    "arena/selfplay/audio_generator.go:101"
+   ]
+  },
+  {
+   "id": 40,
+   "claim": "Mock TTS strips tags",
+   "verdict": "false",
+   "evidence": [
+    "arena/selfplay/audio_generator.go:101",
+    "arena/selfplay/mock_tts_interactive.go:133"
+   ]
+  },
+  {
+   "id": 41,
+   "claim": "The expressive path needs real provider keys",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-refund-demo/config.arena.yaml:39-41"
+   ]
+  },
+  {
+   "id": 42,
+   "claim": "promptarena validate config.arena.yaml in the example dir makes no provider calls and passes",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/validate.go:1"
+   ]
+  },
+  {
+   "id": 43,
+   "claim": "CI step uses working-directory examples/voice-refund-demo and ../../bin/promptarena",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-refund-demo/config.arena.yaml:1"
+   ]
+  },
+  {
+   "id": 44,
+   "claim": "Link /arena/how-to/voice/voice-customer-support/ exists",
+   "verdict": "true",
+   "evidence": []
+  }
+ ]
+}

@@ -1,15 +1,32 @@
 ---
 title: Run a Voice Provider Bake-Off
-description: Side-by-side provider comparison without leaving the scenario file. One scenario, N providers, one report — pick the winner on real metrics.
+description: Run one scenario against several providers and compare their assertion results and latency in one report.
+verified:
+  commit: 631d3c353c2c9d71b362ae5cd20c137d42b19d5b
+  sources:
+    - arena/arenaconfig/types.go
+    - arena/cmd/promptarena/main_integration.go
+    - arena/cmd/promptarena/run.go
+    - arena/cmd/promptarena/serve_interactive.go
+    - arena/engine/eval_orchestrator.go
+    - arena/engine/execution.go
+    - arena/results/markdown/markdown_repository.go
+    - arena/web/frontend/src/App.tsx
+    - arena/web/frontend/src/components/arena/TrialMatrix.tsx
+    - examples/voice-bake-off/config.arena.yaml
+    - examples/voice-bake-off/providers/mock-fast.provider.yaml
+    - examples/voice-bake-off/providers/mock-slow.provider.yaml
+    - examples/voice-bake-off/scenarios/standard-call.scenario.yaml
+    - examples/voice-refund-demo/scenarios/aggressive-refund.scenario.yaml
+    - schemas/v1alpha1/provider.json
+    - schemas/v1alpha1/scenario.json
 ---
 
-This how-to walks through `examples/voice-bake-off/` — the same three-turn support call registered twice (`mock-fast`, `mock-slow`), with per-turn `latency_budget` and `max_length` assertions on each. Arena fans the scenario out automatically; `promptarena serve` shows the providers side by side in the timeline view.
+This how-to walks through `examples/voice-bake-off/`: a three-turn support call run against two registered providers (`mock-fast`, `mock-slow`), with per-turn `latency_budget` and `max_length` assertions. Arena runs the scenario once per provider, and `promptarena serve` shows the results in a scenario-by-provider matrix.
 
 ## What it proves
 
-Provider selection for voice is hard because the failure modes are model-specific: one provider is faster but rambles; another is slower but tighter; a third is great at tool calls but slow on first-audio. Static comparison charts go stale; running the same scenario across providers is the only way to evaluate them on *your* prompt, *your* tools, *your* assertions.
-
-PromptArena makes that a one-line change. Register multiple providers in `config.arena.yaml`; every scenario fans out across all of them. Assertions run per-provider, the report shows them on one axis, and you can tune thresholds per provider with `when:` clauses.
+Running the same scenario across providers evaluates each one on your prompt, your tools and your assertions. Register several providers in `config.arena.yaml` and every scenario runs against each of them. Assertions run per provider, and the report has one row per provider.
 
 ## Run it
 
@@ -18,7 +35,7 @@ cd examples/voice-bake-off
 promptarena serve
 ```
 
-The web UI loads the scenario and shows runs grouped by provider. Click each provider to see its responses and metrics in the timeline view.
+The web UI loads the scenario and shows a scenario-by-provider results matrix, with standings and a results ledger.
 
 Headless:
 
@@ -27,7 +44,7 @@ promptarena run --ci --formats json,markdown
 open out/results.md
 ```
 
-The Markdown report lists results grouped by provider. For the side-by-side comparison with per-turn `latency_ms` / response length from each provider, run `promptarena serve` — the timeline view groups runs by provider and expands each turn on demand.
+`results.md` has a results table with one row per provider and its assertion pass count. Each provider's per-turn `latency_ms` and response text are in the per-run JSON files in `out/`. The mock providers answer in a few milliseconds, so in this demo they differ in reply length, not speed.
 
 ## The fan-out
 
@@ -39,32 +56,25 @@ providers:
   - file: providers/mock-slow.provider.yaml
 ```
 
-That's it. The scenario doesn't mention providers; Arena pairs every scenario with every registered provider and runs each combination. To add a third provider, drop in a new provider YAML file and add one more line.
+The scenario does not mention providers. Arena pairs every scenario with every registered provider and runs each combination. To add a provider, add its provider YAML file and one more line here. A mock provider also needs its mock responses file.
 
 ## Per-provider thresholds
 
-If a provider has tighter or looser real-world limits, narrow the assertion with `when:`:
+An assertion's `when:` block conditions on tool calls only (`tool_called`, `tool_called_pattern`, `any_tool_called`, `min_tool_calls`). It has no `provider` key, and the scenario schema rejects one. A `latency_budget` assertion's `max_ms` applies to every provider the scenario runs against:
 
 ```yaml
 - type: latency_budget
   params:
     max_ms: 800
-  when:
-    provider: openai-realtime
-- type: latency_budget
-  params:
-    max_ms: 1500
-  when:
-    provider: gemini-live
 ```
 
-Useful for migration testing ("we're moving from Gemini Live to OpenAI Realtime — does the new provider stay inside the same budget on our actual prompts?") and for cross-provider bake-offs where each has a different baseline.
+To compare providers against different budgets, read each provider's `latency_ms` in the per-run JSON. This is useful for migration testing ("does the new provider stay inside the same budget on our prompts?").
 
 ## Adding real voice providers
 
-The default config uses text mock providers so the demo runs keyless. To run across real voice providers:
+The default config uses text mock providers, so the demo runs without provider keys. To run across real voice providers:
 
-1. Add provider configs — e.g. `providers/openai-realtime.provider.yaml`:
+1. Add provider configs, for example `providers/openai-realtime.provider.yaml`:
 
    ```yaml
    apiVersion: promptkit.altairalabs.ai/v1alpha1
@@ -75,7 +85,8 @@ The default config uses text mock providers so the demo runs keyless. To run acr
      id: openai-realtime
      type: openai
      model: gpt-realtime
-     audio_modality: true
+     additional_config:
+       realtime: true
    ```
 
 2. Register them in `config.arena.yaml` under `providers:`.
@@ -113,8 +124,10 @@ jobs:
           path: examples/voice-bake-off/out/
 ```
 
-Uploading the report as an artifact lets reviewers eyeball the per-provider responses on the PR — useful when "did the migration regress on prompt X?" is the question.
+The uploaded artifact holds `results.md` and the per-run JSON files, so reviewers can read each provider's responses from the PR.
 
-## Why this matters
+## Related pages
 
-Most eval frameworks treat "compare providers" as a separate workflow with its own UI. PromptArena treats it as a property of the scenario set: one scenario, N providers, one report. Adding a provider is one YAML line. The fan-out shape is the same whether you have two mock providers (this demo) or three real duplex providers (the live version). The scenarios don't change as you move from synthetic to real to migration testing — only the registered providers list does.
+- [Assert Voice Latency Budgets](/arena/how-to/voice/voice-latency-budget/)
+- [Set Up Voice Testing with Self-Play](/arena/how-to/voice/setup-voice-testing/)
+- [Run in CI](/arena/how-to/interfaces/run-in-ci/)

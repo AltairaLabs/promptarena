@@ -1,0 +1,544 @@
+{
+ "page": "docs/src/content/docs/arena/how-to/voice/voice-bake-off.md",
+ "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "examples/voice-bake-off/ walks through a three-turn support call scenario",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-bake-off/scenarios/standard-call.scenario.yaml:10"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "The same scenario is registered twice, as providers mock-fast and mock-slow",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-bake-off/config.arena.yaml:25",
+    "examples/voice-bake-off/providers/mock-fast.provider.yaml:4",
+    "examples/voice-bake-off/providers/mock-slow.provider.yaml:4"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "Per-turn latency_budget assertion is used in the example scenario",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/eval_orchestrator.go:393",
+    "examples/voice-bake-off/scenarios/standard-call.scenario.yaml:14"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "Per-turn max_length assertion is used in the example scenario",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/eval_orchestrator.go:356",
+    "examples/voice-bake-off/scenarios/standard-call.scenario.yaml:18"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "Arena fans a scenario out automatically across registered providers",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/execution.go:172",
+    "arena/engine/execution.go:190",
+    "examples/voice-bake-off/config.arena.yaml:25"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "promptarena serve is a subcommand",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:109"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "promptarena serve shows providers side by side in the timeline view",
+   "verdict": "false",
+   "evidence": [
+    "arena/web/frontend/src/App.tsx:311",
+    "arena/web/frontend/src/components/arena/TrialMatrix.tsx:1"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "Registering multiple providers in config.arena.yaml makes every scenario fan out across all of them",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/execution.go:172",
+    "arena/engine/execution.go:190",
+    "examples/voice-bake-off/config.arena.yaml:24"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "Assertions run per provider",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/eval_orchestrator.go:356",
+    "arena/engine/execution.go:190"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "The report shows per-provider assertion results on one axis",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/markdown/markdown_repository.go:25"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "Assertion thresholds can be tuned per provider with a when: clause",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:26",
+    "arena/arenaconfig/types.go:49",
+    "schemas/v1alpha1/scenario.json:127"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "examples/voice-bake-off is a directory that can be cd'd into",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-bake-off/config.arena.yaml"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "Command promptarena serve is run from inside the example directory",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/serve_interactive.go:109"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "The web UI loads the scenario, groups runs by provider, and shows responses and metrics per provider in the timeline view on click",
+   "verdict": "false",
+   "evidence": [
+    "arena/web/frontend/src/App.tsx:311",
+    "arena/web/frontend/src/components/arena/TrialMatrix.tsx:1"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "Command: promptarena run --ci --formats json,markdown",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:145",
+    "arena/cmd/promptarena/run.go:150"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "Flag --ci exists on run",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:145"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "Flag --formats exists on run and accepts json and markdown values",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:150",
+    "arena/results/markdown/markdown_repository.go:25"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "A headless run writes out/results.md under the example directory",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:144",
+    "arena/results/markdown/markdown_repository.go:25"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "The Markdown report lists results grouped by provider",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/markdown/markdown_repository.go:25"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "Per-turn latency_ms metric is recorded for each provider's responses",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/eval_orchestrator.go:356",
+    "arena/engine/eval_orchestrator.go:393"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "The serve timeline view groups runs by provider and expands each turn on demand",
+   "verdict": "false",
+   "evidence": [
+    "arena/web/frontend/src/App.tsx:311"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "config.arena.yaml has a top-level providers: key listing providers",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:91",
+    "examples/voice-bake-off/config.arena.yaml:24"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "Provider list entries use a file: key",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:385",
+    "examples/voice-bake-off/config.arena.yaml:25"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "Example file exists: examples/voice-bake-off/providers/mock-fast.provider.yaml",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-bake-off/providers/mock-fast.provider.yaml"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "Example file exists: examples/voice-bake-off/providers/mock-slow.provider.yaml",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-bake-off/providers/mock-slow.provider.yaml"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "The scenario does not mention providers; Arena pairs every scenario with every registered provider",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/execution.go:190",
+    "examples/voice-bake-off/scenarios/standard-call.scenario.yaml:1"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "Adding a provider needs only a new provider YAML file and one more line in config.arena.yaml",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:91",
+    "arena/engine/execution.go:190"
+   ]
+  },
+  {
+   "id": 28,
+   "claim": "latency_budget is an assertion type",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-bake-off/scenarios/standard-call.scenario.yaml:14"
+   ]
+  },
+  {
+   "id": 29,
+   "claim": "latency_budget assertion accepts params.max_ms, example value 800",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-bake-off/scenarios/standard-call.scenario.yaml:16"
+   ]
+  },
+  {
+   "id": 30,
+   "claim": "Assertions accept a when: block with a provider: key",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:26",
+    "arena/arenaconfig/types.go:49",
+    "schemas/v1alpha1/scenario.json:127"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "Provider name openai-realtime is used as a when.provider value",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:26",
+    "schemas/v1alpha1/scenario.json:127"
+   ]
+  },
+  {
+   "id": 32,
+   "claim": "latency_budget assertion accepts params.max_ms, example value 1500",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-bake-off/scenarios/standard-call.scenario.yaml:16"
+   ]
+  },
+  {
+   "id": 33,
+   "claim": "Provider name gemini-live is used as a when.provider value",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:26",
+    "schemas/v1alpha1/scenario.json:127"
+   ]
+  },
+  {
+   "id": 34,
+   "claim": "The default config uses text mock providers so the demo runs without provider keys",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-bake-off/providers/mock-fast.provider.yaml:7",
+    "examples/voice-bake-off/providers/mock-slow.provider.yaml:7"
+   ]
+  },
+  {
+   "id": 35,
+   "claim": "Example file path providers/openai-realtime.provider.yaml is a valid provider config location",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:385",
+    "examples/voice-bake-off/config.arena.yaml:25"
+   ]
+  },
+  {
+   "id": 36,
+   "claim": "Provider YAML apiVersion is promptkit.altairalabs.ai/v1alpha1",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-bake-off/providers/mock-fast.provider.yaml:1",
+    "schemas/v1alpha1/provider.json:1"
+   ]
+  },
+  {
+   "id": 37,
+   "claim": "Provider YAML kind is Provider",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-bake-off/providers/mock-fast.provider.yaml:2",
+    "schemas/v1alpha1/provider.json:1"
+   ]
+  },
+  {
+   "id": 38,
+   "claim": "Provider YAML metadata.name field",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-bake-off/providers/mock-fast.provider.yaml:4",
+    "schemas/v1alpha1/provider.json:37"
+   ]
+  },
+  {
+   "id": 39,
+   "claim": "Provider YAML spec.id field",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-bake-off/providers/mock-fast.provider.yaml:6",
+    "schemas/v1alpha1/provider.json:102"
+   ]
+  },
+  {
+   "id": 40,
+   "claim": "Provider YAML spec.type accepts value openai",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/provider.json:105"
+   ]
+  },
+  {
+   "id": 41,
+   "claim": "Provider YAML spec.model field, example value gpt-realtime",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/provider.json:108"
+   ]
+  },
+  {
+   "id": 42,
+   "claim": "Provider YAML spec.audio_modality boolean field",
+   "verdict": "false",
+   "evidence": [
+    "schemas/v1alpha1/provider.json:169",
+    "schemas/v1alpha1/provider.json:200"
+   ]
+  },
+  {
+   "id": 43,
+   "claim": "Provider configs are registered in config.arena.yaml under providers:",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:91",
+    "examples/voice-bake-off/config.arena.yaml:24"
+   ]
+  },
+  {
+   "id": 44,
+   "claim": "A scenario takes a duplex: block",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json:302"
+   ]
+  },
+  {
+   "id": 45,
+   "claim": "Example scenarios exist at examples/voice-refund-demo/scenarios/*.yaml and include a duplex block",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-refund-demo/scenarios/aggressive-refund.scenario.yaml:1"
+   ]
+  },
+  {
+   "id": 46,
+   "claim": "Real voice providers need provider API keys to run",
+   "verdict": "unverified",
+   "evidence": [
+    "schemas/v1alpha1/provider.json:10"
+   ]
+  },
+  {
+   "id": 47,
+   "claim": "CI workflow file path .github/workflows/voice-bake-off.yml is a valid example path",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-bake-off/config.arena.yaml:1"
+   ]
+  },
+  {
+   "id": 48,
+   "claim": "Workflow triggers on pull_request",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-bake-off/config.arena.yaml"
+   ]
+  },
+  {
+   "id": 49,
+   "claim": "Workflow pull_request paths filter is examples/voice-bake-off/**",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-bake-off/config.arena.yaml"
+   ]
+  },
+  {
+   "id": 50,
+   "claim": "Action actions/checkout@v4 is used",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-bake-off/config.arena.yaml"
+   ]
+  },
+  {
+   "id": 51,
+   "claim": "Action actions/setup-go@v5 is used",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-bake-off/config.arena.yaml"
+   ]
+  },
+  {
+   "id": 52,
+   "claim": "go-version '1.26' is the Go version set in the CI example",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 53,
+   "claim": "Command: go build -o bin/promptarena ./arena/cmd/promptarena",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/main_integration.go:1"
+   ]
+  },
+  {
+   "id": 54,
+   "claim": "CI step working-directory is examples/voice-bake-off",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-bake-off/config.arena.yaml"
+   ]
+  },
+  {
+   "id": 55,
+   "claim": "Command: ../../bin/promptarena run --ci --formats json,markdown",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:145"
+   ]
+  },
+  {
+   "id": 56,
+   "claim": "Upload step uses if: always()",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-bake-off/config.arena.yaml"
+   ]
+  },
+  {
+   "id": 57,
+   "claim": "Action actions/upload-artifact@v4 is used",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-bake-off/config.arena.yaml"
+   ]
+  },
+  {
+   "id": 58,
+   "claim": "Uploaded artifact name is bake-off-report",
+   "verdict": "true",
+   "evidence": [
+    "examples/voice-bake-off/config.arena.yaml"
+   ]
+  },
+  {
+   "id": 59,
+   "claim": "Upload path examples/voice-bake-off/out/ is where a run writes its report",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:144",
+    "examples/voice-bake-off/config.arena.yaml:35"
+   ]
+  },
+  {
+   "id": 60,
+   "claim": "Uploaded report lets reviewers see per-provider responses on the PR",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:150"
+   ]
+  },
+  {
+   "id": 61,
+   "claim": "Adding a provider is a one-YAML-line change",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:91"
+   ]
+  },
+  {
+   "id": 62,
+   "claim": "Scenarios do not change when moving from mock to real duplex providers; only the registered providers list changes",
+   "verdict": "false",
+   "evidence": [
+    "examples/voice-bake-off/config.arena.yaml:10",
+    "schemas/v1alpha1/scenario.json:302"
+   ]
+  },
+  {
+   "id": 63,
+   "claim": "The fan-out shape is the same for two mock providers and three real duplex providers",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/execution.go:172",
+    "arena/engine/execution.go:190"
+   ]
+  }
+ ]
+}

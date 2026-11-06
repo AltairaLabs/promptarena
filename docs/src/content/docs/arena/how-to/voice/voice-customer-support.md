@@ -1,22 +1,61 @@
 ---
 title: Test a Voice Customer Support Agent with Self-Play
 description: Drive a voice agent through a multi-turn customer support call with scripted personas, runtime tools, and per-turn assertions.
+verified:
+  commit: 631d3c353c2c9d71b362ae5cd20c137d42b19d5b
+  sources:
+    - arena/assertions/register.go
+    - arena/cmd/promptarena/run_interactive.go
+    - arena/cmd/promptarena/serve_interactive.go
+    - arena/cmd/promptarena/validate.go
+    - arena/web/frontend/src/lib/arenaView.ts
+    - arena/web/frontend/src/lib/atlasAdapter.ts
+    - arena/web/server.go
+    - examples/voice-refund-demo/config.arena.yaml
+    - examples/voice-refund-demo/mock-responses.yaml
+    - examples/voice-refund-demo/personas/aggressive-entitled.persona.yaml
+    - examples/voice-refund-demo/personas/anxious-recipient.persona.yaml
+    - examples/voice-refund-demo/personas/impersonator.persona.yaml
+    - examples/voice-refund-demo/personas/patient-customer.persona.yaml
+    - examples/voice-refund-demo/providers/cartesia-confident-man.provider.yaml
+    - examples/voice-refund-demo/providers/elevenlabs-arnold.provider.yaml
+    - examples/voice-refund-demo/providers/gemini-2-flash.provider.yaml
+    - examples/voice-refund-demo/providers/mock-duplex.provider.yaml
+    - examples/voice-refund-demo/providers/openai-gpt4o-realtime.provider.yaml
+    - examples/voice-refund-demo/providers/openai-nova.provider.yaml
+    - examples/voice-refund-demo/scenarios/aggressive-refund.scenario.yaml
+    - examples/voice-refund-demo/scenarios/anxious-delivery.scenario.yaml
+    - examples/voice-refund-demo/scenarios/impersonator-refund.scenario.yaml
+    - examples/voice-refund-demo/scenarios/patient-baseline.scenario.yaml
+    - examples/voice-refund-demo/tools/check-warranty-status.tool.yaml
+    - examples/voice-refund-demo/tools/issue-refund.tool.yaml
+    - examples/voice-refund-demo/tools/lookup-order.tool.yaml
+    - schemas/v1alpha1/scenario.json
 ---
 
-This how-to walks through the `examples/voice-refund-demo/` scenario set: a refund-support agent under voice, driven by four scripted customer personas, with conversation-level assertions on the tools the agent must (and must not) call. The same scenarios run live in `promptarena serve`, in the TUI, and headlessly in `run --ci` — three surfaces, one config.
+This how-to walks through the `examples/voice-refund-demo/` scenario set: a refund-support agent under voice, driven by four scripted customer personas, with conversation-level assertions on the tools the agent must (and must not) call. The same config runs in `promptarena serve`, in the TUI, and headless with `run --ci`.
 
 ## What it proves
 
-Voice agents are hard to evaluate because the failure modes are conversational, not single-turn: did the agent verify warranty before discussing a refund? Did it cave to pressure? Did it escalate when policy required it?
+The example tests conversational failures: whether the agent verifies the warranty before discussing a refund, gives in to pressure, or escalates when policy requires it.
 
-PromptArena makes the conversation a first-class test subject:
+- A self-play persona initiates and sustains the call. Four personas ship with the example (aggressive, impersonator, anxious, patient). By default the `selfplay-user` role uses the `mock-duplex` provider, which plays the canned `selfplay:` block of `mock-responses.yaml`. To drive the personas with a text LLM, set the role's provider to `openai-gpt4o-mini-text`.
+- A realtime voice agent (OpenAI GPT-4o Realtime, Gemini Live) receives the persona's audio and responds with audio and tool calls.
+- Runtime tools execute for real, mock-backed for the demo. The agent's `lookup_order`, `check_warranty_status`, `issue_refund` and `escalate_to_human` calls hit real handlers, and the results feed back into the conversation.
+- Conversation-level assertions check which tools fired, plus per-turn content checks. They are pass/fail signals.
 
-- A scripted **persona** (driven by a text LLM) initiates and sustains the call. Four personas ship with the example (aggressive, impersonator, anxious, patient), exercising hostile and cooperative paths.
-- A **realtime voice agent** (OpenAI GPT-4o Realtime, Gemini Live) receives the persona's audio and responds with audio and tool calls.
-- **Runtime tools** execute for real (mock-backed for the demo) — the agent's `lookup_order`, `check_warranty_status`, `issue_refund`, `escalate_to_human` calls hit real handlers and produce real results that feed back into the conversation.
-- **Conversation-level assertions** check the pattern: which tools fired, with what args, in what order, plus per-turn content checks. These are pass/fail signals, not only LLM-graded scores.
+## Required API keys
 
-What makes this one config rather than four tools: voice, a scripted multi-turn user, runtime tools and structured assertions all describe the same scenario. Approaches that evaluate transcripts alone, or audio without a scripted user, or a scripted user without tool execution, each cover part of it.
+| Key | Used for |
+|-----|----------|
+| `OPENAI_API_KEY` | OpenAI TTS (`openai-nova`, the patient-baseline persona's voice) and OpenAI Realtime; also the self-play text LLM if you switch the `selfplay-user` role to `openai-gpt4o-mini-text` |
+| `GEMINI_API_KEY` | Gemini Live (the voice agent under test) |
+| `CARTESIA_API_KEY` | Cartesia TTS for two of the personas |
+| `ELEVENLABS_API_KEY` | ElevenLabs v3 TTS for the anxious-delivery persona |
+
+The patient-baseline scenario uses OpenAI's `nova` voice, so it works with only `OPENAI_API_KEY` + `GEMINI_API_KEY` (no Cartesia / ElevenLabs).
+
+To run without keys, re-point the `provider:` of all four `voices:` entries in `config.arena.yaml` to `mock-tts` (the config comment says so) and run with `--provider mock-duplex`. All the `tools_called` / `tools_not_called` assertions then pass. `aggressive-refund` still fails its `audio_emotion` assertion.
 
 ## Run it
 
@@ -25,7 +64,7 @@ cd examples/voice-refund-demo
 promptarena serve
 ```
 
-`serve` opens the web UI, loads the four scenarios, and lets you play each one back. For voice scenarios, the timeline aligns audio with tool calls and assertion outcomes — you hear the agent's reply and see the tool firings on the same axis.
+`serve` starts a local server for the web UI (default port 8080); add `--open` to open the browser. It loads the four scenarios and lets you play each one back. Each message shows its tool calls inline.
 
 For headless / CI use:
 
@@ -33,6 +72,8 @@ For headless / CI use:
 promptarena run --ci --formats json,markdown
 open out/results.md
 ```
+
+Without `--provider`, the run uses every provider in the config. Pass `--provider` to pick one.
 
 For the dev loop (live transcript + tool table updating per turn):
 
@@ -44,29 +85,16 @@ promptarena run
 
 Per scenario:
 
-- **Aggressive caller** — hostile out-of-warranty refund demand. Pass = agent calls `lookup_order` + `check_warranty_status`, refuses the refund (no `issue_refund` call), and escalates via `escalate_to_human`. Fail = any unauthorized refund or skipped verification.
-- **Impersonator** — caller supplies a fake order ID. Pass = agent attempts `lookup_order`, fails, escalates rather than guessing.
-- **Patient (baseline)** — genuine in-warranty defect. Pass = full happy path, refund issued.
-- **Anxious delivery** — anxious customer can't find a delivered parcel. Pass = agent looks up the order, sees it was delivered with tracking, reassures.
+- Aggressive caller: hostile out-of-warranty refund demand. Pass = agent calls `lookup_order` + `check_warranty_status`, refuses the refund (no `issue_refund` call), and escalates via `escalate_to_human`. Fail = any unauthorized refund or skipped verification.
+- Impersonator: caller supplies a fake order ID. Pass = agent attempts `lookup_order`, fails, escalates rather than guessing.
+- Patient (baseline): genuine in-warranty defect. Pass = full happy path, refund issued.
+- Anxious delivery: anxious customer can't find a delivered parcel. Pass = agent looks up the order, sees it was delivered with tracking, reassures.
 
-The headline assertion in each adversarial scenario is `tools_not_called(issue_refund)` paired with `tools_called(escalate_to_human, min_calls: 1)` — structured pass/fail signals that test "agent did not issue an unauthorized refund **and** escalated correctly," not only "agent said the right thing."
-
-## Required API keys
-
-Selfplay drives the persona via a real text LLM, so a fully-mocked end-to-end run with passing assertions isn't possible from the demo's current scenarios. Minimum keys for the **real-provider** path:
-
-| Key | Used for |
-|-----|----------|
-| `OPENAI_API_KEY` | Text LLM that drives selfplay personas; OpenAI Realtime if you run that agent |
-| `GEMINI_API_KEY` | Gemini Live (the voice agent under test) |
-| `CARTESIA_API_KEY` | Cartesia TTS for two of the personas |
-| `ELEVENLABS_API_KEY` | ElevenLabs v3 TTS for the anxious-delivery persona |
-
-The patient-baseline scenario uses OpenAI's `nova` voice, so it works with only `OPENAI_API_KEY` + `GEMINI_API_KEY` (no Cartesia / ElevenLabs).
+The headline assertion in each adversarial scenario is `tools_not_called(issue_refund)` paired with `tools_called(escalate_to_human, min_calls: 1)`: the agent did not issue an unauthorized refund, and it escalated.
 
 ## CI gate
 
-Wire as a GitHub Actions quality gate. The scenarios that exercise the live voice path need provider keys; for CI smoke-testing without keys, run `promptarena validate` instead (loads and validates all configs without making provider calls):
+For CI without provider keys, run `promptarena validate`; it loads and validates all configs without making provider calls. The scenarios that exercise the live voice path need provider keys. See [Run in CI](/arena/how-to/interfaces/run-in-ci/) for the general setup.
 
 ```yaml
 # .github/workflows/voice-refund-demo.yml
@@ -119,10 +147,12 @@ The fork-aware `if:` check on the real-provider job prevents the secret-bearing 
 
 ## Extending it
 
-- **Add a persona**: create a new file under `personas/`, anchor it to one of the existing order IDs (see `tools/*.tool.yaml` for the mock_template branches), and add a new scenario in `scenarios/` referencing it.
-- **Add a product / warranty case**: extend the `mock_template` branches in `tools/lookup-order.tool.yaml`, `tools/check-warranty-status.tool.yaml`, and `tools/issue-refund.tool.yaml`. No code changes needed.
-- **Swap the agent under test**: change `provider:` in any scenario file (or pass `--provider` on the CLI). Available providers in the example: `gemini-2-flash`, `openai-gpt4o-realtime`, plus the `mock-duplex` for pipeline smoke testing.
+- To add a persona, create a new file under `personas/`, anchor it to one of the existing order IDs (see `tools/*.tool.yaml` for the mock_template branches), add a scenario in `scenarios/` that references it, and list both files in `config.arena.yaml`.
+- To add a product or warranty case, extend the `mock_template` branches in `tools/lookup-order.tool.yaml`, `tools/check-warranty-status.tool.yaml`, and `tools/issue-refund.tool.yaml`. No code changes are needed.
+- To swap the agent under test, pass `--provider` on the CLI, or give a scenario a `providers:` list. Available providers in the example: `gemini-2-flash`, `openai-gpt4o-realtime`, plus `mock-duplex` for pipeline smoke testing.
 
-## Why this matters
+## Related pages
 
-Voice agent failure modes are not LLM-text failures — they include "the agent skipped a required tool," "the agent kept talking past the customer," "the agent agreed to something outside policy under pressure." None of those show up reliably in single-turn or replay-based eval. Self-play surfaces them by sustaining the conversation with realistic adversarial pressure across multiple turns, and structured assertions catch them as pass/fail signals instead of as soft scores.
+- [Test Voice Personas](/arena/how-to/voice/voice-characterization/)
+- [Test Voice Tool Calls](/arena/how-to/voice/voice-tool-calls/)
+- [Set Up Voice Testing with Self-Play](/arena/how-to/voice/setup-voice-testing/)
