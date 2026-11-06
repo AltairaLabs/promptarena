@@ -96,9 +96,9 @@ relevance:
 | `provider` | string | required | Embedding provider: `openai`, `gemini`, `voyageai` |
 | `model` | string | provider default | Embedding model to use |
 | `min_recent_messages` | int | `3` | Always keep N most recent messages |
-| `similarity_threshold` | float | `0.3` | Minimum similarity score (0-1) to keep message |
-| `always_keep_system` | bool | `true` | Never truncate system messages |
-| `cache_embeddings` | bool | `true` | Cache embeddings for performance |
+| `similarity_threshold` | float | `0` (off) | Minimum similarity score (0-1) to keep message |
+| `always_keep_system_role` | bool | `true` | Never truncate system messages |
+| `cache_embeddings` | bool | `false` | Reuse message embeddings from the previous turn instead of re-embedding them |
 
 ### Example: Code Assistant
 
@@ -128,7 +128,7 @@ context_policy:
     model: text-embedding-3-small
     min_recent_messages: 3
     similarity_threshold: 0.35
-    always_keep_system: true
+    always_keep_system_role: true
 ```
 
 ## How Relevance Truncation Works
@@ -136,7 +136,7 @@ context_policy:
 1. **Compute query embedding** - Embeds the most recent user message(s)
 2. **Score all messages** - Computes cosine similarity between query and each message
 3. **Apply rules**:
-   - Always keep system messages (if `always_keep_system: true`)
+   - Always keep system messages (if `always_keep_system_role: true`)
    - Always keep last N messages (per `min_recent_messages`)
    - Keep messages with similarity >= threshold
 4. **Truncate remaining** - Remove lowest-scoring messages until under budget
@@ -202,7 +202,7 @@ spec:
 
 ## Performance Considerations
 
-- **Caching**: Enable `cache_embeddings: true` to avoid re-computing embeddings
+- **Caching**: Without `cache_embeddings`, every turn that truncates embeds the whole history again, so embedding cost grows with the conversation. With `cache_embeddings: true`, each turn embeds only the messages (and query) it has no vector for. A message is keyed on its exact text and the embedding provider and model, so an edited message is embedded again. The cache lasts for one conversation and holds only the previous truncation's vectors. It is never shared between conversations or runs. Only turns that go over `token_budget` embed anything, so the cache only helps from the second such turn onwards.
 - **Model size**: Smaller models (e.g., `text-embedding-3-small`) are faster
 - **Batch size**: Embeddings are computed in batches for efficiency
 - **Token budget**: Set appropriately for your LLM's context window
@@ -229,7 +229,7 @@ If truncation is slow:
 If important context is being truncated:
 1. Lower `similarity_threshold`
 2. Increase `min_recent_messages`
-3. Ensure `always_keep_system: true`
+3. Ensure `always_keep_system_role: true`
 
 ## See Also
 

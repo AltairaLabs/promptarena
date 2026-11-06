@@ -67,10 +67,13 @@ spec:
           - tool: search_faq
       message: "Should follow lookup → lookup → FAQ chain"
 
-    # Tool efficiency is a graded score, not a gate: 1 - calls/max_calls
-    # inside the limits, 0 once a limit is broken. An assertion's default
-    # bar is a perfect 1.0, which only a run with zero tool calls reaches,
-    # so it needs a min_score. 0.4 spends at most 3 of the 5-call budget.
+    # Tool efficiency is a graded score, not a gate:
+    # (max_calls + 1 - calls) / (max_calls + 1) inside the limits, so a run
+    # at exactly max_calls still scores above 0, and 0 once a limit is
+    # broken. An assertion's default bar is a perfect 1.0, which only a run
+    # with zero tool calls reaches, so it needs a min_score. With
+    # max_calls 5, 3 calls score 3/6 = 0.5 and 4 score 2/6 = 0.33, so 0.4
+    # spends at most 3 of the 5-call budget.
     - type: tool_efficiency
       params:
         max_calls: 5
