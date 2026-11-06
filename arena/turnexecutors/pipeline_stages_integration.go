@@ -392,8 +392,14 @@ func (e *PipelineExecutor) buildStagePipeline(
 	// and media-convert stages (all skipped for composition turns).
 	stages = e.appendPromptContextStages(stages, req, mergedVars, turnState)
 
-	// 5b. Input recording stage (opt-in via RecordingConfig)
-	stages = appendRecordingStage(stages, req, stage.RecordingPositionInput)
+	// 5b. Input recording stage (opt-in via RecordingConfig), for composition
+	// turns only. The provider stage forwards the turn's user message with
+	// its timestamp, so the output recording stage already records it; an
+	// input stage too recorded every user message twice, the first copy
+	// with a zero timestamp.
+	if req.ActiveComposition != nil {
+		stages = appendRecordingStage(stages, req, stage.RecordingPositionInput)
+	}
 	// 5c. Input audio monitor tap (opt-in via AudioRouter); after recording so
 	// the recording stage always sees every chunk before observers do.
 	stages = appendMonitorTap(stages, req, stage.RecordingPositionInput)
@@ -825,9 +831,9 @@ func (e *PipelineExecutor) buildCommonStreamingStages(
 	// StateStore load, variable/prompt/context/template and mock stages.
 	stages = e.appendStreamingPromptStages(stages, req, cfg, mergedVars, turnState)
 
-	// Input recording stage (opt-in via RecordingConfig)
-	stages = appendRecordingStage(stages, req, stage.RecordingPositionInput)
-	// Input audio monitor tap (opt-in via AudioRouter); after recording.
+	// No input recording stage: the provider stage forwards the turn's user
+	// message, and the output recording stage below records it once.
+	// Input audio monitor tap (opt-in via AudioRouter).
 	stages = appendMonitorTap(stages, req, stage.RecordingPositionInput)
 
 	// Provider stage — pack guardrails run inline as ProviderHooks (same as SDK).

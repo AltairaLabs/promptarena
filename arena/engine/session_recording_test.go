@@ -70,7 +70,7 @@ func TestEnableSessionRecordingWithEventBus(t *testing.T) {
 
 	// Verify store receives events by publishing one
 	eventBus.Publish(&events.Event{
-		Type:      events.EventConversationStarted,
+		Type:      events.EventStreamInterrupted,
 		SessionID: "verify-session",
 	})
 	eventBus.Close()
@@ -109,7 +109,7 @@ func TestEnableSessionRecordingBeforeEventBus(t *testing.T) {
 
 	// Verify store receives events by publishing one
 	eventBus.Publish(&events.Event{
-		Type:      events.EventConversationStarted,
+		Type:      events.EventStreamInterrupted,
 		SessionID: "verify-session",
 	})
 	eventBus.Close()
@@ -147,7 +147,7 @@ func TestSessionRecordingWritesEvents(t *testing.T) {
 	// Emit an event subscribed by the targeted bus subscription
 	testSessionID := "test-session-456"
 	emitter := events.NewEmitter(eventBus, "test-run", testSessionID, "test-conv")
-	emitter.ConversationStarted("test system prompt")
+	emitter.StreamInterrupted("test system prompt")
 
 	// Give the event time to be written
 	time.Sleep(100 * time.Millisecond)
@@ -215,14 +215,14 @@ func TestRecordingIntegrationWithEventStore(t *testing.T) {
 	}
 
 	// Emit several events with the same session ID. The bus subscription is
-	// scoped to ConversationStarted and StreamInterrupted, so emit a mix of
+	// scoped to StreamInterrupted, so emit several of
 	// these to verify the targeted subscription wires up correctly.
 	testSessionID := "integration-test-session"
 	emitter := events.NewEmitter(eventBus, "test-run", testSessionID, "test-conv")
 
-	emitter.ConversationStarted("system prompt 1")
-	emitter.ConversationStarted("system prompt 2")
-	emitter.ConversationStarted("system prompt 3")
+	emitter.StreamInterrupted("system prompt 1")
+	emitter.StreamInterrupted("system prompt 2")
+	emitter.StreamInterrupted("system prompt 3")
 	emitter.StreamInterrupted("user-cancel")
 	emitter.StreamInterrupted("timeout")
 
