@@ -1,0 +1,900 @@
+{
+ "page": "docs/src/content/docs/arena/how-to/setup/use-project-templates.md",
+ "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "The page teaches how to scaffold new PromptArena test projects using templates",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:16"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "The promptarena init command uses templates to generate complete, ready-to-use test projects",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:112",
+    "arena/cmd/promptarena/init.go:99"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "promptarena init my-test --quick --provider mock is a valid command",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:163",
+    "arena/cmd/promptarena/init.go:65"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "init accepts a --quick flag",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:65"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "init accepts a --provider flag",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:68"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "mock is a valid value for --provider",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:193",
+    "arena/templates/builtin/quick-start/template.yaml:24"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "openai is a valid value for --provider",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:193",
+    "arena/templates/builtin/quick-start/template.yaml:24"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "Quick mode uses sensible defaults",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:170",
+    "arena/templates/builtin/quick-start/template.yaml:25"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "Quick mode creates config.arena.yaml in the project root",
+   "verdict": "true",
+   "evidence": [
+    "arena/templates/builtin/quick-start/template.yaml:34"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "Quick mode creates prompts/assistant.yaml",
+   "verdict": "false",
+   "evidence": [
+    "arena/templates/builtin/quick-start/template.yaml:37"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "Quick mode creates providers/{provider}.yaml for the chosen provider",
+   "verdict": "false",
+   "evidence": [
+    "arena/templates/builtin/quick-start/template.yaml:40"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "Quick mode creates scenarios/basic-test.yaml",
+   "verdict": "false",
+   "evidence": [
+    "arena/templates/builtin/quick-start/template.yaml:43"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "Quick mode creates a .env file with placeholders for API keys",
+   "verdict": "true",
+   "evidence": [
+    "arena/templates/builtin/quick-start/template.yaml:50"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "Quick mode creates a .gitignore that ignores .env and temporary files",
+   "verdict": "true",
+   "evidence": [
+    "arena/templates/builtin/quick-start/template.yaml:54"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "Quick mode creates README.md",
+   "verdict": "true",
+   "evidence": [
+    "arena/templates/builtin/quick-start/template.yaml:60"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "PromptArena includes 6 built-in templates",
+   "verdict": "true",
+   "evidence": [
+    "arena/templates/builtin/quick-start/template.yaml:1",
+    "arena/templates/loader.go:143"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "basic-chatbot is a built-in template with simple conversational testing",
+   "verdict": "false",
+   "evidence": [
+    "arena/templates/builtin/quick-start/template.yaml:1",
+    "arena/templates/loader.go:143"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "customer-support is a built-in template with a support agent that has a KB and order tools",
+   "verdict": "true",
+   "evidence": [
+    "arena/templates/builtin/customer-support/template.yaml:8"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "code-assistant is a built-in template with separate generator and reviewer prompts",
+   "verdict": "true",
+   "evidence": [
+    "arena/templates/builtin/code-assistant/template.yaml:8"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "content-generation is a built-in template for creative content",
+   "verdict": "true",
+   "evidence": [
+    "arena/templates/builtin/content-generation/template.yaml:8"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "multimodal is a built-in template with vision analysis and image inputs",
+   "verdict": "true",
+   "evidence": [
+    "arena/templates/builtin/multimodal/template.yaml:8"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "mcp-integration is a built-in template with an MCP filesystem server configuration",
+   "verdict": "true",
+   "evidence": [
+    "arena/templates/builtin/mcp-integration/template.yaml:8"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "promptarena templates list lists available templates",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/templates.go:50",
+    "arena/cmd/promptarena/templates.go:61"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "The default community template index points to the promptkit-templates repo",
+   "verdict": "true",
+   "evidence": [
+    "arena/templates/registry.go:24",
+    "arena/templates/repos.go:166"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "promptarena templates list lists remote templates from the default index",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/templates.go:50",
+    "arena/cmd/promptarena/templates.go:61"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "promptarena templates fetch --template NAME --version VERSION fetches a remote template into the cache",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/templates.go:113",
+    "arena/cmd/promptarena/templates.go:95"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "templates fetch accepts a --version flag",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/templates.go:339"
+   ]
+  },
+  {
+   "id": 28,
+   "claim": "promptarena templates render --template NAME --version VERSION --values FILE --out DIR renders a template",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/templates.go:163",
+    "arena/cmd/promptarena/templates.go:208"
+   ]
+  },
+  {
+   "id": 29,
+   "claim": "templates render accepts a --values flag",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/templates.go:351"
+   ]
+  },
+  {
+   "id": 30,
+   "claim": "templates render accepts an --out flag",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/templates.go:350"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "promptarena templates update updates all cached templates",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/templates.go:129"
+   ]
+  },
+  {
+   "id": 32,
+   "claim": "promptarena init my-project --template NAME --template-index URL initialises a project from a remote template",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:96",
+    "arena/cmd/promptarena/init.go:98"
+   ]
+  },
+  {
+   "id": 33,
+   "claim": "init accepts a --template flag",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:64"
+   ]
+  },
+  {
+   "id": 34,
+   "claim": "init accepts a --template-index flag",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:71"
+   ]
+  },
+  {
+   "id": 35,
+   "claim": "https://raw.githubusercontent.com/AltairaLabs/promptkit-templates/main/index.yaml is a reachable template index",
+   "verdict": "true",
+   "evidence": [
+    "arena/templates/registry.go:24"
+   ]
+  },
+  {
+   "id": 36,
+   "claim": "--index is an accepted alias for the template index override",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/templates.go:325"
+   ]
+  },
+  {
+   "id": 37,
+   "claim": "--template-index overrides the index URL or path",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:71",
+    "arena/cmd/promptarena/init.go:96"
+   ]
+  },
+  {
+   "id": 38,
+   "claim": "--cache-dir is an accepted flag that overrides the template cache location",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/templates.go:329"
+   ]
+  },
+  {
+   "id": 39,
+   "claim": "--template-cache is an accepted flag that overrides the template cache location",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:75"
+   ]
+  },
+  {
+   "id": 40,
+   "claim": "--values and --set provide variables for render",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/templates.go:348",
+    "arena/cmd/promptarena/templates.go:351"
+   ]
+  },
+  {
+   "id": 41,
+   "claim": "The mock provider needs no API key",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 42,
+   "claim": "openai is a provider type that init can scaffold",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:193",
+    "arena/templates/builtin/quick-start/template.yaml:24"
+   ]
+  },
+  {
+   "id": 43,
+   "claim": "claude is a valid value for --provider",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:193",
+    "arena/templates/builtin/quick-start/template.yaml:24"
+   ]
+  },
+  {
+   "id": 44,
+   "claim": "gemini is a valid value for --provider",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:193",
+    "arena/templates/builtin/quick-start/template.yaml:24"
+   ]
+  },
+  {
+   "id": 45,
+   "claim": "Running promptarena init my-project without --quick starts an interactive prompt session",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:167",
+    "arena/cmd/promptarena/init_interactive.go:12"
+   ]
+  },
+  {
+   "id": 46,
+   "claim": "Interactive mode prompts for project name and description",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:139",
+    "arena/cmd/promptarena/init_interactive.go:22"
+   ]
+  },
+  {
+   "id": 47,
+   "claim": "Interactive mode prompts for provider selection",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init_interactive.go:66",
+    "arena/templates/builtin/quick-start/template.yaml:20"
+   ]
+  },
+  {
+   "id": 48,
+   "claim": "Interactive mode prompts for system prompt customisation",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/init_interactive.go:22"
+   ]
+  },
+  {
+   "id": 49,
+   "claim": "Interactive mode prompts for temperature and max tokens",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/init_interactive.go:22"
+   ]
+  },
+  {
+   "id": 50,
+   "claim": "Interactive mode prompts for test scenario details",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/init_interactive.go:22"
+   ]
+  },
+  {
+   "id": 51,
+   "claim": "Temperature prompt accepts a range of 0.0 to 2.0",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/init_interactive.go:22"
+   ]
+  },
+  {
+   "id": 52,
+   "claim": "Interactive prompt label reads Project Name",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:140"
+   ]
+  },
+  {
+   "id": 53,
+   "claim": "Interactive provider prompt offers openai as a choice",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init_interactive.go:66",
+    "arena/templates/builtin/quick-start/template.yaml:24"
+   ]
+  },
+  {
+   "id": 54,
+   "claim": "Interactive mode asks whether to create a sample test scenario",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/init_interactive.go:22"
+   ]
+  },
+  {
+   "id": 55,
+   "claim": "Interactive mode asks for a scenario name",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/init_interactive.go:22"
+   ]
+  },
+  {
+   "id": 56,
+   "claim": "config.arena.yaml uses apiVersion promptkit.altairalabs.ai/v1alpha1",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/arena.json:1"
+   ]
+  },
+  {
+   "id": 57,
+   "claim": "config.arena.yaml uses kind Arena",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 58,
+   "claim": "config.arena.yaml metadata.name is set from the project name",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 59,
+   "claim": "Arena spec.prompt_configs is a list whose entries have id and file fields",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 60,
+   "claim": "Arena spec.providers is a list whose entries have a file field",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 61,
+   "claim": "Arena spec.scenarios is a list whose entries have a file field",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 62,
+   "claim": "prompts/assistant.yaml uses apiVersion promptkit.altairalabs.ai/v1alpha1 and kind PromptConfig",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/promptconfig.json:1"
+   ]
+  },
+  {
+   "id": 63,
+   "claim": "PromptConfig spec.task_type is a field",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/promptconfig.json:1"
+   ]
+  },
+  {
+   "id": 64,
+   "claim": "PromptConfig spec.system_prompt is a field",
+   "verdict": "false",
+   "evidence": [
+    "schemas/v1alpha1/promptconfig.json:384"
+   ]
+  },
+  {
+   "id": 65,
+   "claim": "PromptConfig spec.defaults is an object",
+   "verdict": "false",
+   "evidence": [
+    "schemas/v1alpha1/promptconfig.json:729"
+   ]
+  },
+  {
+   "id": 66,
+   "claim": "The generated prompt defaults set temperature to 0.7",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 67,
+   "claim": "The generated prompt defaults set max_tokens to 2000",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 68,
+   "claim": "providers/openai.yaml uses kind Provider",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/provider.json:1"
+   ]
+  },
+  {
+   "id": 69,
+   "claim": "The generated OpenAI provider is named openai-gpt4o-mini",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 70,
+   "claim": "Provider spec.type is a field and openai is a valid type",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/provider.json:1"
+   ]
+  },
+  {
+   "id": 71,
+   "claim": "The generated OpenAI provider uses model gpt-4o-mini",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 72,
+   "claim": "Provider spec.defaults is an object with temperature and max_tokens",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/provider.json:148"
+   ]
+  },
+  {
+   "id": 73,
+   "claim": "scenarios/basic-test.yaml uses kind Scenario",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json:1"
+   ]
+  },
+  {
+   "id": 74,
+   "claim": "The generated scenario metadata.name is basic-test",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 75,
+   "claim": "Scenario spec.task_type and spec.description are fields",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json:569"
+   ]
+  },
+  {
+   "id": 76,
+   "claim": "Scenario spec.turns is a list whose entries have role and content fields",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json:588"
+   ]
+  },
+  {
+   "id": 77,
+   "claim": "A turn accepts an assertions list",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json:100"
+   ]
+  },
+  {
+   "id": 78,
+   "claim": "content_matches is a registered assertion type",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json:100"
+   ]
+  },
+  {
+   "id": 79,
+   "claim": "content_matches takes a params object with pattern and message",
+   "verdict": "false",
+   "evidence": [
+    "schemas/v1alpha1/scenario.json:120",
+    "schemas/v1alpha1/scenario.json:125"
+   ]
+  },
+  {
+   "id": 80,
+   "claim": "The .env file sets OPENAI_API_KEY",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 81,
+   "claim": "ANTHROPIC_API_KEY is the API key env var for the Claude provider",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 82,
+   "claim": "GOOGLE_API_KEY is the API key env var for the Gemini provider",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 83,
+   "claim": "promptarena run runs the tests in a generated project",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:160"
+   ]
+  },
+  {
+   "id": 84,
+   "claim": "promptarena run writes output/results.json",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:486"
+   ]
+  },
+  {
+   "id": 85,
+   "claim": "Writing OPENAI_API_KEY=... into .env with echo is a valid way to set the key",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:67"
+   ]
+  },
+  {
+   "id": 86,
+   "claim": "All generated files are standard PromptKit YAML",
+   "verdict": "true",
+   "evidence": [
+    "arena/templates/builtin/quick-start/template.yaml:34"
+   ]
+  },
+  {
+   "id": 87,
+   "claim": "prompts/assistant.yaml is the prompt file generated by quick mode",
+   "verdict": "false",
+   "evidence": [
+    "arena/templates/builtin/quick-start/template.yaml:37"
+   ]
+  },
+  {
+   "id": 88,
+   "claim": "scenarios/advanced-test.yaml is a valid path for an added scenario",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 89,
+   "claim": "providers/claude.yaml is a valid path for an added provider file",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 90,
+   "claim": "promptarena init learning --quick --provider mock creates a project named learning",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:134",
+    "arena/cmd/promptarena/init.go:86"
+   ]
+  },
+  {
+   "id": 91,
+   "claim": "The files config.arena.yaml, prompts/assistant.yaml and scenarios/basic-test.yaml exist in a quick-mode project",
+   "verdict": "false",
+   "evidence": [
+    "arena/templates/builtin/quick-start/template.yaml:37",
+    "arena/templates/builtin/quick-start/template.yaml:43"
+   ]
+  },
+  {
+   "id": 92,
+   "claim": "promptarena init dev-test --quick --provider mock is a valid command",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:65"
+   ]
+  },
+  {
+   "id": 93,
+   "claim": "Mock provider responses are instant and free",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 94,
+   "claim": "The quick-mode mock provider file is providers/mock.yaml",
+   "verdict": "false",
+   "evidence": [
+    "arena/templates/builtin/quick-start/template.yaml:40"
+   ]
+  },
+  {
+   "id": 95,
+   "claim": "providers/mock.yaml has a type field that can be changed to openai",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/provider.json:1"
+   ]
+  },
+  {
+   "id": 96,
+   "claim": "Generated projects include a .gitignore",
+   "verdict": "true",
+   "evidence": [
+    "arena/templates/builtin/quick-start/template.yaml:54"
+   ]
+  },
+  {
+   "id": 97,
+   "claim": "git init, git add and git commit are standard and work on a generated project",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:66"
+   ]
+  },
+  {
+   "id": 98,
+   "claim": "promptarena init customer-support --quick --provider openai is valid",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:65"
+   ]
+  },
+  {
+   "id": 99,
+   "claim": "promptarena init content-generation --quick --provider claude is valid",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:68"
+   ]
+  },
+  {
+   "id": 100,
+   "claim": "promptarena init qa-testing --quick --provider mock is valid",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:65"
+   ]
+  },
+  {
+   "id": 101,
+   "claim": "promptarena init my-test --quick --provider openai creates the project layout shown in the tree",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:119",
+    "arena/templates/builtin/quick-start/template.yaml:34",
+    "arena/templates/builtin/quick-start/template.yaml:37"
+   ]
+  },
+  {
+   "id": 102,
+   "claim": "The openai quick-mode project contains .env, .gitignore, README.md, config.arena.yaml, prompts/assistant.yaml, providers/openai.yaml and scenarios/basic-test.yaml",
+   "verdict": "false",
+   "evidence": [
+    "arena/templates/builtin/quick-start/template.yaml:34",
+    "arena/templates/builtin/quick-start/template.yaml:37"
+   ]
+  },
+  {
+   "id": 103,
+   "claim": "init fails when the target directory already exists",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:112",
+    "arena/templates/generator.go:1"
+   ]
+  },
+  {
+   "id": 104,
+   "claim": "The error message reads Directory already exists",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:112"
+   ]
+  },
+  {
+   "id": 105,
+   "claim": "Valid providers are mock, openai, claude and gemini",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:193",
+    "arena/templates/builtin/quick-start/template.yaml:24"
+   ]
+  },
+  {
+   "id": 106,
+   "claim": "The error message reads Provider not recognized",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:203"
+   ]
+  },
+  {
+   "id": 107,
+   "claim": "Generated projects create .env with placeholder API key values",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 108,
+   "claim": "echo OPENAI_API_KEY=... to .env is a valid way to fix a missing key",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:67"
+   ]
+  },
+  {
+   "id": 109,
+   "claim": "The link /arena/how-to/scenarios/write-scenarios/ resolves to an existing page",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 110,
+   "claim": "The link /arena/how-to/providers/configure-providers/ resolves to an existing page",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 111,
+   "claim": "The link /arena/tutorials/01-first-test/ resolves to an existing page",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 112,
+   "claim": "The link /arena/reference/cli-commands/ resolves to an existing page",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 113,
+   "claim": "The link /arena/reference/config-schema/ resolves to an existing page",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 114,
+   "claim": "The link /arena/examples/ resolves to an existing page",
+   "verdict": "unverified",
+   "evidence": []
+  }
+ ]
+}

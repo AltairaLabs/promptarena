@@ -1,132 +1,137 @@
 ---
 title: Use Project Templates
+description: Scaffold a PromptArena test project with promptarena init, using the built-in quick-start template or a community template.
+verified:
+  commit: 631d3c353c2c9d71b362ae5cd20c137d42b19d5b
+  sources:
+    - arena/cmd/promptarena/init.go
+    - arena/cmd/promptarena/init_interactive.go
+    - arena/cmd/promptarena/run.go
+    - arena/cmd/promptarena/templates.go
+    - arena/templates/builtin/code-assistant/template.yaml
+    - arena/templates/builtin/content-generation/template.yaml
+    - arena/templates/builtin/customer-support/template.yaml
+    - arena/templates/builtin/mcp-integration/template.yaml
+    - arena/templates/builtin/multimodal/template.yaml
+    - arena/templates/builtin/quick-start/template.yaml
+    - arena/templates/generator.go
+    - arena/templates/loader.go
+    - arena/templates/registry.go
+    - arena/templates/repos.go
+    - schemas/v1alpha1/arena.json
+    - schemas/v1alpha1/promptconfig.json
+    - schemas/v1alpha1/provider.json
+    - schemas/v1alpha1/scenario.json
 ---
 
-Learn how to quickly scaffold new PromptArena test projects using templates.
+Scaffold a ready-to-run PromptArena test project with `promptarena init`.
 
-## Overview
+## Prerequisites
 
-The `promptarena init` command uses templates to generate complete, ready-to-use test projects. This eliminates manual file creation and ensures your projects follow best practices from the start.
+- The `promptarena` binary. See [Installation](/arena/how-to/setup/installation/).
+- An API key for the provider you choose, unless you use `mock`.
 
-## Quick Mode
+## Create a project in quick mode
 
-The fastest way to create a new project:
+Quick mode takes each template variable's default and asks no questions:
 
 ```bash
-# Create with mock provider (no API calls needed)
+# Mock provider: no API calls, no key
 promptarena init my-test --quick --provider mock
 
-# Or with a real LLM provider
+# Real provider: openai, claude or gemini
 promptarena init my-test --quick --provider openai
 ```
 
-Quick mode uses sensible defaults and creates:
+The built-in templates are `quick-start` (the default for `--template`), `code-assistant`, `content-generation`, `customer-support`, `mcp-integration` and `multimodal`. See the [CLI reference](/arena/reference/cli-commands/) for every `init` flag.
 
-- **config.arena.yaml** - Main configuration with your project name
-- **prompts/assistant.yaml** - Basic prompt configuration
-- **providers/{provider}.yaml** - Provider configuration for your chosen LLM
-- **scenarios/basic-test.yaml** - Sample test scenario with assertions
-- **.env** - Environment variables (with placeholders for API keys)
-- **.gitignore** - Ignores .env and temporary files
-- **README.md** - Project documentation and next steps
+Quick mode with `--provider openai` writes:
 
-## Available Built-In Templates
-
-PromptArena includes 6 built-in templates for common testing scenarios:
-
-| Template | Description | Use Case |
-|----------|-------------|----------|
-| `basic-chatbot` | Simple conversational testing | General purpose, beginners |
-| `customer-support` | Support agent with KB and order tools | Customer service testing |
-| `code-assistant` | Separate generator and reviewer prompts | Code generation workflows |
-| `content-generation` | Creative content for blogs, products, social | Marketing and content testing |
-| `multimodal` | Vision analysis with image inputs | Image/audio/video AI |
-| `mcp-integration` | MCP filesystem server configuration | Tool calling and MCP testing |
-
-### List Available Templates
-
-View all available templates:
-
-```bash
-promptarena templates list
+```text
+my-test/
+├── .claude/skills/promptarena-authoring/   (SKILL.md and 4 reference files)
+├── .env
+├── .gitignore
+├── AGENTS.md
+├── README.md
+├── config.arena.yaml
+├── prompts/assistant.prompt.yaml
+├── providers/openai.provider.yaml
+└── scenarios/basic-test.scenario.yaml
 ```
 
-## Community Templates (Remote)
+`--provider mock` also writes `mock-responses.yaml` at the project root, and `providers/mock.provider.yaml` replaces the OpenAI provider file. `AGENTS.md` is skipped with `--no-agent`.
 
-You can fetch templates from a community index (default points to the promptkit-templates repo).
+## Create a project interactively
+
+Run `init` without `--quick`:
 
 ```bash
-# List remote templates (uses default index)
+promptarena init my-project
+```
+
+The command prompts for:
+
+- `Project name`, only when you give no name on the command line (default `my-arena-tests`).
+- The provider.
+- `include_env`: whether to create a `.env` file.
+
+## Create a project from a community template
+
+Community templates come from an index, which defaults to the `promptkit-templates` repository. `templates list` prints the index entries only; it does not list the built-in templates.
+
+```bash
+# List community templates
 promptarena templates list
 
-# Fetch a remote template into cache
+# Fetch a template into the cache
 promptarena templates fetch --template basic-chatbot --version 1.0.0
 
-# Render a template to a temp/out directory
+# Render a template into ./out
 promptarena templates render --template basic-chatbot --version 1.0.0 --values values.yaml --out ./out
 
 # Update all cached templates
 promptarena templates update
 
-# Init a project using a remote template
+# Create a project from a community template
 promptarena init my-project --template basic-chatbot --template-index https://raw.githubusercontent.com/AltairaLabs/promptkit-templates/main/index.yaml
 ```
 
-Flags:
-- `--index` / `--template-index`: override index URL/path
-- `--cache-dir` / `--template-cache`: override cache location
-- `--values`/`--set`: provide variables for render
+The `templates` commands take `--index` and `--cache-dir`; `init` takes `--template-index` and `--template-cache` for the same settings. `render` takes variables from `--values` and `--set`. See the [CLI reference](/arena/reference/cli-commands/) for the full lists.
 
-## Provider Options
+## Run the generated project
 
-```bash
-# Mock provider (no API required, great for testing)
-promptarena init my-test --quick --provider mock
+1. Change into the project:
 
-# OpenAI (GPT models)
-promptarena init my-test --quick --provider openai
+   ```bash
+   cd my-test
+   ```
 
-# Anthropic (Claude models)
-promptarena init my-test --quick --provider claude
+2. Export the API key in your shell. `promptarena` does not load `.env`, so the placeholder file has no effect until you export the variable:
 
-# Google (Gemini models)
-promptarena init my-test --quick --provider gemini
-```
+   ```bash
+   export OPENAI_API_KEY=sk-...
+   ```
 
-## Interactive Mode
+   Claude reads `ANTHROPIC_API_KEY` or `CLAUDE_API_KEY`. Gemini reads `GEMINI_API_KEY` or `GOOGLE_API_KEY`. The mock provider needs no key.
 
-For more control over your project configuration:
+3. Run the tests:
 
-```bash
-promptarena init my-project
+   ```bash
+   promptarena run
+   ```
 
-# You'll be prompted for:
-# - Project name and description
-# - Provider selection
-# - System prompt customization
-# - Model parameters (temperature, max_tokens)
-# - Test scenario details
-```
+4. Read the results. The default output directory is `out/`, holding `index.json`, one `<run>.json` per run and `results.md`:
 
-Example interactive session:
+   ```bash
+   cat out/results.md
+   ```
 
-```text
-? Project Name: customer-support-tests
-? Description: Testing customer support conversation flows
-? Select LLM Provider: openai
-? System Prompt: You are a helpful customer support agent...
-? Temperature (0.0-2.0): 0.7
-? Max Tokens: 2000
-? Create sample test scenario? Yes
-? Scenario Name: basic-greeting
-```
+## What the generator writes
 
-## What Gets Generated
-
-### 1. Arena Configuration
+`config.arena.yaml` lists the prompt, provider and scenario files and sets the run defaults:
 
 ```yaml
-# config.arena.yaml
 apiVersion: promptkit.altairalabs.ai/v1alpha1
 kind: Arena
 metadata:
@@ -135,229 +140,113 @@ metadata:
 spec:
   prompt_configs:
     - id: assistant
-      file: prompts/assistant.yaml
+      file: prompts/assistant.prompt.yaml
 
   providers:
-    - file: providers/openai.yaml
+    - file: providers/openai.provider.yaml
 
   scenarios:
-    - file: scenarios/basic-test.yaml
+    - file: scenarios/basic-test.scenario.yaml
+
+  defaults:
+    temperature: 0.7
+    max_tokens: 1500
+    seed: 42
+    concurrency: 1
+    output:
+      dir: out
+      formats: ["json", "markdown"]
 ```
 
-### 2. Prompt Configuration
+`prompts/assistant.prompt.yaml` holds the system prompt in `spec.system_template`, with `task_type: general`:
 
 ```yaml
-# prompts/assistant.yaml
 apiVersion: promptkit.altairalabs.ai/v1alpha1
 kind: PromptConfig
 metadata:
   name: assistant
-
 spec:
-  task_type: assistant
-  system_prompt: |
-    You are a helpful AI assistant.
-  
-  defaults:
-    temperature: 0.7
-    max_tokens: 2000
+  task_type: general
+  system_template: |
+    You are a helpful AI assistant. Be concise and friendly.
 ```
 
-### 3. Provider Configuration
+`providers/openai.provider.yaml` names the provider, its type and its model:
 
 ```yaml
-# providers/openai.yaml (example)
 apiVersion: promptkit.altairalabs.ai/v1alpha1
 kind: Provider
 metadata:
-  name: openai-gpt4o-mini
-
+  name: openai
 spec:
+  id: openai-gpt4o-mini
   type: openai
   model: gpt-4o-mini
-  
-  defaults:
-    temperature: 0.7
-    max_tokens: 2000
 ```
 
-### 4. Test Scenario
+`scenarios/basic-test.scenario.yaml` holds two turns. Each assertion carries its `message` beside `params`:
 
 ```yaml
-# scenarios/basic-test.yaml
 apiVersion: promptkit.altairalabs.ai/v1alpha1
 kind: Scenario
 metadata:
   name: basic-test
-
 spec:
-  task_type: assistant
-  description: Basic conversation test
-  
+  id: greeting-test
+  task_type: general
   turns:
     - role: user
-      content: "Hello! Can you help me?"
+      content: "What's the capital of France?"
       assertions:
-        - type: content_matches
+        - type: contains_any
           params:
-            pattern: ".+"
-            message: "Should respond to greeting"
+            patterns: ["Paris", "paris"]
+          message: "Response should mention Paris"
 ```
 
-### 5. Environment Setup
+## Customize the project
+
+Edit the generated files, or add scenarios and providers and list them in `config.arena.yaml`:
 
 ```bash
-# .env
-OPENAI_API_KEY=your-api-key-here
-# ANTHROPIC_API_KEY=your-api-key-here
-# GOOGLE_API_KEY=your-api-key-here
+cp scenarios/basic-test.scenario.yaml scenarios/advanced-test.scenario.yaml
 ```
 
-## Using Generated Projects
+Add `- file: scenarios/advanced-test.scenario.yaml` under `spec.scenarios`. To move from the mock provider to a real one, add a provider file under `spec.providers` and remove the `additional_config` block from any copy of the mock file.
 
-After generation, your project is ready to use:
+## Put the project under version control
 
-```bash
-cd my-test
-
-# Add your API key to .env
-echo "OPENAI_API_KEY=sk-..." > .env
-
-# Run tests
-promptarena run
-
-# View results
-cat output/results.json
-```
-
-## Customizing After Generation
-
-All generated files are standard PromptKit YAML and can be edited freely:
+The generated `.gitignore` lists `.env`, `out/` and `*.log`:
 
 ```bash
-# Edit the prompt
-vim prompts/assistant.yaml
-
-# Add more scenarios
-cp scenarios/basic-test.yaml scenarios/advanced-test.yaml
-vim scenarios/advanced-test.yaml
-
-# Configure additional providers
-vim providers/claude.yaml
-```
-
-## Best Practices
-
-### 1. Start with Quick Mode
-
-Begin with quick mode to understand the structure:
-
-```bash
-promptarena init learning --quick --provider mock
-cd learning
-cat config.arena.yaml prompts/assistant.yaml scenarios/basic-test.yaml
-```
-
-### 2. Use Mock Provider for Development
-
-Mock provider responses are instant and free:
-
-```bash
-promptarena init dev-test --quick --provider mock
-```
-
-Switch to real providers when ready:
-
-```bash
-# Edit providers/mock.yaml -> change type to openai
-# Or create a new provider file
-```
-
-### 3. Version Control from Day One
-
-Generated projects include `.gitignore`:
-
-```bash
-promptarena init my-test --quick --provider openai
-cd my-test
 git init
 git add .
 git commit -m "Initial project setup"
 ```
 
-### 4. Organize Multiple Projects
-
-```bash
-# Create separate projects for different use cases
-promptarena init customer-support --quick --provider openai
-promptarena init content-generation --quick --provider claude
-promptarena init qa-testing --quick --provider mock
-```
-
-## Advanced Usage
-
-### Inspect Generated Files
-
-Review what was created:
-
-```bash
-promptarena init my-test --quick --provider openai
-cd my-test
-tree .
-
-# Output:
-# .
-# ├── .env
-# ├── .gitignore
-# ├── README.md
-# ├── config.arena.yaml
-# ├── prompts/
-# │   └── assistant.yaml
-# ├── providers/
-# │   └── openai.yaml
-# └── scenarios/
-#     └── basic-test.yaml
-```
-
 ## Troubleshooting
 
-### "Directory already exists"
+### Unauthorized or missing bearer error
+
+The key is empty because `promptarena` does not read `.env`. Export the key in the shell, as in step 2 above.
+
+### Provider is not offered
+
+`--provider "anthropic" is not offered by template quick-start (choose one of: mock, openai, claude, gemini)`. Pass one of the listed values:
 
 ```bash
-# Choose a different name
-promptarena init my-test-2 --quick --provider openai
-
-# Or remove the existing directory
-rm -rf my-test
-promptarena init my-test --quick --provider openai
+promptarena init my-test --quick --provider claude
 ```
 
-### "Provider not recognized"
+### Existing files overwritten
 
-Valid providers are: `mock`, `openai`, `claude`, `gemini`
+`init` does not check whether the target directory exists, and it overwrites files that share a generated name. Choose a new project name to keep an existing project.
 
-```bash
-# Use a valid provider
-promptarena init my-test --quick --provider openai
-```
+## Related pages
 
-### Missing API Key
-
-Generated projects create `.env` with placeholders:
-
-```bash
-cd my-test
-echo "OPENAI_API_KEY=sk-your-actual-key" > .env
-```
-
-## Next Steps
-
-- **[Write Test Scenarios](/arena/how-to/scenarios/write-scenarios/)** - Customize your test scenarios
-- **[Configure Providers](/arena/how-to/providers/configure-providers/)** - Set up additional providers
-- **[Tutorial: First Test](/arena/tutorials/01-first-test/)** - Complete walkthrough
-
-## Related Documentation
-
-- **[CLI Reference](/arena/reference/cli-commands/)** - All `promptarena` commands
-- **[Configuration Schema](/arena/reference/config-schema/)** - Full schema documentation
-- **[Examples](/arena/examples/)** - Real-world project examples
+- [Write test scenarios](/arena/how-to/scenarios/write-scenarios/)
+- [Configure providers](/arena/how-to/providers/configure-providers/)
+- [Develop templates](/arena/how-to/setup/develop-templates/)
+- [Tutorial: first test](/arena/tutorials/01-first-test/)
+- [CLI reference](/arena/reference/cli-commands/)
+- [Configuration schema](/arena/reference/config-schema/)

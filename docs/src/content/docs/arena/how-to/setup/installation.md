@@ -1,16 +1,31 @@
 ---
 title: Install PromptArena
+description: Install the promptarena CLI with npm, Homebrew, go install or a release archive, then create a first project with promptarena init.
+verified:
+  commit: 631d3c353c2c9d71b362ae5cd20c137d42b19d5b
+  sources:
+    - .github/workflows/release.yml
+    - .goreleaser.yml
+    - arena/arenaconfig/types.go
+    - arena/audio/local_sink_integration_cgo.go
+    - arena/audio/local_sink_nocgo_integration.go
+    - arena/cmd/promptarena/chat_interactive.go
+    - arena/cmd/promptarena/completion_interactive.go
+    - arena/cmd/promptarena/init.go
+    - arena/cmd/promptarena/run.go
+    - npm/promptarena/lib/resolve.js
+    - npm/promptarena/package.json
 ---
-Learn how to install and set up PromptArena for testing LLM applications.
+Install the `promptarena` binary and create a first project.
 
-## Installation Methods
+## Install
 
-### Option 1: npm/npx (Recommended for JavaScript/TypeScript Projects)
+### Option 1: npm or npx
 
-The easiest way to use PromptArena, especially if you're working in a JavaScript/TypeScript environment:
+The npm package ships prebuilt binaries for each platform, so it needs no Go toolchain. It works with npm, yarn and pnpm, and selects the binary for your OS and CPU at install time.
 
 ```bash
-# Use without installation (recommended for trying it out)
+# Run without installing
 npx @altairalabs/promptarena run -c config.arena.yaml
 
 # Install globally
@@ -20,70 +35,66 @@ npm install -g @altairalabs/promptarena
 npm install --save-dev @altairalabs/promptarena
 ```
 
-**Benefits:**
-- No Go toolchain required
-- Works with npm, yarn, and pnpm
-- Easy integration with package.json scripts
-- Automatic platform detection
+To run it from `package.json`:
 
-**Add to your package.json:**
 ```json
 {
   "scripts": {
     "test:prompts": "promptarena run -c ./tests/config.arena.yaml"
   },
   "devDependencies": {
-    "@altairalabs/promptarena": "^0.0.1"
+    "@altairalabs/promptarena": "^2.4.0"
   }
 }
 ```
 
-### Option 2: Homebrew (macOS/Linux)
+### Option 2: Homebrew (macOS and Linux)
 
-PromptKit is distributed as a cask from the AltairaLabs tap:
+The AltairaLabs tap publishes `promptarena` and `packc` as separate casks:
 
 ```bash
-# Install PromptKit (includes PromptArena and packc)
+# Install promptarena
 brew install altairalabs/tap/promptarena
 
-# Verify installation
+# Install packc, if you need it
+brew install altairalabs/tap/packc
+
+# Verify the installation
 promptarena --version
 ```
 
-Equivalently, tap first and then install by name:
+Or tap first and install by name:
 
 ```bash
 brew tap altairalabs/tap
-brew install --cask promptkit
+brew install --cask promptarena
 ```
 
-### Option 3: Go Install (builds from source)
+### Option 3: go install
 
-This compiles `promptarena` from source, so it needs a Go toolchain plus a C
-compiler and the platform audio development headers (e.g. `libasound2-dev` on
-Debian/Ubuntu) — the audio sink uses cgo. Prefer Homebrew, npm, or the pre-built
-binary for a dependency-free install.
+This compiles `promptarena` from source with your Go toolchain. It needs no C compiler or audio headers.
 
 ```bash
-# Install directly with Go (note the cmd/promptarena package path)
+# Install with Go (note the arena/cmd/promptarena package path)
 go install github.com/AltairaLabs/promptarena/v2/arena/cmd/promptarena@latest
 
-# The binary will be in your $GOPATH/bin
+# The binary is in $GOBIN, or $GOPATH/bin when GOBIN is unset
 promptarena --version
 ```
 
-### Option 4: Download Pre-built Binary
+### Option 4: Download a release archive
 
-Visit the [PromptKit Releases](https://github.com/altairalabs/promptkit/releases) page and download the appropriate binary for your platform.
+Download the archive for your platform from the [PromptArena releases](https://github.com/AltairaLabs/promptarena/releases) page. Archives are named `promptarena_<version>_<Os>_<arch>.tar.gz`, where `<Os>` is `Darwin`, `Linux` or `Windows` and `<arch>` is `x86_64` or `arm64`. Each release also attaches `checksums.txt`.
 
 ```bash
-# Example for macOS (adjust version and platform as needed)
-curl -LO https://github.com/AltairaLabs/promptarena/v2/releases/latest/download/promptarena-darwin-amd64
-chmod +x promptarena-darwin-amd64
-sudo mv promptarena-darwin-amd64 /usr/local/bin/promptarena
+# Example for Apple silicon (adjust the version and platform)
+curl -LO https://github.com/AltairaLabs/promptarena/releases/download/v2.4.0/promptarena_2.4.0_Darwin_arm64.tar.gz
+tar -xzf promptarena_2.4.0_Darwin_arm64.tar.gz promptarena
+chmod +x promptarena
+sudo mv promptarena /usr/local/bin/promptarena
 ```
 
-### For Developers: Build from Source
+### Build from a checkout
 
 ```bash
 # Clone the repository
@@ -94,18 +105,15 @@ cd promptarena
 go install ./arena/cmd/promptarena
 ```
 
-## Verify Installation
+## Verify the installation
 
 ```bash
-# Check that Arena is installed
 promptarena --help
-
-# Should display command usage and available commands
 ```
 
-## Enable Shell Completions (Optional)
+The output lists the usage and the available commands.
 
-Enable tab completion for commands, flags, and dynamic values:
+## Enable shell completions (optional)
 
 ```bash
 # Bash
@@ -118,45 +126,41 @@ promptarena completion zsh > ~/.zsh/completions/_promptarena
 promptarena completion fish > ~/.config/fish/completions/promptarena.fish
 ```
 
-See [Configure Shell Completions](/arena/how-to/setup/shell-completions/) for detailed setup instructions.
+See [Configure Shell Completions](/arena/how-to/setup/shell-completions/) for each shell's setup.
 
-## Create Your First Project
-
-After installation, use the project generator to get started instantly:
+## Create your first project
 
 ```bash
-# Create a new test project with guided setup
+# Create a project with guided setup
 promptarena init my-llm-tests
 
 # Or use quick mode with defaults
 promptarena init my-llm-tests --quick --provider mock
 
-# Navigate to your project
+# Go to the project
 cd my-llm-tests
 
-# Run your first test
+# Run the test
 promptarena run
 ```
 
-The `init` command creates everything you need:
+`init` creates:
 
-- Arena configuration (`config.arena.yaml`)
-- Provider setup (`providers/`)
-- Sample test scenario (`scenarios/`)
-- Prompt configuration (`prompts/`)
-- Environment variables (`.env`)
-- README with next steps
+- the Arena configuration (`config.arena.yaml`)
+- a provider (`providers/`)
+- a sample scenario (`scenarios/`)
+- a prompt configuration (`prompts/`)
+- environment variables (`.env`)
+- a README with next steps
 
-### Manual Configuration (Advanced)
+### Write the config by hand
 
-If you prefer to create files manually:
+To create the config yourself, list each prompt, provider and scenario file under `spec`. A `defaults` block is required:
 
 ```bash
-# Create a test directory
 mkdir my-llm-tests
 cd my-llm-tests
 
-# Create a minimal config file
 cat > config.arena.yaml << 'EOF'
 apiVersion: promptkit.altairalabs.ai/v1alpha1
 kind: Arena
@@ -164,46 +168,46 @@ metadata:
   name: my-llm-tests
 
 spec:
-  prompts:
-    - path: ./prompts
-  
+  prompt_configs:
+    - id: assistant
+      file: prompts/assistant.prompt.yaml
+
   providers:
-    - path: ./providers
-  
+    - file: providers/mock.provider.yaml
+
   scenarios:
-    - path: ./scenarios
+    - file: scenarios/basic-test.scenario.yaml
+
+  defaults:
+    temperature: 0.7
+    max_tokens: 1500
+    output:
+      dir: out
+      formats: ["json", "markdown"]
 EOF
 ```
 
-## Next Steps
-
-- **[Write Your First Test Scenario](/arena/how-to/scenarios/write-scenarios/)** - Create test scenarios
-- **[Configure Providers](/arena/how-to/providers/configure-providers/)** - Set up LLM providers
-- **[Tutorial: First Test](/arena/tutorials/01-first-test/)** - Complete hands-on guide
-
 ## Troubleshooting
 
-### Command Not Found (Go Install)
-
-If `promptarena` is not found after `go install`:
+### Command not found after go install
 
 ```bash
-# Ensure Go bin is in your PATH
+# Add the Go bin directory to your PATH
 export PATH=$PATH:$(go env GOPATH)/bin
 
-# Add to your shell profile (~/.zshrc or ~/.bashrc)
+# Persist it in your shell profile (~/.zshrc or ~/.bashrc)
 echo 'export PATH=$PATH:$(go env GOPATH)/bin' >> ~/.zshrc
 source ~/.zshrc
 ```
 
-### Permission Denied (Binary Download)
+### Permission denied after downloading
 
 ```bash
-# Make the binary executable
-chmod +x promptarena-*
+# Make the extracted binary executable
+chmod +x promptarena
 ```
 
-### Homebrew Not Found
+### Homebrew not found
 
 Install Homebrew first:
 
@@ -211,3 +215,9 @@ Install Homebrew first:
 # macOS/Linux
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
 ```
+
+## Related pages
+
+- [Write scenarios](/arena/how-to/scenarios/write-scenarios/)
+- [Configure providers](/arena/how-to/providers/configure-providers/)
+- [Tutorial: first test](/arena/tutorials/01-first-test/)

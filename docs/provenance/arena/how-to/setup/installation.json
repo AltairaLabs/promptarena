@@ -1,0 +1,453 @@
+{
+ "page": "docs/src/content/docs/arena/how-to/setup/installation.md",
+ "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "PromptArena is for testing LLM applications",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/completion_interactive.go:21"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "npx @altairalabs/promptarena run -c config.arena.yaml runs the npm package",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:134",
+    "npm/promptarena/package.json:1"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "The run subcommand accepts -c / --config for the config file",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:134"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "npm install -g @altairalabs/promptarena installs a global package of that name",
+   "verdict": "true",
+   "evidence": [
+    "npm/promptarena/package.json:1"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "npm install --save-dev @altairalabs/promptarena adds a dev dependency of that name",
+   "verdict": "true",
+   "evidence": [
+    "npm/promptarena/package.json:1"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "The npm install requires no Go toolchain",
+   "verdict": "true",
+   "evidence": [
+    "npm/promptarena/lib/resolve.js:1"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "The npm package works with npm, yarn and pnpm",
+   "verdict": "true",
+   "evidence": [
+    "npm/promptarena/lib/resolve.js:1"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "The npm install detects the platform automatically",
+   "verdict": "true",
+   "evidence": [
+    "npm/promptarena/lib/resolve.js:12",
+    "npm/promptarena/lib/resolve.js:23"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "promptarena run -c ./tests/config.arena.yaml is a valid package.json script invocation",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:134"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "The devDependency version range ^0.0.1 resolves to an existing npm version",
+   "verdict": "false",
+   "evidence": [
+    "npm/promptarena/package.json:1"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "PromptKit is distributed as a cask from the AltairaLabs tap",
+   "verdict": "false",
+   "evidence": [
+    ".goreleaser.yml:201",
+    ".goreleaser.yml:230"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "The promptkit cask includes both PromptArena and packc",
+   "verdict": "false",
+   "evidence": [
+    ".goreleaser.yml:216",
+    ".goreleaser.yml:244"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "brew install altairalabs/tap/promptarena installs the tool",
+   "verdict": "true",
+   "evidence": [
+    ".goreleaser.yml:202"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "promptarena --version prints the version",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/chat_interactive.go:45"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "brew tap altairalabs/tap taps the AltairaLabs tap",
+   "verdict": "true",
+   "evidence": [
+    ".goreleaser.yml:205"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "brew install --cask promptkit installs the cask named promptkit",
+   "verdict": "false",
+   "evidence": [
+    ".goreleaser.yml:202"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "The Go install needs a C compiler and platform audio headers because the audio sink uses cgo",
+   "verdict": "false",
+   "evidence": [
+    "arena/audio/local_sink_integration_cgo.go:1",
+    "arena/audio/local_sink_nocgo_integration.go:1"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "libasound2-dev is the audio header package on Debian/Ubuntu for this build",
+   "verdict": "false",
+   "evidence": [
+    ".github/workflows/release.yml:102",
+    ".github/workflows/release.yml:103"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "go install github.com/AltairaLabs/promptarena/v2/arena/cmd/promptarena@latest installs the binary",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/chat_interactive.go:45"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "go install places the binary in $GOPATH/bin",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 21,
+   "claim": "The PromptKit Releases page is at github.com/altairalabs/promptkit/releases",
+   "verdict": "false",
+   "evidence": [
+    ".goreleaser.yml:135",
+    ".goreleaser.yml:137"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "The release download URL is github.com/AltairaLabs/promptarena/v2/releases/latest/download/promptarena-darwin-amd64",
+   "verdict": "false",
+   "evidence": [
+    ".goreleaser.yml:135",
+    ".goreleaser.yml:62"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "Release binaries are named promptarena-<os>-<arch>, e.g. promptarena-darwin-amd64",
+   "verdict": "false",
+   "evidence": [
+    ".goreleaser.yml:62",
+    ".goreleaser.yml:64"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "The binary is installed to /usr/local/bin/promptarena in the example",
+   "verdict": "true",
+   "evidence": [
+    ".goreleaser.yml:23"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "git clone https://github.com/AltairaLabs/promptarena.git clones the repository",
+   "verdict": "true",
+   "evidence": [
+    ".goreleaser.yml:210"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "go install ./arena/cmd/promptarena installs to $GOBIN or $GOPATH/bin",
+   "verdict": "true",
+   "evidence": [
+    ".goreleaser.yml:23"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "promptarena --help displays command usage and available commands",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:134"
+   ]
+  },
+  {
+   "id": 28,
+   "claim": "promptarena completion bash is a valid subcommand",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/completion_interactive.go:21"
+   ]
+  },
+  {
+   "id": 29,
+   "claim": "promptarena completion zsh is a valid subcommand",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/completion_interactive.go:21"
+   ]
+  },
+  {
+   "id": 30,
+   "claim": "promptarena completion fish is a valid subcommand",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/completion_interactive.go:21"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "The completion file path ~/.local/share/bash-completion/completions/promptarena is the usual bash-completion location",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/completion_interactive.go:21"
+   ]
+  },
+  {
+   "id": 32,
+   "claim": "Shell completions have their own page at /arena/how-to/setup/shell-completions/",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 33,
+   "claim": "promptarena init my-llm-tests creates a project in the named directory with guided setup",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:65"
+   ]
+  },
+  {
+   "id": 34,
+   "claim": "promptarena init accepts --quick and --provider flags",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:65",
+    "arena/cmd/promptarena/init.go:68"
+   ]
+  },
+  {
+   "id": 35,
+   "claim": "mock is a valid value for the --provider flag",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:68"
+   ]
+  },
+  {
+   "id": 36,
+   "claim": "--quick mode uses defaults without prompts",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:65"
+   ]
+  },
+  {
+   "id": 37,
+   "claim": "promptarena run with no -c flag runs the config in the current directory",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:134"
+   ]
+  },
+  {
+   "id": 38,
+   "claim": "init creates config.arena.yaml",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:65"
+   ]
+  },
+  {
+   "id": 39,
+   "claim": "init creates a providers/ directory",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:65"
+   ]
+  },
+  {
+   "id": 40,
+   "claim": "init creates a scenarios/ directory",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:65"
+   ]
+  },
+  {
+   "id": 41,
+   "claim": "init creates a prompts/ directory",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:65"
+   ]
+  },
+  {
+   "id": 42,
+   "claim": "init creates a .env file",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:67"
+   ]
+  },
+  {
+   "id": 43,
+   "claim": "init creates a README with next steps",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:65"
+   ]
+  },
+  {
+   "id": 44,
+   "claim": "apiVersion value promptkit.altairalabs.ai/v1alpha1 is the Arena config API version",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:70"
+   ]
+  },
+  {
+   "id": 45,
+   "claim": "kind: Arena is a valid config kind",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:70"
+   ]
+  },
+  {
+   "id": 46,
+   "claim": "metadata.name is a config field",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:79"
+   ]
+  },
+  {
+   "id": 47,
+   "claim": "spec is the top-level config object with prompts, providers and scenarios",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:88",
+    "arena/arenaconfig/types.go:91",
+    "arena/arenaconfig/types.go:98"
+   ]
+  },
+  {
+   "id": 48,
+   "claim": "spec.prompts is a list whose items take a path field",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:88"
+   ]
+  },
+  {
+   "id": 49,
+   "claim": "spec.providers is a list whose items take a path field",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:91"
+   ]
+  },
+  {
+   "id": 50,
+   "claim": "spec.scenarios is a list whose items take a path field",
+   "verdict": "false",
+   "evidence": [
+    "arena/arenaconfig/types.go:98"
+   ]
+  },
+  {
+   "id": 51,
+   "claim": "The link /arena/how-to/scenarios/write-scenarios/ resolves to an existing page",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 52,
+   "claim": "The link /arena/how-to/providers/configure-providers/ resolves to an existing page",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 53,
+   "claim": "The link /arena/tutorials/01-first-test/ resolves to an existing page",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 54,
+   "claim": "After go install the promptarena binary lands in $(go env GOPATH)/bin",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 55,
+   "claim": "Downloaded binaries are named promptarena-* so chmod +x promptarena-* matches them",
+   "verdict": "false",
+   "evidence": [
+    ".goreleaser.yml:22",
+    ".goreleaser.yml:64"
+   ]
+  },
+  {
+   "id": 56,
+   "claim": "Homebrew install script URL raw.githubusercontent.com/Homebrew/install/HEAD/install.sh is the official installer",
+   "verdict": "true",
+   "evidence": []
+  }
+ ]
+}
