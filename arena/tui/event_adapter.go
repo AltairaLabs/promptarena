@@ -80,11 +80,13 @@ func (a *EventAdapter) mapEvent(event *events.Event) tea.Msg { //nolint:gocyclo 
 	case events.EventProviderCallFailed:
 		return a.logf("ERROR", event, "Provider call failed: %s %s (%v)",
 			providerName(event), providerModel(event), eventError(event))
-	case events.EventMiddlewareStarted:
+	// Nothing emits middleware.* any more; these cases replay recordings made
+	// before PromptKit switched to stage.* events.
+	case events.EventMiddlewareStarted: //nolint:staticcheck // replays pre-stage-event recordings
 		return a.logf("INFO", event, "Middleware started: %s", middlewareName(event))
-	case events.EventMiddlewareCompleted:
+	case events.EventMiddlewareCompleted: //nolint:staticcheck // replays pre-stage-event recordings
 		return a.handleMiddlewareCompleted(event)
-	case events.EventMiddlewareFailed:
+	case events.EventMiddlewareFailed: //nolint:staticcheck // replays pre-stage-event recordings
 		return a.logf("ERROR", event, "Middleware failed: %s (%v)", middlewareName(event), eventError(event))
 	case events.EventStageStarted, events.EventStageCompleted, events.EventStageFailed:
 		return a.handleStageEvent(event)

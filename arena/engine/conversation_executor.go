@@ -88,6 +88,9 @@ func (ce *DefaultConversationExecutor) ExecuteConversation(ctx context.Context, 
 	if req.personaState == nil {
 		req.personaState = &personaStateRecorder{}
 	}
+	if req.contextBuilder == nil {
+		req.contextBuilder = turnexecutors.NewConversationContextBuilder()
+	}
 	if err := ce.objectiveRoleError(req.Scenario); err != nil {
 		return &ConversationResult{Error: err.Error(), Failed: true}
 	}
@@ -406,6 +409,7 @@ func (ce *DefaultConversationExecutor) buildTurnRequest(
 		Metadata:              metadata,
 		ActiveComposition:     activeComposition,
 		CompositionRecorder:   req.CompositionRecorder,
+		ContextBuilder:        req.contextBuilder,
 		CallPack:              req.CallPack,
 		ToolRegistry:          req.ToolRegistry,
 		SkillToolGrants:       req.SkillToolGrants,
@@ -782,6 +786,9 @@ func (ce *DefaultConversationExecutor) ExecuteConversationStream(ctx context.Con
 // executeStreamingConversation handles the main streaming conversation logic
 func (ce *DefaultConversationExecutor) executeStreamingConversation(ctx context.Context, req ConversationRequest, outChan chan<- ConversationStreamChunk) {
 	result := ce.initializeStreamResult(req)
+	if req.contextBuilder == nil {
+		req.contextBuilder = turnexecutors.NewConversationContextBuilder()
+	}
 
 	// This path runs one exchange per self-play turn and has no objective
 	// check, so an objective here would be silently skipped.

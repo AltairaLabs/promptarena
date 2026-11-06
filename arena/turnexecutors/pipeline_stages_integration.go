@@ -134,7 +134,7 @@ func buildRelevanceConfig(cfg *arenaconfig.RelevanceConfig) *stage.RelevanceConf
 	}
 
 	// Create embedding provider based on config
-	embeddingProvider, err := createEmbeddingProvider(cfg.Provider, cfg.Model)
+	embeddingProvider, err := newEmbeddingProvider(cfg.Provider, cfg.Model)
 	if err != nil {
 		logger.Warn("failed to create embedding provider, relevance truncation will fall back to oldest",
 			"provider", cfg.Provider, "error", err)
@@ -159,6 +159,10 @@ func buildRelevanceConfig(cfg *arenaconfig.RelevanceConfig) *stage.RelevanceConf
 
 	return relevance
 }
+
+// newEmbeddingProvider builds the embedding provider a relevance policy names.
+// A variable so tests can substitute one that counts its calls.
+var newEmbeddingProvider = createEmbeddingProvider
 
 // createEmbeddingProvider creates an embedding provider based on the provider name.
 func createEmbeddingProvider(providerName, model string) (providers.EmbeddingProvider, error) {
@@ -448,8 +452,8 @@ func (e *PipelineExecutor) appendPromptContextStages(
 	}
 
 	// 5. Context builder (if policy exists)
-	if contextPolicy := buildContextPolicy(req.Scenario); contextPolicy != nil {
-		stages = append(stages, stage.NewContextBuilderStageWithTurnState(contextPolicy, turnState))
+	if cb := contextBuilderStageFor(req, turnState); cb != nil {
+		stages = append(stages, cb)
 	}
 
 	// 5a. Media conversion stage - converts media to provider-supported formats
@@ -888,8 +892,8 @@ func (e *PipelineExecutor) appendStreamingPromptStages(
 
 	// Context builder (if policy exists) — scripted path
 	if cfg.IncludeScenarioContextExtraction {
-		if contextPolicy := buildContextPolicy(req.Scenario); contextPolicy != nil {
-			stages = append(stages, stage.NewContextBuilderStageWithTurnState(contextPolicy, turnState))
+		if cb := contextBuilderStageFor(req, turnState); cb != nil {
+			stages = append(stages, cb)
 		}
 	}
 
