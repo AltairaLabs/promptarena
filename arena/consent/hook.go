@@ -46,7 +46,9 @@ func (h *SimulationHook) BeforeExecution(ctx context.Context, req hooks.ToolRequ
 
 	switch action {
 	case "deny":
-		reason := buildDenyMessage(req.Name, h.lookupDeclineStrategy(ctx, req.Name))
+		// The SDK's RejectClientTool uses the same message, so a simulated
+		// denial reads to the model exactly like a real one.
+		reason := tools.ConsentDeclinedMessage(req.Name, h.lookupDeclineStrategy(ctx, req.Name))
 		return hooks.DenyWithMetadata(reason, map[string]any{
 			"consent_status": "denied",
 		})
@@ -82,18 +84,6 @@ func (h *SimulationHook) lookupDeclineStrategy(ctx context.Context, toolName str
 	}
 
 	return descriptor.ClientConfig.Consent.DeclineStrategy
-}
-
-// buildDenyMessage returns the appropriate denial message based on decline strategy.
-func buildDenyMessage(toolName, strategy string) string {
-	switch strategy {
-	case tools.DeclineStrategyFallback:
-		return fmt.Sprintf("Tool %s unavailable: user declined consent. Use alternative approach.", toolName)
-	case tools.DeclineStrategyRetry:
-		return fmt.Sprintf("Tool %s denied: user declined consent. Try a different approach.", toolName)
-	default: // "error" or unset
-		return fmt.Sprintf("Tool %s denied: user declined consent", toolName)
-	}
 }
 
 // WithConsentOverrides stores consent overrides in the context.
