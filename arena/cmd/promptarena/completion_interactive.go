@@ -330,7 +330,7 @@ func completeInitProviders(
 	_ []string,
 	toComplete string,
 ) ([]string, cobra.ShellCompDirective) {
-	providers := []string{"openai", "anthropic", "google", "mock"}
+	providers := []string{"mock", "openai", "claude", "gemini"}
 	var matches []string
 	for _, p := range providers {
 		if toComplete == "" || strings.HasPrefix(p, toComplete) {

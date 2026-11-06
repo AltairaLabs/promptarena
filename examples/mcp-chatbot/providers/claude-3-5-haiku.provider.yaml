@@ -3,7 +3,7 @@ kind: Provider
 metadata:
   name: Claude 3.5 Haiku
 spec:
-  type: anthropic
+  type: claude
   model: claude-3-5-haiku-20241022
   base_url: https://api.anthropic.com
   include_raw_output: false

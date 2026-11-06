@@ -512,7 +512,6 @@ func (e *Engine) SetEventBus(bus events.Bus, opts ...EventBusOption) {
 	// pipeline as StreamElement; high-frequency events (audio, messages, tools)
 	// are picked up by the pipeline tap.
 	if e.eventStore != nil && bus != nil {
-		bus.Subscribe(events.EventConversationStarted, e.eventStore.OnEvent)
 		bus.Subscribe(events.EventStreamInterrupted, e.eventStore.OnEvent)
 		logger.Debug("Subscribed event store for session recording (targeted)")
 	}
@@ -608,7 +607,6 @@ func (e *Engine) EnableSessionRecordingWithStore(store events.EventStore) error 
 	// Subscribe store to existing event bus for low-rate replay-essential events
 	// that don't flow through the pipeline as StreamElement.
 	if e.eventBus != nil {
-		e.eventBus.Subscribe(events.EventConversationStarted, store.OnEvent)
 		e.eventBus.Subscribe(events.EventStreamInterrupted, store.OnEvent)
 		logger.Debug("Subscribed event store for session recording (targeted)")
 	}

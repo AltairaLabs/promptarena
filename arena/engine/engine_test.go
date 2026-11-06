@@ -457,7 +457,7 @@ func TestEnableSessionRecordingWithStore_BusSubscription(t *testing.T) {
 
 	// Publish a subscribed event — should be persisted by the store.
 	bus.Publish(&events.Event{
-		Type:      events.EventConversationStarted,
+		Type:      events.EventStreamInterrupted,
 		SessionID: "session-1",
 	})
 	// Publish a high-frequency event that is NOT in the targeted subscription.
@@ -474,8 +474,8 @@ func TestEnableSessionRecordingWithStore_BusSubscription(t *testing.T) {
 	if len(got) != 1 {
 		t.Fatalf("expected exactly 1 event from targeted subscription, got %d", len(got))
 	}
-	if got[0].Type != events.EventConversationStarted {
-		t.Fatalf("expected ConversationStarted, got %s", got[0].Type)
+	if got[0].Type != events.EventStreamInterrupted {
+		t.Fatalf("expected StreamInterrupted, got %s", got[0].Type)
 	}
 }
 
