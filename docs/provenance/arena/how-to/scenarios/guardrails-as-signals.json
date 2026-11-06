@@ -1,0 +1,369 @@
+{
+ "page": "docs/src/content/docs/arena/how-to/scenarios/guardrails-as-signals.md",
+ "commit": "0dbee6290db4e4de3bff3101f260fd614f81c924",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "examples/guardrails-test/ exists and is the canonical example",
+   "verdict": "true",
+   "evidence": [
+    "examples/guardrails-test/config.arena.yaml:1"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "banned_words is a registered eval type",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 3,
+   "claim": "guardrail_triggered is a registered assertion type",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 4,
+   "claim": "Eval is a stateless primitive (content) -> result living in runtime/evals/handlers/",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 5,
+   "claim": "Guardrail is wired through the pack validators: block, adapted in runtime/hooks/guardrails/factory.go into a ProviderHook",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:741"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "Guardrails mutate content (block or replace)",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 7,
+   "claim": "Assertions are configured in the scenario assertions: block and never mutate content",
+   "verdict": "true",
+   "evidence": [
+    "examples/guardrails-test/scenarios/guardrail-should-trigger.scenario.yaml:16"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "Wiring one eval into validators: makes it fire in production and be observable via guardrail_triggered",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 9,
+   "claim": "The example directory is examples/guardrails-test",
+   "verdict": "true",
+   "evidence": [
+    "examples/guardrails-test/config.arena.yaml:1"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "promptarena run is a subcommand",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 11,
+   "claim": "promptarena run accepts --ci",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 12,
+   "claim": "promptarena run accepts --formats with values json and markdown",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 13,
+   "claim": "A run writes out/results.md",
+   "verdict": "true",
+   "evidence": [
+    "examples/guardrails-test/config.arena.yaml:27-29"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "The example uses a mock provider with scripted responses and needs no API key",
+   "verdict": "true",
+   "evidence": [
+    "examples/guardrails-test/config.arena.yaml:12-13",
+    "examples/guardrails-test/providers/mock-provider.yaml:7"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "The pack file is prompts/content-filter.yaml in the example",
+   "verdict": "true",
+   "evidence": [
+    "examples/guardrails-test/prompts/content-filter.yaml:1"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "Pack config has a top-level validators: field",
+   "verdict": "true",
+   "evidence": [
+    "examples/guardrails-test/prompts/content-filter.yaml:17"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "A validators entry has type and params fields",
+   "verdict": "true",
+   "evidence": [
+    "examples/guardrails-test/prompts/content-filter.yaml:18-19"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "banned_words takes a words list parameter",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 19,
+   "claim": "banned_words takes a case_sensitive boolean parameter",
+   "verdict": "dead",
+   "evidence": []
+  },
+  {
+   "id": 20,
+   "claim": "Every assistant message passes through the guardrail hook",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 21,
+   "claim": "On a match the hook replaces content with the safe message",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 22,
+   "claim": "On a match the hook writes a validations: block on the message",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 23,
+   "claim": "The scenario file scenarios/guardrail-should-trigger.scenario.yaml exists in the example",
+   "verdict": "true",
+   "evidence": [
+    "examples/guardrails-test/scenarios/guardrail-should-trigger.scenario.yaml:1"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "Scenario has a top-level turns: field",
+   "verdict": "true",
+   "evidence": [
+    "examples/guardrails-test/scenarios/guardrail-should-trigger.scenario.yaml:13"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "A turn has role and content fields",
+   "verdict": "true",
+   "evidence": [
+    "examples/guardrails-test/scenarios/guardrail-should-trigger.scenario.yaml:14-15"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "A turn has an assertions: field",
+   "verdict": "true",
+   "evidence": [
+    "examples/guardrails-test/scenarios/guardrail-should-trigger.scenario.yaml:16"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "guardrail_triggered assertion type is used with type key and params",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 28,
+   "claim": "guardrail_triggered params accept validator",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 29,
+   "claim": "guardrail_triggered params accept should_trigger boolean",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 30,
+   "claim": "guardrail_triggered reads validations: on the message and does not re-run the eval",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 31,
+   "claim": "Scenario guardrail-should-trigger exists in the example",
+   "verdict": "true",
+   "evidence": [
+    "examples/guardrails-test/scenarios/guardrail-should-trigger.scenario.yaml:4"
+   ]
+  },
+  {
+   "id": 32,
+   "claim": "Scenario guardrail-should-not-trigger exists in the example",
+   "verdict": "true",
+   "evidence": [
+    "examples/guardrails-test/scenarios/guardrail-should-not-trigger.scenario.yaml:4"
+   ]
+  },
+  {
+   "id": 33,
+   "claim": "Scenario multiple-violations exists in the example",
+   "verdict": "true",
+   "evidence": [
+    "examples/guardrails-test/scenarios/multiple-violations.scenario.yaml:4"
+   ]
+  },
+  {
+   "id": 34,
+   "claim": "Scenario streaming-guardrail-trigger exists in the example",
+   "verdict": "false",
+   "evidence": [
+    "examples/guardrails-test/config.arena.yaml:16-20",
+    "examples/guardrails-test/mock-responses.yaml:24-27",
+    "examples/guardrails-test/prompts/content-filter.yaml:26-28"
+   ]
+  },
+  {
+   "id": 35,
+   "claim": "A streaming response with a banned word interrupts the stream when the guardrail fires",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 36,
+   "claim": "Link target /arena/how-to/scenarios/pii-guardrail-red-team/ exists",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 37,
+   "claim": "The PII red-team how-to applies the pattern to pii_leakage",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 38,
+   "claim": "bias, toxicity and role_violation are LLM-judged safety primitives",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 39,
+   "claim": "In production SDK/Conversation API validation failures throw errors and halt execution",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 40,
+   "claim": "Arena pipeline construction enables SuppressValidationExceptions in test mode",
+   "verdict": "false",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:741"
+   ]
+  },
+  {
+   "id": 41,
+   "claim": "In test mode validators record results and execution continues",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 42,
+   "claim": "The same PromptConfig works in production and test mode without test-specific configuration",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:741"
+   ]
+  },
+  {
+   "id": 43,
+   "claim": "CI workflow file .github/workflows/guardrails-test.yml is an example and the paths filter covers examples/guardrails-test/**",
+   "verdict": "true",
+   "evidence": [
+    ".github/workflows/ci.yml:28"
+   ]
+  },
+  {
+   "id": 44,
+   "claim": "actions/checkout@v4 is a valid action version",
+   "verdict": "true",
+   "evidence": [
+    ".github/workflows/ci.yml:28"
+   ]
+  },
+  {
+   "id": 45,
+   "claim": "actions/setup-go@v5 is a valid action version",
+   "verdict": "true",
+   "evidence": [
+    ".github/workflows/ci.yml:96"
+   ]
+  },
+  {
+   "id": 46,
+   "claim": "go-version 1.26 matches the Go version the repo builds with",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 47,
+   "claim": "go build -o bin/promptarena ./arena/cmd/promptarena builds the CLI from that package",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 48,
+   "claim": "promptarena run --ci --formats json is a valid invocation in CI",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 49,
+   "claim": "The CI gate is keyless and fork-safe",
+   "verdict": "true",
+   "evidence": [
+    "examples/guardrails-test/providers/mock-provider.yaml:7"
+   ]
+  },
+  {
+   "id": 50,
+   "claim": "Adapter supports WithMonitorOnly() for monitor-only guardrails",
+   "verdict": "dead",
+   "evidence": [
+    "examples/guardrails-test/prompts/content-filter.yaml:14-16"
+   ]
+  },
+  {
+   "id": 51,
+   "claim": "Validators accept content_excludes, max_length and pii_leakage as eval types",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 52,
+   "claim": "Custom eval handlers go in runtime/evals/handlers/ and are referenced from validators:",
+   "verdict": "unverified",
+   "evidence": []
+  }
+ ]
+}

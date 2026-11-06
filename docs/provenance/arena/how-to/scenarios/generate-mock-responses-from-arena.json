@@ -1,0 +1,282 @@
+{
+ "page": "docs/src/content/docs/arena/how-to/scenarios/generate-mock-responses-from-arena.md",
+ "commit": "0dbee6290db4e4de3bff3101f260fd614f81c924",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "Description: converts recorded Arena runs into mock provider YAML so conversations can be replayed without LLM calls",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/mocks.go:34",
+    "arena/mocks/parser.go:96"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "Converts recorded Arena JSON results into mock provider YAML",
+   "verdict": "true",
+   "evidence": [
+    "arena/mocks/generator.go:32",
+    "arena/mocks/parser.go:96"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "Replays conversations without calling an external LLM",
+   "verdict": "true",
+   "evidence": [
+    "arena/mocks/generator.go:190"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "promptarena run accepts --format json",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:1"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "promptarena run with --format json writes results as out/*.json",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/json/json_repository.go:74"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "The promptarena CLI builds on demand when a Go toolchain is installed",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/mocks.go:75"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "providers/mock-generated.yaml is a valid example output path for mocks",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/mocks.go:84"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "promptarena run is a subcommand",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:1"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "promptarena run accepts --scenario",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:1"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "hardware-faults is a scenario name the run command can select",
+   "verdict": "true",
+   "evidence": [
+    "arena/templates/testdata/2025-11-30T19-49Z_openai-gpt4o_default_hardware-faults_18c25790.json:1"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "promptarena run accepts --provider",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:1"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "openai-gpt4o is a provider name the run command can select",
+   "verdict": "true",
+   "evidence": [
+    "arena/templates/testdata/2025-11-30T19-49Z_openai-gpt4o_default_hardware-faults_18c25790.json:1"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "promptarena run accepts --format with the value json",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:1"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "promptarena run accepts --out",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:1"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "promptarena mocks generate is a subcommand",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/mocks.go:32"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "promptarena mocks generate accepts --input",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/mocks.go:79"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "mocks generate accepts --scenario",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/mocks.go:99"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "mocks generate accepts --provider",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/mocks.go:105"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "mocks generate accepts --output",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/mocks.go:80"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "mocks generate accepts --merge",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/mocks.go:93"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "--input can be a single run file or a directory of JSON results",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/mocks.go:162",
+    "arena/cmd/promptarena/mocks.go:168"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "--scenario and --provider filter which runs are included",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/mocks.go:209"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "--merge overlays generated mocks onto an existing mock file instead of overwriting it",
+   "verdict": "true",
+   "evidence": [
+    "arena/mocks/generator.go:143",
+    "arena/mocks/generator.go:51"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "mocks generate accepts --per-scenario",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/mocks.go:87"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "--per-scenario writes one YAML file per scenario under the --output directory",
+   "verdict": "true",
+   "evidence": [
+    "arena/mocks/generator.go:91"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "mocks generate accepts --dry-run",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/mocks.go:111"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "--dry-run prints the generated YAML to stdout without writing files",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/mocks.go:60"
+   ]
+  },
+  {
+   "id": 28,
+   "claim": "arena/templates/testdata contains hardware-faults run artifacts",
+   "verdict": "true",
+   "evidence": [
+    "arena/templates/testdata/2025-11-30T19-49Z_openai-gpt4o_default_hardware-faults_18c25790.json:1"
+   ]
+  },
+  {
+   "id": 29,
+   "claim": "Example command uses --input arena/templates/testdata, --scenario hardware-faults, --output iot-maintenance-demo/providers/responses/mock-assistant.yaml and --merge",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/mocks.go:79"
+   ]
+  },
+  {
+   "id": 30,
+   "claim": "The IoT maintenance demo mocks contain real tool calls and responses captured from a prior OpenAI run",
+   "verdict": "true",
+   "evidence": [
+    "arena/templates/testdata/2025-11-30T19-49Z_openai-gpt4o_default_hardware-faults_18c25790.json:1"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "mocks generate accepts --default-response",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/mocks.go:112"
+   ]
+  },
+  {
+   "id": 32,
+   "claim": "--default-response is used as a fallback when no turn-specific response exists",
+   "verdict": "true",
+   "evidence": [
+    "arena/mocks/generator.go:37"
+   ]
+  },
+  {
+   "id": 33,
+   "claim": "arena/templates/testdata/ is a directory of recorded JSON fixtures",
+   "verdict": "true",
+   "evidence": [
+    "arena/templates/testdata/2025-11-30T19-49Z_openai-gpt4o_default_hardware-faults_18c25790.json:1"
+   ]
+  },
+  {
+   "id": 34,
+   "claim": "The mock provider can run flows to validate determinism",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:1"
+   ]
+  }
+ ]
+}

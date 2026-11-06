@@ -1,47 +1,57 @@
 ---
 title: Use Guardrails as Test Signals
-description: One primitive enforces in production AND fires as an observable test signal. Walk through examples/guardrails-test/ to see eval / guardrail / assertion wired end-to-end.
+description: Register one eval as a guardrail in the pack, then assert in scenarios that it fired. Walk through examples/guardrails-test/ to see eval, guardrail and assertion wired end to end.
+verified:
+  commit: 0dbee6290db4e4de3bff3101f260fd614f81c924
+  sources:
+    - .github/workflows/ci.yml
+    - arena/turnexecutors/pipeline_stages_integration.go
+    - examples/guardrails-test/config.arena.yaml
+    - examples/guardrails-test/mock-responses.yaml
+    - examples/guardrails-test/prompts/content-filter.yaml
+    - examples/guardrails-test/providers/mock-provider.yaml
+    - examples/guardrails-test/scenarios/guardrail-should-not-trigger.scenario.yaml
+    - examples/guardrails-test/scenarios/guardrail-should-trigger.scenario.yaml
+    - examples/guardrails-test/scenarios/multiple-violations.scenario.yaml
 ---
 
-This how-to walks through `examples/guardrails-test/` — the canonical demonstration of PromptArena's three-role model. One eval primitive (`banned_words`) is registered as a guardrail in the pack; scenarios assert the firing via `guardrail_triggered`. Same code, two roles: production enforcement plus observable test signal.
+This how-to walks through `examples/guardrails-test/`. The pack registers the `banned_words` eval as a guardrail, and scenarios assert the firing with `guardrail_triggered`. The same code enforces in production and acts as a test signal.
 
 ## The three roles
 
-PromptArena keeps these distinct:
-
 | Role | What it is | Where it lives | Mutates content? |
 |------|-----------|----------------|------------------|
-| **Eval** | A primitive function `(content) → result`. Stateless. | `runtime/evals/handlers/` | No |
-| **Guardrail** | An eval applied as production enforcement. | Pack `validators:` block → `runtime/hooks/guardrails/factory.go` → `ProviderHook` | Yes (blocks / replaces) |
-| **Assertion** | An eval or query applied as a test predicate. | Scenario `assertions:` block | Never |
+| Eval | A primitive function `(content) → result`. Stateless. | `runtime/evals/handlers/` | No |
+| Guardrail | An eval applied as production enforcement. | Pack `validators:` block | Yes (replaces or truncates the message) |
+| Assertion | An eval or query applied as a test predicate. | Scenario `assertions:` block | Never |
 
-Same code, different roles. The eval primitive is implemented once. Wired into a pack's `validators:` block, it becomes a guardrail: it fires in production and mutates content. Observed via `guardrail_triggered` in a scenario, it becomes a test signal that confirms the production primitive caught what it should have.
+The eval is implemented once. In a pack's `validators:` block it becomes a guardrail. Observed through `guardrail_triggered` in a scenario, it becomes a test signal. See [Eval framework](/arena/explanation/eval-framework/) for the model.
 
 ## Run it
 
 ```bash
 cd examples/guardrails-test
 promptarena run --ci --formats json,markdown
-open out/results.md
 ```
 
-Keyless: the example uses a mock provider with scripted responses that exercise each scenario's guardrail behaviour.
+The example uses a mock provider with scripted responses, so it needs no API key.
+
+Read pass or fail from the run summary, the exit code, or `out/index.json`.
 
 ## The wiring
 
-**Pack** (`prompts/content-filter.yaml`):
+Declare the guardrail in the pack (`prompts/content-filter.yaml`), under `spec.validators`:
 
 ```yaml
 validators:
   - type: banned_words
     params:
       words: ["damn", "crap", "hell"]
-      case_sensitive: false
 ```
 
-The runtime's `runtime/hooks/guardrails/factory.go` adapter wraps this as a `ProviderHook`. Every assistant message passes through; on a match the hook replaces content with the safe message and writes a `validations:` block on the message.
+`banned_words` is an alias of the `content_excludes` handler, and matching is case-insensitive. The runtime compiles each validator into a provider hook. On a match the hook replaces the assistant message with a blocked-content message (set `message` on the validator to override it) and records the result in the message's `validations` field.
 
-**Scenario** (`scenarios/guardrail-should-trigger.scenario.yaml`):
+Assert the firing in the scenario (`scenarios/guardrail-should-trigger.scenario.yaml`):
 
 ```yaml
 turns:
@@ -50,48 +60,40 @@ turns:
     assertions:
       - type: guardrail_triggered
         params:
-          validator: banned_words
+          validator_type: banned_words
           should_trigger: true
 ```
 
-`guardrail_triggered` reads `validations:` on the message — no re-running of the eval, no race with the runtime's enforcement.
+`guardrail_triggered` reads the recorded `validations` and does not re-run the eval. `should_trigger` is a boolean that defaults to `true`. `validator` is accepted as an alias of `validator_type`.
 
 ## The four scenarios
 
-The example ships four scenarios covering the matrix:
+The example covers both outcomes, a guardrail that fires and one that stays quiet:
 
 | Scenario | Input | Expected guardrail behaviour |
 |---|---|---|
-| `guardrail-should-trigger` | Profanity-laden | `should_trigger: true` |
-| `guardrail-should-not-trigger` | Clean | `should_trigger: false` |
-| `multiple-violations` | Multiple banned words | `should_trigger: true` |
-| `streaming-guardrail-trigger` | Streaming response with banned word | `should_trigger: true` + stream interrupts |
+| `guardrail-should-trigger` | Profanity | `should_trigger: true` |
+| `guardrail-should-not-trigger` | Clean text | `should_trigger: false` |
+| `multiple-violations` | Several banned words | `should_trigger: true` |
+| `streaming-length-trigger` | Streamed response longer than the `length` validator's `max_characters: 100` | Stream is cut off |
 
-Both shapes matter — catching violations AND not false-positiving on clean inputs.
+Assert both shapes: catch violations and avoid false positives on clean input.
 
-## Why this matters
+## Why this pattern
 
-Content filtering usually arrives one of two ways:
+A runtime filter alone leaves you with nothing to assert on, and an eval score over transcripts runs after the agent has already said the bad thing. A guardrail registered once gives you real-time enforcement and a test that observes it. See [Validation strategies](/arena/explanation/validation-strategies/) for the trade-offs.
 
-- **As a runtime feature** — the runtime catches bad content, but you cannot write tests against what it catches without parsing logs.
-- **As an eval score over transcripts** — you get a number, but in production the agent has already said the bad thing; the check is post-hoc.
+The [PII guardrail red-team how-to](/arena/how-to/scenarios/pii-guardrail-red-team/) applies the same pattern to `pii_leakage` and shows how to add the LLM-judged safety primitives (`bias`, `toxicity`, `role_violation`).
 
-PromptArena's three-role model collapses that: the same primitive enforces in real time AND is observable in tests. One implementation. Production catches in real time AND the test observes the firing, from the same code.
+## Guardrails in production and in Arena
 
-Worth pairing with the [PII guardrail red-team how-to](/arena/how-to/scenarios/pii-guardrail-red-team/), which applies the same pattern to `pii_leakage` and shows how to add the LLM-judged safety primitives (`bias`, `toxicity`, `role_violation`).
-
-## Production vs test mode
-
-In **production** (SDK / Conversation API), validation failures throw errors and halt execution. That's the right default for live systems — bad content doesn't reach users.
-
-In **test mode** (Arena's pipeline construction automatically enables `SuppressValidationExceptions`), validators run, record results, and execution continues. This lets `guardrail_triggered` inspect the recording.
-
-**The same PromptConfig works in both modes** — no test-specific configuration needed.
+Arena and the SDK compile validators with the same code, so the same pack works in both with no test-specific configuration. A guardrail does not throw or halt execution. It rewrites the message, records the violation and lets the pipeline continue, which is what lets `guardrail_triggered` inspect the result.
 
 ## CI gate
 
+Add a job like this to your own workflow:
+
 ```yaml
-# .github/workflows/guardrails-test.yml
 name: Guardrails test
 
 on:
@@ -103,8 +105,8 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
         with:
           go-version: '1.26'
       - run: go build -o bin/promptarena ./arena/cmd/promptarena
@@ -113,10 +115,10 @@ jobs:
         run: ../../bin/promptarena run --ci --formats json
 ```
 
-Keyless and fork-safe. The mock provider produces scripted outputs; the guardrails fire deterministically; the assertions observe the firings.
+The job needs no secrets. The mock provider produces scripted outputs, the guardrails fire deterministically, and the assertions observe the firings.
 
 ## Extending it
 
-- **Add a new guardrail**: drop a new validator entry in `validators:` (any registered eval handler works — `content_excludes`, `max_length`, `pii_leakage`, etc.). Add a scenario asserting on it.
-- **Monitor-only guardrails**: the adapter supports `WithMonitorOnly()` — guardrails that record but don't enforce. Useful for shadow-testing a new safety primitive before rolling it out. The assertion shape stays the same.
-- **Custom guardrails**: implement a new eval handler in `runtime/evals/handlers/`, register it, reference it in `validators:`. No new framework needed for the guardrail role — the adapter wraps any eval handler.
+- To add a guardrail, add an entry to `validators:` (any registered eval handler works, for example `content_excludes`, `max_length` or `pii_leakage`) and add a scenario that asserts on it.
+- Guardrails always enforce. To watch a new check before you enforce it, declare it as an eval in the pack and assert on its result in scenarios.
+- For a custom guardrail, implement a new eval handler in `runtime/evals/handlers/`, register it and reference it in `validators:`. The guardrail adapter wraps any eval handler.

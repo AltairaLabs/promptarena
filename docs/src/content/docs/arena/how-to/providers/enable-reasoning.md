@@ -1,21 +1,47 @@
 ---
 title: Enable Model Reasoning
 description: Turn on extended thinking for Gemini, Claude and OpenAI, and capture the trace separately from the answer. Each provider uses a different control, and setting the wrong one usually yields an empty trace rather than an error.
+verified:
+  commit: 0dbee6290db4e4de3bff3101f260fd614f81c924
+  sources:
+    - arena/arenaconfig/validator_tools.go
+    - arena/engine/builder_integration.go
+    - arena/engine/conversation_executor.go
+    - arena/engine/types.go
+    - arena/results/json/json_repository.go
+    - arena/results/markdown/markdown_repository.go
+    - arena/statestore/store.go
+    - arena/tui/app/livefeed.go
+    - arena/tui/event_adapter.go
+    - arena/tui/panels/conversation.go
+    - arena/tui/panels/conversation_render.go
+    - arena/turnexecutors/pipeline_stages_integration.go
+    - arena/web/event_adapter.go
+    - arena/web/frontend/src/components/InteractiveChat.tsx
+    - arena/web/frontend/src/hooks/useArenaEvents.ts
+    - arena/web/frontend/src/lib/atlasAdapter.ts
+    - examples/reasoning-test/providers/claude-sonnet.provider.yaml
+    - examples/reasoning-test/providers/gemini-3-flash.provider.yaml
+    - examples/reasoning-test/providers/openai-gpt5.provider.yaml
+    - examples/reasoning-test/scenarios/reasoning-tools.scenario.yaml
+    - examples/reasoning-test/scenarios/reasoning.scenario.yaml
+    - schemas/v1alpha1/arena.json
+    - schemas/v1alpha1/provider.json
 ---
 
-Thinking models can return their reasoning alongside the answer. PromptArena captures it as `Message.Reasoning` — a **sibling of content**, never mixed into the answer, the exports, or the context passed to later turns.
+Thinking models can return their reasoning alongside the answer. PromptArena captures it as `Message.Reasoning`, a sibling of content that stays out of the answer, the content exports and the context passed to later turns.
 
-Every provider gates this differently, and the important part is what happens when you get it wrong: you almost always get an **empty trace and a passing run**, not an error. Nothing tells you reasoning was requested and not delivered. So verify capture explicitly rather than assuming a green run means it worked.
+A wrong provider control gives an empty trace and a passing run, not an error. Verify capture explicitly (see [Verify capture](#verify-capture)).
 
 Worked example: `examples/reasoning-test/`.
 
 ## Turn it on
 
-Reasoning is configured per provider, under `spec.additional_config`.
+Configure reasoning per provider, under `spec.additional_config`. An unrecognised `thinking_level`, `reasoning_effort` or `reasoning_summary` value is dropped with a logged warning and the request still goes out.
 
 ### Gemini
 
-Gemini 3 and Gemini 2.5 use **different, non-interchangeable** controls:
+Gemini 3 and Gemini 2.5 use different, non-interchangeable controls:
 
 ```yaml
 # Gemini 3.x
@@ -35,10 +61,10 @@ spec:
     thinking_budget: 1024     # reasoning-token cap; counts toward max_tokens
 ```
 
-Swapping them does not fail loudly:
+If you set both `thinking_level` and `thinking_budget`, the level wins and the budget is dropped. Swapping the controls fails quietly or loudly depending on the model:
 
-- `thinking_budget` on a **Gemini 3** model returns no thought summaries at all. The run passes, `reasoning` is empty.
-- `thinking_level` on a **Gemini 2.5** model is a hard 400.
+- `thinking_budget` on a Gemini 3 model returns no thought summaries. The run passes and `reasoning` is empty.
+- `thinking_level` on a Gemini 2.5 model is a hard 400.
 
 Gemini also omits the summary on the occasional call even when configured correctly, so treat its presence as likely rather than guaranteed on any single request.
 
@@ -55,77 +81,72 @@ spec:
     thinking_budget: 2048   # must be >= 1024
 ```
 
-You set a budget; you do **not** choose the wire format. PromptKit selects it from the model generation — 4.5-and-older take `enabled`+`budget_tokens`, 4.6 takes either, and the 5-series takes `adaptive` and rejects `enabled`. Sending the wrong shape is a 400, not a degraded response, which is why this is inferred rather than configured.
+You set a budget; PromptKit picks the wire format from the model name. `claude-3*`, Opus 4.1, Sonnet 4.5, Haiku 4.5 and Opus 4.5 take `enabled` with `budget_tokens`. Every other model, including 4.6 and later, takes `adaptive`, and the value of `thinking_budget` is not sent there. The 1024 minimum applies to the `enabled` shape.
 
 Two adjustments happen for you:
 
-- **`temperature` is dropped** while thinking is on, because the API rejects a custom one. The provider schema still requires a value under `defaults`, so set one and expect it not to reach the wire.
-- **`max_tokens` is raised** if the budget would leave no headroom for an answer, since reasoning tokens count toward the output cap.
+- `temperature` is dropped while thinking is on, because the API rejects a custom one.
+- On the `enabled` shape, `max_tokens` is raised to the budget plus 1024 when it is at or below the budget, since reasoning tokens count toward the output cap. Adaptive models get no adjustment.
 
 ### OpenAI
 
-OpenAI needs one extra step that catches people out — reasoning summaries are a **Responses API** feature, and PromptArena defaults every model that isn't `-pro` to Chat Completions:
+Reasoning summaries are a Responses API feature. On `api.openai.com`, or with an empty `base_url`, PromptArena uses the Responses API by default, so the config is:
 
 ```yaml
 spec:
   model: gpt-5.2
-  unsupported_params:
-    - top_p                    # gpt-5.2 rejects it outright
   additional_config:
-    api_mode: responses        # required for any visible trace
     reasoning_effort: high     # minimal | low | medium | high
     reasoning_summary: auto    # auto | concise | detailed
 ```
 
-Without `api_mode: responses`, `reasoning_summary` does nothing whatever you set it to, and `reasoning` comes back empty.
+If `base_url` points at another host, add `api_mode: responses`. Azure and Bedrock always use Chat Completions, so they cannot produce a summary. Without the Responses API, `reasoning_summary` and `reasoning_effort` have no effect and `reasoning` comes back empty.
 
-`reasoning_summary` is separately gated: requesting summaries requires a **verified OpenAI org**. Unverified, the model still reasons and you are still billed reasoning tokens — the trace never reaches you. An empty `reasoning` on OpenAI therefore has two quite different causes worth distinguishing: wrong API mode (fixable in config) or an unverified org (not).
+`reasoning_summary` is separately gated: requesting summaries requires a verified OpenAI org. Unverified, the model still reasons and you are still billed reasoning tokens, but the trace never reaches you. An empty `reasoning` on OpenAI therefore has two causes: the API mode (fixable in config) or an unverified org (not).
 
 ## Verify capture
 
-Do this rather than trusting a passing run — an empty trace does not fail anything:
+An empty trace does not fail anything, so check the output:
 
 ```bash
 promptarena run --ci --formats json
-jq '.Messages[] | select(.role=="assistant") | {content, reasoning}' out/*.json
+jq '(.Messages // [])[] | select(.role=="assistant") | {content, reasoning}' out/*.json
 ```
 
-A populated `reasoning` proves capture. If your prompt also asks for a terse answer, a short `content` proves the trace didn't leak into the reply.
+The `// []` skips `out/index.json`, which has no `.Messages`. A populated `reasoning` proves capture. If your prompt also asks for a terse answer, a short `content` proves the trace did not leak into the reply.
 
-Reasoning is visible in:
+Where reasoning is visible:
 
-- **JSON results** — the check above.
-- **TUI** (`promptarena run` without `--ci`) — a `💭 Reasoning` section in the turn detail; interactive and voice sessions stream it live.
-- **Web UI** (`promptarena serve`) — a collapsible reasoning disclosure on the message, for both live runs and historical results, including on either side of a tool call. Unlike the TUI, it does not stream token-by-token: the trace appears once, when the message lands.
+| Surface | What it shows |
+|---|---|
+| JSON results | The `reasoning` field, as in the check above. |
+| TUI (`promptarena run` without `--ci`) | A `💭 Reasoning` section in the turn detail, and a live block while a streaming turn runs. |
+| Web UI (`promptarena serve`) | A collapsible reasoning disclosure on the message, for live runs and historical results, on either side of a tool call. Interactive chat also shows a streaming preview while the turn runs; the complete trace arrives with the message. |
 
-One surface does **not** show it: the **markdown report** (`out/results.md`) carries the summary, per-run and cost tables only. It does print a `reasoning` value against assertions, but that is an LLM judge's reasoning for its verdict — unrelated to model thinking.
+The markdown report (`out/results.md`) does not show model reasoning. It prints a `reasoning` value against assertions, which is an LLM judge's reasoning for its verdict.
 
 ### Reasoning is written to disk
 
-Reasoning **is** persisted. Arena's save stage stores it on the message, and run results are rebuilt from the conversation store — which is why `out/*.json` contains the traces.
+Arena's save stage stores reasoning on the message, and run results are rebuilt from the conversation store, so `out/*.json` contains the traces. Before you share those files:
 
-Two consequences worth knowing before you ship those files anywhere:
+- The JSON holds every reasoning text the provider returned: Claude's thinking, Gemini's thought summaries and OpenAI's reasoning summaries.
+- It also holds opaque reasoning entries: provider-native signatures and encrypted blocks. They are never displayed and are routinely larger than the text beside them (536–1288 bytes per message against Claude). They are stripped before reaching the browser, but not before reaching disk.
 
-- The JSON holds the model's full chain-of-thought, not a summary of it.
-- It also holds **opaque** reasoning entries — provider-native signatures and encrypted blocks kept for intra-turn round-trip. These are never displayed and are routinely larger than the text beside them (536–1288 bytes per message against Claude). They are stripped before reaching the browser, but not before reaching disk.
-
-So treat `out/*.json` from a reasoning run as sensitive: attaching one to a bug report or a CI artifact publishes the model's thinking along with provider-internal tokens.
+Treat `out/*.json` from a reasoning run as sensitive. Attaching one to a bug report or a CI artifact publishes the model's thinking along with provider-internal tokens.
 
 ## Write scenarios that actually produce a trace
 
-Trace length tracks problem difficulty, and this surprises people more than the configuration does.
+Trace length tracks problem difficulty. A one-step question yields little or nothing to summarise, so models frequently return an empty trace for it. That is not a capture failure.
 
-A one-step question yields little or nothing to summarise — models frequently return an **empty** trace for it while producing hundreds of characters on either side of it in the same conversation. That is not a capture failure.
-
-If you are building a reasoning test, give it something to chew on: several chained derivations, or a follow-up that has to combine earlier results. `examples/reasoning-test/` does this, and its turn 3 (a single addition) reliably returns an empty trace between two turns that don't — a useful calibration point when you are deciding whether your own empty trace is a bug or the expected result.
+Give a reasoning test something to chew on: several chained derivations, or a follow-up that has to combine earlier results. `examples/reasoning-test/` does this, and its turn 3 (a single addition) usually returns an empty trace between two turns that don't.
 
 ## Reasoning with tools
 
-Reasoning is captured on **both sides** of a tool loop: before the call, and again once the results land. Nothing extra is required to enable that beyond configuring reasoning and tools normally — see `examples/reasoning-test/scenarios/reasoning-tools.scenario.yaml`.
+Reasoning is captured on both sides of a tool loop: before the call, and again once the results land. Configure reasoning and tools normally. See `examples/reasoning-test/scenarios/reasoning-tools.scenario.yaml`.
 
-Remember that the prompt config's `allowed_tools` is an allowlist: a prompt with no entry gets no tools. Keep it in step with what your system prompt tells the model it can do, or the model will be instructed to call tools it has not been granted.
+The prompt config's `allowed_tools` is an allowlist: a prompt with no entry gets no tools. Keep it in step with what your system prompt tells the model it can do.
 
 ## Compatibility notes
 
-- **Seed.** A seed is only sent when you configure a non-zero one under `defaults.seed`, and only on API paths that accept it. The OpenAI Responses API has no `seed` parameter, so the runtime never sends one there and logs a warning that the request is not reproducible when you had configured one. If you need a fixed seed, use `api_mode: completions` on a model that supports it; reasoning summaries are only returned by the Responses path, so you cannot have both at once.
-- **Model-specific rejections.** Use `unsupported_params` to withhold a parameter a model refuses — `top_p` on `gpt-5.2`, for example. It is honoured for sampling parameters on both API paths.
+- Seed: the arena-level `defaults.seed` (see the [config schema](/arena/reference/config-schema/)) is sent only when non-zero, and only on API paths that accept it. The OpenAI Responses API has no `seed` parameter, so the runtime never sends one there and logs a warning that the request is not reproducible. For a fixed seed, use `api_mode: completions` on a model that supports it. Reasoning summaries come only from the Responses path, so you cannot have both.
+- Model-specific rejections: use `unsupported_params` to withhold a parameter a model refuses. It is honoured for sampling parameters on both API paths.

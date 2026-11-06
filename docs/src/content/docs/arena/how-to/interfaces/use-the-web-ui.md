@@ -3,6 +3,34 @@ title: Use the Web UI
 description: Run Arena's local web interface for live run monitoring, a results dashboard, and browser-based chat.
 sidebar:
   order: 20
+verified:
+  commit: 0dbee6290db4e4de3bff3101f260fd614f81c924
+  sources:
+    - arena/cmd/promptarena/serve_interactive.go
+    - arena/engine/engine.go
+    - arena/web/embed.go
+    - arena/web/event_adapter.go
+    - arena/web/frontend/src/App.tsx
+    - arena/web/frontend/src/audio/player.ts
+    - arena/web/frontend/src/components/HistoricalResults.tsx
+    - arena/web/frontend/src/components/InteractiveChat.tsx
+    - arena/web/frontend/src/components/arena/CommandStrip.tsx
+    - arena/web/frontend/src/components/arena/FieldPicker.tsx
+    - arena/web/frontend/src/components/arena/Hero.tsx
+    - arena/web/frontend/src/components/arena/InstrumentBand.tsx
+    - arena/web/frontend/src/components/arena/Standings.tsx
+    - arena/web/frontend/src/components/arena/TopBar.tsx
+    - arena/web/frontend/src/components/arena/TrialMatrix.tsx
+    - arena/web/frontend/src/hooks/useArenaAPI.ts
+    - arena/web/frontend/src/hooks/useArenaEvents.ts
+    - arena/web/frontend/src/hooks/useInteractiveChat.ts
+    - arena/web/frontend/src/lib/arenaInspectorTabs.tsx
+    - arena/web/frontend/src/lib/atlasAdapter.ts
+    - arena/web/interactive.go
+    - arena/web/server.go
+    - arena/web/server_loader_integration.go
+    - arena/web/server_picker_integration.go
+    - arena/web/spa.go
 ---
 
 Arena ships with a local web interface that serves an embedded React single-page
@@ -10,8 +38,8 @@ app backed by a REST API and Server-Sent Events (SSE). Use it to browse results,
 watch runs stream live, kick off runs from the browser, and hold an interactive
 chat with a configured agent.
 
-The server binds to **localhost (`127.0.0.1`) only** — it is a local development
-tool, not something to expose on a network.
+The server binds to the loopback interface only. It is a local development tool,
+not something to expose on a network.
 
 ## Start the Server
 
@@ -30,8 +58,7 @@ promptarena serve                 # load config.arena.yaml from the current dir
 promptarena serve ./my-scenario   # load from a specific directory
 ```
 
-The server prints its URL and config path on startup and runs until you press
-`Ctrl+C`.
+The server prints its URL and config path and runs until you press `Ctrl+C`.
 
 ### Choose a Port
 
@@ -42,29 +69,27 @@ it with `-p`/`--port`:
 promptarena serve --port 3000
 ```
 
-If the port is already in use, Arena does **not** fail — it falls back to the next
-free port and tells you which one it picked:
+If the port is in use, Arena tries the next consecutive port (up to 20 ports) and
+prints the one it picked. If none is free, it exits with an error; retry with `-p`.
 
 ```text
-Port 8080 is in use — serving on 8083 instead
-Arena Web UI: http://localhost:8083
+Port 8080 is in use — serving on 8081 instead
+Arena Web UI: http://localhost:8081
 ```
-
-Read the printed URL rather than assuming 8080.
 
 ## The Dashboard
 
-Opening the UI lands you on the dashboard. It reads the loaded config and any
-saved results (Arena hydrates `*.json` files from the config's output
-directory on startup) and shows:
+The UI opens on the dashboard. It reads the loaded config and any saved results
+(Arena hydrates `*.json` files from the config's output directory on startup)
+and shows:
 
-- The loaded configuration — providers, scenarios, and regions.
+- The loaded configuration: providers and scenarios.
 - A results list of completed runs, each opening a detailed results viewer.
 - Controls to start a new run and to clear stored results.
 
 ![The Arena dashboard: a scenario picker with the run cost and duration estimate, an overall pass-rate dial, trial/spend/latency/token tiles, a provider standings table, and a trial matrix of scenario by provider with per-cell pass rate, cost and duration.](/screenshots/web-dashboard.png)
 
-Selecting a trial opens the detailed results viewer for that run — the transcript
+Select a trial to open the detailed results viewer for that run: the transcript
 with any tool calls and their results inline, per-turn token, cost and latency
 figures, and a scrubber that replays the conversation turn by turn.
 
@@ -73,27 +98,33 @@ figures, and a scrubber that replays the conversation turn by turn.
 ## Monitor a Live Run
 
 The UI subscribes to `GET /api/events`, an SSE stream of run events emitted by the
-engine as scenarios execute. Turn-by-turn messages, assertion outcomes, and status
-updates appear in the browser in real time — no page refresh needed. The stream
-stays open for the life of the page and reconnects automatically if dropped.
+engine as scenarios execute. Turn-by-turn messages (with token and cost figures)
+and provider-call errors appear in the browser as they happen. The stream
+reconnects automatically if dropped. See [Interfaces](/arena/explanation/interfaces/)
+for how the stream works.
+
+Scripts can read the same stream (`curl -N http://localhost:8080/api/events`).
+It also carries `stage.started`, `stage.completed` and `stage.failed` pipeline
+events with payload `{name, stageType, duration, error}`.
 
 ![The dashboard mid-run: the status badge in the header reads Live, and the trial count, spend, latency and pass-rate figures climb as results arrive.](/screenshots/web-run-live.png)
 
-The status badge in the header switches from **Online** to **Live** while a run is
-in flight, and the summary tiles update as each trial lands.
+The header status badge reads Online when connected, Live while a run is in
+flight and Offline when the stream is disconnected. The summary tiles update as
+each trial lands.
 
 ## Start a Run from the Browser
 
-Use the run controls to select which providers, scenarios, and regions to execute,
-then start the run. This issues `POST /api/run`, which launches the run in the
-**background** (up to **4 concurrent** runs, each with a **30-minute timeout**) and
-returns immediately. Progress streams back over the SSE connection, and each
+Use the run controls to select the providers and scenarios to execute and a
+repeat count (`Run the field xN`, 1 to 25), then start the run. This issues
+`POST /api/run`, which launches the run in the background (up to 4 concurrent
+runs, with a 30-minute timeout per sweep) and returns immediately. Progress streams back over the SSE connection, and each
 completed run is persisted to the output directory so it survives a restart.
 
 ## The Interactive Chat Tab
 
-The interactive tab lets you talk to a configured agent directly in the browser —
-handy for exploring prompt behaviour without authoring a scenario. Pick an agent
+The interactive tab lets you talk to a configured agent directly in the browser,
+without authoring a scenario. Pick an agent
 and provider, supply any required template variables, and start a session
 (`POST /api/interactive/session`). Each message you send goes to
 `POST /api/interactive/message`, and the agent's reply renders live over the same
@@ -101,67 +132,69 @@ SSE stream. You can optionally enable evals to score the conversation as it runs
 
 The active agent, provider and connection status sit in a bar above the
 transcript rather than in a side panel. Selecting any message opens an inspector
-on the right with **Overview**, **Checks**, **Raw** and **Tools** tabs — `Raw`
+on the right with Overview, Checks, Raw and Tools tabs. `Raw`
 shows the exact message object, including the resolved tool descriptors sent to
 the provider.
+
+The chat tab also supports a voice call over the WebSocket at
+`GET /api/interactive/voice`.
 
 ![The Interactive Chat tab: a header bar naming the agent, provider and connection status, the system prompt and a user/assistant exchange in the transcript, and a message inspector open on the right showing the raw JSON for the system message.](/screenshots/web-chat.png)
 
 ## Audio Monitoring
 
-For voice scenarios, the server can relay **real-time duplex audio** (both the
+For voice scenarios, the server can relay real-time duplex audio (both the
 caller and agent sides) to the browser over SSE for live monitoring and playback.
-Audio is opt-in per client — the frontend requests it by connecting to
+Audio is opt-in per client: the frontend requests it by connecting to
 `GET /api/events?audio=1`.
 
-Control audio capture with the `--audio-monitor` and `--audio-rate` flags:
+Control audio capture with `--audio-monitor` and `--audio-rate`:
 
 ```bash
 promptarena serve --audio-monitor on --audio-rate 24000
 ```
 
-- `--audio-monitor` — `auto` (default), `on`, or `off`.
-- `--audio-rate` — canonical sample rate: `16000`, `24000` (default), or `48000`.
+See the [`serve` flags](/arena/reference/cli-commands/) for the accepted values and defaults.
 
 ## Free Demos with Mock Providers
 
-Add `--mock-provider` to replace **every** configured provider (the assistant, the
-self-play user role, and any TTS path) with mocks, so a demo makes **zero real API
-calls** and costs nothing. Pair it with `--mock-config` to serve canned scenario
+Add `--mock-provider` to replace every configured provider (the assistant, the
+self-play user role, and any TTS path) with mocks, so a demo makes zero real API
+calls and costs nothing. Pair it with `--mock-config` to serve canned scenario
 responses:
 
 ```bash
 promptarena serve --mock-provider --mock-config mock-responses.yaml --open
 ```
 
-This is the safest way to show the UI to others: runs execute end to end (tools
-still run for real) but no vendor APIs are billed. See
-[Use Mock Providers](/arena/how-to/use-mock-providers/) for the response file
-format.
+Tools still run for real. See [Use Mock Providers](/arena/how-to/providers/use-mock-providers/) for the
+response file format.
 
 ## REST API
 
-The SPA is a thin client over a small REST + SSE surface. You can call these
-endpoints directly (for scripts or your own tooling):
+The SPA is a thin client over these endpoints, which you can also call from
+scripts:
 
 | Method | Path | Purpose |
 |--------|------|---------|
 | `GET` | `/api/events` | SSE stream of live run events; add `?audio=1` for audio relay |
-| `GET` | `/api/config` | Return the loaded Arena config |
-| `GET` | `/api/run-options` | List available providers, scenarios, and regions |
-| `GET` | `/api/results` | List completed runs as `{run_id, scenario_id, provider_id}` locators |
-| `GET` | `/api/results/{id}` | Fetch a single run result |
-| `DELETE` | `/api/results` | Clear stored results (memory + disk) |
-| `GET` | `/api/media/{path...}` | Serve a media artifact (e.g. recorded audio) |
-| `POST` | `/api/run` | Start a run in the background |
-| `GET` | `/api/interactive/options` | List agents/providers for interactive chat |
-| `POST` | `/api/interactive/session` | Open an interactive chat session |
+| `GET` | `/api/config` | Loaded Arena config |
+| `GET` | `/api/run-options` | Available providers and scenarios |
+| `GET` | `/api/workflow` | Workflow topology graph |
+| `GET` | `/api/results` | Completed runs as `{run_id, scenario_id, provider_id}` locators |
+| `GET` | `/api/results/{id}` | A single run result |
+| `DELETE` | `/api/results` | Clear stored results (memory and disk) |
+| `GET` | `/api/media/{path...}` | A media artifact, such as recorded audio |
+| `POST` | `/api/run` | Start a run; body takes `providers`, `scenarios`, `regions`, `runs`; returns 202, or 400 if nothing matches |
+| `GET` | `/api/interactive/options` | Agents and providers for interactive chat |
+| `POST` | `/api/interactive/session` | Open a chat session |
 | `POST` | `/api/interactive/message` | Send a message to a session |
+| `GET` | `/api/interactive/voice` | WebSocket for the chat voice call |
 | `GET` | `/` | The embedded React SPA |
 
 ## See Also
 
-- [CLI Command Reference](/arena/reference/cli-commands/) — full `serve` flag reference
-- [Use the TUI](/arena/how-to/interfaces/use-the-tui/) — the terminal interface
-- [Run in CI](/arena/how-to/interfaces/run-in-ci/) — headless, non-interactive runs
-- [Use Mock Providers](/arena/how-to/use-mock-providers/) — zero-cost demos and tests
+- [CLI Command Reference](/arena/reference/cli-commands/): full `serve` flag reference
+- [Use the TUI](/arena/how-to/interfaces/use-the-tui/): the terminal interface
+- [Run in CI](/arena/how-to/interfaces/run-in-ci/): headless, non-interactive runs
+- [Use Mock Providers](/arena/how-to/providers/use-mock-providers/): zero-cost demos and tests

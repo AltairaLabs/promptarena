@@ -1,0 +1,321 @@
+{
+ "page": "docs/src/content/docs/arena/how-to/providers/model-migration.md",
+ "commit": "0dbee6290db4e4de3bff3101f260fd614f81c924",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "CI fails if the new model breaks an assertion the old one passed.",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run_interactive.go:137",
+    "arena/cmd/promptarena/run_interactive.go:140"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "The example lives at examples/model-migration/.",
+   "verdict": "true",
+   "evidence": [
+    "examples/model-migration/config.arena.yaml:1"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "One scenario set, multiple providers registered, one report.",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run_interactive.go:140",
+    "examples/model-migration/config.arena.yaml:19"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "Identical assertions per scenario; each must pass on every registered model.",
+   "verdict": "true",
+   "evidence": [
+    "examples/model-migration/scenarios/billing-inquiry.scenario.yaml:12",
+    "examples/model-migration/scenarios/tech-inquiry.scenario.yaml:12"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "The report flags a model that fails an assertion the others passed.",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/frontend/src/components/arena/TrialMatrix.tsx:263"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "run --ci exits non-zero when a model fails an assertion.",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run_interactive.go:140"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "Run cd examples/model-migration before the next command.",
+   "verdict": "true",
+   "evidence": [
+    "examples/model-migration/config.arena.yaml:1"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "promptarena serve starts the web UI for the current project.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 9,
+   "claim": "The web UI lays the suite out as a scenario by provider matrix, one column per model.",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/frontend/src/components/arena/TrialMatrix.tsx:23",
+    "arena/web/frontend/src/components/arena/TrialMatrix.tsx:64"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "Clicking a matrix cell filters the run ledger to that scenario and model pair.",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/frontend/src/App.tsx:363",
+    "arena/web/frontend/src/App.tsx:386"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "Opening a run shows its output and assertion results.",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/frontend/src/App.tsx:354",
+    "arena/web/frontend/src/App.tsx:372"
+   ]
+  },
+  {
+   "id": 12,
+   "claim": "A wide matrix scrolls sideways with the scenario column pinned.",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/frontend/src/components/arena/TrialMatrix.tsx:130",
+    "arena/web/frontend/src/components/arena/TrialMatrix.tsx:35"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "promptarena run is a valid subcommand.",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "The --ci flag exists on promptarena run.",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "The --formats flag accepts json and markdown values.",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "A markdown report is written to out/results.md.",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "Both providers in the example are mock providers.",
+   "verdict": "true",
+   "evidence": [
+    "examples/model-migration/providers/model-v1.provider.yaml:6",
+    "examples/model-migration/providers/model-v2.provider.yaml:6"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "mock-responses-v2.yaml is a file in the example.",
+   "verdict": "true",
+   "evidence": [
+    "examples/model-migration/mock-responses-v2.yaml"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "A mock response file keys responses by scenario ID and uses a turns map keyed by turn number.",
+   "verdict": "false",
+   "evidence": [
+    "examples/model-migration/mock-responses-v2.yaml:8"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "The max_length assertion fires on v2 but not v1 for the edited response.",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run_interactive.go:140",
+    "examples/model-migration/scenarios/tech-inquiry.scenario.yaml:19"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "The assertion type content_includes is available.",
+   "verdict": "true",
+   "evidence": [
+    "examples/model-migration/scenarios/tech-inquiry.scenario.yaml:14"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "The assertion type max_length is available.",
+   "verdict": "true",
+   "evidence": [
+    "examples/model-migration/scenarios/tech-inquiry.scenario.yaml:18"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "The run prints Error: execution failed: 1 runs had errors when a run has errors.",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run_interactive.go:140"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "The CI snippet uses set -e so a failing run fails the PR.",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 25,
+   "claim": "config.arena.yaml is the file that lists providers in the example.",
+   "verdict": "true",
+   "evidence": [
+    "examples/model-migration/config.arena.yaml:19"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "config.arena.yaml providers entries use a file key.",
+   "verdict": "true",
+   "evidence": [
+    "examples/model-migration/config.arena.yaml:19"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "providers/openai-gpt4o.provider.yaml exists in the example.",
+   "verdict": "false",
+   "evidence": [
+    "examples/model-migration/config.arena.yaml:19"
+   ]
+  },
+  {
+   "id": 28,
+   "claim": "providers/openai-gpt4o-mini.provider.yaml exists in the example.",
+   "verdict": "false",
+   "evidence": [
+    "examples/model-migration/config.arena.yaml:20"
+   ]
+  },
+  {
+   "id": 29,
+   "claim": "providers/anthropic-claude-haiku.provider.yaml exists in the example.",
+   "verdict": "false",
+   "evidence": [
+    "examples/model-migration/config.arena.yaml:20"
+   ]
+  },
+  {
+   "id": 30,
+   "claim": "The report fans out across every registered provider and CI gates on all of them passing.",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run_interactive.go:140"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "The workflow triggers on pull_request with paths examples/model-migration/**.",
+   "verdict": "unverified",
+   "evidence": []
+  },
+  {
+   "id": 32,
+   "claim": "The example workflow uses Go 1.26 via actions/setup-go.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 33,
+   "claim": "go build -o bin/promptarena ./arena/cmd/promptarena builds the CLI.",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 34,
+   "claim": "../../bin/promptarena run --ci --formats json,markdown runs the suite from examples/model-migration.",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go"
+   ]
+  },
+  {
+   "id": 35,
+   "claim": "The example writes its report to examples/model-migration/out/.",
+   "verdict": "true",
+   "evidence": [
+    "examples/model-migration/config.arena.yaml:29"
+   ]
+  },
+  {
+   "id": 36,
+   "claim": "Adding a third provider file requires only registering it in config.arena.yaml and running; the fan-out scales automatically.",
+   "verdict": "true",
+   "evidence": [
+    "examples/model-migration/config.arena.yaml:19"
+   ]
+  },
+  {
+   "id": 37,
+   "claim": "outcome_equivalent is an assertion type.",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/common/assertions.json"
+   ]
+  },
+  {
+   "id": 38,
+   "claim": "outcome_equivalent compares tool-call pattern, workflow state, or content hash against an expected outcome.",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 39,
+   "claim": "when: clauses scope assertion thresholds per provider.",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/common/assertions.json"
+   ]
+  },
+  {
+   "id": 40,
+   "claim": "The bake-off how-to is at /arena/how-to/voice/voice-bake-off/.",
+   "verdict": "true",
+   "evidence": []
+  }
+ ]
+}

@@ -1,52 +1,66 @@
 ---
 title: Use Mock Providers
+description: "Run scenarios against canned responses with --mock-provider, --mock-config or a type: mock provider, with no API calls or cost."
+verified:
+  commit: 0dbee6290db4e4de3bff3101f260fd614f81c924
+  sources:
+    - arena/arenaconfig/loader.go
+    - arena/cmd/promptarena/provider_override.go
+    - arena/cmd/promptarena/run.go
+    - arena/cmd/promptarena/run_interactive.go
+    - arena/engine/builder_integration.go
+    - arena/engine/conversation_executor.go
+    - arena/engine/engine.go
+    - arena/stages/mock_scenario_context.go
+    - arena/turnexecutors/pipeline_stages_integration.go
+    - examples/customer-support-integrated/tools/check-subscription-status.tool.yaml
+    - examples/customer-support-integrated/tools/get-customer-info.tool.yaml
+    - examples/customer-support/config.arena.yaml
+    - examples/customer-support/mock-responses.yaml
+    - examples/customer-support/scenarios/support-conversations.scenario.yaml
+    - examples/guardrails-test/mock-responses.yaml
+    - examples/guardrails-test/providers/mock-provider.yaml
+    - examples/mock-config-example.yaml
+    - schemas/v1alpha1/arena.json
+    - schemas/v1alpha1/provider.json
 ---
-Learn how to use mock providers for fast, cost-free testing without calling real LLM APIs.
+Run scenarios against canned responses instead of a real LLM API.
 
-## Why Use Mock Providers?
-
-- **Fast iteration**: Test configuration changes instantly
-- **Zero cost**: No API charges during development
-- **Deterministic**: Predictable responses for debugging
-- **Offline testing**: Work without internet connection
-- **CI/CD testing**: Fast pipeline validation without API dependencies
+Mock providers make no network calls, so runs are fast, free, deterministic and work offline, which suits development and CI. See [Testing philosophy](/arena/explanation/testing-philosophy/) for when to use them.
 
 ## Basic Usage
 
-Replace all providers with mock:
+Replace every configured provider with a mock:
 
 ```bash
-# Use mock provider instead of real APIs
 promptarena run --mock-provider
 ```
 
-This replaces all configured providers with a mock that returns predefined responses.
+Each provider keeps its ID and model but runs as a mock. Responses resolve in this order: the `--mock-config` file if you pass one, then the provider's own `additional_config.mock_config`, then a generic reply ("Mock response from provider"). A provider that already declares `mock_config` keeps its declared responses.
 
 ## Mock Configuration File
 
-A mock config file supplies canned responses keyed by scenario and turn. The
-mock provider simulates only the LLM's decision-making — any tools it "calls"
-still execute for real through the tool loop. Pass the file with `--mock-config`,
-or reference it from a mock provider (see [Mock Provider Config](#mock-provider-config)).
+A mock config file supplies canned responses keyed by scenario and turn. The mock provider simulates only the LLM's decision-making. Any tools it "calls" still execute for real through the tool loop. Pass the file with `--mock-config`, or reference it from a mock provider (see [Mock Provider Config](#mock-provider-config)).
+
+To generate a file from a real run, see [Generate mock responses from an arena run](/arena/how-to/scenarios/generate-mock-responses-from-arena/).
 
 ### Mock file format
 
 ```yaml
 # mock-responses.yaml
 scenarios:
-  rental-negotiation:        # MUST match the scenario's metadata.name
+  rental-negotiation:        # must match the scenario's metadata.name
     turns:
       1: "Thanks for your interest. We're listing at twenty-six hundred a month."
       2: "I can come down to twenty-five hundred on a twelve-month lease."
 
 # Fallback used when no scenario/turn matches
-default_response: "This is a mock response from the configured provider."
+defaultResponse: "This is a mock response from the configured provider."
 ```
 
-Scenario keys **must match the scenario's `metadata.name`** (not `spec.id`) — the
-mock repository looks up responses by metadata name. Turn keys are turn numbers,
-and each value is either a plain string (a text response) or a mapping with
-`response` and/or `tool_calls`.
+Scenario keys must match the scenario's `metadata.name`, not `spec.id`. Turn keys are turn numbers. Each value is either a plain string (a text response) or a mapping with `response` and/or `tool_calls`.
+
+The key is `defaultResponse` (camelCase). A misspelled or snake_case key is ignored without a warning, and the run falls back to a generic "Mock response for provider ..." reply.
 
 ### Run with a mock config
 
@@ -56,9 +70,7 @@ promptarena run --mock-provider --mock-config mock-responses.yaml
 
 ## Mock Provider Config
 
-Instead of `--mock-provider`, you can define a provider of `type: mock` that
-points at its own mock file. This lets you keep a real provider and a mock side
-by side in the same arena config:
+Instead of `--mock-provider`, define a provider of `type: mock` that points at its own mock file. This keeps a real provider and a mock side by side in the same arena config:
 
 ```yaml
 # providers/mock-landlord.provider.yaml
@@ -78,9 +90,7 @@ spec:
 
 ### Tool call simulation
 
-A turn with `tool_calls` triggers real tool execution. The mock decides which
-tools to call; the tools run for real and their results feed back into the
-conversation:
+A turn with `tool_calls` triggers real tool execution. The mock decides which tools to call. The tools run for real and their results feed back into the conversation:
 
 ```yaml
 scenarios:
@@ -97,8 +107,7 @@ scenarios:
 
 ### Multi-turn tool loops
 
-Turn numbers account for each round of the tool loop — a tool-calling turn and
-the follow-up text turn are counted separately:
+Turn numbers count each round of the tool loop. A tool-calling turn and the follow-up text turn are counted separately:
 
 ```yaml
 scenarios:
@@ -122,23 +131,21 @@ scenarios:
 
 ### Per-scenario defaults
 
-A scenario's `default_response` covers turns with no explicit entry; the
-top-level `default_response` covers scenarios with no match at all:
+A scenario's `defaultResponse` covers turns with no explicit entry. The top-level `defaultResponse` covers scenarios with no match at all:
 
 ```yaml
 scenarios:
   quick-question:
-    default_response: "The answer to your question is: 42."
+    defaultResponse: "The answer to your question is: 42."
     turns:
       1: "Tell me more about what you need."
 
-default_response: "This is a mock response from the configured provider."
+defaultResponse: "This is a mock response from the configured provider."
 ```
 
 ## Provider Comparison Testing
 
-Compare mock vs. real providers by listing both in your arena config. Every
-scenario runs against each provider, so you get a side-by-side matrix:
+List a mock and a real provider in your arena config. Every scenario runs against each provider, which gives a side-by-side matrix:
 
 ```yaml
 # config.arena.yaml
@@ -151,23 +158,20 @@ spec:
     - file: scenarios/customer-support.yaml
 ```
 
-Run side-by-side:
+Run a scenario across the matrix:
 
 ```bash
-# Compare real vs mock across the provider matrix
 promptarena run --scenario customer-support
 ```
 
+Select which provider a run uses with `--provider`.
+
 ## Substituting a Single Provider
 
-`--mock-provider` replaces *every* provider with a generic mock. When you need to
-swap one configured provider for another at run time without editing config,
-use `--override-provider from=to` (repeatable). It rewrites the `from` provider with
-the spec of the `to` provider, so every reference to `from` (candidate selection,
-self-play roles, **and judges**) picks up the new implementation.
+`--mock-provider` turns every provider into a mock. To swap one configured provider for another at run time without editing config, use `--override-provider from=to` (repeatable). It rewrites the `from` provider with the spec of the `to` provider, so every reference to `from` (candidate selection, self-play roles and judges) picks up the new implementation.
 
 ```bash
-# Tiered CI: mock judge in the cheap gate, real judge in the drift check —
+# Tiered CI: mock judge in the cheap gate, real judge in the drift check,
 # same config, different invocation.
 promptarena run                                         # cheap tier: judge uses its mock provider
 promptarena run --override-provider mock-judge=claude   # drift tier: judge runs for real
@@ -177,10 +181,9 @@ promptarena run --override-provider mock-user=claude
 promptarena run --override-provider claude=mock         # requires a defined `mock` provider
 ```
 
-Both `from` and `to` must be providers defined in `spec.providers`. A typo
-hard-errors rather than silently leaving the original provider in place:
+Both `from` and `to` must be providers defined in `spec.providers`. A typo is a hard error:
 
-```
+```text
 --override-provider mock-judge=nonexistent: unknown target provider "nonexistent" (must be defined in spec.providers)
 ```
 
@@ -189,7 +192,6 @@ hard-errors rather than silently leaving the original provider in place:
 ### Step 1: Build with Mocks
 
 ```bash
-# Fast iteration with mock responses
 promptarena run --mock-provider --mock-config dev-mocks.yaml
 ```
 
@@ -203,13 +205,12 @@ promptarena run --mock-provider --format junit
 ### Step 3: Real Provider Testing
 
 ```bash
-# Test with actual providers
 promptarena run --provider openai-gpt4
 ```
 
 ## CI/CD Integration
 
-Use mocks for configuration validation:
+Use mocks for configuration validation, then run real providers after the mock job passes:
 
 ```yaml
 # .github/workflows/test.yml
@@ -221,25 +222,25 @@ jobs:
   mock-validation:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      
+      - uses: actions/checkout@v7
+
       - name: Validate Scenarios (Mock)
         run: |
           promptarena run --mock-provider --ci --format junit
-      
+
       - name: Publish Results
-        uses: dorny/test-reporter@v1
+        uses: dorny/test-reporter@v3
         with:
           name: Mock Tests
           path: out/junit.xml
           reporter: java-junit
-  
+
   real-provider-tests:
     runs-on: ubuntu-latest
     needs: mock-validation  # Run after mock validation
     steps:
-      - uses: actions/checkout@v3
-      
+      - uses: actions/checkout@v7
+
       - name: Run Real Provider Tests
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -247,64 +248,15 @@ jobs:
           promptarena run --provider openai-gpt4 --ci
 ```
 
-## Complete Mock Example
-
-```yaml
-# mock-customer-support.yaml
-scenarios:
-  # A conversational scenario, keyed by its metadata.name
-  customer-support:
-    turns:
-      1: "Hello! How can I assist you today?"
-      2: "We're open Monday-Friday, 9 AM to 5 PM EST."
-
-  # A tool-driven scenario: the mock calls a real tool, then answers
-  account-lookup:
-    turns:
-      1:
-        response: "Let me pull up your account."
-        tool_calls:
-          - name: get_customer_info
-            arguments:
-              email: customer@example.com
-      2: "I found your account. Your current balance is $42.00."
-
-# Fallback for any scenario/turn not covered above
-default_response: "I'm here to help. Can you provide more details?"
-```
-
-Use this mock:
-
-```bash
-promptarena run --mock-provider --mock-config mock-customer-support.yaml
-```
-
-## Combining Mocks and Real Providers
-
-Keep a mock provider and real providers in the same arena config. Fast
-structure-validation runs can target the mock, while quality runs use the real
-LLMs:
-
-```yaml
-# config.arena.yaml
-spec:
-  providers:
-    - file: providers/mock-landlord.provider.yaml
-    - file: providers/openai.yaml
-    - file: providers/claude.yaml
-```
-
-Select which provider a run uses with `--provider`, or swap one provider for
-another at run time with `--override-provider` (see below).
-
 ## Next Steps
 
-- **[Validate Outputs](/arena/how-to/scenarios/validate-outputs/)** - Add assertions to mock responses
-- **[Integrate CI/CD](/arena/how-to/interfaces/run-in-ci/)** - Use mocks in pipelines
-- **[Tutorial: First Test](/arena/tutorials/01-first-test/)** - Complete walkthrough
+- [Generate mock responses from an arena run](/arena/how-to/scenarios/generate-mock-responses-from-arena/): Build a mock file from a real run
+- [Validate Outputs](/arena/how-to/scenarios/validate-outputs/): Add assertions to mock responses
+- [Integrate CI/CD](/arena/how-to/interfaces/run-in-ci/): Use mocks in pipelines
+- [Tutorial: First Test](/arena/tutorials/01-first-test/): Complete walkthrough
 
 ## Examples
 
-See complete mock configurations:
-- `examples/mock-config-example.yaml` - Full mock setup
-- `examples/customer-support/` - Mock vs real provider comparison
+- `examples/mock-config-example.yaml`: full mock config
+- `examples/guardrails-test/`: a `type: mock` provider beside an OpenAI provider, with `mock-responses.yaml`
+- `examples/customer-support/`: `mock-responses.yaml` for use with `--mock-provider --mock-config`

@@ -1,0 +1,443 @@
+{
+ "page": "docs/src/content/docs/arena/how-to/providers/use-mock-providers.md",
+ "commit": "0dbee6290db4e4de3bff3101f260fd614f81c924",
+ "claims": [
+  {
+   "id": 1,
+   "claim": "Mock providers give deterministic, predictable responses",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:738",
+    "examples/guardrails-test/mock-responses.yaml:1"
+   ]
+  },
+  {
+   "id": 2,
+   "claim": "Mock providers work without an internet connection",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:762"
+   ]
+  },
+  {
+   "id": 3,
+   "claim": "promptarena run --mock-provider",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:192"
+   ]
+  },
+  {
+   "id": 4,
+   "claim": "--mock-provider is a flag of the run subcommand",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:192"
+   ]
+  },
+  {
+   "id": 5,
+   "claim": "--mock-provider replaces all configured providers with a generic mock",
+   "verdict": "false",
+   "evidence": [
+    "arena/cmd/promptarena/run_interactive.go:284",
+    "arena/engine/engine.go:719",
+    "arena/engine/engine.go:793"
+   ]
+  },
+  {
+   "id": 6,
+   "claim": "The mock provider simulates only the LLM decision; tools called by the mock still execute for real through the tool loop",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:446"
+   ]
+  },
+  {
+   "id": 7,
+   "claim": "--mock-config is a flag that takes a mock responses file",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:193"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "Top-level key scenarios maps scenario names to turn definitions",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 9,
+   "claim": "Scenario keys must match the scenario's metadata.name, not spec.id",
+   "verdict": "true",
+   "evidence": [
+    "arena/stages/mock_scenario_context.go:86"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "Each scenario has a turns mapping keyed by turn number",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 11,
+   "claim": "A turn value may be a plain string meaning a text response",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 12,
+   "claim": "Top-level default_response field is used when no scenario or turn matches",
+   "verdict": "false",
+   "evidence": [
+    "examples/guardrails-test/mock-responses.yaml:6",
+    "examples/mock-config-example.yaml:16"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "A turn value mapping supports the keys response and tool_calls",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 14,
+   "claim": "promptarena run --mock-provider --mock-config mock-responses.yaml",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:192",
+    "arena/cmd/promptarena/run.go:193"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "apiVersion promptkit.altairalabs.ai/v1alpha1 for Provider resources",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/provider.json:303"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "kind Provider",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/provider.json:277"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "spec.type mock selects the mock provider type",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:318",
+    "arena/engine/builder_integration.go:377"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "spec.model is a field on provider spec",
+   "verdict": "true",
+   "evidence": [
+    "examples/guardrails-test/providers/mock-provider.yaml:8",
+    "schemas/v1alpha1/provider.json:81"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "spec.additional_config is a free-form map on provider spec",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/provider.json:81"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "additional_config.mock_config points to a mock file, resolved relative to the arena config directory",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:265",
+    "arena/engine/builder_integration.go:321",
+    "arena/engine/engine.go:802"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "tool_calls on a turn triggers real tool execution",
+   "verdict": "true",
+   "evidence": [
+    "arena/turnexecutors/pipeline_stages_integration.go:446"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "Turn mapping key response holds the text of the turn",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 23,
+   "claim": "tool_calls entries have name and arguments fields",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 24,
+   "claim": "Example tool name check_subscription_status (illustrative, must be a tool the reader defines)",
+   "verdict": "true",
+   "evidence": [
+    "examples/customer-support-integrated/tools/check-subscription-status.tool.yaml"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "Turn numbers count each round of the tool loop: a tool-calling turn and the follow-up text turn are counted separately",
+   "verdict": "true",
+   "evidence": [
+    "arena/stages/mock_scenario_context.go:111"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "A turn with tool_calls and no response is valid",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 27,
+   "claim": "A scenario's default_response covers turns with no explicit entry",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 28,
+   "claim": "Top-level default_response covers scenarios with no match at all",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 29,
+   "claim": "default_response is a valid field on a scenario entry in the mock file",
+   "verdict": "false",
+   "evidence": []
+  },
+  {
+   "id": 30,
+   "claim": "config.arena.yaml spec.providers entries reference provider files via a file key",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/arena.json:1209"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "spec.scenarios entries reference scenario files via a file key",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/arena.json:1209"
+   ]
+  },
+  {
+   "id": 32,
+   "claim": "promptarena run --scenario customer-support",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:28"
+   ]
+  },
+  {
+   "id": 33,
+   "claim": "--override-provider from=to is a repeatable flag",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:196"
+   ]
+  },
+  {
+   "id": 34,
+   "claim": "--override-provider rewrites the from provider with the spec of the to provider",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/provider_override.go:16",
+    "arena/cmd/promptarena/provider_override.go:49"
+   ]
+  },
+  {
+   "id": 35,
+   "claim": "Overridden provider applies to candidate selection, self-play roles and judges",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:979",
+    "arena/cmd/promptarena/run_interactive.go:235",
+    "arena/engine/builder_integration.go:826",
+    "arena/engine/conversation_executor.go:917"
+   ]
+  },
+  {
+   "id": 36,
+   "claim": "A judge that references a mock provider is used in the default run",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:979",
+    "arena/engine/conversation_executor.go:917"
+   ]
+  },
+  {
+   "id": 37,
+   "claim": "--override-provider mock-judge=claude makes the judge run against claude",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:984",
+    "arena/cmd/promptarena/provider_override.go:34"
+   ]
+  },
+  {
+   "id": 38,
+   "claim": "--override-provider claude=mock requires a defined provider named mock",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/provider_override.go:28"
+   ]
+  },
+  {
+   "id": 39,
+   "claim": "Both from and to of --override-provider must be defined in spec.providers",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/provider_override.go:22",
+    "arena/cmd/promptarena/provider_override.go:28"
+   ]
+  },
+  {
+   "id": 40,
+   "claim": "Error text: unknown target provider \"nonexistent\" (must be defined in spec.providers)",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/provider_override.go:31"
+   ]
+  },
+  {
+   "id": 41,
+   "claim": "promptarena run --mock-provider --mock-config dev-mocks.yaml",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:192"
+   ]
+  },
+  {
+   "id": 42,
+   "claim": "promptarena run --mock-provider --format junit",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go"
+   ]
+  },
+  {
+   "id": 43,
+   "claim": "--format accepts the value junit",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go"
+   ]
+  },
+  {
+   "id": 44,
+   "claim": "promptarena run --provider openai-gpt4",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:25"
+   ]
+  },
+  {
+   "id": 45,
+   "claim": "promptarena run --mock-provider --ci --format junit",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:9"
+   ]
+  },
+  {
+   "id": 46,
+   "claim": "The junit report is written to out/junit.xml",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go"
+   ]
+  },
+  {
+   "id": 47,
+   "claim": "OPENAI_API_KEY is the env var read by the OpenAI provider",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": 48,
+   "claim": "promptarena run --provider openai-gpt4 --ci",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:25"
+   ]
+  },
+  {
+   "id": 49,
+   "claim": "Top-level mock scenario key customer-support matches a scenario metadata.name",
+   "verdict": "false",
+   "evidence": [
+    "examples/customer-support/mock-responses.yaml:8",
+    "examples/customer-support/scenarios/support-conversations.scenario.yaml:4"
+   ]
+  },
+  {
+   "id": 50,
+   "claim": "Tool name get_customer_info (illustrative, used in the example)",
+   "verdict": "true",
+   "evidence": [
+    "examples/customer-support-integrated/tools/get-customer-info.tool.yaml"
+   ]
+  },
+  {
+   "id": 51,
+   "claim": "config.arena.yaml providers entries use the file key",
+   "verdict": "true",
+   "evidence": [
+    "schemas/v1alpha1/arena.json:1209"
+   ]
+  },
+  {
+   "id": 52,
+   "claim": "--provider selects which provider a run uses",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:25"
+   ]
+  },
+  {
+   "id": 53,
+   "claim": "--override-provider swaps one provider for another at run time",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go:196"
+   ]
+  },
+  {
+   "id": 54,
+   "claim": "examples/mock-config-example.yaml exists in the repository",
+   "verdict": "true",
+   "evidence": [
+    "examples/mock-config-example.yaml:16"
+   ]
+  },
+  {
+   "id": 55,
+   "claim": "examples/customer-support/ exists and compares mock vs real providers",
+   "verdict": "false",
+   "evidence": [
+    "examples/customer-support/config.arena.yaml:11",
+    "examples/customer-support/mock-responses.yaml:1",
+    "examples/guardrails-test/providers/mock-provider.yaml:7"
+   ]
+  }
+ ]
+}
