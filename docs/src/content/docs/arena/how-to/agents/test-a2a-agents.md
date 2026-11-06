@@ -1,36 +1,33 @@
 ---
 title: Test A2A Agents
-description: Configure and test A2A agent delegation in Arena scenarios
+description: Define mock or remote A2A agents in an Arena config and assert on agent delegation in scenarios.
+verified:
+  commit: 631d3c353c2c9d71b362ae5cd20c137d42b19d5b
+  sources:
+    - arena/agentkb/evalmeta.yaml
+    - arena/arenaconfig/types.go
+    - arena/arenaconfig/validator.go
+    - arena/cmd/promptarena/run.go
+    - arena/engine/builder_integration.go
+    - arena/engine/execution.go
+    - arena/stages/assertions.go
+    - examples/multi-agent-demo/config.arena.yaml
+    - examples/multi-agent-demo/mock-responses.yaml
+    - examples/multi-agent-demo/prompts/assistant.yaml
+    - examples/multi-agent-demo/providers/mock-provider.yaml
+    - examples/multi-agent-demo/scenarios/multi-agent-delegation.yaml
 ---
 
-Test agent-to-agent delegation using Arena's built-in mock A2A infrastructure. Define mock agents in your Arena config, write scenarios that trigger tool calls, and verify the full delegation pipeline.
+Test agent-to-agent delegation with mock A2A agents defined in your Arena config. Write a scenario that triggers a tool call and assert on the delegation.
 
----
+## Prerequisites
 
-## Overview
+- The `promptarena` binary.
+- A mock provider whose `mock_config` points at a mock responses file. `examples/multi-agent-demo/` contains a working setup.
 
-```mermaid
-sequenceDiagram
-    participant U as User Turn
-    participant ML as Mock LLM
-    participant E as a2aExecutor
-    participant MS as Mock A2A Server
+## 1. Configure A2A agents
 
-    U->>ML: "Search for papers about quantum"
-    ML->>E: tool_call: a2a__research_agent__search_papers
-    E->>MS: JSON-RPC message/send
-    MS->>E: Task (completed, artifacts)
-    E->>ML: tool result
-    ML->>U: "Found 3 papers..."
-```
-
-Arena spins up mock A2A servers from your config, registers their skills as tools via the Tool Bridge, and connects them to the mock LLM provider. You control both sides (the LLM responses and the A2A agent responses) for fully deterministic tests.
-
----
-
-## Configure A2A Agents
-
-Add an `a2a_agents` block to your Arena config:
+Add an `a2a_agents` block to your Arena config. Arena starts a mock A2A server for each entry and registers each skill as a tool through the Tool Bridge.
 
 ```yaml
 # config.arena.yaml
@@ -74,44 +71,50 @@ spec:
               - text: |
                   Found 1 paper on the requested topic:
                   1. General Survey of the Field (2024)
+
+  defaults:
+    temperature: 0.5
+    max_tokens: 1000
+    seed: 42
+    concurrency: 1
+    output:
+      dir: out
+      formats: ["json", "markdown"]
 ```
 
-Each agent produces a tool named `a2a__{name}__{skillId}` — in this case, `a2a__research_agent__search_papers`.
+Each skill becomes a tool named `a2a__<card name>__<skill id>`. Arena lowercases both parts and replaces runs of non-alphanumeric characters with `_`. Here `Research Agent` and `search_papers` give `a2a__research_agent__search_papers`. The `name` field on the agent entry does not appear in the tool name.
 
----
+Rules in `responses` are checked in order. A rule without `match` answers when no earlier rule matched. See the [config schema](/arena/reference/config-schema/) for every `a2a_agents` and `match` field.
 
-## Prompt Config
+## 2. Write the prompt config
 
-Enable the A2A tool in your prompt config with `allowed_tools`:
-
-:::note[allowed_tools is an allowlist]
-A prompt only reaches the tools it names here — no entry, no tools. Keep it in step with your system prompt: if the prompt says the model can look things up but the allowlist is empty, the model has an instruction it cannot carry out and will usually improvise, writing convincing-looking tool calls and results into its reply as plain text. Check for a real `tool` role in the messages, not tool-shaped text in `content`.
-
-The provider must allow tools too: if it declares a `capabilities` list, that list must include `tools`.
-:::
-
+The prompt config needs `metadata.name`:
 
 ```yaml
 # prompts/assistant.yaml
 apiVersion: promptkit.altairalabs.ai/v1alpha1
 kind: PromptConfig
+metadata:
+  name: assistant
 spec:
   task_type: assistant
   version: v1.0.0
   description: An assistant that can delegate research to A2A agents
-  allowed_tools:
-    - a2a__research_agent__search_papers
   system_template: |
     You are a helpful assistant with access to research tools.
     When asked to search for papers or research a topic, use the available tools.
     Summarize the results for the user.
 ```
 
----
+`a2a__` tools are offered to every prompt without an `allowed_tools` entry. `allowed_tools` gates tools declared in a pack, such as MCP tools.
 
-## Mock LLM Responses
+:::note[Check for a real tool call]
+If the system prompt promises tools the model does not have, the model often writes convincing tool calls and results into its reply as plain text. Check for a real `tool` role in the messages, not tool-shaped text in `content`.
+:::
 
-Configure the mock LLM to issue tool calls and then summarize results:
+## 3. Script the mock LLM
+
+Configure the mock LLM to issue a tool call, then summarize the result. The scenario key matches the scenario's `metadata.name`.
 
 ```yaml
 # mock-responses.yaml
@@ -131,13 +134,9 @@ scenarios:
           3. Practical Quantum Algorithms for Optimization (2023)
 ```
 
-Turn 1: the mock LLM emits a tool call. Arena's `a2aExecutor` routes it to the mock A2A server, which matches the "quantum" rule and returns the canned response. Turn 2: the mock LLM sees the tool result and produces a final summary.
+In turn 1 the mock LLM emits the tool call. Arena routes it to the mock A2A server, which matches the `quantum` rule and returns the canned response. In turn 2 the mock LLM sees the tool result and produces the summary.
 
----
-
-## Scenario Setup
-
-Write a scenario that sends the user message and asserts on the outcome:
+## 4. Write the scenario
 
 ```yaml
 # scenarios/delegated_research.yaml
@@ -166,27 +165,10 @@ spec:
               - "Quantum Computing Fundamentals"
 ```
 
-### Assertions
-
-| Assertion | Description |
-|-----------|-------------|
-| `tools_called` | Verify that specific tools were invoked during the turn |
-| `content_includes` | Check that the final response contains expected patterns |
-| `agent_invoked` | Verify that specific agents were delegated to (checks for agent tool calls) |
-| `agent_not_invoked` | Verify that specific agents were NOT delegated to |
-| `agent_response_contains` | Verify that an agent's response contains expected text |
-
-The `agent_invoked` and `agent_response_contains` assertions provide a higher-level alternative to `tools_called` for agent delegation testing. Instead of checking raw tool names, you can express intent directly:
+`agent_invoked`, `agent_not_invoked` and `agent_response_contains` express delegation checks directly. They match on tool names, like `tools_called`. See the [assertions reference](/arena/reference/assertions/) for every assertion type.
 
 ```yaml
 assertions:
-  # Lower-level: check the raw tool name
-  - type: tools_called
-    params:
-      tools:
-        - a2a__research_agent__search_papers
-
-  # Higher-level: check that an agent was invoked and returned expected content
   - type: agent_invoked
     params:
       agents:
@@ -197,36 +179,19 @@ assertions:
       contains: "Quantum Computing Fundamentals"
 ```
 
----
+## 5. Run and verify
 
-## Run and Verify
-
-```bash
-cd examples/multi-agent-demo
-promptarena run -c arena/config.arena.yaml
-```
-
-Arena will:
-
-1. Start the mock A2A server from your config
-2. Register agent skills as tools via the Tool Bridge
-3. Run each scenario turn with the mock LLM
-4. Route tool calls through the `a2aExecutor` to the mock server
-5. Evaluate assertions and produce a report
-
-Check the output directory for results:
+From `examples/multi-agent-demo/`:
 
 ```bash
-ls arena/out/
-# report-2026-02-08T17-55-25.html
-# report-2026-02-08T17-55-25-data.json
+promptarena run -c config.arena.yaml
 ```
 
----
+Arena starts the mock A2A servers, registers the skills as tools, runs each scenario turn with the mock LLM, routes tool calls to the mock server and evaluates the assertions. Results go to `out/`, relative to where you run: `results.md`, `index.json` and one JSON file per run.
 
-## Multiple Agents
+## Test several agents
 
-Add more agents to test multi-agent delegation:
+Add more entries to `a2a_agents`. This registers `a2a__research_agent__search_papers` and `a2a__translation_agent__translate`:
 
 ```yaml
 a2a_agents:
@@ -255,9 +220,7 @@ a2a_agents:
             - text: "Translated text..."
 ```
 
-This registers both `a2a__research_agent__search_papers` and `a2a__translation_agent__translate` as available tools.
-
-Use `agent_invoked` and `agent_not_invoked` assertions to verify which agents are delegated to:
+Check which agents a turn delegates to. `message` is a sibling of `type` and `params`:
 
 ```yaml
 turns:
@@ -269,17 +232,17 @@ turns:
           agents:
             - a2a__research_agent__search_papers
             - a2a__translation_agent__translate
-          message: "Should delegate to both agents"
+        message: "Should delegate to both agents"
       - type: agent_not_invoked
         params:
           agents:
             - a2a__admin_agent__execute
-          message: "Should not invoke admin agent"
+        message: "Should not invoke admin agent"
       - type: agent_response_contains
         params:
           agent: a2a__research_agent__search_papers
           contains: "Research results"
-          message: "Research agent should return results"
+        message: "Research agent should return results"
 ```
 
 For conversation-wide checks, use `conversation_assertions`:
@@ -298,129 +261,9 @@ conversation_assertions:
     message: "Admin agent should never be invoked"
 ```
 
----
+## Return an error from a mock agent
 
-## Remote A2A Agents
-
-Instead of mock agents, you can test against real remote A2A servers. Set `url` on the agent config — Arena discovers the agent's skills from its `/.well-known/agent.json` endpoint.
-
-### Basic Remote Agent
-
-```yaml
-a2a_agents:
-  - name: echo_agent
-    url: "http://localhost:9877"
-```
-
-When `url` is set, `card` and `responses` are ignored — the agent card is fetched from the remote server.
-
-### Authentication
-
-Use `auth` to send credentials with every request:
-
-```yaml
-a2a_agents:
-  - name: echo_agent
-    url: "http://localhost:9877"
-    auth:
-      scheme: Bearer
-      token: "test-token-123"
-```
-
-To keep tokens out of config files, use `token_env` to read from an environment variable:
-
-```yaml
-a2a_agents:
-  - name: echo_agent
-    url: "https://agent.example.com"
-    auth:
-      scheme: Bearer
-      token_env: AGENT_TOKEN
-```
-
-### Headers
-
-Add static headers or headers resolved from environment variables:
-
-```yaml
-a2a_agents:
-  - name: echo_agent
-    url: "https://agent.example.com"
-    headers:
-      X-Tenant-ID: acme
-      X-Request-Source: arena
-    headers_from_env:
-      - "X-API-Key=API_KEY_ENV"
-```
-
-`headers_from_env` entries use the format `Header-Name=ENV_VAR_NAME`. If the env var is unset, the header is silently skipped.
-
-### Skill Filtering
-
-Limit which skills from the remote agent are exposed as tools:
-
-```yaml
-a2a_agents:
-  - name: echo_agent
-    url: "http://localhost:9877"
-    skill_filter:
-      allowlist:
-        - echo
-```
-
-Use `blocklist` to exclude specific skills instead:
-
-```yaml
-    skill_filter:
-      blocklist:
-        - debug
-        - admin
-```
-
-### Timeout
-
-Set a per-request timeout in milliseconds:
-
-```yaml
-a2a_agents:
-  - name: echo_agent
-    url: "http://localhost:9877"
-    timeout_ms: 5000
-```
-
-### Complete Remote Agent Config
-
-```yaml
-a2a_agents:
-  - name: echo_agent
-    url: "http://localhost:9877"
-    auth:
-      scheme: Bearer
-      token: "test-token-123"
-    headers:
-      X-Tenant-ID: acme
-    headers_from_env:
-      - "X-API-Key=API_KEY_ENV"
-    timeout_ms: 5000
-    skill_filter:
-      allowlist:
-        - echo
-```
-
----
-
-## Response Rules Reference
-
-### Match Config
-
-| Field | Description |
-|-------|-------------|
-| `contains` | Case-insensitive substring match on message text |
-| `regex` | Regular expression match on message text |
-
-### Error Responses
-
-Return a failed task instead of a successful response:
+A rule with `error` returns a failed task:
 
 ```yaml
 responses:
@@ -428,11 +271,41 @@ responses:
     error: "Service temporarily unavailable"
 ```
 
----
+## Test a remote A2A agent
 
-## Next Steps
+Set `url` on the agent entry to test a real A2A server. Arena fetches the agent card from `/.well-known/agent-card.json`, falling back to `/.well-known/agent.json` when the first returns 404 or 405, and registers the skills it finds. `card` and `responses` are ignored.
 
-- [A2A Concept](https://promptkit.altairalabs.ai/concepts/a2a/) — learn about the A2A protocol
-- [Use Mock Server](https://promptkit.altairalabs.ai/runtime/how-to/use-a2a-mock-server/) — use the mock programmatically in Go tests
-- [Write Scenarios](/arena/how-to/scenarios/write-scenarios/) — general scenario authoring guide
-- [Assertions Reference](/arena/reference/assertions/) — all available assertion types
+```yaml
+a2a_agents:
+  - name: echo_agent
+    url: "http://localhost:9877"
+    timeout_ms: 5000
+    auth:
+      scheme: Bearer
+      token_env: AGENT_TOKEN
+    headers:
+      X-Tenant-ID: acme
+    headers_from_env:
+      - "X-API-Key=API_KEY_ENV"
+    skill_filter:
+      allowlist:
+        - echo
+```
+
+| Field | Effect |
+|-------|--------|
+| `auth.scheme` | Authorization scheme, such as `Bearer`. |
+| `auth.token` | Inline token. |
+| `auth.token_env` | Environment variable holding the token. Keeps tokens out of config files. |
+| `headers` | Static headers sent with every request. |
+| `headers_from_env` | Entries of the form `Header-Name=ENV_VAR_NAME`. An unset variable skips the header. |
+| `skill_filter.allowlist` | Expose only the listed skill IDs. |
+| `skill_filter.blocklist` | Hide the listed skill IDs. |
+| `timeout_ms` | Per-request timeout in milliseconds. |
+
+## Related pages
+
+- [A2A concept](https://promptkit.altairalabs.ai/concepts/a2a/) explains the A2A protocol.
+- [Use the mock server](https://promptkit.altairalabs.ai/runtime/how-to/use-a2a-mock-server/) covers the mock in Go tests.
+- [Write Scenarios](/arena/how-to/scenarios/write-scenarios/) is the general scenario guide.
+- [Assertions reference](/arena/reference/assertions/) lists every assertion type.
