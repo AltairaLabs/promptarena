@@ -61,6 +61,38 @@ func (v *ConfigValidator) validateToolUsage() {
 	v.validateAssertedToolsOffered(defined, granted)
 }
 
+// sdkOnlyToolMode is the tool mode PromptKit's registry accepts as built in
+// but promptarena cannot execute: the runtime routes it to an executor named
+// "local" (an in-process Go handler) that only the PromptKit SDK registers.
+const sdkOnlyToolMode = "local"
+
+// CheckToolModeRunnable reports a tool promptarena loads but cannot execute. A
+// mode: local tool passes the runtime's mode check, so without this it loaded
+// cleanly and failed only when the model called it. packc does not apply it:
+// the SDK runs such a tool from a compiled pack.
+func CheckToolModeRunnable(t *tools.ToolDescriptor) error {
+	if t == nil || t.Mode != sdkOnlyToolMode {
+		return nil
+	}
+	return fmt.Errorf("tool %s: mode %q is run by the PromptKit SDK only; promptarena has no %s executor, "+
+		"so the tool would fail when called (use mock, live, mcp or client)", t.Name, t.Mode, t.Mode)
+}
+
+// validateToolModes reports every defined tool promptarena cannot execute.
+func (v *ConfigValidator) validateToolModes() {
+	for _, t := range v.config.LoadedTools {
+		reg := tools.NewRegistry()
+		if reg.LoadToolFromBytes(t.FilePath, t.Data) != nil {
+			continue // a tool that does not parse is reported by the load stage
+		}
+		for _, d := range reg.GetTools() {
+			if err := CheckToolModeRunnable(d); err != nil {
+				v.errors = append(v.errors, fmt.Errorf("%s: %w", t.FilePath, err))
+			}
+		}
+	}
+}
+
 // validateAssertedToolsOffered warns when a scenario asserts that the model
 // calls a tool its prompt does not offer. A mock can still pass such a
 // scenario, because it executes whatever calls it scripts once the turn

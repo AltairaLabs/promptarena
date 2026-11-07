@@ -1543,6 +1543,8 @@ For longer templates, use `mock_template_file: <path>`, and for a long static re
 
 `mode: exec` is not available in PromptArena: it registers no subprocess executor, so `promptarena run` stops at startup on a tool with that mode ("mode must be 'mock', 'live', 'local', 'mcp', 'client', or a registered executor name"). The PromptKit SDK runs exec tools.
 
+`mode: local` (an in-process handler) is not available either: PromptArena registers no `local` executor, so `promptarena validate` reports such a tool as an error and `promptarena run` stops at startup on it. The PromptKit SDK runs local tools.
+
 #### Live Mode (HTTP)
 
 Makes actual HTTP API calls:

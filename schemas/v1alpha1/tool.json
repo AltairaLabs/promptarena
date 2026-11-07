@@ -318,7 +318,7 @@
         "output_schema": true,
         "mode": {
           "type": "string",
-          "description": "Execution mode. One of: 'mock' (use mock_result or mock_template) - 'live' (HTTP via 'http') - 'mcp' (MCP server) - 'client' (client-side handler; arena simulates it with the mock fields and the turn's consent_overrides). 'exec' (subprocess) is run by the PromptKit SDK only: promptarena cannot execute it, and a run stops at startup on such a tool."
+          "description": "Execution mode. One of: 'mock' (use mock_result or mock_template) - 'live' (HTTP via 'http') - 'mcp' (MCP server) - 'client' (client-side handler; arena simulates it with the mock fields and the turn's consent_overrides). 'exec' (subprocess) and 'local' (in-process handler) are run by the PromptKit SDK only: promptarena cannot execute them, and a run stops at startup on such a tool."
         },
         "timeout_ms": {
           "type": "integer"

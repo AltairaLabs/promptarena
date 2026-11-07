@@ -13,7 +13,7 @@ import (
 // referenceDocs builds the bundled reference docs from their live sources:
 // the eval/assertion catalog (handler registry), the config-fields cheat-sheet
 // (embedded schemas), and the CLI reference (cobra command tree). Keyed by the
-// committed filename under tools/arena/agentkb/reference/.
+// committed filename under arena/agentkb/reference/.
 func referenceDocs() (map[string][]byte, error) {
 	evalsMD, err := agentkb.GenerateEvalsReference()
 	if err != nil {
@@ -57,7 +57,7 @@ var genReferenceCmd = &cobra.Command{
 
 func init() {
 	genReferenceCmd.Flags().StringVarP(&genReferenceOut, "out", "o",
-		filepath.Join("tools", "arena", "agentkb", "reference"),
+		filepath.Join("arena", "agentkb", "reference"),
 		"Directory to write the reference docs into")
 	rootCmd.AddCommand(genReferenceCmd)
 }

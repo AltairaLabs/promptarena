@@ -154,6 +154,7 @@ promptarena run
 - a prompt configuration (`prompts/`)
 - a `.env.example` file listing the API keys to export (skip it with `--no-env`)
 - a README with next steps
+- the AI coding-agent brief: `AGENTS.md` and the `.claude/skills/promptarena-authoring/` skill, which tell an agent such as Claude Code or Codex how to write PromptArena configs (skip it with `--no-agent`)
 
 `init` keeps files that already exist in the project directory. Pass `--force` to overwrite them.
 

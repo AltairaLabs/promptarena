@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/prompt"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/tools"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/workflow"
 )
 
@@ -290,4 +292,31 @@ func TestValidateToolUsage_GlobalAssertions(t *testing.T) {
 
 	require.Len(t, v.GetWarnings(), 1)
 	assert.Contains(t, v.GetWarnings()[0], `scenario "chat" asserts tools_called_session on tool "audit_log"`)
+}
+
+// mode: local passes the runtime's mode check, but promptarena registers no
+// local executor, so such a tool loaded and failed only when called.
+func TestValidateToolModes_RejectsLocalMode(t *testing.T) {
+	local := toolData("lookup")
+	local.Data = []byte(strings.Replace(string(local.Data), "mode: mock", "mode: local", 1))
+	cfg := &Config{LoadedTools: []config.ToolData{
+		toolData("refund"),
+		local,
+		{FilePath: "broken.tool.yaml", Data: []byte("a: [")},
+	}}
+	v := NewConfigValidatorWithPath(cfg, "")
+	v.validateToolModes()
+
+	errs := v.GetErrors()
+	require.Len(t, errs, 1)
+	assert.Contains(t, errs[0], `lookup.tool.yaml: tool lookup: mode "local" is run by the PromptKit SDK only`)
+}
+
+func TestCheckToolModeRunnable(t *testing.T) {
+	assert.NoError(t, CheckToolModeRunnable(nil))
+	for _, mode := range []string{"", "mock", "live", "mcp", "client", "workflow-transition"} {
+		assert.NoError(t, CheckToolModeRunnable(&tools.ToolDescriptor{Name: "t", Mode: mode}), mode)
+	}
+	assert.ErrorContains(t, CheckToolModeRunnable(&tools.ToolDescriptor{Name: "t", Mode: "local"}),
+		"promptarena has no local executor")
 }

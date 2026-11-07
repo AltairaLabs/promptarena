@@ -11,11 +11,13 @@ const toolSpecDef = "ToolSpec"
 // toolModeDescription replaces the description config.ToolSpec carries on
 // `mode`. PromptKit's lists 'exec', which the SDK runs but promptarena does not:
 // arena registers no exec executor, so a run stops at startup on a tool with
-// mode: exec.
+// mode: exec. The same holds for 'local' (an in-process Go handler), which the
+// arena loader rejects.
 const toolModeDescription = "Execution mode. One of: 'mock' (use mock_result or mock_template) - " +
 	"'live' (HTTP via 'http') - 'mcp' (MCP server) - 'client' (client-side handler; arena simulates it " +
-	"with the mock fields and the turn's consent_overrides). 'exec' (subprocess) is run by the PromptKit " +
-	"SDK only: promptarena cannot execute it, and a run stops at startup on such a tool."
+	"with the mock fields and the turn's consent_overrides). 'exec' (subprocess) and 'local' (in-process " +
+	"handler) are run by the PromptKit SDK only: promptarena cannot execute them, and a run stops at " +
+	"startup on such a tool."
 
 // File-backed mock fields. Setting a static result and a template together is
 // rejected by the arena loader (validateToolMocks) rather than here: a schema

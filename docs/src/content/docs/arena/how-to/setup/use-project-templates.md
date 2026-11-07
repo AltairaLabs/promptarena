@@ -96,7 +96,7 @@ promptarena templates update
 promptarena init my-project --template basic-chatbot --template-index https://raw.githubusercontent.com/AltairaLabs/promptkit-templates/main/index.yaml
 ```
 
-The `templates` commands take `--index` and `--cache-dir`; `init` takes `--template-index` and `--template-cache` for the same settings. `render` takes variables from `--values` and `--set`. See the [CLI reference](/arena/reference/cli-commands/) for the full lists.
+The `templates` commands take `--index` and `--cache-dir`; `init` takes `--template-index` and `--template-cache` for the same settings. `render` takes variables from `--values` and `--set`. `fetch` and `render` both default `--version` to the latest version in the index. See the [CLI reference](/arena/reference/cli-commands/) for the full lists.
 
 ## Run the generated project
 

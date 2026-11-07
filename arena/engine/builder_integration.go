@@ -559,6 +559,11 @@ func buildToolRegistry(cfg *arenaconfig.Config) (*tools.Registry, error) {
 		// Get the parsed tool descriptor(s) from temp registry
 		loadedTools := tempRegistry.GetTools()
 		for _, tool := range loadedTools {
+			// Stop at startup, as for mode: exec, rather than when the model
+			// calls a tool no arena executor can run.
+			if err := arenaconfig.CheckToolModeRunnable(tool); err != nil {
+				return nil, fmt.Errorf("%s: %w", toolData.FilePath, err)
+			}
 			// Resolve relative file_path references in mock_parts, and the
 			// mock_result_file / mock_template_file paths, against the config
 			// directory, as every other path in an arena config is.

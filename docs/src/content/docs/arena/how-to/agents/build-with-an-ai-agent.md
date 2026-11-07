@@ -146,7 +146,7 @@ A `kind: Tool` config is a contract (`name`, `description`, `input_schema`, `out
 - mocks it (`mode: mock`) for testing, with `mock_result`, `mock_template`, or a file named by
   `mock_result_file` or `mock_template_file` (relative to the arena config directory),
 - binds an existing service (`mode: live` with an `http` block, or `mode: mcp`;
-  `mode: exec` runs only in the PromptKit SDK: `promptarena run` stops at startup on such a tool), or
+  `mode: exec` and `mode: local` run only in the PromptKit SDK: `promptarena run` stops at startup on such a tool), or
 - writes a new service that you deploy separately from the pack.
 
 ## 6. Watch it run

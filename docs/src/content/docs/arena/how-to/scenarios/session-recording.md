@@ -70,15 +70,15 @@ Each line of a recording is one event, `{"seq":N,"event":{...}}`. See [Storage F
 
 ## Captured Events
 
-An Arena recording holds these event types:
+An Arena recording holds these three event types and no others:
 
 | Event Type | Description |
 |------------|-------------|
 | `message.created` | One event per message: user, assistant and tool messages, with multimodal content parts |
-| `stream.interrupted` | A stream interruption, with the reason |
-| `audio.output` | One event per assistant audio chunk in a duplex run: inline PCM (`audio/pcm`) in `payload.inline_data`, with sample rate, channels, encoding and duration in `metadata` |
+| `stream.interrupted` | A stream interruption or a pipeline error, with the reason |
+| `audio.output` | One event per assistant audio chunk: inline PCM (`audio/pcm`) in `payload.inline_data`, with sample rate, channels, encoding and duration in `metadata`. Written by a duplex run, and by a streaming text turn whose provider streams audio back |
 
-A recording holds no stage, pipeline, tool or provider events.
+A recording holds no stage, pipeline, tool or provider events, no `audio.input` (the user's audio in a duplex run is not recorded, only its transcript as a `message.created`), and no `message.text.delta`, image or video events.
 
 In a duplex run, the recorder sits after the pack guardrails, so a recorded assistant message holds the enforced content, not what the agent tried to say.
 

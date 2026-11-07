@@ -59,6 +59,7 @@ func (v *ConfigValidator) Validate() error {
 	v.validateJudgeDefaults()
 	v.validateCrossReferences()
 	v.validateToolUsage()
+	v.validateToolModes()
 	v.validateAllowedToolsResolve()
 	v.validateTaskTypeUsage()
 	v.validateWorkflow()

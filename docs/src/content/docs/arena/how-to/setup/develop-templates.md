@@ -51,7 +51,7 @@ Add a template to the community repo and render it locally before you open a pul
      --values values.example.yaml --out ./out
    ```
 
-   `render --template` reads the cached copy and needs `--version`. `fetch` caches `template.yaml` together with every file a relative `source` names, so a template that uses `source` renders from the cache. A `source` that climbs out of the template directory (`../`) is rejected at fetch. To render while you edit, skip the cache and render straight from your clone:
+   `render --template` reads the cached copy. Without `--version` it renders the latest version the index lists, so that version must be in the cache and the index must be readable. `fetch` caches `template.yaml` together with every file a relative `source` names, so a template that uses `source` renders from the cache. A `source` that climbs out of the template directory (`../`) is rejected at fetch. To render while you edit, skip the cache and render straight from your clone:
 
    ```bash
    promptarena templates render --file ../promptkit-templates/your-template/template.yaml \
