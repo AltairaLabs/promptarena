@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/providers/model-migration.md",
- "commit": "0dbee6290db4e4de3bff3101f260fd614f81c924",
+ "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
  "claims": [
   {
    "id": 1,
@@ -187,10 +187,11 @@
   },
   {
    "id": 23,
-   "claim": "The run prints Error: execution failed: 1 runs had errors when a run has errors.",
+   "claim": "The run prints Error: execution failed: 1 runs had errors, 1 assertions failed when the max_length turn assertion fails",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run_interactive.go:140"
+    "arena/cmd/promptarena/run.go",
+    "arena/cmd/promptarena/run_interactive.go"
    ]
   },
   {
@@ -316,6 +317,15 @@
    "claim": "The bake-off how-to is at /arena/how-to/voice/voice-bake-off/.",
    "verdict": "true",
    "evidence": []
+  },
+  {
+   "id": 41,
+   "claim": "The regression summary prints Assertions: 8 total and Assertions Fail: 1",
+   "verdict": "true",
+   "evidence": [
+    "arena/tui/tui.go",
+    "examples/model-migration/config.arena.yaml"
+   ]
   }
  ]
 }

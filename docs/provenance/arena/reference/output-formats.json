@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/reference/output-formats.md",
- "commit": "3df344ffbc8c604e1a8935929c28499d778d19f0",
+ "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
  "claims": [
   {
    "id": 1,
@@ -2346,20 +2346,55 @@
   },
   {
    "id": 283,
-   "claim": "A run is Pass in results.md when it has no error, no guardrail violation and no failed assertion",
+   "claim": "Every report (index.json counts, CSV, Markdown, JUnit) uses one pass rule: no error, every turn and conversation assertion passed, and any guardrail violation covered by passing assertions",
    "verdict": "true",
    "evidence": [
-    "arena/results/markdown/markdown_repository.go:230",
-    "arena/results/utils.go:94"
+    "arena/results/junit/junit_repository.go",
+    "arena/results/markdown/markdown_repository.go",
+    "arena/results/utils.go"
    ]
   },
   {
    "id": 284,
-   "claim": "The CSV passed column uses the run pass rule the JSON summary counts use",
+   "claim": "The CSV passed column uses the run pass rule every report uses; false for skipped runs",
    "verdict": "true",
    "evidence": [
-    "arena/results/csv/csv_repository.go:41",
-    "arena/results/utils.go:94"
+    "arena/results/csv/csv_repository.go",
+    "arena/results/utils.go"
+   ]
+  },
+  {
+   "id": 285,
+   "claim": "A skipped run is shown as Skipped in results.md, counted as neither passed nor failed, with a Skipped Overview row when present",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/markdown/markdown_repository.go"
+   ]
+  },
+  {
+   "id": 286,
+   "claim": "JUnit sets a failure on every run that fails the pass rule without an execution error, including type AssertionFailure for a failed turn assertion or eval",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/turn_summary.go",
+    "arena/results/junit/junit_repository.go"
+   ]
+  },
+  {
+   "id": 287,
+   "claim": "A run does not clear the output directory: index.json and the reports are overwritten, per-run JSON files accumulate, and promptarena serve loads every run file",
+   "verdict": "true",
+   "evidence": [
+    "arena/results/json/json_repository.go",
+    "arena/web/server_loader_integration.go"
+   ]
+  },
+  {
+   "id": 288,
+   "claim": "--markdown-file defaults to defaults.output.markdown.file relative to the output directory, else <out>/results.md",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run.go"
    ]
   }
  ]

@@ -200,6 +200,7 @@ type testSummary struct {
 	Total       int
 	Passed      int
 	Failed      int
+	Skipped     int
 	TotalCost   float64
 	TotalTokens int
 	Duration    time.Duration
@@ -226,10 +227,14 @@ func (r *MarkdownResultRepository) calculateSummary(runResults []engine.RunResul
 	}
 
 	for _, result := range runResults {
-		// Count passed/failed based on errors and assertion failures
-		if result.Error != "" || len(result.Violations) > 0 || r.hasFailedAssertions(&result) {
+		// Count with the shared predicate, as index.json does: skipped runs are
+		// neither passed nor failed.
+		switch {
+		case result.Skipped:
+			summary.Skipped++
+		case r.runFailed(&result):
 			summary.Failed++
-		} else {
+		default:
 			summary.Passed++
 		}
 
@@ -328,80 +333,12 @@ func (r *MarkdownResultRepository) calculateMediaSize(media *types.MediaContent)
 	return results.MediaSizeBytes(media)
 }
 
-// hasFailedAssertions checks if a result has any failed assertions
-func (r *MarkdownResultRepository) hasFailedAssertions(result *engine.RunResult) bool {
-	// Check per-message assertions
-	for _, msg := range result.Messages {
-		if r.messageHasFailedAssertions(&msg) {
-			return true
-		}
-	}
-	// Check conversation-level assertion summary
-	if result.ConversationAssertions.Total > 0 && !result.ConversationAssertions.Passed {
-		return true
-	}
-	return false
-}
-
-// messageHasFailedAssertions checks if a single message has failed assertions
-func (r *MarkdownResultRepository) messageHasFailedAssertions(msg *types.Message) bool {
-	if msg.Meta == nil {
-		return false
-	}
-
-	assertions, ok := msg.Meta["assertions"]
-	if !ok {
-		return false
-	}
-
-	assertionMap, ok := assertions.(map[string]interface{})
-	if !ok {
-		return false
-	}
-
-	return r.hasFailedAssertionInMap(assertionMap)
-}
-
-// hasFailedAssertionInMap checks if any assertion in the map failed
-func (r *MarkdownResultRepository) hasFailedAssertionInMap(assertionMap map[string]interface{}) bool {
-	// Check top-level "passed" field (new format)
-	if passed, ok := assertionMap["passed"].(bool); ok {
-		return !passed
-	}
-
-	// Check "results" array (new format)
-	if results, ok := assertionMap["results"].([]interface{}); ok {
-		for _, assertion := range results {
-			if r.isFailedAssertion(assertion) {
-				return true
-			}
-		}
-		return false
-	}
-
-	// Legacy format
-	for _, assertion := range assertionMap {
-		if r.isFailedAssertion(assertion) {
-			return true
-		}
-	}
-	return false
-}
-
-// isFailedAssertion checks if a single assertion failed
-func (r *MarkdownResultRepository) isFailedAssertion(assertion interface{}) bool {
-	assertionResult, ok := assertion.(map[string]interface{})
-	if !ok {
-		return false
-	}
-
-	passed, exists := assertionResult["passed"]
-	if !exists {
-		return false
-	}
-
-	passedBool, ok := passed.(bool)
-	return ok && !passedBool
+// runFailed reports whether a run counts as failed in the report. It is the
+// negation of results.RunPassed, the predicate index.json, the CSV report and
+// JUnit use, so a guardrail violation covered by passing assertions (a test
+// that expects the guardrail to fire) is a pass here too.
+func (r *MarkdownResultRepository) runFailed(result *engine.RunResult) bool {
+	return !result.Skipped && !results.RunPassed(result)
 }
 
 // writeOverviewSection writes the summary overview section
@@ -412,6 +349,9 @@ func (r *MarkdownResultRepository) writeOverviewSection(content *strings.Builder
 	content.WriteString(fmt.Sprintf("| Tests Run | %d |\n", summary.Total))
 	content.WriteString(fmt.Sprintf("| Passed | %d ✅ |\n", summary.Passed))
 	content.WriteString(fmt.Sprintf("| Failed | %d ❌ |\n", summary.Failed))
+	if summary.Skipped > 0 {
+		fmt.Fprintf(content, "| Skipped | %d ⏭️ |\n", summary.Skipped)
+	}
 
 	if summary.Total > 0 {
 		successRate := float64(summary.Passed) / float64(summary.Total) * 100
@@ -610,7 +550,10 @@ func truncate(s string, limit int) string {
 func (r *MarkdownResultRepository) writeResultRow(content *strings.Builder, result *engine.RunResult) {
 	// Determine status
 	status := "✅ Pass"
-	if result.Error != "" || len(result.Violations) > 0 || r.hasFailedAssertions(result) {
+	switch {
+	case result.Skipped:
+		status = "⏭️ Skipped"
+	case r.runFailed(result):
 		status = "❌ Fail"
 	}
 
@@ -673,55 +616,10 @@ func (r *MarkdownResultRepository) countAssertions(result *engine.RunResult) int
 	return count
 }
 
-// countMessageAssertions counts assertions in a single message
+// countMessageAssertions counts the turn-level assertions recorded on a message.
 func (r *MarkdownResultRepository) countMessageAssertions(msg *types.Message) int {
-	if msg.Meta == nil {
-		return 0
-	}
-
-	assertions, ok := msg.Meta["assertions"]
-	if !ok {
-		return 0
-	}
-
-	assertionMap, ok := assertions.(map[string]interface{})
-	if !ok {
-		return 0
-	}
-
-	return r.countFromAssertionMap(assertionMap)
-}
-
-// countFromAssertionMap extracts the assertion count from the map structure
-func (r *MarkdownResultRepository) countFromAssertionMap(assertionMap map[string]interface{}) int {
-	// New format: prefer explicit total or results length
-	if resultsArr, ok := assertionMap["results"].([]interface{}); ok {
-		return len(resultsArr)
-	}
-
-	if totalVal, ok := assertionMap["total"].(float64); ok { // JSON numbers decode to float64
-		return int(totalVal)
-	}
-
-	if totalInt, ok := assertionMap["total"].(int); ok {
-		return totalInt
-	}
-
-	// Legacy format: count assertion entries that look like maps with a passed field
-	return r.countLegacyAssertions(assertionMap)
-}
-
-// countLegacyAssertions counts assertions in the legacy format
-func (r *MarkdownResultRepository) countLegacyAssertions(assertionMap map[string]interface{}) int {
-	legacyCount := 0
-	for _, v := range assertionMap {
-		if m, ok := v.(map[string]interface{}); ok {
-			if _, hasPassed := m["passed"]; hasPassed {
-				legacyCount++
-			}
-		}
-	}
-	return legacyCount
+	summary, _ := assertions.TurnSummaryFromMeta(msg.Meta)
+	return summary.Total
 }
 
 // countConversationAssertions returns the count of conversation-level assertions
@@ -737,7 +635,7 @@ func (r *MarkdownResultRepository) writeFailedTestsSection(content *strings.Buil
 	content.WriteString("## 🔍 Failed Tests\n\n")
 
 	for _, result := range runResults {
-		if result.Error != "" || len(result.Violations) > 0 || r.hasFailedAssertions(&result) {
+		if r.runFailed(&result) {
 			r.writeFailedTestDetail(content, &result)
 		}
 	}

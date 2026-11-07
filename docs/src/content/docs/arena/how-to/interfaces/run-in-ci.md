@@ -4,12 +4,13 @@ description: Run Arena headless in CI/CD with the --ci flag, JSON, JUnit and Mar
 sidebar:
   order: 30
 verified:
-  commit: 3df344ffbc8c604e1a8935929c28499d778d19f0
+  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
   sources:
     - .github/actions/promptarena-action/action.yml
     - .github/actions/promptarena-action/src/main.ts
     - .github/actions/promptarena-action/src/outputs.ts
     - .github/actions/promptarena-action/src/runner.ts
+    - .github/workflows/release.yml
     - .goreleaser.yml
     - arena/arenaconfig/helpers.go
     - arena/arenaconfig/types.go
@@ -75,7 +76,7 @@ formats for CI are below; `csv` and `objectives` are also available (see the
 |---|---|---|
 | `json` | Per-run JSON files plus an `index.json` summary in the out dir | `--out` dir (default `defaults.output.dir`, else `out/`) |
 | `junit` | JUnit XML, read by most CI test reporters | `--junit-file` (default `defaults.output.junit.file`, else `<out>/junit.xml`) |
-| `markdown` | Markdown report | `--markdown-file` (default `<out>/results.md`) |
+| `markdown` | Markdown report | `--markdown-file` (default `defaults.output.markdown.file`, else `<out>/results.md`) |
 
 ```bash
 # JUnit for the CI test reporter, JSON for archival, Markdown for humans
@@ -140,13 +141,18 @@ JUnit and CSV fail when any assertion falls below its threshold.
 
 If you need to key a downstream step on the numbers rather than the exit code,
 read `index.json` from the out directory (`total_runs`, `successful`, `errors`),
-or use the GitHub Action's outputs (`passed`, `total`, `success`).
+or use the GitHub Action's outputs (`passed`, `failed`, `total`, `success`).
+`failed` counts every run that did not pass; skipped runs are in `total` but in
+neither `passed` nor `failed`.
 
 ## The GitHub Action
 
 Arena ships a packaged GitHub Action at `.github/actions/promptarena-action/`. It
 installs the requested Arena version, runs your config headless, surfaces
 pass/fail counts as step outputs, and fails the job on test failures by default.
+Reference it as `AltairaLabs/promptarena/.github/actions/promptarena-action@v2`:
+`v2` is a floating tag each release moves to the newest `v2.x.y`, and a release
+tag such as `@v2.4.0` pins it.
 
 ```yaml
 name: Arena quality gate
@@ -165,7 +171,7 @@ jobs:
 
       - name: Run Arena tests
         id: arena
-        uses: AltairaLabs/promptarena/.github/actions/promptarena-action@v1
+        uses: AltairaLabs/promptarena/.github/actions/promptarena-action@v2
         with:
           config-file: config.arena.yaml
           version: latest
@@ -199,7 +205,7 @@ instead of failing the job automatically:
 ```yaml
       - name: Run Arena tests (advisory)
         id: arena
-        uses: AltairaLabs/promptarena/.github/actions/promptarena-action@v1
+        uses: AltairaLabs/promptarena/.github/actions/promptarena-action@v2
         with:
           config-file: config.arena.yaml
           fail-on-error: 'false'

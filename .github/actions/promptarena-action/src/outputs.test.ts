@@ -17,6 +17,8 @@ describe('outputs', () => {
       mockedFs.existsSync.mockImplementation((path: fs.PathLike) =>
         path.toString().includes('index.json')
       );
+      // 5 passed, 1 did not pass, 2 skipped: index.json's `errors` counts every
+      // run that did not pass, and the skipped runs are neither.
       mockedFs.readFileSync.mockReturnValue(
         JSON.stringify({
           successful: 5,
@@ -29,10 +31,24 @@ describe('outputs', () => {
       const results = await parseResults('/output');
 
       expect(results.passed).toBe(5);
-      expect(results.failed).toBe(2);
+      expect(results.failed).toBe(1);
       expect(results.errors).toBe(1);
       expect(results.total).toBe(8);
       expect(results.totalCost).toBe(0.002);
+      expect(results.success).toBe(false);
+    });
+
+    it('should report assertion failures as failed (index.json counts them in errors)', async () => {
+      mockedFs.existsSync.mockImplementation((path: fs.PathLike) =>
+        path.toString().includes('index.json')
+      );
+      mockedFs.readFileSync.mockReturnValue(
+        JSON.stringify({ successful: 3, errors: 2, total_runs: 5 })
+      );
+
+      const results = await parseResults('/output');
+
+      expect(results.failed).toBe(2);
       expect(results.success).toBe(false);
     });
 
@@ -136,7 +152,7 @@ describe('outputs', () => {
     it('should set all outputs', () => {
       mockedFs.existsSync.mockReturnValue(true);
 
-      setOutputs(results, '/output/junit.xml', '/output/report.html');
+      setOutputs(results, '/output/junit.xml');
 
       expect(mockedCore.setOutput).toHaveBeenCalledWith('passed', '5');
       expect(mockedCore.setOutput).toHaveBeenCalledWith('failed', '1');
@@ -145,16 +161,15 @@ describe('outputs', () => {
       expect(mockedCore.setOutput).toHaveBeenCalledWith('total-cost', '0.002345');
       expect(mockedCore.setOutput).toHaveBeenCalledWith('success', 'false');
       expect(mockedCore.setOutput).toHaveBeenCalledWith('junit-path', '/output/junit.xml');
-      expect(mockedCore.setOutput).toHaveBeenCalledWith('html-path', '/output/report.html');
+      expect(mockedCore.setOutput).not.toHaveBeenCalledWith('html-path', expect.any(String));
     });
 
     it('should not set file paths if they do not exist', () => {
       mockedFs.existsSync.mockReturnValue(false);
 
-      setOutputs(results, '/output/junit.xml', '/output/report.html');
+      setOutputs(results, '/output/junit.xml');
 
       expect(mockedCore.setOutput).not.toHaveBeenCalledWith('junit-path', expect.any(String));
-      expect(mockedCore.setOutput).not.toHaveBeenCalledWith('html-path', expect.any(String));
     });
   });
 

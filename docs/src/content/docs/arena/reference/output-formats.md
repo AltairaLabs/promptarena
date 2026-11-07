@@ -1,7 +1,7 @@
 ---
 title: Output Formats
 verified:
-  commit: 3df344ffbc8c604e1a8935929c28499d778d19f0
+  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
   sources:
     - arena/agentkb/schemas/common/assertions.json
     - arena/arenaconfig/governance_taxonomy.go
@@ -11,6 +11,7 @@ verified:
     - arena/arenaconfig/taxonomy.go
     - arena/arenaconfig/trial_budget.go
     - arena/arenaconfig/types.go
+    - arena/assertions/turn_summary.go
     - arena/cmd/promptarena/run.go
     - arena/cmd/promptarena/serve_interactive.go
     - arena/engine/conversation_executor.go
@@ -64,7 +65,7 @@ verified:
 | `--format` | none | Output formats, comma-separated or repeated. |
 | `--formats` | none | Output formats, comma-separated. Takes precedence over `--format`. |
 | `--junit-file` | `defaults.output.junit.file`, else `<out>/junit.xml` | JUnit XML output path. |
-| `--markdown-file` | `<out>/results.md` | Markdown report output path. |
+| `--markdown-file` | `defaults.output.markdown.file` (relative to the output directory), else `<out>/results.md` | Markdown report output path. |
 | `--objectives-group-by` | `scenario` | Grouping keys for the objectives report. See [Objectives Format](#objectives-format). |
 
 ## Output Directory Structure
@@ -86,6 +87,8 @@ out/
         <sha256-of-content>.png
         <sha256-of-content>.png.meta
 ```
+
+A run does not clear the output directory. Each run overwrites `index.json`, `results.md`, `junit.xml`, `results.csv` and the objectives files, and adds its own `<run-id>.json` files beside the ones earlier runs left. `promptarena serve` loads every run file in the directory, so it shows earlier runs too. To read only the latest run, start from `index.json` and open the files its `run_ids` lists. A glob such as `out/*.json` also matches earlier runs and `index.json` itself. Delete the directory, or pass a fresh `--out`, for a clean set.
 
 ### Media Directory
 
@@ -298,7 +301,7 @@ The `markdown` format writes `results.md`, a report for GitHub, documentation an
 
 The Overview shows Total Cost and Total Duration when they are above 0, and adds media tables when the run has media. Media stored under `media/` counts as loaded. The report contains no per-turn transcripts.
 
-A run is `✅ Pass` in `results.md` when it has no error, no guardrail violation and no failed turn or conversation assertion. A violation counts even when a passing assertion expects it, so such a run passes in the JSON summary counts and fails here.
+Every report uses one pass rule, the one behind the `index.json` counts: a run passes when it has no error, every turn and conversation assertion passed, and any guardrail violation is covered by passing assertions. A run whose guardrail fires with a passing `guardrail_triggered` assertion is `✅ Pass`; a violation in a run with no assertions fails it. A skipped run is `⏭️ Skipped`, counted as neither passed nor failed, and the Overview adds a `Skipped` row when there are any.
 
 ### Configuration Options
 
@@ -351,7 +354,7 @@ Persona: attacker
 | `testcase` | `name` is `<provider>.<region>.<run-id>`, with `[<row>]` appended for dataset runs. `classname` is the scenario ID. |
 | `system-out` | Run metadata: Run ID, Provider, Region, Duration, Cost, Input Tokens, Output Tokens, plus Self-Play and Persona when set. |
 | `properties` | `conversation_assertions.total`, `.failed`, `.passed`. |
-| `failure` | `message="Validation failed: N violation(s)"` with `type="ValidationError"` for guardrail violations. `message="Conversation assertions failed"` with `type="ConversationAssertionFailure"` for failed conversation assertions. |
+| `failure` | Set on every run that fails the pass rule of [Markdown Format](#markdown-format) without an execution error. `message="Validation failed: N violation(s)"` with `type="ValidationError"` for guardrail violations that passing assertions do not cover. `message="Conversation assertions failed"` with `type="ConversationAssertionFailure"` for failed conversation assertions. `message="Turn assertions failed: N of M"` (or `Turn evals failed`) with `type="AssertionFailure"` for a failed turn assertion or eval. |
 | `error` | `type="ExecutionError"` for execution errors. |
 | `skipped` | Skipped runs. |
 
@@ -371,7 +374,7 @@ Every row starts with the same fixed columns:
 | Column | Meaning |
 |---|---|
 | `run_id`, `scenario_id`, `provider_id`, `region` | Which run this is |
-| `passed` | `true` when the run is not skipped and passes the run pass rule the JSON summary counts use. Skipped runs are `false`. The Markdown and JUnit reports apply their own pass mappings. |
+| `passed` | `true` when the run is not skipped and passes the run pass rule every report uses (see [Markdown Format](#markdown-format)). Skipped runs are `false`. |
 | `skipped` | Run was skipped (e.g. a transient provider error) rather than failed |
 | `stop_reason` | Why a failed run stopped when it hit a cap, e.g. `max_rounds`; empty otherwise |
 | `error` | Error message, if any |

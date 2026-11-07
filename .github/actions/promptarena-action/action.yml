@@ -11,7 +11,7 @@ inputs:
     description: 'Path to Arena YAML configuration file'
     required: true
   version:
-    description: 'PromptArena version to use (e.g., v1.1.6 or latest)'
+    description: 'PromptArena version to use (e.g., v2.4.0 or latest)'
     required: false
     default: 'latest'
   scenarios:
@@ -28,7 +28,7 @@ inputs:
     required: false
     default: 'out'
   formats:
-    description: 'Output formats (comma-separated, e.g., json,junit,markdown,html)'
+    description: 'Output formats (comma-separated): json, junit, markdown, csv, objectives'
     required: false
     default: 'json,junit'
   junit-output:
@@ -48,11 +48,11 @@ inputs:
 
 outputs:
   passed:
-    description: 'Number of passed tests'
+    description: 'Number of passed runs'
   failed:
-    description: 'Number of failed tests'
+    description: 'Number of runs that did not pass (execution errors and assertion failures; skipped runs excluded)'
   errors:
-    description: 'Number of errors'
+    description: 'Number of runs that did not pass, as recorded in index.json "errors" (the same count as failed)'
   total:
     description: 'Total number of tests'
   total-cost:
@@ -61,8 +61,6 @@ outputs:
     description: 'Whether all tests passed (true/false)'
   junit-path:
     description: 'Path to generated JUnit XML file'
-  html-path:
-    description: 'Path to generated HTML report'
 
 runs:
   using: 'node24'

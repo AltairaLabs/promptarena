@@ -126,7 +126,7 @@ PromptArena ships GitHub Actions for CI/CD. Run prompt tests:
 
 ```yaml
 - name: Run prompt tests
-  uses: AltairaLabs/promptarena/v2/.github/actions/promptarena-action@v1
+  uses: AltairaLabs/promptarena/.github/actions/promptarena-action@v2
   with:
     config-file: config.arena.yaml
   env:

@@ -710,6 +710,21 @@ func TestCountFailedAssertions(t *testing.T) {
 			expected: 1,
 		},
 		{
+			name: "turn-level failures are counted with conversation-level ones",
+			results: []engine.RunResult{
+				{
+					RunID:                  "run-001",
+					ConversationAssertions: engine.AssertionsSummary{Failed: 1, Passed: false, Total: 1},
+					Messages: []types.Message{
+						{Role: "assistant", Meta: map[string]interface{}{"assertions": map[string]interface{}{
+							"passed": false, "total": 3, "failed": 2,
+						}}},
+					},
+				},
+			},
+			expected: 3,
+		},
+		{
 			name: "no assertions is vacuous pass",
 			results: []engine.RunResult{
 				{RunID: "run-001", ConversationAssertions: engine.AssertionsSummary{Failed: 0, Passed: true, Total: 0}},

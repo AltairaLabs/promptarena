@@ -60,7 +60,10 @@ function parseIndexJson(outputDir: string): TestResults | null {
     const total = indexOutput.total_runs ?? 0;
     const passed = indexOutput.successful ?? 0;
     const errors = indexOutput.errors ?? 0;
-    const failed = Math.max(0, total - passed - errors);
+    // index.json's `errors` counts every run that did not pass: execution
+    // errors and assertion failures alike. So it is also the failed count;
+    // total - successful - errors is the skipped runs, not failures.
+    const failed = errors;
 
     return {
       passed,
@@ -160,11 +163,7 @@ export async function parseResults(outputDir: string): Promise<TestResults> {
   return createEmptyResults();
 }
 
-export function setOutputs(
-  results: TestResults,
-  junitPath: string,
-  htmlPath: string
-): void {
+export function setOutputs(results: TestResults, junitPath: string): void {
   core.setOutput('passed', results.passed.toString());
   core.setOutput('failed', results.failed.toString());
   core.setOutput('errors', results.errors.toString());
@@ -172,12 +171,9 @@ export function setOutputs(
   core.setOutput('total-cost', results.totalCost.toFixed(6));
   core.setOutput('success', results.success.toString());
 
-  // Set file paths if they exist
+  // Set the file path if it exists
   if (fs.existsSync(junitPath)) {
     core.setOutput('junit-path', junitPath);
-  }
-  if (fs.existsSync(htmlPath)) {
-    core.setOutput('html-path', htmlPath);
   }
 }
 

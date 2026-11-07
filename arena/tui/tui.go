@@ -16,6 +16,7 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"golang.org/x/term"
 
+	"github.com/AltairaLabs/promptarena/v2/arena/assertions"
 	"github.com/AltairaLabs/promptarena/v2/arena/statestore"
 	"github.com/AltairaLabs/promptarena/v2/arena/tui/logging"
 	"github.com/AltairaLabs/promptarena/v2/arena/tui/pages"
@@ -851,8 +852,11 @@ func SummaryFromStore(ctx context.Context, store runResultStorer, runIDs []strin
 			success++
 		}
 
-		assertTotal += res.ConversationAssertions.Total
-		assertFailed += res.ConversationAssertions.Failed
+		// Count turn- and conversation-level assertions, as results.md does;
+		// counting only the conversation level under-reported (#413).
+		turnTotal, turnFailed := assertions.CountTurnAssertions(res.Messages)
+		assertTotal += res.ConversationAssertions.Total + turnTotal
+		assertFailed += res.ConversationAssertions.Failed + turnFailed
 	}
 
 	regions := make([]string, 0, len(regionSet))

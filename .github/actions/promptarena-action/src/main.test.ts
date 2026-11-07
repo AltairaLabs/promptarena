@@ -51,7 +51,6 @@ describe('main', () => {
     });
     mockedGetOutputPaths.mockReturnValue({
       junitPath: './out/junit.xml',
-      htmlPath: './out/report.html',
       jsonPath: './out/index.json',
     });
     mockedParseResults.mockResolvedValue({

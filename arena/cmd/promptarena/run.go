@@ -7,6 +7,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/v2/arena/assertions"
 	arenaaudio "github.com/AltairaLabs/promptarena/v2/arena/audio"
 	"github.com/AltairaLabs/promptarena/v2/arena/engine"
 	"github.com/AltairaLabs/promptarena/v2/arena/results"
@@ -184,7 +185,8 @@ func init() {
 	// Keep both accepted so existing scripts do not fail outright, but say so.
 	_ = runCmd.Flags().MarkDeprecated("html", "the HTML report was removed; markdown is produced instead")
 	_ = runCmd.Flags().MarkDeprecated("html-file", "the HTML report was removed; use --markdown-file")
-	runCmd.Flags().String("markdown-file", "", "Markdown report output file (default: out/results.md)")
+	runCmd.Flags().String("markdown-file", "",
+		"Markdown report output file (default: defaults.output.markdown.file, else <out>/results.md)")
 	runCmd.Flags().Int(flagMaxTokens, 0, "Override max tokens for all scenarios")
 	runCmd.Flags().BoolP("verbose", "v", false, "Enable verbose debug logging for API calls")
 
@@ -682,12 +684,15 @@ func countResultsByStatus(results []engine.RunResult) (successCount, errorCount 
 	return successCount, errorCount
 }
 
-// countFailedAssertions counts the total number of failed assertions across all results.
+// countFailedAssertions counts the total number of failed turn- and
+// conversation-level assertions across all results, matching the run summary.
 // Also counts runs where Passed is false even if Failed is 0, which indicates assertions
 // were defined but never executed (a configuration or wiring error).
 func countFailedAssertions(results []engine.RunResult) int {
 	failedCount := 0
 	for i := range results {
+		_, turnFailed := assertions.CountTurnAssertions(results[i].Messages)
+		failedCount += turnFailed
 		failedCount += results[i].ConversationAssertions.Failed
 		if !results[i].ConversationAssertions.Passed && results[i].ConversationAssertions.Failed == 0 {
 			// Assertions were defined but never executed — count as 1 failure

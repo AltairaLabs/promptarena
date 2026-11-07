@@ -217,6 +217,40 @@ func TestModel_BuildSummary_FromStateStore(t *testing.T) {
 	assert.Equal(t, 1, summary.AssertionFailed)
 }
 
+// TestSummaryFromStore_CountsTurnAssertions pins #413: the summary counts the
+// turn-level assertions recorded on messages as well as the conversation-level
+// ones, matching results.md.
+func TestSummaryFromStore_CountsTurnAssertions(t *testing.T) {
+	store := &mockRunResultStore{
+		result: &statestore.RunResult{
+			RunID: "run-1", ScenarioID: "scn", ProviderID: "prov", Region: "us",
+			Messages: []types.Message{
+				{Role: "user", Content: "hello"},
+				{Role: "assistant", Content: "hi", Meta: map[string]interface{}{
+					"assertions": map[string]interface{}{
+						"results": []interface{}{
+							map[string]interface{}{"passed": true},
+							map[string]interface{}{"passed": false},
+						},
+						"passed": false, "total": 2, "failed": 1,
+					},
+				}},
+				{Role: "assistant", Content: "bye", Meta: map[string]interface{}{
+					"assertions": map[string]interface{}{
+						"results": []interface{}{map[string]interface{}{"passed": true}},
+						"passed":  true, "total": 1, "failed": 0,
+					},
+				}},
+			},
+			ConversationAssertions: statestore.AssertionsSummary{Total: 1, Passed: true},
+		},
+	}
+
+	summary := SummaryFromStore(context.Background(), store, []string{"run-1"}, "out")
+	assert.Equal(t, 4, summary.AssertionTotal)
+	assert.Equal(t, 1, summary.AssertionFailed)
+}
+
 func TestModel_BuildSummary_FromStateStoreError(t *testing.T) {
 	m := NewModel("test.yaml", 1)
 	m.activeRuns = []RunInfo{{RunID: "run-err", Scenario: "scn", Provider: "prov", Region: "us"}}
