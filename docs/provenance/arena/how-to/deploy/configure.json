@@ -1,13 +1,13 @@
 {
  "page": "docs/src/content/docs/arena/how-to/deploy/configure.md",
- "commit": "3df344ffbc8c604e1a8935929c28499d778d19f0",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
    "claim": "deploy section sits at the top level of arena.yaml",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/loader.go:216",
+    "arena/arenaconfig/loader.go:217",
     "arena/arenaconfig/types.go:170"
    ]
   },
@@ -25,7 +25,7 @@
    "claim": "config is provider-specific and passed as JSON to the adapter",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/config.go:60-80",
+    "arena/deploy/flow/config.go:84-104",
     "deploy/provider.go:39-46"
    ]
   },
@@ -42,7 +42,7 @@
    "claim": "config is opaque to the CLI",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/config.go:60-80"
+    "arena/deploy/flow/config.go:84-104"
    ]
   },
   {
@@ -50,8 +50,8 @@
    "claim": "api_token: ${OMNIA_API_TOKEN} reads the env var",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/loader.go:197-216",
-    "arena/deploy/flow/config.go:58-79"
+    "arena/arenaconfig/loader.go:198-217",
+    "arena/deploy/flow/config.go:82-103"
    ]
   },
   {
@@ -59,7 +59,7 @@
    "claim": "Omnia fields api_endpoint, workspace, api_token, providers{name,ref,role}, runtime, labels; roles llm/embedding/tts/stt/image/inference; autoscaling hpa|keda",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/config.go:60-80"
+    "arena/deploy/flow/config.go:84-104"
    ]
   },
   {
@@ -67,7 +67,7 @@
    "claim": "api_token optional (or OMNIA_API_TOKEN)",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/config.go:70-74"
+    "arena/deploy/flow/config.go:94-98"
    ]
   },
   {
@@ -75,7 +75,7 @@
    "claim": "AgentCore config fields region, account_id, instance_type, timeout, enable_autoscaling",
    "verdict": "false",
    "evidence": [
-    "arena/deploy/flow/config.go:60-80"
+    "arena/deploy/flow/config.go:84-104"
    ]
   },
   {
@@ -83,7 +83,7 @@
    "claim": "--env merges environments.<env>.config over base; later values override, new keys added",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/config.go:60-80"
+    "arena/deploy/flow/config.go:84-104"
    ]
   },
   {
@@ -91,7 +91,7 @@
    "claim": "merge semantics for nested maps",
    "verdict": "false",
    "evidence": [
-    "arena/deploy/flow/config.go:65-69"
+    "arena/deploy/flow/config.go:89-93"
    ]
   },
   {
@@ -99,16 +99,16 @@
    "claim": "deploy plan validates config through the adapter",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/deploy_config_interactive.go:155",
-    "arena/deploy/flow/session.go:101-112"
+    "arena/deploy/flow/session.go:102-118",
+    "arena/deploy/flow/session.go:128-135"
    ]
   },
   {
    "id": 13,
    "claim": "Error: invalid config: region \"invalid-region\" not supported",
-   "verdict": "false",
+   "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/session.go:107-110"
+    "arena/deploy/flow/session.go:115"
    ]
   },
   {
@@ -116,7 +116,7 @@
    "claim": "CLI auto-detects *.pack.json files in the project directory",
    "verdict": "false",
    "evidence": [
-    "arena/deploy/flow/config.go:37-56"
+    "arena/deploy/flow/config.go:61-80"
    ]
   },
   {
@@ -124,8 +124,9 @@
    "claim": "default config is arena.yaml; --config overrides",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/deploy_interactive.go:53-56",
-    "arena/deploy/flow/options.go:20-25"
+    "arena/cmd/promptarena/deploy_interactive.go:65-66",
+    "arena/cmd/promptarena/deploy_interactive.go:86-88",
+    "arena/deploy/flow/options.go:12-41"
    ]
   },
   {
@@ -133,7 +134,7 @@
    "claim": "minimal AgentCore config 'provider: agentcore' uses adapter defaults",
    "verdict": "false",
    "evidence": [
-    "arena/deploy/flow/config.go:60-80"
+    "arena/deploy/flow/config.go:84-104"
    ]
   },
   {
@@ -141,16 +142,16 @@
    "claim": "default environment is \"default\"",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/config.go:29-35",
+    "arena/deploy/flow/config.go:53-59",
     "arena/deploy/flow/options.go:7"
    ]
   },
   {
    "id": 18,
    "claim": "Error: deploy section not found",
-   "verdict": "false",
+   "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/config.go:23-25"
+    "arena/deploy/flow/config.go:20-22"
    ]
   },
   {
@@ -158,7 +159,7 @@
    "claim": "Error: provider required",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/loader.go:203-206"
+    "arena/arenaconfig/loader.go:204-207"
    ]
   },
   {
@@ -166,7 +167,55 @@
    "claim": "Error: adapter not found for provider; fix with deploy adapter install",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/connect.go:27-34"
+    "arena/deploy/flow/connect.go:53-58"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "An arena config file (config.arena.yaml by default, or arena.yaml when only that exists)",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/options.go:12-41"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "Before planning, the CLI sends the merged config to the adapter's validate_config, and stops with deploy config is invalid for \"<provider>\": <problems> if the adapter rejects it.",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/session.go:115"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "no deploy: section in \"config.arena.yaml\" means the config has no spec.deploy.",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/config.go:20-22"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "A top-level deploy: key fails schema validation with Additional property deploy is not allowed.",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/config.go:33"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "Schema validation reports spec.deploy: provider is required.",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/config.go:33"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "By default the CLI reads config.arena.yaml (the file promptarena run reads), or arena.yaml when only that exists.",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/options.go:31-41"
    ]
   }
  ]

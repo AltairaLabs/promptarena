@@ -1,8 +1,9 @@
 ---
 title: 'Deploy: Protocol'
 verified:
-  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
+    - arena/cmd/promptarena/deploy_apply_interactive.go
     - arena/cmd/promptarena/deploy_config_interactive.go
     - arena/cmd/promptarena/deploy_interactive.go
     - arena/cmd/promptarena/deploy_login_interactive.go
@@ -10,6 +11,7 @@ verified:
     - arena/cmd/promptarena/generate_integration.go
     - arena/deploy/flow/credentials.go
     - arena/deploy/flow/login.go
+    - arena/deploy/flow/session.go
     - arena/deploy/flow/sessions.go
     - arena/generate/generate.go
     - deploy/adaptersdk/serve.go
@@ -113,7 +115,7 @@ Returns adapter metadata.
 
 ### validate_config
 
-Validates provider configuration. The CLI calls it before every plan (`deploy`, `deploy plan`, and `deploy apply` when it re-plans) and in `deploy config import` unless you pass `--skip-validate`. A `valid: false` result stops the command with the listed errors before `plan` is sent. An adapter that answers method-not-found (`-32601`) is planned without validation, so the method is optional, but an adapter that implements it is always consulted.
+Validates provider configuration. The CLI calls it before every plan (`deploy`, `deploy plan`, and `deploy apply` when it re-plans) and in `deploy config import` unless you pass `--skip-validate`. A `valid: false` result stops the command with the listed errors before `plan` is sent. An adapter that answers method-not-found (`-32601`) is planned without validation, so the method is optional for planning, but an adapter that implements it is always consulted. `deploy config import` treats method-not-found as an error.
 
 **Request:**
 

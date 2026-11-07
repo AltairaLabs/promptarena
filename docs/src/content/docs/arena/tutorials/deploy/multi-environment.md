@@ -2,14 +2,18 @@
 title: 'Deploy: Multi-Environment Deployments'
 description: Give dev and production their own deploy config with environments overrides, preview each one, and deploy both from one working directory.
 verified:
-  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/arenaconfig/types.go
+    - arena/cmd/promptarena/deploy_apply_interactive.go
     - arena/cmd/promptarena/deploy_destroy_interactive.go
     - arena/cmd/promptarena/deploy_interactive.go
     - arena/cmd/promptarena/deploy_plan_interactive.go
     - arena/cmd/promptarena/deploy_status_interactive.go
     - arena/deploy/flow/config.go
+    - arena/deploy/flow/options.go
+    - arena/deploy/flow/session.go
+    - deploy/lock.go
     - deploy/state.go
     - packc/compiler/compiler.go
 ---

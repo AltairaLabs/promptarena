@@ -1,13 +1,13 @@
 {
  "page": "docs/src/content/docs/arena/how-to/deploy/plan-and-apply.md",
- "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
    "claim": "prerequisite: a compiled .pack.json file",
    "verdict": "false",
    "evidence": [
-    "arena/deploy/flow/config.go:37-56"
+    "arena/deploy/flow/config.go:61-80"
    ]
   },
   {
@@ -15,16 +15,16 @@
    "claim": "deploy plan [--env] previews without modifying",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/deploy_plan_interactive.go:26-52"
+    "arena/cmd/promptarena/deploy_plan_interactive.go:24-54"
    ]
   },
   {
    "id": 3,
    "claim": "plan example output (Planning deployment..., Provider line, Changes:, Summary:)",
-   "verdict": "false",
+   "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/deploy_interactive.go:141-159",
-    "arena/cmd/promptarena/deploy_plan_interactive.go:37-51"
+    "arena/cmd/promptarena/deploy_interactive.go:210-247",
+    "arena/cmd/promptarena/deploy_plan_interactive.go:38-52"
    ]
   },
   {
@@ -41,8 +41,8 @@
    "claim": "plan is saved for a later apply",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/deploy_plan_interactive.go:47-51",
-    "deploy/state.go:120-148"
+    "arena/cmd/promptarena/deploy_plan_interactive.go:48-51",
+    "deploy/state.go:265-272"
    ]
   },
   {
@@ -50,7 +50,7 @@
    "claim": "deploy runs plan then apply",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/deploy_interactive.go:199-248"
+    "arena/cmd/promptarena/deploy_interactive.go:287-330"
    ]
   },
   {
@@ -58,8 +58,8 @@
    "claim": "loads arena.yaml and merges env config",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/config.go:60-80",
-    "arena/deploy/flow/session.go:40-63"
+    "arena/deploy/flow/config.go:15-24",
+    "arena/deploy/flow/session.go:53-81"
    ]
   },
   {
@@ -67,7 +67,7 @@
    "claim": "auto-detects or uses the specified pack file",
    "verdict": "false",
    "evidence": [
-    "arena/deploy/flow/config.go:37-56"
+    "arena/deploy/flow/config.go:61-80"
    ]
   },
   {
@@ -75,7 +75,7 @@
    "claim": "sends plan request to the adapter",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/session.go:101-112"
+    "arena/deploy/flow/session.go:163-176"
    ]
   },
   {
@@ -83,16 +83,16 @@
    "claim": "apply request with streaming progress",
    "verdict": "false",
    "evidence": [
-    "deploy/client.go:306-325"
+    "deploy/client.go:417-436"
    ]
   },
   {
    "id": 11,
-   "claim": "saves state to .promptarena/deploy.state",
+   "claim": "It saves state to .promptarena/envs/<env>/deploy.state.",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/session.go:114-131",
-    "deploy/state.go:13-20"
+    "arena/deploy/flow/session.go:179-195",
+    "deploy/state.go:81-87"
    ]
   },
   {
@@ -100,16 +100,16 @@
    "claim": "--pack and --config flags",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/deploy_interactive.go:53-56"
+    "arena/cmd/promptarena/deploy_interactive.go:64-68"
    ]
   },
   {
    "id": 13,
    "claim": "status example output",
-   "verdict": "false",
+   "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/deploy_interactive.go:181-195",
-    "arena/cmd/promptarena/deploy_status_interactive.go:37-77"
+    "arena/cmd/promptarena/deploy_interactive.go:268-283",
+    "arena/cmd/promptarena/deploy_status_interactive.go:35-84"
    ]
   },
   {
@@ -133,7 +133,7 @@
    "claim": "destroy loads prior state, exits if none, sends destroy, deletes state",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/deploy_destroy_interactive.go:28-89"
+    "arena/cmd/promptarena/deploy_destroy_interactive.go:25-68"
    ]
   },
   {
@@ -146,19 +146,20 @@
   },
   {
    "id": 18,
-   "claim": "deploy apply --env production applies the reviewed plan",
-   "verdict": "false",
+   "claim": "To apply a plan you have already reviewed, run deploy apply with the same --env.",
+   "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/deploy_apply_interactive.go:48-67",
-    "arena/deploy/flow/session.go:156-159"
+    "arena/cmd/promptarena/deploy_apply_interactive.go:42-61",
+    "arena/deploy/flow/session.go:221-223"
    ]
   },
   {
    "id": 19,
    "claim": "refresh example output with Provider line and ! marker",
-   "verdict": "false",
+   "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/deploy_refresh_interactive.go:46-91"
+    "arena/cmd/promptarena/deploy_interactive.go:127",
+    "arena/cmd/promptarena/deploy_refresh_interactive.go:26-67"
    ]
   },
   {
@@ -166,7 +167,7 @@
    "claim": "state is refreshed automatically before deploy plan and deploy",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/session.go:76-99"
+    "arena/deploy/flow/session.go:138-152"
    ]
   },
   {
@@ -180,7 +181,7 @@
   {
    "id": 22,
    "claim": "import example output",
-   "verdict": "false",
+   "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/deploy_import_interactive.go:56"
    ]
@@ -190,16 +191,17 @@
    "claim": "after import the resource appears in plan and status and is managed by deploy/destroy",
    "verdict": "unverified",
    "evidence": [
-    "arena/cmd/promptarena/deploy_import_interactive.go:101-107"
+    "arena/cmd/promptarena/deploy_import_interactive.go:104-110"
    ]
   },
   {
    "id": 24,
    "claim": "Error: no prior state found for status and destroy",
-   "verdict": "false",
+   "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/deploy_destroy_interactive.go:58-62",
-    "arena/cmd/promptarena/deploy_status_interactive.go:53-57"
+    "arena/cmd/promptarena/deploy_destroy_interactive.go:35-39",
+    "arena/cmd/promptarena/deploy_refresh_interactive.go:34-39",
+    "arena/cmd/promptarena/deploy_status_interactive.go:54-59"
    ]
   },
   {
@@ -207,7 +209,7 @@
    "claim": "Error: no pack file found",
    "verdict": "false",
    "evidence": [
-    "arena/deploy/flow/config.go:43-56"
+    "arena/deploy/flow/config.go:67-80"
    ]
   },
   {
@@ -215,7 +217,82 @@
    "claim": "TUI runs plan/confirm/apply/status; destroy, import, refresh CLI-only",
    "verdict": "true",
    "evidence": [
-    "arena/tui/app/deploypage.go:444"
+    "arena/tui/app/deploypage.go:446"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "deploy plan takes the environment's deploy lock, and saves the plan to .promptarena/envs/<env>/deploy.plan for a later deploy apply to the same environment.",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_plan_interactive.go:29-35"
+   ]
+  },
+  {
+   "id": 28,
+   "claim": "Before planning, the CLI sends the merged deploy config to the adapter's validate_config. If the adapter reports it invalid, the command stops with deploy config is invalid for \"<provider>\": <reasons>. An adapter that does not implement validate_config is planned without it.",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/session.go:98-118"
+   ]
+  },
+  {
+   "id": 29,
+   "claim": "status never compiles the pack, so it works even when the arena config does not compile.",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_status_interactive.go:61-63",
+    "arena/deploy/flow/session.go:46-51"
+   ]
+  },
+  {
+   "id": 30,
+   "claim": "The CLI reads config.arena.yaml by default. When there is no config.arena.yaml but there is an arena.yaml, it reads arena.yaml.",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/options.go:14-41"
+   ]
+  },
+  {
+   "id": 31,
+   "claim": "deploy apply reuses the environment's saved plan when the pack checksum matches the plan, and otherwise prints 'Saved plan is stale (the pack changed since it was planned), re-planning...'. The checksum ignores the pack's compile time.",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_apply_interactive.go:55",
+    "deploy/state.go:222-235"
+   ]
+  },
+  {
+   "id": 32,
+   "claim": "deploy lock is held by another process: the message names its pid; the operating system releases the lock when that process exits.",
+   "verdict": "true",
+   "evidence": [
+    "deploy/lock.go:83-93"
+   ]
+  },
+  {
+   "id": 33,
+   "claim": "Legacy .promptarena/deploy.state is used only for the environment it records; run deploy status --env <environment> once to move it.",
+   "verdict": "true",
+   "evidence": [
+    "deploy/state.go:107-113"
+   ]
+  },
+  {
+   "id": 34,
+   "claim": "The adapter's stderr is shown in the terminal; when an adapter exits mid-command, the error ends with the last lines it wrote to stderr.",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/connect.go:29-59",
+    "deploy/client.go:131-142"
+   ]
+  },
+  {
+   "id": 35,
+   "claim": "The CLI deletes the environment's state file and saved plan after destroy.",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_destroy_interactive.go:59-63"
    ]
   }
  ]

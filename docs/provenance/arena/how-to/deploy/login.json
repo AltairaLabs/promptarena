@@ -1,13 +1,13 @@
 {
  "page": "docs/src/content/docs/arena/how-to/deploy/login.md",
- "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
    "claim": "provider must advertise login capability",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/login.go:142-153",
+    "arena/deploy/flow/login.go:170-181",
     "deploy/provider.go:185-187"
    ]
   },
@@ -16,17 +16,17 @@
    "claim": "api_endpoint must be set; login fills in the rest",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/login.go:90-95",
-    "deploy/provider.go:192-199"
+    "arena/deploy/flow/login.go:96-114",
+    "deploy/provider.go:195-199"
    ]
   },
   {
    "id": 3,
-   "claim": "login works without an existing deploy section",
-   "verdict": "false",
+   "claim": "Login needs an existing arena config file; if it has no `spec.deploy` section, login creates one with `provider` set from `--provider`",
+   "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/config.go:23-25",
-    "arena/deploy/flow/login.go:90-93"
+    "arena/deploy/flow/config.go:30-37",
+    "arena/deploy/flow/login.go:100-113"
    ]
   },
   {
@@ -34,7 +34,7 @@
    "claim": "deploy login --provider; omit to use deploy.provider",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/deploy_login_interactive.go:32-50"
+    "arena/cmd/promptarena/deploy_login_interactive.go:43-52"
    ]
   },
   {
@@ -42,8 +42,8 @@
    "claim": "CLI opens browser to authorize page; prints URL",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/deploy_login_interactive.go:58-63",
-    "arena/deploy/flow/login.go:113-126"
+    "arena/cmd/promptarena/deploy_login_interactive.go:60-65",
+    "arena/deploy/flow/login.go:141-154"
    ]
   },
   {
@@ -51,7 +51,7 @@
    "claim": "browser redirects back to the CLI loopback",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/login.go:173-199"
+    "arena/deploy/flow/login.go:201-227"
    ]
   },
   {
@@ -59,7 +59,7 @@
    "claim": "profile merged under deploy.config; no secret written",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/login.go:203-208"
+    "arena/deploy/flow/login.go:231-236"
    ]
   },
   {
@@ -75,7 +75,7 @@
    "claim": "token precedence: config api_token > env var > credentials store",
    "verdict": "false",
    "evidence": [
-    "arena/deploy/flow/config.go:70-74"
+    "arena/deploy/flow/config.go:94-98"
    ]
   },
   {
@@ -83,7 +83,7 @@
    "claim": "adapter does not support login error",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/login.go:152"
+    "arena/deploy/flow/login.go:180"
    ]
   },
   {
@@ -91,7 +91,7 @@
    "claim": "CLI prints URL if browser does not open",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/login.go:119-125"
+    "arena/deploy/flow/login.go:147-153"
    ]
   },
   {
@@ -99,7 +99,7 @@
    "claim": "login timed out after a few minutes",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/login.go:24"
+    "arena/deploy/flow/login.go:25"
    ]
   },
   {
@@ -107,7 +107,23 @@
    "claim": "TUI offers login with [l]",
    "verdict": "true",
    "evidence": [
-    "arena/tui/app/deploypage.go:444"
+    "arena/tui/app/deploypage.go:446"
+   ]
+  },
+  {
+   "id": 14,
+   "claim": "`config file not found: <path>`: login merges into an existing arena config and never creates one; a config without `deploy:` is fine",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/login.go:96-124"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "Token precedence is: an explicit `api_token` in the config, then the stored credential, then the provider's environment variable",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/config.go:84-98"
    ]
   }
  ]

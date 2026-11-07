@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/tutorials/deploy/multi-environment.md",
- "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
@@ -9,7 +9,7 @@
    "evidence": [
     "arena/arenaconfig/types.go:370",
     "arena/arenaconfig/types.go:374",
-    "arena/deploy/flow/config.go:60"
+    "arena/deploy/flow/config.go:84"
    ]
   },
   {
@@ -17,7 +17,8 @@
    "claim": "--env selects the environment",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/deploy_interactive.go:53"
+    "arena/cmd/promptarena/deploy_interactive.go:66",
+    "arena/deploy/flow/config.go:54"
    ]
   },
   {
@@ -25,17 +26,21 @@
    "claim": "saved plan holds request.deploy_config with the merged config",
    "verdict": "true",
    "evidence": [
-    "deploy/state.go:110",
-    "deploy/state.go:117"
+    "arena/deploy/flow/session.go:155",
+    "arena/deploy/flow/session.go:214",
+    "deploy/state.go:301"
    ]
   },
   {
    "id": 4,
-   "claim": "one deploy.state per working directory regardless of --env; status/destroy act on it",
+   "claim": "each environment keeps its own saved plan, state and lock under .promptarena/envs/<env>/; destroying dev sends only dev's state",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/deploy_destroy_interactive.go:52",
-    "deploy/state.go:46"
+    "arena/cmd/promptarena/deploy_destroy_interactive.go:59",
+    "arena/cmd/promptarena/deploy_interactive.go:92",
+    "deploy/lock.go:35",
+    "deploy/state.go:55",
+    "deploy/state.go:81"
    ]
   },
   {
@@ -43,7 +48,8 @@
    "claim": "plan output for dev/production",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/deploy_plan_interactive.go:37"
+    "arena/cmd/promptarena/deploy_plan_interactive.go:38",
+    "arena/cmd/promptarena/deploy_plan_interactive.go:52"
    ]
   },
   {
@@ -51,7 +57,7 @@
    "claim": "runtime name comes from directory name (my_first_test_production)",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:97"
+    "packc/compiler/compiler.go:108"
    ]
   },
   {
@@ -59,7 +65,7 @@
    "claim": "status header 'Deployment status for environment: <env> (provider: agentcore)'",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/deploy_status_interactive.go:37"
+    "arena/cmd/promptarena/deploy_status_interactive.go:35"
    ]
   },
   {
@@ -67,7 +73,7 @@
    "claim": "destroy ends with 'Deployment destroyed.'",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/deploy_destroy_interactive.go:87"
+    "arena/cmd/promptarena/deploy_destroy_interactive.go:66"
    ]
   },
   {
@@ -75,7 +81,24 @@
    "claim": "deploy with no subcommand plans then applies",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/deploy_interactive.go:199"
+    "arena/cmd/promptarena/deploy_interactive.go:287"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "deploy commands read config.arena.yaml by default, no --config needed",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/options.go:14"
+   ]
+  },
+  {
+   "id": 11,
+   "claim": "apply --env dev prints '  Using saved plan.' after the header when the pack is unchanged since plan",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_apply_interactive.go:50",
+    "arena/deploy/flow/session.go:221"
    ]
   }
  ]

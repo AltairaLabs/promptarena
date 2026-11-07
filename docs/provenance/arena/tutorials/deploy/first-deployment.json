@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/tutorials/deploy/first-deployment.md",
- "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
@@ -36,7 +36,7 @@
    "claim": "agentcore config needs region, runtime_role_arn, runtime_binary_path (validated before plan)",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/config.go:60"
+    "arena/deploy/flow/config.go:84"
    ]
   },
   {
@@ -47,11 +47,12 @@
   },
   {
    "id": 6,
-   "claim": "`deploy` commands read arena.yaml unless --config is given",
+   "claim": "`deploy` commands read config.arena.yaml (the file `run` reads) unless --config is given",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/deploy_interactive.go:54",
-    "arena/deploy/flow/options.go:24"
+    "arena/cmd/promptarena/deploy_interactive.go:66",
+    "arena/deploy/flow/options.go:14",
+    "arena/deploy/flow/options.go:19"
    ]
   },
   {
@@ -59,10 +60,10 @@
    "claim": "deploy plan output: 'Deploy plan for environment: default (provider: agentcore)', Adapter line, 'Plan: 1 to create...', '+ agent_runtime.my_first_test (...)', 'Plan saved...'",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/deploy_interactive.go:142",
-    "arena/cmd/promptarena/deploy_plan_interactive.go:37",
-    "arena/cmd/promptarena/deploy_plan_interactive.go:51",
-    "arena/deploy/flow/render.go:6"
+    "arena/cmd/promptarena/deploy_interactive.go:180",
+    "arena/cmd/promptarena/deploy_interactive.go:233",
+    "arena/cmd/promptarena/deploy_plan_interactive.go:38",
+    "arena/cmd/promptarena/deploy_plan_interactive.go:52"
    ]
   },
   {
@@ -70,17 +71,18 @@
    "claim": "without --env the environment is 'default'",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/config.go:30",
+    "arena/deploy/flow/config.go:54",
     "arena/deploy/flow/options.go:7"
    ]
   },
   {
    "id": 9,
-   "claim": "plan is saved to .promptarena/deploy.plan",
+   "claim": "plan is saved to .promptarena/envs/default/deploy.plan",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/session.go:149",
-    "deploy/state.go:16"
+    "deploy/state.go:18",
+    "deploy/state.go:261",
+    "deploy/state.go:81"
    ]
   },
   {
@@ -88,7 +90,7 @@
    "claim": "the CLI compiles a pack from the config when --pack is not given",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/config.go:43"
+    "arena/deploy/flow/config.go:67"
    ]
   },
   {
@@ -96,7 +98,7 @@
    "claim": "pack id / runtime name derives from the project directory name",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:97"
+    "packc/compiler/compiler.go:108"
    ]
   },
   {
@@ -104,40 +106,40 @@
    "claim": "apply prints 'Applying deployment to environment...', 'Using saved plan.', Adapter line, per-resource lines, 'Apply complete.'",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/deploy_apply_interactive.go:46",
-    "arena/cmd/promptarena/deploy_apply_interactive.go:56",
-    "arena/cmd/promptarena/deploy_apply_interactive.go:88",
-    "arena/cmd/promptarena/deploy_interactive.go:164"
+    "arena/cmd/promptarena/deploy_apply_interactive.go:40",
+    "arena/cmd/promptarena/deploy_apply_interactive.go:50",
+    "arena/cmd/promptarena/deploy_apply_interactive.go:82"
    ]
   },
   {
    "id": 13,
-   "claim": "state is recorded in .promptarena/deploy.state",
+   "claim": "apply records the deployment in .promptarena/envs/default/deploy.state",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/session.go:126",
-    "deploy/state.go:14",
-    "deploy/state.go:15"
+    "arena/deploy/flow/session.go:190",
+    "deploy/state.go:17",
+    "deploy/state.go:85"
    ]
   },
   {
    "id": 14,
-   "claim": "status prints header, Status, type.name: status lines, Last deployed, Pack checksum",
+   "claim": "status prints header, Status, type.name: status lines, Last deployed, Pack version, Pack checksum",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/deploy_interactive.go:181",
-    "arena/cmd/promptarena/deploy_status_interactive.go:37",
-    "arena/cmd/promptarena/deploy_status_interactive.go:75"
+    "arena/cmd/promptarena/deploy_interactive.go:270",
+    "arena/cmd/promptarena/deploy_status_interactive.go:35",
+    "arena/cmd/promptarena/deploy_status_interactive.go:79",
+    "arena/cmd/promptarena/deploy_status_interactive.go:81",
+    "arena/cmd/promptarena/deploy_status_interactive.go:83"
    ]
   },
   {
    "id": 15,
-   "claim": "destroy deletes resources, removes deploy.state, prints 'Deployment destroyed.'",
+   "claim": "destroy deletes resources, removes .promptarena/envs/default/deploy.state, prints 'Deployment destroyed.'",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/deploy_destroy_interactive.go:70",
-    "arena/cmd/promptarena/deploy_destroy_interactive.go:82",
-    "arena/cmd/promptarena/deploy_destroy_interactive.go:87"
+    "arena/cmd/promptarena/deploy_destroy_interactive.go:59",
+    "arena/cmd/promptarena/deploy_destroy_interactive.go:66"
    ]
   },
   {
@@ -151,7 +153,36 @@
    "claim": "deploy with no subcommand plans then applies",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/deploy_interactive.go:199"
+    "arena/cmd/promptarena/deploy_interactive.go:287"
+   ]
+  },
+  {
+   "id": 18,
+   "claim": "apply reuses the saved plan while the pack is unchanged; recompiling the same config does not change the checksum",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_apply_interactive.go:50",
+    "arena/deploy/flow/session.go:221",
+    "arena/deploy/flow/session.go:93",
+    "deploy/state.go:222"
+   ]
+  },
+  {
+   "id": 19,
+   "claim": "running deploy outside the project fails with 'deploy config \"config.arena.yaml\" not found'",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/options.go:14"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "the CLI asks the adapter to validate config before planning; a missing required field stops the plan",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/session.go:102",
+    "arena/deploy/flow/session.go:115",
+    "arena/deploy/flow/session.go:129"
    ]
   }
  ]

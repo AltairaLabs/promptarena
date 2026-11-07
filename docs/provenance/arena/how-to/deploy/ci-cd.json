@@ -1,13 +1,13 @@
 {
  "page": "docs/src/content/docs/arena/how-to/deploy/ci-cd.md",
- "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
    "claim": "deploy compiles the pack from arena.yaml automatically",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/config.go:37-56"
+    "arena/deploy/flow/config.go:61-80"
    ]
   },
   {
@@ -37,7 +37,7 @@
    "claim": "promptarena deploy --env production",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/deploy_interactive.go:53-56"
+    "arena/cmd/promptarena/deploy_interactive.go:64-68"
    ]
   },
   {
@@ -45,7 +45,7 @@
    "claim": "OMNIA_API_TOKEN supplies the Omnia token",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/config.go:70-74"
+    "arena/deploy/flow/config.go:94-98"
    ]
   },
   {
@@ -53,7 +53,7 @@
    "claim": "deploy plan --env production",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/deploy_plan_interactive.go:13-24"
+    "arena/cmd/promptarena/deploy_plan_interactive.go:11-22"
    ]
   },
   {
@@ -61,7 +61,7 @@
    "claim": "--pack with the same file gives byte-identical deploys",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/config.go:43-50"
+    "arena/deploy/flow/config.go:67-74"
    ]
   },
   {
@@ -74,10 +74,10 @@
   },
   {
    "id": 10,
-   "claim": "packc compile --config arena.yaml --output app.pack.json --id my-app",
+   "claim": "packc compile --config config.arena.yaml --output app.pack.json --id my-app",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go:120-124"
+    "packc/main_interactive.go:128-130"
    ]
   },
   {
@@ -90,18 +90,18 @@
   },
   {
    "id": 12,
-   "claim": "state file .promptarena/deploy.state stored locally",
+   "claim": "The CLI keeps each environment's deploy state in .promptarena/envs/<env>/deploy.state in the working directory.",
    "verdict": "true",
    "evidence": [
-    "deploy/state.go:13-20"
+    "deploy/state.go:81-87"
    ]
   },
   {
    "id": 13,
-   "claim": "download-artifact without path restores state",
-   "verdict": "false",
+   "claim": "Download prior state with actions/download-artifact path .promptarena/envs/production",
+   "verdict": "true",
    "evidence": [
-    "deploy/state.go:45-48"
+    "deploy/state.go:81-87"
    ]
   },
   {
@@ -109,7 +109,33 @@
    "claim": "without state each CI run treats the deployment as new",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/session.go:76-99"
+    "arena/deploy/flow/session.go:138-152"
+   ]
+  },
+  {
+   "id": 15,
+   "claim": "promptarena deploy compiles the pack from the arena config (config.arena.yaml by default)",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/options.go:14-41"
+   ]
+  },
+  {
+   "id": 16,
+   "claim": "Each environment's state lives in its own directory, so persist each one separately (one artifact per environment).",
+   "verdict": "true",
+   "evidence": [
+    "deploy/state.go:81-87"
+   ]
+  },
+  {
+   "id": 17,
+   "claim": "Without a state file, deploy sends no prior state to the adapter, and status, refresh and destroy print No deployment state found.",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_destroy_interactive.go:35-39",
+    "arena/cmd/promptarena/deploy_refresh_interactive.go:34-39",
+    "arena/cmd/promptarena/deploy_status_interactive.go:54-59"
    ]
   }
  ]

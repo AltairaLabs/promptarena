@@ -1,13 +1,13 @@
 {
  "page": "docs/src/content/docs/arena/explanation/deploy/anatomy.md",
- "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
    "claim": "every deployment combines exactly two inputs",
    "verdict": "false",
    "evidence": [
-    "arena/deploy/flow/session.go:92-98",
+    "arena/deploy/flow/session.go:153-159",
     "deploy/provider.go:39-46"
    ]
   },
@@ -16,16 +16,17 @@
    "claim": "CLI passes deploy.config through verbatim",
    "verdict": "false",
    "evidence": [
-    "arena/deploy/flow/config.go:60-80"
+    "arena/deploy/flow/config.go:84-104"
    ]
   },
   {
    "id": 3,
-   "claim": "CLI compiles the pack and hands both to the adapter as JSON",
+   "claim": "the CLI compiles the pack, asks the adapter to validate the deploy config, and sends both to the adapter as JSON",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/config.go:43-56",
-    "arena/deploy/flow/session.go:76-99"
+    "arena/deploy/flow/session.go:129",
+    "arena/deploy/flow/session.go:153",
+    "arena/deploy/flow/session.go:68"
    ]
   },
   {
@@ -33,7 +34,8 @@
    "claim": "pack carries prompts, system templates, tool schemas, validators, tool policies, evals, agents, id and version",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:103-164"
+    "packc/compiler/compiler.go:143",
+    "packc/compiler/compiler.go:154"
    ]
   },
   {
@@ -41,7 +43,7 @@
    "claim": "deploy.config is defined by the adapter, opaque to the CLI",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:364-365"
+    "arena/arenaconfig/types.go:367-368"
    ]
   },
   {
@@ -57,7 +59,7 @@
    "claim": "test providers in arena.yaml do not deploy",
    "verdict": "unverified",
    "evidence": [
-    "arena/deploy/flow/config.go:89-102"
+    "arena/deploy/flow/config.go:113-126"
    ]
   }
  ]

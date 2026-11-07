@@ -2,7 +2,7 @@
 title: 'Deploy: Adapter Architecture'
 description: Why deploy targets are separate adapter binaries, and how the CLI drives them over JSON-RPC on stdio.
 verified:
-  commit: 631d3c353c2c9d71b362ae5cd20c137d42b19d5b
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/cmd/promptarena/adapter_registry.json
     - arena/cmd/promptarena/deploy_adapter_interactive.go
@@ -99,7 +99,7 @@ An adapter can also implement the optional `LoginProvider` interface (`GetLoginU
 | Method | Purpose |
 |--------|---------|
 | `GetProviderInfo` | Return adapter name, version and capabilities |
-| `ValidateConfig` | Check that provider config is valid. The CLI calls it before every plan, and `promptarena deploy config import` calls it after merging a profile. An invalid result stops the command before `Plan`. |
+| `ValidateConfig` | Check that provider config is valid. The CLI calls it before every plan, and `promptarena deploy config import` calls it after merging a profile. An invalid result stops the command before `Plan`, and its warnings print ahead of the plan's. |
 | `Plan` | Analyze pack and config and report which resources will change |
 | `Apply` | Create, update or delete resources on the cloud provider |
 | `Destroy` | Remove all managed resources |

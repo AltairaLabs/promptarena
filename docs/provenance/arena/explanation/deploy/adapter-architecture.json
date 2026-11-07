@@ -1,13 +1,13 @@
 {
  "page": "docs/src/content/docs/arena/explanation/deploy/adapter-architecture.md",
- "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
    "claim": "JSON-RPC 2.0 over stdio",
    "verdict": "true",
    "evidence": [
-    "deploy/client.go:14-41"
+    "deploy/client.go:298-377"
    ]
   },
   {
@@ -15,16 +15,19 @@
    "claim": "stdin requests, stdout responses",
    "verdict": "true",
    "evidence": [
-    "deploy/adaptersdk/serve.go:85-106",
-    "deploy/client.go:125-150"
+    "deploy/adaptersdk/serve.go:131",
+    "deploy/client.go:322-335"
    ]
   },
   {
    "id": 3,
-   "claim": "stderr available for adapter debug logging (not captured)",
-   "verdict": "false",
+   "claim": "stderr carries the adapter's own logs. The CLI passes it through to your terminal (the TUI routes it into its log), and keeps the last few KiB: when the adapter exits mid-call, the error ends with what it wrote there, typically a panic trace.",
+   "verdict": "true",
    "evidence": [
-    "deploy/client.go:120-123"
+    "arena/deploy/flow/connect.go:28-60",
+    "deploy/client.go:131-145",
+    "deploy/client.go:175-186",
+    "deploy/client.go:276-293"
    ]
   },
   {
@@ -69,11 +72,12 @@
   },
   {
    "id": 9,
-   "claim": "ValidateConfig checks config before planning",
-   "verdict": "false",
+   "claim": "ValidateConfig: Check that provider config is valid. The CLI calls it before every plan, and `promptarena deploy config import` calls it after merging a profile. An invalid result stops the command before `Plan`, and its warnings print ahead of the plan's.",
+   "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/deploy_config_interactive.go:155",
-    "arena/deploy/flow/session.go:101-112"
+    "arena/deploy/flow/session.go:102-118",
+    "arena/deploy/flow/session.go:128-135"
    ]
   },
   {
@@ -89,8 +93,8 @@
    "claim": "Apply returns an opaque state string the CLI persists",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/session.go:114-131",
-    "deploy/provider.go:179"
+    "arena/deploy/flow/session.go:179-195",
+    "deploy/client.go:421-436"
    ]
   },
   {
@@ -114,7 +118,7 @@
    "claim": "CLI closes stdin and adapter exits",
    "verdict": "true",
    "evidence": [
-    "deploy/client.go:165-182"
+    "deploy/client.go:215-239"
    ]
   },
   {
@@ -122,8 +126,8 @@
    "claim": "process lives for one CLI command",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/connect.go:27-34",
-    "arena/deploy/flow/session.go:65-71"
+    "arena/deploy/flow/connect.go:53-60",
+    "arena/deploy/flow/session.go:53-81"
    ]
   },
   {
@@ -132,7 +136,7 @@
    "verdict": "true",
    "evidence": [
     "deploy/adaptersdk/serve.go:100-106",
-    "deploy/client.go:100-105"
+    "deploy/client.go:110-115"
    ]
   },
   {
@@ -148,7 +152,7 @@
    "claim": "no streaming: events collected in final response",
    "verdict": "true",
    "evidence": [
-    "deploy/client.go:306-325"
+    "deploy/client.go:417-436"
    ]
   }
  ]

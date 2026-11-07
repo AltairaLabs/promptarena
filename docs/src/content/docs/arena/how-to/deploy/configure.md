@@ -2,11 +2,10 @@
 title: 'Deploy: Configure'
 description: Add a deploy section to your arena config, bind it to an adapter, and override it per environment.
 verified:
-  commit: 3df344ffbc8c604e1a8935929c28499d778d19f0
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/arenaconfig/loader.go
     - arena/arenaconfig/types.go
-    - arena/cmd/promptarena/deploy_config_interactive.go
     - arena/cmd/promptarena/deploy_interactive.go
     - arena/deploy/flow/config.go
     - arena/deploy/flow/connect.go

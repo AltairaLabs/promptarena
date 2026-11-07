@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/reference/deploy/adapter-sdk.md",
- "commit": "3df344ffbc8c604e1a8935929c28499d778d19f0",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
@@ -848,10 +848,11 @@
   {
    "id": 101,
    "claim": "ToolInfo field Mode takes values mock, live, mcp or a2a",
-   "verdict": "false",
+   "verdict": "true",
    "evidence": [
+    "deploy/adaptersdk/arena.go:83",
     "deploy/adaptersdk/tools.go:14",
-    "schemas/v1alpha1/tool.json:321"
+    "schemas/v1alpha1/tool.json:319-321"
    ]
   },
   {
@@ -997,7 +998,8 @@
    "claim": "promptarena deploy login is the CLI command for browser-based autoconfigure",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/login.go:98"
+    "arena/cmd/promptarena/deploy_interactive.go:39",
+    "arena/deploy/flow/login.go:98-105"
    ]
   },
   {
@@ -1005,7 +1007,7 @@
    "claim": "deploy.LoginCapability is advertised in ProviderInfo.Capabilities to enable login",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/login.go:148",
+    "arena/deploy/flow/login.go:176",
     "deploy/provider.go:187"
    ]
   },
@@ -1023,7 +1025,7 @@
    "claim": "The CLI reports login as unsupported for adapters that do not implement LoginProvider",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/login.go:152"
+    "arena/deploy/flow/login.go:180"
    ]
   },
   {
@@ -1047,8 +1049,8 @@
    "claim": "The CLI supplies the loopback callback URL and a CSRF state nonce to GetLoginURL",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/login.go:103",
-    "arena/deploy/flow/login.go:113"
+    "arena/deploy/flow/login.go:131",
+    "arena/deploy/flow/login.go:141"
    ]
   },
   {
@@ -1591,8 +1593,8 @@
    "claim": "CompleteLoginResponse has field Profile of type map[string]interface{} that is merged into the arena config",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/login.go:203",
-    "arena/deploy/flow/login.go:211",
+    "arena/deploy/flow/login.go:231",
+    "arena/deploy/flow/login.go:239",
     "deploy/provider.go:220"
    ]
   },
@@ -1601,8 +1603,8 @@
    "claim": "CompleteLoginResponse has field Token (omitempty) that is stored in credentials",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/login.go:203",
-    "arena/deploy/flow/login.go:211",
+    "arena/deploy/flow/login.go:231",
+    "arena/deploy/flow/login.go:239",
     "deploy/provider.go:220"
    ]
   },
@@ -1675,8 +1677,8 @@
    "claim": "PlanRequest.ArenaConfig holds JSON-serialized arena config with loaded tools and scenarios",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/config.go:96",
-    "arena/deploy/flow/session.go:95"
+    "arena/deploy/flow/config.go:120",
+    "arena/deploy/flow/session.go:156"
    ]
   },
   {
@@ -1923,6 +1925,16 @@
    "verdict": "true",
    "evidence": [
     "deploy/manager.go:38"
+   ]
+  },
+  {
+   "id": 231,
+   "claim": "The CLI calls ValidateConfig before every plan. Valid: false stops the command with the Errors listed, and Warnings print before the plan's own warnings.",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/session.go:102-118",
+    "arena/deploy/flow/session.go:128-135",
+    "arena/deploy/flow/session.go:172-174"
    ]
   }
  ]
