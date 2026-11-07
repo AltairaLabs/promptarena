@@ -2,7 +2,7 @@
 title: Provider Comparison Guide
 description: How providers differ in style, capability, context and cost, and how Arena runs one scenario against several of them.
 verified:
-  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/arenaconfig/loader.go
     - arena/arenaconfig/types.go
@@ -21,7 +21,7 @@ Providers differ in quality, tone, capabilities, speed, cost and reliability. Ar
 
 ## How a cross-provider run works
 
-A scenario names the providers that run it in `spec.providers`. Each id must match a provider defined in the Arena config, and `promptarena run --provider <id>` narrows the set further. The same turns and assertions apply to every provider, and each provider gets its own result.
+A scenario names the providers that run it in `spec.providers`. Each id must match a provider defined in the Arena config, or that run fails with `provider not found`. `promptarena run --provider <id>` narrows the set further. The same turns and assertions apply to every provider, and each provider gets its own result.
 
 The diagram shows one scenario fanning out to the providers in an Arena config, then converging on the assertions.
 
@@ -40,7 +40,7 @@ flowchart LR
 
 Provider types include `openai`, `claude`, `gemini`, `ollama`, `vllm`, `imagen`, `replay` and `mock` (for tests). This page compares the first four. The provider ids are free strings that you choose in each provider file.
 
-A scenario that compares three providers looks like this. Per-turn assertions go on the turn, and `message` sits beside `params`, not inside it.
+A scenario that compares three providers looks like this. Per-turn assertions go on the turn, and `message` sits beside `params`, not inside it. Validation rejects a param name an assertion does not accept (`max_msx` for `latency_budget`, for example) and any scenario or turn field outside the schema.
 
 ```yaml
 apiVersion: promptkit.altairalabs.ai/v1alpha1
@@ -71,7 +71,7 @@ spec:
             max_ms: 5000
 ```
 
-The `judge: quality` value names an entry in the Arena config's `spec.judges`, which maps a judge name to one of the configured providers. An `llm_judge` can also pick its judge with `params.provider`. Use `metadata.labels` to tag scenarios, for example to group a fast-provider suite apart from a premium one.
+The `judge: quality` value names an entry in the Arena config's `spec.judges`, which maps a judge name to one of the configured providers. A `judge` name that `spec.judges` does not define fails when the config loads. An `llm_judge` can also pick its judge with `params.provider`. Use `metadata.labels` to tag scenarios, for example to group a fast-provider suite apart from a premium one.
 
 ## What differs between providers
 

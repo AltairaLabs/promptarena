@@ -1,7 +1,7 @@
 ---
 title: Scenario Design Principles
 verified:
-  commit: f47e1e3a3e4621c2061a6e67995712d621bbfe79
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/arenaconfig/judge_param.go
     - arena/arenaconfig/loader.go
@@ -180,7 +180,7 @@ assertions:
     message: Must be professional
 ```
 
-The `message` is a sibling of `params`. The `judge` value names an entry in the Arena config's `spec.judges`.
+The `message` is a sibling of `params`. The `judge` value names an entry in the Arena config's `spec.judges`, and a name that `spec.judges` does not define fails when the config loads. Validation also rejects param names an assertion does not accept.
 
 ## Multi-turn design
 
@@ -196,7 +196,7 @@ The cost of a run scales with the number of scenarios, the number of turns, the 
 
 ## Maintenance
 
-Keep scenarios maintainable by recording intent in `metadata.name`, `spec.description` and `labels`. Metadata accepts only `name`, `namespace`, `labels` and `annotations`, so keep version history in git rather than in the manifest.
+Keep scenarios maintainable by recording intent in `metadata.name`, `spec.description` and `labels`. Metadata accepts only `name`, `namespace`, `labels` and `annotations`, and a turn accepts only the fields in the Scenario Format reference. Any other key, such as a turn `name` or `context`, fails validation. Keep version history in git rather than in the manifest.
 
 To avoid repeating a block of assertions, use a YAML anchor and alias. YAML anchors and merge keys both work in scenario files.
 

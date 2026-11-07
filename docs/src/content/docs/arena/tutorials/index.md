@@ -4,7 +4,7 @@ description: Lessons that build a working PromptArena test suite step by step, f
 sidebar:
   order: 0
 verified:
-  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/cmd/promptarena/deploy_adapter_interactive.go
     - arena/engine/builder_integration.go

@@ -1,11 +1,12 @@
 ---
 title: Eval Framework
 verified:
-  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/assertions/types.go
     - arena/engine/builder_integration.go
     - arena/engine/conversation_executor.go
+    - arena/engine/duplex_executor_results_integration.go
     - arena/engine/eval_conversation_executor.go
     - arena/engine/eval_orchestrator.go
     - arena/engine/pack_eval_triggers_test.go
@@ -122,7 +123,7 @@ Three paths execute evals, and all of them go through `EvalRunner`.
 
 The SDK's `evalMiddleware` calls `EvalRunner` directly in the conversation's process. Turn evals run asynchronously in goroutines bounded by a semaphore, so they do not delay the response. Session evals run synchronously when you close the conversation. It builds the `EvalContext` from the conversation state and passes the results to the `ResultWriter`, which records metrics.
 
-Arena's `EvalOrchestrator` wraps `EvalRunner` and calls its `Run*Evals` methods directly. It builds its own `EvalContext` and returns results to the run report. Arena scores every trigger when the conversation ends: it replays the turn triggers (`every_turn`, `sample_turns`) once per assistant turn, over the transcript up to that turn's reply, then runs the session triggers and `on_conversation_complete`. A turn ends at the assistant reply before the next user message, so the intermediate replies of a tool loop are not scored separately.
+Arena's `EvalOrchestrator` wraps `EvalRunner` and calls its `Run*Evals` methods directly. It builds its own `EvalContext` and returns results to the run report. Arena scores every trigger when the conversation ends, for text and duplex runs alike: it replays the turn triggers (`every_turn`, `sample_turns`) once per assistant turn, over the transcript up to that turn's reply, then runs the session triggers and `on_conversation_complete`. A turn ends at the assistant reply before the next user message, so the intermediate replies of a tool loop are not scored separately.
 
 `EvalWorker` is the event-driven path. It subscribes to `eval.turn.*` and `eval.session.*` events through an `EventSubscriber` that your platform supplies, runs `EvalRunner`, and writes the results through a `ResultWriter`. This path suits deployments where evals run in a separate process from the conversation.
 
@@ -193,7 +194,7 @@ Labels come from three places:
 - Const labels come from `CollectorOpts.ConstLabels` and are process-level dimensions such as env or region.
 - Instance labels come from `CollectorOpts.InstanceLabels` and bind per conversation, for dimensions such as tenant or prompt name.
 
-Label names must match `^[a-zA-Z_][a-zA-Z0-9_]*$` and must not start with `__`. Pack validation does not check them. An invalid name surfaces later as a failed Prometheus registration, logged as a warning.
+Label names must match `^[a-zA-Z_][a-zA-Z0-9_]*$` and must not start with `__`. Arena checks the names on the `pack_evals` block of the arena config and refuses to start the run on an invalid one. It does not check the evals of a compiled pack, so an invalid name there surfaces later as a failed Prometheus registration, logged as a warning.
 
 ## Events
 

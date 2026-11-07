@@ -1,14 +1,14 @@
 {
  "page": "docs/src/content/docs/arena/explanation/eval-framework.md",
- "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
    "claim": "Evals are defined in pack files and execute automatically during conversations or against recorded sessions.",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:763",
-    "arena/engine/eval_conversation_executor.go:73"
+    "arena/engine/builder_integration.go:769",
+    "arena/engine/eval_conversation_executor.go:75"
    ]
   },
   {
@@ -16,7 +16,7 @@
    "claim": "Evals use the same check types as assertions and guardrails.",
    "verdict": "true",
    "evidence": [
-    "arena/engine/eval_orchestrator.go:250"
+    "arena/engine/eval_orchestrator.go:303"
    ]
   },
   {
@@ -31,7 +31,7 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/eval_conversation_executor.go:285",
-    "arena/engine/eval_orchestrator.go:254"
+    "arena/engine/eval_orchestrator.go:307"
    ]
   },
   {
@@ -63,7 +63,7 @@
    "claim": "Diagram edge: the Pack File (evals) feeds the EvalRunner.",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:763"
+    "arena/engine/builder_integration.go:769"
    ]
   },
   {
@@ -83,7 +83,7 @@
    "claim": "Pack evals and scenario assertions share the same underlying check types.",
    "verdict": "true",
    "evidence": [
-    "arena/engine/eval_orchestrator.go:250"
+    "arena/engine/eval_orchestrator.go:303"
    ]
   },
   {
@@ -106,7 +106,7 @@
    "claim": "Pack evals run in production and in testing.",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:768"
+    "arena/engine/builder_integration.go:774"
    ]
   },
   {
@@ -115,7 +115,7 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/eval_conversation_executor.go:285",
-    "arena/engine/eval_orchestrator.go:254"
+    "arena/engine/eval_orchestrator.go:307"
    ]
   },
   {
@@ -139,7 +139,7 @@
    "claim": "Pack evals travel with the pack and run in production, in Arena tests, and anywhere the pack is used.",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:763"
+    "arena/engine/builder_integration.go:769"
    ]
   },
   {
@@ -148,7 +148,7 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/eval_conversation_executor.go:285",
-    "arena/engine/eval_orchestrator.go:246"
+    "arena/engine/eval_orchestrator.go:299"
    ]
   },
   {
@@ -387,9 +387,9 @@
   {
    "id": 59,
    "claim": "Diagram edges for InProcDispatcher: Conversation to InProcDispatcher, InProcDispatcher to EvalRunner, EvalRunner to Handlers, Handlers to ResultWriter.",
-   "verdict": "false",
+   "verdict": "dead",
    "evidence": [
-    "arena/engine/eval_orchestrator.go:223"
+    "arena/engine/eval_orchestrator.go:240"
    ]
   },
   {
@@ -482,8 +482,7 @@
    "claim": "EvalConversationExecutor step 4 evaluates conversation-level assertions.",
    "verdict": "true",
    "evidence": [
-    "arena/engine/eval_conversation_executor.go:156",
-    "arena/engine/eval_conversation_executor.go:67"
+    "arena/engine/eval_conversation_executor.go:75"
    ]
   },
   {
@@ -491,8 +490,8 @@
    "claim": "EvalConversationExecutor runs pack evals for every trigger if configured: turn evals per assistant turn, then session and conversation evals.",
    "verdict": "true",
    "evidence": [
-    "arena/engine/eval_conversation_executor.go",
-    "arena/engine/eval_orchestrator.go"
+    "arena/engine/eval_conversation_executor.go:75",
+    "arena/engine/eval_orchestrator.go:240"
    ]
   },
   {
@@ -500,7 +499,7 @@
    "claim": "EvalConversationExecutor step 6 returns aggregated results.",
    "verdict": "true",
    "evidence": [
-    "arena/engine/eval_conversation_executor.go:78"
+    "arena/engine/eval_conversation_executor.go:75"
    ]
   },
   {
@@ -679,7 +678,7 @@
    "claim": "Invalid label names are caught during pack validation.",
    "verdict": "false",
    "evidence": [
-    "arena/engine/builder_integration.go:716"
+    "arena/engine/builder_integration.go:717"
    ]
   },
   {
@@ -729,7 +728,7 @@
    "claim": "When both pack-level and prompt-level evals are defined, they are merged.",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:772"
+    "arena/engine/builder_integration.go:778"
    ]
   },
   {
@@ -763,7 +762,7 @@
    "claim": "The eval-test example evaluates saved conversations with both deterministic assertions and llm_judge evals.",
    "verdict": "true",
    "evidence": [
-    "examples/eval-test/evals/basic-eval.eval.yaml:33"
+    "examples/eval-test/evals/basic-eval.eval.yaml:32"
    ]
   },
   {
@@ -783,8 +782,9 @@
    "claim": "Arena scores every pack eval trigger at conversation end, replaying turn triggers once per assistant turn over the transcript up to that turn's reply; a turn ends at the assistant reply before the next user message.",
    "verdict": "true",
    "evidence": [
-    "arena/engine/conversation_executor.go",
-    "arena/engine/eval_orchestrator.go",
+    "arena/engine/conversation_executor.go:1028",
+    "arena/engine/duplex_executor_results_integration.go:63",
+    "arena/engine/eval_orchestrator.go:240",
     "arena/engine/pack_eval_triggers_test.go"
    ]
   }

@@ -2,7 +2,7 @@
 title: 'Tutorial 1: Your First Test'
 description: Install PromptArena, write a prompt, a provider and a two-turn scenario by hand, and run it against OpenAI.
 verified:
-  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - .goreleaser.yml
     - arena/assertions/types.go
@@ -187,7 +187,7 @@ This file tells Arena which prompts, providers and scenarios to load. `defaults`
 promptarena run --simple
 ```
 
-`--simple` prints plain output instead of the interactive terminal UI. Log lines scroll past, then a progress bar and a summary:
+`--simple` prints plain output instead of the interactive terminal UI. Arena lists the run settings, then shows a progress bar and a summary:
 
 ```text
 Done  [████████████████████████]  1/1
@@ -198,6 +198,9 @@ Run Summary
 Total runs      1
 Passed          1 (100.0%)
 Failed          0 (0.0%)
+
+Assertions      3 total
+Assertions Pass all passed
 
 Total cost      $0.0000
 Total tokens    121
@@ -269,7 +272,7 @@ Run again:
 promptarena run --simple
 ```
 
-The summary now shows `Total runs      2`, one per scenario.
+The summary now shows `Total runs      2` (one per scenario) and `Assertions      4 total`.
 
 ## Common issues
 

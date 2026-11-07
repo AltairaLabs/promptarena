@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/index.md",
- "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
@@ -41,9 +41,9 @@
    "evidence": [
     "arena/tui/app/chatpage.go:164",
     "arena/tui/app/deploypage.go:243",
-    "arena/tui/app/home.go:24",
+    "arena/tui/app/home.go:167",
     "arena/tui/app/inspectpage.go:128",
-    "arena/tui/app/runpage.go:100",
+    "arena/tui/app/runpage.go:108",
     "arena/tui/app/viewpage.go:171"
    ]
   },
@@ -62,7 +62,7 @@
    "verdict": "true",
    "evidence": [
     "arena/results/interfaces.go:42",
-    "arena/results/utils.go:200"
+    "arena/results/utils.go:195"
    ]
   },
   {
@@ -70,7 +70,7 @@
    "claim": "PromptArena validates conversation flows with multi-turn scenarios",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:694"
+    "arena/arenaconfig/types.go:697"
    ]
   },
   {
@@ -92,8 +92,8 @@
    "claim": "Command 'brew install altairalabs/tap/promptarena' installs PromptArena",
    "verdict": "true",
    "evidence": [
-    ".goreleaser.yml:201",
-    ".goreleaser.yml:207"
+    ".goreleaser.yml:183",
+    ".goreleaser.yml:187"
    ]
   },
   {
@@ -101,8 +101,7 @@
    "claim": "Building from source with Go needs no C compiler: oto and PortAudio load via purego",
    "verdict": "true",
    "evidence": [
-    "arena/audio/local_sink_oto.go:1",
-    "go.mod:13"
+    "arena/voice/portaudio/portaudio_discovery.go"
    ]
   },
   {
@@ -116,8 +115,8 @@
    "claim": "Command 'promptarena init <name> --quick' creates a new test project",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:130",
-    "arena/cmd/promptarena/init.go:62"
+    "arena/cmd/promptarena/init.go:15",
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
@@ -149,8 +148,8 @@
    "claim": "Quick init provider choice 'anthropic' exists",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/init.go:162",
-    "arena/templates/builtin/quick-start/template.yaml:21"
+    "arena/cmd/promptarena/init.go:75",
+    "arena/templates/builtin/quick-start/template.yaml:24"
    ]
   },
   {
@@ -158,8 +157,8 @@
    "claim": "Quick init provider choice 'google' exists",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/init.go:63",
-    "arena/templates/builtin/quick-start/template.yaml:21"
+    "arena/cmd/promptarena/init.go:75",
+    "arena/templates/builtin/quick-start/template.yaml:24"
    ]
   },
   {
@@ -232,7 +231,7 @@
    "claim": "Command 'promptarena init <project>' without --quick runs an interactive wizard",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:140",
+    "arena/cmd/promptarena/init.go:146",
     "arena/cmd/promptarena/init_interactive.go:11"
    ]
   },
@@ -503,10 +502,10 @@
   {
    "id": 71,
    "claim": "Arena scenario entry accepts a providers list naming providers to run the scenario against",
-   "verdict": "false",
+   "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:415",
-    "arena/arenaconfig/types.go:696"
+    "arena/arenaconfig/types.go:705",
+    "arena/engine/execution.go:280"
    ]
   },
   {
@@ -611,7 +610,7 @@
    "verdict": "true",
    "evidence": [
     "arena/results/interfaces.go:47",
-    "arena/results/utils.go:200"
+    "arena/results/utils.go:195"
    ]
   },
   {
@@ -619,7 +618,7 @@
    "claim": "PromptArena automatically tracks token usage split into input and output tokens",
    "verdict": "true",
    "evidence": [
-    "arena/results/utils.go:203"
+    "arena/results/utils.go:198"
    ]
   },
   {
@@ -628,7 +627,7 @@
    "verdict": "true",
    "evidence": [
     "arena/results/interfaces.go:48",
-    "arena/results/utils.go:202"
+    "arena/results/utils.go:197"
    ]
   },
   {
@@ -644,7 +643,8 @@
    "claim": "Command 'promptarena run --ci' runs tests in CI mode",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/main_integration.go"
+    "arena/cmd/promptarena/main_integration.go",
+    "arena/cmd/promptarena/run.go:170"
    ]
   },
   {
@@ -652,7 +652,7 @@
    "claim": "The run command accepts a --ci flag",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/main_integration.go"
+    "arena/cmd/promptarena/run.go:170"
    ]
   },
   {
@@ -704,7 +704,7 @@
    "claim": "Issues link https://github.com/AltairaLabs/promptarena/v2/issues is a valid issues URL",
    "verdict": "false",
    "evidence": [
-    ".goreleaser.yml:210"
+    ".goreleaser.yml:192"
    ]
   },
   {

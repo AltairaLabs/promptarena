@@ -2,7 +2,7 @@
 title: 'Tutorial 7: Using Arena as a Go Library'
 description: Build a Go program that configures PromptArena in code, runs a scenario against the mock provider and reads the results.
 verified:
-  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/arenaconfig/types.go
     - arena/assertions/types.go
@@ -241,7 +241,7 @@ Run it again:
 go run .
 ```
 
-The mock reply contains `4` but not `zebra`, so the second assertion fails and the run fails:
+The mock reply contains `4` but not `zebra`, so the second assertion fails and the run fails. The engine also logs two `ERROR` lines for the failed turn; with those removed, the output is:
 
 ```text
 Test 1: basic-test

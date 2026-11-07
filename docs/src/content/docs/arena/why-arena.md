@@ -4,7 +4,7 @@ description: What PromptArena tests that a single-turn eval library does not (vo
 sidebar:
   order: 2
 verified:
-  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/arenaconfig/types.go
     - arena/assertions/register.go
@@ -16,7 +16,6 @@ verified:
     - arena/engine/execution.go
     - arena/engine/mock_default_audio.go
     - arena/selfplay/audio_generator.go
-    - arena/stages/duplex_guardrail.go
     - arena/turnexecutors/pipeline_stages_integration.go
     - examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml
     - examples/guardrails-test/prompts/content-filter.yaml
@@ -63,7 +62,7 @@ A transcript is a lossy record of a voice call. It does not carry turn-taking, l
 
 PromptArena tests voice as a full conversation:
 
-- A persona (LLM-driven via self-play, or scripted text) drives the user side. TTS makes it indistinguishable from a real call from the agent's perspective.
+- A persona (LLM-driven via self-play, or scripted text) drives the user side. TTS turns the persona's lines into audio, so the agent hears speech as it would on a real call.
 - The agent under test is a real duplex provider (OpenAI Realtime, Gemini Live) or a mock for CI.
 - Per-turn latency budgets and content checks run on real signals.
 
@@ -75,7 +74,7 @@ Demos:
 - [Voice IVR with workflow](/arena/how-to/voice/voice-ivr/): a workflow state machine routes the call. Asserts transitions.
 - [Voice + tool calls](/arena/how-to/voice/voice-tool-calls/): the agent calls tools mid-conversation under live audio.
 - [Voice latency budget](/arena/how-to/voice/voice-latency-budget/): asserts `latency_budget(max_ms: ...)` per turn.
-- [Voice + guardrails](/arena/how-to/voice/voice-guardrails/): PII redaction observed with `guardrail_triggered`, on text turns.
+- [Voice + guardrails](/arena/how-to/voice/voice-guardrails/): PII redaction observed with `guardrail_triggered`, on text turns and on duplex turns.
 - [Voice provider bake-off](/arena/how-to/voice/voice-bake-off/): one scenario across two registered mock providers, with a per-provider report. Add your duplex providers to compare voice providers.
 - [Expressive voice characterization](/arena/how-to/voice/voice-characterization/): bracket-tag persona markup lowered into each provider's native dialect.
 
@@ -130,7 +129,7 @@ Demos:
 
 Mock-LLM testing usually means mocking everything (tools, state machines, downstream services), which hides integration bugs. PromptArena runs the real pipeline, workflow state machine, tool-call executor and pack guardrails with the LLM mocked. The agent's structural behaviour is exercised without provider keys. In the demos the tools themselves are mock-mode (`mode: mock` with a `mock_template`), and the A2A agents are in-process mocks.
 
-Most demos run this way in CI. The exceptions call live providers: voice customer support defaults to real realtime agents and TTS, voice tool calls and text negotiation need keys outside their mock modes, and voice characterization's `audio_emotion` check needs `HF_TOKEN`.
+Most demos run this way in CI. The exceptions call live providers: voice tool calls and text negotiation need keys outside their mock modes, and voice characterization's `audio_emotion` check needs `HF_TOKEN`.
 
 ## Test multi-agent A2A delegation
 

@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/explanation/session-recording.md",
- "commit": "3df344ffbc8c604e1a8935929c28499d778d19f0",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
@@ -8,8 +8,8 @@
    "verdict": "true",
    "evidence": [
     "arena/adapters/session_recording.go:39",
-    "arena/engine/builder_integration.go:45",
-    "arena/turnexecutors/pipeline_stages_integration.go:607"
+    "arena/engine/builder_integration.go:44",
+    "arena/turnexecutors/pipeline_stages_integration.go:609"
    ]
   },
   {
@@ -17,7 +17,7 @@
    "claim": "Recordings capture precise, millisecond-accurate event timestamps",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:607"
+    "arena/turnexecutors/pipeline_stages_integration.go:609"
    ]
   },
   {
@@ -26,7 +26,7 @@
    "verdict": "true",
    "evidence": [
     "arena/adapters/session_recording.go:94",
-    "arena/turnexecutors/pipeline_stages_integration.go:607"
+    "arena/turnexecutors/pipeline_stages_integration.go:609"
    ]
   },
   {
@@ -34,7 +34,7 @@
    "claim": "Recordings contain enough information to replay conversations exactly",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:45"
+    "arena/engine/builder_integration.go:44"
    ]
   },
   {
@@ -42,9 +42,9 @@
    "claim": "Diagram edge: Live Session (Emitter) feeds the Event Store (JSONL)",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:515",
-    "arena/engine/engine.go:601",
-    "arena/turnexecutors/pipeline_stages_integration.go:607"
+    "arena/engine/engine.go:519",
+    "arena/engine/engine.go:606",
+    "arena/turnexecutors/pipeline_stages_integration.go:609"
    ]
   },
   {
@@ -60,7 +60,7 @@
    "claim": "Diagram edge: Live Session emits real-time events",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:641"
+    "arena/turnexecutors/pipeline_stages_integration.go:643"
    ]
   },
   {
@@ -68,7 +68,7 @@
    "claim": "Diagram edge: Event Store writes to persistent storage",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:601"
+    "arena/engine/engine.go:606"
    ]
   },
   {
@@ -85,7 +85,7 @@
    "verdict": "false",
    "evidence": [
     "arena/engine/execution.go:907",
-    "arena/turnexecutors/pipeline_stages_integration.go:641"
+    "arena/turnexecutors/pipeline_stages_integration.go:643"
    ]
   },
   {
@@ -93,7 +93,7 @@
    "claim": "Emitter method ConversationStarted(systemPrompt) exists",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:641"
+    "arena/turnexecutors/pipeline_stages_integration.go:643"
    ]
   },
   {
@@ -101,7 +101,7 @@
    "claim": "Emitter method MessageCreated(role, content, index, parts, toolCalls, toolResult) exists with this parameter list",
    "verdict": "false",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:641"
+    "arena/turnexecutors/pipeline_stages_integration.go:643"
    ]
   },
   {
@@ -109,7 +109,7 @@
    "claim": "Emitter method AudioInput(audioData) exists",
    "verdict": "false",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:641"
+    "arena/turnexecutors/pipeline_stages_integration.go:643"
    ]
   },
   {
@@ -117,7 +117,7 @@
    "claim": "Emitter method ProviderCallStarted(provider, model) exists",
    "verdict": "false",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:641"
+    "arena/turnexecutors/pipeline_stages_integration.go:643"
    ]
   },
   {
@@ -125,7 +125,7 @@
    "claim": "Emitter method ToolCallStarted(toolName, args) exists",
    "verdict": "false",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:641"
+    "arena/turnexecutors/pipeline_stages_integration.go:643"
    ]
   },
   {
@@ -133,7 +133,7 @@
    "claim": "Emitter MessageCreated() strips binary data (base64 Data and FilePath) from content parts and emits only metadata (MIMEType, SizeKB, dimensions)",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:641"
+    "arena/turnexecutors/pipeline_stages_integration.go:643"
    ]
   },
   {
@@ -141,7 +141,7 @@
    "claim": "RecordingStage bypasses the emitter and publishes events directly to the EventBus with full binary data intact",
    "verdict": "false",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:607"
+    "arena/turnexecutors/pipeline_stages_integration.go:609"
    ]
   },
   {
@@ -155,9 +155,9 @@
    "claim": "RecordingStages can be inserted manually into Arena pipelines",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:601",
-    "arena/engine/engine.go:693",
-    "arena/turnexecutors/pipeline_stages_integration.go:607"
+    "arena/engine/engine.go:606",
+    "arena/engine/engine.go:698",
+    "arena/turnexecutors/pipeline_stages_integration.go:609"
    ]
   },
   {
@@ -165,7 +165,7 @@
    "claim": "Events flow through an EventBus to registered subscribers",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:561",
+    "arena/engine/engine.go:565",
     "arena/tui/event_adapter.go:43"
    ]
   },
@@ -174,7 +174,7 @@
    "claim": "Diagram edge: Emitter publishes to EventBus",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:641"
+    "arena/turnexecutors/pipeline_stages_integration.go:643"
    ]
   },
   {
@@ -182,8 +182,8 @@
    "claim": "Diagram edge: EventBus delivers to FileEventStore (persistence)",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:515",
-    "arena/engine/engine.go:601"
+    "arena/engine/engine.go:519",
+    "arena/engine/engine.go:606"
    ]
   },
   {
@@ -191,17 +191,16 @@
    "claim": "Diagram edge: EventBus delivers to a Metrics Collector",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:561",
-    "arena/engine/engine.go:563"
+    "arena/engine/engine.go:565",
+    "arena/engine/engine.go:567"
    ]
   },
   {
    "id": 24,
    "claim": "Diagram edge: EventBus delivers to an Eval Listener that auto-triggers pack evals",
-   "verdict": "false",
+   "verdict": "dead",
    "evidence": [
-    "arena/engine/conversation_executor.go:1028",
-    "arena/engine/eval_orchestrator.go:199"
+    "arena/engine/conversation_executor.go:1028"
    ]
   },
   {
@@ -218,7 +217,7 @@
    "claim": "Conversation category has event types started and ended",
    "verdict": "false",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:641"
+    "arena/turnexecutors/pipeline_stages_integration.go:643"
    ]
   },
   {
@@ -226,7 +225,7 @@
    "claim": "Message category has event types created and updated",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:641"
+    "arena/turnexecutors/pipeline_stages_integration.go:643"
    ]
   },
   {
@@ -234,7 +233,7 @@
    "claim": "Audio category has event types input and output",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:607"
+    "arena/turnexecutors/pipeline_stages_integration.go:609"
    ]
   },
   {
@@ -242,7 +241,7 @@
    "claim": "Provider category has event types call.started and call.completed",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:641"
+    "arena/turnexecutors/pipeline_stages_integration.go:643"
    ]
   },
   {
@@ -250,7 +249,7 @@
    "claim": "Tool category has event types call.started and call.completed",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:641"
+    "arena/turnexecutors/pipeline_stages_integration.go:643"
    ]
   },
   {
@@ -258,7 +257,7 @@
    "claim": "Validation category has event types started and completed",
    "verdict": "false",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:641"
+    "arena/turnexecutors/pipeline_stages_integration.go:643"
    ]
   },
   {
@@ -266,7 +265,7 @@
    "claim": "Event struct has a Type field of type EventType",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:641"
+    "arena/turnexecutors/pipeline_stages_integration.go:643"
    ]
   },
   {
@@ -274,7 +273,7 @@
    "claim": "Event struct has a Timestamp field of type time.Time",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:641"
+    "arena/turnexecutors/pipeline_stages_integration.go:643"
    ]
   },
   {
@@ -282,7 +281,7 @@
    "claim": "Event struct has a SessionID string field",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:641"
+    "arena/turnexecutors/pipeline_stages_integration.go:643"
    ]
   },
   {
@@ -290,7 +289,7 @@
    "claim": "Event struct has a Sequence int64 field",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:641"
+    "arena/turnexecutors/pipeline_stages_integration.go:643"
    ]
   },
   {
@@ -298,52 +297,47 @@
    "claim": "Event struct has a Data interface{} field",
    "verdict": "false",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:641"
+    "arena/turnexecutors/pipeline_stages_integration.go:643"
    ]
   },
   {
    "id": 37,
    "claim": "EventBusEvalListener subscribes to message.created events on the EventBus",
-   "verdict": "false",
+   "verdict": "dead",
    "evidence": [
-    "arena/engine/conversation_executor.go:1028",
-    "arena/engine/eval_orchestrator.go:69"
+    "arena/engine/eval_orchestrator.go:240"
    ]
   },
   {
    "id": 38,
    "claim": "Diagram edge: EventBus feeds EventBusEvalListener",
-   "verdict": "false",
+   "verdict": "dead",
    "evidence": [
-    "arena/engine/conversation_executor.go:1028",
-    "arena/engine/eval_orchestrator.go:69"
+    "arena/engine/eval_orchestrator.go:240"
    ]
   },
   {
    "id": 39,
    "claim": "Diagram edge: EventBusEvalListener feeds SessionAccumulator (builds conversation context)",
-   "verdict": "false",
+   "verdict": "dead",
    "evidence": [
-    "arena/engine/conversation_executor.go:1028",
-    "arena/engine/eval_orchestrator.go:69"
+    "arena/engine/eval_orchestrator.go:240"
    ]
   },
   {
    "id": 40,
    "claim": "Diagram edge: SessionAccumulator feeds EvalDispatcher",
-   "verdict": "false",
+   "verdict": "dead",
    "evidence": [
-    "arena/engine/conversation_executor.go:1028",
-    "arena/engine/eval_orchestrator.go:69"
+    "arena/engine/eval_orchestrator.go:240"
    ]
   },
   {
    "id": 41,
    "claim": "Diagram edge: EvalDispatcher feeds EvalRunner",
-   "verdict": "false",
+   "verdict": "dead",
    "evidence": [
-    "arena/engine/conversation_executor.go:1028",
-    "arena/engine/eval_orchestrator.go:69"
+    "arena/engine/eval_orchestrator.go:240"
    ]
   },
   {
@@ -359,7 +353,7 @@
    "claim": "Diagram edge: ResultWriter feeds MetricContext (Prometheus)",
    "verdict": "unverified",
    "evidence": [
-    "arena/engine/engine.go:561"
+    "arena/engine/engine.go:565"
    ]
   },
   {
@@ -368,7 +362,7 @@
    "verdict": "false",
    "evidence": [
     "arena/arenaconfig/types.go:525",
-    "arena/engine/builder_integration.go:777"
+    "arena/engine/builder_integration.go:783"
    ]
   },
   {
@@ -376,16 +370,15 @@
    "claim": "RecordingStage publishes message.created events as content flows through the pipeline",
    "verdict": "false",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:607"
+    "arena/turnexecutors/pipeline_stages_integration.go:609"
    ]
   },
   {
    "id": 46,
    "claim": "EventBusEvalListener accumulates messages per session in a SessionAccumulator",
-   "verdict": "false",
+   "verdict": "dead",
    "evidence": [
-    "arena/engine/conversation_executor.go:1028",
-    "arena/engine/eval_orchestrator.go:209"
+    "arena/engine/eval_orchestrator.go:240"
    ]
   },
   {
@@ -394,7 +387,7 @@
    "verdict": "false",
    "evidence": [
     "arena/engine/eval_orchestrator.go:199",
-    "arena/engine/eval_orchestrator.go:279"
+    "arena/engine/eval_orchestrator.go:332"
    ]
   },
   {
@@ -403,25 +396,23 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/conversation_executor.go:1028",
-    "arena/engine/eval_orchestrator.go:223"
+    "arena/engine/eval_orchestrator.go:240"
    ]
   },
   {
    "id": 49,
    "claim": "Eval results feed MetricContext (for Prometheus export) and can be attached to message metadata",
-   "verdict": "false",
+   "verdict": "dead",
    "evidence": [
-    "arena/engine/conversation_executor.go:1028",
     "arena/engine/engine.go:561"
    ]
   },
   {
    "id": 50,
    "claim": "Pack evals run automatically against recorded conversations without additional wiring",
-   "verdict": "false",
+   "verdict": "dead",
    "evidence": [
-    "arena/engine/builder_integration.go:777",
-    "arena/engine/conversation_executor.go:1028"
+    "arena/engine/builder_integration.go:769"
    ]
   },
   {
@@ -435,7 +426,7 @@
    "claim": "FileEventStore persists events in JSONL (JSON Lines) format",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:601"
+    "arena/engine/engine.go:606"
    ]
   },
   {
@@ -459,7 +450,7 @@
    "claim": "Event type audio.output is a valid JSONL event type",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:607"
+    "arena/turnexecutors/pipeline_stages_integration.go:609"
    ]
   },
   {
@@ -467,7 +458,7 @@
    "claim": "FileEventStore storage is append-only and safe for concurrent writes",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:601"
+    "arena/engine/engine.go:606"
    ]
   },
   {
@@ -483,7 +474,7 @@
    "claim": "FileEventStore storage is human-readable JSON per line",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:601"
+    "arena/engine/engine.go:606"
    ]
   },
   {
@@ -835,7 +826,7 @@
    "claim": "The rec argument to replay.NewProvider is a *recording.SessionRecording",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:45"
+    "arena/engine/builder_integration.go:44"
    ]
   },
   {
@@ -843,7 +834,7 @@
    "claim": "replay.NewProvider(rec, nil) constructs a ReplayProvider and returns (provider, err)",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:45"
+    "arena/engine/builder_integration.go:44"
    ]
   },
   {
@@ -851,7 +842,7 @@
    "claim": "A nil config passed to replay.NewProvider uses replay.DefaultConfig()",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:45"
+    "arena/engine/builder_integration.go:44"
    ]
   },
   {
@@ -859,7 +850,7 @@
    "claim": "replay.NewProviderFromFile(path, nil) loads a recording file directly into a ReplayProvider",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:45"
+    "arena/engine/builder_integration.go:44"
    ]
   },
   {
@@ -867,8 +858,8 @@
    "claim": "Recording files are conventionally stored under recordings/<run-id>.jsonl",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:681",
-    "arena/engine/engine.go:693"
+    "arena/engine/engine.go:686",
+    "arena/engine/engine.go:698"
    ]
   },
   {
@@ -876,7 +867,7 @@
    "claim": "provider.Predict(ctx, providers.PredictionRequest{Messages: messages}) is the ReplayProvider prediction call",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:45"
+    "arena/engine/builder_integration.go:44"
    ]
   },
   {
@@ -884,7 +875,7 @@
    "claim": "ReplayProvider returns the recorded assistant responses turn by turn",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:45"
+    "arena/engine/builder_integration.go:44"
    ]
   },
   {
@@ -892,8 +883,8 @@
    "claim": "ReplayProvider supports regression testing against known-good responses",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:322",
-    "arena/engine/builder_integration.go:45"
+    "arena/engine/builder_integration.go:327",
+    "arena/engine/builder_integration.go:44"
    ]
   },
   {
@@ -901,7 +892,7 @@
    "claim": "ReplayProvider runs with no API calls (offline testing)",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:45"
+    "arena/engine/builder_integration.go:44"
    ]
   },
   {
@@ -909,16 +900,16 @@
    "claim": "Diagram edge: User feeds the Pipeline, which feeds the Provider, which produces a Response to the User",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:607",
-    "arena/turnexecutors/pipeline_stages_integration.go:641"
+    "arena/turnexecutors/pipeline_stages_integration.go:609",
+    "arena/turnexecutors/pipeline_stages_integration.go:643"
    ]
   },
   {
    "id": 112,
    "claim": "Diagram edge: Pipeline feeds the Emitter",
-   "verdict": "true",
+   "verdict": "unverified",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:420"
+    "arena/turnexecutors/pipeline_stages_integration.go:643"
    ]
   },
   {
@@ -926,7 +917,7 @@
    "claim": "Diagram edge: Response feeds the EventBus",
    "verdict": "false",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:607"
+    "arena/turnexecutors/pipeline_stages_integration.go:609"
    ]
   },
   {
@@ -934,7 +925,7 @@
    "claim": "Diagram edge: Emitter feeds the EventBus",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:641"
+    "arena/turnexecutors/pipeline_stages_integration.go:643"
    ]
   },
   {
@@ -942,8 +933,8 @@
    "claim": "Diagram edge: EventBus feeds storage, evals and replay subsystems",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:515",
-    "arena/engine/engine.go:561",
+    "arena/engine/engine.go:519",
+    "arena/engine/engine.go:565",
     "arena/tui/event_adapter.go:43"
    ]
   },
@@ -952,7 +943,7 @@
    "claim": "Diagram edge: FileEventStore writes .jsonl files",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:681"
+    "arena/engine/engine.go:686"
    ]
   },
   {
@@ -960,7 +951,7 @@
    "claim": "Diagram edges: EvalListener -> Runner -> Metrics -> Prom (eval subsystem chain)",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:561",
+    "arena/engine/engine.go:565",
     "arena/engine/eval_orchestrator.go:199"
    ]
   },
@@ -977,8 +968,8 @@
    "claim": "Recording CPU overhead is minimal because events are queued and written asynchronously",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:515",
-    "arena/turnexecutors/pipeline_stages_integration.go:607"
+    "arena/engine/engine.go:519",
+    "arena/turnexecutors/pipeline_stages_integration.go:609"
    ]
   },
   {
@@ -986,7 +977,7 @@
    "claim": "Recording memory is bounded because segments are written incrementally",
    "verdict": "unverified",
    "evidence": [
-    "arena/engine/engine.go:601"
+    "arena/engine/engine.go:606"
    ]
   },
   {
@@ -1006,7 +997,7 @@
    "claim": "Base64 encoding adds roughly 33% overhead to stored audio",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:601"
+    "arena/engine/engine.go:606"
    ]
   },
   {
@@ -1026,9 +1017,8 @@
    "claim": "Recording can be disabled for CI or quick validation runs",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:558",
-    "arena/cmd/promptarena/run_interactive.go:259",
-    "arena/engine/engine.go:693"
+    "arena/arenaconfig/types.go:562",
+    "arena/cmd/promptarena/run_interactive.go:259"
    ]
   },
   {
@@ -1040,18 +1030,17 @@
   {
    "id": 128,
    "claim": "Recordings support retention policies that auto-delete old recordings",
-   "verdict": "false",
+   "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:558"
+    "arena/arenaconfig/types.go:561"
    ]
   },
   {
    "id": 129,
    "claim": "Recording can be enabled selectively for specific scenarios",
-   "verdict": "false",
+   "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:558",
-    "arena/engine/engine.go:693"
+    "arena/arenaconfig/types.go:561"
    ]
   },
   {
@@ -1071,6 +1060,32 @@
    "claim": "Link target /arena/explanation/testing-philosophy/ exists as a docs page",
    "verdict": "true",
    "evidence": []
+  },
+  {
+   "id": 133,
+   "claim": "A duplex recording holds the provider's audio.output events, which fill the assistant audio track of a MediaTimeline",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_executor_pipeline_integration.go:460",
+    "arena/stages/duplex_recording.go:26"
+   ]
+  },
+  {
+   "id": 134,
+   "claim": "Arena runs every pack eval trigger at conversation end (turn triggers per assistant turn, then session, then on_conversation_complete), text and duplex alike",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_executor_results_integration.go:63",
+    "arena/engine/eval_orchestrator.go:240"
+   ]
+  },
+  {
+   "id": 135,
+   "claim": "The duplex recording stages sit after the pack guardrail stage, so a recorded turn holds the enforced content",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_executor_pipeline_integration.go:460"
+   ]
   }
  ]
 }

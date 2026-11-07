@@ -4,12 +4,13 @@ description: The three ways to drive an Arena run (interactive terminal, local w
 sidebar:
   order: 5
 verified:
-  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - .github/actions/promptarena-action/action.yml
     - .github/actions/promptarena-action/src/runner.ts
     - arena/arenaconfig/helpers.go
     - arena/cmd/promptarena/chat_interactive.go
+    - arena/cmd/promptarena/hub_results.go
     - arena/cmd/promptarena/main_integration.go
     - arena/cmd/promptarena/run.go
     - arena/cmd/promptarena/run_interactive.go
@@ -69,7 +70,9 @@ same whichever one starts it. The files they leave behind differ:
 
 - `promptarena run` (with `--ci`, `--simple` or its own TUI) writes every configured report
   format to the `--out` directory, `out` by default.
-- `promptarena serve` writes one `<runID>.json` per run to the same output directory.
+- `promptarena serve` writes one `<runID>.json` per run. It has no `--out` flag, so it uses the
+  output directory `run` resolves from the config (`out` by default) and lists the results
+  `run` wrote there.
 - A run started from the hub's Run page writes the report formats `promptarena run` would
   write with no flags (`defaults.output.formats`, else `json`) to the output directory, resolved
   against the loaded config's directory.

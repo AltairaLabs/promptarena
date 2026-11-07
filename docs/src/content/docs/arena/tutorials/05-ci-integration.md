@@ -2,10 +2,11 @@
 title: 'Tutorial 5: CI/CD Integration'
 description: Build a keyless Arena test suite with a mock provider, see a failed assertion fail the run, and run the suite in GitHub Actions.
 verified:
-  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/arenaconfig/helpers.go
     - arena/arenaconfig/loader.go
+    - arena/arenaconfig/mock_config_check.go
     - arena/assertions/turn_summary.go
     - arena/cmd/promptarena/run.go
     - arena/cmd/promptarena/run_interactive.go

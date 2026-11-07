@@ -2,7 +2,7 @@
 title: 'Tutorial 2: Multi-Provider Testing'
 description: Run one customer-support scenario against OpenAI, Claude and Gemini in a single command, then read each provider's replies from the run output.
 verified:
-  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/arenaconfig/ignored_fields.go
     - arena/arenaconfig/loader.go

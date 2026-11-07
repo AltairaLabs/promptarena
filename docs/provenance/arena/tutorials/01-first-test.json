@@ -1,14 +1,14 @@
 {
  "page": "docs/src/content/docs/arena/tutorials/01-first-test.md",
- "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
    "claim": "brew install altairalabs/tap/promptarena installs PromptArena (Homebrew tap altairalabs/tap)",
    "verdict": "true",
    "evidence": [
-    ".goreleaser.yml:201",
-    ".goreleaser.yml:207"
+    ".goreleaser.yml:183",
+    ".goreleaser.yml:187"
    ]
   },
   {
@@ -44,7 +44,7 @@
    "claim": "promptarena init [project-name] is a valid command",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:190"
+    "arena/cmd/promptarena/init.go:197"
    ]
   },
   {
@@ -52,7 +52,7 @@
    "claim": "promptarena init has a --quick flag that uses defaults and skips interactive prompts",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:190"
+    "arena/cmd/promptarena/init.go:197"
    ]
   },
   {
@@ -60,7 +60,7 @@
    "claim": "promptarena init has a --provider flag; openai is an accepted value",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:190"
+    "arena/cmd/promptarena/init.go:197"
    ]
   },
   {
@@ -68,7 +68,7 @@
    "claim": "init creates a project directory named after the project-name argument (my-first-test) that the reader then cd's into",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:190"
+    "arena/cmd/promptarena/init.go:197"
    ]
   },
   {
@@ -76,7 +76,7 @@
    "claim": "init creates a complete test project in seconds",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:190"
+    "arena/cmd/promptarena/init.go:197"
    ]
   },
   {
@@ -84,7 +84,7 @@
    "claim": "init creates config.arena.yaml (arena configuration) in the project",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:190"
+    "arena/cmd/promptarena/init.go:197"
    ]
   },
   {
@@ -92,7 +92,7 @@
    "claim": "init creates prompts/assistant.yaml",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/init.go:190"
+    "arena/cmd/promptarena/init.go:197"
    ]
   },
   {
@@ -100,7 +100,7 @@
    "claim": "init creates providers/openai.yaml",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/init.go:190"
+    "arena/cmd/promptarena/init.go:197"
    ]
   },
   {
@@ -108,7 +108,7 @@
    "claim": "init creates scenarios/basic-test.yaml",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/init.go:190"
+    "arena/cmd/promptarena/init.go:197"
    ]
   },
   {
@@ -116,7 +116,7 @@
    "claim": "init creates a .env file for environment setup",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:190"
+    "arena/cmd/promptarena/init.go:197"
    ]
   },
   {
@@ -138,7 +138,7 @@
    "claim": "apiVersion value promptkit.altairalabs.ai/v1alpha1 is the accepted apiVersion for PromptConfig, Provider, Scenario and Arena kinds",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:190"
+    "arena/cmd/promptarena/init.go:197"
    ]
   },
   {
@@ -178,7 +178,7 @@
    "claim": "metadata.name identifies the prompt config and is referenced by the arena config (id: greeter)",
    "verdict": "false",
    "evidence": [
-    "arena/engine/builder_integration.go:536",
+    "arena/engine/builder_integration.go:516",
     "arena/engine/conversation_executor.go:481"
    ]
   },
@@ -187,7 +187,7 @@
    "claim": "spec.task_type links a scenario to the prompt config with the matching task_type",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:536",
+    "arena/engine/builder_integration.go:516",
     "arena/engine/conversation_executor.go:389",
     "arena/engine/conversation_executor.go:481"
    ]
@@ -222,7 +222,7 @@
    "claim": "gpt-4o-mini is a model name the openai provider accepts",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:405"
+    "arena/engine/builder_integration.go:416"
    ]
   },
   {
@@ -230,7 +230,7 @@
    "claim": "spec.defaults is a Provider field holding model parameters",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:405",
+    "arena/engine/builder_integration.go:416",
     "schemas/v1alpha1/provider.json:206"
    ]
   },
@@ -255,7 +255,7 @@
    "claim": "spec.type accepts the values openai, anthropic and gemini",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/init.go:190"
+    "arena/cmd/promptarena/init.go:197"
    ]
   },
   {
@@ -299,7 +299,7 @@
    "claim": "kind: Scenario is a valid kind",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/scenario.json:550"
+    "schemas/v1alpha1/scenario.json:551"
    ]
   },
   {
@@ -307,7 +307,7 @@
    "claim": "spec.turns is a Scenario field holding an array of turns",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/scenario.json:553"
+    "schemas/v1alpha1/scenario.json:554"
    ]
   },
   {
@@ -315,7 +315,7 @@
    "claim": "role: user is a valid turn role and each user turn triggers an LLM response",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/scenario.json:952"
+    "schemas/v1alpha1/scenario.json:959"
    ]
   },
   {
@@ -323,7 +323,7 @@
    "claim": "turn content is a string field",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/scenario.json:859"
+    "schemas/v1alpha1/scenario.json:861"
    ]
   },
   {
@@ -393,7 +393,7 @@
    "claim": "apiVersion and kind are standard PromptKit resource identifiers for Scenario resources",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/scenario.json:1051"
+    "schemas/v1alpha1/scenario.json:1058"
    ]
   },
   {
@@ -457,7 +457,7 @@
    "claim": "promptarena run with no arguments uses config.arena.yaml in the current directory",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:168"
+    "arena/cmd/promptarena/run.go:169"
    ]
   },
   {
@@ -465,7 +465,7 @@
    "claim": "promptarena run is a valid command",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:168"
+    "arena/cmd/promptarena/run.go:169"
    ]
   },
   {
@@ -473,7 +473,7 @@
    "claim": "promptarena run prints 'PromptArena Starting...' before loading",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run.go:168"
+    "arena/cmd/promptarena/run.go:169"
    ]
   },
   {
@@ -481,7 +481,7 @@
    "claim": "run prints 'Loading configuration...' and per-kind counts ('Loaded 1 prompt config', 'Loaded 1 provider', 'Loaded 1 scenario')",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run.go:168"
+    "arena/cmd/promptarena/run.go:169"
    ]
   },
   {
@@ -489,7 +489,7 @@
    "claim": "run prints 'Running tests...' and one line per turn in the form 'Scenario Name - Turn N [provider-name] (time)'",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run.go:168"
+    "arena/cmd/promptarena/run.go:169"
    ]
   },
   {
@@ -497,7 +497,7 @@
    "claim": "the scenario is displayed as 'Basic Greeting' in run output",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run.go:168"
+    "arena/cmd/promptarena/run.go:169"
    ]
   },
   {
@@ -505,7 +505,7 @@
    "claim": "run prints a Results summary with Total turns, Passed, Failed and Pass Rate",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run.go:168"
+    "arena/cmd/promptarena/run.go:169"
    ]
   },
   {
@@ -513,7 +513,7 @@
    "claim": "run prints 'Reports generated' and lists out/results.json",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run.go:168"
+    "arena/cmd/promptarena/run.go:169"
    ]
   },
   {
@@ -521,7 +521,7 @@
    "claim": "default output directory is out",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:168"
+    "arena/cmd/promptarena/run.go:169"
    ]
   },
   {
@@ -545,7 +545,7 @@
    "claim": "promptarena run --format markdown is valid and produces a Markdown report",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:174"
+    "arena/cmd/promptarena/run.go:175"
    ]
   },
   {
@@ -553,7 +553,7 @@
    "claim": "the Markdown report is written to out/results.md",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:536",
+    "arena/cmd/promptarena/run.go:538",
     "arena/results/markdown/markdown_repository.go:1"
    ]
   },
@@ -562,7 +562,7 @@
    "claim": "Arena loads the prompt, provider and scenario files on run",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:168"
+    "arena/cmd/promptarena/run.go:169"
    ]
   },
   {
@@ -605,7 +605,7 @@
    "claim": "Arena saves results in multiple formats",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run.go:174"
+    "arena/cmd/promptarena/run.go:175"
    ]
   },
   {
@@ -621,7 +621,7 @@
    "claim": "promptarena run re-runs the edited scenario",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:168"
+    "arena/cmd/promptarena/run.go:169"
    ]
   },
   {
@@ -637,7 +637,7 @@
    "claim": "a turn with role user and empty content is accepted by the schema and runner",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/scenario.json:859"
+    "schemas/v1alpha1/scenario.json:861"
    ]
   },
   {
@@ -691,7 +691,7 @@
    "claim": "the error 'No scenarios found' is printed when config.arena.yaml scenario paths do not match the directory structure",
    "verdict": "false",
    "evidence": [
-    "arena/tui/tui.go:428"
+    "arena/tui/tui.go:429"
    ]
   },
   {
@@ -699,7 +699,7 @@
    "claim": "the reader's prompts/, providers/ and scenarios/ directories are the paths the config references",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:168"
+    "arena/cmd/promptarena/run.go:169"
    ]
   },
   {
@@ -745,7 +745,7 @@
    "claim": "promptarena run --format markdown generates a Markdown report",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:174"
+    "arena/cmd/promptarena/run.go:175"
    ]
   },
   {

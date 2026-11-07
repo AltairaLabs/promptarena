@@ -2,7 +2,7 @@
 title: 'Tutorial 8: Client-Side Tools'
 description: 'Test a client-mode tool in PromptArena with a mock provider, and simulate consent grant and consent deny.'
 verified:
-  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/assertions/types.go
     - arena/assertions/validate_types_test.go
@@ -264,7 +264,7 @@ spec:
 promptarena run --simple
 ```
 
-The log lines include a `tool hook denied` warning, which is the consent-deny scenario declining the call. The run ends with a summary:
+The run ends with a summary. Under `--ci` the log also shows a `tool hook denied` warning, which is the consent-deny scenario declining the call; `--simple` leaves it out.
 
 ```text
 Run Summary
@@ -273,6 +273,9 @@ Run Summary
 Total runs      2
 Passed          2 (100.0%)
 Failed          0 (0.0%)
+
+Assertions      4 total
+Assertions Pass all passed
 
 Total cost      $0.0029
 Total tokens    285

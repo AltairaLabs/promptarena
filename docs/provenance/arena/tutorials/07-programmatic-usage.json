@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/tutorials/07-programmatic-usage.md",
- "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
@@ -23,7 +23,7 @@
    "claim": "The program executes test scenarios",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:886"
+    "arena/engine/engine.go:897"
    ]
   },
   {
@@ -153,7 +153,7 @@
    "claim": "Provider type \"mock\" is a valid provider type",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:71"
+    "arena/engine/builder_integration.go:323"
    ]
   },
   {
@@ -201,7 +201,7 @@
    "claim": "LoadedScenarios value type is Scenario",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:682"
+    "arena/arenaconfig/types.go:687"
    ]
   },
   {
@@ -209,7 +209,7 @@
    "claim": "Scenario has field ID",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:683"
+    "arena/arenaconfig/types.go:688"
    ]
   },
   {
@@ -217,7 +217,7 @@
    "claim": "Scenario has field TaskType",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:684"
+    "arena/arenaconfig/types.go:689"
    ]
   },
   {
@@ -225,16 +225,15 @@
    "claim": "Scenario has field Description",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:686"
+    "arena/arenaconfig/types.go:691"
    ]
   },
   {
    "id": 32,
    "claim": "Scenario has field Turns of type TurnDefinition",
-   "verdict": "false",
+   "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1134",
-    "arena/arenaconfig/types.go:692"
+    "arena/arenaconfig/types.go:697"
    ]
   },
   {
@@ -242,7 +241,7 @@
    "claim": "TurnDefinition has field Role",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1135"
+    "arena/arenaconfig/types.go:1143"
    ]
   },
   {
@@ -250,7 +249,7 @@
    "claim": "TurnDefinition has field Content",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1136"
+    "arena/arenaconfig/types.go:1142"
    ]
   },
   {
@@ -334,7 +333,7 @@
    "claim": "engine.BuildEngineComponents takes one argument (cfg)",
    "verdict": "false",
    "evidence": [
-    "arena/engine/builder_integration.go:71"
+    "arena/engine/builder_integration.go:76"
    ]
   },
   {
@@ -342,7 +341,7 @@
    "claim": "engine.BuildEngineComponents returns five values (providerReg, promptReg, mcpReg, executor, err)",
    "verdict": "false",
    "evidence": [
-    "arena/engine/builder_integration.go:71"
+    "arena/engine/builder_integration.go:76"
    ]
   },
   {
@@ -358,7 +357,7 @@
    "claim": "Engine has method Close",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:456"
+    "arena/engine/engine.go:458"
    ]
   },
   {
@@ -382,7 +381,7 @@
    "claim": "Engine method ExecuteRuns takes a context, a plan and a worker count, and returns run IDs and error",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:886"
+    "arena/engine/engine.go:897"
    ]
   },
   {
@@ -390,7 +389,7 @@
    "claim": "Engine method GetStateStore returns *statestore.ArenaStateStore by type assertion",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:987"
+    "arena/engine/engine.go:998"
    ]
   },
   {
@@ -506,9 +505,9 @@
   {
    "id": 69,
    "claim": "go run main.go with OPENAI_API_KEY set runs the scenario against OpenAI",
-   "verdict": "true",
+   "verdict": "unverified",
    "evidence": [
-    "arena/engine/builder_integration.go:71"
+    "arena/engine/builder_integration.go:323"
    ]
   },
   {
@@ -516,7 +515,7 @@
    "claim": "LoadedScenarios entry math-test with fields ID, TaskType, Description, Turns",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:682"
+    "arena/arenaconfig/types.go:687"
    ]
   },
   {
@@ -524,7 +523,7 @@
    "claim": "TurnDefinition has field Assertions",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1181"
+    "arena/arenaconfig/types.go:1189"
    ]
   },
   {
@@ -597,15 +596,15 @@
    "claim": "config.Scenario map key pattern scenarios[fmt.Sprintf(\"test-%d\", i)] with ID, TaskType, Turns fields",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:682"
+    "arena/arenaconfig/types.go:687"
    ]
   },
   {
    "id": 82,
    "claim": "config.TurnDefinition is used with Role and Content",
-   "verdict": "false",
+   "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1134"
+    "arena/arenaconfig/types.go:1142"
    ]
   },
   {

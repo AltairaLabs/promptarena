@@ -1,7 +1,7 @@
 ---
 title: Validation Strategies
 verified:
-  commit: 1f3acc05aa6f98764a8598798bf817c19d6f1f44
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/arenaconfig/judge_param.go
     - arena/arenaconfig/types.go
@@ -139,6 +139,7 @@ assertions:
 
 Give every assertion a top-level `message` that says what is wrong. Only that key is read; a `message` inside `params` is ignored, and `promptarena validate` warns about it.
 
+`promptarena validate` also checks each assertion's `params` against what its type reads. A key the type ignores, such as `case_sensitive` on `content_matches`, is an error, as is a scalar where a list is needed (`patterns: "Paris"` instead of `patterns: ["Paris"]`).
 ```yaml
 # Fragment
 assertions:
