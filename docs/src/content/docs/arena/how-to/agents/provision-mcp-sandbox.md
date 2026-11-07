@@ -4,8 +4,10 @@ description: Open an MCP server (for example a containerised codegen sandbox) on
 sidebar:
   order: 13
 verified:
-  commit: 3df344ffbc8c604e1a8935929c28499d778d19f0
+  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
   sources:
+    - arena/arenaconfig/loader.go
+    - arena/arenaconfig/mcp_servers.go
     - arena/arenaconfig/types.go
     - arena/arenaconfig/validator.go
     - arena/cmd/promptarena/run.go
@@ -14,7 +16,6 @@ verified:
     - arena/engine/execution.go
     - arena/engine/execution_mcpsource.go
     - arena/engine/mcpsource_scope.go
-    - arena/mcp/config.go
     - arena/mcpsource/docker/cli.go
     - arena/mcpsource/docker/cli_interactive.go
     - arena/mcpsource/docker/register/register.go
@@ -57,7 +58,7 @@ spec:
 | `scope` | `run`, `scenario` or `session`. |
 | `source_args` | Free-form map handed to the source's `Open()`. |
 
-An entry with `source` set is opened as a source, and `url` and `command` on the same entry are ignored.
+Set exactly one of `source`, `url` and `command` on an entry, and give a `source` entry a `scope`. A config that breaks either rule fails to load, in `promptarena validate` and `promptarena run` alike.
 
 ## 2. Choose a scope
 
@@ -115,14 +116,14 @@ PromptArena registers a `docker` source automatically. It drives the container w
 | `image` | string, required |  | Image reference. The container must serve MCP HTTP+SSE on port 8080. |
 | `repo` | string |  | Cloned with `docker exec <cid> git clone [--branch <branch>] <repo> /workspace`. |
 | `branch` | string | repo default | Ignored when `repo` is empty. |
-| `env` | map of string |  | Passed via `-e`. |
+| `env` | map |  | Passed via `-e`. Numbers and booleans are passed as text (`DEV_MODE: 1` becomes `DEV_MODE=1`); a list or map value fails the open. |
 | `mounts` | list of objects |  | Bind mounts with `source`, `target` and `readonly`. |
 | `ports` | list of ints |  | Extra container ports, each published on a free host port. `8080` is rejected. |
 | `network` | string | Docker default | Passed to `--network`. `none` and `host` are rejected. |
 | `cpus` | string or number | unlimited | Passed to `--cpus`. |
 | `memory` | string | unlimited | Passed to `--memory` (for example `2g`). |
 
-The source publishes the container's `8080` on a free local port, polls `<url>/sse` until it returns 2xx (20s budget), then returns `http://localhost:<port>`. On close it stops and removes the container.
+The source publishes the container's `8080` on a free local port, polls `http://localhost:<port>/sse` until it returns 2xx (20s budget), then returns that `/sse` URL as the server's endpoint. On close it stops and removes the container.
 
 The clone is unauthenticated, so a private repo needs credentials baked into the image. See [Configuration Schema](/arena/reference/config-schema/#mcp_servers) for the other `mcp_servers` fields.
 
@@ -147,9 +148,14 @@ A `session_end` hook can point a scanner or load generator at that URL from the 
 
 ## 5. Mount skills
 
-For every source-backed entry, Arena sets `source_args.mounts` from the skill sources that have a `path` and an explicit `name:`. Skill sources without a `name:` are skipped. This assignment overwrites any `mounts` you set by hand on the entry.
+For every source-backed entry, Arena adds a read-only mount to `source_args.mounts` for each skill source with a `path`:
 
-Each entry has `source` (absolute host path of the skill directory), `target` (`/skills/<name>`) and `readonly: true`. The docker source passes it as `-v <src>:<tgt>:ro`, so skill scripts run in the sandbox as `Bash /skills/<name>/scripts/<script>`.
+- A skill directory (one holding `SKILL.md`) mounts at `/skills/<name>`. `<name>` is the source's `name:`, or the directory's base name when there is none, so `path: skills/codegen` mounts at `/skills/codegen`.
+- A directory of skills mounts each skill inside it at `/skills/<skill-directory>`.
+
+Inline skills get no mount. Mounts you set on the entry yourself are kept, and come first. When one of them already uses a `/skills/<name>` target, the skill mount for that target is dropped.
+
+Each skill mount has `source` (absolute host path of the skill directory), `target` and `readonly: true`. The docker source passes it as `-v <src>:<tgt>:ro`, so skill scripts run in the sandbox as `Bash /skills/<name>/scripts/<script>`.
 
 ## 6. Gate on a sandbox tool
 

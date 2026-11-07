@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/agents/provision-mcp-sandbox.md",
- "commit": "3df344ffbc8c604e1a8935929c28499d778d19f0",
+ "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
  "claims": [
   {
    "id": 1,
@@ -99,11 +99,11 @@
   },
   {
    "id": 12,
-   "claim": "source and url or command are mutually exclusive; each entry uses one transport",
-   "verdict": "false",
+   "claim": "An entry sets exactly one of source, url and command, and a source entry needs a scope; otherwise the config fails to load in validate and run",
+   "verdict": "true",
    "evidence": [
-    "arena/engine/mcpsource_scope.go:89",
-    "arena/mcp/config.go:43"
+    "arena/arenaconfig/loader.go",
+    "arena/arenaconfig/mcp_servers.go"
    ]
   },
   {
@@ -360,12 +360,11 @@
   },
   {
    "id": 42,
-   "claim": "env is a map of string to string passed via docker -e",
+   "claim": "env is a map passed via docker -e; numbers and booleans are formatted as text and list or map values fail the open",
    "verdict": "true",
    "evidence": [
-    "arena/mcpsource/docker/cli.go:74",
-    "arena/mcpsource/docker/source.go:235",
-    "arena/mcpsource/docker/source.go:53"
+    "arena/mcpsource/docker/cli.go",
+    "arena/mcpsource/docker/source.go"
    ]
   },
   {
@@ -429,21 +428,19 @@
   },
   {
    "id": 49,
-   "claim": "The source polls <url>/sse until ready with a 20 second budget",
+   "claim": "The source polls http://localhost:<port>/sse until it returns 2xx with a 20 second budget",
    "verdict": "true",
    "evidence": [
-    "arena/mcpsource/docker/source.go:18",
-    "arena/mcpsource/docker/source.go:311",
-    "arena/mcpsource/docker/source.go:314"
+    "arena/mcpsource/docker/source.go"
    ]
   },
   {
    "id": 50,
-   "claim": "The source returns MCPConn with URL http://localhost:<port>",
+   "claim": "The source returns the /sse URL (http://localhost:<port>/sse) as the server's endpoint",
    "verdict": "true",
    "evidence": [
-    "arena/mcpsource/docker/source.go:88",
-    "arena/mcpsource/source.go:27"
+    "arena/mcpsource/docker/source.go",
+    "arena/mcpsource/source.go"
    ]
   },
   {
@@ -537,12 +534,11 @@
   },
   {
    "id": 61,
-   "claim": "The example mounts skills/codegen/ read-only at /skills/codegen inside the container",
-   "verdict": "false",
+   "claim": "The example mounts skills/codegen read-only at /skills/codegen inside the container",
+   "verdict": "true",
    "evidence": [
-    "arena/engine/mcpsource_scope.go:358",
-    "arena/engine/mcpsource_scope.go:366",
-    "examples/codegen-sandbox/config.arena.yaml:31"
+    "arena/engine/mcpsource_scope.go",
+    "examples/codegen-sandbox/config.arena.yaml"
    ]
   },
   {
@@ -677,20 +673,18 @@
   },
   {
    "id": 78,
-   "claim": "When a pack declares skills and the source supports it, Arena populates source_args.mounts with one entry per skill directory",
-   "verdict": "false",
+   "claim": "Arena adds a read-only mount to source_args.mounts for each skill source with a path; a directory of skills mounts each skill inside it",
+   "verdict": "true",
    "evidence": [
-    "arena/engine/mcpsource_scope.go:358",
-    "arena/engine/mcpsource_scope.go:384",
-    "arena/engine/mcpsource_scope.go:85"
+    "arena/engine/mcpsource_scope.go"
    ]
   },
   {
    "id": 79,
-   "claim": "Skill mount target is /skills/<skill-name> inside the container",
+   "claim": "A skill directory mounts at /skills/<name>, where name is the source's name or the directory base name",
    "verdict": "true",
    "evidence": [
-    "arena/engine/mcpsource_scope.go:371"
+    "arena/engine/mcpsource_scope.go"
    ]
   },
   {
@@ -767,6 +761,22 @@
    "claim": "Link to https://promptkit.altairalabs.ai/runtime/how-to/integrate-mcp/ for the low-level MCP registry API",
    "verdict": "true",
    "evidence": []
+  },
+  {
+   "id": 900,
+   "claim": "Mounts set on the entry are kept and come first; a skill mount whose target a user mount uses is dropped",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/mcpsource_scope.go"
+   ]
+  },
+  {
+   "id": 901,
+   "claim": "Inline skills get no mount",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/mcpsource_scope.go"
+   ]
   }
  ]
 }

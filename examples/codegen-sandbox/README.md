@@ -36,10 +36,11 @@ What happens:
 
 1. Arena reads `config.arena.yaml` and finds `source: docker` on the
    `sandbox` MCP entry.
-2. For the session, the docker source runs the image, publishes the
+2. For the session, the docker source runs the image, mounts
+   `skills/codegen` read-only at `/skills/codegen`, publishes the
    container's port 8080 on a free host port, and polls `/sse` until the
    server answers.
-3. Arena connects over HTTP+SSE and discovers the sandbox's tools (32 with
+3. Arena connects to the `/sse` endpoint over HTTP+SSE and discovers the sandbox's tools (32 with
    the current image).
 4. The mock agent seeds `/workspace` with a buggy Go function and a failing
    test, reads the file with `Read`, fixes it with `Edit`, and runs

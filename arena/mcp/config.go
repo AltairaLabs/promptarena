@@ -19,6 +19,8 @@ package mcp
 
 import (
 	"fmt"
+	"os"
+	"regexp"
 
 	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
 
@@ -55,15 +57,20 @@ func NewRegistryFromConfig(cfg *arenaconfig.Config) (*mcp.RegistryImpl, error) {
 // ServerConfig for a static server. Source, Scope and SourceArgs have no
 // runtime counterpart: they tell the arena engine how to provision the
 // endpoint, and the resulting URL and headers come from the MCPSource.
+//
+// `${VAR}` in env and headers values is replaced with the variable from
+// Arena's environment (empty when unset), so a token can be passed as
+// `GITHUB_TOKEN: ${GITHUB_TOKEN}` or `Authorization: "Bearer ${MCP_TOKEN}"`.
+// Only the braced form expands; a bare `$` is passed through.
 func ServerConfigFromConfig(c *config.MCPServerConfig) mcp.ServerConfig {
 	sc := mcp.ServerConfig{
 		Name:          c.Name,
 		Command:       c.Command,
 		Args:          c.Args,
-		Env:           c.Env,
+		Env:           expandEnvValues(c.Env),
 		WorkingDir:    c.WorkingDir,
 		URL:           c.URL,
-		Headers:       c.Headers,
+		Headers:       expandEnvValues(c.Headers),
 		TransportName: mcp.Transport(c.Transport),
 		TimeoutMs:     c.TimeoutMs,
 	}
@@ -74,4 +81,22 @@ func ServerConfigFromConfig(c *config.MCPServerConfig) mcp.ServerConfig {
 		}
 	}
 	return sc
+}
+
+// envVarPattern matches a braced environment reference: ${NAME}.
+var envVarPattern = regexp.MustCompile(`\$\{([A-Za-z_][A-Za-z0-9_]*)\}`)
+
+// expandEnvValues returns a copy of m with ${VAR} references in each value
+// replaced from the process environment. Nil stays nil.
+func expandEnvValues(m map[string]string) map[string]string {
+	if m == nil {
+		return nil
+	}
+	out := make(map[string]string, len(m))
+	for k, v := range m {
+		out[k] = envVarPattern.ReplaceAllStringFunc(v, func(ref string) string {
+			return os.Getenv(ref[2 : len(ref)-1]) // strip "${" and "}"
+		})
+	}
+	return out
 }

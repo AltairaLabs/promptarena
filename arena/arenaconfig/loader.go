@@ -218,6 +218,9 @@ func LoadConfig(filename string) (*Config, error) {
 	if err := cfg.checkStateStore(); err != nil {
 		return nil, err
 	}
+	if err := cfg.checkMCPServers(); err != nil {
+		return nil, err
+	}
 
 	// Determine base directory for resolving relative paths
 	cfg.ConfigDir = ResolveConfigDir(cfg, filename)

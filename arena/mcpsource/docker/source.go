@@ -17,6 +17,10 @@ const (
 	defaultSandboxPort = 8080
 	defaultHealthWait  = 20 * time.Second
 	healthPollInterval = 200 * time.Millisecond
+	// ssePath is the SSE endpoint of the sandbox's MCP server (mcp-go's SSE
+	// server). It is both the readiness probe and the URL handed to the MCP
+	// client, which connects to an SSE endpoint as written.
+	ssePath = "/sse"
 )
 
 // Source is the Docker-backed MCPSource.
@@ -34,7 +38,8 @@ type Source struct {
 func New() *Source { return &Source{cli: NewCLI()} }
 
 // Open validates args, starts the container, optionally clones a repo
-// into /workspace, health-polls, and returns the MCP URL + closer.
+// into /workspace, health-polls, and returns the MCP SSE endpoint URL
+// (http://localhost:<port>/sse) + closer.
 func (s *Source) Open(ctx context.Context, args map[string]any) (mcpsource.MCPConn, io.Closer, error) {
 	image, ok := args["image"].(string)
 	if !ok || image == "" {
@@ -46,11 +51,15 @@ func (s *Source) Open(ctx context.Context, args map[string]any) (mcpsource.MCPCo
 		return mcpsource.MCPConn{}, nil, fmt.Errorf("docker source: pick free port: %w", err)
 	}
 
+	env, err := envFromArgs(args["env"])
+	if err != nil {
+		return mcpsource.MCPConn{}, nil, err
+	}
 	spec := RunSpec{
 		Image:    image,
 		PortHost: hostPort,
 		PortCtr:  defaultSandboxPort,
-		Env:      stringMap(args["env"]),
+		Env:      env,
 		Mounts:   mountsFromArgs(args["mounts"]),
 	}
 	if argErr := applyRuntimeArgs(&spec, args); argErr != nil {
@@ -85,7 +94,7 @@ func (s *Source) Open(ctx context.Context, args map[string]any) (mcpsource.MCPCo
 		return mcpsource.MCPConn{}, nil, fmt.Errorf("docker source: container not healthy: %w", err)
 	}
 
-	return mcpsource.MCPConn{URL: url, ContainerID: cid, Ports: s.portURLs(cid, spec.ExtraPorts)}, closer, nil
+	return mcpsource.MCPConn{URL: url + ssePath, ContainerID: cid, Ports: s.portURLs(cid, spec.ExtraPorts)}, closer, nil
 }
 
 // portURLs maps each extra published container port to the host URL that
@@ -232,18 +241,36 @@ type closerFunc func() error
 // Close invokes the underlying function; satisfies io.Closer.
 func (f closerFunc) Close() error { return f() }
 
-func stringMap(v any) map[string]string {
+// envFromArgs parses args.env: a map of variable name to value. Scalars are
+// formatted as strings, since YAML turns `DEV_MODE: 1` into an int and
+// `DEBUG: true` into a bool; a list or map value is an error rather than
+// being dropped.
+func envFromArgs(v any) (map[string]string, error) {
+	if v == nil {
+		return nil, nil
+	}
 	m, ok := v.(map[string]any)
 	if !ok {
-		return nil
+		return nil, fmt.Errorf("docker source: args.env must be a map of variable to value, got %T", v)
 	}
 	out := make(map[string]string, len(m))
 	for k, raw := range m {
-		if s, ok := raw.(string); ok {
-			out[k] = s
+		switch x := raw.(type) {
+		case string:
+			out[k] = x
+		case int:
+			out[k] = strconv.Itoa(x)
+		case float64:
+			out[k] = strconv.FormatFloat(x, 'f', -1, 64)
+		case bool:
+			out[k] = strconv.FormatBool(x)
+		case nil:
+			out[k] = ""
+		default:
+			return nil, fmt.Errorf("docker source: args.env.%s must be a string, number or boolean, got %T", k, raw)
 		}
 	}
-	return out
+	return out, nil
 }
 
 func mountsFromArgs(v any) []Mount {
@@ -311,7 +338,7 @@ func pickFreePort() (int, error) {
 func waitForHealth(ctx context.Context, baseURL string, timeout time.Duration) error {
 	deadline := time.Now().Add(timeout)
 	for time.Now().Before(deadline) {
-		req, _ := http.NewRequestWithContext(ctx, http.MethodGet, baseURL+"/sse", http.NoBody)
+		req, _ := http.NewRequestWithContext(ctx, http.MethodGet, baseURL+ssePath, http.NoBody)
 		resp, err := http.DefaultClient.Do(req)
 		if err == nil {
 			_ = resp.Body.Close()

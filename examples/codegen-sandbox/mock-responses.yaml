@@ -1,9 +1,8 @@
 # Mock responses for the codegen-sandbox example.
 #
-# The mock provider simulates the LLM's decisions; tools themselves execute
-# against whichever MCP server is configured. When --mock-provider is used
-# with this example, tool calls are matched against the assertions but no
-# real sandbox is required — making this example CI-safe even without Docker.
+# The mock provider simulates the LLM's decisions; the tool calls execute
+# for real against the sandbox container, so the run needs Docker even with
+# --mock-provider.
 
 scenarios:
   simple-fix:

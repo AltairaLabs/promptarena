@@ -2,9 +2,10 @@ package engine
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
+	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -204,10 +205,11 @@ func (m *mcpSourceScope) ports() map[string]map[string]string {
 }
 
 // discoverAndRegisterServerTools lists tools from the just-registered MCP
-// server and adds each as a ToolDescriptor in the tools.Registry under the
-// qualified name "mcp__<server>__<tool>". This mirrors the construction-time
-// discovery done by discoverAndRegisterMCPTools, but for one server at a
-// time so it can run after a source-backed open.
+// server and adds each as a ToolDescriptor in the tools.Registry under its
+// raw MCP name (e.g. "Read"), not the "mcp__<server>__<tool>" form static
+// servers use; see the comment in the loop for why. Otherwise it mirrors the
+// construction-time discovery done by discoverAndRegisterMCPTools, but for
+// one server at a time so it can run after a source-backed open.
 //
 // When the toolRegistry is nil (lifecycle-only tests) discovery is skipped.
 func (m *mcpSourceScope) discoverAndRegisterServerTools(ctx context.Context, serverName string) error {
@@ -240,18 +242,12 @@ func (m *mcpSourceScope) discoverAndRegisterServerTools(ctx context.Context, ser
 	// name through mcpRawToolName (a no-op when there's no namespace) and
 	// looks up the owning server via mcp.Registry.toolIndex, which is
 	// keyed by raw tool name.
-	for _, t := range mcpTools {
+	for i := range mcpTools {
+		t := &mcpTools[i]
 		if filter, fok := m.lookupToolFilter(serverName); fok && filter != nil && !filter.Includes(t.Name) {
 			continue
 		}
-		desc := &tools.ToolDescriptor{
-			Name:         t.Name,
-			Description:  t.Description,
-			InputSchema:  t.InputSchema,
-			OutputSchema: mcpOutputSchema,
-			Mode:         "mcp",
-		}
-		if err := m.toolRegistry.Register(desc); err != nil {
+		if err := m.toolRegistry.Register(mcpToolDescriptor(t.Name, t)); err != nil {
 			return fmt.Errorf("register tool %q: %w", t.Name, err)
 		}
 	}
@@ -267,31 +263,6 @@ func (m *mcpSourceScope) lookupToolFilter(serverName string) (*mcp.ToolFilter, b
 	}
 	return cfg.ToolFilter, true
 }
-
-// mcpOutputSchema is the generic shape MCP tool calls return — kept here
-// so the source-backed discovery path matches the construction-time path
-// in builder_integration.go.
-var mcpOutputSchema = json.RawMessage(`{
-    "type": "object",
-    "properties": {
-        "content": {
-            "type": "array",
-            "items": {
-                "type": "object",
-                "properties": {
-                    "type": {"type": "string"},
-                    "text": {"type": "string"},
-                    "data": {"type": "string"},
-                    "mimeType": {"type": "string"},
-                    "uri": {"type": "string"}
-                },
-                "required": ["type"]
-            }
-        },
-        "isError": {"type": "boolean"}
-    },
-    "required": ["content"]
-}`)
 
 // CloseAll tears down every entry opened for (scope, instanceID). Close
 // errors are collected and returned; registry entries are removed regardless.
@@ -351,36 +322,84 @@ func expandString(s string, vars map[string]string) string {
 
 // --- Skill-mount injection (Task 9 responsibilities) ---
 
+// skillManifest is the file that marks a directory as a single skill.
+const skillManifest = "SKILL.md"
+
 // buildSkillMounts converts skill sources to mount entries suitable for a
-// MCPSource args map. Each skill dir is mounted at /skills/<name> read-only.
-// Sources without a name or directory are skipped (inline skills produce no
-// mount — they're passed to the runtime via a different path).
+// MCPSource args map, each mounted read-only under /skills/:
+//
+//   - a skill directory (one holding SKILL.md) mounts at /skills/<name>, where
+//     <name> is the source's name, or the directory's base name when unset
+//     (a `path:` source has none);
+//   - a directory of skills mounts each child skill directory at
+//     /skills/<child>.
+//
+// The first mount for a target wins, so a skill listed both on its own and
+// inside a skills directory is mounted once. Inline skills produce no mount;
+// they reach the runtime another way.
 func buildSkillMounts(sources []prompt.SkillSourceConfig) []map[string]any {
-	if len(sources) == 0 {
-		return nil
-	}
-	out := make([]map[string]any, 0, len(sources))
-	for i := range sources {
-		s := sources[i]
-		dir := prompt.SkillPath(&s)
-		if dir == "" || s.Name == "" {
-			continue
+	var out []map[string]any
+	seen := map[string]bool{}
+	add := func(dir, name string) {
+		target := "/skills/" + name
+		if seen[target] {
+			return
 		}
+		seen[target] = true
 		out = append(out, map[string]any{
 			"source":   dir, // absolute host path
-			"target":   "/skills/" + s.Name,
+			"target":   target,
 			"readonly": true,
 		})
 	}
-	if len(out) == 0 {
-		return nil
+	for i := range sources {
+		s := sources[i]
+		dir := prompt.SkillPath(&s)
+		if dir == "" {
+			continue
+		}
+		if isSkillDir(dir) || s.Name != "" {
+			name := s.Name
+			if name == "" {
+				name = filepath.Base(filepath.Clean(dir))
+			}
+			add(dir, name)
+			continue
+		}
+		for _, child := range childSkillDirs(dir) {
+			add(filepath.Join(dir, child), child)
+		}
 	}
 	return out
 }
 
-// injectMountsIntoArgs adds mounts to entry.SourceArgs under the "mounts"
-// key, preserving existing args. Empty mounts is a no-op (the key is not
-// added), so sources that don't understand mounts don't see it.
+// isSkillDir reports whether dir holds a SKILL.md.
+func isSkillDir(dir string) bool {
+	info, err := os.Stat(filepath.Join(dir, skillManifest))
+	return err == nil && !info.IsDir()
+}
+
+// childSkillDirs returns the names of dir's immediate subdirectories that
+// are skill directories, in directory order.
+func childSkillDirs(dir string) []string {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return nil
+	}
+	var out []string
+	for _, e := range entries {
+		if e.IsDir() && isSkillDir(filepath.Join(dir, e.Name())) {
+			out = append(out, e.Name())
+		}
+	}
+	return out
+}
+
+// injectMountsIntoArgs appends skill mounts to entry.SourceArgs["mounts"],
+// after any mounts the user configured. A skill mount whose target a user
+// mount already claims is dropped: the user's mount wins. Empty mounts is a
+// no-op (the key is not added), so sources that don't understand mounts
+// don't see it.
 func injectMountsIntoArgs(entry *config.MCPServerConfig, mounts []map[string]any) {
 	if len(mounts) == 0 {
 		return
@@ -388,5 +407,37 @@ func injectMountsIntoArgs(entry *config.MCPServerConfig, mounts []map[string]any
 	if entry.SourceArgs == nil {
 		entry.SourceArgs = map[string]any{}
 	}
-	entry.SourceArgs["mounts"] = mounts
+	combined := userMounts(entry.SourceArgs["mounts"])
+	claimed := map[string]bool{}
+	for _, m := range combined {
+		if mm, ok := m.(map[string]any); ok {
+			if target, _ := mm["target"].(string); target != "" {
+				claimed[target] = true
+			}
+		}
+	}
+	for _, m := range mounts {
+		if target, _ := m["target"].(string); claimed[target] {
+			continue
+		}
+		combined = append(combined, m)
+	}
+	entry.SourceArgs["mounts"] = combined
+}
+
+// userMounts normalises a user-supplied mounts arg to []any: YAML yields
+// []any, programmatic callers may pass []map[string]any.
+func userMounts(v any) []any {
+	switch x := v.(type) {
+	case []any:
+		return append([]any(nil), x...)
+	case []map[string]any:
+		out := make([]any, 0, len(x))
+		for _, m := range x {
+			out = append(out, m)
+		}
+		return out
+	default:
+		return nil
+	}
 }

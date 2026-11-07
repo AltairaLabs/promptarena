@@ -202,7 +202,7 @@ func TestInjectMountsIntoArgs_PreservesExistingArgs(t *testing.T) {
 	injectMountsIntoArgs(entry, mounts)
 
 	assert.Equal(t, "foo", entry.SourceArgs["image"])
-	assert.Equal(t, mounts, entry.SourceArgs["mounts"])
+	assert.Equal(t, []any{mounts[0]}, entry.SourceArgs["mounts"])
 }
 
 func TestInjectMountsIntoArgs_NoMountsIsNoop(t *testing.T) {
@@ -235,12 +235,13 @@ func TestMCPSourceScope_InjectsMountsFromSkills(t *testing.T) {
 		[]config.MCPServerConfig{cfg}))
 
 	require.Equal(t, "x", s.lastArgs["image"])
-	mounts, ok := s.lastArgs["mounts"].([]map[string]any)
-	require.True(t, ok, "mounts should be []map[string]any")
+	mounts, ok := s.lastArgs["mounts"].([]any)
+	require.True(t, ok, "mounts should be []any")
 	require.Len(t, mounts, 1)
-	assert.Equal(t, "/host/path/codegen", mounts[0]["source"])
-	assert.Equal(t, "/skills/codegen", mounts[0]["target"])
-	assert.Equal(t, true, mounts[0]["readonly"])
+	m := mounts[0].(map[string]any)
+	assert.Equal(t, "/host/path/codegen", m["source"])
+	assert.Equal(t, "/skills/codegen", m["target"])
+	assert.Equal(t, true, m["readonly"])
 }
 
 type portsSource struct{ ports map[string]string }

@@ -57,9 +57,9 @@ spec:
       args:
         - "-y"
         - "@modelcontextprotocol/server-memory"
-      env:
-        PATH: "/usr/local/bin:/usr/bin:/bin"  # Adjust if node is elsewhere
 ```
+
+The server inherits the environment `promptarena` runs in, including `PATH`, so `npx` resolves as it does in your shell.
 
 ### 2. Prompt with Memory Instructions
 
@@ -257,14 +257,7 @@ npx -y @modelcontextprotocol/server-memory
 
 ### PATH Issues
 
-If you see "env: node: No such file or directory", update the PATH in `arena.yaml`:
-
-```bash
-# Find your node location
-which node
-
-# Update arena.yaml's env.PATH to include that directory
-```
+If you see "env: node: No such file or directory", `node` is not on the `PATH` of the shell that runs `promptarena`. Check with `which node`, and fix your shell's `PATH` rather than setting `env.PATH` on the server: an `env` entry replaces the inherited value, so a wrong one stops `npx` from starting at all.
 
 ## Learn More
 

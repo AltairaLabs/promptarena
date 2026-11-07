@@ -5,6 +5,7 @@ package docker
 import (
 	"context"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -34,4 +35,5 @@ func TestSource_AgainstRealDocker(t *testing.T) {
 	defer func() { _ = closer.Close() }()
 
 	assert.Contains(t, conn.URL, "http://localhost:")
+	assert.True(t, strings.HasSuffix(conn.URL, "/sse"), "URL should be the SSE endpoint, got %s", conn.URL)
 }

@@ -1,7 +1,10 @@
 # Mock Provider Configuration for MCP Memory Test Example
 #
-# This configuration provides deterministic responses for testing
-# MCP memory operations without making real API calls.
+# The mock provider stands in for the LLM: it decides which tools to call.
+# The tool calls themselves run against the real memory MCP server, so this
+# exercises the full MCP path without an API key:
+#
+#   promptarena run --mock-provider --mock-config mock-responses.yaml --ci
 
 defaultResponse: "I'm ready to work with the knowledge graph memory system."
 
@@ -9,5 +12,21 @@ scenarios:
   mcp-memory-test:
     defaultResponse: "I can store and retrieve information from the knowledge graph."
     turns:
-      1: "I've successfully stored the information in my knowledge graph: Your name is Alice and you work as a software engineer. This information is now part of my persistent memory."
-      2: "Based on my knowledge graph, I know that your name is Alice and you work as a software engineer. This information was previously stored and is now available for recall."
+      1:
+        response: "I'll store that in my knowledge graph."
+        tool_calls:
+          - name: mcp__memory__create_entities
+            arguments:
+              entities:
+                - name: Alice
+                  entityType: person
+                  observations: ["works as a software engineer"]
+      # Turn numbers count every model call, including the one that reads
+      # a tool result, so each tool call takes two turns.
+      2: "I've stored that in my knowledge graph: your name is Alice and you work as a software engineer."
+      3:
+        response: "I'll check my knowledge graph."
+        tool_calls:
+          - name: mcp__memory__read_graph
+            arguments: {}
+      4: "My knowledge graph says your name is Alice and you work as a software engineer."

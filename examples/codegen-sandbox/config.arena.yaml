@@ -6,14 +6,14 @@ metadata:
     description: |
       Agent doing codegen in a Docker-provisioned sandbox.
 
-      Live demo (needs Docker):
-        make build-arena
+      Run it (needs Docker; no API key, the provider is a mock):
+        make build-go
         docker pull ghcr.io/altairalabs/codegen-sandbox:latest
         cd examples/codegen-sandbox
         ../../bin/promptarena run --ci --format markdown
 
-      Offline / CI (mock provider, no sandbox):
-        ../../bin/promptarena run --mock-provider --ci --format markdown
+      The tool calls run for real in the sandbox container, so
+      --mock-provider still starts it.
 
 spec:
   prompt_configs:
@@ -35,8 +35,8 @@ spec:
         env:
           DEV_MODE: "1"
 
+  # Mounted read-only into the sandbox at /skills/codegen.
   skills:
-    - path: skills/
     - path: skills/codegen
       preload: true
 

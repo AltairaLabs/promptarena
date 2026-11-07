@@ -16,7 +16,7 @@ spec:
       assertions:
         - type: tools_called
           params:
-            tools: ["read_file"]
+            tools: ["mcp__filesystem__read_file"]
             message: "Should attempt to use read_file tool"
         - type: content_matches
           params:
@@ -27,7 +27,7 @@ spec:
       assertions:
         - type: tools_called
           params:
-            tools: ["write_file"]
+            tools: ["mcp__filesystem__write_file"]
             message: "Should use write_file tool to create the file"
         - type: content_includes
           params:
@@ -40,7 +40,7 @@ spec:
       assertions:
         - type: tools_called
           params:
-            tools: ["list_directory"]
+            tools: ["mcp__filesystem__list_directory"]
             message: "Should attempt to use list_directory tool"
         - type: content_matches
           params:
@@ -51,7 +51,7 @@ spec:
       assertions:
         - type: tools_called
           params:
-            tools: ["list_directory"]
+            tools: ["mcp__filesystem__list_directory"]
             message: "Should use list_directory tool on allowed directory"
         - type: content_includes
           params:
@@ -71,7 +71,7 @@ spec:
       assertions:
         - type: tools_called
           params:
-            tools: ["list_directory"]
+            tools: ["mcp__filesystem__list_directory"]
             message: "Should use list_directory tool to show current state"
         - type: content_includes
           params:
