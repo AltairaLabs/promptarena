@@ -4,7 +4,7 @@ description: Lay out arena configs and compiled packs by environment, feature or
 sidebar:
   order: 4
 verified:
-  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - packc/compiler/compiler.go
     - packc/compiler/helpers_integration.go
@@ -119,7 +119,7 @@ for env in dev staging prod; do
 done
 ```
 
-`packc validate` checks one file per run, so validate inside the loop rather than with a glob.
+Validate inside the loop so a failure stops the build at the pack that caused it. `packc validate` also takes several files, as in [Verify](#verify).
 
 ### 4. Decide what to commit
 

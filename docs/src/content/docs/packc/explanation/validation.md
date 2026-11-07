@@ -4,9 +4,8 @@ description: What packc compile, packc validate and promptarena validate each ch
 sidebar:
   order: 3
 verified:
-  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
-    - arena/arenaconfig/types.go
     - arena/cmd/promptarena/export.go
     - arena/cmd/promptarena/validate_json.go
     - packc/compiler/check.go
@@ -28,7 +27,7 @@ Three commands validate packs, at different points:
 
 - `packc compile` checks the source config as it builds the pack, then checks the pack before writing it.
 - `packc validate` checks a pack file that already exists, wherever it came from.
-- `promptarena validate` checks an arena config. For a config with `prompt_configs`, it runs the same function `packc compile` runs (`compiler.Check`) without writing a file.
+- `promptarena validate` checks an arena config. For a config with `prompt_configs`, it runs the same function `packc compile` runs (`compiler.Check`) without writing a file. It also checks each assertion's type and params, and the params of prompt validators, in an `assertions` stage that `packc` has no part in.
 
 All three run the same pack checks (`checkPack` in `packc/compiler`): the PromptKit runtime's pack checks plus this repository's skill checks. A finding is an error or a warning in all three alike, so a pack `packc compile` writes never fails `packc validate`. The differences are in what runs before the pack checks, noted in each section below.
 
@@ -80,7 +79,7 @@ id: "2024-demo"            # invalid: must start with a letter
 
 Each skill source in the pack is checked against the directory the paths are relative to: the arena config's directory for `packc compile`, and the pack file's directory for `packc validate`. These are errors:
 
-- a skill directory that does not exist, or a path that resolves outside that directory;
+- a skill directory that does not exist, or a path that resolves outside that directory. An `@org/name` reference is the exception: it resolves to where `promptarena skill install` put the skill, outside the pack directory, and is an error only when that skill is not installed;
 - a `SKILL.md` that does not parse;
 - two skills with the same name in different places;
 - an inline skill without `name`, `description` or `instructions`;

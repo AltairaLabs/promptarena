@@ -1,21 +1,25 @@
 {
  "page": "docs/src/content/docs/packc/how-to/validate-packs.md",
- "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
    "claim": "validate prints 'Validating pack', '\u2713 Schema validation passed', warnings, '\u2713 Pack structure is valid'; errors exit 1",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go"
+    "packc/main_interactive.go:287",
+    "packc/main_interactive.go:299",
+    "packc/main_interactive.go:314"
    ]
   },
   {
    "id": 2,
-   "claim": "packc validate validates every file argument and exits 1 if any fails",
+   "claim": "packc validate validates every file argument, prints 'N of N packs valid' for several, and exits 1 if any fails",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go"
+    "packc/main_interactive.go:261",
+    "packc/main_interactive.go:277",
+    "packc/main_interactive.go:280"
    ]
   },
   {
@@ -23,8 +27,9 @@
    "claim": "schema failures print as '[pack_schema] <path>: <msg>' under '\u2717 Pack validation failed: <file>'; schema-load failure is a pack_schema error",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go",
-    "packc/main_interactive.go"
+    "packc/compiler/check.go:218",
+    "packc/compiler/check.go:222",
+    "packc/main_interactive.go:306"
    ]
   },
   {
@@ -32,35 +37,40 @@
    "claim": "pack structure checks id, semver version, prompts, template_engine, system_template, prompt version, variables-declared are blocking; missing compilation and undeclared prompt tools are warnings",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go",
-    "packc/compiler/pack_fields.go"
+    "packc/compiler/check.go:157",
+    "packc/compiler/pack_fields.go:23",
+    "packc/compiler/pack_fields.go:84"
    ]
   },
   {
    "id": 5,
-   "claim": "skill checks: missing dir, path outside, SKILL.md parse, duplicate names, inline fields, workflow state skills path errors; allowed-tools warning; relative to config dir (compile) or pack dir (validate)",
+   "claim": "skill checks: missing dir, path outside the pack dir, SKILL.md parse, duplicate names, inline fields, workflow state skills path errors; allowed-tools warning; @org/name references resolve to the skill install directory and report 'not installed' when absent; relative to config dir (compile) or pack dir (validate)",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/pack_file.go",
-    "packc/compiler/skills_validator_integration.go"
+    "packc/compiler/pack_file.go:25",
+    "packc/compiler/skills_validator_integration.go:101",
+    "packc/compiler/skills_validator_integration.go:114",
+    "packc/compiler/skills_validator_integration.go:85"
    ]
   },
   {
    "id": 6,
-   "claim": "validate on a missing file reports '[load] reading pack file: open ...'",
+   "claim": "validate on a missing file reports '[load] reading pack file: open ...'; invalid JSON reports '[load] invalid JSON: ...'",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/pack_file.go",
-    "packc/main_interactive.go"
+    "packc/compiler/pack_file.go:25",
+    "packc/main_interactive.go:290"
    ]
   },
   {
    "id": 7,
-   "claim": "promptarena validate and promptarena export use packc/compiler",
+   "claim": "promptarena validate and promptarena export use packc/compiler; promptarena validate adds config consistency and assertion type/param checks",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/export.go:46-51",
-    "arena/cmd/promptarena/validate_json.go:99-160"
+    "arena/cmd/promptarena/export.go:51",
+    "arena/cmd/promptarena/validate_json.go:128",
+    "arena/cmd/promptarena/validate_json.go:146",
+    "arena/cmd/promptarena/validate_json.go:156"
    ]
   },
   {
@@ -68,8 +78,8 @@
    "claim": "compile prints warnings as '\u26a0 [stage] message' and fails with 'Compilation failed:'",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go",
-    "packc/main_interactive.go"
+    "packc/main_interactive.go:170",
+    "packc/main_interactive.go:175"
    ]
   }
  ]

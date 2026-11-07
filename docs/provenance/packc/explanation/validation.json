@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/packc/explanation/validation.md",
- "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
@@ -8,15 +8,16 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/export.go:46-51",
-    "arena/cmd/promptarena/validate_json.go:99-160"
+    "arena/cmd/promptarena/validate_json.go:146"
    ]
   },
   {
    "id": 2,
-   "claim": "compiler.Check stages pack_id, pack_version, load, compile, skills, workflow, compositions, agents, governance, pack, pack_schema; early stages stop, later collect",
+   "claim": "compiler.Check stages and order; early stages stop, later collect",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go"
+    "packc/compiler/check.go:16-28",
+    "packc/compiler/check.go:93-138"
    ]
   },
   {
@@ -24,55 +25,58 @@
    "claim": "arena config, prompt configs and tool files are schema-validated on load; arena config requires providers and defaults",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:88-180",
-    "packc/compiler/check.go:101-105",
-    "schemas/v1alpha1/arena.json:837-840"
+    "packc/compiler/check.go:108-112",
+    "schemas/v1alpha1/arena.json:839-842"
    ]
   },
   {
    "id": 4,
-   "claim": "prompt config requires task_type, version, description, system_template; task_type pattern ^[a-z][a-z0-9_-]*$",
+   "claim": "prompt config requires task_type, version, description, system_template; task_type pattern ^[a-z][a-z0-9_-]*$; version semver",
    "verdict": "true",
    "evidence": [
     "schemas/v1alpha1/promptconfig.json:672",
+    "schemas/v1alpha1/promptconfig.json:676",
     "schemas/v1alpha1/promptconfig.json:750-755"
    ]
   },
   {
    "id": 5,
-   "claim": "variable name pattern ^[a-zA-Z_][a-zA-Z0-9_]*$, metadata.language ^[a-z]{2}$, tool name pattern",
+   "claim": "variable name pattern ^[a-zA-Z_][a-zA-Z0-9_]*$ with required field, metadata.language ^[a-z]{2}$, tool name pattern",
    "verdict": "true",
    "evidence": [
     "schemas/v1alpha1/promptconfig.json:558",
     "schemas/v1alpha1/promptconfig.json:884",
+    "schemas/v1alpha1/promptconfig.json:906-909",
     "schemas/v1alpha1/tool.json:312"
    ]
   },
   {
    "id": 6,
-   "claim": "pack id pattern ^[a-z][a-z0-9-]*$; invalid --id rejected before compile with [pack_id] error",
+   "claim": "pack id pattern ^[a-z][a-z0-9-]*$; invalid --id rejected before loading with [pack_id] error; invalid --pack-version likewise",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:89-99",
-    "packc/compiler/helpers_integration.go:192-228"
+    "packc/compiler/check.go:97-106",
+    "packc/compiler/helpers_integration.go:204-236"
    ]
   },
   {
    "id": 7,
-   "claim": "default id from current directory name via SanitizePackID; non-letter start gets pack- prefix",
+   "claim": "default id from current directory name normalized; 'My Project' becomes my-project, '2024-demo' becomes pack-2024-demo",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/helpers_integration.go",
-    "packc/main_interactive.go"
+    "packc/compiler/compiler.go:100-110",
+    "packc/compiler/helpers_integration.go:213-226"
    ]
   },
   {
    "id": 8,
-   "claim": "skill checks: missing dir, path outside, SKILL.md parse, duplicate names, inline fields, workflow state skills path errors; allowed-tools warning; relative to config dir (compile) or pack dir (validate)",
+   "claim": "skill checks: missing dir, path outside, SKILL.md parse, duplicate names, inline fields, workflow state skills path; allowed-tools warning; relative to config dir (compile) or pack dir (validate); @org/name resolves to the install dir and errors only when not installed",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/pack_file.go",
-    "packc/compiler/skills_validator_integration.go"
+    "packc/compiler/skills_validator_integration.go:185-216",
+    "packc/compiler/skills_validator_integration.go:219-242",
+    "packc/compiler/skills_validator_integration.go:46-72",
+    "packc/compiler/skills_validator_integration.go:99-158"
    ]
   },
   {
@@ -80,83 +84,101 @@
    "claim": "workflow errors/warnings: version 1|2, entry, prompt_task, targets, enums, composition, PascalCase, cycles, terminal, v2 dead-end, agent loops",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go"
+    "packc/compiler/check.go:162-164"
    ]
   },
   {
    "id": 10,
-   "claim": "agents errors: no members, entry not member, member not prompt; MIME/tag findings are warnings in compile and validate alike",
+   "claim": "agents errors: no members, entry not member, member not prompt; MIME/tag findings are warnings",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go",
-    "packc/compiler/pack_file.go"
+    "packc/compiler/check.go:172-177"
    ]
   },
   {
    "id": 11,
-   "claim": "packc compile, compile-prompt and validate all run the composition check (checkPack)",
+   "claim": "packc compile, compile-prompt and validate all run the composition check via checkPack",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go",
-    "packc/compiler/pack_file.go"
+    "packc/compiler/check.go:157",
+    "packc/compiler/check.go:166-170",
+    "packc/compiler/pack_file.go:43",
+    "packc/compiler/pack_file.go:77"
    ]
   },
   {
    "id": 12,
-   "claim": "pack structure checks id, semver version, prompts, template_engine, system_template, prompt version, variables-declared are blocking; missing compilation and undeclared prompt tools are warnings",
-   "verdict": "true",
+   "claim": "governance check: undeclared eval/validator/field/obligation errors, undeclared prefix warning",
+   "verdict": "unverified",
    "evidence": [
-    "packc/compiler/check.go",
-    "packc/compiler/pack_fields.go"
+    "packc/compiler/check.go:179-184"
    ]
   },
   {
    "id": 13,
-   "claim": "schema failures print as '[pack_schema] <path>: <msg>' under '\u2717 Pack validation failed: <file>'; schema-load failure is a pack_schema error",
+   "claim": "pack structure checks id, semver version, prompts, template_engine, system_template, prompt version, variables-declared are blocking; missing compilation and undeclared prompt tools are warnings",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go",
-    "packc/main_interactive.go"
+    "packc/compiler/check.go:186-210",
+    "packc/compiler/pack_fields.go:79-105"
    ]
   },
   {
    "id": 14,
-   "claim": "packc validate parses JSON, then runs schema, then pack checks; compile runs schema last",
+   "claim": "schema failures print as '[pack_schema] <path>: <msg>' under '\u2717 Pack validation failed: <file>'; schema-load failure is a pack_schema error",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go",
-    "packc/compiler/pack_file.go"
+    "packc/compiler/check.go:218-241",
+    "packc/main_interactive.go:287-316"
    ]
   },
   {
    "id": 15,
-   "claim": "validation uses the embedded PromptPack schema by default; PROMPTKIT_SCHEMA_SOURCE local/remote/path overrides",
+   "claim": "packc validate parses JSON ([load] invalid JSON) then runs schema, then pack checks; compile runs schema last",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go"
+    "packc/compiler/check.go:134-136",
+    "packc/compiler/pack_file.go:34-43"
    ]
   },
   {
    "id": 16,
+   "claim": "validation uses the embedded PromptPack schema by default; PROMPTKIT_SCHEMA_SOURCE remote/path overrides",
+   "verdict": "true",
+   "evidence": [
+    "packc/compiler/check.go:219"
+   ]
+  },
+  {
+   "id": 17,
    "claim": "embedded PromptPack schema is version 1.9.0 (identical to promptpack-spec schema)",
    "verdict": "true",
    "evidence": []
   },
   {
-   "id": 17,
-   "claim": "compile prints warnings as '\u26a0 [stage] message' and fails with 'Compilation failed:'",
+   "id": 18,
+   "claim": "compile prints warnings as '\u26a0 [stage] message' and fails with 'Compilation failed:'; only errors printed on failure",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go",
-    "packc/main_interactive.go"
+    "packc/compiler/check.go:43-49",
+    "packc/main_interactive.go:168-176"
    ]
   },
   {
-   "id": 18,
+   "id": 19,
    "claim": "templates are not parsed; only check is variables declared when template contains {{",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go"
+    "packc/compiler/check.go:195-206"
+   ]
+  },
+  {
+   "id": 20,
+   "claim": "promptarena validate also runs an assertions stage that checks assertion types and params and prompt validator params, when the config has scenarios, personas, evals or prompt validators",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/validate_json.go:136",
+    "arena/cmd/promptarena/validate_json.go:158-176"
    ]
   }
  ]

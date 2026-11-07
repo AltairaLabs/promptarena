@@ -1,13 +1,14 @@
 {
  "page": "docs/src/content/docs/packc/reference/index.md",
- "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
    "claim": "commands compile, compile-prompt, validate, inspect, version, completion, help",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go"
+    "packc/main_interactive.go:28",
+    "packc/main_interactive.go:41"
    ]
   },
   {
@@ -15,7 +16,8 @@
    "claim": "completion supports bash, zsh, fish, powershell",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go"
+    "packc/main_interactive.go:365",
+    "packc/main_interactive.go:372"
    ]
   },
   {
@@ -23,7 +25,8 @@
    "claim": "unknown command or no command exits 1 with usage",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go"
+    "packc/main_interactive.go:21",
+    "packc/main_interactive.go:43"
    ]
   },
   {
@@ -31,15 +34,17 @@
    "claim": "help, --help, -h print usage",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go"
+    "packc/main_interactive.go:41"
    ]
   },
   {
    "id": 5,
-   "claim": "validate and inspect print usage for -h/--help",
-   "verdict": "true",
+   "claim": "compile, compile-prompt, validate and inspect accept -h/--help; version ignores arguments; completion -h fails",
+   "verdict": "false",
    "evidence": [
-    "packc/main_interactive.go"
+    "packc/main_interactive.go:236",
+    "packc/main_interactive.go:375",
+    "packc/main_interactive.go:40"
    ]
   },
   {
@@ -47,8 +52,8 @@
    "claim": "compiles with the PromptKit pack compiler, validates against the embedded schema",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go",
-    "packc/compiler/compiler.go"
+    "packc/compiler/check.go:219",
+    "packc/compiler/compiler.go:141"
    ]
   },
   {
@@ -57,6 +62,15 @@
    "verdict": "false",
    "evidence": [
     "packc/main_interactive.go"
+   ]
+  },
+  {
+   "id": 8,
+   "claim": "validate takes one or more pack files",
+   "verdict": "false",
+   "evidence": [
+    "packc/main_interactive.go:261",
+    "packc/main_interactive.go:56"
    ]
   }
  ]

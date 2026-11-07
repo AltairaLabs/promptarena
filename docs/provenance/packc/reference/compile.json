@@ -1,13 +1,13 @@
 {
  "page": "docs/src/content/docs/packc/reference/compile.md",
- "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
    "claim": "compile takes -c/--config, default config.arena.yaml",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go"
+    "packc/main_interactive.go:128"
    ]
   },
   {
@@ -15,7 +15,8 @@
    "claim": "compile takes -o/--output, default <id>.pack.json",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go"
+    "packc/main_interactive.go:129",
+    "packc/main_interactive.go:144-147"
    ]
   },
   {
@@ -23,8 +24,9 @@
    "claim": "compile takes --id, default current directory name sanitized",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/helpers_integration.go",
-    "packc/main_interactive.go"
+    "packc/compiler/helpers_integration.go:213-226",
+    "packc/main_interactive.go:113-119",
+    "packc/main_interactive.go:130"
    ]
   },
   {
@@ -32,8 +34,8 @@
    "claim": "missing parent directories of --output are created",
    "verdict": "true",
    "evidence": [
-    "packc/main.go",
-    "packc/main_interactive.go"
+    "packc/main.go:49-56",
+    "packc/main_interactive.go:180"
    ]
   },
   {
@@ -41,7 +43,7 @@
    "claim": "--id is written to the pack id and name",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:128-132"
+    "packc/compiler/compiler.go:114-146"
    ]
   },
   {
@@ -49,10 +51,10 @@
    "claim": "explicit --id must match ^[a-z][a-z0-9-]*$ or the compile fails at the pack_id stage",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:96-99",
-    "packc/compiler/compiler.go:89-92",
-    "packc/compiler/helpers_integration.go:196",
-    "packc/compiler/helpers_integration.go:222-228"
+    "packc/compiler/check.go:97-100",
+    "packc/compiler/compiler.go:100-103",
+    "packc/compiler/helpers_integration.go:204",
+    "packc/compiler/helpers_integration.go:230-236"
    ]
   },
   {
@@ -60,7 +62,7 @@
    "claim": "default ID sanitization: lowercase, spaces to hyphens, strip others, collapse hyphens, pack- prefix, pack when empty",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/helpers_integration.go:192-218"
+    "packc/compiler/helpers_integration.go:213-226"
    ]
   },
   {
@@ -68,7 +70,6 @@
    "claim": "Arena config is a kind: Arena manifest; schema requires spec.providers and spec.defaults",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:180",
     "arena/arenaconfig/types.go:91",
     "schemas/v1alpha1/arena.json:839"
    ]
@@ -87,7 +88,7 @@
    "claim": "file paths resolve relative to the Arena config directory",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:540-552"
+    "arena/arenaconfig/loader.go:198"
    ]
   },
   {
@@ -95,8 +96,8 @@
    "claim": "prompt_configs/prompt_specs become prompts keyed by task_type",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:172-190",
-    "packc/compiler/compiler.go:103-112"
+    "arena/arenaconfig/loader.go:173-190",
+    "packc/compiler/compiler.go:114-146"
    ]
   },
   {
@@ -104,16 +105,17 @@
    "claim": "tools become pack tools keyed by name",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:102",
-    "packc/compiler/helpers_integration.go:116-140"
+    "packc/compiler/helpers_integration.go:113-140"
    ]
   },
   {
    "id": 13,
-   "claim": "pack_evals, workflow, agents, compositions, skills reach the pack",
+   "claim": "pack_evals, workflow, agents, compositions reach the pack",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go"
+    "packc/compiler/compiler.go:133-146",
+    "packc/compiler/compiler.go:231-263",
+    "packc/compiler/helpers_integration.go:142-161"
    ]
   },
   {
@@ -121,17 +123,16 @@
    "claim": "pack_metadata becomes metadata; otherwise promoted from first prompt by ID with a warning",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:167",
-    "packc/compiler/compiler.go:164-207"
+    "packc/compiler/compiler.go:185-228"
    ]
   },
   {
    "id": 15,
-   "claim": "template_engine is the engine the prompts declare; disagreement fails the compile stage",
+   "claim": "template_engine is the engine the prompts declare; disagreement fails the compile stage; none declared gives v1",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go",
-    "packc/compiler/pack_fields.go"
+    "packc/compiler/compiler.go:138-152",
+    "packc/compiler/pack_fields.go:59-77"
    ]
   },
   {
@@ -139,15 +140,17 @@
    "claim": "pack version is --pack-version or v1.0.0, description 'Pack containing <n> prompts'",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go"
+    "packc/compiler/compiler.go:154-156",
+    "packc/main_interactive.go:164-166"
    ]
   },
   {
    "id": 17,
-   "claim": "compiled_with is packc-<version>",
+   "claim": "compiled_with is packc-<version>, version as printed by packc version",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go"
+    "packc/main.go:24-27",
+    "packc/main_interactive.go:188-191"
    ]
   },
   {
@@ -155,7 +158,7 @@
    "claim": "success summary prints prompts, tools, evals, workflow, agents lines",
    "verdict": "true",
    "evidence": [
-    "packc/main.go"
+    "packc/main.go:329-352"
    ]
   },
   {
@@ -163,8 +166,9 @@
    "claim": "compile runs the same checkPack checks as validate before writing",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go",
-    "packc/compiler/pack_file.go"
+    "packc/compiler/check.go:157-210",
+    "packc/compiler/check.go:93-138",
+    "packc/compiler/pack_file.go:42-43"
    ]
   },
   {
@@ -172,7 +176,7 @@
    "claim": "stage names pack_id, pack_version, load, compile, skills, workflow, compositions, agents, governance, pack, pack_schema",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go"
+    "packc/compiler/check.go:16-28"
    ]
   },
   {
@@ -180,8 +184,8 @@
    "claim": "errors go to stderr as 'Compilation failed:' with [stage] message or numbered list; warnings '\u26a0 [stage] msg' on stdout",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go",
-    "packc/main_interactive.go"
+    "packc/compiler/check.go:60-73",
+    "packc/main_interactive.go:168-177"
    ]
   },
   {
@@ -189,31 +193,34 @@
    "claim": "exit 0 success, 1 failure, 2 unknown flag",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go"
+    "packc/main_interactive.go:127",
+    "packc/main_interactive.go:168-172"
    ]
   },
   {
    "id": 23,
-   "claim": "old: arena.yaml example with top-level prompt_configs/tools (no manifest)",
-   "verdict": "false",
+   "claim": "compiled pack template_engine includes features [basic_substitution] by default (page JSON sample)",
+   "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/arena.json:839"
+    "packc/compiler/compiler.go:138-152"
    ]
   },
   {
    "id": 24,
-   "claim": "old: error 'Error loading arena config: open arena.yaml'",
-   "verdict": "false",
+   "claim": "an @org/name skill path stays a reference in the pack and resolves to the promptarena skill install directory",
+   "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:101-104"
+    "arena/arenaconfig/skill_sources.go:32-66",
+    "packc/compiler/helpers_integration.go:165-190",
+    "packc/compiler/skills_validator_integration.go:99-113"
    ]
   },
   {
    "id": 25,
-   "claim": "old: error 'Error: prompt file not found'",
+   "claim": "skills directory paths are made relative to the config directory",
    "verdict": "false",
    "evidence": [
-    "packc/compiler/check.go:101-104"
+    "packc/compiler/helpers_integration.go:181-187"
    ]
   },
   {

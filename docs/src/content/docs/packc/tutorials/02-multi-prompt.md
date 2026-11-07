@@ -4,7 +4,7 @@ description: Compile three customer-service prompts and a tool definition into o
 sidebar:
   order: 2
 verified:
-  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/arenaconfig/loader.go
     - arena/arenaconfig/types.go
@@ -179,7 +179,7 @@ packc compile \
   --id customer-service
 ```
 
-You see the three prompts (in any order) and the tool:
+You see the three prompts, sorted by task type, and the tool:
 
 ```text
 ✓ Pack compiled successfully: packs/customer-service.pack.json
@@ -193,7 +193,7 @@ You see the three prompts (in any order) and the tool:
 packc inspect packs/customer-service.pack.json
 ```
 
-The prompts section lists each prompt by task type, and the support prompt shows its tool:
+The prompts section lists each prompt by task type, the support prompt shows its tool, and a tools section lists the pack's tools:
 
 ```text
 === Prompts (3) ===
@@ -219,6 +219,9 @@ The prompts section lists each prompt by task type, and the support prompt shows
   Variables: 2 required, 0 optional
     Required: [customer_name issue]
   Tools (1): [search_knowledge_base]
+
+=== Tools (1) ===
+  search_knowledge_base: Search the support knowledge base
 ```
 
 An application loads this one file and selects a prompt by its task type: `greeting`, `support` or `escalation`.

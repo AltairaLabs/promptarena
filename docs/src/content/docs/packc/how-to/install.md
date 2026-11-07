@@ -4,7 +4,7 @@ description: Install the packc compiler with npm, Homebrew, go install or a rele
 sidebar:
   order: 1
 verified:
-  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - .goreleaser.yml
     - Makefile
@@ -95,7 +95,7 @@ packc completion zsh > ~/.zsh/completions/_packc
 packc completion fish > ~/.config/fish/completions/packc.fish
 ```
 
-Start a new shell to load it. [Configure shell completions](/arena/how-to/setup/shell-completions/) covers fpath and bash-completion setup in detail.
+Start a new shell to load it. The scripts complete the commands and each command's flags. In bash, the flags complete at any position after the subcommand, and flag values complete file names. [Configure shell completions](/arena/how-to/setup/shell-completions/) covers fpath and bash-completion setup in detail.
 
 ## Troubleshooting
 

@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/packc/explanation/pack-format.md",
- "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
@@ -16,16 +16,15 @@
   },
   {
    "id": 3,
-   "claim": "pack structure checks id, semver version, prompts, template_engine, system_template, prompt version, variables-declared are blocking; missing compilation and undeclared prompt tools are warnings",
+   "claim": "validate accepts a pack without compilation and prints a warning",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go",
-    "packc/compiler/pack_fields.go"
+    "packc/compiler/check.go:198-203"
    ]
   },
   {
    "id": 4,
-   "claim": "prompt requires id, name, version, system_template; id pattern ^[a-z][a-z0-9_-]*$; optional fields list; tool requires name, description",
+   "claim": "pack id ^[a-z][a-z0-9-]*$, version semver with optional v, template_engine version+syntax; prompt requires id,name,version,system_template, id pattern ^[a-z][a-z0-9_-]*$; tool requires name,description",
    "verdict": "true",
    "evidence": []
   },
@@ -33,61 +32,72 @@
    "id": 5,
    "claim": "each prompt gets the default template/provider/validator pipeline",
    "verdict": "true",
-   "evidence": []
+   "evidence": [
+    "packc/compiler/compiler.go:141-146"
+   ]
   },
   {
    "id": 6,
-   "claim": "arena tools/workflow/agents/compositions/skills/pack_evals/pack_metadata map to pack tools/workflow/agents/compositions/skills/evals/metadata",
+   "claim": "packc compile builds tools from kind: Tool files; a prompt's tools list names entries in it",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go"
+    "packc/compiler/helpers_integration.go:116-139",
+    "packc/compiler/pack_fields.go:79-105"
    ]
   },
   {
    "id": 7,
-   "claim": "workflow requires version, entry, states; state fields on_event, persistence, orchestration internal|external|hybrid|composition, control user|agent, terminal, max_visits, on_max_visits, skills, artifacts, composition; terminal = terminal:true or no on_event",
+   "claim": "workflow requires version, entry, states; state fields on_event, persistence, orchestration internal|external|hybrid|composition, control user|agent, terminal, max_visits, on_max_visits, skills, artifacts, composition; engine optional",
    "verdict": "true",
    "evidence": []
   },
   {
    "id": 8,
-   "claim": "workflow errors/warnings: version 1|2, entry, prompt_task, targets, enums, composition, PascalCase, cycles, terminal, v2 dead-end, agent loops",
+   "claim": "workflow warnings: PascalCase, cycles, terminal with on_event, v2 dead-end; version 1|2",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go"
+    "packc/compiler/check.go:162-164"
    ]
   },
   {
    "id": 9,
    "claim": "compiled fragments map holds {{name}} placeholders, not fragment content",
    "verdict": "true",
-   "evidence": []
+   "evidence": [
+    "packc/compiler/compiler.go:141-146"
+   ]
   },
   {
    "id": 10,
-   "claim": "packc compile sets name=id, version from --pack-version (default v1.0.0), description 'Pack containing N prompts', $schema latest URL, compilation block",
+   "claim": "packc compile sets name=id, version from --pack-version (default v1.0.0), description, $schema latest URL, compilation block with schema v1",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go",
-    "packc/main_interactive.go"
+    "packc/compiler/compiler.go:154-156",
+    "packc/main_interactive.go:126-155"
    ]
   },
   {
    "id": 11,
-   "claim": "compile-prompt: id from task type (_ to -), name/description from prompt, version from spec.version or --pack-version, $schema set",
+   "claim": "compile-prompt: version is spec.version unless --pack-version; $schema set; compilation.schema v1",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/pack_file.go"
+    "packc/compiler/pack_file.go:128-136"
    ]
   },
   {
    "id": 12,
-   "claim": "pack id pattern ^[a-z][a-z0-9-]*$; invalid --id rejected before compile with [pack_id] error",
+   "claim": "invalid --id rejected before compile with [pack_id] error",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:89-99",
-    "packc/compiler/helpers_integration.go:192-228"
+    "packc/compiler/check.go:97-100",
+    "packc/compiler/helpers_integration.go:230-236"
    ]
+  },
+  {
+   "id": 13,
+   "claim": "workflow control: spec default is user; PromptKit runtime treats absent control as the agent keeping the turn",
+   "verdict": "unverified",
+   "evidence": []
   }
  ]
 }

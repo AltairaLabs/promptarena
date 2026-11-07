@@ -4,9 +4,8 @@ description: How packc compile loads an arena config, builds a pack from it with
 sidebar:
   order: 2
 verified:
-  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
-    - arena/arenaconfig/types.go
     - arena/cmd/promptarena/export.go
     - arena/cmd/promptarena/validate_json.go
     - packc/compiler/check.go
@@ -67,7 +66,7 @@ The pack-level parts come from the arena config:
 | `spec.workflow` | `workflow` |
 | `spec.agents` | `agents` |
 | `spec.compositions` | `compositions` |
-| `spec.skills` | `skills`, with directory paths made relative to the config's directory |
+| `spec.skills` | `skills`; directory paths are made relative to the config's directory when `-c` is an absolute path, and stay absolute with a relative `-c`; an `@org/name` installed-skill reference stays a reference |
 | `spec.pack_evals` | `evals` |
 | `spec.pack_metadata` | `metadata` |
 

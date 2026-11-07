@@ -1,13 +1,13 @@
 {
  "page": "docs/src/content/docs/packc/reference/validate.md",
- "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
    "claim": "validate takes one or more pack-file arguments and -h/--help",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go"
+    "packc/main_interactive.go:236-259"
    ]
   },
   {
@@ -15,7 +15,7 @@
    "claim": "PROMPTKIT_SCHEMA_SOURCE selects embedded/remote/file/URL schema",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go"
+    "packc/compiler/check.go:219"
    ]
   },
   {
@@ -23,8 +23,8 @@
    "claim": "check order: read and parse JSON, schema, skills, workflow, compositions, agents, governance, pack",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go",
-    "packc/compiler/pack_file.go"
+    "packc/compiler/check.go:157-210",
+    "packc/compiler/pack_file.go:25-45"
    ]
   },
   {
@@ -32,7 +32,7 @@
    "claim": "schema that cannot be loaded is a pack_schema error",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go"
+    "packc/compiler/check.go:219-224"
    ]
   },
   {
@@ -40,27 +40,31 @@
    "claim": "errors listed under '\u2717 Pack validation failed: <file>' with stage; warnings print separately",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go"
+    "packc/main_interactive.go:287-316"
    ]
   },
   {
    "id": 6,
    "claim": "pack/prompt structural rules (id, semver, prompts, template_engine, compilation, system_template, variables)",
    "verdict": "true",
-   "evidence": []
+   "evidence": [
+    "packc/compiler/check.go:195-207"
+   ]
   },
   {
    "id": 7,
    "claim": "workflow rules and warnings",
    "verdict": "true",
-   "evidence": []
+   "evidence": [
+    "packc/compiler/check.go:162-164"
+   ]
   },
   {
    "id": 8,
    "claim": "agents structural rules are errors; mode and tag findings are warnings",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go"
+    "packc/compiler/check.go:172-177"
    ]
   },
   {
@@ -68,15 +72,16 @@
    "claim": "governance errors block, undeclared-prefix warnings do not",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go"
+    "packc/compiler/check.go:182-184"
    ]
   },
   {
    "id": 10,
-   "claim": "skills resolved relative to the pack file directory",
+   "claim": "skills resolved relative to the pack file directory; a path outside it is an error except @org/name references",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/pack_file.go"
+    "packc/compiler/pack_file.go:43",
+    "packc/compiler/skills_validator_integration.go:99-113"
    ]
   },
   {
@@ -84,8 +89,8 @@
    "claim": "validate warns when a prompt's tools are not in the pack's tools",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go",
-    "packc/compiler/pack_fields.go"
+    "packc/compiler/check.go:209",
+    "packc/compiler/pack_fields.go:84-105"
    ]
   },
   {
@@ -93,7 +98,7 @@
    "claim": "output lines for success, warnings, failure, multi-file count",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go"
+    "packc/main_interactive.go:267-316"
    ]
   },
   {
@@ -101,15 +106,16 @@
    "claim": "exit 0 when every pack is valid (warnings included) or --help; 1 otherwise",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go"
+    "packc/main_interactive.go:239-249",
+    "packc/main_interactive.go:277-282"
    ]
   },
   {
    "id": 14,
-   "claim": "old: exit 1 when pack has warnings",
-   "verdict": "false",
+   "claim": "a missing compilation block is a warning, not an error",
+   "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go"
+    "packc/compiler/check.go:198-205"
    ]
   },
   {

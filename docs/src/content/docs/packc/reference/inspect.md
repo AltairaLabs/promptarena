@@ -4,7 +4,7 @@ description: Output sections and exit codes of packc inspect, which prints a rea
 sidebar:
   order: 4
 verified:
-  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - packc/main.go
     - packc/main_interactive.go
@@ -60,6 +60,7 @@ Version: v1.0.0
 Description: Pack containing 1 prompts
 
 Template Engine: v1 ({{variable}})
+Features: [basic_substitution]
 
 === Prompts (1) ===
 

@@ -1,13 +1,13 @@
 {
  "page": "docs/src/content/docs/packc/tutorials/01-first-pack.md",
- "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
    "claim": "prompt config fields apiVersion/kind/metadata.name/spec.task_type/version/system_template/template_engine/variables",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:540-552"
+    "arena/arenaconfig/loader.go:592-640"
    ]
   },
   {
@@ -17,15 +17,16 @@
    "evidence": [
     "arena/arenaconfig/types.go:180",
     "arena/arenaconfig/types.go:88-91",
-    "schemas/v1alpha1/arena.json:839"
+    "schemas/v1alpha1/arena.json:838-839"
    ]
   },
   {
    "id": 3,
-   "claim": "compile summary output",
+   "claim": "compile summary output, prompt and tool names sorted",
    "verdict": "true",
    "evidence": [
-    "packc/main.go"
+    "packc/main.go:330-345",
+    "packc/main_interactive.go:185"
    ]
   },
   {
@@ -33,30 +34,35 @@
    "claim": "validate success output",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go"
+    "packc/main_interactive.go:287-314"
    ]
   },
   {
    "id": 5,
-   "claim": "go install ...packc@latest reports the module version",
+   "claim": "go install build reports the module version from build info",
    "verdict": "true",
    "evidence": [
-    "packc/main.go"
+    "packc/main.go:25-47"
    ]
   },
   {
    "id": 6,
-   "claim": "inspect output for the greeting pack",
+   "claim": "inspect output for the greeting pack; Compilation line is packc-<version>",
    "verdict": "true",
    "evidence": [
-    "packc/main.go"
+    "packc/main.go:311-318",
+    "packc/main.go:58-89",
+    "packc/main_interactive.go:189-190"
    ]
   },
   {
    "id": 7,
-   "claim": "pack JSON holds id, name, version, template_engine, prompts with variables and pipeline, compilation",
+   "claim": "pack JSON holds $schema, id, name, version, template_engine, prompts with variables and pipeline, compilation",
    "verdict": "true",
-   "evidence": []
+   "evidence": [
+    "packc/compiler/compiler.go:140-160",
+    "packc/main_interactive.go:157-185"
+   ]
   },
   {
    "id": 8,

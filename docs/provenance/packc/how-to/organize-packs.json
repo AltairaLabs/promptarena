@@ -1,14 +1,14 @@
 {
  "page": "docs/src/content/docs/packc/how-to/organize-packs.md",
- "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
    "claim": "packc compile and compile-prompt both create the output directory (writePackFile)",
    "verdict": "true",
    "evidence": [
-    "packc/main.go",
-    "packc/main_interactive.go"
+    "packc/main.go:49",
+    "packc/main_interactive.go:180"
    ]
   },
   {
@@ -16,8 +16,8 @@
    "claim": "pack id pattern ^[a-z][a-z0-9-]*$; invalid --id rejected before compile with [pack_id] error",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:89-99",
-    "packc/compiler/helpers_integration.go:192-228"
+    "packc/compiler/compiler.go:100",
+    "packc/compiler/helpers_integration.go:230"
    ]
   },
   {
@@ -25,8 +25,8 @@
    "claim": "packc compile sets name=id, version from --pack-version (default v1.0.0), description 'Pack containing N prompts', $schema latest URL, compilation block",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go",
-    "packc/main_interactive.go"
+    "packc/compiler/compiler.go:114",
+    "packc/main_interactive.go:164"
    ]
   },
   {
@@ -34,15 +34,17 @@
    "claim": "packc compile flags: -c/--config (default config.arena.yaml), -o/--output (default <id>.pack.json), --id (default current folder name sanitized), --pack-version (default v1.0.0)",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go"
+    "packc/main.go:128",
+    "packc/main.go:146"
    ]
   },
   {
    "id": 5,
-   "claim": "packc validate validates every file argument and exits 1 if any fails",
+   "claim": "packc validate validates every file argument and exits 1 if any fails (so find | xargs -0 packc validate works)",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go"
+    "packc/main_interactive.go:261",
+    "packc/main_interactive.go:280"
    ]
   },
   {
@@ -50,8 +52,8 @@
    "claim": "two compiles of the same inputs differ only in compilation.created_at; template_engine resolved deterministically, disagreement is a compile error",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go",
-    "packc/compiler/pack_fields.go"
+    "packc/compiler/compiler.go:114",
+    "packc/compiler/pack_fields.go:59"
    ]
   }
  ]

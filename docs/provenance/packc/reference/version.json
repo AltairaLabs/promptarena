@@ -1,14 +1,14 @@
 {
  "page": "docs/src/content/docs/packc/reference/version.md",
- "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
    "claim": "version prints 'packc <version>'",
    "verdict": "true",
    "evidence": [
-    "packc/main.go",
-    "packc/main_interactive.go"
+    "packc/main_interactive.go:39",
+    "packc/main_interactive.go:40"
    ]
   },
   {
@@ -16,7 +16,10 @@
    "claim": "release builds set main.version to the version without v",
    "verdict": "true",
    "evidence": [
-    ".goreleaser.yml:41-57"
+    ".goreleaser.yml:41",
+    ".goreleaser.yml:56",
+    "packc/main.go:19",
+    "packc/main.go:34"
    ]
   },
   {
@@ -24,7 +27,8 @@
    "claim": "go install reports the module version, go build in git a pseudo-version, dev only without build info",
    "verdict": "true",
    "evidence": [
-    "packc/main.go"
+    "packc/main.go:33",
+    "packc/main.go:38"
    ]
   },
   {
@@ -32,8 +36,10 @@
    "claim": "Homebrew cask and npm package ship release binaries",
    "verdict": "true",
    "evidence": [
-    ".goreleaser.yml:230-245",
-    "npm/packc/package.json"
+    ".goreleaser.yml:212",
+    ".goreleaser.yml:226",
+    "npm/packc/lib/resolve.js:16",
+    "npm/packc/package.json:15"
    ]
   },
   {
@@ -41,7 +47,9 @@
    "claim": "compile and compile-prompt write packc-<version> into compiled_with",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go"
+    "packc/main_interactive.go:162",
+    "packc/main_interactive.go:188",
+    "packc/main_interactive.go:211"
    ]
   },
   {
@@ -49,7 +57,8 @@
    "claim": "inspect prints it on the Compilation line",
    "verdict": "true",
    "evidence": [
-    "packc/main.go"
+    "packc/main.go:311",
+    "packc/main.go:313"
    ]
   },
   {
@@ -82,9 +91,11 @@
   },
   {
    "id": 11,
-   "claim": "old: GitHub workflow matrix with stripped ${{ }} expressions",
-   "verdict": "false",
-   "evidence": []
+   "claim": "version takes no flags or arguments; extras are ignored, exit code always 0",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:39"
+   ]
   }
  ]
 }
