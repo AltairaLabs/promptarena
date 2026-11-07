@@ -3,11 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
-
-	"github.com/AltairaLabs/promptarena/v2/arena/deploy/flow"
 
 	"github.com/AltairaLabs/promptarena/v2/deploy"
 )
@@ -26,51 +23,31 @@ Examples:
 }
 
 func runDeployDestroy(cmd *cobra.Command, args []string) error {
-	deployCfg, err := loadDeployConfig()
+	// Only this environment's state is ever sent to the adapter: destroying
+	// one environment must never hand it another environment's resources.
+	ec, err := openEnvCommand("Destroying deployment in environment:")
 	if err != nil {
 		return err
 	}
-
-	env := flow.ResolveEnv(deployOptions())
-	projectDir, _ := os.Getwd()
+	defer ec.unlock()
 	ctx := context.Background()
 
-	// Acquire deploy lock.
-	unlock, err := flow.Lock(projectDir)
-	if err != nil {
-		return err
-	}
-	defer unlock()
-
-	fmt.Printf("Destroying deployment in environment: %s (provider: %s)\n", env, deployCfg.Provider)
-
-	configJSON, err := flow.MergedConfigJSON(deployCfg, env, deployConfig)
-	if err != nil {
-		return err
-	}
-
-	stateStore := deploy.NewStateStore(projectDir)
-	priorState, err := stateStore.Load()
-	if err != nil {
-		return fmt.Errorf("failed to load deploy state: %w", err)
-	}
-
-	if priorState == nil {
+	if ec.state == nil {
 		fmt.Println()
-		fmt.Println("  No deployment state found. Nothing to destroy.")
+		fmt.Printf("  No deployment state found for environment %q. Nothing to destroy.\n", ec.env)
 		return nil
 	}
 
-	client, err := connectAdapter(deployCfg.Provider, projectDir)
+	client, err := connectAdapter(ec.cfg.Provider, ec.projectDir)
 	if err != nil {
 		return err
 	}
 	defer client.Close()
 
 	err = client.Destroy(ctx, &deploy.DestroyRequest{
-		DeployConfig: configJSON,
-		Environment:  env,
-		PriorState:   priorState.State,
+		DeployConfig: ec.configJSON,
+		Environment:  ec.env,
+		PriorState:   ec.state.State,
 	}, func(e *deploy.DestroyEvent) error {
 		printDeployEvent(e.Type, e.Message, e.Resource)
 		return nil
@@ -79,9 +56,11 @@ func runDeployDestroy(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("destroy failed: %w", err)
 	}
 
-	if err := stateStore.Delete(); err != nil {
+	if err := ec.store.Delete(); err != nil {
 		return fmt.Errorf("failed to remove deploy state: %w", err)
 	}
+	// A plan saved before the destroy describes resources that no longer exist.
+	_ = ec.store.DeletePlan()
 
 	fmt.Println()
 	fmt.Println("Deployment destroyed.")

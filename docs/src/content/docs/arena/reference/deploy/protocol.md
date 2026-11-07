@@ -26,6 +26,7 @@ Deploy adapters communicate with the CLI using **JSON-RPC 2.0** over **stdio** (
 
 - **Input**: Line-delimited JSON on stdin
 - **Output**: Line-delimited JSON on stdout
+- **Logs**: free-form text on stderr. The CLI passes it to the user's terminal (the TUI to its log), and appends the last 4 KiB to the error when the adapter exits mid-call. Never write logs to stdout.
 - **Encoding**: UTF-8
 - **Max line size**: 10 MB
 - **Initial buffer**: 64 KB
@@ -112,7 +113,7 @@ Returns adapter metadata.
 
 ### validate_config
 
-Validates provider configuration. `deploy config import` calls it unless you pass `--skip-validate`.
+Validates provider configuration. The CLI calls it before every plan (`deploy`, `deploy plan`, and `deploy apply` when it re-plans) and in `deploy config import` unless you pass `--skip-validate`. A `valid: false` result stops the command with the listed errors before `plan` is sent. An adapter that answers method-not-found (`-32601`) is planned without validation, so the method is optional, but an adapter that implements it is always consulted.
 
 **Request:**
 
@@ -163,7 +164,7 @@ Validates provider configuration. `deploy config import` calls it unless you pas
 |--------------|------|-------------|
 | `valid` | bool | Whether config is valid |
 | `errors` | string[] | Validation error messages |
-| `warnings` | string[] | Non-blocking advisories (do not affect `valid`); the CLI prints them with a ⚠ prefix |
+| `warnings` | string[] | Non-blocking advisories (do not affect `valid`); the CLI prints them with a ⚠ prefix, before the plan's own warnings |
 
 ---
 

@@ -21,11 +21,13 @@ The scoped token is stored in ~/.promptarena/credentials — never in the config
 file.
 
 The provider must ship an adapter that supports login. The provider is taken
-from --provider, or from the existing deploy section of the config.
+from --provider, or from the existing deploy section of the config. The config
+file must exist; when it has no deploy section, login creates one with
+provider set from --provider.
 
 Examples:
   promptarena deploy login --provider omnia
-  promptarena deploy login                 # provider read from arena.yaml`,
+  promptarena deploy login                 # provider read from the config`,
 	RunE: runDeployLogin,
 }
 
@@ -41,7 +43,7 @@ func resolveLoginProvider() (string, error) {
 	if deployLoginProvider != "" {
 		return deployLoginProvider, nil
 	}
-	if _, err := os.Stat(deployConfig); err == nil {
+	if _, err := os.Stat(deployConfigPath()); err == nil {
 		if cfg, derr := loadDeployConfig(); derr == nil && cfg.Provider != "" {
 			return cfg.Provider, nil
 		}
@@ -66,7 +68,7 @@ func runDeployLogin(_ *cobra.Command, _ []string) error {
 		return err
 	}
 
-	fmt.Printf("\nLogin complete. Wrote the deploy profile to %s\n", deployConfig)
+	fmt.Printf("\nLogin complete. Wrote the deploy profile to %s\n", deployConfigPath())
 	fmt.Println("The token was stored in ~/.promptarena/credentials (not in the config file).")
 	return nil
 }

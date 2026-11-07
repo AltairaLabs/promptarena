@@ -45,7 +45,7 @@ flowchart LR
 
 - stdin carries requests from the CLI.
 - stdout carries responses from the adapter.
-- stderr is not connected. The CLI discards anything the adapter writes there, so adapter log output does not reach your terminal.
+- stderr carries the adapter's own logs. The CLI passes it through to your terminal (the TUI routes it into its log), and keeps the last few KiB: when the adapter exits mid-call, the error ends with what it wrote there, typically a panic trace.
 
 The model needs no network configuration: no ports, no sockets and no TLS between the two processes.
 
@@ -99,7 +99,7 @@ An adapter can also implement the optional `LoginProvider` interface (`GetLoginU
 | Method | Purpose |
 |--------|---------|
 | `GetProviderInfo` | Return adapter name, version and capabilities |
-| `ValidateConfig` | Check that provider config is valid. `promptarena deploy config import` calls it. `plan` does not, and the Omnia and AgentCore adapters validate again inside `Plan`. |
+| `ValidateConfig` | Check that provider config is valid. The CLI calls it before every plan, and `promptarena deploy config import` calls it after merging a profile. An invalid result stops the command before `Plan`. |
 | `Plan` | Analyze pack and config and report which resources will change |
 | `Apply` | Create, update or delete resources on the cloud provider |
 | `Destroy` | Remove all managed resources |
@@ -169,7 +169,6 @@ The 10 MB ceiling leaves room for plan and apply requests, which carry the whole
 - Process overhead: each command spawns a new process.
 - No streaming: the adapter returns all apply and destroy events in its final response, and the CLI prints them after the call completes.
 - Binary distribution: you download a platform-specific binary for each adapter.
-- No adapter logs: stderr is discarded, so an adapter can only report through its responses.
 
 ## See Also
 

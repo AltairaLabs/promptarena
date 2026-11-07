@@ -10,6 +10,7 @@ import (
 type Preflight struct {
 	Provider       string
 	Env            string
+	Environments   []string // DefaultEnv plus the config's deploy.environments keys
 	AdapterFound   bool
 	AdapterPath    string
 	AdapterVersion string
@@ -54,6 +55,11 @@ func CheckPreflight(ctx context.Context, opts Options) *Preflight {
 	}
 	pf.Provider = dep.Provider
 	pf.InstallCommand = InstallCommand(dep.Provider)
+	pf.Environments = Environments(dep)
+	if envErr := deploy.ValidateEnvironmentName(pf.Env); envErr != nil {
+		pf.ConfigErr = envErr
+		return pf
+	}
 
 	dir, err := opts.dir()
 	if err != nil {

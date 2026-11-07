@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"sort"
 
 	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
 	"github.com/AltairaLabs/promptarena/v2/packc/compiler"
@@ -12,18 +13,41 @@ import (
 // LoadConfig loads the arena config and its deploy section, erroring (with the
 // configure docs URL) when the file or the deploy: section is missing.
 func LoadConfig(opts Options) (*arenaconfig.Config, *arenaconfig.DeployConfig, error) {
-	path := opts.config()
-	if _, err := os.Stat(path); err != nil {
-		return nil, nil, fmt.Errorf("deploy config %q not found: %w\nSee %s", path, err, ConfigureDocsURL)
-	}
-	cfg, err := arenaconfig.LoadConfig(path)
+	cfg, err := loadArenaConfig(opts)
 	if err != nil {
 		return nil, nil, err
 	}
 	if cfg.Deploy == nil {
-		return nil, nil, fmt.Errorf("no deploy: section in %q\nSee %s", path, ConfigureDocsURL)
+		return nil, nil, fmt.Errorf("no deploy: section in %q\nSee %s", opts.config(), ConfigureDocsURL)
 	}
 	return cfg, cfg.Deploy, nil
+}
+
+// loadArenaConfig loads the arena config without requiring a deploy section
+// (login creates one).
+func loadArenaConfig(opts Options) (*arenaconfig.Config, error) {
+	path := opts.config()
+	if _, err := os.Stat(path); err != nil {
+		return nil, fmt.Errorf("deploy config %q not found: %w\nSee %s", path, err, ConfigureDocsURL)
+	}
+	return arenaconfig.LoadConfig(path)
+}
+
+// Environments lists the deploy environments a config targets: DefaultEnv
+// first, then every key of deploy.environments in sorted order.
+func Environments(dep *arenaconfig.DeployConfig) []string {
+	envs := []string{DefaultEnv}
+	if dep == nil {
+		return envs
+	}
+	names := make([]string, 0, len(dep.Environments))
+	for name := range dep.Environments {
+		if name != DefaultEnv {
+			names = append(names, name)
+		}
+	}
+	sort.Strings(names)
+	return append(envs, names...)
 }
 
 // ResolveEnv returns opts.Env or DefaultEnv.

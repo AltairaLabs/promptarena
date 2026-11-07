@@ -3,12 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
-	"os"
 	"time"
 
 	"github.com/spf13/cobra"
-
-	"github.com/AltairaLabs/promptarena/v2/arena/deploy/flow"
 
 	"github.com/AltairaLabs/promptarena/v2/deploy"
 )
@@ -27,61 +24,40 @@ Examples:
 }
 
 func runDeployRefresh(cmd *cobra.Command, args []string) error {
-	deployCfg, err := loadDeployConfig()
+	ec, err := openEnvCommand("Refreshing state for environment:")
 	if err != nil {
 		return err
 	}
-
-	env := flow.ResolveEnv(deployOptions())
-	projectDir, _ := os.Getwd()
+	defer ec.unlock()
 	ctx := context.Background()
 
-	// Acquire deploy lock.
-	unlock, err := flow.Lock(projectDir)
-	if err != nil {
-		return err
-	}
-	defer unlock()
-
-	fmt.Printf("Refreshing state for environment: %s (provider: %s)\n", env, deployCfg.Provider)
-
-	configJSON, err := flow.MergedConfigJSON(deployCfg, env, deployConfig)
-	if err != nil {
-		return err
-	}
-
-	stateStore := deploy.NewStateStore(projectDir)
-	priorState, err := stateStore.Load()
-	if err != nil {
-		return fmt.Errorf("failed to load deploy state: %w", err)
-	}
-
-	if priorState == nil {
+	if ec.state == nil {
 		fmt.Println()
-		fmt.Println("  No deployment state found. Run 'promptarena deploy' first.")
+		fmt.Printf("  No deployment state found for environment %q. Run 'promptarena deploy --env %s' first.\n",
+			ec.env, ec.env)
 		return nil
 	}
 
-	client, err := connectAdapter(deployCfg.Provider, projectDir)
+	client, err := connectAdapter(ec.cfg.Provider, ec.projectDir)
 	if err != nil {
 		return err
 	}
 	defer client.Close()
 
 	status, err := client.Status(ctx, &deploy.StatusRequest{
-		DeployConfig: configJSON,
-		Environment:  env,
-		PriorState:   priorState.State,
+		DeployConfig: ec.configJSON,
+		Environment:  ec.env,
+		PriorState:   ec.state.State,
 	})
 	if err != nil {
 		return fmt.Errorf("refresh failed: %w", err)
 	}
 
 	if status.State != "" {
-		priorState.State = status.State
+		ec.state.State = status.State
 	}
-	priorState.LastRefreshed = time.Now().UTC().Format(time.RFC3339)
-	if err := stateStore.Save(priorState); err != nil {
+	ec.state.LastRefreshed = time.Now().UTC().Format(time.RFC3339)
+	if err := ec.store.Save(ec.state); err != nil {
 		return fmt.Errorf("failed to save refreshed state: %w", err)
 	}
 

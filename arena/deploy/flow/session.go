@@ -2,7 +2,9 @@ package flow
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
@@ -36,8 +38,19 @@ func NewSession(opts Options, arena *arenaconfig.Config, dep *arenaconfig.Deploy
 }
 
 // Open resolves config, compiles the pack, merges config JSON, connects the
-// adapter, and opens the state store.
+// adapter, and opens the environment's state store.
 func Open(ctx context.Context, opts Options) (*Session, error) {
+	return open(ctx, opts, true)
+}
+
+// OpenWithoutPack is Open for commands that never send the pack (status): it
+// skips pack resolution, so a config that does not compile can still be
+// inspected. PlanRequest and Apply must not be used on the result.
+func OpenWithoutPack(ctx context.Context, opts Options) (*Session, error) {
+	return open(ctx, opts, false)
+}
+
+func open(ctx context.Context, opts Options, withPack bool) (*Session, error) {
 	arena, dep, err := LoadConfig(opts)
 	if err != nil {
 		return nil, err
@@ -46,11 +59,16 @@ func Open(ctx context.Context, opts Options) (*Session, error) {
 	if err != nil {
 		return nil, err
 	}
-	packData, err := ResolvePack(opts)
-	if err != nil {
-		return nil, err
-	}
 	env := ResolveEnv(opts)
+	if envErr := deploy.ValidateEnvironmentName(env); envErr != nil {
+		return nil, envErr
+	}
+	var packData []byte
+	if withPack {
+		if packData, err = ResolvePack(opts); err != nil {
+			return nil, err
+		}
+	}
 	cfgJSON, err := MergedConfigJSON(dep, env, opts.config())
 	if err != nil {
 		return nil, err
@@ -59,7 +77,7 @@ func Open(ctx context.Context, opts Options) (*Session, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewSession(opts, arena, dep, client, deploy.NewStateStore(dir), packData, cfgJSON, client.Close), nil
+	return NewSession(opts, arena, dep, client, deploy.NewStateStore(dir, env), packData, cfgJSON, client.Close), nil
 }
 
 // Close releases the adapter subprocess.
@@ -70,11 +88,54 @@ func (s *Session) Close() error {
 	return nil
 }
 
-// PackChecksum returns the checksum of the resolved pack.
-func (s *Session) PackChecksum() string { return deploy.ComputePackChecksum(s.packData) }
+// PackChecksum returns the identity checksum of the resolved pack: its content
+// minus the compile timestamp, so recompiling an unchanged pack keeps it.
+func (s *Session) PackChecksum() string { return deploy.PackIdentityChecksum(s.packData) }
 
-// PlanRequest builds a PlanRequest, refreshing prior adapter state first (soft-fail).
+// PackVersion returns the resolved pack's version ("" when it has none).
+func (s *Session) PackVersion() string { return deploy.PackVersion(s.packData) }
+
+// ValidateConfig asks the adapter to validate the merged deploy config and
+// returns its warnings. An invalid config is an error listing the adapter's
+// reasons. An adapter that answers method-not-found is treated as having
+// nothing to report, so adapters that only validate inside plan keep working.
+func (s *Session) ValidateConfig(ctx context.Context) ([]string, error) {
+	resp, err := s.Client.ValidateConfig(ctx, &deploy.ValidateRequest{Config: s.configJSON})
+	if errors.Is(err, deploy.ErrMethodNotSupported) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, fmt.Errorf("validate_config failed: %w", err)
+	}
+	if !resp.Valid {
+		reasons := "no reason given"
+		if len(resp.Errors) > 0 {
+			reasons = strings.Join(resp.Errors, "; ")
+		}
+		return nil, fmt.Errorf("deploy config is invalid for %q: %s", s.ProviderName, reasons)
+	}
+	return resp.Warnings, nil
+}
+
+// PlanRequest builds a PlanRequest after validating the deploy config with
+// the adapter, refreshing prior adapter state first (soft-fail).
 func (s *Session) PlanRequest(ctx context.Context) (*deploy.PlanRequest, error) {
+	req, _, err := s.planRequest(ctx)
+	return req, err
+}
+
+// planRequest is PlanRequest that also returns the config warnings.
+func (s *Session) planRequest(ctx context.Context) (*deploy.PlanRequest, []string, error) {
+	warnings, err := s.ValidateConfig(ctx)
+	if err != nil {
+		return nil, nil, err
+	}
+	req, err := s.buildPlanRequest(ctx)
+	return req, warnings, err
+}
+
+// buildPlanRequest assembles the request, refreshing prior state.
+func (s *Session) buildPlanRequest(ctx context.Context) (*deploy.PlanRequest, error) {
 	prior := ""
 	st, err := s.Store.Load()
 	if err != nil {
@@ -100,13 +161,16 @@ func (s *Session) PlanRequest(ctx context.Context) (*deploy.PlanRequest, error) 
 
 // Plan computes and returns the plan and the request that produced it.
 func (s *Session) Plan(ctx context.Context) (*deploy.PlanResponse, *deploy.PlanRequest, error) {
-	req, err := s.PlanRequest(ctx)
+	req, warnings, err := s.planRequest(ctx)
 	if err != nil {
 		return nil, nil, err
 	}
 	plan, err := s.Client.Plan(ctx, req)
 	if err != nil {
 		return nil, nil, fmt.Errorf("plan failed: %w", err)
+	}
+	if plan != nil && len(warnings) > 0 {
+		plan.Warnings = append(warnings, plan.Warnings...)
 	}
 	return plan, req, nil
 }
@@ -121,7 +185,7 @@ func (s *Session) Apply(ctx context.Context, req *deploy.PlanRequest, cb deploy.
 	if info, _ := s.Client.GetProviderInfo(ctx); info != nil {
 		version = info.Version
 	}
-	st := deploy.NewState(s.ProviderName, s.Env, "", s.PackChecksum(), version)
+	st := deploy.NewState(s.ProviderName, s.Env, s.PackVersion(), s.PackChecksum(), version)
 	st.State = adapterState
 	if err := s.Store.Save(st); err != nil {
 		return err

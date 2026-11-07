@@ -13,9 +13,7 @@ import (
 func lockFileExclusive(f *os.File) error {
 	if err := syscall.Flock(int(f.Fd()), syscall.LOCK_EX|syscall.LOCK_NB); err != nil {
 		if errors.Is(err, syscall.EWOULDBLOCK) || errors.Is(err, syscall.EAGAIN) {
-			return fmt.Errorf(
-				"deploy lock is held by another process; " +
-					"wait for the other deploy to finish or remove the lock file")
+			return errLockHeld
 		}
 		return fmt.Errorf("failed to acquire deploy lock: %w", err)
 	}

@@ -8,8 +8,6 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/AltairaLabs/promptarena/v2/arena/deploy/flow"
-
-	"github.com/AltairaLabs/promptarena/v2/deploy"
 )
 
 var deployStatusCmd = &cobra.Command{
@@ -38,25 +36,31 @@ func runDeployStatus(cmd *cobra.Command, args []string) error {
 
 	// Validate the deploy config before checking local state, so a broken
 	// --config surfaces its error even when there is no prior deployment.
-	if _, mergeErr := flow.MergedConfigJSON(deployCfg, env, deployConfig); mergeErr != nil {
+	if _, mergeErr := flow.MergedConfigJSON(deployCfg, env, deployConfigPath()); mergeErr != nil {
 		return mergeErr
 	}
 
 	// Peek at local state before connecting the adapter — status should be a
 	// cheap, local check when nothing has been deployed yet (and shouldn't
 	// require the adapter binary to be installed just to say so).
-	stateStore := deploy.NewStateStore(projectDir)
+	stateStore, err := openEnvState(projectDir, env)
+	if err != nil {
+		return err
+	}
 	priorState, err := stateStore.Load()
 	if err != nil {
 		return fmt.Errorf("failed to load deploy state: %w", err)
 	}
 	if priorState == nil {
 		fmt.Println()
-		fmt.Println("  No deployment state found. Run 'promptarena deploy' first.")
+		fmt.Printf("  No deployment state found for environment %q. Run 'promptarena deploy --env %s' first.\n",
+			env, env)
 		return nil
 	}
 
-	sess, err := flow.Open(ctx, opts)
+	// Status never sends the pack, so it does not compile one: a config that
+	// fails to compile can still report what is deployed.
+	sess, err := flow.OpenWithoutPack(ctx, opts)
 	if err != nil {
 		return err
 	}
@@ -73,6 +77,9 @@ func runDeployStatus(cmd *cobra.Command, args []string) error {
 	printStatus(status)
 
 	fmt.Printf("  Last deployed: %s\n", priorState.LastDeployed)
+	if priorState.PackVersion != "" {
+		fmt.Printf("  Pack version:  %s\n", priorState.PackVersion)
+	}
 	fmt.Printf("  Pack checksum: %s\n", priorState.PackChecksum)
 	return nil
 }

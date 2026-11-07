@@ -6,8 +6,6 @@ import (
 	"os"
 
 	"github.com/spf13/cobra"
-
-	"github.com/AltairaLabs/promptarena/v2/arena/deploy/flow"
 )
 
 var deployPlanCmd = &cobra.Command{
@@ -28,10 +26,13 @@ func runDeployPlan(cmd *cobra.Command, args []string) error {
 	projectDir, _ := os.Getwd()
 	ctx := context.Background()
 
-	sess, err := flow.Open(ctx, opts)
+	// Planning refreshes and saves state and writes the saved plan, so it takes
+	// the same per-environment lock as deploy/apply.
+	sess, unlock, err := lockAndOpen(ctx, opts, projectDir)
 	if err != nil {
 		return err
 	}
+	defer unlock()
 	defer func() { _ = sess.Close() }()
 
 	fmt.Printf("Deploy plan for environment: %s (provider: %s)\n", sess.Env, sess.Deploy.Provider)
@@ -48,6 +49,6 @@ func runDeployPlan(cmd *cobra.Command, args []string) error {
 	if err := sess.SavePlan(plan, planReq); err != nil {
 		return fmt.Errorf("failed to save plan: %w", err)
 	}
-	fmt.Println("Plan saved. Run 'promptarena deploy apply' to execute.")
+	fmt.Printf("Plan saved. Run 'promptarena deploy apply --env %s' to execute.\n", sess.Env)
 	return nil
 }

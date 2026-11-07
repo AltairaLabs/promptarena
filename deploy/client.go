@@ -7,8 +7,11 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"os"
 	"os/exec"
+	"strings"
 	"sync"
+	"time"
 )
 
 // AdapterClient launches an adapter binary and communicates with it via
@@ -18,6 +21,13 @@ type AdapterClient struct {
 	cmd    *exec.Cmd
 	stdin  io.WriteCloser
 	stdout *bufio.Scanner
+	// stderrTail keeps the end of the adapter's stderr so a crash can be
+	// reported with what the adapter said on the way down. Nil when the
+	// client is not backed by a subprocess.
+	stderrTail *tailBuffer
+	// stderrDone closes once the adapter's stderr has been fully copied (the
+	// process has exited or closed it).
+	stderrDone chan struct{}
 
 	mu     sync.Mutex
 	nextID int
@@ -117,14 +127,32 @@ func NewAdapterClient(binaryPath string) (*AdapterClient, error) {
 // NewAdapterClientWithContext starts the adapter binary at the given path,
 // using ctx to control the subprocess lifetime. If ctx is canceled, the
 // subprocess is killed. Call Close when done.
+//
+// The adapter's stderr is forwarded to the process's stderr, so adapter debug
+// logs and panics are visible. Use [NewAdapterClientWithStderr] to send them
+// elsewhere (the TUI routes them into its log panel).
 func NewAdapterClientWithContext(ctx context.Context, binaryPath string) (*AdapterClient, error) {
-	cmd := exec.CommandContext(ctx, binaryPath)
-	return newAdapterClient(cmd)
+	return NewAdapterClientWithStderr(ctx, binaryPath, os.Stderr)
 }
 
-// newAdapterClient starts the given exec.Cmd and wires up stdio pipes.
-// Exported only for testing convenience (NewAdapterClient wraps this).
+// NewAdapterClientWithStderr is [NewAdapterClientWithContext] with the
+// adapter's stderr written to stderr instead of the process's stderr. A nil
+// stderr discards it. Either way the last few KiB are kept and appended to the
+// error when the adapter exits mid-call.
+func NewAdapterClientWithStderr(ctx context.Context, binaryPath string, stderr io.Writer) (*AdapterClient, error) {
+	cmd := exec.CommandContext(ctx, binaryPath)
+	return newAdapterClientWithStderr(cmd, stderr)
+}
+
+// newAdapterClient starts the given exec.Cmd and wires up stdio pipes, with
+// the adapter's stderr kept only as a tail for error messages.
 func newAdapterClient(cmd *exec.Cmd) (*AdapterClient, error) {
+	return newAdapterClientWithStderr(cmd, nil)
+}
+
+// newAdapterClientWithStderr starts cmd with stdin/stdout as the JSON-RPC
+// channel and stderr teed to stderr (when non-nil) and the crash-report tail.
+func newAdapterClientWithStderr(cmd *exec.Cmd, stderr io.Writer) (*AdapterClient, error) {
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
 		return nil, fmt.Errorf("stdin pipe: %w", err)
@@ -135,18 +163,38 @@ func newAdapterClient(cmd *exec.Cmd) (*AdapterClient, error) {
 		return nil, fmt.Errorf("stdout pipe: %w", err)
 	}
 
+	errPipe, err := cmd.StderrPipe()
+	if err != nil {
+		return nil, fmt.Errorf("stderr pipe: %w", err)
+	}
+
 	if err := cmd.Start(); err != nil {
 		return nil, fmt.Errorf("start adapter: %w", err)
 	}
+
+	// Copy stderr ourselves (rather than setting cmd.Stderr) so a call that
+	// sees the adapter hang up can wait for everything it wrote first.
+	tail := &tailBuffer{limit: stderrTailBytes}
+	var dst io.Writer = tail
+	if stderr != nil {
+		dst = io.MultiWriter(stderr, tail)
+	}
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		_, _ = io.Copy(dst, errPipe)
+	}()
 
 	scanner := bufio.NewScanner(stdout)
 	scanner.Buffer(make([]byte, 0, initialBufSize), maxScanSize)
 
 	return &AdapterClient{
-		cmd:    cmd,
-		stdin:  stdin,
-		stdout: scanner,
-		nextID: 1,
+		cmd:        cmd,
+		stdin:      stdin,
+		stdout:     scanner,
+		stderrTail: tail,
+		stderrDone: done,
+		nextID:     1,
 	}, nil
 }
 
@@ -175,10 +223,73 @@ func (c *AdapterClient) Close() error {
 
 	_ = c.stdin.Close()
 
+	// Wait closes the stderr pipe, so let the copier finish first; bounded in
+	// case the adapter leaves a child process holding stderr open.
+	if c.stderrDone != nil {
+		select {
+		case <-c.stderrDone:
+		case <-time.After(stderrCloseTimeout):
+		}
+	}
+
 	if c.cmd != nil {
 		return c.cmd.Wait()
 	}
 	return nil
+}
+
+// stderrTailBytes bounds how much adapter stderr is kept for error messages.
+const stderrTailBytes = 4 * 1024
+
+// stderrDrainTimeout bounds the wait for an exiting adapter's stderr.
+const stderrDrainTimeout = time.Second
+
+// stderrCloseTimeout bounds how long Close waits for the adapter to exit and
+// release stderr after stdin is closed.
+const stderrCloseTimeout = 5 * time.Second
+
+// tailBuffer is an io.Writer that keeps the last limit bytes written to it.
+// exec's stderr-copying goroutine writes it while callers read it, so it is
+// mutex-guarded.
+type tailBuffer struct {
+	mu    sync.Mutex
+	limit int
+	buf   []byte
+}
+
+func (t *tailBuffer) Write(p []byte) (int, error) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	t.buf = append(t.buf, p...)
+	if over := len(t.buf) - t.limit; over > 0 {
+		t.buf = append([]byte(nil), t.buf[over:]...)
+	}
+	return len(p), nil
+}
+
+func (t *tailBuffer) String() string {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	return string(t.buf)
+}
+
+// withAdapterStderr appends the tail of the adapter's stderr (usually a panic
+// trace or a fatal log line) to err, for an adapter that hung up mid-call.
+func (c *AdapterClient) withAdapterStderr(err error) error {
+	if c.stderrDone != nil {
+		// stdout closing usually means the process exited; give the stderr
+		// copier a moment to drain what it wrote on the way out.
+		select {
+		case <-c.stderrDone:
+		case <-time.After(stderrDrainTimeout):
+		}
+	}
+	if c.stderrTail != nil {
+		if tail := strings.TrimSpace(c.stderrTail.String()); tail != "" {
+			return fmt.Errorf("%w; adapter stderr:\n%s", err, tail)
+		}
+	}
+	return err
 }
 
 // callCtx sends a JSON-RPC request and reads the response with context support.
@@ -209,7 +320,7 @@ func (c *AdapterClient) callCtx(ctx context.Context, method string, params, resu
 	data = append(data, '\n')
 
 	if _, err := c.stdin.Write(data); err != nil {
-		return fmt.Errorf("write request: %w", err)
+		return c.withAdapterStderr(fmt.Errorf("write request: %w", err))
 	}
 
 	// Read response with context-based timeout.
@@ -244,7 +355,7 @@ func (c *AdapterClient) callCtx(ctx context.Context, method string, params, resu
 		if sr.err != nil {
 			return fmt.Errorf("read response: %w", sr.err)
 		}
-		return fmt.Errorf("adapter closed connection unexpectedly")
+		return c.withAdapterStderr(errors.New("adapter closed connection unexpectedly"))
 	}
 
 	var resp rpcResponse

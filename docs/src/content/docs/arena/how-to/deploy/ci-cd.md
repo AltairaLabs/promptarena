@@ -23,7 +23,7 @@ Automate deployments with GitHub Actions.
 - A deploy section in your arena config (see [Configure Deploy](/arena/how-to/deploy/configure/))
 - Cloud provider credentials stored as GitHub secrets
 
-`promptarena deploy` compiles the pack from `arena.yaml`, so the workflows need no separate compile step. The [Multi-Environment Pipeline](#multi-environment-pipeline) below pre-compiles with `packc` to deploy the same pack to every stage.
+`promptarena deploy` compiles the pack from the arena config (`config.arena.yaml` by default), so the workflows need no separate compile step. The [Multi-Environment Pipeline](#multi-environment-pipeline) below pre-compiles with `packc` to deploy the same pack to every stage.
 
 ## GitHub Actions Workflow
 
@@ -113,7 +113,7 @@ jobs:
 
 ### Multi-Environment Pipeline
 
-Deploy to staging first, then to production after approval. This pipeline compiles the pack once with `packc` and deploys the same `app.pack.json` to every environment with `--pack`, so both stages receive identical bytes. Without `--pack`, each deploy recompiles, and a compiled pack records its compile time.
+Deploy to staging first, then to production after approval. This pipeline compiles the pack once with `packc` and deploys the same `app.pack.json` to every environment with `--pack`, so both stages receive identical bytes. Without `--pack`, each deploy recompiles the pack from the config, which gives the same pack content as long as the config is unchanged.
 
 ```yaml
 # .github/workflows/deploy-pipeline.yml
@@ -218,7 +218,7 @@ promptarena deploy destroy --env staging   # tear down
 
 ## State Management in CI
 
-The CLI keeps deploy state in `.promptarena/deploy.state` in the working directory. A CI runner starts clean, so persist the file between runs. See [State Management](/arena/explanation/deploy/state-management/) for what the file holds.
+The CLI keeps each environment's deploy state in `.promptarena/envs/<env>/deploy.state` in the working directory. A CI runner starts clean, so persist the file between runs. See [State Management](/arena/explanation/deploy/state-management/) for what the file holds.
 
 ### Options for CI State
 
@@ -230,7 +230,7 @@ Option 1: commit state to the repository.
 
 - name: Commit state
   run: |
-    git add .promptarena/deploy.state
+    git add .promptarena/envs/production/deploy.state
     git commit -m "Update deploy state" || true
     git push
 ```
@@ -241,8 +241,8 @@ Option 2: keep state in artifact storage.
 - name: Download prior state
   uses: actions/download-artifact@v4
   with:
-    name: deploy-state
-    path: .promptarena
+    name: deploy-state-production
+    path: .promptarena/envs/production
   continue-on-error: true
 
 - name: Deploy
@@ -251,11 +251,11 @@ Option 2: keep state in artifact storage.
 - name: Upload state
   uses: actions/upload-artifact@v4
   with:
-    name: deploy-state
-    path: .promptarena/deploy.state
+    name: deploy-state-production
+    path: .promptarena/envs/production/deploy.state
 ```
 
-The state file holds one deployment. If one repository deploys several environments, keep a separate state file per environment (for example, one artifact name per environment).
+Each environment's state lives in its own directory, so a pipeline that deploys several environments persists each one separately (for example, one artifact per environment, `deploy-state-staging` and `deploy-state-production`).
 
 ## Troubleshooting
 

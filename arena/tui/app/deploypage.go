@@ -435,6 +435,8 @@ func (p *DeployPage) handleKey(msg tea.KeyMsg) (Page, tea.Cmd) {
 //     already authenticated.
 //   - 'p' (plan) only fires once pf.Ready() — adapter installed, connected
 //     without error, and authenticated.
+//   - 'e' (environment) cycles the target through DefaultEnv and the config's
+//     deploy.environments, then re-runs the probe for the new target.
 //   - 'r' (retry) always re-runs the preflight probe.
 func (p *DeployPage) handlePreflightKey(msg tea.KeyMsg) (Page, tea.Cmd) {
 	if p.pf == nil || msg.Type != tea.KeyRunes {
@@ -450,6 +452,16 @@ func (p *DeployPage) handlePreflightKey(msg tea.KeyMsg) (Page, tea.Cmd) {
 		if p.pf.Ready() {
 			p.state = deployStatePlanning
 			return p, tea.Batch(p.startPlan(), p.spinner.Tick)
+		}
+	case "e":
+		// Switch the target environment and re-probe: auth and config are
+		// per environment, so the old snapshot no longer applies.
+		if len(p.pf.Environments) > 1 {
+			p.opts.Env = nextEnv(p.pf.Environments, p.pf.Env)
+			p.loginErr = nil
+			p.pf = nil
+			cmd := p.runPreflight()
+			return p, cmd
 		}
 	case "r":
 		p.loginErr = nil
@@ -654,7 +666,16 @@ func runPlan(ctx context.Context, opts flow.Options, sess *flow.Session, send fu
 		send(planStaleMsg{})
 	}
 
+	// Planning refreshes and saves state, so it holds the environment's
+	// deploy lock just as apply does.
+	release, err := flow.Lock(opts.ProjectDir, flow.ResolveEnv(opts))
+	if err != nil {
+		_ = sess.Close()
+		send(deployErrMsg{err: err})
+		return
+	}
 	plan, req, err := sess.Plan(ctx)
+	release()
 	if err != nil {
 		// Plan failed on a session this goroutine (or a pre-injected
 		// caller) already opened — close it here rather than leaving
@@ -711,13 +732,14 @@ func (p *DeployPage) startApply() tea.Cmd {
 	p.applySawErrorEvent = false
 
 	projectDir := p.opts.ProjectDir
+	env := flow.ResolveEnv(p.opts)
 	sess := p.sess
 	req := p.planReq
 	send := p.send
 
 	return func() tea.Msg {
 		go func() {
-			release, err := flow.Lock(projectDir)
+			release, err := flow.Lock(projectDir, env)
 			if err != nil {
 				send(deployErrMsg{err: err})
 				return
@@ -1012,8 +1034,23 @@ func preflightKeyBindings(pf *flow.Preflight) []views.KeyBinding {
 	if pf.SupportsLogin && !pf.Authenticated {
 		kb = append([]views.KeyBinding{{Keys: "l", Description: "login"}}, kb...)
 	}
+	if len(pf.Environments) > 1 {
+		kb = append([]views.KeyBinding{{Keys: "e", Description: "environment"}}, kb...)
+	}
 	kb = append([]views.KeyBinding{{Keys: "r", Description: keyHintRetry}}, kb...)
 	return kb
+}
+
+// nextEnv returns the environment after current in envs, wrapping around.
+// A current env that is not listed (an --env the config never declared)
+// moves to the first entry.
+func nextEnv(envs []string, current string) string {
+	for i, e := range envs {
+		if e == current {
+			return envs[(i+1)%len(envs)]
+		}
+	}
+	return envs[0]
 }
 
 // deployBox returns the standard bordered box stretched to fill width so it

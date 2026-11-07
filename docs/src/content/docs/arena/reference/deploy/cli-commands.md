@@ -42,11 +42,15 @@ These flags apply to `deploy` and every subcommand. `--pack` is accepted by the 
 
 | Flag | Short | Type | Default | Description |
 |------|-------|------|---------|-------------|
-| `--env` | `-e` | string | `""` (resolves to `default`) | Target environment name |
-| `--config` | | string | `arena.yaml` | Path to config file |
+| `--env` | `-e` | string | `""` (resolves to `default`) | Target environment name: letters, digits, `.`, `_`, `-`, starting with a letter or digit |
+| `--config` | | string | `config.arena.yaml`, or `arena.yaml` when only that exists | Path to config file |
 | `--pack` | | string | compiled from `--config` | Pre-compiled `.pack.json` to deploy |
 
-Without `--pack`, `plan`, `apply` and bare `deploy` compile the pack from `--config`. `status`, `destroy`, `refresh` and `import` do not read the pack.
+Without `--pack`, `plan`, `apply` and bare `deploy` compile the pack from `--config`. `status`, `destroy`, `refresh` and `import` do not read or compile the pack.
+
+State, saved plans and the deploy lock are per environment, under `.promptarena/envs/<env>/`. A command reads and writes only the state of the environment it targets.
+
+An adapter's stderr is passed through to the terminal. When an adapter exits mid-command, the error includes the last lines it wrote to stderr.
 
 ## Commands
 
@@ -62,14 +66,16 @@ Takes the global flags only.
 
 **Behaviour:**
 
-1. Load the `deploy` section of the config.
-2. Resolve the pack: compile from `--config`, or read `--pack`.
-3. Merge the base config with the environment overrides.
-4. Load prior state, if any.
-5. Refresh state from the live environment.
-6. Call adapter `Plan`.
-7. Call adapter `Apply`.
-8. Save state with the adapter state, pack checksum and timestamps.
+1. Acquire the environment's deploy lock.
+2. Load the `deploy` section of the config.
+3. Resolve the pack: compile from `--config`, or read `--pack`.
+4. Merge the base config with the environment overrides.
+5. Call adapter `ValidateConfig`; an invalid config stops here. An adapter without `validate_config` is skipped.
+6. Load the environment's prior state, if any.
+7. Refresh state from the live environment.
+8. Call adapter `Plan`.
+9. Call adapter `Apply`.
+10. Save state with the adapter state, pack version, pack checksum and timestamps.
 
 **Examples:**
 
@@ -84,7 +90,7 @@ promptarena deploy --config staging.arena.yaml --env staging
 
 ### deploy plan
 
-Previews deployment changes without modifying any cloud resource. Saves the plan to `.promptarena/deploy.plan` for `deploy apply`. It may refresh and rewrite local state when prior state exists.
+Previews deployment changes without modifying any cloud resource. Saves the plan to `.promptarena/envs/<env>/deploy.plan` for `deploy apply`. It takes the environment's deploy lock, validates the config with the adapter (as `deploy` does), and may refresh and rewrite local state when prior state exists.
 
 ```bash
 promptarena deploy plan [flags]
@@ -105,6 +111,8 @@ Plan: 1 to create, 1 to update, 1 to delete
   + agent_runtime.greeting (Create agent runtime)
   ~ a2a_endpoint.greeting (Update A2A endpoint)
   - old_resource.legacy (Delete legacy resource)
+
+Plan saved. Run 'promptarena deploy apply --env production' to execute.
 ```
 
 **Change symbols:**
@@ -128,7 +136,7 @@ promptarena deploy plan --env production
 
 ### deploy apply
 
-Applies deployment changes. If a saved plan from `deploy plan` matches the current pack checksum and environment, `apply` uses it. Otherwise it plans first.
+Applies deployment changes under the environment's deploy lock. If the environment's saved plan from `deploy plan` matches the current pack checksum, `apply` uses it (`Using saved plan.`). Otherwise it validates the config and plans first. The checksum ignores the pack's compile time, so a plan stays fresh across recompiles of an unchanged config.
 
 ```bash
 promptarena deploy apply [flags]
@@ -166,10 +174,11 @@ Deployment status for environment: production (provider: agentcore)
   a2a_endpoint.greeting: healthy — serving at https://example.com/a2a
 
   Last deployed: 2026-02-16T10:30:00Z
+  Pack version:  v1.0.0
   Pack checksum: sha256:abc123def456...
 ```
 
-Resource rows are `  <type>.<name>: <status>[ — <detail>]`. The `Adapter:` line appears when the adapter binary is installed.
+The `Pack version:` line appears when the state records one. Resource rows are `  <type>.<name>: <status>[ — <detail>]`. The `Adapter:` line appears when the adapter binary is installed.
 
 **Status values:**
 
@@ -188,7 +197,7 @@ Resource rows are `  <type>.<name>: <status>[ — <detail>]`. The `Adapter:` lin
 | `unhealthy` | Exists but has issues |
 | `missing` | Expected but not found |
 
-With no state file, `status` prints `  No deployment state found. Run 'promptarena deploy' first.` and exits 0. It does not need the adapter installed in that case.
+With no state for the environment, `status` prints `  No deployment state found for environment "<env>". Run 'promptarena deploy --env <env>' first.` and exits 0. It does not need the adapter installed in that case. `status` does not take the lock and never compiles the pack, so it works when the arena config does not compile.
 
 **Examples:**
 
@@ -211,10 +220,11 @@ Takes the global flags only.
 
 **Behaviour:**
 
-1. Load prior state. With no state it prints `  No deployment state found. Nothing to destroy.` and exits 0.
-2. Call adapter `Destroy` with the prior state.
-3. Delete the local state file.
-4. Print `Deployment destroyed.`
+1. Acquire the environment's deploy lock.
+2. Load the environment's state. With none it prints `  No deployment state found for environment "<env>". Nothing to destroy.` and exits 0.
+3. Call adapter `Destroy` with that state.
+4. Delete the environment's state file and saved plan.
+5. Print `Deployment destroyed.`
 
 **Examples:**
 
@@ -236,8 +246,8 @@ Takes the global flags only.
 
 **Behaviour:**
 
-1. Acquire the deploy lock.
-2. Load prior state. With no state it prints `  No deployment state found. Run 'promptarena deploy' first.` and exits 0.
+1. Acquire the environment's deploy lock.
+2. Load the environment's state. With none it prints `  No deployment state found for environment "<env>". Run 'promptarena deploy --env <env>' first.` and exits 0.
 3. Call adapter `Status` with the prior state.
 4. Update the adapter state and the `last_refreshed` timestamp.
 5. Save the updated state.
@@ -272,8 +282,8 @@ Takes the global flags.
 
 **Behaviour:**
 
-1. Acquire the deploy lock.
-2. Load prior state, or create new state if none exists.
+1. Acquire the environment's deploy lock.
+2. Load the environment's state, or create new state if none exists.
 3. Call adapter `Import` with the resource type, name and identifier.
 4. Update or create local state with the adapter response.
 5. Save the state with a `last_refreshed` timestamp.
@@ -306,11 +316,12 @@ promptarena deploy login [--provider <name>]
 **Behaviour:**
 
 1. Resolve the provider (`--provider` or the config's `deploy.provider`).
-2. Connect the adapter and verify it advertises the `login` capability.
-3. Start a loopback callback server on `127.0.0.1` and open the browser to the adapter's authorize URL (with a CSRF `state`).
-4. The provider authenticates the user (it brokers OIDC; the CLI never sees the identity provider) and redirects back to the loopback with a one-time code.
-5. Exchange the code via the adapter for a deploy profile and a scoped token.
-6. Merge the profile into the arena config and store the token in `~/.promptarena/credentials`, never in `arena.yaml`.
+2. Load the config file. It must exist (`config file not found: <path>` otherwise); a `deploy:` section is optional, and login creates one with `provider` set when it is missing.
+3. Connect the adapter and verify it advertises the `login` capability.
+4. Start a loopback callback server on `127.0.0.1` and open the browser to the adapter's authorize URL (with a CSRF `state`).
+5. The provider authenticates the user (it brokers OIDC; the CLI never sees the identity provider) and redirects back to the loopback with a one-time code.
+6. Exchange the code via the adapter for a deploy profile and a scoped token.
+7. Merge the profile into the arena config and store the token in `~/.promptarena/credentials`, never in the config file.
 
 At deploy time the stored token is loaded when the config carries no `api_token`. Precedence: explicit `api_token`, provider env var, credentials store.
 
@@ -444,7 +455,7 @@ promptarena deploy adapter remove agentcore
 
 ## Configuration
 
-The deploy section in arena.yaml:
+The deploy section of the arena config:
 
 ```yaml
 deploy:
@@ -461,10 +472,11 @@ deploy:
 
 | Path | Description |
 |------|-------------|
-| `arena.yaml` | Default config file |
+| `config.arena.yaml` | Default config file (`arena.yaml` when only that exists) |
 | `*.pack.json` | Optional pre-compiled pack file (passed via `--pack`) |
-| `.promptarena/deploy.state` | Deployment state (JSON) |
-| `.promptarena/deploy.lock` | Deploy lock file (prevents concurrent access) |
+| `.promptarena/envs/<env>/deploy.state` | The environment's deployment state (JSON) |
+| `.promptarena/envs/<env>/deploy.plan` | The environment's saved plan |
+| `.promptarena/envs/<env>/deploy.lock` | The environment's lock file (prevents concurrent access; kept after use) |
 | `.promptarena/adapters/` | Project-local adapters |
 | `~/.promptarena/adapters/` | User-level adapters |
 

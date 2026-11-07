@@ -23,7 +23,7 @@ Add a `deploy` section to your arena config so `promptarena deploy` can target a
 ## Prerequisites
 
 - An adapter installed (see [Install Adapters](/arena/how-to/deploy/install-adapters/))
-- An arena config file (`arena.yaml` by default)
+- An arena config file (`config.arena.yaml` by default, or `arena.yaml` when only that exists)
 
 ## Basic Configuration
 
@@ -157,7 +157,7 @@ Without `--env`, the environment is `default`. With no `environments.default` en
 
 ## Validate Configuration
 
-Run a plan. The Omnia and AgentCore adapters validate the config at the start of `plan` and fail with a list of the problems:
+Run a plan. Before planning, the CLI sends the merged config to the adapter's `validate_config`, and stops with `deploy config is invalid for "<provider>": <problems>` if the adapter rejects it:
 
 ```bash
 promptarena deploy plan --env production
@@ -165,13 +165,13 @@ promptarena deploy plan --env production
 
 ## Specifying the Pack File and Config File
 
-See [Plan and Apply](/arena/how-to/deploy/plan-and-apply/#specifying-a-pack-file) for `--pack` and `--config`. By default the CLI reads `arena.yaml` and compiles the pack from it.
+See [Plan and Apply](/arena/how-to/deploy/plan-and-apply/#specifying-a-pack-file) for `--pack` and `--config`. By default the CLI reads `config.arena.yaml` (the file `promptarena run` reads), or `arena.yaml` when only that exists, and compiles the pack from it.
 
 ## Troubleshooting
 
 ### Error: no deploy: section
 
-`no deploy: section in "arena.yaml"` means the config has no `spec.deploy`. Add the section under `spec`, as in [Basic Configuration](#basic-configuration).
+`no deploy: section in "config.arena.yaml"` means the config has no `spec.deploy`. Add the section under `spec`, as in [Basic Configuration](#basic-configuration).
 
 ### Error: provider is required
 

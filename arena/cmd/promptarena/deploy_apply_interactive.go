@@ -30,17 +30,11 @@ func runDeployApply(cmd *cobra.Command, args []string) error {
 	projectDir, _ := os.Getwd()
 	ctx := context.Background()
 
-	// Acquire deploy lock.
-	unlock, err := flow.Lock(projectDir)
+	sess, unlock, err := lockAndOpen(ctx, opts, projectDir)
 	if err != nil {
 		return err
 	}
 	defer unlock()
-
-	sess, err := flow.Open(ctx, opts)
-	if err != nil {
-		return err
-	}
 	defer func() { _ = sess.Close() }()
 
 	fmt.Printf("Applying deployment to environment: %s (provider: %s)\n", sess.Env, sess.Deploy.Provider)
@@ -58,7 +52,7 @@ func runDeployApply(cmd *cobra.Command, args []string) error {
 		usedSavedPlan = true
 	} else {
 		if savedPlan != nil {
-			fmt.Println("  Saved plan is stale (pack or environment changed), re-planning...")
+			fmt.Println("  Saved plan is stale (the pack changed since it was planned), re-planning...")
 		}
 		planReq, err = sess.PlanRequest(ctx)
 		if err != nil {

@@ -8,6 +8,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
+	"github.com/AltairaLabs/promptarena/v2/arena/deploy/flow"
 	"github.com/AltairaLabs/promptarena/v2/arena/tui/logging"
 	"github.com/AltairaLabs/promptarena/v2/arena/tui/theme"
 
@@ -72,6 +73,9 @@ func RunWithProgram(ctx *AppContext, root Page, newProgram func(tea.Model) Progr
 	if err != nil {
 		return err
 	}
+	// Deploy adapters' stderr goes through the same logger, for the same reason.
+	prevAdapterStderr := flow.SetAdapterStderr(newAdapterLogWriter())
+	defer flow.SetAdapterStderr(prevAdapterStderr)
 	defer func() {
 		if interceptor != nil {
 			interceptor.FlushBuffer()

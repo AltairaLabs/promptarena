@@ -47,7 +47,7 @@ func runDeployImport(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
 
 	// Acquire deploy lock.
-	unlock, err := flow.Lock(projectDir)
+	unlock, err := flow.Lock(projectDir, env)
 	if err != nil {
 		return err
 	}
@@ -55,12 +55,15 @@ func runDeployImport(cmd *cobra.Command, args []string) error {
 
 	fmt.Printf("Importing %s.%s (%s) into environment: %s\n", resourceType, resourceName, identifier, env)
 
-	configJSON, err := flow.MergedConfigJSON(deployCfg, env, deployConfig)
+	configJSON, err := flow.MergedConfigJSON(deployCfg, env, deployConfigPath())
 	if err != nil {
 		return err
 	}
 
-	stateStore := deploy.NewStateStore(projectDir)
+	stateStore, err := openEnvState(projectDir, env)
+	if err != nil {
+		return err
+	}
 	priorState, err := stateStore.Load()
 	if err != nil {
 		return fmt.Errorf("failed to load deploy state: %w", err)
