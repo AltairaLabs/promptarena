@@ -151,8 +151,8 @@ func feedbackVariables(
 	if persona.PrivateNotes {
 		vars[VarPersonaNotes] = templateSafe(priorNotes(history, persona.ID))
 	}
-	if opts != nil {
-		for k, v := range opts.Variables {
+	if opts != nil && opts.Variables != nil {
+		for k, v := range *opts.Variables {
 			vars[k] = templateSafe(v)
 		}
 	}

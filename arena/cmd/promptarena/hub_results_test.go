@@ -13,7 +13,7 @@ import (
 
 // TestHubRunWritesResultFiles reproduces #428: a run started from the hub's
 // Run page kept its results only in memory, while `promptarena run` writes the
-// configured report formats. The hub context's SaveRunResults must write the
+// configured report formats. The hub context's ResultsWriter must write the
 // same files `run` would for a config with no output settings (json, under
 // the config's out/ directory).
 func TestHubRunWritesResultFiles(t *testing.T) {
@@ -27,7 +27,7 @@ func TestHubRunWritesResultFiles(t *testing.T) {
 	var warn bytes.Buffer
 	ctx := buildHubContext(dir, &warn)
 	require.Empty(t, warn.String())
-	require.NotNil(t, ctx.SaveRunResults, "the hub must give its Run page a results writer")
+	require.NotNil(t, ctx.ResultsWriter, "the hub must give its Run page a results writer")
 
 	eng, err := ctx.EnsureEngine()
 	require.NoError(t, err)
@@ -38,7 +38,7 @@ func TestHubRunWritesResultFiles(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEmpty(t, runIDs)
 
-	require.NoError(t, ctx.SaveRunResults(eng, runIDs))
+	require.NoError(t, ctx.ResultsWriter.Write(eng, runIDs))
 
 	assert.FileExists(t, filepath.Join(dir, "out", "index.json"))
 	for _, id := range runIDs {

@@ -41,7 +41,7 @@ type RunPage struct {
 	concurrency int
 	store       runResultGetter
 	// saveResults writes report files after the run; nil keeps results only in
-	// the state store (see AppContext.SaveRunResults).
+	// the state store (see AppContext.ResultsWriter).
 	saveResults func(eng *engine.Engine, runIDs []string) error
 
 	bus      events.Bus
@@ -91,8 +91,8 @@ func NewRunPage(
 		}
 	}
 	var save func(*engine.Engine, []string) error
-	if ctx != nil {
-		save = ctx.SaveRunResults
+	if ctx != nil && ctx.ResultsWriter != nil {
+		save = ctx.ResultsWriter.Write
 	}
 	return &RunPage{
 		model:       model,
@@ -113,7 +113,7 @@ func (p *RunPage) Init() tea.Cmd { return p.model.Init() }
 // Activate implements Activatable. It wires the event bus + adapter to deliver
 // runtime events via send and starts ExecuteRuns in the background. The run
 // results persist to the engine's state store and, when the context supplies
-// SaveRunResults, are written as report files once the runs end. Returns the
+// ResultsWriter, are written as report files once the runs end. Returns the
 // model's Init command.
 func (p *RunPage) Activate(send func(tea.Msg)) tea.Cmd {
 	p.mu.Lock()

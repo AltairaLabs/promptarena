@@ -756,7 +756,7 @@ func generateSelfplayText(
 		SelfplayTurnIndex: selfplayTurnNum,
 		Temperature:       positiveFloat32OrNil(turn.UserTemp),
 		Seed:              seedOrNil(turn.Seed),
-		Variables:         map[string]string{selfplay.VarExchange: strconv.Itoa(selfplayTurnNum)},
+		Variables:         &map[string]string{selfplay.VarExchange: strconv.Itoa(selfplayTurnNum)},
 	}
 	textResult, err := textGen.NextUserTurn(ctx, history, scenarioID, opts)
 	if err != nil {

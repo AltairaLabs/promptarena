@@ -30,9 +30,17 @@ type Locker struct {
 	file    *os.File
 }
 
-// NewLocker creates a Locker for environment env of the given project
+// NewLocker creates a Locker for the default environment of the given project
+// directory, the one a deploy command targets when no --env is given.
+//
+// Deprecated: locks are per environment; use NewEnvLocker.
+func NewLocker(baseDir string) *Locker {
+	return NewEnvLocker(baseDir, defaultEnvironment)
+}
+
+// NewEnvLocker creates a Locker for environment env of the given project
 // directory. An invalid environment name is reported by Lock.
-func NewLocker(baseDir, env string) *Locker {
+func NewEnvLocker(baseDir, env string) *Locker {
 	return &Locker{baseDir: baseDir, env: env}
 }
 

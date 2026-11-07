@@ -187,7 +187,7 @@ func TestDeployWizard_EndToEndWithFakeSession(t *testing.T) {
 		&arenaconfig.Config{Deploy: dc},
 		dc,
 		fp,
-		deploy.NewStateStore(dir, flow.DefaultEnv),
+		deploy.NewEnvStateStore(dir, flow.DefaultEnv),
 		[]byte(`{"pack":true}`),
 		`{}`,
 		func() error { return nil },
@@ -196,7 +196,7 @@ func TestDeployWizard_EndToEndWithFakeSession(t *testing.T) {
 	pf := &flow.Preflight{Provider: "fake", Env: flow.DefaultEnv, AdapterFound: true, Authenticated: true}
 
 	p := newDeployPageWithSession(ctx, sess, pf)
-	p.opts.ProjectDir = dir // startApply's flow.Lock(projectDir) needs a writable dir
+	p.opts.ProjectDir = dir // startApply's flow.LockEnv(projectDir, env) needs a writable dir
 
 	sink := &loginMsgSink{}
 	p.send = sink.send

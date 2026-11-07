@@ -13,8 +13,8 @@ import (
 // staging can never send production's adapter state to the adapter.
 func TestStateStore_EnvironmentsAreIsolated(t *testing.T) {
 	dir := t.TempDir()
-	prod := NewStateStore(dir, "production")
-	staging := NewStateStore(dir, "staging")
+	prod := NewEnvStateStore(dir, "production")
+	staging := NewEnvStateStore(dir, "staging")
 
 	if err := prod.Save(&State{Environment: "production", State: "prod-state"}); err != nil {
 		t.Fatal(err)
@@ -73,7 +73,7 @@ func TestStateStore_AdoptsMatchingLegacyState(t *testing.T) {
 	dir := t.TempDir()
 	legacy := writeLegacyState(t, dir, "production")
 
-	st, err := NewStateStore(dir, "production").Load()
+	st, err := NewEnvStateStore(dir, "production").Load()
 	if err != nil {
 		t.Fatalf("Load: %v", err)
 	}
@@ -97,7 +97,7 @@ func TestStateStore_RefusesMismatchedLegacyState(t *testing.T) {
 	dir := t.TempDir()
 	legacy := writeLegacyState(t, dir, "production")
 
-	st, err := NewStateStore(dir, "staging").Load()
+	st, err := NewEnvStateStore(dir, "staging").Load()
 	if err == nil {
 		t.Fatalf("expected a refusal, got state %+v", st)
 	}
@@ -117,7 +117,7 @@ func TestStateStore_RefusesMismatchedLegacyState(t *testing.T) {
 }
 
 func TestStateStore_RejectsInvalidEnvironment(t *testing.T) {
-	s := NewStateStore(t.TempDir(), "../escape")
+	s := NewEnvStateStore(t.TempDir(), "../escape")
 	if _, err := s.Load(); err == nil {
 		t.Error("Load should reject the env name")
 	}
@@ -134,7 +134,7 @@ func TestStateStore_RejectsInvalidEnvironment(t *testing.T) {
 
 func TestStateStore_LoadCorruptState(t *testing.T) {
 	dir := t.TempDir()
-	s := NewStateStore(dir, "default")
+	s := NewEnvStateStore(dir, "default")
 	if err := os.MkdirAll(s.envDir(), 0o750); err != nil {
 		t.Fatal(err)
 	}

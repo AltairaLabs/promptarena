@@ -123,7 +123,7 @@ func TestRunPage_Activate_RunsToCompletion(t *testing.T) {
 }
 
 // TestRunPage_WritesResultsWhenContextSuppliesWriter covers #428: a hub run
-// hands its run IDs to AppContext.SaveRunResults once ExecuteRuns returns, so
+// hands its run IDs to AppContext.ResultsWriter once ExecuteRuns returns, so
 // the hub writes the same report files as `promptarena run`. A writer error is
 // logged and does not stop the page reporting the run as finished.
 func TestRunPage_WritesResultsWhenContextSuppliesWriter(t *testing.T) {
@@ -142,13 +142,13 @@ func TestRunPage_WritesResultsWhenContextSuppliesWriter(t *testing.T) {
 				gotIDs   []string
 				numCalls int
 			)
-			ctx.SaveRunResults = func(e *engine.Engine, ids []string) error {
+			ctx.ResultsWriter = &ResultsWriter{Write: func(e *engine.Engine, ids []string) error {
 				mu.Lock()
 				defer mu.Unlock()
 				gotEng, gotIDs = e, ids
 				numCalls++
 				return tc.saveErr
-			}
+			}}
 			p := NewRunPage(ctx, eng, plan, 1, "config.arena.yaml", 1)
 			_ = p.Activate((&msgSink{}).send)
 			waitForFinish(t, p)
@@ -157,13 +157,13 @@ func TestRunPage_WritesResultsWhenContextSuppliesWriter(t *testing.T) {
 			mu.Lock()
 			defer mu.Unlock()
 			if numCalls != 1 {
-				t.Fatalf("SaveRunResults called %d times, want 1", numCalls)
+				t.Fatalf("ResultsWriter.Write called %d times, want 1", numCalls)
 			}
 			if gotEng != eng {
-				t.Fatal("SaveRunResults got a different engine")
+				t.Fatal("ResultsWriter.Write got a different engine")
 			}
 			if len(gotIDs) != 1 || len(runIDs) != 1 || gotIDs[0] != runIDs[0] {
-				t.Fatalf("SaveRunResults ids = %v, run ids = %v", gotIDs, runIDs)
+				t.Fatalf("ResultsWriter.Write ids = %v, run ids = %v", gotIDs, runIDs)
 			}
 		})
 	}

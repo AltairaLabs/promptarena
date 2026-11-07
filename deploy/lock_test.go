@@ -10,7 +10,7 @@ import (
 
 func TestLocker_LockAndUnlock(t *testing.T) {
 	dir := t.TempDir()
-	l := NewLocker(dir, "default")
+	l := NewEnvLocker(dir, "default")
 
 	if err := l.Lock(); err != nil {
 		t.Fatalf("Lock() failed: %v", err)
@@ -32,7 +32,7 @@ func TestLocker_LockAndUnlock(t *testing.T) {
 	}
 
 	// And a leftover file never blocks the next locker.
-	l2 := NewLocker(dir, "default")
+	l2 := NewEnvLocker(dir, "default")
 	if err := l2.Lock(); err != nil {
 		t.Fatalf("a leftover lock file must not block a new lock: %v", err)
 	}
@@ -44,13 +44,13 @@ func TestLocker_LockAndUnlock(t *testing.T) {
 // delete the lock file.
 func TestLocker_ContentionNamesHolderAndEnv(t *testing.T) {
 	dir := t.TempDir()
-	l1 := NewLocker(dir, "production")
+	l1 := NewEnvLocker(dir, "production")
 	if err := l1.Lock(); err != nil {
 		t.Fatal(err)
 	}
 	defer func() { _ = l1.Unlock() }()
 
-	err := NewLocker(dir, "production").Lock()
+	err := NewEnvLocker(dir, "production").Lock()
 	if err == nil {
 		t.Fatal("expected contention")
 	}
@@ -69,12 +69,12 @@ func TestLocker_ContentionNamesHolderAndEnv(t *testing.T) {
 // TestLocker_EnvironmentsAreIndependent pins per-environment locking.
 func TestLocker_EnvironmentsAreIndependent(t *testing.T) {
 	dir := t.TempDir()
-	prod := NewLocker(dir, "production")
+	prod := NewEnvLocker(dir, "production")
 	if err := prod.Lock(); err != nil {
 		t.Fatal(err)
 	}
 	defer func() { _ = prod.Unlock() }()
-	staging := NewLocker(dir, "staging")
+	staging := NewEnvLocker(dir, "staging")
 	if err := staging.Lock(); err != nil {
 		t.Fatalf("staging must lock while production is held: %v", err)
 	}
@@ -85,7 +85,7 @@ func TestLocker_EnvironmentsAreIndependent(t *testing.T) {
 // a path outside .promptarena/envs.
 func TestLocker_RejectsInvalidEnvironment(t *testing.T) {
 	for _, env := range []string{"", "../x", "a/b", ".hidden"} {
-		if err := NewLocker(t.TempDir(), env).Lock(); err == nil {
+		if err := NewEnvLocker(t.TempDir(), env).Lock(); err == nil {
 			t.Errorf("env %q should be rejected", env)
 		}
 	}
@@ -93,7 +93,7 @@ func TestLocker_RejectsInvalidEnvironment(t *testing.T) {
 
 func TestLocker_DoubleLock(t *testing.T) {
 	dir := t.TempDir()
-	l := NewLocker(dir, "default")
+	l := NewEnvLocker(dir, "default")
 
 	if err := l.Lock(); err != nil {
 		t.Fatalf("first Lock() failed: %v", err)
@@ -112,8 +112,8 @@ func TestLocker_DoubleLock(t *testing.T) {
 func TestLocker_ConcurrentLock(t *testing.T) {
 	dir := t.TempDir()
 
-	l1 := NewLocker(dir, "default")
-	l2 := NewLocker(dir, "default")
+	l1 := NewEnvLocker(dir, "default")
+	l2 := NewEnvLocker(dir, "default")
 
 	if err := l1.Lock(); err != nil {
 		t.Fatalf("l1.Lock() failed: %v", err)
@@ -132,7 +132,7 @@ func TestLocker_ConcurrentLock(t *testing.T) {
 
 func TestLocker_UnlockWithoutLock(t *testing.T) {
 	dir := t.TempDir()
-	l := NewLocker(dir, "default")
+	l := NewEnvLocker(dir, "default")
 
 	if err := l.Unlock(); err != nil {
 		t.Fatalf("Unlock() without Lock() should be a no-op, got: %v", err)
@@ -148,7 +148,7 @@ func TestLocker_LockCreatesDirectory(t *testing.T) {
 		t.Fatalf(".promptarena dir should not exist yet")
 	}
 
-	l := NewLocker(dir, "default")
+	l := NewEnvLocker(dir, "default")
 	if err := l.Lock(); err != nil {
 		t.Fatalf("Lock() failed: %v", err)
 	}

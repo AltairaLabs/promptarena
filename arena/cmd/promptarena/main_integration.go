@@ -75,9 +75,9 @@ func buildHubContext(cwd string, warnTo io.Writer) *app.AppContext {
 	}
 	// The hub's Run page writes the same report files as `promptarena run`,
 	// against whichever config is loaded when the run finishes.
-	ctx.SaveRunResults = func(eng *engine.Engine, runIDs []string) error {
+	ctx.ResultsWriter = &app.ResultsWriter{Write: func(eng *engine.Engine, runIDs []string) error {
 		return saveHubRunResults(eng, ctx.ConfigPath, runIDs)
-	}
+	}}
 
 	cfgPath, found := app.DiscoverConfig(cwd)
 	if !found {

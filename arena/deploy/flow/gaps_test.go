@@ -230,7 +230,7 @@ func TestSession_PlanPrependsValidationWarnings(t *testing.T) {
 func TestSession_ApplyRecordsPackVersion(t *testing.T) {
 	fake := &fakeProvider{info: &deploy.ProviderInfo{Version: "1"}}
 	dir := t.TempDir()
-	store := deploy.NewStateStore(dir, "staging")
+	store := deploy.NewEnvStateStore(dir, "staging")
 	sess := NewSession(Options{ProjectDir: dir, Env: "staging"}, &arenaconfig.Config{},
 		&arenaconfig.DeployConfig{Provider: "acme"}, fake, store,
 		[]byte(`{"id":"p","version":"v2.3.0"}`), `{}`, nil)
@@ -251,7 +251,7 @@ func TestSession_ApplyRecordsPackVersion(t *testing.T) {
 // first must be fresh for the second.
 func TestSession_SavedPlanSurvivesRecompile(t *testing.T) {
 	dir := t.TempDir()
-	store := deploy.NewStateStore(dir, "staging")
+	store := deploy.NewEnvStateStore(dir, "staging")
 	mk := func(createdAt string) *Session {
 		pack := `{"id":"p","compilation":{"compiled_with":"packc","created_at":"` + createdAt + `"}}`
 		return NewSession(Options{ProjectDir: dir, Env: "staging"}, &arenaconfig.Config{},

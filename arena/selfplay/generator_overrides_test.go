@@ -267,7 +267,7 @@ func TestNextUserTurn_RegenerateSeesTemplateVariables(t *testing.T) {
 	prov := newScriptedProvider("I want a refund for R-42X.")
 	gen := NewContentGenerator(prov, regeneratingPersona(arenaconfig.FactViolationRegenerate))
 	_, err := gen.NextUserTurn(context.Background(), nil, "s1",
-		&GeneratorOptions{Variables: map[string]string{VarObjective: "refund R-42X"}})
+		&GeneratorOptions{Variables: &map[string]string{VarObjective: "refund R-42X"}})
 	require.NoError(t, err)
 	assert.Len(t, prov.calls(), 1, "the objective gave the persona R-42X")
 }

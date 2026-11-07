@@ -80,7 +80,7 @@ func TestNextEnv(t *testing.T) {
 // the environment's lock.
 func TestRunPlan_HoldsTheEnvironmentLock(t *testing.T) {
 	dir := t.TempDir()
-	release, err := flow.Lock(dir, "staging")
+	release, err := flow.LockEnv(dir, "staging")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -90,7 +90,7 @@ func TestRunPlan_HoldsTheEnvironmentLock(t *testing.T) {
 	dc := &arenaconfig.DeployConfig{Provider: "fake"}
 	opts := flow.Options{ProjectDir: dir, Env: "staging"}
 	sess := flow.NewSession(opts, &arenaconfig.Config{Deploy: dc}, dc, fp,
-		deploy.NewStateStore(dir, "staging"), []byte(`{}`), `{}`, func() error { return nil })
+		deploy.NewEnvStateStore(dir, "staging"), []byte(`{}`), `{}`, func() error { return nil })
 
 	sink := &loginMsgSink{}
 	runPlan(context.Background(), opts, sess, sink.send)

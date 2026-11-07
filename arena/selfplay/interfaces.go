@@ -63,6 +63,7 @@ type GeneratorOptions struct {
 
 	// Variables are extra template variables for the persona's
 	// system_template, such as the exchange number and objective feedback.
-	// They override the generator's defaults for the same keys.
-	Variables map[string]string
+	// They override the generator's defaults for the same keys. It is a
+	// pointer so GeneratorOptions stays comparable, as it was in v2.4.0.
+	Variables *map[string]string
 }
