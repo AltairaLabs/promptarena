@@ -2,15 +2,13 @@
 title: Develop Templates
 description: Build a template in a local clone of the community template repo, render it with the promptarena CLI, and submit it.
 verified:
-  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
-    - arena/cmd/promptarena/init.go
     - arena/cmd/promptarena/templates.go
     - arena/cmd/promptarena/templates_cmd_test.go
     - arena/templates/builtin/quick-start/template.yaml
     - arena/templates/loader.go
     - arena/templates/registry.go
-    - arena/templates/repos.go
     - arena/templates/repos_test.go
     - arena/templates/resolver.go
     - arena/templates/resolver_test.go

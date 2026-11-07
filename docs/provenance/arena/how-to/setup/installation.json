@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/setup/installation.md",
- "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
@@ -15,7 +15,7 @@
    "claim": "npx @altairalabs/promptarena run -c config.arena.yaml runs the npm package",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:134",
+    "arena/cmd/promptarena/run.go:159",
     "npm/promptarena/package.json:1"
    ]
   },
@@ -24,7 +24,7 @@
    "claim": "The run subcommand accepts -c / --config for the config file",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:134"
+    "arena/cmd/promptarena/run.go:159"
    ]
   },
   {
@@ -73,7 +73,7 @@
    "claim": "promptarena run -c ./tests/config.arena.yaml is a valid package.json script invocation",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:134"
+    "arena/cmd/promptarena/run.go:159"
    ]
   },
   {
@@ -86,11 +86,11 @@
   },
   {
    "id": 11,
-   "claim": "PromptKit is distributed as a cask from the AltairaLabs tap",
-   "verdict": "false",
+   "claim": "The AltairaLabs tap publishes promptarena and packc as separate casks",
+   "verdict": "true",
    "evidence": [
-    ".goreleaser.yml:201",
-    ".goreleaser.yml:230"
+    ".goreleaser.yml:184",
+    ".goreleaser.yml:212"
    ]
   },
   {
@@ -98,8 +98,8 @@
    "claim": "The promptkit cask includes both PromptArena and packc",
    "verdict": "false",
    "evidence": [
-    ".goreleaser.yml:216",
-    ".goreleaser.yml:244"
+    ".goreleaser.yml:198",
+    ".goreleaser.yml:226"
    ]
   },
   {
@@ -107,7 +107,7 @@
    "claim": "brew install altairalabs/tap/promptarena installs the tool",
    "verdict": "true",
    "evidence": [
-    ".goreleaser.yml:202"
+    ".goreleaser.yml:184"
    ]
   },
   {
@@ -115,7 +115,7 @@
    "claim": "promptarena --version prints the version",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat_interactive.go:45"
+    "arena/cmd/promptarena/chat_interactive.go:51"
    ]
   },
   {
@@ -123,33 +123,33 @@
    "claim": "brew tap altairalabs/tap taps the AltairaLabs tap",
    "verdict": "true",
    "evidence": [
-    ".goreleaser.yml:205"
+    ".goreleaser.yml:187"
    ]
   },
   {
    "id": 16,
-   "claim": "brew install --cask promptkit installs the cask named promptkit",
-   "verdict": "false",
+   "claim": "brew tap altairalabs/tap then brew install --cask promptarena installs the cask named promptarena",
+   "verdict": "true",
    "evidence": [
-    ".goreleaser.yml:202"
+    ".goreleaser.yml:184"
    ]
   },
   {
    "id": 17,
-   "claim": "The Go install needs a C compiler and platform audio headers because the audio sink uses cgo",
-   "verdict": "false",
+   "claim": "go install needs no C compiler or audio headers: oto and PortAudio load their system audio libraries at run time",
+   "verdict": "true",
    "evidence": [
-    "arena/audio/local_sink_oto.go:1",
-    "go.mod:13"
+    "arena/audio/local_sink_oto.go:13",
+    "arena/voice/session_audioio_interactive.go:16"
    ]
   },
   {
    "id": 18,
-   "claim": "libasound2-dev is the audio header package on Debian/Ubuntu for this build",
-   "verdict": "false",
+   "claim": "The release workflow installs no audio dev headers (no libasound2-dev step), because release binaries are built with CGO_ENABLED=0",
+   "verdict": "true",
    "evidence": [
-    ".github/workflows/release.yml:102",
-    ".github/workflows/release.yml:103"
+    ".github/workflows/release.yml:78",
+    ".goreleaser.yml:25"
    ]
   },
   {
@@ -157,7 +157,7 @@
    "claim": "go install github.com/AltairaLabs/promptarena/v2/arena/cmd/promptarena@latest installs the binary",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat_interactive.go:45"
+    "arena/cmd/promptarena/chat_interactive.go:51"
    ]
   },
   {
@@ -206,7 +206,7 @@
    "claim": "git clone https://github.com/AltairaLabs/promptarena.git clones the repository",
    "verdict": "true",
    "evidence": [
-    ".goreleaser.yml:210"
+    ".goreleaser.yml:192"
    ]
   },
   {
@@ -222,7 +222,7 @@
    "claim": "promptarena --help displays command usage and available commands",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:134"
+    "arena/cmd/promptarena/run.go:159"
    ]
   },
   {
@@ -268,7 +268,7 @@
    "claim": "promptarena init my-llm-tests creates a project in the named directory with guided setup",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:65"
+    "arena/cmd/promptarena/init.go:144"
    ]
   },
   {
@@ -276,8 +276,8 @@
    "claim": "promptarena init accepts --quick and --provider flags",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:65",
-    "arena/cmd/promptarena/init.go:68"
+    "arena/cmd/promptarena/init.go:66",
+    "arena/cmd/promptarena/init.go:74"
    ]
   },
   {
@@ -285,7 +285,7 @@
    "claim": "mock is a valid value for the --provider flag",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:68"
+    "arena/cmd/promptarena/init.go:74"
    ]
   },
   {
@@ -293,7 +293,7 @@
    "claim": "--quick mode uses defaults without prompts",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:65"
+    "arena/cmd/promptarena/init.go:170"
    ]
   },
   {
@@ -301,7 +301,7 @@
    "claim": "promptarena run with no -c flag runs the config in the current directory",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:134"
+    "arena/cmd/promptarena/run.go:159"
    ]
   },
   {
@@ -309,7 +309,7 @@
    "claim": "init creates config.arena.yaml",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:65"
+    "arena/templates/builtin/quick-start/template.yaml:50"
    ]
   },
   {
@@ -317,7 +317,7 @@
    "claim": "init creates a providers/ directory",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:65"
+    "arena/templates/builtin/quick-start/template.yaml:40"
    ]
   },
   {
@@ -325,7 +325,7 @@
    "claim": "init creates a scenarios/ directory",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:65"
+    "arena/templates/builtin/quick-start/template.yaml:43"
    ]
   },
   {
@@ -333,15 +333,16 @@
    "claim": "init creates a prompts/ directory",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:65"
+    "arena/templates/builtin/quick-start/template.yaml:37"
    ]
   },
   {
    "id": 42,
-   "claim": "init creates a .env file",
+   "claim": "init creates a .env.example file listing the API keys to export; --no-env skips it",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:67"
+    "arena/cmd/promptarena/init.go:71",
+    "arena/templates/builtin/quick-start/template.yaml:50"
    ]
   },
   {
@@ -349,7 +350,7 @@
    "claim": "init creates a README with next steps",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:65"
+    "arena/templates/builtin/quick-start/template.yaml:60"
    ]
   },
   {
@@ -448,6 +449,15 @@
    "claim": "Homebrew install script URL raw.githubusercontent.com/Homebrew/install/HEAD/install.sh is the official installer",
    "verdict": "true",
    "evidence": []
+  },
+  {
+   "id": 10000,
+   "claim": "init keeps files that already exist in the project directory; --force overwrites them",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go:72",
+    "arena/templates/generator.go:230"
+   ]
   }
  ]
 }

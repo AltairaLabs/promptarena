@@ -1,13 +1,12 @@
 {
  "page": "docs/src/content/docs/arena/how-to/setup/install-skills.md",
- "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
    "claim": "promptarena skill commands install, list and remove shared skills from Git repositories or local paths",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/skill.go:10",
     "arena/cmd/promptarena/skill_interactive.go:12"
    ]
   },
@@ -24,8 +23,7 @@
    "claim": "Command: promptarena skill install @anthropic/pdf-processing",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/skill.go:29",
-    "arena/cmd/promptarena/skill_interactive.go:34"
+    "arena/cmd/promptarena/skill_interactive.go:12"
    ]
   },
   {
@@ -33,7 +31,7 @@
    "claim": "The @org/name reference form is accepted by skill install",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/skill_interactive.go:34"
+    "arena/cmd/promptarena/skill_interactive.go:12"
    ]
   },
   {
@@ -47,7 +45,7 @@
    "claim": "Command: promptarena skill install @anthropic/pdf-processing@v1.0.0 installs a specific Git tag or ref",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/skill_interactive.go:34"
+    "arena/cmd/promptarena/skill_interactive.go:12"
    ]
   },
   {
@@ -55,7 +53,7 @@
    "claim": "Command: promptarena skill install ./path/to/my-skill installs from a local directory",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/skill_interactive.go:25"
+    "arena/cmd/promptarena/skill_interactive.go:12"
    ]
   },
   {
@@ -95,8 +93,7 @@
    "claim": "Flag --project installs to project-level instead of user-level",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/skill.go:97",
-    "arena/cmd/promptarena/skill_interactive.go:26"
+    "arena/cmd/promptarena/skill_interactive.go:12"
    ]
   },
   {
@@ -116,8 +113,7 @@
    "claim": "Flag --into installs a skill directly into a given directory",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/skill.go:99",
-    "arena/cmd/promptarena/skill_interactive.go:21"
+    "arena/cmd/promptarena/skill_interactive.go:12"
    ]
   },
   {
@@ -125,8 +121,7 @@
    "claim": "Command: promptarena skill install @anthropic/pci-compliance --into ./skills/billing",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/skill.go:99",
-    "arena/cmd/promptarena/skill_interactive.go:70"
+    "arena/cmd/promptarena/skill_interactive.go:12"
    ]
   },
   {
@@ -134,7 +129,7 @@
    "claim": "--into installs to ./skills/billing/pci-compliance/ (the skill name is appended to the --into directory)",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/skill_interactive.go:72"
+    "arena/cmd/promptarena/skill_interactive.go:12"
    ]
   },
   {
@@ -150,16 +145,15 @@
    "claim": "Command: promptarena skill list shows installed skills grouped by location",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/skill_interactive.go:106",
-    "arena/cmd/promptarena/skill_interactive.go:89"
+    "arena/cmd/promptarena/skill_interactive.go:12"
    ]
   },
   {
    "id": 21,
-   "claim": "Expected output has a 'Project:' group and a 'User:' group, each line formatted as '<name>  (<path>)'",
-   "verdict": "false",
+   "claim": "`skill list` groups skills under `Project:` and `User:`, each line `@org/name  (<absolute path>)`.",
+   "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/skill_interactive.go:116"
+    "arena/cmd/promptarena/skill_interactive.go:89"
    ]
   },
   {
@@ -167,8 +161,7 @@
    "claim": "Command: promptarena skill remove @anthropic/pdf-processing",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/skill.go:68",
-    "arena/cmd/promptarena/skill_interactive.go:122"
+    "arena/cmd/promptarena/skill_interactive.go:12"
    ]
   },
   {
@@ -176,7 +169,7 @@
    "claim": "skill remove deletes the skill directory from its installed location",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/skill_interactive.go:133"
+    "arena/cmd/promptarena/skill_interactive.go:122"
    ]
   },
   {
@@ -199,11 +192,11 @@
   {
    "id": 26,
    "claim": "Skill entry field path accepts @org/name references such as @anthropic/pci-compliance",
-   "verdict": "false",
+   "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:875",
-    "arena/arenaconfig/loader.go:898",
-    "packc/compiler/skills_validator_integration.go:116"
+    "arena/arenaconfig/loader.go:964",
+    "arena/arenaconfig/skill_sources.go:34",
+    "packc/compiler/skills_validator_integration.go:103"
    ]
   },
   {
@@ -211,7 +204,7 @@
    "claim": "Skill entry field preload is a boolean that is accepted with a local path entry",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/skill_sources.go:20"
+    "arena/arenaconfig/skill_sources.go:17"
    ]
   },
   {
@@ -225,17 +218,18 @@
    "claim": "Example local skill path skills/local-skill is resolved relative to the pack file",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:874",
+    "arena/arenaconfig/loader.go:979",
     "packc/compiler/skills_validator_integration.go:112"
    ]
   },
   {
    "id": 30,
    "claim": "The runtime resolves @org/name references from installed skill directories automatically",
-   "verdict": "false",
+   "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:898",
-    "packc/compiler/skills_validator_integration.go:116"
+    "arena/arenaconfig/loader.go:965",
+    "arena/arenaconfig/skill_sources.go:44",
+    "packc/compiler/helpers_integration.go:177"
    ]
   },
   {
@@ -249,7 +243,7 @@
    "claim": "Resolution step 2: a relative path is resolved from the pack file location",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:874",
+    "arena/arenaconfig/loader.go:979",
     "packc/compiler/skills_validator_integration.go:112"
    ]
   },
@@ -294,7 +288,7 @@
    "claim": "skill remove deletes one copy per call and reports a copy that remains installed",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/skill_interactive.go"
+    "arena/cmd/promptarena/skill_interactive.go:122"
    ]
   },
   {
@@ -302,9 +296,9 @@
    "claim": "Skill entry field path accepts @org/name references to installed skills",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go",
-    "arena/arenaconfig/skill_sources.go",
-    "packc/compiler/skills_validator_integration.go"
+    "arena/arenaconfig/loader.go:964",
+    "arena/arenaconfig/skill_sources.go:34",
+    "packc/compiler/skills_validator_integration.go:103"
    ]
   },
   {
@@ -312,8 +306,9 @@
    "claim": "An @org/name reference resolves to .promptkit/skills beside the config, then the working directory's .promptkit/skills, then the user directory; packc keeps the reference in the pack",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/skill_sources.go",
-    "packc/compiler/helpers_integration.go"
+    "arena/arenaconfig/loader.go:965",
+    "arena/arenaconfig/skill_sources.go:44",
+    "packc/compiler/helpers_integration.go:177"
    ]
   }
  ]

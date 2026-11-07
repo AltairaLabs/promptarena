@@ -1,7 +1,7 @@
 ---
 title: Set Up Voice Testing with Self-Play
 verified:
-  commit: 3df344ffbc8c604e1a8935929c28499d778d19f0
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/arenaconfig/helpers.go
     - arena/arenaconfig/loader.go
@@ -15,6 +15,7 @@ verified:
     - arena/cmd/promptarena/validate.go
     - arena/engine/conversation_executor.go
     - arena/engine/duplex_conversation_executor.go
+    - arena/engine/duplex_executor_assertions_integration.go
     - arena/engine/duplex_executor_pipeline_integration.go
     - arena/engine/duplex_executor_turns_integration.go
     - arena/engine/engine.go

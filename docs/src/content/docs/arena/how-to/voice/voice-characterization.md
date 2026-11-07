@@ -2,10 +2,9 @@
 title: Test Voice Personas
 description: Have a self-play persona emit bracket-tagged expressive markup that each TTS provider lowers into its native format, and assert the agent stays composed across turns.
 verified:
-  commit: 0dbee6290db4e4de3bff3101f260fd614f81c924
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/arenaconfig/judge_param.go
-    - arena/arenaconfig/loader.go
     - arena/arenaconfig/persona.go
     - arena/arenaconfig/types.go
     - arena/assertions/types.go
@@ -103,7 +102,7 @@ Without a `judge:` key, the default judge scores it. To pick another, set `judge
 
 ## What's not covered
 
-`expressive: true` sends persona-side tags to TTS. Arena's audio-side assertions are `audio_duration`, `audio_format` and `audio_emotion`. `audio_emotion` runs speech-emotion recognition through an inference provider such as `hf` and needs `HF_TOKEN`; `aggressive-refund` uses it. Other judgements about the agent's speech (warmth, professionalism) go through the LLM-judged path, operating on the text of the agent's speech.
+`expressive: true` sends persona-side tags to TTS. Arena's audio-side assertions are `audio_duration`, `audio_format` and `audio_emotion`. `audio_emotion` runs speech-emotion recognition through an inference provider such as `hf` and needs `HF_TOKEN` and a dedicated Hugging Face Inference Endpoint. `aggressive-refund` ships the check commented out; to enable it, uncomment `providers/hf.provider.yaml` in `config.arena.yaml` and the `audio_emotion` assertion in the scenario. Other judgements about the agent's speech (warmth, professionalism) go through the LLM-judged path, operating on the text of the agent's speech.
 
 The reference list of supported tags per provider lives in PromptKit's `runtime/tts/markup/`. See the package doc for the canonical dialect and what each TTS adapter recognizes.
 

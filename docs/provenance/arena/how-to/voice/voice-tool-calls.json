@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/voice/voice-tool-calls.md",
- "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
@@ -33,7 +33,7 @@
    "claim": "Tool registry executes real handlers, mock-backed for demo",
    "verdict": "true",
    "evidence": [
-    "examples/duplex-streaming/config.arena.yaml:84",
+    "examples/duplex-streaming/config.arena.yaml:88",
     "examples/duplex-streaming/tools/set_reminder.tool.yaml:35"
    ]
   },
@@ -42,7 +42,8 @@
    "claim": "Conversation-level assertions check which tools fired, args, order, results",
    "verdict": "true",
    "evidence": [
-    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:65"
+    "arena/assertions/validate_params.go:73",
+    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:67"
    ]
   },
   {
@@ -58,7 +59,7 @@
    "claim": "scenario duplex-tools has a busy-professional persona asking about weather, calendar, reminders, three tools",
    "verdict": "true",
    "evidence": [
-    "examples/duplex-streaming/mock-responses.yaml:141",
+    "examples/duplex-streaming/mock-responses.yaml:78",
     "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:56"
    ]
   },
@@ -73,11 +74,11 @@
   },
   {
    "id": 9,
-   "claim": "promptarena run --scenario duplex-tools --provider mock-duplex --ci needs no keys",
-   "verdict": "false",
+   "claim": "promptarena run --scenario duplex-tools --provider mock-duplex --ci needs no keys: the selfplay-user role uses mock-duplex and the persona voice mock-tts",
+   "verdict": "true",
    "evidence": [
-    "examples/duplex-streaming/config.arena.yaml:96",
-    "examples/duplex-streaming/config.arena.yaml:97"
+    "examples/duplex-streaming/config.arena.yaml:103",
+    "examples/duplex-streaming/config.arena.yaml:56"
    ]
   },
   {
@@ -93,16 +94,16 @@
    "claim": "turn 1 is role user with parts type audio, media.file_path audio/greeting.pcm, mime_type audio/L16",
    "verdict": "true",
    "evidence": [
-    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:43",
-    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:45"
+    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:41",
+    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:46"
    ]
   },
   {
    "id": 12,
-   "claim": "assertion content_matches with params.pattern \"(?i)(hello|hi|help|assist)\"",
-   "verdict": "false",
+   "claim": "The first turn's content_matches assertion uses params.pattern \"(?i)(hello|hi|help|assist|Nova)\"",
+   "verdict": "true",
    "evidence": [
-    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:50"
+    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:51"
    ]
   },
   {
@@ -119,7 +120,7 @@
    "claim": "conversation_assertions field",
    "verdict": "true",
    "evidence": [
-    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:65"
+    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:67"
    ]
   },
   {
@@ -127,7 +128,8 @@
    "claim": "tools_called assertion params tool_names (list) and min_calls",
    "verdict": "true",
    "evidence": [
-    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:67"
+    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:69",
+    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:72"
    ]
   },
   {
@@ -135,17 +137,18 @@
    "claim": "three tools fired at least once over four-turn self-play conversation",
    "verdict": "true",
    "evidence": [
-    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:67",
-    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:74",
-    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:81"
+    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:68",
+    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:75",
+    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:82"
    ]
   },
   {
    "id": 17,
    "claim": "tool_calls_with_args and tool_call_sequence can be layered in as conversation assertions",
-   "verdict": "unverified",
+   "verdict": "true",
    "evidence": [
-    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:65"
+    "arena/assertions/validate_params.go:73",
+    "arena/assertions/validate_params.go:77"
    ]
   },
   {
@@ -153,7 +156,9 @@
    "claim": "tool_calls_with_args params tool_name and expected_args (map)",
    "verdict": "true",
    "evidence": [
-    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:65"
+    "arena/assertions/validate_params.go:21",
+    "arena/assertions/validate_params.go:22",
+    "arena/assertions/validate_params.go:73"
    ]
   },
   {
@@ -170,7 +175,8 @@
    "claim": "tool_call_sequence params sequence list of tool names",
    "verdict": "true",
    "evidence": [
-    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:65"
+    "arena/assertions/validate_params.go:32",
+    "arena/assertions/validate_params.go:77"
    ]
   },
   {
@@ -186,7 +192,7 @@
    "claim": "go build -o bin/promptarena ./arena/cmd/promptarena",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:533"
+    "arena/cmd/promptarena/run.go:585"
    ]
   },
   {
@@ -200,7 +206,7 @@
    "claim": "run --scenario duplex-tools --provider gemini-2-flash --ci --formats json,markdown flags",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:533"
+    "arena/cmd/promptarena/run.go:585"
    ]
   },
   {
@@ -230,11 +236,11 @@
   },
   {
    "id": 28,
-   "claim": "conversation-level tool-call assertions fail in mock mode (mock run executes end-to-end for smoke testing)",
-   "verdict": "false",
+   "claim": "In mock mode mock-duplex replies from the duplex-tools block of mock-responses.yaml with scripted tool_calls, tools execute for real and the three tools_called conversation assertions pass",
+   "verdict": "true",
    "evidence": [
-    "examples/duplex-streaming/config.arena.yaml:97",
-    "examples/duplex-streaming/providers/mock-duplex.provider.yaml:33"
+    "examples/duplex-streaming/mock-responses.yaml:78",
+    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:68"
    ]
   },
   {
@@ -260,7 +266,7 @@
    "claim": "new tool: drop .tool.yaml into tools/, reference in config.arena.yaml, mention in prompts/voice-assistant-tools.prompt.yaml",
    "verdict": "true",
    "evidence": [
-    "examples/duplex-streaming/config.arena.yaml:84",
+    "examples/duplex-streaming/config.arena.yaml:88",
     "examples/duplex-streaming/prompts/voice-assistant-tools.prompt.yaml:51"
    ]
   },
@@ -269,7 +275,7 @@
    "claim": "replace tools_called with tool_calls_with_args and specify expected_args",
    "verdict": "true",
    "evidence": [
-    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:67"
+    "arena/assertions/validate_params.go:73"
    ]
   },
   {
@@ -277,7 +283,7 @@
    "claim": "tools_not_called assertion type exists",
    "verdict": "true",
    "evidence": [
-    "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:65"
+    "arena/assertions/validate_params.go:66"
    ]
   },
   {

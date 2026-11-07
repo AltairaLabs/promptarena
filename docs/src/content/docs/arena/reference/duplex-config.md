@@ -2,14 +2,14 @@
 title: Duplex Configuration Reference
 description: Scenario fields, voice catalog, audio input format and pipeline stages for duplex (bidirectional) streaming runs.
 verified:
-  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/arenaconfig/loader.go
     - arena/arenaconfig/persona.go
     - arena/arenaconfig/types.go
     - arena/arenaconfig/voice.go
     - arena/cmd/promptarena/run.go
-    - arena/cmd/promptarena/run_interactive.go
+    - arena/cmd/promptarena/serve_interactive.go
     - arena/engine/builder_integration.go
     - arena/engine/duplex_conversation_executor.go
     - arena/engine/duplex_executor_pipeline_integration.go
@@ -411,12 +411,14 @@ The duplex executor builds the pipeline from these stages, in this order. A stag
 | `PromptAssemblyStage` | Always | Loads the prompt template into the shared `TurnState` (`Template`, `AllowedTools`, `Validators`) |
 | `TemplateStage` | Always | Renders the system prompt into `TurnState.SystemPrompt` |
 | `DuplexProviderStage` | Always | Opens a `StreamInputSupport` session, reading `TurnState.SystemPrompt` at session creation |
+| `DuplexGuardrailStage` (`duplex_guardrails`) | The scenario's prompt declares validators | Runs the pack's output guardrails on each completed assistant turn. It stamps the turn's validations, so `guardrail_triggered` sees a firing, and rewrites the recorded turn when a guardrail enforces. The listener has already heard the streamed audio, so enforcement applies to the transcript, recording, reports and later assertions. Input guardrails do not run |
+| `duplex_recording_split`, `RecordingStage`, `duplex_recording_drop` | Session recording is enabled and an event store is set | Records the assistant messages, which `RecordingStage` would otherwise skip, then removes the copies it made. Placed after the guardrail stage, so a recorded turn holds the enforced content |
 | `AudioPacingStage` (`audio-pacing-output`) | Same condition as the input `AudioPacingStage` | Emits each response audio chunk at real-time cadence |
 | `MonitorTap` (output) | An audio monitor is attached | Copies response audio to the audio monitor |
 | `MediaExternalizerStage` | Media storage is set | Writes all media to storage, retained |
 | `ArenaStateStoreSaveStage` | A state store is configured | Saves the conversation messages to the state store |
 
-An audio monitor is attached when `promptarena run` or `promptarena serve` has `--audio-monitor on`, or `--audio-monitor auto` (the default) with stdout on a terminal. Runs started by `promptarena run` set media storage to the `media` directory under the output directory, and configure a state store.
+An audio monitor is attached when `promptarena run` or `promptarena serve` has `--audio-monitor on`, or `--audio-monitor auto` (the default) with stdout on a terminal. After the session, the arena runs every pack eval trigger, as on the text path: turn evals once per assistant turn, then session and conversation evals. Runs started by `promptarena run` set media storage to the `media` directory under the output directory, and configure a state store.
 
 ---
 

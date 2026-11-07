@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/reference/api-reference.md",
- "commit": "0dbee6290db4e4de3bff3101f260fd614f81c924",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
@@ -12,11 +12,11 @@
   },
   {
    "id": 2,
-   "claim": "func BuildEngineComponents(cfg *arenaconfig.Config, providerFilter []string) with the 9 named results listed",
-   "verdict": "false",
+   "claim": "func BuildEngineComponents(cfg *arenaconfig.Config, providerFilter []string) returns nine named results: providerRegistry, promptRegistry, mcpRegistry, convExecutor, adapterRegistry, a2aCleanup, toolRegistry, skillFactory, err",
+   "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:71",
-    "arena/engine/builder_integration.go:79"
+    "arena/engine/builder_integration.go:76",
+    "arena/engine/builder_integration.go:86"
    ]
   },
   {
@@ -24,7 +24,7 @@
    "claim": "providerFilter limits which providers have credentials resolved; nil or empty initializes all",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:104",
+    "arena/engine/builder_integration.go:109",
     "arena/engine/engine.go:297"
    ]
   },
@@ -33,8 +33,8 @@
    "claim": "promptRegistry is nil when the config loads none",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:504",
-    "arena/engine/builder_integration.go:506"
+    "arena/engine/builder_integration.go:484",
+    "arena/engine/builder_integration.go:486"
    ]
   },
   {
@@ -42,8 +42,8 @@
    "claim": "mcpRegistry is nil when none are configured",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:621",
-    "arena/engine/builder_integration.go:623"
+    "arena/engine/builder_integration.go:619",
+    "arena/engine/builder_integration.go:621"
    ]
   },
   {
@@ -51,8 +51,8 @@
    "claim": "convExecutor has the eval orchestrator already injected",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:167",
-    "arena/engine/builder_integration.go:168"
+    "arena/engine/builder_integration.go:172",
+    "arena/engine/builder_integration.go:173"
    ]
   },
   {
@@ -60,7 +60,7 @@
    "claim": "adapterRegistry: recording-format readers used by eval scenarios",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:167",
+    "arena/engine/builder_integration.go:172",
     "arena/engine/engine.go:385"
    ]
   },
@@ -69,9 +69,10 @@
    "claim": "a2aCleanup releases A2A agent connections; nil when there are none",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:1024",
-    "arena/engine/builder_integration.go:1026",
-    "arena/engine/engine.go:457"
+    "arena/engine/builder_integration.go:145",
+    "arena/engine/builder_integration.go:183",
+    "arena/engine/engine.go:315",
+    "arena/engine/engine.go:459"
    ]
   },
   {
@@ -79,8 +80,8 @@
    "claim": "toolRegistry: registry of tools the runtime can execute",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:109",
-    "arena/engine/builder_integration.go:78"
+    "arena/engine/builder_integration.go:114",
+    "arena/engine/builder_integration.go:83"
    ]
   },
   {
@@ -88,9 +89,9 @@
    "claim": "skillExecutor: Executor for skill activation (nil when the config has no skills)",
    "verdict": "false",
    "evidence": [
-    "arena/engine/builder_integration.go:79",
-    "arena/engine/builder_integration.go:912",
-    "arena/engine/builder_integration.go:916"
+    "arena/engine/builder_integration.go:84",
+    "arena/engine/builder_integration.go:918",
+    "arena/engine/builder_integration.go:922"
    ]
   },
   {
@@ -98,8 +99,8 @@
    "claim": "example: LoadConfig then 9-value BuildEngineComponents(cfg, nil) compiles",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:197",
-    "arena/engine/builder_integration.go:71"
+    "arena/arenaconfig/loader.go:198",
+    "arena/engine/builder_integration.go:76"
    ]
   },
   {
@@ -124,7 +125,7 @@
    "claim": "calling SetEventBus forwards the bus to the evals and eval.completed reach subscribers",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:520"
+    "arena/engine/engine.go:523"
    ]
   },
   {
@@ -143,7 +144,7 @@
    "claim": "NewEngine params providerRegistry, promptRegistry, mcpRegistry, convExecutor, adapterRegistry, toolRegistry are the components returned by BuildEngineComponents",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:71",
+    "arena/engine/builder_integration.go:76",
     "arena/engine/engine.go:388"
    ]
   },
@@ -204,7 +205,7 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/engine.go:285",
-    "arena/engine/engine.go:456"
+    "arena/engine/engine.go:458"
    ]
   },
   {
@@ -238,7 +239,7 @@
    "claim": "func (e *Engine) ExecuteRuns(ctx context.Context, plan *RunPlan, concurrency int) ([]string, error)",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:886"
+    "arena/engine/engine.go:897"
    ]
   },
   {
@@ -246,7 +247,7 @@
    "claim": "ExecuteRuns executes all runs in the plan concurrently with max concurrency",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:914"
+    "arena/engine/engine.go:925"
    ]
   },
   {
@@ -254,9 +255,9 @@
    "claim": "returned run IDs are in the same order as plan combinations",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:884",
-    "arena/engine/engine.go:904",
-    "arena/engine/engine.go:906"
+    "arena/engine/engine.go:895",
+    "arena/engine/engine.go:915",
+    "arena/engine/engine.go:917"
    ]
   },
   {
@@ -264,7 +265,7 @@
    "claim": "error returned when execution setup fails",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:931"
+    "arena/engine/engine.go:942"
    ]
   },
   {
@@ -272,7 +273,7 @@
    "claim": "example ExecuteRuns(ctx, plan, 4) compiles",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:886"
+    "arena/engine/engine.go:897"
    ]
   },
   {
@@ -280,7 +281,7 @@
    "claim": "func (e *Engine) GetStateStore() statestore.Store",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:987"
+    "arena/engine/engine.go:998"
    ]
   },
   {
@@ -288,7 +289,7 @@
    "claim": "eng.GetStateStore().(*statestore.ArenaStateStore) type assertion compiles",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:987",
+    "arena/engine/engine.go:998",
     "arena/statestore/store.go:132"
    ]
   },
@@ -297,7 +298,7 @@
    "claim": "func (e *Engine) Close() error shuts down engine and cleans resources",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:456"
+    "arena/engine/engine.go:458"
    ]
   },
   {
@@ -305,7 +306,7 @@
    "claim": "func (e *Engine) EnableMockProviderMode(mockConfigPath string) error",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:738"
+    "arena/engine/engine.go:741"
    ]
   },
   {
@@ -313,18 +314,18 @@
    "claim": "EnableMockProviderMode replaces all providers with mock providers",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:754",
-    "arena/engine/engine.go:778"
+    "arena/engine/engine.go:762",
+    "arena/engine/engine.go:786"
    ]
   },
   {
    "id": 37,
-   "claim": "mockConfigPath empty string gives default responses",
+   "claim": "EnableMockProviderMode with an empty mockConfigPath keeps each provider's own mock_config, and a provider without one gets default responses",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:742",
-    "arena/engine/engine.go:756",
-    "arena/engine/engine.go:758"
+    "arena/engine/engine.go:744",
+    "arena/engine/engine.go:758",
+    "arena/engine/engine.go:802"
    ]
   },
   {
@@ -332,8 +333,8 @@
    "claim": "returns error if mock configuration is invalid",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:743",
-    "arena/engine/engine.go:745"
+    "arena/engine/engine.go:745",
+    "arena/engine/engine.go:749"
    ]
   },
   {
@@ -341,7 +342,7 @@
    "claim": "func (e *Engine) EnableSessionRecording(recordingDir string) error",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:585"
+    "arena/engine/engine.go:589"
    ]
   },
   {
@@ -349,8 +350,8 @@
    "claim": "enables session recording for all runs",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:585",
-    "arena/engine/engine.go:602"
+    "arena/engine/engine.go:589",
+    "arena/engine/engine.go:606"
    ]
   },
   {
@@ -358,8 +359,8 @@
    "claim": "returns error if directory cannot be created",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:586",
-    "arena/engine/engine.go:588"
+    "arena/engine/engine.go:590",
+    "arena/engine/engine.go:592"
    ]
   },
   {
@@ -469,11 +470,10 @@
    "claim": "type Scenario struct with ID, TaskType, Description string and Turns []TurnDefinition",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:682",
-    "arena/arenaconfig/types.go:683",
-    "arena/arenaconfig/types.go:684",
-    "arena/arenaconfig/types.go:686",
-    "arena/arenaconfig/types.go:692"
+    "arena/arenaconfig/types.go:688",
+    "arena/arenaconfig/types.go:689",
+    "arena/arenaconfig/types.go:691",
+    "arena/arenaconfig/types.go:697"
    ]
   },
   {
@@ -481,20 +481,19 @@
    "claim": "type TurnDefinition struct with Role, Content, Persona string, Turns, MaxTurns int",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1134",
-    "arena/arenaconfig/types.go:1135",
-    "arena/arenaconfig/types.go:1136",
     "arena/arenaconfig/types.go:1143",
-    "arena/arenaconfig/types.go:1145",
-    "arena/arenaconfig/types.go:1147"
+    "arena/arenaconfig/types.go:1144",
+    "arena/arenaconfig/types.go:1151",
+    "arena/arenaconfig/types.go:1153",
+    "arena/arenaconfig/types.go:1155"
    ]
   },
   {
    "id": 56,
-   "claim": "Role is 'user', 'assistant', or self-play role e.g. gemini-user",
+   "claim": "TurnDefinition.Role is \"user\" or a self-play role ID from spec.self_play.roles (e.g. gemini-user); there is no assistant role because the assistant's reply is never scripted",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1135"
+    "arena/arenaconfig/types.go:1143"
    ]
   },
   {
@@ -502,8 +501,8 @@
    "claim": "Turns sets minimum exchanges for self-play and MaxTurns the upper bound",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1144",
-    "arena/arenaconfig/types.go:1147"
+    "arena/arenaconfig/types.go:1152",
+    "arena/arenaconfig/types.go:1155"
    ]
   },
   {
@@ -511,8 +510,8 @@
    "claim": "If MaxTurns is absent exactly Turns exchanges are executed",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1144",
-    "arena/arenaconfig/types.go:1146"
+    "arena/arenaconfig/types.go:1152",
+    "arena/arenaconfig/types.go:1154"
    ]
   },
   {
@@ -825,7 +824,7 @@
    "claim": "arenaconfig.LoadConfig(\"config.arena.yaml\") returns (*Config, error)",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:197"
+    "arena/arenaconfig/loader.go:198"
    ]
   },
   {
@@ -852,7 +851,7 @@
    "claim": "store := eng.GetStateStore().(*statestore.ArenaStateStore); store.GetRunResult(ctx, runID)",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:987",
+    "arena/engine/engine.go:998",
     "arena/statestore/metadata.go:43"
    ]
   },
@@ -861,6 +860,25 @@
    "claim": "link /arena/tutorials/07-programmatic-usage/ and /arena/how-to/setup/use-as-go-library/ exist",
    "verdict": "unverified",
    "evidence": []
+  },
+  {
+   "id": 10000,
+   "claim": "Engine.Close closes the provider, MCP and self-play registries the engine was built with, so components from BuildEngineComponents cannot be shared between two engines",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:470",
+    "arena/engine/engine.go:474",
+    "arena/engine/engine.go:478"
+   ]
+  },
+  {
+   "id": 10001,
+   "claim": "EnableMockProviderMode checks the mock config file for unknown keys before loading it and returns an error for a misspelled key",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/mock_config_check.go:69",
+    "arena/engine/engine.go:747"
+   ]
   }
  ]
 }

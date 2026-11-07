@@ -1,7 +1,7 @@
 ---
 title: Assertions Reference
 verified:
-  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/agentkb/reference_evals.go
     - arena/arenaconfig/judge_param.go
@@ -30,8 +30,6 @@ verified:
     - arena/stages/assertions.go
     - examples/rag-agent/scenarios/paris-capital.scenario.yaml
     - examples/test-a-codegen-agent/config.arena.yaml
-    - schemas/v1alpha1/common/assertions.json
-    - schemas/v1alpha1/scenario.json
 ---
 
 Assertions are checks that verify LLM behavior during Arena test scenarios. They run after each turn (or across the full session) and determine whether the response meets expectations. The [Checks Reference](https://promptkit.altairalabs.ai/reference/checks/) lists every check type and its parameters.
@@ -101,7 +99,7 @@ The table lists the most commonly used assertion types. The [Checks Reference](h
 | `memory_contains` | The run's long-term memory store holds a matching entry, scored from the store; with `max_score: 0`, that none does |
 | `json_schema` | Response conforms to a JSON Schema |
 | `no_tool_errors` | All tool calls completed without errors |
-| `tool_call_chain` | Tools were called in a specific order |
+| `tool_call_chain` | Tool calls form a chain of `steps`, in order, each with optional constraints on its result and arguments |
 | `tool_exec` | Invokes a registered tool (e.g. a sandbox's `run_tests`) at session end and asserts it succeeded |
 
 Assertions accept both canonical and alias names. `content_includes` is an alias for `contains`. The [Checks Reference](https://promptkit.altairalabs.ai/reference/checks/#type-aliases) has the full alias table.

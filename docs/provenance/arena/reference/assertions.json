@@ -1,13 +1,13 @@
 {
  "page": "docs/src/content/docs/arena/reference/assertions.md",
- "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
    "claim": "Assertions run after each turn or across the full session",
    "verdict": "true",
    "evidence": [
-    "arena/engine/eval_orchestrator.go:261",
+    "arena/engine/eval_orchestrator.go:314",
     "arena/stages/assertions.go:208"
    ]
   },
@@ -16,17 +16,15 @@
    "claim": "Assertion field 'type' is required and names the assertion type",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:20",
-    "schemas/v1alpha1/scenario.json:5"
+    "arena/arenaconfig/types.go:20"
    ]
   },
   {
    "id": 3,
-   "claim": "Assertion field 'params' is required and holds type-specific parameters",
-   "verdict": "false",
+   "claim": "Assertion field 'params' is optional and holds type-specific parameters",
+   "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:24",
-    "schemas/v1alpha1/scenario.json:5"
+    "arena/arenaconfig/types.go:24"
    ]
   },
   {
@@ -35,7 +33,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:25",
-    "arena/stages/assertions.go:366"
+    "arena/stages/assertions.go:220"
    ]
   },
   {
@@ -43,8 +41,8 @@
    "claim": "Assertion field 'when' is optional conditional filtering",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:26",
-    "arena/stages/assertions.go:288"
+    "arena/arenaconfig/types.go:47",
+    "arena/assertions/when.go:26"
    ]
   },
   {
@@ -52,8 +50,7 @@
    "claim": "pass_threshold is an optional 0..1 pass rate; values outside the range fail at load",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:30",
-    "schemas/v1alpha1/common/assertions.json"
+    "arena/arenaconfig/types.go:30"
    ]
   },
   {
@@ -194,8 +191,8 @@
    "claim": "Assertions can be scoped to a single turn or to the entire conversation session",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1181",
-    "arena/arenaconfig/types.go:707"
+    "arena/arenaconfig/types.go:1189",
+    "arena/arenaconfig/types.go:715"
    ]
   },
   {
@@ -203,8 +200,8 @@
    "claim": "Turn-level assertions are declared on individual turns under an 'assertions' key and check only that turn's response",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1181",
-    "arena/stages/assertions.go:208"
+    "arena/arenaconfig/types.go:1189",
+    "arena/stages/assertions.go:219"
    ]
   },
   {
@@ -212,7 +209,7 @@
    "claim": "Session-level assertions are declared at scenario level using 'conversation_assertions'",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:707"
+    "arena/arenaconfig/types.go:715"
    ]
   },
   {
@@ -525,8 +522,8 @@
    "claim": "Red-team objective block accepts description, expect (value not_achieved) and success list",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1195",
-    "arena/arenaconfig/types.go:1204"
+    "arena/arenaconfig/types.go:1198",
+    "arena/arenaconfig/types.go:1212"
    ]
   },
   {
@@ -633,8 +630,8 @@
    "claim": "Objectives are checked after every exchange and work with stop_on_success",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1167",
-    "arena/arenaconfig/types.go:1205"
+    "arena/arenaconfig/types.go:1213",
+    "arena/arenaconfig/types.go:1215"
    ]
   },
   {
@@ -651,8 +648,8 @@
    "claim": "taxonomy value 'owasp-agentic:ASI06' is a valid taxonomy identifier on an objective",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/taxonomy.go:45",
-    "arena/arenaconfig/types.go:1216"
+    "arena/arenaconfig/taxonomy.go:26",
+    "arena/arenaconfig/types.go:1229"
    ]
   },
   {
@@ -720,8 +717,8 @@
    "claim": "Memory writes survive an objective's rewind",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1332",
-    "arena/engine/objective.go:392"
+    "arena/arenaconfig/types.go:1330",
+    "arena/engine/objective.go:388"
    ]
   },
   {
@@ -772,7 +769,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:53",
-    "arena/assertions/when.go:73"
+    "arena/assertions/when.go:71"
    ]
   },
   {
@@ -781,7 +778,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:55",
-    "arena/assertions/when.go:36"
+    "arena/assertions/when.go:35"
    ]
   },
   {
@@ -790,7 +787,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:57",
-    "arena/assertions/when.go:48"
+    "arena/assertions/when.go:46"
    ]
   },
   {
@@ -857,7 +854,7 @@
    "claim": "pass_threshold example on a content_includes turn assertion with value 0.8",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go",
+    "arena/arenaconfig/types.go:30",
     "arena/engine/trials.go:351"
    ]
   },
@@ -960,7 +957,7 @@
    "claim": "Scenario field trial_budget can stop trials early and is documented at config-schema trial_budget",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:739"
+    "arena/arenaconfig/types.go:747"
    ]
   },
   {
@@ -1045,8 +1042,8 @@
    "claim": "judge: <name> in eval_params grades with that spec.judges entry; an unknown name fails at load",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/judge_param.go:38",
-    "arena/arenaconfig/judge_param.go:47"
+    "arena/arenaconfig/judge_param.go:53",
+    "arena/arenaconfig/judge_param.go:62"
    ]
   }
  ]
