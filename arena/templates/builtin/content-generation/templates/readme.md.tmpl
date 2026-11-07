@@ -22,7 +22,7 @@ This project tests content creation capabilities including:
 
 {{range .providers}}{{if eq . "mock"}}The `mock` provider replays scripted replies from `mock-responses.yaml`, so it runs with no API key.
 
-{{end}}{{end}}{{$needKeys := false}}{{range .providers}}{{if ne . "mock"}}{{$needKeys = true}}{{end}}{{end}}{{if $needKeys}}- Configure your API keys in `.env`:
+{{end}}{{end}}{{$needKeys := false}}{{range .providers}}{{if ne . "mock"}}{{$needKeys = true}}{{end}}{{end}}{{if $needKeys}}- Export your API keys in your shell (`.env.example` lists them; promptarena reads the environment, not a `.env` file):
 {{range .providers}}{{if eq . "openai"}}  - Get OpenAI key from: https://platform.openai.com/api-keys
 {{else if eq . "claude"}}  - Get Anthropic (Claude) key from: https://console.anthropic.com/
 {{else if eq . "gemini"}}  - Get Gemini key from: https://aistudio.google.com/app/apikey

@@ -25,7 +25,7 @@ func CollectInspectionData(cfg *arenaconfig.Config, configFile string) *Inspecti
 
 	// Collect each section using helper functions
 	data.PromptConfigs = collectPromptConfigs(cfg)
-	data.Providers = collectProviders(cfg)
+	data.Providers = collectProviders(cfg, configFile)
 	data.Scenarios = collectScenarios(cfg)
 	data.Tools = collectTools(cfg)
 	data.Personas = collectPersonas(cfg)
@@ -121,7 +121,7 @@ func populatePromptDetails(promptData *PromptInspectData, cfg *arenaconfig.Confi
 }
 
 // collectProviders extracts provider configuration details
-func collectProviders(cfg *arenaconfig.Config) []ProviderInspectData {
+func collectProviders(cfg *arenaconfig.Config, configFile string) []ProviderInspectData {
 	// Build a map of provider usage
 	providerUsage := buildProviderUsageMap(cfg)
 
@@ -131,7 +131,7 @@ func collectProviders(cfg *arenaconfig.Config) []ProviderInspectData {
 			File:  p.File,
 			Group: p.Group,
 		}
-		populateProviderDetails(&providerData, cfg, p.File)
+		populateProviderDetails(&providerData, cfg, configFile, p.File)
 		// Skip providers that couldn't be loaded (no ID means no data)
 		if providerData.ID == "" {
 			continue
@@ -209,9 +209,10 @@ func appendJudgeProviders(
 }
 
 // populateProviderDetails fills in details from loaded provider
-func populateProviderDetails(providerData *ProviderInspectData, cfg *arenaconfig.Config, filePath string) {
-	fileBase := getProviderIDFromFile(filePath)
-	matched := findMatchingProvider(cfg, fileBase)
+func populateProviderDetails(
+	providerData *ProviderInspectData, cfg *arenaconfig.Config, configFile, filePath string,
+) {
+	matched := providerForFile(cfg, configFile, filePath)
 	if matched != nil {
 		providerData.ID = matched.ID
 		providerData.Type = matched.Type
@@ -219,6 +220,22 @@ func populateProviderDetails(providerData *ProviderInspectData, cfg *arenaconfig
 		providerData.Temperature = matched.Defaults.Temperature
 		providerData.MaxTokens = matched.Defaults.MaxTokens
 	}
+}
+
+// providerForFile returns the loaded provider a providers[].file entry
+// declared. A provider's ID comes from the file's metadata.name, not its file
+// name, so the file is read for its ID first (providers/openai.yaml can hold
+// openai-gpt4o-mini). The file-name match is the fallback for a config whose
+// files are not on disk relative to configFile.
+func providerForFile(cfg *arenaconfig.Config, configFile, filePath string) *config.Provider {
+	if configFile != "" {
+		if p, err := config.LoadProvider(config.ResolveFilePath(configFile, filePath)); err == nil && p != nil {
+			if loaded, ok := cfg.LoadedProviders[p.ID]; ok && loaded != nil {
+				return loaded
+			}
+		}
+	}
+	return findMatchingProvider(cfg, getProviderIDFromFile(filePath))
 }
 
 // findMatchingProvider finds a loaded provider by file base name

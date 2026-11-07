@@ -292,7 +292,9 @@ func completeFormats(
 	_ []string,
 	_ string,
 ) ([]string, cobra.ShellCompDirective) {
-	formats := []string{inspectFormatJSON, formatJUnit, formatHTML, formatMarkdown, formatCSV, formatObjectives}
+	// html is only a deprecated alias for markdown (see processHTMLSettings),
+	// so offer just the formats `run --help` documents.
+	formats := []string{inspectFormatJSON, formatJUnit, formatMarkdown, formatCSV, formatObjectives}
 	return formats, cobra.ShellCompDirectiveNoFileComp
 }
 

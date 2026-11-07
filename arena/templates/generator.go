@@ -195,6 +195,10 @@ func (g *Generator) generateSingleFile(fileSpec FileSpec, vars map[string]interf
 		return err
 	}
 
+	if g.skipExisting(fullPath, outputPath, result) {
+		return nil
+	}
+
 	// Create parent directories
 	if err := os.MkdirAll(filepath.Dir(fullPath), 0755); err != nil {
 		return fmt.Errorf("failed to create directory for %s: %w", outputPath, err)
@@ -217,6 +221,24 @@ func (g *Generator) generateSingleFile(fileSpec FileSpec, vars map[string]interf
 
 	result.FilesCreated = append(result.FilesCreated, outputPath)
 	return nil
+}
+
+// skipExisting reports whether fullPath already exists and must be kept. Init
+// into an existing directory used to overwrite hand-edited files silently; now
+// an existing file is left alone and listed as a warning unless Force is set.
+func (g *Generator) skipExisting(fullPath, outputPath string, result *GenerationResult) bool {
+	if g.config != nil && g.config.Force {
+		return false
+	}
+	if _, err := os.Lstat(fullPath); err != nil {
+		return false
+	}
+	result.Warnings = append(result.Warnings,
+		fmt.Sprintf("kept existing %s (not overwritten; use --force to replace it)", outputPath))
+	if g.config != nil && g.config.Verbose {
+		fmt.Printf("  ⊘ Skipped (file exists)\n")
+	}
+	return true
 }
 
 func (g *Generator) resolveSourcePath(src string) (string, error) {

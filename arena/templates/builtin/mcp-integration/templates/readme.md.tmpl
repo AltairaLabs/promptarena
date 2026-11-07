@@ -40,7 +40,7 @@ promptarena run
 To test against the real MCP server, replace the `tools:` block in
 `config.arena.yaml` with the `mcp_servers:` block shown in its comment, and
 delete the `tools/` directory.
-{{else}}1. Configure your API keys in `.env` file:
+{{else}}1. Export your API keys in your shell (`.env.example` lists them; promptarena reads the environment, not a `.env` file):
 {{range .providers}}{{if eq . "openai"}}   - Get OpenAI key from: https://platform.openai.com/api-keys
 {{else if eq . "claude"}}   - Get Anthropic (Claude) key from: https://console.anthropic.com/
 {{else if eq . "gemini"}}   - Get Google (Gemini) key from: https://aistudio.google.com/app/apikey

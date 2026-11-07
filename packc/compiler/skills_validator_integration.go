@@ -9,6 +9,8 @@ import (
 
 	"github.com/AltairaLabs/PromptKit/runtime/v2/prompt"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/skills"
+
+	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
 )
 
 const skillMDFilename = "SKILL.md"
@@ -83,12 +85,9 @@ func ValidateSkills(pack *prompt.Pack, packDir string) []string {
 		if dir == "" {
 			continue
 		}
-		if err := validatePathContainment(dir, packDir); err != nil {
+		absDir, err := ResolveSkillDir(dir, packDir)
+		if err != nil {
 			continue
-		}
-		absDir := dir
-		if !filepath.IsAbs(absDir) {
-			absDir = filepath.Join(packDir, absDir)
 		}
 
 		warnings = append(warnings, checkAllowedToolsCrossRef(absDir, packToolNames)...)
@@ -97,18 +96,30 @@ func ValidateSkills(pack *prompt.Pack, packDir string) []string {
 	return warnings
 }
 
+// ResolveSkillDir returns the directory a skill path names. An @org/name
+// reference resolves to where `promptarena skill install` put the skill, which
+// is outside the pack directory by design; any other path must stay inside it.
+func ResolveSkillDir(dir, packDir string) (string, error) {
+	if arenaconfig.IsSkillRef(dir) {
+		return arenaconfig.ResolveSkillRef(dir, packDir)
+	}
+	if err := validatePathContainment(dir, packDir); err != nil {
+		return "", err
+	}
+	if filepath.IsAbs(dir) {
+		return dir, nil
+	}
+	return filepath.Join(packDir, dir), nil
+}
+
 // validateSkillDirectory validates a directory-based skill source.
 func validateSkillDirectory(dir, packDir string, idx int, seen map[string]string) []string {
 	var errs []string
 
-	if err := validatePathContainment(dir, packDir); err != nil {
+	absDir, err := ResolveSkillDir(dir, packDir)
+	if err != nil {
 		errs = append(errs, fmt.Sprintf("skills[%d]: %v", idx, err))
 		return errs
-	}
-
-	absDir := dir
-	if !filepath.IsAbs(absDir) {
-		absDir = filepath.Join(packDir, absDir)
 	}
 
 	info, err := os.Stat(absDir)

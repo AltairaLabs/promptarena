@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/setup/install-skills.md",
- "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
  "claims": [
   {
    "id": 1,
@@ -201,8 +201,8 @@
    "claim": "Skill entry field path accepts @org/name references such as @anthropic/pci-compliance",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/loader.go:866",
-    "arena/arenaconfig/loader.go:889",
+    "arena/arenaconfig/loader.go:875",
+    "arena/arenaconfig/loader.go:898",
     "packc/compiler/skills_validator_integration.go:116"
    ]
   },
@@ -225,7 +225,7 @@
    "claim": "Example local skill path skills/local-skill is resolved relative to the pack file",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:865",
+    "arena/arenaconfig/loader.go:874",
     "packc/compiler/skills_validator_integration.go:112"
    ]
   },
@@ -234,7 +234,7 @@
    "claim": "The runtime resolves @org/name references from installed skill directories automatically",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/loader.go:889",
+    "arena/arenaconfig/loader.go:898",
     "packc/compiler/skills_validator_integration.go:116"
    ]
   },
@@ -249,7 +249,7 @@
    "claim": "Resolution step 2: a relative path is resolved from the pack file location",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:865",
+    "arena/arenaconfig/loader.go:874",
     "packc/compiler/skills_validator_integration.go:112"
    ]
   },
@@ -288,6 +288,33 @@
    "claim": "The cli-commands skill section is the complete skill command reference",
    "verdict": "true",
    "evidence": []
+  },
+  {
+   "id": "23",
+   "claim": "skill remove deletes one copy per call and reports a copy that remains installed",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/skill_interactive.go"
+   ]
+  },
+  {
+   "id": "26",
+   "claim": "Skill entry field path accepts @org/name references to installed skills",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go",
+    "arena/arenaconfig/skill_sources.go",
+    "packc/compiler/skills_validator_integration.go"
+   ]
+  },
+  {
+   "id": "30",
+   "claim": "An @org/name reference resolves to .promptkit/skills beside the config, then the working directory's .promptkit/skills, then the user directory; packc keeps the reference in the pack",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/skill_sources.go",
+    "packc/compiler/helpers_integration.go"
+   ]
   }
  ]
 }

@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/providers/configure-providers.md",
- "commit": "3df344ffbc8c604e1a8935929c28499d778d19f0",
+ "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
  "claims": [
   {
    "id": 1,
@@ -1203,6 +1203,14 @@
    "evidence": [
     "examples/ollama-local/docker-compose.yaml",
     "examples/ollama-local/providers/ollama-llama.provider.yaml"
+   ]
+  },
+  {
+   "id": "9",
+   "claim": "init writes a .env.example file listing the API key variables to export",
+   "verdict": "true",
+   "evidence": [
+    "arena/templates/builtin/quick-start/template.yaml"
    ]
   }
  ]

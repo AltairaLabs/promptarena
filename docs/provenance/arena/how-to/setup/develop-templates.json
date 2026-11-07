@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/setup/develop-templates.md",
- "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
  "claims": [
   {
    "id": 1,
@@ -259,6 +259,23 @@
    "verdict": "unverified",
    "evidence": [
     "arena/templates/registry.go:24"
+   ]
+  },
+  {
+   "id": "fix-cache-sources",
+   "claim": "fetch caches template.yaml and every file a relative source names; a source that escapes the template directory is rejected",
+   "verdict": "true",
+   "evidence": [
+    "arena/templates/registry.go"
+   ]
+  },
+  {
+   "id": "fix-path-index",
+   "claim": "fetch and render accept a path-form --index; a path index is cached under a key derived from its absolute path",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/templates.go",
+    "arena/templates/resolver.go"
    ]
   }
  ]

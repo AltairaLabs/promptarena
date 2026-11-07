@@ -170,6 +170,14 @@ func parseSkillsFromConfig(cfg *arenaconfig.Config) []prompt.SkillSourceConfig {
 	result := make([]prompt.SkillSourceConfig, len(cfg.LoadedSkillSources))
 	for i, src := range cfg.LoadedSkillSources {
 		result[i] = src
+		// An installed-skill reference stays a reference: the pack consumer
+		// resolves @org/name against its own installed skills, and this
+		// machine's install directory means nothing anywhere else. The loader
+		// appends one loaded source per declared source, so the indexes align.
+		if i < len(cfg.Skills) && arenaconfig.IsSkillRef(prompt.SkillPath(&cfg.Skills[i])) {
+			result[i] = cfg.Skills[i]
+			continue
+		}
 		// Convert paths back to relative (to config dir) for pack portability.
 		if dir := prompt.SkillPath(&src); dir != "" && cfg.ConfigDir != "" {
 			if rel, err := filepath.Rel(cfg.ConfigDir, dir); err == nil {

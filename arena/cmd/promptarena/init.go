@@ -56,6 +56,7 @@ var (
 	initRepoConfig    string
 	initVerbose       bool
 	initNoAgent       bool
+	initForce         bool
 )
 
 func init() {
@@ -63,8 +64,13 @@ func init() {
 
 	initCmd.Flags().StringVar(&initTemplate, "template", "quick-start", "Template to use")
 	initCmd.Flags().BoolVar(&initQuick, "quick", false, "Use defaults, skip interactive prompts")
-	initCmd.Flags().BoolVar(&initNoGit, "no-git", false, "Skip git initialization")
-	initCmd.Flags().BoolVar(&initNoEnv, "no-env", false, "Skip .env file creation")
+	// init has never run a VCS init; --no-git is kept so existing scripts that
+	// pass it keep working, but it is hidden and warns that it does nothing.
+	initCmd.Flags().BoolVar(&initNoGit, "no-git", false, "Has no effect: init does not initialize a repository")
+	_ = initCmd.Flags().MarkDeprecated("no-git", "init does not initialize a repository, so there is nothing to skip")
+	initCmd.Flags().BoolVar(&initNoEnv, "no-env", false, "Skip .env.example file creation")
+	initCmd.Flags().BoolVar(&initForce, "force", false,
+		"Overwrite files that already exist in the project directory (default: keep them)")
 	initCmd.Flags().StringVar(&initProvider, "provider", "", "Provider to configure (mock, openai, claude, gemini)")
 	initCmd.Flags().StringVar(&initOutputDir, "output", ".", "Output directory")
 	initCmd.Flags().BoolVar(&initVerbose, "verbose", false, "Show detailed generation progress")
@@ -156,6 +162,7 @@ func collectConfiguration(cmd *cobra.Command, tmpl *templates.Template, projectN
 		Variables:   make(map[string]interface{}),
 		Template:    tmpl,
 		Verbose:     initVerbose,
+		Force:       initForce,
 	}
 
 	config.Variables[projectNameVar] = projectName

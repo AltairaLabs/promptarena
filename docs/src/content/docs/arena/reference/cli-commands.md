@@ -212,8 +212,8 @@ promptarena init [project-name] [flags]
 | `--template-cache` | string | per-user cache directory (`promptarena/templates`) | Cache directory for remote templates |
 | `--output` | string | `.` | Output directory |
 | `--no-agent` | bool | `false` | Skip writing the AI-agent brief (`AGENTS.md` + `.claude/skills/`) |
-| `--no-env` | bool | `false` | Skip `.env` file creation |
-| `--no-git` | bool | `false` | Skip git initialization |
+| `--no-env` | bool | `false` | Skip `.env.example` file creation |
+| `--force` | bool | `false` | Overwrite files that already exist in the project directory. Without it, existing files are kept and listed as warnings |
 | `--verbose` | bool | `false` | Show detailed generation progress |
 
 ### Built-In Templates
@@ -234,7 +234,7 @@ PromptArena includes 6 built-in templates:
 #### List Available Templates
 
 ```bash
-# List remote templates (from the default community repo)
+# List built-in templates, then remote templates from the default community repo
 promptarena templates list
 
 # List remote templates from a named repo
@@ -278,7 +278,7 @@ Depending on the template, `init` creates:
 - `providers/` - Provider configurations
 - `scenarios/` - Test scenarios
 - `tools/` - Tool definitions (customer-support template)
-- `.env` - Environment variables with API key placeholders
+- `.env.example` - The API key variables to export (`promptarena` reads the environment and does not load `.env` files)
 - `.gitignore` - Ignores .env and output files
 - `README.md` - Project documentation and usage instructions
 - `AGENTS.md` and `.claude/skills/promptarena-authoring/` - The AI coding-agent brief (skip with `--no-agent`; see [`agent-brief`](#promptarena-agent-brief))
@@ -2349,7 +2349,7 @@ User:
 
 ### `promptarena skill remove`
 
-Remove an installed skill. `remove` checks the project level first, then the user level. It takes no flags.
+Remove an installed skill. `remove` deletes the project-level copy first, then the user-level one, one copy per call. When another copy is still installed, it prints that copy's path and says to run the command again. It takes no flags.
 
 #### Usage
 
