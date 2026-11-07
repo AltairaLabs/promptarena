@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/agents/rag-agent.md",
- "commit": "3df344ffbc8c604e1a8935929c28499d778d19f0",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
@@ -137,7 +137,7 @@
    "claim": "Field: turns (scenario list of turns)",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:692"
+    "arena/arenaconfig/types.go:697"
    ]
   },
   {
@@ -145,7 +145,7 @@
    "claim": "Field: assertions on a turn",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1181"
+    "arena/arenaconfig/types.go:1189"
    ]
   },
   {
@@ -269,8 +269,8 @@
    "claim": "Context source: context_field (metadata key)",
    "verdict": "dead",
    "evidence": [
-    "arena/engine/builder_integration.go:204",
-    "arena/engine/eval_orchestrator.go:371"
+    "arena/engine/builder_integration.go:209",
+    "arena/engine/eval_orchestrator.go:424"
    ]
   },
   {
@@ -278,7 +278,7 @@
    "claim": "Context chunks are read from evalCtx.Metadata",
    "verdict": "true",
    "evidence": [
-    "arena/engine/eval_orchestrator.go:359"
+    "arena/engine/eval_orchestrator.go:412"
    ]
   },
   {
@@ -286,7 +286,7 @@
    "claim": "Example: faithfulness with context_field for a live RAG agent",
    "verdict": "dead",
    "evidence": [
-    "arena/engine/builder_integration.go:204"
+    "arena/engine/builder_integration.go:209"
    ]
   },
   {
@@ -294,8 +294,8 @@
    "claim": "A retrieval tool writing metadata['retrieved_chunks'] on each turn is picked up automatically by the assertion",
    "verdict": "false",
    "evidence": [
-    "arena/engine/builder_integration.go:204",
-    "arena/engine/eval_orchestrator.go:364"
+    "arena/engine/builder_integration.go:209",
+    "arena/engine/eval_orchestrator.go:417"
    ]
   },
   {
@@ -317,7 +317,7 @@
    "claim": "Command: promptarena run",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:116"
+    "arena/cmd/promptarena/run.go:117"
    ]
   },
   {
@@ -325,7 +325,7 @@
    "claim": "Flag: --ci on promptarena run",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:169"
+    "arena/cmd/promptarena/run.go:170"
    ]
   },
   {
@@ -333,7 +333,7 @@
    "claim": "Flag: --formats on promptarena run",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:29"
+    "arena/cmd/promptarena/run.go:30"
    ]
   },
   {
@@ -341,7 +341,7 @@
    "claim": "--formats accepts json and markdown",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:29"
+    "arena/cmd/promptarena/run.go:30"
    ]
   },
   {
@@ -349,7 +349,7 @@
    "claim": "Run writes out/results.md",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:536",
+    "arena/cmd/promptarena/run.go:538",
     "arena/results/markdown/markdown_repository.go:25"
    ]
   },
@@ -401,7 +401,7 @@
    "claim": "A real LLM judge is swapped in by replacing the mock judge provider",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:968",
+    "arena/arenaconfig/loader.go:1056",
     "examples/rag-agent/config.arena.yaml:28"
    ]
   },
@@ -450,7 +450,7 @@
    "claim": "Provider type openai is a registered provider type",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/completion_interactive.go:333"
+    "arena/cmd/promptarena/completion_interactive.go:335"
    ]
   },
   {
@@ -491,7 +491,7 @@
    "claim": "Field: judges[].provider references a provider by name",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:968",
+    "arena/arenaconfig/loader.go:1056",
     "arena/arenaconfig/types.go:398"
    ]
   },
@@ -560,7 +560,7 @@
    "claim": "Command: go build -o bin/promptarena ./arena/cmd/promptarena",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:116"
+    "arena/cmd/promptarena/run.go:117"
    ]
   },
   {
@@ -576,7 +576,7 @@
    "claim": "Command: ../../bin/promptarena run --ci --formats json",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:29"
+    "arena/cmd/promptarena/run.go:30"
    ]
   },
   {

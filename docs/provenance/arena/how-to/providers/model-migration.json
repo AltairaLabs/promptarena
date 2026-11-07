@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/providers/model-migration.md",
- "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
@@ -108,7 +108,7 @@
    "claim": "promptarena run is a valid subcommand.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go"
+    "arena/cmd/promptarena/run.go:120"
    ]
   },
   {
@@ -116,7 +116,7 @@
    "claim": "The --ci flag exists on promptarena run.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go"
+    "arena/cmd/promptarena/run.go:170"
    ]
   },
   {
@@ -124,7 +124,7 @@
    "claim": "The --formats flag accepts json and markdown values.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go"
+    "arena/cmd/promptarena/run.go:177"
    ]
   },
   {
@@ -132,7 +132,7 @@
    "claim": "A markdown report is written to out/results.md.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go"
+    "arena/cmd/promptarena/run.go:188-189"
    ]
   },
   {
@@ -190,8 +190,8 @@
    "claim": "The run prints Error: execution failed: 1 runs had errors, 1 assertions failed when the max_length turn assertion fails",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go",
-    "arena/cmd/promptarena/run_interactive.go"
+    "arena/cmd/promptarena/run.go:694",
+    "arena/cmd/promptarena/run_interactive.go:134-137"
    ]
   },
   {
@@ -271,7 +271,8 @@
    "claim": "../../bin/promptarena run --ci --formats json,markdown runs the suite from examples/model-migration.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go"
+    "arena/cmd/promptarena/run.go:170",
+    "arena/cmd/promptarena/run.go:177"
    ]
   },
   {
@@ -323,7 +324,7 @@
    "claim": "The regression summary prints Assertions: 8 total and Assertions Fail: 1",
    "verdict": "true",
    "evidence": [
-    "arena/tui/tui.go",
+    "arena/tui/tui.go:857-862",
     "examples/model-migration/config.arena.yaml"
    ]
   }

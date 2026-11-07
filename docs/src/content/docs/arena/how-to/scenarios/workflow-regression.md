@@ -2,7 +2,7 @@
 title: Run Workflow Regression Tests
 description: Drive a workflow agent through a stateful conversation, assert the state transitions, and gate merges on the lifecycle reaching its end state.
 verified:
-  commit: 0dbee6290db4e4de3bff3101f260fd614f81c924
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - .github/workflows/ci.yml
     - Makefile

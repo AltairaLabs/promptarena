@@ -4,7 +4,7 @@ description: Open an MCP server (for example a containerised codegen sandbox) on
 sidebar:
   order: 13
 verified:
-  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/arenaconfig/loader.go
     - arena/arenaconfig/mcp_servers.go
@@ -15,6 +15,7 @@ verified:
     - arena/engine/engine.go
     - arena/engine/execution.go
     - arena/engine/execution_mcpsource.go
+    - arena/engine/mcp_tool_descriptor.go
     - arena/engine/mcpsource_scope.go
     - arena/mcpsource/docker/cli.go
     - arena/mcpsource/docker/cli_interactive.go
@@ -58,7 +59,7 @@ spec:
 | `scope` | `run`, `scenario` or `session`. |
 | `source_args` | Free-form map handed to the source's `Open()`. |
 
-Set exactly one of `source`, `url` and `command` on an entry, and give a `source` entry a `scope`. A config that breaks either rule fails to load, in `promptarena validate` and `promptarena run` alike.
+Give every entry a `name` and set exactly one of `source`, `url` and `command`. A `source` entry also needs a `scope` of `run`, `scenario` or `session`. A config that breaks either rule fails to load, in `promptarena validate` and `promptarena run` alike.
 
 ## 2. Choose a scope
 

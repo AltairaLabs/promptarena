@@ -1,13 +1,13 @@
 {
  "page": "docs/src/content/docs/arena/how-to/interfaces/use-the-tui.md",
- "commit": "0dbee6290db4e4de3bff3101f260fd614f81c924",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
    "claim": "Arena ships a full-screen terminal UI (TUI) that is an interactive hub for running scenarios, browsing past results and chatting with an agent.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/main_integration.go:33",
+    "arena/cmd/promptarena/main_integration.go:34",
     "arena/tui/app/menu.go:16"
    ]
   },
@@ -16,8 +16,8 @@
    "claim": "Running promptarena with no subcommand from any directory opens the hub.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/main_integration.go:33",
-    "arena/cmd/promptarena/main_integration.go:39"
+    "arena/cmd/promptarena/main_integration.go:34",
+    "arena/cmd/promptarena/main_integration.go:40"
    ]
   },
   {
@@ -25,7 +25,7 @@
    "claim": "The hub opens in the alternate screen.",
    "verdict": "true",
    "evidence": [
-    "arena/tui/app/launch_interactive.go:48"
+    "arena/tui/app/launch_interactive.go:49"
    ]
   },
   {
@@ -33,8 +33,8 @@
    "claim": "On startup the hub looks for an Arena config in the working directory, for example config.arena.yaml, and loads it if found.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/main_integration.go:76",
-    "arena/tui/app/config.go:10",
+    "arena/cmd/promptarena/main_integration.go:82",
+    "arena/tui/app/config.go:12",
     "arena/tui/app/config.go:17"
    ]
   },
@@ -43,7 +43,7 @@
    "claim": "No config is required to launch the hub.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/main_integration.go:76-79"
+    "arena/cmd/promptarena/main_integration.go:82-85"
    ]
   },
   {
@@ -61,7 +61,7 @@
    "claim": "Results default to the out/ directory beside the config.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/main_integration.go:73",
+    "arena/cmd/promptarena/main_integration.go:74",
     "arena/tui/app/config.go:40-42"
    ]
   },
@@ -145,7 +145,6 @@
    "claim": "The Esc key goes back one page and pops the navigation stack.",
    "verdict": "true",
    "evidence": [
-    "arena/tui/app/app.go:208-227",
     "arena/tui/app/app.go:77-83"
    ]
   },
@@ -190,9 +189,9 @@
    "claim": "The Deploy page requires the loaded config to have a deploy: section.",
    "verdict": "false",
    "evidence": [
-    "arena/deploy/flow/config.go:23-24",
+    "arena/deploy/flow/config.go:13-24",
     "arena/deploy/flow/preflight.go:50-53",
-    "arena/tui/app/deploypage.go:310-315",
+    "arena/tui/app/deploypage.go:312",
     "arena/tui/app/menu.go:50-53"
    ]
   },
@@ -341,7 +340,7 @@
    "claim": "Typing a message and pressing Enter sends it, and the agent replies turn by turn.",
    "verdict": "true",
    "evidence": [
-    "arena/tui/app/chatpage.go:494-500"
+    "arena/tui/app/chatpage.go:498-504"
    ]
   },
   {
@@ -349,7 +348,7 @@
    "claim": "The chat session keeps conversation state between turns.",
    "verdict": "true",
    "evidence": [
-    "arena/tui/app/chatpage.go:251-263"
+    "arena/tui/app/chatpage.go:255-267"
    ]
   },
   {
@@ -365,8 +364,8 @@
    "claim": "With verbose enabled, chat tees raw provider events and transcription to promptarena.log.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat_interactive.go:50-51",
-    "arena/tui/app/launch_interactive.go:92-99"
+    "arena/cmd/promptarena/chat_interactive.go:56-57",
+    "arena/tui/app/launch_interactive.go:96-103"
    ]
   },
   {
@@ -374,9 +373,9 @@
    "claim": "The chat page is the navigation stack root, so Esc exits back to the shell; q exits only when the input box is not focused (a focused input receives q as text).",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat_interactive.go:73",
-    "arena/tui/app/app.go:77-92",
-    "arena/tui/app/chatpage.go:168"
+    "arena/tui/app/app.go:235-239",
+    "arena/tui/app/app.go:77-91",
+    "arena/tui/app/chatpage.go:166-168"
    ]
   },
   {
@@ -384,8 +383,8 @@
    "claim": "chat opens on a provider picker.",
    "verdict": "false",
    "evidence": [
-    "arena/tui/app/chatpage.go:190-246",
-    "arena/tui/app/chatpage.go:460-468"
+    "arena/tui/app/chatpage.go:194-250",
+    "arena/tui/app/chatpage.go:464-472"
    ]
   },
   {
@@ -393,7 +392,7 @@
    "claim": "The provider picker reads digit keys as selections.",
    "verdict": "true",
    "evidence": [
-    "arena/tui/app/chatpage.go:427-442"
+    "arena/tui/app/chatpage.go:431-446"
    ]
   },
   {
@@ -408,7 +407,7 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/chat.go:15",
-    "arena/cmd/promptarena/chat_interactive.go:57-59"
+    "arena/cmd/promptarena/chat_interactive.go:63-65"
    ]
   },
   {
@@ -468,7 +467,7 @@
    "claim": "promptarena run --config config.arena.yaml is a valid command.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:158"
+    "arena/cmd/promptarena/run.go:159"
    ]
   },
   {
@@ -485,7 +484,7 @@
    "claim": "The live run view updates in place until every combination finishes.",
    "verdict": "true",
    "evidence": [
-    "arena/tui/app/app.go:102-111"
+    "arena/tui/app/app.go:103-112"
    ]
   },
   {
@@ -499,7 +498,7 @@
    "claim": "The --ci flag turns the live TUI off and falls back to plain streaming logs.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go",
+    "arena/cmd/promptarena/run.go:170",
     "arena/cmd/promptarena/run_interactive.go:323-325"
    ]
   },
@@ -508,9 +507,9 @@
    "claim": "--simple is an alias of --ci.",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run.go:337-340",
+    "arena/cmd/promptarena/run.go:172",
     "arena/cmd/promptarena/run_interactive.go:134",
-    "arena/cmd/promptarena/run_interactive.go:407-432"
+    "arena/cmd/promptarena/run_interactive.go:323-325"
    ]
   },
   {
@@ -518,8 +517,8 @@
    "claim": "promptarena run --ci --config config.arena.yaml is a valid command.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go",
-    "arena/cmd/promptarena/run.go:158"
+    "arena/cmd/promptarena/run.go:159",
+    "arena/cmd/promptarena/run.go:170"
    ]
   },
   {
@@ -543,8 +542,9 @@
    "claim": "The Deploy wizard walks through the same deploy lifecycle as promptarena deploy on the CLI.",
    "verdict": "true",
    "evidence": [
-    "arena/tui/app/deploypage.go:409-427",
-    "arena/tui/app/deploypage.go:615-675"
+    "arena/tui/app/deploypage.go:441-472",
+    "arena/tui/app/deploypage.go:671",
+    "arena/tui/app/deploypage.go:742"
    ]
   },
   {
@@ -552,7 +552,7 @@
    "claim": "The Deploy page is enabled once the loaded config has a deploy: section.",
    "verdict": "false",
    "evidence": [
-    "arena/deploy/flow/config.go:23-24",
+    "arena/tui/app/home.go:176",
     "arena/tui/app/menu.go:50-53"
    ]
   },
@@ -569,8 +569,7 @@
    "claim": "Deploy is selectable only when the loaded config has a deploy: section.",
    "verdict": "false",
    "evidence": [
-    "arena/deploy/flow/preflight.go:50-53",
-    "arena/tui/app/home.go:175-177",
+    "arena/tui/app/home.go:176",
     "arena/tui/app/menu.go:50-53"
    ]
   },
@@ -588,7 +587,7 @@
    "claim": "The Preflight page shows the target provider and the environment name.",
    "verdict": "true",
    "evidence": [
-    "arena/tui/app/deploypage.go:1048-1052"
+    "arena/tui/app/deploypage.go:1085-1089"
    ]
   },
   {
@@ -596,9 +595,8 @@
    "claim": "The environment name is shown prominently in preflight.",
    "verdict": "false",
    "evidence": [
-    "arena/deploy/flow/config.go:30-35",
-    "arena/tui/app/deploypage.go:1314-1331",
-    "arena/tui/app/deploypage.go:222-225"
+    "arena/tui/app/deploypage.go:1193",
+    "arena/tui/app/deploypage.go:1357"
    ]
   },
   {
@@ -606,7 +604,7 @@
    "claim": "Preflight shows an adapter presence line as a check mark with the provider and version when the adapter is installed.",
    "verdict": "true",
    "evidence": [
-    "arena/tui/app/deploypage.go:1054-1055"
+    "arena/tui/app/deploypage.go:1091-1092"
    ]
   },
   {
@@ -614,7 +612,7 @@
    "claim": "Preflight shows the text not installed with a cross mark when the adapter is missing.",
    "verdict": "true",
    "evidence": [
-    "arena/tui/app/deploypage.go:1056-1058"
+    "arena/tui/app/deploypage.go:1093-1095"
    ]
   },
   {
@@ -622,8 +620,8 @@
    "claim": "Preflight shows an Auth check mark or cross mark depending on whether the adapter has a valid token.",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/preflight.go:89-92",
-    "arena/tui/app/deploypage.go:1060-1064"
+    "arena/deploy/flow/preflight.go:95-98",
+    "arena/tui/app/deploypage.go:1097-1101"
    ]
   },
   {
@@ -631,8 +629,8 @@
    "claim": "If the adapter is not installed, preflight blocks further steps.",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/preflight.go:24-27",
-    "arena/tui/app/deploypage.go:449-453"
+    "arena/deploy/flow/preflight.go:27",
+    "arena/tui/app/deploypage.go:1103-1104"
    ]
   },
   {
@@ -640,8 +638,8 @@
    "claim": "Preflight prints the command promptarena deploy adapter install <provider> when the adapter is missing.",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/connect.go:11-13",
-    "arena/tui/app/deploypage.go:1066-1068"
+    "arena/deploy/flow/connect.go:14-16",
+    "arena/tui/app/deploypage.go:1103-1105"
    ]
   },
   {
@@ -649,7 +647,7 @@
    "claim": "Installing, listing and removing adapters is CLI-only in v1.",
    "verdict": "true",
    "evidence": [
-    "arena/tui/app/deploypage.go:1066-1068",
+    "arena/tui/app/deploypage.go:1103-1105",
     "arena/tui/app/deploypage.go:409-427"
    ]
   },
@@ -658,8 +656,8 @@
    "claim": "The TUI detects the gap and points at the CLI rather than installing an adapter itself.",
    "verdict": "true",
    "evidence": [
-    "arena/tui/app/deploypage.go:1066-1068",
-    "arena/tui/app/deploypage.go:1438-1445"
+    "arena/tui/app/deploypage.go:1103-1105",
+    "arena/tui/app/deploypage.go:1475-1482"
    ]
   },
   {
@@ -667,8 +665,8 @@
    "claim": "When the adapter supports login and you are not authenticated, preflight offers a Login step.",
    "verdict": "true",
    "evidence": [
-    "arena/tui/app/deploypage.go:1012-1014",
-    "arena/tui/app/deploypage.go:444-448"
+    "arena/tui/app/deploypage.go:1034-1036",
+    "arena/tui/app/deploypage.go:446-450"
    ]
   },
   {
@@ -676,7 +674,7 @@
    "claim": "The Login step is triggered with the l key.",
    "verdict": "true",
    "evidence": [
-    "arena/tui/app/deploypage.go:444"
+    "arena/tui/app/deploypage.go:446"
    ]
   },
   {
@@ -684,8 +682,8 @@
    "claim": "The in-TUI login runs the same loopback OAuth flow as promptarena deploy login.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/deploy_login_interactive.go:65",
-    "arena/tui/app/deploypage.go:581"
+    "arena/cmd/promptarena/deploy_login_interactive.go:67",
+    "arena/tui/app/deploypage.go:593"
    ]
   },
   {
@@ -693,8 +691,8 @@
    "claim": "The login flow writes the config and token for you.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/deploy_login_interactive.go:65",
-    "arena/deploy/flow/login.go:95"
+    "arena/cmd/promptarena/deploy_login_interactive.go:16",
+    "arena/deploy/flow/login.go:231"
    ]
   },
   {
@@ -702,8 +700,9 @@
    "claim": "Pressing p renders the plan as a colored diff.",
    "verdict": "true",
    "evidence": [
-    "arena/tui/app/deploypage.go:449-453",
-    "arena/tui/views/plandiff.go:36-49"
+    "arena/tui/app/deploypage.go:1161",
+    "arena/tui/app/deploypage.go:451-455",
+    "arena/tui/views/plandiff.go:36"
    ]
   },
   {
@@ -711,7 +710,7 @@
    "claim": "The space key expands the collapsed no change section on the plan page.",
    "verdict": "true",
    "evidence": [
-    "arena/tui/app/deploypage.go:484-485"
+    "arena/tui/app/deploypage.go:496-497"
    ]
   },
   {
@@ -719,7 +718,7 @@
    "claim": "The a key accepts the plan and moves to Confirm.",
    "verdict": "true",
    "evidence": [
-    "arena/tui/app/deploypage.go:486-489"
+    "arena/tui/app/deploypage.go:498-501"
    ]
   },
   {
@@ -735,7 +734,7 @@
    "claim": "The plan diff uses the same plus, tilde, minus and exclamation vocabulary as the CLI plan output.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/deploy_interactive.go:152",
+    "arena/cmd/promptarena/deploy_interactive.go:240",
     "arena/deploy/flow/render.go:6-18"
    ]
   },
@@ -767,7 +766,7 @@
    "claim": "The space key toggles the hidden no-change resources into the list.",
    "verdict": "true",
    "evidence": [
-    "arena/tui/app/deploypage.go:484-485",
+    "arena/tui/app/deploypage.go:496-497",
     "arena/tui/views/plandiff.go:93-98"
    ]
   },
@@ -776,8 +775,8 @@
    "claim": "In the default environment, Confirm shows a y or N prompt.",
    "verdict": "true",
    "evidence": [
-    "arena/tui/app/deploypage.go:1144-1147",
-    "arena/tui/app/deploypage.go:521-528"
+    "arena/tui/app/deploypage.go:1181-1184",
+    "arena/tui/app/deploypage.go:533-540"
    ]
   },
   {
@@ -786,7 +785,7 @@
    "verdict": "dead",
    "evidence": [
     "arena/tui/app/deploypage.go:222-225",
-    "arena/tui/app/deploypage.go:530-546"
+    "arena/tui/app/deploypage.go:542-558"
    ]
   },
   {
@@ -794,7 +793,7 @@
    "claim": "The y key confirms the apply in Deploy.",
    "verdict": "true",
    "evidence": [
-    "arena/tui/app/deploypage.go:521-525"
+    "arena/tui/app/deploypage.go:533-537"
    ]
   },
   {
@@ -802,7 +801,8 @@
    "claim": "Deploy acquires a deploy lock before it applies.",
    "verdict": "true",
    "evidence": [
-    "arena/tui/app/deploypage.go:720-725"
+    "arena/tui/app/deploypage.go:671",
+    "arena/tui/app/deploypage.go:742"
    ]
   },
   {
@@ -810,8 +810,8 @@
    "claim": "Apply shows live resource progress and logs in the TUI.",
    "verdict": "false",
    "evidence": [
-    "arena/tui/app/deploypage.go:1186-1198",
-    "arena/tui/app/deploypage.go:1264-1278"
+    "arena/tui/app/deploypage.go:1223-1235",
+    "arena/tui/app/deploypage.go:1301-1315"
    ]
   },
   {
@@ -819,9 +819,7 @@
    "claim": "Pressing s checks status after apply or on its own.",
    "verdict": "false",
    "evidence": [
-    "arena/tui/app/deploypage.go:439-460",
-    "arena/tui/app/deploypage.go:799-811",
-    "arena/tui/app/deploypage.go:834-845"
+    "arena/tui/app/deploypage.go:821-828"
    ]
   },
   {
@@ -847,8 +845,8 @@
    "claim": "Pressing Ctrl-C starts a 5-second watchdog and prints a hint.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/main_integration.go:135-139",
-    "arena/cmd/promptarena/main_integration.go:167-171"
+    "arena/cmd/promptarena/main_integration.go:141-145",
+    "arena/cmd/promptarena/main_integration.go:173-177"
    ]
   },
   {
@@ -856,8 +854,8 @@
    "claim": "Pressing Ctrl-C a second time, or waiting out the 5 seconds, force-exits Arena.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/main_integration.go:172-178",
-    "arena/cmd/promptarena/main_integration.go:184-186"
+    "arena/cmd/promptarena/main_integration.go:178-184",
+    "arena/cmd/promptarena/main_integration.go:190-192"
    ]
   },
   {
@@ -865,8 +863,8 @@
    "claim": "The force exit restores the cursor, the primary screen buffer and terminal attributes.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/main_integration.go:160",
-    "arena/cmd/promptarena/main_integration.go:178"
+    "arena/cmd/promptarena/main_integration.go:166",
+    "arena/cmd/promptarena/main_integration.go:184"
    ]
   },
   {
@@ -876,7 +874,7 @@
    "evidence": [
     "arena/cmd/promptarena/hub_results.go:20",
     "arena/cmd/promptarena/main_integration.go:78",
-    "arena/tui/app/runpage.go:161"
+    "arena/tui/app/runpage.go:95"
    ]
   }
  ]

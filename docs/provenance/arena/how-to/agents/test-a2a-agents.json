@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/agents/test-a2a-agents.md",
- "commit": "3df344ffbc8c604e1a8935929c28499d778d19f0",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
@@ -8,7 +8,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:282",
-    "arena/engine/builder_integration.go:1029"
+    "arena/engine/builder_integration.go:1035"
    ]
   },
   {
@@ -16,7 +16,7 @@
    "claim": "The executor is named a2aExecutor.",
    "verdict": "false",
    "evidence": [
-    "arena/engine/builder_integration.go:1034"
+    "arena/engine/builder_integration.go:1040"
    ]
   },
   {
@@ -24,7 +24,7 @@
    "claim": "Diagram nodes: User Turn, Mock LLM, a2aExecutor, Mock A2A Server.",
    "verdict": "false",
    "evidence": [
-    "arena/engine/builder_integration.go:1034"
+    "arena/engine/builder_integration.go:1040"
    ]
   },
   {
@@ -32,7 +32,7 @@
    "claim": "The mock LLM emits a tool_call named a2a__research_agent__search_papers.",
    "verdict": "true",
    "evidence": [
-    "examples/multi-agent-demo/config.arena.yaml:20",
+    "examples/multi-agent-demo/mock-responses.yaml:14",
     "examples/multi-agent-demo/scenarios/multi-agent-delegation.yaml:22"
    ]
   },
@@ -53,7 +53,7 @@
    "claim": "a2aExecutor returns the task result to the mock LLM as a tool result.",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:1034"
+    "arena/engine/builder_integration.go:1040"
    ]
   },
   {
@@ -70,8 +70,8 @@
    "claim": "Arena starts mock A2A servers from the config.",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:1050",
-    "arena/engine/builder_integration.go:1077"
+    "arena/engine/builder_integration.go:1056",
+    "arena/engine/builder_integration.go:1083"
    ]
   },
   {
@@ -79,7 +79,7 @@
    "claim": "Agent skills are registered as tools via the Tool Bridge.",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:1247"
+    "arena/engine/builder_integration.go:1253"
    ]
   },
   {
@@ -87,7 +87,7 @@
    "claim": "Mock A2A responses are deterministic because you control both the LLM and agent responses.",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:1195"
+    "arena/engine/builder_integration.go:1201"
    ]
   },
   {
@@ -168,8 +168,8 @@
    "claim": "a2a_agents[].name is the agent name used in the tool name.",
    "verdict": "false",
    "evidence": [
-    "arena/engine/builder_integration.go:1179",
-    "arena/engine/builder_integration.go:1194"
+    "arena/engine/builder_integration.go:1185",
+    "arena/engine/builder_integration.go:1200"
    ]
   },
   {
@@ -258,7 +258,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:349",
-    "arena/engine/builder_integration.go:1199"
+    "arena/engine/builder_integration.go:1205"
    ]
   },
   {
@@ -282,8 +282,8 @@
    "claim": "A response rule with no match applies when no earlier rule matches.",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:1195",
-    "arena/engine/builder_integration.go:1203"
+    "arena/engine/builder_integration.go:1201",
+    "arena/engine/builder_integration.go:1209"
    ]
   },
   {
@@ -291,7 +291,7 @@
    "claim": "Each agent produces a tool named a2a__{name}__{skillId}.",
    "verdict": "false",
    "evidence": [
-    "arena/engine/builder_integration.go:1179"
+    "arena/engine/builder_integration.go:1185"
    ]
   },
   {
@@ -299,7 +299,7 @@
    "claim": "The prompt config takes allowed_tools, a list of tool names.",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator.go:397",
+    "arena/arenaconfig/validator.go:421",
     "examples/multi-agent-demo/prompts/assistant.yaml:14"
    ]
   },
@@ -424,8 +424,8 @@
    "claim": "Scenario spec.task_type must match a prompt config task_type to bind to it.",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:529",
-    "arena/engine/builder_integration.go:555"
+    "arena/engine/builder_integration.go:509",
+    "arena/engine/builder_integration.go:535"
    ]
   },
   {
@@ -449,7 +449,7 @@
    "claim": "tool_policy.tool_choice accepts the value auto.",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:937"
+    "arena/arenaconfig/types.go:945"
    ]
   },
   {
@@ -457,7 +457,7 @@
    "claim": "tool_policy.max_tool_calls_per_turn is a field limiting tool calls per turn.",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:943"
+    "arena/arenaconfig/types.go:951"
    ]
   },
   {
@@ -465,7 +465,7 @@
    "claim": "turns[].role accepts the value user.",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1135"
+    "arena/arenaconfig/types.go:1143"
    ]
   },
   {
@@ -551,7 +551,7 @@
    "claim": "promptarena run is the command that runs the example.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:116"
+    "arena/cmd/promptarena/run.go:117"
    ]
   },
   {
@@ -559,7 +559,7 @@
    "claim": "promptarena run accepts -c as the config flag.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:116"
+    "arena/cmd/promptarena/run.go:117"
    ]
   },
   {
@@ -575,8 +575,8 @@
    "claim": "Arena starts the mock A2A server from the config before running scenarios.",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:139",
-    "arena/engine/builder_integration.go:142"
+    "arena/engine/builder_integration.go:144",
+    "arena/engine/builder_integration.go:147"
    ]
   },
   {
@@ -592,7 +592,7 @@
    "claim": "Tool calls are routed through the a2aExecutor to the mock server.",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:1034"
+    "arena/engine/builder_integration.go:1040"
    ]
   },
   {
@@ -600,7 +600,7 @@
    "claim": "Arena evaluates assertions and produces a report.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:501"
+    "arena/cmd/promptarena/run.go:503"
    ]
   },
   {
@@ -616,9 +616,9 @@
    "claim": "The HTML report file is named report-<timestamp>.html.",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run.go:178",
+    "arena/cmd/promptarena/run.go:174",
     "arena/cmd/promptarena/run.go:187",
-    "arena/cmd/promptarena/run.go:536"
+    "arena/cmd/promptarena/run.go:538"
    ]
   },
   {
@@ -626,7 +626,7 @@
    "claim": "The JSON data file is named report-<timestamp>-data.json.",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run.go:501"
+    "arena/cmd/promptarena/run.go:503"
    ]
   },
   {
@@ -682,7 +682,7 @@
    "claim": "conversation_assertions is a scenario-level key that holds assertions evaluated across the whole conversation.",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:707",
+    "arena/arenaconfig/types.go:715",
     "examples/multi-agent-demo/scenarios/multi-agent-delegation.yaml:46"
    ]
   },
@@ -691,7 +691,8 @@
    "claim": "agent_invoked and agent_not_invoked are valid in conversation_assertions.",
    "verdict": "true",
    "evidence": [
-    "examples/multi-agent-demo/scenarios/multi-agent-delegation.yaml:46-52"
+    "examples/multi-agent-demo/scenarios/multi-agent-delegation.yaml:47",
+    "examples/multi-agent-demo/scenarios/multi-agent-delegation.yaml:52"
    ]
   },
   {
@@ -706,7 +707,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:289",
-    "arena/engine/builder_integration.go:1062"
+    "arena/engine/builder_integration.go:1068"
    ]
   },
   {
@@ -715,7 +716,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:287",
-    "arena/engine/builder_integration.go:1060"
+    "arena/engine/builder_integration.go:1066"
    ]
   },
   {
@@ -724,7 +725,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:311",
-    "arena/engine/builder_integration.go:1145"
+    "arena/engine/builder_integration.go:1151"
    ]
   },
   {
@@ -733,7 +734,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:313",
-    "arena/engine/builder_integration.go:1115"
+    "arena/engine/builder_integration.go:1121"
    ]
   },
   {
@@ -742,7 +743,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:315",
-    "arena/engine/builder_integration.go:1139"
+    "arena/engine/builder_integration.go:1145"
    ]
   },
   {
@@ -759,7 +760,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:299",
-    "arena/engine/builder_integration.go:1163"
+    "arena/engine/builder_integration.go:1169"
    ]
   },
   {
@@ -767,7 +768,7 @@
    "claim": "If the env var named in headers_from_env is unset, the header is silently skipped.",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:1167"
+    "arena/engine/builder_integration.go:1173"
    ]
   },
   {
@@ -775,7 +776,7 @@
    "claim": "skill_filter.allowlist limits exposed skills to the listed IDs.",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:1106"
+    "arena/engine/builder_integration.go:1112"
    ]
   },
   {
@@ -783,7 +784,7 @@
    "claim": "skill_filter.blocklist excludes the listed skills.",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:1108"
+    "arena/engine/builder_integration.go:1114"
    ]
   },
   {
@@ -792,7 +793,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:302",
-    "arena/engine/builder_integration.go:1127"
+    "arena/engine/builder_integration.go:1133"
    ]
   },
   {
@@ -809,7 +810,7 @@
    "claim": "match.contains is a case-insensitive substring match on message text.",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:1199"
+    "arena/engine/builder_integration.go:1205"
    ]
   },
   {
@@ -817,7 +818,7 @@
    "claim": "match.regex is a regular expression match on message text.",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:1200"
+    "arena/engine/builder_integration.go:1206"
    ]
   },
   {
@@ -826,7 +827,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:344",
-    "arena/engine/builder_integration.go:1196"
+    "arena/engine/builder_integration.go:1202"
    ]
   },
   {

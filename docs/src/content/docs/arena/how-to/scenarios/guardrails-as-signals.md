@@ -2,7 +2,7 @@
 title: Use Guardrails as Test Signals
 description: Register one eval as a guardrail in the pack, then assert in scenarios that it fired. Walk through examples/guardrails-test/ to see eval, guardrail and assertion wired end to end.
 verified:
-  commit: 0dbee6290db4e4de3bff3101f260fd614f81c924
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - .github/workflows/ci.yml
     - arena/turnexecutors/pipeline_stages_integration.go
@@ -13,6 +13,7 @@ verified:
     - examples/guardrails-test/scenarios/guardrail-should-not-trigger.scenario.yaml
     - examples/guardrails-test/scenarios/guardrail-should-trigger.scenario.yaml
     - examples/guardrails-test/scenarios/multiple-violations.scenario.yaml
+    - examples/guardrails-test/scenarios/streaming-guardrail-trigger.scenario.yaml
 ---
 
 This how-to walks through `examples/guardrails-test/`. The pack registers the `banned_words` eval as a guardrail, and scenarios assert the firing with `guardrail_triggered`. The same code enforces in production and acts as a test signal.
@@ -66,7 +67,7 @@ turns:
 
 `guardrail_triggered` reads the recorded `validations` and does not re-run the eval. `should_trigger` is a boolean that defaults to `true`. `validator` is accepted as an alias of `validator_type`.
 
-## The four scenarios
+## The five scenarios
 
 The example covers both outcomes, a guardrail that fires and one that stays quiet:
 
@@ -75,6 +76,7 @@ The example covers both outcomes, a guardrail that fires and one that stays quie
 | `guardrail-should-trigger` | Profanity | `should_trigger: true` |
 | `guardrail-should-not-trigger` | Clean text | `should_trigger: false` |
 | `multiple-violations` | Several banned words | `should_trigger: true` |
+| `streaming-guardrail-trigger` | Streamed response containing a banned word | `banned_words` fires and interrupts the stream |
 | `streaming-length-trigger` | Streamed response longer than the `length` validator's `max_characters: 100` | Stream is cut off |
 
 Assert both shapes: catch violations and avoid false positives on clean input.

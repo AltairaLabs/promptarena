@@ -4,7 +4,7 @@ description: Run Arena headless in CI/CD with the --ci flag, JSON, JUnit and Mar
 sidebar:
   order: 30
 verified:
-  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - .github/actions/promptarena-action/action.yml
     - .github/actions/promptarena-action/src/main.ts
@@ -13,6 +13,7 @@ verified:
     - .github/workflows/release.yml
     - .goreleaser.yml
     - arena/arenaconfig/helpers.go
+    - arena/arenaconfig/mock_config_check.go
     - arena/arenaconfig/types.go
     - arena/assertions/conversation.go
     - arena/assertions/types.go
@@ -141,9 +142,10 @@ JUnit and CSV fail when any assertion falls below its threshold.
 
 If you need to key a downstream step on the numbers rather than the exit code,
 read `index.json` from the out directory (`total_runs`, `successful`, `errors`),
-or use the GitHub Action's outputs (`passed`, `failed`, `total`, `success`).
-`failed` counts every run that did not pass; skipped runs are in `total` but in
-neither `passed` nor `failed`.
+or use the GitHub Action's outputs (`passed`, `failed`, `errors`, `total`,
+`success`). `failed` and `errors` both count every run that did not pass (the
+`errors` field of `index.json`); skipped runs are in `total` but in neither
+`passed` nor `failed`.
 
 ## The GitHub Action
 
@@ -336,7 +338,8 @@ non-zero exit from `promptarena run` marks the build failed.
 Mock providers make CI runs deterministic and free: no provider API keys, no
 network, no per-run cost. `--mock-provider` replaces every configured provider
 with a canned-response mock; `--mock-config` points at a YAML file of scripted
-responses. Tools still execute for real, so tool-call and workflow assertions
+responses. Arena rejects unknown keys in that file, so a typo fails the run
+instead of silently falling back to the default response. Tools still execute for real, so tool-call and workflow assertions
 remain meaningful.
 
 ```bash

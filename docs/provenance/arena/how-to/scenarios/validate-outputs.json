@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/scenarios/validate-outputs.md",
- "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
@@ -64,7 +64,7 @@
    "claim": "conversation_assertions on the scenario spec",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:707"
+    "arena/arenaconfig/types.go:715"
    ]
   },
   {
@@ -80,7 +80,7 @@
    "claim": "turn written as - user: \"...\"",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:1409"
+    "arena/arenaconfig/types.go:1417"
    ]
   },
   {
@@ -88,7 +88,7 @@
    "claim": "llm_judge takes params.judge_provider \"openai/gpt-4o-mini\"",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/judge_param.go:38",
+    "arena/arenaconfig/judge_param.go:53",
     "arena/arenaconfig/types.go:93",
     "arena/engine/conversation_executor.go:917"
    ]
@@ -123,7 +123,7 @@
    "claim": "promptarena run --format json|markdown|junit",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:174"
+    "arena/cmd/promptarena/run.go:175"
    ]
   },
   {
@@ -139,7 +139,8 @@
    "claim": "promptarena run --verbose --scenario",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:189"
+    "arena/cmd/promptarena/run.go:164",
+    "arena/cmd/promptarena/run.go:191"
    ]
   },
   {

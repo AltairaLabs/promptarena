@@ -2,7 +2,7 @@
 title: Session Recording
 description: Record Arena scenario runs to JSONL, then load, replay, annotate and evaluate them.
 verified:
-  commit: 3df344ffbc8c604e1a8935929c28499d778d19f0
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - .github/workflows/ci.yml
     - arena/arenaconfig/helpers.go
@@ -76,6 +76,11 @@ An Arena recording holds these event types:
 |------------|-------------|
 | `message.created` | One event per message: user, assistant and tool messages, with multimodal content parts |
 | `stream.interrupted` | A stream interruption, with the reason |
+| `audio.output` | One event per assistant audio chunk in a duplex run: inline PCM (`audio/pcm`) in `payload.inline_data`, with sample rate, channels, encoding and duration in `metadata` |
+
+A recording holds no stage, pipeline, tool or provider events.
+
+In a duplex run, the recorder sits after the pack guardrails, so a recorded assistant message holds the enforced content, not what the agent tried to say.
 
 Tool calls appear inside `message.created` events. Assistant messages carry `ToolCalls` (id, name, args) and tool messages carry `ToolResult`.
 
@@ -151,14 +156,11 @@ for {
 }
 ```
 
-To export audio from a recording as WAV files, build a media timeline and export each track:
+To export the assistant audio from a duplex recording as a WAV file, build a media timeline and export the output track. A recording holds no user audio, so there is no input track:
 
 ```go
 timeline, err := rec.ToMediaTimeline(nil)
 if err != nil {
-    panic(err)
-}
-if err := timeline.ExportAudioToWAV(events.TrackAudioInput, "user.wav"); err != nil {
     panic(err)
 }
 if err := timeline.ExportAudioToWAV(events.TrackAudioOutput, "assistant.wav"); err != nil {
@@ -354,8 +356,11 @@ Save recordings as artifacts for debugging failed tests:
 - Message content and metadata, including multimodal content parts
 - Tool calls with arguments (inside assistant messages) and tool results (inside tool messages)
 - Stream interruptions
+- Assistant audio chunks from duplex runs
 
 ### Not Captured (stored separately)
+- User audio (the user's `message.created` event keeps the audio as a content part)
+- Stage, pipeline, tool and provider events
 - Post-run human feedback (UserFeedback)
 - Session tags added after completion
 - External annotations (stored in separate files)

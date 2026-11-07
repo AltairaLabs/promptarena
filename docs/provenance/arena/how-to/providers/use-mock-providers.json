@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/providers/use-mock-providers.md",
- "commit": "1f3acc05aa6f98764a8598798bf817c19d6f1f44",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
@@ -40,9 +40,9 @@
    "claim": "--mock-provider replaces all configured providers with a generic mock",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run_interactive.go:284",
-    "arena/engine/engine.go:722",
-    "arena/engine/engine.go:796"
+    "arena/cmd/promptarena/run_interactive.go:290",
+    "arena/engine/engine.go:741",
+    "arena/engine/engine.go:766"
    ]
   },
   {
@@ -160,7 +160,7 @@
    "evidence": [
     "arena/engine/builder_integration.go:270",
     "arena/engine/builder_integration.go:326",
-    "arena/engine/engine.go:808"
+    "arena/engine/engine.go:802"
    ]
   },
   {
@@ -228,7 +228,7 @@
    "claim": "config.arena.yaml spec.providers entries reference provider files via a file key",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/arena.json:1209"
+    "schemas/v1alpha1/arena.json:1210"
    ]
   },
   {
@@ -236,7 +236,7 @@
    "claim": "spec.scenarios entries reference scenario files via a file key",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/arena.json:1209"
+    "schemas/v1alpha1/arena.json:1210"
    ]
   },
   {
@@ -269,10 +269,11 @@
    "claim": "Overridden provider applies to candidate selection, self-play roles and judges",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:982",
-    "arena/cmd/promptarena/run_interactive.go:235",
-    "arena/engine/builder_integration.go:814",
-    "arena/engine/conversation_executor.go:917"
+    "arena/arenaconfig/loader.go:1074",
+    "arena/cmd/promptarena/provider_override.go:16",
+    "arena/cmd/promptarena/run_interactive.go:241",
+    "arena/engine/builder_integration.go:308",
+    "arena/engine/conversation_executor.go:922"
    ]
   },
   {
@@ -280,8 +281,9 @@
    "claim": "A judge that references a mock provider is used in the default run",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:982",
-    "arena/engine/conversation_executor.go:917"
+    "arena/arenaconfig/loader.go:1062",
+    "arena/arenaconfig/loader.go:1074",
+    "arena/engine/conversation_executor.go:922"
    ]
   },
   {
@@ -289,7 +291,7 @@
    "claim": "--override-provider mock-judge=claude makes the judge run against claude",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:987",
+    "arena/arenaconfig/loader.go:1072",
     "arena/cmd/promptarena/provider_override.go:34"
    ]
   },
@@ -402,7 +404,7 @@
    "claim": "config.arena.yaml providers entries use the file key",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/arena.json:1209"
+    "schemas/v1alpha1/arena.json:1210"
    ]
   },
   {
@@ -444,17 +446,29 @@
    "claim": "A misspelled or snake_case mock file key such as default_response is an error when Arena loads the file",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go",
-    "arena/arenaconfig/mock_config_check.go"
+    "arena/arenaconfig/loader.go:294",
+    "arena/arenaconfig/mock_config_check.go:45",
+    "arena/arenaconfig/mock_config_check.go:69"
    ]
   },
   {
    "id": 9002,
-   "claim": "promptarena validate checks a provider mock_config file; promptarena run also checks the --mock-config file",
+   "claim": "promptarena validate checks the mock_config file of each type: mock provider; promptarena run also checks the --mock-config file",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go",
-    "arena/engine/engine.go"
+    "arena/arenaconfig/loader.go:294",
+    "arena/engine/engine.go:748"
+   ]
+  },
+  {
+   "id": 9003,
+   "claim": "The mock file check also rejects unknown keys inside a turn, a tool call and a content part",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/mock_config_check.go:109",
+    "arena/arenaconfig/mock_config_check.go:27",
+    "arena/arenaconfig/mock_config_check.go:29",
+    "arena/arenaconfig/mock_config_check.go:30"
    ]
   }
  ]

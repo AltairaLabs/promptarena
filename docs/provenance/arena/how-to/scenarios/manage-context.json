@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/scenarios/manage-context.md",
- "commit": "60cd1a146e6224c0d66c972d18f329a0ce76c522",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
@@ -8,7 +8,7 @@
    "verdict": "true",
    "evidence": [
     "arena/turnexecutors/pipeline_stages_integration.go:107",
-    "arena/turnexecutors/pipeline_stages_integration.go:455"
+    "arena/turnexecutors/pipeline_stages_integration.go:463"
    ]
   },
   {
@@ -33,8 +33,8 @@
    "claim": "A scenario spec accepts a context_policy field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:699",
-    "schemas/v1alpha1/scenario.json:258"
+    "arena/arenaconfig/types.go:713",
+    "schemas/v1alpha1/scenario.json:261"
    ]
   },
   {
@@ -42,7 +42,7 @@
    "claim": "apiVersion is promptkit.altairalabs.ai/v1alpha1",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:137"
+    "arena/arenaconfig/loader.go:138"
    ]
   },
   {
@@ -50,7 +50,7 @@
    "claim": "kind is Scenario",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:137"
+    "arena/arenaconfig/loader.go:138"
    ]
   },
   {
@@ -58,7 +58,7 @@
    "claim": "spec.task_type is a valid scenario field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:678"
+    "arena/arenaconfig/types.go:689"
    ]
   },
   {
@@ -66,7 +66,7 @@
    "claim": "context_policy is a field under spec",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:699"
+    "arena/arenaconfig/types.go:713"
    ]
   },
   {
@@ -74,7 +74,7 @@
    "claim": "context_policy.token_budget is a field accepting an integer (8000 in example)",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:837",
+    "arena/arenaconfig/types.go:851",
     "arena/turnexecutors/pipeline_stages_integration.go:113"
    ]
   },
@@ -83,7 +83,7 @@
    "claim": "context_policy.strategy accepts truncate_oldest",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:840",
+    "arena/arenaconfig/types.go:854",
     "arena/turnexecutors/pipeline_stages_integration.go:354"
    ]
   },
@@ -92,7 +92,7 @@
    "claim": "spec.turns is a scenario field holding a list of turns",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:686"
+    "arena/arenaconfig/types.go:697"
    ]
   },
   {
@@ -100,8 +100,9 @@
    "claim": "A turn accepts role and content fields",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1129",
-    "arena/arenaconfig/types.go:745"
+    "arena/arenaconfig/types.go:1142",
+    "arena/arenaconfig/types.go:1143",
+    "arena/arenaconfig/types.go:1144"
    ]
   },
   {
@@ -141,7 +142,7 @@
    "claim": "context_policy.strategy accepts relevance",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:840",
+    "arena/arenaconfig/types.go:854",
     "arena/turnexecutors/pipeline_stages_integration.go:362"
    ]
   },
@@ -150,7 +151,7 @@
    "claim": "relevance is a nested block under context_policy",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:845"
+    "arena/arenaconfig/types.go:859"
    ]
   },
   {
@@ -174,7 +175,7 @@
    "claim": "relevance.min_recent_messages is a field (3 in example)",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:859",
+    "arena/arenaconfig/types.go:873",
     "arena/turnexecutors/pipeline_stages_integration.go:146"
    ]
   },
@@ -183,7 +184,7 @@
    "claim": "relevance.similarity_threshold is a field (0.3 in example)",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:867",
+    "arena/arenaconfig/types.go:881",
     "arena/turnexecutors/pipeline_stages_integration.go:147"
    ]
   },
@@ -232,7 +233,7 @@
    "claim": "relevance.provider accepts voyageai",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:892",
+    "arena/arenaconfig/types.go:906",
     "arena/turnexecutors/pipeline_stages_integration.go:184"
    ]
   },
@@ -249,8 +250,8 @@
    "claim": "relevance.provider is required and accepts openai, gemini, voyageai",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:892",
-    "schemas/v1alpha1/scenario.json:543"
+    "arena/arenaconfig/types.go:906",
+    "schemas/v1alpha1/scenario.json:546"
    ]
   },
   {
@@ -267,7 +268,7 @@
    "claim": "relevance.min_recent_messages is an int defaulting to 3",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:859",
+    "arena/arenaconfig/types.go:873",
     "arena/turnexecutors/pipeline_stages_integration.go:146"
    ]
   },
@@ -276,7 +277,7 @@
    "claim": "relevance.similarity_threshold is a float defaulting to 0 (off), range 0-1",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:897",
+    "arena/arenaconfig/types.go:911",
     "arena/turnexecutors/pipeline_stages_integration.go:147"
    ]
   },
@@ -285,7 +286,7 @@
    "claim": "relevance.always_keep_system_role is a bool defaulting to true",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:863",
+    "arena/arenaconfig/types.go:877",
     "arena/turnexecutors/pipeline_stages_integration.go:152"
    ]
   },
@@ -294,7 +295,7 @@
    "claim": "relevance.cache_embeddings is a bool defaulting to false and reuses previous-turn embeddings when true",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:882",
+    "arena/arenaconfig/types.go:896",
     "arena/engine/conversation_executor.go:92",
     "arena/turnexecutors/context_builder.go:24",
     "arena/turnexecutors/pipeline_stages_integration.go:151"
@@ -305,8 +306,8 @@
    "claim": "Code assistant example is valid: voyageai with voyage-code-3, min_recent_messages 5, similarity_threshold 0.25, token_budget 16000",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:835",
-    "arena/arenaconfig/types.go:850"
+    "arena/arenaconfig/types.go:849",
+    "arena/arenaconfig/types.go:864"
    ]
   },
   {
@@ -314,8 +315,8 @@
    "claim": "Customer support example is valid: openai with text-embedding-3-small, min_recent_messages 3, similarity_threshold 0.35, always_keep_system_role true",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:835",
-    "arena/arenaconfig/types.go:850"
+    "arena/arenaconfig/types.go:849",
+    "arena/arenaconfig/types.go:864"
    ]
   },
   {
@@ -323,7 +324,7 @@
    "claim": "always_keep_system_role is accepted inside the relevance block",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:863"
+    "arena/arenaconfig/types.go:877"
    ]
   },
   {
@@ -331,7 +332,7 @@
    "claim": "Relevance truncation computes a query embedding from the most recent user message(s)",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:871",
+    "arena/arenaconfig/types.go:885",
     "arena/turnexecutors/pipeline_stages_integration.go:148"
    ]
   },
@@ -405,9 +406,9 @@
    "claim": "Complete example is a valid Scenario document with relevance context_policy and turns",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:678",
-    "arena/arenaconfig/types.go:686",
-    "arena/arenaconfig/types.go:699"
+    "arena/arenaconfig/types.go:669",
+    "arena/arenaconfig/types.go:697",
+    "arena/arenaconfig/types.go:713"
    ]
   },
   {
@@ -415,7 +416,7 @@
    "claim": "metadata.labels accepts arbitrary key/value labels such as category and context",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:684"
+    "arena/arenaconfig/types.go:695"
    ]
   },
   {
@@ -423,7 +424,7 @@
    "claim": "spec.description is an accepted scenario field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:680"
+    "arena/arenaconfig/types.go:691"
    ]
   },
   {
@@ -431,7 +432,7 @@
    "claim": "A turn accepts an assertions list",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1175"
+    "arena/arenaconfig/types.go:1189"
    ]
   },
   {
@@ -523,7 +524,7 @@
    "claim": "Increasing similarity_threshold keeps fewer messages",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:867"
+    "arena/arenaconfig/types.go:881"
    ]
   },
   {
@@ -531,7 +532,7 @@
    "claim": "Lowering similarity_threshold keeps more messages",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:867"
+    "arena/arenaconfig/types.go:881"
    ]
   },
   {
@@ -539,7 +540,7 @@
    "claim": "Increasing min_recent_messages keeps more recent messages",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:859"
+    "arena/arenaconfig/types.go:873"
    ]
   },
   {

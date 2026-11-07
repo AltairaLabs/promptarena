@@ -4,13 +4,14 @@ description: Launch Arena's interactive terminal hub to run tests, browse result
 sidebar:
   order: 10
 verified:
-  commit: 0dbee6290db4e4de3bff3101f260fd614f81c924
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/cmd/promptarena/chat.go
     - arena/cmd/promptarena/chat_interactive.go
     - arena/cmd/promptarena/config_inspect_interactive.go
     - arena/cmd/promptarena/deploy_interactive.go
     - arena/cmd/promptarena/deploy_login_interactive.go
+    - arena/cmd/promptarena/hub_results.go
     - arena/cmd/promptarena/main_integration.go
     - arena/cmd/promptarena/run.go
     - arena/cmd/promptarena/run_interactive.go

@@ -2,7 +2,7 @@
 title: Test Multi-Agent A2A Delegation
 description: Assert which A2A agents an assistant invokes and what they return, using examples/multi-agent-demo/ with a research agent and a translation agent.
 verified:
-  commit: 631d3c353c2c9d71b362ae5cd20c137d42b19d5b
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - .github/workflows/ci.yml
     - Makefile

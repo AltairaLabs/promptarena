@@ -2,7 +2,7 @@
 title: Gate Model Migrations
 description: Run the same scenarios against the old and new model side by side. CI fails if the new model breaks an assertion the old one passed.
 verified:
-  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/cmd/promptarena/run.go
     - arena/cmd/promptarena/run_interactive.go

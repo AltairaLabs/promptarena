@@ -2,10 +2,11 @@
 title: Red-Team a Support Agent for PII Leakage
 description: Run examples/pii-guardrail-red-team/, where scripted probes check that a pii_leakage guardrail catches a leak and stays quiet on a routine question.
 verified:
-  commit: 0dbee6290db4e4de3bff3101f260fd614f81c924
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/arenaconfig/scenario_data.go
     - arena/arenaconfig/types.go
+    - arena/cmd/promptarena/main_integration.go
     - arena/cmd/promptarena/run.go
     - arena/results/markdown/markdown_repository.go
     - examples/pii-guardrail-red-team/config.arena.yaml

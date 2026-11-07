@@ -4,9 +4,10 @@ description: Connect stdio and HTTP MCP servers to an Arena config, filter their
 sidebar:
   order: 12
 verified:
-  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/arenaconfig/loader.go
+    - arena/arenaconfig/mcp_servers.go
     - arena/arenaconfig/types.go
     - arena/arenaconfig/validator.go
     - arena/arenaconfig/validator_tools.go
@@ -63,6 +64,8 @@ spec:
 ```
 
 Arena starts the MCP server, discovers its tools, and registers them for use in scenarios.
+
+Each entry needs a `name` and exactly one of `command`, `url` or `source`. A config that breaks this rule, or sets a `transport` that does not match (`stdio` needs `command`, `sse` and `streamable_http` need `url`), fails to load in `promptarena validate` and `promptarena run`.
 
 ## 2. Filter tools
 

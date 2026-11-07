@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/scenarios/guardrails-as-signals.md",
- "commit": "0dbee6290db4e4de3bff3101f260fd614f81c924",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
@@ -33,7 +33,10 @@
    "claim": "Guardrail is wired through the pack validators: block, adapted in runtime/hooks/guardrails/factory.go into a ProviderHook",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:741"
+    "arena/turnexecutors/pipeline_stages_integration.go:503",
+    "arena/turnexecutors/pipeline_stages_integration.go:730",
+    "arena/turnexecutors/pipeline_stages_integration.go:739",
+    "arena/turnexecutors/pipeline_stages_integration.go:760"
    ]
   },
   {
@@ -87,7 +90,7 @@
    "claim": "A run writes out/results.md",
    "verdict": "true",
    "evidence": [
-    "examples/guardrails-test/config.arena.yaml:27-29"
+    "examples/guardrails-test/config.arena.yaml:28-30"
    ]
   },
   {
@@ -236,11 +239,12 @@
   {
    "id": 34,
    "claim": "Scenario streaming-guardrail-trigger exists in the example",
-   "verdict": "false",
+   "verdict": "true",
    "evidence": [
-    "examples/guardrails-test/config.arena.yaml:16-20",
-    "examples/guardrails-test/mock-responses.yaml:24-27",
-    "examples/guardrails-test/prompts/content-filter.yaml:26-28"
+    "examples/guardrails-test/config.arena.yaml:20",
+    "examples/guardrails-test/mock-responses.yaml:24-28",
+    "examples/guardrails-test/prompts/content-filter.yaml:17-22",
+    "examples/guardrails-test/scenarios/streaming-guardrail-trigger.scenario.yaml:9"
    ]
   },
   {
@@ -278,7 +282,8 @@
    "claim": "Arena pipeline construction enables SuppressValidationExceptions in test mode",
    "verdict": "false",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:741"
+    "arena/turnexecutors/pipeline_stages_integration.go:739",
+    "arena/turnexecutors/pipeline_stages_integration.go:760"
    ]
   },
   {
@@ -292,7 +297,8 @@
    "claim": "The same PromptConfig works in production and test mode without test-specific configuration",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:741"
+    "arena/turnexecutors/pipeline_stages_integration.go:731",
+    "arena/turnexecutors/pipeline_stages_integration.go:760"
    ]
   },
   {
@@ -314,7 +320,7 @@
   {
    "id": 45,
    "claim": "actions/setup-go@v5 is a valid action version",
-   "verdict": "true",
+   "verdict": "false",
    "evidence": [
     ".github/workflows/ci.yml:96"
    ]
@@ -364,6 +370,15 @@
    "claim": "Custom eval handlers go in runtime/evals/handlers/ and are referenced from validators:",
    "verdict": "unverified",
    "evidence": []
+  },
+  {
+   "id": 53,
+   "claim": "examples/guardrails-test has five scenarios; streaming-guardrail-trigger asserts guardrail_triggered for banned_words on a streamed response",
+   "verdict": "true",
+   "evidence": [
+    "examples/guardrails-test/config.arena.yaml:17-21",
+    "examples/guardrails-test/scenarios/streaming-guardrail-trigger.scenario.yaml:16-19"
+   ]
   }
  ]
 }

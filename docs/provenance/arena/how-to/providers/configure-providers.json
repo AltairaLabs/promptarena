@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/providers/configure-providers.md",
- "commit": "0c27dc25f3c6ccfce8e77f27911a245f2a30cb96",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
@@ -82,7 +82,8 @@
    "claim": "Provider files are placed in a providers/ directory and referenced from arena.yaml",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:598",
+    "arena/arenaconfig/loader.go:592",
+    "arena/arenaconfig/loader.go:672",
     "arena/templates/builtin/quick-start/template.yaml:40"
    ]
   },
@@ -99,8 +100,8 @@
    "claim": "kind value Provider is a valid manifest kind",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:467",
-    "schemas/v1alpha1/provider.json:277"
+    "arena/arenaconfig/loader.go:534",
+    "schemas/v1alpha1/provider.json:304"
    ]
   },
   {
@@ -116,8 +117,8 @@
    "claim": "metadata.labels is a map field of a provider manifest, used with provider label values",
    "verdict": "dead",
    "evidence": [
-    "arena/arenaconfig/ignored_fields.go:66",
-    "arena/arenaconfig/loader.go:471"
+    "arena/arenaconfig/ignored_fields.go:71",
+    "arena/arenaconfig/loader.go:537"
    ]
   },
   {
@@ -142,7 +143,7 @@
    "claim": "spec.capabilities is a list field of the provider spec",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:660",
+    "arena/arenaconfig/loader.go:725",
     "schemas/v1alpha1/provider.json:169"
    ]
   },
@@ -168,7 +169,8 @@
    "claim": "Scenarios accept a required_capabilities field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:707"
+    "arena/arenaconfig/types.go:709",
+    "arena/engine/execution.go:306"
    ]
   },
   {
@@ -194,8 +196,8 @@
    "claim": "Example vision-capable openai provider uses model gpt-4o with capabilities text, streaming, vision, tools, json",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:660",
-    "schemas/v1alpha1/provider.json:105"
+    "arena/arenaconfig/loader.go:725",
+    "schemas/v1alpha1/provider.json:169"
    ]
   },
   {
@@ -203,7 +205,8 @@
    "claim": "Example audio-only openai provider uses model gpt-4o-audio-preview with capabilities audio and duplex",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:660"
+    "arena/arenaconfig/loader.go:725",
+    "schemas/v1alpha1/provider.json:169"
    ]
   },
   {
@@ -211,7 +214,8 @@
    "claim": "Example ollama provider with model llama3.2:3b declares capabilities text, streaming, tools, json",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:660"
+    "arena/arenaconfig/loader.go:725",
+    "schemas/v1alpha1/provider.json:169"
    ]
   },
   {
@@ -509,8 +513,8 @@
    "claim": "Inference providers power assertion handlers such as audio_emotion and do not participate in the LLM run matrix",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:637",
-    "arena/engine/classify_registry.go:21"
+    "arena/arenaconfig/loader.go:702",
+    "arena/engine/classify_registry.go:25"
    ]
   },
   {
@@ -534,7 +538,7 @@
    "claim": "spec.role accepts the value inference, which routes the provider into the classify registry",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:637",
+    "arena/arenaconfig/loader.go:702",
     "arena/engine/classify_registry.go:25",
     "schemas/v1alpha1/provider.json:123"
    ]
@@ -561,7 +565,7 @@
    "verdict": "false",
    "evidence": [
     "arena/arenaconfig/types.go:388",
-    "schemas/v1alpha1/arena.json:3251"
+    "schemas/v1alpha1/arena.json:3252"
    ]
   },
   {
@@ -569,8 +573,9 @@
    "claim": "spec.defaults.inference accepts audio_classifier, text_classifier, image_classifier and embedder keys",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:739",
-    "arena/engine/classify_registry.go:58"
+    "arena/arenaconfig/types.go:485",
+    "arena/engine/classify_registry.go:52",
+    "arena/engine/classify_registry.go:55"
    ]
   },
   {
@@ -595,7 +600,7 @@
    "claim": "Scenarios accept a conversation_assertions field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:713"
+    "arena/arenaconfig/types.go:715"
    ]
   },
   {
@@ -940,7 +945,7 @@
    "claim": "kind value Arena is a valid arena.yaml manifest kind",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/arena.json:5206"
+    "schemas/v1alpha1/arena.json:5212"
    ]
   },
   {
@@ -956,8 +961,9 @@
    "claim": "Example arena.yaml references providers/openai.yaml, providers/claude.yaml and providers/gemini.yaml under spec.providers",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:598",
-    "arena/arenaconfig/types.go:388"
+    "arena/arenaconfig/loader.go:672",
+    "arena/arenaconfig/types.go:388",
+    "schemas/v1alpha1/arena.json:3252"
    ]
   },
   {
@@ -1021,8 +1027,8 @@
    "claim": "Example providers openai-gpt4 and openai-mini use labels provider openai with tiers premium and cost-effective",
    "verdict": "dead",
    "evidence": [
-    "arena/arenaconfig/ignored_fields.go:66",
-    "arena/arenaconfig/loader.go:471"
+    "arena/arenaconfig/ignored_fields.go:71",
+    "arena/arenaconfig/loader.go:537"
    ]
   },
   {
@@ -1030,7 +1036,8 @@
    "claim": "A single providers file may contain multiple provider documents separated by ---",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/loader.go:467"
+    "arena/arenaconfig/loader.go:523",
+    "arena/arenaconfig/yamldocs.go:17"
    ]
   },
   {
@@ -1073,7 +1080,8 @@
    "claim": "Scenario labels such as provider-specific constrain which providers run the scenario",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:707",
+    "arena/arenaconfig/types.go:695",
+    "arena/engine/execution.go:271",
     "arena/engine/execution.go:280"
    ]
   },
@@ -1082,7 +1090,9 @@
    "claim": "Scenario kind manifest accepts spec.task_type and spec.turns",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:476"
+    "arena/arenaconfig/loader.go:542",
+    "arena/arenaconfig/types.go:689",
+    "arena/arenaconfig/types.go:697"
    ]
   },
   {
@@ -1090,7 +1100,9 @@
    "claim": "Scenario turns take role and content fields",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go"
+    "arena/arenaconfig/types.go:1143",
+    "arena/arenaconfig/types.go:1144",
+    "arena/arenaconfig/types.go:697"
    ]
   },
   {
@@ -1210,8 +1222,8 @@
    "claim": "A provider file with a second YAML document after --- fails to load",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go",
-    "arena/arenaconfig/yamldocs.go"
+    "arena/arenaconfig/loader.go:523",
+    "arena/arenaconfig/yamldocs.go:17"
    ]
   },
   {

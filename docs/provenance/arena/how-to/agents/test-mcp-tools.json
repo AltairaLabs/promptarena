@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/agents/test-mcp-tools.md",
- "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
@@ -13,8 +13,8 @@
    "claim": "Arena connects real MCP servers and verifies tool calls in scenarios",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:423",
-    "arena/engine/builder_integration.go:482"
+    "arena/engine/builder_integration.go:441",
+    "arena/engine/builder_integration.go:470"
    ]
   },
   {
@@ -23,7 +23,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:173",
-    "schemas/v1alpha1/arena.json:1812"
+    "schemas/v1alpha1/arena.json:1813"
    ]
   },
   {
@@ -31,8 +31,8 @@
    "claim": "MCP servers are configured by static HTTP+SSE via the 'url' field",
    "verdict": "false",
    "evidence": [
-    "schemas/v1alpha1/arena.json:1830",
-    "schemas/v1alpha1/arena.json:1839"
+    "schemas/v1alpha1/arena.json:1831",
+    "schemas/v1alpha1/arena.json:1840"
    ]
   },
   {
@@ -40,10 +40,10 @@
    "claim": "Stdio and HTTP+SSE servers are long-lived processes shared across all scenarios",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:116",
-    "arena/engine/builder_integration.go:86",
-    "arena/engine/engine.go:814",
-    "arena/mcp/config.go:43"
+    "arena/engine/builder_integration.go:121",
+    "arena/engine/builder_integration.go:91",
+    "arena/engine/engine.go:828",
+    "arena/mcp/config.go:40"
    ]
   },
   {
@@ -51,7 +51,7 @@
    "claim": "Per-scenario/per-session MCP containers are covered by provision-mcp-sandbox",
    "verdict": "true",
    "evidence": [
-    "arena/mcp/config.go:43"
+    "arena/mcp/config.go:45"
    ]
   },
   {
@@ -65,7 +65,7 @@
    "claim": "kind Arena",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:203",
+    "arena/arenaconfig/loader.go:204",
     "schemas/v1alpha1/arena.json:4"
    ]
   },
@@ -74,7 +74,7 @@
    "claim": "metadata.name is a free-form string (example 'mcp-test')",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/arena.json:5181"
+    "schemas/v1alpha1/arena.json:5188"
    ]
   },
   {
@@ -91,7 +91,7 @@
    "claim": "mcp_servers entry field name",
    "verdict": "true",
    "evidence": [
-    "arena/mcp/config.go:58",
+    "arena/mcp/config.go:65",
     "schemas/v1alpha1/arena.json:1807"
    ]
   },
@@ -100,7 +100,7 @@
    "claim": "mcp_servers entry field command",
    "verdict": "true",
    "evidence": [
-    "arena/mcp/config.go:58",
+    "arena/mcp/config.go:65",
     "schemas/v1alpha1/arena.json:1807"
    ]
   },
@@ -109,7 +109,7 @@
    "claim": "mcp_servers entry field args is a list of strings",
    "verdict": "true",
    "evidence": [
-    "arena/mcp/config.go:58",
+    "arena/mcp/config.go:65",
     "schemas/v1alpha1/arena.json:1807"
    ]
   },
@@ -118,7 +118,7 @@
    "claim": "spec.prompt_configs is a list with id and file fields",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/arena.json:3085"
+    "schemas/v1alpha1/arena.json:3086"
    ]
   },
   {
@@ -126,7 +126,7 @@
    "claim": "spec.scenarios is a list with a file field",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/arena.json:3824"
+    "schemas/v1alpha1/arena.json:3826"
    ]
   },
   {
@@ -134,7 +134,7 @@
    "claim": "spec.providers is a list with a file field",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/arena.json:3251"
+    "schemas/v1alpha1/arena.json:3252"
    ]
   },
   {
@@ -142,8 +142,8 @@
    "claim": "Arena starts the MCP server, discovers its tools and registers them for scenarios",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:437",
-    "arena/engine/builder_integration.go:482"
+    "arena/engine/builder_integration.go:448",
+    "arena/engine/builder_integration.go:470"
    ]
   },
   {
@@ -151,8 +151,8 @@
    "claim": "Field tool_filter limits which MCP tools are available",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:454",
-    "schemas/v1alpha1/arena.json:1873"
+    "arena/engine/builder_integration.go:465",
+    "schemas/v1alpha1/arena.json:1874"
    ]
   },
   {
@@ -160,8 +160,8 @@
    "claim": "tool_filter.allowlist is a list of tool names",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:454",
-    "schemas/v1alpha1/arena.json:1885"
+    "arena/engine/builder_integration.go:465",
+    "schemas/v1alpha1/arena.json:1886"
    ]
   },
   {
@@ -177,9 +177,9 @@
    "claim": "tool_filter.blocklist is a list of tool names",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:454",
-    "arena/mcp/config.go:73",
-    "schemas/v1alpha1/arena.json:1891"
+    "arena/engine/builder_integration.go:465",
+    "arena/mcp/config.go:77",
+    "schemas/v1alpha1/arena.json:1892"
    ]
   },
   {
@@ -199,7 +199,7 @@
    "claim": "mcp_servers entry field env is a map of environment variables",
    "verdict": "true",
    "evidence": [
-    "arena/mcp/config.go:58",
+    "arena/mcp/config.go:65",
     "schemas/v1alpha1/arena.json:1807"
    ]
   },
@@ -208,7 +208,9 @@
    "claim": "${VAR} in env values is replaced from the environment promptarena runs in; an unset variable becomes empty",
    "verdict": "true",
    "evidence": [
-    "arena/mcp/config.go"
+    "arena/mcp/config.go:61",
+    "arena/mcp/config.go:86",
+    "arena/mcp/config.go:91"
    ]
   },
   {
@@ -216,8 +218,8 @@
    "claim": "mcp_servers entry field working_dir sets the server process working directory",
    "verdict": "true",
    "evidence": [
-    "arena/mcp/config.go:64",
-    "schemas/v1alpha1/arena.json:1827"
+    "arena/mcp/config.go:71",
+    "schemas/v1alpha1/arena.json:1828"
    ]
   },
   {
@@ -225,7 +227,7 @@
    "claim": "mcp_servers entry field timeout_ms is in milliseconds",
    "verdict": "true",
    "evidence": [
-    "arena/mcp/config.go:68"
+    "arena/mcp/config.go:75"
    ]
   },
   {
@@ -233,7 +235,7 @@
    "claim": "timeout_ms applies per request",
    "verdict": "true",
    "evidence": [
-    "arena/mcp/config.go:68"
+    "arena/mcp/config.go:75"
    ]
   },
   {
@@ -241,7 +243,7 @@
    "claim": "MCP tools are named mcp__{serverName}__{toolName}",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:482"
+    "arena/engine/builder_integration.go:469"
    ]
   },
   {
@@ -249,7 +251,7 @@
    "claim": "A prompt reaches only the tools named in allowed_tools; no entry means no tools",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator.go:358",
+    "arena/arenaconfig/validator.go:382",
     "examples/mcp-everything-test/prompts/mcp-assistant.yaml:20"
    ]
   },
@@ -266,8 +268,8 @@
    "claim": "If a provider declares a capabilities list, it must include 'tools'",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:699",
-    "arena/engine/builder_integration.go:403",
+    "arena/arenaconfig/types.go:707",
+    "arena/engine/builder_integration.go:414",
     "arena/engine/execution.go:306"
    ]
   },
@@ -302,7 +304,7 @@
    "claim": "Tool name mcp__everything__echo is valid in allowed_tools",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator.go:358",
+    "arena/arenaconfig/validator.go:382",
     "examples/mcp-everything-test/prompts/mcp-assistant.yaml:21"
    ]
   },
@@ -311,7 +313,7 @@
    "claim": "Tool name mcp__everything__get-sum is valid in allowed_tools",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:482",
+    "arena/engine/builder_integration.go:469",
     "examples/mcp-everything-test/prompts/mcp-assistant.yaml:22"
    ]
   },
@@ -362,7 +364,7 @@
    "verdict": "true",
    "evidence": [
     "examples/mcp-everything-test/scenarios/echo-and-add.scenario.yaml:1",
-    "schemas/v1alpha1/scenario.json:1060"
+    "schemas/v1alpha1/scenario.json:1067"
    ]
   },
   {
@@ -370,8 +372,8 @@
    "claim": "spec.id, spec.task_type and spec.description are Scenario fields",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/scenario.json:554",
-    "schemas/v1alpha1/scenario.json:571"
+    "schemas/v1alpha1/scenario.json:555",
+    "schemas/v1alpha1/scenario.json:572"
    ]
   },
   {
@@ -379,8 +381,8 @@
    "claim": "spec.tool_policy is a Scenario field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:936",
-    "schemas/v1alpha1/scenario.json:602"
+    "arena/arenaconfig/types.go:944",
+    "schemas/v1alpha1/scenario.json:604"
    ]
   },
   {
@@ -388,8 +390,8 @@
    "claim": "tool_policy.tool_choice accepts value 'auto'",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:939",
-    "schemas/v1alpha1/scenario.json:735"
+    "arena/arenaconfig/types.go:947",
+    "schemas/v1alpha1/scenario.json:737"
    ]
   },
   {
@@ -397,7 +399,7 @@
    "claim": "tool_policy.max_tool_calls_per_turn is an integer field",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/scenario.json:739"
+    "schemas/v1alpha1/scenario.json:741"
    ]
   },
   {
@@ -405,7 +407,7 @@
    "claim": "spec.turns is a list of turn objects with role and content",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/scenario.json:879"
+    "schemas/v1alpha1/scenario.json:881"
    ]
   },
   {
@@ -413,7 +415,7 @@
    "claim": "Turn field assertions is a list of assertion objects with type and params",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/scenario.json:942"
+    "schemas/v1alpha1/scenario.json:949"
    ]
   },
   {
@@ -430,7 +432,7 @@
    "claim": "tools_called params take a tools list",
    "verdict": "true",
    "evidence": [
-    "examples/mcp-everything-test/scenarios/echo-and-add.scenario.yaml:21"
+    "examples/mcp-everything-test/scenarios/echo-and-add.scenario.yaml:22"
    ]
   },
   {
@@ -450,8 +452,8 @@
    "claim": "Second MCP server in the same config accepts the same tool_filter.allowlist form",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:451",
-    "arena/mcp/config.go:41"
+    "arena/engine/builder_integration.go:465",
+    "arena/mcp/config.go:77"
    ]
   },
   {
@@ -511,7 +513,7 @@
    "claim": "spec.defaults.temperature is a field (value 0.7)",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/arena.json:922"
+    "schemas/v1alpha1/arena.json:923"
    ]
   },
   {
@@ -519,7 +521,7 @@
    "claim": "spec.defaults.max_tokens is a field (value 500)",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/arena.json:925"
+    "schemas/v1alpha1/arena.json:926"
    ]
   },
   {
@@ -527,7 +529,7 @@
    "claim": "spec.defaults.concurrency is a field (value 1)",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/arena.json:931"
+    "schemas/v1alpha1/arena.json:932"
    ]
   },
   {
@@ -535,7 +537,7 @@
    "claim": "spec.defaults.output.dir and output.formats are fields",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/arena.json:2463"
+    "schemas/v1alpha1/arena.json:2464"
    ]
   },
   {
@@ -560,7 +562,7 @@
    "claim": "Binary promptarena has a run subcommand accepting -c for config",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:158"
+    "arena/cmd/promptarena/run.go:159"
    ]
   },
   {
@@ -598,7 +600,17 @@
    "claim": "headers values on a url server expand ${VAR} the same way",
    "verdict": "true",
    "evidence": [
-    "arena/mcp/config.go"
+    "arena/mcp/config.go:73",
+    "arena/mcp/config.go:91"
+   ]
+  },
+  {
+   "id": 901,
+   "claim": "An mcp_servers entry needs a name and exactly one of command, url or source, and a transport that matches (stdio needs command; sse and streamable_http need url), otherwise the config fails to load in validate and run",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go:222",
+    "arena/arenaconfig/mcp_servers.go:15"
    ]
   }
  ]

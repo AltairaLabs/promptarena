@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/providers/enable-reasoning.md",
- "commit": "0dbee6290db4e4de3bff3101f260fd614f81c924",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
@@ -19,7 +19,7 @@
    "claim": "Message.Reasoning is a sibling of content and is not mixed into the answer, the exports, or the context passed to later turns",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:959"
+    "arena/turnexecutors/pipeline_stages_integration.go:980"
    ]
   },
   {
@@ -39,7 +39,7 @@
    "claim": "Reasoning is configured per provider under spec.additional_config",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:398",
+    "arena/engine/builder_integration.go:409",
     "schemas/v1alpha1/provider.json:160"
    ]
   },
@@ -220,7 +220,7 @@
    "claim": "unsupported_params is a spec field that takes a list of parameter names",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:402",
+    "arena/engine/builder_integration.go:413",
     "schemas/v1alpha1/provider.json:175-180"
    ]
   },
@@ -307,7 +307,7 @@
    "verdict": "true",
    "evidence": [
     "arena/statestore/store.go:483-491",
-    "arena/turnexecutors/pipeline_stages_integration.go:959"
+    "arena/turnexecutors/pipeline_stages_integration.go:980"
    ]
   },
   {
@@ -342,7 +342,7 @@
    "evidence": [
     "arena/web/event_adapter.go:575-597",
     "arena/web/event_adapter.go:651-658",
-    "arena/web/frontend/src/lib/atlasAdapter.ts:238-258"
+    "arena/web/frontend/src/lib/atlasAdapter.ts:239-259"
    ]
   },
   {
@@ -353,19 +353,15 @@
     "arena/web/event_adapter.go:439-444",
     "arena/web/event_adapter.go:624-640",
     "arena/web/frontend/src/components/InteractiveChat.tsx:198-235",
-    "arena/web/frontend/src/hooks/useArenaEvents.ts:175-190"
+    "arena/web/frontend/src/hooks/useArenaEvents.ts:178-193"
    ]
   },
   {
    "id": 52,
-   "claim": "The markdown report at out/results.md contains only the summary, per-run and cost tables",
+   "claim": "The markdown report does not show model reasoning; its conversation-assertion tables print a reasoning value, an LLM judge's reasoning for its verdict",
    "verdict": "true",
    "evidence": [
-    "arena/results/markdown/markdown_repository.go:409",
-    "arena/results/markdown/markdown_repository.go:496",
-    "arena/results/markdown/markdown_repository.go:517",
-    "arena/results/markdown/markdown_repository.go:737",
-    "arena/results/markdown/markdown_repository.go:964"
+    "arena/results/markdown/markdown_repository.go:522"
    ]
   },
   {
@@ -373,7 +369,7 @@
    "claim": "The markdown report prints a reasoning value against assertions that is the LLM judge's reasoning",
    "verdict": "true",
    "evidence": [
-    "arena/results/markdown/markdown_repository.go:582-583"
+    "arena/results/markdown/markdown_repository.go:522-523"
    ]
   },
   {
@@ -381,7 +377,7 @@
    "claim": "The arena save stage stores reasoning on the message",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:959"
+    "arena/turnexecutors/pipeline_stages_integration.go:980"
    ]
   },
   {
@@ -464,7 +460,7 @@
    "evidence": [
     "arena/engine/conversation_executor.go:1338-1343",
     "arena/engine/conversation_executor.go:395",
-    "schemas/v1alpha1/arena.json:920-930",
+    "schemas/v1alpha1/arena.json:921-931",
     "schemas/v1alpha1/provider.json:206-222"
    ]
   },
@@ -497,7 +493,7 @@
    "claim": "unsupported_params is the spec field that withholds a parameter a model refuses",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:402",
+    "arena/engine/builder_integration.go:413",
     "schemas/v1alpha1/provider.json:175"
    ]
   }

@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/scenarios/pii-guardrail-red-team.md",
- "commit": "0dbee6290db4e4de3bff3101f260fd614f81c924",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
@@ -70,7 +70,7 @@
    "verdict": "true",
    "evidence": [
     "schemas/v1alpha1/persona.json:375",
-    "schemas/v1alpha1/scenario.json:924"
+    "schemas/v1alpha1/scenario.json:931"
    ]
   },
   {
@@ -78,7 +78,8 @@
    "claim": "Command promptarena run with flags --ci and --formats json,markdown",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:187"
+    "arena/cmd/promptarena/run.go:170",
+    "arena/cmd/promptarena/run.go:177"
    ]
   },
   {
@@ -86,7 +87,7 @@
    "claim": "Run writes out/results.md",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:536",
+    "arena/cmd/promptarena/run.go:538",
     "arena/results/markdown/markdown_repository.go:25",
     "examples/pii-guardrail-red-team/config.arena.yaml:46"
    ]
@@ -261,7 +262,7 @@
    "claim": "Build command go build -o bin/promptarena ./arena/cmd/promptarena",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:187"
+    "arena/cmd/promptarena/main_integration.go:196"
    ]
   },
   {
@@ -269,7 +270,8 @@
    "claim": "Command ../../bin/promptarena run --ci --formats json",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:187"
+    "arena/cmd/promptarena/run.go:170",
+    "arena/cmd/promptarena/run.go:177"
    ]
   },
   {
