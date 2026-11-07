@@ -2,16 +2,19 @@
 title: 'Tutorial 5: CI/CD Integration'
 description: Build a keyless Arena test suite with a mock provider, see a failed assertion fail the run, and run the suite in GitHub Actions.
 verified:
-  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
   sources:
     - arena/arenaconfig/helpers.go
     - arena/arenaconfig/loader.go
+    - arena/assertions/turn_summary.go
     - arena/cmd/promptarena/run.go
+    - arena/cmd/promptarena/run_interactive.go
     - arena/engine/engine.go
     - arena/engine/execution.go
     - arena/results/json/json_repository.go
     - arena/results/junit/junit_repository.go
     - arena/results/markdown/markdown_repository.go
+    - arena/tui/tui.go
     - npm/promptarena/lib/resolve.js
     - npm/promptarena/package.json
     - schemas/v1alpha1/scenario.json
@@ -173,7 +176,12 @@ Run Summary
 Total Runs:       1
 Successful:       1 (100.0%)
 Failed:           0 (0.0%)
+
+Assertions:       2 total
+Assertions Pass:  all passed
 ```
+
+`Assertions` counts the turn-level and conversation-level assertions together, here one per turn.
 
 Check the exit code:
 
@@ -192,14 +200,16 @@ promptarena run --ci --format junit,json
 echo $?
 ```
 
-The mock reply does not contain `Sunday`. The summary ends with the failed assertion, and the exit code is `1`:
+The mock reply does not contain `Sunday`. The summary reports `Assertions Fail:  1`, ends with the failed assertion, and the exit code is `1`:
 
 ```text
 Errors:
   • business-hours/mock-provider/default: pipeline execution failed: validation failed: [assertion 0 (content_includes) failed: missing patterns: Sunday]
 
-Error: execution failed: 1 runs had errors
+Error: execution failed: 1 runs had errors, 1 assertions failed
 ```
+
+The run stops at the failed turn, so the second turn's assertion never runs and the summary counts one assertion.
 
 A CI job fails on that exit code. In `out/junit.xml` the failed run is recorded as an `<error>` element, not `<failure>`.
 

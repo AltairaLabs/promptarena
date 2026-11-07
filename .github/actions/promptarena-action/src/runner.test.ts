@@ -119,12 +119,12 @@ describe('runner', () => {
 
       await runPromptArena({
         ...baseInputs,
-        formats: 'json, markdown ,html',
+        formats: 'json, markdown ,csv',
       });
 
       expect(mockedExec.exec).toHaveBeenCalledWith(
         'promptarena',
-        expect.arrayContaining(['--format', 'json,markdown,html']),
+        expect.arrayContaining(['--format', 'json,markdown,csv']),
         expect.any(Object)
       );
     });
@@ -171,15 +171,14 @@ describe('runner', () => {
       const paths = getOutputPaths('/workspace', 'out');
 
       expect(paths.junitPath).toBe('/workspace/out/junit.xml');
-      expect(paths.htmlPath).toBe('/workspace/out/report.html');
-      expect(paths.jsonPath).toBe('/workspace/out/results.json');
+      expect(paths.jsonPath).toBe('/workspace/out/index.json');
     });
 
     it('should use custom junit output path when specified', () => {
       const paths = getOutputPaths('/workspace', 'out', '/custom/junit.xml');
 
       expect(paths.junitPath).toBe('/custom/junit.xml');
-      expect(paths.htmlPath).toBe('/workspace/out/report.html');
+      expect(paths).not.toHaveProperty('htmlPath');
     });
   });
 });

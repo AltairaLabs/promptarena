@@ -58,7 +58,7 @@ async function run(): Promise<void> {
     core.endGroup();
 
     // Set outputs
-    setOutputs(results, outputPaths.junitPath, outputPaths.htmlPath);
+    setOutputs(results, outputPaths.junitPath);
 
     // Handle failure
     if (runResult.exitCode !== 0 || !results.success) {

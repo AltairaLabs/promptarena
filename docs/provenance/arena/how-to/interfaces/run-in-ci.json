@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/interfaces/run-in-ci.md",
- "commit": "3df344ffbc8c604e1a8935929c28499d778d19f0",
+ "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
  "claims": [
   {
    "id": 1,
@@ -217,12 +217,10 @@
   },
   {
    "id": 25,
-   "claim": "Flag --markdown-file defaults to <out>/results.md",
+   "claim": "Flag --markdown-file defaults to defaults.output.markdown.file, else <out>/results.md",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:187",
-    "arena/cmd/promptarena/run.go:531",
-    "arena/cmd/promptarena/run.go:536"
+    "arena/cmd/promptarena/run.go"
    ]
   },
   {
@@ -587,10 +585,11 @@
   },
   {
    "id": 67,
-   "claim": "Action reference AltairaLabs/promptarena/v2/.github/actions/promptarena-action@v1 is valid",
-   "verdict": "false",
+   "claim": "Action reference AltairaLabs/promptarena/.github/actions/promptarena-action@v2 is valid; v2 is a floating tag each release moves to the newest v2.x.y",
+   "verdict": "true",
    "evidence": [
-    ".github/actions/promptarena-action/action.yml:1"
+    ".github/actions/promptarena-action/action.yml",
+    ".github/workflows/release.yml"
    ]
   },
   {
@@ -732,14 +731,12 @@
   },
   {
    "id": 84,
-   "claim": "Action outputs failed and total exist",
+   "claim": "Action outputs failed and total exist; failed counts every run that did not pass (index.json errors), skipped runs are in neither passed nor failed",
    "verdict": "true",
    "evidence": [
-    ".github/actions/promptarena-action/action.yml:52",
-    ".github/actions/promptarena-action/action.yml:56",
-    ".github/actions/promptarena-action/src/outputs.ts:168",
-    ".github/actions/promptarena-action/src/outputs.ts:171",
-    ".github/actions/promptarena-action/src/outputs.ts:63"
+    ".github/actions/promptarena-action/action.yml",
+    ".github/actions/promptarena-action/src/outputs.ts",
+    "arena/results/json/json_repository.go"
    ]
   },
   {

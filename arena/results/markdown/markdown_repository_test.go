@@ -242,7 +242,7 @@ func TestHasFailedAssertions(t *testing.T) {
 
 	// Test result with no assertions
 	noAssertions := createSuccessfulResult("test", "scenario", "provider")
-	assert.False(t, repo.hasFailedAssertions(&noAssertions))
+	assert.False(t, repo.runFailed(&noAssertions))
 
 	// Test result with passing assertions
 	passingAssertions := createSuccessfulResult("test", "scenario", "provider")
@@ -253,11 +253,11 @@ func TestHasFailedAssertions(t *testing.T) {
 			},
 		},
 	}
-	assert.False(t, repo.hasFailedAssertions(&passingAssertions))
+	assert.False(t, repo.runFailed(&passingAssertions))
 
 	// Test result with failed assertions
 	failedAssertions := createResultWithAssertions("test", "scenario", "provider")
-	assert.True(t, repo.hasFailedAssertions(&failedAssertions))
+	assert.True(t, repo.runFailed(&failedAssertions))
 }
 
 func TestCountAssertions(t *testing.T) {
@@ -793,22 +793,26 @@ func TestExtractMessageAssertionFailures(t *testing.T) {
 	})
 }
 
-func TestHasFailedAssertionInMap(t *testing.T) {
+func TestRunFailed_TurnAssertionShapes(t *testing.T) {
 	repo := &MarkdownResultRepository{}
+	withMeta := func(m map[string]interface{}) *engine.RunResult {
+		r := createSuccessfulResult("test", "scenario", "provider")
+		r.Messages[1].Meta = map[string]interface{}{"assertions": m}
+		return &r
+	}
 
 	t.Run("new format - top level passed field true", func(t *testing.T) {
-		assertions := map[string]interface{}{
+		assert.False(t, repo.runFailed(withMeta(map[string]interface{}{
 			"passed": true,
 			"total":  2,
 			"results": []interface{}{
 				map[string]interface{}{"type": "is_valid_json", "passed": true},
 			},
-		}
-		assert.False(t, repo.hasFailedAssertionInMap(assertions))
+		})))
 	})
 
 	t.Run("new format - top level passed field false", func(t *testing.T) {
-		assertions := map[string]interface{}{
+		assert.True(t, repo.runFailed(withMeta(map[string]interface{}{
 			"passed": false,
 			"total":  2,
 			"failed": 1,
@@ -816,51 +820,127 @@ func TestHasFailedAssertionInMap(t *testing.T) {
 				map[string]interface{}{"type": "is_valid_json", "passed": true},
 				map[string]interface{}{"type": "json_schema", "passed": false},
 			},
-		}
-		assert.True(t, repo.hasFailedAssertionInMap(assertions))
+		})))
 	})
 
 	t.Run("new format - results array with failure", func(t *testing.T) {
-		assertions := map[string]interface{}{
+		assert.True(t, repo.runFailed(withMeta(map[string]interface{}{
 			"results": []interface{}{
 				map[string]interface{}{"type": "is_valid_json", "passed": true},
 				map[string]interface{}{"type": "json_schema", "passed": false},
 			},
-		}
-		assert.True(t, repo.hasFailedAssertionInMap(assertions))
+		})))
 	})
 
 	t.Run("new format - results array all pass", func(t *testing.T) {
-		assertions := map[string]interface{}{
+		assert.False(t, repo.runFailed(withMeta(map[string]interface{}{
 			"results": []interface{}{
 				map[string]interface{}{"type": "is_valid_json", "passed": true},
 				map[string]interface{}{"type": "json_schema", "passed": true},
 			},
-		}
-		assert.False(t, repo.hasFailedAssertionInMap(assertions))
+		})))
 	})
 
 	t.Run("legacy format - has failure", func(t *testing.T) {
-		assertions := map[string]interface{}{
+		assert.True(t, repo.runFailed(withMeta(map[string]interface{}{
 			"is_valid_json": map[string]interface{}{"passed": true},
 			"json_schema":   map[string]interface{}{"passed": false},
-		}
-		assert.True(t, repo.hasFailedAssertionInMap(assertions))
+		})))
 	})
 
 	t.Run("legacy format - all pass", func(t *testing.T) {
-		assertions := map[string]interface{}{
+		assert.False(t, repo.runFailed(withMeta(map[string]interface{}{
 			"is_valid_json": map[string]interface{}{"passed": true},
 			"json_schema":   map[string]interface{}{"passed": true},
-		}
-		assert.False(t, repo.hasFailedAssertionInMap(assertions))
-	})
-
-	t.Run("nil assertions", func(t *testing.T) {
-		assert.False(t, repo.hasFailedAssertionInMap(nil))
+		})))
 	})
 
 	t.Run("empty assertions", func(t *testing.T) {
-		assert.False(t, repo.hasFailedAssertionInMap(map[string]interface{}{}))
+		assert.False(t, repo.runFailed(withMeta(map[string]interface{}{})))
 	})
+}
+
+// createExpectedGuardrailResult is a run whose guardrail fired and whose
+// assertions (e.g. guardrail_triggered) all passed: the violation was expected.
+func createExpectedGuardrailResult(runID, scenario, provider string) engine.RunResult {
+	result := createResultWithViolations(runID, scenario, provider)
+	result.Messages[1].Meta = map[string]interface{}{
+		"assertions": map[string]interface{}{
+			"results": []interface{}{
+				map[string]interface{}{"type": "guardrail_triggered", "passed": true},
+			},
+			"passed": true,
+			"total":  1,
+			"failed": 0,
+		},
+	}
+	return result
+}
+
+// TestExpectedGuardrailRunPasses pins the Markdown report to results.RunPassed
+// (#410, #411): a violation covered by passing assertions is a pass, exactly as
+// index.json and the run summary report it.
+func TestExpectedGuardrailRunPasses(t *testing.T) {
+	repo := NewMarkdownResultRepositoryWithConfig(t.TempDir(), nil)
+	expected := createExpectedGuardrailResult("run-g", "guardrail-should-trigger", "mock")
+	unexpected := createResultWithViolations("run-u", "unexpected-violation", "mock")
+	runResults := []engine.RunResult{expected, unexpected}
+
+	summary := repo.calculateSummary(runResults)
+	assert.Equal(t, 1, summary.Passed)
+	assert.Equal(t, 1, summary.Failed)
+
+	var matrix strings.Builder
+	repo.writeResultsMatrix(&matrix, runResults)
+	assert.Contains(t, matrix.String(), "| mock | guardrail-should-trigger | us-east-1 | ✅ Pass |")
+	assert.Contains(t, matrix.String(), "| mock | unexpected-violation | us-east-1 | ❌ Fail |")
+
+	var failed strings.Builder
+	repo.writeFailedTestsSection(&failed, runResults)
+	assert.NotContains(t, failed.String(), "guardrail-should-trigger")
+	assert.Contains(t, failed.String(), "unexpected-violation")
+}
+
+// TestSkippedRunIsNeitherPassedNorFailed matches index.json, which counts
+// skipped runs separately.
+func TestSkippedRunIsNeitherPassedNorFailed(t *testing.T) {
+	repo := NewMarkdownResultRepositoryWithConfig(t.TempDir(), nil)
+	skipped := createFailedResult("run-s", "skipped-scenario", "mock")
+	skipped.Skipped = true
+	runResults := []engine.RunResult{skipped, createSuccessfulResult("run-p", "passing", "mock")}
+
+	summary := repo.calculateSummary(runResults)
+	assert.Equal(t, 1, summary.Passed)
+	assert.Equal(t, 0, summary.Failed)
+	assert.Equal(t, 1, summary.Skipped)
+
+	var overview strings.Builder
+	repo.writeOverviewSection(&overview, summary)
+	assert.Contains(t, overview.String(), "| Skipped | 1 ⏭️ |")
+
+	var matrix strings.Builder
+	repo.writeResultsMatrix(&matrix, runResults)
+	assert.Contains(t, matrix.String(), "| mock | skipped-scenario | us-east-1 | ⏭️ Skipped |")
+
+	var failed strings.Builder
+	repo.writeFailedTestsSection(&failed, runResults)
+	assert.NotContains(t, failed.String(), "skipped-scenario")
+}
+
+// TestDuplexTurnAssertionFailureFailsRun covers the duplex Meta shape
+// (all_passed, typed results slice), which has no top-level "passed".
+func TestDuplexTurnAssertionFailureFailsRun(t *testing.T) {
+	repo := NewMarkdownResultRepositoryWithConfig(t.TempDir(), nil)
+	result := createSuccessfulResult("run-d", "duplex", "mock")
+	result.Messages[1].Meta = map[string]interface{}{
+		"assertions": map[string]interface{}{
+			"results":    []map[string]interface{}{{"passed": true}, {"passed": false}},
+			"all_passed": false,
+			"total":      2,
+			"failed":     1,
+		},
+	}
+	summary := repo.calculateSummary([]engine.RunResult{result})
+	assert.Equal(t, 1, summary.Failed)
+	assert.Equal(t, 2, repo.countAssertions(&result))
 }

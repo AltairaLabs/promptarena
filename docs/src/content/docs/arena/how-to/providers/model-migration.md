@@ -2,10 +2,11 @@
 title: Gate Model Migrations
 description: Run the same scenarios against the old and new model side by side. CI fails if the new model breaks an assertion the old one passed.
 verified:
-  commit: 0dbee6290db4e4de3bff3101f260fd614f81c924
+  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
   sources:
     - arena/cmd/promptarena/run.go
     - arena/cmd/promptarena/run_interactive.go
+    - arena/tui/tui.go
     - arena/web/frontend/src/App.tsx
     - arena/web/frontend/src/components/arena/TrialMatrix.tsx
     - examples/model-migration/config.arena.yaml
@@ -68,6 +69,9 @@ Run Summary
 Total Runs:       4
 Successful:       3 (75.0%)
 Failed:           1 (25.0%)
+
+Assertions:       8 total
+Assertions Fail:  1
 ...
 Providers:        model-v1 (2), model-v2 (2)
 Scenarios:        2 scenarios
@@ -78,7 +82,7 @@ Errors:
 
 Results saved to: out
 
-Error: execution failed: 1 runs had errors
+Error: execution failed: 1 runs had errors, 1 assertions failed
 ```
 
 The non-zero exit fails the CI step below, so the migration PR stays red until you rework the prompt or swap the new model out.

@@ -2,7 +2,7 @@
 title: CLI Commands
 description: Every promptarena command with its flags, defaults and examples.
 verified:
-  commit: 3df344ffbc8c604e1a8935929c28499d778d19f0
+  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
   sources:
     - arena/adapters/adapter.go
     - arena/adapters/arena_output.go
@@ -594,7 +594,7 @@ Exit status: with `--ci`, `run` exits non-zero when a run errors or an assertion
 | `--formats` | []string | from config | Alias for --format |
 | `--objectives-group-by` | []string | `scenario` | Groupings for the objectives report: `scenario`, `provider`, `objective`, `taxonomy`, `taxonomy.<framework>`, `label.<key>`, `data.<column>` |
 | `--junit-file` | string | `defaults.output.junit.file`, else `<out>/junit.xml` | JUnit XML output file |
-| `--markdown-file` | string | `<out>/results.md` | Markdown report output file |
+| `--markdown-file` | string | `defaults.output.markdown.file`, else `<out>/results.md` | Markdown report output file |
 
 #### Debugging
 

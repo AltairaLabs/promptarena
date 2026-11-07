@@ -117,12 +117,11 @@ export function getOutputPaths(
   workingDirectory: string,
   outputDir: string,
   junitOutput?: string
-): { junitPath: string; htmlPath: string; jsonPath: string } {
+): { junitPath: string; jsonPath: string } {
   const baseDir = path.join(workingDirectory, outputDir);
 
   return {
     junitPath: junitOutput || path.join(baseDir, 'junit.xml'),
-    htmlPath: path.join(baseDir, 'report.html'),
-    jsonPath: path.join(baseDir, 'results.json'),
+    jsonPath: path.join(baseDir, 'index.json'),
   };
 }

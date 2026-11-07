@@ -258,7 +258,7 @@ async function run() {
         (0, outputs_1.logSummary)(results);
         core.endGroup();
         // Set outputs
-        (0, outputs_1.setOutputs)(results, outputPaths.junitPath, outputPaths.htmlPath);
+        (0, outputs_1.setOutputs)(results, outputPaths.junitPath);
         // Handle failure
         if (runResult.exitCode !== 0 || !results.success) {
             const message = `PromptArena tests failed: ${results.failed} failures, ${results.errors} errors`;
@@ -354,7 +354,10 @@ function parseIndexJson(outputDir) {
         const total = indexOutput.total_runs ?? 0;
         const passed = indexOutput.successful ?? 0;
         const errors = indexOutput.errors ?? 0;
-        const failed = Math.max(0, total - passed - errors);
+        // index.json's `errors` counts every run that did not pass: execution
+        // errors and assertion failures alike. So it is also the failed count;
+        // total - successful - errors is the skipped runs, not failures.
+        const failed = errors;
         return {
             passed,
             failed,
@@ -443,19 +446,16 @@ async function parseResults(outputDir) {
     core.warning('No results file found or results could not be parsed');
     return createEmptyResults();
 }
-function setOutputs(results, junitPath, htmlPath) {
+function setOutputs(results, junitPath) {
     core.setOutput('passed', results.passed.toString());
     core.setOutput('failed', results.failed.toString());
     core.setOutput('errors', results.errors.toString());
     core.setOutput('total', results.total.toString());
     core.setOutput('total-cost', results.totalCost.toFixed(6));
     core.setOutput('success', results.success.toString());
-    // Set file paths if they exist
+    // Set the file path if it exists
     if (fs.existsSync(junitPath)) {
         core.setOutput('junit-path', junitPath);
-    }
-    if (fs.existsSync(htmlPath)) {
-        core.setOutput('html-path', htmlPath);
     }
 }
 function logSummary(results) {
@@ -603,8 +603,7 @@ function getOutputPaths(workingDirectory, outputDir, junitOutput) {
     const baseDir = path.join(workingDirectory, outputDir);
     return {
         junitPath: junitOutput || path.join(baseDir, 'junit.xml'),
-        htmlPath: path.join(baseDir, 'report.html'),
-        jsonPath: path.join(baseDir, 'results.json'),
+        jsonPath: path.join(baseDir, 'index.json'),
     };
 }
 //# sourceMappingURL=runner.js.map

@@ -204,6 +204,9 @@ func (r *JUnitResultRepository) convertTestCase(result *engine.RunResult) JUnitT
 	// Add conversation-level assertions as properties and potential failure
 	r.addConversationAssertions(&testCase, result)
 
+	// Any remaining RunPassed failure is a turn-level assertion failure
+	r.addTurnAssertionFailure(&testCase, result)
+
 	return testCase
 }
 
@@ -237,19 +240,29 @@ func (r *JUnitResultRepository) addErrorOrFailure(testCase *JUnitTestCase, resul
 		return
 	}
 
-	if len(result.Violations) > 0 {
-		// Only report violations as failures if assertions didn't expect them
-		// - No assertions = violations are unexpected = failure
-		// - Some assertions fail = failure
-		// - All assertions pass = violations were expected = not a failure
-		if !results.HasAssertions(result) || !results.AllAssertionsPassed(result) {
-			testCase.Failure = &JUnitFailure{
-				Message: fmt.Sprintf("Validation failed: %d violation(s)", len(result.Violations)),
-				Type:    "ValidationError",
-				Content: r.buildValidationDetails(result.Violations),
-			}
+	// Pass/fail follows results.RunPassed, the predicate index.json uses: a
+	// violation covered by passing assertions was expected and is not a failure.
+	if len(result.Violations) > 0 && !results.RunPassed(result) {
+		testCase.Failure = &JUnitFailure{
+			Message: fmt.Sprintf("Validation failed: %d violation(s)", len(result.Violations)),
+			Type:    "ValidationError",
+			Content: r.buildValidationDetails(result.Violations),
 		}
 	}
+}
+
+// addTurnAssertionFailure marks a run that results.RunPassed fails but that no
+// error, violation or conversation-assertion failure has explained: a failed
+// turn-level assertion (or eval). Without it such a run reads as passing.
+func (r *JUnitResultRepository) addTurnAssertionFailure(testCase *JUnitTestCase, result *engine.RunResult) {
+	if testCase.Skipped != nil || testCase.Error != nil || testCase.Failure != nil || results.RunPassed(result) {
+		return
+	}
+	message := "Turn evals failed"
+	if total, failed := assertions.CountTurnAssertions(result.Messages); failed > 0 {
+		message = fmt.Sprintf("Turn assertions failed: %d of %d", failed, total)
+	}
+	testCase.Failure = &JUnitFailure{Message: message, Type: "AssertionFailure"}
 }
 
 // addConversationAssertions adds conversation-level assertions as properties and potential failure

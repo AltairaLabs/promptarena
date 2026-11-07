@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Run Arena tests
-        uses: AltairaLabs/promptarena/v2/.github/actions/promptarena-action@v1
+        uses: AltairaLabs/promptarena/.github/actions/promptarena-action@v2
         with:
           config-file: config.arena.yaml
           version: 'latest'
@@ -34,13 +34,14 @@ jobs:
 | Input | Description | Required | Default |
 |-------|-------------|----------|---------|
 | `config-file` | Path to Arena YAML configuration file | Yes | - |
-| `version` | PromptArena version to use (e.g., `v1.1.6` or `latest`) | No | `latest` |
+| `version` | PromptArena version to use (e.g., `v2.4.0` or `latest`) | No | `latest` |
 | `scenarios` | Comma-separated list of scenarios to run | No | - |
 | `providers` | Comma-separated list of providers to use | No | - |
 | `regions` | Comma-separated list of regions to run | No | - |
 | `output-dir` | Directory for test results | No | `out` |
-| `formats` | Output formats (comma-separated, e.g. `json,junit,markdown,html`) | No | `json,junit` |
+| `formats` | Output formats (comma-separated): `json`, `junit`, `markdown`, `csv`, `objectives` | No | `json,junit` |
 | `junit-output` | Path for JUnit XML output file | No | - |
+| `override-providers` | Provider substitutions as comma-separated `from=to` pairs | No | - |
 | `fail-on-error` | Fail the action if tests fail | No | `true` |
 | `working-directory` | Working directory for running tests | No | `.` |
 
@@ -48,14 +49,13 @@ jobs:
 
 | Output | Description |
 |--------|-------------|
-| `passed` | Number of passed tests |
-| `failed` | Number of failed tests |
-| `errors` | Number of errors |
-| `total` | Total number of tests |
+| `passed` | Number of passed runs |
+| `failed` | Number of runs that did not pass (execution errors and assertion failures; skipped runs are excluded) |
+| `errors` | The `errors` count from `index.json`: every run that did not pass, so the same number as `failed` |
+| `total` | Total number of runs |
 | `total-cost` | Total cost in dollars |
 | `success` | Whether all tests passed (`true`/`false`) |
 | `junit-path` | Path to generated JUnit XML file |
-| `html-path` | Path to generated HTML report |
 
 ## Examples
 
@@ -63,7 +63,7 @@ jobs:
 
 ```yaml
 - name: Run Arena tests
-  uses: AltairaLabs/promptarena/v2/.github/actions/promptarena-action@v1
+  uses: AltairaLabs/promptarena/.github/actions/promptarena-action@v2
   with:
     config-file: arena.yaml
 ```
@@ -72,7 +72,7 @@ jobs:
 
 ```yaml
 - name: Run specific scenarios
-  uses: AltairaLabs/promptarena/v2/.github/actions/promptarena-action@v1
+  uses: AltairaLabs/promptarena/.github/actions/promptarena-action@v2
   with:
     config-file: arena.yaml
     scenarios: 'scenario1,scenario2'
@@ -84,7 +84,7 @@ jobs:
 ```yaml
 - name: Run Arena tests (continue on failure)
   id: arena
-  uses: AltairaLabs/promptarena/v2/.github/actions/promptarena-action@v1
+  uses: AltairaLabs/promptarena/.github/actions/promptarena-action@v2
   with:
     config-file: arena.yaml
     fail-on-error: 'false'
@@ -101,7 +101,7 @@ jobs:
 ```yaml
 - name: Run Arena tests
   id: arena
-  uses: AltairaLabs/promptarena/v2/.github/actions/promptarena-action@v1
+  uses: AltairaLabs/promptarena/.github/actions/promptarena-action@v2
   with:
     config-file: arena.yaml
 
@@ -116,7 +116,7 @@ jobs:
 
 ```yaml
 - name: Run Arena tests
-  uses: AltairaLabs/promptarena/v2/.github/actions/promptarena-action@v1
+  uses: AltairaLabs/promptarena/.github/actions/promptarena-action@v2
   with:
     config-file: arena.yaml
     junit-output: test-results/junit.xml
@@ -133,11 +133,14 @@ jobs:
 
 ```yaml
 - name: Run Arena tests
-  uses: AltairaLabs/promptarena/v2/.github/actions/promptarena-action@v1
+  uses: AltairaLabs/promptarena/.github/actions/promptarena-action@v2
   with:
     config-file: arena.yaml
-    version: 'v1.1.6'
+    version: 'v2.4.0'
 ```
+
+The `@v2` ref is a floating tag that each release moves to the newest `v2.x.y`.
+Pin the action itself to a release tag (for example `@v2.4.0`) for a fixed action version.
 
 ## Platform Support
 

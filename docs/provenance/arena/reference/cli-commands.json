@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/reference/cli-commands.md",
- "commit": "3df344ffbc8c604e1a8935929c28499d778d19f0",
+ "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
  "claims": [
   {
    "id": 1001,
@@ -2231,10 +2231,10 @@
   },
   {
    "id": 1267,
-   "claim": "Flag `--markdown-file` defaults to out/results.md",
+   "claim": "Flag `--markdown-file` defaults to defaults.output.markdown.file, else <out>/results.md",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:532"
+    "arena/cmd/promptarena/run.go"
    ]
   },
   {
