@@ -1017,15 +1017,15 @@ func (ce *DefaultConversationExecutor) buildResultFromStateStore(
 	convAssertionResults = append(convAssertionResults, req.fidelity.all()...)
 	convAssertionResults = append(convAssertionResults, req.personaState.all()...)
 
-	// Run pack-level evals at session end. These are non-gating
-	// observations — same machinery that fires in production. They
-	// land on EvalResults (raw runtime EvalResult), not in the
-	// assertion bucket, so the report can render them without
+	// Run pack-level evals for every trigger (turn, session, conversation).
+	// These are non-gating observations — same machinery that fires in
+	// production. They land on EvalResults (raw runtime EvalResult), not in
+	// the assertion bucket, so the report can render them without
 	// pretending they have pass/fail semantics.
 	var packEvalResults []evals.EvalResult
 	orch := ce.resolveEvalOrchestrator(req)
 	if orch != nil && orch.HasEvals() {
-		packEvalResults = orch.RunSessionEvals(ctx, messages, req.ConversationID)
+		packEvalResults = orch.RunPackEvals(ctx, messages, req.ConversationID)
 	}
 
 	return &ConversationResult{

@@ -452,7 +452,9 @@ func NewEngine(
 
 // Close shuts down the engine and cleans up resources.
 // This includes closing all MCP server connections, provider HTTP clients,
-// and the event store if session recording is enabled.
+// and the event store if session recording is enabled. It closes the
+// registries the engine was built with, including ones passed to NewEngine
+// from BuildEngineComponents, so those cannot be shared with another engine.
 func (e *Engine) Close() error {
 	if e.a2aCleanup != nil {
 		e.a2aCleanup()
@@ -491,9 +493,11 @@ type eventBusConfig struct {
 	emitMessages bool
 }
 
-// WithMessageEvents enables RecordingStage in pipelines so message.created
-// events are published to the event bus. This does NOT write session recordings
-// to disk — use EnableSessionRecording for that.
+// WithMessageEvents makes SetEventBus call EnableMessageEvents, which sets a
+// default recording-stage config. On its own that publishes nothing: the
+// RecordingStage writes message.created events to the run's EventStore (not
+// to the event bus) and is left out of the pipeline when there is no store.
+// Use EnableSessionRecording to supply one.
 func WithMessageEvents() EventBusOption {
 	return func(c *eventBusConfig) { c.emitMessages = true }
 }
@@ -525,7 +529,7 @@ func (e *Engine) SetEventBus(bus events.Bus, opts ...EventBusOption) {
 	if instrumented, ok := e.mediaStorage.(*storage.InstrumentedStorage); ok {
 		instrumented.SetBus(bus)
 	}
-	// Enable RecordingStage so message.created events flow to the bus
+	// Set a recording-stage config; it records only when an EventStore is set.
 	if cfg.emitMessages {
 		e.EnableMessageEvents()
 	}
@@ -566,10 +570,11 @@ func (e *Engine) SetMetrics(collector *metrics.Collector, instanceLabels map[str
 	logger.Debug("Metrics collection enabled for Arena engine")
 }
 
-// EnableMessageEvents enables RecordingStage in pipelines so message.created
-// events are published to the event bus. This does NOT write session recordings
-// to disk — use EnableSessionRecording for that. Requires an event bus to be
-// configured via SetEventBus.
+// EnableMessageEvents sets a default recording-stage config when none is set.
+// The RecordingStage it configures appends message.created events to the
+// run's EventStore only; it does not publish them to the event bus, and it is
+// left out of the pipeline when the engine has no EventStore (see
+// EnableSessionRecording, which sets both).
 func (e *Engine) EnableMessageEvents() {
 	if e.recordingConfig == nil {
 		defaults := stage.DefaultRecordingStageConfig()
@@ -797,6 +802,9 @@ func (e *Engine) declaredMockRepository(provider *config.Provider) (mock.Respons
 		return withDefaultMockAudio(mock.NewInMemoryMockRepository(genericMockResponse)), nil
 	}
 
+	// createProviderImpl leaves an absolute path, so only a provider it never
+	// constructed still holds one relative to the config dir. (With a relative
+	// --config, its rewrite used to stay relative and was joined here again.)
 	if !filepath.IsAbs(mockCfg) && e.config != nil && e.config.ConfigDir != "" {
 		mockCfg = filepath.Join(e.config.ConfigDir, mockCfg)
 	}

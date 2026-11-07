@@ -339,26 +339,22 @@
         "name": "my-eval"
       },
       "spec": {
-        "assertions": [
+        "conversation_assertions": [
           {
-            "config": {
-              "criteria": "Was the customer issue resolved satisfactorily?",
-              "expected": "pass",
-              "judge": "default"
+            "message": "Customer issue was resolved",
+            "params": {
+              "eval_params": {
+                "criteria": "Was the customer issue resolved satisfactorily?",
+                "judge": "default"
+              },
+              "eval_type": "llm_judge_session",
+              "min_score": 0.8
             },
-            "type": "llm_judge"
+            "type": "assertion"
           }
         ],
         "description": "Evaluate saved customer support conversation",
         "id": "eval-saved-conversation",
-        "judge_targets": {
-          "default": {
-            "id": "gpt-4o-judge",
-            "model": "gpt-4o",
-            "type": "openai"
-          }
-        },
-        "mode": "instant",
         "recording": {
           "path": "recordings/session-2024-01-15.recording.json",
           "type": "session"

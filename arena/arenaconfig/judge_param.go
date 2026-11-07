@@ -22,14 +22,29 @@ func (c *Config) resolveJudgeParams() error {
 	for _, set := range c.assertionSets() {
 		for i := range set.assertions {
 			a := &set.assertions[i]
-			if err := c.resolveJudgeParam(a.Params); err != nil {
+			if err := c.resolveJudgeParamsIn(a.Params); err != nil {
 				return fmt.Errorf("%s: %s assertion: %w", set.where, a.Type, err)
 			}
-			if inner, ok := a.Params[paramEvalParams].(map[string]interface{}); ok {
-				if err := c.resolveJudgeParam(inner); err != nil {
-					return fmt.Errorf("%s: %s assertion: eval_params: %w", set.where, a.Type, err)
-				}
-			}
+		}
+	}
+	for i := range c.PackEvals {
+		def := &c.PackEvals[i]
+		if err := c.resolveJudgeParamsIn(def.Params); err != nil {
+			return fmt.Errorf("pack_evals %s: %w", def.ID, err)
+		}
+	}
+	return nil
+}
+
+// resolveJudgeParamsIn resolves `judge` in params and in a wrapper's nested
+// eval_params.
+func (c *Config) resolveJudgeParamsIn(params map[string]interface{}) error {
+	if err := c.resolveJudgeParam(params); err != nil {
+		return err
+	}
+	if inner, ok := params[paramEvalParams].(map[string]interface{}); ok {
+		if err := c.resolveJudgeParam(inner); err != nil {
+			return fmt.Errorf("eval_params: %w", err)
 		}
 	}
 	return nil

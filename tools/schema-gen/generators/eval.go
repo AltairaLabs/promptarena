@@ -20,6 +20,9 @@ func GenerateEvalSchema() (interface{}, error) {
 	})
 }
 
+// exampleJudgeMinScore is the pass threshold in the schema example.
+const exampleJudgeMinScore = 0.8
+
 func addEvalExample(schema *jsonschema.Schema) {
 	schema.Examples = []interface{}{
 		map[string]interface{}{
@@ -35,25 +38,23 @@ func addEvalExample(schema *jsonschema.Schema) {
 					"path": "recordings/session-2024-01-15.recording.json",
 					"type": "session",
 				},
-				"judge_targets": map[string]interface{}{
-					"default": map[string]interface{}{
-						"type":  "openai",
-						"model": "gpt-4o",
-						"id":    "gpt-4o-judge",
-					},
-				},
-				"assertions": []interface{}{
+				// Judges come from spec.judges in the arena config; `judge`
+				// selects one by name, and an unknown name fails at load.
+				"conversation_assertions": []interface{}{
 					map[string]interface{}{
-						"type": "llm_judge",
-						"config": map[string]interface{}{
-							"judge":    "default",
-							"criteria": "Was the customer issue resolved satisfactorily?",
-							"expected": "pass",
+						"type":    "assertion",
+						"message": "Customer issue was resolved",
+						"params": map[string]interface{}{
+							"eval_type": "llm_judge_session",
+							"eval_params": map[string]interface{}{
+								"judge":    "default",
+								"criteria": "Was the customer issue resolved satisfactorily?",
+							},
+							"min_score": exampleJudgeMinScore,
 						},
 					},
 				},
 				"tags": []string{"customer-support", "evaluation"},
-				"mode": "instant",
 			},
 		},
 	}

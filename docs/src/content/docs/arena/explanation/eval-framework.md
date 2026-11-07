@@ -1,12 +1,14 @@
 ---
 title: Eval Framework
 verified:
-  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
   sources:
     - arena/assertions/types.go
     - arena/engine/builder_integration.go
+    - arena/engine/conversation_executor.go
     - arena/engine/eval_conversation_executor.go
     - arena/engine/eval_orchestrator.go
+    - arena/engine/pack_eval_triggers_test.go
     - examples/eval-test/config.arena.yaml
     - examples/eval-test/evals/basic-eval.eval.yaml
 ---
@@ -120,7 +122,7 @@ Three paths execute evals, and all of them go through `EvalRunner`.
 
 The SDK's `evalMiddleware` calls `EvalRunner` directly in the conversation's process. Turn evals run asynchronously in goroutines bounded by a semaphore, so they do not delay the response. Session evals run synchronously when you close the conversation. It builds the `EvalContext` from the conversation state and passes the results to the `ResultWriter`, which records metrics.
 
-Arena's `EvalOrchestrator` wraps `EvalRunner` and calls its `Run*Evals` methods directly. It builds its own `EvalContext` and returns results to the run report.
+Arena's `EvalOrchestrator` wraps `EvalRunner` and calls its `Run*Evals` methods directly. It builds its own `EvalContext` and returns results to the run report. Arena scores every trigger when the conversation ends: it replays the turn triggers (`every_turn`, `sample_turns`) once per assistant turn, over the transcript up to that turn's reply, then runs the session triggers and `on_conversation_complete`. A turn ends at the assistant reply before the next user message, so the intermediate replies of a tool loop are not scored separately.
 
 `EvalWorker` is the event-driven path. It subscribes to `eval.turn.*` and `eval.session.*` events through an `EventSubscriber` that your platform supplies, runs `EvalRunner`, and writes the results through a `ResultWriter`. This path suits deployments where evals run in a separate process from the conversation.
 
@@ -149,8 +151,10 @@ sequenceDiagram
     E->>E: Build conversation context
     E->>E: Turn-level assertions on each assistant message
     E->>E: Conversation-level assertions
-    E->>O: Pack session evals (if configured)
+    E->>O: Pack evals (if configured)
+    O->>R: RunTurnEvals per assistant turn
     O->>R: RunSessionEvals
+    O->>R: RunConversationEvals
     R-->>O: Eval results
     O-->>E: Eval results
     E->>E: Aggregate results

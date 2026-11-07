@@ -314,6 +314,30 @@ func (v *ConfigValidator) validateCrossReferences() {
 				id, scenario.TaskType)
 			v.errors = append(v.errors, err)
 		}
+		v.validateTurnRoles(id, scenario)
+	}
+}
+
+// validateTurnRoles checks that each turn's role is one the executors run:
+// "user", or the ID of a self-play role when self-play is enabled. Anything
+// else, "assistant" included, used to pass validation and then fail the run
+// with "unsupported role" (#428). The assistant's side of a turn is the
+// provider's reply; a scenario does not script it.
+func (v *ConfigValidator) validateTurnRoles(id string, scenario *Scenario) {
+	selfPlayRoles := make(map[string]bool)
+	if sp := v.config.SelfPlay; sp != nil && sp.IsEnabled() {
+		for _, role := range sp.Roles {
+			selfPlayRoles[role.ID] = true
+		}
+	}
+	for i := range scenario.Turns {
+		role := scenario.Turns[i].Role
+		if role == "user" || selfPlayRoles[role] {
+			continue
+		}
+		v.errors = append(v.errors, fmt.Errorf(
+			"scenario %s: turns[%d].role %q is not \"user\" or a self-play role ID (spec.self_play.roles)",
+			id, i, role))
 	}
 }
 

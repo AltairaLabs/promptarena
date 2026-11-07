@@ -1,0 +1,13 @@
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Scenario
+metadata:
+  name: two-turns
+spec:
+  id: two-turns
+  task_type: basic
+  description: "Two scripted user turns"
+  turns:
+    - role: user
+      content: "First question"
+    - role: user
+      content: "Second question"

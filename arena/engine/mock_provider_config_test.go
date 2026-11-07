@@ -128,6 +128,33 @@ func TestEnableMockProviderMode_RelativeConfigResolvesAgainstConfigDir(t *testin
 	}
 }
 
+// TestEnableMockProviderMode_RelativeConfigDirResolvesOnce covers a relative
+// --config (`promptarena run examples/x/config.arena.yaml`): ConfigDir is then
+// relative too, and the provider was already constructed, so createProviderImpl
+// has rewritten mock_config to ConfigDir/mock-responses.yaml. Joining ConfigDir
+// again gave examples/x/examples/x/mock-responses.yaml (#432 item 1).
+func TestEnableMockProviderMode_RelativeConfigDirResolvesOnce(t *testing.T) {
+	root := t.TempDir()
+	t.Chdir(root)
+	configDir := filepath.Join("kits", "demo")
+	if err := os.MkdirAll(configDir, 0o750); err != nil {
+		t.Fatal(err)
+	}
+	writeMockConfig(t, configDir, declaredMockResponse)
+
+	eng := engineWithMockProvider(t, configDir, "mock-responses.yaml")
+	if _, err := createProviderImpl(configDir, eng.providers["declared-mock"]); err != nil {
+		t.Fatalf("createProviderImpl failed: %v", err)
+	}
+	if err := eng.EnableMockProviderMode(""); err != nil {
+		t.Fatalf("EnableMockProviderMode failed: %v", err)
+	}
+
+	if got := predictOnce(t, eng, "declared-mock"); got != declaredMockResponse {
+		t.Errorf("relative mock_config was resolved wrongly:\n got: %q\nwant: %q", got, declaredMockResponse)
+	}
+}
+
 // TestEnableMockProviderMode_FlagOverridesDeclaredConfig pins the precedence:
 // an explicit --mock-config is an operator override and wins over what any
 // provider declares. Without this the fix could satisfy the test above by simply

@@ -67,6 +67,12 @@ import (
 //
 // Returns all components needed to construct an Engine, or an error if any component fails to build.
 //
+// The components belong to the one Engine built from them: Engine.Close
+// closes the provider registry, the MCP registry and the self-play registry
+// and runs a2aCleanup. Do not pass the same components to a second engine;
+// closing either engine tears down what the other is using. Call
+// BuildEngineComponents again for each engine.
+//
 //nolint:gocritic // 8 returns are the public API contract
 func BuildEngineComponents(cfg *arenaconfig.Config, providerFilter []string) (
 	providerRegistry *providers.Registry,
@@ -323,14 +329,20 @@ var providerFileKeys = map[string]string{
 }
 
 // resolveProviderFilePath rewrites a provider's relative file path (see
-// providerFileKeys) to one rooted at configDir.
+// providerFileKeys) to an absolute one rooted at configDir. The result is
+// absolute even when configDir is relative (a relative --config), so a second
+// call is a no-op: joining a relative result with configDir again doubled it.
 func resolveProviderFilePath(configDir string, provider *config.Provider) {
 	key, ok := providerFileKeys[provider.Type]
 	if !ok || provider.AdditionalConfig == nil || configDir == "" {
 		return
 	}
 	if p, ok := provider.AdditionalConfig[key].(string); ok && p != "" && !filepath.IsAbs(p) {
-		provider.AdditionalConfig[key] = filepath.Join(configDir, p)
+		resolved := filepath.Join(configDir, p)
+		if abs, err := filepath.Abs(resolved); err == nil {
+			resolved = abs
+		}
+		provider.AdditionalConfig[key] = resolved
 	}
 }
 
@@ -711,6 +723,14 @@ func buildEvalOrchestrator(
 	// Create registry with default handlers (registered via init() in handlers package)
 	registry := evals.NewEvalTypeRegistry()
 	registerExecEvals(registry, cfg)
+
+	// Structural checks on the defs the arena config declares (ids, trigger,
+	// sample_percentage, metric name/type/range/labels). A loaded compiled
+	// pack's defs are not checked here: the runtime runs them as they are, and
+	// rejecting a pack it accepts would be Arena-only strictness.
+	if defErrs := evals.ValidateEvals(cfg.PackEvals, "pack_evals"); len(defErrs) > 0 {
+		return nil, fmt.Errorf("invalid pack_evals:\n  %s", strings.Join(defErrs, "\n  "))
+	}
 
 	// Validate that all eval types have registered handlers
 	if typeErrs := evals.ValidateEvalTypes(allDefs, registry); len(typeErrs) > 0 {

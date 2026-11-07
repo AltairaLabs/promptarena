@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/reference/scenario-format.md",
- "commit": "0dbee6290db4e4de3bff3101f260fd614f81c924",
+ "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
  "claims": [
   {
    "id": 1,
@@ -875,6 +875,15 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:137"
+   ]
+  },
+  {
+   "id": 107,
+   "claim": "A turn's role is user or a self-play role ID from spec.self_play.roles; promptarena validate rejects any other role, assistant included.",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go",
+    "arena/arenaconfig/validator.go"
    ]
   }
  ]

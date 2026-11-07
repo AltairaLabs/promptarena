@@ -32,6 +32,28 @@ func TestNewConfigValidator(t *testing.T) {
 	}
 }
 
+// A turn role must be "user" or a self-play role ID. `role: assistant` used
+// to validate and then fail the run with "unsupported role" (#428).
+func TestConfigValidator_TurnRoles(t *testing.T) {
+	cfg := &Config{
+		SelfPlay: &SelfPlayConfig{Roles: []SelfPlayRoleGroup{{ID: "claude-user", Provider: "p"}}},
+		LoadedScenarios: map[string]*Scenario{"s": {Turns: []TurnDefinition{
+			{Role: "user"}, {Role: "claude-user"}, {Role: "assistant"},
+		}}},
+	}
+	v := NewConfigValidatorWithPath(cfg, "")
+	v.validateCrossReferences()
+	require.Len(t, v.errors, 1)
+	assert.Contains(t, v.errors[0].Error(), `scenario s: turns[2].role "assistant" is not "user"`)
+
+	disabled := false
+	cfg.SelfPlay.Enabled = &disabled
+	cfg.LoadedScenarios["s"].Turns = []TurnDefinition{{Role: "claude-user"}}
+	v = NewConfigValidatorWithPath(cfg, "")
+	v.validateCrossReferences()
+	require.Len(t, v.errors, 1, "a self-play role does not run while self-play is disabled")
+}
+
 func TestConfigValidator_GetWarnings(t *testing.T) {
 	cfg := &Config{}
 	validator := NewConfigValidatorWithPath(cfg, "")

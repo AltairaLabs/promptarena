@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/explanation/eval-framework.md",
- "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
  "claims": [
   {
    "id": 1,
@@ -488,11 +488,11 @@
   },
   {
    "id": 73,
-   "claim": "EvalConversationExecutor step 5 runs pack session evals if configured.",
+   "claim": "EvalConversationExecutor runs pack evals for every trigger if configured: turn evals per assistant turn, then session and conversation evals.",
    "verdict": "true",
    "evidence": [
-    "arena/engine/eval_conversation_executor.go:73",
-    "arena/engine/eval_orchestrator.go:209"
+    "arena/engine/eval_conversation_executor.go",
+    "arena/engine/eval_orchestrator.go"
    ]
   },
   {
@@ -777,6 +777,16 @@
    "claim": "Internal link /arena/explanation/session-recording/ resolves to a page in this docs site.",
    "verdict": "true",
    "evidence": []
+  },
+  {
+   "id": 119,
+   "claim": "Arena scores every pack eval trigger at conversation end, replaying turn triggers once per assistant turn over the transcript up to that turn's reply; a turn ends at the assistant reply before the next user message.",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/conversation_executor.go",
+    "arena/engine/eval_orchestrator.go",
+    "arena/engine/pack_eval_triggers_test.go"
+   ]
   }
  ]
 }
