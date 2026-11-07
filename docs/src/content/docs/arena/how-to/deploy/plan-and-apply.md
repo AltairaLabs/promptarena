@@ -29,7 +29,7 @@ Preview deployment changes, apply them, check status, and tear down resources.
 - A deploy section in your arena config (see [Configure Deploy](/arena/how-to/deploy/configure/))
 - The adapter for that provider installed (see [Install Adapters](/arena/how-to/deploy/install-adapters/))
 
-`deploy`, `deploy plan` and `deploy apply` compile the pack from the arena config, so you do not need a separate compile step. Pass `--pack` to deploy a pre-compiled pack instead.
+`deploy`, `deploy plan` and `deploy apply` compile the pack from the arena config, so you do not need a separate compile step. Pass `--pack` to deploy a pre-compiled pack instead. `deploy status` does not compile the pack.
 
 ## Plan a Deployment
 
@@ -58,10 +58,12 @@ Plan: 2 to create, 0 to update, 0 to delete
   + agent_runtime.greeting (Create agent runtime)
   + a2a_endpoint.greeting (Create A2A endpoint)
 
-Plan saved. Run 'promptarena deploy apply' to execute.
+Plan saved. Run 'promptarena deploy apply --env production' to execute.
 ```
 
-`deploy plan` saves the plan to `.promptarena/deploy.plan` for a later `deploy apply`.
+`deploy plan` takes the environment's deploy lock, and saves the plan to `.promptarena/envs/<env>/deploy.plan` for a later `deploy apply` to the same environment.
+
+Before planning, the CLI sends the merged deploy config to the adapter's `validate_config`. If the adapter reports it invalid, the command stops with `deploy config is invalid for "<provider>": <reasons>` and nothing is planned. Validation warnings are printed with the plan's own warnings. An adapter that does not implement `validate_config` is planned without it.
 
 ### Reading the Plan
 
@@ -89,20 +91,20 @@ promptarena deploy --env staging
 
 What happens:
 
-1. The CLI takes the deploy lock (`.promptarena/deploy.lock`).
+1. The CLI takes the environment's deploy lock (`.promptarena/envs/<env>/deploy.lock`).
 2. It loads the arena config and merges the environment's config into the base config.
 3. It compiles the pack from the arena config, or reads the file you passed with `--pack`.
-4. If a prior state exists, it asks the adapter for current status and stores the refreshed adapter state.
-5. It sends a plan request to the adapter and prints the plan.
-6. It sends an apply request and prints each resource result the adapter returns.
-7. It saves state to `.promptarena/deploy.state`.
+4. It asks the adapter to validate the merged config (`validate_config`).
+5. If a prior state exists for this environment, it asks the adapter for current status and stores the refreshed adapter state.
+6. It sends a plan request to the adapter and prints the plan.
+7. It sends an apply request and prints each resource result the adapter returns.
+8. It saves state to `.promptarena/envs/<env>/deploy.state`.
 
-To apply a plan you have already reviewed, run `deploy apply`. It reuses the saved plan when the pack checksum and the environment match the plan, and re-plans otherwise. A compiled pack records its compile time, so recompiling from the arena config changes the checksum. To apply exactly the plan you reviewed, pass the same pre-compiled pack to both commands:
+To apply a plan you have already reviewed, run `deploy apply` with the same `--env`. It reuses the environment's saved plan when the pack checksum matches the plan, and otherwise prints `Saved plan is stale (the pack changed since it was planned), re-planning...`. The checksum ignores the pack's compile time, so recompiling an unchanged arena config keeps the saved plan:
 
 ```bash
-packc compile --config arena.yaml --output app.pack.json --id my-app
-promptarena deploy plan  --env production --pack app.pack.json
-promptarena deploy apply --env production --pack app.pack.json
+promptarena deploy plan  --env production
+promptarena deploy apply --env production   # Using saved plan.
 ```
 
 ### Specifying a Pack File
@@ -113,7 +115,7 @@ promptarena deploy --pack dist/app.pack.json
 
 ### Using a Different Config File
 
-The CLI reads `arena.yaml` by default. To point at a different file:
+The CLI reads `config.arena.yaml` by default, the same file `promptarena run` reads and `promptarena init` writes. When there is no `config.arena.yaml` but there is an `arena.yaml`, it reads `arena.yaml`. To point at a different file:
 
 ```bash
 promptarena deploy --config staging.arena.yaml
@@ -139,10 +141,11 @@ Deployment status for environment: production (provider: omnia)
   a2a_endpoint.greeting: healthy
 
   Last deployed: 2026-02-16T10:30:00Z
+  Pack version:  v1.0.0
   Pack checksum: sha256:abc123def456...
 ```
 
-With no state file, `status` prints `No deployment state found. Run 'promptarena deploy' first.` and exits 0.
+With no state for the environment, `status` prints `No deployment state found for environment "production". Run 'promptarena deploy --env production' first.` and exits 0. `status` never compiles the pack, so it works even when the arena config does not compile.
 
 ### Status Values
 
@@ -171,12 +174,12 @@ promptarena deploy destroy --env staging
 
 What happens:
 
-1. The CLI takes the deploy lock and loads the prior state. With no state, it prints `No deployment state found. Nothing to destroy.` and exits 0.
+1. The CLI takes the environment's deploy lock and loads that environment's state. With none, it prints `No deployment state found for environment "staging". Nothing to destroy.` and exits 0.
 2. It sends a destroy request with the prior state to the adapter.
 3. The adapter removes the resources it manages.
-4. The CLI deletes the local state file.
+4. The CLI deletes the environment's state file and saved plan.
 
-The state file holds one deployment, whichever environment wrote it last. `deploy destroy --env staging` sends that state to the adapter even if production wrote it. Check the `environment` field in `.promptarena/deploy.state` first to see which deployment the state describes.
+State is kept per environment, so `deploy destroy --env staging` only ever sends staging's state. Production's deployment is untouched.
 
 ## Redeployment Workflow
 
@@ -249,7 +252,7 @@ The resource types and identifiers an import accepts depend on the adapter. Afte
 
 ### No deployment state found
 
-`status`, `refresh` and `destroy` need a prior deployment in this project directory. Deploy first:
+`status`, `refresh` and `destroy` need a prior deployment to that environment in this project directory. Deploy first:
 
 ```bash
 promptarena deploy --env production
@@ -257,7 +260,7 @@ promptarena deploy --env production
 
 ### Error: failed to compile pack
 
-`failed to compile pack from arena.yaml: ...` means the arena config does not compile. Fix the reported error, or deploy a pre-compiled pack:
+`failed to compile pack from config.arena.yaml: ...` means the arena config does not compile. Fix the reported error, or deploy a pre-compiled pack:
 
 ```bash
 promptarena deploy --pack path/to/app.pack.json
@@ -265,7 +268,19 @@ promptarena deploy --pack path/to/app.pack.json
 
 ### Error: deploy lock is held by another process
 
-Another `deploy`, `apply`, `destroy`, `refresh` or `import` is running in this project directory. Wait for it to finish, then run your command again. The operating system releases the lock when that process exits.
+Another `deploy`, `plan`, `apply`, `destroy`, `refresh` or `import` for the same environment is running in this project directory; the message names its pid. Wait for it to finish, then run your command again. The operating system releases the lock when that process exits, so there is no lock file to delete.
+
+### Error: legacy deploy state ... belongs to environment
+
+Earlier releases kept one `.promptarena/deploy.state` for every environment. The CLI uses that file only for the environment it records. Run `promptarena deploy status --env <environment named in the error>` once; it moves the file to `.promptarena/envs/<env>/`, and commands for other environments then work.
+
+### Error: deploy config is invalid
+
+The adapter's `validate_config` rejected the merged deploy config. Fix the reasons it lists in the `deploy:` section (or the environment's overrides) and plan again.
+
+### Adapter errors and logs
+
+The adapter's stderr is shown in the terminal, so its log lines appear alongside the CLI's output. When an adapter exits mid-command, the error ends with the last lines it wrote to stderr (`adapter closed connection unexpectedly; adapter stderr: ...`), which is usually the panic or fatal error.
 
 ### Deployment shows no changes
 

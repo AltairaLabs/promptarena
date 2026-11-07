@@ -17,9 +17,7 @@ func lockFileExclusive(f *os.File) error {
 	err := windows.LockFileEx(h, flags, 0, 1, 0, ol)
 	if err != nil {
 		if err == windows.ERROR_LOCK_VIOLATION {
-			return fmt.Errorf(
-				"deploy lock is held by another process; " +
-					"wait for the other deploy to finish or remove the lock file")
+			return errLockHeld
 		}
 		return fmt.Errorf("failed to acquire deploy lock: %w", err)
 	}

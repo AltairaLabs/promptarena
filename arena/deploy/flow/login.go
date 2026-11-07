@@ -16,6 +16,7 @@ import (
 	"github.com/pkg/browser"
 	"gopkg.in/yaml.v3"
 
+	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
 	"github.com/AltairaLabs/promptarena/v2/deploy"
 )
 
@@ -25,10 +26,6 @@ const (
 	loginStateBytes           = 16
 	loopbackReadHeaderTimeout = 10 * time.Second
 
-	// configFilePerms is the fallback permission used when writing a config
-	// file that does not yet exist. The profile may carry a scoped token, so
-	// default to owner-only.
-	configFilePerms = 0o600
 	// yamlIndentSpaces matches the repo's 2-space YAML convention.
 	yamlIndentSpaces = 2
 
@@ -81,18 +78,49 @@ func Login(ctx context.Context, provider string, opts Options, hooks LoginHooks)
 	if err != nil {
 		return err
 	}
+	// Check the config before starting the adapter: a missing or broken config
+	// should fail fast, without spawning a subprocess first.
+	cfgJSON, err := loginConfigJSON(provider, opts)
+	if err != nil {
+		return err
+	}
 	client, err := Connect(ctx, provider, dir)
 	if err != nil {
 		return err
 	}
 	defer client.Close()
 
-	_, dep, err := LoadConfig(opts)
-	if err != nil {
-		return err
-	}
-	cfgJSON, _ := MergedConfigJSON(dep, ResolveEnv(opts), opts.config())
 	return runLoginFlow(ctx, client, provider, opts.config(), cfgJSON, hooks, writeLoginResult)
+}
+
+// loginConfigJSON loads the arena config login will write into and returns
+// the deploy config JSON the adapter sees during login. The deploy section is
+// optional: login is how a config gets one, so a fresh config (for example
+// from 'promptarena init') starts from an empty deploy config for provider.
+func loginConfigJSON(provider string, opts Options) (string, error) {
+	path := opts.config()
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return "", configNotFoundError(path)
+	}
+	cfg, err := loadArenaConfig(opts)
+	if err != nil {
+		return "", err
+	}
+	dep := cfg.Deploy
+	if dep == nil {
+		dep = &arenaconfig.DeployConfig{Provider: provider}
+	}
+	return MergedConfigJSON(dep, ResolveEnv(opts), path)
+}
+
+// configNotFoundError is the error for login or profile import against a
+// config that does not exist yet. Both only merge into an existing arena
+// manifest; they never create one from scratch.
+func configNotFoundError(path string) error {
+	return fmt.Errorf(
+		"config file not found: %s\nCreate one first (e.g. 'promptarena init'), then re-run this command",
+		path,
+	)
 }
 
 func runLoginFlow(ctx context.Context, client loginClient, provider, configPath, configJSON string,
@@ -225,14 +253,16 @@ func writeTokenOnly(provider, configPath string, resp *deploy.CompleteLoginRespo
 // MergeProfileIntoConfigFile deep-merges the profile fragment into the
 // spec.deploy.config mapping of the arena config file at configPath, preserving
 // the rest of the document (comments, key order, unrelated sections), then
-// writes the result back with the file's existing permissions (or
-// configFilePerms for a config that does not yet exist).
+// writes the result back with the file's existing permissions. The file must
+// already exist: the deploy section is merged into an arena manifest, and a
+// manifest is never synthesized from nothing.
 func MergeProfileIntoConfigFile(configPath string, profile map[string]interface{}, provider string) error {
-	if _, statErr := os.Stat(configPath); os.IsNotExist(statErr) {
-		return fmt.Errorf(
-			"config file not found: %s\nCreate one first (e.g. 'promptarena init'), then re-run login",
-			configPath,
-		)
+	fi, statErr := os.Stat(configPath)
+	if os.IsNotExist(statErr) {
+		return configNotFoundError(configPath)
+	}
+	if statErr != nil {
+		return fmt.Errorf("failed to stat config %s: %w", configPath, statErr)
 	}
 	doc, err := os.ReadFile(configPath) //nolint:gosec // configPath is the user-specified arena config path
 	if err != nil {
@@ -242,11 +272,7 @@ func MergeProfileIntoConfigFile(configPath string, profile map[string]interface{
 	if err != nil {
 		return err
 	}
-	mode := os.FileMode(configFilePerms)
-	if fi, statErr := os.Stat(configPath); statErr == nil {
-		mode = fi.Mode().Perm()
-	}
-	if err := os.WriteFile(configPath, merged, mode); err != nil {
+	if err := os.WriteFile(configPath, merged, fi.Mode().Perm()); err != nil {
 		return fmt.Errorf("failed to write config %s: %w", configPath, err)
 	}
 	return nil

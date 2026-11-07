@@ -20,7 +20,7 @@ verified:
 
 ## Overview
 
-Deploy records each deployment in a local file, `.promptarena/deploy.state`, so later commands can update, check, refresh and tear down what was deployed. This page explains what the file stores, when it changes, and why.
+Deploy records each environment's deployment in a local file, `.promptarena/envs/<env>/deploy.state`, so later commands can update, check, refresh and tear down what was deployed there. This page explains what the file stores, when it changes, and why.
 
 ## Why State?
 
@@ -34,15 +34,21 @@ State records what was deployed, when, and the information the adapter needs to 
 
 ## State File Location
 
-The state file lives in the directory you run `promptarena deploy` from:
+State lives in the directory you run `promptarena deploy` from, one subdirectory per environment (`--env`, or `default`):
 
 ```text
 project/
 └── .promptarena/
-    ├── deploy.state    # last deployment
-    ├── deploy.plan     # plan saved by `deploy plan`, removed by apply
-    └── deploy.lock     # present while a command holds the lock
+    └── envs/
+        ├── default/
+        │   ├── deploy.state    # last deployment to this environment
+        │   ├── deploy.plan     # plan saved by `deploy plan`, removed by apply
+        │   └── deploy.lock     # the lock file; created on first use and kept
+        └── production/
+            └── ...
 ```
+
+An environment name becomes a directory, so it must start with a letter or digit and contain only letters, digits, `.`, `_` and `-`. Any other `--env` is rejected.
 
 - Directory permissions: `0750`
 - File permissions: `0600` (read/write for owner only)
@@ -58,7 +64,7 @@ The CLI creates the `.promptarena/` directory the first time it saves state or t
   "provider": "agentcore",
   "environment": "production",
   "last_deployed": "2026-02-16T10:30:00Z",
-  "pack_version": "",
+  "pack_version": "v1.0.0",
   "pack_checksum": "sha256:abc123def456...",
   "adapter_version": "0.2.0",
   "last_refreshed": "2026-02-16T11:00:00Z",
@@ -70,10 +76,10 @@ The CLI creates the `.promptarena/` directory the first time it saves state or t
 |-------|-------------|
 | `version` | State file format version (`1`) |
 | `provider` | Name of the adapter that created this state |
-| `environment` | Environment of the command that wrote the state |
+| `environment` | The environment this state belongs to |
 | `last_deployed` | RFC 3339 timestamp (UTC) of the last successful apply |
-| `pack_version` | Written empty by the CLI |
-| `pack_checksum` | SHA-256 checksum of the deployed pack JSON (`sha256:{hex}`) |
+| `pack_version` | The deployed pack's top-level `version` |
+| `pack_checksum` | SHA-256 checksum of the deployed pack, ignoring its compile time (`sha256:{hex}`) |
 | `adapter_version` | Version the adapter reported in `GetProviderInfo` |
 | `last_refreshed` | RFC 3339 timestamp of the last refresh (omitted if never refreshed) |
 | `state` | Opaque string from the adapter (resource IDs, metadata, etc.) |
@@ -95,7 +101,7 @@ flowchart LR
 The CLI builds the state from:
 
 1. The provider name from the config and the environment from `--env` (or `default`)
-2. The checksum of the pack it sent
+2. The pack's `version` and checksum
 3. The adapter version from `GetProviderInfo`
 4. The opaque state string returned by `Apply`
 
@@ -112,7 +118,7 @@ Commands load state when they need prior context:
 - `deploy import`: passes prior state so the adapter can add the resource to it
 - `deploy destroy`: passes prior state so the adapter knows what to tear down
 
-`status`, `refresh` and `destroy` stop with `No deployment state found` when the file is absent.
+Each command reads only the state of the environment it targets. `status`, `refresh` and `destroy` stop with `No deployment state found for environment "<env>"` when that environment has none.
 
 ### Update
 
@@ -120,19 +126,19 @@ Each successful `deploy` or `deploy apply` replaces the whole file. The new stat
 
 ### Deletion
 
-A successful `deploy destroy` deletes the state file.
+A successful `deploy destroy` deletes the environment's state file and any plan saved for it.
 
 ## Pack Checksums
 
-The CLI computes a SHA-256 checksum of the pack JSON it deploys:
+The CLI computes a SHA-256 checksum of the pack it deploys. It leaves out `compilation.created_at`, which changes on every compile, and hashes the rest of the pack with its keys in sorted order:
 
 ```text
 sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
 ```
 
-The checksum is stored in state and shown by `deploy status`. It identifies the exact bytes deployed.
+The checksum is stored in state and shown by `deploy status`. Recompiling an unchanged pack gives the same checksum, so two deployments with the same checksum deployed the same pack content.
 
-The CLI also compares checksums when you run `deploy apply` after `deploy plan`: it reuses the saved plan only when the checksum and environment match. A compiled pack records its compile time, so every compile produces a new checksum. To compare deployments or reuse a saved plan, compile once with `packc` and pass the file with `--pack`.
+The CLI also compares checksums when you run `deploy apply` after `deploy plan`: it reuses the saved plan only when the checksum matches. Changing any prompt, tool or other pack content makes the saved plan stale, and apply re-plans.
 
 The checksum is not sent to the adapter. Adapters decide what changed from the pack itself and their own state.
 
@@ -155,9 +161,9 @@ Each adapter tracks the provider-specific information it needs, and the CLI need
 
 ## State and Environments
 
-A project directory has one state file, whichever environment you target. The file holds the last deployment written, and `environment` records which environment that was.
+Each environment has its own state file, saved plan and lock under `.promptarena/envs/<env>/`. After `deploy --env production`, `deploy status --env staging` reports no deployment, and `deploy destroy --env staging` has nothing to destroy: production's adapter state is never sent for another environment.
 
-The CLI does not check `environment` before using the state. After `deploy --env production`, a `deploy status --env staging` or `deploy destroy --env staging` sends production's adapter state to the adapter. To deploy several environments from one checkout, keep each environment's state separately (for example, a separate working directory or CI artifact per environment).
+Earlier releases kept one `.promptarena/deploy.state` per directory. The CLI still reads that file, but only for the environment it records. The first command that targets that environment moves it to `.promptarena/envs/<env>/deploy.state`. A command for any other environment stops with an error naming the file and its environment, rather than using or ignoring it. Run `promptarena deploy status --env <that environment>` once to move it, then carry on.
 
 ## State and CI/CD
 
@@ -197,12 +203,14 @@ Import calls the adapter's `Import` method with the resource type, name and iden
 
 ## State Locking
 
-Deploy takes an exclusive lock on `.promptarena/deploy.lock` so that two commands in the same directory cannot write state at once:
+Deploy takes an exclusive lock on `.promptarena/envs/<env>/deploy.lock` so that two commands for the same environment cannot write its state at once. Different environments lock independently:
 
 - Unix and Linux: `flock(2)` with `LOCK_EX|LOCK_NB`
 - Windows: `LockFileEx` with `LOCKFILE_EXCLUSIVE_LOCK|LOCKFILE_FAIL_IMMEDIATELY`
 
-`deploy`, `deploy apply`, `deploy destroy`, `deploy refresh` and `deploy import` take the lock before reading state. `deploy plan` and `deploy status` do not. If another process holds the lock, the command fails at once with `deploy lock is held by another process` instead of waiting. The operating system releases the lock when the holding process exits, and the CLI deletes the lock file when it unlocks.
+`deploy`, `deploy plan`, `deploy apply`, `deploy destroy`, `deploy refresh` and `deploy import` take the lock before reading state, and so does the TUI's Deploy page while it plans and applies. `deploy status` only reads, and does not. If another process holds the lock, the command fails at once with `deploy lock is held by another process (pid <n>) for environment "<env>"` instead of waiting.
+
+The operating system releases the lock when the holding process exits, however it exits, so a leftover `deploy.lock` file never blocks anyone and never needs deleting. The CLI keeps the file: deleting a lock file while a command holds it would let a second command lock a new file at the same path while the first is still running.
 
 ## Tradeoffs
 
@@ -216,8 +224,8 @@ Deploy takes an exclusive lock on `.promptarena/deploy.lock` so that two command
 ### Limitations
 
 - Local only: state is stored on disk, not in a remote backend.
-- One deployment per directory: environments share the state file.
-- Single machine: the lock prevents concurrent deploys in one directory, but does not coordinate across machines.
+- One deployment per environment per directory.
+- Single machine: the lock prevents concurrent deploys to one environment in one directory, but does not coordinate across machines.
 
 ## See Also
 

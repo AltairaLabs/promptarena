@@ -37,7 +37,7 @@ func runDeployRefresh(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
 
 	// Acquire deploy lock.
-	unlock, err := flow.Lock(projectDir)
+	unlock, err := flow.Lock(projectDir, env)
 	if err != nil {
 		return err
 	}
@@ -45,12 +45,15 @@ func runDeployRefresh(cmd *cobra.Command, args []string) error {
 
 	fmt.Printf("Refreshing state for environment: %s (provider: %s)\n", env, deployCfg.Provider)
 
-	configJSON, err := flow.MergedConfigJSON(deployCfg, env, deployConfig)
+	configJSON, err := flow.MergedConfigJSON(deployCfg, env, deployConfigPath())
 	if err != nil {
 		return err
 	}
 
-	stateStore := deploy.NewStateStore(projectDir)
+	stateStore, err := openEnvState(projectDir, env)
+	if err != nil {
+		return err
+	}
 	priorState, err := stateStore.Load()
 	if err != nil {
 		return fmt.Errorf("failed to load deploy state: %w", err)
@@ -58,7 +61,8 @@ func runDeployRefresh(cmd *cobra.Command, args []string) error {
 
 	if priorState == nil {
 		fmt.Println()
-		fmt.Println("  No deployment state found. Run 'promptarena deploy' first.")
+		fmt.Printf("  No deployment state found for environment %q. Run 'promptarena deploy --env %s' first.\n",
+			env, env)
 		return nil
 	}
 

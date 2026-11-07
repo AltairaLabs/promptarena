@@ -50,14 +50,52 @@ func TestAdapterInstalled_ProjectLocal(t *testing.T) {
 
 func TestLock_ContentionReturnsError(t *testing.T) {
 	dir := t.TempDir()
-	release, err := Lock(dir)
+	release, err := Lock(dir, "production")
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer release()
-	if _, err := Lock(dir); err == nil {
+	if _, err := Lock(dir, "production"); err == nil {
 		t.Fatal("expected lock contention error on second Lock")
 	} else if !strings.Contains(err.Error(), "lock") {
 		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+// TestLock_EnvironmentsLockIndependently pins that a deploy to one
+// environment never blocks (or is blocked by) another's.
+func TestLock_EnvironmentsLockIndependently(t *testing.T) {
+	dir := t.TempDir()
+	releaseProd, err := Lock(dir, "production")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer releaseProd()
+	releaseStaging, err := Lock(dir, "staging")
+	if err != nil {
+		t.Fatalf("staging must lock while production is held: %v", err)
+	}
+	releaseStaging()
+}
+
+// TestLock_RejectsUnsafeEnvironmentName pins that an env name cannot escape
+// the per-environment directory.
+func TestLock_RejectsUnsafeEnvironmentName(t *testing.T) {
+	if _, err := Lock(t.TempDir(), "../prod"); err == nil {
+		t.Fatal("expected an invalid environment name to be rejected")
+	}
+}
+
+// TestSetAdapterStderr_ReturnsPrevious pins the swap-and-restore contract
+// the TUI relies on.
+func TestSetAdapterStderr_ReturnsPrevious(t *testing.T) {
+	var buf strings.Builder
+	prev := SetAdapterStderr(&buf)
+	defer SetAdapterStderr(prev)
+	if prev != os.Stderr {
+		t.Fatalf("default adapter stderr = %v, want os.Stderr", prev)
+	}
+	if currentAdapterStderr() != &buf {
+		t.Fatal("SetAdapterStderr did not take effect")
 	}
 }

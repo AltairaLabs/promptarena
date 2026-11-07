@@ -115,10 +115,10 @@ func runDeployConfigImport(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	if err := flow.MergeProfileIntoConfigFile(deployConfig, profile, deployConfigImportProvider); err != nil {
+	if err := flow.MergeProfileIntoConfigFile(deployConfigPath(), profile, deployConfigImportProvider); err != nil {
 		return err
 	}
-	fmt.Printf("Imported profile into %s (merged under deploy.config)\n", deployConfig)
+	fmt.Printf("Imported profile into %s (merged under deploy.config)\n", deployConfigPath())
 
 	if deployConfigImportSkipValidate {
 		fmt.Println("Skipping validation (--skip-validate).")
@@ -140,7 +140,7 @@ func validateDeployConfig() error {
 	projectDir, _ := os.Getwd()
 	ctx := context.Background()
 
-	configJSON, err := flow.MergedConfigJSON(deployCfg, env, deployConfig)
+	configJSON, err := flow.MergedConfigJSON(deployCfg, env, deployConfigPath())
 	if err != nil {
 		return err
 	}

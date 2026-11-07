@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"errors"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
@@ -268,14 +269,16 @@ func TestLogin_CancelKeyReturnsToPreflight(t *testing.T) {
 }
 
 // TestDeployPage_StartLogin_WiresGoroutineToSend drives the real
-// flow.Login goroutine wiring (not a fake) with a provider that has no
-// adapter installed, so Connect fails fast without any network/browser
-// round-trip. This exercises the actual cmd-starts-goroutine-calls-send
-// plumbing that the message-only tests above can't reach.
+// flow.Login goroutine wiring (not a fake) against a config that does not
+// exist, so Login fails fast — before starting any adapter — without any
+// network/browser round-trip. This exercises the actual
+// cmd-starts-goroutine-calls-send plumbing that the message-only tests above
+// can't reach.
 func TestDeployPage_StartLogin_WiresGoroutineToSend(t *testing.T) {
 	sink := &loginMsgSink{}
 	p := &DeployPage{
 		pf:   &flow.Preflight{Provider: "no-such-adapter-xyz", SupportsLogin: true},
+		opts: flow.Options{ConfigPath: filepath.Join(t.TempDir(), "absent.arena.yaml")},
 		send: sink.send,
 	}
 	cmd := p.startLogin()
@@ -285,8 +288,8 @@ func TestDeployPage_StartLogin_WiresGoroutineToSend(t *testing.T) {
 	cmd() // starts the goroutine; the cmd itself returns nil (see brief note)
 
 	done := waitForLoginDone(t, sink)
-	if done.err == nil || !strings.Contains(done.err.Error(), "adapter not found") {
-		t.Fatalf("loginDoneMsg.err = %v, want an adapter-not-found error", done.err)
+	if done.err == nil || !strings.Contains(done.err.Error(), "config file not found") {
+		t.Fatalf("loginDoneMsg.err = %v, want a config-not-found error", done.err)
 	}
 }
 
@@ -803,7 +806,7 @@ func TestConfirm_YKeyStartsApplyGoroutine(t *testing.T) {
 // contention, this would panic on a nil pointer and fail the test.
 func TestDeployPage_StartApply_LockContentionReportsErr(t *testing.T) {
 	dir := t.TempDir()
-	release, err := flow.Lock(dir)
+	release, err := flow.Lock(dir, flow.DefaultEnv)
 	if err != nil {
 		t.Fatalf("failed to acquire test lock: %v", err)
 	}
@@ -1057,7 +1060,7 @@ func TestStalePlan_NoticeShownBeforeReplan(t *testing.T) {
 	dir := t.TempDir()
 	fp := &fakeDeployProvider{plan: planWithChanges()}
 	dc := &arenaconfig.DeployConfig{Provider: "fake"}
-	store := deploy.NewStateStore(dir)
+	store := deploy.NewStateStore(dir, flow.DefaultEnv)
 
 	// Seed a saved plan with a checksum/env that won't match this session's
 	// (whose packData is `{"pack":true}` and whose Env resolves to
@@ -1069,7 +1072,7 @@ func TestStalePlan_NoticeShownBeforeReplan(t *testing.T) {
 	sess := flow.NewSession(flow.Options{ProjectDir: dir}, &arenaconfig.Config{Deploy: dc}, dc,
 		fp, store, []byte(`{"pack":true}`), `{}`, func() error { return nil })
 
-	p := &DeployPage{state: deployStatePlanning, sess: sess}
+	p := &DeployPage{state: deployStatePlanning, sess: sess, opts: flow.Options{ProjectDir: dir}}
 	sink := &loginMsgSink{}
 	p.send = sink.send
 

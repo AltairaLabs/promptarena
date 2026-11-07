@@ -80,7 +80,7 @@ func TestOpen_UnresolvablePackFailsBeforeDialling(t *testing.T) {
 // a deploy tool, because it succeeds.
 func TestSession_PlanFreshnessTracksThePackAndEnv(t *testing.T) {
 	dir := t.TempDir()
-	store := deploy.NewStateStore(dir)
+	store := deploy.NewStateStore(dir, "staging")
 	opts := Options{ProjectDir: dir, Env: "staging"}
 	dep := &arenaconfig.DeployConfig{Provider: "acme"}
 
@@ -158,7 +158,7 @@ func TestSession_CloseWithoutACloserIsSafe(t *testing.T) {
 func TestSession_LoadPlanWithNoSavedPlan(t *testing.T) {
 	sess := NewSession(Options{}, &arenaconfig.Config{},
 		&arenaconfig.DeployConfig{Provider: "acme"}, nil,
-		deploy.NewStateStore(t.TempDir()), nil, "", nil)
+		deploy.NewStateStore(t.TempDir(), "staging"), nil, "", nil)
 
 	saved, err := sess.LoadPlan()
 	if err != nil {
@@ -180,9 +180,13 @@ type fakeProvider struct {
 	status    *deploy.StatusResponse
 	statusErr error
 
-	sawPlanReq   *deploy.PlanRequest
-	sawStatusReq *deploy.StatusRequest
-	appliedState string
+	validate    *deploy.ValidateResponse
+	validateErr error
+
+	sawPlanReq     *deploy.PlanRequest
+	sawStatusReq   *deploy.StatusRequest
+	sawValidateReq *deploy.ValidateRequest
+	appliedState   string
 }
 
 func (f *fakeProvider) GetProviderInfo(context.Context) (*deploy.ProviderInfo, error) {
@@ -190,9 +194,16 @@ func (f *fakeProvider) GetProviderInfo(context.Context) (*deploy.ProviderInfo, e
 }
 
 func (f *fakeProvider) ValidateConfig(
-	context.Context, *deploy.ValidateRequest,
+	_ context.Context, req *deploy.ValidateRequest,
 ) (*deploy.ValidateResponse, error) {
-	return &deploy.ValidateResponse{}, nil
+	f.sawValidateReq = req
+	if f.validateErr != nil {
+		return nil, f.validateErr
+	}
+	if f.validate != nil {
+		return f.validate, nil
+	}
+	return &deploy.ValidateResponse{Valid: true}, nil
 }
 
 func (f *fakeProvider) Plan(_ context.Context, req *deploy.PlanRequest) (*deploy.PlanResponse, error) {
@@ -222,7 +233,7 @@ func (f *fakeProvider) Import(context.Context, *deploy.ImportRequest) (*deploy.I
 func newTestSession(t *testing.T, client deploy.Provider) (*Session, *deploy.StateStore) {
 	t.Helper()
 	dir := t.TempDir()
-	store := deploy.NewStateStore(dir)
+	store := deploy.NewStateStore(dir, "staging")
 	sess := NewSession(Options{ProjectDir: dir, Env: "staging"}, &arenaconfig.Config{},
 		&arenaconfig.DeployConfig{Provider: "acme"}, client, store,
 		[]byte(`{"pack":"v1"}`), `{"cfg":true}`, nil)

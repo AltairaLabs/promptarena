@@ -23,10 +23,13 @@ instead of exporting a profile and running `deploy config import`.
   [Install Adapters](/arena/how-to/deploy/install-adapters/)). An adapter that
   supports login advertises the `login` capability.
 - A local browser. This flow does not work headless; see [CI](#ci--headless).
-- An arena config file with a `spec.deploy` section that names the provider.
-  Login merges into that section and does not create it.
-- Any non-secret coordinates the provider needs, already set in the deploy
-  section. For Omnia, that is `api_endpoint`; login fills in the rest.
+- An arena config file (for example from `promptarena init`). Login merges into
+  it and does not create the file. If it has no `spec.deploy` section, login
+  creates one with `provider` set from `--provider`.
+- Any non-secret coordinates the provider needs to start a login, already set
+  in the deploy section. For Omnia, that is `api_endpoint`; login fills in the
+  rest. A provider that needs nothing up front can log in from a config with
+  no deploy section at all.
 
 ## Log in
 
@@ -52,7 +55,7 @@ What happens:
 
 ## What gets written
 
-- The arena config (`arena.yaml`, or the file given with `--config`): the deploy
+- The arena config (`config.arena.yaml` by default, or the file given with `--config`): the deploy
   profile is merged under `spec.deploy.config` (endpoint, workspace, providers and
   skills). Login keeps the rest of the file, including comments and key order.
   The token is not written here.
@@ -82,7 +85,7 @@ variable (for Omnia, `OMNIA_API_TOKEN`). See [CI/CD Integration](/arena/how-to/d
 |---------|-------------|
 | `adapter "<p>" does not support login` | The adapter has no `login` capability. Configure manually (see [Configure Deploy](/arena/how-to/deploy/configure/)) or install a newer adapter. |
 | `no provider specified; pass --provider` | The config has no `deploy.provider`. Pass `--provider`. |
-| `deploy config "arena.yaml" not found` or `no deploy: section` | Create the config and its deploy section first (see [Configure Deploy](/arena/how-to/deploy/configure/)), then log in again. |
+| `config file not found: <path>` | Login merges into an existing arena config and never creates one. Create it first (for example with `promptarena init`), then log in again. A config without a `deploy:` section is fine: login adds one, with `provider` set from `--provider`. |
 | The browser didn't open | Open the URL the CLI printed. |
 | `login timed out waiting for the browser callback` | The CLI waits 5 minutes for the callback. Run login again and finish in the browser. |
 

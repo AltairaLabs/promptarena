@@ -194,17 +194,22 @@ output, but does not set the failure exit codes. See
 The **Deploy** entry walks the deploy lifecycle as a wizard: preflight, plan,
 confirm, apply and status. It is selectable with any loaded config. Without a
 `deploy:` section it opens a "Deploy failed" screen; see
-[Configure Deploy](/arena/how-to/deploy/configure/) to set one up. The wizard always
-targets the `default` environment. For another environment, use
-`promptarena deploy --env <name>`.
+[Configure Deploy](/arena/how-to/deploy/configure/) to set one up. The wizard starts
+on the `default` environment; press `e` on the preflight screen to switch to one of
+the config's `deploy.environments`.
 
 ### Preflight
 
 Opening Deploy starts on a readiness gate that shows:
 
-- The target provider and environment.
+- The target provider and environment. A non-default environment is flagged in
+  amber, and `production` in red.
 - Adapter presence: `✓ <provider> vX.Y.Z` if installed, `✗ not installed` if not.
 - Auth: `✓ authenticated` or `✗ not authenticated`.
+
+When the config declares `deploy.environments`, press `e` to cycle the target
+through `default` and each declared environment (in name order). Each switch re-runs
+the preflight for the new target, since config and auth are per environment.
 
 If the adapter is missing, preflight blocks and prints the command to run:
 
@@ -239,11 +244,18 @@ Drifted resources are badged `⚠ N drifted`. The diff uses the same `+` / `~` /
 
 ### Confirm
 
-Confirm shows a `[y/N]` prompt. Press `y` to apply; any other key returns to the plan.
+For the `default` environment, Confirm shows a `[y/N]` prompt. Press `y` to apply;
+any other key returns to the plan.
+
+For any other environment, Confirm shows a `⚠ Deploying to <ENV>` banner and asks
+you to type the environment name. `Enter` applies only when what you typed matches
+exactly; otherwise it shows `names don't match`.
 
 ### Apply
 
-Deploy acquires a deploy lock and applies. The screen shows a spinner and
+Planning and applying each hold the environment's deploy lock, the same lock the
+CLI takes, so the wizard cannot race a `promptarena deploy` for that environment.
+Adapter log output (its stderr) goes to the TUI's log, not over the screen. The screen shows a spinner and
 `Applying...` until resource events arrive, then the resource table and log panel.
 The result screen reads `Apply completed successfully`, `with N failure(s)` or
 `with errors`.

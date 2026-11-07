@@ -22,6 +22,11 @@ var deployCmd = &cobra.Command{
 
 When run without a subcommand, deploy executes a plan followed by apply.
 
+The config defaults to config.arena.yaml (the file 'promptarena run' reads),
+falling back to arena.yaml when only that exists. Deploy state, saved plans
+and the deploy lock are kept per environment under .promptarena/envs/<env>/,
+so commands for one --env never read or change another environment's state.
+
 Subcommands:
   plan      Preview what would be deployed
   apply     Apply the deployment
@@ -29,8 +34,14 @@ Subcommands:
   destroy   Tear down a deployment
   refresh   Refresh local state from live environment
   import    Import a pre-existing resource
+  adapter   Install, list or remove deploy adapters
+  config    Manage the deploy configuration (import a profile)
+  login     Authenticate in the browser and write the deploy config
 
 Examples:
+  promptarena deploy adapter install omnia
+  promptarena deploy login --provider omnia
+  promptarena deploy config import omnia-profile.json
   promptarena deploy --env production
   promptarena deploy plan --env staging
   promptarena deploy apply --env staging
@@ -51,7 +62,8 @@ func init() {
 	rootCmd.AddCommand(deployCmd)
 
 	deployCmd.PersistentFlags().StringVarP(&deployEnv, "env", "e", "", "Target environment")
-	deployCmd.PersistentFlags().StringVar(&deployConfig, "config", "arena.yaml", "Config file path")
+	deployCmd.PersistentFlags().StringVar(&deployConfig, "config", "",
+		"Config file path (default: config.arena.yaml, or arena.yaml when only that exists)")
 	deployCmd.PersistentFlags().StringVar(&deployPackFile, "pack", "",
 		"Optional pre-compiled *.pack.json to deploy (default: compile from --config)")
 
@@ -67,6 +79,21 @@ func init() {
 // flags, for handing off to the flow package's config/pack resolution.
 func deployOptions() flow.Options {
 	return flow.Options{ConfigPath: deployConfig, Env: deployEnv, PackFile: deployPackFile}
+}
+
+// deployConfigPath is the arena config the deploy commands read: --config, or
+// the resolved default.
+func deployConfigPath() string {
+	return flow.ResolveConfigPath(deployConfig)
+}
+
+// openEnvState validates env and opens its state store; commands that talk
+// to the adapter without a full flow.Session use it.
+func openEnvState(projectDir, env string) (*deploy.StateStore, error) {
+	if err := deploy.ValidateEnvironmentName(env); err != nil {
+		return nil, err
+	}
+	return deploy.NewStateStore(projectDir, env), nil
 }
 
 // loadDeployConfig loads the arena config and returns the deploy section.
@@ -201,8 +228,8 @@ func runDeploy(cmd *cobra.Command, args []string) error {
 	projectDir, _ := os.Getwd()
 	ctx := context.Background()
 
-	// Acquire deploy lock.
-	unlock, err := flow.Lock(projectDir)
+	// Acquire this environment's deploy lock.
+	unlock, err := flow.Lock(projectDir, flow.ResolveEnv(opts))
 	if err != nil {
 		return err
 	}

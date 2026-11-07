@@ -36,7 +36,7 @@ func runDeployDestroy(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
 
 	// Acquire deploy lock.
-	unlock, err := flow.Lock(projectDir)
+	unlock, err := flow.Lock(projectDir, env)
 	if err != nil {
 		return err
 	}
@@ -44,12 +44,17 @@ func runDeployDestroy(cmd *cobra.Command, args []string) error {
 
 	fmt.Printf("Destroying deployment in environment: %s (provider: %s)\n", env, deployCfg.Provider)
 
-	configJSON, err := flow.MergedConfigJSON(deployCfg, env, deployConfig)
+	configJSON, err := flow.MergedConfigJSON(deployCfg, env, deployConfigPath())
 	if err != nil {
 		return err
 	}
 
-	stateStore := deploy.NewStateStore(projectDir)
+	// Only this environment's state is ever sent to the adapter: destroying
+	// one environment must never hand it another environment's resources.
+	stateStore, err := openEnvState(projectDir, env)
+	if err != nil {
+		return err
+	}
 	priorState, err := stateStore.Load()
 	if err != nil {
 		return fmt.Errorf("failed to load deploy state: %w", err)
@@ -57,7 +62,7 @@ func runDeployDestroy(cmd *cobra.Command, args []string) error {
 
 	if priorState == nil {
 		fmt.Println()
-		fmt.Println("  No deployment state found. Nothing to destroy.")
+		fmt.Printf("  No deployment state found for environment %q. Nothing to destroy.\n", env)
 		return nil
 	}
 
@@ -82,6 +87,8 @@ func runDeployDestroy(cmd *cobra.Command, args []string) error {
 	if err := stateStore.Delete(); err != nil {
 		return fmt.Errorf("failed to remove deploy state: %w", err)
 	}
+	// A plan saved before the destroy describes resources that no longer exist.
+	_ = stateStore.DeletePlan()
 
 	fmt.Println()
 	fmt.Println("Deployment destroyed.")

@@ -47,7 +47,7 @@ promptarena deploy adapter install omnia
 ```
 
 ```yaml
-# arena.yaml
+# config.arena.yaml
 spec:
   # ...prompt_configs, providers, defaults...
   deploy:
@@ -70,15 +70,15 @@ Next: [First Deployment Tutorial](/arena/tutorials/deploy/first-deployment/)
 
 ## How It Works
 
-The CLI compiles the pack from the arena config (or reads one passed with `--pack`), drives the adapter, and records the result in a local state file:
+The CLI compiles the pack from the arena config (or reads one passed with `--pack`), drives the adapter, and records the result in a local state file for the target environment:
 
 ```mermaid
 flowchart LR
-  arena["arena.yaml"]
+  arena["config.arena.yaml"]
   cli["promptarena deploy<br/>(CLI)"]
   adapter["Adapter<br/>(JSON-RPC plugin)"]
   cloud["Cloud Provider<br/>(AWS, GCP, Azure, Kubernetes)"]
-  state[".promptarena/<br/>deploy.state"]
+  state[".promptarena/envs/(env)/<br/>deploy.state"]
   arena --> cli --> adapter --> cloud
   cli --> state
 ```

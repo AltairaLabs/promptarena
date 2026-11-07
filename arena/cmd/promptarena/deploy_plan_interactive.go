@@ -28,6 +28,14 @@ func runDeployPlan(cmd *cobra.Command, args []string) error {
 	projectDir, _ := os.Getwd()
 	ctx := context.Background()
 
+	// Planning refreshes and saves state and writes the saved plan, so it takes
+	// the same per-environment lock as deploy/apply.
+	unlock, err := flow.Lock(projectDir, flow.ResolveEnv(opts))
+	if err != nil {
+		return err
+	}
+	defer unlock()
+
 	sess, err := flow.Open(ctx, opts)
 	if err != nil {
 		return err
@@ -48,6 +56,6 @@ func runDeployPlan(cmd *cobra.Command, args []string) error {
 	if err := sess.SavePlan(plan, planReq); err != nil {
 		return fmt.Errorf("failed to save plan: %w", err)
 	}
-	fmt.Println("Plan saved. Run 'promptarena deploy apply' to execute.")
+	fmt.Printf("Plan saved. Run 'promptarena deploy apply --env %s' to execute.\n", sess.Env)
 	return nil
 }

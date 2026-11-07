@@ -990,7 +990,7 @@ With no subcommand, `deploy` runs plan, then apply. See [Deploy: CLI Commands](/
 | Flag | Short | Default | Description |
 |------|-------|---------|-------------|
 | `--env` | `-e` | `"default"` | Target environment name |
-| `--config` | | `arena.yaml` | Path to config file |
+| `--config` | | `config.arena.yaml` (`arena.yaml` when only that exists) | Path to config file |
 | `--pack` | | Compiled from `--config` | Path to a pre-compiled `.pack.json` file |
 
 ### Examples

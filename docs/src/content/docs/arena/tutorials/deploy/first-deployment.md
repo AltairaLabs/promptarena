@@ -24,7 +24,7 @@ In this tutorial we deploy the greeting agent from [Tutorial 1](/arena/tutorials
 
 ## What we will build
 
-One AgentCore runtime running the `my-first-test` agent, plus a local record of the deployment in `.promptarena/deploy.state`.
+One AgentCore runtime running the `my-first-test` agent, plus a local record of the deployment in `.promptarena/envs/default/deploy.state`.
 
 ## Prerequisites
 
@@ -92,10 +92,10 @@ Add a `deploy` block under `spec:` in `config.arena.yaml`, after `defaults`. Rep
 
 ## Step 4: Preview the plan
 
-`promptarena deploy` reads `arena.yaml` unless you pass `--config`, so we name our file:
+`promptarena deploy` reads `config.arena.yaml`, the same file `promptarena run` reads, so no `--config` is needed:
 
 ```bash
-promptarena deploy plan --config config.arena.yaml
+promptarena deploy plan
 ```
 
 The CLI compiles a pack from the config, sends it to the adapter, and prints what the adapter would create:
@@ -108,18 +108,18 @@ Plan: 1 to create, 0 to update, 0 to delete
 
   + agent_runtime.my_first_test (Create AgentCore runtime for my_first_test)
 
-Plan saved. Run 'promptarena deploy apply' to execute.
+Plan saved. Run 'promptarena deploy apply --env default' to execute.
 ```
 
-`+` marks a resource to create. Without `--env`, the environment is `default`. The plan is saved to `.promptarena/deploy.plan`.
+`+` marks a resource to create. Without `--env`, the environment is `default`. The plan is saved to `.promptarena/envs/default/deploy.plan`.
 
 ## Step 5: Apply the plan
 
 ```bash
-promptarena deploy apply --config config.arena.yaml
+promptarena deploy apply
 ```
 
-Apply reuses the saved plan while the pack and environment are unchanged:
+Apply reuses the saved plan while the pack is unchanged (recompiling the same config does not count as a change):
 
 ```text
 Applying deployment to environment: default (provider: agentcore)
@@ -127,29 +127,29 @@ Applying deployment to environment: default (provider: agentcore)
   Adapter:     /Users/you/.promptarena/adapters/promptarena-deploy-agentcore
 ```
 
-The adapter then prints one line per resource as it creates it, and the command ends with `Apply complete.`. The CLI records the deployment in `.promptarena/deploy.state`.
+The adapter then prints one line per resource as it creates it, and the command ends with `Apply complete.`. The CLI records the deployment in `.promptarena/envs/default/deploy.state`.
 
 ## Step 6: Check the deployment
 
 ```bash
-promptarena deploy status --config config.arena.yaml
+promptarena deploy status
 ```
 
-The output starts with `Deployment status for environment: default (provider: agentcore)`, then the adapter's overall status, one `type.name: status` line per resource, and the `Last deployed` time and `Pack checksum` from the state file.
+The output starts with `Deployment status for environment: default (provider: agentcore)`, then the adapter's overall status, one `type.name: status` line per resource, and the `Last deployed` time, `Pack version` and `Pack checksum` from the state file.
 
 ## Step 7: Tear it down
 
 ```bash
-promptarena deploy destroy --config config.arena.yaml
+promptarena deploy destroy
 ```
 
-The adapter deletes each resource, the CLI removes `.promptarena/deploy.state`, and the command ends with `Deployment destroyed.`.
+The adapter deletes each resource, the CLI removes `.promptarena/envs/default/deploy.state`, and the command ends with `Deployment destroyed.`.
 
 ## Common issues
 
-### `deploy config "arena.yaml" not found`
+### `deploy config "config.arena.yaml" not found`
 
-You ran a `deploy` command without `--config`. Pass `--config config.arena.yaml`.
+You ran a `deploy` command outside the project directory. Run it from `my-first-test`, or pass `--config path/to/config.arena.yaml`.
 
 ### `failed to create AWS client`
 

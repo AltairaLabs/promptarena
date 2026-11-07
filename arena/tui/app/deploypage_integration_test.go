@@ -187,7 +187,7 @@ func TestDeployWizard_EndToEndWithFakeSession(t *testing.T) {
 		&arenaconfig.Config{Deploy: dc},
 		dc,
 		fp,
-		deploy.NewStateStore(dir),
+		deploy.NewStateStore(dir, flow.DefaultEnv),
 		[]byte(`{"pack":true}`),
 		`{}`,
 		func() error { return nil },
