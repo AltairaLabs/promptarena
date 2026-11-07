@@ -30,17 +30,11 @@ func runDeployApply(cmd *cobra.Command, args []string) error {
 	projectDir, _ := os.Getwd()
 	ctx := context.Background()
 
-	// Acquire deploy lock.
-	unlock, err := flow.Lock(projectDir, flow.ResolveEnv(opts))
+	sess, unlock, err := lockAndOpen(ctx, opts, projectDir)
 	if err != nil {
 		return err
 	}
 	defer unlock()
-
-	sess, err := flow.Open(ctx, opts)
-	if err != nil {
-		return err
-	}
 	defer func() { _ = sess.Close() }()
 
 	fmt.Printf("Applying deployment to environment: %s (provider: %s)\n", sess.Env, sess.Deploy.Provider)
