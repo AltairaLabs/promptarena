@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/reference/config-schema.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "5a8cffd8daf00b49cbbb3596ce63750db56c3704",
  "claims": [
   {
    "id": 1001,
@@ -8499,6 +8499,16 @@
    "evidence": [
     "arena/arenaconfig/persona.go:274",
     "arena/arenaconfig/persona.go:320"
+   ]
+  },
+  {
+   "id": "fix-449-local",
+   "claim": "mode: local is not available in PromptArena: validate reports it as an error and run stops at startup on it",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/validator.go:62",
+    "arena/arenaconfig/validator_tools.go:73-95",
+    "arena/engine/builder_integration.go:564"
    ]
   }
  ]

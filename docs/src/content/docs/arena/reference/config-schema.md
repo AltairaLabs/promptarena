@@ -1,7 +1,7 @@
 ---
 title: Configuration Schema
 verified:
-  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
+  commit: 5a8cffd8daf00b49cbbb3596ce63750db56c3704
   sources:
     - arena/adapters/arena_output.go
     - arena/adapters/registry.go
@@ -21,6 +21,7 @@ verified:
     - arena/arenaconfig/trial_budget.go
     - arena/arenaconfig/types.go
     - arena/arenaconfig/validator.go
+    - arena/arenaconfig/validator_tools.go
     - arena/arenaconfig/voice.go
     - arena/assertions/canary/canary.go
     - arena/assertions/memorystate/memorystate.go

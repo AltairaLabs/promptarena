@@ -4,12 +4,13 @@ description: Brief Claude Code, Codex, or another coding agent with PromptArena'
 sidebar:
   order: 20
 verified:
-  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
+  commit: 5a8cffd8daf00b49cbbb3596ce63750db56c3704
   sources:
     - arena/agentkb/catalog.yaml
     - arena/agentkb/skill.go
     - arena/agentmcp/server.go
     - arena/agentmcp/tools.go
+    - arena/arenaconfig/validator_tools.go
     - arena/assertions/validate_params.go
     - arena/cmd/promptarena/agent_brief.go
     - arena/cmd/promptarena/chat.go

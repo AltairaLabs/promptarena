@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/reference/tool-authoring.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "5a8cffd8daf00b49cbbb3596ce63750db56c3704",
  "claims": [
   {
    "id": 1,
@@ -12,10 +12,11 @@
   },
   {
    "id": 2,
-   "claim": "Valid mode values under promptarena are mock, live, mcp and client; exec is SDK-only",
+   "claim": "Valid mode values under promptarena are mock, live, mcp and client; exec and local are SDK-only",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:555",
+    "arena/arenaconfig/validator_tools.go:73-95",
+    "arena/engine/builder_integration.go:564",
     "schemas/v1alpha1/tool.json:321"
    ]
   },
@@ -426,6 +427,16 @@
    "evidence": [
     "arena/arenaconfig/loader.go:344",
     "arena/consent/hook.go:24"
+   ]
+  },
+  {
+   "id": "fix-449-local",
+   "claim": "A mode: local tool stops a run at startup and is a promptarena validate error; packc compile accepts it",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/validator.go:62",
+    "arena/arenaconfig/validator_tools.go:73-95",
+    "arena/engine/builder_integration.go:564"
    ]
   }
  ]

@@ -2,7 +2,7 @@
 title: Session Recording
 description: Record Arena scenario runs to JSONL, then load, replay, annotate and evaluate them.
 verified:
-  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
+  commit: 5a8cffd8daf00b49cbbb3596ce63750db56c3704
   sources:
     - .github/workflows/ci.yml
     - arena/arenaconfig/helpers.go
