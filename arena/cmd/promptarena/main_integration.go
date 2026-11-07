@@ -11,6 +11,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	"github.com/AltairaLabs/promptarena/v2/arena/engine"
 	"github.com/AltairaLabs/promptarena/v2/arena/tui/app"
 
 	"github.com/AltairaLabs/PromptKit/runtime/v2/logger"
@@ -71,6 +72,11 @@ func buildHubContext(cwd string, warnTo io.Writer) *app.AppContext {
 	ctx := &app.AppContext{
 		Version:    GetVersion(),
 		ResultsDir: filepath.Join(cwd, "out"),
+	}
+	// The hub's Run page writes the same report files as `promptarena run`,
+	// against whichever config is loaded when the run finishes.
+	ctx.SaveRunResults = func(eng *engine.Engine, runIDs []string) error {
+		return saveHubRunResults(eng, ctx.ConfigPath, runIDs)
 	}
 
 	cfgPath, found := app.DiscoverConfig(cwd)

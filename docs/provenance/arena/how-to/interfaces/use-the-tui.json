@@ -868,6 +868,16 @@
     "arena/cmd/promptarena/main_integration.go:160",
     "arena/cmd/promptarena/main_integration.go:178"
    ]
+  },
+  {
+   "id": 102,
+   "claim": "The hub's Run page writes the report formats run would write with no flags to the output directory resolved against the config's directory when its runs finish.",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/hub_results.go:20",
+    "arena/cmd/promptarena/main_integration.go:78",
+    "arena/tui/app/runpage.go:161"
+   ]
   }
  ]
 }

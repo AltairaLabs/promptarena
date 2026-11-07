@@ -560,6 +560,16 @@
    "claim": "Link /arena/reference/cli-commands/ resolves to an existing page",
    "verdict": "true",
    "evidence": []
+  },
+  {
+   "id": 64,
+   "claim": "A run started from the hub's Run page writes the report formats run would write with no flags, to the output directory resolved against the loaded config's directory.",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/hub_results.go:20",
+    "arena/cmd/promptarena/main_integration.go:78",
+    "arena/tui/app/runpage.go:161"
+   ]
   }
  ]
 }

@@ -169,6 +169,11 @@ The display shows runs as they progress, a log panel, and results as they comple
 The log panel shows pipeline stage events: each stage logs `Stage started` and
 `Stage completed` lines at DEBUG, and a failing stage logs `Stage failed` at ERROR.
 
+The hub's **Run** page shows the same display for every scenario in the loaded config.
+When the runs finish it writes the report formats `run` would write with no flags
+(`defaults.output.formats`, else `json`) to the output directory, resolved against
+the config's directory, so View can open them.
+
 ![A run in progress: an Active Runs table listing each provider with status, scenario, region and duration, a live log panel streaming turn and provider-call events, and a results pane awaiting selection.](/screenshots/tui-run.png)
 
 ### Disable the live TUI
