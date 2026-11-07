@@ -16,6 +16,8 @@ import type {
   MessageUpdatedData,
   ProviderCallData,
   LogEntry,
+  StageEventData,
+  StageEventEntry,
 } from "@/types";
 import { toDisplayString } from "@/lib/utils";
 
@@ -42,6 +44,7 @@ type Action =
   | { type: "PROVIDER_CALL_COMPLETED"; runId: string; data: ProviderCallData; timestamp: string }
   | { type: "REASONING_DELTA"; runId: string; data: ReasoningDeltaData; seq: number; timestamp: string }
   | { type: "CONTENT_DELTA"; runId: string; data: ContentDeltaData; timestamp: string }
+  | { type: "STAGE_EVENT"; runId: string; entry: StageEventEntry }
   | { type: "LOG"; entry: LogEntry };
 
 // Exported for tests so the reducer/mapper contracts are pinned without
@@ -270,6 +273,16 @@ function reducer(state: ArenaState, action: Action): ArenaState {
     case "PROVIDER_CALL_COMPLETED":
       return state;
 
+    case "STAGE_EVENT": {
+      const existing = ensureRun(state, action.runId, action.entry.timestamp);
+      // Bounded like the log buffer: a long run emits several stages per turn.
+      const stageEvents = [...(existing.stageEvents ?? []).slice(-(MAX_STAGE_EVENTS - 1)), action.entry];
+      return {
+        ...state,
+        runs: { ...state.runs, [action.runId]: { ...existing, stageEvents } },
+      };
+    }
+
     case "LOG":
       return {
         ...state,
@@ -280,6 +293,16 @@ function reducer(state: ArenaState, action: Action): ArenaState {
       return state;
   }
 }
+
+// MAX_STAGE_EVENTS caps the stage events kept per run.
+const MAX_STAGE_EVENTS = 2000;
+
+// stagePhase maps a stage.* SSE type to the phase recorded on the run.
+const stagePhase: Record<string, StageEventEntry["phase"]> = {
+  "stage.started": "started",
+  "stage.completed": "completed",
+  "stage.failed": "failed",
+};
 
 // emptyStreamingTurn is the initial in-flight turn. index is -1 until a content
 // delta names one; reasoning can start before any text exists.
@@ -325,6 +348,24 @@ function mapSSEToAction(event: SSEEvent): Action | null {
       return { type: "MESSAGE_UPDATED", runId, data: d as unknown as MessageUpdatedData, timestamp: ts };
     case "provider.call.completed":
       return { type: "PROVIDER_CALL_COMPLETED", runId, data: d as unknown as ProviderCallData, timestamp: ts };
+    case "stage.started":
+    case "stage.completed":
+    case "stage.failed": {
+      const sd = d as unknown as StageEventData;
+      return {
+        type: "STAGE_EVENT",
+        runId,
+        entry: {
+          phase: stagePhase[event.type],
+          name: toDisplayString(sd.name, "stage"),
+          stageType: sd.stageType || undefined,
+          duration: sd.duration,
+          error: sd.error || undefined,
+          timestamp: ts,
+          seq: event.sequence ?? 0,
+        },
+      };
+    }
     case "provider.call.failed":
       return {
         type: "LOG",

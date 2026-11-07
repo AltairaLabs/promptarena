@@ -151,7 +151,34 @@ describe("App — Runs view", () => {
     // SessionReview replaces the dashboard; the matrix heading disappears.
     expect(screen.queryByText("TRIAL MATRIX · SCENARIO × PROVIDER")).not.toBeInTheDocument();
     expect(await screen.findByRole("tab", { name: /^transcript$/i })).toBeInTheDocument();
+    // No stage events were seen for this run, so there is no Trace tab.
+    expect(screen.queryByRole("tab", { name: /^trace$/i })).not.toBeInTheDocument();
     await act(async () => { await Promise.resolve(); });
+  });
+
+  // #410: pipeline stage events seen live for a run show on its Trace tab,
+  // and stay there once the run has completed and opens as a saved result.
+  it("shows the run's pipeline stage events on the Trace tab", async () => {
+    const run1 = seededResults[0];
+    useArenaEventsMock.mockReturnValue({
+      ...defaultArenaState(),
+      runs: {
+        [run1.RunID]: {
+          runId: run1.RunID, scenario: run1.ScenarioID, provider: run1.ProviderID, region: "default",
+          startTime: run1.StartTime, turnIndex: 0, messages: [], status: "completed",
+          costs: { inputTokens: 0, outputTokens: 0, totalCost: 0 },
+          stageEvents: [
+            { phase: "started", name: "provider_stage", timestamp: run1.StartTime, seq: 1 },
+            { phase: "failed", name: "provider_stage", duration: 0.5, error: "rate limited", timestamp: run1.StartTime, seq: 2 },
+          ],
+        },
+      },
+    });
+    render(<App />);
+    await screen.findByText("TRIAL MATRIX · SCENARIO × PROVIDER");
+    fireEvent.click((await screen.findByText("Pass")).closest("button")!);
+    fireEvent.click(await screen.findByRole("tab", { name: /^trace$/i }));
+    expect((await screen.findAllByText(/provider_stage: rate limited/)).length).toBeGreaterThan(0);
   });
 
   it("steps through ledger runs with a position indicator, then highlights the row on return", async () => {

@@ -651,6 +651,16 @@
     "arena/web/server.go:141",
     "arena/web/spa.go"
    ]
+  },
+  {
+   "id": 77,
+   "claim": "Pipeline stage events received live show on the run's Trace tab, one row per stage execution with duration and error; only for runs whose events the open page received.",
+   "verdict": "true",
+   "evidence": [
+    "arena/web/frontend/src/hooks/useArenaEvents.ts:276",
+    "arena/web/frontend/src/lib/atlasAdapter.ts:395",
+    "arena/web/frontend/src/App.tsx:517"
+   ]
   }
  ]
 }

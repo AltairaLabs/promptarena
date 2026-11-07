@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { adaptMessage, adaptRun, adaptLiveMessages, conversationChecks, adaptWorkflow } from "./atlasAdapter";
-import type { LiveMessage, Message, RunResult, WorkflowGraph } from "@/types";
+import { adaptMessage, adaptRun, adaptLiveMessages, conversationChecks, adaptWorkflow, stageTraceEvents } from "./atlasAdapter";
+import type { LiveMessage, Message, RunResult, StageEventEntry, WorkflowGraph } from "@/types";
 
 const run = (over: Partial<RunResult> = {}): RunResult =>
   ({ RunID: "r", ScenarioID: "helpfulness", ProviderID: "mock", StartTime: "2026-07-03T12:52:15Z", Messages: [], Error: "", ...over } as unknown as RunResult);
@@ -231,5 +231,56 @@ describe("reasoning", () => {
   it("keeps a redacted trace, which has no text but must still surface", () => {
     const a = adaptMessage(msg({ reasoning: { redacted: true } }), 0, run(), 0);
     expect(a.reasoning?.redacted).toBe(true);
+  });
+});
+
+describe("stageTraceEvents", () => {
+  const ev = (phase: StageEventEntry["phase"], name: string, second: number, over: Partial<StageEventEntry> = {}): StageEventEntry => ({
+    phase, name, timestamp: `2026-07-03T12:00:${String(second).padStart(2, "0")}Z`, seq: second, ...over,
+  });
+
+  it("returns no rows when the run has no stage events", () => {
+    expect(stageTraceEvents(undefined)).toEqual([]);
+    expect(stageTraceEvents([])).toEqual([]);
+  });
+
+  it("folds a start and its completion into one pipeline-stage row", () => {
+    const rows = stageTraceEvents([ev("started", "provider", 1, { stageType: "transform" }), ev("completed", "provider", 3, { duration: 2 })]);
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({
+      label: "provider", category: "pipeline-stage", status: "success",
+      durationMs: 2000, timestamp: "2026-07-03T12:00:01Z", type: "stage.completed",
+      payload: { name: "provider", stageType: "transform" },
+    });
+  });
+
+  it("shows an unfinished stage as started and a failure as an error row", () => {
+    const rows = stageTraceEvents([
+      ev("started", "template", 1),
+      ev("started", "provider", 2),
+      ev("failed", "provider", 4, { duration: 2, error: "rate limited" }),
+    ]);
+    expect(rows.map((r) => [r.label, r.status, r.durationMs])).toEqual([
+      ["template", "started", undefined],
+      ["provider: rate limited", "error", 2000],
+    ]);
+  });
+
+  it("pairs repeated executions of a stage in time order and keeps an orphan completion", () => {
+    const rows = stageTraceEvents([
+      ev("completed", "provider", 9, { duration: 1 }),
+      ev("started", "provider", 1),
+      ev("completed", "provider", 2, { duration: 1 }),
+      ev("started", "provider", 5),
+      ev("completed", "orphan", 6),
+    ]);
+    // Sorted by time first, so the 12:00:09 completion closes the 12:00:05
+    // start; "orphan" never started and still gets its own row.
+    expect(rows.map((r) => [r.label, r.status, r.timestamp])).toEqual([
+      ["provider", "success", "2026-07-03T12:00:01Z"],
+      ["provider", "success", "2026-07-03T12:00:05Z"],
+      ["orphan", "success", "2026-07-03T12:00:06Z"],
+    ]);
+    expect(rows.map((r) => r.ordinal)).toEqual([0, 1, 2]);
   });
 });

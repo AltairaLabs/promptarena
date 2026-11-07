@@ -35,6 +35,28 @@ export interface ArenaTurnData {
   error?: string;
 }
 
+// StageEventData is the payload of a pipeline stage lifecycle event
+// (stage.started / stage.completed / stage.failed). duration is in seconds and
+// error is empty on stage.started (arena/web/event_adapter.go stagePayload).
+export interface StageEventData {
+  name: string;
+  stageType?: string;
+  duration?: number;
+  error?: string;
+}
+
+// StageEventEntry is one stage lifecycle event as recorded on a run.
+export interface StageEventEntry {
+  phase: "started" | "completed" | "failed";
+  name: string;
+  stageType?: string;
+  duration?: number;
+  error?: string;
+  timestamp: string;
+  // SSE sequence number: a tiebreak for events that share a timestamp.
+  seq: number;
+}
+
 export interface ProviderCallData {
   provider: string;
   model: string;
@@ -439,6 +461,9 @@ export interface ActiveRun {
   status: "running" | "completed" | "failed";
   duration?: number;
   error?: string;
+  // Pipeline stage lifecycle events seen for this run, in arrival order. Only
+  // events this page observed live: REST results do not carry them.
+  stageEvents?: StageEventEntry[];
 }
 
 export interface ArenaState {

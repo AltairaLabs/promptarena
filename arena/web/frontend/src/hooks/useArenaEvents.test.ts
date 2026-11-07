@@ -387,3 +387,55 @@ describe("streaming deltas", () => {
     } as never)).toMatchObject({ type: "CONTENT_DELTA" });
   });
 });
+
+// #410: the server sends stage.started / stage.completed / stage.failed on
+// /api/events; the reducer used to drop them, so nothing in the UI showed a
+// pipeline stage. They now land on the run as stageEvents.
+describe("pipeline stage events", () => {
+  const stage = (type: string, data: Record<string, unknown>, sequence = 1): SSEEvent =>
+    ({ type, timestamp: "2026-05-06T12:00:01Z", executionId: "run-1", sequence, data } as SSEEvent);
+
+  it("maps stage.started / completed / failed → STAGE_EVENT with the phase", () => {
+    expect(__mapSSEToAction(stage("stage.started", { name: "provider", stageType: "transform", duration: 0, error: "" })))
+      .toEqual({
+        type: "STAGE_EVENT",
+        runId: "run-1",
+        entry: {
+          phase: "started", name: "provider", stageType: "transform", duration: 0,
+          error: undefined, timestamp: "2026-05-06T12:00:01Z", seq: 1,
+        },
+      });
+    expect(__mapSSEToAction(stage("stage.completed", { name: "provider", duration: 0.25 })))
+      .toMatchObject({ type: "STAGE_EVENT", entry: { phase: "completed", duration: 0.25 } });
+    expect(__mapSSEToAction(stage("stage.failed", { name: "provider", error: "boom" })))
+      .toMatchObject({ type: "STAGE_EVENT", entry: { phase: "failed", error: "boom" } });
+  });
+
+  it("falls back to a generic name and seq 0 when the payload lacks them", () => {
+    const ev = { type: "stage.completed", timestamp: "t", executionId: "run-1", data: { duration: 1 } } as SSEEvent;
+    expect(__mapSSEToAction(ev)).toMatchObject({ entry: { name: "stage", seq: 0 } });
+  });
+
+  it("records stage events on the run, creating the entry when the run start was missed", () => {
+    let state = __initialState;
+    for (const [i, t] of ["stage.started", "stage.completed"].entries()) {
+      const action = __mapSSEToAction(stage(t, { name: "template", duration: 0.1 }, i));
+      if (action) state = __reducer(state, action);
+    }
+    const run = state.runs["run-1"];
+    expect(run).toBeDefined();
+    expect(run.stageEvents?.map((e) => e.phase)).toEqual(["started", "completed"]);
+
+    // A later run.started keeps nothing it does not own: stageEvents survive
+    // only on the existing entry, and RUN_STARTED does not reset them away.
+    const started = __reducer(state, __mapSSEToAction(fakeRunStarted("run-1"))!);
+    expect(started.runs["run-1"].scenario).toBe("aggressive-refund");
+  });
+
+  it("caps the stage events kept per run", () => {
+    let state = __initialState;
+    const action = __mapSSEToAction(stage("stage.completed", { name: "s", duration: 0 }))!;
+    for (let i = 0; i < 2005; i++) state = __reducer(state, action);
+    expect(state.runs["run-1"].stageEvents).toHaveLength(2000);
+  });
+});

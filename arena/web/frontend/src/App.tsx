@@ -17,7 +17,7 @@ import { useTheme } from "@/hooks/useTheme";
 import { AudioPlayer } from "@/audio/player";
 import { buildMatrix, currentWorkflowStateAt, estimateFieldRun, orderLedgerRows, overlayWorkflowCurrentState, overlayWorkflowRun, runScored } from "@/lib/arenaView";
 import { MAX_SLICE_PROVIDERS, MAX_SLICE_SCENARIOS, refsInSlice, seedSlice } from "@/lib/fieldSlice";
-import { adaptAnyRun, adaptWorkflow, isRunResult } from "@/lib/atlasAdapter";
+import { adaptAnyRun, adaptWorkflow, isRunResult, stageTraceEvents } from "@/lib/atlasAdapter";
 import { arenaInspectorTabs } from "@/lib/arenaInspectorTabs";
 import type { RunResult, ActiveRun, ProviderInfo, ScenarioInfo, WorkflowGraph } from "@/types";
 
@@ -511,6 +511,12 @@ export default function App() {
                         !isRunResult(selectedCellRun) && selectedCellRun.status === "running"
                           ? selectedCellRun.runId
                           : undefined;
+                      // Pipeline stage events this page saw live for the run.
+                      // They stay on the live entry after the run completes,
+                      // so the saved result keeps its Trace tab.
+                      const stageEvents = stageTraceEvents(
+                        state.runs[isRunResult(selectedCellRun) ? selectedCellRun.RunID : selectedCellRun.runId]?.stageEvents,
+                      );
                       return (
                         <div style={{ height: "calc(100vh - 210px)", minHeight: 460 }}>
                           {liveRunId && (
@@ -526,6 +532,7 @@ export default function App() {
                           <SessionReview
                             title={a.title}
                             messages={a.messages}
+                            events={stageEvents}
                             checks={a.checks}
                             recording={a.recording}
                             inspectorTabs={arenaInspectorTabs}
