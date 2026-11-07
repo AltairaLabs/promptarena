@@ -70,6 +70,12 @@ func predictOnce(t *testing.T, eng *Engine, providerID string) string {
 	if !ok {
 		t.Fatalf("provider %q not found after enabling mock mode", providerID)
 	}
+	return predictWith(t, prov)
+}
+
+// predictWith drives prov once and returns its reply text.
+func predictWith(t *testing.T, prov providers.Provider) string {
+	t.Helper()
 	resp, err := prov.Predict(context.Background(), providers.PredictionRequest{
 		Messages:  []types.Message{{Role: "user", Content: "hello"}},
 		MaxTokens: 64,

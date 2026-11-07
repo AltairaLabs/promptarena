@@ -315,6 +315,26 @@ func (r *Registry) ClearCache() {
 	r.cacheMisses = 0
 }
 
+// UseProviders re-points each role at the provider with the same ID in reg and
+// drops every cached generator built on the old instances. Roles whose
+// provider reg does not hold keep the one they had. Engine.EnableMockProviderMode
+// calls it so --mock-provider mocks the self-play roles along with the
+// assistant; the role registry holds its own copies of the provider instances,
+// so swapping only the engine's registry left them calling the real API.
+func (r *Registry) UseProviders(reg *providers.Registry) {
+	if reg == nil {
+		return
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	for _, providerID := range r.providerMap {
+		if p, ok := reg.Get(providerID); ok {
+			r.providerRegistry.Register(p)
+		}
+	}
+	r.userGenerators = make(map[CacheKey]*ContentGenerator)
+}
+
 // Close closes the self-play provider registry and cleans up resources
 func (r *Registry) Close() error {
 	if r.providerRegistry != nil {

@@ -185,6 +185,10 @@ func (de *DuplexConversationExecutor) executeDuplexPipeline(
 	streamProvider providers.StreamInputSupport,
 	emitter *events.Emitter,
 ) *ConversationResult {
+	// A retried attempt starts from an empty transcript, so it starts with no
+	// recorded turn assertions either.
+	req.duplexTurnAssertions = &duplexTurnAssertionRecorder{}
+
 	// Create pipeline for duplex streaming
 	//nolint:gocritic // Variable shadowing unavoidable in this context
 	pipeline, err := de.buildDuplexPipeline(req, streamProvider)

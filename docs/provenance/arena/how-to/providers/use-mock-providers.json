@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/providers/use-mock-providers.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "5a8cffd8daf00b49cbbb3596ce63750db56c3704",
  "claims": [
   {
    "id": 1,
@@ -469,6 +469,15 @@
     "arena/arenaconfig/mock_config_check.go:27",
     "arena/arenaconfig/mock_config_check.go:29",
     "arena/arenaconfig/mock_config_check.go:30"
+   ]
+  },
+  {
+   "id": 9501,
+   "claim": "--mock-provider also mocks the providers behind self-play roles",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go",
+    "arena/selfplay/registry.go"
    ]
   }
  ]

@@ -35,6 +35,7 @@ import (
 	"github.com/AltairaLabs/promptarena/v2/arena/artifacts"
 	arenaaudio "github.com/AltairaLabs/promptarena/v2/arena/audio"
 	"github.com/AltairaLabs/promptarena/v2/arena/mcpsource"
+	"github.com/AltairaLabs/promptarena/v2/arena/selfplay"
 	arenastore "github.com/AltairaLabs/promptarena/v2/arena/statestore"
 
 	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
@@ -782,8 +783,14 @@ func (e *Engine) EnableMockProviderMode(mockConfigPath string) error {
 	// console would offer a voice call on either.
 	e.realVoiceProviderIDs = e.VoiceProviderIDs()
 
-	// Replace the engine's provider registry
+	// Replace the engine's provider registry, and the self-play roles'
+	// providers with it: the role registry holds its own copies of the
+	// provider instances, so without this a self-play turn still called the
+	// real API (#446).
 	e.providerRegistry = mockRegistry
+	if reg := e.selfPlayRegistry(); reg != nil {
+		reg.UseProviders(mockRegistry)
+	}
 	e.mockProviderMode = true
 
 	return nil
@@ -844,19 +851,31 @@ func (e *Engine) closeProviderRegistry() error {
 
 // closeSelfPlayRegistry closes the self-play registry if it exists
 func (e *Engine) closeSelfPlayRegistry() error {
-	if e.conversationExecutor == nil {
+	reg := e.selfPlayRegistry()
+	if reg == nil {
 		return nil
 	}
 
-	executor, ok := e.conversationExecutor.(*DefaultConversationExecutor)
-	if !ok || executor.selfPlayRegistry == nil {
-		return nil
-	}
-
-	if err := executor.selfPlayRegistry.Close(); err != nil {
+	if err := reg.Close(); err != nil {
 		return fmt.Errorf("failed to close self-play registry: %w", err)
 	}
 
+	return nil
+}
+
+// selfPlayRegistry returns the self-play registry the conversation executors
+// share, or nil when the config has no self_play section. The engine normally
+// holds a CompositeConversationExecutor, whose default and duplex executors
+// share the one registry.
+func (e *Engine) selfPlayRegistry() *selfplay.Registry {
+	switch executor := e.conversationExecutor.(type) {
+	case *CompositeConversationExecutor:
+		if executor.defaultExecutor != nil {
+			return executor.defaultExecutor.selfPlayRegistry
+		}
+	case *DefaultConversationExecutor:
+		return executor.selfPlayRegistry
+	}
 	return nil
 }
 

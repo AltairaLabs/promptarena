@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 
+	arenaassertions "github.com/AltairaLabs/promptarena/v2/arena/assertions"
+
 	"github.com/AltairaLabs/PromptKit/runtime/v2/evals"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/statestore"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
@@ -47,6 +49,8 @@ func (de *DuplexConversationExecutor) buildResultFromStateStore(
 		messages = state.Messages
 	}
 
+	turnErr := stampTurnAssertions(ctx, req, store, state)
+
 	totalCost := de.calculateTotalCost(messages)
 	mediaOutputs := CollectMediaOutputs(messages)
 	toolStats := de.calculateToolStats(messages)
@@ -72,7 +76,36 @@ func (de *DuplexConversationExecutor) buildResultFromStateStore(
 		PersonaID:                    de.findFirstSelfPlayPersona(req.Scenario),
 		ConversationAssertionResults: convAssertionResults,
 		EvalResults:                  packEvalResults,
+		Failed:                       turnErr != "",
+		Error:                        turnErr,
 	}
+}
+
+// stampTurnAssertions writes each duplex turn's assertion outcome onto its
+// reply in the final transcript and returns the run error, "" when every turn
+// assertion passed.
+//
+// The save stage rewrites the transcript on every save, so the outcomes are
+// stamped here, after the session has finished saving, not in the store
+// mid-session. The run result is read back from the store, so the stamped
+// transcript is written there too. A failing turn assertion fails the run, as
+// it does on the text path, where it surfaces as the turn's error.
+func stampTurnAssertions(
+	ctx context.Context, req *ConversationRequest, store statestore.Store, state *statestore.ConversationState,
+) string {
+	if state == nil || !req.duplexTurnAssertions.apply(state.Messages) {
+		return ""
+	}
+	if writer, ok := store.(statestore.BulkWriter); ok {
+		if err := writer.Save(ctx, state); err != nil {
+			return fmt.Sprintf("failed to save turn assertion results: %v", err)
+		}
+	}
+	total, failed := arenaassertions.CountTurnAssertions(state.Messages)
+	if failed == 0 {
+		return ""
+	}
+	return fmt.Sprintf("turn assertions failed: %d of %d", failed, total)
 }
 
 // calculateToolStats aggregates tool usage statistics from messages.

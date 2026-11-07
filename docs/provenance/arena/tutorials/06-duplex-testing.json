@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/tutorials/06-duplex-testing.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "5a8cffd8daf00b49cbbb3596ce63750db56c3704",
  "claims": [
   {
    "id": 1,
@@ -1165,6 +1165,49 @@
    "claim": "Link /arena/reference/validators/ exists",
    "verdict": "true",
    "evidence": []
+  },
+  {
+   "id": 9501,
+   "claim": "A passing duplex run's summary shows the Assertions total and Assertions Pass all passed",
+   "verdict": "true",
+   "evidence": [
+    "arena/tui/tui.go",
+    "arena/tui/views/summary.go"
+   ]
+  },
+  {
+   "id": 9502,
+   "claim": "A failing duplex turn assertion fails the run, reported as turn assertions failed: N of M",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_executor_results_integration.go",
+    "arena/engine/duplex_turn_assertions.go"
+   ]
+  },
+  {
+   "id": 9503,
+   "claim": "Each duplex reply in the JSON results carries its own turn assertion results",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_executor_assertions_integration.go",
+    "arena/engine/duplex_turn_assertions.go"
+   ]
+  },
+  {
+   "id": 9504,
+   "claim": "A failing duplex turn assertion does not stop later turns",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_executor_turns_integration.go"
+   ]
+  },
+  {
+   "id": 9505,
+   "claim": "promptarena run --ci exits 1 when an assertion failed",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/run_interactive.go"
+   ]
   }
  ]
 }

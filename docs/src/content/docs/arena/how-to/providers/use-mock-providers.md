@@ -2,7 +2,7 @@
 title: Use Mock Providers
 description: "Run scenarios against canned responses with --mock-provider, --mock-config or a type: mock provider, with no API calls or cost."
 verified:
-  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
+  commit: 5a8cffd8daf00b49cbbb3596ce63750db56c3704
   sources:
     - arena/arenaconfig/loader.go
     - arena/arenaconfig/mock_config_check.go
@@ -12,6 +12,7 @@ verified:
     - arena/engine/builder_integration.go
     - arena/engine/conversation_executor.go
     - arena/engine/engine.go
+    - arena/selfplay/registry.go
     - arena/stages/mock_scenario_context.go
     - arena/turnexecutors/pipeline_stages_integration.go
     - examples/customer-support-integrated/tools/check-subscription-status.tool.yaml
@@ -37,7 +38,7 @@ Replace every configured provider with a mock:
 promptarena run --mock-provider
 ```
 
-Each provider keeps its ID and model but runs as a mock. Responses resolve in this order: the `--mock-config` file if you pass one, then the provider's own `additional_config.mock_config`, then a generic reply ("Mock response from provider"). A provider that already declares `mock_config` keeps its declared responses.
+Each provider keeps its ID and model but runs as a mock. That includes the providers behind self-play roles, so a self-play turn makes no API call either. Responses resolve in this order: the `--mock-config` file if you pass one, then the provider's own `additional_config.mock_config`, then a generic reply ("Mock response from provider"). A provider that already declares `mock_config` keeps its declared responses.
 
 ## Mock Configuration File
 

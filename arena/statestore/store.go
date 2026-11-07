@@ -359,7 +359,9 @@ func (s *ArenaStateStore) Fork(ctx context.Context, sourceID, newID string) erro
 }
 
 // UpdateLastAssistantMessage updates the metadata of the last assistant message.
-// This is used by duplex mode to attach assertion results to messages after evaluation.
+// It matches on role and exact Content. The duplex executor no longer uses it
+// for turn assertions: its save stage rewrites the transcript on every save,
+// which dropped metadata merged in here (#446).
 //
 // When conversationID is non-empty the update is O(M) on that conversation's messages.
 // When empty it falls back to scanning all conversations (O(N*M)).

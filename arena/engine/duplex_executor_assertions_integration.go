@@ -6,7 +6,6 @@ import (
 
 	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
 	arenaassertions "github.com/AltairaLabs/promptarena/v2/arena/assertions"
-	arenastore "github.com/AltairaLabs/promptarena/v2/arena/statestore"
 
 	"github.com/AltairaLabs/PromptKit/runtime/v2/evals"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/logger"
@@ -51,8 +50,10 @@ func (de *DuplexConversationExecutor) evaluateTurnAssertions(
 
 	results := turnAssertionResults(evalResults, assertionConfigs)
 
-	// Store results in the assistant message's metadata
-	de.storeAssertionResults(req, lastAssistantMsg, results)
+	// Record the results against this reply; buildResultFromStateStore stamps
+	// them onto the final transcript, where the run summary and RunPassed read
+	// them.
+	req.duplexTurnAssertions.record(lastAssistantOrdinal(messages), duplexAssertionSummary(results))
 
 	logger.Debug("Turn assertions evaluated via eval path",
 		"turn", turnIdx,
@@ -85,23 +86,10 @@ func turnAssertionConfigs(defs []arenaconfig.AssertionConfig) []arenaassertions.
 	return assertionConfigs
 }
 
-// storeAssertionResults stores assertion results in the state store.
-func (de *DuplexConversationExecutor) storeAssertionResults(
-	req *ConversationRequest,
-	msg *types.Message,
-	results []arenaassertions.AssertionResult,
-) {
-	if req.StateStoreConfig == nil || req.StateStoreConfig.Store == nil {
-		return
-	}
-
-	// Try to get ArenaStateStore to update assertion results
-	arenaStore, ok := req.StateStoreConfig.Store.(*arenastore.ArenaStateStore)
-	if !ok {
-		return
-	}
-
-	// Convert results to map format for message metadata
+// duplexAssertionSummary builds the Meta["assertions"] value for one duplex
+// turn: {results, all_passed, total, failed}, the duplex shape
+// TurnSummaryFromMeta reads.
+func duplexAssertionSummary(results []arenaassertions.AssertionResult) map[string]interface{} {
 	assertionResults := make(map[string]interface{})
 	resultsList := make([]map[string]interface{}, 0, len(results))
 	allPassed := true
@@ -124,31 +112,12 @@ func (de *DuplexConversationExecutor) storeAssertionResults(
 	assertionResults["results"] = resultsList
 	assertionResults["all_passed"] = allPassed
 	assertionResults["total"] = len(results)
-	assertionResults["failed"] = de.countFailedAssertions(results)
-
-	// Update message metadata
-	if msg.Meta == nil {
-		msg.Meta = make(map[string]interface{})
-	}
-	msg.Meta["assertions"] = assertionResults
-
-	// Update the state store with the modified message
-	arenaStore.UpdateLastAssistantMessage(req.ConversationID, msg)
-}
-
-// countPassedAssertions counts how many assertions passed.
-func (de *DuplexConversationExecutor) countPassedAssertions(results []arenaassertions.AssertionResult) int {
-	count := 0
-	for _, r := range results {
-		if r.Passed {
-			count++
-		}
-	}
-	return count
+	assertionResults["failed"] = countFailedAssertions(results)
+	return assertionResults
 }
 
 // countFailedAssertions counts how many assertions failed.
-func (de *DuplexConversationExecutor) countFailedAssertions(results []arenaassertions.AssertionResult) int {
+func countFailedAssertions(results []arenaassertions.AssertionResult) int {
 	count := 0
 	for _, r := range results {
 		if !r.Passed {

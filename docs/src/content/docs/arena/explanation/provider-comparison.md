@@ -2,10 +2,11 @@
 title: Provider Comparison Guide
 description: How providers differ in style, capability, context and cost, and how Arena runs one scenario against several of them.
 verified:
-  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
+  commit: 5a8cffd8daf00b49cbbb3596ce63750db56c3704
   sources:
     - arena/arenaconfig/loader.go
     - arena/arenaconfig/types.go
+    - arena/arenaconfig/validator.go
     - arena/assertions/types.go
     - arena/cmd/promptarena/prompt-debug_interactive.go
     - arena/cmd/promptarena/run.go
@@ -21,7 +22,7 @@ Providers differ in quality, tone, capabilities, speed, cost and reliability. Ar
 
 ## How a cross-provider run works
 
-A scenario names the providers that run it in `spec.providers`. Each id must match a provider defined in the Arena config, or that run fails with `provider not found`. `promptarena run --provider <id>` narrows the set further. The same turns and assertions apply to every provider, and each provider gets its own result.
+A scenario names the providers that run it in `spec.providers`. Each id must match a provider defined in the Arena config. `promptarena validate` reports an id that matches none as an error. `promptarena run --provider <id>` narrows the set further. The same turns and assertions apply to every provider, and each provider gets its own result.
 
 The diagram shows one scenario fanning out to the providers in an Arena config, then converging on the assertions.
 
