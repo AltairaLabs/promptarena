@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/tutorials/04-mcp-tools.md",
- "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
  "claims": [
   {
    "id": 1,
@@ -654,6 +654,15 @@
    "claim": "External link https://promptkit.altairalabs.ai/runtime/reference/tools-mcp/ resolves",
    "verdict": "true",
    "evidence": []
+  },
+  {
+   "id": 900,
+   "claim": "The current unpinned @modelcontextprotocol/server-memory works with Arena: its tools register with the server's own outputSchema, so structuredContent results pass",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go",
+    "arena/engine/mcp_tool_descriptor.go"
+   ]
   }
  ]
 }

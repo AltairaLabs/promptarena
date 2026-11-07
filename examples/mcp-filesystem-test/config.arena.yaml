@@ -15,8 +15,6 @@ spec:
         - "-y"
         - "@modelcontextprotocol/server-filesystem"
         - "."
-      env:
-        PATH: "Make sure node is on your path"
 
   # Prompt Configuration
   prompt_configs:

@@ -14,8 +14,6 @@ spec:
       args:
         - "-y"
         - "@modelcontextprotocol/server-memory"
-      env:
-        PATH: "Make sure node is on your path"
  
   # Prompts
   prompt_configs:

@@ -2,7 +2,7 @@
 title: 'Tutorial 4: Testing MCP Tools'
 description: Connect the npm memory MCP server to Arena, let OpenAI call its tools, and assert on the tool calls.
 verified:
-  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
   sources:
     - arena/arenaconfig/manifest_helpers.go
     - arena/arenaconfig/types.go
@@ -10,6 +10,7 @@ verified:
     - arena/cmd/promptarena/run.go
     - arena/engine/builder_integration.go
     - arena/engine/engine.go
+    - arena/engine/mcp_tool_descriptor.go
     - arena/mcp/config.go
     - examples/mcp-filesystem-test/config.arena.yaml
     - examples/mcp-memory-test/config.arena.yaml
@@ -38,8 +39,6 @@ mcp-test/
 - `promptarena` installed ([Tutorial 1](/arena/tutorials/01-first-test/))
 - Node.js, so that `npx` is available
 - An OpenAI API key
-
-This tutorial pins the server version it was tested with: `@modelcontextprotocol/server-memory@2025.4.25`.
 
 ## Step 1: Create the project directory
 
@@ -167,7 +166,7 @@ spec:
   mcp_servers:
     - name: memory
       command: npx
-      args: ["-y", "@modelcontextprotocol/server-memory@2025.4.25"]
+      args: ["-y", "@modelcontextprotocol/server-memory"]
 
   defaults:
     temperature: 0.2

@@ -1,7 +1,7 @@
 ---
 title: Configuration Schema
 verified:
-  commit: 3df344ffbc8c604e1a8935929c28499d778d19f0
+  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
   sources:
     - arena/adapters/arena_output.go
     - arena/adapters/registry.go
@@ -11,6 +11,7 @@ verified:
     - arena/arenaconfig/helpers.go
     - arena/arenaconfig/judge_param.go
     - arena/arenaconfig/loader.go
+    - arena/arenaconfig/mcp_servers.go
     - arena/arenaconfig/persona.go
     - arena/arenaconfig/persona_state.go
     - arena/arenaconfig/scenario_data.go
@@ -340,7 +341,8 @@ tools:
 #### `mcp_servers`
 
 Optional list of MCP (Model Context Protocol) server configurations. Each
-entry has exactly one transport selected by which fields are set.
+entry has exactly one transport selected by which fields are set: one of
+`command`, `url` and `source`. A config with none or several fails to load.
 
 **Common fields**:
 - `name` (string, required): Registry key. Used as the server prefix in
@@ -355,7 +357,9 @@ PromptArena spawns a local subprocess and speaks MCP over stdio.
 
 - `command` (string, required): Executable to run.
 - `args` (string array, optional): Command-line arguments.
-- `env` (string→string map, optional): Environment variables.
+- `env` (string→string map, optional): Environment variables, added to
+  the environment the server inherits. `${VAR}` in a value is replaced
+  from PromptArena's environment (empty when unset).
 - `working_dir` (string, optional): Working directory for the subprocess.
 
 ```yaml
@@ -378,7 +382,8 @@ HTTP transports, chosen with `transport`.
   PromptArena tries Streamable HTTP and falls back to HTTP+SSE if the server
   only hosts that.
 - `headers` (string→string map, optional): Headers added to every request
-  (e.g. `Authorization`).
+  (e.g. `Authorization`). `${VAR}` in a value is replaced from
+  PromptArena's environment (empty when unset).
 
 With no `transport`, `url` is the server's endpoint (usually ending in `/mcp`):
 

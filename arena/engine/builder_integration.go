@@ -2,7 +2,6 @@ package engine
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -467,39 +466,8 @@ func discoverAndRegisterMCPTools(mcpRegistry *mcp.RegistryImpl, toolRegistry *to
 				continue
 			}
 
-			// MCP tools return a ToolCallResponse with Content array
-			// Define a generic output schema that matches this structure
-			mcpOutputSchema := json.RawMessage(`{
-				"type": "object",
-				"properties": {
-					"content": {
-						"type": "array",
-						"items": {
-							"type": "object",
-							"properties": {
-								"type": {"type": "string"},
-								"text": {"type": "string"},
-								"data": {"type": "string"},
-								"mimeType": {"type": "string"},
-								"uri": {"type": "string"}
-							},
-							"required": ["type"]
-						}
-					},
-					"isError": {"type": "boolean"}
-				},
-				"required": ["content"]
-			}`)
-
 			qualifiedName := fmt.Sprintf("mcp__%s__%s", serverName, mcpTool.Name)
-			toolDesc := &tools.ToolDescriptor{
-				Name:         qualifiedName,
-				Description:  mcpTool.Description,
-				InputSchema:  mcpTool.InputSchema,
-				OutputSchema: mcpOutputSchema,
-				Mode:         "mcp", // Mark as MCP tool for routing
-			}
-			if err := toolRegistry.Register(toolDesc); err != nil {
+			if err := toolRegistry.Register(mcpToolDescriptor(qualifiedName, &mcpTool)); err != nil {
 				return fmt.Errorf("failed to register MCP tool %s from server %s: %w", qualifiedName, serverName, err)
 			}
 			totalTools++

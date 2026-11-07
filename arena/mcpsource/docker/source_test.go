@@ -58,7 +58,9 @@ func TestSource_Open_StartsContainerAndReturnsURL(t *testing.T) {
 
 	conn, closer, err := s.Open(context.Background(), map[string]any{"image": "x"})
 	require.NoError(t, err)
-	assert.Equal(t, health.URL, conn.URL)
+	// The URL is the SSE endpoint itself, so the MCP client connects to it as
+	// written instead of retrying base+/sse with a warning.
+	assert.Equal(t, health.URL+"/sse", conn.URL)
 	require.NotNil(t, closer)
 	require.Len(t, cli.runCalls, 1)
 	assert.Equal(t, "x", cli.runCalls[0].Image)
@@ -174,6 +176,37 @@ func TestSource_Open_PropagatesMountsAndEnv(t *testing.T) {
 	assert.Equal(t, "/host/skills", spec.Mounts[0].Source)
 	assert.Equal(t, "/skills/codegen", spec.Mounts[0].Target)
 	assert.True(t, spec.Mounts[0].ReadOnly)
+}
+
+// YAML turns `DEV_MODE: 1` into an int; it used to be dropped silently.
+func TestEnvFromArgs_FormatsScalars(t *testing.T) {
+	env, err := envFromArgs(map[string]any{
+		"S": "x", "I": 1, "F": 1.5, "B": true, "N": nil,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, map[string]string{"S": "x", "I": "1", "F": "1.5", "B": "true", "N": ""}, env)
+}
+
+func TestEnvFromArgs_RejectsNonScalars(t *testing.T) {
+	_, err := envFromArgs(map[string]any{"L": []any{"a"}})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "args.env.L")
+
+	_, err = envFromArgs([]any{"A=1"})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "args.env must be a map")
+
+	env, err := envFromArgs(nil)
+	require.NoError(t, err)
+	assert.Nil(t, env)
+}
+
+func TestSource_Open_BadEnvFailsBeforeStartingContainer(t *testing.T) {
+	cli := &fakeCLI{runID: "cid-env"}
+	s := &Source{cli: cli, urlForContainer: func(_, _ string) string { return "http://x" }}
+	_, _, err := s.Open(context.Background(), map[string]any{"image": "x", "env": map[string]any{"M": map[string]any{}}})
+	require.Error(t, err)
+	assert.Empty(t, cli.runCalls)
 }
 
 func TestMountsFromArgs_TypedSlice(t *testing.T) {

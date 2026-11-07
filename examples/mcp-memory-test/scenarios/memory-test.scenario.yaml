@@ -16,7 +16,7 @@ spec:
       assertions:
         - type: tools_called
           params:
-            tools: ["create_entities"]
+            tools: ["mcp__memory__create_entities"]
             message: "Should use create_entities tool to store information in knowledge graph"
         - type: content_includes
           params:
@@ -28,7 +28,7 @@ spec:
       assertions:
         - type: tools_called
           params:
-            tools: ["read_graph"]
+            tools: ["mcp__memory__read_graph"]
             message: "Should use read_graph tool to retrieve stored information"
         - type: content_includes
           params:

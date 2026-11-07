@@ -195,10 +195,10 @@ granted.
 So when a transcript *looks* like it used tools, confirm there is a real `tool`
 role in the messages rather than tool-shaped text sitting in `content`.
 
-**The same applies to provider `capabilities`.** If you declare a
-`capabilities` list, it is exclusive — omit `tools` and the provider won't be
-offered any. The working examples in this repo omit the block entirely, which
-permits everything.
+Provider `capabilities` do not gate tools: a provider declared with
+`capabilities: [text]` is still offered the prompt's `allowed_tools`. The
+`tools` value only takes part in a scenario's `required_capabilities`
+matching.
 
 ## No mock/offline path
 

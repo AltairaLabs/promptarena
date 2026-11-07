@@ -4,7 +4,7 @@ description: Connect stdio and HTTP MCP servers to an Arena config, filter their
 sidebar:
   order: 12
 verified:
-  commit: 3df344ffbc8c604e1a8935929c28499d778d19f0
+  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
   sources:
     - arena/arenaconfig/loader.go
     - arena/arenaconfig/types.go
@@ -100,7 +100,7 @@ mcp_servers:
 
 ### Environment variables
 
-The server process inherits the environment of the shell that runs `promptarena`, so a token you export there reaches the server. Use `env` to set extra variables. Values pass to the server literally: `${VAR}` is not expanded.
+The server process inherits the environment of the shell that runs `promptarena`, so a token you export there reaches the server. Use `env` to set extra variables. `${VAR}` in a value is replaced from the environment `promptarena` runs in, which lets you pass a variable under another name. An unset variable becomes an empty string. `headers` values on a `url` server expand the same way.
 
 ```yaml
 mcp_servers:
@@ -109,6 +109,7 @@ mcp_servers:
     args: ["-y", "@modelcontextprotocol/server-github"]
     env:
       LOG_LEVEL: "debug"
+      GITHUB_PERSONAL_ACCESS_TOKEN: "${GITHUB_TOKEN}"
 ```
 
 ### Working directory
