@@ -390,7 +390,7 @@ func TestEnableMockProviderMode_RejectsUnknownMockKeys(t *testing.T) {
 		t.Fatal(err)
 	}
 	err = eng.EnableMockProviderMode(path)
-	if err == nil || !strings.Contains(err.Error(), "field default_response not found") {
+	if err == nil || !strings.Contains(err.Error(), `unknown key "default_response"`) {
 		t.Fatalf("expected an unknown-key error, got %v", err)
 	}
 }

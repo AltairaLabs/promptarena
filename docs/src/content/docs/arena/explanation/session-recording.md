@@ -14,7 +14,6 @@ verified:
     - arena/engine/engine.go
     - arena/engine/eval_orchestrator.go
     - arena/engine/execution.go
-    - arena/stages/duplex_recording.go
     - arena/tui/event_adapter.go
     - arena/turnexecutors/pipeline_stages_integration.go
     - arena/web/event_adapter.go
@@ -29,7 +28,7 @@ Session recording provides an audit trail of LLM interactions. Unlike simple log
 - Every message with its multimodal parts, tool calls and tool results
 - Enough information to replay a conversation turn by turn
 
-Arena writes a recording when `defaults.output.recording.enabled` is `true`. Arena adds `RecordingStage` to the pipeline itself, duplex runs included. On the duplex path the provider stage puts each assistant turn's message on the element that ends the turn, which `RecordingStage` skips as a control signal, so Arena records a copy of that content immediately ahead of it. The duplex recording sits after the pack guardrail stage, so a recorded turn holds the enforced content.
+Arena writes a recording when `defaults.output.recording.enabled` is `true`. Arena adds `RecordingStage` to the pipeline itself, duplex runs included. On the duplex path the provider stage puts each assistant turn's message on the element that ends the turn, and `RecordingStage` records it there, once per turn. The duplex recording sits after the provider stage, whose guardrails have already run, so a recorded turn holds the enforced content.
 
 The following diagram shows the path from a live run to a replay.
 

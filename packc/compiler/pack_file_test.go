@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/AltairaLabs/PromptKit/runtime/v2/packspec"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/prompt"
 )
 
@@ -125,7 +124,7 @@ func TestValidatePackFile_MissingCompilationIsAWarning(t *testing.T) {
 	delete(m, "compilation")
 	r := ValidatePackFile(writePackMap(t, m))
 	assert.Empty(t, r.Errors, messages(r.Errors))
-	assert.Contains(t, messages(r.Warnings), missingCompilationMsg)
+	assert.Contains(t, messages(r.Warnings), "missing compilation metadata")
 }
 
 func TestValidatePackFile_UndeclaredPromptToolIsAWarning(t *testing.T) {
@@ -133,7 +132,7 @@ func TestValidatePackFile_UndeclaredPromptToolIsAWarning(t *testing.T) {
 	m["prompts"].(map[string]any)["greeting"].(map[string]any)["tools"] = []string{"nonexistent_tool"}
 	r := ValidatePackFile(writePackMap(t, m))
 	assert.Empty(t, r.Errors, messages(r.Errors))
-	assert.Contains(t, messages(r.Warnings), `tool "nonexistent_tool" is not defined in the pack's tools`)
+	assert.Contains(t, messages(r.Warnings), `tool 'nonexistent_tool' is not defined in the pack's tools`)
 }
 
 func TestCompilePromptFile_Success(t *testing.T) {
@@ -247,13 +246,6 @@ func TestCompile_TemplateEngine(t *testing.T) {
 	})
 }
 
-func TestResolveTemplateEngine_NoneDeclared(t *testing.T) {
-	existing := &prompt.TemplateEngineInfo{Version: "v1", Syntax: "{{variable}}"}
-	pack := &prompt.Pack{Pack: packspec.Pack{TemplateEngine: existing}}
-	require.NoError(t, resolveTemplateEngine(nil, pack))
-	assert.Same(t, existing, pack.TemplateEngine)
-}
-
 func TestValidatePackVersion(t *testing.T) {
 	for _, v := range []string{"1.0.0", "v2.1.3", "1.0.0-alpha", "2.0.0-beta.1+build.123"} {
 		assert.NoError(t, validatePackVersion(v), v)
@@ -261,19 +253,4 @@ func TestValidatePackVersion(t *testing.T) {
 	for _, v := range []string{"", "1.0", "latest", "v1.0.0.0", "01.0.0"} {
 		assert.Error(t, validatePackVersion(v), v)
 	}
-}
-
-func TestUndeclaredPromptTools(t *testing.T) {
-	pack := &prompt.Pack{Pack: packspec.Pack{
-		Prompts: map[string]*prompt.PackPrompt{
-			"b":   {Tools: []string{"known", "missing_b"}},
-			"a":   {Tools: []string{"missing_a"}},
-			"nil": nil,
-		},
-		Tools: map[string]*prompt.PackTool{"known": {Name: "known"}},
-	}}
-	assert.Equal(t, []string{
-		`prompt "a": tool "missing_a" is not defined in the pack's tools`,
-		`prompt "b": tool "missing_b" is not defined in the pack's tools`,
-	}, undeclaredPromptTools(pack))
 }

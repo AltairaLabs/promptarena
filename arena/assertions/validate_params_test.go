@@ -9,7 +9,6 @@ import (
 	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
 
 	"github.com/AltairaLabs/PromptKit/runtime/v2/evals"
-	"github.com/AltairaLabs/PromptKit/runtime/v2/prompt"
 )
 
 func scenarioWith(a ...arenaconfig.AssertionConfig) *arenaconfig.Config {
@@ -30,7 +29,7 @@ func TestValidateConfigAssertionParams_ValidParamsPass(t *testing.T) {
 		arenaconfig.AssertionConfig{Type: "banned_words", Params: map[string]any{"words": []any{"x"}}},
 		arenaconfig.AssertionConfig{Type: "max_length", Params: map[string]any{"max_characters": 10, "min_score": 1}},
 		arenaconfig.AssertionConfig{Type: "llm_judge", Params: map[string]any{
-			"criteria": "c", "judge": "j", "provider": "j",
+			"criteria": "c", "provider": "j",
 		}},
 		arenaconfig.AssertionConfig{Type: "guardrail_triggered", Params: map[string]any{
 			"validator_type": "banned_words", "should_trigger": true,
@@ -62,14 +61,15 @@ func TestValidateConfigAssertionParams_UnknownParamsError(t *testing.T) {
 			"patterns": []any{"x"}, "case_sensitive": true,
 		}},
 		arenaconfig.AssertionConfig{Type: "workflow_complete", Params: map[string]any{"state": "x"}},
-		arenaconfig.AssertionConfig{Type: "max_sentences", Params: map[string]any{"max_sentences": 3}},
+		arenaconfig.AssertionConfig{Type: "llm_judge", Params: map[string]any{"criteria": "c", "judge": "j"}},
 	)
 	require.Len(t, f.Errors, 6)
 	joined := f.Errors
-	assert.Contains(t, joined[0], `content_includes: unknown param "case_sensitive": case_sensitive is not supported`)
-	assert.Contains(t, joined[1], `llm_judge: unknown param "judge_provider": select a judge with judge:`)
-	assert.Contains(t, joined[2], `llm_judge: unknown param "model"`)
-	assert.Contains(t, joined[3], "max_sentences: sentence_count measures and always scores 1.0")
+	assert.Contains(t, joined[0], `content_includes: unknown param "case_sensitive"`)
+	assert.Contains(t, joined[0], "contains accepts: patterns")
+	assert.Contains(t, joined[1], `llm_judge: unknown param "judge"`, "the loader resolves judge to provider and drops it")
+	assert.Contains(t, joined[2], `llm_judge: unknown param "judge_provider": select a judge with judge:`)
+	assert.Contains(t, joined[3], `llm_judge: unknown param "model"`)
 	assert.Contains(t, joined[4], `tool_called: unknown param "tool_name" (did you mean "tool_names"?)`)
 	assert.Contains(t, joined[5], `workflow_complete: unknown param "state"`)
 	assert.Contains(t, joined[5], "takes no params")
@@ -154,22 +154,4 @@ func TestValidateConfigAssertionParams_EveryLocation(t *testing.T) {
 		assert.True(t, found, "missing %q in %v", want, f.Errors)
 	}
 	assert.Empty(t, ValidateConfigAssertionParams(nil, evals.NewEvalTypeRegistry()).Errors)
-}
-
-func TestValidatePromptValidatorParams(t *testing.T) {
-	prompts := map[string]*arenaconfig.PromptConfigData{
-		"support": {Config: &prompt.Config{Spec: prompt.Spec{Validators: []prompt.ValidatorConfig{
-			{Type: "max_sentences", Params: map[string]any{"max_sentences": 3}},
-			{Type: "banned_words", Params: map[string]any{"words": []any{"x"}, "case_sensitive": false}},
-			{Type: "banned_words", Params: map[string]any{"words": []any{"x"}}},
-			{Type: "not_registered"},
-		}}}},
-		"other": {Config: "not a prompt config"},
-		"nil":   nil,
-	}
-	warns := ValidatePromptValidatorParams(prompts, evals.NewEvalTypeRegistry())
-	require.Len(t, warns, 2)
-	assert.Contains(t, warns[0], "prompt support: validators[0] (max_sentences): sentence_count measures")
-	assert.Contains(t, warns[0], "as a guardrail it never fires")
-	assert.Contains(t, warns[1], "prompt support: validators[1] (banned_words): case_sensitive is not supported")
 }

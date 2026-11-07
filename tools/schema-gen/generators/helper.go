@@ -151,7 +151,6 @@ func Generate(cfg *SchemaConfig) (interface{}, error) {
 	schema.Description = cfg.Description
 
 	allowSchemaField(schema)
-	applyOptionalFields(schema)
 
 	if cfg.Customize != nil {
 		cfg.Customize(schema)

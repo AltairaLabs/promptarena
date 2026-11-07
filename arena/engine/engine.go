@@ -744,11 +744,7 @@ func (e *Engine) EnableMockProviderMode(mockConfigPath string) error {
 	// parsing it N times would be wasted work.
 	var flagRepo mock.ResponseRepository
 	if mockConfigPath != "" {
-		// The runtime parses the file leniently; reject unknown keys first, as
-		// the config loader does for a provider's own mock_config.
-		if err := arenaconfig.CheckMockConfigFile(mockConfigPath); err != nil {
-			return err
-		}
+		// The runtime decodes the file strictly, so an unknown key fails here.
 		fileRepo, err := mock.NewFileMockRepository(mockConfigPath)
 		if err != nil {
 			return fmt.Errorf("failed to load mock configuration from %s: %w", mockConfigPath, err)

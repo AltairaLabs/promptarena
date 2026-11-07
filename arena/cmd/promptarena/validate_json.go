@@ -153,12 +153,11 @@ func (r *validateJSONReport) addArenaStages(filePath string) {
 }
 
 // addAssertionStage checks every assertion's type and params against the eval
-// registry, and the prompts' validators for params their handler ignores. It
-// runs when the config has something to check.
+// registry. It runs when the config has something to check. The prompts'
+// validators are not checked here: PromptKit rejects a validator param its
+// handler does not read when it builds the guardrail.
 func (r *validateJSONReport) addAssertionStage(cfg *arenaconfig.Config) {
-	promptValidators := assertions.ValidatePromptValidatorParams(cfg.LoadedPromptConfigs, evals.NewEvalTypeRegistry())
-	if len(cfg.LoadedScenarios) == 0 && len(cfg.LoadedPersonas) == 0 && len(cfg.LoadedEvals) == 0 &&
-		len(promptValidators) == 0 {
+	if len(cfg.LoadedScenarios) == 0 && len(cfg.LoadedPersonas) == 0 && len(cfg.LoadedEvals) == 0 {
 		return
 	}
 	r.Stages = append(r.Stages, stageAssertions)
@@ -170,7 +169,7 @@ func (r *validateJSONReport) addAssertionStage(cfg *arenaconfig.Config) {
 	for _, e := range errs {
 		r.addError(validateFinding{Stage: stageAssertions, Description: e})
 	}
-	for _, w := range append(params.Warnings, promptValidators...) {
+	for _, w := range params.Warnings {
 		r.addWarning(validateFinding{Stage: stageAssertions, Description: w})
 	}
 }

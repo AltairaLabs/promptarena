@@ -1,7 +1,6 @@
 package arenaconfig
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
@@ -17,15 +16,8 @@ func (c *Config) checkMCPServers() error {
 		return nil
 	}
 	spec := config.RuntimeConfigSpec{MCPServers: c.MCPServers}
-	err := spec.Validate()
-	if err == nil {
-		return nil
+	if err := spec.Validate(); err != nil {
+		return fmt.Errorf("invalid mcp_servers: %w", err)
 	}
-	// config.ValidationError's own message is prefixed "logging config
-	// validation error" whatever the field, so report its parts directly.
-	var ve *config.ValidationError
-	if errors.As(err, &ve) {
-		return fmt.Errorf("invalid mcp_servers: %s: %s", ve.Field, ve.Message)
-	}
-	return fmt.Errorf("invalid mcp_servers: %w", err)
+	return nil
 }

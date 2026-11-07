@@ -318,34 +318,32 @@ func (de *DuplexConversationExecutor) buildDuplexPipeline(
 	if req.OnDuplexSession != nil {
 		duplexStage.SetSessionObserver(req.OnDuplexSession)
 	}
-	stages = append(stages, duplexStage)
-
-	// 2b. Pack guardrails on each completed assistant turn. DuplexProviderStage
-	// runs no provider hooks, so this is the duplex path's only enforcement.
-	guardStage, err := de.buildDuplexGuardrailStage(req, streamProvider, mergedVars, emitter)
+	// Pack guardrails run inside the duplex provider stage, as they run inside
+	// ProviderStage on the text path: on text bound for the session, on each
+	// chunk of assistant text, and on each completed assistant turn.
+	guardrails, err := de.buildDuplexGuardrailRegistry(req, mergedVars)
 	if err != nil {
 		return nil, err
 	}
-	if guardStage != nil {
-		stages = append(stages, guardStage)
+	if guardrails != nil {
+		duplexStage.SetHookRegistry(guardrails)
 	}
+	stages = append(stages, duplexStage)
 
 	stages = de.appendDuplexOutputStages(stages, req, turnState)
 
 	return builder.WithEventEmitter(emitter).Chain(stages...).Build()
 }
 
-// buildDuplexGuardrailStage compiles the validators the scenario's prompt
-// declares, with the same loader the text path uses, and wraps them in the
-// duplex guardrail stage. Nil when the prompt declares none. An unregistered
-// validator type is an error, as it is on the text path: a guardrail must not
-// be dropped quietly.
-func (de *DuplexConversationExecutor) buildDuplexGuardrailStage(
+// buildDuplexGuardrailRegistry compiles the validators the scenario's prompt
+// declares, with the same loader the text path uses, into the hook registry
+// the duplex provider stage runs. Nil when the prompt declares none. An
+// unregistered validator type is an error, as it is on the text path: a
+// guardrail must not be dropped quietly.
+func (de *DuplexConversationExecutor) buildDuplexGuardrailRegistry(
 	req *ConversationRequest,
-	streamProvider providers.StreamInputSupport,
 	vars map[string]string,
-	emitter *events.Emitter,
-) (stage.Stage, error) {
+) (*hooks.Registry, error) {
 	taskType := ""
 	if req.Scenario != nil {
 		taskType = req.Scenario.TaskType
@@ -361,9 +359,7 @@ func (de *DuplexConversationExecutor) buildDuplexGuardrailStage(
 	for _, h := range compiled {
 		opts = append(opts, hooks.WithProviderHook(h))
 	}
-	return arenastages.NewDuplexGuardrailStage(
-		hooks.NewRegistry(opts...), emitter, streamProvider.ID(), streamProvider.Model(),
-	), nil
+	return hooks.NewRegistry(opts...), nil
 }
 
 // buildDuplexPipelineConfig builds the StreamPipeline configuration for a duplex
@@ -462,13 +458,14 @@ func (de *DuplexConversationExecutor) appendDuplexOutputStages(
 	turnState *stage.TurnState,
 ) []stage.Stage {
 	// 2a-rec. Output session recording (opt-in via RecordingConfig + EventStore),
-	// after the guardrails so a recorded turn holds the enforced content.
+	// after the provider stage, whose guardrails have already run, so a
+	// recorded turn holds the enforced content.
 	if req.RecordingConfig != nil && req.EventStore != nil {
 		cfg := *req.RecordingConfig
 		cfg.Position = stage.RecordingPositionOutput
 		cfg.SessionID = req.RunID
 		cfg.ConversationID = req.ConversationID
-		stages = append(stages, arenastages.DuplexOutputRecordingStages(req.EventStore, cfg)...)
+		stages = append(stages, stage.NewRecordingStage(req.EventStore, cfg))
 	}
 
 	// 2a-pre. Output audio pacing. Realtime providers stream assistant audio

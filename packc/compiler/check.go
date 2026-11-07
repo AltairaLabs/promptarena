@@ -183,34 +183,20 @@ func (r *CheckResult) checkPack(pack *prompt.Pack, configDir, configFile string)
 	r.addAll(true, StageGovernance, configFile, gov.Errors)
 	r.addAll(false, StageGovernance, configFile, gov.Warnings)
 
-	for _, m := range structuralFindings(pack, gov) {
-		if m == missingCompilationMsg {
-			// PromptKit makes a missing compilation block blocking, but the
-			// PromptPack schema does not require it: a pack written by another
-			// tool may leave it out.
-			r.add(false, Problem{Stage: StagePack, Source: configFile,
-				Message: m + " (optional in the PromptPack schema)"})
-			continue
-		}
-		r.add(true, Problem{Stage: StagePack, Source: configFile, Message: m})
-	}
-
-	r.addAll(false, StagePack, configFile, undeclaredPromptTools(pack))
+	structural := structuralFindings(pack, gov)
+	r.addAll(true, StagePack, configFile, structural.Errors)
+	r.addAll(false, StagePack, configFile, structural.Warnings)
 }
 
-// structuralFindings returns what pack.Validate finds about the pack's own
-// structure, which `packc validate` treats as blocking, without the workflow,
-// agent and governance findings checkPack has already reported by stage.
+// structuralFindings returns what pack.ValidateDetailed finds about the pack's
+// own structure, split by severity, without the workflow, agent and governance
+// findings checkPack has already reported under their own stages.
 //
-// pack.Validate re-runs those validators, and matching its copies to the
-// reported ones by text is not reliable: PromptKit words a workflow cycle by
-// the back edge its DFS meets first, which depends on map order, so the same
-// cycle could come back as "a -> b" once and "b -> a" the next time and slip
-// through as an error (#445). So Validate runs on a shallow copy with no
-// workflow and no agents, which it skips entirely. Governance stays, because
-// pack-level governance can reference anything; its findings are worded per
-// declaration, in a fixed order, so they are dropped by text.
-func structuralFindings(pack *prompt.Pack, gov *prompt.GovernanceValidationResult) []string {
+// ValidateDetailed re-runs those validators. So it runs on a shallow copy with
+// no workflow and no agents, which it then skips entirely. Governance stays,
+// because pack-level governance can reference anything; its findings are
+// dropped by text.
+func structuralFindings(pack *prompt.Pack, gov *prompt.GovernanceValidationResult) *prompt.PackValidationResult {
 	structural := *pack
 	structural.Workflow = nil
 	structural.Agents = nil
@@ -221,18 +207,21 @@ func structuralFindings(pack *prompt.Pack, gov *prompt.GovernanceValidationResul
 			reported[m] = true
 		}
 	}
-	var out []string
-	for _, m := range structural.Validate() {
-		if !reported[m] {
-			out = append(out, m)
+	unreported := func(msgs []string) []string {
+		var out []string
+		for _, m := range msgs {
+			if !reported[m] {
+				out = append(out, m)
+			}
 		}
+		return out
 	}
-	return out
+	found := structural.ValidateDetailed()
+	return &prompt.PackValidationResult{
+		Errors:   unreported(found.Errors),
+		Warnings: unreported(found.Warnings),
+	}
 }
-
-// missingCompilationMsg is the finding PromptKit's Pack.Validate reports for a
-// pack with no compilation block.
-const missingCompilationMsg = "missing compilation metadata"
 
 // checkSchema validates the compiled pack against the PromptPack spec schema,
 // one Problem per violation.

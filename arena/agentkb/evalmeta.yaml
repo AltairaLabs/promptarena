@@ -43,7 +43,7 @@ handlers:
     score: boolean gate
   sentence_count:
     level: turn
-    description: Counts the output's sentences. A measurement that always scores 1.0; it enforces no maximum, so as a guardrail it never fires.
+    description: Counts the output's sentences. With max, a reply within the cap scores 1.0 and one over it max/count; without max it always scores 1.0.
     score: measurement
   field_presence:
     level: turn
