@@ -1,7 +1,7 @@
 ---
 title: 'Deploy: Adapter SDK'
 verified:
-  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
+  commit: 45cbd09a1d70928da45e071755b0c2172abfc8ca
   sources:
     - arena/cmd/promptarena/deploy_interactive.go
     - arena/deploy/flow/config.go
@@ -348,7 +348,7 @@ type AgentInfo struct {
 type ToolInfo struct {
     Name        string      `json:"name"`
     Description string      `json:"description"`
-    Mode        string      `json:"mode"`          // "mock", "live", "mcp", "exec", "client"
+    Mode        string      `json:"mode"`          // the tool's configured mode: "mock", "live", "mcp", "client", "exec", "local"
     HasSchema   bool        `json:"has_schema"`
     InputSchema interface{} `json:"input_schema,omitempty"`
     HTTPURL     string      `json:"http_url,omitempty"`

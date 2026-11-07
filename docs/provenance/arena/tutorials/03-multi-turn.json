@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/tutorials/03-multi-turn.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "45cbd09a1d70928da45e071755b0c2172abfc8ca",
  "claims": [
   {
    "id": 1,
@@ -630,11 +630,11 @@
   },
   {
    "id": 68,
-   "claim": "Role entries take a provider field; value selfplay is the provider ID for the persona LLM",
-   "verdict": "unverified",
+   "claim": "Role entries take a provider field naming a provider id listed under spec.providers",
+   "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go",
-    "schemas/v1alpha1/arena.json"
+    "arena/arenaconfig/types.go:455-459",
+    "schemas/v1alpha1/arena.json:3939-3941"
    ]
   },
   {

@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/explanation/scenario-design.md",
- "commit": "5a8cffd8daf00b49cbbb3596ce63750db56c3704",
+ "commit": "45cbd09a1d70928da45e071755b0c2172abfc8ca",
  "claims": [
   {
    "id": 1,
@@ -43,7 +43,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:689",
-    "arena/arenaconfig/validator.go:312",
+    "arena/arenaconfig/validator.go:314",
     "arena/engine/builder_integration.go:509"
    ]
   },
@@ -113,7 +113,7 @@
    "claim": "task_type connects the scenario to its prompt configuration",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator.go:312",
+    "arena/arenaconfig/validator.go:314",
     "arena/engine/builder_integration.go:509"
    ]
   },
@@ -335,7 +335,7 @@
    "claim": "a top-level templates key defines reusable blocks in an Arena config",
    "verdict": "false",
    "evidence": [
-    "schemas/v1alpha1/arena.json"
+    "schemas/v1alpha1/arena.json:5182-5198"
    ]
   },
   {
@@ -461,7 +461,8 @@
    "claim": "promptarena validate warns about a spec.context.variables key",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator.go"
+    "arena/arenaconfig/validator.go:320",
+    "arena/arenaconfig/validator.go:329-335"
    ]
   }
  ]

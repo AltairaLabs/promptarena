@@ -1,7 +1,7 @@
 ---
 title: Configuration Schema
 verified:
-  commit: 5a8cffd8daf00b49cbbb3596ce63750db56c3704
+  commit: 45cbd09a1d70928da45e071755b0c2172abfc8ca
   sources:
     - arena/adapters/arena_output.go
     - arena/adapters/registry.go
@@ -1016,6 +1016,10 @@ assertions:
 #### `context` and `context_metadata`
 
 Optional metadata about the scenario. `context` is a free-form key-value map that a run does not read; only `promptarena prompt-debug` reads its `user_context` key. `promptarena validate` warns when `context` has a `variables` key, because those values never reach the prompt template; set them in `spec.variables`. `context_metadata` has typed fields: `domain` and `user_role`. A third field, `project_stage`, is still accepted but nothing reads it, and loading warns that it is ignored.
+
+#### `providers`
+
+Optional list of provider ids that restricts the scenario to those arena providers. When empty, the scenario runs against the providers in its `provider_group` (`default` unless set), or every provider if that group has none. `promptarena validate` reports an id that names no loaded provider as an error and lists the known ids.
 
 #### `context_policy`
 

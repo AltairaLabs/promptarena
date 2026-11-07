@@ -2,7 +2,7 @@
 title: Use Mock Providers
 description: "Run scenarios against canned responses with --mock-provider, --mock-config or a type: mock provider, with no API calls or cost."
 verified:
-  commit: 5a8cffd8daf00b49cbbb3596ce63750db56c3704
+  commit: 45cbd09a1d70928da45e071755b0c2172abfc8ca
   sources:
     - arena/arenaconfig/loader.go
     - arena/arenaconfig/mock_config_check.go

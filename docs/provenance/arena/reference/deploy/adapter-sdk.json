@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/reference/deploy/adapter-sdk.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "45cbd09a1d70928da45e071755b0c2172abfc8ca",
  "claims": [
   {
    "id": 1,
@@ -847,12 +847,12 @@
   },
   {
    "id": 101,
-   "claim": "ToolInfo field Mode takes values mock, live, mcp or a2a",
+   "claim": "ToolInfo field Mode carries the tool's configured mode unchanged: mock, live, mcp, client, exec or local",
    "verdict": "true",
    "evidence": [
     "deploy/adaptersdk/arena.go:83",
     "deploy/adaptersdk/tools.go:14",
-    "schemas/v1alpha1/tool.json:319-321"
+    "schemas/v1alpha1/tool.json:321"
    ]
   },
   {

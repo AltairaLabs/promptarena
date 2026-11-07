@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/packc/explanation/pack-format.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "45cbd09a1d70928da45e071755b0c2172abfc8ca",
  "claims": [
   {
    "id": 1,
@@ -19,7 +19,8 @@
    "claim": "validate accepts a pack without compilation and prints a warning",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:198-203"
+    "packc/compiler/check.go:186-198",
+    "packc/compiler/check.go:233-235"
    ]
   },
   {
@@ -90,7 +91,7 @@
    "verdict": "true",
    "evidence": [
     "packc/compiler/check.go:97-100",
-    "packc/compiler/helpers_integration.go:230-236"
+    "packc/compiler/helpers_integration.go:240-246"
    ]
   },
   {

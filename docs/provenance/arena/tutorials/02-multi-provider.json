@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/tutorials/02-multi-provider.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "45cbd09a1d70928da45e071755b0c2172abfc8ca",
  "claims": [
   {
    "id": 1,
@@ -270,8 +270,8 @@
    "claim": "Arena manifest kind is Arena",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go",
-    "schemas/v1alpha1/arena.json"
+    "arena/configschema/configschema.go:85",
+    "schemas/v1alpha1/arena.json:5185"
    ]
   },
   {
@@ -279,8 +279,7 @@
    "claim": "metadata.name is a valid arena field",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go",
-    "schemas/v1alpha1/arena.json"
+    "schemas/v1alpha1/arena.json:5188"
    ]
   },
   {
@@ -288,8 +287,7 @@
    "claim": "spec.prompt_configs is a valid list field",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go",
-    "schemas/v1alpha1/arena.json"
+    "schemas/v1alpha1/arena.json:638"
    ]
   },
   {
@@ -297,8 +295,7 @@
    "claim": "prompt_configs entries have an id field",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go",
-    "schemas/v1alpha1/arena.json"
+    "schemas/v1alpha1/arena.json:3086"
    ]
   },
   {
@@ -314,8 +311,8 @@
    "claim": "spec.providers is a list of entries each with a file field",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go",
-    "schemas/v1alpha1/arena.json"
+    "schemas/v1alpha1/arena.json:3252",
+    "schemas/v1alpha1/arena.json:645"
    ]
   },
   {
@@ -323,8 +320,8 @@
    "claim": "spec.scenarios is a list of entries each with a file field",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go",
-    "schemas/v1alpha1/arena.json"
+    "schemas/v1alpha1/arena.json:3826",
+    "schemas/v1alpha1/arena.json:663"
    ]
   },
   {

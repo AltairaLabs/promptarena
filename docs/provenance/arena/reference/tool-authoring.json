@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/reference/tool-authoring.md",
- "commit": "5a8cffd8daf00b49cbbb3596ce63750db56c3704",
+ "commit": "45cbd09a1d70928da45e071755b0c2172abfc8ca",
  "claims": [
   {
    "id": 1,
@@ -15,9 +15,9 @@
    "claim": "Valid mode values under promptarena are mock, live, mcp and client; exec and local are SDK-only",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator_tools.go:73-95",
+    "arena/arenaconfig/validator_tools.go:73-79",
     "arena/engine/builder_integration.go:564",
-    "schemas/v1alpha1/tool.json:321"
+    "schemas/v1alpha1/tool.json:319"
    ]
   },
   {
@@ -33,7 +33,7 @@
    "claim": "mock (template) renders mock_template (mock_template_file in a kind: Tool file reads the same template from a file)",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:604",
+    "arena/engine/builder_integration.go:609",
     "schemas/v1alpha1/tool.json:358"
    ]
   },
@@ -61,7 +61,7 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/builder_integration.go:555",
-    "schemas/v1alpha1/tool.json:321"
+    "schemas/v1alpha1/tool.json:319"
    ]
   },
   {
@@ -175,8 +175,8 @@
    "claim": "In a kind: Tool file, mock_template_file reads the template from a file resolved against the arena config directory",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:566",
-    "arena/engine/builder_integration.go:604",
+    "arena/engine/builder_integration.go:571",
+    "arena/engine/builder_integration.go:609",
     "schemas/v1alpha1/tool.json:360"
    ]
   },
@@ -185,7 +185,7 @@
    "claim": "In a kind: Tool file, mock_template_file reads the same content as mock_template from a file resolved against the arena config directory",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:604",
+    "arena/engine/builder_integration.go:609",
     "schemas/v1alpha1/tool.json:358"
    ]
   },
@@ -276,7 +276,7 @@
    "claim": "mcp example (spec: mode: mcp) is valid",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/tool.json:321"
+    "schemas/v1alpha1/tool.json:319"
    ]
   },
   {
@@ -285,7 +285,7 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/builder_integration.go:555",
-    "schemas/v1alpha1/tool.json:321"
+    "schemas/v1alpha1/tool.json:319"
    ]
   },
   {
@@ -304,7 +304,7 @@
    "evidence": [
     "arena/consent/hook.go:119",
     "arena/turnexecutors/pipeline_stages_integration.go:779",
-    "schemas/v1alpha1/tool.json:321"
+    "schemas/v1alpha1/tool.json:319"
    ]
   },
   {
@@ -371,7 +371,7 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/builder_integration.go:555",
-    "schemas/v1alpha1/tool.json:321"
+    "schemas/v1alpha1/tool.json:319"
    ]
   },
   {
@@ -379,7 +379,7 @@
    "claim": "client mode is answered by the mock executor in promptarena, not handed back to a caller",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/tool.json:321",
+    "schemas/v1alpha1/tool.json:319",
     "schemas/v1alpha1/tool.json:345"
    ]
   },
@@ -414,8 +414,8 @@
    "claim": "In a kind: Tool file, mock_result_file and mock_template_file read the content from a file resolved against the arena config directory",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:566",
-    "arena/engine/builder_integration.go:604",
+    "arena/engine/builder_integration.go:571",
+    "arena/engine/builder_integration.go:609",
     "schemas/v1alpha1/tool.json:354",
     "schemas/v1alpha1/tool.json:358"
    ]
@@ -434,8 +434,8 @@
    "claim": "A mode: local tool stops a run at startup and is a promptarena validate error; packc compile accepts it",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator.go:62",
-    "arena/arenaconfig/validator_tools.go:73-95",
+    "arena/arenaconfig/validator.go:63",
+    "arena/arenaconfig/validator_tools.go:73-94",
     "arena/engine/builder_integration.go:564"
    ]
   }

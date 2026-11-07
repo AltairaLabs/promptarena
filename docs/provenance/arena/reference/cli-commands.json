@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/reference/cli-commands.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "45cbd09a1d70928da45e071755b0c2172abfc8ca",
  "claims": [
   {
    "id": 1001,
@@ -52,8 +52,11 @@
    "claim": "Command `templates` manages templates with subcommands list, fetch, update, render, repo",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/templates.go:40",
-    "arena/cmd/promptarena/templates.go:46"
+    "arena/cmd/promptarena/templates.go:116",
+    "arena/cmd/promptarena/templates.go:150",
+    "arena/cmd/promptarena/templates.go:185",
+    "arena/cmd/promptarena/templates.go:299",
+    "arena/cmd/promptarena/templates.go:39"
    ]
   },
   {
@@ -464,8 +467,8 @@
    "claim": "promptarena templates list lists built-in templates, then remote templates from the default community repo",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/templates.go:103",
-    "arena/cmd/promptarena/templates.go:46"
+    "arena/cmd/promptarena/templates.go:102",
+    "arena/cmd/promptarena/templates.go:51-94"
    ]
   },
   {
@@ -473,7 +476,8 @@
    "claim": "`promptarena templates repo add --name internal --url https://example.com/index.yaml` adds a named template repo",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/templates.go:306"
+    "arena/cmd/promptarena/templates.go:331",
+    "arena/cmd/promptarena/templates.go:418-419"
    ]
   },
   {
@@ -481,7 +485,7 @@
    "claim": "`promptarena templates list --index internal` lists templates from the named repo internal",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/templates.go:360"
+    "arena/cmd/promptarena/templates.go:385"
    ]
   },
   {
@@ -489,7 +493,7 @@
    "claim": "`promptarena templates list --index community` lists templates using the community shorthand",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/templates.go:360",
+    "arena/cmd/promptarena/templates.go:385",
     "arena/templates/repos.go:17"
    ]
   },
@@ -525,7 +529,8 @@
    "claim": "`promptarena templates fetch --template community/basic-chatbot --version 1.0.0` fetches a remote template version",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/templates.go:117"
+    "arena/cmd/promptarena/templates.go:116-148",
+    "arena/cmd/promptarena/templates.go:398-399"
    ]
   },
   {
@@ -533,8 +538,7 @@
    "claim": "Remote template `community/basic-chatbot` at version 1.0.0 exists in the community repo index",
    "verdict": "unverified",
    "evidence": [
-    "arena/cmd/promptarena/templates.go:40",
-    "arena/cmd/promptarena/templates.go:46"
+    "arena/cmd/promptarena/templates.go:128-140"
    ]
   },
   {
@@ -542,7 +546,8 @@
    "claim": "`promptarena templates render --template community/basic-chatbot --version 1.0.0 --out ./out` renders a remote template to a directory",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/templates.go:186"
+    "arena/cmd/promptarena/templates.go:191-221",
+    "arena/cmd/promptarena/templates.go:404-411"
    ]
   },
   {
@@ -2094,7 +2099,7 @@
    "verdict": "true",
    "evidence": [
     "arena/audio/types.go:121",
-    "arena/engine/engine.go:642"
+    "arena/engine/engine.go:643"
    ]
   },
   {
@@ -4064,8 +4069,9 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/export.go:51",
-    "packc/compiler/compiler.go:231",
-    "packc/compiler/compiler.go:258"
+    "packc/compiler/compiler.go:239",
+    "packc/compiler/compiler.go:255",
+    "packc/compiler/compiler.go:259"
    ]
   },
   {
@@ -4185,7 +4191,7 @@
    "claim": "export validates against the embedded PromptPack schema",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:218",
+    "packc/compiler/check.go:239",
     "packc/compiler/compiler.go:75"
    ]
   },
@@ -4194,7 +4200,7 @@
    "claim": "export schema validation uses PROMPTKIT_SCHEMA_SOURCE: local or unset uses the schema embedded in the PromptKit runtime, remote fetches the pack $schema URL, a path starting with / or ./ loads a schema file",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:218"
+    "packc/compiler/check.go:239"
    ]
   },
   {
@@ -4790,7 +4796,7 @@
    "claim": "connectivity check \"Unique task types per prompt\" is performed by config-inspect",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator.go:490"
+    "arena/arenaconfig/validator.go:530"
    ]
   },
   {
@@ -4798,7 +4804,7 @@
    "claim": "connectivity check \"Scenario task types exist\" is performed by config-inspect",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator.go:525"
+    "arena/arenaconfig/validator.go:565"
    ]
   },
   {
@@ -5372,7 +5378,7 @@
    "verdict": "true",
    "evidence": [
     "arena/audio/types.go:121",
-    "arena/engine/engine.go:637"
+    "arena/engine/engine.go:638"
    ]
   },
   {
@@ -8537,7 +8543,8 @@
    "claim": "`promptarena templates list` lists built-in templates, then remote templates from the default community repo",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/templates.go"
+    "arena/cmd/promptarena/templates.go:102",
+    "arena/cmd/promptarena/templates.go:51-94"
    ]
   },
   {

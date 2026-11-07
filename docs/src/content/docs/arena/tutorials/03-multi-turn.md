@@ -2,7 +2,7 @@
 title: 'Tutorial 3: Multi-Turn Conversations'
 description: Test that an assistant keeps context across a conversation, walk it through a multi-step flow, and let a persona play the customer.
 verified:
-  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
+  commit: 45cbd09a1d70928da45e071755b0c2172abfc8ca
   sources:
     - arena/arenaconfig/loader.go
     - arena/arenaconfig/types.go

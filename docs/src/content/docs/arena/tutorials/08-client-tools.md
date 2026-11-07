@@ -2,7 +2,7 @@
 title: 'Tutorial 8: Client-Side Tools'
 description: 'Test a client-mode tool in PromptArena with a mock provider, and simulate consent grant and consent deny.'
 verified:
-  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
+  commit: 45cbd09a1d70928da45e071755b0c2172abfc8ca
   sources:
     - arena/assertions/types.go
     - arena/assertions/validate_types_test.go

@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/packc/reference/validate.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "45cbd09a1d70928da45e071755b0c2172abfc8ca",
  "claims": [
   {
    "id": 1,
@@ -15,7 +15,7 @@
    "claim": "PROMPTKIT_SCHEMA_SOURCE selects embedded/remote/file/URL schema",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:219"
+    "packc/compiler/check.go:240"
    ]
   },
   {
@@ -23,7 +23,7 @@
    "claim": "check order: read and parse JSON, schema, skills, workflow, compositions, agents, governance, pack",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:157-210",
+    "packc/compiler/check.go:157-198",
     "packc/compiler/pack_file.go:25-45"
    ]
   },
@@ -32,7 +32,7 @@
    "claim": "schema that cannot be loaded is a pack_schema error",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:219-224"
+    "packc/compiler/check.go:240-245"
    ]
   },
   {
@@ -48,7 +48,8 @@
    "claim": "pack/prompt structural rules (id, semver, prompts, template_engine, compilation, system_template, variables)",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:195-207"
+    "packc/compiler/check.go:186-196",
+    "packc/compiler/check.go:213-231"
    ]
   },
   {
@@ -89,7 +90,7 @@
    "claim": "validate warns when a prompt's tools are not in the pack's tools",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:209",
+    "packc/compiler/check.go:198",
     "packc/compiler/pack_fields.go:84-105"
    ]
   },
@@ -115,7 +116,7 @@
    "claim": "a missing compilation block is a warning, not an error",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:198-205"
+    "packc/compiler/check.go:186-196"
    ]
   },
   {

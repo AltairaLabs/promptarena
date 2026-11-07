@@ -2,7 +2,7 @@
 title: Provider Comparison Guide
 description: How providers differ in style, capability, context and cost, and how Arena runs one scenario against several of them.
 verified:
-  commit: 5a8cffd8daf00b49cbbb3596ce63750db56c3704
+  commit: 45cbd09a1d70928da45e071755b0c2172abfc8ca
   sources:
     - arena/arenaconfig/loader.go
     - arena/arenaconfig/types.go

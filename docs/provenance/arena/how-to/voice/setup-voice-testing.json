@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/voice/setup-voice-testing.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "45cbd09a1d70928da45e071755b0c2172abfc8ca",
  "claims": [
   {
    "id": 1,
@@ -55,7 +55,7 @@
    "evidence": [
     "arena/arenaconfig/loader.go:598",
     "arena/arenaconfig/loader.go:631",
-    "arena/engine/duplex_executor_pipeline_integration.go:212"
+    "arena/engine/duplex_executor_pipeline_integration.go:216"
    ]
   },
   {
@@ -127,7 +127,7 @@
    "evidence": [
     "arena/arenaconfig/loader.go:230",
     "arena/arenaconfig/types.go:88",
-    "arena/arenaconfig/validator.go:312"
+    "arena/arenaconfig/validator.go:314"
    ]
   },
   {
@@ -145,8 +145,8 @@
    "claim": "Arena config header: apiVersion promptkit.altairalabs.ai/v1alpha1, kind Arena",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:138",
-    "schemas/v1alpha1/arena.json"
+    "arena/configschema/configschema.go:85",
+    "schemas/v1alpha1/arena.json:5210-5212"
    ]
   },
   {
@@ -423,8 +423,8 @@
    "claim": "The scenario task_type must match the task_type of a loaded prompt config",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator.go:312",
-    "arena/engine/duplex_executor_pipeline_integration.go:284"
+    "arena/arenaconfig/validator.go:314",
+    "arena/engine/duplex_executor_pipeline_integration.go:288"
    ]
   },
   {
@@ -466,7 +466,7 @@
    "claim": "PromptConfig spec.system_template field",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:289",
+    "arena/engine/duplex_executor_pipeline_integration.go:293",
     "schemas/v1alpha1/promptconfig.json:690"
    ]
   },
@@ -475,7 +475,7 @@
    "claim": "The voice-assistant prompt asks the assistant to end each answer by asking what else it can help with (so the final reply contains help)",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:287"
+    "arena/engine/duplex_executor_pipeline_integration.go:291"
    ]
   },
   {
@@ -545,7 +545,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:715",
-    "arena/engine/duplex_executor_assertions_integration.go:162"
+    "arena/engine/duplex_executor_assertions_integration.go:131"
    ]
   },
   {
@@ -594,7 +594,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:689",
-    "arena/arenaconfig/validator.go:312"
+    "arena/arenaconfig/validator.go:314"
    ]
   },
   {
@@ -621,7 +621,7 @@
    "evidence": [
     "arena/arenaconfig/types.go:1032",
     "arena/arenaconfig/types.go:983",
-    "arena/engine/duplex_executor_pipeline_integration.go:374"
+    "arena/engine/duplex_executor_pipeline_integration.go:378"
    ]
   },
   {
@@ -641,7 +641,7 @@
    "evidence": [
     "arena/arenaconfig/types.go:1018",
     "arena/engine/duplex_conversation_executor.go:131",
-    "arena/engine/duplex_executor_pipeline_integration.go:693"
+    "arena/engine/duplex_executor_pipeline_integration.go:697"
    ]
   },
   {
@@ -651,7 +651,7 @@
    "evidence": [
     "arena/arenaconfig/types.go:1020",
     "arena/engine/duplex_conversation_executor.go:134",
-    "arena/engine/duplex_executor_pipeline_integration.go:696"
+    "arena/engine/duplex_executor_pipeline_integration.go:700"
    ]
   },
   {
@@ -768,7 +768,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:198",
-    "arena/arenaconfig/validator.go:48"
+    "arena/arenaconfig/validator.go:49"
    ]
   },
   {
@@ -821,7 +821,7 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/run_interactive.go:285",
-    "arena/engine/duplex_executor_pipeline_integration.go:374"
+    "arena/engine/duplex_executor_pipeline_integration.go:378"
    ]
   },
   {
@@ -833,8 +833,8 @@
     "arena/arenaconfig/helpers.go:55",
     "arena/cmd/promptarena/run.go:363",
     "arena/cmd/promptarena/serve_interactive.go:222",
-    "arena/engine/engine.go:1026",
-    "arena/engine/engine.go:705"
+    "arena/engine/engine.go:1045",
+    "arena/engine/engine.go:706"
    ]
   },
   {
@@ -892,7 +892,7 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/duplex_conversation_executor.go:131",
-    "arena/engine/duplex_executor_pipeline_integration.go:693"
+    "arena/engine/duplex_executor_pipeline_integration.go:697"
    ]
   },
   {
@@ -901,7 +901,7 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/duplex_conversation_executor.go:131",
-    "arena/engine/duplex_executor_pipeline_integration.go:693"
+    "arena/engine/duplex_executor_pipeline_integration.go:697"
    ]
   },
   {
@@ -910,7 +910,7 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/duplex_conversation_executor.go:134",
-    "arena/engine/duplex_executor_pipeline_integration.go:696"
+    "arena/engine/duplex_executor_pipeline_integration.go:700"
    ]
   },
   {

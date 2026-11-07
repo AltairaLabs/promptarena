@@ -2,10 +2,11 @@
 title: 'Tutorial 6: Duplex Voice Testing'
 description: Build a duplex voice test that streams audio files to a mock duplex provider and asserts on the replies, with no API key.
 verified:
-  commit: 5a8cffd8daf00b49cbbb3596ce63750db56c3704
+  commit: 45cbd09a1d70928da45e071755b0c2172abfc8ca
   sources:
     - arena/arenaconfig/types.go
     - arena/arenaconfig/voice.go
+    - arena/assertions/turn_summary.go
     - arena/cmd/promptarena/run.go
     - arena/cmd/promptarena/run_interactive.go
     - arena/engine/duplex_conversation_executor.go

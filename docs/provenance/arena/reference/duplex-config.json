@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/reference/duplex-config.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "45cbd09a1d70928da45e071755b0c2172abfc8ca",
  "claims": [
   {
    "id": 1,
@@ -8,7 +8,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:979",
-    "arena/engine/duplex_executor_pipeline_integration.go:441"
+    "arena/engine/duplex_executor_pipeline_integration.go:445"
    ]
   },
   {
@@ -337,8 +337,8 @@
    "claim": "Mode 'asm' is provider-native: the provider handles turn detection internally",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:441",
-    "arena/engine/duplex_executor_pipeline_integration.go:646"
+    "arena/engine/duplex_executor_pipeline_integration.go:445",
+    "arena/engine/duplex_executor_pipeline_integration.go:650"
    ]
   },
   {
@@ -346,8 +346,8 @@
    "claim": "Gemini's automaticActivityDetection is the provider-native mechanism used for asm mode",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:441",
-    "arena/engine/duplex_executor_pipeline_integration.go:646"
+    "arena/engine/duplex_executor_pipeline_integration.go:445",
+    "arena/engine/duplex_executor_pipeline_integration.go:650"
    ]
   },
   {
@@ -356,7 +356,7 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/duplex_conversation_executor.go:119",
-    "arena/engine/duplex_executor_pipeline_integration.go:441"
+    "arena/engine/duplex_executor_pipeline_integration.go:445"
    ]
   },
   {
@@ -365,7 +365,7 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/duplex_conversation_executor.go:119",
-    "arena/engine/duplex_executor_pipeline_integration.go:441"
+    "arena/engine/duplex_executor_pipeline_integration.go:445"
    ]
   },
   {
@@ -374,7 +374,7 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/duplex_conversation_executor.go:119",
-    "arena/engine/duplex_executor_pipeline_integration.go:441"
+    "arena/engine/duplex_executor_pipeline_integration.go:445"
    ]
   },
   {
@@ -1110,7 +1110,7 @@
    "claim": "Provider spec.type 'gemini' is a valid provider type",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:300",
+    "arena/engine/duplex_executor_pipeline_integration.go:304",
     "schemas/v1alpha1/provider.json"
    ]
   },
@@ -1119,7 +1119,7 @@
    "claim": "Model name 'gemini-2.0-flash-exp' is used in the example",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:300",
+    "arena/engine/duplex_executor_pipeline_integration.go:304",
     "schemas/v1alpha1/provider.json"
    ]
   },
@@ -1129,7 +1129,7 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/run.go:551",
-    "arena/engine/duplex_executor_pipeline_integration.go:485"
+    "arena/engine/duplex_executor_pipeline_integration.go:489"
    ]
   },
   {
@@ -1137,7 +1137,7 @@
    "claim": "Provider spec.additional_config is a field and accepts response_modalities for Gemini",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:300",
+    "arena/engine/duplex_executor_pipeline_integration.go:304",
     "schemas/v1alpha1/provider.json"
    ]
   },
@@ -1259,7 +1259,7 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/duplex_executor_turns_integration.go:648",
-    "arena/selfplay/registry.go"
+    "arena/selfplay/registry.go:85"
    ]
   },
   {
@@ -1312,8 +1312,9 @@
    "claim": "A self-play turn's role is the id of an entry in the arena's self_play.roles list",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_turns_integration.go:648",
-    "arena/selfplay/registry.go"
+    "arena/engine/duplex_executor_turns_integration.go:679",
+    "arena/selfplay/registry.go:169",
+    "arena/selfplay/registry.go:215-217"
    ]
   },
   {
@@ -1329,9 +1330,9 @@
    "claim": "The duplex executor builds the pipeline from the listed stages, in the listed order",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:272",
-    "arena/engine/duplex_executor_pipeline_integration.go:409",
-    "arena/engine/duplex_executor_pipeline_integration.go:455"
+    "arena/engine/duplex_executor_pipeline_integration.go:276",
+    "arena/engine/duplex_executor_pipeline_integration.go:413",
+    "arena/engine/duplex_executor_pipeline_integration.go:459"
    ]
   },
   {
@@ -1339,9 +1340,9 @@
    "claim": "A stage with a condition is added only when that condition holds",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:272",
-    "arena/engine/duplex_executor_pipeline_integration.go:409",
-    "arena/engine/duplex_executor_pipeline_integration.go:455"
+    "arena/engine/duplex_executor_pipeline_integration.go:276",
+    "arena/engine/duplex_executor_pipeline_integration.go:413",
+    "arena/engine/duplex_executor_pipeline_integration.go:459"
    ]
   },
   {
@@ -1349,8 +1350,8 @@
    "claim": "Stage AudioPacingStage (audio-pacing) is added when the arena config has no enabled self_play section or an audio monitor is attached",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:419",
-    "arena/engine/duplex_executor_pipeline_integration.go:627"
+    "arena/engine/duplex_executor_pipeline_integration.go:423",
+    "arena/engine/duplex_executor_pipeline_integration.go:631"
    ]
   },
   {
@@ -1358,8 +1359,8 @@
    "claim": "AudioPacingStage (audio-pacing) emits each input audio chunk at real-time cadence implied by its size and sample rate",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:419",
-    "arena/engine/duplex_executor_pipeline_integration.go:627"
+    "arena/engine/duplex_executor_pipeline_integration.go:423",
+    "arena/engine/duplex_executor_pipeline_integration.go:631"
    ]
   },
   {
@@ -1367,9 +1368,9 @@
    "claim": "Stage MonitorTap (input) is added when an audio monitor is attached and copies input audio to the audio monitor",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:272",
-    "arena/engine/duplex_executor_pipeline_integration.go:409",
-    "arena/engine/duplex_executor_pipeline_integration.go:455"
+    "arena/engine/duplex_executor_pipeline_integration.go:276",
+    "arena/engine/duplex_executor_pipeline_integration.go:413",
+    "arena/engine/duplex_executor_pipeline_integration.go:459"
    ]
   },
   {
@@ -1377,9 +1378,9 @@
    "claim": "Stage AudioResampleStage is always added",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:272",
-    "arena/engine/duplex_executor_pipeline_integration.go:409",
-    "arena/engine/duplex_executor_pipeline_integration.go:455"
+    "arena/engine/duplex_executor_pipeline_integration.go:276",
+    "arena/engine/duplex_executor_pipeline_integration.go:413",
+    "arena/engine/duplex_executor_pipeline_integration.go:459"
    ]
   },
   {
@@ -1387,7 +1388,7 @@
    "claim": "AudioResampleStage resamples to the provider's preferred rate: Gemini 16000 Hz, OpenAI realtime 24000 Hz",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:394"
+    "arena/engine/duplex_executor_pipeline_integration.go:398"
    ]
   },
   {
@@ -1395,9 +1396,9 @@
    "claim": "AudioResampleStage passes audio through when the rates match",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:272",
-    "arena/engine/duplex_executor_pipeline_integration.go:409",
-    "arena/engine/duplex_executor_pipeline_integration.go:455"
+    "arena/engine/duplex_executor_pipeline_integration.go:276",
+    "arena/engine/duplex_executor_pipeline_integration.go:413",
+    "arena/engine/duplex_executor_pipeline_integration.go:459"
    ]
   },
   {
@@ -1405,9 +1406,9 @@
    "claim": "Stage AudioTurnStage is added when turn_detection.mode is vad or the turn_detection block is omitted",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:272",
-    "arena/engine/duplex_executor_pipeline_integration.go:409",
-    "arena/engine/duplex_executor_pipeline_integration.go:455"
+    "arena/engine/duplex_executor_pipeline_integration.go:276",
+    "arena/engine/duplex_executor_pipeline_integration.go:413",
+    "arena/engine/duplex_executor_pipeline_integration.go:459"
    ]
   },
   {
@@ -1415,9 +1416,9 @@
    "claim": "AudioTurnStage detects turn boundaries using the VAD settings",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:272",
-    "arena/engine/duplex_executor_pipeline_integration.go:409",
-    "arena/engine/duplex_executor_pipeline_integration.go:455"
+    "arena/engine/duplex_executor_pipeline_integration.go:276",
+    "arena/engine/duplex_executor_pipeline_integration.go:413",
+    "arena/engine/duplex_executor_pipeline_integration.go:459"
    ]
   },
   {
@@ -1425,9 +1426,9 @@
    "claim": "Stage VariableProviderStage is always added and supplies the merged scenario variables",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:272",
-    "arena/engine/duplex_executor_pipeline_integration.go:409",
-    "arena/engine/duplex_executor_pipeline_integration.go:455"
+    "arena/engine/duplex_executor_pipeline_integration.go:276",
+    "arena/engine/duplex_executor_pipeline_integration.go:413",
+    "arena/engine/duplex_executor_pipeline_integration.go:459"
    ]
   },
   {
@@ -1435,9 +1436,9 @@
    "claim": "Stage PromptAssemblyStage is always added and loads the prompt template into the shared TurnState",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:272",
-    "arena/engine/duplex_executor_pipeline_integration.go:409",
-    "arena/engine/duplex_executor_pipeline_integration.go:455"
+    "arena/engine/duplex_executor_pipeline_integration.go:276",
+    "arena/engine/duplex_executor_pipeline_integration.go:413",
+    "arena/engine/duplex_executor_pipeline_integration.go:459"
    ]
   },
   {
@@ -1445,9 +1446,9 @@
    "claim": "TurnState has fields Template, AllowedTools and Validators",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:272",
-    "arena/engine/duplex_executor_pipeline_integration.go:409",
-    "arena/engine/duplex_executor_pipeline_integration.go:455"
+    "arena/engine/duplex_executor_pipeline_integration.go:276",
+    "arena/engine/duplex_executor_pipeline_integration.go:413",
+    "arena/engine/duplex_executor_pipeline_integration.go:459"
    ]
   },
   {
@@ -1455,9 +1456,9 @@
    "claim": "Stage TemplateStage is always added and renders the system prompt into TurnState.SystemPrompt",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:272",
-    "arena/engine/duplex_executor_pipeline_integration.go:409",
-    "arena/engine/duplex_executor_pipeline_integration.go:455"
+    "arena/engine/duplex_executor_pipeline_integration.go:276",
+    "arena/engine/duplex_executor_pipeline_integration.go:413",
+    "arena/engine/duplex_executor_pipeline_integration.go:459"
    ]
   },
   {
@@ -1465,9 +1466,9 @@
    "claim": "Stage DuplexProviderStage is always added and opens a StreamInputSupport session",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:272",
-    "arena/engine/duplex_executor_pipeline_integration.go:409",
-    "arena/engine/duplex_executor_pipeline_integration.go:455"
+    "arena/engine/duplex_executor_pipeline_integration.go:276",
+    "arena/engine/duplex_executor_pipeline_integration.go:413",
+    "arena/engine/duplex_executor_pipeline_integration.go:459"
    ]
   },
   {
@@ -1475,9 +1476,9 @@
    "claim": "DuplexProviderStage reads TurnState.SystemPrompt at session creation",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:272",
-    "arena/engine/duplex_executor_pipeline_integration.go:409",
-    "arena/engine/duplex_executor_pipeline_integration.go:455"
+    "arena/engine/duplex_executor_pipeline_integration.go:276",
+    "arena/engine/duplex_executor_pipeline_integration.go:413",
+    "arena/engine/duplex_executor_pipeline_integration.go:459"
    ]
   },
   {
@@ -1485,9 +1486,9 @@
    "claim": "Stage AudioPacingStage (audio-pacing-output) has the same condition as the input AudioPacingStage",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:272",
-    "arena/engine/duplex_executor_pipeline_integration.go:409",
-    "arena/engine/duplex_executor_pipeline_integration.go:455"
+    "arena/engine/duplex_executor_pipeline_integration.go:276",
+    "arena/engine/duplex_executor_pipeline_integration.go:413",
+    "arena/engine/duplex_executor_pipeline_integration.go:459"
    ]
   },
   {
@@ -1495,9 +1496,9 @@
    "claim": "AudioPacingStage (audio-pacing-output) emits each response audio chunk at real-time cadence",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:272",
-    "arena/engine/duplex_executor_pipeline_integration.go:409",
-    "arena/engine/duplex_executor_pipeline_integration.go:455"
+    "arena/engine/duplex_executor_pipeline_integration.go:276",
+    "arena/engine/duplex_executor_pipeline_integration.go:413",
+    "arena/engine/duplex_executor_pipeline_integration.go:459"
    ]
   },
   {
@@ -1505,9 +1506,9 @@
    "claim": "Stage MonitorTap (output) is added when an audio monitor is attached and copies response audio to the audio monitor",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:272",
-    "arena/engine/duplex_executor_pipeline_integration.go:409",
-    "arena/engine/duplex_executor_pipeline_integration.go:455"
+    "arena/engine/duplex_executor_pipeline_integration.go:276",
+    "arena/engine/duplex_executor_pipeline_integration.go:413",
+    "arena/engine/duplex_executor_pipeline_integration.go:459"
    ]
   },
   {
@@ -1516,7 +1517,7 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/builder_integration.go:139",
-    "arena/engine/duplex_executor_pipeline_integration.go:488"
+    "arena/engine/duplex_executor_pipeline_integration.go:492"
    ]
   },
   {
@@ -1524,7 +1525,7 @@
    "claim": "Stage ArenaStateStoreSaveStage is added when a state store is configured and saves the conversation messages",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:503"
+    "arena/engine/duplex_executor_pipeline_integration.go:507"
    ]
   },
   {
@@ -1576,7 +1577,7 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/builder_integration.go:139",
-    "arena/engine/builder_integration.go:874"
+    "arena/engine/builder_integration.go:879"
    ]
   },
   {
@@ -1585,7 +1586,7 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/builder_integration.go:139",
-    "arena/engine/builder_integration.go:874"
+    "arena/engine/builder_integration.go:879"
    ]
   },
   {
@@ -1749,8 +1750,8 @@
    "claim": "In asm mode, a scenario with self-play turns (with self_play enabled) has the provider's own speech detection turned off",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:646",
-    "arena/engine/duplex_executor_pipeline_integration.go:656"
+    "arena/engine/duplex_executor_pipeline_integration.go:650",
+    "arena/engine/duplex_executor_pipeline_integration.go:660"
    ]
   },
   {

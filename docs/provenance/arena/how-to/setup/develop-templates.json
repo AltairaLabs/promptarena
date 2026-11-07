@@ -1,13 +1,13 @@
 {
  "page": "docs/src/content/docs/arena/how-to/setup/develop-templates.md",
- "commit": "5a8cffd8daf00b49cbbb3596ce63750db56c3704",
+ "commit": "45cbd09a1d70928da45e071755b0c2172abfc8ca",
  "claims": [
   {
    "id": 1,
    "claim": "The PromptArena CLI is built with a Go toolchain.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/templates.go:357"
+    "arena/cmd/promptarena/templates.go:382"
    ]
   },
   {
@@ -21,7 +21,7 @@
    "claim": "A template lives in a new directory under the template repo, named after the template.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/templates.go:357"
+    "arena/cmd/promptarena/templates.go:382"
    ]
   },
   {
@@ -64,7 +64,7 @@
    "claim": "Each entry in spec.files accepts a source field that points to a separate file.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/templates.go:357"
+    "arena/cmd/promptarena/templates.go:382"
    ]
   },
   {
@@ -81,8 +81,9 @@
    "claim": "A `source` path resolves relative to the directory of the `template.yaml` being rendered.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/templates.go:191",
-    "arena/templates/registry.go:291"
+    "arena/templates/generator.go:304",
+    "arena/templates/loader.go:137",
+    "arena/templates/registry.go:284-292"
    ]
   },
   {
@@ -90,7 +91,7 @@
    "claim": "index.yaml takes entries under spec.entries.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/templates.go:357"
+    "arena/cmd/promptarena/templates.go:382"
    ]
   },
   {
@@ -98,7 +99,7 @@
    "claim": "Each index entry has the fields name, version, description and source.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/templates.go:357"
+    "arena/cmd/promptarena/templates.go:382"
    ]
   },
   {
@@ -106,7 +107,7 @@
    "claim": "The source value is a path of the form <template-name>/template.yaml relative to the index.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/templates.go:357"
+    "arena/cmd/promptarena/templates.go:382"
    ]
   },
   {
@@ -114,7 +115,7 @@
    "claim": "Template versions are semver-like and the reader increments them when templates change.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/templates.go:357"
+    "arena/cmd/promptarena/templates.go:382"
    ]
   },
   {
@@ -122,7 +123,7 @@
    "claim": "A local index path (--index) avoids fetching from GitHub.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/templates.go:357"
+    "arena/cmd/promptarena/templates.go:382"
    ]
   },
   {
@@ -130,7 +131,7 @@
    "claim": "promptarena templates list accepts --index.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/templates.go:357"
+    "arena/cmd/promptarena/templates.go:382"
    ]
   },
   {
@@ -138,7 +139,7 @@
    "claim": "promptarena templates fetch accepts --index, --template and --version.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/templates.go:357"
+    "arena/cmd/promptarena/templates.go:382"
    ]
   },
   {
@@ -146,7 +147,7 @@
    "claim": "promptarena templates fetch fills the local cache.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/templates.go:357"
+    "arena/cmd/promptarena/templates.go:382"
    ]
   },
   {
@@ -154,7 +155,7 @@
    "claim": "promptarena templates render accepts --index, --template, --version, --values and --out.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/templates.go:357"
+    "arena/cmd/promptarena/templates.go:382"
    ]
   },
   {
@@ -162,7 +163,7 @@
    "claim": "The --values flag takes a YAML file of variable values.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/templates.go:357"
+    "arena/cmd/promptarena/templates.go:382"
    ]
   },
   {
@@ -170,7 +171,7 @@
    "claim": "promptarena templates repo add accepts --name and --url.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/templates.go:357"
+    "arena/cmd/promptarena/templates.go:382"
    ]
   },
   {
@@ -178,7 +179,7 @@
    "claim": "A repo added with a name can be referenced as <name>/<template>, for example local/your-template.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/templates.go:357"
+    "arena/cmd/promptarena/templates.go:382"
    ]
   },
   {
@@ -214,7 +215,7 @@
    "claim": "A template directory holds a values.example.yaml that shows the expected variables.",
    "verdict": "unverified",
    "evidence": [
-    "arena/cmd/promptarena/templates.go:386"
+    "arena/cmd/promptarena/templates.go:412"
    ]
   },
   {
@@ -222,7 +223,7 @@
    "claim": "templates render succeeds for a correct template.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/templates.go:357"
+    "arena/cmd/promptarena/templates.go:382"
    ]
   },
   {
@@ -230,7 +231,7 @@
    "claim": "Provider names openai, claude, gemini and mock are the current provider names.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/templates.go:357"
+    "arena/cmd/promptarena/templates.go:382"
    ]
   },
   {

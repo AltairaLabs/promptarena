@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/tutorials/04-mcp-tools.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "45cbd09a1d70928da45e071755b0c2172abfc8ca",
  "claims": [
   {
    "id": 1,
@@ -60,9 +60,8 @@
    "claim": "Arena auto-discovers the tools each configured MCP server provides",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/mcp_servers.go",
-    "arena/engine/builder_integration.go:437",
-    "arena/engine/builder_integration.go:482"
+    "arena/engine/builder_integration.go:447",
+    "arena/engine/builder_integration.go:469"
    ]
   },
   {
@@ -309,7 +308,7 @@
    "claim": "tools_called is a valid assertion type",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator_tools.go:14"
+    "arena/assertions/validate_params.go:65"
    ]
   },
   {
@@ -317,7 +316,7 @@
    "claim": "tools_called takes a params.tools list",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator_tools.go:14"
+    "arena/assertions/validate_params.go:65"
    ]
   },
   {
@@ -333,7 +332,7 @@
    "claim": "content_includes is a valid assertion type",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator_tools.go:14"
+    "arena/assertions/types_test.go:24"
    ]
   },
   {
@@ -341,7 +340,7 @@
    "claim": "content_includes takes a params.patterns list",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator_tools.go:14"
+    "arena/assertions/validate_params.go:16"
    ]
   },
   {
@@ -358,7 +357,7 @@
    "verdict": "false",
    "evidence": [
     "arena/arenaconfig/manifest_helpers.go:49",
-    "arena/engine/engine.go:427"
+    "arena/engine/engine.go:428"
    ]
   },
   {
@@ -414,8 +413,7 @@
    "claim": "Tool spec.mode accepts the value mock",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/mcp_servers.go",
-    "schemas/v1alpha1/tool.json:321"
+    "schemas/v1alpha1/tool.json:319"
    ]
   },
   {
@@ -463,7 +461,7 @@
    "claim": "tools_called with several tool names passes when each listed tool was called",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator_tools.go:14"
+    "arena/assertions/validate_params.go:65"
    ]
   },
   {
@@ -471,7 +469,7 @@
    "claim": "tools_called checks that a tool was called, not how many times (the tutorial's Should call store_memory multiple times message)",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/validator_tools.go:14"
+    "arena/assertions/validate_params.go:65"
    ]
   },
   {
@@ -479,7 +477,7 @@
    "claim": "tools_called does not check call order (the tutorial's Should call both tools in sequence message)",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator_tools.go:14"
+    "arena/assertions/validate_params.go:65"
    ]
   },
   {
@@ -570,7 +568,7 @@
    "claim": "`promptarena run --scenario tool-test` runs a scenario named tool-test",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:427"
+    "arena/engine/engine.go:428"
    ]
   },
   {
@@ -578,7 +576,7 @@
    "claim": "run with an unknown --scenario name fails with an error",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:427"
+    "arena/engine/engine.go:428"
    ]
   },
   {
@@ -594,8 +592,8 @@
    "claim": "A prompt reaches only the tools listed in allowed_tools; unlisted tools are not called",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/mcp_servers.go",
-    "arena/engine/builder_integration.go:482"
+    "arena/arenaconfig/validator_tools.go:184",
+    "arena/engine/builder_integration.go:469"
    ]
   },
   {
@@ -603,8 +601,7 @@
    "claim": "MCP tools are named mcp__<server>__<tool>",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/mcp_servers.go",
-    "arena/engine/builder_integration.go:482"
+    "arena/engine/builder_integration.go:469"
    ]
   },
   {
@@ -670,8 +667,7 @@
    "claim": "The current unpinned @modelcontextprotocol/server-memory works with Arena: its tools register with the server's own outputSchema, so structuredContent results pass",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/mcp_servers.go",
-    "arena/engine/builder_integration.go",
+    "arena/engine/builder_integration.go:469",
     "arena/engine/mcp_tool_descriptor.go"
    ]
   }

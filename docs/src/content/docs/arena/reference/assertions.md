@@ -1,7 +1,7 @@
 ---
 title: Assertions Reference
 verified:
-  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
+  commit: 45cbd09a1d70928da45e071755b0c2172abfc8ca
   sources:
     - arena/agentkb/reference_evals.go
     - arena/arenaconfig/judge_param.go
@@ -16,6 +16,7 @@ verified:
     - arena/assertions/register.go
     - arena/assertions/turn_tool_trace.go
     - arena/assertions/types.go
+    - arena/assertions/validate_params.go
     - arena/assertions/validate_types.go
     - arena/assertions/when.go
     - arena/cmd/promptarena/calibrate_cmd.go
