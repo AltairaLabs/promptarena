@@ -57,12 +57,13 @@ validators:
 
 ### Test Scenarios (`arena.yaml`)
 
-Four test scenarios demonstrate different assertion patterns:
+Five test scenarios demonstrate different assertion patterns:
 
 1. **`guardrail-should-trigger`**: Input contains banned words → expect validator to trigger
 2. **`guardrail-should-not-trigger`**: Clean input → expect validator not to trigger
 3. **`multiple-violations`**: Multiple banned words → expect validator to trigger
-4. **`streaming-guardrail-trigger`**: Tests guardrail in streaming mode → expect validator to trigger and interrupt stream
+4. **`streaming-guardrail-trigger`**: A streamed reply containing a banned word → expect `banned_words` to trigger and interrupt the stream
+5. **`streaming-length-trigger`**: A streamed reply over 100 characters → expect `length` to trigger and truncate the stream
 
 Each scenario uses the `guardrail_triggered` assertion:
 
@@ -95,6 +96,7 @@ assertions:
 - ✅ **guardrail-should-not-trigger**: PASS (validator did not trigger as expected)
 - ✅ **multiple-violations**: PASS (validator triggered on multiple violations as expected)
 - ✅ **streaming-guardrail-trigger**: PASS (validator triggered in streaming mode and interrupted stream as expected)
+- ✅ **streaming-length-trigger**: PASS (length validator triggered and the reply was truncated to 100 characters)
 
 ## Streaming Mode Support
 
