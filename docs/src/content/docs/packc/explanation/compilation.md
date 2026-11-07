@@ -4,7 +4,7 @@ description: How packc compile loads an arena config, builds a pack from it with
 sidebar:
   order: 2
 verified:
-  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
+  commit: b2f589e04cd12bf82fc73ab2f9675765c4d9c7f9
   sources:
     - arena/cmd/promptarena/export.go
     - arena/cmd/promptarena/validate_json.go

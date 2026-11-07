@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/packc/reference/compile.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "b2f589e04cd12bf82fc73ab2f9675765c4d9c7f9",
  "claims": [
   {
    "id": 1,
@@ -24,7 +24,7 @@
    "claim": "compile takes --id, default current directory name sanitized",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/helpers_integration.go:213-226",
+    "packc/compiler/helpers_integration.go:223-236",
     "packc/main_interactive.go:113-119",
     "packc/main_interactive.go:130"
    ]
@@ -53,8 +53,8 @@
    "evidence": [
     "packc/compiler/check.go:97-100",
     "packc/compiler/compiler.go:100-103",
-    "packc/compiler/helpers_integration.go:204",
-    "packc/compiler/helpers_integration.go:230-236"
+    "packc/compiler/helpers_integration.go:214",
+    "packc/compiler/helpers_integration.go:240-246"
    ]
   },
   {
@@ -62,7 +62,7 @@
    "claim": "default ID sanitization: lowercase, spaces to hyphens, strip others, collapse hyphens, pack- prefix, pack when empty",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/helpers_integration.go:213-226"
+    "packc/compiler/helpers_integration.go:223-236"
    ]
   },
   {
@@ -113,8 +113,8 @@
    "claim": "pack_evals, workflow, agents, compositions reach the pack",
    "verdict": "true",
    "evidence": [
+    "packc/compiler/compiler.go",
     "packc/compiler/compiler.go:133-146",
-    "packc/compiler/compiler.go:231-263",
     "packc/compiler/helpers_integration.go:142-161"
    ]
   },
@@ -166,7 +166,7 @@
    "claim": "compile runs the same checkPack checks as validate before writing",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:157-210",
+    "packc/compiler/check.go:157-199",
     "packc/compiler/check.go:93-138",
     "packc/compiler/pack_file.go:42-43"
    ]
@@ -211,16 +211,18 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/skill_sources.go:32-66",
-    "packc/compiler/helpers_integration.go:165-190",
+    "packc/compiler/helpers_integration.go",
     "packc/compiler/skills_validator_integration.go:99-113"
    ]
   },
   {
    "id": 25,
-   "claim": "skills directory paths are made relative to the config directory",
-   "verdict": "false",
+   "claim": "skills directory paths are made relative to the config file's directory for a relative or absolute -c",
+   "verdict": "true",
    "evidence": [
-    "packc/compiler/helpers_integration.go:181-187"
+    "arena/arenaconfig/loader.go:946-996",
+    "packc/compiler/compiler.go:125-128",
+    "packc/compiler/helpers_integration.go:171-200"
    ]
   },
   {

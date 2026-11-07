@@ -4,7 +4,7 @@ description: Compile and validate packs on every change in GitHub Actions, GitLa
 sidebar:
   order: 5
 verified:
-  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
+  commit: b2f589e04cd12bf82fc73ab2f9675765c4d9c7f9
   sources:
     - .github/actions/packc-action/action.yml
     - .github/actions/packc-action/src/compiler.ts

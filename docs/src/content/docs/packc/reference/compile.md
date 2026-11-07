@@ -4,7 +4,7 @@ description: Flags, input, output and exit codes of packc compile, which compile
 sidebar:
   order: 1
 verified:
-  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
+  commit: b2f589e04cd12bf82fc73ab2f9675765c4d9c7f9
   sources:
     - arena/arenaconfig/loader.go
     - arena/arenaconfig/skill_sources.go

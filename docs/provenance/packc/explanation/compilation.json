@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/packc/explanation/compilation.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "b2f589e04cd12bf82fc73ab2f9675765c4d9c7f9",
  "claims": [
   {
    "id": 1,
@@ -16,7 +16,7 @@
    "claim": "compiler.Check stages pack_id, pack_version, load, compile, skills, workflow, compositions, agents, governance, pack, pack_schema; early stages stop, later collect",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:157-210",
+    "packc/compiler/check.go:157-199",
     "packc/compiler/check.go:16-28",
     "packc/compiler/check.go:93-138"
    ]
@@ -52,9 +52,9 @@
    "claim": "arena tools/workflow/agents/compositions/skills/pack_evals/pack_metadata map to pack tools/workflow/agents/compositions/skills/evals/metadata",
    "verdict": "true",
    "evidence": [
+    "packc/compiler/compiler.go",
     "packc/compiler/compiler.go:133-146",
-    "packc/compiler/compiler.go:203-205",
-    "packc/compiler/compiler.go:231-262"
+    "packc/compiler/compiler.go:203-205"
    ]
   },
   {
@@ -67,10 +67,11 @@
   },
   {
    "id": 8,
-   "claim": "skill directory paths are made relative to the config directory; an @org/name reference stays a reference",
-   "verdict": "false",
+   "claim": "skill directory paths are made relative to the config's directory however -c is written; an @org/name reference stays a reference",
+   "verdict": "true",
    "evidence": [
-    "packc/compiler/helpers_integration.go:170-188"
+    "packc/compiler/compiler.go:125-128",
+    "packc/compiler/helpers_integration.go:171-200"
    ]
   },
   {
@@ -87,7 +88,7 @@
    "claim": "default id from current directory name via SanitizePackID; non-letter start gets pack- prefix",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/helpers_integration.go:213-226",
+    "packc/compiler/helpers_integration.go:223-236",
     "packc/main_interactive.go:113-119"
    ]
   },
@@ -121,7 +122,7 @@
    "claim": "templates are not parsed; only check is that a template containing {{ declares at least one variable (pack stage error)",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:195-206"
+    "packc/compiler/check.go"
    ]
   },
   {
@@ -174,7 +175,7 @@
    "verdict": "true",
    "evidence": [
     "packc/compiler/check.go:97-106",
-    "packc/compiler/helpers_integration.go:230-236",
+    "packc/compiler/helpers_integration.go:240-246",
     "packc/compiler/pack_fields.go:17-28"
    ]
   }

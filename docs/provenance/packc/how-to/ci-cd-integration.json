@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/packc/how-to/ci-cd-integration.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "b2f589e04cd12bf82fc73ab2f9675765c4d9c7f9",
  "claims": [
   {
    "id": 1,
@@ -28,7 +28,7 @@
    "evidence": [
     ".github/actions/packc-action/action.yml:16",
     ".github/actions/packc-action/action.yml:20",
-    ".github/actions/packc-action/action.yml:64",
+    ".github/actions/packc-action/action.yml:66",
     ".github/actions/packc-action/action.yml:9",
     ".github/actions/packc-action/src/compiler.ts:31",
     ".github/actions/packc-action/src/installer.ts:137",
@@ -80,14 +80,15 @@
   },
   {
    "id": 9,
-   "claim": "packc-action: a compile failure fails the step; a validation failure only logs a warning and the step stays green",
+   "claim": "packc-action: a compile failure fails the step; with validate: true a pack packc validate rejects fails the step before publishing, warnings leave it green; validate: false skips the check",
    "verdict": "true",
    "evidence": [
-    ".github/actions/packc-action/src/compiler.ts:180",
+    ".github/actions/packc-action/action.yml:33-38",
+    ".github/actions/packc-action/src/compiler.ts:180-182",
     ".github/actions/packc-action/src/compiler.ts:68",
-    ".github/actions/packc-action/src/main.ts:88",
-    ".github/actions/packc-action/src/main.ts:91",
-    ".github/actions/packc-action/src/main.ts:92"
+    ".github/actions/packc-action/src/main.ts:179",
+    ".github/actions/packc-action/src/main.ts:89-100",
+    "packc/main_interactive.go:280-282"
    ]
   }
  ]
