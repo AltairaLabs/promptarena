@@ -33,7 +33,7 @@ Compile and publish prompt packs to OCI-compliant registries in your CI/CD pipel
 | `version` | No | `latest` | OCI tag to publish under |
 | `packc-version` | No | `latest` | PackC release to install |
 | `output` | No | - | Output file path |
-| `validate` | No | `true` | Run validation after compile |
+| `validate` | No | `true` | Run `packc validate` on the compiled pack; errors fail the step before publishing, warnings do not. Set `false` to skip. |
 | `registry` | No | - | OCI registry URL |
 | `repository` | No | - | Repository path in registry |
 | `username` | No | - | Registry username |

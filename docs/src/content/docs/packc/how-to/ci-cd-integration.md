@@ -67,7 +67,7 @@ jobs:
           path: ${{ steps.pack.outputs.pack-file }}
 ```
 
-`validate` defaults to `true`, and `packc-version` defaults to the latest release. A compile failure fails the step. A validation failure only logs a warning and the step stays green, so run `packc validate` in a separate step when a bad pack must block the build. `pack-version` passes `--pack-version` to `packc compile`, for example `pack-version: ${{ github.ref_name }}` on a tag build, and needs a `packc` release later than v2.4.0. The action's outputs include `pack-file`, `pack-id`, `prompts` and `tools`. It can also push the pack to an OCI registry and sign it; see the action's `action.yml` for those inputs.
+`validate` defaults to `true`, and `packc-version` defaults to the latest release. A compile failure fails the step. With `validate: true`, a pack that `packc validate` rejects also fails the step, before anything is published; warnings are printed and the step stays green. Set `validate: false` to skip the check. `pack-version` passes `--pack-version` to `packc compile`, for example `pack-version: ${{ github.ref_name }}` on a tag build, and needs a `packc` release later than v2.4.0. The action's outputs include `pack-file`, `pack-id`, `prompts` and `tools`. It can also push the pack to an OCI registry and sign it; see the action's `action.yml` for those inputs.
 
 ## GitHub Actions with go install
 

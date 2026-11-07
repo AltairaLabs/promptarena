@@ -125,7 +125,7 @@ func compilePack(cfg *arenaconfig.Config, configFile string, options compileOpti
 	configDir := filepath.Dir(configFile)
 	warnings := collectMediaWarnings(cfg, configDir)
 
-	compileOpts, err := buildCompileOptions(cfg)
+	compileOpts, err := buildCompileOptions(cfg, configDir)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -228,7 +228,7 @@ func resolvePackMetadata(cfg *arenaconfig.Config, pack *prompt.Pack) []string {
 }
 
 // buildCompileOptions parses workflow and agents from config into compile options.
-func buildCompileOptions(cfg *arenaconfig.Config) ([]prompt.CompileOption, error) {
+func buildCompileOptions(cfg *arenaconfig.Config, configDir string) ([]prompt.CompileOption, error) {
 	var opts []prompt.CompileOption
 
 	workflowConfig, err := parseWorkflowFromConfig(cfg)
@@ -255,7 +255,7 @@ func buildCompileOptions(cfg *arenaconfig.Config) ([]prompt.CompileOption, error
 		opts = append(opts, prompt.WithCompositions(comps))
 	}
 
-	if skillsConfig := parseSkillsFromConfig(cfg); len(skillsConfig) > 0 {
+	if skillsConfig := parseSkillsFromConfig(cfg, configDir); len(skillsConfig) > 0 {
 		opts = append(opts, prompt.WithSkills(skillsConfig))
 	}
 

@@ -249,12 +249,28 @@ describe('main', () => {
       expect(mockedValidate).not.toHaveBeenCalled();
     });
 
-    it('should warn when validation has warnings', async () => {
+    it('should fail the step and not publish when validation fails', async () => {
       mockedValidate.mockResolvedValue(false);
+      mockedCore.getInput.mockImplementation((name: string) => {
+        if (name === 'config-file') return 'config.yaml';
+        if (name === 'registry') return 'ghcr.io';
+        if (name === 'repository') return 'test/pack';
+        return '';
+      });
 
       await reimportAndRun();
 
-      expect(mockedCore.warning).toHaveBeenCalledWith('Pack validation had warnings');
+      expect(mockedCore.setFailed).toHaveBeenCalledWith(
+        'Pack validation failed: packc validate /output/test.pack.json reported errors'
+      );
+      expect(mockedPublish).not.toHaveBeenCalled();
+      expect(mockedSetOutputs).not.toHaveBeenCalled();
+    });
+
+    it('should not fail the step when validation passes', async () => {
+      await reimportAndRun();
+
+      expect(mockedCore.setFailed).not.toHaveBeenCalled();
     });
 
     it('should parse pack file for accurate counts', async () => {

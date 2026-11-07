@@ -81,7 +81,7 @@ File paths resolve relative to the Arena config's directory. These `spec` fields
 | `workflow` | `workflow` |
 | `agents` | `agents` |
 | `compositions` | `compositions` |
-| `skills` | `skills`. Directory paths are made relative to the config directory when `-c` is an absolute path; with a relative `-c`, including the default, they stay absolute. An `@org/name` path installed by `promptarena skill install` stays a reference in the pack and resolves to its install directory |
+| `skills` | `skills`. Directory paths are made relative to the config file's directory, whether `-c` is relative (including the default) or absolute. An `@org/name` path installed by `promptarena skill install` stays a reference in the pack and resolves to its install directory |
 | `pack_metadata` | `metadata` |
 
 The pack's `template_engine` is the `spec.template_engine` the prompts set. Prompts that set different ones fail the `compile` stage, since a pack has one engine; prompts that set none are not compared. With none set, the pack gets the default `v1` engine. Without `pack_metadata`, the pack's `metadata` is taken from the prompt whose `prompt_configs` ID sorts first among those that set `spec.metadata`, and the compile prints a warning naming it. See [Configuration Schema](/arena/reference/config-schema/) for every Arena field.

@@ -66,7 +66,7 @@ The pack-level parts come from the arena config:
 | `spec.workflow` | `workflow` |
 | `spec.agents` | `agents` |
 | `spec.compositions` | `compositions` |
-| `spec.skills` | `skills`; directory paths are made relative to the config's directory when `-c` is an absolute path, and stay absolute with a relative `-c`; an `@org/name` installed-skill reference stays a reference |
+| `spec.skills` | `skills`; directory paths are made relative to the config's directory, however `-c` is written; an `@org/name` installed-skill reference stays a reference |
 | `spec.pack_evals` | `evals` |
 | `spec.pack_metadata` | `metadata` |
 
