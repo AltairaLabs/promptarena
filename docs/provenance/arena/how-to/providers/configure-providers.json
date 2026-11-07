@@ -1,13 +1,13 @@
 {
  "page": "docs/src/content/docs/arena/how-to/providers/configure-providers.md",
- "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
+ "commit": "0c27dc25f3c6ccfce8e77f27911a245f2a30cb96",
  "claims": [
   {
    "id": 1,
    "claim": "Provider configs define how PromptArena connects to LLM services and specify authentication, model selection and default parameters",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:385",
+    "arena/engine/builder_integration.go:396",
     "schemas/v1alpha1/provider.json:100"
    ]
   },
@@ -16,7 +16,7 @@
    "claim": "Built-in provider types exist for OpenAI, Anthropic and Google (Gemini) services",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:368"
+    "arena/engine/builder_integration.go:379"
    ]
   },
   {
@@ -24,7 +24,7 @@
    "claim": "Command 'promptarena init my-test --quick --provider openai' creates a project with an OpenAI provider",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:190",
+    "arena/cmd/promptarena/init.go:197",
     "arena/templates/builtin/quick-start/template.yaml:24"
    ]
   },
@@ -33,7 +33,7 @@
    "claim": "promptarena init accepts a --quick flag",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:67"
+    "arena/cmd/promptarena/init.go"
    ]
   },
   {
@@ -41,7 +41,7 @@
    "claim": "promptarena init accepts a --provider flag",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:190"
+    "arena/cmd/promptarena/init.go:197"
    ]
   },
   {
@@ -57,7 +57,7 @@
    "claim": "The interactive init provider prompt offers openai, anthropic, google and mock",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/init.go:190",
+    "arena/cmd/promptarena/init.go:197",
     "arena/templates/builtin/quick-start/template.yaml:24"
    ]
   },
@@ -66,7 +66,7 @@
    "claim": "init generates a provider config with correct API version and schema, recommended model defaults and a ready-to-use configuration",
    "verdict": "false",
    "evidence": [
-    "arena/engine/builder_integration.go:368"
+    "arena/engine/builder_integration.go:379"
    ]
   },
   {
@@ -74,7 +74,7 @@
    "claim": "init sets up environment variables through a .env file",
    "verdict": "true",
    "evidence": [
-    "arena/templates/builtin/quick-start/template.yaml:50"
+    "arena/templates/builtin/quick-start/template.yaml"
    ]
   },
   {
@@ -82,7 +82,7 @@
    "claim": "Provider files are placed in a providers/ directory and referenced from arena.yaml",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:595",
+    "arena/arenaconfig/loader.go:598",
     "arena/templates/builtin/quick-start/template.yaml:40"
    ]
   },
@@ -99,7 +99,7 @@
    "claim": "kind value Provider is a valid manifest kind",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:464",
+    "arena/arenaconfig/loader.go:467",
     "schemas/v1alpha1/provider.json:277"
    ]
   },
@@ -117,7 +117,7 @@
    "verdict": "dead",
    "evidence": [
     "arena/arenaconfig/ignored_fields.go:66",
-    "arena/arenaconfig/loader.go:468"
+    "arena/arenaconfig/loader.go:471"
    ]
   },
   {
@@ -133,7 +133,7 @@
    "claim": "spec.model is a field of the provider spec",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:394",
+    "arena/engine/builder_integration.go:405",
     "schemas/v1alpha1/provider.json:108"
    ]
   },
@@ -142,7 +142,7 @@
    "claim": "spec.capabilities is a list field of the provider spec",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:657",
+    "arena/arenaconfig/loader.go:660",
     "schemas/v1alpha1/provider.json:169"
    ]
   },
@@ -151,7 +151,7 @@
    "claim": "spec.defaults accepts temperature, max_tokens and top_p",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:404",
+    "arena/engine/builder_integration.go:415",
     "schemas/v1alpha1/provider.json:206"
    ]
   },
@@ -160,7 +160,7 @@
    "claim": "The openai provider reads the OPENAI_API_KEY environment variable automatically",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:343"
+    "arena/engine/builder_integration.go:354"
    ]
   },
   {
@@ -168,7 +168,7 @@
    "claim": "Scenarios accept a required_capabilities field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:701"
+    "arena/arenaconfig/types.go:707"
    ]
   },
   {
@@ -194,7 +194,7 @@
    "claim": "Example vision-capable openai provider uses model gpt-4o with capabilities text, streaming, vision, tools, json",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:657",
+    "arena/arenaconfig/loader.go:660",
     "schemas/v1alpha1/provider.json:105"
    ]
   },
@@ -203,7 +203,7 @@
    "claim": "Example audio-only openai provider uses model gpt-4o-audio-preview with capabilities audio and duplex",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:657"
+    "arena/arenaconfig/loader.go:660"
    ]
   },
   {
@@ -211,7 +211,7 @@
    "claim": "Example ollama provider with model llama3.2:3b declares capabilities text, streaming, tools, json",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:657"
+    "arena/arenaconfig/loader.go:660"
    ]
   },
   {
@@ -225,7 +225,7 @@
    "claim": "Example openai provider 'openai-gpt4o' uses type openai, model gpt-4o, temperature 0.7 and max_tokens 4000",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:404",
+    "arena/engine/builder_integration.go:415",
     "schemas/v1alpha1/provider.json:206"
    ]
   },
@@ -240,7 +240,7 @@
    "claim": "Example anthropic provider uses type anthropic, model claude-3-5-sonnet-20241022, label provider anthropic, temperature 0.6 and max_tokens 4000",
    "verdict": "false",
    "evidence": [
-    "arena/engine/builder_integration.go:368"
+    "arena/engine/builder_integration.go:379"
    ]
   },
   {
@@ -248,7 +248,7 @@
    "claim": "The anthropic provider reads the ANTHROPIC_API_KEY environment variable automatically",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:343"
+    "arena/engine/builder_integration.go:354"
    ]
   },
   {
@@ -262,7 +262,7 @@
    "claim": "Example gemini provider uses type gemini, model gemini-1.5-flash, label provider google, temperature 0.7 and max_tokens 2000",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:368"
+    "arena/engine/builder_integration.go:379"
    ]
   },
   {
@@ -270,7 +270,7 @@
    "claim": "The gemini provider reads the GOOGLE_API_KEY environment variable automatically",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:343"
+    "arena/engine/builder_integration.go:354"
    ]
   },
   {
@@ -284,7 +284,7 @@
    "claim": "Azure OpenAI is configured with type openai plus platform authentication of type azure",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:352"
+    "arena/engine/builder_integration.go:363"
    ]
   },
   {
@@ -292,7 +292,7 @@
    "claim": "The provider auto-derives the Azure deployment URL from platform.endpoint and model",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:352"
+    "arena/engine/builder_integration.go:363"
    ]
   },
   {
@@ -308,7 +308,7 @@
    "claim": "platform.additional_config.api_version defaults to 2024-12-01-preview",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:352"
+    "arena/engine/builder_integration.go:363"
    ]
   },
   {
@@ -316,7 +316,7 @@
    "claim": "Azure auth uses the Azure Default Credential chain (Managed Identity, Azure CLI, or environment variables)",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:361"
+    "arena/engine/builder_integration.go:372"
    ]
   },
   {
@@ -324,7 +324,7 @@
    "claim": "AZURE_TENANT_ID is read by the Azure credential chain",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:361"
+    "arena/engine/builder_integration.go:372"
    ]
   },
   {
@@ -332,7 +332,7 @@
    "claim": "AZURE_CLIENT_ID is read by the Azure credential chain",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:361"
+    "arena/engine/builder_integration.go:372"
    ]
   },
   {
@@ -340,7 +340,7 @@
    "claim": "AZURE_CLIENT_SECRET is read by the Azure credential chain",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:361"
+    "arena/engine/builder_integration.go:372"
    ]
   },
   {
@@ -348,7 +348,7 @@
    "claim": "spec.credential with credential_env selects API key auth instead of Azure AD",
    "verdict": "false",
    "evidence": [
-    "arena/engine/builder_integration.go:361"
+    "arena/engine/builder_integration.go:372"
    ]
   },
   {
@@ -356,7 +356,7 @@
    "claim": "credential_env accepts AZURE_OPENAI_API_KEY as the env var name holding the Azure API key",
    "verdict": "false",
    "evidence": [
-    "arena/engine/builder_integration.go:361"
+    "arena/engine/builder_integration.go:372"
    ]
   },
   {
@@ -364,7 +364,7 @@
    "claim": "Azure deployments use the Chat Completions API only; the Responses API is unavailable and the provider falls back to Completions mode",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:352"
+    "arena/engine/builder_integration.go:363"
    ]
   },
   {
@@ -372,7 +372,7 @@
    "claim": "Example ollama provider uses type ollama, model llama3.2:1b, base_url http://localhost:11434, keep_alive 5m, temperature 0.7 and max_tokens 2048",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:395"
+    "arena/engine/builder_integration.go:406"
    ]
   },
   {
@@ -380,7 +380,7 @@
    "claim": "spec.base_url is a field used by the ollama provider",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:395",
+    "arena/engine/builder_integration.go:406",
     "schemas/v1alpha1/provider.json:136"
    ]
   },
@@ -389,7 +389,7 @@
    "claim": "additional_config.keep_alive is an ollama option that keeps the model loaded for a duration such as 5m",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:398"
+    "arena/engine/builder_integration.go:409"
    ]
   },
   {
@@ -397,7 +397,7 @@
    "claim": "The ollama provider needs no API key",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:361"
+    "arena/engine/builder_integration.go:372"
    ]
   },
   {
@@ -411,7 +411,7 @@
    "claim": "Docker command runs the ollama/ollama image publishing port 11434",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:395"
+    "arena/engine/builder_integration.go:406"
    ]
   },
   {
@@ -419,7 +419,7 @@
    "claim": "Any model listed by ollama list can be used with the ollama provider (llama3.2:1b, llama3.2:3b, mistral, llava, deepseek-r1:8b)",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:394"
+    "arena/engine/builder_integration.go:405"
    ]
   },
   {
@@ -427,7 +427,7 @@
    "claim": "Example vllm provider uses type vllm, model meta-llama/Llama-3.2-3B-Instruct, base_url http://localhost:8000, temperature 0.7 and max_tokens 2048",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:394"
+    "arena/engine/builder_integration.go:405"
    ]
   },
   {
@@ -435,7 +435,7 @@
    "claim": "vllm is a valid provider spec.type",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:368"
+    "arena/engine/builder_integration.go:379"
    ]
   },
   {
@@ -443,7 +443,7 @@
    "claim": "additional_config.use_beam_search is a vLLM option",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:398"
+    "arena/engine/builder_integration.go:409"
    ]
   },
   {
@@ -451,7 +451,7 @@
    "claim": "additional_config.best_of is a vLLM option",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:398"
+    "arena/engine/builder_integration.go:409"
    ]
   },
   {
@@ -459,7 +459,7 @@
    "claim": "additional_config.guided_json is passed through to vLLM for guided JSON decoding",
    "verdict": "false",
    "evidence": [
-    "arena/engine/builder_integration.go:398"
+    "arena/engine/builder_integration.go:409"
    ]
   },
   {
@@ -485,7 +485,7 @@
    "claim": "additional_config.guided_regex is passed through to vLLM for regex-constrained output",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:398"
+    "arena/engine/builder_integration.go:409"
    ]
   },
   {
@@ -493,7 +493,7 @@
    "claim": "additional_config.guided_choice is passed through to vLLM for choice-constrained output",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:398"
+    "arena/engine/builder_integration.go:409"
    ]
   },
   {
@@ -509,7 +509,7 @@
    "claim": "Inference providers power assertion handlers such as audio_emotion and do not participate in the LLM run matrix",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:634",
+    "arena/arenaconfig/loader.go:637",
     "arena/engine/classify_registry.go:21"
    ]
   },
@@ -534,7 +534,7 @@
    "claim": "spec.role accepts the value inference, which routes the provider into the classify registry",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:634",
+    "arena/arenaconfig/loader.go:637",
     "arena/engine/classify_registry.go:25",
     "schemas/v1alpha1/provider.json:123"
    ]
@@ -569,7 +569,7 @@
    "claim": "spec.defaults.inference accepts audio_classifier, text_classifier, image_classifier and embedder keys",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:736",
+    "arena/arenaconfig/loader.go:739",
     "arena/engine/classify_registry.go:58"
    ]
   },
@@ -595,7 +595,7 @@
    "claim": "Scenarios accept a conversation_assertions field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:707"
+    "arena/arenaconfig/types.go:713"
    ]
   },
   {
@@ -611,7 +611,7 @@
    "claim": "audio_emotion is a valid eval_type",
    "verdict": "true",
    "evidence": [
-    "arena/engine/eval_orchestrator.go:250"
+    "arena/engine/eval_orchestrator.go:303"
    ]
   },
   {
@@ -643,7 +643,7 @@
    "claim": "A HuggingFace 503 model is loading response causes the assertion to be recorded as skipped, not failed",
    "verdict": "true",
    "evidence": [
-    "arena/engine/eval_orchestrator.go:250"
+    "arena/engine/eval_orchestrator.go:303"
    ]
   },
   {
@@ -667,8 +667,8 @@
    "claim": "The built-in openai provider can target OpenAI-compatible gateways through base_url and optional headers",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:395",
-    "arena/engine/builder_integration.go:396"
+    "arena/engine/builder_integration.go:406",
+    "arena/engine/builder_integration.go:407"
    ]
   },
   {
@@ -684,7 +684,7 @@
    "claim": "Header values are plain strings and headers are injected into every request the provider sends",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:396"
+    "arena/engine/builder_integration.go:407"
    ]
   },
   {
@@ -692,7 +692,7 @@
    "claim": "A custom header that collides with a built-in header (e.g. Authorization, Content-Type) makes the request fail fast with an error",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:396"
+    "arena/engine/builder_integration.go:407"
    ]
   },
   {
@@ -706,8 +706,8 @@
    "claim": "Example openrouter provider uses type openai, model anthropic/claude-sonnet-4-20250514, base_url https://openrouter.ai/api/v1, headers HTTP-Referer and X-Title, and credential_env OPENROUTER_API_KEY",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:395",
-    "arena/engine/builder_integration.go:396"
+    "arena/engine/builder_integration.go:406",
+    "arena/engine/builder_integration.go:407"
    ]
   },
   {
@@ -715,7 +715,7 @@
    "claim": "OPENROUTER_API_KEY is the environment variable holding the OpenRouter key",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:361"
+    "arena/engine/builder_integration.go:372"
    ]
   },
   {
@@ -729,7 +729,7 @@
    "claim": "Example groq provider uses type openai, model llama-3.3-70b-versatile, base_url https://api.groq.com/openai/v1 and credential_env GROQ_API_KEY",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:395"
+    "arena/engine/builder_integration.go:406"
    ]
   },
   {
@@ -743,7 +743,7 @@
    "claim": "Example together provider uses type openai, model meta-llama/Llama-3.3-70B-Instruct-Turbo, base_url https://api.together.xyz/v1 and credential_env TOGETHER_API_KEY",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:395"
+    "arena/engine/builder_integration.go:406"
    ]
   },
   {
@@ -751,8 +751,8 @@
    "claim": "Example litellm provider uses type openai with base_url http://litellm.internal:4000 and a custom X-Internal-Auth header",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:395",
-    "arena/engine/builder_integration.go:396"
+    "arena/engine/builder_integration.go:406",
+    "arena/engine/builder_integration.go:407"
    ]
   },
   {
@@ -760,7 +760,7 @@
    "claim": "Any provider type can declare headers, not only OpenAI-compatible gateways",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:396"
+    "arena/engine/builder_integration.go:407"
    ]
   },
   {
@@ -768,7 +768,7 @@
    "claim": "Custom headers are applied after the provider sets its built-in headers, so collision detection runs before any request is sent",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:396"
+    "arena/engine/builder_integration.go:407"
    ]
   },
   {
@@ -776,7 +776,7 @@
    "claim": "Auth should be set via the credential field rather than by overriding built-in headers",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:361"
+    "arena/engine/builder_integration.go:372"
    ]
   },
   {
@@ -784,7 +784,7 @@
    "claim": "Streaming retry, concurrency limits and connection pool tuning are optional and default to safe values",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:417"
+    "arena/engine/builder_integration.go:428"
    ]
   },
   {
@@ -792,7 +792,7 @@
    "claim": "spec.stream_retry.enabled is a field that turns on streaming retry",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:417",
+    "arena/engine/builder_integration.go:428",
     "schemas/v1alpha1/provider.json:250"
    ]
   },
@@ -801,7 +801,7 @@
    "claim": "stream_retry.max_attempts is a field; the value 2 means initial attempt plus one retry",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:417",
+    "arena/engine/builder_integration.go:428",
     "schemas/v1alpha1/provider.json:253"
    ]
   },
@@ -810,7 +810,7 @@
    "claim": "stream_retry.retry_window accepts pre_first_chunk and always",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:417",
+    "arena/engine/builder_integration.go:428",
     "schemas/v1alpha1/provider.json:262"
    ]
   },
@@ -827,7 +827,7 @@
    "claim": "stream_retry.budget.rate_per_sec is a field of the retry budget",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:417",
+    "arena/engine/builder_integration.go:428",
     "schemas/v1alpha1/provider.json:238"
    ]
   },
@@ -836,7 +836,7 @@
    "claim": "stream_retry.budget.burst is a field of the retry budget",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:417",
+    "arena/engine/builder_integration.go:428",
     "schemas/v1alpha1/provider.json:241"
    ]
   },
@@ -845,7 +845,7 @@
    "claim": "retry_window always also retries mid-stream failures by discarding the response and re-requesting from scratch, costing extra tokens",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:417"
+    "arena/engine/builder_integration.go:428"
    ]
   },
   {
@@ -853,7 +853,7 @@
    "claim": "spec.request_timeout is a field for the non-streaming call timeout, accepting a duration string such as 60s",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:417",
+    "arena/engine/builder_integration.go:428",
     "schemas/v1alpha1/provider.json:181"
    ]
   },
@@ -862,7 +862,7 @@
    "claim": "spec.stream_idle_timeout is a field that aborts a stream that goes silent",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:417",
+    "arena/engine/builder_integration.go:428",
     "schemas/v1alpha1/provider.json:184"
    ]
   },
@@ -871,7 +871,7 @@
    "claim": "spec.stream_max_concurrent is a field limiting parallel streams",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:417",
+    "arena/engine/builder_integration.go:428",
     "schemas/v1alpha1/provider.json:190"
    ]
   },
@@ -880,7 +880,7 @@
    "claim": "stream_max_concurrent of 0 means unlimited",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:417"
+    "arena/engine/builder_integration.go:428"
    ]
   },
   {
@@ -888,7 +888,7 @@
    "claim": "spec.http_transport is a field group for connection pool tuning",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:417",
+    "arena/engine/builder_integration.go:428",
     "schemas/v1alpha1/provider.json:193"
    ]
   },
@@ -897,7 +897,7 @@
    "claim": "http_transport.max_conns_per_host defaults to 100",
    "verdict": "false",
    "evidence": [
-    "arena/engine/builder_integration.go:417",
+    "arena/engine/builder_integration.go:428",
     "schemas/v1alpha1/provider.json:22"
    ]
   },
@@ -906,7 +906,7 @@
    "claim": "http_transport.max_idle_conns_per_host is a field of the connection pool",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:417",
+    "arena/engine/builder_integration.go:428",
     "schemas/v1alpha1/provider.json:25"
    ]
   },
@@ -915,7 +915,7 @@
    "claim": "http_transport.idle_conn_timeout is a field of the connection pool and accepts a duration such as 90s",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:417",
+    "arena/engine/builder_integration.go:428",
     "schemas/v1alpha1/provider.json:28"
    ]
   },
@@ -924,7 +924,7 @@
    "claim": "The effective concurrent-stream ceiling is max_conns_per_host multiplied by the upstream HTTP/2 max concurrent streams setting",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:417"
+    "arena/engine/builder_integration.go:428"
    ]
   },
   {
@@ -932,7 +932,7 @@
    "claim": "promptkit_http_conns_in_use is a Prometheus gauge tracking connection pool pressure",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:417"
+    "arena/engine/builder_integration.go:428"
    ]
   },
   {
@@ -940,7 +940,7 @@
    "claim": "kind value Arena is a valid arena.yaml manifest kind",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/arena.json:5205"
+    "schemas/v1alpha1/arena.json:5206"
    ]
   },
   {
@@ -956,7 +956,7 @@
    "claim": "Example arena.yaml references providers/openai.yaml, providers/claude.yaml and providers/gemini.yaml under spec.providers",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:595",
+    "arena/arenaconfig/loader.go:598",
     "arena/arenaconfig/types.go:388"
    ]
   },
@@ -973,7 +973,7 @@
    "claim": "OPENAI_API_KEY is the environment variable for OpenAI credentials",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:343"
+    "arena/engine/builder_integration.go:354"
    ]
   },
   {
@@ -981,7 +981,7 @@
    "claim": "ANTHROPIC_API_KEY is the environment variable for Anthropic credentials",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:343"
+    "arena/engine/builder_integration.go:354"
    ]
   },
   {
@@ -989,7 +989,7 @@
    "claim": "GOOGLE_API_KEY is the environment variable for Google credentials",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:343"
+    "arena/engine/builder_integration.go:354"
    ]
   },
   {
@@ -997,7 +997,7 @@
    "claim": "promptarena does not load a .env file automatically; the user must export variables before running",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:78"
+    "arena/cmd/promptarena/run.go:79"
    ]
   },
   {
@@ -1005,7 +1005,7 @@
    "claim": "Command 'promptarena run' runs the arena tests",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:162"
+    "arena/cmd/promptarena/run.go:163"
    ]
   },
   {
@@ -1013,7 +1013,7 @@
    "claim": "Example GitHub Actions workflow passes OPENAI_API_KEY and ANTHROPIC_API_KEY from secrets as env",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:343"
+    "arena/engine/builder_integration.go:354"
    ]
   },
   {
@@ -1022,7 +1022,7 @@
    "verdict": "dead",
    "evidence": [
     "arena/arenaconfig/ignored_fields.go:66",
-    "arena/arenaconfig/loader.go:468"
+    "arena/arenaconfig/loader.go:471"
    ]
   },
   {
@@ -1030,7 +1030,7 @@
    "claim": "A single providers file may contain multiple provider documents separated by ---",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/loader.go:464"
+    "arena/arenaconfig/loader.go:467"
    ]
   },
   {
@@ -1038,7 +1038,7 @@
    "claim": "Example openai-creative and openai-precise providers set temperature 0.9 and 0.1 in defaults",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:405",
+    "arena/engine/builder_integration.go:416",
     "schemas/v1alpha1/provider.json:208"
    ]
   },
@@ -1047,8 +1047,8 @@
    "claim": "promptarena run accepts a --provider flag selecting providers by name",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:162",
-    "arena/cmd/promptarena/run.go:316"
+    "arena/cmd/promptarena/run.go:163",
+    "arena/cmd/promptarena/run.go:318"
    ]
   },
   {
@@ -1056,7 +1056,7 @@
    "claim": "The --provider flag accepts a comma-separated list of provider names",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:162"
+    "arena/cmd/promptarena/run.go:163"
    ]
   },
   {
@@ -1073,7 +1073,7 @@
    "claim": "Scenario labels such as provider-specific constrain which providers run the scenario",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:701",
+    "arena/arenaconfig/types.go:707",
     "arena/engine/execution.go:280"
    ]
   },
@@ -1082,7 +1082,7 @@
    "claim": "Scenario kind manifest accepts spec.task_type and spec.turns",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:473"
+    "arena/arenaconfig/loader.go:476"
    ]
   },
   {
@@ -1090,7 +1090,7 @@
    "claim": "Scenario turns take role and content fields",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1135"
+    "arena/arenaconfig/types.go"
    ]
   },
   {
@@ -1098,8 +1098,8 @@
    "claim": "promptarena run accepts a --temperature flag",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:207",
-    "arena/cmd/promptarena/run.go:225"
+    "arena/cmd/promptarena/run.go:209",
+    "arena/cmd/promptarena/run.go:227"
    ]
   },
   {
@@ -1107,8 +1107,8 @@
    "claim": "--temperature overrides the temperature for all providers at runtime",
    "verdict": "dead",
    "evidence": [
-    "arena/cmd/promptarena/run.go:216",
-    "arena/cmd/promptarena/run.go:225"
+    "arena/cmd/promptarena/run.go:218",
+    "arena/cmd/promptarena/run.go:227"
    ]
   },
   {
@@ -1116,8 +1116,8 @@
    "claim": "promptarena run accepts a --max-tokens flag that overrides max tokens at runtime",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:188",
-    "arena/cmd/promptarena/run.go:549"
+    "arena/cmd/promptarena/run.go:190",
+    "arena/cmd/promptarena/run.go:551"
    ]
   },
   {
@@ -1125,8 +1125,8 @@
    "claim": "Combined overrides --temperature 0.9 --max-tokens 4000 are accepted together",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:188",
-    "arena/cmd/promptarena/run.go:225"
+    "arena/cmd/promptarena/run.go:190",
+    "arena/cmd/promptarena/run.go:227"
    ]
   },
   {
@@ -1151,7 +1151,7 @@
    "claim": "promptarena run accepts a --verbose flag",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:189"
+    "arena/cmd/promptarena/run.go:191"
    ]
   },
   {
@@ -1167,8 +1167,8 @@
    "claim": "promptarena run accepts a --concurrency flag",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:167",
-    "arena/cmd/promptarena/run.go:274"
+    "arena/cmd/promptarena/run.go:168",
+    "arena/cmd/promptarena/run.go:276"
    ]
   },
   {
@@ -1176,7 +1176,7 @@
    "claim": "--concurrency 1 runs tests sequentially",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:325",
+    "arena/cmd/promptarena/run.go:327",
     "arena/cmd/promptarena/run_interactive.go:458"
    ]
   },
@@ -1203,6 +1203,15 @@
    "evidence": [
     "examples/ollama-local/docker-compose.yaml",
     "examples/ollama-local/providers/ollama-llama.provider.yaml"
+   ]
+  },
+  {
+   "id": 9001,
+   "claim": "A provider file with a second YAML document after --- fails to load",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go",
+    "arena/arenaconfig/yamldocs.go"
    ]
   },
   {

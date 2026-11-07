@@ -4,7 +4,7 @@ description: Brief Claude Code, Codex, or another coding agent with PromptArena'
 sidebar:
   order: 20
 verified:
-  commit: 3df344ffbc8c604e1a8935929c28499d778d19f0
+  commit: 1f3acc05aa6f98764a8598798bf817c19d6f1f44
   sources:
     - arena/agentkb/catalog.yaml
     - arena/agentkb/skill.go
@@ -20,10 +20,12 @@ verified:
     - arena/cmd/promptarena/validate.go
     - arena/cmd/promptarena/validate_json.go
     - arena/configschema/configschema.go
+    - arena/engine/builder_integration.go
     - arena/engine/engine.go
     - arena/tui/tui.go
     - examples/rag-agent/config.arena.yaml
     - schemas/v1alpha1/tool.json
+    - tools/schema-gen/generators/tool_spec.go
 ---
 
 Have a coding agent such as Claude Code write a PromptArena kit (prompts, scenarios, assertions, tools and mock responses) and test it against mocks. PromptArena ships the config format and its idioms inside the binary, and writes them into your project as an authoring brief so the agent does not guess field names.
@@ -141,8 +143,8 @@ Give the kit a `type: mock` provider that declares `additional_config.mock_confi
 A `kind: Tool` config is a contract (`name`, `description`, `input_schema`, `output_schema`) plus a binding; the implementation lives outside the pack. See [Tool authoring](/arena/reference/tool-authoring/). For each tool, the agent either:
 
 - mocks it (`mode: mock`) for testing,
-- binds an existing service (`mode: live` with an `http` block, `mode: mcp`, or
-  `mode: exec`), or
+- binds an existing service (`mode: live` with an `http` block, or `mode: mcp`;
+  `mode: exec` runs only in the PromptKit SDK, not in `promptarena run`), or
 - writes a new service that you deploy separately from the pack.
 
 ## 6. Watch it run

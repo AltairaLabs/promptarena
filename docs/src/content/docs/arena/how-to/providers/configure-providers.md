@@ -2,11 +2,12 @@
 title: Configure LLM Providers
 description: Add OpenAI, Anthropic, Gemini, Azure, Ollama, vLLM and gateway providers to an arena, set credentials, and select providers per run.
 verified:
-  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
+  commit: 0c27dc25f3c6ccfce8e77f27911a245f2a30cb96
   sources:
     - arena/arenaconfig/ignored_fields.go
     - arena/arenaconfig/loader.go
     - arena/arenaconfig/types.go
+    - arena/arenaconfig/yamldocs.go
     - arena/assertions/types.go
     - arena/cmd/promptarena/config_inspect_interactive.go
     - arena/cmd/promptarena/init.go
@@ -59,7 +60,7 @@ spec:
     max_tokens: 2000
 ```
 
-Only the first YAML document in a file is loaded. Put each provider in its own file. The provider id is `spec.id`, or `metadata.name` when `spec.id` is absent.
+A provider file holds one YAML document: a file with a second document after a `---` separator fails to load. Put each provider in its own file. The provider id is `spec.id`, or `metadata.name` when `spec.id` is absent.
 
 `capabilities` is a list of free strings. A scenario that sets `required_capabilities` runs only against providers that list all of them. See [capabilities](/arena/reference/config-schema/#capabilities) for the values and [Write Scenarios](/arena/how-to/scenarios/write-scenarios/) for the scenario side.
 

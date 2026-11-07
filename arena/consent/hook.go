@@ -13,6 +13,25 @@ import (
 
 type contextKey int
 
+// Consent override actions a scenario turn may name in consent_overrides.
+const (
+	ActionGrant   = "grant"
+	ActionDeny    = "deny"
+	ActionTimeout = "timeout"
+)
+
+// Actions lists every valid consent_overrides value.
+var Actions = []string{ActionGrant, ActionDeny, ActionTimeout}
+
+// consentStatusKey is the decision metadata key naming the simulated outcome.
+const consentStatusKey = "consent_status"
+
+// IsValidAction reports whether action is a consent_overrides value the hook
+// understands.
+func IsValidAction(action string) bool {
+	return action == ActionGrant || action == ActionDeny || action == ActionTimeout
+}
+
 const (
 	consentOverridesKey contextKey = iota
 	toolRegistryKey
@@ -45,24 +64,34 @@ func (h *SimulationHook) BeforeExecution(ctx context.Context, req hooks.ToolRequ
 	}
 
 	switch action {
-	case "deny":
+	case ActionGrant:
+		return hooks.Decision{Allow: true, Metadata: map[string]any{
+			consentStatusKey: "granted",
+		}}
+
+	case ActionDeny:
 		// The SDK's RejectClientTool uses the same message, so a simulated
 		// denial reads to the model exactly like a real one.
 		reason := tools.ConsentDeclinedMessage(req.Name, h.lookupDeclineStrategy(ctx, req.Name))
 		return hooks.DenyWithMetadata(reason, map[string]any{
-			"consent_status": "denied",
+			consentStatusKey: "denied",
 		})
 
-	case "timeout":
+	case ActionTimeout:
 		return hooks.DenyWithMetadata(
 			fmt.Sprintf("Tool %s timed out waiting for user consent", req.Name),
-			map[string]any{"consent_status": "timeout"},
+			map[string]any{consentStatusKey: "timeout"},
 		)
 
-	default: // "grant" or any other value
-		return hooks.Decision{Allow: true, Metadata: map[string]any{
-			"consent_status": "granted",
-		}}
+	default:
+		// The loader rejects unknown values, so this is only reachable from a
+		// caller that built the overrides itself. Fail closed: granting on a
+		// typo such as "denied" let a tool run that the scenario meant to block.
+		return hooks.DenyWithMetadata(
+			fmt.Sprintf("Tool %s: unknown consent override %q (want %s, %s or %s)",
+				req.Name, action, ActionGrant, ActionDeny, ActionTimeout),
+			map[string]any{consentStatusKey: "invalid"},
+		)
 	}
 }
 

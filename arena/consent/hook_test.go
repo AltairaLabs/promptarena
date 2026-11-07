@@ -271,6 +271,33 @@ func TestOverridesFromContext_Empty(t *testing.T) {
 	}
 }
 
+// An unknown value used to fall into the grant branch, so a typo such as
+// "denied" let the tool run. It now fails closed.
+func TestSimulationHook_UnknownValueDenies(t *testing.T) {
+	h := NewSimulationHook()
+	ctx := WithConsentOverrides(context.Background(), map[string]string{"get_location": "denied"})
+	d := h.BeforeExecution(ctx, hooks.ToolRequest{Name: "get_location"})
+	if d.Allow {
+		t.Fatal("expected Allow=false for an unknown override value")
+	}
+	if status := d.Metadata["consent_status"]; status != "invalid" {
+		t.Errorf("expected consent_status='invalid', got %v", status)
+	}
+}
+
+func TestIsValidAction(t *testing.T) {
+	for _, a := range Actions {
+		if !IsValidAction(a) {
+			t.Errorf("%q should be valid", a)
+		}
+	}
+	for _, a := range []string{"", "denied", "Grant", "allow"} {
+		if IsValidAction(a) {
+			t.Errorf("%q should be invalid", a)
+		}
+	}
+}
+
 func TestToolRegistryFromContext_Empty(t *testing.T) {
 	got := ToolRegistryFromContext(context.Background())
 	if got != nil {

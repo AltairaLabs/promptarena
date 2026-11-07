@@ -17,10 +17,10 @@ spec:
         and verify the tests pass.
       assertions:
         - type: tools_called
+          message: "Must read the file before editing."
           params:
             tools: ["Read"]
-            message: "Must read the file before editing."
         - type: tools_called
+          message: "Must verify with run_tests before finishing."
           params:
             tools: ["run_tests"]
-            message: "Must verify with run_tests before finishing."

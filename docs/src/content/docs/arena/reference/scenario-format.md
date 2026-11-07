@@ -2,8 +2,9 @@
 title: Test Scenario Format
 description: The structure of a Scenario file, its main spec and turn fields, and examples of multimodal, workflow and self-play turns.
 verified:
-  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
+  commit: 1f3acc05aa6f98764a8598798bf817c19d6f1f44
   sources:
+    - arena/arenaconfig/ignored_fields.go
     - arena/arenaconfig/loader.go
     - arena/arenaconfig/types.go
     - arena/arenaconfig/validator.go
@@ -74,7 +75,7 @@ spec:
 | `trial_budget` | object | Stops trials early once one achieves every objective, or once they have cost a set amount. |
 | `data` | object | Runs the scenario once per row of a JSONL or CSV file, substituting columns as `{column}`. |
 | `context_policy` | object | Context management for long conversations. |
-| `context_metadata` | object | `domain`, `user_role` and `project_stage`. |
+| `context_metadata` | object | `domain` and `user_role`. `project_stage` is accepted but ignored, with a load warning. |
 | `context`, `constraints` | map | Free-form scenario context and constraints. |
 | `tool_policy` | object | Tool-call limits for the scenario. |
 | `tool_result_transforms` | list | Rewrites named tools' results before the agent sees them. |

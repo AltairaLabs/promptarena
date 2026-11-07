@@ -43,8 +43,8 @@ handlers:
     score: boolean gate
   sentence_count:
     level: turn
-    description: Output sentence count falls within the given range.
-    score: boolean gate
+    description: Counts the output's sentences. A measurement that always scores 1.0; it enforces no maximum, so as a guardrail it never fires.
+    score: measurement
   field_presence:
     level: turn
     description: Required fields are present in the structured output.

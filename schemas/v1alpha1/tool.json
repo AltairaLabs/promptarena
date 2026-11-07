@@ -318,7 +318,7 @@
         "output_schema": true,
         "mode": {
           "type": "string",
-          "description": "Execution mode. One of: 'mock' (use mock_result or mock_template) - 'live' (HTTP via 'http') - 'mcp' (MCP server) - 'exec' (subprocess) - 'client' (client-side handler)."
+          "description": "Execution mode. One of: 'mock' (use mock_result or mock_template) - 'live' (HTTP via 'http') - 'mcp' (MCP server) - 'client' (client-side handler; arena simulates it with the mock fields and the turn's consent_overrides). 'exec' (subprocess) is run by the PromptKit SDK only: promptarena cannot execute it, and a run stops at startup on such a tool."
         },
         "timeout_ms": {
           "type": "integer"
@@ -350,6 +350,14 @@
         },
         "extensions": {
           "type": "object"
+        },
+        "mock_result_file": {
+          "type": "string",
+          "description": "Path to a JSON file holding the static mock result, relative to the arena config directory. Mutually exclusive with mock_template and mock_template_file."
+        },
+        "mock_template_file": {
+          "type": "string",
+          "description": "Path to a file holding the mock_template, relative to the arena config directory. Mutually exclusive with mock_result and mock_result_file."
         }
       },
       "additionalProperties": false,

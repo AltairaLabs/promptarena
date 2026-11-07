@@ -17,36 +17,36 @@ spec:
       content: "Please echo the message: Hello from PromptKit!"
       assertions:
         - type: tools_called
+          message: "Should call the echo tool from the MCP everything server"
           params:
             tools: ["mcp__everything__echo"]
-            message: "Should call the echo tool from the MCP everything server"
         - type: no_tool_errors
+          message: "MCP echo tool should execute without errors"
           params:
             tools: ["mcp__everything__echo"]
-            message: "MCP echo tool should execute without errors"
         - type: tool_result_includes
+          message: "Echo tool should return the original message"
           params:
             tool: "mcp__everything__echo"
             patterns: ["Hello from PromptKit!"]
-            message: "Echo tool should return the original message"
 
     # Turn 2: Add two numbers via real MCP server
     - role: user
       content: "Add 17 and 25 using the get-sum tool."
       assertions:
         - type: tools_called
+          message: "Should call the get-sum tool from the MCP everything server"
           params:
             tools: ["mcp__everything__get-sum"]
-            message: "Should call the get-sum tool from the MCP everything server"
         - type: no_tool_errors
+          message: "MCP get-sum tool should execute without errors"
           params:
             tools: ["mcp__everything__get-sum"]
-            message: "MCP get-sum tool should execute without errors"
         - type: tool_result_includes
+          message: "get-sum should return 42 (17 + 25)"
           params:
             tool: "mcp__everything__get-sum"
             patterns: ["42"]
-            message: "get-sum should return 42 (17 + 25)"
 
   tool_policy:
     tool_choice: required

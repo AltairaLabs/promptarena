@@ -52,5 +52,4 @@ spec:
 
   style:
     verbosity: short
-    formality: moderate
     challenge_level: medium

@@ -13,29 +13,29 @@ spec:
       content: "Generate a revenue chart for Q1-2026."
       assertions:
         - type: tools_called
+          message: "Should call generate_chart tool"
           params:
             tools:
               - generate_chart
-            message: "Should call generate_chart tool"
         - type: tool_result_has_media
+          message: "Tool result should contain media (chart image)"
           params:
             tool: generate_chart
             media_type: image
-            message: "Tool result should contain media (chart image)"
         - type: tool_result_media_type
+          message: "Tool result media should be an image"
           params:
             tool: generate_chart
             mime_type: image/png
-            message: "Tool result media should be an image"
 
     # Turn 2: Follow-up — LLM describes the chart
     - role: user
       content: "What does the chart show?"
       assertions:
         - type: content_matches
+          message: "Should describe the chart content"
           params:
             pattern: "(?i)(revenue|chart|trend|growth|Q1)"
-            message: "Should describe the chart content"
 
   context:
     goal: "generate and interpret a revenue chart"

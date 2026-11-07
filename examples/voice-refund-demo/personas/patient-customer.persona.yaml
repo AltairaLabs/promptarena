@@ -36,5 +36,4 @@ spec:
 
   style:
     verbosity: short
-    formality: casual
     challenge_level: low

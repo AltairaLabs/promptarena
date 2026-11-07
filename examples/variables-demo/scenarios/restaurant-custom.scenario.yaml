@@ -23,38 +23,37 @@ spec:
       content: "What's your restaurant called and what cuisine do you specialize in?"
       assertions:
         - type: content_includes
+          message: "Should mention overridden restaurant name (Sushi Haven) and cuisine (Japanese)"
           params:
             patterns:
               - "Sushi Haven"
               - "Japanese"
-            message: "Should mention overridden restaurant name (Sushi Haven) and cuisine (Japanese)"
 
     - role: user
       content: "When are you open?"
       assertions:
         - type: content_includes
+          message: "Should mention custom hours (12 PM - 11 PM, closed Mondays)"
           params:
             patterns:
               - "12"
               - "11"
               - "Monday"
-            message: "Should mention custom hours (12 PM - 11 PM, closed Mondays)"
 
     - role: user
       content: "What should I wear to dinner?"
       assertions:
         - type: content_includes
+          message: "Should mention overridden dress code (Casual)"
           params:
             patterns:
               - "casual"
-            case_sensitive: false
-            message: "Should mention overridden dress code (Casual)"
 
     - role: user
       content: "How do I make a reservation?"
       assertions:
         - type: content_includes
+          message: "Phone number should still be the DEFAULT value (not overridden)"
           params:
             patterns:
               - "(555) 123-4567"
-            message: "Phone number should still be the DEFAULT value (not overridden)"

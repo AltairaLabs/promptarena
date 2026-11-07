@@ -13,23 +13,22 @@ spec:
       content: "The product is amazing! Best purchase ever. I'm so happy with it."
       assertions:
         - type: content_includes
+          message: "Response should contain sentiment and confidence in JSON format"
           params:
             patterns:
               - "sentiment"
               - "confidence"
               - "positive"
-            message: "Response should contain sentiment and confidence in JSON format"
         - type: valid_json
-          params:
-            message: "Response should be valid JSON"
+          message: "Response should be valid JSON"
 
     - role: user
       content: "This is terrible. Worst experience I've ever had. Would not recommend."
       assertions:
         - type: content_includes
+          message: "Response should identify negative sentiment"
           params:
             patterns:
               - "sentiment"
               - "confidence"
               - "negative"
-            message: "Response should identify negative sentiment"

@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/reference/tool-authoring.md",
- "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "commit": "1f3acc05aa6f98764a8598798bf817c19d6f1f44",
  "claims": [
   {
    "id": 1,
@@ -15,7 +15,7 @@
    "claim": "mode values are mock, live, mcp, exec, client",
    "verdict": "false",
    "evidence": [
-    "arena/engine/builder_integration.go:109",
+    "arena/engine/builder_integration.go:114",
     "schemas/v1alpha1/tool.json:321"
    ]
   },
@@ -41,7 +41,7 @@
    "claim": "live mode requires an http: block",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:109",
+    "arena/engine/builder_integration.go:114",
     "schemas/v1alpha1/tool.json:339"
    ]
   },
@@ -50,8 +50,8 @@
    "claim": "mcp mode needs no further fields; tool is exposed by an MCP server configured at the arena level and auto-discovered",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:421",
-    "arena/engine/builder_integration.go:431"
+    "arena/engine/builder_integration.go:432",
+    "arena/engine/builder_integration.go:442"
    ]
   },
   {
@@ -59,7 +59,7 @@
    "claim": "exec mode requires an exec: block (tool shells out to a local subprocess)",
    "verdict": "false",
    "evidence": [
-    "arena/engine/builder_integration.go:109",
+    "arena/engine/builder_integration.go:114",
     "schemas/v1alpha1/tool.json:342"
    ]
   },
@@ -175,7 +175,7 @@
    "claim": "mock_template_file points at a file whose path is relative to the tool YAML",
    "verdict": "false",
    "evidence": [
-    "arena/engine/builder_integration.go:600",
+    "arena/engine/builder_integration.go:580",
     "schemas/v1alpha1/tool.json:355"
    ]
   },
@@ -211,7 +211,7 @@
    "claim": "Live mode calls a real HTTP endpoint; args are sent as JSON and the response is the parsed JSON body",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:109",
+    "arena/engine/builder_integration.go:114",
     "schemas/v1alpha1/tool.json:76"
    ]
   },
@@ -233,7 +233,7 @@
    "claim": "headers_from_env: [API_TOKEN] sets \"Authorization: Bearer ${API_TOKEN}\"",
    "verdict": "false",
    "evidence": [
-    "arena/engine/builder_integration.go:109",
+    "arena/engine/builder_integration.go:114",
     "schemas/v1alpha1/tool.json:84"
    ]
   },
@@ -266,8 +266,8 @@
    "claim": "For mcp mode, the Tool YAML only declares the contract and the MCP client provides the executor",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:421",
-    "arena/engine/builder_integration.go:431"
+    "arena/engine/builder_integration.go:432",
+    "arena/engine/builder_integration.go:442"
    ]
   },
   {
@@ -283,7 +283,7 @@
    "claim": "Exec mode calls a local subprocess; args on stdin, response read from stdout",
    "verdict": "false",
    "evidence": [
-    "arena/engine/builder_integration.go:109",
+    "arena/engine/builder_integration.go:114",
     "schemas/v1alpha1/tool.json:342"
    ]
   },
@@ -301,7 +301,7 @@
    "claim": "Client mode hands the tool call back to the SDK consumer or external system for execution",
    "verdict": "false",
    "evidence": [
-    "arena/engine/builder_integration.go:109",
+    "arena/engine/builder_integration.go:114",
     "schemas/v1alpha1/tool.json:345"
    ]
   },
@@ -351,7 +351,7 @@
    "claim": "Diagram: HTTP API -> live + http",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:109",
+    "arena/engine/builder_integration.go:114",
     "schemas/v1alpha1/tool.json:339"
    ]
   },
@@ -360,7 +360,7 @@
    "claim": "Diagram: Tool from an MCP server -> mcp",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:421"
+    "arena/engine/builder_integration.go:432"
    ]
   },
   {
@@ -368,7 +368,7 @@
    "claim": "Diagram: Local CLI or script -> exec",
    "verdict": "false",
    "evidence": [
-    "arena/engine/builder_integration.go:109",
+    "arena/engine/builder_integration.go:114",
     "schemas/v1alpha1/tool.json:342"
    ]
   },
@@ -377,7 +377,7 @@
    "claim": "Diagram: Caller SDK or app handles it -> client",
    "verdict": "false",
    "evidence": [
-    "arena/engine/builder_integration.go:109",
+    "arena/engine/builder_integration.go:114",
     "schemas/v1alpha1/tool.json:345"
    ]
   },
@@ -396,6 +396,23 @@
    "evidence": [
     "examples/customer-support/tools/example-tool.tool.yaml:29",
     "examples/customer-support/tools/example-tool.tool.yaml:31"
+   ]
+  },
+  {
+   "id": 9001,
+   "claim": "A tool that sets both mock_result and mock_template fails to load",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go"
+   ]
+  },
+  {
+   "id": 9002,
+   "claim": "In a kind: Tool file, mock_result_file and mock_template_file read the content from a file resolved against the arena config directory",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go",
+    "tools/schema-gen/generators/tool_spec.go"
    ]
   }
  ]

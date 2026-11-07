@@ -42,9 +42,9 @@ spec:
     content: What's my name again?
     assertions:
     - type: content_matches
+      message: Should indicate inability to remember name due to context truncation
       params:
         pattern: (?i)(haven't.*mentioned|haven't.*provided|don't.*have|can't.*answer|can't.*provide|don't.*know|not.*provided|no.*name)
-        message: Should indicate inability to remember name due to context truncation
   context_metadata:
     domain: astronomy
     user_role: science tutor

@@ -19,10 +19,10 @@ spec:
         detail: high
     assertions:
     - type: content_includes
+      message: Response should mention the image
       params:
         patterns:
         - image
-        message: Response should mention the image
   - role: user
     parts:
     - type: text
@@ -37,8 +37,8 @@ spec:
         mime_type: image/png
     assertions:
     - type: content_includes
+      message: Response should discuss the images
       params:
         patterns:
         - image
-        message: Response should discuss the images
   description: Test image analysis using local image files

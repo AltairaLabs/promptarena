@@ -133,15 +133,7 @@ func (r *validateJSONReport) addArenaStages(filePath string) {
 		r.addWarning(validateFinding{Stage: stageConfig, Description: w})
 	}
 
-	if len(cfg.LoadedScenarios) > 0 || len(cfg.LoadedPersonas) > 0 {
-		r.Stages = append(r.Stages, stageAssertions)
-		registry := evals.NewEvalTypeRegistry()
-		errs := assertions.ValidateAssertionTypes(cfg.LoadedScenarios, registry)
-		errs = append(errs, assertions.ValidatePersonaAssertionTypes(cfg.LoadedPersonas, registry)...)
-		for _, e := range errs {
-			r.addError(validateFinding{Stage: stageAssertions, Description: e})
-		}
-	}
+	r.addAssertionStage(cfg)
 
 	// A config with no prompts runs scenarios against a pack built elsewhere;
 	// there is nothing for packc to build, so failing it here would be wrong.
@@ -157,6 +149,29 @@ func (r *validateJSONReport) addArenaStages(filePath string) {
 	}
 	for _, p := range check.Warnings {
 		r.addWarning(findingFromProblem(p, filePath))
+	}
+}
+
+// addAssertionStage checks every assertion's type and params against the eval
+// registry, and the prompts' validators for params their handler ignores. It
+// runs when the config has something to check.
+func (r *validateJSONReport) addAssertionStage(cfg *arenaconfig.Config) {
+	promptValidators := assertions.ValidatePromptValidatorParams(cfg.LoadedPromptConfigs, evals.NewEvalTypeRegistry())
+	if len(cfg.LoadedScenarios) == 0 && len(cfg.LoadedPersonas) == 0 && len(cfg.LoadedEvals) == 0 &&
+		len(promptValidators) == 0 {
+		return
+	}
+	r.Stages = append(r.Stages, stageAssertions)
+	registry := evals.NewEvalTypeRegistry()
+	params := assertions.ValidateConfigAssertionParams(cfg, registry)
+	errs := assertions.ValidateAssertionTypes(cfg.LoadedScenarios, registry)
+	errs = append(errs, assertions.ValidatePersonaAssertionTypes(cfg.LoadedPersonas, registry)...)
+	errs = append(errs, params.Errors...)
+	for _, e := range errs {
+		r.addError(validateFinding{Stage: stageAssertions, Description: e})
+	}
+	for _, w := range append(params.Warnings, promptValidators...) {
+		r.addWarning(validateFinding{Stage: stageAssertions, Description: w})
 	}
 }
 

@@ -13,29 +13,29 @@ spec:
       content: "Scan this receipt for me."
       assertions:
         - type: tools_called
+          message: "Should call scan_document tool"
           params:
             tools:
               - scan_document
-            message: "Should call scan_document tool"
         - type: tool_result_has_media
+          message: "Tool result should contain media (scanned image)"
           params:
             tool: scan_document
             media_type: image
-            message: "Tool result should contain media (scanned image)"
         - type: tool_result_media_type
+          message: "Scanned document should be returned as an image"
           params:
             tool: scan_document
             mime_type: image/png
-            message: "Scanned document should be returned as an image"
 
     # Turn 2: Follow-up about the scanned document
     - role: user
       content: "What does the receipt say?"
       assertions:
         - type: content_matches
+          message: "Should describe receipt contents"
           params:
             pattern: "(?i)(receipt|purchase|total|\\$)"
-            message: "Should describe receipt contents"
 
   context:
     goal: "scan and interpret a document"

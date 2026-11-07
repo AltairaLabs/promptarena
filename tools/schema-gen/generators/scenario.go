@@ -17,6 +17,7 @@ func GenerateScenarioSchema() (interface{}, error) {
 			addScenarioOneOf(schema)
 			addScenarioExample(schema)
 			applyKnownTypeSuggestions(schema)
+			applyConsentOverrideEnum(schema)
 		},
 	})
 }

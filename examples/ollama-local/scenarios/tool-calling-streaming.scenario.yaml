@@ -19,28 +19,28 @@ spec:
       content: "What's the weather like in Tokyo right now?"
       assertions:
         - type: min_length
+          message: "Response should describe the weather"
           params:
             min_chars: 20
-            message: "Response should describe the weather"
 
     - role: user
       content: "And what time is it there?"
       assertions:
         - type: min_length
+          message: "Response should include time information"
           params:
             min_chars: 10
-            message: "Response should include time information"
 
   conversation_assertions:
     - type: tools_called
+      message: "Should call get_weather tool for weather query"
       params:
         tool_names:
           - get_weather
         min_calls: 1
-        message: "Should call get_weather tool for weather query"
     - type: tools_called
+      message: "Should call get_time tool for time query"
       params:
         tool_names:
           - get_time
         min_calls: 1
-        message: "Should call get_time tool for time query"

@@ -48,7 +48,3 @@ spec:
       params:
         max_characters: 1000
         max_tokens: 250
-    
-    - type: max_sentences
-      params:
-        max_sentences: 8

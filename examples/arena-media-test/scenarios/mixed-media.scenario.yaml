@@ -22,15 +22,15 @@ spec:
             mime_type: audio/wav
       assertions:
         - type: image_format
+          message: "Validate PNG image format."
           params:
             formats:
               - png
-            message: "Validate PNG image format."
         - type: audio_format
+          message: "Validate MP3 audio format."
           params:
             formats:
               - mp3
-            message: "Validate MP3 audio format."
 
     - role: user
       parts:
@@ -50,9 +50,9 @@ spec:
             mime_type: image/gif
       assertions:
         - type: image_format
+          message: "Validate JPEG, PNG, and GIF image formats."
           params:
             formats:
               - jpeg
               - png
               - gif
-            message: "Validate JPEG, PNG, and GIF image formats."

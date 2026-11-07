@@ -1,7 +1,7 @@
 ---
 title: Validation Strategies
 verified:
-  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
+  commit: 1f3acc05aa6f98764a8598798bf817c19d6f1f44
   sources:
     - arena/arenaconfig/judge_param.go
     - arena/arenaconfig/types.go
@@ -9,7 +9,9 @@ verified:
     - arena/assertions/eval_adapter.go
     - arena/assertions/register.go
     - arena/assertions/types.go
+    - arena/assertions/validate_params.go
     - arena/cmd/promptarena/prompt-debug_interactive.go
+    - arena/cmd/promptarena/validate_json.go
     - arena/engine/conversation_executor.go
     - arena/engine/eval_orchestrator.go
     - arena/engine/trials.go
@@ -135,7 +137,7 @@ assertions:
 
 ### Fail fast, fail clear
 
-Give every assertion a top-level `message` that says what is wrong. Only that key is read; a `message` inside `params` is ignored.
+Give every assertion a top-level `message` that says what is wrong. Only that key is read; a `message` inside `params` is ignored, and `promptarena validate` warns about it.
 
 ```yaml
 # Fragment

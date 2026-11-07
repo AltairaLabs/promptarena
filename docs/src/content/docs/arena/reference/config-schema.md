@@ -1,7 +1,7 @@
 ---
 title: Configuration Schema
 verified:
-  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
+  commit: 1f3acc05aa6f98764a8598798bf817c19d6f1f44
   sources:
     - arena/adapters/arena_output.go
     - arena/adapters/registry.go
@@ -9,6 +9,7 @@ verified:
     - arena/adapters/transcript.go
     - arena/arenaconfig/governance_taxonomy.go
     - arena/arenaconfig/helpers.go
+    - arena/arenaconfig/ignored_fields.go
     - arena/arenaconfig/judge_param.go
     - arena/arenaconfig/loader.go
     - arena/arenaconfig/mcp_servers.go
@@ -90,6 +91,7 @@ verified:
     - schemas/v1alpha1/provider.json
     - schemas/v1alpha1/scenario.json
     - schemas/v1alpha1/tool.json
+    - tools/schema-gen/generators/tool_spec.go
 ---
 
 Reference for every PromptArena configuration file: each field, its type, its default and its purpose.
@@ -730,11 +732,6 @@ spec:
         max_tokens: 250
         message: "Keep responses concise"
 
-    - type: max_sentences
-      params:
-        max_sentences: 8
-        message: "Maximum 8 sentences"
-
   # Optional: tools this prompt is allowed to call, by name.
   allowed_tools:
     - get_customer_info
@@ -934,33 +931,33 @@ spec:
 
       assertions:                   # Optional: Checks for this turn
         - type: content_includes
+          message: "Should acknowledge tracking request"
           params:
             patterns: ["track"]
-            message: "Should acknowledge tracking request"
 
         - type: content_matches
+          message: "Should reference order number"
           params:
             pattern: "(?i)(order|#12345)"
-            message: "Should reference order number"
 
     # Another user turn
     - role: user
       content: "It says out for delivery but I haven't received it"
       assertions:
         - type: content_matches
+          message: "Should offer assistance"
           params:
             pattern: "(?i)(understand|help|check)"
-            message: "Should offer assistance"
 
     # Tool calling assertion
     - role: user
       content: "Please check the status"
       assertions:
         - type: tools_called
+          message: "Should call order status tool"
           params:
             tools:
               - check_order_status
-            message: "Should call order status tool"
 
     # Self-play turn with natural termination
     - role: gemini-user              # Self-play role (must match a configured role)
@@ -976,7 +973,6 @@ spec:
   context_metadata:
     domain: "e-commerce"                   # Domain
     user_role: "support agent"             # LLM role
-    project_stage: "production"            # Project stage
 ```
 
 ### Field Descriptions
@@ -1015,7 +1011,7 @@ assertions:
 
 #### `context` and `context_metadata`
 
-Optional metadata about the scenario. `context` is a free-form key-value map. `context_metadata` has typed fields: `domain`, `user_role`, `project_stage`.
+Optional metadata about the scenario. `context` is a free-form key-value map. `context_metadata` has typed fields: `domain` and `user_role`. A third field, `project_stage`, is still accepted but nothing reads it, and loading warns that it is ignored.
 
 #### `context_policy`
 
@@ -1490,13 +1486,14 @@ spec:
     conditions: "Sunny"
     humidity: 45
 
-  # For mock mode: Template response
-  mock_template: |                  # Alternative to mock_result
-    {
-      "location": "",
-      "temperature": 72,
-      "conditions": "Sunny"
-    }
+  # For mock mode: Template response. An alternative to mock_result: a tool
+  # that sets both fails to load.
+  # mock_template: |
+  #   {
+  #     "location": "",
+  #     "temperature": 72,
+  #     "conditions": "Sunny"
+  #   }
 
   # For live mode: HTTP configuration
   http:                             # Required if mode=live
@@ -1540,7 +1537,9 @@ mock_template: |
   {{- end -}}
 ```
 
-For longer templates, use `mock_template_file: <path>` (resolved against the working directory). See [Tool Authoring](/arena/reference/tool-authoring/) for guidance on when to use template vs static.
+For longer templates, use `mock_template_file: <path>`, and for a long static result `mock_result_file: <path>` (a JSON file). Both resolve against the arena config's directory, and both are accepted in a `kind: Tool` file only, not in an inline `tool_specs` entry. A tool that sets a static result (`mock_result` or `mock_result_file`) and a template (`mock_template` or `mock_template_file`) fails to load. See [Tool Authoring](/arena/reference/tool-authoring/) for guidance on when to use template vs static.
+
+`mode: exec` is not available in PromptArena: it registers no subprocess executor, so `promptarena run` stops at startup on a tool with that mode ("mode must be 'mock', 'live', 'local', 'mcp', 'client', or a registered executor name"). The PromptKit SDK runs exec tools.
 
 #### Live Mode (HTTP)
 

@@ -16,37 +16,37 @@ spec:
       content: "Hi! Can you check the status of my order #ORD-98765?"
       assertions:
         - type: tools_called
+          message: "Should call get_order_status tool to retrieve order information"
           params:
             tools:
               - get_order_status
-            message: "Should call get_order_status tool to retrieve order information"
         - type: content_matches
+          message: "Response should acknowledge order inquiry"
           params:
             pattern: "(?i)(order|status|shipped|delivery|help)"
-            message: "Response should acknowledge order inquiry"
     
     # Turn 2: Follow-up question about the order
     - role: user
       content: "When is it expected to arrive?"
       assertions:
         - type: content_matches
+          message: "Should address delivery timeline"
           params:
             pattern: "(?i)(delivery|arrive|expect|date|shipping)"
-            message: "Should address delivery timeline"
     
     # Turn 3: Another order check - demonstrates tool being called again
     - role: user
       content: "I also have order #ORD-11111, can you check that one too?"
       assertions:
         - type: tools_called
+          message: "Should call get_order_status for the second order"
           params:
             tools:
               - get_order_status
-            message: "Should call get_order_status for the second order"
         - type: content_matches
+          message: "Should acknowledge second order request"
           params:
             pattern: "(?i)(order|status|check|help)"
-            message: "Should acknowledge second order request"
     
     # Turn 4: General question (no tool call needed)
     - role: user
@@ -54,9 +54,9 @@ spec:
       streaming: true
       assertions:
         - type: content_matches
+          message: "Should explain return policy"
           params:
             pattern: "(?i)(return|policy|days|refund|exchange)"
-            message: "Should explain return policy"
 
   context:
     goal: "demonstrate streaming responses with tool invocation"

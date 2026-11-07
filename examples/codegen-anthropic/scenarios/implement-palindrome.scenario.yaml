@@ -27,10 +27,10 @@ spec:
         with run_tests, and only declare done once they pass.
       assertions:
         - type: tools_called
+          message: "Must initialise the workspace (go mod, file scaffolding) via Bash."
           params:
             tools: ["Bash"]
-            message: "Must initialise the workspace (go mod, file scaffolding) via Bash."
         - type: tools_called
+          message: "Must verify with run_tests before finishing."
           params:
             tools: ["run_tests"]
-            message: "Must verify with run_tests before finishing."

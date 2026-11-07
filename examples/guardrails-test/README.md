@@ -50,8 +50,9 @@ validators:
         - damn
         - crap
         - hell
-      case_sensitive: false
 ```
+
+Matching is case-insensitive. The guardrail has no `case_sensitive` param, and `promptarena validate` warns if one is set.
 
 **Note**: No special test-only flags are needed in the PromptConfig. Arena's test framework automatically enables suppression mode when running validators.
 

@@ -12,10 +12,10 @@ spec:
       content: "Please write me a very detailed, comprehensive 500-word essay explaining all the features of your customer support system, including every tool you have access to, how each one works, what parameters they accept, when to use them, examples of usage, common edge cases, troubleshooting tips, and best practices for customer support agents. Make it extremely detailed and thorough."
       assertions:
         - type: content_matches
+          message: "Response should be truncated by max_length validator and be relatively short"
           params:
             pattern: "(?s).{1,100}"
-            message: "Response should be truncated by max_length validator and be relatively short"
         - type: content_includes
+          message: "Should start responding to the request before being truncated"
           params:
             patterns: ["support system", "features"]
-            message: "Should start responding to the request before being truncated"

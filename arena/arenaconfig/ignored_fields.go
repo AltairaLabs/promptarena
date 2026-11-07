@@ -37,6 +37,11 @@ func (c *Config) ignoredFieldWarnings() []string {
 	if c.StateStore != nil && c.StateStore.File != nil {
 		out = append(out, "state_store.file "+ignoredFieldSuffix)
 	}
+	for _, id := range sortedKeys(c.LoadedScenarios) {
+		if s := c.LoadedScenarios[id]; s != nil && s.ContextMetadata != nil && s.ContextMetadata.ProjectStage != "" {
+			out = append(out, fmt.Sprintf("scenario %s: context_metadata.project_stage %s", id, ignoredFieldSuffix))
+		}
+	}
 	for _, id := range sortedKeys(c.LoadedEvals) {
 		ev := c.LoadedEvals[id]
 		if ev == nil {

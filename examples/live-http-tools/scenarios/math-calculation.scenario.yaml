@@ -12,22 +12,22 @@ spec:
       content: "What is the square root of 144 plus 3 squared?"
       assertions:
         - type: tools_called
+          message: "Should call the calculate tool"
           params:
             tool_names: ["calculate"]
-            message: "Should call the calculate tool"
         - type: tool_result_matches
+          message: "calculate should return 21 (sqrt(144)=12, 3^2=9, 12+9=21)"
           params:
             tool: calculate
             pattern: "21"
-            message: "calculate should return 21 (sqrt(144)=12, 3^2=9, 12+9=21)"
 
     - role: user
       content: "Thanks for the answer."
       assertions:
         - type: content_matches
+          message: "Should reference the calculation result"
           params:
             pattern: "(?i)(21|result|square)"
-            message: "Should reference the calculation result"
 
   tool_policy:
     tool_choice: auto

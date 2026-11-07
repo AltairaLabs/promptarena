@@ -559,8 +559,11 @@ func buildToolRegistry(cfg *arenaconfig.Config) (*tools.Registry, error) {
 		// Get the parsed tool descriptor(s) from temp registry
 		loadedTools := tempRegistry.GetTools()
 		for _, tool := range loadedTools {
-			// Resolve relative file_path references in mock_parts against the config directory
+			// Resolve relative file_path references in mock_parts, and the
+			// mock_result_file / mock_template_file paths, against the config
+			// directory, as every other path in an arena config is.
 			resolveMockPartsPaths(tool, cfg.ConfigDir)
+			resolveMockFilePaths(tool, cfg.ConfigDir)
 			if err := memRepo.SaveTool(tool); err != nil {
 				return nil, fmt.Errorf("failed to save tool %s to repository: %w", tool.Name, err)
 			}
@@ -590,6 +593,21 @@ func resolveMockPartsPaths(tool *tools.ToolDescriptor, configDir string) {
 				resolved := filepath.Join(configDir, fp)
 				tool.MockParts[i].Media.FilePath = &resolved
 			}
+		}
+	}
+}
+
+// resolveMockFilePaths roots a tool's relative mock_result_file and
+// mock_template_file at the config directory. The runtime reads them as given,
+// so left relative they resolved against the working directory and a config
+// only ran from its own directory.
+func resolveMockFilePaths(tool *tools.ToolDescriptor, configDir string) {
+	if configDir == "" {
+		return
+	}
+	for _, p := range []*string{&tool.MockResultFile, &tool.MockTemplateFile} {
+		if *p != "" && !filepath.IsAbs(*p) {
+			*p = filepath.Join(configDir, *p)
 		}
 	}
 }
