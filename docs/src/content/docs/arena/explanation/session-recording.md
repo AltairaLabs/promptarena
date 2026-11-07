@@ -12,6 +12,7 @@ verified:
     - arena/engine/engine.go
     - arena/engine/eval_orchestrator.go
     - arena/engine/execution.go
+    - arena/stages/duplex_recording.go
     - arena/tui/event_adapter.go
     - arena/turnexecutors/pipeline_stages_integration.go
     - arena/web/event_adapter.go
@@ -26,7 +27,7 @@ Session recording provides an audit trail of LLM interactions. Unlike simple log
 - Every message with its multimodal parts, tool calls and tool results
 - Enough information to replay a conversation turn by turn
 
-Arena writes a recording when `defaults.output.recording.enabled` is `true`. Arena adds `RecordingStage` to the pipeline itself. Duplex runs write no recording, because the duplex pipeline has no `RecordingStage`.
+Arena writes a recording when `defaults.output.recording.enabled` is `true`. Arena adds `RecordingStage` to the pipeline itself, duplex runs included. On the duplex path the provider stage puts each assistant turn's message on the element that ends the turn, which `RecordingStage` skips as a control signal, so Arena records a copy of that content immediately ahead of it.
 
 The following diagram shows the path from a live run to a replay.
 
@@ -156,7 +157,7 @@ The replay provider supports regression testing against known-good responses, re
 
 ## Performance Considerations
 
-`RecordingStage` appends each event synchronously under a mutex, so a slow disk back-pressures the pipeline. Disk use grows with conversation length. Base64 encoding adds about 33% to binary parts. Arena duplex runs write no recording.
+`RecordingStage` appends each event synchronously under a mutex, so a slow disk back-pressures the pipeline. Disk use grows with conversation length. Base64 encoding adds about 33% to binary parts. A duplex recording also holds the provider's audio as `audio.output` events, so it grows with talk time.
 
 Recording is a global switch (`defaults.output.recording.enabled` and `dir`). There is no retention policy or per-scenario setting. See [Recording Storage](/arena/how-to/scenarios/session-recording/#recording-storage) for housekeeping tips.
 

@@ -85,7 +85,7 @@ promptarena chat --voice \
   --config config.arena.yaml
 ```
 
-`--voice-stt` must match a provider declared under `stt_providers:` in the Arena config. `--voice-output-voice` must match a voice id declared under `voices:`, and VAD mode needs it. The value is a voice binding id (the `id:` field of a `voices:` entry), which maps to the synthesis voice of the configured TTS provider. Use the binding id, not the vendor's voice name, unless the two are the same.
+`--voice-stt` must match a provider declared under `stt_providers:` in the Arena config. Any other id stops `chat` before the console opens, with an error that lists the STT provider ids the config loads. `--voice-output-voice` must match a voice id declared under `voices:`, and VAD mode needs it. The value is a voice binding id (the `id:` field of a `voices:` entry), which maps to the synthesis voice of the configured TTS provider. Use the binding id, not the vendor's voice name, unless the two are the same.
 
 ## Echo guard
 

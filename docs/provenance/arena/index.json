@@ -98,11 +98,11 @@
   },
   {
    "id": 13,
-   "claim": "Building from source with Go needs a C compiler and audio development headers",
-   "verdict": "unverified",
+   "claim": "Building from source with Go needs no C compiler: oto and PortAudio load via purego",
+   "verdict": "true",
    "evidence": [
-    "arena/audio/local_sink_integration_cgo.go:1",
-    "arena/audio/local_sink_nocgo_integration.go:6"
+    "arena/audio/local_sink_oto.go:1",
+    "go.mod:13"
    ]
   },
   {

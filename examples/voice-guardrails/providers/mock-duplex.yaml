@@ -1,0 +1,16 @@
+# yaml-language-server: $schema=https://promptkit.altairalabs.ai/schemas/latest/provider.json
+#
+# A mock realtime voice agent for the pii-redaction-duplex scenario. It reads
+# its replies from the scenario's block in mock-responses.yaml and streams each
+# one back when a caller turn ends (auto_respond).
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Provider
+metadata:
+  name: mock-duplex
+spec:
+  id: mock-duplex
+  type: mock
+  model: mock-duplex-model
+  additional_config:
+    mock_config: mock-responses.yaml
+    auto_respond: true

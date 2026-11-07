@@ -9,3 +9,10 @@ scenarios:
       # the guardrail fired, the redaction marker is present, the PII
       # pattern is absent.
       2: "Sure — the email is jane.doe@example.com and the card ending 4111 1111 1111 1111 is on file. Anything else?"
+
+  # The same exchange for the duplex scenario: the realtime mock streams this
+  # reply, and Arena's duplex guardrail stage blocks turn 2 when it completes.
+  pii-redaction-duplex:
+    turns:
+      1: "I can help with that. What can I do for you?"
+      2: "Sure — the email is jane.doe@example.com and the card ending 4111 1111 1111 1111 is on file. Anything else?"

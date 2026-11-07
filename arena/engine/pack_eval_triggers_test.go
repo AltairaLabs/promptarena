@@ -9,9 +9,43 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/AltairaLabs/PromptKit/runtime/v2/evals"
+	runtimestore "github.com/AltairaLabs/PromptKit/runtime/v2/statestore"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
+	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
 	"github.com/AltairaLabs/promptarena/v2/arena/statestore"
 )
+
+// The duplex path runs every pack eval trigger too, not just the session ones.
+func TestDuplexResult_RunsEveryPackEvalTrigger(t *testing.T) {
+	params := map[string]any{"patterns": []any{"hi"}}
+	defs := []evals.EvalDef{
+		{ID: "turn_check", Type: "contains", Trigger: "every_turn", Params: params},
+		{ID: "session_check", Type: "contains", Trigger: "on_session_complete", Params: params},
+		{ID: "conversation_check", Type: "contains", Trigger: "on_conversation_complete", Params: params},
+	}
+	orch := NewEvalOrchestrator(evals.NewEvalTypeRegistry(), defs, false, nil, "")
+	de := NewDuplexConversationExecutor(nil, nil, nil, nil, orch)
+
+	store := statestore.NewArenaStateStore()
+	require.NoError(t, store.Save(context.Background(), &runtimestore.ConversationState{
+		ID: "conv",
+		Messages: []types.Message{
+			{Role: "user", Content: "hello"}, {Role: "assistant", Content: "hi one"},
+			{Role: "user", Content: "again"}, {Role: "assistant", Content: "hi two"},
+		},
+	}))
+	req := &ConversationRequest{
+		ConversationID:   "conv",
+		Scenario:         &arenaconfig.Scenario{ID: "duplex"},
+		StateStoreConfig: &StateStoreConfig{Store: store},
+	}
+
+	byID := map[string]int{}
+	for _, r := range de.buildResultFromStateStore(context.Background(), req).EvalResults {
+		byID[r.EvalID]++
+	}
+	assert.Equal(t, map[string]int{"turn_check": 2, "session_check": 1, "conversation_check": 1}, byID)
+}
 
 // Every pack eval trigger fires in a normal run through the real engine: the
 // turn triggers once per assistant turn, the session and conversation triggers

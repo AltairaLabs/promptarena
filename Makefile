@@ -8,9 +8,9 @@
 # reproduces the merge gates locally before you push. Run `make help` for the
 # list.
 #
-# Note: the voice path uses CGO audio bindings. On Linux, install the ALSA dev
-# headers first (`sudo apt-get install -y libasound2-dev`); macOS needs nothing.
-# The frontend pulls @altairalabs/atlas from GitHub Packages (private), so
+# Note: no C toolchain is needed. Audio (oto speaker playback and PortAudio for
+# the voice console) is loaded at runtime via purego, so CGO_ENABLED=0 builds
+# keep it. The frontend pulls @altairalabs/atlas from GitHub Packages (private), so
 # `make deps` needs npm auth configured for read:packages.
 
 # Recipes use bash features (process substitution, arithmetic); pin the shell so

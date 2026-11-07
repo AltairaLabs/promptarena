@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=https://promptkit.altairalabs.ai/schemas/latest/provider.json
+#
+# Keyless TTS for the duplex scenario's caller. With no audio_files it speaks
+# the built-in "mock user turn" clip.
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Provider
+metadata:
+  name: mock-tts
+spec:
+  id: mock-tts
+  type: mock
+  role: tts
+  sample_rate: 24000

@@ -8,11 +8,13 @@ verified:
     - arena/cmd/promptarena/run.go
     - arena/cmd/promptarena/serve_interactive.go
     - arena/engine/duplex_executor_pipeline_integration.go
+    - arena/stages/duplex_guardrail.go
     - arena/turnexecutors/pipeline_stages_integration.go
     - examples/pii-guardrail-red-team/scenarios/legitimate-question.scenario.yaml
     - examples/voice-guardrails/config.arena.yaml
     - examples/voice-guardrails/prompts/support-agent.yaml
     - examples/voice-guardrails/providers/mock-judge.yaml
+    - examples/voice-guardrails/scenarios/pii-redaction-duplex.scenario.yaml
     - examples/voice-guardrails/scenarios/pii-redaction.scenario.yaml
 ---
 
@@ -63,7 +65,7 @@ This demo has one scenario and one assertion. For a second scenario that checks 
 
 ## Switching to live voice
 
-Arena's duplex voice path does not run pack guardrails. Its pipeline wires no guardrail hooks, so a scenario with a `duplex:` block runs without `pii_leakage` enforcement. Test guardrails with text turns, as this example does.
+The duplex voice path runs the pack's output guardrails too, on each assistant turn when the realtime session completes it, and records the firing the same way, so `guardrail_triggered` works on a scenario with a `duplex:` block (`pii-redaction-duplex` in this example). The provider streams the reply's audio while it speaks, so the caller has heard it before the guardrail sees the finished transcript; enforcement rewrites the turn as recorded (state, session recording, reports, later assertions), not the audio already played. Input guardrails do not run on the duplex path.
 
 ## CI gate
 

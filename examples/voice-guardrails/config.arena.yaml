@@ -30,6 +30,15 @@ spec:
     # turns, it does not take them.
     - file: providers/mock-judge.yaml
       group: judge
+    # The realtime voice agent for pii-redaction-duplex, and the TTS that
+    # speaks its scripted caller lines. Both are mocks, so the duplex
+    # scenario is keyless too.
+    - file: providers/mock-duplex.yaml
+    - file: providers/mock-tts.yaml
+
+  voices:
+    - id: caller
+      provider: mock-tts
 
   # The judge the pii_leakage guardrail names. Pointing it at the mock
   # provider keeps the demo keyless; swap the provider here to grade with a
@@ -40,6 +49,16 @@ spec:
 
   scenarios:
     - file: scenarios/pii-redaction.scenario.yaml
+    - file: scenarios/pii-redaction-duplex.scenario.yaml
+
+  # Duplex scenarios speak their scripted text turns through TTS, and Arena
+  # builds that TTS from the self-play setup, so the duplex scenario needs this
+  # block even though no persona drives it.
+  self_play:
+    personas: []
+    roles:
+      - id: selfplay-user
+        provider: mock-guardrails
 
   defaults:
     temperature: 0.1
@@ -47,3 +66,6 @@ spec:
     output:
       dir: out
       formats: ["json", "markdown"]
+      # Session recordings land in out/recordings/, one JSONL file per run.
+      recording:
+        enabled: true

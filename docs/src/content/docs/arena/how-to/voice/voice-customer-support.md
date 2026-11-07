@@ -48,14 +48,18 @@ The example tests conversational failures: whether the agent verifies the warran
 
 | Key | Used for |
 |-----|----------|
+The shipped config needs none: the `selfplay-user` role uses `mock-duplex` and the four `voices:` entries are bound to `mock-tts`, so `promptarena run --provider mock-duplex` runs all four scenarios keyless and every `tools_called` / `tools_not_called` assertion passes. Keys come in when you bind the voices to their vendor TTS providers (the comment above `voices:` lists the pairs) or run a real agent:
+
+| Key | Used for |
+|-----|----------|
 | `OPENAI_API_KEY` | OpenAI TTS (`openai-nova`, the patient-baseline persona's voice) and OpenAI Realtime; also the self-play text LLM if you switch the `selfplay-user` role to `openai-gpt4o-mini-text` |
 | `GEMINI_API_KEY` | Gemini Live (the voice agent under test) |
 | `CARTESIA_API_KEY` | Cartesia TTS for two of the personas |
 | `ELEVENLABS_API_KEY` | ElevenLabs v3 TTS for the anxious-delivery persona |
 
-The patient-baseline scenario uses OpenAI's `nova` voice, so it works with only `OPENAI_API_KEY` + `GEMINI_API_KEY` (no Cartesia / ElevenLabs).
+With `nova` bound to `openai-nova`, the patient-baseline scenario needs only `OPENAI_API_KEY` + `GEMINI_API_KEY` (no Cartesia / ElevenLabs).
 
-To run without keys, re-point the `provider:` of all four `voices:` entries in `config.arena.yaml` to `mock-tts` (the config comment says so) and run with `--provider mock-duplex`. All the `tools_called` / `tools_not_called` assertions then pass. `aggressive-refund` still fails its `audio_emotion` assertion.
+`aggressive-refund` ships an `audio_emotion` assertion commented out. It names the `hf` inference provider, which Arena builds only with `HF_TOKEN`, and a check naming an unbound provider is an error rather than a skip, so it would fail every keyless run. The scenario comment says how to turn it on.
 
 ## Run it
 
@@ -94,7 +98,7 @@ The headline assertion in each adversarial scenario is `tools_not_called(issue_r
 
 ## CI gate
 
-For CI without provider keys, run `promptarena validate`; it loads and validates all configs without making provider calls. The scenarios that exercise the live voice path need provider keys. See [Run in CI](/arena/how-to/interfaces/run-in-ci/) for the general setup.
+For CI without provider keys, run the shipped config with `promptarena run --ci --provider mock-duplex`: it runs all four scenarios through the duplex pipeline against the mock agent. `promptarena validate` checks the configs without running anything. The scenarios against a live voice agent need provider keys. See [Run in CI](/arena/how-to/interfaces/run-in-ci/) for the general setup.
 
 ```yaml
 # .github/workflows/voice-refund-demo.yml

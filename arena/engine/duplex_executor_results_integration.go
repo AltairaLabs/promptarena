@@ -54,11 +54,13 @@ func (de *DuplexConversationExecutor) buildResultFromStateStore(
 	// Evaluate conversation-level assertions
 	convAssertionResults := de.evaluateConversationAssertions(ctx, req, messages)
 
-	// Run pack-level evals at session end. Non-gating observations
-	// surface on EvalResults; assertions stay in ConversationAssertionResults.
+	// Run every pack eval the finished conversation should have produced: turn
+	// triggers replayed per assistant turn, then session, then conversation
+	// triggers, as the text path does. Non-gating observations surface on
+	// EvalResults; assertions stay in ConversationAssertionResults.
 	var packEvalResults []evals.EvalResult
 	if de.evalOrchestrator != nil && de.evalOrchestrator.HasEvals() {
-		packEvalResults = de.evalOrchestrator.RunSessionEvals(ctx, messages, req.ConversationID)
+		packEvalResults = de.evalOrchestrator.RunPackEvals(ctx, messages, req.ConversationID)
 	}
 
 	return &ConversationResult{

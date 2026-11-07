@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"sort"
+	"strings"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -65,6 +67,34 @@ func (p *ChatPage) startVoice(send func(tea.Msg)) tea.Cmd {
 	return p.runVoice(audioIO, send)
 }
 
+// ResolveSTTProvider returns the STT provider a --voice-stt id names, or nil
+// when id is empty. An id that names no loaded STT provider is an error that
+// lists the ids the config does load: dropping it silently sent the console on
+// to ASM, or to the "requires an STT provider" error, with no hint that the id
+// was simply wrong.
+func ResolveSTTProvider(cfg *arenaconfig.Config, id string) (*config.Provider, error) {
+	if id == "" {
+		return nil, nil
+	}
+	var loaded map[string]*config.Provider
+	if cfg != nil {
+		loaded = cfg.LoadedSTTProviders
+	}
+	if prov, ok := loaded[id]; ok {
+		return prov, nil
+	}
+	ids := make([]string, 0, len(loaded))
+	for k := range loaded {
+		ids = append(ids, k)
+	}
+	sort.Strings(ids)
+	available := "none loaded"
+	if len(ids) > 0 {
+		available = strings.Join(ids, ", ")
+	}
+	return nil, fmt.Errorf("--voice-stt %q is not an STT provider in this config (available: %s)", id, available)
+}
+
 // newAudioIO constructs the live AudioIO. It is a package var (not a direct
 // call to voice.NewAudioIO) so tests can override it to avoid opening a real
 // microphone.
@@ -110,11 +140,10 @@ func (p *ChatPage) runVoice(audioIO voice.AudioIO, send func(tea.Msg)) tea.Cmd {
 	}
 
 	// 5. Resolve optional STT provider (VAD path; ignored by the ASM executor).
-	var voiceSTT *config.Provider
-	if p.voice.STTProviderID != "" {
-		if prov, ok := cfg.LoadedSTTProviders[p.voice.STTProviderID]; ok {
-			voiceSTT = prov
-		}
+	voiceSTT, err := ResolveSTTProvider(cfg, p.voice.STTProviderID)
+	if err != nil {
+		p.engineErr = err
+		return nil
 	}
 
 	// 6. Build an in-memory state store and event bus.

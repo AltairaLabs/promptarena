@@ -11,9 +11,11 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 
+	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
 	arenastore "github.com/AltairaLabs/promptarena/v2/arena/statestore"
 	"github.com/AltairaLabs/promptarena/v2/arena/voice"
 
+	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
 	runtimestore "github.com/AltairaLabs/PromptKit/runtime/v2/statestore"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )
@@ -731,43 +733,47 @@ func TestRunVoice_OnLevelCallbackFiredByTapLevels(t *testing.T) {
 	p.voiceCancel()
 }
 
-// TestRunVoice_STTProviderIDSet_NotInConfig verifies that when
-// p.voice.STTProviderID is set but the ID is not found in cfg.LoadedSTTProviders,
-// runVoice takes the "if STTProviderID != """ branch without error (voiceSTT
-// stays nil and the run proceeds normally). The observable is that chatErrMsg
-// is still delivered (driver fails for the usual reason — no real STT) rather
-// than panicking or skipping the branch entirely.
+// TestRunVoice_STTProviderIDSet_NotInConfig verifies that an STTProviderID
+// naming no loaded STT provider stops runVoice with an engine error that names
+// the id, instead of dropping the id and running on without STT.
 func TestRunVoice_STTProviderIDSet_NotInConfig(t *testing.T) {
 	p := newVoiceChatPage(t)
 	p.voice.STTProviderID = "nonexistent-stt-provider"
 
-	fake := newFakeAudioIO()
-	fake.startErr = fmt.Errorf("audio device not available")
-
-	gotMsg := make(chan tea.Msg, 4)
-	send := func(msg tea.Msg) {
-		select {
-		case gotMsg <- msg:
-		default:
-		}
+	if cmd := p.runVoice(newFakeAudioIO(), func(tea.Msg) {}); cmd != nil {
+		t.Fatal("runVoice must not start a voice session for an unknown STT id")
 	}
-
-	_ = p.runVoice(fake, send)
-
-	select {
-	case msg := <-gotMsg:
-		em, ok := msg.(voiceEndedMsg)
-		if !ok {
-			t.Fatalf("expected voiceEndedMsg, got %T", msg)
-		}
-		if em.err == nil {
-			t.Fatal("voiceEndedMsg.err must be non-nil")
-		}
-	case <-time.After(2 * time.Second):
-		t.Fatal("timed out waiting for voiceEndedMsg in STT provider ID test")
+	if p.engineErr == nil || !strings.Contains(p.engineErr.Error(), "nonexistent-stt-provider") {
+		t.Fatalf("engineErr must name the unknown --voice-stt id, got %v", p.engineErr)
 	}
+	if p.voiceCancel != nil {
+		t.Fatal("no voice driver should have been launched")
+	}
+}
 
-	p.voiceCancel()
+func TestResolveSTTProvider(t *testing.T) {
+	stt := &config.Provider{ID: "whisper"}
+	cfg := &arenaconfig.Config{LoadedSTTProviders: map[string]*config.Provider{
+		"whisper": stt, "deepgram": {ID: "deepgram"},
+	}}
+
+	got, err := ResolveSTTProvider(cfg, "")
+	if got != nil || err != nil {
+		t.Fatalf("empty id: want nil, nil; got %v, %v", got, err)
+	}
+	got, err = ResolveSTTProvider(cfg, "whisper")
+	if err != nil || got != stt {
+		t.Fatalf("known id: want the provider; got %v, %v", got, err)
+	}
+	_, err = ResolveSTTProvider(cfg, "whsiper")
+	if err == nil || !strings.Contains(err.Error(), `"whsiper"`) ||
+		!strings.Contains(err.Error(), "available: deepgram, whisper") {
+		t.Fatalf("unknown id: want error naming the id and the sorted ids, got %v", err)
+	}
+	_, err = ResolveSTTProvider(nil, "whisper")
+	if err == nil || !strings.Contains(err.Error(), "none loaded") {
+		t.Fatalf("nil config: want 'none loaded' error, got %v", err)
+	}
 }
 
 // TestHandleChatKey_Voice_TabTogglesFocus verifies that Tab in voice mode

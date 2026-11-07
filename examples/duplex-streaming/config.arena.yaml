@@ -50,14 +50,18 @@ spec:
     - file: providers/mock-tts-alt.provider.yaml
 
   voices:
-    # For real-provider mode (requires API keys). For keyless CI:
-    # change each `provider:` below to `mock-tts`.
+    # The persona voices default to mock-tts so `--provider mock-duplex` runs
+    # every self-play scenario without API keys. For a real-provider self-play
+    # run, bind them to the vendor TTS providers instead (needs their keys):
+    #   rachel           -> elevenlabs-rachel        (ELEVENLABS_API_KEY)
+    #   echo             -> openai-echo              (OPENAI_API_KEY)
+    #   alloy-expressive -> openai-alloy-expressive  (OPENAI_API_KEY)
     - id: rachel
-      provider: elevenlabs-rachel
+      provider: mock-tts
     - id: echo
-      provider: openai-echo
+      provider: mock-tts
     - id: alloy-expressive
-      provider: openai-alloy-expressive
+      provider: mock-tts
     # Scripted-text scenario voices. mock-tts serves CI runs without API keys.
     - id: scripted-mock
       provider: mock-tts
@@ -94,7 +98,11 @@ spec:
       - file: personas/busy-professional.persona.yaml
     roles:
       - id: selfplay-user
-        provider: openai-gpt4o-mini-text  # Low-latency text model; switch to mock-duplex for CI
+        # mock-duplex writes the user's lines from the per-persona `selfplay:`
+        # block in mock-responses.yaml, so self-play runs without API keys.
+        # For LLM-written lines, switch to openai-gpt4o-mini-text
+        # (OPENAI_API_KEY), the low-latency text model loaded above.
+        provider: mock-duplex
 
   # Default settings
   defaults:
