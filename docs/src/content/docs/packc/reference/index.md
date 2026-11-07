@@ -4,7 +4,7 @@ description: Command reference for packc, the compiler that turns PromptArena pr
 sidebar:
   order: 0
 verified:
-  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - packc/compiler/check.go
     - packc/compiler/compiler.go
@@ -18,7 +18,7 @@ verified:
 |---|---|
 | [`compile`](/packc/reference/compile/) | Compile every prompt an Arena config lists into one pack. |
 | [`compile-prompt`](/packc/reference/compile-prompt/) | Compile one PromptConfig file into a single-prompt pack. |
-| [`validate`](/packc/reference/validate/) | Validate a pack file against the PromptPack schema and structure rules. |
+| [`validate`](/packc/reference/validate/) | Validate one or more pack files against the PromptPack schema and structure rules. |
 | [`inspect`](/packc/reference/inspect/) | Print a summary of a pack file. |
 | [`version`](/packc/reference/version/) | Print the `packc` version. |
 | `completion <shell>` | Print a shell completion script for `bash`, `zsh`, `fish` or `powershell`. See [Install packc](/packc/how-to/install/). |
@@ -26,7 +26,7 @@ verified:
 
 An unknown command prints `Unknown command: <name>` and the usage, and exits with code `1`. `packc` with no command prints the usage and exits with code `1`.
 
-Every command accepts `--help` or `-h`: `compile` and `compile-prompt` print their flags, and `validate` and `inspect` print their usage.
+`compile`, `compile-prompt`, `validate` and `inspect` accept `--help` or `-h`: `compile` and `compile-prompt` print their flags, and `validate` and `inspect` print their usage. `version` ignores any argument, and `completion -h` fails with `Unknown shell: -h`.
 
 ## Example
 

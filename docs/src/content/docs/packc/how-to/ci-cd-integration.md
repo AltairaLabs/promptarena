@@ -4,11 +4,12 @@ description: Compile and validate packs on every change in GitHub Actions, GitLa
 sidebar:
   order: 5
 verified:
-  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - .github/actions/packc-action/action.yml
     - .github/actions/packc-action/src/compiler.ts
     - .github/actions/packc-action/src/installer.ts
+    - .github/actions/packc-action/src/main.ts
     - arena/arenaconfig/types.go
     - npm/packc/lib/resolve.js
     - npm/packc/package.json
@@ -66,7 +67,7 @@ jobs:
           path: ${{ steps.pack.outputs.pack-file }}
 ```
 
-`validate` defaults to `true`, and `packc-version` defaults to the latest release. `pack-version` passes `--pack-version` to `packc compile`, for example `pack-version: ${{ github.ref_name }}` on a tag build. The action's outputs include `pack-file`, `pack-id`, `prompts` and `tools`. It can also push the pack to an OCI registry and sign it; see the action's `action.yml` for those inputs.
+`validate` defaults to `true`, and `packc-version` defaults to the latest release. A compile failure fails the step. A validation failure only logs a warning and the step stays green, so run `packc validate` in a separate step when a bad pack must block the build. `pack-version` passes `--pack-version` to `packc compile`, for example `pack-version: ${{ github.ref_name }}` on a tag build, and needs a `packc` release later than v2.4.0. The action's outputs include `pack-file`, `pack-id`, `prompts` and `tools`. It can also push the pack to an OCI registry and sign it; see the action's `action.yml` for those inputs.
 
 ## GitHub Actions with go install
 

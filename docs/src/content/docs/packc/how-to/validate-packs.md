@@ -4,7 +4,7 @@ description: Check a compiled pack against the PromptPack schema and packc's str
 sidebar:
   order: 3
 verified:
-  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/cmd/promptarena/export.go
     - arena/cmd/promptarena/validate_json.go
@@ -19,7 +19,7 @@ Check that a `.pack.json` file is valid before you ship it.
 ## Prerequisites
 
 - `packc` installed ([Install PackC](/packc/how-to/install/)).
-- A pack file. `packc compile` runs the same checks before it writes one, so `packc validate` matters most for packs built elsewhere or edited since, since `packc compile` and `packc compile-prompt` run the same checks.
+- A pack file. `packc compile` runs the same checks before it writes one, so `packc compile` and `packc compile-prompt` run the same checks before they write one, so `packc validate` matters most for packs built elsewhere or edited since.
 
 ## Validate a pack
 
@@ -116,7 +116,7 @@ jobs:
 
 ## Check the source config instead
 
-`promptarena validate` runs the pack checks on an arena config without writing a pack, and adds PromptArena's own checks:
+`promptarena validate` runs the pack checks on an arena config without writing a pack, and adds PromptArena's own checks, including assertion types and params:
 
 ```bash
 promptarena validate config.arena.yaml
@@ -171,7 +171,13 @@ A `[pack_schema]` line gives the JSON path of the problem, and the structural ch
   - [skills] skills[0]: directory "skills/billing" does not exist
 ```
 
-`packc validate` resolves skill paths relative to the pack file's directory. Validate the pack where it sits next to its `skills/` directory, or move the directory.
+`packc validate` resolves skill paths relative to the pack file's directory, and a path must stay inside that directory. Validate the pack where it sits next to its `skills/` directory, or move the directory.
+
+An `@org/name` skill reference resolves to the directory `promptarena skill install` used, outside the pack directory. If that skill is not installed, `packc validate` reports it:
+
+```text
+  - [skills] skills[0]: skill acme/billing is not installed (install it with: promptarena skill install @acme/billing)
+```
 
 ## Related
 

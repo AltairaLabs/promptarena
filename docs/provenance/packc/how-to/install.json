@@ -1,14 +1,15 @@
 {
  "page": "docs/src/content/docs/packc/how-to/install.md",
- "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
    "claim": "npm package @altairalabs/packc ships prebuilt binaries for linux/darwin/windows amd64/arm64",
    "verdict": "true",
    "evidence": [
-    "npm/packc/lib/resolve.js:13-26",
-    "npm/packc/package.json:2-8"
+    "npm/packc/lib/resolve.js:16",
+    "npm/packc/package.json:15",
+    "npm/packc/package.json:2"
    ]
   },
   {
@@ -16,7 +17,9 @@
    "claim": "Homebrew cask altairalabs/tap/packc",
    "verdict": "true",
    "evidence": [
-    ".goreleaser.yml:230-245"
+    ".goreleaser.yml:183",
+    ".goreleaser.yml:212",
+    ".goreleaser.yml:226"
    ]
   },
   {
@@ -30,7 +33,9 @@
    "claim": "release archives packc_<version>_<Os>_<arch>.tar.gz plus checksums.txt",
    "verdict": "true",
    "evidence": [
-    ".goreleaser.yml:76-94"
+    ".goreleaser.yml:76",
+    ".goreleaser.yml:78",
+    ".goreleaser.yml:92"
    ]
   },
   {
@@ -38,7 +43,9 @@
    "claim": "go build -o bin/packc ./packc; make build-go builds both binaries",
    "verdict": "true",
    "evidence": [
-    "Makefile:59-64"
+    "Makefile:59",
+    "Makefile:61",
+    "Makefile:63"
    ]
   },
   {
@@ -46,7 +53,9 @@
    "claim": "version: ldflags-stamped for releases, else module version from debug.ReadBuildInfo, else dev",
    "verdict": "true",
    "evidence": [
-    "packc/main.go"
+    "packc/main.go:19",
+    "packc/main.go:33",
+    "packc/main.go:38"
    ]
   },
   {
@@ -54,7 +63,8 @@
    "claim": "packc completion supports bash, zsh, fish, powershell",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go"
+    "packc/main_interactive.go:365",
+    "packc/main_interactive.go:372"
    ]
   },
   {
@@ -62,7 +72,18 @@
    "claim": "packc commands are compile, compile-prompt, validate, inspect, version, help, completion",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go"
+    "packc/main_interactive.go:28",
+    "packc/main_interactive.go:41"
+   ]
+  },
+  {
+   "id": 9,
+   "claim": "completion scripts complete commands and flags; in bash flags complete at any position after the subcommand and flag values complete file names",
+   "verdict": "true",
+   "evidence": [
+    "packc/main_interactive.go:393",
+    "packc/main_interactive.go:408",
+    "packc/main_interactive.go:412"
    ]
   }
  ]

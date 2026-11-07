@@ -4,11 +4,12 @@ description: Checks, output and exit codes of packc validate, which validates a 
 sidebar:
   order: 3
 verified:
-  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - packc/compiler/check.go
     - packc/compiler/pack_fields.go
     - packc/compiler/pack_file.go
+    - packc/compiler/skills_validator_integration.go
     - packc/main_interactive.go
 ---
 `packc validate` checks compiled `.pack.json` files against the [PromptPack](https://promptpack.org) schema, then against the structural rules the schema cannot express. It runs the same pack checks [`packc compile`](/packc/reference/compile/) runs before it writes a pack, so a finding is an error or a warning in both alike. It does not change the files.
@@ -52,7 +53,7 @@ Errors:
 | `workflow` | `version` not 1 or 2; `states` empty; `entry` not a state; a state's `prompt_task` not a prompt (except `orchestration: composition` states); an `on_event` or `on_max_visits` target not a state; `persistence` not `transient` or `persistent`; `orchestration` not `internal`, `external`, `hybrid` or `composition`; `control` not `user` or `agent`; `composition` set without `orchestration: composition`, or missing with it |
 | `compositions` | a step graph that is not valid; a step referencing a prompt, tool or eval the pack does not define; a workflow state naming a composition that does not exist |
 | `agents` | `members` empty; `entry` not a member; a member key not a prompt; a member's `state` set without a workflow, or not a workflow state |
-| Skills | a missing directory, a path outside the pack's directory, an unparseable `SKILL.md`, a duplicate name, an incomplete inline skill |
+| Skills | a missing directory, a path outside the pack's directory (an `@org/name` reference resolves to its `promptarena skill install` directory instead), an unparseable `SKILL.md`, a duplicate name, an incomplete inline skill |
 | Governance | an obligation or review naming an eval, validator, field or obligation the pack does not declare |
 
 Warnings print and the pack still passes:

@@ -4,7 +4,7 @@ description: Compile an arena config, or a single prompt file, into a .pack.json
 sidebar:
   order: 2
 verified:
-  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/arenaconfig/types.go
     - packc/compiler/check.go
@@ -63,11 +63,11 @@ Compile your prompts into a `.pack.json` file that a PromptPack runtime can load
 
    ```text
    ✓ Pack compiled successfully: packs/customer-service.pack.json
-     Contains 2 prompts: [sales support]
+     Contains 2 prompts: [customer-support sales]
      Contains 1 tools: [lookup_order]
    ```
 
-   The summary also lists pack-level evals, the workflow and the agents when the pack has them.
+   The summary lists prompts by task type. It also lists pack-level evals, the workflow and the agents when the pack has them.
 
 3. Check the contents:
 
@@ -212,7 +212,7 @@ Fix the YAML at the line given.
 ### The template references variables that are not declared
 
 ```text
-Compilation failed: [pack] prompt 'support': system_template references variables, but none are declared
+Compilation failed: [pack] prompt 'customer-support': system_template references variables, but none are declared
 ```
 
 Declare each `{{name}}` in the prompt's `spec.variables`.

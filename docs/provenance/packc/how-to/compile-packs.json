@@ -1,15 +1,15 @@
 {
  "page": "docs/src/content/docs/packc/how-to/compile-packs.md",
- "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
    "claim": "arena config, prompt configs and tool files are schema-validated on load; arena config requires providers and defaults",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:88-180",
-    "packc/compiler/check.go:101-105",
-    "schemas/v1alpha1/arena.json:837-840"
+    "arena/arenaconfig/types.go:88",
+    "packc/compiler/check.go:110",
+    "schemas/v1alpha1/arena.json:837"
    ]
   },
   {
@@ -17,7 +17,12 @@
    "claim": "packc compile flags: -c/--config (default config.arena.yaml), -o/--output (default <id>.pack.json), --id (default current folder name sanitized), --pack-version (default v1.0.0)",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go"
+    "packc/main.go:128",
+    "packc/main.go:129",
+    "packc/main.go:130",
+    "packc/main.go:131",
+    "packc/main.go:139",
+    "packc/main.go:146"
    ]
   },
   {
@@ -25,16 +30,19 @@
    "claim": "packc compile and compile-prompt both create the output directory (writePackFile)",
    "verdict": "true",
    "evidence": [
-    "packc/main.go",
-    "packc/main_interactive.go"
+    "packc/main.go:49",
+    "packc/main_interactive.go:180",
+    "packc/main_interactive.go:226"
    ]
   },
   {
    "id": 4,
-   "claim": "compile prints '\u2713 Pack compiled successfully' with prompt, tool, eval, workflow and agent counts",
+   "claim": "compile prints '\u2713 Pack compiled successfully' with prompts (listed by task type), tools, eval, workflow and agent counts",
    "verdict": "true",
    "evidence": [
-    "packc/main.go"
+    "packc/main_interactive.go:330",
+    "packc/main_interactive.go:332",
+    "packc/main_interactive.go:343"
    ]
   },
   {
@@ -42,8 +50,8 @@
    "claim": "packc inspect prints pack info, prompts, tools, fragments, evals, skills, workflow, compositions, agents, metadata, compilation",
    "verdict": "true",
    "evidence": [
-    "packc/main.go",
-    "packc/main_interactive.go"
+    "packc/main.go:318",
+    "packc/main_interactive.go:330"
    ]
   },
   {
@@ -51,8 +59,8 @@
    "claim": "default id from current directory name via SanitizePackID; non-letter start gets pack- prefix",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/helpers_integration.go",
-    "packc/main_interactive.go"
+    "packc/compiler/helpers_integration.go:213",
+    "packc/main.go:113"
    ]
   },
   {
@@ -60,8 +68,8 @@
    "claim": "pack id pattern ^[a-z][a-z0-9-]*$; invalid --id rejected before compile with [pack_id] error",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:89-99",
-    "packc/compiler/helpers_integration.go:192-228"
+    "packc/compiler/compiler.go:100",
+    "packc/compiler/helpers_integration.go:230"
    ]
   },
   {
@@ -69,8 +77,8 @@
    "claim": "packc compile sets name=id, version from --pack-version (default v1.0.0), description 'Pack containing N prompts', $schema latest URL, compilation block",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go",
-    "packc/main_interactive.go"
+    "packc/compiler/compiler.go:114",
+    "packc/main_interactive.go:164"
    ]
   },
   {
@@ -78,7 +86,10 @@
    "claim": "packc compile-prompt flags -p/--prompt and -o/--output, both required; --pack-version optional",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go"
+    "packc/main_interactive.go:195",
+    "packc/main_interactive.go:196",
+    "packc/main_interactive.go:197",
+    "packc/main_interactive.go:204"
    ]
   },
   {
@@ -86,7 +97,8 @@
    "claim": "compile-prompt: id from task type (_ to -), name/description from prompt, version from spec.version or --pack-version, $schema set",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/pack_file.go"
+    "packc/compiler/pack_file.go:113",
+    "packc/compiler/pack_file.go:52"
    ]
   },
   {
@@ -94,8 +106,9 @@
    "claim": "compile prints warnings as '\u26a0 [stage] message' and fails with 'Compilation failed:'",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go",
-    "packc/main_interactive.go"
+    "packc/compiler/check.go:19",
+    "packc/main_interactive.go:170",
+    "packc/main_interactive.go:175"
    ]
   },
   {
@@ -103,15 +116,15 @@
    "claim": "missing config/prompt and YAML errors are reported under [load] with 'loading arena config:'",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:101-105"
+    "packc/compiler/check.go:110"
    ]
   },
   {
    "id": 13,
-   "claim": "templates are not parsed; only check is variables declared when template contains {{",
+   "claim": "templates are not parsed; only check is variables declared when template contains {{ (error names the prompt by task type)",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go"
+    "packc/compiler/check.go:157"
    ]
   },
   {
@@ -119,8 +132,9 @@
    "claim": "missing media example files warn 'media(<task>): Media file not found: ...' relative to config dir (compile) or prompt dir (compile-prompt)",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/helpers_integration.go",
-    "packc/compiler/pack_file.go"
+    "packc/compiler/helpers_integration.go:105",
+    "packc/compiler/helpers_integration.go:62",
+    "packc/compiler/pack_file.go:118"
    ]
   },
   {
@@ -128,8 +142,9 @@
    "claim": "compile-prompt creates the output directory; write errors print 'Failed to write pack file: ...'",
    "verdict": "true",
    "evidence": [
-    "packc/main.go",
-    "packc/main_interactive.go"
+    "packc/main.go:49",
+    "packc/main_interactive.go:226",
+    "packc/main_interactive.go:227"
    ]
   },
   {
@@ -137,7 +152,10 @@
    "claim": "validate prints 'Validating pack', '\u2713 Schema validation passed', warnings, '\u2713 Pack structure is valid'; errors exit 1",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go"
+    "packc/main_interactive.go:287",
+    "packc/main_interactive.go:299",
+    "packc/main_interactive.go:302",
+    "packc/main_interactive.go:314"
    ]
   }
  ]

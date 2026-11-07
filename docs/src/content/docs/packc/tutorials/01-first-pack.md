@@ -4,10 +4,11 @@ description: Install packc, write one prompt and an Arena config, then compile, 
 sidebar:
   order: 1
 verified:
-  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/arenaconfig/loader.go
     - arena/arenaconfig/types.go
+    - packc/compiler/compiler.go
     - packc/main.go
     - packc/main_interactive.go
     - schemas/v1alpha1/arena.json
@@ -131,7 +132,7 @@ You see:
 packc inspect packs/greeting.pack.json
 ```
 
-You see a summary like this one, with your own timestamp:
+You see a summary like this one, with your own version and timestamp:
 
 ```text
 === Pack Information ===
@@ -151,7 +152,7 @@ Template Engine: v1 ({{variable}})
   Variables: 1 required, 1 optional
     Required: [user_name]
 
-Compilation: packc-dev, 2026-11-06T18:08:46Z, Schema: v1
+Compilation: packc-v2.4.0, 2026-11-06T18:08:46Z, Schema: v1
 ```
 
 The pack's ID and name come from `--id`. The prompt keeps the name, description, version and variables from `greeting.yaml`.
@@ -176,7 +177,7 @@ Validating pack: packs/greeting.pack.json
 cat packs/greeting.pack.json
 ```
 
-The file holds the pack's `id`, `name` and `version`, the `template_engine`, the `greeting` prompt under `prompts` with its `system_template`, `variables` and a default `pipeline`, and a `compilation` record naming the compiler and the time.
+The file holds a `$schema` URL for the PromptPack schema, the pack's `id`, `name` and `version`, the `template_engine`, the `greeting` prompt under `prompts` with its `system_template`, `variables` and a default `pipeline`, and a `compilation` record naming the compiler and the time.
 
 We now have a PromptPack file that any PromptPack runtime can load.
 

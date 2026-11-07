@@ -1,13 +1,13 @@
 {
  "page": "docs/src/content/docs/packc/tutorials/02-multi-prompt.md",
- "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
    "claim": "prompt config fields apiVersion/kind/metadata.name/spec.task_type/version/system_template/template_engine/variables",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:540-552"
+    "arena/arenaconfig/loader.go:592-640"
    ]
   },
   {
@@ -17,15 +17,16 @@
    "evidence": [
     "arena/arenaconfig/types.go:180",
     "arena/arenaconfig/types.go:88-91",
-    "schemas/v1alpha1/arena.json:839"
+    "schemas/v1alpha1/arena.json:838-839"
    ]
   },
   {
    "id": 3,
-   "claim": "compile summary output",
+   "claim": "compile summary output, prompt and tool names sorted",
    "verdict": "true",
    "evidence": [
-    "packc/main.go"
+    "packc/main.go:330-345",
+    "packc/main_interactive.go:185"
    ]
   },
   {
@@ -33,7 +34,7 @@
    "claim": "validate success output",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go"
+    "packc/main_interactive.go:287-314"
    ]
   },
   {
@@ -47,10 +48,12 @@
   },
   {
    "id": 6,
-   "claim": "inspect prompt blocks sorted, support shows Tools (1)",
+   "claim": "inspect prompt blocks sorted, support shows Tools (1), and a Tools section lists pack tools",
    "verdict": "true",
    "evidence": [
-    "packc/main.go"
+    "packc/main.go:119-123",
+    "packc/main.go:232-250",
+    "packc/main.go:77-89"
    ]
   },
   {

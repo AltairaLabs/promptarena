@@ -4,7 +4,7 @@ description: Task guides for installing packc, compiling and validating packs, o
 sidebar:
   order: 0
 verified:
-  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - packc/main_interactive.go
 ---

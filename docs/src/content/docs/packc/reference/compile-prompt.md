@@ -4,8 +4,10 @@ description: Flags, output and exit codes of packc compile-prompt, which compile
 sidebar:
   order: 2
 verified:
-  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
+    - packc/compiler/helpers_integration.go
+    - packc/compiler/pack_fields.go
     - packc/compiler/pack_file.go
     - packc/main.go
     - packc/main_interactive.go
@@ -68,10 +70,11 @@ The pack's top-level fields come from the prompt config:
 | `prompts.<task_type>` | the compiled prompt; `allowed_tools` becomes `tools` |
 | `compilation.compiled_with` | `packc-<version>`, where `<version>` is what [`packc version`](/packc/reference/version/) prints |
 
-`$schema` is `https://promptpack.org/schema/latest/promptpack.schema.json`, as in a `packc compile` pack. For the example above the command prints:
+`$schema` is `https://promptpack.org/schema/latest/promptpack.schema.json`, as in a `packc compile` pack. For the example above the command prints a warning, because the pack carries no tools for `allowed_tools` to name:
 
 ```text
 Compiling prompt prompts/support.yaml to pack...
+⚠ [pack] prompt "customer_support": tool "search_knowledge_base" is not defined in the pack's tools
 ✓ Pack compiled successfully: packs/support.pack.json
 ```
 

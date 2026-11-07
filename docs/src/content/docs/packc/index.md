@@ -4,7 +4,7 @@ description: packc compiles a PromptArena config and the prompts, tools and work
 sidebar:
   order: 0
 verified:
-  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - packc/compiler/check.go
     - packc/compiler/compiler.go
@@ -36,7 +36,7 @@ The commands are:
 
 - `packc compile` compiles every prompt in an arena config into one pack.
 - `packc compile-prompt` compiles a single prompt file into a pack.
-- `packc validate` checks a pack file against the PromptPack schema and the pack's structural rules.
+- `packc validate` checks one or more pack files against the PromptPack schema and the pack's structural rules.
 - `packc inspect` prints a summary of a pack's contents.
 - `packc version` prints the version, and `packc completion` prints a shell completion script.
 

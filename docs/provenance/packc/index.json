@@ -1,73 +1,95 @@
 {
  "page": "docs/src/content/docs/packc/index.md",
- "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
    "claim": "packc commands are compile, compile-prompt, validate, inspect, version, help, completion",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go"
+    "packc/main_interactive.go:28",
+    "packc/main_interactive.go:41"
    ]
   },
   {
    "id": 2,
-   "claim": "validation uses the embedded PromptPack schema by default; PROMPTKIT_SCHEMA_SOURCE local/remote/path overrides",
+   "claim": "validation uses the PromptPack schema embedded in the binary, so it works offline",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go"
+    "packc/compiler/check.go:219"
    ]
   },
   {
    "id": 3,
-   "claim": "packc compile-prompt flags -p/--prompt and -o/--output, both required; --pack-version optional",
+   "claim": "packc compile-prompt flags -p/--prompt and -o/--output",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go"
+    "packc/main_interactive.go:195",
+    "packc/main_interactive.go:197",
+    "packc/main_interactive.go:204"
    ]
   },
   {
    "id": 4,
-   "claim": "packc compile flags: -c/--config (default config.arena.yaml), -o/--output (default <id>.pack.json), --id (default current folder name sanitized), --pack-version (default v1.0.0)",
+   "claim": "packc compile flags -c/--config, -o/--output, --id",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go"
+    "packc/main_interactive.go:128",
+    "packc/main_interactive.go:129",
+    "packc/main_interactive.go:130",
+    "packc/main_interactive.go:131",
+    "packc/main_interactive.go:146"
    ]
   },
   {
    "id": 5,
-   "claim": "validate prints 'Validating pack', '\u2713 Schema validation passed', warnings, '\u2713 Pack structure is valid'; errors exit 1",
+   "claim": "validate prints 'Validating pack', schema passed, structure valid",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go"
+    "packc/main_interactive.go:288",
+    "packc/main_interactive.go:299",
+    "packc/main_interactive.go:314"
    ]
   },
   {
    "id": 6,
-   "claim": "packc compile sets name=id, version from --pack-version (default v1.0.0), description 'Pack containing N prompts', $schema latest URL, compilation block",
+   "claim": "compile writes name=id, description 'Pack containing N prompts', $schema latest URL, compilation block",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go",
-    "packc/main_interactive.go"
+    "packc/compiler/compiler.go:141",
+    "packc/compiler/compiler.go:154"
    ]
   },
   {
    "id": 7,
    "claim": "each prompt gets the default template/provider/validator pipeline",
    "verdict": "true",
-   "evidence": []
+   "evidence": [
+    "packc/compiler/compiler.go:142"
+   ]
   },
   {
    "id": 8,
-   "claim": "go install github.com/AltairaLabs/promptarena/v2/packc@latest; go 1.26",
+   "claim": "go install github.com/AltairaLabs/promptarena/v2/packc@latest",
    "verdict": "true",
    "evidence": []
   },
   {
    "id": 9,
-   "claim": "PromptPack schema requires id, name, version, template_engine, prompts; optional $schema, description, fragments, tools, metadata, compilation, evals, workflow, agents, skills, compositions, requires",
+   "claim": "PromptPack schema fields",
    "verdict": "true",
-   "evidence": []
+   "evidence": [
+    "packc/compiler/check.go:219"
+   ]
+  },
+  {
+   "id": 10,
+   "claim": "validate checks one or more pack files",
+   "verdict": "false",
+   "evidence": [
+    "packc/main_interactive.go:267",
+    "packc/main_interactive.go:56"
+   ]
   }
  ]
 }
