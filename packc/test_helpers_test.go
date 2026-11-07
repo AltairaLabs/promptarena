@@ -8,26 +8,25 @@ import (
 	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
 
 	"github.com/AltairaLabs/PromptKit/runtime/v2/evals"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/persistence/memory"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/prompt"
 )
 
-// validateLoadedMedia prints media validation warnings for loaded prompt configs.
-// Kept as test helper after migration to compiler package.
-func validateLoadedMedia(cfg *arenaconfig.Config, configDir string) {
+// buildMemoryRepo registers the loaded prompt configs in a memory repository.
+// A test helper: the spec compliance tests drive PromptKit's compiler directly,
+// and the production copy lives in the compiler package.
+func buildMemoryRepo(cfg *arenaconfig.Config) (*memory.PromptRepository, error) {
+	memRepo := memory.NewPromptRepository()
 	for _, promptData := range cfg.LoadedPromptConfigs {
 		promptConfig, ok := promptData.Config.(*prompt.Config)
 		if !ok {
-			continue
+			return nil, fmt.Errorf("prompt config %s has invalid type", promptData.FilePath)
 		}
-
-		warnings := validateMediaReferences(promptConfig, configDir)
-		if len(warnings) > 0 {
-			fmt.Printf("media validation warnings for %s:\n", promptConfig.Spec.TaskType)
-			for _, w := range warnings {
-				fmt.Printf(warningFormat, w)
-			}
+		if err := memRepo.SavePrompt(promptConfig); err != nil {
+			return nil, fmt.Errorf("registering prompt %s: %w", promptData.FilePath, err)
 		}
 	}
+	return memRepo, nil
 }
 
 // parsePackEvalsFromConfig returns pack-level eval definitions from arena config.

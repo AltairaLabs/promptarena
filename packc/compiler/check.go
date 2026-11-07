@@ -15,6 +15,7 @@ import (
 // Stages a Problem can come from, in the order Check runs them.
 const (
 	StagePackID       = "pack_id"      // the pack ID derived from (or given for) the config
+	StagePackVersion  = "pack_version" // the pack version given with WithPackVersion
 	StageLoad         = "load"         // reading the arena config and the files it references
 	StageCompile      = "compile"      // turning the config into a pack (parse errors, media, metadata)
 	StageSkills       = "skills"       // skill sources and paths
@@ -97,6 +98,12 @@ func Check(configFile string, opts ...Option) *CheckResult {
 		r.add(true, Problem{Stage: StagePackID, Source: configFile, Message: err.Error()})
 		return r
 	}
+	if options.packVersion != "" {
+		if err := validatePackVersion(options.packVersion); err != nil {
+			r.add(true, Problem{Stage: StagePackVersion, Source: configFile, Message: err.Error()})
+			return r
+		}
+	}
 
 	cfg, err := arenaconfig.LoadConfig(configFile)
 	if err != nil {
@@ -144,8 +151,9 @@ func (r *CheckResult) addAll(isErr bool, stage, source string, msgs []string) {
 	}
 }
 
-// checkPack runs every structural check `packc validate` runs on a pack file,
-// plus the composition check `packc compile` adds.
+// checkPack runs the structural checks shared by `packc compile`,
+// `packc compile-prompt` and `packc validate` (ValidatePackFile), so the three
+// never disagree about whether a finding is an error or a warning.
 func (r *CheckResult) checkPack(pack *prompt.Pack, configDir, configFile string) {
 	skillErrs, skillWarnings := runSkillValidation(pack, configDir)
 	r.addAll(true, StageSkills, configFile, skillErrs)
@@ -185,11 +193,25 @@ func (r *CheckResult) checkPack(pack *prompt.Pack, configDir, configFile string)
 		}
 	}
 	for _, m := range pack.Validate() {
-		if !reported[m] {
+		switch {
+		case reported[m]:
+		case m == missingCompilationMsg:
+			// PromptKit makes a missing compilation block blocking, but the
+			// PromptPack schema does not require it: a pack written by another
+			// tool may leave it out.
+			r.add(false, Problem{Stage: StagePack, Source: configFile,
+				Message: m + " (optional in the PromptPack schema)"})
+		default:
 			r.add(true, Problem{Stage: StagePack, Source: configFile, Message: m})
 		}
 	}
+
+	r.addAll(false, StagePack, configFile, undeclaredPromptTools(pack))
 }
+
+// missingCompilationMsg is the finding PromptKit's Pack.Validate reports for a
+// pack with no compilation block.
+const missingCompilationMsg = "missing compilation metadata"
 
 // checkSchema validates the compiled pack against the PromptPack spec schema,
 // one Problem per violation.

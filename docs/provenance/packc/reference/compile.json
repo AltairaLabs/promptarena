@@ -1,14 +1,13 @@
 {
  "page": "docs/src/content/docs/packc/reference/compile.md",
- "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
  "claims": [
   {
    "id": 1,
    "claim": "compile takes -c/--config, default config.arena.yaml",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go:121",
-    "packc/main_interactive.go:153"
+    "packc/main_interactive.go"
    ]
   },
   {
@@ -16,8 +15,7 @@
    "claim": "compile takes -o/--output, default <id>.pack.json",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go:122",
-    "packc/main_interactive.go:136-139"
+    "packc/main_interactive.go"
    ]
   },
   {
@@ -25,9 +23,8 @@
    "claim": "compile takes --id, default current directory name sanitized",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/helpers_integration.go:205-218",
-    "packc/main_interactive.go:110-116",
-    "packc/main_interactive.go:123"
+    "packc/compiler/helpers_integration.go",
+    "packc/main_interactive.go"
    ]
   },
   {
@@ -35,8 +32,8 @@
    "claim": "missing parent directories of --output are created",
    "verdict": "true",
    "evidence": [
-    "packc/main.go:28-35",
-    "packc/main_interactive.go:168"
+    "packc/main.go",
+    "packc/main_interactive.go"
    ]
   },
   {
@@ -116,10 +113,7 @@
    "claim": "pack_evals, workflow, agents, compositions, skills reach the pack",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:104-130",
-    "arena/arenaconfig/types.go:157",
-    "packc/compiler/compiler.go:210-242",
-    "packc/compiler/helpers_integration.go:143-182"
+    "packc/compiler/compiler.go"
    ]
   },
   {
@@ -133,18 +127,19 @@
   },
   {
    "id": 15,
-   "claim": "template_engine copied from one prompt that sets it; agreement not checked",
+   "claim": "template_engine is the engine the prompts declare; disagreement fails the compile stage",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:127-132"
+    "packc/compiler/compiler.go",
+    "packc/compiler/pack_fields.go"
    ]
   },
   {
    "id": 16,
-   "claim": "pack version is v1.0.0 and description 'Pack containing <n> prompts'",
+   "claim": "pack version is --pack-version or v1.0.0, description 'Pack containing <n> prompts'",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:127-132"
+    "packc/compiler/compiler.go"
    ]
   },
   {
@@ -152,8 +147,7 @@
    "claim": "compiled_with is packc-<version>",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go:151",
-    "packc/main_interactive.go:155"
+    "packc/main_interactive.go"
    ]
   },
   {
@@ -161,25 +155,24 @@
    "claim": "success summary prints prompts, tools, evals, workflow, agents lines",
    "verdict": "true",
    "evidence": [
-    "packc/main.go:274-294"
+    "packc/main.go"
    ]
   },
   {
    "id": 19,
-   "claim": "compile runs validate's checks plus compositions before writing",
+   "claim": "compile runs the same checkPack checks as validate before writing",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:149-192",
-    "packc/compiler/check.go:83-131",
-    "packc/compiler/compiler.go:64-74"
+    "packc/compiler/check.go",
+    "packc/compiler/pack_file.go"
    ]
   },
   {
    "id": 20,
-   "claim": "stage names pack_id, load, compile, skills, workflow, compositions, agents, governance, pack, pack_schema",
+   "claim": "stage names pack_id, pack_version, load, compile, skills, workflow, compositions, agents, governance, pack, pack_schema",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:16-27"
+    "packc/compiler/check.go"
    ]
   },
   {
@@ -187,8 +180,8 @@
    "claim": "errors go to stderr as 'Compilation failed:' with [stage] message or numbered list; warnings '\u26a0 [stage] msg' on stdout",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:42-72",
-    "packc/main_interactive.go:157-165"
+    "packc/compiler/check.go",
+    "packc/main_interactive.go"
    ]
   },
   {
@@ -196,8 +189,7 @@
    "claim": "exit 0 success, 1 failure, 2 unknown flag",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go:120",
-    "packc/main_interactive.go:157-171"
+    "packc/main_interactive.go"
    ]
   },
   {

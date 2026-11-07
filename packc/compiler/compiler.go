@@ -29,6 +29,7 @@ type Option func(*compileOptions)
 
 type compileOptions struct {
 	packID               string
+	packVersion          string
 	compilerVersion      string
 	skipSchemaValidation bool
 }
@@ -38,6 +39,16 @@ type compileOptions struct {
 func WithPackID(id string) Option {
 	return func(o *compileOptions) {
 		o.packID = id
+	}
+}
+
+// WithPackVersion sets the compiled pack's version, the PromptPack field that
+// tracks the pack as a whole. It must be a semantic version (an optional "v"
+// prefix is allowed). If not provided, the pack keeps PromptKit's default,
+// v1.0.0, for an arena config, or the prompt's spec.version for a single prompt.
+func WithPackVersion(v string) Option {
+	return func(o *compileOptions) {
+		o.packVersion = v
 	}
 }
 
@@ -124,6 +135,9 @@ func compilePack(cfg *arenaconfig.Config, configFile string, options compileOpti
 		return nil, nil, err
 	}
 
+	// Read before compiling: the registry defaults the engine in place.
+	engines := declaredTemplateEngines(cfg)
+
 	compiler := prompt.NewPackCompiler(registry)
 	pack, err := compiler.CompileFromRegistryWithOptions(
 		options.packID, options.compilerVersion,
@@ -132,6 +146,13 @@ func compilePack(cfg *arenaconfig.Config, configFile string, options compileOpti
 	)
 	if err != nil {
 		return nil, nil, fmt.Errorf("compilation failed: %w", err)
+	}
+
+	if err := resolveTemplateEngine(engines, pack); err != nil {
+		return nil, nil, err
+	}
+	if options.packVersion != "" {
+		pack.Version = options.packVersion
 	}
 
 	// CompileFromRegistryWithOptions leaves pack.Metadata unset — it has no

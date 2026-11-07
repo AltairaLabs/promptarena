@@ -1,29 +1,29 @@
 {
  "page": "docs/src/content/docs/packc/reference/inspect.md",
- "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
  "claims": [
   {
    "id": 1,
-   "claim": "inspect takes one pack-file argument; no flags",
+   "claim": "inspect takes exactly one pack-file argument, and -h/--help",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go:341-348"
+    "packc/main_interactive.go"
    ]
   },
   {
    "id": 2,
-   "claim": "inspect does not validate",
+   "claim": "inspect does not validate, but rejects a file with no id and no prompts",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go:350-365"
+    "packc/main_interactive.go"
    ]
   },
   {
    "id": 3,
-   "claim": "section order: pack info, template engine, prompts, fragments, workflow, agents, metadata, compilation",
+   "claim": "section order: pack info, template engine, prompts, tools, fragments, evals, skills, workflow, compositions, agents, metadata, compilation",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go:356-363"
+    "packc/main_interactive.go"
    ]
   },
   {
@@ -31,7 +31,7 @@
    "claim": "pack info lines",
    "verdict": "true",
    "evidence": [
-    "packc/main.go:58-66"
+    "packc/main.go"
    ]
   },
   {
@@ -39,7 +39,7 @@
    "claim": "template engine line and features",
    "verdict": "true",
    "evidence": [
-    "packc/main.go:68-75"
+    "packc/main.go"
    ]
   },
   {
@@ -47,7 +47,7 @@
    "claim": "prompt block lines, sorted by task type",
    "verdict": "true",
    "evidence": [
-    "packc/main.go:77-154"
+    "packc/main.go"
    ]
   },
   {
@@ -55,8 +55,7 @@
    "claim": "fragments sorted",
    "verdict": "true",
    "evidence": [
-    "packc/main.go:156-160",
-    "packc/main.go:256-263"
+    "packc/main.go"
    ]
   },
   {
@@ -64,7 +63,7 @@
    "claim": "workflow section",
    "verdict": "true",
    "evidence": [
-    "packc/main.go:162-200"
+    "packc/main.go"
    ]
   },
   {
@@ -72,7 +71,7 @@
    "claim": "agents section",
    "verdict": "true",
    "evidence": [
-    "packc/main.go:202-230"
+    "packc/main.go"
    ]
   },
   {
@@ -80,23 +79,23 @@
    "claim": "metadata and compilation lines",
    "verdict": "true",
    "evidence": [
-    "packc/main.go:232-254"
+    "packc/main.go"
    ]
   },
   {
    "id": 11,
-   "claim": "pack-level tools, evals, skills, compositions not printed",
+   "claim": "pack-level tools, evals, skills and compositions are printed",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go:356-363"
+    "packc/main.go"
    ]
   },
   {
    "id": 12,
-   "claim": "exit 1 and 'Error loading pack:' on missing/invalid file",
+   "claim": "exit 1 and 'Error loading pack:' on missing/invalid file, or 'is not a PromptPack' for no id and no prompts",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go:342-354"
+    "packc/main_interactive.go"
    ]
   },
   {
@@ -104,7 +103,7 @@
    "claim": "old: 'Error loading pack: open missing.pack.json'",
    "verdict": "false",
    "evidence": [
-    "packc/main_interactive.go:350-354"
+    "packc/main_interactive.go"
    ]
   },
   {
@@ -112,7 +111,7 @@
    "claim": "old: 'Error loading pack: invalid pack format'",
    "verdict": "false",
    "evidence": [
-    "packc/main_interactive.go:350-354"
+    "packc/main_interactive.go"
    ]
   },
   {
@@ -120,7 +119,7 @@
    "claim": "old: fragments printed comma-separated",
    "verdict": "false",
    "evidence": [
-    "packc/main.go:158"
+    "packc/main.go"
    ]
   },
   {
@@ -128,7 +127,7 @@
    "claim": "old: tools printed with commas",
    "verdict": "false",
    "evidence": [
-    "packc/main.go:121"
+    "packc/main.go"
    ]
   },
   {
@@ -136,7 +135,7 @@
    "claim": "old: grep 'Tools:' finds tools lines",
    "verdict": "false",
    "evidence": [
-    "packc/main.go:121"
+    "packc/main.go"
    ]
   }
  ]

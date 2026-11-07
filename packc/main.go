@@ -4,12 +4,10 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime/debug"
 	"sort"
 
-	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
-
 	"github.com/AltairaLabs/PromptKit/runtime/v2/packspec"
-	"github.com/AltairaLabs/PromptKit/runtime/v2/persistence/memory"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/prompt"
 )
 
@@ -18,7 +16,30 @@ const (
 	outputDirPerm  = 0o755
 )
 
-var version = "dev" //nolint:gochecknoglobals // overridden via ldflags at build time
+var version = devVersion //nolint:gochecknoglobals // overridden via ldflags at build time
+
+// devVersion is the version of a build that was not stamped via ldflags.
+const devVersion = "dev"
+
+// packcVersion is the version packc reports and stamps into compiled packs.
+func packcVersion() string {
+	return resolveVersion(version, debug.ReadBuildInfo)
+}
+
+// resolveVersion returns the ldflags-stamped version when there is one. A
+// `go install …/packc@vX.Y.Z` build is not stamped, so it falls back to the
+// module version recorded in the binary's build info, and only reports "dev"
+// when that is unknown too ("(devel)" or empty).
+func resolveVersion(stamped string, buildInfo func() (*debug.BuildInfo, bool)) string {
+	if stamped != devVersion {
+		return stamped
+	}
+	info, ok := buildInfo()
+	if !ok || info == nil || info.Main.Version == "" || info.Main.Version == "(devel)" {
+		return stamped
+	}
+	return info.Main.Version
+}
 
 const warningFormat = "  - %s\n"
 
@@ -32,27 +53,6 @@ func writePackFile(path string, data []byte) error {
 		}
 	}
 	return os.WriteFile(path, data, outputFilePerm)
-}
-
-func buildMemoryRepo(cfg *arenaconfig.Config) (*memory.PromptRepository, error) {
-	memRepo := memory.NewPromptRepository()
-
-	for _, promptData := range cfg.LoadedPromptConfigs {
-		if promptData.Config == nil {
-			continue
-		}
-
-		promptConfig, ok := promptData.Config.(*prompt.Config)
-		if !ok {
-			return nil, fmt.Errorf("prompt config %s has invalid type", promptData.FilePath)
-		}
-
-		if err := memRepo.SavePrompt(promptConfig); err != nil {
-			return nil, fmt.Errorf("registering prompt %s: %w", promptData.FilePath, err)
-		}
-	}
-
-	return memRepo, nil
 }
 
 func printPackInfo(pack *prompt.Pack) {
@@ -229,6 +229,70 @@ func printAgents(pack *prompt.Pack) {
 	}
 }
 
+func printTools(pack *prompt.Pack) {
+	if len(pack.Tools) == 0 {
+		return
+	}
+	names := make([]string, 0, len(pack.Tools))
+	for name := range pack.Tools {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	fmt.Printf("\n=== Tools (%d) ===\n", len(names))
+	for _, name := range names {
+		if t := pack.Tools[name]; t != nil && t.Description != "" {
+			fmt.Printf("  %s: %s\n", name, t.Description)
+		} else {
+			fmt.Printf("  %s\n", name)
+		}
+	}
+}
+
+func printEvals(pack *prompt.Pack) {
+	if len(pack.Evals) == 0 {
+		return
+	}
+	fmt.Printf("\n=== Evals (%d) ===\n", len(pack.Evals))
+	for _, e := range pack.Evals {
+		if e == nil {
+			continue
+		}
+		fmt.Printf("  %s (type: %s, trigger: %s)\n", e.ID, e.Type, e.Trigger)
+	}
+}
+
+func printSkills(pack *prompt.Pack) {
+	if len(pack.Skills) == 0 {
+		return
+	}
+	fmt.Printf("\n=== Skills (%d) ===\n", len(pack.Skills))
+	for _, src := range pack.Skills {
+		if src == nil {
+			continue
+		}
+		if dir := prompt.SkillPath(src); dir != "" {
+			fmt.Printf("  path: %s\n", dir)
+		} else {
+			fmt.Printf("  inline: %s\n", src.Name)
+		}
+	}
+}
+
+func printCompositions(pack *prompt.Pack) {
+	if len(pack.Compositions) == 0 {
+		return
+	}
+	names := make([]string, 0, len(pack.Compositions))
+	for name := range pack.Compositions {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	fmt.Printf("\n=== Compositions (%d) ===\n", len(names))
+	for _, name := range names {
+		fmt.Printf("  %s\n", name)
+	}
+}
+
 func printMetadata(pack *prompt.Pack) {
 	if pack.Metadata != nil {
 		fmt.Printf("\nPack Metadata:\n")
@@ -262,18 +326,12 @@ func getFragmentNames(fragments map[string]string) []string {
 	return names
 }
 
-// runSkillValidation validates skill configurations in a pack, returning errors and warnings.
-// Returns fatal errors (should abort) and non-fatal warnings (informational).
-func runSkillValidation(pack *prompt.Pack, dir string) (fatalErrors, warnings []string) {
-	fatalErrors = ValidateSkillErrors(pack, dir)
-	warnings = ValidateSkills(pack, dir)
-	return fatalErrors, warnings
-}
-
 // printPackSummary prints a summary of the compiled pack.
 func printPackSummary(pack *prompt.Pack, outputFile string) {
 	fmt.Printf("✓ Pack compiled successfully: %s\n", outputFile)
-	fmt.Printf("  Contains %d prompts: %v\n", len(pack.Prompts), pack.ListPrompts())
+	prompts := pack.ListPrompts()
+	sort.Strings(prompts)
+	fmt.Printf("  Contains %d prompts: %v\n", len(pack.Prompts), prompts)
 	if len(pack.Tools) > 0 {
 		toolNames := make([]string, 0, len(pack.Tools))
 		for name := range pack.Tools {
@@ -291,50 +349,4 @@ func printPackSummary(pack *prompt.Pack, outputFile string) {
 	if pack.Agents != nil {
 		fmt.Printf("  Agents: %d members (entry: %s)\n", len(pack.Agents.Members), pack.Agents.Entry)
 	}
-}
-
-// validateMediaReferences checks if media files referenced in examples exist
-func validateMediaReferences(config *prompt.Config, baseDir string) []string {
-	var warnings []string
-
-	if config.Spec.MediaConfig == nil || !config.Spec.MediaConfig.Enabled {
-		return warnings
-	}
-
-	for _, example := range config.Spec.MediaConfig.Examples {
-		warnings = append(warnings, validateExampleMediaReferences(example, baseDir)...)
-	}
-
-	return warnings
-}
-
-// validateExampleMediaReferences validates media references in a single example
-func validateExampleMediaReferences(example *prompt.MultimodalExample, baseDir string) []string {
-	var warnings []string
-
-	if example == nil {
-		return warnings
-	}
-
-	for i, part := range example.Parts {
-		if part == nil || part.Media == nil || part.Media.FilePath == "" {
-			continue
-		}
-
-		// Only validate file paths (not URLs)
-		filePath := part.Media.FilePath
-		// If path is relative, resolve from base directory
-		if !filepath.IsAbs(filePath) && baseDir != "" {
-			filePath = filepath.Join(baseDir, filePath)
-		}
-
-		// Check if file exists
-		if _, err := os.Stat(filePath); os.IsNotExist(err) {
-			warnings = append(warnings, fmt.Sprintf(
-				"Media file not found: %s (example: %s, part %d)",
-				part.Media.FilePath, example.Name, i))
-		}
-	}
-
-	return warnings
 }

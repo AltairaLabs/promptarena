@@ -8,6 +8,7 @@ import { setOutputs, logSummary } from './outputs';
 interface ActionInputs {
   configFile: string;
   packId?: string;
+  packVersion?: string;
   version: string;
   packcVersion: string;
   output?: string;
@@ -26,6 +27,7 @@ function getInputs(): ActionInputs {
   return {
     configFile: core.getInput('config-file', { required: true }),
     packId: core.getInput('pack-id') || undefined,
+    packVersion: core.getInput('pack-version') || undefined,
     version: core.getInput('version') || 'latest',
     packcVersion: core.getInput('packc-version') || 'latest',
     output: core.getInput('output') || undefined,
@@ -76,6 +78,7 @@ async function compilePack(inputs: ActionInputs): Promise<CompileResult> {
   const compileInputs: CompileInputs = {
     configFile: inputs.configFile,
     packId: inputs.packId,
+    packVersion: inputs.packVersion,
     output: inputs.output,
     workingDirectory: inputs.workingDirectory,
   };

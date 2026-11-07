@@ -1,215 +1,113 @@
 # @altairalabs/packc
 
-> PromptKit Pack Compiler - Compile and validate prompt packs for LLM applications
+> PackC, the PromptPack compiler: compile a PromptArena config into a `.pack.json` PromptPack, and validate and inspect packs.
 
 ## Installation
 
-### npx (No Installation Required)
+### npx (no installation)
 
 ```bash
-npx @altairalabs/packc compile -c arena.yaml
-npx @altairalabs/packc validate -c arena.yaml
+npx @altairalabs/packc compile -c config.arena.yaml
+npx @altairalabs/packc validate my-pack.pack.json
 ```
 
-### Global Installation
+### Global installation
 
 ```bash
 npm install -g @altairalabs/packc
 
-# Use directly
 packc version
-packc compile -c arena.yaml
+packc compile -c config.arena.yaml
 ```
 
-### Project Dev Dependency
+### Project dev dependency
 
 ```bash
 npm install --save-dev @altairalabs/packc
+```
 
-# Use via npm scripts
-# Add to package.json:
+Then add scripts to `package.json`:
+
+```json
 {
   "scripts": {
-    "build:prompts": "packc compile -c arena.yaml",
-    "validate:prompts": "packc validate -c arena.yaml"
+    "build:prompts": "packc compile -c config.arena.yaml -o dist/prompts.pack.json",
+    "validate:prompts": "packc validate dist/prompts.pack.json"
   }
 }
 ```
 
 ## What is PackC?
 
-PackC is the PromptKit Pack Compiler - a tool for compiling and validating prompt configurations. It helps you:
+PackC compiles the prompt configs, tools, evals, workflow, agents and skills that a PromptArena config references into a single [PromptPack](https://promptpack.org) JSON file, which the PromptKit runtime and SDK load. It also validates pack files against the PromptPack schema and prints a summary of a pack.
 
-- 📦 **Compile prompts** from YAML configurations into optimized packs
-- ✅ **Validate configurations** before deployment
-- 🔍 **Inspect prompts** to understand structure and metadata
-- 🚀 **Optimize** prompt loading for production use
+## Quick start
 
-## Quick Start
-
-1. Create a configuration file:
+1. Point PackC at an Arena config that lists your prompts:
 
 ```yaml
-# arena.yaml
-name: My Application
-version: 1.0.0
-
-prompts:
-  - name: assistant
-    system_prompt: |
-      You are a helpful AI assistant.
-    
-  - name: code-helper
-    system_prompt: |
-      You are an expert programmer.
-    context:
-      - type: file
-        path: ./docs/guidelines.md
+# config.arena.yaml
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Arena
+metadata:
+  name: my-app
+spec:
+  prompt_configs:
+    - id: assistant
+      file: prompts/assistant.yaml
+  providers: []
+  defaults: {}
 ```
 
-2. Compile the prompts:
+2. Compile it:
 
 ```bash
-packc compile -c arena.yaml -o prompts.pack
+packc compile -c config.arena.yaml -o my-app.pack.json --pack-version 1.0.0
 ```
 
-3. Validate the configuration:
+3. Validate and inspect the pack:
 
 ```bash
-packc validate -c arena.yaml
-```
-
-4. Inspect a specific prompt:
-
-```bash
-packc inspect -c arena.yaml -p assistant
+packc validate my-app.pack.json
+packc inspect my-app.pack.json
 ```
 
 ## Commands
 
-### compile
+| Command | What it does |
+|---------|--------------|
+| `packc compile [-c <config>] [-o <file>] [--id <id>] [--pack-version <semver>]` | Compile every prompt in an Arena config into one pack. `-c` defaults to `config.arena.yaml`, `--id` to the current folder name, `-o` to `<id>.pack.json`, and `--pack-version` to `v1.0.0`. |
+| `packc compile-prompt -p <prompt.yaml> -o <file> [--pack-version <semver>]` | Compile one prompt config into a one-prompt pack. |
+| `packc validate <pack-file>...` | Validate one or more pack files. Exits 1 if any has an error. |
+| `packc inspect <pack-file>` | Print a pack's prompts, tools, evals, skills, workflow, agents and metadata. |
+| `packc version` | Print the version. |
+| `packc completion <shell>` | Print a completion script for bash, zsh, fish or powershell. |
 
-Compile all prompts from a configuration file into a single pack:
+Full reference: [PackC docs](https://promptarena.altairalabs.ai/packc/).
 
-```bash
-packc compile -c arena.yaml -o output.pack
-```
-
-Options:
-- `-c, --config`: Path to arena.yaml configuration file (required)
-- `-o, --output`: Output pack file path (default: prompts.pack)
-
-### compile-prompt
-
-Compile a single prompt:
-
-```bash
-packc compile-prompt -c arena.yaml -p assistant -o assistant.json
-```
-
-Options:
-- `-c, --config`: Path to configuration file (required)
-- `-p, --prompt`: Name of the prompt to compile (required)
-- `-o, --output`: Output file path (default: stdout)
-
-### validate
-
-Validate configuration file without compiling:
-
-```bash
-packc validate -c arena.yaml
-```
-
-Checks for:
-- YAML syntax errors
-- Missing required fields
-- Invalid prompt references
-- Malformed context definitions
-- File path validation
-
-### inspect
-
-Inspect a specific prompt's configuration:
-
-```bash
-packc inspect -c arena.yaml -p assistant
-```
-
-Shows:
-- Prompt name and metadata
-- System prompt content
-- Context sources
-- Variable definitions
-- Formatting details
-
-### version
-
-Display version information:
-
-```bash
-packc version
-```
-
-## Use Cases
-
-### CI/CD Validation
-
-Add prompt validation to your CI pipeline:
+## CI validation
 
 ```yaml
-# .github/workflows/validate.yml
-- name: Validate prompts
-  run: npx @altairalabs/packc validate -c config/arena.yaml
+# .github/workflows/prompts.yml
+- name: Build and validate prompts
+  run: |
+    npx @altairalabs/packc compile -c config.arena.yaml -o dist/prompts.pack.json
+    npx @altairalabs/packc validate dist/prompts.pack.json
 ```
 
-### Build Scripts
+## How it works
 
-Compile prompts as part of your build process:
+The `packc` Go binary ships in a per-platform package (`@altairalabs/packc-linux-x64` and friends) that this package declares as an optional dependency. Your package manager installs the one that matches your OS and CPU, and a thin Node.js wrapper runs it. No install script runs and no Go toolchain is needed.
 
-```json
-{
-  "scripts": {
-    "prebuild": "packc compile -c arena.yaml",
-    "build": "your-build-command"
-  }
-}
-```
-
-### Local Development
-
-Quickly validate changes during development:
-
-```bash
-# Watch for changes and validate
-watch -n 2 'packc validate -c arena.yaml'
-```
-
-## How It Works
-
-This npm package downloads pre-built Go binaries from [GitHub Releases](https://github.com/AltairaLabs/PromptKit/releases) during installation. The binaries are:
-
-1. Downloaded for your specific OS and architecture
-2. Extracted from the release archive
-3. Made executable (Unix-like systems)
-4. Invoked through a thin Node.js wrapper
-
-No Go toolchain is required on your machine.
-
-## Supported Platforms
+## Supported platforms
 
 - macOS (Intel and Apple Silicon)
 - Linux (x86_64 and arm64)
 - Windows (x86_64 and arm64)
 
-## Documentation
-
-- [Full Documentation](https://github.com/AltairaLabs/PromptKit#readme)
-- [Configuration Reference](https://github.com/AltairaLabs/PromptKit/tree/main/docs)
-- [Examples](https://github.com/AltairaLabs/PromptKit/tree/main/examples)
-
 ## Troubleshooting
 
-### Binary Not Found
+### Binary not found
 
 `packc` ships its Go binary in a per-platform package
 (`@altairalabs/packc-linux-x64` and friends) that this package declares as an
@@ -223,35 +121,21 @@ If you see `could not find its platform binary package`:
    on a different platform will not carry your binary.
 3. Confirm your platform is one of darwin/linux/win32 on x64 or arm64.
 
-### Permission Denied
+## Other installation methods
 
-On Unix-like systems:
+- **Homebrew**: `brew install altairalabs/tap/packc`
+- **Go install**: `go install github.com/AltairaLabs/promptarena/v2/packc@latest`
+- **Direct download**: [GitHub Releases](https://github.com/AltairaLabs/promptarena/releases)
+- **Build from source**: clone the repo and run `go build -o bin/packc ./packc`
 
-```bash
-chmod +x node_modules/@altairalabs/packc/packc
-```
+## Related tools
 
-## Alternative Installation Methods
-
-- **Homebrew**: `brew install altairalabs/tap/promptkit`
-- **Go Install**: `go install github.com/AltairaLabs/PromptKit/tools/packc@latest`
-- **Direct Download**: [GitHub Releases](https://github.com/AltairaLabs/PromptKit/releases)
-- **Build from Source**: Clone repo and run `make install-tools`
-
-## Related Tools
-
-- **[@altairalabs/promptarena](https://www.npmjs.com/package/@altairalabs/promptarena)** - Test and evaluate your prompts
-- **PromptKit SDK** - Production deployment library
+- **[@altairalabs/promptarena](https://www.npmjs.com/package/@altairalabs/promptarena)**: test and evaluate your prompts
 
 ## License
 
-Apache-2.0 - see [LICENSE](https://github.com/AltairaLabs/PromptKit/blob/main/LICENSE)
-
-## Contributing
-
-Contributions welcome! See [CONTRIBUTING.md](https://github.com/AltairaLabs/PromptKit/blob/main/CONTRIBUTING.md)
+Apache-2.0. See [LICENSE](https://github.com/AltairaLabs/promptarena/blob/main/LICENSE).
 
 ## Support
 
-- [GitHub Issues](https://github.com/AltairaLabs/PromptKit/issues)
-- [Discussions](https://github.com/AltairaLabs/PromptKit/discussions)
+- [GitHub Issues](https://github.com/AltairaLabs/promptarena/issues)

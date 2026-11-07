@@ -4,7 +4,7 @@ description: Compile three customer-service prompts and a tool definition into o
 sidebar:
   order: 2
 verified:
-  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
   sources:
     - arena/arenaconfig/loader.go
     - arena/arenaconfig/types.go
@@ -183,7 +183,7 @@ You see the three prompts (in any order) and the tool:
 
 ```text
 ✓ Pack compiled successfully: packs/customer-service.pack.json
-  Contains 3 prompts: [greeting support escalation]
+  Contains 3 prompts: [escalation greeting support]
   Contains 1 tools: [search_knowledge_base]
 ```
 

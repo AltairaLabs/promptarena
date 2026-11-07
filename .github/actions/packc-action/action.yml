@@ -13,8 +13,14 @@ inputs:
   pack-id:
     description: 'Pack identifier (defaults to folder name)'
     required: false
+  pack-version:
+    description: >-
+      Version written into the pack's "version" field (packc compile
+      --pack-version). Must be a semantic version, such as 1.2.0 or v1.2.0.
+      Needs a packc release later than v2.4.0. Defaults to v1.0.0.
+    required: false
   version:
-    description: 'Pack version (semver or git ref)'
+    description: 'OCI tag to publish the pack under (semver or git ref)'
     required: false
     default: 'latest'
   packc-version:

@@ -53,6 +53,9 @@ async function compile(inputs) {
     if (inputs.packId) {
         args.push('--id', inputs.packId);
     }
+    if (inputs.packVersion) {
+        args.push('--pack-version', inputs.packVersion);
+    }
     if (inputs.output) {
         args.push('--output', inputs.output);
     }
@@ -508,6 +511,7 @@ function getInputs() {
     return {
         configFile: core.getInput('config-file', { required: true }),
         packId: core.getInput('pack-id') || undefined,
+        packVersion: core.getInput('pack-version') || undefined,
         version: core.getInput('version') || 'latest',
         packcVersion: core.getInput('packc-version') || 'latest',
         output: core.getInput('output') || undefined,
@@ -553,6 +557,7 @@ async function compilePack(inputs) {
     const compileInputs = {
         configFile: inputs.configFile,
         packId: inputs.packId,
+        packVersion: inputs.packVersion,
         output: inputs.output,
         workingDirectory: inputs.workingDirectory,
     };

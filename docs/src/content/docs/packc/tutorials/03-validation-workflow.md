@@ -4,11 +4,12 @@ description: See what packc compile and packc validate catch, then wire both int
 sidebar:
   order: 3
 verified:
-  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
   sources:
     - arena/arenaconfig/loader.go
     - arena/arenaconfig/types.go
     - packc/compiler/check.go
+    - packc/compiler/pack_file.go
     - packc/main.go
     - packc/main_interactive.go
     - schemas/v1alpha1/arena.json
@@ -107,14 +108,15 @@ sed -i.bak 's/"version": "v1.0.0"/"version": "1.0"/' packs/assistant.pack.json
 packc validate packs/assistant.pack.json
 ```
 
-Validation fails on the pack's `version` and the prompt's `version` (the pattern is shortened here):
+Validation fails on the pack's `version` and the prompt's `version`. The schema check and the structural check each report both (the pattern is shortened here):
 
 ```text
 Validating pack: packs/assistant.pack.json
-Validating against PromptPack schema...
-✗ Pack failed schema validation:
-  - prompts.assistant.version: Does not match pattern '^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)...' (value: 1.0)
-  - version: Does not match pattern '^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)...' (value: 1.0)
+✗ Pack validation failed: packs/assistant.pack.json
+  - [pack_schema] version: Does not match pattern '^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)...' (value: 1.0)
+  - [pack_schema] prompts.assistant.version: Does not match pattern '^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)...' (value: 1.0)
+  - [pack] invalid pack version '1.0': invalid semantic version: invalid semantic version
+  - [pack] prompt 'assistant': invalid version '1.0': invalid semantic version: invalid semantic version
 ```
 
 Restore the pack and validate again:

@@ -4,11 +4,11 @@ description: Command reference for packc, the compiler that turns PromptArena pr
 sidebar:
   order: 0
 verified:
-  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
   sources:
+    - packc/compiler/check.go
     - packc/compiler/compiler.go
     - packc/main_interactive.go
-    - packc/schema_validator.go
 ---
 `packc` compiles prompt configs into [PromptPack](https://promptpack.org) JSON files (`.pack.json`), validates them, and prints their contents. It compiles with the PromptKit runtime's pack compiler and validates against the PromptPack schema embedded in that runtime.
 
@@ -26,7 +26,7 @@ verified:
 
 An unknown command prints `Unknown command: <name>` and the usage, and exits with code `1`. `packc` with no command prints the usage and exits with code `1`.
 
-`compile` and `compile-prompt` accept `--help`, which prints their flags. `validate` and `inspect` treat any first argument, `--help` included, as the pack file path.
+Every command accepts `--help` or `-h`: `compile` and `compile-prompt` print their flags, and `validate` and `inspect` print their usage.
 
 ## Example
 

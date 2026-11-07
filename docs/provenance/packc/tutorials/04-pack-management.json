@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/packc/tutorials/04-pack-management.md",
- "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
  "claims": [
   {
    "id": 1,
@@ -25,7 +25,7 @@
    "claim": "compile summary output",
    "verdict": "true",
    "evidence": [
-    "packc/main.go:274-294"
+    "packc/main.go"
    ]
   },
   {
@@ -33,7 +33,7 @@
    "claim": "validate success output",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go:256-338"
+    "packc/main_interactive.go"
    ]
   },
   {
@@ -41,9 +41,9 @@
    "claim": "pack_metadata.tags appears under Pack Metadata in inspect",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:167",
-    "packc/compiler/compiler.go:182-190",
-    "packc/main.go:232-245"
+    "arena/arenaconfig/types.go",
+    "packc/compiler/compiler.go",
+    "packc/main.go"
    ]
   },
   {
@@ -51,14 +51,16 @@
    "claim": "compile creates missing output directories",
    "verdict": "true",
    "evidence": [
-    "packc/main.go:28-35"
+    "packc/main.go"
    ]
   },
   {
    "id": 7,
-   "claim": "pack-level version is always v1.0.0 from compile",
+   "claim": "pack-level version is v1.0.0 unless --pack-version is passed",
    "verdict": "true",
-   "evidence": []
+   "evidence": [
+    "packc/compiler/compiler.go"
+   ]
   },
   {
    "id": 8,

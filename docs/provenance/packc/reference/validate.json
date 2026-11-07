@@ -1,13 +1,13 @@
 {
  "page": "docs/src/content/docs/packc/reference/validate.md",
- "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
  "claims": [
   {
    "id": 1,
-   "claim": "validate takes one pack-file argument; extra args ignored; no flags",
+   "claim": "validate takes one or more pack-file arguments and -h/--help",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go:247-254"
+    "packc/main_interactive.go"
    ]
   },
   {
@@ -15,31 +15,32 @@
    "claim": "PROMPTKIT_SCHEMA_SOURCE selects embedded/remote/file/URL schema",
    "verdict": "true",
    "evidence": [
-    "packc/schema_validator.go:21-30"
+    "packc/compiler/check.go"
    ]
   },
   {
    "id": 3,
-   "claim": "check order: read, schema, load, structure, skills",
+   "claim": "check order: read and parse JSON, schema, skills, workflow, compositions, agents, governance, pack",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go:256-320"
+    "packc/compiler/check.go",
+    "packc/compiler/pack_file.go"
    ]
   },
   {
    "id": 4,
-   "claim": "schema not performable prints a warning and continues",
+   "claim": "schema that cannot be loaded is a pack_schema error",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go:267-270"
+    "packc/compiler/check.go"
    ]
   },
   {
    "id": 5,
-   "claim": "structural errors listed under '\u2717 Pack validation failed:' including warnings",
+   "claim": "errors listed under '\u2717 Pack validation failed: <file>' with stage; warnings print separately",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go:287-306"
+    "packc/main_interactive.go"
    ]
   },
   {
@@ -56,10 +57,10 @@
   },
   {
    "id": 8,
-   "claim": "agents rules block validate, including mode and tag warnings",
+   "claim": "agents structural rules are errors; mode and tag findings are warnings",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go:287-306"
+    "packc/compiler/check.go"
    ]
   },
   {
@@ -67,9 +68,7 @@
    "claim": "governance errors block, undeclared-prefix warnings do not",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:171-176",
-    "packc/main_interactive.go:293-298",
-    "packc/main_interactive.go:322-327"
+    "packc/compiler/check.go"
    ]
   },
   {
@@ -77,31 +76,32 @@
    "claim": "skills resolved relative to the pack file directory",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go:309-320"
+    "packc/compiler/pack_file.go"
    ]
   },
   {
    "id": 11,
-   "claim": "validate does not check prompt tools against pack tools",
+   "claim": "validate warns when a prompt's tools are not in the pack's tools",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go:287"
+    "packc/compiler/check.go",
+    "packc/compiler/pack_fields.go"
    ]
   },
   {
    "id": 12,
-   "claim": "output lines for success, warnings, schema failure",
+   "claim": "output lines for success, warnings, failure, multi-file count",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go:256-338"
+    "packc/main_interactive.go"
    ]
   },
   {
    "id": 13,
-   "claim": "exit 0 valid (warnings included), 1 otherwise",
+   "claim": "exit 0 when every pack is valid (warnings included) or --help; 1 otherwise",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go:248-338"
+    "packc/main_interactive.go"
    ]
   },
   {
@@ -109,7 +109,7 @@
    "claim": "old: exit 1 when pack has warnings",
    "verdict": "false",
    "evidence": [
-    "packc/main_interactive.go:329-338"
+    "packc/main_interactive.go"
    ]
   },
   {
@@ -147,7 +147,7 @@
    "claim": "old: '\u26a0 Temperature exceeds maximum' warning",
    "verdict": "false",
    "evidence": [
-    "packc/main_interactive.go:267-275"
+    "packc/main_interactive.go"
    ]
   },
   {
@@ -161,7 +161,7 @@
    "claim": "old: 'Fail CI on warnings' via exit code",
    "verdict": "false",
    "evidence": [
-    "packc/main_interactive.go:329-338"
+    "packc/main_interactive.go"
    ]
   }
  ]

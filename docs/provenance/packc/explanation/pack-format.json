@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/packc/explanation/pack-format.md",
- "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
  "claims": [
   {
    "id": 1,
@@ -16,11 +16,11 @@
   },
   {
    "id": 3,
-   "claim": "pack structure checks id, semver version, prompts, template_engine, system_template, prompt version, variables-declared, compilation; all blocking in packc",
+   "claim": "pack structure checks id, semver version, prompts, template_engine, system_template, prompt version, variables-declared are blocking; missing compilation and undeclared prompt tools are warnings",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:178-191",
-    "packc/main_interactive.go:296-306"
+    "packc/compiler/check.go",
+    "packc/compiler/pack_fields.go"
    ]
   },
   {
@@ -40,11 +40,7 @@
    "claim": "arena tools/workflow/agents/compositions/skills/pack_evals/pack_metadata map to pack tools/workflow/agents/compositions/skills/evals/metadata",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:100-167",
-    "packc/compiler/compiler.go:103-142",
-    "packc/compiler/compiler.go:210-242",
-    "packc/compiler/helpers_integration.go:116-182",
-    "packc/compiler/helpers_integration.go:19-24"
+    "packc/compiler/compiler.go"
    ]
   },
   {
@@ -58,7 +54,7 @@
    "claim": "workflow errors/warnings: version 1|2, entry, prompt_task, targets, enums, composition, PascalCase, cycles, terminal, v2 dead-end, agent loops",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:154-156"
+    "packc/compiler/check.go"
    ]
   },
   {
@@ -69,18 +65,19 @@
   },
   {
    "id": 10,
-   "claim": "packc compile sets name=id, version v1.0.0, description 'Pack containing N prompts', $schema latest URL, compilation block",
+   "claim": "packc compile sets name=id, version from --pack-version (default v1.0.0), description 'Pack containing N prompts', $schema latest URL, compilation block",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:127-132"
+    "packc/compiler/compiler.go",
+    "packc/main_interactive.go"
    ]
   },
   {
    "id": 11,
-   "claim": "compile-prompt: id from task type (_ to -), name/version/description from prompt, no $schema",
+   "claim": "compile-prompt: id from task type (_ to -), name/description from prompt, version from spec.version or --pack-version, $schema set",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go:205-245"
+    "packc/compiler/pack_file.go"
    ]
   },
   {

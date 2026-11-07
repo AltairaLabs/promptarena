@@ -4,11 +4,11 @@ description: packc compiles a PromptArena config and the prompts, tools and work
 sidebar:
   order: 0
 verified:
-  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
   sources:
+    - packc/compiler/check.go
     - packc/compiler/compiler.go
     - packc/main_interactive.go
-    - packc/schema_validator.go
 ---
 
 `packc` compiles a PromptArena configuration into a [PromptPack](https://promptpack.org): one JSON file holding the prompts, tools, workflow, agents and validators that the configuration references. It also validates and inspects pack files.
@@ -80,7 +80,6 @@ packc validate greeting.pack.json
 
 ```text
 Validating pack: greeting.pack.json
-Validating against PromptPack schema...
 ✓ Schema validation passed
 ✓ Pack structure is valid
 ```

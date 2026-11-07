@@ -4,7 +4,7 @@ description: What packc compile, packc validate and promptarena validate each ch
 sidebar:
   order: 3
 verified:
-  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
   sources:
     - arena/arenaconfig/types.go
     - arena/cmd/promptarena/export.go
@@ -12,9 +12,10 @@ verified:
     - packc/compiler/check.go
     - packc/compiler/compiler.go
     - packc/compiler/helpers_integration.go
+    - packc/compiler/pack_fields.go
+    - packc/compiler/pack_file.go
+    - packc/compiler/skills_validator_integration.go
     - packc/main_interactive.go
-    - packc/schema_validator.go
-    - packc/skills_validator.go
     - schemas/v1alpha1/arena.json
     - schemas/v1alpha1/promptconfig.json
     - schemas/v1alpha1/tool.json
@@ -29,18 +30,19 @@ Three commands validate packs, at different points:
 - `packc validate` checks a pack file that already exists, wherever it came from.
 - `promptarena validate` checks an arena config. For a config with `prompt_configs`, it runs the same function `packc compile` runs (`compiler.Check`) without writing a file.
 
-All three share the pack checks from the PromptKit runtime and this repository's skill checks. The differences are noted in each section below.
+All three run the same pack checks (`checkPack` in `packc/compiler`): the PromptKit runtime's pack checks plus this repository's skill checks. A finding is an error or a warning in all three alike, so a pack `packc compile` writes never fails `packc validate`. The differences are in what runs before the pack checks, noted in each section below.
 
 ```mermaid
 flowchart TD
   src["arena config + prompt, tool files"]
   schemaSrc["PromptArena schemas"]
   build["compiler.Check: build the pack"]
-  packChecks["pack checks: skills, workflow, agents, governance, structure"]
+  packChecks["pack checks: skills, workflow, compositions, agents, governance, structure"]
   packSchema["PromptPack schema"]
   file["*.pack.json"]
+  parse["parse JSON"]
   src --> schemaSrc --> build --> packChecks --> packSchema
-  file -- "packc validate" --> packSchema
+  file -- "packc validate" --> parse --> packSchema
   packSchema -- "packc validate" --> packChecks
 ```
 
@@ -59,6 +61,8 @@ The checks catch a mistake in the build, when the author is still at the keyboar
 - `metadata.language` is two lowercase letters.
 - Tool names match `^[a-zA-Z_][a-zA-Z0-9_]*$`.
 
+`packc compile-prompt` checks its one prompt config against the same schema.
+
 ### Pack ID
 
 A pack ID starts with a lowercase letter and contains only lowercase letters, digits and hyphens (`^[a-z][a-z0-9-]*$`):
@@ -70,7 +74,7 @@ id: "app-v1.2.0"           # invalid: no dots
 id: "2024-demo"            # invalid: must start with a letter
 ```
 
-`packc compile` rejects an invalid `--id` before it loads anything. Without `--id`, it derives the ID from the current directory's name and normalizes it to this pattern: `My Project` becomes `my-project`, and a name that does not start with a letter gets a `pack-` prefix (`2024-demo` becomes `pack-2024-demo`).
+`packc compile` rejects an invalid `--id`, or a `--pack-version` that is not a semantic version, before it loads anything. Without `--id`, it derives the ID from the current directory's name and normalizes it to this pattern: `My Project` becomes `my-project`, and a name that does not start with a letter gets a `pack-` prefix (`2024-demo` becomes `pack-2024-demo`).
 
 ### Skills
 
@@ -107,14 +111,14 @@ These are warnings:
 Real messages name the state and field:
 
 ```text
-✗ Pack validation failed:
-  - workflow.entry "unknown" does not reference a key in states
-  - workflow.states["intake"].on_event["Escalate"] target "missing" does not exist in states
+✗ Pack validation failed: app.pack.json
+  - [workflow] workflow.entry "unknown" does not reference a key in states
+  - [workflow] workflow.states["intake"].on_event["Escalate"] target "missing" does not exist in states
 ```
 
 ### Agents, compositions and governance
 
-The agents check rejects an `agents` block with no members, an `entry` that is not a member, or a member that is not a prompt in the pack. It warns about an input or output mode that is not a MIME type, or an empty tag. `packc compile` treats those as warnings, but `packc validate` counts them as errors. The governance check rejects an obligation or review that names an eval, validator, field or obligation the pack does not declare, and warns about an undeclared vocabulary prefix. `packc compile` also checks compositions: their step graphs, their references to prompts, tools and evals, and the workflow states that use them. `packc validate` does not run the composition check.
+The agents check rejects an `agents` block with no members, an `entry` that is not a member, or a member that is not a prompt in the pack. It warns about an input or output mode that is not a MIME type, or an empty tag. The governance check rejects an obligation or review that names an eval, validator, field or obligation the pack does not declare, and warns about an undeclared vocabulary prefix. The composition check covers their step graphs, their references to prompts, tools and evals, and the workflow states that use them.
 
 ### Pack structure
 
@@ -123,14 +127,22 @@ The structural check covers what the schema alone does not:
 - the pack has an `id`, a semantic `version` and at least one prompt;
 - `template_engine` is present with `version` and `syntax`;
 - each prompt has a `system_template` and a semantic `version`;
-- a prompt whose template contains `{{` declares at least one variable;
-- the pack has a `compilation` block.
+- a prompt whose template contains `{{` declares at least one variable.
 
-`packc` treats every structural finding as blocking:
+`packc` treats each of those findings as blocking:
 
 ```text
-✗ Pack validation failed:
-  - missing compilation metadata
+✗ Pack validation failed: app.pack.json
+  - [pack] prompt 'support': missing system_template
+```
+
+Two structural findings are warnings:
+
+- a pack with no `compilation` block. The PromptPack schema makes it optional, so a pack written by another tool can leave it out;
+- a prompt whose `tools` names a tool the pack's `tools` object does not define. The specification requires prompt tools to be defined at pack level, but Arena also offers tools a pack does not carry (MCP, workflow, memory and skill tools), and a prompt may list those.
+
+```text
+⚠ [pack] prompt "support": tool "lookup_order" is not defined in the pack's tools
 ```
 
 ### PromptPack schema
@@ -138,17 +150,17 @@ The structural check covers what the schema alone does not:
 Last, the pack JSON is validated against the PromptPack schema (version 1.9.0, embedded in the binary). The schema covers required fields, types, enums and patterns throughout the pack. Each violation is reported with its path:
 
 ```text
-✗ Pack failed schema validation:
-  - prompts.greeting.version: Does not match pattern '^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)...' (value: )
+✗ Pack validation failed: app.pack.json
+  - [pack_schema] prompts.greeting.version: Does not match pattern '^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)...' (value: )
 ```
 
-`packc validate` runs this check first. `packc compile` runs it last, on the JSON it is about to write.
+`packc validate` first parses the file, so a JSON syntax error is reported as `[load] invalid JSON: …` and nothing else runs. It then runs this check before the pack checks. `packc compile` runs it last, on the JSON it is about to write.
 
-By default the embedded schema is used, so validation works offline. The `PROMPTKIT_SCHEMA_SOURCE` environment variable changes the source: `remote` fetches the URL in the pack's `$schema`, and a path starting with `/` or `./` loads a schema file. If the schema cannot be loaded, `packc compile` fails, while `packc validate` prints a `⚠` line and carries on with the other checks.
+By default the embedded schema is used, so validation works offline. The `PROMPTKIT_SCHEMA_SOURCE` environment variable changes the source: `remote` fetches the URL in the pack's `$schema`, and a path starting with `/` or `./` loads a schema file. If the schema cannot be loaded, the check reports a `[pack_schema]` error.
 
 ## Errors and warnings
 
-An error blocks: `packc compile` writes no file and exits 1, and `packc validate` exits 1. A warning is printed with a `⚠` prefix and changes nothing. `packc compile` prints each warning with its stage:
+An error blocks: `packc compile` writes no file and exits 1, and `packc validate` exits 1. A warning is printed with a `⚠` prefix and changes nothing. `packc compile` and `packc validate` print each warning with its stage:
 
 ```text
 ⚠ [workflow] workflow.states["intake"].on_event["escalate"]: event name should be PascalCase
@@ -165,7 +177,6 @@ No command checks these, so they reach the runtime:
 
 - Template syntax. `system_template` is stored as text, and a malformed placeholder compiles. Only the "variables declared at all" rule applies.
 - Whether every placeholder in a template has a declared variable, once at least one variable is declared.
-- Whether a prompt's `tools` list names tools defined in the pack's `tools` object.
 - Unreachable workflow states.
 - Pack size.
 

@@ -4,11 +4,11 @@ description: Lay out arena configs and compiled packs by environment, feature or
 sidebar:
   order: 4
 verified:
-  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
   sources:
-    - packc/compiler/check.go
     - packc/compiler/compiler.go
     - packc/compiler/helpers_integration.go
+    - packc/compiler/pack_fields.go
     - packc/main.go
     - packc/main_interactive.go
 ---
@@ -99,7 +99,7 @@ A pack ID must start with a lowercase letter and contain only lowercase letters,
 --id 2024-demo               # rejected: must start with a letter
 ```
 
-Keep semantic versions in the output path, as in the version layout above. `packc compile` sets every pack's `version` field to `v1.0.0`, so the path or the artifact tag is where a release version lives.
+Keep semantic versions out of the ID. Put the release version in the pack's `version` field with `--pack-version 1.2.0` (without it, `packc compile` writes `v1.0.0`), and in the output path, as in the version layout above.
 
 For file names, use the ID with a `.pack.json` suffix. `--output` defaults to `<id>.pack.json`, and the default keeps names and IDs in step.
 
@@ -158,10 +158,10 @@ ls -d v*/ | sort -V | head -n -3 | xargs rm -rf
 ## Verify
 
 ```bash
-find packs -name '*.pack.json' -print0 | xargs -0 -n1 packc validate
+find packs -name '*.pack.json' -print0 | xargs -0 packc validate
 ```
 
-Each pack prints `✓ Pack structure is valid`. `xargs` exits non-zero if any pack fails.
+`packc validate` checks every file it is given. Each valid pack prints `✓ Pack structure is valid`, a final line counts the valid packs, and the command exits 1 if any pack fails.
 
 ## Related
 

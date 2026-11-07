@@ -126,7 +126,7 @@ PromptArena ships GitHub Actions for CI/CD. Run prompt tests:
 
 ```yaml
 - name: Run prompt tests
-  uses: AltairaLabs/promptarena/v2/.github/actions/promptarena-action@v1
+  uses: AltairaLabs/promptarena/.github/actions/promptarena-action@v2
   with:
     config-file: config.arena.yaml
   env:
@@ -137,7 +137,7 @@ Compile and publish packs to OCI registries:
 
 ```yaml
 - name: Build and publish pack
-  uses: AltairaLabs/promptarena/v2/.github/actions/packc-action@v1
+  uses: AltairaLabs/promptarena/.github/actions/packc-action@v2
   with:
     config-file: config.arena.yaml
     registry: ghcr.io
@@ -147,7 +147,7 @@ Compile and publish packs to OCI registries:
 ```
 
 The action definitions live in [`.github/actions/`](.github/actions). Pin to a
-release tag (e.g. `@v1.5.7`) or the floating major tag (`@v1`).
+release tag (e.g. `@v2.4.0`) or the floating major tag (`@v2`).
 
 ## Repository Structure
 
