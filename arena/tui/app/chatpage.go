@@ -163,6 +163,10 @@ func NewChatPage(ctx *AppContext) *ChatPage {
 // Title implements Page.
 func (p *ChatPage) Title() string { return "Chat" }
 
+// CapturesTextInput implements TextInputCapturer: while the text input is
+// focused (chatting or entering a variable), printable keys belong to it.
+func (p *ChatPage) CapturesTextInput() bool { return p.input.Focused() }
+
 // Close implements Closeable. It cancels any running voice driver so the mic
 // and pipeline shut down cleanly when the user quits.
 func (p *ChatPage) Close() {

@@ -84,8 +84,9 @@ func (a *App) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case tea.KeyRunes:
 			// 'q' quits only at the root, matching esc. In a sub-page it falls
 			// through to the page (esc is the way back); this keeps navigation
-			// keys consistent across the hub.
-			if len(m.Runes) == 1 && m.Runes[0] == 'q' && a.atRoot() {
+			// keys consistent across the hub. A page with a focused text field
+			// (the chat input when chat is the root) gets the key instead.
+			if len(m.Runes) == 1 && m.Runes[0] == 'q' && a.atRoot() && !a.topCapturesText() {
 				a.closeAll()
 				return a, tea.Quit
 			}
@@ -229,6 +230,13 @@ func (a *App) pop() tea.Cmd {
 // atRoot reports whether the navigation stack has only one page (the root).
 func (a *App) atRoot() bool {
 	return len(a.stack) == 1
+}
+
+// topCapturesText reports whether the top page currently has a focused text
+// field that should receive printable keys before global shortcuts.
+func (a *App) topCapturesText() bool {
+	c, ok := a.top().(TextInputCapturer)
+	return ok && c.CapturesTextInput()
 }
 
 // top returns the current top-of-stack page.

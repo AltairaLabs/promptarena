@@ -87,6 +87,40 @@ func TestApp_QKeyQuits(t *testing.T) {
 	}
 }
 
+// TestApp_QKeyTypedIntoRootChatInput reproduces #410: with chat as the stack
+// root (`promptarena chat`), a 'q' typed into the focused input must reach the
+// input, not quit the TUI.
+func TestApp_QKeyTypedIntoRootChatInput(t *testing.T) {
+	chat := NewChatPage(&AppContext{})
+	chat.state = chatStateChat
+	chat.input.Focus()
+	a := New(&AppContext{}, chat)
+
+	_, cmd := a.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}})
+	if cmd != nil {
+		if _, quit := cmd().(tea.QuitMsg); quit {
+			t.Fatal("'q' typed into the chat input quit the TUI")
+		}
+	}
+	if got := chat.input.Value(); got != "q" {
+		t.Fatalf("input value = %q, want %q", got, "q")
+	}
+}
+
+// TestApp_QKeyQuitsRootChatWhenInputBlurred: with the input unfocused (e.g. the
+// conversation panel has focus) 'q' is still the quit shortcut at the root.
+func TestApp_QKeyQuitsRootChatWhenInputBlurred(t *testing.T) {
+	chat := NewChatPage(&AppContext{})
+	a := New(&AppContext{}, chat)
+	_, cmd := a.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}})
+	if cmd == nil {
+		t.Fatal("expected tea.Quit from 'q'")
+	}
+	if got := cmd(); got != (tea.QuitMsg{}) {
+		t.Fatalf("expected tea.QuitMsg{}, got %T %v", got, got)
+	}
+}
+
 func TestApp_CtrlCQuits(t *testing.T) {
 	a := New(&AppContext{}, &namedFakePage{name: "home"})
 	_, cmd := a.Update(tea.KeyMsg{Type: tea.KeyCtrlC})

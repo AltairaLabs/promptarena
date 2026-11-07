@@ -40,6 +40,9 @@ type RunPage struct {
 	plan        *engine.RunPlan
 	concurrency int
 	store       runResultGetter
+	// saveResults writes report files after the run; nil keeps results only in
+	// the state store (see AppContext.SaveRunResults).
+	saveResults func(eng *engine.Engine, runIDs []string) error
 
 	bus      events.Bus
 	cancel   context.CancelFunc
@@ -87,12 +90,17 @@ func NewRunPage(
 			getter = s
 		}
 	}
+	var save func(*engine.Engine, []string) error
+	if ctx != nil {
+		save = ctx.SaveRunResults
+	}
 	return &RunPage{
 		model:       model,
 		engine:      eng,
 		plan:        plan,
 		concurrency: concurrency,
 		store:       getter,
+		saveResults: save,
 	}
 }
 
@@ -104,8 +112,9 @@ func (p *RunPage) Init() tea.Cmd { return p.model.Init() }
 
 // Activate implements Activatable. It wires the event bus + adapter to deliver
 // runtime events via send and starts ExecuteRuns in the background. The run
-// results persist to the engine's state store as today. Returns the model's
-// Init command.
+// results persist to the engine's state store and, when the context supplies
+// SaveRunResults, are written as report files once the runs end. Returns the
+// model's Init command.
 func (p *RunPage) Activate(send func(tea.Msg)) tea.Cmd {
 	p.mu.Lock()
 	if p.started {
@@ -130,6 +139,7 @@ func (p *RunPage) Activate(send func(tea.Msg)) tea.Cmd {
 
 	go func() {
 		runIDs, err := p.engine.ExecuteRuns(runCtx, p.plan, p.concurrency)
+		p.writeResults(runIDs)
 		p.mu.Lock()
 		p.runIDs = runIDs
 		p.runErr = err
@@ -142,6 +152,19 @@ func (p *RunPage) Activate(send func(tea.Msg)) tea.Cmd {
 	}()
 
 	return p.model.Init()
+}
+
+// writeResults hands the finished run IDs to the configured report writer, if
+// any. Like `promptarena run`, it writes whatever completed even when some runs
+// failed. A write failure is logged, not fatal: the results are still in the
+// state store and browsable in the hub.
+func (p *RunPage) writeResults(runIDs []string) {
+	if p.saveResults == nil {
+		return
+	}
+	if err := p.saveResults(p.engine, runIDs); err != nil {
+		logger.Warn("failed to write run results", "error", err)
+	}
 }
 
 // Cancel stops the background run. Safe to call after the hub exits so an

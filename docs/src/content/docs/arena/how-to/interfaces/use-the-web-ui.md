@@ -103,9 +103,15 @@ and provider-call errors appear in the browser as they happen. The stream
 reconnects automatically if dropped. See [Interfaces](/arena/explanation/interfaces/)
 for how the stream works.
 
+The stream also carries `stage.started`, `stage.completed` and `stage.failed`
+pipeline events. Open a run to see them on its **Trace** tab: one row per stage
+execution, in progress until the stage finishes, then with its duration, and a
+failed stage with its error. The tab appears only for runs whose stage events
+this browser tab received live; a result loaded from disk after a reload has
+none.
+
 Scripts can read the same stream (`curl -N http://localhost:8080/api/events`).
-It also carries `stage.started`, `stage.completed` and `stage.failed` pipeline
-events with payload `{name, stageType, duration, error}`.
+Stage events carry the payload `{name, stageType, duration, error}`.
 
 ![The dashboard mid-run: the status badge in the header reads Live, and the trial count, spend, latency and pass-rate figures climb as results arrive.](/screenshots/web-run-live.png)
 

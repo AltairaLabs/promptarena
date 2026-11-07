@@ -19,9 +19,9 @@ spec:
   # provider schema still requires a value under defaults, so it is declared
   # unsupported here and withheld from the request.
   #
-  # `seed` needs no entry: PromptKit's Responses builder sends it unguarded, so
-  # unsupported_params cannot suppress it. Arena instead omits the seed entirely
-  # when none is configured (see seedOrNil).
+  # `seed` needs no entry: the Responses API has no seed parameter, and
+  # PromptKit's Responses builder drops a configured seed with a warning. This
+  # config sets none, so Arena sends none.
   unsupported_params:
     - top_p
   defaults:
@@ -40,10 +40,10 @@ spec:
   # policy difference, not a PromptKit capture failure. Comment the line out to
   # see the difference.
   additional_config:
-    # Reasoning summaries are a RESPONSES API feature. PromptKit defaults to
-    # Chat Completions for every model that isn't "-pro", and on that path the
-    # trace never comes back however you set reasoning_summary. This line is
-    # what makes OpenAI reasoning visible at all.
+    # Reasoning summaries are a RESPONSES API feature: on Chat Completions the
+    # trace never comes back however you set reasoning_summary. PromptKit
+    # already uses the Responses API for api.openai.com (Chat Completions for
+    # other hosts); this line makes the choice explicit.
     api_mode: responses
     reasoning_effort: high   # minimal | low | medium | high
     reasoning_summary: auto    # auto | concise | detailed (verified orgs only)

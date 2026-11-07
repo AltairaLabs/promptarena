@@ -138,7 +138,8 @@ Type a message and press `Enter` to send; the agent replies turn by turn, keepin
 conversation state. `Tab` moves focus between the conversation and the input, and
 `Ctrl-L` toggles a runtime-log overlay. Add `-v` / `--verbose` to tee raw provider
 events and transcription to `promptarena.log` for debugging. The chat page is the
-stack root, so `Esc` / `q` exits back to the shell.
+stack root, so `Esc` exits back to the shell. While the input box has focus, `q`
+is typed into the message; `Tab` to the conversation first to quit with `q`.
 
 ![A chat session seven turns deep: the numbered turn list shows the system prompt, two user messages, the assistant's replies, a get_order_status tool call and its result, and the final answer rendered on the right with token and cost totals.](/screenshots/tui-chat.png)
 
@@ -167,6 +168,11 @@ promptarena run --config config.arena.yaml
 The display shows runs as they progress, a log panel, and results as they complete.
 The log panel shows pipeline stage events: each stage logs `Stage started` and
 `Stage completed` lines at DEBUG, and a failing stage logs `Stage failed` at ERROR.
+
+The hub's **Run** page shows the same display for every scenario in the loaded config.
+When the runs finish it writes the report formats `run` would write with no flags
+(`defaults.output.formats`, else `json`) to the output directory, resolved against
+the config's directory, so View can open them.
 
 ![A run in progress: an Active Runs table listing each provider with status, scenario, region and duration, a live log panel streaming turn and provider-call events, and a results pane awaiting selection.](/screenshots/tui-run.png)
 

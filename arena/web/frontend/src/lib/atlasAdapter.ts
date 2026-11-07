@@ -3,8 +3,9 @@
 // nanosecond latencies, and checks that live in meta.assertions / conversation_
 // assertions rather than a single field. Covers the historical path; the live
 // SSE camelCase bridge and derived trace events land in later WUs.
-import type { AtlasMessage, AtlasReasoning, AtlasCheck, AtlasContentPart, AtlasToolCall, AtlasCheckViolation, ConstellationNode, ConstellationEdge } from "@altairalabs/atlas";
-import type { ActiveRun, Message, RunResult, ContentPart, EvalResult, ValidationResult, WorkflowGraph } from "@/types";
+import { assignTimelineOrdinal } from "@altairalabs/atlas";
+import type { AtlasEvent, AtlasMessage, AtlasReasoning, AtlasCheck, AtlasContentPart, AtlasToolCall, AtlasCheckViolation, ConstellationNode, ConstellationEdge, RawEvent } from "@altairalabs/atlas";
+import type { ActiveRun, Message, RunResult, ContentPart, EvalResult, ValidationResult, WorkflowGraph, StageEventEntry } from "@/types";
 
 const ROLES = new Set(["user", "assistant", "system", "tool"]);
 const toRole = (r: string): AtlasMessage["role"] => (ROLES.has(r) ? r : "assistant") as AtlasMessage["role"];
@@ -380,5 +381,57 @@ export function adaptRun(run: RunResult): AdaptedRun {
     messages,
     checks: checks.length ? checks : undefined,
     recording: run.RecordingPath ? { src: `/api/media/${encodeURI(run.RecordingPath)}` } : undefined,
+  };
+}
+
+// ---- pipeline stage trace ----
+
+// stageTraceEvents turns a run's stage.started / stage.completed /
+// stage.failed events into rows for SessionReview's Trace tab: one row per
+// stage execution. A started stage shows as in progress until its completion
+// or failure arrives, which then fills in the duration and outcome. Stages
+// that start more than once (every turn runs the pipeline again) pair in
+// order, so each execution keeps its own row.
+export function stageTraceEvents(entries: StageEventEntry[] | undefined): AtlasEvent[] {
+  if (!entries?.length) return [];
+  const ordered = [...entries].sort(
+    (a, b) => (Date.parse(a.timestamp) || 0) - (Date.parse(b.timestamp) || 0) || a.seq - b.seq,
+  );
+  const rows: RawEvent[] = [];
+  // Per stage name, the rows still waiting for their completion, oldest first.
+  const open = new Map<string, { row: number; start: StageEventEntry }[]>();
+  for (const [i, e] of ordered.entries()) {
+    if (e.phase === "started") {
+      const queue = open.get(e.name) ?? [];
+      queue.push({ row: rows.length, start: e });
+      open.set(e.name, queue);
+      rows.push(stageRow(e, `stage-${i}`));
+      continue;
+    }
+    const pending = open.get(e.name)?.shift();
+    if (!pending) {
+      rows.push(stageRow(e, `stage-${i}`));
+      continue;
+    }
+    // Keep the start time so the row sits where the stage began.
+    rows[pending.row] = stageRow(
+      { ...e, timestamp: pending.start.timestamp, stageType: e.stageType ?? pending.start.stageType },
+      rows[pending.row].id,
+    );
+  }
+  return assignTimelineOrdinal(rows);
+}
+
+function stageRow(e: StageEventEntry, id: string): RawEvent {
+  const status = e.phase === "started" ? "started" : e.phase === "failed" ? "error" : "success";
+  return {
+    id,
+    timestamp: e.timestamp,
+    type: `stage.${e.phase}`,
+    label: e.error ? `${e.name}: ${e.error}` : e.name,
+    category: "pipeline-stage",
+    status,
+    durationMs: e.phase === "started" || e.duration == null ? undefined : e.duration * 1000,
+    payload: { name: e.name, stageType: e.stageType, error: e.error },
   };
 }

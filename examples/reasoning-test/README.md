@@ -104,7 +104,7 @@ Each provider file documents its own contract inline. The short version:
 |---|---|---|
 | Gemini 3 | `thinking_level: high` | 2.5's `thinking_budget` silently yields no summaries |
 | Claude | `thinking_budget: 2048` | wire shape auto-selected by model generation |
-| OpenAI | `api_mode: responses` + `reasoning_effort` | no trace at all on Chat Completions |
+| OpenAI | Responses API + `reasoning_effort` | no trace at all on Chat Completions |
 
 **Gemini's control is generation-specific and fails silently.** Gemini 3 takes
 `thinking_level`; Gemini 2.5 takes `thinking_budget` and rejects
@@ -123,21 +123,22 @@ is on) and raises `max_tokens` if the budget would leave no headroom for an
 answer — which is why the provider file sets a temperature that never reaches
 the wire.
 
-**OpenAI hides the trace unless you switch API.** This one cost the most time,
-so it is worth stating plainly: reasoning summaries are a **Responses API**
-feature, and PromptKit defaults every non-`-pro` model to Chat Completions. On
-that path `reasoning_summary` does nothing and `reasoning` comes back empty
-however you configure it. `api_mode: responses` is what makes GPT-5 reasoning
-visible at all. Two follow-on quirks, both handled in the provider file:
+**OpenAI hides the trace on Chat Completions.** Reasoning summaries are a
+**Responses API** feature. On Chat Completions `reasoning_summary` does nothing
+and `reasoning` comes back empty however you configure it. PromptKit uses the
+Responses API by default for OpenAI's own API (no `base_url`, or
+`api.openai.com`), and Chat Completions for any other host or when
+`api_mode: completions` is set. The provider file sets `api_mode: responses`
+anyway, so the choice is explicit. Two follow-on quirks:
 
 - `gpt-5.2` rejects `top_p` outright, so it is declared in
   `unsupported_params`.
-- The Responses API rejects `seed`, and **`unsupported_params` cannot suppress
-  it** — PromptKit's Responses builder sends `seed` unguarded. Arena instead
-  omits the seed entirely when none is configured. Before that fix, every
-  Responses-API call 400'd with `Unknown parameter: 'seed'`.
+- The Responses API has no `seed` parameter. PromptKit's Responses builder drops
+  a configured seed and logs a warning that the request is not reproducible.
+  This config sets no seed, and Arena sends none when none is configured, so the
+  warning does not appear.
 
-Worth noting what the fix bought: on Chat Completions, GPT-5 returned *wrong*
+Worth noting what the Responses API buys: on Chat Completions, GPT-5 returned *wrong*
 totals (396, then 516 at higher effort) with no visible trace. On the Responses
 API it returns 208 with the richest reasoning of the three providers. The
 reasoning wasn't just invisible — it wasn't really happening.

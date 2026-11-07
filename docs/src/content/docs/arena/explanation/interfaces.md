@@ -61,6 +61,7 @@ flowchart TB
     ENGINE --> STORE["In-memory state store"]
     WEB --> JSONFILE["One JSON file per run<br/>(output directory)"]
     CI --> REPORTS["--out directory<br/>(json · junit · markdown · csv · objectives)"]
+    TUI --> REPORTS
 ```
 
 The three surfaces are peers on top of the same execution engine, so a scenario behaves the
@@ -69,7 +70,9 @@ same whichever one starts it. The files they leave behind differ:
 - `promptarena run` (with `--ci`, `--simple` or its own TUI) writes every configured report
   format to the `--out` directory, `out` by default.
 - `promptarena serve` writes one `<runID>.json` per run to the same output directory.
-- A run started from the hub's Run page goes to the in-memory state store and writes no files.
+- A run started from the hub's Run page writes the report formats `promptarena run` would
+  write with no flags (`defaults.output.formats`, else `json`) to the output directory, resolved
+  against the loaded config's directory.
 
 ## The TUI: interactive terminal hub
 
@@ -85,7 +88,7 @@ voice mode). Everything is keyboard-driven and runs in your terminal.
 
 The TUI suits local iteration: you edit prompts and scenarios, run them, read what came back,
 and try again. It is the default because that loop is the most common way to work with Arena.
-Use `promptarena run` when you need report files from the run.
+Use `promptarena run` when you need run flags such as `--formats`, `--out` or a scenario filter.
 
 See [Use the TUI](/arena/how-to/interfaces/use-the-tui/).
 

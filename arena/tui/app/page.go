@@ -35,6 +35,14 @@ type Closeable interface {
 	Close()
 }
 
+// TextInputCapturer is an optional interface a Page implements when it can hold
+// a focused text field. While CapturesTextInput reports true, the App hands
+// printable keys (such as a bare 'q') to the page instead of treating them as
+// global shortcuts, so typing a message never quits the hub.
+type TextInputCapturer interface {
+	CapturesTextInput() bool
+}
+
 // VoiceOptions carries the interactive-session parameters. A nil *VoiceOptions
 // on AppContext means plain text chat; non-nil means a live mic/speaker session.
 type VoiceOptions struct {
@@ -133,6 +141,12 @@ type AppContext struct {
 	// directory for that file — usually the run's output dir.
 	Verbose bool
 	LogDir  string
+
+	// SaveRunResults, when set, is called by the Run page once its runs finish
+	// (or are canceled) to write the configured report formats, the same files
+	// `promptarena run` writes. The bare-`promptarena` hub sets it; `run` leaves
+	// it nil because it writes the reports itself after the hub exits.
+	SaveRunResults func(eng *engine.Engine, runIDs []string) error
 }
 
 // HasConfig reports whether a config has been loaded into this context.

@@ -17,6 +17,7 @@ spec:
     - file: scenarios/guardrail-should-trigger.scenario.yaml
     - file: scenarios/guardrail-should-not-trigger.scenario.yaml
     - file: scenarios/multiple-violations.scenario.yaml
+    - file: scenarios/streaming-guardrail-trigger.scenario.yaml
     - file: scenarios/streaming-length-trigger.scenario.yaml
 
   # Default configuration
