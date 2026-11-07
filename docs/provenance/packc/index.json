@@ -1,14 +1,13 @@
 {
  "page": "docs/src/content/docs/packc/index.md",
- "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
  "claims": [
   {
    "id": 1,
    "claim": "packc commands are compile, compile-prompt, validate, inspect, version, help, completion",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go:29-48",
-    "packc/main_interactive.go:51-100"
+    "packc/main_interactive.go"
    ]
   },
   {
@@ -16,39 +15,40 @@
    "claim": "validation uses the embedded PromptPack schema by default; PROMPTKIT_SCHEMA_SOURCE local/remote/path overrides",
    "verdict": "true",
    "evidence": [
-    "packc/schema_validator.go:15-31"
+    "packc/compiler/check.go"
    ]
   },
   {
    "id": 3,
-   "claim": "packc compile-prompt flags -p/--prompt and -o/--output, both required",
+   "claim": "packc compile-prompt flags -p/--prompt and -o/--output, both required; --pack-version optional",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go:176-190"
+    "packc/main_interactive.go"
    ]
   },
   {
    "id": 4,
-   "claim": "packc compile flags: -c/--config (default config.arena.yaml), -o/--output (default <id>.pack.json), --id (default current folder name sanitized)",
+   "claim": "packc compile flags: -c/--config (default config.arena.yaml), -o/--output (default <id>.pack.json), --id (default current folder name sanitized), --pack-version (default v1.0.0)",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go:119-146"
+    "packc/main_interactive.go"
    ]
   },
   {
    "id": 5,
-   "claim": "validate prints 'Validating pack', schema result, '\u2713 Pack structure is valid'; blocking findings exit 1",
+   "claim": "validate prints 'Validating pack', '\u2713 Schema validation passed', warnings, '\u2713 Pack structure is valid'; errors exit 1",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go:247-339"
+    "packc/main_interactive.go"
    ]
   },
   {
    "id": 6,
-   "claim": "packc compile sets name=id, version v1.0.0, description 'Pack containing N prompts', $schema latest URL, compilation block",
+   "claim": "packc compile sets name=id, version from --pack-version (default v1.0.0), description 'Pack containing N prompts', $schema latest URL, compilation block",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:127-132"
+    "packc/compiler/compiler.go",
+    "packc/main_interactive.go"
    ]
   },
   {

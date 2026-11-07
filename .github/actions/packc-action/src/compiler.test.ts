@@ -67,6 +67,20 @@ describe('compiler', () => {
       );
     });
 
+    it('should include pack-version flag when provided', async () => {
+      await compile({
+        configFile: 'config.yaml',
+        packVersion: '1.4.0',
+        workingDirectory: '.',
+      });
+
+      expect(mockedExec.exec).toHaveBeenCalledWith(
+        'packc',
+        ['compile', '--config', 'config.yaml', '--pack-version', '1.4.0'],
+        expect.any(Object)
+      );
+    });
+
     it('should include output flag when provided', async () => {
       await compile({
         configFile: 'config.yaml',

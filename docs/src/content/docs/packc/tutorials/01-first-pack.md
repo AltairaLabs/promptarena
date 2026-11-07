@@ -4,7 +4,7 @@ description: Install packc, write one prompt and an Arena config, then compile, 
 sidebar:
   order: 1
 verified:
-  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
   sources:
     - arena/arenaconfig/loader.go
     - arena/arenaconfig/types.go
@@ -30,10 +30,10 @@ packc version
 You see:
 
 ```text
-packc dev
+packc v2.4.0
 ```
 
-A `go install` build always reports `dev`. If your shell cannot find `packc`, add Go's bin directory to your `PATH`:
+A `go install` build reports the module version it was installed at. If your shell cannot find `packc`, add Go's bin directory to your `PATH`:
 
 ```bash
 export PATH="$PATH:$(go env GOPATH)/bin"
@@ -166,7 +166,6 @@ You see:
 
 ```text
 Validating pack: packs/greeting.pack.json
-Validating against PromptPack schema...
 ✓ Schema validation passed
 ✓ Pack structure is valid
 ```

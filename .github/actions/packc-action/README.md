@@ -6,7 +6,7 @@ Compile and publish prompt packs to OCI-compliant registries in your CI/CD pipel
 
 ```yaml
 - name: Build and publish pack
-  uses: AltairaLabs/promptarena/v2/.github/actions/packc-action@v1
+  uses: AltairaLabs/promptarena/.github/actions/packc-action@v2
   with:
     config-file: config.arena.yaml
     registry: ghcr.io
@@ -29,7 +29,9 @@ Compile and publish prompt packs to OCI-compliant registries in your CI/CD pipel
 |-------|----------|---------|-------------|
 | `config-file` | **Yes** | - | Path to Arena YAML configuration |
 | `pack-id` | No | - | Pack identifier |
-| `version` | No | `latest` | Pack version for publishing |
+| `pack-version` | No | - | Version written into the pack (`packc compile --pack-version`); a semantic version such as `1.2.0`. Without it the pack says `v1.0.0`. Needs packc later than v2.4.0 |
+| `version` | No | `latest` | OCI tag to publish under |
+| `packc-version` | No | `latest` | PackC release to install |
 | `output` | No | - | Output file path |
 | `validate` | No | `true` | Run validation after compile |
 | `registry` | No | - | OCI registry URL |
@@ -57,7 +59,7 @@ Compile and publish prompt packs to OCI-compliant registries in your CI/CD pipel
 ### Compile Only
 
 ```yaml
-- uses: AltairaLabs/promptarena/v2/.github/actions/packc-action@v1
+- uses: AltairaLabs/promptarena/.github/actions/packc-action@v2
   with:
     config-file: config.arena.yaml
     pack-id: my-prompts
@@ -71,20 +73,21 @@ Compile and publish prompt packs to OCI-compliant registries in your CI/CD pipel
 ### Publish to GitHub Container Registry
 
 ```yaml
-- uses: AltairaLabs/promptarena/v2/.github/actions/packc-action@v1
+- uses: AltairaLabs/promptarena/.github/actions/packc-action@v2
   with:
     config-file: config.arena.yaml
     registry: ghcr.io
     repository: ${{ github.repository }}/prompts
     username: ${{ github.actor }}
     password: ${{ secrets.GITHUB_TOKEN }}
+    pack-version: ${{ github.ref_name }}   # e.g. v1.2.0 from a release tag
     version: ${{ github.ref_name }}
 ```
 
 ### Sign with Cosign
 
 ```yaml
-- uses: AltairaLabs/promptarena/v2/.github/actions/packc-action@v1
+- uses: AltairaLabs/promptarena/.github/actions/packc-action@v2
   with:
     config-file: config.arena.yaml
     registry: ghcr.io
@@ -99,7 +102,7 @@ Compile and publish prompt packs to OCI-compliant registries in your CI/CD pipel
 ### Use Outputs
 
 ```yaml
-- uses: AltairaLabs/promptarena/v2/.github/actions/packc-action@v1
+- uses: AltairaLabs/promptarena/.github/actions/packc-action@v2
   id: packc
   with:
     config-file: config.arena.yaml

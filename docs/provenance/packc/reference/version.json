@@ -1,14 +1,14 @@
 {
  "page": "docs/src/content/docs/packc/reference/version.md",
- "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
  "claims": [
   {
    "id": 1,
    "claim": "version prints 'packc <version>'",
    "verdict": "true",
    "evidence": [
-    "packc/main.go:21",
-    "packc/main_interactive.go:40-41"
+    "packc/main.go",
+    "packc/main_interactive.go"
    ]
   },
   {
@@ -21,11 +21,10 @@
   },
   {
    "id": 3,
-   "claim": "go install / make build-go report dev",
+   "claim": "go install reports the module version, go build in git a pseudo-version, dev only without build info",
    "verdict": "true",
    "evidence": [
-    "Makefile:59-64",
-    "packc/main.go:21"
+    "packc/main.go"
    ]
   },
   {
@@ -42,8 +41,7 @@
    "claim": "compile and compile-prompt write packc-<version> into compiled_with",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go:151",
-    "packc/main_interactive.go:239"
+    "packc/main_interactive.go"
    ]
   },
   {
@@ -51,7 +49,7 @@
    "claim": "inspect prints it on the Compilation line",
    "verdict": "true",
    "evidence": [
-    "packc/main.go:247-254"
+    "packc/main.go"
    ]
   },
   {
@@ -73,7 +71,7 @@
    "claim": "old: inspect prints 'Pack Format'",
    "verdict": "false",
    "evidence": [
-    "packc/main.go:58-254"
+    "packc/main.go"
    ]
   },
   {

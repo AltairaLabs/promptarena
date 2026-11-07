@@ -4,15 +4,16 @@ description: How packc compile loads an arena config, builds a pack from it with
 sidebar:
   order: 2
 verified:
-  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
   sources:
-    - .goreleaser.yml
     - arena/arenaconfig/types.go
     - arena/cmd/promptarena/export.go
     - arena/cmd/promptarena/validate_json.go
     - packc/compiler/check.go
     - packc/compiler/compiler.go
     - packc/compiler/helpers_integration.go
+    - packc/compiler/pack_fields.go
+    - packc/compiler/pack_file.go
     - packc/main.go
     - packc/main_interactive.go
     - schemas/v1alpha1/arena.json
@@ -29,9 +30,9 @@ This page explains what happens between `packc compile` and the `.pack.json` fil
 
 ```mermaid
 flowchart TD
-  id["pack_id: resolve or validate --id"]
+  id["pack_id, pack_version: resolve or validate --id and --pack-version"]
   load["load: arena config and referenced files, schema-checked"]
-  compile["compile: registry, tools, workflow, agents, skills, metadata"]
+  compile["compile: registry, tools, workflow, agents, skills, metadata, template engine"]
   checks["skills, workflow, compositions, agents, governance, pack"]
   schema["pack_schema: compiled JSON against the PromptPack schema"]
   out["packc writes the file"]
@@ -40,7 +41,7 @@ flowchart TD
 
 Each finding carries its stage name, which `packc` prints in brackets, for example `[workflow]` or `[pack_schema]`.
 
-The first three stages stop the run when they fail, because nothing after them has a pack to check. Once a pack exists, `Check` runs every remaining stage and collects all of their findings before it returns. A config with three problems reports all three in one run. `packc compile` exits 1 if any finding is an error, and writes no file.
+The stages before the checks stop the run when they fail, because nothing after them has a pack to check. Once a pack exists, `Check` runs every remaining stage and collects all of their findings before it returns. A config with three problems reports all three in one run. `packc compile` exits 1 if any finding is an error, and writes no file.
 
 ### Loading
 
@@ -76,10 +77,10 @@ The workflow, agents and compositions blocks are typed as the generated PromptPa
 
 - `id` is the `--id` flag, or the current directory's name made to fit the pack ID pattern.
 - `name` is the same value as `id`.
-- `version` is `v1.0.0`. `packc compile` has no flag or config field that sets it.
+- `version` is the `--pack-version` flag, a semantic version such as `1.2.0`, or `v1.0.0` without it. It tracks the pack as a whole, while each prompt keeps its own `spec.version`.
 - `description` is `Pack containing <n> prompts`.
 - `$schema` is `https://promptpack.org/schema/latest/promptpack.schema.json`.
-- `template_engine` is copied from a prompt that declares one. The prompts are visited in no fixed order, so give every prompt the same `template_engine`.
+- `template_engine` is the one the prompts declare in `spec.template_engine`. A pack has one engine, so prompts that declare different ones fail the `compile` stage. Prompts that declare none are left out of the comparison. If no prompt declares one, the pack gets the default (`v1`, `{{variable}}`).
 - `compilation` records `compiled_with` (`packc-<version>`), `created_at` (the time of the compile, RFC 3339, to the second) and `schema` (`v1`).
 
 ### Metadata from prompt configs
@@ -108,24 +109,24 @@ Rendering happens in the runtime that loads the pack, with the variable values i
 
 ## compile and compile-prompt
 
-`packc compile-prompt` takes one prompt file and calls the PromptKit compiler's single-prompt path directly. It skips the arena config loader and every check after it. The pack it writes differs from a `packc compile` pack:
+`packc compile-prompt` takes one prompt file and calls the PromptKit compiler's single-prompt path instead of loading an arena config. It checks the prompt config against its schema first, as the arena config loader does for each prompt, then runs the same structural checks and PromptPack schema check as `packc compile`. A prompt that `packc compile` would reject at `load` fails here too, and no file is written. The pack it writes differs from a `packc compile` pack:
 
 - `id` is the task type with underscores replaced by hyphens.
-- `name`, `version` and `description` come from the prompt's `metadata.name`, `spec.version` and `spec.description`.
+- `name` and `description` come from the prompt's `metadata.name` and `spec.description`.
+- `version` is the prompt's `spec.version`, or `--pack-version` when given.
 - `metadata` is the prompt's `spec.metadata`.
-- There is no `$schema`.
 
-Beyond parsing the file, `compile-prompt` checks only media references, relative to the prompt file's directory. A prompt without `spec.version` compiles, and the pack then fails `packc validate`. Run `packc validate` on every `compile-prompt` output.
+Media references are checked relative to the prompt file's directory.
 
 ## Repeatable output
 
-The output is indented JSON with two-space indentation. Object keys come out in a fixed order, so two compiles of the same inputs with the same `packc` version produce the same bytes except for `compilation.created_at` (and `template_engine`, if your prompts declare different ones). That field records when the compile ran. To compare two builds, strip it first:
+The output is indented JSON with two-space indentation. Object keys come out in a fixed order, so two compiles of the same inputs with the same `packc` version produce the same bytes except for `compilation.created_at`. That field records when the compile ran. To compare two builds, strip it first:
 
 ```bash
 jq 'del(.compilation.created_at)' app.pack.json | sha256sum
 ```
 
-`compiled_with` records the `packc` version. A `go install` build reports `packc-dev`, because only release builds set the version string.
+`compiled_with` records the `packc` version. A release build stamps its version at build time; a `go install …@<tag>` build reports the module version from its build information, and only a build with neither reports `packc-dev`.
 
 ## Trade-offs
 

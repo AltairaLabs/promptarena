@@ -4,7 +4,7 @@ description: Compile and validate packs on every change in GitHub Actions, GitLa
 sidebar:
   order: 5
 verified:
-  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
   sources:
     - .github/actions/packc-action/action.yml
     - .github/actions/packc-action/src/compiler.ts
@@ -66,7 +66,7 @@ jobs:
           path: ${{ steps.pack.outputs.pack-file }}
 ```
 
-`validate` defaults to `true`, and `packc-version` defaults to the latest release. The action's outputs include `pack-file`, `pack-id`, `prompts` and `tools`. It can also push the pack to an OCI registry and sign it; see the action's `action.yml` for those inputs.
+`validate` defaults to `true`, and `packc-version` defaults to the latest release. `pack-version` passes `--pack-version` to `packc compile`, for example `pack-version: ${{ github.ref_name }}` on a tag build. The action's outputs include `pack-file`, `pack-id`, `prompts` and `tools`. It can also push the pack to an OCI registry and sign it; see the action's `action.yml` for those inputs.
 
 ## GitHub Actions with go install
 
@@ -128,7 +128,7 @@ jobs:
 
 ### Attach packs to a release
 
-`packc compile` always writes `v1.0.0` as the pack's `version` field, so carry the release version in the file name:
+Pass the release tag to `--pack-version`, so the pack's `version` field matches the release, and put it in the file name too. Without `--pack-version`, `packc compile` writes `v1.0.0`. The flag needs a `packc` release later than v2.4.0:
 
 ```yaml
 on:
@@ -145,9 +145,10 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: '1.26'
-      - run: go install github.com/AltairaLabs/promptarena/v2/packc@v2.4.0
+      - run: go install github.com/AltairaLabs/promptarena/v2/packc@latest
       - run: |
-          packc compile --config config.arena.yaml --output "packs/app-${GITHUB_REF_NAME}.pack.json" --id app
+          packc compile --config config.arena.yaml --output "packs/app-${GITHUB_REF_NAME}.pack.json" --id app \
+            --pack-version "${GITHUB_REF_NAME}"
           packc validate "packs/app-${GITHUB_REF_NAME}.pack.json"
       - uses: softprops/action-gh-release@v2
         with:
@@ -214,10 +215,6 @@ The install directory is not on `PATH`. After `go install`, add Go's bin directo
 ### The config is not found in CI
 
 `--config` and the default pack ID both depend on the working directory. Run `packc` from the directory you run it from locally, or pass `--config` and `--id` explicitly. With packc-action, set `working-directory`.
-
-### Validating a glob checks only one pack
-
-`packc validate` checks only its first argument. Loop over the files, as shown in [Validate packs](/packc/how-to/validate-packs/#validate-several-packs).
 
 ## Related
 

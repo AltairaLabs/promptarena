@@ -4,8 +4,9 @@ description: Flags, output and exit codes of packc compile-prompt, which compile
 sidebar:
   order: 2
 verified:
-  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
   sources:
+    - packc/compiler/pack_file.go
     - packc/main.go
     - packc/main_interactive.go
 ---
@@ -14,7 +15,7 @@ verified:
 ## Synopsis
 
 ```bash
-packc compile-prompt -p <prompt.yaml> -o <pack-file>
+packc compile-prompt -p <prompt.yaml> -o <pack-file> [--pack-version <semver>]
 ```
 
 ## Flags
@@ -22,7 +23,8 @@ packc compile-prompt -p <prompt.yaml> -o <pack-file>
 | Flag | Type | Default | Description |
 |---|---|---|---|
 | `-p`, `--prompt` | string | none (required) | Path to the PromptConfig YAML file. |
-| `-o`, `--output` | string | none (required) | Path of the pack file to write. The parent directory must exist. |
+| `-o`, `--output` | string | none (required) | Path of the pack file to write. Missing parent directories are created. |
+| `--pack-version` | string | the prompt's `spec.version` | Pack version, written to the pack's `version` field. A semantic version, with an optional `v` prefix. |
 
 ## Input
 
@@ -59,60 +61,59 @@ The pack's top-level fields come from the prompt config:
 |---|---|
 | `id` | `spec.task_type`, with `_` replaced by `-` |
 | `name` | `metadata.name` |
-| `version` | `spec.version` |
+| `version` | `--pack-version`, or `spec.version` |
 | `description` | `spec.description` |
 | `template_engine` | `spec.template_engine` |
 | `metadata` | `spec.metadata` |
 | `prompts.<task_type>` | the compiled prompt; `allowed_tools` becomes `tools` |
 | `compilation.compiled_with` | `packc-<version>`, where `<version>` is what [`packc version`](/packc/reference/version/) prints |
 
-The pack has no `$schema` field. For the example above the command prints:
+`$schema` is `https://promptpack.org/schema/latest/promptpack.schema.json`, as in a `packc compile` pack. For the example above the command prints:
 
 ```text
-Compiling prompt 'customer_support' to pack...
+Compiling prompt prompts/support.yaml to pack...
 ✓ Pack compiled successfully: packs/support.pack.json
 ```
 
 ## Validation
 
-`compile-prompt` checks only that the file parses as a PromptConfig. It does not validate the prompt config or the pack against their schemas, and it does not run the structural checks of [`packc validate`](/packc/reference/validate/): a pack it writes can fail `packc validate`. When `spec.media.enabled` is true, media files referenced under `spec.media.examples` are resolved relative to the prompt file's directory, and a missing one prints a warning:
+`compile-prompt` validates the prompt config against the PromptConfig schema before compiling, then runs the same checks on the pack as [`packc compile`](/packc/reference/compile/): the pack checks of [`packc validate`](/packc/reference/validate/) and the PromptPack schema. A pack it writes passes `packc validate`. When `spec.media.enabled` is true, media files referenced under `spec.media.examples` are resolved relative to the prompt file's directory, and a missing one prints a warning:
 
 ```text
-⚠ Media validation warnings:
-  - Media file not found: images/logo.png (example: product-photo, part 0)
+⚠ [compile] media(customer_support): Media file not found: images/logo.png (example: product-photo, part 0)
 ```
 
-Errors print to stderr:
+Errors print to stderr, and no file is written:
 
 | Message | Cause |
 |---|---|
-| `Error: --prompt and --output are required` | A flag is missing. |
-| `Error reading prompt file: ...` | The prompt file cannot be read. |
-| `Error parsing prompt config: ...` | The file is not valid YAML, or misses a required field such as `apiVersion`. |
-| `Compilation failed: failed to write pack file: ...` | The output path cannot be written, for example because its directory does not exist. |
+| `Error: --prompt and --output are required`, then the usage and flags | A flag is missing. |
+| `Compilation failed: [load] reading prompt file: ...` | The prompt file cannot be read. |
+| `Compilation failed: [load] prompt config failed schema validation: ...` | The prompt config does not match its schema, for example `spec.version: "1.0"`. |
+| `Compilation failed: [load] parsing prompt config: ...` | The file is not a valid PromptConfig. |
+| `Compilation failed: [pack_version] ...` | `--pack-version` is not a semantic version. |
+| `Compilation failed: [<stage>] ...` | A pack check failed, with the stage that found it. |
+| `Failed to write pack file: ...` | The output path cannot be written. |
 
 ## Exit codes
 
 | Code | Meaning |
 |---|---|
 | `0` | Pack written. |
-| `1` | The prompt file could not be read, parsed or compiled, or the pack could not be written. |
-| `2` | A required flag is missing, or a flag is unknown. |
+| `1` | A required flag is missing, the prompt could not be read, validated or compiled, or the pack could not be written. |
+| `2` | A flag is unknown. |
 
 ## Examples
 
-Compile one prompt and validate the result:
+Compile one prompt:
 
 ```bash
-mkdir -p packs
 packc compile-prompt -p prompts/support.yaml -o packs/support.pack.json
-packc validate packs/support.pack.json
 ```
 
 Compile every prompt in a directory into its own pack:
 
 ```bash
-mkdir -p packs
 for prompt in prompts/*.yaml; do
   packc compile-prompt -p "$prompt" -o "packs/$(basename "$prompt" .yaml).pack.json"
 done

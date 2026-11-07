@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/packc/tutorials/01-first-pack.md",
- "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
  "claims": [
   {
    "id": 1,
@@ -25,7 +25,7 @@
    "claim": "compile summary output",
    "verdict": "true",
    "evidence": [
-    "packc/main.go:274-294"
+    "packc/main.go"
    ]
   },
   {
@@ -33,15 +33,15 @@
    "claim": "validate success output",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go:256-338"
+    "packc/main_interactive.go"
    ]
   },
   {
    "id": 5,
-   "claim": "go install github.com/AltairaLabs/promptarena/v2/packc@latest installs packc reporting 'packc dev'",
+   "claim": "go install ...packc@latest reports the module version",
    "verdict": "true",
    "evidence": [
-    "packc/main.go:21"
+    "packc/main.go"
    ]
   },
   {
@@ -49,8 +49,7 @@
    "claim": "inspect output for the greeting pack",
    "verdict": "true",
    "evidence": [
-    "packc/main.go:247-254",
-    "packc/main.go:58-154"
+    "packc/main.go"
    ]
   },
   {
@@ -72,7 +71,7 @@
    "claim": "old: packc version prints 'packc v0.1.0'",
    "verdict": "false",
    "evidence": [
-    "packc/main.go:21"
+    "packc/main.go"
    ]
   }
  ]

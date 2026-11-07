@@ -6,6 +6,7 @@ import * as path from 'node:path';
 export interface CompileInputs {
   configFile: string;
   packId?: string;
+  packVersion?: string;
   output?: string;
   workingDirectory: string;
 }
@@ -25,6 +26,10 @@ export async function compile(inputs: CompileInputs): Promise<CompileResult> {
 
   if (inputs.packId) {
     args.push('--id', inputs.packId);
+  }
+
+  if (inputs.packVersion) {
+    args.push('--pack-version', inputs.packVersion);
   }
 
   if (inputs.output) {

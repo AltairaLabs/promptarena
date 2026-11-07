@@ -1,39 +1,39 @@
 {
  "page": "docs/src/content/docs/packc/how-to/validate-packs.md",
- "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
  "claims": [
   {
    "id": 1,
-   "claim": "validate prints 'Validating pack', schema result, '\u2713 Pack structure is valid'; blocking findings exit 1",
+   "claim": "validate prints 'Validating pack', '\u2713 Schema validation passed', warnings, '\u2713 Pack structure is valid'; errors exit 1",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go:247-339"
+    "packc/main_interactive.go"
    ]
   },
   {
    "id": 2,
-   "claim": "packc validate checks only its first argument (os.Args[2])",
+   "claim": "packc validate validates every file argument and exits 1 if any fails",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go:248-254"
+    "packc/main_interactive.go"
    ]
   },
   {
    "id": 3,
-   "claim": "schema failure prints '\u2717 Pack failed schema validation:' with path per line; schema-load failure: compile errors, validate warns and continues",
+   "claim": "schema failures print as '[pack_schema] <path>: <msg>' under '\u2717 Pack validation failed: <file>'; schema-load failure is a pack_schema error",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:196-219",
-    "packc/main_interactive.go:265-278"
+    "packc/compiler/check.go",
+    "packc/main_interactive.go"
    ]
   },
   {
    "id": 4,
-   "claim": "pack structure checks id, semver version, prompts, template_engine, system_template, prompt version, variables-declared, compilation; all blocking in packc",
+   "claim": "pack structure checks id, semver version, prompts, template_engine, system_template, prompt version, variables-declared are blocking; missing compilation and undeclared prompt tools are warnings",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:178-191",
-    "packc/main_interactive.go:296-306"
+    "packc/compiler/check.go",
+    "packc/compiler/pack_fields.go"
    ]
   },
   {
@@ -41,17 +41,17 @@
    "claim": "skill checks: missing dir, path outside, SKILL.md parse, duplicate names, inline fields, workflow state skills path errors; allowed-tools warning; relative to config dir (compile) or pack dir (validate)",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:150-152",
-    "packc/main_interactive.go:308-320",
-    "packc/skills_validator.go:45-238"
+    "packc/compiler/pack_file.go",
+    "packc/compiler/skills_validator_integration.go"
    ]
   },
   {
    "id": 6,
-   "claim": "validate on missing file prints 'Error reading pack file: open ...'",
+   "claim": "validate on a missing file reports '[load] reading pack file: open ...'",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go:258-263"
+    "packc/compiler/pack_file.go",
+    "packc/main_interactive.go"
    ]
   },
   {
@@ -68,9 +68,8 @@
    "claim": "compile prints warnings as '\u26a0 [stage] message' and fails with 'Compilation failed:'",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:42-48",
-    "packc/compiler/check.go:60-72",
-    "packc/main_interactive.go:157-165"
+    "packc/compiler/check.go",
+    "packc/main_interactive.go"
    ]
   }
  ]

@@ -4,7 +4,7 @@ description: Background on the PromptPack format and on how packc compiles and v
 sidebar:
   order: 0
 verified:
-  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
   sources:
     - packc/main_interactive.go
 ---

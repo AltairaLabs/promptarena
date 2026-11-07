@@ -4,12 +4,13 @@ description: Compile an arena config, or a single prompt file, into a .pack.json
 sidebar:
   order: 2
 verified:
-  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
   sources:
     - arena/arenaconfig/types.go
     - packc/compiler/check.go
     - packc/compiler/compiler.go
     - packc/compiler/helpers_integration.go
+    - packc/compiler/pack_file.go
     - packc/main.go
     - packc/main_interactive.go
     - schemas/v1alpha1/arena.json
@@ -62,7 +63,7 @@ Compile your prompts into a `.pack.json` file that a PromptPack runtime can load
 
    ```text
    ✓ Pack compiled successfully: packs/customer-service.pack.json
-     Contains 2 prompts: [support sales]
+     Contains 2 prompts: [sales support]
      Contains 1 tools: [lookup_order]
    ```
 
@@ -92,17 +93,19 @@ The default ID comes from the directory you run `packc` in, not from the config 
 Compilation failed: [pack_id] invalid pack ID "app-v1.2.0": must start with a lowercase letter and contain only lowercase letters, digits and dashes (pattern ^[a-z][a-z0-9-]*$)
 ```
 
-Keep version numbers out of the ID. `packc compile` sets the pack's `version` field to `v1.0.0` on every build, so put the release version in the output path instead:
+Keep version numbers out of the ID. Set the pack's `version` field with `--pack-version` instead, and put it in the output path if you keep several builds side by side:
 
 ```bash
-packc compile --config config.arena.yaml --output "packs/app-v${VERSION}.pack.json" --id app
+packc compile --config config.arena.yaml --output "packs/app-v${VERSION}.pack.json" --id app --pack-version "${VERSION}"
 ```
+
+`--pack-version` takes a semantic version, such as `1.2.0` or `v1.2.0`. Without it the pack's `version` is `v1.0.0`.
 
 ## Compile a single prompt
 
-`packc compile-prompt` compiles one prompt config into a pack without an arena config. It suits trying out a prompt. It skips the arena loader and every pack check, so validate its output.
+`packc compile-prompt` compiles one prompt config into a pack without an arena config. It suits trying out a prompt. It checks the prompt config against its schema and runs the same pack checks as `packc compile`, so a pack it writes passes `packc validate`.
 
-1. Write the prompt config. Include `spec.version`: the pack takes its version from it, and a pack without one fails validation.
+1. Write the prompt config. The pack takes its version from `spec.version` unless you pass `--pack-version`.
 
    ```yaml
    # prompts/support.yaml
@@ -126,15 +129,14 @@ packc compile --config config.arena.yaml --output "packs/app-v${VERSION}.pack.js
          required: true
    ```
 
-2. Compile it. Both flags are required, and the output directory must already exist:
+2. Compile it. Both flags are required. `packc` creates the output directory if it is missing:
 
    ```bash
-   mkdir -p packs
    packc compile-prompt --prompt prompts/support.yaml --output packs/support.pack.json
    ```
 
    ```text
-   Compiling prompt 'customer-support' to pack...
+   Compiling prompt prompts/support.yaml to pack...
    ✓ Pack compiled successfully: packs/support.pack.json
    ```
 
@@ -222,14 +224,6 @@ Declare each `{{name}}` in the prompt's `spec.variables`.
 ```
 
 This is a warning, and the pack is still written. Media paths are relative to the arena config's directory for `packc compile`, and to the prompt file's directory for `packc compile-prompt`.
-
-### compile-prompt cannot write the file
-
-```text
-Compilation failed: failed to write pack file: open out/support.pack.json: no such file or directory
-```
-
-Create the output directory first. Only `packc compile` creates it.
 
 ## Related
 

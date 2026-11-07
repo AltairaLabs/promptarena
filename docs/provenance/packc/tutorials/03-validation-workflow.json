@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/packc/tutorials/03-validation-workflow.md",
- "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
  "claims": [
   {
    "id": 1,
@@ -25,7 +25,7 @@
    "claim": "compile summary output",
    "verdict": "true",
    "evidence": [
-    "packc/main.go:274-294"
+    "packc/main.go"
    ]
   },
   {
@@ -33,7 +33,7 @@
    "claim": "validate success output",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go:256-338"
+    "packc/main_interactive.go"
    ]
   },
   {
@@ -46,10 +46,11 @@
   },
   {
    "id": 6,
-   "claim": "validate rejects a non-semver version via the schema",
+   "claim": "validate rejects a non-semver version via the schema and the pack check",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go:267-275"
+    "packc/compiler/check.go",
+    "packc/compiler/pack_file.go"
    ]
   },
   {

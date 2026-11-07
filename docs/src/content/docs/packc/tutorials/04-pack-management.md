@@ -4,7 +4,7 @@ description: Build a versioned pack per environment from one prompt, then releas
 sidebar:
   order: 4
 verified:
-  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
   sources:
     - arena/arenaconfig/loader.go
     - arena/arenaconfig/types.go
@@ -183,7 +183,7 @@ The diff shows the prompt's new version:
 >   Version: v1.1.0
 ```
 
-The `Compilation:` line differs too when the two builds ran in different seconds. The pack-level `Version:` stays `v1.0.0`: `packc compile` always writes that value, so the prompt version and the file name carry the release number. To see the prompt text change, compare the JSON (it also shows `created_at` when the builds ran in different seconds):
+The `Compilation:` line differs too when the two builds ran in different seconds. The pack-level `Version:` stays `v1.0.0`, because the build script does not pass `--pack-version`, so the prompt version and the file name carry the release number. Add `--pack-version 1.1.0` to the compile to put the release number in the pack too. To see the prompt text change, compare the JSON (it also shows `created_at` when the builds ran in different seconds):
 
 ```bash
 diff packs/prod/assistant-1.0.0.pack.json packs/prod/assistant-1.1.0.pack.json

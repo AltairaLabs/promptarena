@@ -7,7 +7,6 @@ import (
 
 	"github.com/spf13/pflag"
 
-	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
 	"github.com/AltairaLabs/promptarena/v2/packc/compiler"
 
 	"github.com/AltairaLabs/PromptKit/runtime/v2/prompt"
@@ -38,7 +37,7 @@ func main() {
 	case "completion":
 		completionCommand()
 	case "version":
-		fmt.Printf("packc %s\n", version)
+		fmt.Printf("packc %s\n", packcVersion())
 	case "help", "--help", "-h":
 		printUsage()
 	default:
@@ -54,26 +53,28 @@ func printUsage() {
 Usage:
   packc compile [options]         Compile ALL prompts from arena.yaml into a single pack
   packc compile-prompt [options]  Compile a single prompt to pack format
-  packc validate <pack-file>      Validate a pack file
+  packc validate <pack-file>...   Validate one or more pack files
   packc inspect <pack-file>       Display pack information
   packc version                   Show version
   packc help                      Show this help
   packc completion <shell>        Generate shell completion script (bash, zsh, fish, powershell)
 
 Compile Command (main):
-  packc compile [-c <arena.yaml>] [-o <pack-file>] [--id <pack-id>]
+  packc compile [-c <arena.yaml>] [-o <pack-file>] [--id <pack-id>] [--pack-version <semver>]
 
   Options:
-    -c, --config  Path to arena.yaml file (default: config.arena.yaml)
-    -o, --output  Output pack file path (default: {id}.pack.json)
-        --id      Pack ID (default: current folder name, sanitized)
+    -c, --config        Path to arena.yaml file (default: config.arena.yaml)
+    -o, --output        Output pack file path (default: {id}.pack.json)
+        --id            Pack ID (default: current folder name, sanitized)
+        --pack-version  Pack version, e.g. 1.2.0 (default: v1.0.0)
 
 Compile Prompt Command (single prompt):
-  packc compile-prompt -p <yaml-file> -o <json-file>
+  packc compile-prompt -p <yaml-file> -o <json-file> [--pack-version <semver>]
 
   Options:
-    -p, --prompt  Path to prompt YAML file (required)
-    -o, --output  Output pack file path (required)
+    -p, --prompt        Path to prompt YAML file (required)
+    -o, --output        Output pack file path (required)
+        --pack-version  Pack version (default: the prompt's spec.version)
 
 Examples:
   # Compile using all defaults (config.arena.yaml, folder name as id)
@@ -83,13 +84,14 @@ Examples:
   packc compile -c arena.yaml
 
   # Compile with all options specified
-  packc compile -c arena.yaml -o packs/customer-support-pack.json --id customer-support
+  packc compile -c arena.yaml -o packs/customer-support-pack.json --id customer-support --pack-version 1.2.0
 
   # Compile single prompt
   packc compile-prompt -p prompts/support.yaml -o packs/support.json
 
-  # Validate a pack
+  # Validate a pack, or several
   packc validate packs/support.json
+  packc validate packs/*.pack.json
 
   # Inspect a pack
   packc inspect packs/support.json
@@ -101,9 +103,10 @@ Examples:
 
 // compileFlags holds the parsed flags for the compile command.
 type compileFlags struct {
-	configFile string
-	outputFile string
-	packID     string
+	configFile  string
+	outputFile  string
+	packID      string
+	packVersion string
 }
 
 // getDefaultPackID returns a default pack ID based on the current directory name.
@@ -115,12 +118,17 @@ func getDefaultPackID() string {
 	return compiler.SanitizePackID(filepath.Base(cwd))
 }
 
+// packVersionUsage is the help text for --pack-version on both compile commands.
+const packVersionUsage = "Pack version, a semantic version such as 1.2.0 (default: v1.0.0 for compile, " +
+	"the prompt's spec.version for compile-prompt)"
+
 // parseCompileFlags parses and validates compile command flags.
 func parseCompileFlags() compileFlags {
 	fs := pflag.NewFlagSet("compile", pflag.ExitOnError)
 	configFile := fs.StringP("config", "c", "config.arena.yaml", "Path to arena.yaml file")
 	outputFile := fs.StringP("output", "o", "", "Output pack file path (default: {id}.pack.json)")
 	packID := fs.String("id", "", "Pack ID (default: current folder name, sanitized)")
+	packVersion := fs.String("pack-version", "", packVersionUsage)
 
 	if err := fs.Parse(os.Args[2:]); err != nil {
 		fmt.Fprintf(os.Stderr, "Error parsing flags: %v\n", err)
@@ -139,21 +147,25 @@ func parseCompileFlags() compileFlags {
 	}
 
 	return compileFlags{
-		configFile: *configFile,
-		outputFile: resolvedOutput,
-		packID:     resolvedID,
+		configFile:  *configFile,
+		outputFile:  resolvedOutput,
+		packID:      resolvedID,
+		packVersion: *packVersion,
 	}
 }
 
 func compileCommand() {
 	flags := parseCompileFlags()
 
-	compilerVer := fmt.Sprintf("packc-%s", version)
-
-	result, err := compiler.Compile(flags.configFile,
+	opts := []compiler.Option{
 		compiler.WithPackID(flags.packID),
-		compiler.WithCompilerVersion(compilerVer),
-	)
+		compiler.WithCompilerVersion(compilerVersionString()),
+	}
+	if flags.packVersion != "" {
+		opts = append(opts, compiler.WithPackVersion(flags.packVersion))
+	}
+
+	result, err := compiler.Compile(flags.configFile, opts...)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Compilation failed: %v\n", err)
 		os.Exit(1)
@@ -173,10 +185,16 @@ func compileCommand() {
 	printPackSummary(result.Pack, flags.outputFile)
 }
 
+// compilerVersionString is the compilation.compiled_with value packc stamps.
+func compilerVersionString() string {
+	return "packc-" + packcVersion()
+}
+
 func compilePromptCommand() {
 	fs := pflag.NewFlagSet("compile-prompt", pflag.ExitOnError)
 	promptFile := fs.StringP("prompt", "p", "", "Path to prompt YAML file")
 	outputFile := fs.StringP("output", "o", "", "Output pack file path")
+	packVersion := fs.String("pack-version", "", packVersionUsage)
 
 	if err := fs.Parse(os.Args[2:]); err != nil {
 		fmt.Fprintf(os.Stderr, "Error parsing flags: %v\n", err)
@@ -185,179 +203,149 @@ func compilePromptCommand() {
 
 	if *promptFile == "" || *outputFile == "" {
 		fmt.Fprintln(os.Stderr, "Error: --prompt and --output are required")
-		fs.Usage()
+		fmt.Fprintln(os.Stderr, "Usage: packc compile-prompt -p <yaml-file> -o <json-file>")
+		fs.PrintDefaults()
 		os.Exit(1)
 	}
 
-	// Read and parse prompt file
-	data, err := os.ReadFile(*promptFile)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error reading prompt file: %v\n", err)
-		os.Exit(1)
+	opts := []compiler.Option{compiler.WithCompilerVersion(compilerVersionString())}
+	if *packVersion != "" {
+		opts = append(opts, compiler.WithPackVersion(*packVersion))
 	}
 
-	promptConfig, err := prompt.ParseConfig(data)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error parsing prompt config: %v\n", err)
-		os.Exit(1)
+	fmt.Printf("Compiling prompt %s to pack...\n", *promptFile)
+	result := compiler.CompilePromptFile(*promptFile, opts...)
+	for _, w := range result.Warnings {
+		fmt.Printf("⚠ %s\n", w)
 	}
-
-	taskType := promptConfig.Spec.TaskType
-
-	// Validate media references
-	promptDir := filepath.Dir(*promptFile)
-	warnings := validateMediaReferences(promptConfig, promptDir)
-	if len(warnings) > 0 {
-		fmt.Printf("⚠ Media validation warnings:\n")
-		for _, w := range warnings {
-			fmt.Printf(warningFormat, w)
-		}
-	}
-
-	// Create memory repository and register the prompt
-	memRepo, err := buildMemoryRepo(&arenaconfig.Config{
-		LoadedPromptConfigs: map[string]*arenaconfig.PromptConfigData{
-			taskType: {
-				FilePath: *promptFile,
-				Config:   promptConfig,
-			},
-		},
-	})
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
-		os.Exit(1)
-	}
-
-	// Create registry with memory repository
-	registry := prompt.NewRegistryWithRepository(memRepo)
-
-	// Create pack compiler and compile
-	packCompiler := prompt.NewPackCompiler(registry)
-
-	fmt.Printf("Compiling prompt '%s' to pack...\n", taskType)
-
-	if err := packCompiler.CompileToFile(taskType, *outputFile, fmt.Sprintf("packc-%s", version)); err != nil {
+	if err := result.Err(); err != nil {
 		fmt.Fprintf(os.Stderr, "Compilation failed: %v\n", err)
+		os.Exit(1)
+	}
+
+	if err := writePackFile(*outputFile, result.JSON); err != nil {
+		fmt.Fprintf(os.Stderr, "Failed to write pack file: %v\n", err)
 		os.Exit(1)
 	}
 
 	fmt.Printf("✓ Pack compiled successfully: %s\n", *outputFile)
 }
 
-func validateCommand() {
-	if len(os.Args) < minArgsWithPackArg {
+// packFileArgs returns the pack-file arguments to validate or inspect, or nil
+// after printing usage when they asked for help.
+func packFileArgs(usage string) []string {
+	args := os.Args[2:]
+	for _, a := range args {
+		if a == "-h" || a == "--help" {
+			fmt.Println(usage)
+			return nil
+		}
+	}
+	if len(args) == 0 {
 		fmt.Fprintln(os.Stderr, "Error: pack file path required")
-		fmt.Fprintln(os.Stderr, "Usage: packc validate <pack-file>")
+		fmt.Fprintln(os.Stderr, usage)
 		os.Exit(1)
 	}
+	return args
+}
 
-	packFile := os.Args[2]
+const validateUsage = `Usage: packc validate <pack-file> [<pack-file>...]
 
-	fmt.Printf("Validating pack: %s\n", packFile)
+Validates each pack file against the PromptPack schema and checks its structure.
+Exits 1 if any pack has an error.`
 
-	// Read the pack file for schema validation
-	packData, err := os.ReadFile(packFile) //nolint:gosec // packFile is from command line args
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error reading pack file: %v\n", err)
-		os.Exit(1)
+const inspectUsage = `Usage: packc inspect <pack-file>
+
+Displays a pack's prompts, tools, evals, skills, workflow, agents and metadata.`
+
+func validateCommand() {
+	packFiles := packFileArgs(validateUsage)
+	if packFiles == nil {
+		return
 	}
 
-	// Validate against PromptPack schema
-	fmt.Printf("Validating against PromptPack schema...\n")
-	schemaResult, err := ValidatePackAgainstSchema(packData)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "⚠ Schema validation could not be performed: %v\n", err)
-	} else if !schemaResult.Valid {
-		fmt.Fprintf(os.Stderr, "✗ Pack failed schema validation:\n")
-		for _, validationErr := range schemaResult.Errors {
-			fmt.Fprintf(os.Stderr, "  - %s\n", validationErr)
+	failed := 0
+	for i, packFile := range packFiles {
+		if i > 0 {
+			fmt.Println()
 		}
-		os.Exit(1)
-	} else {
-		fmt.Printf("✓ Schema validation passed\n")
-	}
-
-	// Load and validate pack structure
-	pack, err := prompt.LoadPack(packFile)
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Error loading pack: %v\n", err)
-		os.Exit(1)
-	}
-
-	warnings := pack.Validate()
-
-	// Get workflow-specific result for error/warning distinction
-	wfResult := pack.ValidateWorkflow()
-	wfIssueCount := len(wfResult.Errors) + len(wfResult.Warnings)
-
-	// Governance warnings (an undeclared vocabulary prefix) never block.
-	govResult := pack.ValidateGovernance()
-
-	// Every other issue is a blocking error
-	nonWFCount := len(warnings) - wfIssueCount - len(govResult.Warnings)
-	hasErrors := nonWFCount > 0 || wfResult.HasErrors()
-
-	if hasErrors {
-		fmt.Fprintf(os.Stderr, "✗ Pack validation failed:\n")
-		for _, w := range warnings {
-			fmt.Fprintf(os.Stderr, warningFormat, w)
-		}
-		os.Exit(1)
-	}
-
-	// Validate skills configuration
-	packDir := filepath.Dir(packFile)
-	skillErrs, skillWarnings := runSkillValidation(pack, packDir)
-	if len(skillErrs) > 0 {
-		fmt.Fprintf(os.Stderr, "✗ Skill validation errors:\n")
-		for _, e := range skillErrs {
-			fmt.Fprintf(os.Stderr, "  - %s\n", e)
-		}
-		os.Exit(1)
-	}
-	for _, w := range skillWarnings {
-		fmt.Printf("⚠ %s\n", w)
-	}
-
-	if len(govResult.Warnings) > 0 {
-		fmt.Printf("⚠ Governance warnings:\n")
-		for _, w := range govResult.Warnings {
-			fmt.Printf(warningFormat, w)
+		if !validatePackFile(packFile) {
+			failed++
 		}
 	}
 
-	// Workflow warnings are informational (PascalCase, cycles)
-	if len(wfResult.Warnings) > 0 {
-		fmt.Printf("✓ Pack structure is valid\n")
-		fmt.Printf("⚠ Workflow warnings:\n")
-		for _, w := range wfResult.Warnings {
-			fmt.Printf("  - %s\n", w)
-		}
-	} else {
-		fmt.Println("✓ Pack structure is valid")
+	if len(packFiles) > 1 {
+		fmt.Printf("\n%d of %d packs valid\n", len(packFiles)-failed, len(packFiles))
+	}
+	if failed > 0 {
+		os.Exit(1)
 	}
 }
 
-func inspectCommand() {
-	if len(os.Args) < minArgsWithPackArg {
-		fmt.Fprintln(os.Stderr, "Error: pack file path required")
-		fmt.Fprintln(os.Stderr, "Usage: packc inspect <pack-file>")
-		os.Exit(1)
+// validatePackFile validates one pack and prints the result, reporting whether
+// it is valid.
+func validatePackFile(packFile string) bool {
+	fmt.Printf("Validating pack: %s\n", packFile)
+
+	result := compiler.ValidatePackFile(packFile)
+
+	schemaFailed := false
+	for _, p := range result.Errors {
+		if p.Stage == compiler.StagePackSchema {
+			schemaFailed = true
+		}
+	}
+	if result.Pack != nil && !schemaFailed {
+		fmt.Println("✓ Schema validation passed")
 	}
 
-	packFile := os.Args[2]
+	for _, w := range result.Warnings {
+		fmt.Printf("⚠ %s\n", w)
+	}
+
+	if len(result.Errors) > 0 {
+		fmt.Fprintf(os.Stderr, "✗ Pack validation failed: %s\n", packFile)
+		for _, p := range result.Errors {
+			fmt.Fprintf(os.Stderr, warningFormat, p)
+		}
+		return false
+	}
+
+	fmt.Println("✓ Pack structure is valid")
+	return true
+}
+
+func inspectCommand() {
+	packFiles := packFileArgs(inspectUsage)
+	if packFiles == nil {
+		return
+	}
+	if len(packFiles) > 1 {
+		fmt.Fprintln(os.Stderr, "Error: inspect takes one pack file")
+		fmt.Fprintln(os.Stderr, inspectUsage)
+		os.Exit(1)
+	}
+	packFile := packFiles[0]
 
 	pack, err := prompt.LoadPack(packFile)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error loading pack: %v\n", err)
+		os.Exit(1)
+	}
+	if pack.ID == "" && len(pack.Prompts) == 0 {
+		fmt.Fprintf(os.Stderr, "Error: %s is not a PromptPack (no id and no prompts)\n", packFile)
 		os.Exit(1)
 	}
 
 	printPackInfo(pack)
 	printTemplateEngine(pack)
 	printPrompts(pack)
+	printTools(pack)
 	printFragments(pack)
+	printEvals(pack)
+	printSkills(pack)
 	printWorkflow(pack)
+	printCompositions(pack)
 	printAgents(pack)
 	printMetadata(pack)
 	printCompilationInfo(pack)
@@ -404,10 +392,10 @@ _packc_completions() {
 
     case "${prev}" in
         compile)
-            COMPREPLY=($(compgen -W "-c --config -o --output --id" -- "${cur}"))
+            COMPREPLY=($(compgen -W "-c --config -o --output --id --pack-version" -- "${cur}"))
             ;;
         compile-prompt)
-            COMPREPLY=($(compgen -W "-p --prompt -o --output" -- "${cur}"))
+            COMPREPLY=($(compgen -W "-p --prompt -o --output --pack-version" -- "${cur}"))
             ;;
         -c|--config)
             COMPREPLY=($(compgen -f -X '!*.yaml' -- "${cur}"))
@@ -459,14 +447,16 @@ _packc() {
                         '--config[Path to arena.yaml file]:config file:_files -g "*.yaml"' \
                         '-o[Output pack file path]:output file:_files -g "*.json"' \
                         '--output[Output pack file path]:output file:_files -g "*.json"' \
-                        '--id[Pack ID]:pack id:'
+                        '--id[Pack ID]:pack id:' \
+                        '--pack-version[Pack version]:pack version:'
                     ;;
                 compile-prompt)
                     _arguments \
                         '-p[Path to prompt YAML file]:prompt file:_files -g "*.yaml"' \
                         '--prompt[Path to prompt YAML file]:prompt file:_files -g "*.yaml"' \
                         '-o[Output pack file path]:output file:_files -g "*.json"' \
-                        '--output[Output pack file path]:output file:_files -g "*.json"'
+                        '--output[Output pack file path]:output file:_files -g "*.json"' \
+                        '--pack-version[Pack version]:pack version:'
                     ;;
                 validate|inspect)
                     _arguments '*:pack file:_files -g "*.json"'
@@ -498,10 +488,12 @@ complete -c packc -n '__fish_use_subcommand' -a 'completion' -d 'Generate shell 
 complete -c packc -n '__fish_seen_subcommand_from compile' -s c -l config -d 'Path to arena.yaml file' -r -F
 complete -c packc -n '__fish_seen_subcommand_from compile' -s o -l output -d 'Output pack file path' -r -F
 complete -c packc -n '__fish_seen_subcommand_from compile' -l id -d 'Pack ID' -r
+complete -c packc -n '__fish_seen_subcommand_from compile' -l pack-version -d 'Pack version' -r
 
 # compile-prompt options
 complete -c packc -n '__fish_seen_subcommand_from compile-prompt' -s p -l prompt -d 'Path to prompt YAML file' -r -F
 complete -c packc -n '__fish_seen_subcommand_from compile-prompt' -s o -l output -d 'Output pack file path' -r -F
+complete -c packc -n '__fish_seen_subcommand_from compile-prompt' -l pack-version -d 'Pack version' -r
 
 # completion shells
 complete -c packc -n '__fish_seen_subcommand_from completion' -a 'bash zsh fish powershell'
@@ -536,13 +528,14 @@ Register-ArgumentCompleter -Native -CommandName packc -ScriptBlock {
 
     switch ($command) {
         'compile' {
-            $opts = @('-c', '--config', '-o', '--output', '--id')
+            $opts = @('-c', '--config', '-o', '--output', '--id', '--pack-version')
             $opts | Where-Object { $_ -like "$wordToComplete*" } | ForEach-Object {
                 [System.Management.Automation.CompletionResult]::new($_, $_, 'ParameterName', $_)
             }
         }
         'compile-prompt' {
-            @('-p', '--prompt', '-o', '--output') | Where-Object { $_ -like "$wordToComplete*" } | ForEach-Object {
+            $opts = @('-p', '--prompt', '-o', '--output', '--pack-version')
+            $opts | Where-Object { $_ -like "$wordToComplete*" } | ForEach-Object {
                 [System.Management.Automation.CompletionResult]::new($_, $_, 'ParameterName', $_)
             }
         }

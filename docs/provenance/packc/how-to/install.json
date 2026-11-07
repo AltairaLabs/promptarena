@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/packc/how-to/install.md",
- "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
  "claims": [
   {
    "id": 1,
@@ -43,12 +43,10 @@
   },
   {
    "id": 6,
-   "claim": "go install/source builds report version 'dev' (packc dev, compiled_with packc-dev); release builds set main.version",
+   "claim": "version: ldflags-stamped for releases, else module version from debug.ReadBuildInfo, else dev",
    "verdict": "true",
    "evidence": [
-    ".goreleaser.yml:41-57",
-    "packc/main.go:21",
-    "packc/main_interactive.go:40-41"
+    "packc/main.go"
    ]
   },
   {
@@ -56,7 +54,7 @@
    "claim": "packc completion supports bash, zsh, fish, powershell",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go:368-391"
+    "packc/main_interactive.go"
    ]
   },
   {
@@ -64,8 +62,7 @@
    "claim": "packc commands are compile, compile-prompt, validate, inspect, version, help, completion",
    "verdict": "true",
    "evidence": [
-    "packc/main_interactive.go:29-48",
-    "packc/main_interactive.go:51-100"
+    "packc/main_interactive.go"
    ]
   }
  ]

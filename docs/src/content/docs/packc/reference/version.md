@@ -4,10 +4,9 @@ description: Output of packc version, and how the version reaches the compilatio
 sidebar:
   order: 5
 verified:
-  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
   sources:
     - .goreleaser.yml
-    - Makefile
     - npm/packc/package.json
     - packc/main.go
     - packc/main_interactive.go
@@ -31,9 +30,11 @@ packc <version>
 | Build | `<version>` |
 |---|---|
 | A release binary: a GitHub release archive, the Homebrew cask or the npm package | the release version without its `v` prefix, for example `2.4.0` |
-| `go install`, `go build` or `make build-go` | `dev` |
+| `go install github.com/AltairaLabs/promptarena/v2/packc@<tag>` | the module version, for example `v2.4.0` |
+| `go build` or `make build-go` in a git checkout | the Go toolchain's pseudo-version for the commit, for example `v2.4.1-0.20261106191711-95b220864e8d`, with `+dirty` for uncommitted changes |
+| any build with no version information | `dev` |
 
-The version is set at link time with `-X main.version=...`. A build without that flag reports `dev`.
+A release build sets the version at link time with `-X main.version=...`. Without that flag, `packc` reads the module version Go records in the binary, and reports `dev` only when there is none.
 
 ## Version in compiled packs
 

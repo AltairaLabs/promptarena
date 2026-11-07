@@ -4,12 +4,13 @@ description: What a PromptPack .pack.json file contains, how its workflow block 
 sidebar:
   order: 1
 verified:
-  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
   sources:
-    - arena/arenaconfig/types.go
     - packc/compiler/check.go
     - packc/compiler/compiler.go
     - packc/compiler/helpers_integration.go
+    - packc/compiler/pack_fields.go
+    - packc/compiler/pack_file.go
     - packc/main_interactive.go
 ---
 
@@ -40,9 +41,9 @@ A pack is one JSON object. The schema requires five top-level fields:
 - `template_engine`: the template engine's `version` and the variable `syntax`, such as `{{variable}}`.
 - `prompts`: the prompts, keyed by task type.
 
-Everything else is optional: `$schema`, `description`, `fragments`, `tools`, `metadata`, `compilation`, `evals`, `workflow`, `agents`, `skills`, `compositions` and `requires`. `packc` writes `compilation` itself, recording the compiler version, the time and the schema version. `packc validate` is stricter than the schema here: it rejects a pack without `compilation`.
+Everything else is optional: `$schema`, `description`, `fragments`, `tools`, `metadata`, `compilation`, `evals`, `workflow`, `agents`, `skills`, `compositions` and `requires`. `packc` writes `compilation` itself, recording the compiler version, the time and the schema version. `packc validate` accepts a pack without `compilation` and prints a warning.
 
-A minimal pack that passes the schema (add a `compilation` block for `packc validate`):
+A minimal pack that passes the schema and `packc validate`:
 
 ```json
 {
@@ -140,9 +141,9 @@ The PromptKit runtime accepts workflow `version` 1 or 2. Version 2 also warns ab
 
 ## Versions
 
-A pack carries two kinds of version. `version` is the pack's own semantic version, and each prompt has its own. `packc compile` writes `v1.0.0` as the pack version on every build. `packc compile-prompt` uses the prompt's `spec.version`. To distinguish builds of the same pack, put the version in the output file name or the artifact tag.
+A pack carries two kinds of version. `version` is the pack's own semantic version, tracking the pack as a whole, and each prompt has its own. Set the pack version with `packc compile --pack-version 1.2.0`, typically from a release tag; without the flag, `packc compile` writes `v1.0.0`. `packc compile-prompt` uses the prompt's `spec.version` unless `--pack-version` is given.
 
-The format itself is versioned through `$schema` and `compilation.schema`. `packc compile` writes `$schema` as `https://promptpack.org/schema/latest/promptpack.schema.json` and `compilation.schema` as `v1`.
+The format itself is versioned through `$schema` and `compilation.schema`. Both `packc compile` and `packc compile-prompt` write `$schema` as `https://promptpack.org/schema/latest/promptpack.schema.json` and `compilation.schema` as `v1`.
 
 ## What the format buys you
 

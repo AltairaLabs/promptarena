@@ -4,7 +4,7 @@ description: Install the packc compiler with npm, Homebrew, go install or a rele
 sidebar:
   order: 1
 verified:
-  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
   sources:
     - .goreleaser.yml
     - Makefile
@@ -76,7 +76,7 @@ go build -o bin/packc ./packc
 packc version
 ```
 
-A release build (npm, Homebrew or an archive) prints its version, for example `packc 2.4.0`. A `go install` or source build prints `packc dev`, because only the release build sets the version string.
+A release build (npm, Homebrew or an archive) prints its version, for example `packc 2.4.0`. A `go install …@<tag>` build prints the module version from its build information, for example `packc v2.4.0`. A source build in a git checkout prints a pseudo-version for the commit, and a build with no version information at all prints `packc dev`.
 
 `packc help` prints the command list.
 
