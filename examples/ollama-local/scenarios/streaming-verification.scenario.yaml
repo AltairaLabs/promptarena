@@ -18,16 +18,15 @@ spec:
       content: "Write a detailed explanation of how neural networks learn, covering forward propagation, backpropagation, and gradient descent. Be thorough."
       assertions:
         - type: min_length
+          message: "Response should be substantial to verify streaming worked"
           params:
             min_chars: 500
-            message: "Response should be substantial to verify streaming worked"
         - type: content_includes
+          message: "Response should cover the requested topics"
           params:
             patterns:
               - "neural"
               - "gradient"
-            match_mode: all
-            message: "Response should cover the requested topics"
 
     # Test 2: Multi-paragraph response to verify chunk boundaries
     - role: user
@@ -40,46 +39,44 @@ spec:
         For each, explain what it does, its formula, and when to use it.
       assertions:
         - type: content_includes
+          message: "Response should cover all three activation functions"
           params:
             patterns:
               - "ReLU"
               - "sigmoid"
               - "tanh"
-            match_mode: all
-            message: "Response should cover all three activation functions"
         - type: min_length
+          message: "Response should be detailed enough"
           params:
             min_chars: 300
-            message: "Response should be detailed enough"
 
     # Test 3: Code generation with streaming (tests code block handling)
     - role: user
       content: "Write a Python implementation of a simple perceptron with forward and backward methods. Include comments explaining each step."
       assertions:
-        - type: content_includes
+        - type: content_includes_any
+          message: "Response should contain Python code"
           params:
             patterns:
               - "def"
               - "class"
               - "forward"
-            match_mode: any
-            message: "Response should contain Python code"
         - type: content_includes
+          message: "Response should mention weights"
           params:
             patterns:
               - "weight"
-            message: "Response should mention weights"
 
     # Test 4: Test streaming interruption handling (short response after long ones)
     - role: user
       content: "In one sentence, what is the vanishing gradient problem?"
       assertions:
         - type: max_length
+          message: "Response should be concise as requested"
           params:
             max_chars: 500
-            message: "Response should be concise as requested"
         - type: content_includes
+          message: "Response should mention gradient"
           params:
             patterns:
               - "gradient"
-            message: "Response should mention gradient"

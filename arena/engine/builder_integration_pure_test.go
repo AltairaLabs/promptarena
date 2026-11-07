@@ -48,6 +48,19 @@ func TestResolveMockPartsPaths(t *testing.T) {
 	})
 }
 
+func TestResolveMockFilePaths(t *testing.T) {
+	abs := filepath.Join("/already", "result.json")
+	tool := &tools.ToolDescriptor{MockResultFile: abs, MockTemplateFile: "mocks/t.tmpl"}
+	resolveMockFilePaths(tool, "/base")
+	assert.Equal(t, abs, tool.MockResultFile)
+	assert.Equal(t, filepath.Join("/base", "mocks/t.tmpl"), tool.MockTemplateFile)
+
+	unset := &tools.ToolDescriptor{MockTemplateFile: "rel.tmpl"}
+	resolveMockFilePaths(unset, "")
+	assert.Equal(t, "rel.tmpl", unset.MockTemplateFile)
+	assert.Empty(t, unset.MockResultFile)
+}
+
 func TestBuildMergedVariables(t *testing.T) {
 	de := &DuplexConversationExecutor{}
 

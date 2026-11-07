@@ -250,7 +250,8 @@
           "type": "string"
         },
         "project_stage": {
-          "type": "string"
+          "type": "string",
+          "description": "Deprecated: nothing reads ProjectStage. It stays loadable so existing\nscenarios keep working, and loading warns that it is ignored."
         }
       },
       "additionalProperties": false,
@@ -903,7 +904,12 @@
         },
         "consent_overrides": {
           "additionalProperties": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "grant",
+              "deny",
+              "timeout"
+            ]
           },
           "type": "object",
           "description": "ConsentOverrides controls consent simulation for client-side tools.\nKeys are tool names, values are \"grant\", \"deny\", or \"timeout\"."

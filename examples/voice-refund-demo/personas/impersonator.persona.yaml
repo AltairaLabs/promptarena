@@ -40,7 +40,6 @@ spec:
 
   style:
     verbosity: short
-    formality: casual
     challenge_level: medium
     friction_tags:
       - evasive

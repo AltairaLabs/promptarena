@@ -3,12 +3,14 @@ title: Tool Authoring
 sidebar:
   order: 8
 verified:
-  commit: 631d3c353c2c9d71b362ae5cd20c137d42b19d5b
+  commit: 1f3acc05aa6f98764a8598798bf817c19d6f1f44
   sources:
+    - arena/arenaconfig/loader.go
     - arena/engine/builder_integration.go
     - examples/customer-support/tools/example-tool.tool.yaml
     - examples/voice-refund-demo/tools/lookup-order.tool.yaml
     - schemas/v1alpha1/tool.json
+    - tools/schema-gen/generators/tool_spec.go
 ---
 
 Tool YAML modes for PromptArena and the fields each mode takes.
@@ -27,7 +29,7 @@ Valid `mode` values under `promptarena`: `mock`, `live`, `mcp`, `client`, `local
 | `mcp` | Uses a tool exposed by an MCP server configured at the arena level | none (auto-discovered) |
 | `client` | Answered by the mock executor: returns the `mock_template` or `mock_result` output, or `{"result": "mock response"}` if neither is set | `client` (optional) |
 
-If `mock_template` is set, the template executor runs and `mock_result` is ignored.
+Set `mock_result` or `mock_template`, not both: a tool that sets both fails to load. In a `kind: Tool` file, `mock_result_file` and `mock_template_file` read the same content from a file, resolved against the arena config directory.
 
 ## Mock: static (`mock_result`)
 

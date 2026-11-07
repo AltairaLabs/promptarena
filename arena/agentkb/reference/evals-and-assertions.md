@@ -72,7 +72,7 @@ Two envelopes carry that entry, and they are **not** the same schema:
 | `rest_eval` | turn | 0..1 raw signal | Calls an external REST endpoint to score the turn. |
 | `rest_eval_session` | session | 0..1 raw signal | Calls an external REST endpoint to score the session. |
 | `role_violation` | turn | 0..1 raw signal | Degree to which the output violates the expected role/persona. LLM judge required. |
-| `sentence_count` | turn | boolean gate | Output sentence count falls within the given range. |
+| `sentence_count` | turn | measurement | Counts the output's sentences. A measurement that always scores 1.0; it enforces no maximum, so as a guardrail it never fires. |
 | `skill_activated` | session | boolean gate | The named skill was activated. |
 | `skill_activation_order` | session | boolean gate | Skills were activated in the specified order. |
 | `skill_not_activated` | session | boolean gate | The named skill was not activated. |

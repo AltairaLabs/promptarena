@@ -24,6 +24,6 @@ spec:
       turns: 2
       assertions:
         - type: content_matches
+          message: "Should mention solar in the follow-up turns."
           params:
             pattern: "(?i)solar"
-            message: "Should mention solar in the follow-up turns."

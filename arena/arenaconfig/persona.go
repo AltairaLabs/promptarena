@@ -1,6 +1,7 @@
 package arenaconfig
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -270,6 +271,9 @@ func ParsePersonaYAML(data []byte, name string) (*UserPersonaPack, error) {
 
 // loadYAMLPersona loads a persona from YAML data (K8s manifest format required)
 func loadYAMLPersona(data []byte, filename string) (*UserPersonaPack, error) {
+	if err := checkSingleDocument(data, filename); err != nil {
+		return nil, err
+	}
 	temp, err := parseYAMLData(data, filename)
 	if err != nil {
 		return nil, err
@@ -309,9 +313,14 @@ func loadK8sManifest(tempMap map[string]interface{}, filename string) (*UserPers
 		return nil, fmt.Errorf("failed to convert K8s manifest to JSON for %s: %w", filename, err)
 	}
 
+	// Decoded strictly: the persona schema is closed, and an unknown key (a
+	// typo, or a style knob such as `formality` that nothing reads) used to load
+	// without a word and silently do nothing.
 	var personaConfig PersonaConfig
-	if err := json.Unmarshal(jsonData, &personaConfig); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal K8s manifest %s: %w", filename, err)
+	dec := json.NewDecoder(bytes.NewReader(jsonData))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&personaConfig); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal K8s manifest %s: %w%s", filename, err, unknownKeyHint(err))
 	}
 
 	if err := validateK8sManifest(&personaConfig, filename); err != nil {
@@ -343,11 +352,22 @@ func validateK8sManifest(personaConfig *PersonaConfig, filename string) error {
 // loadJSONPersona loads a persona from JSON data
 func loadJSONPersona(data []byte, filename string) (*UserPersonaPack, error) {
 	var persona UserPersonaPack
-	if err := json.Unmarshal(data, &persona); err != nil {
+	dec := json.NewDecoder(bytes.NewReader(data))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&persona); err != nil {
+		err = fmt.Errorf("%w%s", err, unknownKeyHint(err))
 		return nil, fmt.Errorf("failed to parse JSON persona file: %w", err)
 	}
 
 	return validateAndReturnPersona(&persona, filename)
+}
+
+// unknownKeyHint explains a strict-decode rejection of an unknown key.
+func unknownKeyHint(err error) string {
+	if !strings.Contains(err.Error(), "unknown field") {
+		return ""
+	}
+	return " (a persona file accepts only the keys in the persona schema; remove the key or fix its spelling)"
 }
 
 // validateAndReturnPersona validates a persona and returns it

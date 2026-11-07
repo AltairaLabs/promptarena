@@ -373,6 +373,28 @@ func TestEnableMockProviderMode_WithInvalidConfigFile(t *testing.T) {
 	}
 }
 
+// A misspelled key in the --mock-config file used to be ignored, leaving the
+// generic fallback reply; it is now rejected before any provider is replaced.
+func TestEnableMockProviderMode_RejectsUnknownMockKeys(t *testing.T) {
+	cfg := &arenaconfig.Config{LoadedProviders: map[string]*config.Provider{
+		"test-provider": {ID: "test-provider", Type: "openai", Model: "gpt-4"},
+	}}
+	providerRegistry := providers.NewRegistry()
+	providerRegistry.Register(mock.NewProvider("test-provider", "gpt-4", false))
+	eng, err := NewEngine(cfg, providerRegistry, nil, nil, nil, nil, nil)
+	if err != nil {
+		t.Fatalf("Failed to create engine: %v", err)
+	}
+	path := filepath.Join(t.TempDir(), "mock.yaml")
+	if err := os.WriteFile(path, []byte("default_response: hi\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	err = eng.EnableMockProviderMode(path)
+	if err == nil || !strings.Contains(err.Error(), "field default_response not found") {
+		t.Fatalf("expected an unknown-key error, got %v", err)
+	}
+}
+
 // fakeEventStore is a test-only in-memory implementation of events.EventStore.
 // Kept inside _test.go so it doesn't ship as a public type.
 type fakeEventStore struct {

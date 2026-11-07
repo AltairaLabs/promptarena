@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/agents/build-with-an-ai-agent.md",
- "commit": "3df344ffbc8c604e1a8935929c28499d778d19f0",
+ "commit": "1f3acc05aa6f98764a8598798bf817c19d6f1f44",
  "claims": [
   {
    "id": 1,
@@ -249,8 +249,8 @@
    "claim": "promptarena run --ci --formats json,markdown",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:176",
-    "arena/cmd/promptarena/run.go:407"
+    "arena/cmd/promptarena/run.go:177",
+    "arena/cmd/promptarena/run.go:409"
    ]
   },
   {
@@ -258,7 +258,7 @@
    "claim": "run accepts --ci",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:169"
+    "arena/cmd/promptarena/run.go:170"
    ]
   },
   {
@@ -266,8 +266,8 @@
    "claim": "run accepts --formats with values json and markdown",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:174",
-    "arena/cmd/promptarena/run.go:176"
+    "arena/cmd/promptarena/run.go:175",
+    "arena/cmd/promptarena/run.go:177"
    ]
   },
   {
@@ -345,7 +345,7 @@
    "claim": "run --ci writes results to the out/ directory",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:168",
+    "arena/cmd/promptarena/run.go:169",
     "examples/rag-agent/config.arena.yaml:39"
    ]
   },
@@ -354,7 +354,7 @@
    "claim": "out/results.md holds the summary and per-run JSON files hold detail",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:536"
+    "arena/cmd/promptarena/run.go:538"
    ]
   },
   {
@@ -362,7 +362,7 @@
    "claim": "Mock responses in mock-responses.yaml are keyed by each scenario's metadata.name",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:792"
+    "arena/engine/engine.go:797"
    ]
   },
   {
@@ -370,7 +370,7 @@
    "claim": "Tools, workflow state and memory run for real against mocked model output",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:760"
+    "arena/engine/engine.go:765"
    ]
   },
   {
@@ -390,7 +390,7 @@
    "claim": "run accepts --mock-provider",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:192"
+    "arena/cmd/promptarena/run.go:194"
    ]
   },
   {
@@ -398,9 +398,9 @@
    "claim": "--mock-provider replaces every provider with a generic mock that ignores canned responses",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:715",
-    "arena/engine/engine.go:736",
-    "arena/engine/engine.go:791"
+    "arena/engine/engine.go:720",
+    "arena/engine/engine.go:741",
+    "arena/engine/engine.go:796"
    ]
   },
   {
@@ -438,11 +438,11 @@
   },
   {
    "id": 54,
-   "claim": "Tool mode exec is a valid tool mode",
+   "claim": "Tool mode exec runs only in the PromptKit SDK, not in promptarena run",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/tool.json:321",
-    "schemas/v1alpha1/tool.json:342"
+    "arena/engine/builder_integration.go",
+    "tools/schema-gen/generators/tool_spec.go"
    ]
   },
   {
@@ -466,7 +466,7 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/run_interactive.go:327",
-    "arena/tui/tui.go:1018"
+    "arena/tui/tui.go:1022"
    ]
   },
   {

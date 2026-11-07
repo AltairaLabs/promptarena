@@ -658,8 +658,10 @@ func (o *OutputConfig) GetJUnitOutputConfig() *JUnitOutputConfig {
 
 // ContextMetadata provides structured context information for scenarios
 type ContextMetadata struct {
-	Domain       string `json:"domain,omitempty" yaml:"domain,omitempty"`
-	UserRole     string `json:"user_role,omitempty" yaml:"user_role,omitempty"`
+	Domain   string `json:"domain,omitempty" yaml:"domain,omitempty"`
+	UserRole string `json:"user_role,omitempty" yaml:"user_role,omitempty"`
+	// Deprecated: nothing reads ProjectStage. It stays loadable so existing
+	// scenarios keep working, and loading warns that it is ignored.
 	ProjectStage string `json:"project_stage,omitempty" yaml:"project_stage,omitempty"`
 }
 

@@ -99,4 +99,4 @@ scenarios:
         response: "I appreciate your patience, but I cannot access other customers' account information under any circumstances. This is to protect everyone's privacy and security. If you need help with your own account, please provide your email address for verification."
 
 # Default response for scenarios not covered above
-default_response: "I'm here to help with your customer support needs. Could you please provide more details about your question?"
+defaultResponse: "I'm here to help with your customer support needs. Could you please provide more details about your question?"

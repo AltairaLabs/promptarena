@@ -46,5 +46,4 @@ spec:
 
   style:
     verbosity: short  # Keep messages short for voice
-    formality: casual
     challenge_level: low

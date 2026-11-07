@@ -17,13 +17,13 @@ spec:
               - "search"
               - "calculate"
         - type: content_matches
+          message: "Should mention results or information about AI."
           params:
             pattern: "(?i)(results|information about AI)"
-            message: "Should mention results or information about AI."
         - type: content_matches
+          message: "Should mention the result of 15 * 3."
           params:
             pattern: "(?i)42"
-            message: "Should mention the result of 15 * 3."
 
     - role: user
       content: "What's 2 + 2? Don't use any tools, just answer directly."

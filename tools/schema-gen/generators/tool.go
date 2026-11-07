@@ -16,6 +16,8 @@ func GenerateToolSchema() (interface{}, error) {
 		Customize: func(schema *jsonschema.Schema) {
 			addToolExample(schema)
 			applyToolManifestNamePattern(schema)
+			applyToolSpecMode(schema)
+			applyToolFileMocks(schema)
 		},
 	})
 }

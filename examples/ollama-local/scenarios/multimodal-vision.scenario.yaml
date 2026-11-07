@@ -24,9 +24,9 @@ spec:
             mime_type: image/jpeg
       assertions:
         - type: content_matches
+          message: "Response should acknowledge image"
           params:
             pattern: "(?i)(ok|yes|see|image|received)"
-            message: "Response should acknowledge image"
 
     # Turn 2: Short follow-up about a specific detail
     - role: user
@@ -35,9 +35,9 @@ spec:
           text: "What color is the sky?"
       assertions:
         - type: content_matches
+          message: "Response should describe sky color"
           params:
             pattern: "(?i)(blue|grey|gray|white|overcast|cloudy)"
-            message: "Response should describe sky color"
 
     # Turn 3: Ask about something NOT in first response
     - role: user
@@ -46,9 +46,9 @@ spec:
           text: "How many silos do you see?"
       assertions:
         - type: content_matches
+          message: "Response should count silos"
           params:
             pattern: "(?i)(one|two|three|1|2|3|silo)"
-            message: "Response should count silos"
 
     # Turn 4: Request detailed description to prove full image access
     - role: user
@@ -57,7 +57,7 @@ spec:
           text: "Now describe everything you see in this image in detail."
       assertions:
         - type: content_matches
+          message: "Detailed description should mention visual elements"
           params:
             pattern: "(?i)(silo|tank|industrial|sky|building|structure)"
-            message: "Detailed description should mention visual elements"
 

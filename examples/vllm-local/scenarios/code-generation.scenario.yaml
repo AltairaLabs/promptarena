@@ -13,17 +13,17 @@ spec:
       content: "Write a Python function that calculates the factorial of a number."
       assertions:
         - type: content_includes
+          message: "Response should contain a Python function definition"
           params:
             patterns:
               - "def"
               - "factorial"
-            message: "Response should contain a Python function definition"
 
     - role: user
       content: "Can you add error handling to check for negative numbers?"
       assertions:
         - type: content_includes
+          message: "Response should include conditional logic"
           params:
             patterns:
               - "if"
-            message: "Response should include conditional logic"

@@ -13,27 +13,25 @@ spec:
       content: "Write a Python function that checks if a number is prime. Just the function, no explanation."
       assertions:
         - type: content_includes
+          message: "Response should contain a Python function"
           params:
             patterns:
               - "def"
               - "return"
-            message: "Response should contain a Python function"
-        - type: content_includes
+        - type: content_includes_any
+          message: "Response should mention prime"
           params:
             patterns:
               - "prime"
               - "Prime"
-            match_mode: any
-            message: "Response should mention prime"
 
     - role: user
       content: "Now write a simple 'Hello World' program in Go."
       assertions:
-        - type: content_includes
+        - type: content_includes_any
+          message: "Response should contain Go code elements"
           params:
             patterns:
               - "package"
               - "fmt"
               - "Println"
-            match_mode: any
-            message: "Response should contain Go code elements"

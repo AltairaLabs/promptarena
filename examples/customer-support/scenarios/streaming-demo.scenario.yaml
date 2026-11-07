@@ -16,9 +16,9 @@ spec:
       content: "How does your support system work?"
       assertions:
         - type: content_matches
+          message: "Should describe support system"
           params:
             pattern: "(?i)(support|help|assist|team|process|work)"
-            message: "Should describe support system"
     
     # Turn 2: Override to disable streaming for a quick question
     - role: user
@@ -26,9 +26,9 @@ spec:
       streaming: false
       assertions:
         - type: content_matches
+          message: "Should provide support hours information"
           params:
             pattern: "(?i)(hours|available|24|time|business)"
-            message: "Should provide support hours information"
     
     # Turn 3: Explicitly enable streaming (same as default, but shows you can be explicit)
     - role: user
@@ -36,18 +36,18 @@ spec:
       streaming: true
       assertions:
         - type: content_matches
+          message: "Should provide customer help example"
           params:
             pattern: "(?i)(customer|help|example|problem|issue|assist)"
-            message: "Should provide customer help example"
     
     # Turn 4: Uses scenario-level streaming (true)
     - role: user
       content: "Thank you for the information!"
       assertions:
         - type: content_matches
+          message: "Should acknowledge thanks professionally"
           params:
             pattern: "(?i)(welcome|thank|help|glad|happy|pleasure)"
-            message: "Should acknowledge thanks professionally"
 
   context:
     goal: "Demonstrate streaming behavior with mixed turn configurations"
@@ -56,7 +56,6 @@ spec:
   context_metadata:
     domain: "customer support"
     user_role: "support agent"
-    project_stage: "demo"
 
   constraints:
     max_sentences: 10

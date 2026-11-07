@@ -62,9 +62,9 @@ turns:
           mime_type: audio/L16
     assertions:
       - type: content_matches
+        message: "Assistant should greet or offer help"
         params:
           pattern: "(?i)(hello|hi|help|assist|Nova)"
-          message: "Assistant should greet or offer help"
 
   - role: selfplay-user
     persona: busy-professional

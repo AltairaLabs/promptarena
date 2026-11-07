@@ -30,6 +30,8 @@ func GenerateArenaSchema() (interface{}, error) {
 			applyWorkflowEnums(schema)
 			applyCompositionShapes(schema)
 			applyInlineToolNamePattern(schema)
+			applyToolSpecMode(schema)
+			applyConsentOverrideEnum(schema)
 		},
 	})
 }

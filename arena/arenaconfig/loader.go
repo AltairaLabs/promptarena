@@ -14,6 +14,7 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/v2/prompt"
 
 	"github.com/AltairaLabs/promptarena/v2/arena/configschema"
+	"github.com/AltairaLabs/promptarena/v2/arena/consent"
 )
 
 const (
@@ -290,6 +291,9 @@ func (c *Config) loadProviderResources(filename string) error {
 	if err := c.mergeProviderSpecs(); err != nil {
 		return err
 	}
+	if err := c.validateMockConfigs(); err != nil {
+		return err
+	}
 	if err := c.loadTTSProviders(filename); err != nil {
 		return err
 	}
@@ -328,7 +332,32 @@ func (c *Config) loadPromptScenarioResources(filename string) error {
 	if err := c.loadInlineScenarioData(filename); err != nil {
 		return err
 	}
+	if err := c.validateConsentOverrides(); err != nil {
+		return err
+	}
 	return c.validateScenarioVoices()
+}
+
+// validateConsentOverrides rejects a consent_overrides value the consent hook
+// does not understand. It used to treat every unknown value as a grant, so a
+// typo such as `denied` silently let the tool run.
+func (c *Config) validateConsentOverrides() error {
+	for _, name := range sortedKeys(c.LoadedScenarios) {
+		s := c.LoadedScenarios[name]
+		if s == nil {
+			continue
+		}
+		for i := range s.Turns {
+			overrides := s.Turns[i].ConsentOverrides
+			for _, tool := range sortedKeys(overrides) {
+				if action := overrides[tool]; !consent.IsValidAction(action) {
+					return fmt.Errorf("scenario %s: turns[%d].consent_overrides.%s: unknown value %q (want %s)",
+						name, i, tool, action, strings.Join(consent.Actions, ", "))
+				}
+			}
+		}
+	}
+	return nil
 }
 
 // loadEvalToolSkillResources loads evals and tools (file refs then inline
@@ -349,7 +378,41 @@ func (c *Config) loadEvalToolSkillResources(filename string) error {
 	if err := c.validateToolResultTargets(); err != nil {
 		return err
 	}
+	if err := c.validateToolMocks(); err != nil {
+		return err
+	}
 	return c.loadSkills(filename)
+}
+
+// validateToolMocks rejects a tool that sets both a static mock result and a
+// mock template. The runtime renders the template whenever one is set and
+// ignores the result, so the second field is silently dead.
+func (c *Config) validateToolMocks() error {
+	for _, t := range c.LoadedTools {
+		var doc struct {
+			Metadata struct {
+				Name string `yaml:"name"`
+			} `yaml:"metadata"`
+			Spec struct {
+				MockResult       interface{} `yaml:"mock_result"`
+				MockResultFile   string      `yaml:"mock_result_file"`
+				MockTemplate     string      `yaml:"mock_template"`
+				MockTemplateFile string      `yaml:"mock_template_file"`
+			} `yaml:"spec"`
+		}
+		if yaml.Unmarshal(t.Data, &doc) != nil {
+			continue // a tool that does not parse is reported when it is registered
+		}
+		s := doc.Spec
+		hasResult := s.MockResult != nil || s.MockResultFile != ""
+		hasTemplate := s.MockTemplate != "" || s.MockTemplateFile != ""
+		if hasResult && hasTemplate {
+			return fmt.Errorf("tool %s (%s): set a static mock result (mock_result / mock_result_file) "+
+				"or a mock template (mock_template / mock_template_file), not both: "+
+				"the template is used and the result is ignored", doc.Metadata.Name, t.FilePath)
+		}
+	}
+	return nil
 }
 
 // validateToolResultTargets rejects tool_result_transforms on a client-mode
@@ -456,6 +519,9 @@ func checkFile(configType config.ConfigType, filename string) error {
 	data, err := os.ReadFile(filename) //nosec G304 -- operator-provided config file path is the loader's purpose
 	if err != nil {
 		return fmt.Errorf("failed to read %s: %w", filename, err)
+	}
+	if err := checkSingleDocument(data, filename); err != nil {
+		return err
 	}
 	if err := configschema.Check(configType, data); err != nil {
 		return fmt.Errorf("invalid %s file %s: %w", configType, filename, err)
@@ -851,6 +917,9 @@ func (c *Config) loadTools(configPath string) error {
 		// by the tool registry at load time, not by schema.
 		ext := strings.ToLower(filepath.Ext(ref.File))
 		if ext == extYAML || ext == extYML {
+			if err := checkSingleDocument(data, ref.File); err != nil {
+				return err
+			}
 			if err := configschema.Check(config.ConfigTypeTool, data); err != nil {
 				return fmt.Errorf(errSchemaValidationFailed, ref.File, err)
 			}

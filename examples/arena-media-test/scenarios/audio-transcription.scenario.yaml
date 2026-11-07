@@ -18,11 +18,11 @@ spec:
         mime_type: audio/wav
     assertions:
     - type: content_includes
+      message: Response should mention audio or transcription
       params:
         patterns:
         - audio
         - transcri
-        message: Response should mention audio or transcription
   - role: user
     parts:
     - type: text
@@ -33,10 +33,10 @@ spec:
         mime_type: audio/wav
     assertions:
     - type: content_includes
+      message: Response should discuss audio format
       params:
         patterns:
         - audio
-        message: Response should discuss audio format
   - role: user
     parts:
     - type: text

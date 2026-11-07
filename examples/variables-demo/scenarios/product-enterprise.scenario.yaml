@@ -28,37 +28,37 @@ spec:
       content: "Tell me about your product and support offering"
       assertions:
         - type: content_includes
+          message: "Should mention Enterprise product variant"
           params:
             patterns:
               - "CloudSync Enterprise"
               - "enterprise"
-            message: "Should mention Enterprise product variant"
 
     - role: user
       content: "When can I reach support?"
       assertions:
         - type: content_includes
+          message: "Should mention premium support hours with account manager"
           params:
             patterns:
               - "24/7"
               - "account manager"
-            message: "Should mention premium support hours with account manager"
 
     - role: user
       content: "What's the warranty coverage?"
       assertions:
         - type: content_includes
+          message: "Should mention enhanced warranty (3 years with SLA)"
           params:
             patterns:
               - "3 year"
               - "SLA"
-            message: "Should mention enhanced warranty (3 years with SLA)"
 
     - role: user
       content: "How long do I have to return it?"
       assertions:
         - type: content_includes
+          message: "Should mention extended return window (60 days) instead of default"
           params:
             patterns:
               - "60"
-            message: "Should mention extended return window (60 days) instead of default"

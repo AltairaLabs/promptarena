@@ -46,9 +46,9 @@ spec:
             mime_type: audio/L16
       assertions:
         - type: content_matches
+          message: "Assistant should greet or offer help"
           params:
             pattern: "(?i)(hello|hi|help|assist|Nova)"
-            message: "Assistant should greet or offer help"
 
     # Selfplay: busy professional asks about weather, calendar, reminders
     # TTS converts generated text to audio for duplex input
@@ -58,32 +58,32 @@ spec:
       assertions:
         # Each turn should get a substantive response
         - type: content_matches
+          message: "Response should have meaningful content"
           params:
             pattern: ".{20,}"
-            message: "Response should have meaningful content"
 
   # Conversation-level assertions - verify tools were called
   conversation_assertions:
     - type: tools_called
+      message: "Should call get_weather tool for weather query"
       params:
         tool_names:
           - get_weather
         min_calls: 1
-        message: "Should call get_weather tool for weather query"
 
     - type: tools_called
+      message: "Should call get_calendar_events for schedule query"
       params:
         tool_names:
           - get_calendar_events
         min_calls: 1
-        message: "Should call get_calendar_events for schedule query"
 
     - type: tools_called
+      message: "Should call set_reminder for reminder request"
       params:
         tool_names:
           - set_reminder
         min_calls: 1
-        message: "Should call set_reminder for reminder request"
 
   context:
     goal: "Test tool calling in duplex streaming mode with selfplay"

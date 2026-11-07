@@ -1,13 +1,13 @@
 {
  "page": "docs/src/content/docs/arena/how-to/providers/use-mock-providers.md",
- "commit": "0dbee6290db4e4de3bff3101f260fd614f81c924",
+ "commit": "1f3acc05aa6f98764a8598798bf817c19d6f1f44",
  "claims": [
   {
    "id": 1,
    "claim": "Mock providers give deterministic, predictable responses",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:738",
+    "arena/engine/engine.go:741",
     "examples/guardrails-test/mock-responses.yaml:1"
    ]
   },
@@ -16,7 +16,7 @@
    "claim": "Mock providers work without an internet connection",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:762"
+    "arena/engine/engine.go:765"
    ]
   },
   {
@@ -24,7 +24,7 @@
    "claim": "promptarena run --mock-provider",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:192"
+    "arena/cmd/promptarena/run.go:194"
    ]
   },
   {
@@ -32,7 +32,7 @@
    "claim": "--mock-provider is a flag of the run subcommand",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:192"
+    "arena/cmd/promptarena/run.go:194"
    ]
   },
   {
@@ -41,8 +41,8 @@
    "verdict": "false",
    "evidence": [
     "arena/cmd/promptarena/run_interactive.go:284",
-    "arena/engine/engine.go:719",
-    "arena/engine/engine.go:793"
+    "arena/engine/engine.go:722",
+    "arena/engine/engine.go:796"
    ]
   },
   {
@@ -50,7 +50,7 @@
    "claim": "The mock provider simulates only the LLM decision; tools called by the mock still execute for real through the tool loop",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:446"
+    "arena/turnexecutors/pipeline_stages_integration.go:454"
    ]
   },
   {
@@ -58,7 +58,7 @@
    "claim": "--mock-config is a flag that takes a mock responses file",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:193"
+    "arena/cmd/promptarena/run.go:195"
    ]
   },
   {
@@ -107,8 +107,8 @@
    "claim": "promptarena run --mock-provider --mock-config mock-responses.yaml",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:192",
-    "arena/cmd/promptarena/run.go:193"
+    "arena/cmd/promptarena/run.go:194",
+    "arena/cmd/promptarena/run.go:195"
    ]
   },
   {
@@ -132,8 +132,8 @@
    "claim": "spec.type mock selects the mock provider type",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:318",
-    "arena/engine/builder_integration.go:377"
+    "arena/engine/builder_integration.go:323",
+    "arena/engine/builder_integration.go:388"
    ]
   },
   {
@@ -158,9 +158,9 @@
    "claim": "additional_config.mock_config points to a mock file, resolved relative to the arena config directory",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:265",
-    "arena/engine/builder_integration.go:321",
-    "arena/engine/engine.go:802"
+    "arena/engine/builder_integration.go:270",
+    "arena/engine/builder_integration.go:326",
+    "arena/engine/engine.go:808"
    ]
   },
   {
@@ -168,7 +168,7 @@
    "claim": "tool_calls on a turn triggers real tool execution",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:446"
+    "arena/turnexecutors/pipeline_stages_integration.go:454"
    ]
   },
   {
@@ -244,7 +244,7 @@
    "claim": "promptarena run --scenario customer-support",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:28"
+    "arena/cmd/promptarena/run.go:29"
    ]
   },
   {
@@ -252,7 +252,7 @@
    "claim": "--override-provider from=to is a repeatable flag",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:196"
+    "arena/cmd/promptarena/run.go:198"
    ]
   },
   {
@@ -269,9 +269,9 @@
    "claim": "Overridden provider applies to candidate selection, self-play roles and judges",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:979",
+    "arena/arenaconfig/loader.go:982",
     "arena/cmd/promptarena/run_interactive.go:235",
-    "arena/engine/builder_integration.go:826",
+    "arena/engine/builder_integration.go:814",
     "arena/engine/conversation_executor.go:917"
    ]
   },
@@ -280,7 +280,7 @@
    "claim": "A judge that references a mock provider is used in the default run",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:979",
+    "arena/arenaconfig/loader.go:982",
     "arena/engine/conversation_executor.go:917"
    ]
   },
@@ -289,7 +289,7 @@
    "claim": "--override-provider mock-judge=claude makes the judge run against claude",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:984",
+    "arena/arenaconfig/loader.go:987",
     "arena/cmd/promptarena/provider_override.go:34"
    ]
   },
@@ -323,7 +323,7 @@
    "claim": "promptarena run --mock-provider --mock-config dev-mocks.yaml",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:192"
+    "arena/cmd/promptarena/run.go:194"
    ]
   },
   {
@@ -347,7 +347,7 @@
    "claim": "promptarena run --provider openai-gpt4",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:25"
+    "arena/cmd/promptarena/run.go:26"
    ]
   },
   {
@@ -377,7 +377,7 @@
    "claim": "promptarena run --provider openai-gpt4 --ci",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:25"
+    "arena/cmd/promptarena/run.go:26"
    ]
   },
   {
@@ -410,7 +410,7 @@
    "claim": "--provider selects which provider a run uses",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:25"
+    "arena/cmd/promptarena/run.go:26"
    ]
   },
   {
@@ -418,7 +418,7 @@
    "claim": "--override-provider swaps one provider for another at run time",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:196"
+    "arena/cmd/promptarena/run.go:198"
    ]
   },
   {
@@ -437,6 +437,24 @@
     "examples/customer-support/config.arena.yaml:11",
     "examples/customer-support/mock-responses.yaml:1",
     "examples/guardrails-test/providers/mock-provider.yaml:7"
+   ]
+  },
+  {
+   "id": 9001,
+   "claim": "A misspelled or snake_case mock file key such as default_response is an error when Arena loads the file",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go",
+    "arena/arenaconfig/mock_config_check.go"
+   ]
+  },
+  {
+   "id": 9002,
+   "claim": "promptarena validate checks a provider mock_config file; promptarena run also checks the --mock-config file",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/loader.go",
+    "arena/engine/engine.go"
    ]
   }
  ]

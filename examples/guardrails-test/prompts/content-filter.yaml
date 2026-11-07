@@ -21,7 +21,6 @@ spec:
           - damn
           - crap
           - hell
-        case_sensitive: false
 
     - type: length
       params:

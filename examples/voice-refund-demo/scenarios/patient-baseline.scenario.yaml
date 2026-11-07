@@ -39,9 +39,9 @@ spec:
       turns: 3
       assertions:
         - type: content_matches
+          message: "Each agent reply should have substantive content"
           params:
             pattern: ".{20,}"
-            message: "Each agent reply should have substantive content"
 
   conversation_assertions:
     - type: tools_called

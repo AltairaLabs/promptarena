@@ -868,7 +868,8 @@
           "type": "string"
         },
         "project_stage": {
-          "type": "string"
+          "type": "string",
+          "description": "Deprecated: nothing reads ProjectStage. It stays loadable so existing\nscenarios keep working, and loading warns that it is ignored."
         }
       },
       "additionalProperties": false,
@@ -4495,7 +4496,7 @@
         "output_schema": true,
         "mode": {
           "type": "string",
-          "description": "Execution mode. One of: 'mock' (use mock_result or mock_template) - 'live' (HTTP via 'http') - 'mcp' (MCP server) - 'exec' (subprocess) - 'client' (client-side handler)."
+          "description": "Execution mode. One of: 'mock' (use mock_result or mock_template) - 'live' (HTTP via 'http') - 'mcp' (MCP server) - 'client' (client-side handler; arena simulates it with the mock fields and the turn's consent_overrides). 'exec' (subprocess) is run by the PromptKit SDK only: promptarena cannot execute it, and a run stops at startup on such a tool."
         },
         "timeout_ms": {
           "type": "integer"
@@ -4655,7 +4656,12 @@
         },
         "consent_overrides": {
           "additionalProperties": {
-            "type": "string"
+            "type": "string",
+            "enum": [
+              "grant",
+              "deny",
+              "timeout"
+            ]
           },
           "type": "object",
           "description": "ConsentOverrides controls consent simulation for client-side tools.\nKeys are tool names, values are \"grant\", \"deny\", or \"timeout\"."

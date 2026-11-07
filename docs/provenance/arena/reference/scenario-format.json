@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/reference/scenario-format.md",
- "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
+ "commit": "1f3acc05aa6f98764a8598798bf817c19d6f1f44",
  "claims": [
   {
    "id": 1,
@@ -8,7 +8,7 @@
    "verdict": "false",
    "evidence": [
     "arena/arenaconfig/loader.go:137",
-    "packc/schema_validator_test.go:14"
+    "packc/schema_validator_test.go"
    ]
   },
   {
@@ -16,7 +16,7 @@
    "claim": "Kubernetes-style resource kind Arena is supported",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:478",
+    "arena/arenaconfig/loader.go:481",
     "schemas/v1alpha1/arena.json:1"
    ]
   },
@@ -25,7 +25,7 @@
    "claim": "Kubernetes-style resource kind PromptConfig is supported",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:478",
+    "arena/arenaconfig/loader.go:481",
     "schemas/v1alpha1/promptconfig.json:1"
    ]
   },
@@ -34,7 +34,7 @@
    "claim": "Kubernetes-style resource kind Scenario is supported",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:478",
+    "arena/arenaconfig/loader.go:481",
     "schemas/v1alpha1/scenario.json:1"
    ]
   },
@@ -43,7 +43,7 @@
    "claim": "Kubernetes-style resource kind Provider is supported",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:478",
+    "arena/arenaconfig/loader.go:481",
     "schemas/v1alpha1/provider.json:1"
    ]
   },
@@ -52,7 +52,7 @@
    "claim": "Kubernetes-style resource kind Tool is supported",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:478",
+    "arena/arenaconfig/loader.go:481",
     "schemas/v1alpha1/tool.json:1"
    ]
   },
@@ -61,7 +61,7 @@
    "claim": "Kubernetes-style resource kind Persona is supported",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:478",
+    "arena/arenaconfig/loader.go:481",
     "schemas/v1alpha1/persona.json:1"
    ]
   },
@@ -70,7 +70,7 @@
    "claim": "Provider OpenAI is a supported testing provider",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:318",
+    "arena/engine/builder_integration.go:323",
     "arena/turnexecutors/pipeline_stages_integration.go:177"
    ]
   },
@@ -87,7 +87,7 @@
    "claim": "Provider Google Gemini is a supported testing provider",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:318",
+    "arena/engine/builder_integration.go:323",
     "arena/turnexecutors/pipeline_stages_integration.go:177"
    ]
   },
@@ -112,7 +112,7 @@
    "claim": "Provider Mock is a supported testing provider",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:318",
+    "arena/engine/builder_integration.go:323",
     "arena/turnexecutors/pipeline_stages_integration.go:177"
    ]
   },
@@ -137,7 +137,7 @@
    "claim": "Output formats are JSON, Markdown and JUnit",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:34"
+    "arena/cmd/promptarena/run.go:35"
    ]
   },
   {
@@ -153,8 +153,8 @@
    "claim": "promptarena run <arena.yaml> runs a test scenario",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:119",
-    "arena/cmd/promptarena/run.go:158"
+    "arena/cmd/promptarena/run.go:120",
+    "arena/cmd/promptarena/run.go:159"
    ]
   },
   {
@@ -170,7 +170,7 @@
    "claim": "promptarena run accepts --provider with a comma-separated list",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:162"
+    "arena/cmd/promptarena/run.go:163"
    ]
   },
   {
@@ -178,7 +178,7 @@
    "claim": "promptarena run accepts --format with value markdown",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:34"
+    "arena/cmd/promptarena/run.go:35"
    ]
   },
   {
@@ -194,7 +194,7 @@
    "claim": "Arena resource has metadata.name",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1432"
+    "arena/arenaconfig/types.go:1438"
    ]
   },
   {
@@ -267,7 +267,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:180",
-    "arena/cmd/promptarena/run.go:168"
+    "arena/cmd/promptarena/run.go:169"
    ]
   },
   {
@@ -275,7 +275,7 @@
    "claim": "Arena spec.defaults.output.formats accepts markdown and json",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:34"
+    "arena/cmd/promptarena/run.go:35"
    ]
   },
   {
@@ -291,7 +291,7 @@
    "claim": "Turn-level assertions key 'assertions' is valid on a turn",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1181"
+    "arena/arenaconfig/types.go:1187"
    ]
   },
   {
@@ -528,7 +528,7 @@
    "claim": "spec.task_type sets the workflow entry state",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:684",
+    "arena/arenaconfig/types.go:687",
     "arena/engine/execution_workflow_integration.go:233"
    ]
   },
@@ -537,7 +537,7 @@
    "claim": "Scenario spec.variables is a valid field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:733"
+    "arena/arenaconfig/types.go:739"
    ]
   },
   {
@@ -545,7 +545,7 @@
    "claim": "Scenario spec.turns is a valid field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:692"
+    "arena/arenaconfig/types.go"
    ]
   },
   {
@@ -553,7 +553,7 @@
    "claim": "A turn accepts an assertions list",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1181"
+    "arena/arenaconfig/types.go:1187"
    ]
   },
   {
@@ -561,7 +561,7 @@
    "claim": "state_is and transitioned_to take params.state",
    "verdict": "true",
    "evidence": [
-    "arena/engine/eval_orchestrator.go:350"
+    "arena/engine/eval_orchestrator.go:403"
    ]
   },
   {
@@ -569,7 +569,7 @@
    "claim": "Assertions accept a message field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1181"
+    "arena/arenaconfig/types.go:1187"
    ]
   },
   {
@@ -610,7 +610,7 @@
    "claim": "Workflow assertions (state_is, transitioned_to, workflow_complete) are available in turn-level assertions",
    "verdict": "true",
    "evidence": [
-    "arena/engine/eval_orchestrator.go:350"
+    "arena/engine/eval_orchestrator.go:403"
    ]
   },
   {
@@ -666,8 +666,8 @@
    "claim": "Scenario content parts support type text",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1140",
-    "arena/arenaconfig/types.go:1409"
+    "arena/arenaconfig/types.go:1146",
+    "arena/arenaconfig/types.go:1415"
    ]
   },
   {
@@ -675,7 +675,7 @@
    "claim": "Scenario content parts support type image",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1409",
+    "arena/arenaconfig/types.go:1415",
     "arena/turnexecutors/media_loader.go:186"
    ]
   },
@@ -684,8 +684,8 @@
    "claim": "A text content part accepts a patterns field",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:1409",
-    "schemas/v1alpha1/scenario.json:847"
+    "arena/arenaconfig/types.go:1415",
+    "schemas/v1alpha1/scenario.json:848"
    ]
   },
   {
@@ -693,7 +693,7 @@
    "claim": "An image content part uses image_url.url",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:1418"
+    "arena/arenaconfig/types.go:1424"
    ]
   },
   {
@@ -701,7 +701,7 @@
    "claim": "image_url.detail accepts the value high",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1424"
+    "arena/arenaconfig/types.go:1430"
    ]
   },
   {
@@ -718,7 +718,7 @@
    "claim": "A document content part uses document_url.url",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:1418",
+    "arena/arenaconfig/types.go:1424",
     "examples/document-analysis/scenarios/pdf-summary.scenario.yaml:16"
    ]
   },
@@ -744,7 +744,7 @@
    "claim": "Provider spec.type value mock selects the Mock provider",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:318"
+    "arena/engine/builder_integration.go:323"
    ]
   },
   {
@@ -760,8 +760,8 @@
    "claim": "Mock provider responses are configured in providers/mock-responses.yaml",
    "verdict": "false",
    "evidence": [
-    "arena/engine/builder_integration.go:265",
-    "arena/engine/builder_integration.go:321"
+    "arena/engine/builder_integration.go:270",
+    "arena/engine/builder_integration.go:326"
    ]
   },
   {
@@ -826,7 +826,7 @@
    "claim": "A self-play turn accepts a persona field referencing a Persona by name",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1143"
+    "arena/arenaconfig/types.go:1149"
    ]
   },
   {
@@ -834,7 +834,7 @@
    "claim": "A self-play turn accepts a turns field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1145"
+    "arena/arenaconfig/types.go:1151"
    ]
   },
   {
@@ -842,7 +842,7 @@
    "claim": "A self-play turn accepts a max_turns field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1147"
+    "arena/arenaconfig/types.go:1153"
    ]
   },
   {
@@ -850,7 +850,7 @@
    "claim": "Generated reports are written to out/ by default",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:168"
+    "arena/cmd/promptarena/run.go:169"
    ]
   },
   {
@@ -858,7 +858,7 @@
    "claim": "PromptPack v1.0 is fully supported by PromptArena",
    "verdict": "unverified",
    "evidence": [
-    "packc/schema_validator.go:15"
+    "packc/schema_validator.go"
    ]
   },
   {
@@ -866,7 +866,7 @@
    "claim": "PromptPack v1.1 is fully supported with multimodal support for images, audio and video",
    "verdict": "false",
    "evidence": [
-    "packc/schema_validator.go:15"
+    "packc/schema_validator.go"
    ]
   },
   {
@@ -884,6 +884,15 @@
    "evidence": [
     "arena/arenaconfig/types.go",
     "arena/arenaconfig/validator.go"
+   ]
+  },
+  {
+   "id": 9001,
+   "claim": "context_metadata takes domain and user_role; project_stage is accepted but ignored, with a load warning",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/ignored_fields.go",
+    "arena/arenaconfig/types.go"
    ]
   }
  ]

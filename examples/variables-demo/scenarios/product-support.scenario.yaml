@@ -27,37 +27,37 @@ spec:
       content: "What product are you supporting and what company are you from?"
       assertions:
         - type: content_includes
+          message: "Should mention required variables: company (TechStart Inc) and product (CloudSync Pro)"
           params:
             patterns:
               - "TechStart"
               - "CloudSync Pro"
-            message: "Should mention required variables: company (TechStart Inc) and product (CloudSync Pro)"
 
     - role: user
       content: "What are your support hours?"
       assertions:
         - type: content_includes
+          message: "Should mention custom support hours (9 AM - 5 PM EST)"
           params:
             patterns:
               - "9 AM"
               - "5 PM"
               - "EST"
-            message: "Should mention custom support hours (9 AM - 5 PM EST)"
 
     - role: user
       content: "How long is the warranty?"
       assertions:
         - type: content_includes
+          message: "Should mention custom warranty period (2 years)"
           params:
             patterns:
               - "2 year"
-            message: "Should mention custom warranty period (2 years)"
 
     - role: user
       content: "What's the return policy?"
       assertions:
         - type: content_includes
+          message: "Should mention DEFAULT return window (30 days) - not overridden"
           params:
             patterns:
               - "30"
-            message: "Should mention DEFAULT return window (30 days) - not overridden"

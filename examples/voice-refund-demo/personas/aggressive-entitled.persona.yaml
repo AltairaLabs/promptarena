@@ -25,7 +25,6 @@ spec:
 
   style:
     verbosity: short
-    formality: casual
     challenge_level: high
     friction_tags:
       - hostile
