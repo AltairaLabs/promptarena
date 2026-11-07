@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
 	"strings"
 
 	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
@@ -315,8 +316,46 @@ func (v *ConfigValidator) validateCrossReferences() {
 				id, scenario.TaskType)
 			v.errors = append(v.errors, err)
 		}
+		v.validateScenarioProviders(id, scenario)
+		v.validateScenarioContext(id, scenario)
 		v.validateTurnRoles(id, scenario)
 	}
+}
+
+// validateScenarioContext warns about spec.context.variables. spec.context is
+// free-form notes that a run never reads (only prompt-debug reads its
+// user_context key), so values put under context.variables never reach the
+// prompt template, though the name suggests they do (#446 item 4).
+func (v *ConfigValidator) validateScenarioContext(id string, scenario *Scenario) {
+	if _, ok := scenario.Context["variables"]; !ok {
+		return
+	}
+	v.warns = append(v.warns, fmt.Sprintf(
+		"scenario %s: spec.context.variables is not read by a run; set template values in spec.variables", id))
+}
+
+// validateScenarioProviders checks that every spec.providers id names a
+// loaded provider. An unknown id used to pass validation and fail the run
+// with "provider not found" (#446 item 3).
+func (v *ConfigValidator) validateScenarioProviders(id string, scenario *Scenario) {
+	for _, providerID := range scenario.Providers {
+		if _, ok := v.config.LoadedProviders[providerID]; ok {
+			continue
+		}
+		v.errors = append(v.errors, fmt.Errorf(
+			"scenario %s: spec.providers names unknown provider %q (known: %s)",
+			id, providerID, strings.Join(v.loadedProviderIDs(), ", ")))
+	}
+}
+
+// loadedProviderIDs returns the loaded provider ids, sorted.
+func (v *ConfigValidator) loadedProviderIDs() []string {
+	ids := make([]string, 0, len(v.config.LoadedProviders))
+	for providerID := range v.config.LoadedProviders {
+		ids = append(ids, providerID)
+	}
+	sort.Strings(ids)
+	return ids
 }
 
 // validateTurnRoles checks that each turn's role is one the executors run:

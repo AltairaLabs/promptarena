@@ -54,6 +54,39 @@ func TestConfigValidator_TurnRoles(t *testing.T) {
 	require.Len(t, v.errors, 1, "a self-play role does not run while self-play is disabled")
 }
 
+// A scenario's spec.providers ids must name loaded providers. An unknown id
+// used to validate and then fail the run with "provider not found" (#446).
+func TestConfigValidator_ScenarioProviders(t *testing.T) {
+	cfg := &Config{
+		LoadedProviders: map[string]*config.Provider{"b": {ID: "b"}, "a": {ID: "a"}},
+		LoadedScenarios: map[string]*Scenario{"s": {Providers: []string{"a", "missing"}}},
+	}
+	v := NewConfigValidatorWithPath(cfg, "")
+	v.validateCrossReferences()
+	require.Len(t, v.errors, 1)
+	assert.Equal(t, `scenario s: spec.providers names unknown provider "missing" (known: a, b)`, v.errors[0].Error())
+
+	cfg.LoadedScenarios["s"].Providers = []string{"b"}
+	v = NewConfigValidatorWithPath(cfg, "")
+	v.validateCrossReferences()
+	assert.Empty(t, v.errors)
+}
+
+// spec.context.variables looks like template variables but a run never reads
+// it, so validate warns (#446 item 4). Other context keys are free-form notes.
+func TestConfigValidator_ScenarioContextVariables(t *testing.T) {
+	cfg := &Config{LoadedScenarios: map[string]*Scenario{
+		"notes": {Context: map[string]interface{}{"goal": "g", "user_context": "u"}},
+		"vars":  {Context: map[string]interface{}{"variables": map[string]interface{}{"name": "x"}}},
+	}}
+	v := NewConfigValidatorWithPath(cfg, "")
+	v.validateCrossReferences()
+	assert.Empty(t, v.errors)
+	assert.Equal(t, []string{
+		"scenario vars: spec.context.variables is not read by a run; set template values in spec.variables",
+	}, v.warns)
+}
+
 func TestConfigValidator_GetWarnings(t *testing.T) {
 	cfg := &Config{}
 	validator := NewConfigValidatorWithPath(cfg, "")

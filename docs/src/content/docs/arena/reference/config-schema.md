@@ -26,6 +26,7 @@ verified:
     - arena/assertions/canary/canary.go
     - arena/assertions/memorystate/memorystate.go
     - arena/chaos/hook.go
+    - arena/cmd/promptarena/prompt-debug_interactive.go
     - arena/cmd/promptarena/run.go
     - arena/cmd/promptarena/serve_interactive.go
     - arena/cmd/promptarena/validate_json.go
@@ -1014,7 +1015,7 @@ assertions:
 
 #### `context` and `context_metadata`
 
-Optional metadata about the scenario. `context` is a free-form key-value map. `context_metadata` has typed fields: `domain` and `user_role`. A third field, `project_stage`, is still accepted but nothing reads it, and loading warns that it is ignored.
+Optional metadata about the scenario. `context` is a free-form key-value map that a run does not read; only `promptarena prompt-debug` reads its `user_context` key. `promptarena validate` warns when `context` has a `variables` key, because those values never reach the prompt template; set them in `spec.variables`. `context_metadata` has typed fields: `domain` and `user_role`. A third field, `project_stage`, is still accepted but nothing reads it, and loading warns that it is ignored.
 
 #### `context_policy`
 

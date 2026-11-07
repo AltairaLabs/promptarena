@@ -2,14 +2,20 @@
 title: 'Tutorial 6: Duplex Voice Testing'
 description: Build a duplex voice test that streams audio files to a mock duplex provider and asserts on the replies, with no API key.
 verified:
-  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
+  commit: 5a8cffd8daf00b49cbbb3596ce63750db56c3704
   sources:
     - arena/arenaconfig/types.go
     - arena/arenaconfig/voice.go
     - arena/cmd/promptarena/run.go
+    - arena/cmd/promptarena/run_interactive.go
     - arena/engine/duplex_conversation_executor.go
+    - arena/engine/duplex_executor_assertions_integration.go
     - arena/engine/duplex_executor_pipeline_integration.go
+    - arena/engine/duplex_executor_results_integration.go
     - arena/engine/duplex_executor_turns_integration.go
+    - arena/engine/duplex_turn_assertions.go
+    - arena/tui/tui.go
+    - arena/tui/views/summary.go
     - arena/turnexecutors/audio_file_source.go
     - arena/turnexecutors/media_loader.go
     - examples/duplex-streaming/config.arena.yaml
@@ -219,6 +225,9 @@ Total runs      1
 Passed          1 (100.0%)
 Failed          0 (0.0%)
 
+Assertions      2 total
+Assertions Pass all passed
+
 Total cost      $0.0000
 Total tokens    0
 Total duration  7.4s
@@ -231,9 +240,9 @@ Regions         default
 Saved to        out
 ```
 
-The scenario passes. The run wrote its JSON results, the assistant replies and the recorded audio to `out/`. The duration lines in your output differ.
+The scenario passes: both replies matched their assertions. The run wrote its JSON results, the assistant replies and the recorded audio to `out/`. The duration lines in your output differ.
 
-Duplex turn assertions are evaluated against each reply, but a failing turn assertion does not change the pass count or the exit code. Read the replies in the JSON file in `out/` to confirm what the provider said.
+A failing turn assertion fails the run. To see it, change the `content_includes` pattern to `"Max"` and run again. The summary shows `Failed 1`, `Assertions Fail 1` and the failure `turn assertions failed: 1 of 2`. The other turns still run, and each reply in the JSON results carries its own assertion results. With `--ci` the command exits with status 1.
 
 ## Next steps
 

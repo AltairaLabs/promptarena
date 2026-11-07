@@ -113,6 +113,11 @@ type ConversationRequest struct {
 	// ExecuteConversation sets it.
 	personaState *personaStateRecorder
 
+	// duplexTurnAssertions collects each duplex turn's assertion outcome until
+	// the session has finished saving its transcript. executeDuplexPipeline
+	// sets it, fresh for each attempt.
+	duplexTurnAssertions *duplexTurnAssertionRecorder
+
 	// contextBuilder is the conversation's context-builder stage, shared by
 	// all its turns so relevance embeddings are cached across them.
 	// ExecuteConversation sets it.

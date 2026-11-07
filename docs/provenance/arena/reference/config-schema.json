@@ -8484,6 +8484,23 @@
    ]
   },
   {
+   "id": 9501,
+   "claim": "Scenario context is not read by a run; only prompt-debug reads its user_context key",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go",
+    "arena/cmd/promptarena/prompt-debug_interactive.go"
+   ]
+  },
+  {
+   "id": 9502,
+   "claim": "promptarena validate warns when scenario context has a variables key",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/validator.go"
+   ]
+  },
+  {
    "id": 10001,
    "claim": "Arena checks each pack_evals entry at engine build (id present and unique, type and trigger required with a valid trigger, sample_percentage 0-100, valid metric name/type/labels); a bad entry stops the run with 'invalid pack_evals'",
    "verdict": "true",

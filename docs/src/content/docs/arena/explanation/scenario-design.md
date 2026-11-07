@@ -1,7 +1,7 @@
 ---
 title: Scenario Design Principles
 verified:
-  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
+  commit: 5a8cffd8daf00b49cbbb3596ce63750db56c3704
   sources:
     - arena/arenaconfig/judge_param.go
     - arena/arenaconfig/loader.go
@@ -149,7 +149,7 @@ turns:
     content: "What's the status?"   # refers to the previous turn
 ```
 
-Use explicit state for known facts and environment data. Use history when the point of the test is whether the model retains what was said earlier. `spec.context` is a free-form object that the engine does not pass to the model, so do not rely on it to steer a response. Two fields do reach the pipeline. `spec.variables` is a map of strings injected into the prompt's template variables. `spec.context_metadata` carries `domain` and `user_role`, which the engine turns into the `domain`, `user_context` and `user_role` template variables. When the history grows too long for the model, the [Manage Context](/arena/how-to/scenarios/manage-context/) how-to covers `context_policy` truncation.
+Use explicit state for known facts and environment data. Use history when the point of the test is whether the model retains what was said earlier. `spec.context` is a free-form object that the engine does not pass to the model, so do not rely on it to steer a response. `promptarena validate` warns about a `context.variables` key for this reason. Two fields do reach the pipeline. `spec.variables` is a map of strings injected into the prompt's template variables. `spec.context_metadata` carries `domain` and `user_role`, which the engine turns into the `domain`, `user_context` and `user_role` template variables. When the history grows too long for the model, the [Manage Context](/arena/how-to/scenarios/manage-context/) how-to covers `context_policy` truncation.
 
 ## Assertion design
 

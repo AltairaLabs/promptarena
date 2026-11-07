@@ -15,63 +15,35 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )
 
-func TestCountPassedFailedAssertions(t *testing.T) {
-	de := &DuplexConversationExecutor{}
+func TestCountFailedAssertions(t *testing.T) {
 	results := []arenaassertions.AssertionResult{
 		{Passed: true},
 		{Passed: false},
 		{Passed: true},
 	}
-	assert.Equal(t, 2, de.countPassedAssertions(results))
-	assert.Equal(t, 1, de.countFailedAssertions(results))
-	assert.Equal(t, 0, de.countPassedAssertions(nil))
-	assert.Equal(t, 0, de.countFailedAssertions(nil))
+	assert.Equal(t, 1, countFailedAssertions(results))
+	assert.Equal(t, 0, countFailedAssertions(nil))
 }
 
-func TestStoreAssertionResults(t *testing.T) {
-	de := &DuplexConversationExecutor{}
-	results := []arenaassertions.AssertionResult{
+func TestDuplexAssertionSummary(t *testing.T) {
+	summary := duplexAssertionSummary([]arenaassertions.AssertionResult{
 		{Passed: true, Message: "ok"},
 		{Passed: false},
-	}
-
-	t.Run("no-op without a state store", func(t *testing.T) {
-		msg := &types.Message{Role: roleAssistant}
-		assert.NotPanics(t, func() {
-			de.storeAssertionResults(&ConversationRequest{}, msg, results)
-		})
-		assert.Nil(t, msg.Meta["assertions"])
 	})
+	assert.Equal(t, 2, summary["total"])
+	assert.Equal(t, 1, summary["failed"])
+	assert.Equal(t, false, summary["all_passed"])
+	list, ok := summary["results"].([]map[string]interface{})
+	require.True(t, ok)
+	require.Len(t, list, 2)
+	assert.Equal(t, "ok", list[0]["message"])
+	_, hasMessage := list[1]["message"]
+	assert.False(t, hasMessage)
 
-	t.Run("writes summary metadata and persists to store", func(t *testing.T) {
-		ctx := context.Background()
-		store := statestore.NewArenaStateStore()
-		convID := "conv-assert"
-		require.NoError(t, store.Save(ctx, &runtimestore.ConversationState{
-			ID: convID,
-			Messages: []types.Message{
-				{Role: "user", Content: "hi"},
-				{Role: "assistant", Content: "reply"},
-			},
-		}))
-
-		req := &ConversationRequest{
-			ConversationID:   convID,
-			StateStoreConfig: &StateStoreConfig{Store: store},
-		}
-		msg := &types.Message{Role: roleAssistant, Content: "reply"}
-		de.storeAssertionResults(req, msg, results)
-
-		summary, ok := msg.Meta["assertions"].(map[string]interface{})
-		require.True(t, ok)
-		assert.Equal(t, 2, summary["total"])
-		assert.Equal(t, 1, summary["failed"])
-		assert.Equal(t, false, summary["all_passed"])
-		list, ok := summary["results"].([]map[string]interface{})
-		require.True(t, ok)
-		require.Len(t, list, 2)
-		assert.Equal(t, "ok", list[0]["message"])
-	})
+	// The run summary and RunPassed read it through TurnSummaryFromMeta.
+	turn, ok := arenaassertions.TurnSummaryFromMeta(map[string]interface{}{"assertions": summary})
+	require.True(t, ok)
+	assert.Equal(t, arenaassertions.TurnSummary{Total: 2, Failed: 1, Passed: false}, turn)
 }
 
 func TestDuplexEvaluateConversationAssertions_NoOrchestrator(t *testing.T) {
