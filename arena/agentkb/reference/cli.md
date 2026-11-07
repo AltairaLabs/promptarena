@@ -134,7 +134,7 @@ Manage AgentSkills.io skills
 
 ## promptarena templates
 
-Manage PromptArena templates (list, fetch, render)
+Manage PromptArena templates (list, fetch, render, update, repo)
 
 - `promptarena templates fetch` — Fetch a template from an index into cache
 - `promptarena templates list` — List built-in templates and the templates in an index

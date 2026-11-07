@@ -39,7 +39,7 @@ const (
 var templatesCmd = &cobra.Command{
 	Use:     "templates",
 	Aliases: []string{"template"},
-	Short:   "Manage PromptArena templates (list, fetch, render)",
+	Short:   "Manage PromptArena templates (list, fetch, render, update, repo)",
 }
 
 var templatesListCmd = &cobra.Command{

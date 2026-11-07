@@ -136,8 +136,8 @@ func init() {
 	serveCmd.Flags().Int("audio-rate", arenaaudio.Rate24k,
 		"Audio canonical sample rate: 16000, 24000, or 48000")
 	serveCmd.Flags().Bool("mock-provider", false,
-		"Replace ALL configured providers with mocks (assistant, self-play user, "+
-			"and any others) so no real API calls are made. Useful for free demos. "+
+		"Replace the assistant and self-play role providers with mocks. "+
+			"TTS and STT providers are not swapped; point voices at mock-tts for a keyless run. "+
 			"Pair with --mock-config to use canned scenario responses.")
 	serveCmd.Flags().String("mock-config", "",
 		"Path to a mock responses YAML file. Only meaningful with --mock-provider.")
@@ -173,11 +173,10 @@ func runServe(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to create engine: %w", err)
 	}
 
-	// --mock-provider replaces every provider in the registry with a
-	// generic mock, including the self-play user role and any TTS path
-	// that resolves through providers. Without this, picking the
-	// "mock-duplex" assistant in the UI still leaves self-play and TTS
-	// hitting real APIs for $$$ — surprising for a demo.
+	// --mock-provider replaces the assistant providers and the self-play
+	// role providers with mocks, so picking the "mock-duplex" assistant in
+	// the UI doesn't leave self-play hitting real APIs. TTS/STT providers
+	// are not swapped.
 	mockAll, _ := cmd.Flags().GetBool("mock-provider")
 	mockConfig, _ := cmd.Flags().GetString("mock-config")
 	if mockAll {
