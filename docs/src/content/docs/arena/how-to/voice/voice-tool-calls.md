@@ -39,14 +39,14 @@ promptarena serve
 For headless / CI use:
 
 ```bash
-# Real provider (requires GEMINI_API_KEY, plus OPENAI_API_KEY for the self-play persona)
+# Real provider (requires GEMINI_API_KEY)
 promptarena run --scenario duplex-tools --provider gemini-2-flash --ci
 
-# Mock provider (smoke-tests the pipeline; see "Mock mode limits" below)
+# Mock provider (keyless; see "Mock mode" below)
 promptarena run --scenario duplex-tools --provider mock-duplex --ci
 ```
 
-The `selfplay-user` role in `config.arena.yaml` uses `openai-gpt4o-mini-text`, so both commands need `OPENAI_API_KEY`. To run the mock command without keys, set that role's provider to `mock-duplex`, as the config comment says.
+The shipped `config.arena.yaml` binds the `selfplay-user` role to `mock-duplex` and the persona's `alloy-expressive` voice to `mock-tts`, so the mock command needs no keys. For an LLM-written, really spoken caller on the real-provider run, bind the role to `openai-gpt4o-mini-text` and the voice to `openai-alloy-expressive` (both `OPENAI_API_KEY`), as the config comments say.
 
 ## The assertion shape
 
@@ -145,11 +145,9 @@ jobs:
 
 The fork-aware `if:` check keeps the secret-bearing job from running on PRs from external forks.
 
-## Mock mode limits
+## Mock mode
 
-The `mock-duplex` provider sets `duplex_scenario: duplex-basic`, so its replies come from the `duplex-basic` scripted turns and audio. The `tool_calls` scripted for `duplex-tools` in `mock-responses.yaml` are never looked up, so no tools fire, and the conversation-level tool-call assertions cannot pass. Use the mock run to smoke-test the pipeline (does everything wire up, does the conversation execute end to end), not to assert correctness.
-
-The mock streaming provider emits audio fixtures and `tool_calls` in the same turn when its `duplex_scenario` names a scenario that scripts them. For deterministic mock runs where tool assertions pass, see [Test a Voice IVR](/arena/how-to/voice/voice-ivr/), which uses a text-mode mock provider that executes scripted tool calls.
+Arena passes the running scenario's ID to the mock session, so `mock-duplex` replies from the `duplex-tools` block of `mock-responses.yaml`, scripted `tool_calls` included. The tools execute for real and the three conversation-level `tools_called` assertions pass. The run proves the wiring (the duplex session, the tool loop, the assertions), not how a real model chooses tools.
 
 ## Extending it
 

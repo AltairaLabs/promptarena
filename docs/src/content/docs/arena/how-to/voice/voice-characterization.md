@@ -55,6 +55,8 @@ The TTS adapter parses the bracket spans, lowers them into its native dialect, a
 
 ## Run it
 
+The shipped config binds every persona voice to `mock-tts`, which plays a canned clip and lowers no tags. For the expressive path, bind `confident-man` (the `aggressive-refund` caller) to `cartesia-confident-man` in `config.arena.yaml` and set `CARTESIA_API_KEY`. For an LLM to write the tags, also bind the `selfplay-user` role to `openai-gpt4o-mini-text` and set `OPENAI_API_KEY`.
+
 ```bash
 cd examples/voice-refund-demo
 promptarena serve

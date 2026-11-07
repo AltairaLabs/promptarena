@@ -50,7 +50,7 @@ echo "  Validated $total config(s); $failed failed."
 #   - real providers or local model servers: azure-foundry-test, bedrock-test,
 #     capability-matrix, codegen-anthropic, codegen-eval, context-management,
 #     load-testing, memory-agent, ollama-local, reasoning-test, vertex-test,
-#     vllm-local, voice-refund-demo (Cartesia TTS), arena-media-test (its
+#     vllm-local, arena-media-test (its
 #     mock-media provider cannot produce the image/audio its scenarios assert)
 #   - interactive voice consoles with no scenarios: voice-console-asm,
 #     voice-console-vad
@@ -79,6 +79,11 @@ run customer-support-integrated --config config.arena.yaml --ci --provider mock-
   --scenario account-info,billing-question,order-inquiry,security-test,tool-test --formats json
 run duplex-streaming  --config config.arena.yaml --ci --provider mock-duplex --scenario duplex-noisy-line --formats json
 run duplex-streaming  --config config.arena.yaml --ci --provider mock-duplex --scenario duplex-voice-best-of-n --formats json
+# Self-play and tool calls, keyless: the selfplay-user role and persona voices
+# are bound to mock-duplex and mock-tts.
+run duplex-streaming  --config config.arena.yaml --ci --provider mock-duplex \
+  --scenario duplex-basic,duplex-tools,duplex-selfplay-mock --formats json
+run voice-refund-demo --config config.arena.yaml --ci --provider mock-duplex --formats json
 
 # Mock-only packs.
 run llm-judge         --config config.arena.yaml --ci --formats json

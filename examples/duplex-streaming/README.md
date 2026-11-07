@@ -10,7 +10,7 @@ This example runs duplex (bidirectional) audio conversations against a voice mod
 | Turn detection | Client-side VAD (`mode: vad`) or the provider's own detection (`mode: asm`) |
 | Self-play with TTS | A text model writes the user's lines, and TTS speaks them |
 | Multiple providers | Gemini (`gemini-2.5-flash-native-audio-latest`) and OpenAI (`gpt-realtime`) |
-| Mock provider | Keyless runs of `duplex-basic`, `duplex-scripted-text`, `duplex-noisy-line` and `duplex-voice-best-of-n` |
+| Mock provider | Keyless runs of every scenario except `duplex-scripted-text-openai` |
 | Audio transforms | Make the caller quieter and add line noise before the agent hears them |
 
 ## Prerequisites
@@ -22,24 +22,23 @@ export GEMINI_API_KEY="your-gemini-api-key"
 export OPENAI_API_KEY="your-openai-api-key"
 ```
 
-The self-play scenarios need `OPENAI_API_KEY` even with the mock duplex provider: the `selfplay-user` role writes its lines with `openai-gpt4o-mini-text`. Their personas speak through the `rachel`, `echo` and `alloy-expressive` voices, so they also need the TTS vendor keys (ElevenLabs for `rachel`).
+The shipped config keeps self-play keyless: the `selfplay-user` role is bound to `mock-duplex`, which writes the user's lines from the `selfplay:` block in `mock-responses.yaml`, and the persona voices `rachel`, `echo` and `alloy-expressive` are bound to `mock-tts`. For self-play against real providers, see [Self-play with real providers](#self-play-with-real-providers).
 
 ## Quick Start
 
 ### Run with the Mock Provider
 
-These scenarios run without API keys:
+These run without API keys:
 
 ```bash
 cd examples/duplex-streaming
 
 promptarena run --provider mock-duplex --scenario duplex-basic
-promptarena run --provider mock-duplex --scenario duplex-scripted-text
+promptarena run --provider mock-duplex --scenario duplex-tools
 promptarena run --provider mock-duplex --scenario duplex-noisy-line
-promptarena run --provider mock-duplex --scenario duplex-voice-best-of-n
 ```
 
-`promptarena run --provider mock-duplex` with no `--scenario` runs all 10 scenarios. Without API keys, `duplex-interactive`, `duplex-selfplay`, `duplex-selfplay-mock`, `duplex-tools` and `duplex-scripted-text-openai` fail. The command exits non-zero only with `--ci`.
+`promptarena run --provider mock-duplex` with no `--scenario` runs all 10 scenarios. Without API keys only `duplex-scripted-text-openai` fails: it speaks through the OpenAI `scripted-alloy` voice. The command exits non-zero only with `--ci`.
 
 ### Run with Real Providers
 
@@ -53,6 +52,13 @@ promptarena run --provider openai-gpt4o-realtime
 # One scenario
 promptarena run --scenario duplex-selfplay --provider gemini-2-flash
 ```
+
+### Self-play with real providers
+
+With the shipped config, the self-play turns of a real-provider run are mock lines spoken by the mock TTS clip. For an LLM-written, really spoken caller, edit `config.arena.yaml`:
+
+1. Bind the `selfplay-user` role to `openai-gpt4o-mini-text` (`OPENAI_API_KEY`).
+2. Bind the voices to their vendor TTS providers, as the comment above `voices:` lists: `rachel` to `elevenlabs-rachel` (`ELEVENLABS_API_KEY`), `echo` and `alloy-expressive` to the OpenAI TTS providers (`OPENAI_API_KEY`).
 
 ## Scenarios
 
@@ -201,7 +207,7 @@ Run the keyless scenarios by name with the mock provider:
 - name: Run Duplex Streaming Tests
   run: |
     cd examples/duplex-streaming
-    promptarena run --ci --provider mock-duplex --scenario duplex-noisy-line --scenario duplex-voice-best-of-n
+    promptarena run --ci --provider mock-duplex --scenario duplex-basic --scenario duplex-tools --scenario duplex-noisy-line --scenario duplex-voice-best-of-n
 ```
 
 To check the configuration only:

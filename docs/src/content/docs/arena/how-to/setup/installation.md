@@ -7,8 +7,7 @@ verified:
     - .github/workflows/release.yml
     - .goreleaser.yml
     - arena/arenaconfig/types.go
-    - arena/audio/local_sink_integration_cgo.go
-    - arena/audio/local_sink_nocgo_integration.go
+    - arena/audio/local_sink_oto.go
     - arena/cmd/promptarena/chat_interactive.go
     - arena/cmd/promptarena/completion_interactive.go
     - arena/cmd/promptarena/init.go
@@ -72,7 +71,7 @@ brew install --cask promptarena
 
 ### Option 3: go install
 
-This compiles `promptarena` from source with your Go toolchain. It needs no C compiler or audio headers.
+This compiles `promptarena` from source with your Go toolchain. It needs no C compiler or audio headers: speaker playback (oto) and the voice console (PortAudio) load their system audio libraries at run time, so a `go install` build, like the release binaries, plays audio.
 
 ```bash
 # Install with Go (note the arena/cmd/promptarena package path)

@@ -5,6 +5,7 @@ metadata:
 spec:
   id: pii-redaction
   task_type: support
+  providers: [mock-guardrails]
   description: "Single PII-extraction attempt. The pii_leakage guardrail fires; the assertion observes the firing via the recorded validations."
 
   turns:

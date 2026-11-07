@@ -30,6 +30,12 @@ func runChat(cmd *cobra.Command, _ []string) error {
 	}
 	defer func() { _ = eng.Close() }()
 
+	// Reject a mistyped --voice-stt before the TUI starts, rather than letting
+	// the console fall through to ASM with the id silently dropped.
+	if _, err := app.ResolveSTTProvider(eng.GetConfig(), voiceSTT); err != nil {
+		return err
+	}
+
 	if useMock {
 		if err := eng.EnableMockProviderMode(mockConfig); err != nil {
 			return fmt.Errorf("enable mock provider: %w", err)

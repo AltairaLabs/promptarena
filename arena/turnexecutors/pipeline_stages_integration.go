@@ -728,19 +728,30 @@ func (e *PipelineExecutor) buildProviderStage(
 // against a newer runtime can legitimately carry params this build does not
 // understand, and refusing to load would make packs forward-incompatible.
 func loadGuardrailHooks(req *TurnRequest, vars map[string]string) ([]hooks.ProviderHook, error) {
-	if req.PromptRegistry == nil {
+	return LoadTaskGuardrails(req.PromptRegistry, req.TaskType, vars)
+}
+
+// LoadTaskGuardrails compiles the validators the prompt for taskType declares
+// into provider hooks, by loadGuardrailHooks' rules: no registry, no task, a
+// template that fails to load, or no validators all mean no hooks, and only an
+// unregistered validator type is an error. The duplex voice path calls it too,
+// so both paths enforce the same set.
+func LoadTaskGuardrails(
+	registry *prompt.Registry, taskType string, vars map[string]string,
+) ([]hooks.ProviderHook, error) {
+	if registry == nil {
 		return nil, nil
 	}
 	// A composition/workflow entry state has no prompt_task, so there is no pack
 	// prompt to source guardrails from. Skip quietly — loading a template for an
 	// empty task would fail with "prompt not found" and log a misleading warning.
-	if req.TaskType == "" {
+	if taskType == "" {
 		return nil, nil
 	}
-	tmpl, err := req.PromptRegistry.LoadTemplate(req.TaskType, vars, "")
+	tmpl, err := registry.LoadTemplate(taskType, vars, "")
 	if err != nil {
 		logger.Warn("Skipping pack guardrails: template load failed",
-			"task_type", req.TaskType, "error", err)
+			"task_type", taskType, "error", err)
 		return nil, nil
 	}
 	if tmpl == nil || len(tmpl.Validators) == 0 {
@@ -748,7 +759,7 @@ func loadGuardrailHooks(req *TurnRequest, vars map[string]string) ([]hooks.Provi
 	}
 	compiled, err := guardrails.CompileValidators(tmpl.Validators)
 	if err != nil {
-		return nil, fmt.Errorf("task %q: %w", req.TaskType, err)
+		return nil, fmt.Errorf("task %q: %w", taskType, err)
 	}
 	return compiled, nil
 }

@@ -17,53 +17,36 @@ The headline assertion in each adversarial scenario is `tools_not_called(issue_r
 
 ## Quick start
 
-### Required API keys
+### Mock mode (keyless)
 
-Every scenario in this example uses selfplay (persona LLM → TTS → realtime agent). At minimum you need:
-
-| Key | Used for | Required for |
-|---|---|---|
-| `OPENAI_API_KEY` | Selfplay text generation (`openai-gpt4o-mini-text`) AND `patient-baseline`'s OpenAI TTS | All four scenarios |
-| `CARTESIA_API_KEY` | Cartesia TTS on `aggressive-refund` + `impersonator-refund` | Those two scenarios |
-| `ELEVENLABS_API_KEY` | ElevenLabs v3 TTS on `anxious-delivery` | That scenario |
-| `GEMINI_API_KEY` | Gemini Live (the realtime agent under test) | Real-provider runs against Gemini |
-| `HF_TOKEN` | HuggingFace Inference API (audio_emotion SER scoring on `aggressive-refund`) | Optional — assertion skips cleanly when unset |
-
-Selfplay drives the persona via a real text LLM — there is no fully-mocked CI path for this example. To run only schema validation without keys, use `promptarena validate config.arena.yaml`.
-
-### Speech-emotion-recognition on the aggressive caller
-
-`aggressive-refund` includes an `audio_emotion` assertion that scores the selfplay user's TTS audio against `superb/wav2vec2-base-superb-er` to verify the persona actually *sounds* angry, not just says angry words. This catches a class of failure where a hostile-text persona produces a flat, monotone TTS read — voice agents trained on tone may handle those two cases very differently.
-
-Gated on `HF_TOKEN`:
-
-- **With `HF_TOKEN` exported** — the assertion runs against the HuggingFace Inference API. Passes when the model returns `angry` with score ≥ 0.5. The first call on a cold model returns 503 (loading); the assertion is recorded as *skipped*, not failed.
-- **Without `HF_TOKEN`** — the assertion skips cleanly with a "no api key configured" SkipReason. Doesn't affect the scenario's overall pass/fail.
-
-Cost is a few cents per run against the free tier. To disable entirely, remove the `audio_emotion` block from `scenarios/aggressive-refund.scenario.yaml` or comment out the `providers/hf.provider.yaml` reference in `config.arena.yaml`.
-
-### Mock-mode run (validates the pipeline; assertions will fail)
+The shipped config runs every scenario without API keys. The `selfplay-user` role is bound to `mock-duplex`, which writes each persona's lines from the `selfplay:` block in `mock-responses.yaml`, and the four persona voices are bound to `mock-tts`:
 
 ```bash
 cd examples/voice-refund-demo
-export OPENAI_API_KEY="..."
-export CARTESIA_API_KEY="..."   # for aggressive + impersonator
-export ELEVENLABS_API_KEY="..." # for anxious-delivery
-
-../../bin/promptarena run \
-  --provider mock-duplex \
-  --ci \
-  --formats json,markdown
+../../bin/promptarena run --provider mock-duplex --ci --formats json,markdown
 open out/results.md
 ```
 
-Mock-mode runs validate that scenarios load, configs parse, the duplex pipeline executes end-to-end, and selfplay personas generate plausible turns. **Conversation-level tool assertions will fail in mock mode** — the streaming mock provider emits a fixed `auto_respond` text instead of the scripted tool calls in `mock-responses.yaml`. This is a known limitation shared by `duplex-streaming/duplex-tools`. Mock mode is for structural validation; real-provider mode is where the tool-call assertions become meaningful.
+All four scenarios pass, tool assertions included: the mock agent replays the scripted tool calls in the `scenarios:` block of `mock-responses.yaml`, and the tools run for real against their `mock_template`s. Mock mode checks the wiring (configs load, the duplex pipeline runs end to end, the assertions see the tool calls); it says nothing about how a real model behaves.
 
 ### Real-provider mode (this is the "demo" mode)
 
+Edit `config.arena.yaml`:
+
+1. Bind the `selfplay-user` role to `openai-gpt4o-mini-text`, so a text LLM plays the persona.
+2. Bind each voice to its vendor TTS provider; the comment above `voices:` lists the pairs.
+
+Then set the keys the run needs:
+
+| Key | Used for | Required for |
+|---|---|---|
+| `OPENAI_API_KEY` | Selfplay text generation (`openai-gpt4o-mini-text`) and `patient-baseline`'s OpenAI TTS | All four scenarios |
+| `CARTESIA_API_KEY` | Cartesia TTS on `aggressive-refund` and `impersonator-refund` | Those two scenarios |
+| `ELEVENLABS_API_KEY` | ElevenLabs v3 TTS on `anxious-delivery` | That scenario |
+| `GEMINI_API_KEY` | Gemini Live (the realtime agent under test) | Runs against Gemini |
+
 ```bash
 cd examples/voice-refund-demo
-# Plus the TTS keys listed above for whichever scenarios you run
 
 # Run against OpenAI GPT-4o Realtime
 ../../bin/promptarena run --provider openai-gpt4o-realtime --formats json,markdown
@@ -73,6 +56,12 @@ cd examples/voice-refund-demo
 ```
 
 Pass rates against real providers will vary — the agent may sometimes cave to pressure or skip verification steps. That variation IS the demo: self-play discovers failure modes that replay-based testing cannot.
+
+### Speech-emotion-recognition on the aggressive caller (opt-in)
+
+`aggressive-refund` carries a commented-out `audio_emotion` assertion that scores the selfplay user's TTS audio against `superb/wav2vec2-base-superb-er`, to check the persona actually *sounds* angry, not just says angry words. This catches a hostile-text persona that produces a flat, monotone TTS read.
+
+It is off by default because it cannot skip cleanly. It names the `hf` inference provider, and a check that names a provider the host did not bind is an error, not a skip. Without `HF_TOKEN` Arena does not build `hf`, so every keyless run would fail it. It also needs a dedicated HF Inference Endpoint: the free serverless tier no longer serves the model (see `providers/hf.provider.yaml`). To turn it on, set `HF_TOKEN`, deploy the endpoint, uncomment `providers/hf.provider.yaml` in `config.arena.yaml`, and uncomment the assertion in the scenario. It passes when the model returns `ang` with score ≥ 0.5. A cold model's first call returns 503 (loading), and the assertion is recorded as skipped.
 
 ## How it works
 
@@ -90,7 +79,7 @@ Conversation assertions (tools_called, tools_not_called)
 Markdown report / web UI
 ```
 
-The persona LLM acts as the user; TTS makes the conversation indistinguishable from a real call from the realtime LLM's perspective. The tools are mock-backed; in CI mode the entire conversation is scripted via `mock-responses.yaml`.
+The persona LLM acts as the user; TTS makes the conversation indistinguishable from a real call from the realtime LLM's perspective. The tools are mock-backed; in mock mode the entire conversation is scripted via `mock-responses.yaml`.
 
 ## File structure
 
@@ -107,7 +96,9 @@ voice-refund-demo/
 ├── prompts/
 │   └── refund-agent.prompt.yaml           # the agent under test
 ├── providers/
-│   ├── mock-duplex.provider.yaml          # mock-mode agent under test
+│   ├── mock-duplex.provider.yaml          # mock-mode agent under test, and the mock selfplay user
+│   ├── mock-tts.provider.yaml             # keyless TTS for the persona voices
+│   ├── hf.provider.yaml                   # inference provider for the opt-in audio_emotion check
 │   ├── openai-gpt4o-mini-text.provider.yaml  # text LLM for selfplay
 │   ├── openai-gpt4o-realtime.provider.yaml
 │   └── gemini-2-flash.provider.yaml

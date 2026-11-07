@@ -12,8 +12,10 @@ import (
 	arenaaudio "github.com/AltairaLabs/promptarena/v2/arena/audio"
 	arenastages "github.com/AltairaLabs/promptarena/v2/arena/stages"
 	arenastore "github.com/AltairaLabs/promptarena/v2/arena/statestore"
+	"github.com/AltairaLabs/promptarena/v2/arena/turnexecutors"
 
 	"github.com/AltairaLabs/PromptKit/runtime/v2/events"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/hooks"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/logger"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/pipeline"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/pipeline/stage"
@@ -314,9 +316,50 @@ func (de *DuplexConversationExecutor) buildDuplexPipeline(
 	}
 	stages = append(stages, duplexStage)
 
+	// 2b. Pack guardrails on each completed assistant turn. DuplexProviderStage
+	// runs no provider hooks, so this is the duplex path's only enforcement.
+	guardStage, err := de.buildDuplexGuardrailStage(req, streamProvider, mergedVars, emitter)
+	if err != nil {
+		return nil, err
+	}
+	if guardStage != nil {
+		stages = append(stages, guardStage)
+	}
+
 	stages = de.appendDuplexOutputStages(stages, req, turnState)
 
 	return builder.WithEventEmitter(emitter).Chain(stages...).Build()
+}
+
+// buildDuplexGuardrailStage compiles the validators the scenario's prompt
+// declares, with the same loader the text path uses, and wraps them in the
+// duplex guardrail stage. Nil when the prompt declares none. An unregistered
+// validator type is an error, as it is on the text path: a guardrail must not
+// be dropped quietly.
+func (de *DuplexConversationExecutor) buildDuplexGuardrailStage(
+	req *ConversationRequest,
+	streamProvider providers.StreamInputSupport,
+	vars map[string]string,
+	emitter *events.Emitter,
+) (stage.Stage, error) {
+	taskType := ""
+	if req.Scenario != nil {
+		taskType = req.Scenario.TaskType
+	}
+	compiled, err := turnexecutors.LoadTaskGuardrails(de.promptRegistry, taskType, vars)
+	if err != nil {
+		return nil, fmt.Errorf("pack guardrails: %w", err)
+	}
+	if len(compiled) == 0 {
+		return nil, nil
+	}
+	opts := make([]hooks.Option, 0, len(compiled))
+	for _, h := range compiled {
+		opts = append(opts, hooks.WithProviderHook(h))
+	}
+	return arenastages.NewDuplexGuardrailStage(
+		hooks.NewRegistry(opts...), emitter, streamProvider.ID(), streamProvider.Model(),
+	), nil
 }
 
 // buildDuplexPipelineConfig builds the StreamPipeline configuration for a duplex
@@ -335,6 +378,12 @@ func (de *DuplexConversationExecutor) buildDuplexPipelineConfig(req *Conversatio
 		WithIdleTimeout(idleTimeout)
 	if req.VoiceBargeIn {
 		pipelineConfig = pipelineConfig.WithChannelBufferSize(bargeInChannelBufferSize)
+	}
+	// The binding resolves the logical provider names a pack's checks declare
+	// (a guardrail's judge). The text path attaches the same one; without it a
+	// judge-backed duplex guardrail fails closed on every turn.
+	if de.evalOrchestrator != nil && de.evalOrchestrator.providerBinding != nil {
+		pipelineConfig.ProviderBinding = de.evalOrchestrator.providerBinding
 	}
 	return pipelineConfig
 }
@@ -408,6 +457,16 @@ func (de *DuplexConversationExecutor) appendDuplexOutputStages(
 	req *ConversationRequest,
 	turnState *stage.TurnState,
 ) []stage.Stage {
+	// 2a-rec. Output session recording (opt-in via RecordingConfig + EventStore),
+	// after the guardrails so a recorded turn holds the enforced content.
+	if req.RecordingConfig != nil && req.EventStore != nil {
+		cfg := *req.RecordingConfig
+		cfg.Position = stage.RecordingPositionOutput
+		cfg.SessionID = req.RunID
+		cfg.ConversationID = req.ConversationID
+		stages = append(stages, arenastages.DuplexOutputRecordingStages(req.EventStore, cfg)...)
+	}
+
 	// 2a-pre. Output audio pacing. Realtime providers stream assistant audio
 	// faster than playback rate; without output pacing the LocalSink queue fills
 	// instantly (turn-end fires before audio is heard) and the next selfplay turn

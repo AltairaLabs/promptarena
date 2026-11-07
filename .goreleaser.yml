@@ -149,18 +149,12 @@ release:
     
     ### Installation
     
-    **CLI Tools:**
     ```bash
     # Arena
-    go install github.com/AltairaLabs/promptarena/v2/arena/cmd/promptarena@{{.Version}}
+    go install github.com/AltairaLabs/promptarena/v2/arena/cmd/promptarena@{{.Tag}}
     
     # PackC
-    go install github.com/AltairaLabs/promptarena/v2/packc@{{.Version}}
-    ```
-    
-    **SDK Library:**
-    ```bash
-    go get github.com/AltairaLabs/PromptKit/sdk/v2@{{.Version}}
+    go install github.com/AltairaLabs/promptarena/v2/packc@{{.Tag}}
     ```
     
     **Or download pre-built binaries below** ⬇️
@@ -168,23 +162,11 @@ release:
   footer: |
     ---
     
-    ### Components Released
-    
-    **Libraries:**
-    - `runtime/{{.Version}}` - Core runtime components
-    - `pkg/{{.Version}}` - Shared packages
-    - `server/a2a/{{.Version}}` - A2A server module
-    - `sdk/{{.Version}}` - Production SDK library
-    
-    **Tools:**
-    - `arena/{{.Version}}` - Arena CLI (binaries above)
-    - `packc/{{.Version}}` - PackC CLI (binaries above)
-    
     ### Installation Methods
     
     1. **Pre-built Binaries** (fastest): Download from assets above
-    2. **Go Install** (latest Go): Use commands shown above
-    3. **Build from Source**: Clone repo and run `make build`
+    2. **Go Install**: Use the commands shown above
+    3. **Build from Source**: Clone the repo and run `make build`
     
     ### Verification
     
@@ -195,7 +177,7 @@ release:
     
     ---
     
-    **Full Changelog**: https://github.com/AltairaLabs/promptarena/v2/compare/{{.PreviousTag}}...{{.Tag}}
+    **Full Changelog**: https://github.com/AltairaLabs/promptarena/compare/{{.PreviousTag}}...{{.Tag}}
 
 # Homebrew casks (replaces deprecated brews)
 homebrew_casks:

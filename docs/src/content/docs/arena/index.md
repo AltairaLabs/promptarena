@@ -9,8 +9,7 @@ verified:
   sources:
     - .goreleaser.yml
     - arena/arenaconfig/types.go
-    - arena/audio/local_sink_integration_cgo.go
-    - arena/audio/local_sink_nocgo_integration.go
+    - arena/audio/local_sink_oto.go
     - arena/cmd/promptarena/deploy_adapter_interactive.go
     - arena/cmd/promptarena/deploy_apply_interactive.go
     - arena/cmd/promptarena/deploy_destroy_interactive.go
@@ -72,7 +71,7 @@ Install PromptArena, generate a project and run it:
 ```bash
 brew install altairalabs/tap/promptarena
 
-# Or build from source with Go (needs a C compiler + audio dev headers)
+# Or build from source with Go (no C compiler needed)
 go install github.com/AltairaLabs/promptarena/v2/arena/cmd/promptarena@latest
 
 promptarena init my-test --quick

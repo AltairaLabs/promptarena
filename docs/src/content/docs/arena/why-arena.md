@@ -16,6 +16,7 @@ verified:
     - arena/engine/execution.go
     - arena/engine/mock_default_audio.go
     - arena/selfplay/audio_generator.go
+    - arena/stages/duplex_guardrail.go
     - arena/turnexecutors/pipeline_stages_integration.go
     - examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml
     - examples/guardrails-test/prompts/content-filter.yaml
@@ -66,7 +67,7 @@ PromptArena tests voice as a full conversation:
 - The agent under test is a real duplex provider (OpenAI Realtime, Gemini Live) or a mock for CI.
 - Per-turn latency budgets and content checks run on real signals.
 
-The duplex voice pipeline does not run pack guardrails. To test a guardrail on a voice agent's responses, use text turns, as the voice guardrails demo does.
+The duplex voice pipeline runs the pack's output guardrails on each completed assistant turn, after the realtime provider has streamed it, so a firing is recorded and asserted but the audio already played is not recalled. The voice guardrails demo runs the same guardrail on text and duplex turns.
 
 Demos:
 

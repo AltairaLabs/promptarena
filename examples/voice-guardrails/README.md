@@ -9,8 +9,9 @@ Distinct from `examples/pii-guardrail-red-team/` in scope: this demo focuses on 
 | Scenario | What it proves |
 |---|---|
 | `pii-redaction` | An adversarial caller asks the agent to "read out the email and card details." The mock agent attempts to comply; the `pii_leakage` guardrail's regex pre-pass catches the high-confidence patterns (email + 16-digit card-shape). The runtime replaces the would-be-spoken response in-pipeline. The scenario asserts the firing via `guardrail_triggered`. |
+| `pii-redaction-duplex` | The same exchange as a realtime duplex voice call against a mock realtime agent (`mock-duplex`), with the caller's lines spoken through `mock-tts`. The guardrail runs on each assistant turn as it completes. The scenario asserts the firing via `guardrail_triggered` and that the recorded turn holds no PII. |
 
-The recording captures the pre-enforcement content with a `validations:` block on each message — the assertion reads that block, not the agent's text. This gives traceability (you can see what the agent tried to say, and that the guardrail caught it) without leaking PII to downstream consumers.
+The recorded message holds the replaced content, not what the agent tried to say, plus a `validations:` entry for the firing (`validator_type: pii_leakage`, `passed: false`, the matched pattern class in `details`). The assertion reads that entry, not the agent's text. So results and session recordings (`out/recordings/`) show that the guardrail fired and why, without holding the PII.
 
 ## Running
 
@@ -39,9 +40,11 @@ Live dev loop:
 
 The `guardrail_triggered` assertion (`runtime/evals/handlers/guardrail_triggered.go`) reads the `validations[]` block at test time — no re-running of the eval, no race with the runtime's enforcement.
 
-## Switching to live voice
+## Duplex voice
 
-Add a duplex provider (OpenAI Realtime / Gemini Live), add a `duplex:` block to the scenario, and run with provider keys. The guardrail fires identically — the audio path receives the safe message, the test observes the firing.
+On the duplex path the pack's output guardrails run on each assistant turn when the realtime session completes it, with the same validators and the same `validations[]` entry as the text path, so `guardrail_triggered` works the same way. The difference is timing. A realtime provider streams the reply's audio while it speaks, so the caller has already heard it by the time the guardrail sees the finished transcript. Enforcement rewrites the turn as recorded: the transcript in state, the session recording, the reports and every later assertion. Input guardrails do not run on the duplex path, because the caller's audio has already reached the provider.
+
+To run `pii-redaction-duplex` against a live realtime agent, add a provider such as OpenAI Realtime or Gemini Live, name it in the scenario's `providers:`, and point the `caller` voice at a real TTS provider.
 
 ## File layout
 
@@ -50,7 +53,14 @@ voice-guardrails/
 ├── README.md
 ├── config.arena.yaml
 ├── mock-responses.yaml
+├── mock-responses-judge.yaml
 ├── prompts/support-agent.yaml      # validators: block lives here
-├── providers/mock-provider.yaml
-└── scenarios/pii-redaction.scenario.yaml
+├── providers/
+│   ├── mock-provider.yaml          # text agent
+│   ├── mock-judge.yaml             # judge for pii_leakage
+│   ├── mock-duplex.yaml            # realtime voice agent
+│   └── mock-tts.yaml               # caller voice
+└── scenarios/
+    ├── pii-redaction.scenario.yaml
+    └── pii-redaction-duplex.scenario.yaml
 ```

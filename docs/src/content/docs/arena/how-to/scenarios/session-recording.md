@@ -14,6 +14,7 @@ verified:
     - arena/engine/duplex_executor_pipeline_integration.go
     - arena/engine/engine.go
     - arena/engine/execution.go
+    - arena/stages/duplex_recording.go
     - arena/turnexecutors/pipeline_stages_integration.go
     - examples/eval-test/config.arena.yaml
     - examples/session-replay/demo/main.go
@@ -27,7 +28,7 @@ See [Session Recording Architecture](/arena/explanation/session-recording/) for 
 ## Prerequisites
 
 - A PromptArena project with a `config.arena.yaml` (`promptarena init` creates one).
-- Non-duplex scenarios. Duplex runs write no recording file.
+- Text and duplex scenarios. A duplex recording holds the user and assistant messages and the provider's audio chunks.
 - Go, to load, replay or annotate a recording with the `recording` package.
 
 ## Enable Session Recording
