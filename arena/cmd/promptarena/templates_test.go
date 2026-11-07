@@ -22,7 +22,7 @@ func TestTemplateCommandDefinitions(t *testing.T) {
 		short   string
 		aliases []string
 	}{
-		{"templatesCmd", cmdWrapper{templatesCmd}, "templates", "Manage PromptArena templates (list, fetch, render)", []string{"template"}},
+		{"templatesCmd", cmdWrapper{templatesCmd}, "templates", "Manage PromptArena templates (list, fetch, render, update, repo)", []string{"template"}},
 		{"templatesListCmd", cmdWrapper{templatesListCmd}, "list", "List built-in templates and the templates in an index", nil},
 		{"templatesFetchCmd", cmdWrapper{templatesFetchCmd}, "fetch", "Fetch a template from an index into cache", nil},
 		{"templatesUpdateCmd", cmdWrapper{templatesUpdateCmd}, "update", "Update all templates from an index into cache", nil},
