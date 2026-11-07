@@ -371,11 +371,12 @@
   },
   {
    "id": 44,
-   "claim": "The chat page is the navigation stack root, so Esc or q exits back to the shell.",
+   "claim": "The chat page is the navigation stack root, so Esc exits back to the shell; q exits only when the input box is not focused (a focused input receives q as text).",
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/chat_interactive.go:73",
-    "arena/tui/app/app.go:77-91"
+    "arena/tui/app/app.go:77-92",
+    "arena/tui/app/chatpage.go:168"
    ]
   },
   {

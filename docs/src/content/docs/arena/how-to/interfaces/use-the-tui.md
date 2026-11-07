@@ -138,7 +138,8 @@ Type a message and press `Enter` to send; the agent replies turn by turn, keepin
 conversation state. `Tab` moves focus between the conversation and the input, and
 `Ctrl-L` toggles a runtime-log overlay. Add `-v` / `--verbose` to tee raw provider
 events and transcription to `promptarena.log` for debugging. The chat page is the
-stack root, so `Esc` / `q` exits back to the shell.
+stack root, so `Esc` exits back to the shell. While the input box has focus, `q`
+is typed into the message; `Tab` to the conversation first to quit with `q`.
 
 ![A chat session seven turns deep: the numbered turn list shows the system prompt, two user messages, the assistant's replies, a get_order_status tool call and its result, and the final answer rendered on the right with token and cost totals.](/screenshots/tui-chat.png)
 

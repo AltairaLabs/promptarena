@@ -35,6 +35,14 @@ type Closeable interface {
 	Close()
 }
 
+// TextInputCapturer is an optional interface a Page implements when it can hold
+// a focused text field. While CapturesTextInput reports true, the App hands
+// printable keys (such as a bare 'q') to the page instead of treating them as
+// global shortcuts, so typing a message never quits the hub.
+type TextInputCapturer interface {
+	CapturesTextInput() bool
+}
+
 // VoiceOptions carries the interactive-session parameters. A nil *VoiceOptions
 // on AppContext means plain text chat; non-nil means a live mic/speaker session.
 type VoiceOptions struct {
