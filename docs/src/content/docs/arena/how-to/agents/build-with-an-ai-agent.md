@@ -4,12 +4,13 @@ description: Brief Claude Code, Codex, or another coding agent with PromptArena'
 sidebar:
   order: 20
 verified:
-  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
+  commit: 5a8cffd8daf00b49cbbb3596ce63750db56c3704
   sources:
     - arena/agentkb/catalog.yaml
     - arena/agentkb/skill.go
     - arena/agentmcp/server.go
     - arena/agentmcp/tools.go
+    - arena/arenaconfig/validator_tools.go
     - arena/assertions/validate_params.go
     - arena/cmd/promptarena/agent_brief.go
     - arena/cmd/promptarena/chat.go
@@ -146,7 +147,7 @@ A `kind: Tool` config is a contract (`name`, `description`, `input_schema`, `out
 - mocks it (`mode: mock`) for testing, with `mock_result`, `mock_template`, or a file named by
   `mock_result_file` or `mock_template_file` (relative to the arena config directory),
 - binds an existing service (`mode: live` with an `http` block, or `mode: mcp`;
-  `mode: exec` runs only in the PromptKit SDK: `promptarena run` stops at startup on such a tool), or
+  `mode: exec` and `mode: local` run only in the PromptKit SDK: `promptarena run` stops at startup on such a tool), or
 - writes a new service that you deploy separately from the pack.
 
 ## 6. Watch it run

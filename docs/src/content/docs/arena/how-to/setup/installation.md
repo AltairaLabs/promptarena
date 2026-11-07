@@ -2,12 +2,13 @@
 title: Install PromptArena
 description: Install the promptarena CLI with npm, Homebrew, go install or a release archive, then create a first project with promptarena init.
 verified:
-  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
+  commit: 5a8cffd8daf00b49cbbb3596ce63750db56c3704
   sources:
     - .github/workflows/release.yml
     - .goreleaser.yml
     - arena/arenaconfig/types.go
     - arena/audio/local_sink_oto.go
+    - arena/cmd/promptarena/agent_brief.go
     - arena/cmd/promptarena/chat_interactive.go
     - arena/cmd/promptarena/completion_interactive.go
     - arena/cmd/promptarena/init.go
@@ -154,6 +155,7 @@ promptarena run
 - a prompt configuration (`prompts/`)
 - a `.env.example` file listing the API keys to export (skip it with `--no-env`)
 - a README with next steps
+- the AI coding-agent brief: `AGENTS.md` and the `.claude/skills/promptarena-authoring/` skill, which tell an agent such as Claude Code or Codex how to write PromptArena configs (skip it with `--no-agent`)
 
 `init` keeps files that already exist in the project directory. Pass `--force` to overwrite them.
 

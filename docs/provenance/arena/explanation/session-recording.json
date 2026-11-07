@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/explanation/session-recording.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "5a8cffd8daf00b49cbbb3596ce63750db56c3704",
  "claims": [
   {
    "id": 1,
@@ -1063,11 +1063,12 @@
   },
   {
    "id": 133,
-   "claim": "A duplex recording holds the provider's audio.output events, which fill the assistant audio track of a MediaTimeline",
+   "claim": "A duplex recording holds the provider audio.output events, which fill the assistant audio track; a text run whose provider returns no audio has no audio track",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:460",
-    "arena/stages/duplex_recording.go:26"
+    "arena/engine/duplex_executor_pipeline_integration.go:467",
+    "arena/stages/duplex_recording.go:26",
+    "arena/turnexecutors/pipeline_stages_integration.go:551"
    ]
   },
   {
@@ -1085,6 +1086,18 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/duplex_executor_pipeline_integration.go:460"
+   ]
+  },
+  {
+   "id": "fix-449-event-types",
+   "claim": "An Arena recording holds message.created, stream.interrupted and audio.output; Arena pipelines never produce audio.input, message.text.delta, image or video events",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_executor_pipeline_integration.go:467",
+    "arena/engine/engine.go:519",
+    "arena/engine/engine.go:580",
+    "arena/turnexecutors/pipeline_stages_integration.go:400",
+    "arena/turnexecutors/pipeline_stages_integration.go:551"
    ]
   }
  ]

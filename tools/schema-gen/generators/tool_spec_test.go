@@ -25,7 +25,7 @@ func TestToolSpecSchema(t *testing.T) {
 
 		mode, _ := props["mode"].(map[string]interface{})
 		if desc, _ := mode["description"].(string); desc != toolModeDescription ||
-			!strings.Contains(desc, "promptarena cannot execute it") || strings.Contains(desc, "'exec' (subprocess) -") {
+			!strings.Contains(desc, "promptarena cannot execute them") || strings.Contains(desc, "'exec' (subprocess) -") {
 			t.Errorf("%s: mode description = %q", file, desc)
 		}
 

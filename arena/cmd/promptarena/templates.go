@@ -195,20 +195,45 @@ func resolveTemplateSource() (string, error) {
 	if templateName == "" {
 		return "", fmt.Errorf("either --template or --file is required")
 	}
-	if templateVersion == "" {
-		return "", fmt.Errorf("--version is required when rendering from cache")
-	}
 	cfg, err := templates.LoadRepoConfig(repoConfigPath)
 	if err != nil {
 		return "", err
 	}
 	resolver := templates.NewRepoResolver(cfg)
-	ref, err := resolver.ParseTemplateRef(templateName+"@"+templateVersion, templateIndex)
+	refStr := templateName
+	if templateVersion != "" {
+		refStr += "@" + templateVersion
+	}
+	ref, err := resolver.ParseTemplateRef(refStr, templateIndex)
 	if err != nil {
 		return "", err
 	}
+	if ref.Version == "" || ref.Version == "latest" {
+		latest, latestErr := latestIndexVersion(ref)
+		if latestErr != nil {
+			return "", latestErr
+		}
+		ref.Version = latest
+	}
 	templateName = ref.TemplateName // Update for error message
+	templateVersion = ref.Version
 	return resolver.GetCachePath(templateCache, ref), nil
+}
+
+// latestIndexVersion resolves the version `templates render` uses when
+// --version is omitted: the latest version of the template in its index, the
+// same one `templates fetch` caches when given no version.
+func latestIndexVersion(ref *templates.TemplateRef) (string, error) {
+	idx, err := templates.LoadIndex(ref.Repository.URL)
+	if err != nil {
+		return "", fmt.Errorf("resolve latest version of %s (pass --version to render a cached version "+
+			"without reading the index): %w", ref.TemplateName, err)
+	}
+	entry, err := idx.FindEntry(ref.TemplateName, "")
+	if err != nil {
+		return "", err
+	}
+	return entry.Version, nil
 }
 
 func wrapCacheMissError(src string, err error) error {
@@ -377,7 +402,8 @@ func init() {
 	}
 
 	templatesRenderCmd.Flags().StringVar(&templateName, "template", "", "Template name (cached)")
-	templatesRenderCmd.Flags().StringVar(&templateVersion, "version", "", "Template version (default latest)")
+	templatesRenderCmd.Flags().StringVar(&templateVersion, "version", "",
+		"Template version (default: latest in the index)")
 	templatesRenderCmd.Flags().StringVar(&templateFile, "file", "", "Template file path (bypass cache)")
 	templatesRenderCmd.Flags().BoolVar(&dryRun, "dry-run", true, "Render to a temp/output dir without touching project")
 	templatesRenderCmd.Flags().StringToStringVar(&templateValues, "set", map[string]string{},

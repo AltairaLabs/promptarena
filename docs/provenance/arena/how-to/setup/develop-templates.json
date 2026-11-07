@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/setup/develop-templates.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "5a8cffd8daf00b49cbbb3596ce63750db56c3704",
  "claims": [
   {
    "id": 1,
@@ -239,6 +239,15 @@
    "verdict": "unverified",
    "evidence": [
     "arena/templates/registry.go:24"
+   ]
+  },
+  {
+   "id": "fix-449-render-latest",
+   "claim": "templates render --template without --version renders the latest version the index lists, which must be cached, and needs a readable index",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/templates.go:191-237",
+    "arena/templates/registry.go:183"
    ]
   },
   {

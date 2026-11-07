@@ -294,13 +294,72 @@ func TestRunTemplatesRender_MissingFlags(t *testing.T) {
 		t.Fatalf("expected either --template or --file error, got: %v", err)
 	}
 
-	// Test missing --version when using --template
+	// Without --version the latest version is read from the index; an
+	// unreadable index says so and points at --version.
+	dir := t.TempDir()
 	templateFile = ""
 	templateName = "test"
 	templateVersion = ""
+	templateIndex = filepath.Join(dir, "missing-index.yaml")
+	repoConfigPath = filepath.Join(dir, "repos.yaml")
 	err = runTemplatesRender(templatesRenderCmd, nil)
-	if err == nil || err.Error() != "--version is required when rendering from cache" {
-		t.Fatalf("expected --version error, got: %v", err)
+	if err == nil || !strings.Contains(err.Error(), "resolve latest version of test") ||
+		!strings.Contains(err.Error(), "--version") {
+		t.Fatalf("expected latest-version resolution error, got: %v", err)
+	}
+}
+
+func TestRunTemplatesRender_DefaultsToLatestIndexVersion(t *testing.T) {
+	dir := t.TempDir()
+	writeTpl := func(name, body string) string {
+		p := filepath.Join(dir, name)
+		if err := os.WriteFile(p, []byte("files:\n  - path: README.md\n    content: "+body+"\n"), 0o600); err != nil {
+			t.Fatalf("write tpl: %v", err)
+		}
+		return p
+	}
+	oldTpl := writeTpl("old.yaml", "old")
+	newTpl := writeTpl("new.yaml", "new")
+	indexPath := filepath.Join(dir, "index.yaml")
+	index := "apiVersion: promptkit.altairalabs.ai/v1\nkind: TemplateIndex\nspec:\n  entries:\n" +
+		"    - name: demo\n      version: \"1.2.0\"\n      source: " + newTpl + "\n" +
+		"    - name: demo\n      version: \"1.0.0\"\n      source: " + oldTpl + "\n"
+	if err := os.WriteFile(indexPath, []byte(index), 0o600); err != nil {
+		t.Fatalf("write index: %v", err)
+	}
+	repoConfigPath = filepath.Join(dir, "repos.yaml")
+	templateIndex = indexPath
+	templateCache = filepath.Join(dir, "cache")
+	templateFile = ""
+	templateValues = map[string]string{}
+	valuesFile = ""
+	promptMissing = false
+
+	// Cache both versions, then render with no --version.
+	for _, v := range []string{"1.0.0", "1.2.0"} {
+		templateName, templateVersion = "demo", v
+		if err := runTemplatesFetch(templatesFetchCmd, nil); err != nil {
+			t.Fatalf("fetch %s: %v", v, err)
+		}
+	}
+	templateName, templateVersion = "demo", ""
+	outputDir = filepath.Join(dir, "out")
+	if err := runTemplatesRender(templatesRenderCmd, nil); err != nil {
+		t.Fatalf("render: %v", err)
+	}
+	data, err := os.ReadFile(filepath.Join(outputDir, "README.md"))
+	if err != nil {
+		t.Fatalf("read rendered: %v", err)
+	}
+	if string(data) != "new" {
+		t.Fatalf("expected latest (1.2.0) template, got %q", string(data))
+	}
+
+	// A template the index does not list fails clearly.
+	templateName, templateVersion = "absent", ""
+	if err := runTemplatesRender(templatesRenderCmd, nil); err == nil ||
+		!strings.Contains(err.Error(), "template absent not found") {
+		t.Fatalf("expected not-found error, got: %v", err)
 	}
 }
 

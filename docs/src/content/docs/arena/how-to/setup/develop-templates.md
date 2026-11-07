@@ -2,7 +2,7 @@
 title: Develop Templates
 description: Build a template in a local clone of the community template repo, render it with the promptarena CLI, and submit it.
 verified:
-  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
+  commit: 5a8cffd8daf00b49cbbb3596ce63750db56c3704
   sources:
     - arena/cmd/promptarena/templates.go
     - arena/cmd/promptarena/templates_cmd_test.go
@@ -51,7 +51,7 @@ Add a template to the community repo and render it locally before you open a pul
      --values values.example.yaml --out ./out
    ```
 
-   `render --template` reads the cached copy and needs `--version`. `fetch` caches `template.yaml` together with every file a relative `source` names, so a template that uses `source` renders from the cache. A `source` that climbs out of the template directory (`../`) is rejected at fetch. To render while you edit, skip the cache and render straight from your clone:
+   `render --template` reads the cached copy. Without `--version` it renders the latest version the index lists, so that version must be in the cache and the index must be readable. `fetch` caches `template.yaml` together with every file a relative `source` names, so a template that uses `source` renders from the cache. A `source` that climbs out of the template directory (`../`) is rejected at fetch. To render while you edit, skip the cache and render straight from your clone:
 
    ```bash
    promptarena templates render --file ../promptkit-templates/your-template/template.yaml \

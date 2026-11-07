@@ -2,7 +2,7 @@
 title: Session Recording Architecture
 description: How Arena captures runs to JSONL through RecordingStage, loads them as SessionRecordings, and replays them offline.
 verified:
-  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
+  commit: 5a8cffd8daf00b49cbbb3596ce63750db56c3704
   sources:
     - arena/adapters/session_recording.go
     - arena/arenaconfig/types.go
@@ -75,7 +75,7 @@ The `FileEventStore` is the only bus subscription that writes recordings, and it
 
 ### Event Types
 
-An Arena recording holds `message.created` and `stream.interrupted` events. A duplex recording also holds the provider's `audio.output` events. See [Captured Events](/arena/how-to/scenarios/session-recording/#captured-events) for the table. Tool calls, tool results and media parts are fields of the `message.created` payload, not separate events.
+An Arena recording holds three event types: `message.created`, `stream.interrupted` and `audio.output`. Every run writes the first two; `audio.output` comes from a duplex run, or from a streaming text turn whose provider streams audio back. `RecordingStage` can also write `audio.input`, `message.text.delta`, image and video events, but Arena's pipelines never produce them: the duplex pipeline records only its output, and Arena leaves streaming-text and video recording off. See [Captured Events](/arena/how-to/scenarios/session-recording/#captured-events) for the table. Tool calls, tool results and media parts are fields of the `message.created` payload, not separate events.
 
 ### Event Structure
 
@@ -119,7 +119,7 @@ rec, err := recording.Load("session.jsonl")  // Works with either format
 
 ## Media Timeline
 
-For recordings with audio or video events, the `MediaTimeline` provides synchronized access. Text runs write only `message.created` and `stream.interrupted` events, so a timeline built from a text-run recording holds no audio tracks. A duplex recording carries `audio.output` events, which fill the assistant audio track.
+For recordings with audio or video events, the `MediaTimeline` provides synchronized access. A text run whose provider returns no audio writes only `message.created` and `stream.interrupted` events, so a timeline built from its recording holds no audio tracks. A duplex recording carries `audio.output` events, which fill the assistant audio track.
 
 ```mermaid
 flowchart TD

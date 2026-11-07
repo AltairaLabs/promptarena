@@ -337,7 +337,7 @@ Fields under `spec`:
 | `mock_result_file` | string |  | Path to a JSON file holding the static mock result, relative to the arena config directory. Mutually exclusive with mock_template and mock_template_file. |
 | `mock_template` | string |  | Go text/template rendered against tool-call args (parsed as a JSON map). Rendered output is parsed back as JSON. Use this instead of mock_result when the response should depend on inputs (e.g. branching on order_id with {{ if eq .order_id "X" }}...{{ end }}). Mutually exclusive with mock_result. |
 | `mock_template_file` | string |  | Path to a file holding the mock_template, relative to the arena config directory. Mutually exclusive with mock_result and mock_result_file. |
-| `mode` | string | ✓ | Execution mode. One of: 'mock' (use mock_result or mock_template) - 'live' (HTTP via 'http') - 'mcp' (MCP server) - 'client' (client-side handler; arena simulates it with the mock fields and the turn's consent_overrides). 'exec' (subprocess) is run by the PromptKit SDK only: promptarena cannot execute it, and a run stops at startup on such a tool. |
+| `mode` | string | ✓ | Execution mode. One of: 'mock' (use mock_result or mock_template) - 'live' (HTTP via 'http') - 'mcp' (MCP server) - 'client' (client-side handler; arena simulates it with the mock fields and the turn's consent_overrides). 'exec' (subprocess) and 'local' (in-process handler) are run by the PromptKit SDK only: promptarena cannot execute them, and a run stops at startup on such a tool. |
 | `name` | string |  | — |
 | `output_schema` | — | ✓ | — |
 | `timeout_ms` | integer |  | — |

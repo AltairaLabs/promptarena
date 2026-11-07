@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/setup/use-project-templates.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "5a8cffd8daf00b49cbbb3596ce63750db56c3704",
  "claims": [
   {
    "id": 1,
@@ -891,6 +891,16 @@
    "evidence": [
     "arena/cmd/promptarena/templates.go:102",
     "arena/cmd/promptarena/templates.go:51"
+   ]
+  },
+  {
+   "id": "fix-449-version-default",
+   "claim": "templates fetch and templates render default --version to the latest version in the index",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/templates.go:136",
+    "arena/cmd/promptarena/templates.go:191-237",
+    "arena/templates/registry.go:183"
    ]
   },
   {

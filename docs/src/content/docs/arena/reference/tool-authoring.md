@@ -3,9 +3,11 @@ title: Tool Authoring
 sidebar:
   order: 8
 verified:
-  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
+  commit: 5a8cffd8daf00b49cbbb3596ce63750db56c3704
   sources:
     - arena/arenaconfig/loader.go
+    - arena/arenaconfig/validator.go
+    - arena/arenaconfig/validator_tools.go
     - arena/consent/hook.go
     - arena/engine/builder_integration.go
     - arena/turnexecutors/pipeline_stages_integration.go
@@ -20,7 +22,7 @@ For the full `Tool` schema (every field), see [Configuration Schema → Tool](/a
 
 ## Modes
 
-Valid `mode` values under `promptarena`: `mock`, `live`, `mcp` and `client`. `exec` (a subprocess) is run by the PromptKit SDK only: `promptarena` cannot execute it, and a run stops at startup on a tool with `mode: exec`.
+Valid `mode` values under `promptarena`: `mock`, `live`, `mcp` and `client`. `exec` (a subprocess) and `local` (an in-process handler) are run by the PromptKit SDK only: `promptarena` cannot execute them. A run stops at startup on a tool with either mode, and `promptarena validate` reports a `mode: local` tool as an error. `packc compile` accepts `mode: local`, since the SDK runs it from the compiled pack.
 
 | `mode` | Behaviour | Fields |
 |---|---|---|
