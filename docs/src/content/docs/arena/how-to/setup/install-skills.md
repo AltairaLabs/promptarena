@@ -2,7 +2,7 @@
 title: Install Skills
 description: Install, list and remove shared skills from Git repositories or local paths with promptarena skill, then reference them from a config.
 verified:
-  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/arenaconfig/loader.go
     - arena/arenaconfig/skill_sources.go

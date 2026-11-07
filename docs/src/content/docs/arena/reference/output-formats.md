@@ -1,7 +1,7 @@
 ---
 title: Output Formats
 verified:
-  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/agentkb/schemas/common/assertions.json
     - arena/arenaconfig/governance_taxonomy.go
@@ -21,7 +21,6 @@ verified:
     - arena/engine/objective_unreached_test.go
     - arena/engine/stop_reason.go
     - arena/engine/types.go
-    - arena/results/composite.go
     - arena/results/csv/csv_repository.go
     - arena/results/json/json_repository.go
     - arena/results/junit/junit_repository.go

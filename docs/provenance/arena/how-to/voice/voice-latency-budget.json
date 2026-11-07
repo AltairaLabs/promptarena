@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/voice/voice-latency-budget.md",
- "commit": "3df344ffbc8c604e1a8935929c28499d778d19f0",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
@@ -16,7 +16,7 @@
    "claim": "The provider stage records LatencyMs on every assistant message (LLM round-trip including in-turn tool-call rounds)",
    "verdict": "false",
    "evidence": [
-    "arena/engine/eval_orchestrator.go:406"
+    "arena/engine/eval_orchestrator.go:459"
    ]
   },
   {
@@ -24,8 +24,8 @@
    "claim": "Arena bridges LatencyMs into eval context metadata as latency_ms",
    "verdict": "true",
    "evidence": [
-    "arena/engine/eval_orchestrator.go:392",
-    "arena/engine/eval_orchestrator.go:395"
+    "arena/engine/eval_orchestrator.go:445",
+    "arena/engine/eval_orchestrator.go:448"
    ]
   },
   {
@@ -41,8 +41,8 @@
    "claim": "Turn YAML with type latency_budget params.max_ms and message",
    "verdict": "true",
    "evidence": [
-    "examples/voice-latency-budget/scenarios/turn-budget.scenario.yaml:11",
-    "schemas/v1alpha1/scenario.json"
+    "examples/voice-latency-budget/scenarios/turn-budget.scenario.yaml:14",
+    "schemas/v1alpha1/scenario.json:54"
    ]
   },
   {
@@ -50,7 +50,7 @@
    "claim": "latency_budget score is min(1.0, max_ms / latency_ms); 2x budget scores 0.5",
    "verdict": "true",
    "evidence": [
-    "arena/engine/eval_orchestrator.go:395"
+    "arena/engine/eval_orchestrator.go:448"
    ]
   },
   {
@@ -58,7 +58,7 @@
    "claim": "The Markdown report shows latency_ms vs budget_ms per turn",
    "verdict": "false",
    "evidence": [
-    "arena/engine/eval_orchestrator.go:395"
+    "arena/engine/eval_orchestrator.go:448"
    ]
   },
   {
@@ -74,8 +74,8 @@
    "claim": "promptarena run --ci --formats json,markdown; open out/results.md",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:176",
-    "arena/cmd/promptarena/run.go:536"
+    "arena/cmd/promptarena/run.go:177",
+    "arena/cmd/promptarena/run.go:538"
    ]
   },
   {
@@ -99,7 +99,7 @@
    "claim": "Markdown report shows per-provider latency_ms results",
    "verdict": "false",
    "evidence": [
-    "arena/engine/eval_orchestrator.go:395"
+    "arena/engine/eval_orchestrator.go:448"
    ]
   },
   {
@@ -107,7 +107,7 @@
    "claim": "latency_budget checks total provider-call duration per turn including tool-call rounds",
    "verdict": "false",
    "evidence": [
-    "arena/engine/eval_orchestrator.go:406"
+    "arena/engine/eval_orchestrator.go:459"
    ]
   },
   {
@@ -115,7 +115,7 @@
    "claim": "TTFB / first-audio timings are not exposed to the eval context as named metadata keys",
    "verdict": "true",
    "evidence": [
-    "arena/engine/eval_orchestrator.go:392"
+    "arena/engine/eval_orchestrator.go:445"
    ]
   },
   {
@@ -129,7 +129,7 @@
    "claim": "../../bin/promptarena run --ci --formats json from the example dir",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:176"
+    "arena/cmd/promptarena/run.go:177"
    ]
   },
   {

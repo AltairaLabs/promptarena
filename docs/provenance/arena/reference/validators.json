@@ -1,14 +1,14 @@
 {
  "page": "docs/src/content/docs/arena/reference/validators.md",
- "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
    "claim": "Guardrails are runtime checks that run during generation and can modify or block LLM responses, using the same check types as assertions/evals",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:722",
-    "arena/turnexecutors/pipeline_stages_integration.go:741"
+    "arena/turnexecutors/pipeline_stages_integration.go:739",
+    "arena/turnexecutors/pipeline_stages_integration.go:760"
    ]
   },
   {
@@ -16,7 +16,7 @@
    "claim": "Diagram: Guardrails = runtime enforcement, can abort streaming, policy compliance, defined in PromptConfig",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:722",
+    "arena/turnexecutors/pipeline_stages_integration.go:739",
     "schemas/v1alpha1/promptconfig.json:714"
    ]
   },
@@ -33,26 +33,26 @@
    "claim": "Table: guardrails enforce policies during generation, can abort early while streaming, defined in PromptConfig, failure = policy violation; assertions run after generation, defined in Scenario, failure = test failure",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:722",
+    "arena/turnexecutors/pipeline_stages_integration.go:739",
     "schemas/v1alpha1/promptconfig.json:714"
    ]
   },
   {
    "id": 5,
-   "claim": "Non-streaming diagram: when validation fails the guardrail returns a 'Validation Error' result instead of the response",
-   "verdict": "false",
+   "claim": "On a guardrail failure the assistant message is rewritten in place; the pipeline continues and no error is returned",
+   "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:741",
-    "examples/guardrails-test/prompts/content-filter.yaml:14"
+    "arena/turnexecutors/pipeline_stages_integration.go:739",
+    "arena/turnexecutors/pipeline_stages_integration.go:760"
    ]
   },
   {
    "id": 6,
-   "claim": "Streaming diagram: a failing chunk aborts the stream and the result is 'Partial + Error'",
-   "verdict": "false",
+   "claim": "A streaming guardrail that triggers replaces or truncates the chunk and stops reading the stream; the turn completes with no error",
+   "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:741",
-    "examples/guardrails-test/prompts/content-filter.yaml:14"
+    "arena/turnexecutors/pipeline_stages_integration.go:739",
+    "arena/turnexecutors/pipeline_stages_integration.go:760"
    ]
   },
   {
@@ -60,7 +60,7 @@
    "claim": "Guardrails are defined in the 'validators' section under spec of a PromptConfig",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:722",
+    "arena/turnexecutors/pipeline_stages_integration.go:739",
     "schemas/v1alpha1/promptconfig.json:714"
    ]
   },
@@ -78,8 +78,8 @@
    "claim": "'message' sets the user-facing text shown when a guardrail fires; default policy message if omitted",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:741",
-    "schemas/v1alpha1/promptconfig.json:813"
+    "arena/turnexecutors/pipeline_stages_integration.go:739",
+    "schemas/v1alpha1/promptconfig.json:714"
    ]
   },
   {
@@ -92,11 +92,11 @@
   },
   {
    "id": 11,
-   "claim": "fail_on_violation defaults to true",
-   "verdict": "false",
+   "claim": "The validators table lists type, params, message, enabled and id; the page documents no fail_on_violation field",
+   "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:741",
-    "schemas/v1alpha1/promptconfig.json:824"
+    "arena/turnexecutors/pipeline_stages_integration.go:739",
+    "arena/turnexecutors/pipeline_stages_integration.go:760"
    ]
   },
   {
@@ -104,7 +104,7 @@
    "claim": "Content blockers (banned_words / content_excludes) replace content with the message or a default policy message",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:741",
+    "arena/turnexecutors/pipeline_stages_integration.go:760",
     "examples/guardrails-test/prompts/content-filter.yaml:14"
    ]
   },
@@ -113,17 +113,17 @@
    "claim": "Length guards (max_length / length) truncate content to the configured maximum",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:741",
+    "arena/turnexecutors/pipeline_stages_integration.go:760",
     "examples/guardrails-test/prompts/content-filter.yaml:14"
    ]
   },
   {
    "id": 14,
-   "claim": "Other check types log the violation but do not modify content",
-   "verdict": "false",
+   "claim": "Any other check type that triggers replaces the content with message, the check's own replacement, or the default blocked message",
+   "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:741",
-    "examples/guardrails-test/prompts/content-filter.yaml:14"
+    "arena/turnexecutors/pipeline_stages_integration.go:739",
+    "arena/turnexecutors/pipeline_stages_integration.go:760"
    ]
   },
   {
@@ -140,7 +140,8 @@
    "claim": "Any check type can be used as a guardrail",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:741"
+    "arena/turnexecutors/pipeline_stages_integration.go:739",
+    "arena/turnexecutors/pipeline_stages_integration.go:760"
    ]
   },
   {
@@ -148,7 +149,8 @@
    "claim": "Alias pairs: content_excludes/banned_words, max_length/length, sentence_count/max_sentences, field_presence/required_fields",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:741"
+    "arena/turnexecutors/pipeline_stages_integration.go:739",
+    "arena/turnexecutors/pipeline_stages_integration.go:760"
    ]
   },
   {
@@ -156,7 +158,8 @@
    "claim": "content_excludes and max_length support streaming",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:741"
+    "arena/turnexecutors/pipeline_stages_integration.go:739",
+    "arena/turnexecutors/pipeline_stages_integration.go:760"
    ]
   },
   {
@@ -164,23 +167,26 @@
    "claim": "sentence_count and field_presence do not support streaming",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:741"
+    "arena/turnexecutors/pipeline_stages_integration.go:739",
+    "arena/turnexecutors/pipeline_stages_integration.go:760"
    ]
   },
   {
    "id": 20,
-   "claim": "sentence_count / max_sentences enforcement: logs violation",
-   "verdict": "false",
+   "claim": "Guardrails that are not streaming-capable run on the completed response and replace the content when they trigger",
+   "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:741"
+    "arena/turnexecutors/pipeline_stages_integration.go:739",
+    "arena/turnexecutors/pipeline_stages_integration.go:760"
    ]
   },
   {
    "id": 21,
-   "claim": "field_presence / required_fields enforcement: logs violation, no content change",
-   "verdict": "false",
+   "claim": "field_presence / required_fields is not streaming-capable and replaces the content when any field is missing",
+   "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:741"
+    "arena/turnexecutors/pipeline_stages_integration.go:739",
+    "arena/turnexecutors/pipeline_stages_integration.go:760"
    ]
   },
   {
@@ -188,7 +194,8 @@
    "claim": "Streaming-capable guardrails abort generation immediately when a violation is detected",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:741"
+    "arena/turnexecutors/pipeline_stages_integration.go:739",
+    "arena/turnexecutors/pipeline_stages_integration.go:760"
    ]
   },
   {
@@ -196,15 +203,17 @@
    "claim": "Diagram: chunk 3 containing a banned word aborts the stream",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:741"
+    "arena/turnexecutors/pipeline_stages_integration.go:739",
+    "arena/turnexecutors/pipeline_stages_integration.go:760"
    ]
   },
   {
    "id": 24,
-   "claim": "Streaming guardrails save API costs by aborting early (no wasted tokens)",
-   "verdict": "false",
+   "claim": "The stage stops using the stream but reads the remainder in the background, so the provider still generates the remaining tokens",
+   "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:741"
+    "arena/turnexecutors/pipeline_stages_integration.go:739",
+    "arena/turnexecutors/pipeline_stages_integration.go:760"
    ]
   },
   {
@@ -212,25 +221,26 @@
    "claim": "Combined example: banned_words params.words (list), max_length params max_characters and max_tokens, each with a message",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:741",
-    "schemas/v1alpha1/promptconfig.json:813"
+    "arena/turnexecutors/pipeline_stages_integration.go:739",
+    "schemas/v1alpha1/promptconfig.json:714"
    ]
   },
   {
    "id": 26,
-   "claim": "max_sentences guardrail with params.max_sentences enforces a post-completion sentence limit ('Maximum 5 sentences')",
-   "verdict": "false",
+   "claim": "The page documents no separate max_sentences guardrail example; the combined example uses banned_words and max_length",
+   "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:741",
-    "schemas/v1alpha1/promptconfig.json:813"
+    "arena/turnexecutors/pipeline_stages_integration.go:739",
+    "arena/turnexecutors/pipeline_stages_integration.go:760"
    ]
   },
   {
    "id": 27,
-   "claim": "Execution order: streaming guardrails run during generation, non-streaming run after completion",
-   "verdict": "false",
+   "claim": "Streaming-capable guardrails run on each chunk; every guardrail then runs on the completed response in declaration order",
+   "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:741"
+    "arena/turnexecutors/pipeline_stages_integration.go:739",
+    "arena/turnexecutors/pipeline_stages_integration.go:760"
    ]
   },
   {
@@ -238,7 +248,8 @@
    "claim": "First failure stops the validation chain",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:741"
+    "arena/turnexecutors/pipeline_stages_integration.go:739",
+    "arena/turnexecutors/pipeline_stages_integration.go:760"
    ]
   },
   {
@@ -246,8 +257,8 @@
    "claim": "Content Safety example: banned_words with words list including '100%' and a message",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:741",
-    "schemas/v1alpha1/promptconfig.json:813"
+    "arena/turnexecutors/pipeline_stages_integration.go:739",
+    "schemas/v1alpha1/promptconfig.json:714"
    ]
   },
   {
@@ -255,8 +266,8 @@
    "claim": "Response Length example: max_length with max_characters 2000, max_tokens 500",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:741",
-    "schemas/v1alpha1/promptconfig.json:813"
+    "arena/turnexecutors/pipeline_stages_integration.go:739",
+    "schemas/v1alpha1/promptconfig.json:714"
    ]
   },
   {
@@ -270,10 +281,11 @@
   },
   {
    "id": 32,
-   "claim": "Order by speed: put streaming guardrails before post-completion checks",
-   "verdict": "false",
+   "claim": "Declaration order does not change when streaming guardrails fire",
+   "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:741"
+    "arena/turnexecutors/pipeline_stages_integration.go:739",
+    "arena/turnexecutors/pipeline_stages_integration.go:760"
    ]
   },
   {
@@ -281,7 +293,8 @@
    "claim": "Custom guardrails implement hooks.ProviderHook",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:741"
+    "arena/turnexecutors/pipeline_stages_integration.go:739",
+    "arena/turnexecutors/pipeline_stages_integration.go:760"
    ]
   },
   {
@@ -289,7 +302,8 @@
    "claim": "Go snippet: sdk.Open(\"./app.pack.json\", \"chat\", sdk.WithProviderHook(&MyCustomHook{}))",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:741"
+    "arena/turnexecutors/pipeline_stages_integration.go:739",
+    "arena/turnexecutors/pipeline_stages_integration.go:760"
    ]
   }
  ]

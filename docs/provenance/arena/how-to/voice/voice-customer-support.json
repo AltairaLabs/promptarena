@@ -1,14 +1,14 @@
 {
  "page": "docs/src/content/docs/arena/how-to/voice/voice-customer-support.md",
- "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
    "claim": "Example dir examples/voice-refund-demo/ holds a refund-support agent with four scripted personas",
    "verdict": "true",
    "evidence": [
-    "examples/voice-refund-demo/config.arena.yaml:48",
-    "examples/voice-refund-demo/config.arena.yaml:61"
+    "examples/voice-refund-demo/config.arena.yaml:53",
+    "examples/voice-refund-demo/config.arena.yaml:65"
    ]
   },
   {
@@ -16,7 +16,7 @@
    "claim": "Conversation-level assertions on tools the agent must and must not call",
    "verdict": "true",
    "evidence": [
-    "examples/voice-refund-demo/scenarios/aggressive-refund.scenario.yaml:46"
+    "examples/voice-refund-demo/scenarios/aggressive-refund.scenario.yaml:47"
    ]
   },
   {
@@ -32,7 +32,7 @@
    "claim": "Four personas ship: aggressive, impersonator, anxious, patient",
    "verdict": "true",
    "evidence": [
-    "examples/voice-refund-demo/config.arena.yaml:61"
+    "examples/voice-refund-demo/config.arena.yaml:66"
    ]
   },
   {
@@ -40,7 +40,7 @@
    "claim": "A persona is driven by a text LLM",
    "verdict": "false",
    "evidence": [
-    "examples/voice-refund-demo/config.arena.yaml:66",
+    "examples/voice-refund-demo/config.arena.yaml:71",
     "examples/voice-refund-demo/mock-responses.yaml:114"
    ]
   },
@@ -58,7 +58,7 @@
    "claim": "Runtime tools lookup_order, check_warranty_status, issue_refund, escalate_to_human exist and are mock-backed",
    "verdict": "true",
    "evidence": [
-    "examples/voice-refund-demo/config.arena.yaml:54",
+    "examples/voice-refund-demo/config.arena.yaml:59",
     "examples/voice-refund-demo/tools/lookup-order.tool.yaml:30"
    ]
   },
@@ -75,7 +75,7 @@
    "claim": "Per-turn content checks",
    "verdict": "true",
    "evidence": [
-    "examples/voice-refund-demo/scenarios/aggressive-refund.scenario.yaml:40"
+    "examples/voice-refund-demo/scenarios/aggressive-refund.scenario.yaml:41"
    ]
   },
   {
@@ -116,7 +116,7 @@
    "verdict": "false",
    "evidence": [
     "arena/web/frontend/src/lib/arenaView.ts:443",
-    "arena/web/frontend/src/lib/atlasAdapter.ts:39"
+    "arena/web/frontend/src/lib/atlasAdapter.ts:40"
    ]
   },
   {
@@ -132,7 +132,7 @@
    "claim": "open out/results.md after the run",
    "verdict": "true",
    "evidence": [
-    "examples/voice-refund-demo/config.arena.yaml:81"
+    "examples/voice-refund-demo/config.arena.yaml:86"
    ]
   },
   {
@@ -189,11 +189,12 @@
   },
   {
    "id": 23,
-   "claim": "Selfplay drives the persona via a real text LLM, so a fully mocked end-to-end run with passing assertions isn't possible",
-   "verdict": "false",
+   "claim": "By default the selfplay-user role uses mock-duplex and the voices are bound to mock-tts, so a fully mocked end-to-end run with passing assertions works with no API keys",
+   "verdict": "true",
    "evidence": [
-    "examples/voice-refund-demo/config.arena.yaml:38",
-    "examples/voice-refund-demo/config.arena.yaml:74"
+    "examples/voice-refund-demo/config.arena.yaml:44",
+    "examples/voice-refund-demo/config.arena.yaml:72",
+    "examples/voice-refund-demo/config.arena.yaml:79"
    ]
   },
   {
@@ -201,7 +202,7 @@
    "claim": "OPENAI_API_KEY used for the text LLM that drives selfplay personas; OpenAI Realtime",
    "verdict": "false",
    "evidence": [
-    "examples/voice-refund-demo/config.arena.yaml:74",
+    "examples/voice-refund-demo/config.arena.yaml:79",
     "examples/voice-refund-demo/providers/openai-nova.provider.yaml:8"
    ]
   },
@@ -237,7 +238,7 @@
    "claim": "Patient-baseline uses OpenAI nova voice, so works with only OPENAI_API_KEY + GEMINI_API_KEY",
    "verdict": "true",
    "evidence": [
-    "examples/voice-refund-demo/config.arena.yaml:45",
+    "examples/voice-refund-demo/config.arena.yaml:50",
     "examples/voice-refund-demo/personas/patient-customer.persona.yaml:9"
    ]
   },
@@ -284,7 +285,7 @@
    "claim": "Report uploaded from examples/voice-refund-demo/out/",
    "verdict": "true",
    "evidence": [
-    "examples/voice-refund-demo/config.arena.yaml:82"
+    "examples/voice-refund-demo/config.arena.yaml:87"
    ]
   },
   {
@@ -300,8 +301,8 @@
    "claim": "Add a persona: new file under personas/, anchor to an existing order ID (tools/*.tool.yaml mock_template branches), add a scenario in scenarios/ referencing it",
    "verdict": "true",
    "evidence": [
-    "examples/voice-refund-demo/config.arena.yaml:48",
-    "examples/voice-refund-demo/config.arena.yaml:61"
+    "examples/voice-refund-demo/config.arena.yaml:53",
+    "examples/voice-refund-demo/config.arena.yaml:65"
    ]
   },
   {
@@ -320,7 +321,7 @@
    "verdict": "false",
    "evidence": [
     "examples/voice-refund-demo/scenarios/aggressive-refund.scenario.yaml:12",
-    "schemas/v1alpha1/scenario.json:603"
+    "schemas/v1alpha1/scenario.json:607"
    ]
   },
   {

@@ -2,7 +2,7 @@
 title: CLI Commands
 description: Every promptarena command with its flags, defaults and examples.
 verified:
-  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/adapters/adapter.go
     - arena/adapters/arena_output.go
@@ -49,13 +49,11 @@ verified:
     - arena/cmd/promptarena/generate.go
     - arena/cmd/promptarena/generate_integration.go
     - arena/cmd/promptarena/init.go
-    - arena/cmd/promptarena/init_interactive.go
     - arena/cmd/promptarena/main_integration.go
     - arena/cmd/promptarena/mcp_cmd.go
     - arena/cmd/promptarena/mocks.go
     - arena/cmd/promptarena/personas_cmd.go
     - arena/cmd/promptarena/prompt-debug_interactive.go
-    - arena/cmd/promptarena/provider_override.go
     - arena/cmd/promptarena/redteam_cmd.go
     - arena/cmd/promptarena/run.go
     - arena/cmd/promptarena/run_interactive.go
@@ -70,7 +68,6 @@ verified:
     - arena/deploy/flow/sessions.go
     - arena/engine/conversation_executor.go
     - arena/engine/engine.go
-    - arena/engine/engine_audio.go
     - arena/engine/eval_orchestrator.go
     - arena/engine/execution.go
     - arena/engine/interactive.go
@@ -135,8 +132,6 @@ verified:
     - packc/compiler/check.go
     - packc/compiler/compiler.go
     - packc/main_interactive.go
-    - packc/schema_validator.go
-    - schemas/v1alpha1/arena.json
     - schemas/v1alpha1/scenario.json
 ---
 Commands, flags and defaults of the `promptarena` CLI.
@@ -387,7 +382,7 @@ promptarena generate [flags]
 | `--dedup` | bool | `true` | Deduplicate sessions by failure pattern fingerprint |
 
 :::note
-You must specify either `--from-recordings` or `--source`. `--from-recordings` reads local files. `--source <name>` resolves the installed deploy adapter of that name (`~/.promptarena/adapters/promptarena-deploy-<name>`, or project-local), checks it advertises the `sessions` capability, and hands it the merged deploy config from `--config`, including the token stored by `promptarena deploy login`. An adapter without the capability is reported with the upgrade command.
+You must specify either `--from-recordings` or `--source`. `--from-recordings` reads local files. `--source <name>` resolves the installed deploy adapter of that name (`promptarena-deploy-<name>` in `.promptarena/adapters/`, then `~/.promptarena/adapters/`, then on `PATH`), checks it advertises the `sessions` capability, and hands it the merged deploy config from `--config`, including the token stored by `promptarena deploy login`. An adapter without the capability is reported with the upgrade command.
 :::
 
 ### Input formats
@@ -1010,6 +1005,8 @@ promptarena deploy status
 promptarena deploy destroy --env staging
 ```
 
+Deploy state, saved plans and the deploy lock are kept per environment under `.promptarena/envs/<env>/`, so a command for one `--env` never reads or changes another environment's state.
+
 For the complete deploy command reference, see [Deploy: CLI Commands](/arena/reference/deploy/cli-commands/).
 
 ---
@@ -1071,7 +1068,7 @@ The `--section` flag allows focusing on specific parts of the configuration:
 | Section | Description |
 |---------|-------------|
 | `prompts` | Prompt configurations with task types, variables, validators |
-| `providers` | Provider details organized by group (default, judge, selfplay) |
+| `providers` | Provider details organized by each provider's `group` (`default` when unset), plus a `judge` group for judge providers not listed under `providers` |
 | `scenarios` | Scenario details with turn counts and assertion summaries |
 | `tools` | Tool definitions with modes, parameters, timeouts |
 | `selfplay` | Self-play configuration including personas and roles |
@@ -1083,7 +1080,7 @@ The `--section` flag allows focusing on specific parts of the configuration:
 
 The command displays styled boxes with:
 - Loaded prompt configurations with task types, variables, and validators
-- Configured providers organized by group (default, judge, selfplay)
+- Configured providers organized by `group` (`default` when unset), with judge-only providers under `judge`
 - Available scenarios with turn counts and assertion summaries
 - Tool definitions with modes and parameters
 - Self-play roles with persona associations
@@ -1366,7 +1363,7 @@ promptarena chat [flags]
 | `--mock-provider` | bool | `false` | Replace all providers with a generic mock (no API keys needed) |
 | `--mock-config` | string | - | Path to a mock-responses YAML file (used with `--mock-provider`) |
 | `--voice` | bool | `false` | Hands-free voice mode (requires PortAudio installed) |
-| `--voice-stt` | string | - | STT provider id for voice over text agents (VAD mode) |
+| `--voice-stt` | string | - | STT provider id for voice over text agents (VAD mode). An id that is not an STT provider in the config fails before the TUI starts, listing the ids available |
 | `--voice-output-voice` | string | - | TTS voice id the agent speaks in (VAD mode) |
 | `--echo-guard` | bool | `false` | Gate mic while the agent speaks (for laptop speakers) |
 | `--barge-in` | bool | `false` | Allow interrupting the agent mid-reply (needs headphones/AEC) |
@@ -1794,6 +1791,8 @@ Markdown reports include a media statistics table in the overview section:
 | Errors | 0 |
 | 💾 Total Size | 1.2 MB |
 ```
+
+In the Overview table, a `Skipped` row follows `Failed` when any run was skipped. A skipped run counts as neither passed nor failed.
 
 ### Media Loading Options
 

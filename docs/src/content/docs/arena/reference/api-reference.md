@@ -2,9 +2,10 @@
 title: Go API Reference
 description: Exported types, functions and methods for using Arena as a Go library
 verified:
-  commit: 0dbee6290db4e4de3bff3101f260fd614f81c924
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/arenaconfig/loader.go
+    - arena/arenaconfig/mock_config_check.go
     - arena/arenaconfig/types.go
     - arena/cmd/promptarena/run_interactive.go
     - arena/deploy/flow/sessions.go
@@ -246,7 +247,10 @@ if !ok {
 func (e *Engine) Close() error
 ```
 
-Shuts down the engine and cleans up resources.
+Shuts down the engine and cleans up resources. It closes the provider, MCP and
+self-play registries the engine was built with, including ones you passed to
+`NewEngine` from `BuildEngineComponents`, so do not share one set of components
+between two engines. Call `BuildEngineComponents` again for each engine.
 
 **Returns:**
 - `error` - Error if cleanup fails
@@ -264,10 +268,11 @@ defer eng.Close()
 func (e *Engine) EnableMockProviderMode(mockConfigPath string) error
 ```
 
-Replaces all providers with mock providers for testing.
+Replaces all providers with mock providers for testing. The file is checked for
+unknown keys before it loads, so a misspelled key returns an error.
 
 **Parameters:**
-- `mockConfigPath` - Path to mock config YAML (empty string for default responses)
+- `mockConfigPath` - Path to mock config YAML. An empty string keeps each provider's own `mock_config`, and a provider without one gets default responses
 
 **Returns:**
 - `error` - Error if mock configuration is invalid
@@ -415,7 +420,7 @@ Test scenario definition.
 
 ```go
 type TurnDefinition struct {
-    Role      string  // "user", "assistant", or self-play role (e.g. "gemini-user")
+    Role      string  // "user", or a self-play role ID from spec.self_play.roles (e.g. "gemini-user")
     Content   string  // Message content (scripted turns)
     Persona   string  // Persona ID (self-play turns)
     Turns     int     // Number of self-play turns (exact if MaxTurns absent)
@@ -424,7 +429,7 @@ type TurnDefinition struct {
 }
 ```
 
-Single conversation turn. For self-play turns, `Turns` sets the minimum number of
+Single conversation turn. The assistant's reply is never scripted, so there is no `"assistant"` role. For self-play turns, `Turns` sets the minimum number of
 exchanges and `MaxTurns` sets the upper bound. When `MaxTurns > Turns`, natural
 termination is enabled: the self-play LLM can signal conversation completion after
 the minimum turns are reached. If `MaxTurns` is absent, exactly `Turns` exchanges

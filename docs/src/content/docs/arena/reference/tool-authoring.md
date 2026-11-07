@@ -3,14 +3,15 @@ title: Tool Authoring
 sidebar:
   order: 8
 verified:
-  commit: 1f3acc05aa6f98764a8598798bf817c19d6f1f44
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/arenaconfig/loader.go
+    - arena/consent/hook.go
     - arena/engine/builder_integration.go
+    - arena/turnexecutors/pipeline_stages_integration.go
     - examples/customer-support/tools/example-tool.tool.yaml
     - examples/voice-refund-demo/tools/lookup-order.tool.yaml
     - schemas/v1alpha1/tool.json
-    - tools/schema-gen/generators/tool_spec.go
 ---
 
 Tool YAML modes for PromptArena and the fields each mode takes.
@@ -19,7 +20,7 @@ For the full `Tool` schema (every field), see [Configuration Schema → Tool](/a
 
 ## Modes
 
-Valid `mode` values under `promptarena`: `mock`, `live`, `mcp`, `client`, `local`, or the name of a registered executor.
+Valid `mode` values under `promptarena`: `mock`, `live`, `mcp` and `client`. `exec` (a subprocess) is run by the PromptKit SDK only: `promptarena` cannot execute it, and a run stops at startup on a tool with `mode: exec`.
 
 | `mode` | Behaviour | Fields |
 |---|---|---|
@@ -152,7 +153,7 @@ spec:
 
 ## Client (`mode: client`)
 
-A `client` tool is answered by the mock executor: it returns `mock_template` or `mock_result` output, or `{"result": "mock response"}` if neither is set. The optional `client` block carries the following settings.
+A `client` tool is answered by the mock executor: it returns `mock_template` or `mock_result` output, or `{"result": "mock response"}` if neither is set. A turn's `consent_overrides` map a tool name to `grant`, `deny` or `timeout` to simulate the consent decision; any other value fails to load. The optional `client` block carries the following settings.
 
 ```yaml
 spec:

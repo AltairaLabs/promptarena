@@ -2,7 +2,7 @@
 title: Pack Evals
 description: Fields of an eval definition in a pack's evals array, with the triggers, groups and metric types it accepts.
 verified:
-  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/engine/builder_integration.go
     - arena/engine/eval_conversation_executor.go
@@ -58,7 +58,7 @@ The `metric` object takes these fields. The schema allows additional properties,
 |-------|------|---------|-------------|
 | `name` | string | required | Metric name, matching `^[a-zA-Z_:][a-zA-Z0-9_:]*$`. The collector prefixes it with `{namespace}_eval_` unless it already starts with that prefix. |
 | `type` | string | required | One of the metric types below. |
-| `labels` | map of string to string | none | Labels added to the metric. Label names are not checked when the pack loads; a name Prometheus rejects fails metric registration and logs a warning. |
+| `labels` | map of string to string | none | Labels added to the metric. Each name must match `^[a-zA-Z_][a-zA-Z0-9_]*$` and must not start with `__`. Arena checks this for evals under `pack_evals` in the arena config, and an invalid name stops the run with `invalid pack_evals`. A compiled pack's evals are not checked when the pack loads; a name Prometheus rejects fails metric registration and logs a warning. |
 
 | Metric type | Behavior |
 |-------------|----------|

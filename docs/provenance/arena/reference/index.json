@@ -1,14 +1,14 @@
 {
  "page": "docs/src/content/docs/arena/reference/index.md",
- "commit": "0dbee6290db4e4de3bff3101f260fd614f81c924",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
-   "claim": "Tool modes: mock, live, mcp, exec, client",
-   "verdict": "false",
+   "claim": "Tool Authoring lists the tool mode values arena runs: mock, live, mcp, client",
+   "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:109",
-    "schemas/v1alpha1/tool.json:321"
+    "arena/engine/builder_integration.go:113",
+    "schemas/v1alpha1/tool.json:319"
    ]
   },
   {
@@ -16,7 +16,7 @@
    "claim": "promptarena run runs scenarios",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:119"
+    "arena/cmd/promptarena/run.go:120"
    ]
   },
   {
@@ -82,8 +82,8 @@
    "claim": "Output formats include HTML",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run.go:56",
-    "arena/cmd/promptarena/run.go:71"
+    "arena/cmd/promptarena/run.go:57",
+    "arena/cmd/promptarena/run.go:72"
    ]
   },
   {

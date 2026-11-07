@@ -1,7 +1,7 @@
 ---
 title: Guardrails Reference
 verified:
-  commit: 631d3c353c2c9d71b362ae5cd20c137d42b19d5b
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/agentkb/evalmeta.yaml
     - arena/turnexecutors/pipeline_stages_integration.go
@@ -89,6 +89,10 @@ Chunks already emitted cannot be recalled. Streaming matching is substring-based
 Guardrails that are not streaming-capable allow every chunk and run on the completed response.
 
 The stage stops using the stream but reads the remainder in the background, so the provider still generates the remaining tokens.
+
+## Guardrails in Duplex Scenarios
+
+A scenario with a `duplex` block runs the prompt's guardrails too, loaded the same way as on the text path. They run on each completed assistant turn, not on chunks, and only on the output. The listener has already heard the streamed audio, so a firing corrects the transcript, the recording, the reports and later assertions, and `guardrail_triggered` sees it. See [Pipeline stages](/arena/reference/duplex-config/#pipeline-stages).
 
 ## Combining Guardrails
 

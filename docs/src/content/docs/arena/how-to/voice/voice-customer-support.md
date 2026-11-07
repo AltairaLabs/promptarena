@@ -2,7 +2,7 @@
 title: Test a Voice Customer Support Agent with Self-Play
 description: Drive a voice agent through a multi-turn customer support call with scripted personas, runtime tools, and per-turn assertions.
 verified:
-  commit: 631d3c353c2c9d71b362ae5cd20c137d42b19d5b
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/assertions/register.go
     - arena/cmd/promptarena/run_interactive.go
@@ -46,8 +46,6 @@ The example tests conversational failures: whether the agent verifies the warran
 
 ## Required API keys
 
-| Key | Used for |
-|-----|----------|
 The shipped config needs none: the `selfplay-user` role uses `mock-duplex` and the four `voices:` entries are bound to `mock-tts`, so `promptarena run --provider mock-duplex` runs all four scenarios keyless and every `tools_called` / `tools_not_called` assertion passes. Keys come in when you bind the voices to their vendor TTS providers (the comment above `voices:` lists the pairs) or run a real agent:
 
 | Key | Used for |

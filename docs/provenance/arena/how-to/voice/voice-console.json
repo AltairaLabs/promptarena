@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/voice/voice-console.md",
- "commit": "3df344ffbc8c604e1a8935929c28499d778d19f0",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
@@ -26,8 +26,8 @@
    "claim": "An Arena config needs at least one provider and one agent declared to start a voice session",
    "verdict": "true",
    "evidence": [
-    "arena/tui/app/chatpage.go:197",
-    "arena/tui/app/chatpage.go:212"
+    "arena/tui/app/chatpage.go:201",
+    "arena/tui/app/chatpage.go:216"
    ]
   },
   {
@@ -44,7 +44,7 @@
    "claim": "The binary loads PortAudio dynamically at runtime, and only when a voice session starts",
    "verdict": "true",
    "evidence": [
-    "arena/tui/app/chatpage_voice.go:59",
+    "arena/tui/app/chatpage_voice.go:61",
     "arena/voice/portaudio/portaudio_io_interactive.go:68",
     "arena/voice/session_audioio_interactive.go:15"
    ]
@@ -70,8 +70,8 @@
    "claim": "chat --voice without PortAudio prints a clear install hint and every other feature keeps working",
    "verdict": "true",
    "evidence": [
-    "arena/tui/app/chatpage.go:624",
-    "arena/tui/app/chatpage_voice.go:59",
+    "arena/tui/app/chatpage.go:628",
+    "arena/tui/app/chatpage_voice.go:61",
     "arena/voice/portaudio/portaudio_io_interactive.go:98"
    ]
   },
@@ -123,7 +123,7 @@
    "claim": "The voice console opens in full-screen TUI mode",
    "verdict": "true",
    "evidence": [
-    "arena/tui/app/launch_interactive.go:44"
+    "arena/tui/app/launch_interactive.go:45"
    ]
   },
   {
@@ -141,7 +141,8 @@
    "verdict": "true",
    "evidence": [
     "arena/tui/app/app.go:74",
-    "arena/tui/app/app.go:88"
+    "arena/tui/app/app.go:89",
+    "arena/tui/app/chatpage.go:268"
    ]
   },
   {
@@ -150,7 +151,7 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/duplex_interactive.go:65",
-    "arena/tui/app/page.go:82"
+    "arena/tui/app/page.go:90"
    ]
   },
   {
@@ -168,7 +169,7 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/duplex_interactive.go:65",
-    "arena/tui/app/chatpage_voice.go:96"
+    "arena/tui/app/chatpage_voice.go:126"
    ]
   },
   {
@@ -193,9 +194,9 @@
    "claim": "The response_modalities: [AUDIO] setting enables stream input",
    "verdict": "false",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:544",
+    "arena/engine/duplex_executor_pipeline_integration.go:603",
     "arena/engine/duplex_interactive.go:65",
-    "arena/tui/app/page.go:88"
+    "arena/tui/app/page.go:96"
    ]
   },
   {
@@ -240,7 +241,7 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/chat.go:16",
-    "arena/tui/app/chatpage_voice.go:114"
+    "arena/tui/app/chatpage_voice.go:143"
    ]
   },
   {
@@ -254,12 +255,13 @@
   },
   {
    "id": 29,
-   "claim": "--voice-stt must match a provider declared under stt_providers: in the Arena config",
+   "claim": "--voice-stt must match a provider declared under stt_providers:; any other id stops chat before the console opens with an error listing the loaded STT provider ids",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:692",
+    "arena/arenaconfig/loader.go:693",
     "arena/arenaconfig/types.go:209",
-    "arena/tui/app/chatpage_voice.go:115"
+    "arena/cmd/promptarena/chat_interactive.go:35",
+    "arena/tui/app/chatpage_voice.go:75"
    ]
   },
   {
@@ -295,7 +297,7 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/chat.go:18",
-    "arena/tui/app/chatpage_voice.go:165",
+    "arena/tui/app/chatpage_voice.go:194",
     "arena/voice/echo_guard.go:153"
    ]
   },
@@ -355,7 +357,7 @@
    "claim": "The --voice flag requires PortAudio installed",
    "verdict": "true",
    "evidence": [
-    "arena/tui/app/chatpage_voice.go:59",
+    "arena/tui/app/chatpage_voice.go:61",
     "arena/voice/session_audioio_interactive.go:15"
    ]
   },

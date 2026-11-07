@@ -1,7 +1,7 @@
 ---
 title: Configuration Schema
 verified:
-  commit: 1f3acc05aa6f98764a8598798bf817c19d6f1f44
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/adapters/arena_output.go
     - arena/adapters/registry.go
@@ -69,7 +69,6 @@ verified:
     - arena/selfplay/generator.go
     - arena/selfplay/registry.go
     - arena/selfplay/transform.go
-    - arena/stages/duplex_recording.go
     - arena/statestore/store.go
     - arena/toolresult/hook.go
     - arena/turnexecutors/pipeline_stages_integration.go
@@ -559,6 +558,8 @@ hook runs after them, and the container is removed last. The program can
 Skills directories are mounted into the sandbox, where the agent can read
 them, so a harness file under `skills:` is visible to the agent. A runnable example is
 in [`examples/sandbox-host-eval/`](https://github.com/AltairaLabs/promptarena/tree/main/examples/sandbox-host-eval).
+
+Arena checks each `pack_evals` entry when it builds the engine: `id` must be present and unique, `type` and `trigger` are required and the trigger must be a valid one, `sample_percentage` must be between 0 and 100, and a `metric` needs a valid name, type and label names. A bad entry stops the run with `invalid pack_evals`, followed by one line per problem.
 
 #### `pack_metadata.governance`
 
@@ -1789,6 +1790,8 @@ spec:
     on_violation: flag               # flag (default) or regenerate
     judge: false                     # Also ask the configured judge about each message (default false)
 ```
+
+A persona file accepts only the keys in the persona schema. An unknown key (a typo, or a style knob nothing reads) fails the load, as does a persona file with more than one YAML document.
 
 #### Template variables for each exchange
 

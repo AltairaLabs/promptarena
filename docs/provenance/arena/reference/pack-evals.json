@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/reference/pack-evals.md",
- "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
@@ -180,10 +180,10 @@
   },
   {
    "id": 30,
-   "claim": "metric.labels map string->string; names match ^[a-zA-Z_][a-zA-Z0-9_]*$ and not start with __",
-   "verdict": "false",
+   "claim": "metric.labels names must match ^[a-zA-Z_][a-zA-Z0-9_]*$ and not start with __; arena checks this for pack_evals in the arena config and stops the run with invalid pack_evals; compiled pack evals are not checked at load",
+   "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:716"
+    "arena/engine/builder_integration.go:717"
    ]
   },
   {

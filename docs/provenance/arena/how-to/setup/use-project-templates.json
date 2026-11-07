@@ -1,13 +1,13 @@
 {
  "page": "docs/src/content/docs/arena/how-to/setup/use-project-templates.md",
- "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
    "claim": "The page teaches how to scaffold new PromptArena test projects using templates",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:16"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
@@ -15,8 +15,7 @@
    "claim": "The promptarena init command uses templates to generate complete, ready-to-use test projects",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:112",
-    "arena/cmd/promptarena/init.go:99"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
@@ -24,7 +23,6 @@
    "claim": "promptarena init my-test --quick --provider mock is a valid command",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:163",
     "arena/cmd/promptarena/init.go:65"
    ]
   },
@@ -41,7 +39,7 @@
    "claim": "init accepts a --provider flag",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:68"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
@@ -49,8 +47,7 @@
    "claim": "mock is a valid value for --provider",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:193",
-    "arena/templates/builtin/quick-start/template.yaml:24"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
@@ -58,8 +55,7 @@
    "claim": "openai is a valid value for --provider",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:193",
-    "arena/templates/builtin/quick-start/template.yaml:24"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
@@ -67,8 +63,7 @@
    "claim": "Quick mode uses sensible defaults",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:170",
-    "arena/templates/builtin/quick-start/template.yaml:25"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
@@ -76,31 +71,31 @@
    "claim": "Quick mode creates config.arena.yaml in the project root",
    "verdict": "true",
    "evidence": [
-    "arena/templates/builtin/quick-start/template.yaml:34"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
    "id": 10,
-   "claim": "Quick mode creates prompts/assistant.yaml",
-   "verdict": "false",
+   "claim": "Quick mode writes `prompts/assistant.prompt.yaml`.",
+   "verdict": "true",
    "evidence": [
-    "arena/templates/builtin/quick-start/template.yaml:37"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
    "id": 11,
-   "claim": "Quick mode creates providers/{provider}.yaml for the chosen provider",
-   "verdict": "false",
+   "claim": "Quick mode writes `providers/<provider>.provider.yaml`.",
+   "verdict": "true",
    "evidence": [
-    "arena/templates/builtin/quick-start/template.yaml:40"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
    "id": 12,
-   "claim": "Quick mode creates scenarios/basic-test.yaml",
-   "verdict": "false",
+   "claim": "Quick mode writes `scenarios/basic-test.scenario.yaml`.",
+   "verdict": "true",
    "evidence": [
-    "arena/templates/builtin/quick-start/template.yaml:43"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
@@ -116,7 +111,7 @@
    "claim": "Quick mode creates a .gitignore that ignores .env and temporary files",
    "verdict": "true",
    "evidence": [
-    "arena/templates/builtin/quick-start/template.yaml:54"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
@@ -124,7 +119,7 @@
    "claim": "Quick mode creates README.md",
    "verdict": "true",
    "evidence": [
-    "arena/templates/builtin/quick-start/template.yaml:60"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
@@ -132,17 +127,15 @@
    "claim": "PromptArena includes 6 built-in templates",
    "verdict": "true",
    "evidence": [
-    "arena/templates/builtin/quick-start/template.yaml:1",
-    "arena/templates/loader.go:143"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
    "id": 17,
-   "claim": "basic-chatbot is a built-in template with simple conversational testing",
-   "verdict": "false",
+   "claim": "`basic-chatbot` is a community template; the built-ins are quick-start, code-assistant, content-generation, customer-support, mcp-integration, multimodal.",
+   "verdict": "true",
    "evidence": [
-    "arena/templates/builtin/quick-start/template.yaml:1",
-    "arena/templates/loader.go:143"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
@@ -187,11 +180,11 @@
   },
   {
    "id": 23,
-   "claim": "promptarena templates list lists available templates",
-   "verdict": "false",
+   "claim": "`templates list` prints built-in templates first, then index entries.",
+   "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/templates.go:50",
-    "arena/cmd/promptarena/templates.go:61"
+    "arena/cmd/promptarena/templates.go:102",
+    "arena/cmd/promptarena/templates.go:51"
    ]
   },
   {
@@ -208,8 +201,8 @@
    "claim": "promptarena templates list lists remote templates from the default index",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/templates.go:50",
-    "arena/cmd/promptarena/templates.go:61"
+    "arena/cmd/promptarena/templates.go:102",
+    "arena/cmd/promptarena/templates.go:51"
    ]
   },
   {
@@ -217,8 +210,7 @@
    "claim": "promptarena templates fetch --template NAME --version VERSION fetches a remote template into the cache",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/templates.go:113",
-    "arena/cmd/promptarena/templates.go:95"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
@@ -226,7 +218,7 @@
    "claim": "templates fetch accepts a --version flag",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/templates.go:339"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
@@ -234,8 +226,7 @@
    "claim": "promptarena templates render --template NAME --version VERSION --values FILE --out DIR renders a template",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/templates.go:163",
-    "arena/cmd/promptarena/templates.go:208"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
@@ -243,7 +234,7 @@
    "claim": "templates render accepts a --values flag",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/templates.go:351"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
@@ -251,7 +242,7 @@
    "claim": "templates render accepts an --out flag",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/templates.go:350"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
@@ -259,7 +250,7 @@
    "claim": "promptarena templates update updates all cached templates",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/templates.go:129"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
@@ -267,8 +258,7 @@
    "claim": "promptarena init my-project --template NAME --template-index URL initialises a project from a remote template",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:96",
-    "arena/cmd/promptarena/init.go:98"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
@@ -276,7 +266,7 @@
    "claim": "init accepts a --template flag",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:64"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
@@ -284,7 +274,7 @@
    "claim": "init accepts a --template-index flag",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:71"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
@@ -300,7 +290,7 @@
    "claim": "--index is an accepted alias for the template index override",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/templates.go:325"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
@@ -308,8 +298,7 @@
    "claim": "--template-index overrides the index URL or path",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:71",
-    "arena/cmd/promptarena/init.go:96"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
@@ -317,7 +306,7 @@
    "claim": "--cache-dir is an accepted flag that overrides the template cache location",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/templates.go:329"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
@@ -325,7 +314,7 @@
    "claim": "--template-cache is an accepted flag that overrides the template cache location",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:75"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
@@ -333,8 +322,7 @@
    "claim": "--values and --set provide variables for render",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/templates.go:348",
-    "arena/cmd/promptarena/templates.go:351"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
@@ -348,8 +336,7 @@
    "claim": "openai is a provider type that init can scaffold",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:193",
-    "arena/templates/builtin/quick-start/template.yaml:24"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
@@ -357,8 +344,7 @@
    "claim": "claude is a valid value for --provider",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:193",
-    "arena/templates/builtin/quick-start/template.yaml:24"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
@@ -366,8 +352,7 @@
    "claim": "gemini is a valid value for --provider",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:193",
-    "arena/templates/builtin/quick-start/template.yaml:24"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
@@ -375,17 +360,15 @@
    "claim": "Running promptarena init my-project without --quick starts an interactive prompt session",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:167",
-    "arena/cmd/promptarena/init_interactive.go:12"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
    "id": 46,
-   "claim": "Interactive mode prompts for project name and description",
-   "verdict": "false",
+   "claim": "Interactive mode prompts for the project name (only when none is given), the provider, and `include_env`.",
+   "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:139",
-    "arena/cmd/promptarena/init_interactive.go:22"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
@@ -393,8 +376,7 @@
    "claim": "Interactive mode prompts for provider selection",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init_interactive.go:66",
-    "arena/templates/builtin/quick-start/template.yaml:20"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
@@ -431,10 +413,10 @@
   },
   {
    "id": 52,
-   "claim": "Interactive prompt label reads Project Name",
-   "verdict": "false",
+   "claim": "The interactive prompt label is `Project name`, default `my-arena-tests`.",
+   "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:140"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
@@ -442,8 +424,7 @@
    "claim": "Interactive provider prompt offers openai as a choice",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init_interactive.go:66",
-    "arena/templates/builtin/quick-start/template.yaml:24"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
@@ -599,7 +580,7 @@
    "claim": "Scenario spec.task_type and spec.description are fields",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/scenario.json:571"
+    "schemas/v1alpha1/scenario.json:572"
    ]
   },
   {
@@ -607,7 +588,7 @@
    "claim": "Scenario spec.turns is a list whose entries have role and content fields",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/scenario.json:590"
+    "schemas/v1alpha1/scenario.json:591"
    ]
   },
   {
@@ -658,7 +639,7 @@
    "claim": "promptarena run runs the tests in a generated project",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:119"
+    "arena/cmd/promptarena/run.go:120"
    ]
   },
   {
@@ -666,15 +647,15 @@
    "claim": "promptarena run writes output/results.json",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run.go:536"
+    "arena/cmd/promptarena/run.go:538"
    ]
   },
   {
    "id": 85,
-   "claim": "Writing OPENAI_API_KEY=... into .env with echo is a valid way to set the key",
-   "verdict": "false",
+   "claim": "Keys are exported in the shell; `.env.example` only lists the variables.",
+   "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:67"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
@@ -682,15 +663,15 @@
    "claim": "All generated files are standard PromptKit YAML",
    "verdict": "true",
    "evidence": [
-    "arena/templates/builtin/quick-start/template.yaml:34"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
    "id": 87,
-   "claim": "prompts/assistant.yaml is the prompt file generated by quick mode",
-   "verdict": "false",
+   "claim": "`prompts/assistant.prompt.yaml` is the generated prompt file.",
+   "verdict": "true",
    "evidence": [
-    "arena/templates/builtin/quick-start/template.yaml:37"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
@@ -710,17 +691,15 @@
    "claim": "promptarena init learning --quick --provider mock creates a project named learning",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:134",
-    "arena/cmd/promptarena/init.go:86"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
    "id": 91,
-   "claim": "The files config.arena.yaml, prompts/assistant.yaml and scenarios/basic-test.yaml exist in a quick-mode project",
-   "verdict": "false",
+   "claim": "A quick-mode project has config.arena.yaml, prompts/assistant.prompt.yaml and scenarios/basic-test.scenario.yaml.",
+   "verdict": "true",
    "evidence": [
-    "arena/templates/builtin/quick-start/template.yaml:37",
-    "arena/templates/builtin/quick-start/template.yaml:43"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
@@ -739,10 +718,10 @@
   },
   {
    "id": 94,
-   "claim": "The quick-mode mock provider file is providers/mock.yaml",
-   "verdict": "false",
+   "claim": "The mock provider file is `providers/mock.provider.yaml`.",
+   "verdict": "true",
    "evidence": [
-    "arena/templates/builtin/quick-start/template.yaml:40"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
@@ -758,7 +737,7 @@
    "claim": "Generated projects include a .gitignore",
    "verdict": "true",
    "evidence": [
-    "arena/templates/builtin/quick-start/template.yaml:54"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
@@ -766,7 +745,7 @@
    "claim": "git init, git add and git commit are standard and work on a generated project",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:66"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
@@ -782,7 +761,7 @@
    "claim": "promptarena init content-generation --quick --provider claude is valid",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:68"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
@@ -795,38 +774,34 @@
   },
   {
    "id": 101,
-   "claim": "promptarena init my-test --quick --provider openai creates the project layout shown in the tree",
-   "verdict": "false",
+   "claim": "Quick mode with `--provider openai` writes the tree shown on the page.",
+   "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:119",
-    "arena/templates/builtin/quick-start/template.yaml:34",
-    "arena/templates/builtin/quick-start/template.yaml:37"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
    "id": 102,
-   "claim": "The openai quick-mode project contains .env, .gitignore, README.md, config.arena.yaml, prompts/assistant.yaml, providers/openai.yaml and scenarios/basic-test.yaml",
-   "verdict": "false",
+   "claim": "The openai quick-mode project contains the tree shown on the page.",
+   "verdict": "true",
    "evidence": [
-    "arena/templates/builtin/quick-start/template.yaml:34",
-    "arena/templates/builtin/quick-start/template.yaml:37"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
    "id": 103,
-   "claim": "init fails when the target directory already exists",
-   "verdict": "false",
+   "claim": "`init` into an existing directory keeps files sharing a generated name; `--force` overwrites.",
+   "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:112",
-    "arena/templates/generator.go:1"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
    "id": 104,
-   "claim": "The error message reads Directory already exists",
-   "verdict": "false",
+   "claim": "Kept files are listed as `kept existing <file> (not overwritten; use --force to replace it)`.",
+   "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:112"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
@@ -834,16 +809,15 @@
    "claim": "Valid providers are mock, openai, claude and gemini",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:193",
-    "arena/templates/builtin/quick-start/template.yaml:24"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
    "id": 106,
-   "claim": "The error message reads Provider not recognized",
-   "verdict": "false",
+   "claim": "The provider error reads `--provider \"anthropic\" is not offered by template quick-start (choose one of: mock, openai, claude, gemini)`.",
+   "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:203"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
@@ -854,10 +828,10 @@
   },
   {
    "id": 108,
-   "claim": "echo OPENAI_API_KEY=... to .env is a valid way to fix a missing key",
-   "verdict": "false",
+   "claim": "Export the key in the shell; `promptarena` does not read `.env` files.",
+   "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:67"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
@@ -907,7 +881,7 @@
    "claim": "Quick mode creates a .env.example file listing the API keys to export",
    "verdict": "true",
    "evidence": [
-    "arena/templates/builtin/quick-start/template.yaml"
+    "arena/templates/builtin/quick-start/template.yaml:50"
    ]
   },
   {
@@ -915,7 +889,8 @@
    "claim": "promptarena templates list prints the built-in templates first, then the index entries",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/templates.go"
+    "arena/cmd/promptarena/templates.go:102",
+    "arena/cmd/promptarena/templates.go:51"
    ]
   },
   {
@@ -923,8 +898,8 @@
    "claim": "init into an existing directory keeps files that share a generated name and lists them as warnings; --force overwrites them",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go",
-    "arena/templates/generator.go"
+    "arena/cmd/promptarena/init.go:72",
+    "arena/templates/generator.go:229"
    ]
   }
  ]

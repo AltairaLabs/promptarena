@@ -2,7 +2,7 @@
 title: Test Scenario Format
 description: The structure of a Scenario file, its main spec and turn fields, and examples of multimodal, workflow and self-play turns.
 verified:
-  commit: 1f3acc05aa6f98764a8598798bf817c19d6f1f44
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/arenaconfig/ignored_fields.go
     - arena/arenaconfig/loader.go
@@ -12,6 +12,7 @@ verified:
     - arena/assertions/validate_types.go
     - arena/cmd/promptarena/run.go
     - arena/cmd/promptarena/serve_interactive.go
+    - arena/cmd/promptarena/validate_json.go
     - arena/engine/builder_integration.go
     - arena/engine/conversation_executor.go
     - arena/engine/eval_orchestrator.go
@@ -23,8 +24,7 @@ verified:
     - examples/arena-media-test/config.arena.yaml
     - examples/assertions-test/config.arena.yaml
     - examples/document-analysis/scenarios/pdf-summary.scenario.yaml
-    - packc/schema_validator.go
-    - packc/schema_validator_test.go
+    - packc/compiler/check.go
     - schemas/v1alpha1/arena.json
     - schemas/v1alpha1/persona.json
     - schemas/v1alpha1/promptconfig.json
@@ -198,7 +198,7 @@ spec:
 
 ### Self-play turn
 
-A turn whose `role` is a provider selector generates the user message from a persona:
+A turn whose `role` is a self-play role ID from `spec.self_play.roles` generates the user message from a persona:
 
 ```yaml
 turns:

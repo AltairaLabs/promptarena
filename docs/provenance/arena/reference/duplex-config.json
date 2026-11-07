@@ -1,14 +1,14 @@
 {
  "page": "docs/src/content/docs/arena/reference/duplex-config.md",
- "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
    "claim": "Duplex mode streams audio in chunks and detects turn boundaries dynamically with VAD or ASM",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:971",
-    "arena/engine/duplex_executor_pipeline_integration.go:392"
+    "arena/arenaconfig/types.go:979",
+    "arena/engine/duplex_executor_pipeline_integration.go:441"
    ]
   },
   {
@@ -56,17 +56,17 @@
    "claim": "The 'duplex' field of the scenario spec enables duplex mode",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:709",
+    "arena/arenaconfig/types.go:717",
     "arena/engine/duplex_conversation_executor.go:75"
    ]
   },
   {
    "id": 8,
-   "claim": "Scenario example (L38-55) is a valid Scenario document with apiVersion promptkit.altairalabs.ai/v1alpha1 and kind Scenario",
-   "verdict": "false",
+   "claim": "The first scenario example is a valid Scenario document with apiVersion promptkit.altairalabs.ai/v1alpha1, kind Scenario and a turns list; a spec without turns is rejected at load",
+   "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:484",
-    "schemas/v1alpha1/scenario.json"
+    "arena/arenaconfig/types.go:689"
    ]
   },
   {
@@ -74,8 +74,8 @@
    "claim": "Scenario field spec.id exists",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:686",
-    "schemas/v1alpha1/scenario.json"
+    "arena/arenaconfig/loader.go:484",
+    "arena/arenaconfig/types.go:689"
    ]
   },
   {
@@ -83,8 +83,8 @@
    "claim": "Scenario field spec.task_type exists",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:686",
-    "schemas/v1alpha1/scenario.json"
+    "arena/arenaconfig/loader.go:484",
+    "arena/arenaconfig/types.go:689"
    ]
   },
   {
@@ -92,8 +92,8 @@
    "claim": "Scenario field spec.description exists",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:686",
-    "schemas/v1alpha1/scenario.json"
+    "arena/arenaconfig/loader.go:484",
+    "arena/arenaconfig/types.go:689"
    ]
   },
   {
@@ -101,8 +101,8 @@
    "claim": "Duplex field 'timeout' exists under the scenario duplex block",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1026",
-    "arena/arenaconfig/types.go:975",
+    "arena/arenaconfig/types.go:1034",
+    "arena/arenaconfig/types.go:983",
     "arena/engine/duplex_conversation_executor.go:96"
    ]
   },
@@ -111,7 +111,7 @@
    "claim": "Duplex field 'turn_detection' exists",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:977"
+    "arena/arenaconfig/types.go:985"
    ]
   },
   {
@@ -119,8 +119,8 @@
    "claim": "turn_detection.mode accepts the value 'asm' in the example",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1099",
-    "arena/arenaconfig/types.go:966"
+    "arena/arenaconfig/types.go:1107",
+    "arena/arenaconfig/types.go:974"
    ]
   },
   {
@@ -128,8 +128,8 @@
    "claim": "Duplex field 'resilience' exists",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:979",
-    "arena/engine/duplex_executor_pipeline_integration.go:57"
+    "arena/arenaconfig/types.go:987",
+    "arena/engine/duplex_executor_pipeline_integration.go:59"
    ]
   },
   {
@@ -137,8 +137,8 @@
    "claim": "Resilience field 'max_retries' exists",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:987",
-    "arena/engine/duplex_executor_pipeline_integration.go:57",
+    "arena/arenaconfig/types.go:995",
+    "arena/engine/duplex_executor_pipeline_integration.go:59",
     "arena/engine/duplex_executor_types.go:15"
    ]
   },
@@ -147,7 +147,7 @@
    "claim": "Resilience field 'partial_success_min_turns' exists",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:992",
+    "arena/arenaconfig/types.go:1000",
     "arena/engine/duplex_executor_turns_integration.go:106",
     "arena/engine/duplex_executor_types.go:16"
    ]
@@ -157,8 +157,8 @@
    "claim": "DuplexConfig table: field 'timeout' has type string",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1026",
-    "arena/arenaconfig/types.go:975",
+    "arena/arenaconfig/types.go:1034",
+    "arena/arenaconfig/types.go:983",
     "arena/engine/duplex_conversation_executor.go:96"
    ]
   },
@@ -176,8 +176,8 @@
    "claim": "DuplexConfig.timeout is in Go duration format",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1026",
-    "arena/arenaconfig/types.go:975",
+    "arena/arenaconfig/types.go:1034",
+    "arena/arenaconfig/types.go:983",
     "arena/engine/duplex_conversation_executor.go:96"
    ]
   },
@@ -186,8 +186,8 @@
    "claim": "DuplexConfig.timeout is the maximum session duration",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1026",
-    "arena/arenaconfig/types.go:975",
+    "arena/arenaconfig/types.go:1034",
+    "arena/arenaconfig/types.go:983",
     "arena/engine/duplex_conversation_executor.go:96"
    ]
   },
@@ -196,7 +196,7 @@
    "claim": "DuplexConfig.turn_detection has type TurnDetectionConfig",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:977"
+    "arena/arenaconfig/types.go:985"
    ]
   },
   {
@@ -212,7 +212,7 @@
    "claim": "In-page anchor #turndetectionconfig resolves to the TurnDetectionConfig section of this page",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:977"
+    "arena/arenaconfig/types.go:985"
    ]
   },
   {
@@ -220,8 +220,8 @@
    "claim": "DuplexConfig.resilience has type DuplexResilienceConfig",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:979",
-    "arena/engine/duplex_executor_pipeline_integration.go:57"
+    "arena/arenaconfig/types.go:987",
+    "arena/engine/duplex_executor_pipeline_integration.go:59"
    ]
   },
   {
@@ -229,7 +229,7 @@
    "claim": "When resilience is omitted, the DuplexResilienceConfig field defaults apply",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:57",
+    "arena/engine/duplex_executor_pipeline_integration.go:59",
     "arena/engine/duplex_executor_turns_integration.go:106"
    ]
   },
@@ -238,8 +238,8 @@
    "claim": "In-page anchor #duplexresilienceconfig resolves to the DuplexResilienceConfig section of this page",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:979",
-    "arena/engine/duplex_executor_pipeline_integration.go:57"
+    "arena/arenaconfig/types.go:987",
+    "arena/engine/duplex_executor_pipeline_integration.go:59"
    ]
   },
   {
@@ -247,8 +247,8 @@
    "claim": "DuplexConfig example (L71-81) is valid YAML under the duplex schema, with timeout '5m30s', turn_detection vad settings and resilience.max_retries 2",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1008",
-    "schemas/v1alpha1/scenario.json"
+    "arena/arenaconfig/types.go:981",
+    "arena/arenaconfig/types.go:992"
    ]
   },
   {
@@ -256,8 +256,8 @@
    "claim": "turn_detection.mode accepts the value 'vad'",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1099",
-    "arena/arenaconfig/types.go:966"
+    "arena/arenaconfig/types.go:1107",
+    "arena/arenaconfig/types.go:974"
    ]
   },
   {
@@ -265,7 +265,7 @@
    "claim": "vad is a nested field under turn_detection",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1004",
+    "arena/arenaconfig/types.go:1012",
     "arena/engine/duplex_conversation_executor.go:129"
    ]
   },
@@ -274,7 +274,7 @@
    "claim": "VAD field 'silence_threshold_ms' exists",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1010",
+    "arena/arenaconfig/types.go:1018",
     "arena/engine/duplex_conversation_executor.go:131"
    ]
   },
@@ -283,7 +283,7 @@
    "claim": "VAD field 'min_speech_ms' exists",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1012",
+    "arena/arenaconfig/types.go:1020",
     "arena/engine/duplex_conversation_executor.go:134"
    ]
   },
@@ -292,7 +292,7 @@
    "claim": "TurnDetectionConfig: configures how turn boundaries are detected during duplex streaming",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1000",
+    "arena/arenaconfig/types.go:1008",
     "arena/engine/duplex_conversation_executor.go:119"
    ]
   },
@@ -301,7 +301,7 @@
    "claim": "TurnDetectionConfig.mode is a string with default 'asm'",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1002",
+    "arena/arenaconfig/types.go:1010",
     "arena/engine/duplex_conversation_executor.go:122"
    ]
   },
@@ -310,8 +310,8 @@
    "claim": "TurnDetectionConfig.mode accepts 'vad' or 'asm'",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1099",
-    "arena/arenaconfig/types.go:966"
+    "arena/arenaconfig/types.go:1107",
+    "arena/arenaconfig/types.go:974"
    ]
   },
   {
@@ -319,7 +319,7 @@
    "claim": "The mode value applies only when the turn_detection block is present",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1000",
+    "arena/arenaconfig/types.go:1008",
     "arena/engine/duplex_conversation_executor.go:119"
    ]
   },
@@ -328,7 +328,7 @@
    "claim": "TurnDetectionConfig.vad has type VADConfig and applies when mode is vad",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1004",
+    "arena/arenaconfig/types.go:1012",
     "arena/engine/duplex_conversation_executor.go:129"
    ]
   },
@@ -337,8 +337,8 @@
    "claim": "Mode 'asm' is provider-native: the provider handles turn detection internally",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:392",
-    "arena/engine/duplex_executor_pipeline_integration.go:587"
+    "arena/engine/duplex_executor_pipeline_integration.go:441",
+    "arena/engine/duplex_executor_pipeline_integration.go:646"
    ]
   },
   {
@@ -346,8 +346,8 @@
    "claim": "Gemini's automaticActivityDetection is the provider-native mechanism used for asm mode",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:392",
-    "arena/engine/duplex_executor_pipeline_integration.go:587"
+    "arena/engine/duplex_executor_pipeline_integration.go:441",
+    "arena/engine/duplex_executor_pipeline_integration.go:646"
    ]
   },
   {
@@ -356,7 +356,7 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/duplex_conversation_executor.go:119",
-    "arena/engine/duplex_executor_pipeline_integration.go:392"
+    "arena/engine/duplex_executor_pipeline_integration.go:441"
    ]
   },
   {
@@ -365,7 +365,7 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/duplex_conversation_executor.go:119",
-    "arena/engine/duplex_executor_pipeline_integration.go:392"
+    "arena/engine/duplex_executor_pipeline_integration.go:441"
    ]
   },
   {
@@ -374,7 +374,7 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/duplex_conversation_executor.go:119",
-    "arena/engine/duplex_executor_pipeline_integration.go:392"
+    "arena/engine/duplex_executor_pipeline_integration.go:441"
    ]
   },
   {
@@ -390,7 +390,7 @@
    "claim": "A turn_detection block whose mode is empty or 'asm' uses ASM",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1000",
+    "arena/arenaconfig/types.go:1008",
     "arena/engine/duplex_conversation_executor.go:119"
    ]
   },
@@ -399,8 +399,8 @@
    "claim": "TurnDetection example (L103-111) is valid YAML with mode vad, vad.silence_threshold_ms 600, vad.min_speech_ms 200 and vad.max_turn_duration_s 60",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1008",
-    "schemas/v1alpha1/scenario.json"
+    "arena/arenaconfig/types.go:981",
+    "arena/arenaconfig/types.go:992"
    ]
   },
   {
@@ -408,7 +408,7 @@
    "claim": "VAD field 'max_turn_duration_s' exists",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1014",
+    "arena/arenaconfig/types.go:1022",
     "arena/engine/duplex_conversation_executor.go:137"
    ]
   },
@@ -423,7 +423,7 @@
    "claim": "VADConfig is used when turn_detection.mode is 'vad'",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1004",
+    "arena/arenaconfig/types.go:1012",
     "arena/engine/duplex_conversation_executor.go:129"
    ]
   },
@@ -432,7 +432,7 @@
    "claim": "VADConfig.silence_threshold_ms has type int and default 800",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1010",
+    "arena/arenaconfig/types.go:1018",
     "arena/engine/duplex_conversation_executor.go:131"
    ]
   },
@@ -441,7 +441,7 @@
    "claim": "silence_threshold_ms is the silence duration in ms that triggers turn end",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1010",
+    "arena/arenaconfig/types.go:1018",
     "arena/engine/duplex_conversation_executor.go:131"
    ]
   },
@@ -450,7 +450,7 @@
    "claim": "VADConfig.min_speech_ms has type int and default 200",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1012",
+    "arena/arenaconfig/types.go:1020",
     "arena/engine/duplex_conversation_executor.go:134"
    ]
   },
@@ -459,7 +459,7 @@
    "claim": "min_speech_ms is the minimum speech duration before silence counts",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1012",
+    "arena/arenaconfig/types.go:1020",
     "arena/engine/duplex_conversation_executor.go:134"
    ]
   },
@@ -468,7 +468,7 @@
    "claim": "VADConfig.max_turn_duration_s has type int and default 30",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1014",
+    "arena/arenaconfig/types.go:1022",
     "arena/engine/duplex_conversation_executor.go:137"
    ]
   },
@@ -477,7 +477,7 @@
    "claim": "max_turn_duration_s forces a turn end after that many seconds",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1014",
+    "arena/arenaconfig/types.go:1022",
     "arena/engine/duplex_conversation_executor.go:137"
    ]
   },
@@ -486,8 +486,8 @@
    "claim": "VAD example (L129-137) is valid YAML with silence_threshold_ms 800, min_speech_ms 300 and max_turn_duration_s 30",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1008",
-    "schemas/v1alpha1/scenario.json"
+    "arena/arenaconfig/types.go:981",
+    "arena/arenaconfig/types.go:992"
    ]
   },
   {
@@ -495,7 +495,7 @@
    "claim": "Tuning guidance: quick responses use silence_threshold_ms 400-500 and min_speech_ms 150-200",
    "verdict": "unverified",
    "evidence": [
-    "arena/arenaconfig/types.go:1008"
+    "arena/arenaconfig/types.go:1016"
    ]
   },
   {
@@ -503,7 +503,7 @@
    "claim": "Tuning guidance: natural conversation uses silence_threshold_ms 600-800 and min_speech_ms 200-300",
    "verdict": "unverified",
    "evidence": [
-    "arena/arenaconfig/types.go:1008"
+    "arena/arenaconfig/types.go:1016"
    ]
   },
   {
@@ -511,7 +511,7 @@
    "claim": "Tuning guidance: TTS with pauses uses silence_threshold_ms 1000-1500 and min_speech_ms 500-800",
    "verdict": "unverified",
    "evidence": [
-    "arena/arenaconfig/types.go:1008"
+    "arena/arenaconfig/types.go:1016"
    ]
   },
   {
@@ -519,7 +519,7 @@
    "claim": "Tuning guidance: slow or deliberate speech uses silence_threshold_ms 1200-2000 and min_speech_ms 800-1000",
    "verdict": "unverified",
    "evidence": [
-    "arena/arenaconfig/types.go:1008"
+    "arena/arenaconfig/types.go:1016"
    ]
   },
   {
@@ -527,8 +527,8 @@
    "claim": "DuplexResilienceConfig.max_retries has type int and default 0",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:987",
-    "arena/engine/duplex_executor_pipeline_integration.go:57",
+    "arena/arenaconfig/types.go:995",
+    "arena/engine/duplex_executor_pipeline_integration.go:59",
     "arena/engine/duplex_executor_types.go:15"
    ]
   },
@@ -537,8 +537,8 @@
    "claim": "max_retries is the retry attempts for failed turns",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:987",
-    "arena/engine/duplex_executor_pipeline_integration.go:57",
+    "arena/arenaconfig/types.go:995",
+    "arena/engine/duplex_executor_pipeline_integration.go:59",
     "arena/engine/duplex_executor_types.go:15"
    ]
   },
@@ -547,8 +547,8 @@
    "claim": "DuplexResilienceConfig.retry_delay_ms has type int and default 1000",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:989",
-    "arena/engine/duplex_executor_pipeline_integration.go:58",
+    "arena/arenaconfig/types.go:997",
+    "arena/engine/duplex_executor_pipeline_integration.go:60",
     "arena/engine/duplex_executor_types.go:14"
    ]
   },
@@ -557,8 +557,8 @@
    "claim": "retry_delay_ms is the delay between retries in ms",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:989",
-    "arena/engine/duplex_executor_pipeline_integration.go:58",
+    "arena/arenaconfig/types.go:997",
+    "arena/engine/duplex_executor_pipeline_integration.go:60",
     "arena/engine/duplex_executor_types.go:14"
    ]
   },
@@ -567,7 +567,7 @@
    "claim": "DuplexResilienceConfig.partial_success_min_turns has type int and default 1",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:992",
+    "arena/arenaconfig/types.go:1000",
     "arena/engine/duplex_executor_turns_integration.go:106",
     "arena/engine/duplex_executor_types.go:16"
    ]
@@ -577,7 +577,7 @@
    "claim": "partial_success_min_turns is the minimum completed turns for partial success",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:992",
+    "arena/arenaconfig/types.go:1000",
     "arena/engine/duplex_executor_turns_integration.go:106",
     "arena/engine/duplex_executor_types.go:16"
    ]
@@ -587,7 +587,7 @@
    "claim": "DuplexResilienceConfig.ignore_last_turn_session_end has type bool and default true",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:996",
+    "arena/arenaconfig/types.go:1004",
     "arena/engine/duplex_executor_turns_integration.go:107",
     "arena/engine/duplex_executor_types.go:17"
    ]
@@ -597,7 +597,7 @@
    "claim": "ignore_last_turn_session_end treats session end on the final turn as success",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:996",
+    "arena/arenaconfig/types.go:1004",
     "arena/engine/duplex_executor_turns_integration.go:107",
     "arena/engine/duplex_executor_types.go:17"
    ]
@@ -607,8 +607,8 @@
    "claim": "Resilience example (L164-170) is valid YAML with max_retries 2, retry_delay_ms 2000, partial_success_min_turns 3 and ignore_last_turn_session_end true",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1008",
-    "schemas/v1alpha1/scenario.json"
+    "arena/arenaconfig/types.go:981",
+    "arena/arenaconfig/types.go:992"
    ]
   },
   {
@@ -625,8 +625,8 @@
    "claim": "Partial success example (L177-179) is valid YAML with partial_success_min_turns 2",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1008",
-    "schemas/v1alpha1/scenario.json"
+    "arena/arenaconfig/types.go:981",
+    "arena/arenaconfig/types.go:992"
    ]
   },
   {
@@ -634,7 +634,7 @@
    "claim": "With ignore_last_turn_session_end true (the default), a session ending on the final expected turn is treated as success",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:996",
+    "arena/arenaconfig/types.go:1004",
     "arena/engine/duplex_executor_turns_integration.go:107",
     "arena/engine/duplex_executor_types.go:17"
    ]
@@ -644,8 +644,8 @@
    "claim": "Session end example (L186-187) is valid YAML with ignore_last_turn_session_end true",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1008",
-    "schemas/v1alpha1/scenario.json"
+    "arena/arenaconfig/types.go:981",
+    "arena/arenaconfig/types.go:992"
    ]
   },
   {
@@ -653,7 +653,7 @@
    "claim": "With ignore_last_turn_session_end false, the final turn must complete without session termination",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:996",
+    "arena/arenaconfig/types.go:1004",
     "arena/engine/duplex_executor_turns_integration.go:107",
     "arena/engine/duplex_executor_types.go:17"
    ]
@@ -663,7 +663,7 @@
    "claim": "Self-play TTS audio generation comes from the arena voice catalog",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:779",
+    "arena/arenaconfig/loader.go:848",
     "arena/arenaconfig/types.go:208",
     "arena/arenaconfig/voice.go:12"
    ]
@@ -673,7 +673,7 @@
    "claim": "TTS providers are declared in the tts_providers key",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:779",
+    "arena/arenaconfig/loader.go:848",
     "arena/arenaconfig/types.go:208",
     "arena/arenaconfig/voice.go:12"
    ]
@@ -683,7 +683,7 @@
    "claim": "Voice IDs are bound to TTS providers in the voices key",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:779",
+    "arena/arenaconfig/loader.go:848",
     "arena/arenaconfig/types.go:208",
     "arena/arenaconfig/voice.go:12"
    ]
@@ -693,7 +693,7 @@
    "claim": "Personas and scripted-text scenarios reference voice IDs from the voices catalog",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:779",
+    "arena/arenaconfig/loader.go:848",
     "arena/arenaconfig/types.go:208",
     "arena/arenaconfig/voice.go:12"
    ]
@@ -703,7 +703,7 @@
    "claim": "Arena-level declaration example (L202-212) is valid: spec.tts_providers entries use a 'file' key and spec.voices entries use 'id' and 'provider' keys",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:779",
+    "arena/arenaconfig/loader.go:848",
     "arena/arenaconfig/types.go:208",
     "arena/arenaconfig/voice.go:12"
    ]
@@ -731,8 +731,8 @@
    "claim": "A persona's voice field holds a voice ID, and self-play turns using that persona use the corresponding TTS provider",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/persona.go:42",
-    "arena/arenaconfig/persona.go:56",
+    "arena/arenaconfig/persona.go:43",
+    "arena/arenaconfig/persona.go:57",
     "arena/engine/duplex_executor_turns_integration.go:347"
    ]
   },
@@ -741,8 +741,8 @@
    "claim": "Persona example (L218-225) is valid: spec.id, spec.voice and spec.system_template are persona fields",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/persona.go:42",
-    "arena/arenaconfig/persona.go:56",
+    "arena/arenaconfig/persona.go:43",
+    "arena/arenaconfig/persona.go:57",
     "arena/engine/duplex_executor_turns_integration.go:347"
    ]
   },
@@ -751,8 +751,8 @@
    "claim": "Persona field 'voice' exists",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/persona.go:42",
-    "arena/arenaconfig/persona.go:56",
+    "arena/arenaconfig/persona.go:43",
+    "arena/arenaconfig/persona.go:57",
     "arena/engine/duplex_executor_turns_integration.go:347"
    ]
   },
@@ -761,8 +761,8 @@
    "claim": "Persona field 'system_template' exists",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/persona.go:42",
-    "arena/arenaconfig/persona.go:56",
+    "arena/arenaconfig/persona.go:43",
+    "arena/arenaconfig/persona.go:57",
     "arena/engine/duplex_executor_turns_integration.go:347"
    ]
   },
@@ -771,7 +771,7 @@
    "claim": "Scripted-text duplex scenarios (turns with content instead of audio parts) declare voice at the scenario level",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:723",
+    "arena/arenaconfig/types.go:731",
     "arena/engine/duplex_executor_turns_integration.go:380"
    ]
   },
@@ -780,7 +780,7 @@
    "claim": "Scripted-text scenario example (L231-238) is valid: spec.id, spec.voice and spec.turns with role user and content",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:723",
+    "arena/arenaconfig/types.go:731",
     "arena/engine/duplex_executor_turns_integration.go:380"
    ]
   },
@@ -789,8 +789,8 @@
    "claim": "The 'voices' list gives one voice per trial: trial i speaks every user turn, scripted or self-play, in voices[i mod n]",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:800",
-    "arena/arenaconfig/types.go:730",
+    "arena/arenaconfig/loader.go:869",
+    "arena/arenaconfig/types.go:738",
     "arena/arenaconfig/voice.go:33",
     "arena/engine/duplex_executor_turns_integration.go:347"
    ]
@@ -800,8 +800,8 @@
    "claim": "The voices list overrides the persona's voice",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:800",
-    "arena/arenaconfig/types.go:730",
+    "arena/arenaconfig/loader.go:869",
+    "arena/arenaconfig/types.go:738",
     "arena/arenaconfig/voice.go:33",
     "arena/engine/duplex_executor_turns_integration.go:347"
    ]
@@ -811,8 +811,8 @@
    "claim": "The voices list cannot be combined with the voice field (a config error)",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:800",
-    "arena/arenaconfig/types.go:730",
+    "arena/arenaconfig/loader.go:869",
+    "arena/arenaconfig/types.go:738",
     "arena/arenaconfig/voice.go:33",
     "arena/engine/duplex_executor_turns_integration.go:347"
    ]
@@ -822,8 +822,8 @@
    "claim": "With perturbations, the voice changes once every variant has run",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:800",
-    "arena/arenaconfig/types.go:730",
+    "arena/arenaconfig/loader.go:869",
+    "arena/arenaconfig/types.go:738",
     "arena/arenaconfig/voice.go:33",
     "arena/engine/duplex_executor_turns_integration.go:347"
    ]
@@ -833,8 +833,8 @@
    "claim": "Voices example (L244-249) is valid: spec.id, spec.voices and spec.trials",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:800",
-    "arena/arenaconfig/types.go:730",
+    "arena/arenaconfig/loader.go:869",
+    "arena/arenaconfig/types.go:738",
     "arena/arenaconfig/voice.go:33",
     "arena/engine/duplex_executor_turns_integration.go:347"
    ]
@@ -844,7 +844,7 @@
    "claim": "Scenario field 'trials' exists",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:736"
+    "arena/arenaconfig/types.go:744"
    ]
   },
   {
@@ -858,7 +858,7 @@
    "claim": "The provider of a voices entry selects real vendor TTS or mock TTS",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:779",
+    "arena/arenaconfig/loader.go:848",
     "arena/arenaconfig/voice.go:12"
    ]
   },
@@ -867,7 +867,7 @@
    "claim": "CI vs recording example (L258-266) is valid: voices entries use id and provider",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:779",
+    "arena/arenaconfig/loader.go:848",
     "arena/arenaconfig/voice.go:12"
    ]
   },
@@ -894,7 +894,7 @@
    "claim": "In duplex scenarios, user turns contain audio parts instead of text",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1140",
+    "arena/arenaconfig/types.go:1148",
     "arena/engine/duplex_executor_turns_integration.go:451"
    ]
   },
@@ -903,7 +903,7 @@
    "claim": "Audio turn parts example (L274-282) is valid: turns with role user, parts with type audio, media.file_path and media.mime_type",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1140",
+    "arena/arenaconfig/types.go:1148",
     "arena/engine/duplex_executor_turns_integration.go:451"
    ]
   },
@@ -912,7 +912,7 @@
    "claim": "Audio media field 'file_path' exists",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1140",
+    "arena/arenaconfig/types.go:1148",
     "arena/engine/duplex_executor_turns_integration.go:451"
    ]
   },
@@ -921,7 +921,7 @@
    "claim": "Audio media field 'mime_type' exists",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1140",
+    "arena/arenaconfig/types.go:1148",
     "arena/engine/duplex_executor_turns_integration.go:451"
    ]
   },
@@ -1044,7 +1044,7 @@
    "claim": "mime_type is required by the schema",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/scenario.json"
+    "schemas/v1alpha1/scenario.json:1001"
    ]
   },
   {
@@ -1060,7 +1060,7 @@
    "claim": "The mime_type field labels the stored audio",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/scenario.json"
+    "schemas/v1alpha1/scenario.json:1001"
    ]
   },
   {
@@ -1110,7 +1110,7 @@
    "claim": "Provider spec.type 'gemini' is a valid provider type",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:298",
+    "arena/engine/duplex_executor_pipeline_integration.go:300",
     "schemas/v1alpha1/provider.json"
    ]
   },
@@ -1119,7 +1119,7 @@
    "claim": "Model name 'gemini-2.0-flash-exp' is used in the example",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:298",
+    "arena/engine/duplex_executor_pipeline_integration.go:300",
     "schemas/v1alpha1/provider.json"
    ]
   },
@@ -1128,9 +1128,8 @@
    "claim": "A duplex session takes defaults.temperature and defaults.max_tokens from the arena config; run --max-tokens overrides max_tokens",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:550",
-    "arena/engine/duplex_executor_pipeline_integration.go:485",
-    "arena/engine/duplex_executor_pipeline_integration.go:496"
+    "arena/cmd/promptarena/run.go:551",
+    "arena/engine/duplex_executor_pipeline_integration.go:485"
    ]
   },
   {
@@ -1138,7 +1137,7 @@
    "claim": "Provider spec.additional_config is a field and accepts response_modalities for Gemini",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:298",
+    "arena/engine/duplex_executor_pipeline_integration.go:300",
     "schemas/v1alpha1/provider.json"
    ]
   },
@@ -1203,9 +1202,8 @@
    "claim": "Complete scenario example (L350-404) is a valid Scenario document with apiVersion promptkit.altairalabs.ai/v1alpha1, kind Scenario and metadata.name",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1134",
-    "arena/arenaconfig/types.go:707",
-    "schemas/v1alpha1/scenario.json"
+    "arena/arenaconfig/types.go:717",
+    "schemas/v1alpha1/scenario.json:1"
    ]
   },
   {
@@ -1213,9 +1211,8 @@
    "claim": "Complete example duplex.resilience.retry_delay_ms and ignore_last_turn_session_end are valid resilience fields",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1134",
-    "arena/arenaconfig/types.go:707",
-    "schemas/v1alpha1/scenario.json"
+    "arena/arenaconfig/types.go:981",
+    "arena/arenaconfig/types.go:992"
    ]
   },
   {
@@ -1223,9 +1220,8 @@
    "claim": "turns entries support role, parts, assertions and persona fields",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1134",
-    "arena/arenaconfig/types.go:707",
-    "schemas/v1alpha1/scenario.json"
+    "arena/arenaconfig/types.go:1143",
+    "arena/arenaconfig/types.go:715"
    ]
   },
   {
@@ -1233,9 +1229,8 @@
    "claim": "A turn accepts an assertions list",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1134",
-    "arena/arenaconfig/types.go:707",
-    "schemas/v1alpha1/scenario.json"
+    "arena/arenaconfig/types.go:1143",
+    "arena/arenaconfig/types.go:715"
    ]
   },
   {
@@ -1272,9 +1267,8 @@
    "claim": "Turn field 'persona' references persona curious-customer",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1134",
-    "arena/arenaconfig/types.go:707",
-    "schemas/v1alpha1/scenario.json"
+    "arena/arenaconfig/types.go:1143",
+    "arena/arenaconfig/types.go:715"
    ]
   },
   {
@@ -1282,9 +1276,8 @@
    "claim": "Self-play turn field 'turns' accepts an integer count of 3",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1134",
-    "arena/arenaconfig/types.go:707",
-    "schemas/v1alpha1/scenario.json"
+    "arena/arenaconfig/types.go:1143",
+    "arena/arenaconfig/types.go:715"
    ]
   },
   {
@@ -1298,9 +1291,8 @@
    "claim": "conversation_assertions is a valid scenario spec key",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1134",
-    "arena/arenaconfig/types.go:707",
-    "schemas/v1alpha1/scenario.json"
+    "arena/arenaconfig/types.go:1143",
+    "arena/arenaconfig/types.go:715"
    ]
   },
   {
@@ -1329,7 +1321,7 @@
    "claim": "examples/voice-refund-demo/config.arena.yaml declares a self_play role with id selfplay-user",
    "verdict": "true",
    "evidence": [
-    "examples/voice-refund-demo/config.arena.yaml:67"
+    "examples/voice-refund-demo/config.arena.yaml:72"
    ]
   },
   {
@@ -1337,9 +1329,9 @@
    "claim": "The duplex executor builds the pipeline from the listed stages, in the listed order",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:270",
-    "arena/engine/duplex_executor_pipeline_integration.go:360",
-    "arena/engine/duplex_executor_pipeline_integration.go:406"
+    "arena/engine/duplex_executor_pipeline_integration.go:272",
+    "arena/engine/duplex_executor_pipeline_integration.go:409",
+    "arena/engine/duplex_executor_pipeline_integration.go:455"
    ]
   },
   {
@@ -1347,9 +1339,9 @@
    "claim": "A stage with a condition is added only when that condition holds",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:270",
-    "arena/engine/duplex_executor_pipeline_integration.go:360",
-    "arena/engine/duplex_executor_pipeline_integration.go:406"
+    "arena/engine/duplex_executor_pipeline_integration.go:272",
+    "arena/engine/duplex_executor_pipeline_integration.go:409",
+    "arena/engine/duplex_executor_pipeline_integration.go:455"
    ]
   },
   {
@@ -1357,8 +1349,8 @@
    "claim": "Stage AudioPacingStage (audio-pacing) is added when the arena config has no enabled self_play section or an audio monitor is attached",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:370",
-    "arena/engine/duplex_executor_pipeline_integration.go:568"
+    "arena/engine/duplex_executor_pipeline_integration.go:419",
+    "arena/engine/duplex_executor_pipeline_integration.go:627"
    ]
   },
   {
@@ -1366,8 +1358,8 @@
    "claim": "AudioPacingStage (audio-pacing) emits each input audio chunk at real-time cadence implied by its size and sample rate",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:370",
-    "arena/engine/duplex_executor_pipeline_integration.go:568"
+    "arena/engine/duplex_executor_pipeline_integration.go:419",
+    "arena/engine/duplex_executor_pipeline_integration.go:627"
    ]
   },
   {
@@ -1375,9 +1367,9 @@
    "claim": "Stage MonitorTap (input) is added when an audio monitor is attached and copies input audio to the audio monitor",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:270",
-    "arena/engine/duplex_executor_pipeline_integration.go:360",
-    "arena/engine/duplex_executor_pipeline_integration.go:406"
+    "arena/engine/duplex_executor_pipeline_integration.go:272",
+    "arena/engine/duplex_executor_pipeline_integration.go:409",
+    "arena/engine/duplex_executor_pipeline_integration.go:455"
    ]
   },
   {
@@ -1385,9 +1377,9 @@
    "claim": "Stage AudioResampleStage is always added",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:270",
-    "arena/engine/duplex_executor_pipeline_integration.go:360",
-    "arena/engine/duplex_executor_pipeline_integration.go:406"
+    "arena/engine/duplex_executor_pipeline_integration.go:272",
+    "arena/engine/duplex_executor_pipeline_integration.go:409",
+    "arena/engine/duplex_executor_pipeline_integration.go:455"
    ]
   },
   {
@@ -1395,7 +1387,7 @@
    "claim": "AudioResampleStage resamples to the provider's preferred rate: Gemini 16000 Hz, OpenAI realtime 24000 Hz",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:345"
+    "arena/engine/duplex_executor_pipeline_integration.go:394"
    ]
   },
   {
@@ -1403,9 +1395,9 @@
    "claim": "AudioResampleStage passes audio through when the rates match",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:270",
-    "arena/engine/duplex_executor_pipeline_integration.go:360",
-    "arena/engine/duplex_executor_pipeline_integration.go:406"
+    "arena/engine/duplex_executor_pipeline_integration.go:272",
+    "arena/engine/duplex_executor_pipeline_integration.go:409",
+    "arena/engine/duplex_executor_pipeline_integration.go:455"
    ]
   },
   {
@@ -1413,9 +1405,9 @@
    "claim": "Stage AudioTurnStage is added when turn_detection.mode is vad or the turn_detection block is omitted",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:270",
-    "arena/engine/duplex_executor_pipeline_integration.go:360",
-    "arena/engine/duplex_executor_pipeline_integration.go:406"
+    "arena/engine/duplex_executor_pipeline_integration.go:272",
+    "arena/engine/duplex_executor_pipeline_integration.go:409",
+    "arena/engine/duplex_executor_pipeline_integration.go:455"
    ]
   },
   {
@@ -1423,9 +1415,9 @@
    "claim": "AudioTurnStage detects turn boundaries using the VAD settings",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:270",
-    "arena/engine/duplex_executor_pipeline_integration.go:360",
-    "arena/engine/duplex_executor_pipeline_integration.go:406"
+    "arena/engine/duplex_executor_pipeline_integration.go:272",
+    "arena/engine/duplex_executor_pipeline_integration.go:409",
+    "arena/engine/duplex_executor_pipeline_integration.go:455"
    ]
   },
   {
@@ -1433,9 +1425,9 @@
    "claim": "Stage VariableProviderStage is always added and supplies the merged scenario variables",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:270",
-    "arena/engine/duplex_executor_pipeline_integration.go:360",
-    "arena/engine/duplex_executor_pipeline_integration.go:406"
+    "arena/engine/duplex_executor_pipeline_integration.go:272",
+    "arena/engine/duplex_executor_pipeline_integration.go:409",
+    "arena/engine/duplex_executor_pipeline_integration.go:455"
    ]
   },
   {
@@ -1443,9 +1435,9 @@
    "claim": "Stage PromptAssemblyStage is always added and loads the prompt template into the shared TurnState",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:270",
-    "arena/engine/duplex_executor_pipeline_integration.go:360",
-    "arena/engine/duplex_executor_pipeline_integration.go:406"
+    "arena/engine/duplex_executor_pipeline_integration.go:272",
+    "arena/engine/duplex_executor_pipeline_integration.go:409",
+    "arena/engine/duplex_executor_pipeline_integration.go:455"
    ]
   },
   {
@@ -1453,9 +1445,9 @@
    "claim": "TurnState has fields Template, AllowedTools and Validators",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:270",
-    "arena/engine/duplex_executor_pipeline_integration.go:360",
-    "arena/engine/duplex_executor_pipeline_integration.go:406"
+    "arena/engine/duplex_executor_pipeline_integration.go:272",
+    "arena/engine/duplex_executor_pipeline_integration.go:409",
+    "arena/engine/duplex_executor_pipeline_integration.go:455"
    ]
   },
   {
@@ -1463,9 +1455,9 @@
    "claim": "Stage TemplateStage is always added and renders the system prompt into TurnState.SystemPrompt",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:270",
-    "arena/engine/duplex_executor_pipeline_integration.go:360",
-    "arena/engine/duplex_executor_pipeline_integration.go:406"
+    "arena/engine/duplex_executor_pipeline_integration.go:272",
+    "arena/engine/duplex_executor_pipeline_integration.go:409",
+    "arena/engine/duplex_executor_pipeline_integration.go:455"
    ]
   },
   {
@@ -1473,9 +1465,9 @@
    "claim": "Stage DuplexProviderStage is always added and opens a StreamInputSupport session",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:270",
-    "arena/engine/duplex_executor_pipeline_integration.go:360",
-    "arena/engine/duplex_executor_pipeline_integration.go:406"
+    "arena/engine/duplex_executor_pipeline_integration.go:272",
+    "arena/engine/duplex_executor_pipeline_integration.go:409",
+    "arena/engine/duplex_executor_pipeline_integration.go:455"
    ]
   },
   {
@@ -1483,9 +1475,9 @@
    "claim": "DuplexProviderStage reads TurnState.SystemPrompt at session creation",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:270",
-    "arena/engine/duplex_executor_pipeline_integration.go:360",
-    "arena/engine/duplex_executor_pipeline_integration.go:406"
+    "arena/engine/duplex_executor_pipeline_integration.go:272",
+    "arena/engine/duplex_executor_pipeline_integration.go:409",
+    "arena/engine/duplex_executor_pipeline_integration.go:455"
    ]
   },
   {
@@ -1493,9 +1485,9 @@
    "claim": "Stage AudioPacingStage (audio-pacing-output) has the same condition as the input AudioPacingStage",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:270",
-    "arena/engine/duplex_executor_pipeline_integration.go:360",
-    "arena/engine/duplex_executor_pipeline_integration.go:406"
+    "arena/engine/duplex_executor_pipeline_integration.go:272",
+    "arena/engine/duplex_executor_pipeline_integration.go:409",
+    "arena/engine/duplex_executor_pipeline_integration.go:455"
    ]
   },
   {
@@ -1503,9 +1495,9 @@
    "claim": "AudioPacingStage (audio-pacing-output) emits each response audio chunk at real-time cadence",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:270",
-    "arena/engine/duplex_executor_pipeline_integration.go:360",
-    "arena/engine/duplex_executor_pipeline_integration.go:406"
+    "arena/engine/duplex_executor_pipeline_integration.go:272",
+    "arena/engine/duplex_executor_pipeline_integration.go:409",
+    "arena/engine/duplex_executor_pipeline_integration.go:455"
    ]
   },
   {
@@ -1513,9 +1505,9 @@
    "claim": "Stage MonitorTap (output) is added when an audio monitor is attached and copies response audio to the audio monitor",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:270",
-    "arena/engine/duplex_executor_pipeline_integration.go:360",
-    "arena/engine/duplex_executor_pipeline_integration.go:406"
+    "arena/engine/duplex_executor_pipeline_integration.go:272",
+    "arena/engine/duplex_executor_pipeline_integration.go:409",
+    "arena/engine/duplex_executor_pipeline_integration.go:455"
    ]
   },
   {
@@ -1523,8 +1515,8 @@
    "claim": "Stage MediaExternalizerStage is added when media storage is set and writes all media to storage, retained",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:134",
-    "arena/engine/duplex_executor_pipeline_integration.go:429"
+    "arena/engine/builder_integration.go:139",
+    "arena/engine/duplex_executor_pipeline_integration.go:488"
    ]
   },
   {
@@ -1532,7 +1524,7 @@
    "claim": "Stage ArenaStateStoreSaveStage is added when a state store is configured and saves the conversation messages",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:444"
+    "arena/engine/duplex_executor_pipeline_integration.go:503"
    ]
   },
   {
@@ -1540,8 +1532,8 @@
    "claim": "An audio monitor is attached when promptarena run or promptarena serve has --audio-monitor on",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go",
-    "arena/cmd/promptarena/run_interactive.go:404"
+    "arena/cmd/promptarena/run.go:206",
+    "arena/cmd/promptarena/serve_interactive.go:134"
    ]
   },
   {
@@ -1549,8 +1541,8 @@
    "claim": "promptarena run and promptarena serve both accept the --audio-monitor flag",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go",
-    "arena/cmd/promptarena/run_interactive.go:404"
+    "arena/cmd/promptarena/run.go:206",
+    "arena/cmd/promptarena/serve_interactive.go:134"
    ]
   },
   {
@@ -1558,8 +1550,8 @@
    "claim": "--audio-monitor accepts 'auto', which is the default, and attaches a monitor when stdout is a terminal",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go",
-    "arena/cmd/promptarena/run_interactive.go:404"
+    "arena/cmd/promptarena/run.go:206",
+    "arena/cmd/promptarena/serve_interactive.go:134"
    ]
   },
   {
@@ -1567,8 +1559,7 @@
    "claim": "promptarena serve is a subcommand",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go",
-    "arena/cmd/promptarena/run_interactive.go:404"
+    "arena/cmd/promptarena/serve_interactive.go:109"
    ]
   },
   {
@@ -1576,8 +1567,7 @@
    "claim": "promptarena run is a subcommand",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go",
-    "arena/cmd/promptarena/run_interactive.go:404"
+    "arena/cmd/promptarena/run.go:206"
    ]
   },
   {
@@ -1585,8 +1575,8 @@
    "claim": "Runs started by promptarena run set media storage to the media directory under the output directory",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:134",
-    "arena/engine/builder_integration.go:868"
+    "arena/engine/builder_integration.go:139",
+    "arena/engine/builder_integration.go:874"
    ]
   },
   {
@@ -1594,8 +1584,8 @@
    "claim": "Runs started by promptarena run configure a state store",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:134",
-    "arena/engine/builder_integration.go:868"
+    "arena/engine/builder_integration.go:139",
+    "arena/engine/builder_integration.go:874"
    ]
   },
   {
@@ -1603,7 +1593,7 @@
    "claim": "Validation error 'invalid duplex timeout format' is emitted when the timeout is not in Go duration format",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1026",
+    "arena/arenaconfig/types.go:1034",
     "arena/engine/duplex_conversation_executor.go:82"
    ]
   },
@@ -1612,7 +1602,7 @@
    "claim": "Go duration examples '5m', '30s' and '1h30m' are accepted for duplex timeout",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1026",
+    "arena/arenaconfig/types.go:1034",
     "arena/engine/duplex_conversation_executor.go:82"
    ]
   },
@@ -1621,7 +1611,7 @@
    "claim": "Validation error 'invalid turn detection mode' is emitted when mode is not vad or asm",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1100"
+    "arena/arenaconfig/types.go:1108"
    ]
   },
   {
@@ -1629,7 +1619,7 @@
    "claim": "Validation error 'silence_threshold_ms must be non-negative' is emitted for a negative VAD threshold",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1121"
+    "arena/arenaconfig/types.go:1129"
    ]
   },
   {
@@ -1637,7 +1627,7 @@
    "claim": "Validation error 'voices[<voice id>]: provider id \"<provider>\" not found in tts_providers' is emitted when a voice references an unknown TTS provider ID",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:779"
+    "arena/arenaconfig/loader.go:848"
    ]
   },
   {
@@ -1645,7 +1635,7 @@
    "claim": "Validation error 'voices[N]: id is required' is emitted when a voices entry has no id",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:779"
+    "arena/arenaconfig/loader.go:848"
    ]
   },
   {
@@ -1653,7 +1643,7 @@
    "claim": "Validation error 'voices[<id>]: provider is required' is emitted when a voices entry has no provider",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:779"
+    "arena/arenaconfig/loader.go:848"
    ]
   },
   {
@@ -1661,7 +1651,7 @@
    "claim": "Validation error 'persona <name>: voice id \"<id>\" not found in spec.voices' is emitted for an undeclared persona voice",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:826",
+    "arena/arenaconfig/loader.go:895",
     "arena/arenaconfig/voice.go:27"
    ]
   },
@@ -1670,7 +1660,7 @@
    "claim": "Validation error 'scenario <name>: voice id \"X\" not found in spec.voices' is emitted for an undeclared scenario voice",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:800",
+    "arena/arenaconfig/loader.go:869",
     "arena/arenaconfig/voice.go:27"
    ]
   },
@@ -1735,7 +1725,7 @@
    "claim": "Validation error 'scenario <name>: set voice or voices, not both'",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:805"
+    "arena/arenaconfig/loader.go:874"
    ]
   },
   {
@@ -1743,7 +1733,7 @@
    "claim": "Validation error 'scenario <name>: voices need a duplex scenario'",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:807"
+    "arena/arenaconfig/loader.go:876"
    ]
   },
   {
@@ -1751,7 +1741,7 @@
    "claim": "Validation error 'turns[N].objective is not supported in duplex scenarios' for objectives in a duplex scenario",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:831"
+    "arena/arenaconfig/types.go:839"
    ]
   },
   {
@@ -1759,8 +1749,8 @@
    "claim": "In asm mode, a scenario with self-play turns (with self_play enabled) has the provider's own speech detection turned off",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:587",
-    "arena/engine/duplex_executor_pipeline_integration.go:597"
+    "arena/engine/duplex_executor_pipeline_integration.go:646",
+    "arena/engine/duplex_executor_pipeline_integration.go:656"
    ]
   },
   {
@@ -1776,7 +1766,7 @@
    "claim": "TTS providers load from providers: entries with role: tts or from tts_providers:, into the same catalog",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:666",
+    "arena/arenaconfig/loader.go:735",
     "arena/arenaconfig/types.go:201"
    ]
   }

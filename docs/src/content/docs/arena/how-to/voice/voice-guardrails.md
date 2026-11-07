@@ -2,7 +2,7 @@
 title: Add Voice PII Guardrails
 description: Wire the pii_leakage guardrail into a pack so it replaces a PII-bearing reply before it is spoken, and assert that it fired with guardrail_triggered.
 verified:
-  commit: 3df344ffbc8c604e1a8935929c28499d778d19f0
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/cmd/promptarena/main_integration.go
     - arena/cmd/promptarena/run.go
@@ -18,7 +18,7 @@ verified:
     - examples/voice-guardrails/scenarios/pii-redaction.scenario.yaml
 ---
 
-This how-to walks through `examples/voice-guardrails/`: one scenario with the `pii_leakage` guardrail declared in the pack. The runtime catches PII in the agent's reply before it reaches the TTS layer, and the test observes the firing with the `guardrail_triggered` assertion.
+This how-to walks through `examples/voice-guardrails/`: two scenarios (`pii-redaction` and a duplex variant, `pii-redaction-duplex`) with the `pii_leakage` guardrail declared in the pack. In `pii-redaction` the runtime catches PII in the agent's reply before it reaches the TTS layer, and the test observes the firing with the `guardrail_triggered` assertion. In `pii-redaction-duplex` the provider streams its audio while it speaks, so the caller has already heard the reply when the guardrail checks the completed turn; the firing rewrites the turn as recorded (state, session recording, reports and later assertions), and `guardrail_triggered` still observes it.
 
 ## What it proves
 
@@ -35,7 +35,7 @@ cd examples/voice-guardrails
 promptarena serve
 ```
 
-`serve` loads the single scenario. The recorded assistant message holds the replaced, safe content, plus the `validations:` block (what the guardrail did). The PII the agent tried to say does not appear in the recording.
+`serve` loads both scenarios. The recorded assistant message holds the replaced, safe content, plus the `validations:` block (what the guardrail did). The PII the agent tried to say does not appear in the recording.
 
 Headless / CI:
 
@@ -44,7 +44,7 @@ promptarena run --ci --formats json,markdown
 open out/results.md
 ```
 
-The run needs no LLM key: `pii_leakage`'s regex pre-pass catches the PII, and the example's judge is a mock provider.
+The run needs no API keys: `pii_leakage`'s regex pre-pass catches the PII, and the agent, judge and TTS are all mock providers. The config enables session recording, so each run also writes a JSONL file under `out/recordings/`.
 
 ## The assertion shape
 
@@ -61,7 +61,7 @@ conversation_assertions:
 
 ## Side-by-side with red-team
 
-This demo has one scenario and one assertion. For a second scenario that checks the guardrail stays quiet on a legitimate question, see [Red-team a support agent for PII leakage](/arena/how-to/scenarios/pii-guardrail-red-team/).
+This demo has no control scenario. For a second scenario that checks the guardrail stays quiet on a legitimate question, see [Red-team a support agent for PII leakage](/arena/how-to/scenarios/pii-guardrail-red-team/).
 
 ## Switching to live voice
 
@@ -92,7 +92,7 @@ jobs:
         run: ../../bin/promptarena run --ci --formats json
 ```
 
-The demo is one scenario with one regex-based assertion, so the job needs no secrets and is safe for PRs from forks. To add the LLM-judged guardrails (`bias`, `toxicity`, `role_violation`), put them in a separate job that reads provider keys from secrets.
+The demo's scenarios use regex-based checks and mock providers, so the job needs no secrets and is safe for PRs from forks. To add the LLM-judged guardrails (`bias`, `toxicity`, `role_violation`), put them in a separate job that reads provider keys from secrets.
 
 ## Related pages
 
