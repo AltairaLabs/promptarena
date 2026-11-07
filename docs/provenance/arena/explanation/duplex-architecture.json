@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/explanation/duplex-architecture.md",
- "commit": "3df344ffbc8c604e1a8935929c28499d778d19f0",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
@@ -13,7 +13,7 @@
    "claim": "DuplexProviderStage communicates to provider via WebSocket to Gemini",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:307"
+    "arena/engine/duplex_executor_pipeline_integration.go:309"
    ]
   },
   {
@@ -21,7 +21,7 @@
    "claim": "DuplexProviderStage creates WebSocket session and handles bidirectional I/O",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:307"
+    "arena/engine/duplex_executor_pipeline_integration.go:309"
    ]
   },
   {
@@ -29,8 +29,8 @@
    "claim": "duplex.turn_detection.mode field can be set to 'asm'",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1099",
-    "arena/arenaconfig/types.go:968",
+    "arena/arenaconfig/types.go:1107",
+    "arena/arenaconfig/types.go:976",
     "arena/engine/duplex_conversation_executor.go:117"
    ]
   },
@@ -39,8 +39,8 @@
    "claim": "duplex.turn_detection.mode field can be set to 'vad'",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1099",
-    "arena/arenaconfig/types.go:966",
+    "arena/arenaconfig/types.go:1107",
+    "arena/arenaconfig/types.go:974",
     "arena/engine/duplex_conversation_executor.go:117"
    ]
   },
@@ -49,7 +49,7 @@
    "claim": "duplex.turn_detection.vad.silence_threshold_ms field exists with example value 600",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1010",
+    "arena/arenaconfig/types.go:1018",
     "arena/engine/duplex_conversation_executor.go:131"
    ]
   },
@@ -58,7 +58,7 @@
    "claim": "duplex.turn_detection.vad.min_speech_ms field exists with example value 200",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1012",
+    "arena/arenaconfig/types.go:1020",
     "arena/engine/duplex_conversation_executor.go:134"
    ]
   },
@@ -68,7 +68,7 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/duplex_conversation_executor.go:29",
-    "arena/engine/duplex_executor_pipeline_integration.go:386",
+    "arena/engine/duplex_executor_pipeline_integration.go:435",
     "arena/engine/duplex_executor_turns_integration.go:577"
    ]
   },
@@ -104,8 +104,8 @@
    "claim": "duplex.resilience.max_retries field exists with default value 2",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:987",
-    "arena/engine/duplex_executor_pipeline_integration.go:57",
+    "arena/arenaconfig/types.go:995",
+    "arena/engine/duplex_executor_pipeline_integration.go:59",
     "arena/engine/duplex_executor_types.go:15"
    ]
   },
@@ -114,8 +114,8 @@
    "claim": "duplex.resilience.retry_delay_ms field exists with value 2000",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:989",
-    "arena/engine/duplex_executor_pipeline_integration.go:58"
+    "arena/arenaconfig/types.go:997",
+    "arena/engine/duplex_executor_pipeline_integration.go:60"
    ]
   },
   {
@@ -123,8 +123,8 @@
    "claim": "duplex.resilience.inter_turn_delay_ms field exists with value 500",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:982",
-    "schemas/v1alpha1/scenario.json:306"
+    "arena/arenaconfig/types.go:990",
+    "schemas/v1alpha1/scenario.json:307"
    ]
   },
   {
@@ -132,7 +132,7 @@
    "claim": "duplex.resilience.partial_success_min_turns field exists with value 2",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:992",
+    "arena/arenaconfig/types.go:1000",
     "arena/engine/duplex_executor_turns_integration.go:106"
    ]
   },
@@ -141,7 +141,7 @@
    "claim": "duplex.resilience.ignore_last_turn_session_end field exists with value true",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:996",
+    "arena/arenaconfig/types.go:1004",
     "arena/engine/duplex_executor_turns_integration.go:107"
    ]
   },
@@ -150,7 +150,7 @@
    "claim": "resilience.partial_success_min_turns can be set to 3",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:992",
+    "arena/arenaconfig/types.go:1000",
     "arena/engine/duplex_executor_turns_integration.go:106"
    ]
   },
@@ -186,7 +186,7 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/duplex_conversation_executor.go:117",
-    "arena/engine/duplex_executor_pipeline_integration.go:392"
+    "arena/engine/duplex_executor_pipeline_integration.go:441"
    ]
   },
   {
@@ -194,7 +194,7 @@
    "claim": "Pipeline stage 'PromptAssemblyStage' with purpose: Loads prompt config, adds system instruction",
    "verdict": "false",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:281"
+    "arena/engine/duplex_executor_pipeline_integration.go:283"
    ]
   },
   {
@@ -202,7 +202,7 @@
    "claim": "Pipeline stage 'DuplexProviderStage' with purpose: Creates WebSocket session, handles bidirectional I/O",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:307"
+    "arena/engine/duplex_executor_pipeline_integration.go:309"
    ]
   },
   {
@@ -210,16 +210,16 @@
    "claim": "Pipeline stage 'MediaExternalizerStage' saves audio responses to files",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:430"
+    "arena/engine/duplex_executor_pipeline_integration.go:489"
    ]
   },
   {
    "id": 26,
    "claim": "Pipeline stage 'ValidationStage' runs assertions and guardrails on responses",
-   "verdict": "false",
+   "verdict": "dead",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:262",
-    "arena/engine/duplex_executor_pipeline_integration.go:408"
+    "arena/engine/duplex_executor_pipeline_integration.go:319",
+    "arena/stages/duplex_guardrail.go:32"
    ]
   },
   {
@@ -227,7 +227,7 @@
    "claim": "Pipeline stage 'ArenaStateStoreSaveStage' persists messages for reporting",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:445",
+    "arena/engine/duplex_executor_pipeline_integration.go:504",
     "arena/stages/statestore_save_integration.go:23"
    ]
   },
@@ -248,6 +248,43 @@
    "claim": "Document reference: /arena/explanation/testing-philosophy/ exists",
    "verdict": "true",
    "evidence": []
+  },
+  {
+   "id": 31,
+   "claim": "DuplexGuardrailStage runs after DuplexProviderStage when the prompt declares guardrails, because DuplexProviderStage runs no provider hooks",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_executor_pipeline_integration.go:319",
+    "arena/engine/duplex_executor_pipeline_integration.go:334",
+    "arena/stages/duplex_guardrail.go:59"
+   ]
+  },
+  {
+   "id": 32,
+   "claim": "Duplex guardrail enforcement is after the fact: it rewrites the recorded turn (state store, recording, reports, later assertions), keeps audio and tool calls, and does not run input guardrails",
+   "verdict": "true",
+   "evidence": [
+    "arena/stages/duplex_guardrail.go:14",
+    "arena/stages/duplex_guardrail.go:185"
+   ]
+  },
+  {
+   "id": 33,
+   "claim": "Duplex output recording stages come after the guardrail stage, so a recorded turn holds the enforced content",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_executor_pipeline_integration.go:460",
+    "arena/stages/duplex_recording.go:26"
+   ]
+  },
+  {
+   "id": 34,
+   "claim": "Duplex runs execute pack evals at conversation end: turn triggers per assistant turn, then session and conversation triggers",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_executor_results_integration.go:63",
+    "arena/engine/eval_orchestrator.go:240"
+   ]
   }
  ]
 }

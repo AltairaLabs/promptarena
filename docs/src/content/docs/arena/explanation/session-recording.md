@@ -2,13 +2,15 @@
 title: Session Recording Architecture
 description: How Arena captures runs to JSONL through RecordingStage, loads them as SessionRecordings, and replays them offline.
 verified:
-  commit: 3df344ffbc8c604e1a8935929c28499d778d19f0
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/adapters/session_recording.go
     - arena/arenaconfig/types.go
     - arena/cmd/promptarena/run_interactive.go
     - arena/engine/builder_integration.go
     - arena/engine/conversation_executor.go
+    - arena/engine/duplex_executor_pipeline_integration.go
+    - arena/engine/duplex_executor_results_integration.go
     - arena/engine/engine.go
     - arena/engine/eval_orchestrator.go
     - arena/engine/execution.go
@@ -27,7 +29,7 @@ Session recording provides an audit trail of LLM interactions. Unlike simple log
 - Every message with its multimodal parts, tool calls and tool results
 - Enough information to replay a conversation turn by turn
 
-Arena writes a recording when `defaults.output.recording.enabled` is `true`. Arena adds `RecordingStage` to the pipeline itself, duplex runs included. On the duplex path the provider stage puts each assistant turn's message on the element that ends the turn, which `RecordingStage` skips as a control signal, so Arena records a copy of that content immediately ahead of it.
+Arena writes a recording when `defaults.output.recording.enabled` is `true`. Arena adds `RecordingStage` to the pipeline itself, duplex runs included. On the duplex path the provider stage puts each assistant turn's message on the element that ends the turn, which `RecordingStage` skips as a control signal, so Arena records a copy of that content immediately ahead of it. The duplex recording sits after the pack guardrail stage, so a recorded turn holds the enforced content.
 
 The following diagram shows the path from a live run to a replay.
 
@@ -73,7 +75,7 @@ The `FileEventStore` is the only bus subscription that writes recordings, and it
 
 ### Event Types
 
-An Arena recording holds `message.created` and `stream.interrupted` events. See [Captured Events](/arena/how-to/scenarios/session-recording/#captured-events) for the table. Tool calls, tool results and media parts are fields of the `message.created` payload, not separate events.
+An Arena recording holds `message.created` and `stream.interrupted` events. A duplex recording also holds the provider's `audio.output` events. See [Captured Events](/arena/how-to/scenarios/session-recording/#captured-events) for the table. Tool calls, tool results and media parts are fields of the `message.created` payload, not separate events.
 
 ### Event Structure
 
@@ -81,7 +83,7 @@ Each event carries a type, a timestamp, an execution ID, a session ID, a convers
 
 ## Eval Integration
 
-Arena evaluates the live conversation through its `EvalOrchestrator`, not the recording file. At the end of each conversation, the orchestrator runs session-level evals (`on_session_complete`, `sample_sessions`) synchronously over the full message list.
+Arena evaluates the live conversation through its `EvalOrchestrator`, not the recording file. At the end of each conversation, text and duplex runs alike, the orchestrator runs every pack eval trigger synchronously over the message list: the turn triggers (`every_turn`, `sample_turns`) once per assistant turn, then the session triggers (`on_session_complete`, `sample_sessions`), then `on_conversation_complete`.
 
 Pack eval results land in `ConversationResult.EvalResults` and the report. For details on eval types and configuration, see [Eval Framework](/arena/explanation/eval-framework/).
 
@@ -117,7 +119,7 @@ rec, err := recording.Load("session.jsonl")  // Works with either format
 
 ## Media Timeline
 
-For recordings with audio or video events, the `MediaTimeline` provides synchronized access. Arena runs write only `message.created` and `stream.interrupted` events, so a timeline built from an Arena recording holds no audio tracks.
+For recordings with audio or video events, the `MediaTimeline` provides synchronized access. Text runs write only `message.created` and `stream.interrupted` events, so a timeline built from a text-run recording holds no audio tracks. A duplex recording carries `audio.output` events, which fill the assistant audio track.
 
 ```mermaid
 flowchart TD

@@ -5,11 +5,10 @@ description: >-
 sidebar:
   order: 0
 verified:
-  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - .goreleaser.yml
     - arena/arenaconfig/types.go
-    - arena/audio/local_sink_oto.go
     - arena/cmd/promptarena/deploy_adapter_interactive.go
     - arena/cmd/promptarena/deploy_apply_interactive.go
     - arena/cmd/promptarena/deploy_destroy_interactive.go
@@ -19,6 +18,8 @@ verified:
     - arena/cmd/promptarena/init.go
     - arena/cmd/promptarena/init_interactive.go
     - arena/cmd/promptarena/main_integration.go
+    - arena/cmd/promptarena/run.go
+    - arena/engine/execution.go
     - arena/results/interfaces.go
     - arena/results/utils.go
     - arena/templates/builtin/code-assistant/template.yaml
@@ -34,6 +35,7 @@ verified:
     - arena/tui/app/inspectpage.go
     - arena/tui/app/runpage.go
     - arena/tui/app/viewpage.go
+    - arena/voice/portaudio/portaudio_discovery.go
     - scripts/prepare-examples-docs.sh
 ---
 PromptArena is a testing framework for LLM prompts and agents. You describe prompts, providers and scenarios in YAML, and `promptarena run` executes every scenario against every provider and checks the responses.
@@ -86,10 +88,12 @@ promptarena run
 - `providers/mock.provider.yaml`
 - `scenarios/basic-test.scenario.yaml`
 - `mock-responses.yaml`
+- `.env.example`
 - `.gitignore`
 - `README.md`
+- `AGENTS.md` and `.claude/skills/promptarena-authoring/`, a brief for AI coding agents (skip it with `--no-agent`)
 
-Run `promptarena init my-project` without `--quick` for the interactive wizard, which asks for a project name, a provider and whether to create a `.env.example` file listing the API keys to export. The built-in templates are `quick-start` (the default), `customer-support`, `code-assistant`, `content-generation`, `multimodal` and `mcp-integration`.
+Existing files are kept unless you pass `--force`. Run `promptarena init my-project` without `--quick` for the interactive wizard, which asks for a project name, a provider and whether to create a `.env.example` file listing the API keys to export. The built-in templates are `quick-start` (the default), `customer-support`, `code-assistant`, `content-generation`, `multimodal` and `mcp-integration`.
 
 Continue with [Your First Test](/arena/tutorials/01-first-test/), or see [Installation](/arena/how-to/setup/installation/) for other install options.
 
@@ -190,7 +194,7 @@ Prompt engineers use it to refine prompts and compare variations across provider
 
 ## Deploy
 
-`promptarena deploy` ships prompt packs to cloud providers through adapter plugins.
+`promptarena deploy` ships prompt packs to cloud providers through adapter plugins. State, saved plans and the lock are kept per environment under `.promptarena/envs/<env>/`.
 
 - [Deploy Overview](/arena/explanation/deploy/overview/)
 - [First Deployment Tutorial](/arena/tutorials/deploy/first-deployment/)

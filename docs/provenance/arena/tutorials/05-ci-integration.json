@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/tutorials/05-ci-integration.md",
- "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
@@ -66,7 +66,7 @@
    "claim": "promptarena run is a subcommand",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:163"
+    "arena/cmd/promptarena/run.go:164"
    ]
   },
   {
@@ -74,8 +74,8 @@
    "claim": "--scenario <name> selects scenarios by the name 'smoke' so that scenarios/smoke/basic.yaml runs",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/loader.go:567",
-    "arena/cmd/promptarena/run.go:163",
+    "arena/arenaconfig/loader.go:636",
+    "arena/cmd/promptarena/run.go:164",
     "arena/engine/execution.go:193",
     "arena/engine/execution.go:86"
    ]
@@ -85,8 +85,8 @@
    "claim": "--mock-provider flag exists and makes no API calls",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:192",
-    "arena/engine/engine.go:791"
+    "arena/cmd/promptarena/run.go:194",
+    "arena/engine/engine.go:801"
    ]
   },
   {
@@ -94,8 +94,8 @@
    "claim": "--ci flag exists and changes output for CI",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:169",
-    "arena/cmd/promptarena/run.go:337"
+    "arena/cmd/promptarena/run.go:170",
+    "arena/cmd/promptarena/run.go:339"
    ]
   },
   {
@@ -103,6 +103,7 @@
    "claim": "--format accepts a comma-separated list containing junit and json",
    "verdict": "true",
    "evidence": [
+    "arena/cmd/promptarena/run.go",
     "arena/cmd/promptarena/run.go:174",
     "arena/results/json/json_repository.go",
     "arena/results/junit/junit_repository.go"
@@ -114,7 +115,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/helpers.go:38",
-    "arena/cmd/promptarena/run.go:168"
+    "arena/cmd/promptarena/run.go:169"
    ]
   },
   {
@@ -122,7 +123,7 @@
    "claim": "--concurrency flag exists and takes an integer",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:171"
+    "arena/cmd/promptarena/run.go:172"
    ]
   },
   {
@@ -130,6 +131,7 @@
    "claim": "--format accepts markdown",
    "verdict": "true",
    "evidence": [
+    "arena/cmd/promptarena/run.go",
     "arena/cmd/promptarena/run.go:174",
     "arena/results/markdown/markdown_repository.go"
    ]
@@ -157,6 +159,7 @@
    "claim": "A JUnit report is written to tests/out/junit.xml",
    "verdict": "true",
    "evidence": [
+    "arena/cmd/promptarena/run.go",
     "arena/cmd/promptarena/run.go:521",
     "arena/results/junit/junit_repository.go"
    ]
@@ -166,7 +169,7 @@
    "claim": "A results file tests/out/results.json is written, containing a summary object with pass_rate",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run.go:59",
+    "arena/cmd/promptarena/run.go:60",
     "arena/results/json/json_repository.go"
    ]
   },
@@ -199,7 +202,7 @@
    "claim": "--format json writes results to out/results.json relative to the working directory",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run.go:59",
+    "arena/cmd/promptarena/run.go:60",
     "arena/results/json/json_repository.go"
    ]
   },
@@ -208,7 +211,7 @@
    "claim": "bash tests/quality-gates.sh run from the repository root reads out/results.json (the script assumes the tests/ working directory)",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run.go:361",
+    "arena/cmd/promptarena/run.go:363",
     "arena/results/json/json_repository.go"
    ]
   },
@@ -217,6 +220,7 @@
    "claim": "apiVersion promptkit.altairalabs.ai/v1alpha1 is the scenario apiVersion",
    "verdict": "true",
    "evidence": [
+    "arena/cmd/promptarena/run.go",
     "schemas/v1alpha1/scenario.json"
    ]
   },
@@ -225,6 +229,7 @@
    "claim": "kind: Scenario is a valid kind",
    "verdict": "true",
    "evidence": [
+    "arena/cmd/promptarena/run.go",
     "schemas/v1alpha1/scenario.json"
    ]
   },
@@ -233,15 +238,17 @@
    "claim": "metadata.labels is a map that accepts free-form keys such as category and speed",
    "verdict": "true",
    "evidence": [
+    "arena/cmd/promptarena/run.go",
     "schemas/v1alpha1/scenario.json"
    ]
   },
   {
    "id": 30,
    "claim": "metadata.name is a required field of a scenario",
-   "verdict": "false",
+   "verdict": "unverified",
    "evidence": [
     "arena/arenaconfig/loader.go:567",
+    "arena/cmd/promptarena/run.go",
     "schemas/v1alpha1/scenario.json"
    ]
   },
@@ -250,6 +257,7 @@
    "claim": "spec.task_type is a field and 'support' is an accepted value",
    "verdict": "true",
    "evidence": [
+    "arena/cmd/promptarena/run.go",
     "schemas/v1alpha1/scenario.json"
    ]
   },
@@ -258,6 +266,7 @@
    "claim": "spec.turns[].role accepts 'user'",
    "verdict": "true",
    "evidence": [
+    "arena/cmd/promptarena/run.go",
     "schemas/v1alpha1/scenario.json"
    ]
   },
@@ -266,6 +275,7 @@
    "claim": "spec.turns[].content is a string field",
    "verdict": "true",
    "evidence": [
+    "arena/cmd/promptarena/run.go",
     "schemas/v1alpha1/scenario.json"
    ]
   },
@@ -274,6 +284,7 @@
    "claim": "spec.turns[].assertions is a list field",
    "verdict": "true",
    "evidence": [
+    "arena/cmd/promptarena/run.go",
     "schemas/v1alpha1/scenario.json"
    ]
   },
@@ -286,16 +297,18 @@
   {
    "id": 36,
    "claim": "content_matches takes params with pattern and message",
-   "verdict": "false",
+   "verdict": "unverified",
    "evidence": [
+    "arena/cmd/promptarena/run.go",
     "schemas/v1alpha1/scenario.json"
    ]
   },
   {
    "id": 37,
    "claim": "content_matches pattern '^.{1,200}$' is valid regex and the message param is named message",
-   "verdict": "false",
+   "verdict": "unverified",
    "evidence": [
+    "arena/cmd/promptarena/run.go",
     "schemas/v1alpha1/scenario.json"
    ]
   },
@@ -304,6 +317,7 @@
    "claim": "metadata.labels accepts category: critical and priority: must-pass labels",
    "verdict": "true",
    "evidence": [
+    "arena/cmd/promptarena/run.go",
     "schemas/v1alpha1/scenario.json"
    ]
   },
@@ -316,8 +330,9 @@
   {
    "id": 40,
    "claim": "content_includes takes params.patterns as a list and params.message",
-   "verdict": "false",
+   "verdict": "unverified",
    "evidence": [
+    "arena/cmd/promptarena/run.go",
     "schemas/v1alpha1/scenario.json"
    ]
   },
@@ -326,6 +341,7 @@
    "claim": "spec.turns[] entries take role user with content and assertions, as in the critical scenario",
    "verdict": "true",
    "evidence": [
+    "arena/cmd/promptarena/run.go",
     "schemas/v1alpha1/scenario.json"
    ]
   },
@@ -334,8 +350,8 @@
    "claim": "promptarena run --ci --format json is a valid command",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:169",
-    "arena/cmd/promptarena/run.go:174"
+    "arena/cmd/promptarena/run.go:170",
+    "arena/cmd/promptarena/run.go:175"
    ]
   },
   {
@@ -343,7 +359,7 @@
    "claim": "promptarena run --concurrency 2 --ci is a valid command",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:171"
+    "arena/cmd/promptarena/run.go:172"
    ]
   },
   {
@@ -408,7 +424,7 @@
    "claim": "promptarena run --config <file> selects a config file other than arena.yaml",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:166"
+    "arena/cmd/promptarena/run.go:167"
    ]
   },
   {
@@ -416,7 +432,7 @@
    "claim": "promptarena run --out <dir> sets the output directory",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:168"
+    "arena/cmd/promptarena/run.go:169"
    ]
   },
   {
@@ -424,7 +440,7 @@
    "claim": "promptarena run --ci --format json,markdown is a valid command",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:174"
+    "arena/cmd/promptarena/run.go:175"
    ]
   },
   {
@@ -464,8 +480,8 @@
    "claim": "promptarena run --ci --concurrency 3 --format junit,json,markdown is a valid command",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:171",
-    "arena/cmd/promptarena/run.go:174"
+    "arena/cmd/promptarena/run.go:172",
+    "arena/cmd/promptarena/run.go:175"
    ]
   },
   {
@@ -473,7 +489,7 @@
    "claim": "--ci gives optimized output for CI",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:337"
+    "arena/cmd/promptarena/run.go:339"
    ]
   },
   {
@@ -487,7 +503,7 @@
    "claim": "--mock-provider is useful for structure validation when rate limited",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:192"
+    "arena/cmd/promptarena/run.go:194"
    ]
   },
   {
@@ -556,7 +572,7 @@
    "verdict": "false",
    "evidence": [
     "arena/arenaconfig/helpers.go:35",
-    "arena/cmd/promptarena/run.go:361"
+    "arena/cmd/promptarena/run.go:363"
    ]
   },
   {
@@ -607,6 +623,7 @@
    "verdict": "true",
    "evidence": [
     "arena/assertions/turn_summary.go",
+    "arena/cmd/promptarena/run.go",
     "arena/tui/tui.go"
    ]
   },
@@ -615,6 +632,7 @@
    "claim": "With the broken assertion the summary reports Assertions Fail: 1 and the run ends with Error: execution failed: 1 runs had errors, 1 assertions failed",
    "verdict": "true",
    "evidence": [
+    "arena/arenaconfig/mock_config_check.go",
     "arena/cmd/promptarena/run.go",
     "arena/cmd/promptarena/run_interactive.go"
    ]

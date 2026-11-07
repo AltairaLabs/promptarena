@@ -2,7 +2,7 @@
 title: 'Tutorial 6: Duplex Voice Testing'
 description: Build a duplex voice test that streams audio files to a mock duplex provider and asserts on the replies, with no API key.
 verified:
-  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/arenaconfig/types.go
     - arena/arenaconfig/voice.go
@@ -219,13 +219,21 @@ Total runs      1
 Passed          1 (100.0%)
 Failed          0 (0.0%)
 
+Total cost      $0.0000
+Total tokens    0
+Total duration  7.4s
+Avg duration    7.4s per run
+
 Providers       mock-duplex (1)
 Scenarios       1 scenarios
+Regions         default
 
 Saved to        out
 ```
 
-The scenario passes: both replies matched their assertions. The run wrote its JSON results to `out/`. The duration lines in your output differ.
+The scenario passes. The run wrote its JSON results, the assistant replies and the recorded audio to `out/`. The duration lines in your output differ.
+
+Duplex turn assertions are evaluated against each reply, but a failing turn assertion does not change the pass count or the exit code. Read the replies in the JSON file in `out/` to confirm what the provider said.
 
 ## Next steps
 

@@ -1,13 +1,13 @@
 {
  "page": "docs/src/content/docs/arena/tutorials/08-client-tools.md",
- "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
    "claim": "Tutorial covers testing tools that execute on the caller's device, including consent simulation for grant and deny",
    "verdict": "true",
    "evidence": [
-    "arena/consent/hook.go:36"
+    "arena/consent/hook.go:55"
    ]
   },
   {
@@ -605,8 +605,8 @@
    "claim": "Arena registers the tool with the pipeline and handles consent simulation automatically from scenario overrides",
    "verdict": "true",
    "evidence": [
-    "arena/consent/hook.go:36",
-    "arena/turnexecutors/pipeline_stages_integration.go:760"
+    "arena/consent/hook.go:55",
+    "arena/turnexecutors/pipeline_stages_integration.go:779"
    ]
   },
   {
@@ -622,7 +622,7 @@
    "claim": "promptarena run accepts the --ci flag",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:169"
+    "arena/cmd/promptarena/run.go:170"
    ]
   },
   {
@@ -630,7 +630,7 @@
    "claim": "promptarena run accepts --format with the value markdown",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:174"
+    "arena/cmd/promptarena/run.go:175"
    ]
   },
   {
@@ -638,13 +638,13 @@
    "claim": "Running from the project directory finds config.arena.yaml by default",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:158"
+    "arena/cmd/promptarena/run.go:159"
    ]
   },
   {
    "id": 81,
    "claim": "Run output shows both scenarios executed",
-   "verdict": "false",
+   "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/run.go"
    ]

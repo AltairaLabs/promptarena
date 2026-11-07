@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/explanation/provider-comparison.md",
- "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
@@ -25,8 +25,8 @@
    "claim": "apiVersion promptkit.altairalabs.ai/v1alpha1 is the scenario apiVersion",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:478",
-    "schemas/v1alpha1/scenario.json:1060"
+    "arena/arenaconfig/loader.go:547",
+    "schemas/v1alpha1/scenario.json:1067"
    ]
   },
   {
@@ -34,8 +34,8 @@
    "claim": "kind Scenario is a valid resource kind",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:478",
-    "schemas/v1alpha1/scenario.json:1061"
+    "arena/arenaconfig/loader.go:547",
+    "schemas/v1alpha1/scenario.json:1068"
    ]
   },
   {
@@ -44,7 +44,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:80",
-    "schemas/v1alpha1/scenario.json:1031"
+    "schemas/v1alpha1/scenario.json:1038"
    ]
   },
   {
@@ -52,8 +52,8 @@
    "claim": "spec is the top-level body key of a scenario",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:682",
-    "schemas/v1alpha1/scenario.json:1031"
+    "arena/arenaconfig/types.go:687",
+    "schemas/v1alpha1/scenario.json:1038"
    ]
   },
   {
@@ -61,7 +61,7 @@
    "claim": "spec.task_type is a scenario field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:684"
+    "arena/arenaconfig/types.go:689"
    ]
   },
   {
@@ -69,7 +69,7 @@
    "claim": "spec.description is a scenario field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:686"
+    "arena/arenaconfig/types.go:691"
    ]
   },
   {
@@ -77,9 +77,9 @@
    "claim": "spec.providers is a list of provider names on a scenario, restricting the run to those providers",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:697",
+    "arena/arenaconfig/types.go:705",
     "arena/engine/execution.go:271",
-    "arena/engine/execution.go:281"
+    "arena/engine/execution.go:278"
    ]
   },
   {
@@ -87,7 +87,7 @@
    "claim": "spec.turns is a list of turns on a scenario",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:692"
+    "arena/arenaconfig/types.go:697"
    ]
   },
   {
@@ -95,7 +95,7 @@
    "claim": "a turn has a role field, with user as a valid value",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1135"
+    "arena/arenaconfig/types.go:1143"
    ]
   },
   {
@@ -103,7 +103,7 @@
    "claim": "a turn has a content field holding the user message",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1136"
+    "arena/arenaconfig/types.go:1144"
    ]
   },
   {
@@ -111,7 +111,7 @@
    "claim": "a turn accepts an assertions list",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1181"
+    "arena/arenaconfig/types.go:1189"
    ]
   },
   {
@@ -164,8 +164,8 @@
    "claim": "the Claude scenario example uses apiVersion promptkit.altairalabs.ai/v1alpha1 and kind Scenario",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:478",
-    "schemas/v1alpha1/scenario.json:1060"
+    "arena/arenaconfig/loader.go:547",
+    "schemas/v1alpha1/scenario.json:1067"
    ]
   },
   {
@@ -181,8 +181,8 @@
    "claim": "the Claude example's spec block is valid YAML and matches the scenario schema (providers and assertions nested under spec after description)",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:682",
-    "schemas/v1alpha1/scenario.json:1031"
+    "arena/arenaconfig/types.go:687",
+    "schemas/v1alpha1/scenario.json:1038"
    ]
   },
   {
@@ -190,8 +190,8 @@
    "claim": "providers: [claude-sonnet] is a valid spec.providers entry in the Claude example",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:697",
-    "arena/engine/execution.go:271"
+    "arena/arenaconfig/types.go:705",
+    "arena/engine/execution.go:278"
    ]
   },
   {
@@ -199,9 +199,9 @@
    "claim": "assertions is a valid key placed directly under the scenario spec in the Claude example",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:1181",
-    "arena/arenaconfig/types.go:682",
-    "schemas/v1alpha1/scenario.json:1031"
+    "arena/arenaconfig/types.go:1189",
+    "arena/arenaconfig/types.go:687",
+    "schemas/v1alpha1/scenario.json:1038"
    ]
   },
   {
@@ -209,8 +209,8 @@
    "claim": "content_matches accepts pattern and message params at spec-level assertions",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:1181",
-    "arena/arenaconfig/types.go:707"
+    "arena/arenaconfig/types.go:1189",
+    "arena/arenaconfig/types.go:715"
    ]
   },
   {
@@ -250,7 +250,7 @@
    "claim": "Claude Sonnet is available under the model id claude-sonnet-style alias in the examples (providers: claude-sonnet)",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:697"
+    "arena/arenaconfig/types.go:705"
    ]
   },
   {
@@ -276,8 +276,8 @@
    "claim": "the Gemini scenario example uses apiVersion promptkit.altairalabs.ai/v1alpha1 and kind Scenario",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:478",
-    "schemas/v1alpha1/scenario.json:1060"
+    "arena/arenaconfig/loader.go:547",
+    "schemas/v1alpha1/scenario.json:1067"
    ]
   },
   {
@@ -285,7 +285,7 @@
    "claim": "providers: [gemini-flash] is a valid spec.providers entry, and the example's YAML nesting is valid",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:682"
+    "arena/arenaconfig/types.go:687"
    ]
   },
   {
@@ -341,7 +341,7 @@
    "claim": "providers: [ollama-llama] is a valid spec.providers entry in the Ollama example and the example YAML nesting is valid",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:682"
+    "arena/arenaconfig/types.go:687"
    ]
   },
   {
@@ -373,7 +373,7 @@
    "claim": "Arena does not provide a built-in response time assertion",
    "verdict": "false",
    "evidence": [
-    "arena/engine/eval_orchestrator.go:395"
+    "arena/engine/eval_orchestrator.go:448"
    ]
   },
   {
@@ -381,7 +381,7 @@
    "claim": "Response latency can be observed in test output reports",
    "verdict": "true",
    "evidence": [
-    "arena/engine/eval_orchestrator.go:395",
+    "arena/engine/eval_orchestrator.go:448",
     "arena/engine/types.go:68"
    ]
   },
@@ -390,7 +390,7 @@
    "claim": "the long-document example uses a context.document field on a scenario",
    "verdict": "dead",
    "evidence": [
-    "arena/arenaconfig/types.go:693",
+    "arena/arenaconfig/types.go:698",
     "arena/cmd/promptarena/prompt-debug_interactive.go:223"
    ]
   },
@@ -399,7 +399,7 @@
    "claim": "providers claude-sonnet and gemini-pro are used in the long-context example",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:697"
+    "arena/arenaconfig/types.go:705"
    ]
   },
   {
@@ -407,7 +407,7 @@
    "claim": "the ${fixtures.<name>} variable syntax is supported in context values",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:693"
+    "arena/arenaconfig/types.go:698"
    ]
   },
   {
@@ -499,8 +499,8 @@
    "claim": "a turn can carry a name field",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:1134",
-    "schemas/v1alpha1/scenario.json:1031"
+    "arena/arenaconfig/types.go:1142",
+    "schemas/v1alpha1/scenario.json"
    ]
   },
   {
@@ -508,7 +508,7 @@
    "claim": "a turn block can carry a providers list in the tool calling example",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:1134"
+    "arena/arenaconfig/types.go:1142"
    ]
   },
   {
@@ -528,7 +528,7 @@
    "claim": "conversation_assertions is a valid key on a scenario or turn",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:1134",
+    "arena/arenaconfig/types.go:1142",
     "arena/arenaconfig/types.go:707"
    ]
   },
@@ -605,8 +605,7 @@
    "claim": "a turn accepts an image field pointing to a local file path",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:1134",
-    "arena/arenaconfig/types.go:1140"
+    "arena/arenaconfig/types.go:1148"
    ]
   },
   {
@@ -614,7 +613,7 @@
    "claim": "model short names gpt-4o, claude-opus and gemini-pro are used as providers in the image example",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:1134"
+    "arena/arenaconfig/types.go:705"
    ]
   },
   {
@@ -637,7 +636,7 @@
    "claim": "providers openai-gpt4o-mini, claude-sonnet and gemini-flash are used in the cross-provider baseline",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:697"
+    "arena/arenaconfig/types.go:705"
    ]
   },
   {
@@ -651,7 +650,7 @@
    "claim": "a turn entry accepts a name field and a providers field in the provider-specific example",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:1134"
+    "arena/arenaconfig/types.go:1142"
    ]
   },
   {
@@ -659,8 +658,8 @@
    "claim": "providers claude-sonnet and gemini-flash with context.document are used in the provider-specific example",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:1134",
-    "arena/arenaconfig/types.go:693"
+    "arena/arenaconfig/types.go:1142",
+    "arena/arenaconfig/types.go:698"
    ]
   },
   {
@@ -668,7 +667,7 @@
    "claim": "context.document accepts a ${fixtures.100k_token_doc} reference",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:693"
+    "arena/arenaconfig/types.go:698"
    ]
   },
   {
@@ -676,8 +675,8 @@
    "claim": "Arena has no primary_provider or fallback_providers failover",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:682",
-    "schemas/v1alpha1/scenario.json:1031"
+    "arena/arenaconfig/types.go:687",
+    "schemas/v1alpha1/scenario.json:1038"
    ]
   },
   {
@@ -685,7 +684,7 @@
    "claim": "primary_provider is a scenario field",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:682"
+    "arena/arenaconfig/types.go:687"
    ]
   },
   {
@@ -693,7 +692,7 @@
    "claim": "fallback_providers is a scenario field",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:682"
+    "arena/arenaconfig/types.go:687"
    ]
   },
   {
@@ -701,7 +700,7 @@
    "claim": "spec.scenarios is a list field of per-provider scenario entries",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:682"
+    "arena/arenaconfig/types.go:687"
    ]
   },
   {
@@ -709,7 +708,7 @@
    "claim": "a scenario entry accepts a provider key",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:682"
+    "arena/arenaconfig/types.go:687"
    ]
   },
   {
@@ -717,7 +716,7 @@
    "claim": "a scenario entry accepts an expected_to_work key",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:682"
+    "arena/arenaconfig/types.go:687"
    ]
   },
   {
@@ -737,8 +736,8 @@
    "claim": "a spec-level tags field accepts a list such as fast-providers",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:682",
-    "schemas/v1alpha1/scenario.json:1031"
+    "arena/arenaconfig/types.go:687",
+    "schemas/v1alpha1/scenario.json:1038"
    ]
   },
   {
@@ -746,7 +745,7 @@
    "claim": "providers openai-mini, gemini-flash and claude-haiku are used in the tags example",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:697"
+    "arena/arenaconfig/types.go:705"
    ]
   },
   {
@@ -754,7 +753,7 @@
    "claim": "a second scenario entry with name and tags premium-providers can be listed under spec in the tags example",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:682"
+    "arena/arenaconfig/types.go:687"
    ]
   },
   {
@@ -762,7 +761,7 @@
    "claim": "promptarena run is a CLI command",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:162"
+    "arena/cmd/promptarena/run.go:163"
    ]
   },
   {
@@ -770,8 +769,8 @@
    "claim": "promptarena run accepts a --provider flag",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:162",
-    "arena/cmd/promptarena/run.go:316"
+    "arena/cmd/promptarena/run.go:163",
+    "arena/cmd/promptarena/run.go:318"
    ]
   },
   {
@@ -779,7 +778,7 @@
    "claim": "promptarena run --provider gemini-flash is a valid invocation (a provider id from the config)",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:316",
+    "arena/cmd/promptarena/run.go:318",
     "arena/engine/execution.go:271"
    ]
   },
@@ -788,7 +787,7 @@
    "claim": "promptarena run --provider claude-sonnet is a valid invocation",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:316",
+    "arena/cmd/promptarena/run.go:318",
     "arena/engine/execution.go:271"
    ]
   },

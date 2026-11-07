@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/tutorials/04-mcp-tools.md",
- "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
@@ -42,6 +42,7 @@
    "claim": "`npm install -g @modelcontextprotocol/server-filesystem` installs the filesystem MCP server",
    "verdict": "true",
    "evidence": [
+    "arena/arenaconfig/mcp_servers.go",
     "examples/mcp-filesystem-test/config.arena.yaml:16"
    ]
   },
@@ -59,6 +60,7 @@
    "claim": "Arena auto-discovers the tools each configured MCP server provides",
    "verdict": "true",
    "evidence": [
+    "arena/arenaconfig/mcp_servers.go",
     "arena/engine/builder_integration.go:437",
     "arena/engine/builder_integration.go:482"
    ]
@@ -143,6 +145,7 @@
    "claim": "Each mcp_servers entry accepts a command field",
    "verdict": "true",
    "evidence": [
+    "arena/arenaconfig/mcp_servers.go",
     "arena/mcp/config.go:60"
    ]
   },
@@ -151,6 +154,7 @@
    "claim": "Each mcp_servers entry accepts an args list field",
    "verdict": "true",
    "evidence": [
+    "arena/arenaconfig/mcp_servers.go",
     "arena/mcp/config.go:61"
    ]
   },
@@ -159,6 +163,7 @@
    "claim": "Each mcp_servers entry accepts an env map field",
    "verdict": "true",
    "evidence": [
+    "arena/arenaconfig/mcp_servers.go",
     "arena/mcp/config.go:62"
    ]
   },
@@ -173,8 +178,9 @@
   {
    "id": 22,
    "claim": "LOG_LEVEL is an environment variable the memory server reads, with values such as info and debug",
-   "verdict": "false",
+   "verdict": "unverified",
    "evidence": [
+    "arena/arenaconfig/mcp_servers.go",
     "arena/mcp/config.go:62"
    ]
   },
@@ -343,7 +349,7 @@
    "claim": "`promptarena run --scenario <name>` runs a scenario selected by name",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:168"
+    "arena/cmd/promptarena/run.go:169"
    ]
   },
   {
@@ -360,7 +366,7 @@
    "claim": "`promptarena run` accepts a --verbose flag",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:168"
+    "arena/cmd/promptarena/run.go:169"
    ]
   },
   {
@@ -408,6 +414,7 @@
    "claim": "Tool spec.mode accepts the value mock",
    "verdict": "true",
    "evidence": [
+    "arena/arenaconfig/mcp_servers.go",
     "schemas/v1alpha1/tool.json:321"
    ]
   },
@@ -504,6 +511,7 @@
    "claim": "read_file is a tool name (illustrative)",
    "verdict": "true",
    "evidence": [
+    "arena/arenaconfig/mcp_servers.go",
     "examples/mcp-filesystem-test/config.arena.yaml:16"
    ]
   },
@@ -520,7 +528,7 @@
    "claim": "Verbose run prints lines of the form [TOOL CALL] store_memory({...}) and [TOOL RESPONSE] {...}",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run.go:168"
+    "arena/cmd/promptarena/run.go:169"
    ]
   },
   {
@@ -554,7 +562,7 @@
    "claim": "Setting LOG_LEVEL=debug in the environment changes the memory server log level",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run.go:168"
+    "arena/cmd/promptarena/run.go:169"
    ]
   },
   {
@@ -586,6 +594,7 @@
    "claim": "A prompt reaches only the tools listed in allowed_tools; unlisted tools are not called",
    "verdict": "true",
    "evidence": [
+    "arena/arenaconfig/mcp_servers.go",
     "arena/engine/builder_integration.go:482"
    ]
   },
@@ -594,6 +603,7 @@
    "claim": "MCP tools are named mcp__<server>__<tool>",
    "verdict": "true",
    "evidence": [
+    "arena/arenaconfig/mcp_servers.go",
     "arena/engine/builder_integration.go:482"
    ]
   },
@@ -602,7 +612,7 @@
    "claim": "`promptarena run` writes results to out/results.json by default",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run.go:168"
+    "arena/cmd/promptarena/run.go:169"
    ]
   },
   {
@@ -610,7 +620,7 @@
    "claim": "results.json has a top-level results array",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run.go:168"
+    "arena/cmd/promptarena/run.go:169"
    ]
   },
   {
@@ -618,7 +628,7 @@
    "claim": "Each result entry has a tool_calls array whose items have a name field",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run.go:168"
+    "arena/cmd/promptarena/run.go:169"
    ]
   },
   {
@@ -626,7 +636,7 @@
    "claim": "Each tool_calls item has an arguments field",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run.go:168"
+    "arena/cmd/promptarena/run.go:169"
    ]
   },
   {
@@ -660,6 +670,7 @@
    "claim": "The current unpinned @modelcontextprotocol/server-memory works with Arena: its tools register with the server's own outputSchema, so structuredContent results pass",
    "verdict": "true",
    "evidence": [
+    "arena/arenaconfig/mcp_servers.go",
     "arena/engine/builder_integration.go",
     "arena/engine/mcp_tool_descriptor.go"
    ]

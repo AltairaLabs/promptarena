@@ -1,13 +1,13 @@
 {
  "page": "docs/src/content/docs/arena/why-arena.md",
- "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
    "claim": "PromptArena is a testing framework for LLM-driven systems",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/main_integration.go:25"
+    "arena/cmd/promptarena/main_integration.go:26"
    ]
   },
   {
@@ -29,8 +29,8 @@
    "claim": "Voice support includes duplex audio with self-play personas, runtime tools, and assertions that observe what got spoken and what got blocked",
    "verdict": "false",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:249",
-    "arena/turnexecutors/pipeline_stages_integration.go:495"
+    "arena/engine/duplex_executor_pipeline_integration.go:251",
+    "arena/turnexecutors/pipeline_stages_integration.go:503"
    ]
   },
   {
@@ -38,9 +38,9 @@
    "claim": "Multi-turn agents support scripted or self-play opponents over many turns",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:720",
+    "arena/arenaconfig/types.go:728",
     "examples/text-negotiation/scenarios/rental-negotiation.scenario.yaml:10",
-    "examples/voice-refund-demo/config.arena.yaml:60"
+    "examples/voice-refund-demo/config.arena.yaml:65"
    ]
   },
   {
@@ -82,7 +82,7 @@
    "claim": "The same code enforces guardrails in production and fires the test signal",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:495"
+    "arena/turnexecutors/pipeline_stages_integration.go:503"
    ]
   },
   {
@@ -108,18 +108,18 @@
    "claim": "A scripted persona (LLM-driven via self-play, or scripted text) drives the user side of a voice test",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:720",
+    "arena/arenaconfig/types.go:728",
     "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:56",
-    "examples/voice-refund-demo/config.arena.yaml:60"
+    "examples/voice-refund-demo/config.arena.yaml:65"
    ]
   },
   {
    "id": 15,
    "claim": "TTS is used to make the persona audio indistinguishable from a real call",
-   "verdict": "unverified",
+   "verdict": "false",
    "evidence": [
     "arena/selfplay/audio_generator.go",
-    "examples/voice-refund-demo/config.arena.yaml:36"
+    "examples/voice-refund-demo/config.arena.yaml"
    ]
   },
   {
@@ -135,7 +135,7 @@
    "claim": "The agent under test can be a mock for CI",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:192",
+    "arena/cmd/promptarena/run.go:194",
     "arena/engine/mock_default_audio.go",
     "examples/voice-refund-demo/config.arena.yaml:24"
    ]
@@ -153,8 +153,8 @@
    "claim": "Content checks and guardrail observation run on real signals in voice tests",
    "verdict": "false",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:249",
-    "arena/turnexecutors/pipeline_stages_integration.go:495"
+    "arena/engine/duplex_executor_pipeline_integration.go:251",
+    "arena/turnexecutors/pipeline_stages_integration.go:503"
    ]
   },
   {
@@ -162,7 +162,7 @@
    "claim": "The voice-customer-support demo uses four personas to drive a refund agent",
    "verdict": "true",
    "evidence": [
-    "examples/voice-refund-demo/config.arena.yaml:61"
+    "examples/voice-refund-demo/config.arena.yaml:66"
    ]
   },
   {
@@ -204,7 +204,7 @@
    "claim": "The voice-guardrails demo observes PII redaction via guardrail_triggered",
    "verdict": "true",
    "evidence": [
-    "examples/voice-guardrails/scenarios/pii-redaction.scenario.yaml:18"
+    "examples/voice-guardrails/scenarios/pii-redaction.scenario.yaml:19"
    ]
   },
   {
@@ -229,7 +229,7 @@
    "claim": "The voice-customer-support demo is a multi-turn voice conversation with adversarial personas",
    "verdict": "true",
    "evidence": [
-    "examples/voice-refund-demo/config.arena.yaml:61",
+    "examples/voice-refund-demo/config.arena.yaml",
     "examples/voice-refund-demo/personas/aggressive-entitled.persona.yaml",
     "examples/voice-refund-demo/personas/impersonator.persona.yaml"
    ]
@@ -272,7 +272,7 @@
    "claim": "A Guardrail is an eval wired in the pack's validators: block",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:703",
+    "arena/turnexecutors/pipeline_stages_integration.go:711",
     "schemas/v1alpha1/promptconfig.json:714"
    ]
   },
@@ -319,7 +319,7 @@
    "claim": "The voice-guardrails demo is a focused PII redaction demo emphasising the runtime and test bridge",
    "verdict": "true",
    "evidence": [
-    "examples/voice-guardrails/scenarios/pii-redaction.scenario.yaml:18"
+    "examples/voice-guardrails/scenarios/pii-redaction.scenario.yaml:19"
    ]
   },
   {
@@ -327,7 +327,7 @@
    "claim": "PromptArena runs the real runtime (real tools, real workflow state machine, real guardrails) with the LLM mocked",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run.go:192",
+    "arena/cmd/promptarena/run.go:194",
     "examples/multi-agent-demo/config.arena.yaml:17",
     "examples/voice-ivr/tools/check-balance.tool.yaml:24",
     "examples/voice-refund-demo/tools/lookup-order.tool.yaml:30"
@@ -371,8 +371,7 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/run.go:685",
-    "arena/cmd/promptarena/run_interactive.go:134",
-    "arena/cmd/promptarena/run_interactive.go:143"
+    "arena/cmd/promptarena/run_interactive.go:134"
    ]
   },
   {
@@ -448,7 +447,7 @@
    "claim": "The promptarena binary exists",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/main_integration.go:25"
+    "arena/cmd/promptarena/main_integration.go:26"
    ]
   },
   {
@@ -456,7 +455,7 @@
    "claim": "promptarena run --ci exits non-zero on any assertion failure",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:169",
+    "arena/cmd/promptarena/run.go:170",
     "arena/cmd/promptarena/run_interactive.go:134",
     "arena/cmd/promptarena/run_interactive.go:143"
    ]
@@ -466,7 +465,7 @@
    "claim": "The --ci flag exists on the run subcommand",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:169"
+    "arena/cmd/promptarena/run.go:170"
    ]
   },
   {
@@ -480,7 +479,7 @@
    "claim": "Report artifacts give reviewers per-scenario and per-provider visibility into failures",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:192"
+    "arena/cmd/promptarena/run.go:194"
    ]
   },
   {

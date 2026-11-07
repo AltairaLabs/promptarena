@@ -2,13 +2,17 @@
 title: Duplex Streaming Architecture
 description: How PromptArena streams bidirectional audio to a provider, from pipeline stages and session creation to turn detection and resilience.
 verified:
-  commit: 3df344ffbc8c604e1a8935929c28499d778d19f0
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/arenaconfig/types.go
     - arena/engine/duplex_conversation_executor.go
     - arena/engine/duplex_executor_pipeline_integration.go
+    - arena/engine/duplex_executor_results_integration.go
     - arena/engine/duplex_executor_turns_integration.go
     - arena/engine/duplex_executor_types.go
+    - arena/engine/eval_orchestrator.go
+    - arena/stages/duplex_guardrail.go
+    - arena/stages/duplex_recording.go
     - arena/stages/statestore_save_integration.go
     - arena/turnexecutors/audio_file_source.go
     - schemas/v1alpha1/scenario.json
@@ -79,7 +83,9 @@ flowchart TD
     vps --> pas["PromptAssemblyStage"]
     pas --> ts["TemplateStage<br/>(renders system prompt)"]
     ts --> dps["DuplexProviderStage"]
-    dps -->|WebSocket session| pout["audio-pacing-output<br/>(when paced)"]
+    dps -->|WebSocket session| grs["DuplexGuardrailStage<br/>(when the prompt declares guardrails)"]
+    grs --> rec["duplex_recording_split, RecordingStage, duplex_recording_drop<br/>(when session recording is enabled)"]
+    rec --> pout["audio-pacing-output<br/>(when paced)"]
     pout --> tout["MonitorTap, output<br/>(when an audio monitor is attached)"]
     tout --> mes["MediaExternalizerStage<br/>(when media storage is configured)"]
     mes --> ass["ArenaStateStoreSaveStage<br/>(when a state store is configured)"]
@@ -90,6 +96,12 @@ flowchart TD
 ### Key Pipeline Stages
 
 See [Duplex Configuration Reference](/arena/reference/duplex-config/) for every stage and option.
+
+`DuplexProviderStage` runs no provider hooks, so `DuplexGuardrailStage` is where the pack's guardrails run in a duplex session. It gives each completed assistant message the same after-call check the text path applies. A firing is stamped on the message's validations, which `guardrail_triggered` reads, and an enforcing guardrail rewrites the recorded content.
+
+Enforcement is after the fact. The provider has already streamed the turn's audio and transcript while it spoke, so a listener has heard the original by the time the turn completes. The stage corrects the turn as recorded: the transcript in the state store, the session recording, the reports and every later assertion. The stage keeps the audio and the tool calls, because the session played the first and executed the second. Input guardrails do not run, because the user's audio has already reached the provider.
+
+The recording stages come after the guardrail stage, so a recorded turn holds the enforced content. Pack evals run when the conversation ends, as on the text path: turn triggers once per assistant turn, then session and conversation triggers. See [Eval Framework](/arena/explanation/eval-framework/).
 
 ## Session Lifecycle
 

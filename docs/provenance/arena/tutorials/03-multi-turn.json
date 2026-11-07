@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/tutorials/03-multi-turn.md",
- "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
@@ -19,7 +19,7 @@
    "claim": "The reader creates scenarios/support-conversation.yaml",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/loader.go:473",
+    "arena/arenaconfig/loader.go:542",
     "arena/engine/execution.go:191"
    ]
   },
@@ -29,6 +29,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:473",
+    "arena/arenaconfig/types.go",
     "arena/arenaconfig/types.go:672",
     "schemas/v1alpha1/scenario.json"
    ]
@@ -39,6 +40,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:473",
+    "arena/arenaconfig/types.go",
     "arena/arenaconfig/types.go:672",
     "schemas/v1alpha1/scenario.json"
    ]
@@ -49,6 +51,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:473",
+    "arena/arenaconfig/types.go",
     "arena/arenaconfig/types.go:672",
     "schemas/v1alpha1/scenario.json"
    ]
@@ -59,6 +62,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:473",
+    "arena/arenaconfig/types.go",
     "arena/arenaconfig/types.go:672",
     "schemas/v1alpha1/scenario.json"
    ]
@@ -69,6 +73,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:473",
+    "arena/arenaconfig/types.go",
     "arena/arenaconfig/types.go:672",
     "schemas/v1alpha1/scenario.json"
    ]
@@ -79,6 +84,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:473",
+    "arena/arenaconfig/types.go",
     "arena/arenaconfig/types.go:672",
     "schemas/v1alpha1/scenario.json"
    ]
@@ -89,6 +95,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:473",
+    "arena/arenaconfig/types.go",
     "arena/arenaconfig/types.go:672",
     "schemas/v1alpha1/scenario.json"
    ]
@@ -99,6 +106,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:473",
+    "arena/arenaconfig/types.go",
     "arena/arenaconfig/types.go:672",
     "schemas/v1alpha1/scenario.json"
    ]
@@ -109,6 +117,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:473",
+    "arena/arenaconfig/types.go",
     "arena/arenaconfig/types.go:672",
     "schemas/v1alpha1/scenario.json"
    ]
@@ -119,6 +128,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:473",
+    "arena/arenaconfig/types.go",
     "arena/arenaconfig/types.go:672",
     "schemas/v1alpha1/scenario.json"
    ]
@@ -129,6 +139,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:473",
+    "arena/arenaconfig/types.go",
     "arena/arenaconfig/types.go:672",
     "schemas/v1alpha1/scenario.json"
    ]
@@ -145,6 +156,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:473",
+    "arena/arenaconfig/types.go",
     "arena/arenaconfig/types.go:672",
     "schemas/v1alpha1/scenario.json"
    ]
@@ -155,6 +167,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:473",
+    "arena/arenaconfig/types.go",
     "arena/arenaconfig/types.go:672",
     "schemas/v1alpha1/scenario.json"
    ]
@@ -164,6 +177,7 @@
    "claim": "Assertion params accept a message string",
    "verdict": "true",
    "evidence": [
+    "arena/arenaconfig/types.go",
     "arena/arenaconfig/types.go:1181",
     "schemas/v1alpha1/scenario.json"
    ]
@@ -174,6 +188,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:473",
+    "arena/arenaconfig/types.go",
     "arena/arenaconfig/types.go:672",
     "schemas/v1alpha1/scenario.json"
    ]
@@ -184,6 +199,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:473",
+    "arena/arenaconfig/types.go",
     "arena/arenaconfig/types.go:672",
     "schemas/v1alpha1/scenario.json"
    ]
@@ -194,6 +210,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:473",
+    "arena/arenaconfig/types.go",
     "arena/arenaconfig/types.go:672",
     "schemas/v1alpha1/scenario.json"
    ]
@@ -226,6 +243,7 @@
    "claim": "Command promptarena run exists",
    "verdict": "true",
    "evidence": [
+    "arena/arenaconfig/types.go",
     "arena/cmd/promptarena/run.go"
    ]
   },
@@ -234,6 +252,7 @@
    "claim": "Flag --scenario exists on promptarena run",
    "verdict": "true",
    "evidence": [
+    "arena/arenaconfig/types.go",
     "arena/cmd/promptarena/run.go"
    ]
   },
@@ -251,15 +270,16 @@
    "claim": "The reader creates scenarios/progressive-disclosure.yaml",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/loader.go:473",
+    "arena/arenaconfig/loader.go:542",
     "arena/engine/execution.go:191"
    ]
   },
   {
    "id": 29,
    "claim": "spec.description is a string field on a scenario",
-   "verdict": "false",
+   "verdict": "unverified",
    "evidence": [
+    "arena/arenaconfig/types.go",
     "arena/arenaconfig/types.go:686",
     "schemas/v1alpha1/scenario.json"
    ]
@@ -267,8 +287,9 @@
   {
    "id": 30,
    "claim": "spec.context_metadata is a map field on a scenario",
-   "verdict": "false",
+   "verdict": "unverified",
    "evidence": [
+    "arena/arenaconfig/types.go",
     "arena/arenaconfig/types.go:657",
     "schemas/v1alpha1/scenario.json"
    ]
@@ -276,8 +297,9 @@
   {
    "id": 31,
    "claim": "context_metadata accepts free-form keys (domain used here)",
-   "verdict": "false",
+   "verdict": "unverified",
    "evidence": [
+    "arena/arenaconfig/types.go",
     "arena/arenaconfig/types.go:657",
     "schemas/v1alpha1/scenario.json"
    ]
@@ -288,6 +310,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:473",
+    "arena/arenaconfig/types.go",
     "arena/arenaconfig/types.go:672",
     "schemas/v1alpha1/scenario.json"
    ]
@@ -297,7 +320,7 @@
    "claim": "A single YAML file can hold several scenario documents separated by ---, each loaded as its own scenario",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/loader.go:473"
+    "arena/arenaconfig/loader.go:542"
    ]
   },
   {
@@ -305,15 +328,16 @@
    "claim": "The reader creates scenarios/memory-test.yaml",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/loader.go:473",
+    "arena/arenaconfig/loader.go:542",
     "arena/engine/execution.go:191"
    ]
   },
   {
    "id": 35,
    "claim": "Code block at lines 218-256 is the scenario file for step 5 (metadata.name long-term-memory-test)",
-   "verdict": "false",
+   "verdict": "unverified",
    "evidence": [
+    "arena/arenaconfig/types.go",
     "arena/arenaconfig/types.go:686",
     "schemas/v1alpha1/scenario.json"
    ]
@@ -324,6 +348,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:473",
+    "arena/arenaconfig/types.go",
     "arena/arenaconfig/types.go:672",
     "schemas/v1alpha1/scenario.json"
    ]
@@ -334,6 +359,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:473",
+    "arena/arenaconfig/types.go",
     "arena/arenaconfig/types.go:672",
     "schemas/v1alpha1/scenario.json"
    ]
@@ -341,8 +367,9 @@
   {
    "id": 38,
    "claim": "context_metadata map holds user_tier and account_id keys (repeats 295-297)",
-   "verdict": "false",
+   "verdict": "unverified",
    "evidence": [
+    "arena/arenaconfig/types.go",
     "arena/arenaconfig/types.go:657",
     "schemas/v1alpha1/scenario.json"
    ]
@@ -352,7 +379,7 @@
    "claim": "Scenario named happy-path-conversation and escalation-path are two separate scenarios defined in one file (lines 164, 191)",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/loader.go:473"
+    "arena/arenaconfig/loader.go:542"
    ]
   },
   {
@@ -361,6 +388,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:473",
+    "arena/arenaconfig/types.go",
     "arena/arenaconfig/types.go:672",
     "schemas/v1alpha1/scenario.json"
    ]
@@ -371,6 +399,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:473",
+    "arena/arenaconfig/types.go",
     "arena/arenaconfig/types.go:672",
     "schemas/v1alpha1/scenario.json"
    ]
@@ -380,7 +409,7 @@
    "claim": "Multi-document YAML separator --- is used in this file (see claim 33)",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/loader.go:473"
+    "arena/arenaconfig/loader.go:542"
    ]
   },
   {
@@ -388,6 +417,7 @@
    "claim": "Flag --scenario accepts a comma-separated list of scenario names",
    "verdict": "true",
    "evidence": [
+    "arena/arenaconfig/types.go",
     "arena/cmd/promptarena/run.go"
    ]
   },
@@ -404,6 +434,7 @@
    "claim": "Comment: --format markdown generates a detailed Markdown report",
    "verdict": "true",
    "evidence": [
+    "arena/arenaconfig/types.go",
     "arena/cmd/promptarena/run.go"
    ]
   },
@@ -412,6 +443,7 @@
    "claim": "Flag --format exists on promptarena run and accepts the value markdown",
    "verdict": "true",
    "evidence": [
+    "arena/arenaconfig/types.go",
     "arena/cmd/promptarena/run.go"
    ]
   },
@@ -420,6 +452,7 @@
    "claim": "promptarena run --format markdown writes out/results.md",
    "verdict": "true",
    "evidence": [
+    "arena/arenaconfig/types.go",
     "arena/cmd/promptarena/run.go"
    ]
   },
@@ -477,6 +510,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:473",
+    "arena/arenaconfig/types.go",
     "arena/arenaconfig/types.go:672",
     "schemas/v1alpha1/scenario.json"
    ]
@@ -486,6 +520,7 @@
    "claim": "Self-play: a turn with a persona key is generated by a persona LLM, which produces user messages while the target assistant responds",
    "verdict": "true",
    "evidence": [
+    "arena/arenaconfig/types.go",
     "arena/arenaconfig/types.go:1135",
     "arena/engine/conversation_executor.go:622"
    ]
@@ -493,8 +528,9 @@
   {
    "id": 58,
    "claim": "Self-play example scenario (apiVersion, kind, metadata.name self-play-customer-interaction, labels.category self-play) is valid",
-   "verdict": "false",
+   "verdict": "unverified",
    "evidence": [
+    "arena/arenaconfig/types.go",
     "schemas/v1alpha1/scenario.json"
    ]
   },
@@ -503,6 +539,7 @@
    "claim": "Turn role gemini-user must match a role id under arena.yaml self_play.roles",
    "verdict": "true",
    "evidence": [
+    "arena/arenaconfig/types.go",
     "arena/arenaconfig/types.go:1135",
     "arena/engine/conversation_executor.go:622"
    ]
@@ -512,6 +549,7 @@
    "claim": "Turn persona field must match a persona configured in arena.yaml self_play.personas",
    "verdict": "true",
    "evidence": [
+    "arena/arenaconfig/types.go",
     "arena/arenaconfig/types.go:1135",
     "arena/engine/conversation_executor.go:622"
    ]
@@ -530,6 +568,7 @@
    "claim": "Turn field max_turns is an upper bound on exchanges, with natural termination enabled",
    "verdict": "true",
    "evidence": [
+    "arena/arenaconfig/types.go",
     "arena/arenaconfig/types.go:1135",
     "arena/engine/conversation_executor.go:622"
    ]
@@ -540,6 +579,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:473",
+    "arena/arenaconfig/types.go",
     "arena/arenaconfig/types.go:672",
     "schemas/v1alpha1/scenario.json"
    ]
@@ -550,6 +590,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:473",
+    "arena/arenaconfig/types.go",
     "arena/arenaconfig/types.go:672",
     "schemas/v1alpha1/scenario.json"
    ]
@@ -560,6 +601,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:473",
+    "arena/arenaconfig/types.go",
     "arena/arenaconfig/types.go:672",
     "schemas/v1alpha1/scenario.json"
    ]
@@ -570,6 +612,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:473",
+    "arena/arenaconfig/types.go",
     "arena/arenaconfig/types.go:672",
     "schemas/v1alpha1/scenario.json"
    ]
@@ -580,6 +623,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:473",
+    "arena/arenaconfig/types.go",
     "arena/arenaconfig/types.go:672",
     "schemas/v1alpha1/scenario.json"
    ]
@@ -587,8 +631,9 @@
   {
    "id": 68,
    "claim": "Role entries take a provider field; value selfplay is the provider ID for the persona LLM",
-   "verdict": "false",
+   "verdict": "unverified",
    "evidence": [
+    "arena/arenaconfig/types.go",
     "schemas/v1alpha1/arena.json"
    ]
   },
@@ -598,6 +643,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:473",
+    "arena/arenaconfig/types.go",
     "arena/arenaconfig/types.go:672",
     "schemas/v1alpha1/scenario.json"
    ]
@@ -608,6 +654,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:473",
+    "arena/arenaconfig/types.go",
     "arena/arenaconfig/types.go:672",
     "schemas/v1alpha1/scenario.json"
    ]
@@ -618,6 +665,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:473",
+    "arena/arenaconfig/types.go",
     "arena/arenaconfig/types.go:672",
     "schemas/v1alpha1/scenario.json"
    ]
@@ -628,6 +676,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:473",
+    "arena/arenaconfig/types.go",
     "arena/arenaconfig/types.go:672",
     "schemas/v1alpha1/scenario.json"
    ]
@@ -637,7 +686,7 @@
    "claim": "Example multi-document scenarios (very-long-conversation, topic-switching, ambiguous-references) are valid",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/loader.go:473"
+    "arena/arenaconfig/loader.go:542"
    ]
   },
   {
@@ -645,6 +694,7 @@
    "claim": "A self-play turn in a scenario may use role gemini-user with persona persistent-customer, turns 10 and max_turns 20",
    "verdict": "true",
    "evidence": [
+    "arena/arenaconfig/types.go",
     "arena/arenaconfig/types.go:1135",
     "arena/engine/conversation_executor.go:622"
    ]
@@ -652,8 +702,9 @@
   {
    "id": 75,
    "claim": "Example scenario resume-conversation with spec.context_metadata keys previous_topic, unresolved_issues and user_mood is valid",
-   "verdict": "false",
+   "verdict": "unverified",
    "evidence": [
+    "arena/arenaconfig/types.go",
     "arena/arenaconfig/types.go:657",
     "schemas/v1alpha1/scenario.json"
    ]
@@ -679,6 +730,7 @@
    "claim": "Flag --verbose exists on promptarena run",
    "verdict": "true",
    "evidence": [
+    "arena/arenaconfig/types.go",
     "arena/cmd/promptarena/run.go"
    ]
   },
@@ -695,6 +747,7 @@
    "claim": "Verbose output shows whether the prompt includes conversation history",
    "verdict": "true",
    "evidence": [
+    "arena/arenaconfig/types.go",
     "arena/cmd/promptarena/run.go"
    ]
   },
@@ -704,6 +757,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:473",
+    "arena/arenaconfig/types.go",
     "arena/arenaconfig/types.go:672",
     "schemas/v1alpha1/scenario.json"
    ]
@@ -714,6 +768,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:473",
+    "arena/arenaconfig/types.go",
     "arena/arenaconfig/types.go:672",
     "schemas/v1alpha1/scenario.json"
    ]
@@ -723,6 +778,7 @@
    "claim": "Command promptarena run --concurrency 1 --verbose is valid",
    "verdict": "true",
    "evidence": [
+    "arena/arenaconfig/types.go",
     "arena/cmd/promptarena/run.go"
    ]
   },
@@ -731,6 +787,7 @@
    "claim": "Flag --concurrency exists on promptarena run",
    "verdict": "true",
    "evidence": [
+    "arena/arenaconfig/types.go",
     "arena/cmd/promptarena/run.go"
    ]
   },
@@ -739,6 +796,7 @@
    "claim": "Flag --verbose exists on promptarena run (also used with --concurrency)",
    "verdict": "true",
    "evidence": [
+    "arena/arenaconfig/types.go",
     "arena/cmd/promptarena/run.go"
    ]
   },
@@ -747,6 +805,7 @@
    "claim": "--concurrency limits the number of scenario runs in parallel; reducing scenarios is an alternative to a larger limit",
    "verdict": "true",
    "evidence": [
+    "arena/arenaconfig/types.go",
     "arena/cmd/promptarena/run.go"
    ]
   },

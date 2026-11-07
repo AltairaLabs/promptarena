@@ -1,13 +1,13 @@
 {
  "page": "docs/src/content/docs/arena/explanation/interfaces.md",
- "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
    "claim": "Arena is one engine with three front doors (TUI, Web UI, CI/headless)",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/main_integration.go:33",
+    "arena/cmd/promptarena/main_integration.go:34",
     "arena/cmd/promptarena/run_interactive.go:205",
     "arena/cmd/promptarena/serve_interactive.go:171"
    ]
@@ -17,9 +17,9 @@
    "claim": "The same config, providers, scenarios and assertions run underneath all three surfaces",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run_interactive.go:205",
-    "arena/cmd/promptarena/serve_interactive.go:166",
-    "arena/tui/app/runpage.go:132"
+    "arena/cmd/promptarena/run_interactive.go:252",
+    "arena/cmd/promptarena/serve_interactive.go:222",
+    "arena/tui/app/runpage.go:139"
    ]
   },
   {
@@ -27,8 +27,8 @@
    "claim": "The TUI is a full-screen interactive terminal hub for local development",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/main_integration.go:33",
-    "arena/tui/app/launch_interactive.go:48"
+    "arena/cmd/promptarena/main_integration.go:34",
+    "arena/tui/app/launch_interactive.go:49"
    ]
   },
   {
@@ -45,7 +45,7 @@
    "claim": "CI/headless mode gives plain-log, machine-readable execution for automation",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:169",
+    "arena/cmd/promptarena/run.go:170",
     "arena/cmd/promptarena/run_interactive.go:134"
    ]
   },
@@ -54,8 +54,8 @@
    "claim": "Running bare `promptarena` (no subcommand) opens the TUI",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/main_integration.go:30",
-    "arena/cmd/promptarena/main_integration.go:39"
+    "arena/cmd/promptarena/main_integration.go:31",
+    "arena/cmd/promptarena/main_integration.go:40"
    ]
   },
   {
@@ -71,7 +71,7 @@
    "claim": "`promptarena chat` opens an interactive chat session in the TUI",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat_interactive.go:73"
+    "arena/cmd/promptarena/chat_interactive.go:79"
    ]
   },
   {
@@ -99,7 +99,7 @@
    "claim": "`promptarena run --ci` is the headless CI invocation",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:169",
+    "arena/cmd/promptarena/run.go:170",
     "arena/cmd/promptarena/run_interactive.go:134"
    ]
   },
@@ -108,8 +108,8 @@
    "claim": "`--ci` is a flag on the run subcommand",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:169",
-    "arena/cmd/promptarena/run.go:331"
+    "arena/cmd/promptarena/run.go:170",
+    "arena/cmd/promptarena/run.go:333"
    ]
   },
   {
@@ -117,9 +117,9 @@
    "claim": "`--simple` is an alias for `--ci`",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run.go:169",
-    "arena/cmd/promptarena/run.go:171",
-    "arena/cmd/promptarena/run.go:337",
+    "arena/cmd/promptarena/run.go:170",
+    "arena/cmd/promptarena/run.go:172",
+    "arena/cmd/promptarena/run.go:339",
     "arena/cmd/promptarena/run_interactive.go:134",
     "arena/cmd/promptarena/run_interactive.go:323"
    ]
@@ -129,7 +129,7 @@
    "claim": "Diagram node TUI is labelled 'TUI hub (bare promptarena)'",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/main_integration.go:33"
+    "arena/cmd/promptarena/main_integration.go:34"
    ]
   },
   {
@@ -145,7 +145,7 @@
    "claim": "Diagram node CI is labelled 'CI / headless (promptarena run --ci)'",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:169"
+    "arena/cmd/promptarena/run.go:170"
    ]
   },
   {
@@ -154,7 +154,7 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/serve_interactive.go:166",
-    "arena/engine/engine.go:719"
+    "arena/engine/engine.go:722"
    ]
   },
   {
@@ -162,8 +162,8 @@
    "claim": "Edge TUI --> ENGINE: the TUI hub runs on the Arena engine",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/main_integration.go:39",
-    "arena/tui/app/runpage.go:132"
+    "arena/cmd/promptarena/main_integration.go:73",
+    "arena/tui/app/runpage.go:139"
    ]
   },
   {
@@ -189,8 +189,8 @@
    "claim": "Diagram RESULTS node lists out/, json, junit, html and markdown outputs, fed from the ENGINE",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run.go:174",
-    "arena/cmd/promptarena/run.go:501",
+    "arena/cmd/promptarena/run.go:175",
+    "arena/cmd/promptarena/run.go:503",
     "arena/web/server.go:266"
    ]
   },
@@ -199,9 +199,9 @@
    "claim": "None of the three surfaces is a wrapper around another; all are peers on the same execution engine",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run_interactive.go:205",
-    "arena/cmd/promptarena/serve_interactive.go:171",
-    "arena/tui/app/runpage.go:132"
+    "arena/cmd/promptarena/run_interactive.go:252",
+    "arena/cmd/promptarena/serve_interactive.go:222",
+    "arena/tui/app/runpage.go:139"
    ]
   },
   {
@@ -209,8 +209,8 @@
    "claim": "A run started from the TUI, browser or CI produces the same result artifacts",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run_interactive.go:109",
-    "arena/tui/app/runpage.go:132",
+    "arena/cmd/promptarena/hub_results.go:20",
+    "arena/cmd/promptarena/run_interactive.go:111",
     "arena/web/server.go:266"
    ]
   },
@@ -219,9 +219,8 @@
    "claim": "Result artifacts from every surface are written to the same out/ directory",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/helpers.go:55",
-    "arena/cmd/promptarena/main_integration.go:73",
-    "arena/cmd/promptarena/run.go:168",
+    "arena/arenaconfig/helpers.go:40",
+    "arena/cmd/promptarena/hub_results.go:25",
     "arena/cmd/promptarena/serve_interactive.go:222"
    ]
   },
@@ -230,7 +229,7 @@
    "claim": "The TUI is built on Bubble Tea (github.com/charmbracelet/bubbletea)",
    "verdict": "true",
    "evidence": [
-    "arena/tui/app/launch_interactive.go:48"
+    "arena/tui/app/launch_interactive.go:49"
    ]
   },
   {
@@ -257,7 +256,7 @@
    "verdict": "true",
    "evidence": [
     "arena/tui/app/menu.go:26",
-    "arena/tui/app/runpage.go:109"
+    "arena/tui/app/runpage.go:112"
    ]
   },
   {
@@ -265,7 +264,7 @@
    "claim": "The Chat page talks to an agent from the config in text or hands-free voice",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat_interactive.go:56",
+    "arena/cmd/promptarena/chat_interactive.go:62",
     "arena/tui/app/menu.go:37"
    ]
   },
@@ -283,7 +282,7 @@
    "claim": "`promptarena chat` opens an interactive chat session",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat_interactive.go:73"
+    "arena/cmd/promptarena/chat_interactive.go:79"
    ]
   },
   {
@@ -292,7 +291,7 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/chat_interactive.go:20",
-    "arena/cmd/promptarena/chat_interactive.go:57"
+    "arena/cmd/promptarena/chat_interactive.go:63"
    ]
   },
   {
@@ -300,7 +299,7 @@
    "claim": "The TUI is fully keyboard-driven and runs entirely in the terminal",
    "verdict": "true",
    "evidence": [
-    "arena/tui/app/launch_interactive.go:48"
+    "arena/tui/app/launch_interactive.go:49"
    ]
   },
   {
@@ -308,7 +307,7 @@
    "claim": "The TUI is the default interface when no subcommand is given",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/main_integration.go:30"
+    "arena/cmd/promptarena/main_integration.go:31"
    ]
   },
   {
@@ -386,7 +385,7 @@
    "claim": "`--mock-provider` is a flag accepted by the run path used by serve",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:192",
+    "arena/cmd/promptarena/run.go:194",
     "arena/cmd/promptarena/serve_interactive.go:138"
    ]
   },
@@ -396,7 +395,7 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/serve_interactive.go:184",
-    "arena/engine/engine.go:719"
+    "arena/engine/engine.go:722"
    ]
   },
   {
@@ -427,8 +426,8 @@
    "claim": "`--simple` is accepted as an alias for `--ci`",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run.go:171",
-    "arena/cmd/promptarena/run.go:337",
+    "arena/cmd/promptarena/run.go:172",
+    "arena/cmd/promptarena/run.go:339",
     "arena/cmd/promptarena/run_interactive.go:134"
    ]
   },
@@ -437,7 +436,7 @@
    "claim": "CI mode emits plain, line-oriented, deterministic text logs",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:169",
+    "arena/cmd/promptarena/run.go:170",
     "arena/cmd/promptarena/run_interactive.go:40"
    ]
   },
@@ -446,8 +445,8 @@
    "claim": "Report formats are selected with `--format`",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:174",
-    "arena/cmd/promptarena/run.go:413"
+    "arena/cmd/promptarena/run.go:175",
+    "arena/cmd/promptarena/run.go:415"
    ]
   },
   {
@@ -455,8 +454,8 @@
    "claim": "`--formats` is an alias for `--format`",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:176",
-    "arena/cmd/promptarena/run.go:407"
+    "arena/cmd/promptarena/run.go:177",
+    "arena/cmd/promptarena/run.go:409"
    ]
   },
   {
@@ -464,9 +463,9 @@
    "claim": "`--format` accepts any combination of the report formats",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run.go:174",
-    "arena/cmd/promptarena/run.go:417",
-    "arena/cmd/promptarena/run.go:501"
+    "arena/cmd/promptarena/run.go:175",
+    "arena/cmd/promptarena/run.go:419",
+    "arena/cmd/promptarena/run.go:503"
    ]
   },
   {
@@ -474,7 +473,7 @@
    "claim": "Format `json` produces structured results for downstream tooling",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:422"
+    "arena/cmd/promptarena/run.go:424"
    ]
   },
   {
@@ -482,8 +481,8 @@
    "claim": "Format `junit` produces JUnit XML",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:174",
-    "arena/cmd/promptarena/run.go:523"
+    "arena/cmd/promptarena/run.go:175",
+    "arena/cmd/promptarena/run.go:525"
    ]
   },
   {
@@ -491,9 +490,7 @@
    "claim": "Format `html` produces a self-contained HTML report",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/run.go:173",
-    "arena/cmd/promptarena/run.go:185",
-    "arena/cmd/promptarena/run.go:507"
+    "arena/cmd/promptarena/run.go:185"
    ]
   },
   {
@@ -501,8 +498,7 @@
    "claim": "Format `markdown` produces a Markdown report",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:187",
-    "arena/cmd/promptarena/run.go:532"
+    "arena/cmd/promptarena/run.go:187"
    ]
   },
   {
@@ -535,7 +531,7 @@
    "evidence": [
     "arena/cmd/promptarena/run_interactive.go:205",
     "arena/cmd/promptarena/serve_interactive.go:166",
-    "arena/tui/app/runpage.go:249"
+    "arena/tui/app/runpage.go:272"
    ]
   },
   {
@@ -544,7 +540,7 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/run_interactive.go:205",
-    "arena/tui/app/runpage.go:249"
+    "arena/tui/app/runpage.go:272"
    ]
   },
   {
@@ -568,7 +564,7 @@
    "evidence": [
     "arena/cmd/promptarena/hub_results.go:20",
     "arena/cmd/promptarena/main_integration.go:78",
-    "arena/tui/app/runpage.go:161"
+    "arena/tui/app/runpage.go:157"
    ]
   }
  ]
