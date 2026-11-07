@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -31,18 +32,8 @@ var referenceRelDir = filepath.Join(".claude", "skills", "promptarena-authoring"
 var agentBriefCmd = &cobra.Command{
 	Use:   "agent-brief [dir]",
 	Short: "Write the authoring brief (AGENTS.md + .claude/skills) into a project",
-	Long: `Install the PromptArena authoring brief into a project directory:
-
-  AGENTS.md                                        a shim pointing the agent at the skill + CLI
-  .claude/skills/promptarena-authoring/SKILL.md    the full authoring skill
-
-Unlike 'init', this scaffolds no sample kit — it only briefs the agent, so it is
-safe to run in an existing or empty project. Hand-written AGENTS.md content is
-preserved (the brief is appended once, idempotently).
-
-  promptarena agent-brief            # brief the current directory
-  promptarena agent-brief ./myproj   # brief ./myproj`,
-	Args: cobra.MaximumNArgs(1),
+	Long:  agentBriefLong(),
+	Args:  cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		dir := "."
 		if len(args) == 1 {
@@ -63,6 +54,29 @@ preserved (the brief is appended once, idempotently).
 
 func init() {
 	rootCmd.AddCommand(agentBriefCmd)
+}
+
+// agentBriefLong builds the help text from the files the command writes, so
+// the bundled reference docs are listed as they are added.
+func agentBriefLong() string {
+	var b strings.Builder
+	b.WriteString("Install the PromptArena authoring brief into a project directory:\n\n")
+	b.WriteString("  AGENTS.md    a shim pointing the agent at the skill + CLI\n")
+	fmt.Fprintf(&b, "  %s    the full authoring skill\n", filepath.ToSlash(skillRelPath))
+	b.WriteString("  " + filepath.ToSlash(referenceRelDir) + "/    reference catalogs:\n")
+	names, _ := agentkb.ReferenceNames()
+	for _, name := range names {
+		fmt.Fprintf(&b, "      %s\n", name)
+	}
+	b.WriteString(`
+Unlike 'init', this scaffolds no sample kit — it only briefs the agent, so it is
+safe to run in an existing or empty project. The skill and reference files are
+rewritten on every run; hand-written AGENTS.md content is preserved (the brief
+is appended once, idempotently).
+
+  promptarena agent-brief            # brief the current directory
+  promptarena agent-brief ./myproj   # brief ./myproj`)
+	return b.String()
 }
 
 // writeAgentBriefTo drops the PromptArena authoring skill and an AGENTS.md shim

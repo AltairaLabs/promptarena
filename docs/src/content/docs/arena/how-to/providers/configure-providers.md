@@ -2,7 +2,7 @@
 title: Configure LLM Providers
 description: Add OpenAI, Anthropic, Gemini, Azure, Ollama, vLLM and gateway providers to an arena, set credentials, and select providers per run.
 verified:
-  commit: 3df344ffbc8c604e1a8935929c28499d778d19f0
+  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
   sources:
     - arena/arenaconfig/ignored_fields.go
     - arena/arenaconfig/loader.go
@@ -38,7 +38,7 @@ Add LLM providers to an arena and give each one credentials.
 promptarena init my-test --quick --provider openai
 ```
 
-`--provider` accepts `mock`, `openai`, `claude` and `gemini`. Without it, `init` prompts for the provider. The generator writes `providers/<name>.provider.yaml` with `id`, `type` and `model`, and a `.env` file (skip it with `--no-env`).
+`--provider` accepts `mock`, `openai`, `claude` and `gemini`. Without it, `init` prompts for the provider. The generator writes `providers/<name>.provider.yaml` with `id`, `type` and `model`, and a `.env.example` file that lists the API key variables to export (skip it with `--no-env`).
 
 ## Write a provider file
 

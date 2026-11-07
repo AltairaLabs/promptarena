@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/setup/use-project-templates.md",
- "commit": "3df344ffbc8c604e1a8935929c28499d778d19f0",
+ "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
  "claims": [
   {
    "id": 1,
@@ -895,6 +895,37 @@
    "claim": "The link /arena/examples/ resolves to an existing page",
    "verdict": "unverified",
    "evidence": []
+  },
+  {
+   "id": "107",
+   "claim": "promptarena does not load .env files; .env.example only lists the variables to export",
+   "verdict": "true",
+   "evidence": []
+  },
+  {
+   "id": "13",
+   "claim": "Quick mode creates a .env.example file listing the API keys to export",
+   "verdict": "true",
+   "evidence": [
+    "arena/templates/builtin/quick-start/template.yaml"
+   ]
+  },
+  {
+   "id": "25",
+   "claim": "promptarena templates list prints the built-in templates first, then the index entries",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/templates.go"
+   ]
+  },
+  {
+   "id": "fix-init-keep",
+   "claim": "init into an existing directory keeps files that share a generated name and lists them as warnings; --force overwrites them",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go",
+    "arena/templates/generator.go"
+   ]
   }
  ]
 }

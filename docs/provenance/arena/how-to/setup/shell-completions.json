@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/setup/shell-completions.md",
- "commit": "3df344ffbc8c604e1a8935929c28499d778d19f0",
+ "commit": "95b220864e8df93d5a36b38ad288897bf70a4c5b",
  "claims": [
   {
    "id": 1,
@@ -449,6 +449,15 @@
    "claim": "Link target /arena/reference/cli-commands exists",
    "verdict": "true",
    "evidence": []
+  },
+  {
+   "id": "9",
+   "claim": "`--format` offers the output formats json, junit, markdown, csv, objectives",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/completion_interactive.go",
+    "arena/cmd/promptarena/run.go"
+   ]
   }
  ]
 }

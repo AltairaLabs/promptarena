@@ -73,7 +73,7 @@ Flags: `--config`, `--dedup`, `--expect`, `--filter-eval-type`, `--filter-passed
 
 Initialize a new Arena test project
 
-Flags: `--no-agent`, `--no-env`, `--no-git`, `--output`, `--provider`, `--quick`, `--repo-config`, `--template-cache`, `--template-index`, `--template`, `--verbose`
+Flags: `--force`, `--no-agent`, `--no-env`, `--output`, `--provider`, `--quick`, `--repo-config`, `--template-cache`, `--template-index`, `--template`, `--verbose`
 
 ## promptarena mcp
 
@@ -137,7 +137,7 @@ Manage AgentSkills.io skills
 Manage PromptArena templates (list, fetch, render)
 
 - `promptarena templates fetch` — Fetch a template from an index into cache
-- `promptarena templates list` — List templates from an index
+- `promptarena templates list` — List built-in templates and the templates in an index
 - `promptarena templates render` — Render a cached template to an output directory (dry-run only)
 - `promptarena templates repo` — Manage template repositories
 - `promptarena templates update` — Update all templates from an index into cache

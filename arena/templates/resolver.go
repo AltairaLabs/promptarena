@@ -1,6 +1,8 @@
 package templates
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"path/filepath"
 	"strings"
 )
@@ -21,6 +23,10 @@ type TemplateRef struct {
 	TemplateName string     // e.g., "iot-maintenance-demo"
 	Version      string     // e.g., "1.0.0" or empty
 	Repository   Repository // The resolved repository
+	// CacheKey is the directory name the template is cached under. It equals
+	// RepoName for a configured repo; for a raw index path or URL it is a
+	// stable hash, because the raw value is not a safe directory name.
+	CacheKey string
 }
 
 // ParseTemplateRef parses a template reference like "local/template@version" or "template@version".
@@ -53,13 +59,45 @@ func (r *RepoResolver) ParseTemplateRef(ref, defaultRepo string) (*TemplateRef, 
 
 	// Resolve the repository
 	result.Repository = ResolveIndex(result.RepoName, r.config)
+	result.CacheKey = CacheRepoKey(result.RepoName, r.config)
 
 	return result, nil
 }
 
+// cacheKeyHexLen is how many hex characters of the index hash name a cache
+// directory for an unnamed index — enough to keep distinct indexes apart.
+const cacheKeyHexLen = 12
+
+// CacheRepoKey returns the cache directory name for a repo reference. A repo
+// configured in cfg is cached under its own name. Anything else is a raw index
+// path or URL (`--index ../templates/index.yaml`), which cannot be used as a
+// directory name: a relative path escapes the cache directory and an absolute
+// one nests the whole path inside it. Those are keyed by a hash of the
+// absolute path or the URL, so `templates fetch` and `templates render` given
+// the same --index agree on where the template lives.
+func CacheRepoKey(repoName string, cfg *RepoConfig) string {
+	if cfg != nil {
+		if _, ok := cfg.Repos[repoName]; ok {
+			return repoName
+		}
+	}
+	location := repoName
+	if !isHTTPURL(location) {
+		if abs, err := filepath.Abs(location); err == nil {
+			location = abs
+		}
+	}
+	sum := sha256.Sum256([]byte(location))
+	return "index-" + hex.EncodeToString(sum[:])[:cacheKeyHexLen]
+}
+
 // GetCachePath returns the cache path for a template within a repository.
 func (r *RepoResolver) GetCachePath(cacheDir string, ref *TemplateRef) string {
-	return filepath.Join(cacheDir, ref.RepoName, ref.TemplateName, ref.Version, "template.yaml")
+	key := ref.CacheKey
+	if key == "" {
+		key = ref.RepoName
+	}
+	return filepath.Join(cacheDir, key, ref.TemplateName, ref.Version, "template.yaml")
 }
 
 // SplitTemplateRef is a standalone utility that splits "repo/template" into parts.

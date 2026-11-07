@@ -33,7 +33,7 @@ spec:
       prompt: "Which MCP server types"
       
     - name: include_env
-      description: "Create .env file for API keys"
+      description: "Create a .env.example file listing the API keys to export"
       type: boolean
       default: true
       
@@ -72,7 +72,7 @@ spec:
       template: "templates/tool-read-text-file.yaml.tmpl"
       condition: "{{if and (eq (len .providers) 1) (eq (index .providers 0) \"mock\")}}true{{end}}"
       
-    - path: ".env"
+    - path: ".env.example"
       template: "templates/env.tmpl"
       condition: "{{.include_env}}"
       

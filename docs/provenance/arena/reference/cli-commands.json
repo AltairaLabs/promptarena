@@ -8440,6 +8440,55 @@
    "evidence": [
     "arena/cmd/promptarena/run.go:139"
    ]
+  },
+  {
+   "id": "1047",
+   "claim": "Flag `--no-env` (bool) skips .env.example file creation",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go"
+   ]
+  },
+  {
+   "id": "1049",
+   "claim": "Flag `--force` (bool, default false) overwrites existing files; without it they are kept and listed as warnings",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go",
+    "arena/templates/generator.go"
+   ]
+  },
+  {
+   "id": "1050",
+   "claim": "`--no-git` is deprecated and hidden: init never initializes a repository",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/init.go"
+   ]
+  },
+  {
+   "id": "1060",
+   "claim": "`promptarena templates list` lists built-in templates, then remote templates from the default community repo",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/templates.go"
+   ]
+  },
+  {
+   "id": "1076",
+   "claim": "init creates a `.env.example` file listing the API key variables",
+   "verdict": "true",
+   "evidence": [
+    "arena/templates/builtin/customer-support/template.yaml"
+   ]
+  },
+  {
+   "id": "4066",
+   "claim": "skill remove deletes the project copy first, one copy per call, and reports a remaining copy",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/skill_interactive.go"
+   ]
   }
  ]
 }

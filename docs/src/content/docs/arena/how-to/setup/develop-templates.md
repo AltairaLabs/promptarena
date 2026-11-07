@@ -2,7 +2,7 @@
 title: Develop Templates
 description: Build a template in a local clone of the community template repo, render it with the promptarena CLI, and submit it.
 verified:
-  commit: 631d3c353c2c9d71b362ae5cd20c137d42b19d5b
+  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
   sources:
     - arena/cmd/promptarena/init.go
     - arena/cmd/promptarena/templates.go
@@ -43,7 +43,7 @@ Add a template to the community repo and render it locally before you open a pul
    promptarena templates list --index local
    ```
 
-   `templates list` also accepts the index file path directly: `--index ../promptkit-templates/index.yaml`. Use the repo name for `fetch` and `render`, which fail with `create cache dir: ... not a directory` when `--index` is a file path.
+   Every `templates` command also accepts the index file path directly: `--index ../promptkit-templates/index.yaml`. Pass the same `--index` to `fetch` and `render`; a path index is cached under a key derived from its absolute path, so the two find the same copy.
 
 4. Fetch and render the template.
 
@@ -53,7 +53,7 @@ Add a template to the community repo and render it locally before you open a pul
      --values values.example.yaml --out ./out
    ```
 
-   `render --template` reads the cached copy and needs `--version`. `fetch` caches only `template.yaml`, so a template whose files use `source` fails to render from the cache with a "not found in cache" error. Render that template straight from your clone instead:
+   `render --template` reads the cached copy and needs `--version`. `fetch` caches `template.yaml` together with every file a relative `source` names, so a template that uses `source` renders from the cache. A `source` that climbs out of the template directory (`../`) is rejected at fetch. To render while you edit, skip the cache and render straight from your clone:
 
    ```bash
    promptarena templates render --file ../promptkit-templates/your-template/template.yaml \

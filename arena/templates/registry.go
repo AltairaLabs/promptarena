@@ -247,7 +247,8 @@ func DefaultCacheDir() string {
 	return defaultCacheDir
 }
 
-// FetchTemplate copies the template source into cacheDir/<name>/<version>/template.yaml.
+// FetchTemplate copies the template source into cacheDir/<repo>/<name>/<version>/template.yaml,
+// along with the files its relative files[].source entries reference.
 // indexPath is used to resolve relative source paths.
 func FetchTemplate(entry *IndexEntry, cacheDir, indexPath, repoName string) (string, error) {
 	if entry == nil {
@@ -274,7 +275,66 @@ func FetchTemplate(entry *IndexEntry, cacheDir, indexPath, repoName string) (str
 	if err := os.WriteFile(dest, data, filePerm); err != nil {
 		return "", fmt.Errorf("write cache: %w", err)
 	}
+	if err := cacheSourceFiles(data, source, destDir); err != nil {
+		return "", err
+	}
 	return dest, nil
+}
+
+// cacheSourceFiles copies the files a template pulls in through files[].source
+// into the cache beside template.yaml. Rendering from the cache resolves a
+// relative source against the cached template's directory, so without these
+// copies a cached template that uses source could never render. Absolute and
+// URL sources are left alone: rendering reads them from where they are.
+func cacheSourceFiles(templateData []byte, templateSource, destDir string) error {
+	for _, rel := range relativeSources(templateData) {
+		clean := filepath.Clean(rel)
+		if clean == ".." || strings.HasPrefix(clean, ".."+string(filepath.Separator)) {
+			return fmt.Errorf("template source %q escapes the template directory", rel)
+		}
+		content, err := loadBytes(siblingLocation(templateSource, filepath.ToSlash(clean)))
+		if err != nil {
+			return fmt.Errorf("load template source %s: %w", rel, err)
+		}
+		target := filepath.Join(destDir, clean)
+		if err := os.MkdirAll(filepath.Dir(target), dirPerm); err != nil {
+			return fmt.Errorf("create cache dir: %w", err)
+		}
+		if err := os.WriteFile(target, content, filePerm); err != nil {
+			return fmt.Errorf("write cache: %w", err)
+		}
+	}
+	return nil
+}
+
+// relativeSources lists the relative files[].source entries of a template, in
+// either the Template CR layout (spec.files) or the plain package (files).
+func relativeSources(templateData []byte) []string {
+	var doc struct {
+		Files []TemplateFile `yaml:"files"`
+		Spec  struct {
+			Files []TemplateFile `yaml:"files"`
+		} `yaml:"spec"`
+	}
+	if err := yaml.Unmarshal(templateData, &doc); err != nil {
+		return nil
+	}
+	var out []string
+	for _, f := range append(doc.Spec.Files, doc.Files...) {
+		if f.Source == "" || f.Content != "" || isHTTPURL(f.Source) || filepath.IsAbs(f.Source) {
+			continue
+		}
+		out = append(out, f.Source)
+	}
+	return out
+}
+
+// siblingLocation resolves rel against the directory of a file path or URL.
+func siblingLocation(location, rel string) string {
+	if isHTTPURL(location) {
+		return location[:strings.LastIndex(location, "/")+1] + rel
+	}
+	return filepath.Join(filepath.Dir(location), rel)
 }
 
 // LoadTemplatePackage loads a template package from path.

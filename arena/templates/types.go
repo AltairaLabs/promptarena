@@ -143,6 +143,9 @@ type TemplateConfig struct {
 	Variables   map[string]interface{}
 	Template    *Template
 	Verbose     bool // Enable detailed logging
+	// Force overwrites files that already exist in the project directory.
+	// Without it an existing file is left untouched and reported as a warning.
+	Force bool
 }
 
 // GenerationResult contains the result of template generation

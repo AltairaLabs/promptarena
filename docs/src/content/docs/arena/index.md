@@ -90,7 +90,7 @@ promptarena run
 - `.gitignore`
 - `README.md`
 
-Run `promptarena init my-project` without `--quick` for the interactive wizard, which asks for a project name, a provider and whether to create a `.env` file. The built-in templates are `quick-start` (the default), `customer-support`, `code-assistant`, `content-generation`, `multimodal` and `mcp-integration`.
+Run `promptarena init my-project` without `--quick` for the interactive wizard, which asks for a project name, a provider and whether to create a `.env.example` file listing the API keys to export. The built-in templates are `quick-start` (the default), `customer-support`, `code-assistant`, `content-generation`, `multimodal` and `mcp-integration`.
 
 Continue with [Your First Test](/arena/tutorials/01-first-test/), or see [Installation](/arena/how-to/setup/installation/) for other install options.
 

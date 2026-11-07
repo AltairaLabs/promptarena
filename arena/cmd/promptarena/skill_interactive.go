@@ -130,10 +130,21 @@ func runSkillRemove(_ *cobra.Command, args []string) error {
 		return fmt.Errorf("initializing installer: %w", err)
 	}
 
+	removed, err := inst.Resolve(ref)
+	if err != nil {
+		return err
+	}
 	if err := inst.Remove(ref); err != nil {
 		return err
 	}
 
-	fmt.Printf("Removed skill %s\n", ref.FullName())
+	fmt.Printf("Removed skill %s (%s)\n", ref.FullName(), removed)
+	// Remove takes the project-level copy first. A user-level copy of the
+	// same skill still resolves afterwards, so say so instead of letting the
+	// user believe the skill is gone.
+	if remaining, resolveErr := inst.Resolve(ref); resolveErr == nil {
+		fmt.Printf("Another copy of %s is still installed at %s; run the command again to remove it too.\n",
+			ref.FullName(), remaining)
+	}
 	return nil
 }

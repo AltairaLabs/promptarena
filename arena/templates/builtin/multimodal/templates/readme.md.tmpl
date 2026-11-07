@@ -23,9 +23,9 @@ answering.
 {{end}}{{end}}
 ### Setup
 
-{{range .providers}}{{if eq . "openai"}}- Set `OPENAI_API_KEY` (in `.env` or your shell). Get a key from: https://platform.openai.com/api-keys
-{{else if eq . "claude"}}- Set `CLAUDE_API_KEY` or `ANTHROPIC_API_KEY` (in `.env` or your shell). Get a key from: https://console.anthropic.com/
-{{else if eq . "gemini"}}- Set `GEMINI_API_KEY` (in `.env` or your shell). Get a key from: https://aistudio.google.com/app/apikey
+{{range .providers}}{{if eq . "openai"}}- Set `OPENAI_API_KEY` in your shell (see `.env.example`). Get a key from: https://platform.openai.com/api-keys
+{{else if eq . "claude"}}- Set `CLAUDE_API_KEY` or `ANTHROPIC_API_KEY` in your shell (see `.env.example`). Get a key from: https://console.anthropic.com/
+{{else if eq . "gemini"}}- Set `GEMINI_API_KEY` in your shell (see `.env.example`). Get a key from: https://aistudio.google.com/app/apikey
 {{end}}{{end}}
 Run the tests:
 

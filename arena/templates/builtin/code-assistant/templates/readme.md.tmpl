@@ -20,7 +20,7 @@ This project tests code assistant capabilities including:
 {{end}}{{end}}
 ### Setup
 
-1. Configure API keys for any real providers in `.env`:
+1. Export API keys for any real providers in your shell (`.env.example` lists them; promptarena reads the environment, not a `.env` file):
 {{range .providers}}{{if eq . "openai"}}   - Get OpenAI key from: https://platform.openai.com/api-keys
 {{else if eq . "claude"}}   - Get Anthropic (Claude) key from: https://console.anthropic.com/
 {{else if eq . "gemini"}}   - Get Google (Gemini) key from: https://aistudio.google.com/app/apikey

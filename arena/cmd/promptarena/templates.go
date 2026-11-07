@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"regexp"
 	"text/tabwriter"
@@ -43,7 +44,7 @@ var templatesCmd = &cobra.Command{
 
 var templatesListCmd = &cobra.Command{
 	Use:   "list",
-	Short: "List templates from an index",
+	Short: "List built-in templates and the templates in an index",
 	RunE:  runTemplatesList,
 }
 
@@ -58,10 +59,6 @@ func runTemplatesList(cmd *cobra.Command, _ []string) error {
 		repoNameResolved = templates.DefaultRepoName
 	}
 
-	idx, err := templates.LoadIndex(repo.URL)
-	if err != nil {
-		return err
-	}
 	w := tabwriter.NewWriter(cmd.OutOrStdout(), tabMinWidth, tabWidth, tabPadding, ' ', 0)
 	if _, err := fmt.Fprintln(w, "REPO\tTEMPLATE\tVERSION\tDESCRIPTION"); err != nil {
 		return err
@@ -69,21 +66,51 @@ func runTemplatesList(cmd *cobra.Command, _ []string) error {
 	if _, err := fmt.Fprintln(w, "----\t--------\t-------\t-----------"); err != nil {
 		return err
 	}
-	repoPrefix := "-"
-	if repoNameResolved != "" {
-		repoPrefix = repoNameResolved
+	if listErr := writeBuiltInTemplates(w); listErr != nil {
+		return listErr
 	}
+
+	idx, err := templates.LoadIndex(repo.URL)
+	if err != nil {
+		// The built-ins need no index, so show them even when it is unreachable.
+		_ = w.Flush()
+		return err
+	}
+	// A configured repo's templates are addressed as repo/name. A raw index
+	// path or URL is not a repo name, so its templates are shown bare: they are
+	// fetched with --template <name> --index <same path>.
+	_, named := cfg.Repos[repoNameResolved]
 	for i := range idx.Spec.Entries {
 		e := &idx.Spec.Entries[i]
 		name := e.Name
-		if repoNameResolved != "" {
+		if named {
 			name = fmt.Sprintf("%s/%s", repoNameResolved, e.Name)
 		}
-		if _, err := fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", repoPrefix, name, e.Version, e.Description); err != nil {
+		if _, err := fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", repoNameResolved, name, e.Version, e.Description); err != nil {
 			return err
 		}
 	}
 	return w.Flush()
+}
+
+// builtInRepoLabel is the REPO column value for templates embedded in the
+// binary. `init --template <name>` uses them without any index or fetch.
+const builtInRepoLabel = "built-in"
+
+// writeBuiltInTemplates lists the templates embedded in the binary, which
+// `init` resolves before any index — including its default, quick-start.
+func writeBuiltInTemplates(w io.Writer) error {
+	builtIns, err := templates.NewLoader(templateCache).ListBuiltIn()
+	if err != nil {
+		return err
+	}
+	for i := range builtIns {
+		t := &builtIns[i]
+		if _, err := fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", builtInRepoLabel, t.Name, t.Version, t.Description); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 var templatesFetchCmd = &cobra.Command{
@@ -110,7 +137,7 @@ func runTemplatesFetch(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return err
 	}
-	path, err := templates.FetchTemplate(entry, templateCache, ref.Repository.URL, ref.RepoName)
+	path, err := templates.FetchTemplate(entry, templateCache, ref.Repository.URL, ref.CacheKey)
 	if err != nil {
 		return err
 	}
@@ -140,10 +167,11 @@ func runTemplatesUpdate(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return err
 	}
+	cacheKey := templates.CacheRepoKey(updateRepoName, cfg)
 	seen := 0
 	for i := range idx.Spec.Entries {
 		entry := &idx.Spec.Entries[i]
-		if _, err := templates.FetchTemplate(entry, templateCache, repo.URL, updateRepoName); err != nil {
+		if _, err := templates.FetchTemplate(entry, templateCache, repo.URL, cacheKey); err != nil {
 			return fmt.Errorf("fetch %s@%s: %w", entry.Name, entry.Version, err)
 		}
 		seen++
@@ -185,6 +213,13 @@ func resolveTemplateSource() (string, error) {
 
 func wrapCacheMissError(src string, err error) error {
 	if templateFile != "" || !errors.Is(err, os.ErrNotExist) {
+		return err
+	}
+	// Only a missing cached template.yaml is a cache miss. A template that is
+	// cached but references a source file that is not there fails with the
+	// same ErrNotExist, and calling that "not found in cache" sends the user
+	// to re-fetch something they already have.
+	if _, statErr := os.Stat(src); statErr == nil {
 		return err
 	}
 	return fmt.Errorf(

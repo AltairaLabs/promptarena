@@ -885,6 +885,22 @@ func (c *Config) loadSkills(configPath string) error {
 			continue
 		}
 
+		// An @org/name reference names a skill `promptarena skill install`
+		// placed in a project- or user-level skills directory. Those live
+		// outside the config directory by design, so the containment check
+		// below does not apply.
+		if IsSkillRef(dir) {
+			installed, refErr := ResolveSkillRef(dir, absBase)
+			if refErr != nil {
+				return fmt.Errorf("skills: %w", refErr)
+			}
+			resolved := src
+			resolved.Shorthand = ""
+			resolved.Path = installed
+			c.LoadedSkillSources = append(c.LoadedSkillSources, resolved)
+			continue
+		}
+
 		// Resolve relative path.
 		absDir := dir
 		if !filepath.IsAbs(absDir) {

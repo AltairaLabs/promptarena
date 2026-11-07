@@ -21,7 +21,7 @@ This project tests customer support interactions including:
 {{$real := false}}{{range .providers}}{{if ne . "mock"}}{{$real = true}}{{end}}{{end}}
 {{range .providers}}{{if eq . "mock"}}The mock provider replays scripted replies from `mock-responses.yaml`, so it runs with no API key.
 
-{{end}}{{end}}{{if $real}}1. Configure your API keys in `.env`:
+{{end}}{{end}}{{if $real}}1. Export your API keys in your shell (`.env.example` lists them; promptarena reads the environment, not a `.env` file):
 {{range .providers}}{{if eq . "openai"}}   - Get OpenAI key from: https://platform.openai.com/api-keys
 {{else if eq . "claude"}}   - Get Anthropic (Claude) key from: https://console.anthropic.com/
 {{else if eq . "gemini"}}   - Get Google (Gemini) key from: https://aistudio.google.com/app/apikey

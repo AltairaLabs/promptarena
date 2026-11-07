@@ -390,21 +390,29 @@ _packc_completions() {
         return 0
     fi
 
+    # A flag's value comes first: complete the file the flag takes.
     case "${prev}" in
+        -c|--config|-p|--prompt)
+            COMPREPLY=($(compgen -f -X '!*.yaml' -- "${cur}"))
+            return 0
+            ;;
+        -o|--output)
+            COMPREPLY=($(compgen -f -X '!*.json' -- "${cur}"))
+            return 0
+            ;;
+        --id)
+            return 0
+            ;;
+    esac
+
+    # Otherwise complete by subcommand, wherever the cursor is after it, so a
+    # second and later flag still gets suggestions.
+    case "${COMP_WORDS[1]}" in
         compile)
             COMPREPLY=($(compgen -W "-c --config -o --output --id --pack-version" -- "${cur}"))
             ;;
         compile-prompt)
             COMPREPLY=($(compgen -W "-p --prompt -o --output --pack-version" -- "${cur}"))
-            ;;
-        -c|--config)
-            COMPREPLY=($(compgen -f -X '!*.yaml' -- "${cur}"))
-            ;;
-        -o|--output)
-            COMPREPLY=($(compgen -f -X '!*.json' -- "${cur}"))
-            ;;
-        -p|--prompt)
-            COMPREPLY=($(compgen -f -X '!*.yaml' -- "${cur}"))
             ;;
         validate|inspect)
             COMPREPLY=($(compgen -f -X '!*.json' -- "${cur}"))

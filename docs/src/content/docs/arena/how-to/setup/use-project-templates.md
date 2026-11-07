@@ -2,7 +2,7 @@
 title: Use Project Templates
 description: Scaffold a PromptArena test project with promptarena init, using the built-in quick-start template or a community template.
 verified:
-  commit: 3df344ffbc8c604e1a8935929c28499d778d19f0
+  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
   sources:
     - arena/cmd/promptarena/init.go
     - arena/cmd/promptarena/init_interactive.go
@@ -50,7 +50,7 @@ Quick mode with `--provider openai` writes:
 ```text
 my-test/
 ├── .claude/skills/promptarena-authoring/   (SKILL.md and 4 reference files)
-├── .env
+├── .env.example
 ├── .gitignore
 ├── AGENTS.md
 ├── README.md
@@ -74,14 +74,14 @@ The command prompts for:
 
 - `Project name`, only when you give no name on the command line (default `my-arena-tests`).
 - The provider.
-- `include_env`: whether to create a `.env` file.
+- `include_env`: whether to create a `.env.example` file listing the API keys to export.
 
 ## Create a project from a community template
 
-Community templates come from an index, which defaults to the `promptkit-templates` repository. `templates list` prints the index entries only; it does not list the built-in templates.
+Community templates come from an index, which defaults to the `promptkit-templates` repository. `templates list` prints the built-in templates (repo `built-in`) first, then the index entries.
 
 ```bash
-# List community templates
+# List built-in and community templates
 promptarena templates list
 
 # Fetch a template into the cache
@@ -107,7 +107,7 @@ The `templates` commands take `--index` and `--cache-dir`; `init` takes `--templ
    cd my-test
    ```
 
-2. Export the API key in your shell. `promptarena` does not load `.env`, so the placeholder file has no effect until you export the variable:
+2. Export the API key in your shell. `promptarena` reads keys from the environment and does not load `.env` files; `.env.example` only lists the variables to set:
 
    ```bash
    export OPENAI_API_KEY=sk-...
@@ -216,7 +216,7 @@ Add `- file: scenarios/advanced-test.scenario.yaml` under `spec.scenarios`. To m
 
 ## Put the project under version control
 
-The generated `.gitignore` lists `.env`, `out/` and `*.log`:
+The generated `.gitignore` lists `.env`, `out/` and `*.log`, so a `.env` you create from `.env.example` stays out of the repository:
 
 ```bash
 git init
@@ -228,7 +228,7 @@ git commit -m "Initial project setup"
 
 ### Unauthorized or missing bearer error
 
-The key is empty because `promptarena` does not read `.env`. Export the key in the shell, as in step 2 above.
+The key is empty because `promptarena` does not read `.env` files. Export the key in the shell, as in step 2 above.
 
 ### Provider is not offered
 
@@ -238,9 +238,9 @@ The key is empty because `promptarena` does not read `.env`. Export the key in t
 promptarena init my-test --quick --provider claude
 ```
 
-### Existing files overwritten
+### Existing files kept
 
-`init` does not check whether the target directory exists, and it overwrites files that share a generated name. Choose a new project name to keep an existing project.
+`init` into an existing directory keeps any file that shares a generated name and lists it under Warnings as `kept existing <file> (not overwritten; use --force to replace it)`. Missing files are still created. Pass `--force` to overwrite them.
 
 ## Related pages
 

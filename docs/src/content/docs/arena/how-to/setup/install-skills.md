@@ -2,7 +2,7 @@
 title: Install Skills
 description: Install, list and remove shared skills from Git repositories or local paths with promptarena skill, then reference them from a config.
 verified:
-  commit: 631d3c353c2c9d71b362ae5cd20c137d42b19d5b
+  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
   sources:
     - arena/arenaconfig/loader.go
     - arena/arenaconfig/skill_sources.go
@@ -95,22 +95,25 @@ With nothing installed, it prints `No skills installed.` and a hint.
 promptarena skill remove @acme/pdf-processing
 ```
 
-This deletes one installed copy per call: the project copy first, then the user copy. Run it again to remove a second copy. Remove a local install with its `@local/<dirname>` name.
+This deletes one installed copy per call: the project copy first, then the user copy. When a user copy remains, the command prints `Another copy of <org>/<name> is still installed at <path>; run the command again to remove it too.` Remove a local install with its `@local/<dirname>` name.
 
 ## Reference a skill from a config
 
-In an Arena config (`spec.skills`) and in packs that `packc` compiles, a skill entry's `path` is a directory relative to the config file. Install the skill there with `--into`, then point at it:
+In an Arena config (`spec.skills`) and in packs that `packc` compiles, a skill entry's `path` is either a directory relative to the config file or an `@org/name` reference to an installed skill:
 
 ```json
 {
   "skills": [
+    {"path": "@acme/pci-compliance"},
     {"path": "skills/billing/pci-compliance"},
     {"path": "skills/local-skill", "preload": true}
   ]
 }
 ```
 
-`promptarena` and `packc` do not resolve `@org/name` references in `path`. An entry such as `{"path": "@acme/pci-compliance"}` fails with `skills: directory "@acme/pci-compliance" does not exist`. The PromptKit SDK's skills registry resolves `@org/name` from the installed directories; see the [Skills Reference](https://promptkit.altairalabs.ai/reference/skills).
+An `@org/name` reference resolves to the first installed copy in `.promptkit/skills/` beside the config file, then `.promptkit/skills/` in the current directory, then the user directory. A reference that is not installed fails with `skills: skill <org>/<name> is not installed (install it with: promptarena skill install @<org>/<name>)`. `packc` keeps the `@org/name` reference in the compiled pack, so the pack's consumer resolves it against its own installed skills; the PromptKit SDK's skills registry does that, see the [Skills Reference](https://promptkit.altairalabs.ai/reference/skills).
+
+A directory path must stay inside the config directory. Install a skill there with `--into` to vendor it with the config.
 
 ## Skill discovery order
 

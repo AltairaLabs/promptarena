@@ -26,7 +26,7 @@ spec:
       prompt: "Which provider would you like to test"
       
     - name: include_env
-      description: "Create .env file for API keys"
+      description: "Create a .env.example file listing the API keys to export"
       type: boolean
       default: true
       
@@ -47,7 +47,7 @@ spec:
       template: "templates/mock-responses.yaml.tmpl"
       condition: "{{if eq .provider \"mock\"}}true{{end}}"
       
-    - path: ".env"
+    - path: ".env.example"
       template: "templates/env.tmpl"
       condition: "{{.include_env}}"
       
