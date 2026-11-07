@@ -218,9 +218,14 @@ Then test scenarios like:
 ```yaml
 - role: user
   content: "Read project-spec.md and remember the key requirements"
-- role: assistant
-  # Should call read_file, then create_entities to store requirements
+  # Assertions on a user turn check the assistant's reply to it.
+  assertions:
+    - type: tools_called
+      params:
+        tool_names: ["mcp__filesystem__read_file", "mcp__memory__create_entities"]
 ```
+
+A turn's `role` is `user` or a self-play role. The assistant's reply is never scripted, so `role: assistant` fails `promptarena validate`.
 
 ## Troubleshooting
 

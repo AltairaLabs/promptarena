@@ -1,0 +1,38 @@
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Arena
+metadata:
+  name: pack-eval-triggers
+spec:
+  prompt_configs:
+    - id: basic
+      file: prompts/basic.yaml
+  providers:
+    - file: providers/mock.provider.yaml
+  scenarios:
+    - file: scenarios/two-turns.scenario.yaml
+  # One judge-free eval per trigger, so the test can see which triggers fire.
+  pack_evals:
+    - id: turn_check
+      type: contains
+      trigger: every_turn
+      params:
+        patterns: ["Mock"]
+    - id: sampled_turn_check
+      type: contains
+      trigger: sample_turns
+      sample_percentage: 100
+      params:
+        patterns: ["Mock"]
+    - id: session_check
+      type: contains
+      trigger: on_session_complete
+      params:
+        patterns: ["Mock"]
+    - id: conversation_check
+      type: contains
+      trigger: on_conversation_complete
+      params:
+        patterns: ["Mock"]
+  defaults:
+    temperature: 0.5
+    max_tokens: 100

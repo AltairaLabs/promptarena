@@ -1,7 +1,7 @@
 ---
 title: Validation Strategies
 verified:
-  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
   sources:
     - arena/arenaconfig/judge_param.go
     - arena/arenaconfig/types.go
@@ -59,7 +59,7 @@ flowchart TD
     I -->|no| K["Turn fails with each assertion's message"]
 ```
 
-Put assertions on the `role: user` turn. A `role: assistant` turn errors in a non-duplex scenario.
+Put assertions on the `role: user` turn. A turn's role is `user` or a self-play role ID, so `promptarena validate` rejects a `role: assistant` turn.
 
 ## Validation principles
 

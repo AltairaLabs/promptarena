@@ -416,7 +416,9 @@ func (e *PipelineExecutor) buildStagePipeline(
 
 	// Chain all stages together
 	// The emitter makes the pipeline publish stage.* and pipeline.* lifecycle
-	// events, which the TUI log, web UI and session recordings show.
+	// events on the event bus, for its subscribers (the TUI log, the web
+	// server's /api/events stream). Session recordings do not hold them: the
+	// recording's event store subscribes to stream.interrupted only.
 	return builder.WithEventEmitter(emitterFromRequest(req)).Chain(stages...).Build()
 }
 
@@ -851,7 +853,9 @@ func (e *PipelineExecutor) buildCommonStreamingStages(
 	stages = e.appendStreamingFinalizeStages(stages, req, cfg, turnState)
 
 	// The emitter makes the pipeline publish stage.* and pipeline.* lifecycle
-	// events, which the TUI log, web UI and session recordings show.
+	// events on the event bus, for its subscribers (the TUI log, the web
+	// server's /api/events stream). Session recordings do not hold them: the
+	// recording's event store subscribes to stream.interrupted only.
 	return builder.WithEventEmitter(emitterFromRequest(req)).Chain(stages...).Build()
 }
 

@@ -3,6 +3,7 @@ package arenaconfig
 import (
 	"testing"
 
+	"github.com/AltairaLabs/PromptKit/runtime/v2/evals"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -62,4 +63,26 @@ func TestResolveJudgeParams_NoJudgeParamIsUntouched(t *testing.T) {
 	cfg.LoadedEvals = map[string]*Eval{"e": nil}
 	require.NoError(t, cfg.resolveJudgeParams())
 	assert.NotContains(t, params, "provider")
+}
+
+// pack_evals take the same `judge` selector as scenario assertions.
+func TestResolveJudgeParams_PackEvals(t *testing.T) {
+	cfg := judgeConfig()
+	direct := map[string]interface{}{"judge": "picked"}
+	inner := map[string]interface{}{"judge": "picked"}
+	cfg.PackEvals = []evals.EvalDef{
+		{ID: "direct", Type: "llm_judge", Params: direct},
+		{ID: "wrapped", Type: "assertion", Params: map[string]interface{}{"eval_params": inner}},
+		{ID: "plain", Type: "contains"},
+	}
+	require.NoError(t, cfg.resolveJudgeParams())
+	assert.Equal(t, "picked", direct["provider"])
+	assert.Equal(t, "picked", inner["provider"])
+
+	cfg.PackEvals = []evals.EvalDef{{ID: "bad", Type: "assertion", Params: map[string]interface{}{
+		"eval_params": map[string]interface{}{"judge": "nope"},
+	}}}
+	err := cfg.resolveJudgeParams()
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), `pack_evals bad: eval_params: judge "nope" is not defined in spec.judges`)
 }

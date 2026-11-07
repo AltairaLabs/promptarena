@@ -67,12 +67,12 @@ func (e *EvalConversationExecutor) ExecuteConversation(
 	mergedEvalAssertions := mergeAssertionConfigs(req.Config, req.Eval.ConversationAssertions)
 	convResults := e.evaluateConversationAssertions(ctx, mergedEvalAssertions, convCtx)
 
-	// Run pack-level evals at session end. Non-gating observations
-	// surface on EvalResults; assertions stay in
+	// Run pack-level evals for every trigger over the recorded transcript.
+	// Non-gating observations surface on EvalResults; assertions stay in
 	// ConversationAssertionResults.
 	var packEvalResults []evals.EvalResult
 	if e.evalOrchestrator != nil && e.evalOrchestrator.HasEvals() {
-		packEvalResults = e.evalOrchestrator.RunSessionEvals(ctx, messages, req.ConversationID)
+		packEvalResults = e.evalOrchestrator.RunPackEvals(ctx, messages, req.ConversationID)
 	}
 
 	return &ConversationResult{

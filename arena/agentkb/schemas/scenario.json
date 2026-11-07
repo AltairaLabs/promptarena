@@ -594,7 +594,8 @@
           "type": "array"
         },
         "context": {
-          "type": "object"
+          "type": "object",
+          "description": "Context is free-form scenario context. Only `promptarena prompt-debug`\nreads it (its user_context key); a run does not pass it to the\npipeline or the prompt template. Use variables for template values."
         },
         "constraints": {
           "type": "object"
@@ -860,7 +861,7 @@
       "properties": {
         "role": {
           "type": "string",
-          "description": "\"user\", \"assistant\", or provider selector like \"claude-user\" (only for self-play turns)"
+          "description": "\"user\", or the ID of a self-play role from spec.self_play.roles (e.g. \"claude-user\"). The assistant's reply is never scripted."
         },
         "content": {
           "type": "string"

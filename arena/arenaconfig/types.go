@@ -554,7 +554,10 @@ type JUnitOutputConfig struct {
 }
 
 // RecordingConfig contains configuration for session recording.
-// Session recordings capture the complete event stream for replay and analysis.
+// A session recording holds each run's message.created events (one per
+// message) and any stream.interrupted events, enough to replay the
+// conversation. It does not hold the full event stream (no stage, pipeline,
+// tool or provider events).
 type RecordingConfig struct {
 	Enabled bool   `yaml:"enabled" json:"enabled"`             // Enable session recording
 	Dir     string `yaml:"dir,omitempty" json:"dir,omitempty"` // Subdirectory within output.dir (default: "recordings")
@@ -687,12 +690,15 @@ type Scenario struct {
 	// Labels are key/value tags copied from the scenario manifest's metadata.labels
 	// (K8s-style). Used for stratified reporting in arena. Populated by LoadScenario;
 	// not read from the spec body itself.
-	Labels          map[string]string      `json:"labels,omitempty" yaml:"labels,omitempty"`
-	ContextMetadata *ContextMetadata       `json:"context_metadata,omitempty" yaml:"context_metadata,omitempty"`
-	Turns           []TurnDefinition       `json:"turns,omitempty" yaml:"turns,omitempty"`
-	Context         map[string]interface{} `json:"context,omitempty" yaml:"context,omitempty"`
-	Constraints     map[string]interface{} `json:"constraints,omitempty" yaml:"constraints,omitempty"`
-	ToolPolicy      *ToolPolicy            `json:"tool_policy,omitempty" yaml:"tool_policy,omitempty"`
+	Labels          map[string]string `json:"labels,omitempty" yaml:"labels,omitempty"`
+	ContextMetadata *ContextMetadata  `json:"context_metadata,omitempty" yaml:"context_metadata,omitempty"`
+	Turns           []TurnDefinition  `json:"turns,omitempty" yaml:"turns,omitempty"`
+	// Context is free-form scenario context. Only `promptarena prompt-debug`
+	// reads it (its user_context key); a run does not pass it to the
+	// pipeline or the prompt template. Use variables for template values.
+	Context     map[string]interface{} `json:"context,omitempty" yaml:"context,omitempty"`
+	Constraints map[string]interface{} `json:"constraints,omitempty" yaml:"constraints,omitempty"`
+	ToolPolicy  *ToolPolicy            `json:"tool_policy,omitempty" yaml:"tool_policy,omitempty"`
 	// ProvidersOverride: If empty, uses all arena providers.
 	Providers     []string `json:"providers,omitempty" yaml:"providers,omitempty"`
 	ProviderGroup string   `json:"provider_group,omitempty" yaml:"provider_group,omitempty"`
@@ -1132,7 +1138,7 @@ func (v *VADConfig) Validate() error {
 
 // TurnDefinition represents a single conversation turn definition
 type TurnDefinition struct {
-	Role    string `json:"role" yaml:"role"` // "user", "assistant", or provider selector like "claude-user" (only for self-play turns)
+	Role    string `json:"role" yaml:"role"` // "user", or the ID of a self-play role from spec.self_play.roles (e.g. "claude-user"). The assistant's reply is never scripted.
 	Content string `json:"content,omitempty" yaml:"content,omitempty"`
 
 	// Multimodal content parts (text, images, audio, video)

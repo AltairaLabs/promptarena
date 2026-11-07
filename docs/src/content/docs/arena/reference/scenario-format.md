@@ -2,10 +2,11 @@
 title: Test Scenario Format
 description: The structure of a Scenario file, its main spec and turn fields, and examples of multimodal, workflow and self-play turns.
 verified:
-  commit: 0dbee6290db4e4de3bff3101f260fd614f81c924
+  commit: 95b220864e8df93d5a36b38ad288897bf70a4c5b
   sources:
     - arena/arenaconfig/loader.go
     - arena/arenaconfig/types.go
+    - arena/arenaconfig/validator.go
     - arena/arenaconfig/validator_tools.go
     - arena/assertions/validate_types.go
     - arena/cmd/promptarena/run.go
@@ -87,7 +88,7 @@ Every field, including nested objects, is documented in the [Scenario reference]
 
 | Field | Type | Description |
 |---|---|---|
-| `role` | string | `user`, `assistant`, or a provider selector such as `gemini-user` for a self-play turn. Required. |
+| `role` | string | `user`, or the ID of a self-play role from `spec.self_play.roles` (such as `gemini-user`). The assistant's reply is never scripted: `promptarena validate` rejects any other role, `assistant` included. Required. |
 | `content` | string | Turn text. |
 | `parts` | list | Multimodal content parts. Takes precedence over `content` when non-empty. |
 | `assertions` | list | Assertions evaluated on this turn. |

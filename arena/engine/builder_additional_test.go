@@ -407,6 +407,26 @@ func TestBuildEvalOrchestrator_UnknownEvalType(t *testing.T) {
 	require.Contains(t, err.Error(), `"contians"`)
 }
 
+// The arena config's pack_evals get the runtime's structural checks, which
+// had no production caller: a bad trigger or out-of-range sample_percentage
+// used to load and then never fire.
+func TestBuildEvalOrchestrator_InvalidPackEvals(t *testing.T) {
+	pct := 150.0
+	cfg := &arenaconfig.Config{PackEvals: []evals.EvalDef{
+		{ID: "dup", Type: "contains", Trigger: "every_turn"},
+		{ID: "dup", Type: "contains", Trigger: "sometimes"},
+		{ID: "pct", Type: "contains", Trigger: "sample_turns", SamplePercentage: &pct},
+	}}
+
+	hook, err := buildEvalOrchestrator(cfg, false, nil)
+	require.Error(t, err)
+	require.Nil(t, hook)
+	require.Contains(t, err.Error(), "invalid pack_evals")
+	require.Contains(t, err.Error(), `duplicate eval id "dup"`)
+	require.Contains(t, err.Error(), `invalid trigger "sometimes"`)
+	require.Contains(t, err.Error(), "sample_percentage must be between 0 and 100")
+}
+
 func TestBuildEvalOrchestrator_AllKnownTypes(t *testing.T) {
 	cfg := &arenaconfig.Config{
 		LoadedPack: &prompt.Pack{Pack: packspec.Pack{

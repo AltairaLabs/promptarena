@@ -294,7 +294,7 @@ Fields under `spec`:
 | field | type | required | description |
 |-------|------|----------|-------------|
 | `constraints` | object |  | — |
-| `context` | object |  | — |
+| `context` | object |  | Context is free-form scenario context. Only `promptarena prompt-debug` reads it (its user_context key); a run does not pass it to the pipeline or the prompt template. Use variables for template values. |
 | `context_metadata` | object |  | — |
 | `context_policy` | object |  | Context management policy for long conversations. |
 | `conversation_assertions` | array |  | Assertions evaluated after the entire conversation completes. |

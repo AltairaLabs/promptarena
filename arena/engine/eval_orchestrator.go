@@ -223,6 +223,59 @@ func (h *EvalOrchestrator) RunSessionEvals(
 	return h.runner.RunSessionEvals(h.withClassify(ctx), h.defs, evalCtx)
 }
 
+// RunPackEvals runs every pack eval a finished conversation should have
+// produced, in trigger order: the turn triggers (every_turn, sample_turns)
+// once for each completed assistant turn, then the session triggers
+// (on_session_complete, sample_sessions), then on_conversation_complete.
+//
+// Turn evals are replayed over the transcript rather than fired from inside
+// the turn pipeline: each one sees the messages up to and including the
+// assistant reply that closed its turn, which is what it would have seen at
+// that moment, and its TurnIndex is that reply's message index. A turn ends at
+// an assistant message that is the last message or is followed by a user
+// message, so the intermediate assistant messages of a tool loop are not
+// scored as turns of their own.
+//
+// Like RunSessionEvals, the results are the runtime's raw observations.
+func (h *EvalOrchestrator) RunPackEvals(
+	ctx context.Context,
+	messages []types.Message,
+	sessionID string,
+) []evals.EvalResult {
+	if h == nil || !h.HasEvals() || h.runner == nil {
+		return nil
+	}
+
+	classifyCtx := h.withClassify(ctx)
+	var results []evals.EvalResult
+	for _, end := range turnEndIndexes(messages) {
+		turn := messages[:end+1]
+		evalCtx := withArenaEvalMetadata(ctx, h.buildEvalContext(turn, end, sessionID))
+		results = append(results, h.runner.RunTurnEvals(classifyCtx, h.defs, evalCtx)...)
+	}
+
+	results = append(results, h.RunSessionEvals(ctx, messages, sessionID)...)
+
+	turnIndex := max(len(messages)-1, 0)
+	evalCtx := withArenaEvalMetadata(ctx, h.buildEvalContext(messages, turnIndex, sessionID))
+	return append(results, h.runner.RunConversationEvals(classifyCtx, h.defs, evalCtx)...)
+}
+
+// turnEndIndexes returns the index of each assistant message that closes a
+// turn: one that is the last message, or is followed by a user message.
+func turnEndIndexes(messages []types.Message) []int {
+	var ends []int
+	for i := range messages {
+		if messages[i].Role != roleAssistant {
+			continue
+		}
+		if i == len(messages)-1 || messages[i+1].Role == roleUser {
+			ends = append(ends, i)
+		}
+	}
+	return ends
+}
+
 // RunConversationEvals runs conversation-complete evals after all turns finish.
 // Returns converted ConversationValidationResult entries.
 func (h *EvalOrchestrator) RunConversationEvals(
