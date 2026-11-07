@@ -141,7 +141,7 @@ Two structural findings are warnings:
 - a prompt whose `tools` names a tool the pack's `tools` object does not define. The specification requires prompt tools to be defined at pack level, but Arena also offers tools a pack does not carry (MCP, workflow, memory and skill tools), and a prompt may list those.
 
 ```text
-⚠ [pack] prompt "support": tool "lookup_order" is not defined in the pack's tools
+⚠ [pack] prompt 'support': tool 'lookup_order' is not defined in the pack's tools
 ```
 
 ### PromptPack schema

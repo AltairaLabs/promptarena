@@ -127,8 +127,9 @@ func TestDuplexConversation_GuardrailsAndRecording(t *testing.T) {
 		if strings.Contains(m.Content, "secret") {
 			t.Fatalf("assistant turn kept the banned word: %q", m.Content)
 		}
-		if len(m.Validations) == 0 || m.Validations[0].ValidatorType != "banned_words" {
-			t.Fatalf("assistant turn must record the banned_words firing, got %+v", m.Validations)
+		if len(m.Validations) != 1 || m.Validations[0].ValidatorType != "banned_words" ||
+			m.Validations[0].Passed {
+			t.Fatalf("assistant turn must record the banned_words firing once, got %+v", m.Validations)
 		}
 	}
 	if assistant == 0 {
@@ -150,7 +151,7 @@ func TestDuplexConversation_GuardrailsAndRecording(t *testing.T) {
 	}
 }
 
-func TestBuildDuplexGuardrailStage(t *testing.T) {
+func TestBuildDuplexGuardrailRegistry(t *testing.T) {
 	provider := mock.NewStreamingProvider("p", "m", false)
 	req := &ConversationRequest{
 		Scenario: &arenaconfig.Scenario{TaskType: "voice", Duplex: &arenaconfig.DuplexConfig{}},
@@ -158,21 +159,21 @@ func TestBuildDuplexGuardrailStage(t *testing.T) {
 	}
 
 	none := NewDuplexConversationExecutor(nil, guardedPromptRegistry(nil), nil, nil, nil)
-	if s, err := none.buildDuplexGuardrailStage(req, provider, nil, nil); s != nil || err != nil {
-		t.Fatalf("no validators: want no stage, got %v, %v", s, err)
+	if r, err := none.buildDuplexGuardrailRegistry(req, nil); r != nil || err != nil {
+		t.Fatalf("no validators: want no registry, got %v, %v", r, err)
 	}
 
 	bad := NewDuplexConversationExecutor(nil, guardedPromptRegistry([]prompt.ValidatorConfig{
 		{Type: "no_such_validator"},
 	}), nil, nil, nil)
-	if _, err := bad.buildDuplexGuardrailStage(req, provider, nil, nil); err == nil {
+	if _, err := bad.buildDuplexGuardrailRegistry(req, nil); err == nil {
 		t.Fatal("an unregistered validator type must fail the pipeline build")
 	}
 	if _, err := bad.buildDuplexPipeline(req, provider); err == nil {
 		t.Fatal("buildDuplexPipeline must surface the guardrail error")
 	}
 
-	if s, err := bad.buildDuplexGuardrailStage(&ConversationRequest{}, provider, nil, nil); s != nil || err != nil {
+	if r, err := bad.buildDuplexGuardrailRegistry(&ConversationRequest{}, nil); r != nil || err != nil {
 		t.Fatal("no scenario: no task, so no guardrails")
 	}
 }

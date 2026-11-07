@@ -36,6 +36,32 @@ func TestResolveJudgeParams_NamedJudgeBecomesProvider(t *testing.T) {
 	assert.Equal(t, "picked", direct["provider"])
 	assert.Equal(t, "other", explicit["provider"], "an explicit provider is left alone")
 	assert.Equal(t, "aaa-low", cfg.LoadedEvals["e"].Turns[0].AllTurns.Assertions[0].Params["provider"])
+	for _, p := range []map[string]interface{}{inner, direct, explicit} {
+		assert.NotContains(t, p, "judge", "judge is dropped once resolved: no handler reads it")
+	}
+}
+
+// Objectives and persona transitions take the same `judge` selector.
+func TestResolveJudgeParams_ObjectivesAndPersonaTransitions(t *testing.T) {
+	cfg := judgeConfig()
+	success := map[string]interface{}{"eval_type": "llm_judge", "eval_params": map[string]interface{}{"judge": "picked"}}
+	rewind := map[string]interface{}{"judge": "picked"}
+	transition := map[string]interface{}{"judge": "picked"}
+	cfg.LoadedScenarios = map[string]*Scenario{"s": {Turns: []TurnDefinition{{Objective: &ObjectiveConfig{
+		Success: []AssertionConfig{{Type: "assertion", Params: success}},
+		Rewind:  &ObjectiveRewindConfig{When: []AssertionConfig{{Type: "llm_judge", Params: rewind}}},
+	}}}}}
+	cfg.LoadedPersonas = map[string]*UserPersonaPack{
+		"p":   {Transitions: []PersonaTransition{{When: []AssertionConfig{{Type: "llm_judge", Params: transition}}}}},
+		"nil": nil,
+	}
+
+	require.NoError(t, cfg.resolveJudgeParams())
+	inner := success["eval_params"].(map[string]interface{})
+	for _, p := range []map[string]interface{}{inner, rewind, transition} {
+		assert.Equal(t, "picked", p["provider"])
+		assert.NotContains(t, p, "judge")
+	}
 }
 
 func TestResolveJudgeParams_UnknownJudgeIsAnError(t *testing.T) {

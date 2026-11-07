@@ -74,7 +74,7 @@ The pack's top-level fields come from the prompt config:
 
 ```text
 Compiling prompt prompts/support.yaml to pack...
-⚠ [pack] prompt "customer_support": tool "search_knowledge_base" is not defined in the pack's tools
+⚠ [pack] prompt 'customer_support': tool 'search_knowledge_base' is not defined in the pack's tools
 ✓ Pack compiled successfully: packs/support.pack.json
 ```
 

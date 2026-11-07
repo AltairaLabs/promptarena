@@ -269,8 +269,8 @@ defer eng.Close()
 func (e *Engine) EnableMockProviderMode(mockConfigPath string) error
 ```
 
-Replaces all providers, including the providers behind self-play roles, with mock providers for testing. The file is checked for
-unknown keys before it loads, so a misspelled key returns an error.
+Replaces all providers, including the providers behind self-play roles, with mock providers for testing. The file is decoded
+strictly, so a misspelled key returns an error naming it and the valid keys.
 
 **Parameters:**
 - `mockConfigPath` - Path to mock config YAML. An empty string keeps each provider's own `mock_config`, and a provider without one gets default responses

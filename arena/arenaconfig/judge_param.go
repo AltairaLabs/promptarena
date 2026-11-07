@@ -18,6 +18,9 @@ const (
 // judge, so `judge:` used to be ignored whenever several judges were
 // configured. A `judge` naming no configured judge is a load error. An
 // explicit `provider` is left alone.
+//
+// `judge` is removed once resolved: it is Arena's param, no handler reads it,
+// and PromptKit rejects a param its handler does not list.
 func (c *Config) resolveJudgeParams() error {
 	for _, set := range c.assertionSets() {
 		for i := range set.assertions {
@@ -61,6 +64,7 @@ func (c *Config) resolveJudgeParam(params map[string]interface{}) error {
 	if _, set := params[paramProvider]; !set {
 		params[paramProvider] = name
 	}
+	delete(params, paramJudge)
 	return nil
 }
 
@@ -84,7 +88,25 @@ func (c *Config) assertionSets() []assertionSet {
 		where := "scenario " + id
 		sets = append(sets, assertionSet{where + " conversation_assertions", s.ConversationAssertions})
 		for i := range s.Turns {
-			sets = append(sets, assertionSet{fmt.Sprintf("%s turns[%d]", where, i), s.Turns[i].Assertions})
+			turn := &s.Turns[i]
+			sets = append(sets, assertionSet{fmt.Sprintf("%s turns[%d]", where, i), turn.Assertions})
+			if obj := turn.Objective; obj != nil {
+				sets = append(sets, assertionSet{fmt.Sprintf("%s turns[%d].objective.success", where, i), obj.Success})
+				if obj.Rewind != nil {
+					sets = append(sets, assertionSet{
+						fmt.Sprintf("%s turns[%d].objective.rewind.when", where, i), obj.Rewind.When,
+					})
+				}
+			}
+		}
+	}
+	for _, id := range sortedKeys(c.LoadedPersonas) {
+		p := c.LoadedPersonas[id]
+		if p == nil {
+			continue
+		}
+		for i := range p.Transitions {
+			sets = append(sets, assertionSet{fmt.Sprintf("persona %s transitions[%d].when", id, i), p.Transitions[i].When})
 		}
 	}
 	for _, id := range sortedKeys(c.LoadedEvals) {

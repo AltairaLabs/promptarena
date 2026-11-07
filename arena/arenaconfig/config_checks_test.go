@@ -155,7 +155,7 @@ func writeMockFile(t *testing.T, content string) string {
 	return path
 }
 
-func TestCheckMockConfigFile(t *testing.T) {
+func TestCheckMockConfigFile_UsesTheRuntimeDecoder(t *testing.T) {
 	valid := `defaultResponse: hi
 scenarios:
   s:
@@ -179,16 +179,16 @@ selfplay:
     turns:
       1: hello
 `
-	assert.NoError(t, CheckMockConfigFile(writeMockFile(t, valid)))
-	assert.NoError(t, CheckMockConfigFile(writeMockFile(t, "")))
-	assert.NoError(t, CheckMockConfigFile(filepath.Join(t.TempDir(), "missing.yaml")),
+	assert.NoError(t, checkMockConfigFile(writeMockFile(t, valid)))
+	assert.NoError(t, checkMockConfigFile(writeMockFile(t, "")))
+	assert.NoError(t, checkMockConfigFile(filepath.Join(t.TempDir(), "missing.yaml")),
 		"an unreadable file is left to the provider")
 
-	err := CheckMockConfigFile(writeMockFile(t, "default_response: hi\n"))
+	err := checkMockConfigFile(writeMockFile(t, "default_response: hi\n"))
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "field default_response not found")
+	assert.Contains(t, err.Error(), `unknown key "default_response" (valid: defaultResponse, scenarios, selfplay)`)
 
-	err = CheckMockConfigFile(writeMockFile(t, `scenarios:
+	err = checkMockConfigFile(writeMockFile(t, `scenarios:
   s:
     turns:
       1: {respnse: typo}
@@ -229,5 +229,5 @@ func TestValidateMockConfigs(t *testing.T) {
 	}}
 	err := cfg.validateMockConfigs()
 	require.Error(t, err)
-	assert.Contains(t, err.Error(), "provider mock: mock config "+filepath.Join(dir, "mock.yaml"))
+	assert.Contains(t, err.Error(), "provider mock: failed to parse mock config YAML "+filepath.Join(dir, "mock.yaml"))
 }

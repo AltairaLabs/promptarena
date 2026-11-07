@@ -249,10 +249,10 @@ spec:
 	assert.Contains(t, err.Error(), "broken.yaml")
 }
 
-// A workflow cycle is a warning. PromptKit words it by the back edge its DFS
-// meets first ("a -> b" or "b -> a"), which depends on map order, so the copy
-// pack.Validate repeats must not be matched to the reported one by its text, or
-// it turns into a blocking [pack] error on some runs (#445). Run it many times.
+// A workflow cycle is a warning, reported once under the workflow stage: the
+// copy pack.ValidateDetailed repeats must never come back as a blocking [pack]
+// error (#445). Run it many times, so a finding whose wording varied between
+// runs would show.
 func TestCheck_WorkflowCycleIsNeverAnError(t *testing.T) {
 	dir := t.TempDir()
 	writeFixture(t, dir, "prompts/greeting.yaml", minimalPromptYAML)

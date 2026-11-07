@@ -135,9 +135,6 @@ func compilePack(cfg *arenaconfig.Config, configFile string, options compileOpti
 		return nil, nil, err
 	}
 
-	// Read before compiling: the registry defaults the engine in place.
-	engines := declaredTemplateEngines(cfg)
-
 	compiler := prompt.NewPackCompiler(registry)
 	pack, err := compiler.CompileFromRegistryWithOptions(
 		options.packID, options.compilerVersion,
@@ -148,9 +145,6 @@ func compilePack(cfg *arenaconfig.Config, configFile string, options compileOpti
 		return nil, nil, fmt.Errorf("compilation failed: %w", err)
 	}
 
-	if err := resolveTemplateEngine(engines, pack); err != nil {
-		return nil, nil, err
-	}
 	if options.packVersion != "" {
 		pack.Version = options.packVersion
 	}

@@ -14,7 +14,6 @@ verified:
     - arena/engine/duplex_executor_pipeline_integration.go
     - arena/engine/engine.go
     - arena/engine/execution.go
-    - arena/stages/duplex_recording.go
     - arena/turnexecutors/pipeline_stages_integration.go
     - examples/eval-test/config.arena.yaml
     - examples/session-replay/demo/main.go
@@ -80,7 +79,7 @@ An Arena recording holds these three event types and no others:
 
 A recording holds no stage, pipeline, tool or provider events, no `audio.input` (the user's audio in a duplex run is not recorded, only its transcript as a `message.created`), and no `message.text.delta`, image or video events.
 
-In a duplex run, the recorder sits after the pack guardrails, so a recorded assistant message holds the enforced content, not what the agent tried to say.
+In a duplex run, the recorder sits after the provider stage, which runs the pack guardrails, so a recorded assistant message holds the enforced content, not what the agent tried to say.
 
 Tool calls appear inside `message.created` events. Assistant messages carry `ToolCalls` (id, name, args) and tool messages carry `ToolResult`.
 
