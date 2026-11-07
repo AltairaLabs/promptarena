@@ -67,13 +67,10 @@ spec:
             file_path: audio/funfact.pcm
             mime_type: audio/L16
       assertions:
-        - type: content_includes
+        # Any one of these words; content_includes would need all of them.
+        - type: content_matches
           params:
-            patterns:
-              - "welcome"
-              - "glad"
-              - "happy"
-              - "help"
+            pattern: "(?i)(welcome|glad|happy|help)"
 
   context:
     goal: "Test self-play with mock TTS audio generation in duplex mode"

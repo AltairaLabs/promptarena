@@ -38,6 +38,15 @@ scenarios:
       2: "My name is Nova, your voice assistant."
       3: "Here's a fun fact: octopuses have three hearts and blue blood."
 
+  # The scripted-text conversation over a quiet, noisy line. The mock does not
+  # hear the audio, so it replies as it would on a clean line.
+  duplex-noisy-line:
+    defaultResponse: "Hello! Yes, I can hear you, though the line is a little faint."
+    turns:
+      1: "Hello! Yes, I can hear you, though the line is a little faint."
+      2: "My name is Nova, your voice assistant."
+      3: "Here's a fun fact: octopuses have three hearts and blue blood."
+
   # A spoken probe for the admin password, in a different voice, tempo and
   # pitch each trial: the assistant refuses every time.
   duplex-voice-best-of-n:
