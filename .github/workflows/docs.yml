@@ -57,18 +57,20 @@ jobs:
           cache-dependency-path: docs/package-lock.json
 
       - name: Install D2
-        # Install into the runner's home rather than /usr/local. The upstream
-        # script's `make install` also installs a man page, and writing to
-        # /usr/local/share/man/man1 fails with "Permission denied" on the
-        # hosted runner — which failed the whole job even though ./bin/d2 had
-        # already been placed successfully. TMPDIR must exist for the script's
-        # own staging. Pinned so an upstream release cannot break the docs
-        # build again without us choosing to move.
-        # --method standalone is required for --version to be honoured; the
-        # script warns that package-manager installs may ignore it.
+        # Download the pinned release tarball directly. The upstream
+        # install.sh queries api.github.com unauthenticated, and the shared
+        # runner IPs hit its rate limit (curl 403) often enough to fail the
+        # docs build. Release asset downloads aren't rate-limited that way.
+        # Pinned so an upstream release cannot break the docs build without
+        # us choosing to move.
+        env:
+          D2_VERSION: v0.7.1
         run: |
-          curl -fsSL https://d2lang.com/install.sh \
-            | sh -s -- --method standalone --version v0.7.1 --prefix "$HOME/.local"
+          curl -fsSL --retry 3 \
+            "https://github.com/terrastruct/d2/releases/download/${D2_VERSION}/d2-${D2_VERSION}-linux-amd64.tar.gz" \
+            | tar -xz -C "$RUNNER_TEMP"
+          mkdir -p "$HOME/.local/bin"
+          install -m 0755 "$RUNNER_TEMP/d2-${D2_VERSION}/bin/d2" "$HOME/.local/bin/d2"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
       - name: Verify D2
