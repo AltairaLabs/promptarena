@@ -4,7 +4,7 @@ description: Brief Claude Code, Codex, or another coding agent with PromptArena'
 sidebar:
   order: 20
 verified:
-  commit: 5a8cffd8daf00b49cbbb3596ce63750db56c3704
+  commit: 45cbd09a1d70928da45e071755b0c2172abfc8ca
   sources:
     - arena/agentkb/catalog.yaml
     - arena/agentkb/skill.go

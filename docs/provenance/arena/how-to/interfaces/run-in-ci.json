@@ -1,14 +1,14 @@
 {
  "page": "docs/src/content/docs/arena/how-to/interfaces/run-in-ci.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "45cbd09a1d70928da45e071755b0c2172abfc8ca",
  "claims": [
   {
    "id": 1,
    "claim": "Mock providers make CI runs deterministic and zero-cost",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:741",
-    "arena/engine/engine.go:770"
+    "arena/engine/engine.go:742",
+    "arena/engine/engine.go:771"
    ]
   },
   {
@@ -871,8 +871,8 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/engine.go:762",
-    "arena/engine/engine.go:770",
-    "arena/engine/engine.go:786"
+    "arena/engine/engine.go:771",
+    "arena/engine/engine.go:790-793"
    ]
   },
   {
@@ -881,8 +881,8 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/mock_config_check.go:69",
-    "arena/engine/engine.go:741",
-    "arena/engine/engine.go:748"
+    "arena/engine/engine.go:742",
+    "arena/engine/engine.go:749"
    ]
   },
   {
@@ -890,7 +890,7 @@
    "claim": "Tools still execute for real under --mock-provider",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:770"
+    "arena/engine/engine.go:771"
    ]
   },
   {
@@ -928,7 +928,7 @@
    "evidence": [
     "arena/arenaconfig/mock_config_check.go:69",
     "arena/arenaconfig/mock_config_check.go:75",
-    "arena/engine/engine.go:748"
+    "arena/engine/engine.go:749"
    ]
   },
   {

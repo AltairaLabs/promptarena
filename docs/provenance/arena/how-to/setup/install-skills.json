@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/setup/install-skills.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "45cbd09a1d70928da45e071755b0c2172abfc8ca",
  "claims": [
   {
    "id": 1,
@@ -178,7 +178,8 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:104",
-    "packc/compiler/helpers_integration.go:165"
+    "packc/compiler/compiler.go:259",
+    "packc/compiler/helpers_integration.go:171"
    ]
   },
   {
@@ -229,7 +230,7 @@
    "evidence": [
     "arena/arenaconfig/loader.go:965",
     "arena/arenaconfig/skill_sources.go:44",
-    "packc/compiler/helpers_integration.go:177"
+    "packc/compiler/helpers_integration.go:187"
    ]
   },
   {
@@ -308,7 +309,7 @@
    "evidence": [
     "arena/arenaconfig/loader.go:965",
     "arena/arenaconfig/skill_sources.go:44",
-    "packc/compiler/helpers_integration.go:177"
+    "packc/compiler/helpers_integration.go:187"
    ]
   }
  ]

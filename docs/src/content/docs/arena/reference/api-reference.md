@@ -2,7 +2,7 @@
 title: Go API Reference
 description: Exported types, functions and methods for using Arena as a Go library
 verified:
-  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
+  commit: 45cbd09a1d70928da45e071755b0c2172abfc8ca
   sources:
     - arena/arenaconfig/loader.go
     - arena/arenaconfig/mock_config_check.go
@@ -19,6 +19,7 @@ verified:
     - arena/generate/expectation.go
     - arena/generate/generate.go
     - arena/generate/sources/recordings.go
+    - arena/selfplay/registry.go
     - arena/statestore/metadata.go
     - arena/statestore/store.go
 ---
@@ -268,7 +269,7 @@ defer eng.Close()
 func (e *Engine) EnableMockProviderMode(mockConfigPath string) error
 ```
 
-Replaces all providers with mock providers for testing. The file is checked for
+Replaces all providers, including the providers behind self-play roles, with mock providers for testing. The file is checked for
 unknown keys before it loads, so a misspelled key returns an error.
 
 **Parameters:**

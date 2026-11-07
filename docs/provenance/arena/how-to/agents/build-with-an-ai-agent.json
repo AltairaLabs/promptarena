@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/agents/build-with-an-ai-agent.md",
- "commit": "5a8cffd8daf00b49cbbb3596ce63750db56c3704",
+ "commit": "45cbd09a1d70928da45e071755b0c2172abfc8ca",
  "claims": [
   {
    "id": 1,
@@ -233,7 +233,7 @@
    "claim": "mode: mock",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/tool.json:322"
+    "schemas/v1alpha1/tool.json:319"
    ]
   },
   {
@@ -363,7 +363,7 @@
    "claim": "Mock responses in mock-responses.yaml are keyed by each scenario's metadata.name",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:802"
+    "arena/engine/engine.go:809"
    ]
   },
   {
@@ -371,7 +371,7 @@
    "claim": "Tools, workflow state and memory run for real against mocked model output",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:770"
+    "arena/engine/engine.go:771"
    ]
   },
   {
@@ -399,9 +399,9 @@
    "claim": "--mock-provider replaces every provider with a generic mock that ignores canned responses",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:720",
-    "arena/engine/engine.go:741",
-    "arena/engine/engine.go:801"
+    "arena/engine/engine.go:721",
+    "arena/engine/engine.go:742",
+    "arena/engine/engine.go:808"
    ]
   },
   {
@@ -419,7 +419,7 @@
    "claim": "Tool mode mock is a valid tool mode",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/tool.json:322"
+    "schemas/v1alpha1/tool.json:319"
    ]
   },
   {
@@ -427,7 +427,7 @@
    "claim": "Tool mode live takes an http block",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/tool.json:322"
+    "schemas/v1alpha1/tool.json:319"
    ]
   },
   {
@@ -435,7 +435,7 @@
    "claim": "Tool mode mcp is a valid tool mode",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/tool.json:322"
+    "schemas/v1alpha1/tool.json:319"
    ]
   },
   {
@@ -443,9 +443,9 @@
    "claim": "Tool modes exec and local run only in the PromptKit SDK; promptarena run stops at startup on such a tool",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator_tools.go:73-95",
+    "arena/arenaconfig/validator_tools.go:73-94",
     "arena/engine/builder_integration.go:564",
-    "schemas/v1alpha1/tool.json:322"
+    "schemas/v1alpha1/tool.json:319"
    ]
   },
   {
@@ -538,7 +538,7 @@
    "claim": "A kind: Tool config accepts mock_result_file and mock_template_file, paths relative to the arena config directory",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:604",
+    "arena/engine/builder_integration.go:609",
     "schemas/v1alpha1/tool.json:354",
     "schemas/v1alpha1/tool.json:358"
    ]

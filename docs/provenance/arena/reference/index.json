@@ -1,14 +1,15 @@
 {
  "page": "docs/src/content/docs/arena/reference/index.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "45cbd09a1d70928da45e071755b0c2172abfc8ca",
  "claims": [
   {
    "id": 1,
    "claim": "Tool Authoring lists the tool mode values arena runs: mock, live, mcp, client",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:113",
-    "schemas/v1alpha1/tool.json:319"
+    "arena/arenaconfig/validator_tools.go:64-78",
+    "arena/engine/builder_integration.go:114",
+    "schemas/v1alpha1/tool.json:321"
    ]
   },
   {

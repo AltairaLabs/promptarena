@@ -4,8 +4,9 @@ description: Index of the PromptArena reference pages, with summary tables of co
 sidebar:
   order: 0
 verified:
-  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
+  commit: 45cbd09a1d70928da45e071755b0c2172abfc8ca
   sources:
+    - arena/arenaconfig/validator_tools.go
     - arena/assertions/types.go
     - arena/cmd/promptarena/config_inspect_interactive.go
     - arena/cmd/promptarena/debug.go

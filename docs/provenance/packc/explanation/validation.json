@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/packc/explanation/validation.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "45cbd09a1d70928da45e071755b0c2172abfc8ca",
  "claims": [
   {
    "id": 1,
@@ -56,7 +56,7 @@
    "verdict": "true",
    "evidence": [
     "packc/compiler/check.go:97-106",
-    "packc/compiler/helpers_integration.go:204-236"
+    "packc/compiler/helpers_integration.go:214-246"
    ]
   },
   {
@@ -65,7 +65,7 @@
    "verdict": "true",
    "evidence": [
     "packc/compiler/compiler.go:100-110",
-    "packc/compiler/helpers_integration.go:213-226"
+    "packc/compiler/helpers_integration.go:223-236"
    ]
   },
   {
@@ -109,7 +109,7 @@
   {
    "id": 12,
    "claim": "governance check: undeclared eval/validator/field/obligation errors, undeclared prefix warning",
-   "verdict": "unverified",
+   "verdict": "true",
    "evidence": [
     "packc/compiler/check.go:179-184"
    ]
@@ -119,7 +119,7 @@
    "claim": "pack structure checks id, semver version, prompts, template_engine, system_template, prompt version, variables-declared are blocking; missing compilation and undeclared prompt tools are warnings",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:186-210",
+    "packc/compiler/check.go:186-198",
     "packc/compiler/pack_fields.go:79-105"
    ]
   },
@@ -128,7 +128,7 @@
    "claim": "schema failures print as '[pack_schema] <path>: <msg>' under '\u2717 Pack validation failed: <file>'; schema-load failure is a pack_schema error",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:218-241",
+    "packc/compiler/check.go:239-262",
     "packc/main_interactive.go:287-316"
    ]
   },
@@ -146,7 +146,7 @@
    "claim": "validation uses the embedded PromptPack schema by default; PROMPTKIT_SCHEMA_SOURCE remote/path overrides",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:219"
+    "packc/compiler/check.go:240"
    ]
   },
   {
@@ -169,7 +169,8 @@
    "claim": "templates are not parsed; only check is variables declared when template contains {{",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:195-206"
+    "packc/compiler/check.go:186-196",
+    "packc/compiler/check.go:213-231"
    ]
   },
   {

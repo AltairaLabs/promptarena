@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/interfaces/use-the-web-ui.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "45cbd09a1d70928da45e071755b0c2172abfc8ca",
  "claims": [
   {
    "id": 1,
@@ -504,18 +504,18 @@
    "claim": "--mock-provider replaces every configured provider with mocks",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:138-141",
-    "arena/cmd/promptarena/serve_interactive.go:181-188",
-    "arena/engine/engine.go:741-790"
+    "arena/cmd/promptarena/serve_interactive.go:176-188",
+    "arena/engine/engine.go:742-797"
    ]
   },
   {
    "id": 60,
-   "claim": "Mock replacement covers the assistant, the self-play user role, and any TTS path",
-   "verdict": "unverified",
+   "claim": "Mock replacement covers the assistant and the self-play user role; TTS and STT providers are not replaced",
+   "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:176-180",
-    "arena/engine/engine.go:762-787"
+    "arena/engine/engine.go:426",
+    "arena/engine/engine.go:763-793",
+    "arena/selfplay/registry.go:318-336"
    ]
   },
   {
@@ -524,7 +524,7 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/serve_interactive.go:142-143",
-    "arena/engine/engine.go:745-756"
+    "arena/engine/engine.go:746-757"
    ]
   },
   {
@@ -540,16 +540,16 @@
    "claim": "In mock mode runs execute end to end with tools still running for real",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:770"
+    "arena/engine/engine.go:771"
    ]
   },
   {
    "id": 64,
-   "claim": "In mock mode no vendor APIs are called or billed",
-   "verdict": "true",
+   "claim": "In mock mode no real model calls are made or billed; TTS and STT providers are not replaced",
+   "verdict": "false",
    "evidence": [
     "arena/cmd/promptarena/serve_interactive.go:183-188",
-    "arena/engine/engine.go:758-787"
+    "arena/engine/engine.go:763-793"
    ]
   },
   {
@@ -667,7 +667,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/mock_config_check.go:69",
-    "arena/engine/engine.go:748"
+    "arena/engine/engine.go:749"
    ]
   }
  ]

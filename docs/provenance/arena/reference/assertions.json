@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/reference/assertions.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "45cbd09a1d70928da45e071755b0c2172abfc8ca",
  "claims": [
   {
    "id": 1,
@@ -107,7 +107,8 @@
    "claim": "tools_offered assertion type exists and checks tools offered to the provider in the turn",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator_tools.go:69"
+    "arena/arenaconfig/validator_tools.go:101",
+    "arena/assertions/validate_params.go:67"
    ]
   },
   {
@@ -174,7 +175,7 @@
    "claim": "tool_exec assertion type exists and invokes a registered tool at session end",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:220",
+    "arena/engine/engine.go:221",
     "examples/test-a-codegen-agent/config.arena.yaml:57"
    ]
   },
@@ -339,7 +340,8 @@
    "claim": "Example uses tools_offered in turn-level assertions with params tools and absent",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator_tools.go:69"
+    "arena/arenaconfig/validator_tools.go:101",
+    "arena/assertions/validate_params.go:67"
    ]
   },
   {
@@ -347,7 +349,8 @@
    "claim": "tools_offered accepts params 'tools' or 'tool_names'",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator_tools.go:69"
+    "arena/arenaconfig/validator_tools.go:101",
+    "arena/assertions/validate_params.go:67"
    ]
   },
   {
@@ -355,7 +358,8 @@
    "claim": "tools_offered param 'absent' is a bool meaning none of the tools may be offered",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator_tools.go:69"
+    "arena/arenaconfig/validator_tools.go:101",
+    "arena/assertions/validate_params.go:67"
    ]
   },
   {
@@ -363,7 +367,8 @@
    "claim": "tools_offered param 'exact' is a bool meaning the offered set must be exactly these tools",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator_tools.go:69"
+    "arena/arenaconfig/validator_tools.go:101",
+    "arena/assertions/validate_params.go:67"
    ]
   },
   {
@@ -377,7 +382,8 @@
    "claim": "tools_offered fails when the turn offered no tools at all",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator_tools.go:69"
+    "arena/arenaconfig/validator_tools.go:101",
+    "arena/assertions/validate_params.go:67"
    ]
   },
   {

@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/reference/config-schema.md",
- "commit": "5a8cffd8daf00b49cbbb3596ce63750db56c3704",
+ "commit": "45cbd09a1d70928da45e071755b0c2172abfc8ca",
  "claims": [
   {
    "id": 1001,
@@ -213,7 +213,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:62",
-    "arena/arenaconfig/validator.go:94",
+    "arena/arenaconfig/validator.go:95",
     "schemas/v1alpha1/arena.json:1"
    ]
   },
@@ -385,16 +385,15 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:177",
-    "arena/engine/builder_integration.go:871"
+    "arena/engine/builder_integration.go:876"
    ]
   },
   {
    "id": 1043,
    "claim": "state_store.type enum values are memory, redis, file",
-   "verdict": "false",
+   "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:871",
-    "arena/engine/builder_integration.go:907"
+    "arena/engine/builder_integration.go:877-905"
    ]
   },
   {
@@ -404,7 +403,7 @@
    "evidence": [
     "arena/arenaconfig/types.go:251",
     "arena/arenaconfig/types.go:255",
-    "arena/engine/builder_integration.go:872"
+    "arena/engine/builder_integration.go:877"
    ]
   },
   {
@@ -412,7 +411,7 @@
    "claim": "state_store.redis is required when type is redis",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:879"
+    "arena/engine/builder_integration.go:884"
    ]
   },
   {
@@ -420,7 +419,7 @@
    "claim": "state_store.redis.address is a field",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:885"
+    "arena/engine/builder_integration.go:890"
    ]
   },
   {
@@ -428,8 +427,7 @@
    "claim": "state_store.file is required when type is file",
    "verdict": "dead",
    "evidence": [
-    "arena/engine/builder_integration.go:871",
-    "arena/engine/builder_integration.go:907"
+    "arena/engine/builder_integration.go:876-910"
    ]
   },
   {
@@ -437,8 +435,7 @@
    "claim": "state_store.file.root is a field",
    "verdict": "dead",
    "evidence": [
-    "arena/engine/builder_integration.go:871",
-    "arena/engine/builder_integration.go:907"
+    "arena/engine/builder_integration.go:876-910"
    ]
   },
   {
@@ -531,7 +528,7 @@
    "evidence": [
     "arena/arenaconfig/types.go:466",
     "arena/cmd/promptarena/run.go:168",
-    "arena/engine/engine.go:897"
+    "arena/engine/engine.go:916"
    ]
   },
   {
@@ -699,7 +696,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:525",
-    "arena/engine/engine.go:699"
+    "arena/engine/engine.go:700"
    ]
   },
   {
@@ -708,7 +705,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:562",
-    "arena/engine/engine.go:700"
+    "arena/engine/engine.go:701"
    ]
   },
   {
@@ -717,7 +714,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:562",
-    "arena/engine/engine.go:700"
+    "arena/engine/engine.go:701"
    ]
   },
   {
@@ -726,7 +723,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:563",
-    "arena/engine/engine.go:706"
+    "arena/engine/engine.go:707"
    ]
   },
   {
@@ -734,8 +731,8 @@
    "claim": "defaults.output.recording.dir defaults to recordings",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:61",
-    "arena/engine/engine.go:708"
+    "arena/engine/engine.go:62",
+    "arena/engine/engine.go:709"
    ]
   },
   {
@@ -743,8 +740,8 @@
    "claim": "The recording dir is a subdirectory of output.dir",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:705",
-    "arena/engine/engine.go:710"
+    "arena/engine/engine.go:706",
+    "arena/engine/engine.go:711"
    ]
   },
   {
@@ -1308,7 +1305,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:116",
-    "arena/engine/builder_integration.go:737"
+    "arena/engine/builder_integration.go:742"
    ]
   },
   {
@@ -1316,8 +1313,8 @@
    "claim": "runtime.evals binds an eval type name to a program on the host, and pack_evals references that type",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:729",
-    "arena/engine/builder_integration.go:737"
+    "arena/engine/builder_integration.go:734",
+    "arena/engine/builder_integration.go:742"
    ]
   },
   {
@@ -1343,7 +1340,7 @@
    "claim": "A runtime eval program runs on the host, not inside the sandbox, so the agent cannot see it",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:729"
+    "arena/engine/builder_integration.go:734"
    ]
   },
   {
@@ -1351,7 +1348,7 @@
    "claim": "A runtime eval program inherits the host environment, including Docker access",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:729"
+    "arena/engine/builder_integration.go:734"
    ]
   },
   {
@@ -1360,7 +1357,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:106",
-    "arena/engine/builder_integration.go:737",
+    "arena/engine/builder_integration.go:742",
     "examples/sandbox-host-eval/config.arena.yaml:30"
    ]
   },
@@ -1369,7 +1366,7 @@
    "claim": "runtime.evals timeout_ms defaults to 30s (30000 ms) per invocation",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:746"
+    "arena/engine/builder_integration.go:751"
    ]
   },
   {
@@ -1377,7 +1374,7 @@
    "claim": "pack_evals params are passed to the program as-is",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:741"
+    "arena/engine/builder_integration.go:746"
    ]
   },
   {
@@ -1429,7 +1426,7 @@
    "claim": "runtime.evals.<name>.command is the program to run",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:743"
+    "arena/engine/builder_integration.go:748"
    ]
   },
   {
@@ -1437,8 +1434,8 @@
    "claim": "A relative command path containing / resolves against the config directory; a bare name is looked up on PATH",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:754",
-    "arena/engine/builder_integration.go:755"
+    "arena/engine/builder_integration.go:759",
+    "arena/engine/builder_integration.go:760"
    ]
   },
   {
@@ -1446,7 +1443,7 @@
    "claim": "runtime.evals.<name>.args is an extra-arguments field",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:744"
+    "arena/engine/builder_integration.go:749"
    ]
   },
   {
@@ -1454,7 +1451,7 @@
    "claim": "runtime.evals.<name>.env is a list of host environment variable names passed through to the program",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:745"
+    "arena/engine/builder_integration.go:750"
    ]
   },
   {
@@ -1462,7 +1459,7 @@
    "claim": "The program inherits the rest of the host environment in addition to the env list",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:745"
+    "arena/engine/builder_integration.go:750"
    ]
   },
   {
@@ -1470,7 +1467,7 @@
    "claim": "runtime.evals.<name>.timeout_ms is a per-invocation timeout field",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:746"
+    "arena/engine/builder_integration.go:751"
    ]
   },
   {
@@ -1478,7 +1475,7 @@
    "claim": "runtime.evals timeout_ms default is 30000",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:746"
+    "arena/engine/builder_integration.go:751"
    ]
   },
   {
@@ -1486,7 +1483,7 @@
    "claim": "On timeout or non-zero exit the eval scores 0 and stderr goes into the explanation",
    "verdict": "false",
    "evidence": [
-    "arena/engine/builder_integration.go:741"
+    "arena/engine/builder_integration.go:746"
    ]
   },
   {
@@ -1494,7 +1491,7 @@
    "claim": "The runtime eval input is one JSON document on stdin",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:741"
+    "arena/engine/builder_integration.go:746"
    ]
   },
   {
@@ -1694,7 +1691,7 @@
    "claim": "artifacts_dir is a host directory for the run's outputs",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:249",
+    "arena/engine/engine.go:250",
     "arena/engine/execution.go:573"
    ]
   },
@@ -1703,8 +1700,8 @@
    "claim": "The session_end workspace-capture hook writes into artifacts_dir",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:214",
-    "arena/engine/engine.go:236"
+    "arena/engine/engine.go:215",
+    "arena/engine/engine.go:237"
    ]
   },
   {
@@ -1721,7 +1718,7 @@
    "claim": "A runtime eval program writes one JSON document to stdout",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:741"
+    "arena/engine/builder_integration.go:746"
    ]
   },
   {
@@ -1729,7 +1726,7 @@
    "claim": "The runtime eval output has a score field",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:741"
+    "arena/engine/builder_integration.go:746"
    ]
   },
   {
@@ -1737,7 +1734,7 @@
    "claim": "The runtime eval output has a detail field",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:741"
+    "arena/engine/builder_integration.go:746"
    ]
   },
   {
@@ -1745,7 +1742,7 @@
    "claim": "The runtime eval output has a metrics field",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:741"
+    "arena/engine/builder_integration.go:746"
    ]
   },
   {
@@ -1753,7 +1750,7 @@
    "claim": "The runtime eval output has a data field",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:741"
+    "arena/engine/builder_integration.go:746"
    ]
   },
   {
@@ -1761,7 +1758,7 @@
    "claim": "The output score becomes the eval's score",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:741"
+    "arena/engine/builder_integration.go:746"
    ]
   },
   {
@@ -1769,7 +1766,7 @@
    "claim": "The output metrics become the eval's named sub-scores",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:741"
+    "arena/engine/builder_integration.go:746"
    ]
   },
   {
@@ -1777,7 +1774,7 @@
    "claim": "The output data becomes the eval's details in the run JSON",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:741"
+    "arena/engine/builder_integration.go:746"
    ]
   },
   {
@@ -1801,7 +1798,7 @@
    "claim": "An output of the form {error: ...} records the eval as errored rather than as a score of 0",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:741"
+    "arena/engine/builder_integration.go:746"
    ]
   },
   {
@@ -1809,7 +1806,7 @@
    "claim": "A crash, a timeout, or output that is not valid JSON counts as an error",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:741"
+    "arena/engine/builder_integration.go:746"
    ]
   },
   {
@@ -1817,7 +1814,7 @@
    "claim": "Runtime eval programs should write logs to stderr",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:741"
+    "arena/engine/builder_integration.go:746"
    ]
   },
   {
@@ -1883,7 +1880,7 @@
    "claim": "A session eval program can docker exec into the sandbox container",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:729"
+    "arena/engine/builder_integration.go:734"
    ]
   },
   {
@@ -2402,7 +2399,7 @@
    "claim": "defaults.output.recording.enabled defaults to false",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:700"
+    "arena/engine/engine.go:701"
    ]
   },
   {
@@ -2418,7 +2415,7 @@
    "claim": "defaults.output.recording.dir defaults to recordings",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:708"
+    "arena/engine/engine.go:709"
    ]
   },
   {
@@ -2426,8 +2423,8 @@
    "claim": "Session recording captures detailed event streams for each test run, including audio data for voice conversations",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:589",
-    "arena/engine/engine.go:698"
+    "arena/engine/engine.go:590",
+    "arena/engine/engine.go:699"
    ]
   },
   {
@@ -2603,7 +2600,7 @@
    "claim": "Prompt spec accepts an `allowed_tools` list of tool names",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator.go:396",
+    "arena/arenaconfig/validator.go:436",
     "schemas/v1alpha1/promptconfig.json"
    ]
   },
@@ -2612,7 +2609,7 @@
    "claim": "allowed_tools names tools registered under the arena config's spec.tools, or MCP tools as mcp__<server>__<tool>",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator.go:396",
+    "arena/arenaconfig/validator.go:436",
     "arena/engine/builder_integration.go:469"
    ]
   },
@@ -2976,7 +2973,7 @@
    "claim": "Scenario spec.task_type is required and must match the prompt's task_type",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator.go:312",
+    "arena/arenaconfig/validator.go:313",
     "schemas/v1alpha1/scenario.json"
    ]
   },
@@ -3427,7 +3424,7 @@
    "claim": "Reports name a row's runs scenario[row-id]",
    "verdict": "true",
    "evidence": [
-    "arena/statestore/store.go:1157"
+    "arena/statestore/store.go:1159"
    ]
   },
   {
@@ -3436,7 +3433,7 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/execution.go:978",
-    "arena/statestore/store.go:1155"
+    "arena/statestore/store.go:1157"
    ]
   },
   {
@@ -3536,7 +3533,7 @@
    "claim": "A budgeted group's trials run in order on one worker regardless of --concurrency",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:964",
+    "arena/engine/engine.go:983",
     "arena/engine/trial_budget.go:132"
    ]
   },
@@ -4684,7 +4681,7 @@
    "claim": "The mock provider returns predefined responses without making API calls",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:715"
+    "arena/engine/engine.go:716"
    ]
   },
   {
@@ -4876,7 +4873,7 @@
    "claim": "Tool resources use apiVersion promptkit.altairalabs.ai/v1alpha1 with kind Tool",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/tool.json"
+    "schemas/v1alpha1/tool.json:318"
    ]
   },
   {
@@ -4884,7 +4881,7 @@
    "claim": "spec.name is the function name the model calls",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/tool.json"
+    "schemas/v1alpha1/tool.json:318"
    ]
   },
   {
@@ -4899,7 +4896,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:923",
-    "schemas/v1alpha1/tool.json"
+    "schemas/v1alpha1/tool.json:318"
    ]
   },
   {
@@ -4919,7 +4916,7 @@
    "claim": "spec.output_schema is optional on a Tool",
    "verdict": "false",
    "evidence": [
-    "schemas/v1alpha1/tool.json"
+    "schemas/v1alpha1/tool.json:368"
    ]
   },
   {
@@ -4928,7 +4925,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:923",
-    "schemas/v1alpha1/tool.json"
+    "schemas/v1alpha1/tool.json:318"
    ]
   },
   {
@@ -4936,7 +4933,7 @@
    "claim": "Tool mode accepts the values mock, live, mcp, exec and client",
    "verdict": "false",
    "evidence": [
-    "arena/engine/builder_integration.go:547"
+    "arena/engine/builder_integration.go:564"
    ]
   },
   {
@@ -4944,7 +4941,7 @@
    "claim": "spec.timeout_ms is an optional execution timeout on a Tool",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/tool.json"
+    "schemas/v1alpha1/tool.json:318"
    ]
   },
   {
@@ -4958,7 +4955,7 @@
    "claim": "spec.mock_template is an alternative to mock_result",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/tool.json"
+    "schemas/v1alpha1/tool.json:318"
    ]
   },
   {
@@ -4966,7 +4963,7 @@
    "claim": "spec.http is required when mode is live",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/tool.json"
+    "schemas/v1alpha1/tool.json:318"
    ]
   },
   {
@@ -4974,7 +4971,7 @@
    "claim": "http.method accepts GET, POST, PUT and DELETE",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/tool.json"
+    "schemas/v1alpha1/tool.json:318"
    ]
   },
   {
@@ -4982,7 +4979,7 @@
    "claim": "http.headers is a field on the live-mode HTTP config",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/tool.json"
+    "schemas/v1alpha1/tool.json:318"
    ]
   },
   {
@@ -4990,7 +4987,7 @@
    "claim": "http.headers_from_env loads header values from environment variables",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/tool.json"
+    "schemas/v1alpha1/tool.json:318"
    ]
   },
   {
@@ -4998,7 +4995,7 @@
    "claim": "http.timeout_ms is a field on the live-mode HTTP config",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/tool.json"
+    "schemas/v1alpha1/tool.json:318"
    ]
   },
   {
@@ -5006,7 +5003,7 @@
    "claim": "http.redact lists fields redacted in logs",
    "verdict": "false",
    "evidence": [
-    "schemas/v1alpha1/tool.json"
+    "schemas/v1alpha1/tool.json:318"
    ]
   },
   {
@@ -5038,8 +5035,8 @@
    "claim": "mock_template_file and mock_result_file resolve against the arena config directory and are accepted in a kind: Tool file only",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go",
-    "tools/schema-gen/generators/tool_spec.go"
+    "arena/engine/builder_integration.go:564-580",
+    "tools/schema-gen/generators/tool_spec.go:22-40"
    ]
   },
   {
@@ -5317,8 +5314,8 @@
    "claim": "Session recordings are generated by Arena when recording.enabled is true in the output config",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:698",
-    "arena/engine/engine.go:700"
+    "arena/engine/engine.go:699",
+    "arena/engine/engine.go:701"
    ]
   },
   {
@@ -5342,7 +5339,7 @@
    "claim": "A session recording contains the full event stream with timing, audio data and metadata",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:619-622"
+    "arena/engine/engine.go:620-623"
    ]
   },
   {
@@ -5502,7 +5499,7 @@
    "claim": "Session recording files use the .recording.json extension",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:686"
+    "arena/engine/engine.go:687"
    ]
   },
   {
@@ -8454,8 +8451,8 @@
     "arena/arenaconfig/helpers.go:55",
     "arena/cmd/promptarena/run.go:363",
     "arena/cmd/promptarena/serve_interactive.go:222",
-    "arena/engine/engine.go:1026",
-    "arena/engine/engine.go:705"
+    "arena/engine/engine.go:1045",
+    "arena/engine/engine.go:706"
    ]
   },
   {
@@ -8497,7 +8494,7 @@
    "claim": "promptarena validate warns when scenario context has a variables key",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator.go"
+    "arena/arenaconfig/validator.go:326-333"
    ]
   },
   {
@@ -8505,8 +8502,8 @@
    "claim": "Arena checks each pack_evals entry at engine build (id present and unique, type and trigger required with a valid trigger, sample_percentage 0-100, valid metric name/type/labels); a bad entry stops the run with 'invalid pack_evals'",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:717",
-    "arena/engine/builder_integration.go:718"
+    "arena/engine/builder_integration.go:722",
+    "arena/engine/builder_integration.go:723"
    ]
   },
   {
@@ -8519,13 +8516,25 @@
    ]
   },
   {
+   "id": 10003,
+   "claim": "Scenario spec.providers is an optional list of provider ids restricting the scenario to those arena providers; when empty the scenario uses its provider_group (default unless set), or every provider if the group has none; validate reports an unknown id as an error listing the known ids",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:705",
+    "arena/arenaconfig/validator.go:337-347",
+    "arena/engine/execution.go:279-302",
+    "schemas/v1alpha1/scenario.json:607-613"
+   ]
+  },
+  {
    "id": "fix-449-local",
    "claim": "mode: local is not available in PromptArena: validate reports it as an error and run stops at startup on it",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator.go:62",
-    "arena/arenaconfig/validator_tools.go:73-95",
-    "arena/engine/builder_integration.go:564"
+    "arena/arenaconfig/validator.go:63",
+    "arena/arenaconfig/validator_tools.go:73-98",
+    "arena/engine/builder_integration.go:564",
+    "schemas/v1alpha1/tool.json:321"
    ]
   }
  ]

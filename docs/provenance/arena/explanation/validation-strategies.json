@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/explanation/validation-strategies.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "45cbd09a1d70928da45e071755b0c2172abfc8ca",
  "claims": [
   {
    "id": 1,
@@ -158,7 +158,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:689",
-    "arena/arenaconfig/validator.go:312-315"
+    "arena/arenaconfig/validator.go:314-317"
    ]
   },
   {
@@ -199,7 +199,7 @@
    "claim": "A turn's role is user or a self-play role ID; promptarena validate rejects role: assistant.",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator.go",
+    "arena/arenaconfig/validator.go:366",
     "arena/engine/conversation_executor.go"
    ]
   },
