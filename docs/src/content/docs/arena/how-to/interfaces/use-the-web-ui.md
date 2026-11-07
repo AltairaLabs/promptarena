@@ -4,8 +4,9 @@ description: Run Arena's local web interface for live run monitoring, a results 
 sidebar:
   order: 20
 verified:
-  commit: 0dbee6290db4e4de3bff3101f260fd614f81c924
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
+    - arena/arenaconfig/mock_config_check.go
     - arena/cmd/promptarena/serve_interactive.go
     - arena/engine/engine.go
     - arena/web/embed.go
@@ -173,7 +174,7 @@ responses:
 promptarena serve --mock-provider --mock-config mock-responses.yaml --open
 ```
 
-Tools still run for real. See [Use Mock Providers](/arena/how-to/providers/use-mock-providers/) for the
+`serve` exits at startup if the `--mock-config` file has an unknown key. Tools still run for real. See [Use Mock Providers](/arena/how-to/providers/use-mock-providers/) for the
 response file format.
 
 ## REST API

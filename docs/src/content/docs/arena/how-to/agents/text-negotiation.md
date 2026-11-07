@@ -2,7 +2,7 @@
 title: Test Agent Negotiation
 description: Test a multi-turn negotiation with conversation-level assertions, scripted for CI or driven by a real LLM in self-play.
 verified:
-  commit: 3df344ffbc8c604e1a8935929c28499d778d19f0
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - .github/workflows/ci.yml
     - arena/arenaconfig/loader.go
@@ -124,6 +124,8 @@ The default scenario uses scripted user turns. These steps hand the tenant side 
        with a 12-month lease. Be polite but firm; don't accept above
        $2500. If the landlord won't budge below $2500, walk away.
    ```
+
+   A persona file accepts only the keys in the persona schema. An unknown key, such as a misspelt `system_template`, fails the load.
 
 2. Create `providers/openai-gpt4o-mini-text.provider.yaml`:
 

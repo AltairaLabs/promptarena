@@ -4,15 +4,17 @@ description: Brief Claude Code, Codex, or another coding agent with PromptArena'
 sidebar:
   order: 20
 verified:
-  commit: 1f3acc05aa6f98764a8598798bf817c19d6f1f44
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/agentkb/catalog.yaml
     - arena/agentkb/skill.go
     - arena/agentmcp/server.go
     - arena/agentmcp/tools.go
+    - arena/assertions/validate_params.go
     - arena/cmd/promptarena/agent_brief.go
     - arena/cmd/promptarena/chat.go
     - arena/cmd/promptarena/deploy_adapter_interactive.go
+    - arena/cmd/promptarena/examples_cmd.go
     - arena/cmd/promptarena/init.go
     - arena/cmd/promptarena/mcp_cmd.go
     - arena/cmd/promptarena/run.go
@@ -25,7 +27,6 @@ verified:
     - arena/tui/tui.go
     - examples/rag-agent/config.arena.yaml
     - schemas/v1alpha1/tool.json
-    - tools/schema-gen/generators/tool_spec.go
 ---
 
 Have a coding agent such as Claude Code write a PromptArena kit (prompts, scenarios, assertions, tools and mock responses) and test it against mocks. PromptArena ships the config format and its idioms inside the binary, and writes them into your project as an authoring brief so the agent does not guess field names.
@@ -125,7 +126,7 @@ promptarena validate config.arena.yaml
 promptarena run --ci --formats json,markdown
 ```
 
-`validate` checks each file against the JSON schema embedded in the binary, checks that every assertion type exists, then builds the pack in memory and runs every check `packc` runs. A config that passes `validate` compiles with `packc`. It reports every problem in one pass. `validate --json` gives the same report as JSON; each problem names the stage that found it, and names the file to edit when that differs from the file being validated. `run --ci` runs every scenario headless, writes results to `--out`, else `defaults.output.dir`, else `out/`, and exits non-zero when a run errors or an assertion fails. The agent reads `out/results.md` for the summary and the per-run JSON files for
+`validate` checks each file against the JSON schema embedded in the binary, checks that every assertion type exists and that its `params` are ones the handler reads, then builds the pack in memory and runs every check `packc` runs. A config that passes `validate` compiles with `packc`. It reports every problem in one pass. `validate --json` gives the same report as JSON; each problem names the stage that found it, and names the file to edit when that differs from the file being validated. `run --ci` runs every scenario headless, writes results to `--out`, else `defaults.output.dir`, else `out/`, and exits non-zero when a run errors or an assertion fails. The agent reads `out/results.md` for the summary and the per-run JSON files for
 detail, fixes what failed, and runs again.
 
 Along the way the agent sets up:
@@ -142,9 +143,10 @@ Give the kit a `type: mock` provider that declares `additional_config.mock_confi
 
 A `kind: Tool` config is a contract (`name`, `description`, `input_schema`, `output_schema`) plus a binding; the implementation lives outside the pack. See [Tool authoring](/arena/reference/tool-authoring/). For each tool, the agent either:
 
-- mocks it (`mode: mock`) for testing,
+- mocks it (`mode: mock`) for testing, with `mock_result`, `mock_template`, or a file named by
+  `mock_result_file` or `mock_template_file` (relative to the arena config directory),
 - binds an existing service (`mode: live` with an `http` block, or `mode: mcp`;
-  `mode: exec` runs only in the PromptKit SDK, not in `promptarena run`), or
+  `mode: exec` runs only in the PromptKit SDK: `promptarena run` stops at startup on such a tool), or
 - writes a new service that you deploy separately from the pack.
 
 ## 6. Watch it run

@@ -2,12 +2,14 @@
 title: Write Test Scenarios
 description: Create a scenario file, add turns and assertions, and choose which providers it runs against.
 verified:
-  commit: 631d3c353c2c9d71b362ae5cd20c137d42b19d5b
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/arenaconfig/types.go
     - arena/assertions/types.go
+    - arena/assertions/validate_params.go
     - arena/cmd/promptarena/init.go
     - arena/cmd/promptarena/run.go
+    - arena/cmd/promptarena/validate_json.go
     - arena/engine/execution.go
     - arena/turnexecutors/pipeline_stages_integration.go
 ---
@@ -62,7 +64,7 @@ Write a scenario: the scripted conversation Arena sends to a provider, with the 
              message: "Should mention weekend availability"
    ```
 
-   Each turn is one user message. The turns run in order in one conversation, so later turns test context retention. `message` sits beside `params`, not inside it.
+   Each turn is one user message: `role` is `user`, or the ID of a self-play role from `spec.self_play.roles`. The assistant's reply is never scripted. The turns run in order in one conversation, so later turns test context retention. `message` sits beside `params`, not inside it.
 
 3. Add the scenario to the arena config:
 
@@ -165,7 +167,13 @@ Write a scenario: the scripted conversation Arena sends to a provider, with the 
 
 ## Verify
 
-Run the scenario by its `metadata.name`:
+Check the config first. `promptarena validate config.arena.yaml` reports unknown assertion types and `params` the assertion handler does not read.
+
+```bash
+promptarena validate config.arena.yaml
+```
+
+Then run the scenario by its `metadata.name`:
 
 ```bash
 promptarena run --scenario basic-customer-inquiry

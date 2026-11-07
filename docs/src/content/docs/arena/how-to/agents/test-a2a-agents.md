@@ -2,7 +2,7 @@
 title: Test A2A Agents
 description: Define mock or remote A2A agents in an Arena config and assert on agent delegation in scenarios.
 verified:
-  commit: 3df344ffbc8c604e1a8935929c28499d778d19f0
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/agentkb/evalmeta.yaml
     - arena/arenaconfig/types.go

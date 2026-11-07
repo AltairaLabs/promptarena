@@ -2,7 +2,7 @@
 title: Use Mock Providers
 description: "Run scenarios against canned responses with --mock-provider, --mock-config or a type: mock provider, with no API calls or cost."
 verified:
-  commit: 1f3acc05aa6f98764a8598798bf817c19d6f1f44
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/arenaconfig/loader.go
     - arena/arenaconfig/mock_config_check.go
@@ -61,7 +61,7 @@ defaultResponse: "This is a mock response from the configured provider."
 
 Scenario keys must match the scenario's `metadata.name`, not `spec.id`. Turn keys are turn numbers. Each value is either a plain string (a text response) or a mapping with `response` and/or `tool_calls`.
 
-The key is `defaultResponse` (camelCase). Arena checks a mock file's keys when it loads it, so a misspelled or snake_case key such as `default_response` is an error rather than a silent fall back to the generic "Mock response for provider ..." reply. `promptarena validate` checks a provider's `mock_config` file; `promptarena run` also checks the file `--mock-config` names.
+The key is `defaultResponse` (camelCase). Arena checks a mock file's keys when it loads it, so a misspelled or snake_case key such as `default_response` is an error rather than a silent fall back to the generic "Mock response for provider ..." reply. The check also covers the keys inside a turn (`response`, `tool_calls`, `parts` and the audio keys), a tool call (`name`, `arguments`) and a content part. `promptarena validate` checks the `mock_config` file of each `type: mock` provider; `promptarena run` also checks the file `--mock-config` names.
 
 ### Run with a mock config
 

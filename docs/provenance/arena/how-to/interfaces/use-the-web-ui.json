@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/interfaces/use-the-web-ui.md",
- "commit": "0dbee6290db4e4de3bff3101f260fd614f81c924",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
@@ -183,9 +183,8 @@
    "claim": "The dashboard shows providers, scenarios and regions from the loaded config",
    "verdict": "false",
    "evidence": [
-    "arena/web/frontend/src/App.tsx",
-    "arena/web/server.go:130",
-    "arena/web/server_picker_integration.go"
+    "arena/web/frontend/src/App.tsx:156-157",
+    "arena/web/frontend/src/App.tsx:175-176"
    ]
   },
   {
@@ -193,7 +192,7 @@
    "claim": "The dashboard lists completed runs, each opening a detailed results viewer",
    "verdict": "true",
    "evidence": [
-    "arena/web/frontend/src/App.tsx:266",
+    "arena/web/frontend/src/App.tsx:635",
     "arena/web/frontend/src/components/HistoricalResults.tsx"
    ]
   },
@@ -224,7 +223,7 @@
    "claim": "Selecting a trial opens the detailed results viewer for that run",
    "verdict": "true",
    "evidence": [
-    "arena/web/frontend/src/App.tsx:500-545"
+    "arena/web/frontend/src/App.tsx:501-518"
    ]
   },
   {
@@ -232,8 +231,8 @@
    "claim": "The results viewer shows the transcript with tool calls and their results inline",
    "verdict": "true",
    "evidence": [
-    "arena/web/frontend/src/App.tsx:531",
-    "arena/web/frontend/src/lib/atlasAdapter.ts:382"
+    "arena/web/frontend/src/App.tsx:532",
+    "arena/web/frontend/src/lib/atlasAdapter.ts:17-28"
    ]
   },
   {
@@ -241,7 +240,7 @@
    "claim": "The results viewer shows per-turn token, cost and latency figures",
    "verdict": "unverified",
    "evidence": [
-    "arena/web/frontend/src/lib/atlasAdapter.ts"
+    "arena/web/frontend/src/lib/atlasAdapter.ts:177-184"
    ]
   },
   {
@@ -249,8 +248,7 @@
    "claim": "The results viewer has a scrubber that replays the conversation turn by turn",
    "verdict": "true",
    "evidence": [
-    "arena/web/frontend/src/App.tsx:151",
-    "arena/web/frontend/src/lib/atlasAdapter.ts:193-199"
+    "arena/web/frontend/src/App.tsx:545"
    ]
   },
   {
@@ -258,7 +256,7 @@
    "claim": "The run detail view shows message, tool-call, token, cost and latency totals and a replay timeline",
    "verdict": "unverified",
    "evidence": [
-    "arena/web/frontend/src/App.tsx:531"
+    "arena/web/frontend/src/App.tsx:532"
    ]
   },
   {
@@ -266,7 +264,7 @@
    "claim": "The UI subscribes to GET /api/events, an SSE stream of run events",
    "verdict": "true",
    "evidence": [
-    "arena/web/frontend/src/hooks/useArenaEvents.ts:347",
+    "arena/web/frontend/src/hooks/useArenaEvents.ts:388",
     "arena/web/server.go:127"
    ]
   },
@@ -275,7 +273,7 @@
    "claim": "The SSE stream stays open for the life of the page",
    "verdict": "true",
    "evidence": [
-    "arena/web/frontend/src/hooks/useArenaEvents.ts:346-370"
+    "arena/web/frontend/src/hooks/useArenaEvents.ts:386-408"
    ]
   },
   {
@@ -283,7 +281,7 @@
    "claim": "The SSE stream reconnects automatically if dropped",
    "verdict": "true",
    "evidence": [
-    "arena/web/frontend/src/hooks/useArenaEvents.ts:347-356"
+    "arena/web/frontend/src/hooks/useArenaEvents.ts:388-396"
    ]
   },
   {
@@ -300,7 +298,7 @@
    "verdict": "true",
    "evidence": [
     "arena/web/frontend/src/App.tsx:435",
-    "arena/web/frontend/src/hooks/useArenaEvents.ts:82-280"
+    "arena/web/frontend/src/hooks/useArenaEvents.ts:107-286"
    ]
   },
   {
@@ -351,7 +349,7 @@
    "claim": "Progress streams back over the SSE connection",
    "verdict": "true",
    "evidence": [
-    "arena/web/frontend/src/hooks/useArenaEvents.ts",
+    "arena/web/frontend/src/hooks/useArenaEvents.ts:388",
     "arena/web/server.go:127"
    ]
   },
@@ -396,7 +394,7 @@
    "claim": "The agent reply renders live over the same SSE stream",
    "verdict": "true",
    "evidence": [
-    "arena/web/frontend/src/hooks/useArenaEvents.ts:195-232",
+    "arena/web/frontend/src/hooks/useArenaEvents.ts:198-232",
     "arena/web/interactive.go:159",
     "arena/web/server.go:123-160"
    ]
@@ -507,7 +505,8 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/serve_interactive.go:138-141",
-    "arena/engine/engine.go:738-782"
+    "arena/cmd/promptarena/serve_interactive.go:181-188",
+    "arena/engine/engine.go:741-790"
    ]
   },
   {
@@ -516,7 +515,7 @@
    "verdict": "unverified",
    "evidence": [
     "arena/cmd/promptarena/serve_interactive.go:176-180",
-    "arena/engine/engine.go:738-782"
+    "arena/engine/engine.go:762-787"
    ]
   },
   {
@@ -525,7 +524,7 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/serve_interactive.go:142-143",
-    "arena/engine/engine.go:741-748"
+    "arena/engine/engine.go:745-756"
    ]
   },
   {
@@ -541,7 +540,7 @@
    "claim": "In mock mode runs execute end to end with tools still running for real",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:762"
+    "arena/engine/engine.go:770"
    ]
   },
   {
@@ -550,7 +549,7 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/serve_interactive.go:183-188",
-    "arena/engine/engine.go:750-779"
+    "arena/engine/engine.go:758-787"
    ]
   },
   {
@@ -607,7 +606,7 @@
    "claim": "GET /api/media/{path...} serves a media artifact such as recorded audio",
    "verdict": "true",
    "evidence": [
-    "arena/web/frontend/src/lib/atlasAdapter.ts:382",
+    "arena/web/frontend/src/lib/atlasAdapter.ts:383",
     "arena/web/server.go:133"
    ]
   },
@@ -657,9 +656,18 @@
    "claim": "Pipeline stage events received live show on the run's Trace tab, one row per stage execution with duration and error; only for runs whose events the open page received.",
    "verdict": "true",
    "evidence": [
+    "arena/web/frontend/src/App.tsx:517",
     "arena/web/frontend/src/hooks/useArenaEvents.ts:276",
-    "arena/web/frontend/src/lib/atlasAdapter.ts:395",
-    "arena/web/frontend/src/App.tsx:517"
+    "arena/web/frontend/src/lib/atlasAdapter.ts:395"
+   ]
+  },
+  {
+   "id": 78,
+   "claim": "serve exits at startup if the --mock-config file has an unknown key.",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/mock_config_check.go:69",
+    "arena/engine/engine.go:748"
    ]
   }
  ]

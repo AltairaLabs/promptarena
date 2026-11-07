@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/scenarios/workflow-regression.md",
- "commit": "0dbee6290db4e4de3bff3101f260fd614f81c924",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
@@ -105,7 +105,8 @@
    "claim": "Turn-level assertions block: turns[].role, turns[].content, turns[].assertions with type and params",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:44",
+    "arena/arenaconfig/types.go:1189",
+    "arena/arenaconfig/types.go:697",
     "examples/workflow-support/scenarios/basic-flow.scenario.yaml:9"
    ]
   },
@@ -196,8 +197,9 @@
    "claim": "Scenario field conversation_assertions accepts transitioned_to and spoke_in_state entries with params.state",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:44",
-    "examples/workflow-agent-loops/scenarios/loop-converges.scenario.yaml:31"
+    "arena/arenaconfig/types.go:715",
+    "examples/workflow-agent-loops/scenarios/loop-converges.scenario.yaml:29",
+    "examples/workflow-agent-loops/scenarios/loop-converges.scenario.yaml:41"
    ]
   },
   {
@@ -282,7 +284,7 @@
    "claim": "actions/checkout@v4 and actions/setup-go@v5 are used in the CI example",
    "verdict": "false",
    "evidence": [
-    ".github/workflows/ci.yml:28",
+    ".github/workflows/ci.yml:93",
     ".github/workflows/ci.yml:96"
    ]
   },
@@ -333,7 +335,7 @@
    "claim": "Scenario spec field task_type sets the start stage of the workflow",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go",
+    "arena/arenaconfig/types.go:689",
     "arena/engine/execution_workflow_integration.go:233"
    ]
   },

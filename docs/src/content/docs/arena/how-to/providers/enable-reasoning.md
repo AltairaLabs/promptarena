@@ -2,7 +2,7 @@
 title: Enable Model Reasoning
 description: Turn on extended thinking for Gemini, Claude and OpenAI, and capture the trace separately from the answer. Each provider uses a different control, and setting the wrong one usually yields an empty trace rather than an error.
 verified:
-  commit: 0dbee6290db4e4de3bff3101f260fd614f81c924
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/arenaconfig/validator_tools.go
     - arena/engine/builder_integration.go
@@ -123,7 +123,7 @@ Where reasoning is visible:
 | TUI (`promptarena run` without `--ci`) | A `💭 Reasoning` section in the turn detail, and a live block while a streaming turn runs. |
 | Web UI (`promptarena serve`) | A collapsible reasoning disclosure on the message, for live runs and historical results, on either side of a tool call. Interactive chat also shows a streaming preview while the turn runs; the complete trace arrives with the message. |
 
-The markdown report (`out/results.md`) does not show model reasoning. It prints a `reasoning` value against assertions, which is an LLM judge's reasoning for its verdict.
+The markdown report (`out/results.md`) does not show model reasoning. Its conversation-assertion tables print a `reasoning` value, which is an LLM judge's reasoning for its verdict.
 
 ### Reasoning is written to disk
 

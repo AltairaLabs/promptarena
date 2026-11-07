@@ -2,16 +2,16 @@
 title: Generate regression scenarios from production sessions
 description: Turn a session that went wrong in production into an arena scenario that asserts it does not go wrong again.
 verified:
-  commit: 60cd1a146e6224c0d66c972d18f329a0ce76c522
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/arenaconfig/types.go
-    - arena/cmd/promptarena/deploy_import_interactive.go
+    - arena/cmd/promptarena/deploy_apply_interactive.go
     - arena/cmd/promptarena/generate.go
     - arena/cmd/promptarena/generate_integration.go
     - arena/deploy/flow/config.go
     - arena/deploy/flow/connect.go
+    - arena/deploy/flow/credentials.go
     - arena/deploy/flow/login.go
-    - arena/deploy/flow/session.go
     - arena/deploy/flow/sessions.go
     - arena/deploy/flow/sessions_test.go
     - arena/generate/adapter.go
@@ -51,7 +51,8 @@ scenario description.
   with that exact command to run.
 - A `deploy:` section in your arena config, and a token from `promptarena
   deploy login`. The adapter is handed the same merged profile `deploy apply`
-  uses: endpoint, workspace, token. `--workspace` overrides the workspace.
+  uses for the `default` environment: endpoint, workspace, token. `generate`
+  has no `--env` flag. `--workspace` overrides the workspace.
 
 ## Generate
 

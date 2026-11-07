@@ -2,7 +2,7 @@
 title: Validate Outputs
 description: Add assertions to scenario turns and conversations to check content, structure, tool use and quality, then read the results.
 verified:
-  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/arenaconfig/judge_param.go
     - arena/arenaconfig/types.go

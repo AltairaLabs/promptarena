@@ -2,7 +2,7 @@
 title: Test RAG Agents
 description: Gate a RAG agent with faithfulness, answer_relevancy, contextual_precision, contextual_recall, contextual_relevancy and hallucination assertions. Run keyless with a mock judge, or swap in a real LLM judge.
 verified:
-  commit: 3df344ffbc8c604e1a8935929c28499d778d19f0
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - .github/workflows/ci.yml
     - arena/arenaconfig/loader.go

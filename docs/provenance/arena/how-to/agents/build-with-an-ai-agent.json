@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/agents/build-with-an-ai-agent.md",
- "commit": "1f3acc05aa6f98764a8598798bf817c19d6f1f44",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
@@ -16,7 +16,7 @@
    "verdict": "true",
    "evidence": [
     "arena/agentkb/skill.go:49",
-    "arena/cmd/promptarena/agent_brief.go:72"
+    "arena/cmd/promptarena/agent_brief.go:86"
    ]
   },
   {
@@ -24,7 +24,7 @@
    "claim": "promptarena init my-kit --quick",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:65"
+    "arena/cmd/promptarena/init.go:66"
    ]
   },
   {
@@ -32,7 +32,7 @@
    "claim": "init accepts --quick",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:65"
+    "arena/cmd/promptarena/init.go:66"
    ]
   },
   {
@@ -40,8 +40,8 @@
    "claim": "init scaffolds a sample kit and writes the brief next to it",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/agent_brief.go:132",
-    "arena/cmd/promptarena/init.go:119"
+    "arena/cmd/promptarena/agent_brief.go:146",
+    "arena/cmd/promptarena/init.go:125"
    ]
   },
   {
@@ -49,7 +49,7 @@
    "claim": "init accepts --template <name>",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:64"
+    "arena/cmd/promptarena/init.go:65"
    ]
   },
   {
@@ -58,7 +58,7 @@
    "verdict": "true",
    "evidence": [
     "arena/agentkb/catalog.yaml:1",
-    "arena/cmd/promptarena/init.go:64"
+    "arena/cmd/promptarena/examples_cmd.go:32"
    ]
   },
   {
@@ -66,8 +66,8 @@
    "claim": "init accepts --no-agent, which skips writing the brief",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/init.go:119",
-    "arena/cmd/promptarena/init.go:77"
+    "arena/cmd/promptarena/init.go:125",
+    "arena/cmd/promptarena/init.go:83"
    ]
   },
   {
@@ -75,7 +75,7 @@
    "claim": "promptarena agent-brief writes the brief into the current directory by default",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/agent_brief.go:47"
+    "arena/cmd/promptarena/agent_brief.go:38"
    ]
   },
   {
@@ -83,7 +83,8 @@
    "claim": "promptarena agent-brief ./my-kit accepts a target directory argument",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/agent_brief.go:45"
+    "arena/cmd/promptarena/agent_brief.go:33",
+    "arena/cmd/promptarena/agent_brief.go:39"
    ]
   },
   {
@@ -91,8 +92,8 @@
    "claim": "agent-brief writes only the brief, with no sample kit",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/agent_brief.go:46",
-    "arena/cmd/promptarena/agent_brief.go:72"
+    "arena/cmd/promptarena/agent_brief.go:72",
+    "arena/cmd/promptarena/agent_brief.go:86"
    ]
   },
   {
@@ -108,7 +109,7 @@
    "claim": "The brief writes .claude/skills/promptarena-authoring/SKILL.md with a step-by-step workflow and minimal valid skeletons per config kind",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/agent_brief.go:23"
+    "arena/cmd/promptarena/agent_brief.go:24"
    ]
   },
   {
@@ -116,7 +117,7 @@
    "claim": "The skill reference directory holds evals-and-assertions.md, config-fields.md, mock-responses.md and cli.md, generated from the binary",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/agent_brief.go:107"
+    "arena/cmd/promptarena/agent_brief.go:121"
    ]
   },
   {
@@ -124,7 +125,7 @@
    "claim": "If AGENTS.md already exists, the brief is appended once and the user's content is kept",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/agent_brief.go:159"
+    "arena/cmd/promptarena/agent_brief.go:173"
    ]
   },
   {
@@ -132,8 +133,8 @@
    "claim": "The skill and reference files are overwritten on each agent-brief run",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/agent_brief.go:122",
-    "arena/cmd/promptarena/agent_brief.go:82"
+    "arena/cmd/promptarena/agent_brief.go:136",
+    "arena/cmd/promptarena/agent_brief.go:96"
    ]
   },
   {
@@ -232,7 +233,7 @@
    "claim": "mode: mock",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/tool.json:319"
+    "schemas/v1alpha1/tool.json:322"
    ]
   },
   {
@@ -284,7 +285,7 @@
    "claim": "validate checks that every assertion type exists",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/validate_json.go:27"
+    "arena/cmd/promptarena/validate_json.go:167"
    ]
   },
   {
@@ -292,8 +293,8 @@
    "claim": "validate builds the pack in memory and runs every check packc runs",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/validate_json.go:11",
-    "arena/cmd/promptarena/validate_json.go:28"
+    "arena/cmd/promptarena/validate_json.go:138",
+    "arena/cmd/promptarena/validate_json.go:146"
    ]
   },
   {
@@ -301,8 +302,8 @@
    "claim": "A config that passes validate compiles with packc",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/validate.go:24",
-    "arena/cmd/promptarena/validate_json.go:20"
+    "arena/cmd/promptarena/validate.go:25",
+    "arena/cmd/promptarena/validate_json.go:146"
    ]
   },
   {
@@ -310,7 +311,7 @@
    "claim": "validate reports every problem in one pass rather than stopping at the first",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/validate.go:21",
+    "arena/cmd/promptarena/validate.go:26",
     "arena/cmd/promptarena/validate_json.go:55"
    ]
   },
@@ -319,6 +320,7 @@
    "claim": "validate --json gives the same report as JSON",
    "verdict": "true",
    "evidence": [
+    "arena/cmd/promptarena/validate.go:52",
     "arena/cmd/promptarena/validate_json.go:55"
    ]
   },
@@ -327,9 +329,8 @@
    "claim": "Each validate problem names the stage that found it and the file to edit",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/validate_json.go:33",
-    "arena/cmd/promptarena/validate_json.go:35",
-    "arena/cmd/promptarena/validate_json.go:36"
+    "arena/cmd/promptarena/validate_json.go:181",
+    "arena/cmd/promptarena/validate_json.go:34"
    ]
   },
   {
@@ -362,7 +363,7 @@
    "claim": "Mock responses in mock-responses.yaml are keyed by each scenario's metadata.name",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:797"
+    "arena/engine/engine.go:802"
    ]
   },
   {
@@ -370,7 +371,7 @@
    "claim": "Tools, workflow state and memory run for real against mocked model output",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:765"
+    "arena/engine/engine.go:770"
    ]
   },
   {
@@ -400,7 +401,7 @@
    "evidence": [
     "arena/engine/engine.go:720",
     "arena/engine/engine.go:741",
-    "arena/engine/engine.go:796"
+    "arena/engine/engine.go:801"
    ]
   },
   {
@@ -409,6 +410,7 @@
    "verdict": "true",
    "evidence": [
     "schemas/v1alpha1/tool.json:317",
+    "schemas/v1alpha1/tool.json:318",
     "schemas/v1alpha1/tool.json:319"
    ]
   },
@@ -417,7 +419,7 @@
    "claim": "Tool mode mock is a valid tool mode",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/tool.json:321"
+    "schemas/v1alpha1/tool.json:322"
    ]
   },
   {
@@ -425,7 +427,7 @@
    "claim": "Tool mode live takes an http block",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/tool.json:321"
+    "schemas/v1alpha1/tool.json:322"
    ]
   },
   {
@@ -433,16 +435,17 @@
    "claim": "Tool mode mcp is a valid tool mode",
    "verdict": "true",
    "evidence": [
-    "schemas/v1alpha1/tool.json:321"
+    "schemas/v1alpha1/tool.json:322"
    ]
   },
   {
    "id": 54,
-   "claim": "Tool mode exec runs only in the PromptKit SDK, not in promptarena run",
+   "claim": "Tool mode exec runs only in the PromptKit SDK; promptarena run stops at startup on a tool with mode: exec",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go",
-    "tools/schema-gen/generators/tool_spec.go"
+    "arena/engine/builder_integration.go:114",
+    "arena/engine/builder_integration.go:442",
+    "schemas/v1alpha1/tool.json:322"
    ]
   },
   {
@@ -520,6 +523,25 @@
    "claim": "Link target /arena/how-to/providers/configure-providers/ exists",
    "verdict": "true",
    "evidence": []
+  },
+  {
+   "id": 66,
+   "claim": "validate checks that each assertion's params are keys its handler reads",
+   "verdict": "true",
+   "evidence": [
+    "arena/assertions/validate_params.go:153",
+    "arena/cmd/promptarena/validate_json.go:166"
+   ]
+  },
+  {
+   "id": 67,
+   "claim": "A kind: Tool config accepts mock_result_file and mock_template_file, paths relative to the arena config directory",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:604",
+    "schemas/v1alpha1/tool.json:354",
+    "schemas/v1alpha1/tool.json:358"
+   ]
   }
  ]
 }

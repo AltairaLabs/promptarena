@@ -2,7 +2,7 @@
 title: Manage Context
 description: Set a token budget and a truncation strategy so long scenario conversations stay within the model's context window.
 verified:
-  commit: 60cd1a146e6224c0d66c972d18f329a0ce76c522
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/arenaconfig/loader.go
     - arena/arenaconfig/types.go

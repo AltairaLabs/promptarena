@@ -2,7 +2,7 @@
 title: Configure LLM Providers
 description: Add OpenAI, Anthropic, Gemini, Azure, Ollama, vLLM and gateway providers to an arena, set credentials, and select providers per run.
 verified:
-  commit: 0c27dc25f3c6ccfce8e77f27911a245f2a30cb96
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/arenaconfig/ignored_fields.go
     - arena/arenaconfig/loader.go

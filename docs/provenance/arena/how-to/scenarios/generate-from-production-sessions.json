@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/scenarios/generate-from-production-sessions.md",
- "commit": "60cd1a146e6224c0d66c972d18f329a0ce76c522",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
@@ -103,7 +103,7 @@
    "claim": "promptarena deploy adapter install omnia installs the omnia adapter",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/connect.go:12"
+    "arena/deploy/flow/connect.go:15"
    ]
   },
   {
@@ -111,7 +111,7 @@
    "claim": "An older adapter is reported with the exact install command to run",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/connect.go:12",
+    "arena/deploy/flow/connect.go:15",
     "arena/deploy/flow/sessions.go:34"
    ]
   },
@@ -121,7 +121,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:170",
-    "arena/deploy/flow/config.go:23"
+    "arena/deploy/flow/config.go:13-24"
    ]
   },
   {
@@ -129,17 +129,18 @@
    "claim": "promptarena deploy login command issues the token used by generate",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/config.go:70",
-    "arena/deploy/flow/login.go:94"
+    "arena/deploy/flow/config.go:94-96",
+    "arena/deploy/flow/credentials.go:91",
+    "arena/deploy/flow/login.go:231"
    ]
   },
   {
    "id": 16,
-   "claim": "Adapter receives the same merged profile that deploy apply uses (endpoint, workspace, token)",
+   "claim": "The adapter receives the same merged profile that deploy apply uses for the default environment (endpoint, workspace, token).",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/session.go:54",
-    "arena/deploy/flow/sessions.go:64"
+    "arena/deploy/flow/config.go:84-104",
+    "arena/deploy/flow/sessions.go:58-69"
    ]
   },
   {
@@ -147,7 +148,7 @@
    "claim": "promptarena deploy apply command exists",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/deploy_import_interactive.go:58"
+    "arena/cmd/promptarena/deploy_apply_interactive.go:16"
    ]
   },
   {
@@ -184,8 +185,8 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/generate.go:119",
-    "arena/cmd/promptarena/generate.go:55",
-    "arena/deploy/flow/config.go:14"
+    "arena/cmd/promptarena/generate.go:82-84",
+    "arena/deploy/flow/config.go:13-24"
    ]
   },
   {
@@ -487,6 +488,15 @@
    "verdict": "true",
    "evidence": [
     "arena/deploy/flow/sessions_test.go:347"
+   ]
+  },
+  {
+   "id": 57,
+   "claim": "promptarena generate has no --env flag; it merges the default environment's profile.",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/generate.go:82-84",
+    "arena/deploy/flow/sessions.go:63"
    ]
   }
  ]
