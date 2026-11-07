@@ -806,7 +806,7 @@ func TestConfirm_YKeyStartsApplyGoroutine(t *testing.T) {
 // contention, this would panic on a nil pointer and fail the test.
 func TestDeployPage_StartApply_LockContentionReportsErr(t *testing.T) {
 	dir := t.TempDir()
-	release, err := flow.Lock(dir, flow.DefaultEnv)
+	release, err := flow.LockEnv(dir, flow.DefaultEnv)
 	if err != nil {
 		t.Fatalf("failed to acquire test lock: %v", err)
 	}
@@ -1060,7 +1060,7 @@ func TestStalePlan_NoticeShownBeforeReplan(t *testing.T) {
 	dir := t.TempDir()
 	fp := &fakeDeployProvider{plan: planWithChanges()}
 	dc := &arenaconfig.DeployConfig{Provider: "fake"}
-	store := deploy.NewStateStore(dir, flow.DefaultEnv)
+	store := deploy.NewEnvStateStore(dir, flow.DefaultEnv)
 
 	// Seed a saved plan with a checksum/env that won't match this session's
 	// (whose packData is `{"pack":true}` and whose Env resolves to

@@ -130,12 +130,13 @@ func (r *treeRun) run(t *testing.T, search *arenaconfig.ObjectiveSearchConfig) *
 		executor.evalOrchestrator = NewEvalOrchestrator(evals.NewEvalTypeRegistry(), nil, false, nil, "")
 	}
 	if r.judge != nil {
-		executor.searchJudge = func(_ *arenaconfig.Config, name string) (handlers.JudgeProvider, error) {
+		judgeFor := searchJudgeFunc(func(_ *arenaconfig.Config, name string) (handlers.JudgeProvider, error) {
 			if name != "scorer" {
 				return nil, fmt.Errorf("no judge %q", name)
 			}
 			return r.judge, nil
-		}
+		})
+		executor.searchJudge = &judgeFor
 	}
 	obj := refundObjective("", nil)
 	obj.Search = search

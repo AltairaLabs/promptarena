@@ -21,7 +21,7 @@ func TestSelfPlayExecutor_GenerateUserMessage_PassesTurnOverrides(t *testing.T) 
 	gen := new(MockContentGen)
 	gen.On("NextUserTurn", mock.Anything, mock.Anything, "s1", mock.MatchedBy(func(o *selfplay.GeneratorOptions) bool {
 		return o != nil && o.Temperature != nil && *o.Temperature == temp && o.Seed != nil && *o.Seed == seed &&
-			o.Variables["exchange"] == "3"
+			o.Variables != nil && (*o.Variables)["exchange"] == "3"
 	})).Return(&pipeline.ExecutionResult{Response: &pipeline.Response{Content: "hi"}}, nil)
 
 	content := new(MockSelfPlayContentProvider)

@@ -63,9 +63,24 @@ type StateStore struct {
 	env     string
 }
 
-// NewStateStore creates a StateStore rooted at baseDir for environment env.
+// defaultEnvironment is the environment deploy commands target when no --env
+// is given (flow.DefaultEnv). The one-argument constructors kept from v2.4.0,
+// before state was scoped per environment, map onto it.
+const defaultEnvironment = "default"
+
+// NewStateStore creates a StateStore rooted at baseDir for the default
+// environment, the one a deploy command targets when no --env is given. A
+// legacy unscoped state file recorded for that environment is adopted by
+// Load, as with any store.
+//
+// Deprecated: state is per environment; use NewEnvStateStore.
+func NewStateStore(baseDir string) *StateStore {
+	return NewEnvStateStore(baseDir, defaultEnvironment)
+}
+
+// NewEnvStateStore creates a StateStore rooted at baseDir for environment env.
 // An invalid environment name is reported by the first operation.
-func NewStateStore(baseDir, env string) *StateStore {
+func NewEnvStateStore(baseDir, env string) *StateStore {
 	return &StateStore{baseDir: baseDir, env: env}
 }
 

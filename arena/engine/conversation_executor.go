@@ -38,8 +38,9 @@ type DefaultConversationExecutor struct {
 	promptRegistry   *prompt.Registry
 	evalOrchestrator *EvalOrchestrator
 	// searchJudge returns an objective search's judge; nil builds it from
-	// spec.judges.
-	searchJudge searchJudgeFunc
+	// spec.judges. It is a pointer so the struct stays comparable, as it was
+	// in v2.4.0.
+	searchJudge *searchJudgeFunc
 }
 
 // NewDefaultConversationExecutor creates a new conversation executor

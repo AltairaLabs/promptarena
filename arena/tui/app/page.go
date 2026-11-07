@@ -142,11 +142,17 @@ type AppContext struct {
 	Verbose bool
 	LogDir  string
 
-	// SaveRunResults, when set, is called by the Run page once its runs finish
+	// ResultsWriter, when set, is called by the Run page once its runs finish
 	// (or are canceled) to write the configured report formats, the same files
 	// `promptarena run` writes. The bare-`promptarena` hub sets it; `run` leaves
 	// it nil because it writes the reports itself after the hub exits.
-	SaveRunResults func(eng *engine.Engine, runIDs []string) error
+	ResultsWriter *ResultsWriter
+}
+
+// ResultsWriter writes the report files for a finished set of runs. It is held
+// by pointer so AppContext stays comparable, as it was in v2.4.0.
+type ResultsWriter struct {
+	Write func(eng *engine.Engine, runIDs []string) error
 }
 
 // HasConfig reports whether a config has been loaded into this context.

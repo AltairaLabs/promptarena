@@ -9,7 +9,7 @@ import (
 
 func TestStateStore_SaveAndLoad(t *testing.T) {
 	dir := t.TempDir()
-	store := NewStateStore(dir, "default")
+	store := NewEnvStateStore(dir, "default")
 
 	original := &State{
 		Provider:       "aws-lambda",
@@ -62,7 +62,7 @@ func TestStateStore_SaveAndLoad(t *testing.T) {
 
 func TestStateStore_LastRefreshedRoundtrip(t *testing.T) {
 	dir := t.TempDir()
-	store := NewStateStore(dir, "default")
+	store := NewEnvStateStore(dir, "default")
 
 	original := &State{
 		Provider:      "aws-lambda",
@@ -92,7 +92,7 @@ func TestStateStore_LastRefreshedRoundtrip(t *testing.T) {
 
 func TestStateStore_LastRefreshedOmittedWhenEmpty(t *testing.T) {
 	dir := t.TempDir()
-	store := NewStateStore(dir, "default")
+	store := NewEnvStateStore(dir, "default")
 
 	original := &State{
 		Provider:    "local",
@@ -114,7 +114,7 @@ func TestStateStore_LastRefreshedOmittedWhenEmpty(t *testing.T) {
 
 func TestStateStore_LoadNonExistent(t *testing.T) {
 	dir := t.TempDir()
-	store := NewStateStore(dir, "default")
+	store := NewEnvStateStore(dir, "default")
 
 	state, err := store.Load()
 	if err != nil {
@@ -127,7 +127,7 @@ func TestStateStore_LoadNonExistent(t *testing.T) {
 
 func TestStateStore_SaveCreatesDirectory(t *testing.T) {
 	dir := t.TempDir()
-	store := NewStateStore(dir, "default")
+	store := NewEnvStateStore(dir, "default")
 
 	stateDir := filepath.Join(dir, ".promptarena")
 	if _, err := os.Stat(stateDir); !os.IsNotExist(err) {
@@ -154,7 +154,7 @@ func TestStateStore_SaveCreatesDirectory(t *testing.T) {
 
 func TestStateStore_Delete(t *testing.T) {
 	dir := t.TempDir()
-	store := NewStateStore(dir, "default")
+	store := NewEnvStateStore(dir, "default")
 
 	// Save first so there's something to delete.
 	state := &State{Provider: "test"}
@@ -174,7 +174,7 @@ func TestStateStore_Delete(t *testing.T) {
 
 func TestStateStore_DeleteNonExistent(t *testing.T) {
 	dir := t.TempDir()
-	store := NewStateStore(dir, "default")
+	store := NewEnvStateStore(dir, "default")
 
 	if err := store.Delete(); err != nil {
 		t.Fatalf("Delete on non-existent file returned error: %v", err)
@@ -232,7 +232,7 @@ func TestNewState(t *testing.T) {
 
 func TestStateStore_SaveNilState(t *testing.T) {
 	dir := t.TempDir()
-	store := NewStateStore(dir, "default")
+	store := NewEnvStateStore(dir, "default")
 
 	err := store.Save(nil)
 	if err == nil {
@@ -242,7 +242,7 @@ func TestStateStore_SaveNilState(t *testing.T) {
 
 func TestStateStore_SaveAndLoadPlan(t *testing.T) {
 	dir := t.TempDir()
-	store := NewStateStore(dir, "default")
+	store := NewEnvStateStore(dir, "default")
 
 	original := &SavedPlan{
 		CreatedAt:    "2026-02-18T10:30:00Z",
@@ -311,7 +311,7 @@ func TestStateStore_SaveAndLoadPlan(t *testing.T) {
 
 func TestStateStore_LoadPlanNonExistent(t *testing.T) {
 	dir := t.TempDir()
-	store := NewStateStore(dir, "default")
+	store := NewEnvStateStore(dir, "default")
 
 	plan, err := store.LoadPlan()
 	if err != nil {
@@ -324,7 +324,7 @@ func TestStateStore_LoadPlanNonExistent(t *testing.T) {
 
 func TestStateStore_DeletePlan(t *testing.T) {
 	dir := t.TempDir()
-	store := NewStateStore(dir, "default")
+	store := NewEnvStateStore(dir, "default")
 
 	// Save first so there's something to delete.
 	plan := &SavedPlan{Provider: "test"}
@@ -344,7 +344,7 @@ func TestStateStore_DeletePlan(t *testing.T) {
 
 func TestStateStore_DeletePlanNonExistent(t *testing.T) {
 	dir := t.TempDir()
-	store := NewStateStore(dir, "default")
+	store := NewEnvStateStore(dir, "default")
 
 	if err := store.DeletePlan(); err != nil {
 		t.Fatalf("DeletePlan on non-existent file returned error: %v", err)
@@ -353,7 +353,7 @@ func TestStateStore_DeletePlanNonExistent(t *testing.T) {
 
 func TestStateStore_SavePlanNilPlan(t *testing.T) {
 	dir := t.TempDir()
-	store := NewStateStore(dir, "default")
+	store := NewEnvStateStore(dir, "default")
 
 	err := store.SavePlan(nil)
 	if err == nil {

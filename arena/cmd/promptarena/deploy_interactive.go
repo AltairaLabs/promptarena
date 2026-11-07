@@ -93,7 +93,7 @@ func openEnvState(projectDir, env string) (*deploy.StateStore, error) {
 	if err := deploy.ValidateEnvironmentName(env); err != nil {
 		return nil, err
 	}
-	return deploy.NewStateStore(projectDir, env), nil
+	return deploy.NewEnvStateStore(projectDir, env), nil
 }
 
 // envCommand is what destroy and refresh share: the deploy config, the
@@ -119,7 +119,7 @@ func openEnvCommand(action string) (*envCommand, error) {
 	env := flow.ResolveEnv(deployOptions())
 	projectDir, _ := os.Getwd()
 
-	unlock, err := flow.Lock(projectDir, env)
+	unlock, err := flow.LockEnv(projectDir, env)
 	if err != nil {
 		return nil, err
 	}
@@ -145,7 +145,7 @@ func openEnvCommand(action string) (*envCommand, error) {
 // for the commands that plan (deploy, plan, apply). The caller must call
 // unlock and close the session.
 func lockAndOpen(ctx context.Context, opts flow.Options, projectDir string) (*flow.Session, func(), error) {
-	unlock, err := flow.Lock(projectDir, flow.ResolveEnv(opts))
+	unlock, err := flow.LockEnv(projectDir, flow.ResolveEnv(opts))
 	if err != nil {
 		return nil, nil, err
 	}

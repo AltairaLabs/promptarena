@@ -50,12 +50,12 @@ func TestAdapterInstalled_ProjectLocal(t *testing.T) {
 
 func TestLock_ContentionReturnsError(t *testing.T) {
 	dir := t.TempDir()
-	release, err := Lock(dir, "production")
+	release, err := LockEnv(dir, "production")
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer release()
-	if _, err := Lock(dir, "production"); err == nil {
+	if _, err := LockEnv(dir, "production"); err == nil {
 		t.Fatal("expected lock contention error on second Lock")
 	} else if !strings.Contains(err.Error(), "lock") {
 		t.Fatalf("unexpected error: %v", err)
@@ -66,12 +66,12 @@ func TestLock_ContentionReturnsError(t *testing.T) {
 // environment never blocks (or is blocked by) another's.
 func TestLock_EnvironmentsLockIndependently(t *testing.T) {
 	dir := t.TempDir()
-	releaseProd, err := Lock(dir, "production")
+	releaseProd, err := LockEnv(dir, "production")
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer releaseProd()
-	releaseStaging, err := Lock(dir, "staging")
+	releaseStaging, err := LockEnv(dir, "staging")
 	if err != nil {
 		t.Fatalf("staging must lock while production is held: %v", err)
 	}
@@ -81,7 +81,7 @@ func TestLock_EnvironmentsLockIndependently(t *testing.T) {
 // TestLock_RejectsUnsafeEnvironmentName pins that an env name cannot escape
 // the per-environment directory.
 func TestLock_RejectsUnsafeEnvironmentName(t *testing.T) {
-	if _, err := Lock(t.TempDir(), "../prod"); err == nil {
+	if _, err := LockEnv(t.TempDir(), "../prod"); err == nil {
 		t.Fatal("expected an invalid environment name to be rejected")
 	}
 }

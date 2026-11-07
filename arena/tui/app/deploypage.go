@@ -668,7 +668,7 @@ func runPlan(ctx context.Context, opts flow.Options, sess *flow.Session, send fu
 
 	// Planning refreshes and saves state, so it holds the environment's
 	// deploy lock just as apply does.
-	release, err := flow.Lock(opts.ProjectDir, flow.ResolveEnv(opts))
+	release, err := flow.LockEnv(opts.ProjectDir, flow.ResolveEnv(opts))
 	if err != nil {
 		_ = sess.Close()
 		send(deployErrMsg{err: err})
@@ -739,7 +739,7 @@ func (p *DeployPage) startApply() tea.Cmd {
 
 	return func() tea.Msg {
 		go func() {
-			release, err := flow.Lock(projectDir, env)
+			release, err := flow.LockEnv(projectDir, env)
 			if err != nil {
 				send(deployErrMsg{err: err})
 				return

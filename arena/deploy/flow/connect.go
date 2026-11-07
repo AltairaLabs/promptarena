@@ -59,11 +59,20 @@ func Connect(ctx context.Context, provider, projectDir string) (*deploy.AdapterC
 	return deploy.NewAdapterClientWithStderr(ctx, path, currentAdapterStderr())
 }
 
-// Lock acquires the deploy file lock for one environment of projectDir and
+// Lock acquires the deploy file lock for the default environment of
+// projectDir, the one a deploy command targets when no --env is given, and
+// returns a release func.
+//
+// Deprecated: locks are per environment; use LockEnv.
+func Lock(projectDir string) (func(), error) {
+	return LockEnv(projectDir, DefaultEnv)
+}
+
+// LockEnv acquires the deploy file lock for one environment of projectDir and
 // returns a release func. Environments lock independently, so a staging
 // deploy never waits on (or races) a production one.
-func Lock(projectDir, env string) (func(), error) {
-	locker := deploy.NewLocker(projectDir, env)
+func LockEnv(projectDir, env string) (func(), error) {
+	locker := deploy.NewEnvLocker(projectDir, env)
 	if err := locker.Lock(); err != nil {
 		return nil, err
 	}

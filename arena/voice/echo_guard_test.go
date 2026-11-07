@@ -205,3 +205,19 @@ func TestEchoGuard_NaturalTurnEndDoesNotLeakPlaybackRMS(t *testing.T) {
 		t.Fatalf("0.25-RMS barge-in dropped on the first quiet frame: playback estimate %.3f leaked from the previous turn", est)
 	}
 }
+
+func TestEchoGuard_SetAgentSpeakingFalseClosesTheWindow(t *testing.T) {
+	g := NewEchoGuard(0.5)
+	now := time.Now()
+	g.recordPlaybackAt(make([]byte, 6400), now)
+
+	g.SetAgentSpeaking(true) // no-op: playback drives the window
+	if g.allowAt(make([]byte, 64), now) {
+		t.Fatal("expected quiet mic still gated after SetAgentSpeaking(true)")
+	}
+
+	g.SetAgentSpeaking(false)
+	if !g.allowAt(make([]byte, 64), now) {
+		t.Fatal("expected mic allowed after SetAgentSpeaking(false)")
+	}
+}

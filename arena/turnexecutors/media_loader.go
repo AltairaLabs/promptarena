@@ -539,13 +539,13 @@ func detectMIMEType(filePath string) string {
 		".mp3": types.MIMETypeAudioMP3,
 		".wav": types.MIMETypeAudioWAV,
 		".ogg": types.MIMETypeAudioOgg,
-		".m4a": "audio/mp4", // Not defined in types package
+		".m4a": mimeTypeAudioMP4,
 		".pcm": "audio/pcm", // Raw PCM audio
 
 		// Video
 		".mp4":  types.MIMETypeVideoMP4,
 		".webm": types.MIMETypeVideoWebM,
-		".mov":  "video/quicktime", // Not defined in types package
+		".mov":  mimeTypeVideoQuickTime,
 
 		// Documents
 		".pdf": "application/pdf",

@@ -121,7 +121,7 @@ func (e *SelfPlayExecutor) generateUserMessage(
 		Emitter:     emitterFromRequest(req),
 		Temperature: req.SelfPlayUserTemp,
 		Seed:        req.SelfPlaySeed,
-		Variables:   req.SelfPlayVars,
+		Variables:   &req.SelfPlayVars,
 	}
 	if nt, ok := req.Metadata["natural_termination_enabled"].(bool); ok && nt {
 		genOpts.NaturalTerminationEnabled = true
@@ -291,7 +291,7 @@ func (e *SelfPlayExecutor) generateUserMessageForStream(
 		Emitter:     emitterFromRequest(req),
 		Temperature: req.SelfPlayUserTemp,
 		Seed:        req.SelfPlaySeed,
-		Variables:   req.SelfPlayVars,
+		Variables:   &req.SelfPlayVars,
 	}
 	if nt, ok := req.Metadata["natural_termination_enabled"].(bool); ok && nt {
 		genOpts.NaturalTerminationEnabled = true

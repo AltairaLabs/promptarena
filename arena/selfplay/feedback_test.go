@@ -77,7 +77,7 @@ func TestFeedbackVariables(t *testing.T) {
 	t.Run("persona optional vars always win", func(t *testing.T) {
 		p := &arenaconfig.UserPersonaPack{OptionalVars: map[string]string{VarObjective: "mine", VarExchange: "billing"}}
 		vars := feedbackVariables(p, nil, &GeneratorOptions{
-			Variables: map[string]string{VarObjective: "turn objective", VarExchange: "2"},
+			Variables: &map[string]string{VarObjective: "turn objective", VarExchange: "2"},
 		})
 		assert.NotContains(t, vars, VarObjective)
 		assert.NotContains(t, vars, VarExchange)
@@ -85,7 +85,7 @@ func TestFeedbackVariables(t *testing.T) {
 
 	t.Run("caller variables win and are template-safe", func(t *testing.T) {
 		vars := feedbackVariables(&arenaconfig.UserPersonaPack{}, nil, &GeneratorOptions{
-			Variables: map[string]string{VarExchange: "3", VarObjectiveFeedback: "agent said {{x}}"},
+			Variables: &map[string]string{VarExchange: "3", VarObjectiveFeedback: "agent said {{x}}"},
 		})
 		assert.Equal(t, "3", vars[VarExchange])
 		assert.Equal(t, "agent said { {x}}", vars[VarObjectiveFeedback])
@@ -117,7 +117,7 @@ func TestNextUserTurn_RendersFeedbackVariables(t *testing.T) {
 		{Role: "assistant", Content: "hello"},
 	}
 
-	_, err := gen.NextUserTurn(context.Background(), history, "s1", &GeneratorOptions{Variables: map[string]string{
+	_, err := gen.NextUserTurn(context.Background(), history, "s1", &GeneratorOptions{Variables: &map[string]string{
 		VarExchange:          "2",
 		VarObjective:         "get a refund",
 		VarObjectiveStatus:   "not achieved",

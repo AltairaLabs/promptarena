@@ -80,7 +80,7 @@ func TestOpen_UnresolvablePackFailsBeforeDialling(t *testing.T) {
 // a deploy tool, because it succeeds.
 func TestSession_PlanFreshnessTracksThePackAndEnv(t *testing.T) {
 	dir := t.TempDir()
-	store := deploy.NewStateStore(dir, "staging")
+	store := deploy.NewEnvStateStore(dir, "staging")
 	opts := Options{ProjectDir: dir, Env: "staging"}
 	dep := &arenaconfig.DeployConfig{Provider: "acme"}
 
@@ -158,7 +158,7 @@ func TestSession_CloseWithoutACloserIsSafe(t *testing.T) {
 func TestSession_LoadPlanWithNoSavedPlan(t *testing.T) {
 	sess := NewSession(Options{}, &arenaconfig.Config{},
 		&arenaconfig.DeployConfig{Provider: "acme"}, nil,
-		deploy.NewStateStore(t.TempDir(), "staging"), nil, "", nil)
+		deploy.NewEnvStateStore(t.TempDir(), "staging"), nil, "", nil)
 
 	saved, err := sess.LoadPlan()
 	if err != nil {
@@ -233,7 +233,7 @@ func (f *fakeProvider) Import(context.Context, *deploy.ImportRequest) (*deploy.I
 func newTestSession(t *testing.T, client deploy.Provider) (*Session, *deploy.StateStore) {
 	t.Helper()
 	dir := t.TempDir()
-	store := deploy.NewStateStore(dir, "staging")
+	store := deploy.NewEnvStateStore(dir, "staging")
 	sess := NewSession(Options{ProjectDir: dir, Env: "staging"}, &arenaconfig.Config{},
 		&arenaconfig.DeployConfig{Provider: "acme"}, client, store,
 		[]byte(`{"pack":"v1"}`), `{"cfg":true}`, nil)

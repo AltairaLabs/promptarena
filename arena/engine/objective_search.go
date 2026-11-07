@@ -210,9 +210,9 @@ func (ce *DefaultConversationExecutor) newTreeSearch(
 		s.root.state = state.state
 	}
 	if name := s.cfg.Judge; name != "" {
-		judgeFor := ce.searchJudge
-		if judgeFor == nil {
-			judgeFor = specSearchJudge
+		judgeFor := specSearchJudge
+		if ce.searchJudge != nil {
+			judgeFor = *ce.searchJudge
 		}
 		if s.judge, err = judgeFor(req.Config, name); err != nil {
 			return nil, fmt.Errorf("objective.search.judge: %w", err)

@@ -77,7 +77,7 @@ func open(ctx context.Context, opts Options, withPack bool) (*Session, error) {
 	if err != nil {
 		return nil, err
 	}
-	return NewSession(opts, arena, dep, client, deploy.NewStateStore(dir, env), packData, cfgJSON, client.Close), nil
+	return NewSession(opts, arena, dep, client, deploy.NewEnvStateStore(dir, env), packData, cfgJSON, client.Close), nil
 }
 
 // Close releases the adapter subprocess.

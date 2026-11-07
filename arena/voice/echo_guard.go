@@ -150,6 +150,17 @@ func (g *EchoGuard) Reset() {
 	g.mu.Unlock()
 }
 
+// SetAgentSpeaking is the v2.4.0 way to open and close the gate. The speaking
+// window is now driven by RecordPlayback, so true is a no-op and false ends
+// the window immediately, the same as Reset.
+//
+// Deprecated: call RecordPlayback for each played frame and Reset on barge-in.
+func (g *EchoGuard) SetAgentSpeaking(v bool) {
+	if !v {
+		g.Reset()
+	}
+}
+
 // Allow reports whether a mic frame should be forwarded.
 func (g *EchoGuard) Allow(frame []byte) bool {
 	return g.allowAt(frame, time.Now())

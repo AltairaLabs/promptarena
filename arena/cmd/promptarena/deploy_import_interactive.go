@@ -47,7 +47,7 @@ func runDeployImport(cmd *cobra.Command, args []string) error {
 	ctx := context.Background()
 
 	// Acquire deploy lock.
-	unlock, err := flow.Lock(projectDir, env)
+	unlock, err := flow.LockEnv(projectDir, env)
 	if err != nil {
 		return err
 	}
