@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/explanation/deploy/overview.md",
- "commit": "3df344ffbc8c604e1a8935929c28499d778d19f0",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
@@ -15,7 +15,7 @@
    "claim": "state tracking: checksums, timestamps, adapter state",
    "verdict": "true",
    "evidence": [
-    "deploy/state.go:22-33"
+    "deploy/state.go:41-51"
    ]
   },
   {
@@ -23,15 +23,16 @@
    "claim": "applies with streaming progress feedback",
    "verdict": "false",
    "evidence": [
-    "deploy/client.go:306-325"
+    "deploy/client.go:417-436"
    ]
   },
   {
    "id": 4,
-   "claim": "tracks state with checksums and versioning",
-   "verdict": "false",
+   "claim": "Tracks deployment state with a pack checksum and timestamps.",
+   "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/session.go:120-124"
+    "arena/deploy/flow/session.go:188",
+    "deploy/state.go:41-51"
    ]
   },
   {
@@ -47,7 +48,7 @@
    "claim": "cat >> arena.yaml appending a top-level deploy section",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/loader.go:216",
+    "arena/arenaconfig/loader.go:217",
     "arena/arenaconfig/types.go:170"
    ]
   },
@@ -56,7 +57,7 @@
    "claim": "providers map form default: claude-prod",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/config.go:60-80"
+    "arena/deploy/flow/config.go:84-104"
    ]
   },
   {
@@ -64,16 +65,16 @@
    "claim": "deploy plan, deploy, deploy status",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/deploy_interactive.go:18-64"
+    "arena/cmd/promptarena/deploy_interactive.go:18-53"
    ]
   },
   {
    "id": 9,
-   "claim": "diagram: pack -> CLI -> adapter -> cloud; CLI -> state",
+   "claim": "The CLI compiles the pack from the arena config (or reads one passed with --pack), drives the adapter, and records the result in a local state file for the target environment (.promptarena/envs/(env)/deploy.state).",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/session.go:40-63",
-    "deploy/state.go:13-20"
+    "arena/deploy/flow/session.go:53-81",
+    "deploy/state.go:81-87"
    ]
   },
   {
@@ -97,7 +98,16 @@
    "claim": "Deploy requires a compiled .pack.json",
    "verdict": "false",
    "evidence": [
-    "arena/deploy/flow/config.go:37-56"
+    "arena/deploy/flow/config.go:61-80"
+   ]
+  },
+  {
+   "id": 13,
+   "claim": "Quick start: add a deploy section under spec in config.arena.yaml, then run promptarena deploy plan, deploy, deploy status.",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/config.go:15-24",
+    "arena/deploy/flow/options.go:14-41"
    ]
   }
  ]

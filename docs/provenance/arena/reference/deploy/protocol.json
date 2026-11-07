@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/reference/deploy/protocol.md",
- "commit": "8c7a948d1eb921fd8db28cf9e76beccf7079cbd6",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
@@ -8,7 +8,7 @@
    "verdict": "true",
    "evidence": [
     "deploy/adaptersdk/serve.go:41",
-    "deploy/client.go:29"
+    "deploy/client.go:39"
    ]
   },
   {
@@ -41,7 +41,7 @@
    "verdict": "true",
    "evidence": [
     "deploy/adaptersdk/serve.go:103",
-    "deploy/client.go:102"
+    "deploy/client.go:112"
    ]
   },
   {
@@ -50,7 +50,7 @@
    "verdict": "true",
    "evidence": [
     "deploy/adaptersdk/serve.go:104",
-    "deploy/client.go:104"
+    "deploy/client.go:114"
    ]
   },
   {
@@ -58,8 +58,7 @@
    "claim": "Each JSON-RPC message is a single line terminated by newline; the CLI sends requests and reads responses sequentially",
    "verdict": "true",
    "evidence": [
-    "deploy/client.go:187",
-    "deploy/client.go:209"
+    "deploy/client.go:309-335"
    ]
   },
   {
@@ -68,7 +67,7 @@
    "verdict": "true",
    "evidence": [
     "deploy/adaptersdk/serve.go:48",
-    "deploy/client.go:44"
+    "deploy/client.go:54"
    ]
   },
   {
@@ -77,7 +76,7 @@
    "verdict": "true",
    "evidence": [
     "deploy/adaptersdk/serve.go:56",
-    "deploy/client.go:52"
+    "deploy/client.go:62"
    ]
   },
   {
@@ -86,7 +85,7 @@
    "verdict": "true",
    "evidence": [
     "deploy/adaptersdk/serve.go:64",
-    "deploy/client.go:60"
+    "deploy/client.go:70"
    ]
   },
   {
@@ -95,7 +94,7 @@
    "verdict": "true",
    "evidence": [
     "deploy/adaptersdk/serve.go:19",
-    "deploy/client.go:30"
+    "deploy/client.go:40"
    ]
   },
   {
@@ -112,8 +111,8 @@
    "verdict": "false",
    "evidence": [
     "deploy/adaptersdk/serve.go:200",
-    "deploy/client.go:271",
-    "deploy/client.go:47"
+    "deploy/client.go:382",
+    "deploy/client.go:57"
    ]
   },
   {
@@ -162,16 +161,17 @@
    "verdict": "true",
    "evidence": [
     "deploy/adaptersdk/serve.go:20",
-    "deploy/client.go:31"
+    "deploy/client.go:41"
    ]
   },
   {
    "id": 20,
    "claim": "validate_config validates provider configuration before planning",
-   "verdict": "false",
+   "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/deploy_config_interactive.go:122",
-    "arena/cmd/promptarena/deploy_config_interactive.go:155"
+    "arena/cmd/promptarena/deploy_config_interactive.go:123-155",
+    "arena/deploy/flow/session.go:102-118",
+    "arena/deploy/flow/session.go:128-135"
    ]
   },
   {
@@ -245,7 +245,7 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/deploy_config_interactive.go:168",
-    "arena/cmd/promptarena/deploy_interactive.go:98"
+    "arena/cmd/promptarena/deploy_interactive.go:186"
    ]
   },
   {
@@ -254,7 +254,7 @@
    "verdict": "true",
    "evidence": [
     "deploy/adaptersdk/serve.go:21",
-    "deploy/client.go:32"
+    "deploy/client.go:42"
    ]
   },
   {
@@ -336,8 +336,8 @@
    "claim": "plan result field warnings is a string array printed before the plan changes with a warning-sign prefix",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/deploy_interactive.go:144",
-    "arena/cmd/promptarena/deploy_interactive.go:98",
+    "arena/cmd/promptarena/deploy_interactive.go:186",
+    "arena/cmd/promptarena/deploy_interactive.go:232",
     "deploy/provider.go:54"
    ]
   },
@@ -363,7 +363,7 @@
    "verdict": "true",
    "evidence": [
     "deploy/adaptersdk/serve.go:22",
-    "deploy/client.go:33"
+    "deploy/client.go:43"
    ]
   },
   {
@@ -407,7 +407,7 @@
    "verdict": "true",
    "evidence": [
     "deploy/adaptersdk/serve.go:71",
-    "deploy/client.go:297"
+    "deploy/client.go:408"
    ]
   },
   {
@@ -457,7 +457,7 @@
    "verdict": "true",
    "evidence": [
     "deploy/adaptersdk/serve.go:23",
-    "deploy/client.go:34"
+    "deploy/client.go:44"
    ]
   },
   {
@@ -517,7 +517,7 @@
    "verdict": "true",
    "evidence": [
     "deploy/adaptersdk/serve.go:24",
-    "deploy/client.go:35"
+    "deploy/client.go:45"
    ]
   },
   {
@@ -599,7 +599,7 @@
    "verdict": "true",
    "evidence": [
     "deploy/adaptersdk/serve.go:25",
-    "deploy/client.go:36"
+    "deploy/client.go:46"
    ]
   },
   {
@@ -681,7 +681,7 @@
    "verdict": "true",
    "evidence": [
     "deploy/adaptersdk/serve.go:26",
-    "deploy/client.go:37"
+    "deploy/client.go:47"
    ]
   },
   {
@@ -689,7 +689,7 @@
    "claim": "get_login_url is served only by adapters that advertise the login capability and implement the LoginProvider interface; other adapters return method-not-found",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/login.go:134",
+    "arena/deploy/flow/login.go:162",
     "deploy/adaptersdk/serve.go:334",
     "deploy/provider.go:187"
    ]
@@ -700,7 +700,7 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/deploy_login_interactive.go:16",
-    "arena/deploy/flow/login.go:107"
+    "arena/deploy/flow/login.go:135"
    ]
   },
   {
@@ -724,7 +724,7 @@
    "claim": "get_login_url param callback_url is the CLI loopback callback the provider must redirect to",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/login.go:107",
+    "arena/deploy/flow/login.go:135",
     "deploy/provider.go:193"
    ]
   },
@@ -733,7 +733,7 @@
    "claim": "get_login_url param state is a CSRF nonce the provider must echo back",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/login.go:178",
+    "arena/deploy/flow/login.go:206",
     "deploy/provider.go:194"
    ]
   },
@@ -751,7 +751,7 @@
    "claim": "get_login_url result field authorize_url is the URL the CLI opens in the browser",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/login.go:114",
+    "arena/deploy/flow/login.go:142",
     "deploy/provider.go:203"
    ]
   },
@@ -761,7 +761,7 @@
    "verdict": "true",
    "evidence": [
     "deploy/adaptersdk/serve.go:27",
-    "deploy/client.go:38"
+    "deploy/client.go:48"
    ]
   },
   {
@@ -786,7 +786,7 @@
    "claim": "complete_login param params is an object of all query parameters captured from the loopback callback",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/login.go:175",
+    "arena/deploy/flow/login.go:203",
     "deploy/provider.go:210"
    ]
   },
@@ -803,7 +803,7 @@
    "claim": "complete_login result field profile is an object holding endpoint, workspace, providers and skills to merge into the config",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/login.go:204",
+    "arena/deploy/flow/login.go:232",
     "deploy/provider.go:221"
    ]
   },
@@ -821,7 +821,7 @@
    "verdict": "true",
    "evidence": [
     "arena/deploy/flow/credentials.go:24",
-    "arena/deploy/flow/login.go:214"
+    "arena/deploy/flow/login.go:242"
    ]
   },
   {
@@ -830,7 +830,7 @@
    "verdict": "true",
    "evidence": [
     "deploy/adaptersdk/serve.go:28",
-    "deploy/client.go:39"
+    "deploy/client.go:49"
    ]
   },
   {
@@ -966,7 +966,7 @@
    "verdict": "true",
    "evidence": [
     "deploy/adaptersdk/serve.go:29",
-    "deploy/client.go:40"
+    "deploy/client.go:50"
    ]
   },
   {
@@ -1070,7 +1070,7 @@
    "evidence": [
     "deploy/adaptersdk/serve.go:191",
     "deploy/adaptersdk/serve.go:36",
-    "deploy/client.go:72"
+    "deploy/client.go:82"
    ]
   },
   {
@@ -1087,8 +1087,8 @@
    "claim": "Adapters may return custom error codes with descriptive messages",
    "verdict": "true",
    "evidence": [
-    "deploy/client.go:255",
-    "deploy/client.go:60"
+    "deploy/client.go:366",
+    "deploy/client.go:70"
    ]
   },
   {
@@ -1104,8 +1104,8 @@
    "claim": "The CLI uses sequential integer request IDs starting from 1",
    "verdict": "true",
    "evidence": [
-    "deploy/client.go:149",
-    "deploy/client.go:195"
+    "deploy/client.go:197",
+    "deploy/client.go:306-307"
    ]
   },
   {
@@ -1122,7 +1122,7 @@
    "claim": "Request IDs are not reused within a single session",
    "verdict": "true",
    "evidence": [
-    "deploy/client.go:195"
+    "deploy/client.go:306"
    ]
   },
   {
@@ -1144,6 +1144,45 @@
    "claim": "The CLI Commands page is at /arena/reference/deploy/cli-commands/ and documents the CLI that drives the protocol",
    "verdict": "true",
    "evidence": []
+  },
+  {
+   "id": 136,
+   "claim": "Logs: free-form text on stderr. The CLI passes it to the user's terminal (the TUI to its log), and appends the last 4 KiB to the error when the adapter exits mid-call. Never write logs to stdout.",
+   "verdict": "true",
+   "evidence": [
+    "deploy/client.go:142-186",
+    "deploy/client.go:241-293"
+   ]
+  },
+  {
+   "id": 137,
+   "claim": "validate_config: The CLI calls it before every plan (deploy, deploy plan, and deploy apply when it re-plans) and in deploy config import unless you pass --skip-validate. A valid: false result stops the command with the listed errors before plan is sent.",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_apply_interactive.go:49-61",
+    "arena/cmd/promptarena/deploy_config_interactive.go:123-128",
+    "arena/cmd/promptarena/deploy_interactive.go:307",
+    "arena/deploy/flow/session.go:128-135"
+   ]
+  },
+  {
+   "id": 138,
+   "claim": "An adapter that answers method-not-found (-32601) is planned without validation, so the method is optional for planning, but an adapter that implements it is always consulted. deploy config import treats method-not-found as an error.",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_config_interactive.go:155-158",
+    "arena/deploy/flow/session.go:104-106"
+   ]
+  },
+  {
+   "id": 139,
+   "claim": "warnings: Non-blocking advisories (do not affect valid); the CLI prints them with a warning prefix, before the plan's own warnings.",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_config_interactive.go:168",
+    "arena/deploy/flow/session.go:102-118",
+    "arena/deploy/flow/session.go:172-174"
+   ]
   }
  ]
 }

@@ -1,8 +1,9 @@
 ---
 title: 'Deploy: Adapter SDK'
 verified:
-  commit: 3df344ffbc8c604e1a8935929c28499d778d19f0
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
+    - arena/cmd/promptarena/deploy_interactive.go
     - arena/deploy/flow/config.go
     - arena/deploy/flow/login.go
     - arena/deploy/flow/render.go
@@ -490,6 +491,8 @@ type ValidateResponse struct {
     Warnings []string `json:"warnings,omitempty"` // non-blocking advisories
 }
 ```
+
+The CLI calls `ValidateConfig` before every plan. `Valid: false` stops the command with the `Errors` listed, and `Warnings` print before the plan's own warnings.
 
 ### Session Types
 

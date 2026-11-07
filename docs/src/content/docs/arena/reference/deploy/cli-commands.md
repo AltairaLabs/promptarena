@@ -1,7 +1,7 @@
 ---
 title: 'Deploy: CLI Commands'
 verified:
-  commit: 631d3c353c2c9d71b362ae5cd20c137d42b19d5b
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - .github/workflows/sync-adapter-registry.yml
     - arena/arenaconfig/types.go
@@ -17,10 +17,8 @@ verified:
     - arena/cmd/promptarena/deploy_refresh_interactive.go
     - arena/cmd/promptarena/deploy_status_interactive.go
     - arena/deploy/flow/config.go
-    - arena/deploy/flow/connect.go
     - arena/deploy/flow/credentials.go
     - arena/deploy/flow/login.go
-    - arena/deploy/flow/options.go
     - arena/deploy/flow/render.go
     - arena/deploy/flow/session.go
     - deploy/client.go
@@ -251,7 +249,7 @@ Takes the global flags only.
 3. Call adapter `Status` with the prior state.
 4. Update the adapter state and the `last_refreshed` timestamp.
 5. Save the updated state.
-6. Print each resource as `<type>.<name>: <status>`, then `State refreshed successfully.`
+6. Print `  Status: <status>` and each resource as `  <type>.<name>: <status>[ — <detail>]`, then `State refreshed successfully.`
 
 **Examples:**
 
@@ -304,8 +302,10 @@ promptarena deploy import agent_runtime my-agent container-abc123 --env producti
 Authenticates in the browser and writes the deploy config. Available only for adapters that advertise the `login` capability.
 
 ```bash
-promptarena deploy login [--provider <name>]
+promptarena deploy login [--provider <name>] [flags]
 ```
+
+Takes the global flags; `--config` selects the file login writes into.
 
 **Flags:**
 
@@ -323,7 +323,7 @@ promptarena deploy login [--provider <name>]
 6. Exchange the code via the adapter for a deploy profile and a scoped token.
 7. Merge the profile into the arena config and store the token in `~/.promptarena/credentials`, never in the config file.
 
-At deploy time the stored token is loaded when the config carries no `api_token`. Precedence: explicit `api_token`, provider env var, credentials store.
+At deploy time the stored token is loaded when the config carries no `api_token`. Precedence: explicit `api_token`, then the credentials store, then the provider env var.
 
 The command needs a local browser. In CI, supply the token through the provider's environment variable.
 

@@ -2,7 +2,7 @@
 title: 'Deploy: Your First Deployment'
 description: Install the AgentCore deploy adapter, add a deploy section to the Tutorial 1 project, preview the plan, deploy it to AWS, check it and tear it down.
 verified:
-  commit: 8c7a948d1eb921fd8db28cf9e76beccf7079cbd6
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/arenaconfig/types.go
     - arena/cmd/promptarena/deploy_adapter_interactive.go
@@ -13,7 +13,6 @@ verified:
     - arena/cmd/promptarena/deploy_status_interactive.go
     - arena/deploy/flow/config.go
     - arena/deploy/flow/options.go
-    - arena/deploy/flow/render.go
     - arena/deploy/flow/session.go
     - deploy/state.go
     - packc/compiler/compiler.go

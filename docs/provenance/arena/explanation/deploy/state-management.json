@@ -1,13 +1,13 @@
 {
  "page": "docs/src/content/docs/arena/explanation/deploy/state-management.md",
- "commit": "631d3c353c2c9d71b362ae5cd20c137d42b19d5b",
+ "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
  "claims": [
   {
    "id": 1,
-   "claim": "state in .promptarena/deploy.state",
+   "claim": "Deploy records each environment's deployment in .promptarena/envs/<env>/deploy.state",
    "verdict": "true",
    "evidence": [
-    "deploy/state.go:13-20"
+    "deploy/state.go:14-18"
    ]
   },
   {
@@ -15,7 +15,7 @@
    "claim": "dir 0750, file 0600, indented JSON",
    "verdict": "true",
    "evidence": [
-    "deploy/state.go:18-19"
+    "deploy/state.go:20-21"
    ]
   },
   {
@@ -23,8 +23,8 @@
    "claim": "directory created when state is first saved",
    "verdict": "true",
    "evidence": [
-    "deploy/lock.go:36-39",
-    "deploy/state.go:77-80"
+    "deploy/lock.go:54",
+    "deploy/state.go:171"
    ]
   },
   {
@@ -32,23 +32,24 @@
    "claim": "state JSON fields",
    "verdict": "true",
    "evidence": [
-    "deploy/state.go:22-33"
+    "deploy/state.go:41-51"
    ]
   },
   {
    "id": 5,
-   "claim": "pack_version is the version string from the deployed pack",
-   "verdict": "false",
+   "claim": "pack_version: The deployed pack's top-level version",
+   "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/session.go:124"
+    "arena/deploy/flow/session.go:96",
+    "deploy/state.go:239-247"
    ]
   },
   {
    "id": 6,
-   "claim": "pack_checksum sha256:{hex}",
+   "claim": "pack_checksum: SHA-256 checksum of the deployed pack, ignoring its compile time (sha256:{hex})",
    "verdict": "true",
    "evidence": [
-    "deploy/state.go:103-107"
+    "deploy/state.go:222-235"
    ]
   },
   {
@@ -56,7 +57,7 @@
    "claim": "last_refreshed omitted if never refreshed",
    "verdict": "true",
    "evidence": [
-    "deploy/state.go:31"
+    "deploy/state.go:49"
    ]
   },
   {
@@ -64,15 +65,15 @@
    "claim": "state created after deploy or deploy apply",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/session.go:114-131"
+    "arena/deploy/flow/session.go:179-195"
    ]
   },
   {
    "id": 9,
    "claim": "state built from provider, env, pack version and checksum, adapter version, apply state",
-   "verdict": "false",
+   "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/session.go:120-125"
+    "arena/deploy/flow/session.go:184-189"
    ]
   },
   {
@@ -80,16 +81,16 @@
    "claim": "plan/apply/status/destroy pass prior state",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/deploy_destroy_interactive.go:70-74",
-    "arena/deploy/flow/session.go:76-99"
+    "arena/cmd/promptarena/deploy_destroy_interactive.go:47-51",
+    "arena/deploy/flow/session.go:138-160"
    ]
   },
   {
    "id": 11,
-   "claim": "state deleted after destroy",
+   "claim": "A successful deploy destroy deletes the environment's state file and any plan saved for it.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/deploy_destroy_interactive.go:82-84"
+    "arena/cmd/promptarena/deploy_destroy_interactive.go:59-63"
    ]
   },
   {
@@ -102,19 +103,20 @@
   },
   {
    "id": 13,
-   "claim": "checksum verifies deployed matches repository",
-   "verdict": "false",
+   "claim": "Recompiling an unchanged pack gives the same checksum; apply reuses the saved plan only when the checksum matches",
+   "verdict": "true",
    "evidence": [
-    "deploy/state.go:103-107"
+    "arena/deploy/flow/session.go:221-223",
+    "deploy/state.go:222-235"
    ]
   },
   {
    "id": 14,
-   "claim": "environments share one state file; env name recorded",
+   "claim": "Each environment has its own state file, saved plan and lock under .promptarena/envs/<env>/",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/deploy_status_interactive.go:48-57",
-    "deploy/state.go:45-48"
+    "arena/cmd/promptarena/deploy_status_interactive.go:46-59",
+    "deploy/state.go:53-82"
    ]
   },
   {
@@ -122,7 +124,7 @@
    "claim": "deploy and deploy plan refresh state before planning",
    "verdict": "true",
    "evidence": [
-    "arena/deploy/flow/session.go:76-99"
+    "arena/deploy/flow/session.go:138-152"
    ]
   },
   {
@@ -130,7 +132,7 @@
    "claim": "refresh calls Status, updates state, records last_refreshed",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/deploy_refresh_interactive.go:71-86"
+    "arena/cmd/promptarena/deploy_refresh_interactive.go:47-61"
    ]
   },
   {
@@ -138,8 +140,8 @@
    "claim": "refresh reports drifted resources with DRIFT (!)",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/deploy_interactive.go:181-195",
-    "arena/cmd/promptarena/deploy_refresh_interactive.go:88-90"
+    "arena/cmd/promptarena/deploy_interactive.go:269-283",
+    "arena/cmd/promptarena/deploy_refresh_interactive.go:64-66"
    ]
   },
   {
@@ -147,15 +149,15 @@
    "claim": "import calls adapter Import and updates state",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/deploy_import_interactive.go:80-107"
+    "arena/cmd/promptarena/deploy_import_interactive.go:83-110"
    ]
   },
   {
    "id": 19,
-   "claim": "lock file .promptarena/deploy.lock",
+   "claim": "Deploy takes an exclusive lock on .promptarena/envs/<env>/deploy.lock",
    "verdict": "true",
    "evidence": [
-    "deploy/lock.go:9"
+    "deploy/lock.go:12"
    ]
   },
   {
@@ -169,14 +171,13 @@
   },
   {
    "id": 21,
-   "claim": "deploy, apply, destroy, refresh, import take the lock; fail immediately",
+   "claim": "deploy, deploy plan, deploy apply, deploy destroy, deploy refresh and deploy import take the lock before reading state, and so does the TUI's Deploy page; deploy status does not",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/deploy_apply_interactive.go:33-38",
-    "arena/cmd/promptarena/deploy_destroy_interactive.go:38-43",
     "arena/cmd/promptarena/deploy_import_interactive.go:49-54",
-    "arena/cmd/promptarena/deploy_interactive.go:204-209",
-    "arena/cmd/promptarena/deploy_refresh_interactive.go:39-44"
+    "arena/cmd/promptarena/deploy_interactive.go:147-158",
+    "arena/cmd/promptarena/deploy_status_interactive.go:24-85",
+    "arena/tui/app/deploypage.go:671"
    ]
   },
   {
@@ -184,7 +185,47 @@
    "claim": "state local only; lock does not coordinate across machines",
    "verdict": "true",
    "evidence": [
-    "deploy/lock.go:11-14"
+    "deploy/lock.go:18-26"
+   ]
+  },
+  {
+   "id": 23,
+   "claim": "An environment name must start with a letter or digit and contain only letters, digits, '.', '_' and '-'",
+   "verdict": "true",
+   "evidence": [
+    "deploy/state.go:28-38"
+   ]
+  },
+  {
+   "id": 24,
+   "claim": "The CLI reads the legacy .promptarena/deploy.state only for the environment it records, moves it on first use; other environments stop with an error",
+   "verdict": "true",
+   "evidence": [
+    "deploy/state.go:99-149"
+   ]
+  },
+  {
+   "id": 25,
+   "claim": "Lock contention fails at once with: deploy lock is held by another process (pid <n>) for environment \"<env>\"; the CLI keeps the lock file",
+   "verdict": "true",
+   "evidence": [
+    "deploy/lock.go:83-93"
+   ]
+  },
+  {
+   "id": 26,
+   "claim": "A failed pre-plan refresh does not stop the plan; it uses the stored state",
+   "verdict": "true",
+   "evidence": [
+    "arena/deploy/flow/session.go:146-151"
+   ]
+  },
+  {
+   "id": 27,
+   "claim": "deploy status, refresh and destroy stop with No deployment state found for environment \"<env>\" when that environment has none",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/deploy_destroy_interactive.go:59-63"
    ]
   }
  ]

@@ -2,13 +2,17 @@
 title: 'Deploy: CI/CD Integration'
 description: Run deploy plans on pull requests and deployments on merge with GitHub Actions, and keep deploy state between runs.
 verified:
-  commit: 631d3c353c2c9d71b362ae5cd20c137d42b19d5b
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - Makefile
     - arena/cmd/promptarena/adapter_registry.json
+    - arena/cmd/promptarena/deploy_destroy_interactive.go
     - arena/cmd/promptarena/deploy_interactive.go
     - arena/cmd/promptarena/deploy_plan_interactive.go
+    - arena/cmd/promptarena/deploy_refresh_interactive.go
+    - arena/cmd/promptarena/deploy_status_interactive.go
     - arena/deploy/flow/config.go
+    - arena/deploy/flow/options.go
     - arena/deploy/flow/session.go
     - deploy/state.go
     - packc/main_interactive.go
@@ -137,7 +141,7 @@ jobs:
         run: go install github.com/AltairaLabs/promptarena/v2/packc@latest
 
       - name: Compile pack
-        run: packc compile --config arena.yaml --output app.pack.json --id my-app
+        run: packc compile --config config.arena.yaml --output app.pack.json --id my-app
 
       - name: Upload pack
         uses: actions/upload-artifact@v4

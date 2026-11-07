@@ -2,7 +2,7 @@
 title: 'Deploy: Log In'
 description: Authenticate in the browser and let the adapter write the deploy config and store a scoped token.
 verified:
-  commit: 631d3c353c2c9d71b362ae5cd20c137d42b19d5b
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/cmd/promptarena/deploy_login_interactive.go
     - arena/deploy/flow/config.go

@@ -2,7 +2,7 @@
 title: 'Deploy: Anatomy of a Deployment'
 description: How a compiled pack and a deploy config combine into a running agent, and what belongs in each.
 verified:
-  commit: 631d3c353c2c9d71b362ae5cd20c137d42b19d5b
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/arenaconfig/types.go
     - arena/deploy/flow/config.go
@@ -24,7 +24,7 @@ Every plan and apply request carries two primary inputs:
 
 The request also carries the serialized arena config. An adapter can read it for details the pack does not hold: the Omnia adapter reads the HTTP sources of the arena's tools from it.
 
-The CLI does not interpret the contents of the pack or of `deploy.config`. It compiles the pack (or reads the one you pass with `--pack`), sends both to the adapter as JSON, and the adapter translates them into provider-native resources:
+The CLI does not interpret the contents of the pack or of `deploy.config`. It compiles the pack (or reads the one you pass with `--pack`), asks the adapter to validate the deploy config, sends both to the adapter as JSON, and the adapter translates them into provider-native resources:
 
 ```mermaid
 flowchart LR

@@ -2,7 +2,7 @@
 title: 'Deploy: Plan and Apply'
 description: Preview a deployment, apply it, check its status, refresh and import state, and tear it down.
 verified:
-  commit: 631d3c353c2c9d71b362ae5cd20c137d42b19d5b
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
     - arena/cmd/promptarena/deploy_apply_interactive.go
     - arena/cmd/promptarena/deploy_destroy_interactive.go
@@ -12,10 +12,13 @@ verified:
     - arena/cmd/promptarena/deploy_refresh_interactive.go
     - arena/cmd/promptarena/deploy_status_interactive.go
     - arena/deploy/flow/config.go
+    - arena/deploy/flow/connect.go
+    - arena/deploy/flow/options.go
     - arena/deploy/flow/render.go
     - arena/deploy/flow/session.go
     - arena/tui/app/deploypage.go
     - deploy/client.go
+    - deploy/lock.go
     - deploy/provider.go
     - deploy/state.go
 ---

@@ -2,15 +2,15 @@
 title: 'Deploy: State Management'
 description: What the local deploy state file records, when each command reads and writes it, and how locking protects it.
 verified:
-  commit: 631d3c353c2c9d71b362ae5cd20c137d42b19d5b
+  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
   sources:
-    - arena/cmd/promptarena/deploy_apply_interactive.go
     - arena/cmd/promptarena/deploy_destroy_interactive.go
     - arena/cmd/promptarena/deploy_import_interactive.go
     - arena/cmd/promptarena/deploy_interactive.go
     - arena/cmd/promptarena/deploy_refresh_interactive.go
     - arena/cmd/promptarena/deploy_status_interactive.go
     - arena/deploy/flow/session.go
+    - arena/tui/app/deploypage.go
     - deploy/lock.go
     - deploy/lock_unix.go
     - deploy/lock_windows.go
