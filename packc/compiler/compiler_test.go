@@ -249,6 +249,56 @@ spec:
 	assert.Contains(t, err.Error(), "broken.yaml")
 }
 
+// A workflow cycle is a warning. PromptKit words it by the back edge its DFS
+// meets first ("a -> b" or "b -> a"), which depends on map order, so the copy
+// pack.Validate repeats must not be matched to the reported one by its text, or
+// it turns into a blocking [pack] error on some runs (#445). Run it many times.
+func TestCheck_WorkflowCycleIsNeverAnError(t *testing.T) {
+	dir := t.TempDir()
+	writeFixture(t, dir, "prompts/greeting.yaml", minimalPromptYAML)
+	writeFixture(t, dir, "prompts/farewell.yaml", secondPromptYAML)
+	configFile := writeFixture(t, dir, "config.arena.yaml", `apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Arena
+metadata:
+  name: test
+spec:
+  prompt_configs:
+    - id: prompt0
+      file: prompts/greeting.yaml
+    - id: prompt1
+      file: prompts/farewell.yaml
+  providers: []
+  workflow:
+    version: 1
+    entry: a
+    states:
+      a:
+        prompt_task: greeting
+        on_event:
+          Next: b
+      b:
+        prompt_task: farewell
+        on_event:
+          Back: a
+  defaults:
+    temperature: 0.7
+    max_tokens: 100
+`)
+
+	for i := 0; i < 64; i++ {
+		r := Check(configFile, WithPackID("cycle-pack"), WithSkipSchemaValidation())
+		require.Empty(t, r.Errors, "run %d", i)
+		cycles := 0
+		for _, w := range r.Warnings {
+			assert.NotEqual(t, StagePack, w.Stage, "run %d: %s", i, w)
+			if strings.Contains(w.Message, "workflow contains a cycle") {
+				cycles++
+			}
+		}
+		assert.Equal(t, 1, cycles, "run %d: %v", i, r.WarningMessages())
+	}
+}
+
 func TestCompile_WithWorkflow(t *testing.T) {
 	dir := t.TempDir()
 	writeFixture(t, dir, "prompts/greeting.yaml", minimalPromptYAML)
@@ -564,6 +614,57 @@ spec:
 	require.Len(t, result.Pack.Skills, 1)
 	// Path should be relative (converted back from absolute)
 	assert.Equal(t, "skills", prompt.SkillPath(result.Pack.Skills[0]))
+}
+
+// A pack must not carry this machine's absolute skill paths, however -c is
+// spelled. The default -c is the bare "config.arena.yaml", whose directory is
+// ".", which a filepath.Rel against an absolute skill dir cannot handle (#445).
+func TestCompile_SkillPathsAreRelativeForAnyConfigForm(t *testing.T) {
+	t.Setenv("PROMPTKIT_SCHEMA_SOURCE", "local")
+	dir := t.TempDir()
+	writeFixture(t, dir, "proj/prompts/chat.yaml", minimalPromptYAML)
+	skillDir := filepath.Join(dir, "proj", "skills", "hello")
+	require.NoError(t, os.MkdirAll(skillDir, 0o755))
+	require.NoError(t, os.WriteFile(filepath.Join(skillDir, "SKILL.md"), []byte(
+		"---\nname: hello\ndescription: Test\n---\nInstructions.\n",
+	), 0o600))
+	writeFixture(t, dir, "proj/config.arena.yaml", `apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Arena
+metadata:
+  name: test
+spec:
+  prompt_configs:
+    - id: greeting
+      file: prompts/chat.yaml
+  providers: []
+  skills:
+    - path: skills/hello
+  defaults:
+    concurrency: 1
+`)
+	t.Chdir(dir)
+
+	for _, configFile := range []string{
+		filepath.Join(dir, "proj", "config.arena.yaml"),
+		"proj/config.arena.yaml",
+		"./proj/config.arena.yaml",
+		"proj/../proj/config.arena.yaml",
+	} {
+		t.Run(configFile, func(t *testing.T) {
+			result, err := Compile(configFile, WithPackID("skills-pack"), WithSkipSchemaValidation())
+			require.NoError(t, err)
+			require.Len(t, result.Pack.Skills, 1)
+			assert.Equal(t, filepath.Join("skills", "hello"), prompt.SkillPath(result.Pack.Skills[0]))
+		})
+	}
+
+	t.Run("config.arena.yaml from its own directory", func(t *testing.T) {
+		t.Chdir(filepath.Join(dir, "proj"))
+		result, err := Compile("config.arena.yaml", WithPackID("skills-pack"), WithSkipSchemaValidation())
+		require.NoError(t, err)
+		require.Len(t, result.Pack.Skills, 1)
+		assert.Equal(t, filepath.Join("skills", "hello"), prompt.SkillPath(result.Pack.Skills[0]))
+	})
 }
 
 const echoToolYAML = `apiVersion: promptkit.altairalabs.ai/v1alpha1

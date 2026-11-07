@@ -161,10 +161,20 @@ func parseAgentsFromConfig(cfg *arenaconfig.Config) (*prompt.AgentsConfig, error
 }
 
 // parseSkillsFromConfig returns skill source configs from the loaded arena config.
-// Paths are converted back to relative (relative to config dir) for portability.
-func parseSkillsFromConfig(cfg *arenaconfig.Config) []prompt.SkillSourceConfig {
+// Paths are converted back to relative, relative to configDir (the directory of
+// the arena config file), for portability.
+//
+// The loader resolves skill paths against the absolute form of that directory,
+// so configDir is made absolute here too: when -c is relative (the default
+// "config.arena.yaml" gives "."), filepath.Rel between a relative base and an
+// absolute target fails, and the pack would keep this machine's absolute path.
+func parseSkillsFromConfig(cfg *arenaconfig.Config, configDir string) []prompt.SkillSourceConfig {
 	if len(cfg.LoadedSkillSources) == 0 {
 		return nil
+	}
+	base := configDir
+	if abs, err := filepath.Abs(configDir); err == nil {
+		base = abs
 	}
 
 	result := make([]prompt.SkillSourceConfig, len(cfg.LoadedSkillSources))
@@ -179,8 +189,8 @@ func parseSkillsFromConfig(cfg *arenaconfig.Config) []prompt.SkillSourceConfig {
 			continue
 		}
 		// Convert paths back to relative (to config dir) for pack portability.
-		if dir := prompt.SkillPath(&src); dir != "" && cfg.ConfigDir != "" {
-			if rel, err := filepath.Rel(cfg.ConfigDir, dir); err == nil {
+		if dir := prompt.SkillPath(&src); dir != "" {
+			if rel, err := filepath.Rel(base, dir); err == nil {
 				result[i].Shorthand = ""
 				result[i].Path = rel
 			}

@@ -183,30 +183,51 @@ func (r *CheckResult) checkPack(pack *prompt.Pack, configDir, configFile string)
 	r.addAll(true, StageGovernance, configFile, gov.Errors)
 	r.addAll(false, StageGovernance, configFile, gov.Warnings)
 
-	// pack.Validate repeats the workflow, agent and governance findings
-	// reported above; what is left is the pack's own structure, which
-	// `packc validate` treats as blocking.
-	reported := map[string]bool{}
-	for _, list := range [][]string{wf.Errors, wf.Warnings, agentErrs, agentWarnings, gov.Errors, gov.Warnings} {
-		for _, m := range list {
-			reported[m] = true
-		}
-	}
-	for _, m := range pack.Validate() {
-		switch {
-		case reported[m]:
-		case m == missingCompilationMsg:
+	for _, m := range structuralFindings(pack, gov) {
+		if m == missingCompilationMsg {
 			// PromptKit makes a missing compilation block blocking, but the
 			// PromptPack schema does not require it: a pack written by another
 			// tool may leave it out.
 			r.add(false, Problem{Stage: StagePack, Source: configFile,
 				Message: m + " (optional in the PromptPack schema)"})
-		default:
-			r.add(true, Problem{Stage: StagePack, Source: configFile, Message: m})
+			continue
 		}
+		r.add(true, Problem{Stage: StagePack, Source: configFile, Message: m})
 	}
 
 	r.addAll(false, StagePack, configFile, undeclaredPromptTools(pack))
+}
+
+// structuralFindings returns what pack.Validate finds about the pack's own
+// structure, which `packc validate` treats as blocking, without the workflow,
+// agent and governance findings checkPack has already reported by stage.
+//
+// pack.Validate re-runs those validators, and matching its copies to the
+// reported ones by text is not reliable: PromptKit words a workflow cycle by
+// the back edge its DFS meets first, which depends on map order, so the same
+// cycle could come back as "a -> b" once and "b -> a" the next time and slip
+// through as an error (#445). So Validate runs on a shallow copy with no
+// workflow and no agents, which it skips entirely. Governance stays, because
+// pack-level governance can reference anything; its findings are worded per
+// declaration, in a fixed order, so they are dropped by text.
+func structuralFindings(pack *prompt.Pack, gov *prompt.GovernanceValidationResult) []string {
+	structural := *pack
+	structural.Workflow = nil
+	structural.Agents = nil
+
+	reported := map[string]bool{}
+	for _, list := range [][]string{gov.Errors, gov.Warnings} {
+		for _, m := range list {
+			reported[m] = true
+		}
+	}
+	var out []string
+	for _, m := range structural.Validate() {
+		if !reported[m] {
+			out = append(out, m)
+		}
+	}
+	return out
 }
 
 // missingCompilationMsg is the finding PromptKit's Pack.Validate reports for a

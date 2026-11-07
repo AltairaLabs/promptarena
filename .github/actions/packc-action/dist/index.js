@@ -566,10 +566,13 @@ async function compilePack(inputs) {
     if (inputs.validate) {
         core.startGroup('Validating Pack');
         const isValid = await (0, compiler_1.validate)(compileResult.packFile);
-        if (!isValid) {
-            core.warning('Pack validation had warnings');
-        }
         core.endGroup();
+        // packc validate exits non-zero only on errors (warnings still pass), so a
+        // failed validate fails the step before anything is published. Set
+        // validate: false to skip the check.
+        if (!isValid) {
+            throw new Error(`Pack validation failed: packc validate ${compileResult.packFile} reported errors`);
+        }
     }
     // Parse pack file for more accurate counts
     const packInfo = (0, compiler_1.parsePackFile)(compileResult.packFile);
