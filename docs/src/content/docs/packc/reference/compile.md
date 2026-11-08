@@ -137,7 +137,7 @@ Before writing, `compile` runs the same checks as [`packc validate`](/packc/refe
 | `pack_id` | the pack ID |
 | `pack_version` | the `--pack-version` value |
 | `load` | the Arena config and every file it references, against their schemas |
-| `compile` | prompt parsing, missing media files, metadata promotion, prompts that declare different template engines, a `required: true` fragment that does not resolve |
+| `compile` | prompt parsing, missing media files, metadata promotion, prompts that declare different template engines, a `required: true` fragment file that cannot be read; an optional one is a warning |
 | `skills` | skill sources and paths |
 | `workflow` | the workflow state machine |
 | `compositions` | composition step graphs and their references |

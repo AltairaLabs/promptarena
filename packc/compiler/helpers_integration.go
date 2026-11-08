@@ -8,10 +8,10 @@ import (
 	"strings"
 
 	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/v2/arena/promptrepo"
 
 	"github.com/AltairaLabs/PromptKit/runtime/v2/composition"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/evals"
-	"github.com/AltairaLabs/PromptKit/runtime/v2/persistence/memory"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/prompt"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/tools"
 )
@@ -23,9 +23,11 @@ func parseCompositionsFromConfig(cfg *arenaconfig.Config) (map[string]*compositi
 	return cfg.CompositionSpecs, nil
 }
 
-// buildMemoryRepo creates a memory-backed prompt repository from the loaded config.
-func buildMemoryRepo(cfg *arenaconfig.Config) (*memory.PromptRepository, error) {
-	memRepo := memory.NewPromptRepository()
+// buildMemoryRepo creates the prompt repository from the loaded config: the
+// prompt configs held in memory, each with the directory its fragment paths
+// resolve against.
+func buildMemoryRepo(cfg *arenaconfig.Config) (*promptrepo.Repository, error) {
+	memRepo := promptrepo.New()
 
 	for _, promptData := range cfg.LoadedPromptConfigs {
 		if promptData.Config == nil {
@@ -37,7 +39,7 @@ func buildMemoryRepo(cfg *arenaconfig.Config) (*memory.PromptRepository, error) 
 			return nil, fmt.Errorf("prompt config %s has invalid type", promptData.FilePath)
 		}
 
-		if err := memRepo.SavePrompt(promptConfig); err != nil {
+		if err := memRepo.Add(promptConfig, promptData.Dir); err != nil {
 			return nil, fmt.Errorf("registering prompt %s: %w", promptData.FilePath, err)
 		}
 	}

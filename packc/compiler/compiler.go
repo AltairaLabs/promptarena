@@ -125,6 +125,12 @@ func compilePack(cfg *arenaconfig.Config, configFile string, options compileOpti
 	configDir := filepath.Dir(configFile)
 	warnings := collectMediaWarnings(cfg, configDir)
 
+	fragmentWarnings, err := memRepo.LoadFragments(registry)
+	if err != nil {
+		return nil, nil, fmt.Errorf("compilation failed: %w", err)
+	}
+	warnings = append(warnings, prefixed("fragments", fragmentWarnings)...)
+
 	compileOpts, err := buildCompileOptions(cfg, configDir)
 	if err != nil {
 		return nil, nil, err
@@ -154,6 +160,15 @@ func compilePack(cfg *arenaconfig.Config, configFile string, options compileOpti
 	warnings = append(warnings, resolvePackMetadata(cfg, pack)...)
 
 	return pack, warnings, nil
+}
+
+// prefixed returns each message as "label: message".
+func prefixed(label string, msgs []string) []string {
+	out := make([]string, 0, len(msgs))
+	for _, m := range msgs {
+		out = append(out, label+": "+m)
+	}
+	return out
 }
 
 // specMetadata is one prompt config's spec.metadata, kept with the name it was

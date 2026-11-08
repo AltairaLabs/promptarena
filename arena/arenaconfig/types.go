@@ -378,7 +378,11 @@ type DeployEnvironment struct {
 
 // PromptConfigData holds a loaded prompt configuration with its file path
 type PromptConfigData struct {
-	FilePath string            `json:"file_path,omitempty"` // relative to ConfigDir
+	FilePath string `json:"file_path,omitempty"` // relative to ConfigDir
+	// Dir is the directory the prompt config was loaded from (the arena
+	// config's for an inline prompt_specs entry): the base its relative
+	// fragment paths resolve against.
+	Dir      string            `json:"-"`
 	Config   interface{}       `json:"config,omitempty"`    // parsed prompt configuration (*prompt.Config at runtime)
 	TaskType string            `json:"task_type,omitempty"` // extracted from Config.Spec.TaskType
 	Vars     map[string]string `json:"vars,omitempty"`      // Variable overrides from arena.yaml

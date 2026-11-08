@@ -92,16 +92,24 @@ For each prompt with `media.enabled: true`, the compiler checks that every `file
 ⚠ [compile] media(customer-support): Media file not found: images/logo.png (example: logo-example, part 0)
 ```
 
-The PromptKit compiler resolves each fragment a prompt config references to its content, and writes that content into the pack's `fragments` map under the fragment's name. `packc` builds its prompt registry without the fragment files, so today a static fragment never resolves:
+Each fragment a prompt config references in `spec.fragments` is read from its file, and its `content` is written into the pack's `fragments` map under the fragment's name. A relative `path` resolves against the directory of the prompt config that references it, not the arena config's. If no file exists there, the working directory is tried next. An inline `prompt_specs` entry has no file of its own, so its paths resolve against the arena config's directory.
 
-- A fragment with `required: true` fails the `compile` stage:
+- A fragment with `required: true` that cannot be read or parsed fails the `compile` stage, and the error names the file:
 
   ```text
-  Compilation failed: [compile] compilation failed: prompt "support": required fragment "tone": fragment not found: tone
+  Compilation failed: [compile] compilation failed: prompt "support": required fragment "tone": reading fragment file: open /work/support/fragments/tone.yaml: no such file or directory
   ```
 
-- An optional fragment is left out of the pack, without a warning.
+- An optional fragment that cannot be read is left out of the pack, with a warning:
+
+  ```text
+  ⚠ [compile] fragments: prompt "support": optional fragment "tone" was not loaded and is left out: reading fragment file: open /work/support/fragments/tone.yaml: no such file or directory
+  ```
+
+- A fragment with no `path` names no file, so it cannot be loaded: a required one fails the compile and an optional one is a warning.
 - A fragment whose `name` or `path` contains `{{` is chosen by a template variable, so it cannot be resolved at compile time. It is written as the placeholder `{{<name>}}`.
+
+`promptarena run` loads fragments the same way, when it builds its prompt registry, so a missing required fragment stops the run before any scenario starts.
 
 ### Templates
 
@@ -122,7 +130,7 @@ Rendering happens in the runtime that loads the pack, with the variable values i
 - `version` is the prompt's `spec.version`, or `--pack-version` when given.
 - `metadata` is the prompt's `spec.metadata`.
 
-Media references are checked relative to the prompt file's directory.
+Media references and fragment paths are resolved relative to the prompt file's directory.
 
 ## Repeatable output
 
