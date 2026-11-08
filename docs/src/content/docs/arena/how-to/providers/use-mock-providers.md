@@ -33,7 +33,7 @@ Mock providers make no network calls, so runs are fast, free, deterministic and 
 
 ## Basic Usage
 
-Replace every configured provider with a mock:
+Replace the configured LLM and self-play role providers with mocks (TTS and STT providers are not replaced):
 
 ```bash
 promptarena run --mock-provider
