@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/tutorials/06-duplex-testing.md",
- "commit": "72f35dcda537f9ebff0eaf33808ce728f0c8b3f8",
+ "commit": "d12d5b388a693c119b19bf05eabade5b717cb10d",
  "claims": [
   {
    "id": 1,
@@ -37,7 +37,7 @@
    "claim": "Duplex streaming requires the Gemini Live API; a Gemini API key is needed",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -45,7 +45,7 @@
    "claim": "OpenAI API key is needed only for TTS in self-play mode",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -53,7 +53,7 @@
    "claim": "Traditional audio testing sends the entire audio file as one blob",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -61,7 +61,7 @@
    "claim": "Duplex streams audio in chunks",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -69,7 +69,7 @@
    "claim": "Traditional turn detection is manual, per turn",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -77,7 +77,7 @@
    "claim": "Duplex turn detection is dynamic: VAD or provider-native",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -85,7 +85,7 @@
    "claim": "Traditional response timing is after full upload; duplex responds in real time as audio streams",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -99,7 +99,7 @@
    "claim": "Arena config apiVersion is promptkit.altairalabs.ai/v1alpha1",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -107,7 +107,7 @@
    "claim": "Arena config kind is Arena",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -115,7 +115,7 @@
    "claim": "metadata.name is a field of the arena config",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -150,7 +150,7 @@
    "claim": "spec.defaults.output.dir is a field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:472"
+    "arena/arenaconfig/types.go:473"
    ]
   },
   {
@@ -158,7 +158,7 @@
    "claim": "Provider file kind is Provider with metadata.name gemini-live",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -166,7 +166,7 @@
    "claim": "Provider spec.id is a field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -174,7 +174,7 @@
    "claim": "Provider type gemini is a registered provider type",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -229,7 +229,7 @@
    "claim": "export GEMINI_API_KEY sets the key the provider reads",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -329,7 +329,7 @@
    "claim": "Scenario file kind is Scenario",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -337,7 +337,7 @@
    "claim": "Scenario metadata.name is a field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -345,7 +345,7 @@
    "claim": "Scenario spec.id is a field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -353,7 +353,7 @@
    "claim": "Scenario spec.task_type is a field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -361,7 +361,7 @@
    "claim": "Scenario spec.description is a field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -369,7 +369,7 @@
    "claim": "Scenario spec.duplex enables duplex mode",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -377,7 +377,7 @@
    "claim": "duplex.timeout is a field that accepts a Go duration string such as \"30s\"",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:987"
+    "arena/arenaconfig/types.go:988"
    ]
   },
   {
@@ -385,7 +385,7 @@
    "claim": "duplex.turn_detection.mode is a field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -393,7 +393,7 @@
    "claim": "turn_detection.mode asm means provider-native turn detection",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -401,7 +401,7 @@
    "claim": "Scenario spec.streaming is a boolean field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -409,7 +409,7 @@
    "claim": "Scenario spec.turns is a list field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -417,7 +417,7 @@
    "claim": "turns[].role accepts user",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -425,7 +425,7 @@
    "claim": "turns[].parts[].type accepts audio",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -433,7 +433,7 @@
    "claim": "parts[].media.file_path is a field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -449,7 +449,7 @@
    "claim": "turns[].assertions is a field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -469,7 +469,7 @@
    "claim": "Regex (?i)(hello|hi|hey) matches case-insensitively",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -477,7 +477,7 @@
    "claim": "Pattern .{10,} requires at least 10 characters of response",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -485,7 +485,7 @@
    "claim": "promptarena run is a valid command",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -493,7 +493,7 @@
    "claim": "promptarena run accepts --scenario",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -509,7 +509,7 @@
    "claim": "promptarena run accepts --provider",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -517,7 +517,7 @@
    "claim": "A duplex run prints real-time streaming output as audio is processed",
    "verdict": "unverified",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -525,7 +525,7 @@
    "claim": "Duplex supports exactly two turn detection modes: vad and asm",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -533,7 +533,7 @@
    "claim": "In asm mode the provider (Gemini) detects turns internally",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -541,7 +541,7 @@
    "claim": "duplex.turn_detection.mode accepts asm",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -549,7 +549,7 @@
    "claim": "duplex.turn_detection.mode accepts vad",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -557,7 +557,7 @@
    "claim": "turn_detection.vad is a field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -565,7 +565,7 @@
    "claim": "vad.silence_threshold_ms is a field with example value 600",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -573,7 +573,7 @@
    "claim": "vad.min_speech_ms is a field with example value 200",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -597,7 +597,7 @@
    "claim": "Second scenario metadata.name is selfplay-duplex and spec.id matches",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -605,7 +605,7 @@
    "claim": "duplex.timeout accepts \"5m\"",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:987"
+    "arena/arenaconfig/types.go:988"
    ]
   },
   {
@@ -613,7 +613,7 @@
    "claim": "turn_detection.mode vad is used in the self-play scenario",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -621,7 +621,7 @@
    "claim": "vad.silence_threshold_ms accepts 1200 in the self-play scenario",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1022"
+    "arena/arenaconfig/types.go:1023"
    ]
   },
   {
@@ -629,7 +629,7 @@
    "claim": "vad.min_speech_ms accepts 800",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -637,7 +637,7 @@
    "claim": "duplex.resilience is a field block",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -645,7 +645,7 @@
    "claim": "resilience.max_retries is a field, value 2",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -653,7 +653,7 @@
    "claim": "resilience.partial_success_min_turns is a field, value 2",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -661,7 +661,7 @@
    "claim": "resilience.ignore_last_turn_session_end is a boolean field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -669,7 +669,7 @@
    "claim": "Self-play scenario sets spec.streaming: true",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -685,7 +685,7 @@
    "claim": "turns[].persona references a persona by metadata.name",
    "verdict": "unverified",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -710,7 +710,7 @@
    "claim": "Pattern .{10,} is used as a content_matches assertion in self-play",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -718,7 +718,7 @@
    "claim": "context.goal is a field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -726,7 +726,7 @@
    "claim": "context.user_type is a field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -734,7 +734,7 @@
    "claim": "Persona file kind is Persona",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -742,7 +742,7 @@
    "claim": "Persona metadata.name is a field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -750,7 +750,7 @@
    "claim": "Persona spec.id is a field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -758,7 +758,7 @@
    "claim": "Persona spec.voice is a field that references a voice catalog id",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -766,7 +766,7 @@
    "claim": "Persona spec.description is a field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -806,7 +806,7 @@
    "claim": "Arena spec.voices[] is a field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -814,7 +814,7 @@
    "claim": "voices[].id is a field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -830,7 +830,7 @@
    "claim": "voices[].provider references a TTS provider id (openai-alloy)",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -838,7 +838,7 @@
    "claim": "TTS provider file kind is Provider",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -846,7 +846,7 @@
    "claim": "Provider type openai is a registered provider type",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -854,7 +854,7 @@
    "claim": "Provider spec.role accepts tts",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -862,7 +862,7 @@
    "claim": "Provider spec.voice is a field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -870,7 +870,7 @@
    "claim": "Provider spec.sample_rate is a field with example value 24000",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -878,7 +878,7 @@
    "claim": "export OPENAI_API_KEY sets the key the TTS provider reads",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -886,7 +886,7 @@
    "claim": "promptarena run --scenario selfplay-duplex --provider gemini-live runs the self-play scenario",
    "verdict": "unverified",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -894,7 +894,7 @@
    "claim": "Voice sessions can be interrupted by network issues or provider limits",
    "verdict": "unverified",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -902,7 +902,7 @@
    "claim": "duplex.resilience is a field block (second occurrence)",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:991"
+    "arena/arenaconfig/types.go:992"
    ]
   },
   {
@@ -910,7 +910,7 @@
    "claim": "resilience.max_retries is a field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -918,7 +918,7 @@
    "claim": "resilience.retry_delay_ms is a field, value 2000",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1001"
+    "arena/arenaconfig/types.go:1002"
    ]
   },
   {
@@ -926,7 +926,7 @@
    "claim": "resilience.inter_turn_delay_ms is a field, value 500",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:996"
+    "arena/arenaconfig/types.go:997"
    ]
   },
   {
@@ -934,7 +934,7 @@
    "claim": "resilience.selfplay_inter_turn_delay_ms is a field, value 1000",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:996"
+    "arena/arenaconfig/types.go:997"
    ]
   },
   {
@@ -942,7 +942,7 @@
    "claim": "resilience.partial_success_min_turns is a field (second occurrence)",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -950,7 +950,7 @@
    "claim": "resilience.ignore_last_turn_session_end is a field (second occurrence)",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -976,7 +976,7 @@
    "claim": "Pattern .{20,} requires at least 20 characters",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -1054,7 +1054,7 @@
    "claim": "Increasing inter_turn_delay_ms addresses turn interruption",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:996"
+    "arena/arenaconfig/types.go:997"
    ]
   },
   {
@@ -1062,7 +1062,7 @@
    "claim": "TTS pauses are addressed by silence_threshold_ms of 1200ms or more",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1022",
+    "arena/arenaconfig/types.go:1023",
     "arena/engine/duplex_conversation_executor.go:131"
    ]
   },
@@ -1071,7 +1071,7 @@
    "claim": "Example project tree: config.arena.yaml at root",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -1079,7 +1079,7 @@
    "claim": "Example project tree lists audio/greeting.pcm and audio/question.pcm",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -1087,7 +1087,7 @@
    "claim": "Example project tree lists prompts/voice-assistant.prompt.yaml",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -1103,7 +1103,7 @@
    "claim": "Example project tree lists providers/gemini-live.provider.yaml",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -1111,7 +1111,7 @@
    "claim": "Example project tree lists providers/openai-alloy.provider.yaml",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -1119,7 +1119,7 @@
    "claim": "Example project tree lists scenarios/basic-duplex.scenario.yaml",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {
@@ -1127,7 +1127,7 @@
    "claim": "Example project tree lists scenarios/selfplay-duplex.scenario.yaml",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:985"
+    "arena/arenaconfig/types.go:986"
    ]
   },
   {

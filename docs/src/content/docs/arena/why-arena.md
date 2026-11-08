@@ -4,7 +4,7 @@ description: What PromptArena tests that a single-turn eval library does not (vo
 sidebar:
   order: 2
 verified:
-  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
+  commit: d12d5b388a693c119b19bf05eabade5b717cb10d
   sources:
     - arena/arenaconfig/types.go
     - arena/assertions/register.go

@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/tutorials/08-client-tools.md",
- "commit": "45cbd09a1d70928da45e071755b0c2172abfc8ca",
+ "commit": "d12d5b388a693c119b19bf05eabade5b717cb10d",
  "claims": [
   {
    "id": 1,
@@ -459,7 +459,7 @@
    "verdict": "true",
    "evidence": [
     "arena/consent/hook.go:48",
-    "arena/engine/conversation_executor.go:402"
+    "arena/engine/conversation_executor.go:403"
    ]
   },
   {

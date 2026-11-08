@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/scenarios/validate-outputs.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "d12d5b388a693c119b19bf05eabade5b717cb10d",
  "claims": [
   {
    "id": 1,
@@ -64,7 +64,7 @@
    "claim": "conversation_assertions on the scenario spec",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:715"
+    "arena/arenaconfig/types.go:720"
    ]
   },
   {
@@ -80,7 +80,7 @@
    "claim": "turn written as - user: \"...\"",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:1417"
+    "arena/arenaconfig/types.go:1422"
    ]
   },
   {
@@ -88,9 +88,9 @@
    "claim": "llm_judge takes params.judge_provider \"openai/gpt-4o-mini\"",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/judge_param.go:53",
+    "arena/arenaconfig/judge_param.go:56",
     "arena/arenaconfig/types.go:93",
-    "arena/engine/conversation_executor.go:917"
+    "arena/engine/conversation_executor.go:918"
    ]
   },
   {
@@ -131,7 +131,7 @@
    "claim": "JSON output has test_case, turn, assertions[expected, actual], overall_pass",
    "verdict": "false",
    "evidence": [
-    "arena/engine/conversation_executor.go:910"
+    "arena/engine/conversation_executor.go:911"
    ]
   },
   {

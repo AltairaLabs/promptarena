@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/why-arena.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "d12d5b388a693c119b19bf05eabade5b717cb10d",
  "claims": [
   {
    "id": 1,
@@ -29,7 +29,7 @@
    "claim": "Voice support includes duplex audio with self-play personas, runtime tools, and assertions that observe what got spoken and what got blocked",
    "verdict": "false",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:251",
+    "arena/engine/duplex_executor_pipeline_integration.go:255",
     "arena/turnexecutors/pipeline_stages_integration.go:503"
    ]
   },
@@ -38,7 +38,7 @@
    "claim": "Multi-turn agents support scripted or self-play opponents over many turns",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:728",
+    "arena/arenaconfig/types.go:733",
     "examples/text-negotiation/scenarios/rental-negotiation.scenario.yaml:10",
     "examples/voice-refund-demo/config.arena.yaml:65"
    ]
@@ -56,7 +56,7 @@
    "claim": "Workflows (state machines) are first-class test subjects",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:124",
+    "arena/arenaconfig/types.go:125",
     "examples/voice-ivr/scenarios/balance-check.scenario.yaml:14",
     "schemas/v1alpha1/arena.json:419"
    ]
@@ -66,7 +66,7 @@
    "claim": "Multi-agent A2A supports supervisor plus specialist delegation, asserted per turn",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:175"
+    "arena/arenaconfig/types.go:176"
    ]
   },
   {
@@ -108,7 +108,7 @@
    "claim": "A scripted persona (LLM-driven via self-play, or scripted text) drives the user side of a voice test",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:728",
+    "arena/arenaconfig/types.go:733",
     "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:56",
     "examples/voice-refund-demo/config.arena.yaml:65"
    ]
@@ -153,7 +153,7 @@
    "claim": "Content checks and guardrail observation run on real signals in voice tests",
    "verdict": "false",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:251",
+    "arena/engine/duplex_executor_pipeline_integration.go:255",
     "arena/turnexecutors/pipeline_stages_integration.go:503"
    ]
   },
@@ -248,7 +248,7 @@
    "claim": "PromptArena ships a workflow primitive in the pack, and scenarios assert state transitions and tool-call patterns per state",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:124",
+    "arena/arenaconfig/types.go:125",
     "examples/voice-ivr/scenarios/handoff-to-agent.scenario.yaml:21",
     "schemas/v1alpha1/arena.json:419"
    ]

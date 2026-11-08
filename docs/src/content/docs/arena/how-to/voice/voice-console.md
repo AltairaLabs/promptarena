@@ -2,7 +2,7 @@
 title: Use the Voice Console
 description: Hold a live, hands-free voice conversation with an Arena agent from the terminal with promptarena chat --voice.
 verified:
-  commit: 66ec692303a313b1f7ece7ce55dd5f73859efe29
+  commit: d12d5b388a693c119b19bf05eabade5b717cb10d
   sources:
     - .goreleaser.yml
     - arena/arenaconfig/loader.go

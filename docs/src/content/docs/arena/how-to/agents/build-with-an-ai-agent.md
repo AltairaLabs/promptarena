@@ -4,7 +4,7 @@ description: Brief Claude Code, Codex, or another coding agent with PromptArena'
 sidebar:
   order: 20
 verified:
-  commit: 66ec692303a313b1f7ece7ce55dd5f73859efe29
+  commit: d12d5b388a693c119b19bf05eabade5b717cb10d
   sources:
     - arena/agentkb/catalog.yaml
     - arena/agentkb/skill.go
@@ -138,7 +138,7 @@ Along the way the agent sets up:
 - Self-play personas (cooperative, confused, impatient, adversarial) to exercise the
   guardrails. If the adversarial persona does not trip an assertion, strengthen the assertions.
 
-Give the kit a `type: mock` provider that declares `additional_config.mock_config`. The `--mock-provider` flag replaces each provider with a mock: a provider that declares `mock_config` keeps its canned responses, and `--mock-config` overrides them for all providers. A provider that declares neither gets a generic reply, so assertions that expect specific content fail.
+Give the kit a `type: mock` provider that declares `additional_config.mock_config`. The `--mock-provider` flag replaces each LLM provider with a mock: a provider that declares `mock_config` keeps its canned responses, and `--mock-config` overrides them for all providers. A provider that declares neither gets a generic reply, so assertions that expect specific content fail.
 
 ## 5. Define the tools
 

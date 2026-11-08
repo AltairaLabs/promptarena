@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/tutorials/02-multi-provider.md",
- "commit": "45cbd09a1d70928da45e071755b0c2172abfc8ca",
+ "commit": "d12d5b388a693c119b19bf05eabade5b717cb10d",
  "claims": [
   {
    "id": 1,
@@ -79,7 +79,7 @@
    "claim": "metadata.name is a valid provider name field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:562"
+    "arena/arenaconfig/loader.go:568"
    ]
   },
   {
@@ -87,8 +87,8 @@
    "claim": "metadata.labels is a valid field and accepts provider label",
    "verdict": "dead",
    "evidence": [
-    "arena/arenaconfig/ignored_fields.go:69",
-    "arena/arenaconfig/ignored_fields.go:84"
+    "arena/arenaconfig/ignored_fields.go:71",
+    "arena/arenaconfig/ignored_fields.go:86"
    ]
   },
   {
@@ -174,7 +174,7 @@
    "claim": "metadata.name and metadata.labels are valid scenario metadata fields",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:687",
+    "arena/arenaconfig/types.go:692",
     "arena/cmd/promptarena/run.go"
    ]
   },
@@ -607,7 +607,7 @@
    "claim": "labels accepts a provider-specific: openai key (free label)",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:687",
+    "arena/arenaconfig/types.go:692",
     "arena/cmd/promptarena/run.go"
    ]
   },

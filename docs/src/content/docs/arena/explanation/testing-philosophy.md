@@ -2,7 +2,7 @@
 title: LLM Testing Philosophy
 description: The reasoning behind PromptArena's behavior-based tests, and how it shapes scenarios, assertions and providers.
 verified:
-  commit: 66ec692303a313b1f7ece7ce55dd5f73859efe29
+  commit: d12d5b388a693c119b19bf05eabade5b717cb10d
   sources:
     - arena/arenaconfig/judge_param.go
     - arena/arenaconfig/loader.go

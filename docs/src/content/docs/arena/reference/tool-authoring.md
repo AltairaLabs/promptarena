@@ -3,7 +3,7 @@ title: Tool Authoring
 sidebar:
   order: 8
 verified:
-  commit: 45cbd09a1d70928da45e071755b0c2172abfc8ca
+  commit: d12d5b388a693c119b19bf05eabade5b717cb10d
   sources:
     - arena/arenaconfig/loader.go
     - arena/arenaconfig/validator.go

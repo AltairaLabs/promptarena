@@ -1,13 +1,13 @@
 {
  "page": "docs/src/content/docs/arena/how-to/voice/voice-console.md",
- "commit": "66ec692303a313b1f7ece7ce55dd5f73859efe29",
+ "commit": "d12d5b388a693c119b19bf05eabade5b717cb10d",
  "claims": [
   {
    "id": 1,
    "claim": "Voice is built into the standard promptarena binary; no special build is needed",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:15",
+    "arena/cmd/promptarena/chat.go:26",
     "arena/cmd/promptarena/chat_interactive.go:20",
     "arena/voice/session_audioio_interactive.go:15"
    ]
@@ -62,7 +62,7 @@
    "claim": "go build -o bin/promptarena ./arena/cmd/promptarena builds the CLI",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:5"
+    "arena/cmd/promptarena/chat.go:16"
    ]
   },
   {
@@ -114,8 +114,8 @@
    "claim": "Example command: promptarena chat --voice --config config.arena.yaml",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:12",
-    "arena/cmd/promptarena/chat.go:15"
+    "arena/cmd/promptarena/chat.go:23",
+    "arena/cmd/promptarena/chat.go:26"
    ]
   },
   {
@@ -231,8 +231,8 @@
    "claim": "Example command: promptarena chat --voice --voice-stt openai-whisper --voice-output-voice alloy --config config.arena.yaml",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:16",
-    "arena/cmd/promptarena/chat.go:17"
+    "arena/cmd/promptarena/chat.go:27",
+    "arena/cmd/promptarena/chat.go:28"
    ]
   },
   {
@@ -240,7 +240,7 @@
    "claim": "The --voice-stt flag exists and takes an STT provider id",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:16",
+    "arena/cmd/promptarena/chat.go:27",
     "arena/tui/app/chatpage_voice.go:143"
    ]
   },
@@ -249,7 +249,7 @@
    "claim": "The --voice-output-voice flag exists and takes a TTS voice id",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:17",
+    "arena/cmd/promptarena/chat.go:28",
     "arena/engine/duplex_interactive.go:275"
    ]
   },
@@ -258,8 +258,8 @@
    "claim": "--voice-stt must match a provider declared under stt_providers:; any other id stops chat before the console opens with an error listing the loaded STT provider ids",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:693",
-    "arena/arenaconfig/types.go:209",
+    "arena/arenaconfig/loader.go:700",
+    "arena/arenaconfig/types.go:210",
     "arena/cmd/promptarena/chat_interactive.go:35",
     "arena/tui/app/chatpage_voice.go:75"
    ]
@@ -269,7 +269,7 @@
    "claim": "--voice-output-voice must match a voice id declared under voices: in the Arena config",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:217",
+    "arena/arenaconfig/types.go:218",
     "arena/arenaconfig/voice.go:12"
    ]
   },
@@ -296,7 +296,7 @@
    "claim": "The --echo-guard flag exists and gates the mic while the agent is speaking",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:18",
+    "arena/cmd/promptarena/chat.go:29",
     "arena/tui/app/chatpage_voice.go:194",
     "arena/voice/echo_guard.go:165-190"
    ]
@@ -306,8 +306,8 @@
    "claim": "Example command: promptarena chat --voice --echo-guard --config config.arena.yaml",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:15",
-    "arena/cmd/promptarena/chat.go:18"
+    "arena/cmd/promptarena/chat.go:26",
+    "arena/cmd/promptarena/chat.go:29"
    ]
   },
   {
@@ -315,7 +315,7 @@
    "claim": "Echo guard is off by default",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:18"
+    "arena/cmd/promptarena/chat.go:29"
    ]
   },
   {
@@ -341,7 +341,7 @@
    "claim": "Headphones give the lowest latency and cleanest transcription compared with echo guard",
    "verdict": "unverified",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:18"
+    "arena/cmd/promptarena/chat.go:29"
    ]
   },
   {
@@ -349,7 +349,7 @@
    "claim": "The --voice flag defaults to false",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:15"
+    "arena/cmd/promptarena/chat.go:26"
    ]
   },
   {
@@ -366,7 +366,7 @@
    "claim": "The --voice-stt flag has no default and is the STT provider id for VAD mode",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:16",
+    "arena/cmd/promptarena/chat.go:27",
     "arena/engine/duplex_interactive.go:61"
    ]
   },
@@ -375,7 +375,7 @@
    "claim": "The --voice-output-voice flag has no default and is the TTS voice id used in VAD mode",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:17",
+    "arena/cmd/promptarena/chat.go:28",
     "arena/engine/duplex_interactive.go:275"
    ]
   },
@@ -384,7 +384,7 @@
    "claim": "The --echo-guard flag defaults to false",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:18"
+    "arena/cmd/promptarena/chat.go:29"
    ]
   },
   {
@@ -392,7 +392,7 @@
    "claim": "The --config flag defaults to config.arena.yaml",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:12"
+    "arena/cmd/promptarena/chat.go:23"
    ]
   },
   {
@@ -400,7 +400,7 @@
    "claim": "The --config flag exists and takes the path to the Arena config file",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:12",
+    "arena/cmd/promptarena/chat.go:23",
     "arena/cmd/promptarena/chat_interactive.go:17"
    ]
   },

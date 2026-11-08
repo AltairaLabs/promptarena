@@ -4,7 +4,7 @@ description: Run Arena headless in CI/CD with the --ci flag, JSON, JUnit and Mar
 sidebar:
   order: 30
 verified:
-  commit: 72f35dcda537f9ebff0eaf33808ce728f0c8b3f8
+  commit: d12d5b388a693c119b19bf05eabade5b717cb10d
   sources:
     - .github/actions/promptarena-action/action.yml
     - .github/actions/promptarena-action/src/main.ts
@@ -17,6 +17,7 @@ verified:
     - arena/arenaconfig/types.go
     - arena/assertions/conversation.go
     - arena/assertions/types.go
+    - arena/cmd/promptarena/chat.go
     - arena/cmd/promptarena/main_integration.go
     - arena/cmd/promptarena/run.go
     - arena/cmd/promptarena/run_interactive.go
@@ -336,8 +337,8 @@ non-zero exit from `promptarena run` marks the build failed.
 ## Zero-cost runs with mock providers
 
 Mock providers make CI runs deterministic and free: no provider API keys, no
-network, no per-run cost. `--mock-provider` replaces every configured provider
-with a canned-response mock; `--mock-config` points at a YAML file of scripted
+network, no per-run cost. `--mock-provider` replaces the LLM and self-play role
+providers with canned-response mocks (TTS and STT providers are not replaced); `--mock-config` points at a YAML file of scripted
 responses. Arena rejects unknown keys in that file, so a typo fails the run
 instead of silently falling back to the default response. Tools still execute for real, so tool-call and workflow assertions
 remain meaningful.
