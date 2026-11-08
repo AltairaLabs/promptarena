@@ -1,7 +1,7 @@
 ---
 title: Configuration Schema
 verified:
-  commit: 45cbd09a1d70928da45e071755b0c2172abfc8ca
+  commit: 41e16490ec749312f63e711caf8cbd08bad51c64
   sources:
     - arena/adapters/arena_output.go
     - arena/adapters/registry.go
@@ -48,6 +48,7 @@ verified:
     - arena/engine/persona_fidelity_judge.go
     - arena/engine/persona_state.go
     - arena/engine/perturbations.go
+    - arena/engine/runtime_hooks.go
     - arena/engine/stop_reason.go
     - arena/engine/trial_budget.go
     - arena/engine/trials.go
@@ -91,6 +92,7 @@ verified:
     - schemas/v1alpha1/persona.json
     - schemas/v1alpha1/promptconfig.json
     - schemas/v1alpha1/provider.json
+    - schemas/v1alpha1/runtime-config.json
     - schemas/v1alpha1/scenario.json
     - schemas/v1alpha1/tool.json
     - tools/schema-gen/generators/tool_spec.go
@@ -456,6 +458,17 @@ mcp_servers:
 Tools discovered from a source-backed server are registered under their
 **raw** MCP name (`Read`, `Edit`, …) rather than the namespaced
 `mcp__<server>__<tool>` form used by stdio/url entries.
+
+#### `runtime`
+
+`runtime` takes a PromptKit runtime config spec: the `spec` of a standalone
+`RuntimeConfig` resource, whose schema is
+`schemas/v1alpha1/runtime-config.json`. Arena reads three of its fields:
+`evals` (below), `hooks` and `sandboxes`. Only session hooks run; a
+`provider` or `tool` hook fails when Arena builds the engine, and an `eval`
+hook is ignored. The schema
+accepts the spec's other fields, such as `providers`, `state_store` and
+`logging`, and Arena ignores them.
 
 #### `runtime.evals`
 

@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/reference/api-reference.md",
- "commit": "45cbd09a1d70928da45e071755b0c2172abfc8ca",
+ "commit": "41e16490ec749312f63e711caf8cbd08bad51c64",
  "claims": [
   {
    "id": 1,
@@ -239,7 +239,7 @@
    "claim": "func (e *Engine) ExecuteRuns(ctx context.Context, plan *RunPlan, concurrency int) ([]string, error)",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:916"
+    "arena/engine/engine.go:912"
    ]
   },
   {
@@ -247,7 +247,7 @@
    "claim": "ExecuteRuns executes all runs in the plan concurrently with max concurrency",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:944"
+    "arena/engine/engine.go:940"
    ]
   },
   {
@@ -255,9 +255,9 @@
    "claim": "returned run IDs are in the same order as plan combinations",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:914",
-    "arena/engine/engine.go:934",
-    "arena/engine/engine.go:936"
+    "arena/engine/engine.go:910",
+    "arena/engine/engine.go:930",
+    "arena/engine/engine.go:932"
    ]
   },
   {
@@ -265,7 +265,7 @@
    "claim": "error returned when execution setup fails",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:961"
+    "arena/engine/engine.go:957"
    ]
   },
   {
@@ -273,7 +273,7 @@
    "claim": "example ExecuteRuns(ctx, plan, 4) compiles",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:916"
+    "arena/engine/engine.go:912"
    ]
   },
   {
@@ -281,7 +281,7 @@
    "claim": "func (e *Engine) GetStateStore() statestore.Store",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:1017"
+    "arena/engine/engine.go:1013"
    ]
   },
   {
@@ -289,7 +289,7 @@
    "claim": "eng.GetStateStore().(*statestore.ArenaStateStore) type assertion compiles",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:1017",
+    "arena/engine/engine.go:1013",
     "arena/statestore/store.go:132"
    ]
   },
@@ -311,11 +311,14 @@
   },
   {
    "id": 36,
-   "claim": "EnableMockProviderMode replaces all providers, including the providers behind self-play roles, with mock providers",
+   "claim": "EnableMockProviderMode replaces all providers, including the providers behind self-play roles, with mock providers; TTS and STT providers are not swapped",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:742-797",
-    "arena/selfplay/registry.go:318-336"
+    "arena/engine/engine.go:759",
+    "arena/engine/engine.go:786",
+    "arena/engine/engine.go:788",
+    "arena/selfplay/registry.go:324",
+    "arena/selfplay/registry.go:47"
    ]
   },
   {
@@ -323,9 +326,9 @@
    "claim": "EnableMockProviderMode with an empty mockConfigPath keeps each provider's own mock_config, and a provider without one gets default responses",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:745",
-    "arena/engine/engine.go:759",
-    "arena/engine/engine.go:809"
+    "arena/engine/engine.go:746",
+    "arena/engine/engine.go:763",
+    "arena/engine/engine.go:810"
    ]
   },
   {
@@ -333,7 +336,7 @@
    "claim": "returns error if mock configuration is invalid",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:746",
+    "arena/engine/engine.go:748",
     "arena/engine/engine.go:750"
    ]
   },
@@ -851,7 +854,7 @@
    "claim": "store := eng.GetStateStore().(*statestore.ArenaStateStore); store.GetRunResult(ctx, runID)",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:1017",
+    "arena/engine/engine.go:1013",
     "arena/statestore/metadata.go:43"
    ]
   },
@@ -873,11 +876,32 @@
   },
   {
    "id": 10001,
-   "claim": "EnableMockProviderMode checks the mock config file for unknown keys before loading it and returns an error for a misspelled key",
+   "claim": "EnableMockProviderMode decodes the mock config file strictly, so a misspelled key returns an error naming it and the valid keys",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/mock_config_check.go:69",
+    "arena/engine/engine.go:747",
     "arena/engine/engine.go:748"
+   ]
+  },
+  {
+   "id": 20001,
+   "claim": "Config.Workflow and Config.Compositions are deprecated untyped forms of WorkflowSpec and CompositionSpecs, kept for Go callers that build a Config by hand; loading from YAML never sets them",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/deprecated.go:15",
+    "arena/arenaconfig/types.go:136",
+    "arena/arenaconfig/types.go:141"
+   ]
+  },
+  {
+   "id": 20002,
+   "claim": "ResolveDeprecatedFields copies Workflow/Compositions over when the typed field is unset, and NewEngine calls it",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/deprecated.go:16",
+    "arena/arenaconfig/deprecated.go:23",
+    "arena/engine/engine.go:309",
+    "arena/engine/engine.go:398"
    ]
   }
  ]

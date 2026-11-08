@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/reference/scenario-format.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "41e16490ec749312f63e711caf8cbd08bad51c64",
  "claims": [
   {
    "id": 1,
@@ -8,7 +8,7 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/validate_json.go:146",
-    "packc/compiler/check.go:218"
+    "packc/compiler/check.go:229"
    ]
   },
   {
@@ -452,7 +452,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:715",
-    "arena/engine/conversation_executor.go:1015"
+    "arena/engine/conversation_executor.go:1016"
    ]
   },
   {
@@ -470,7 +470,7 @@
    "verdict": "true",
    "evidence": [
     "arena/assertions/validate_types.go:27",
-    "arena/engine/conversation_executor.go:1078"
+    "arena/engine/conversation_executor.go:1079"
    ]
   },
   {
@@ -479,7 +479,7 @@
    "verdict": "true",
    "evidence": [
     "arena/assertions/validate_types.go:27",
-    "arena/engine/conversation_executor.go:1078"
+    "arena/engine/conversation_executor.go:1079"
    ]
   },
   {
@@ -815,7 +815,7 @@
    "claim": "A self-play turn uses role gemini-user",
    "verdict": "true",
    "evidence": [
-    "arena/engine/conversation_executor.go:1300",
+    "arena/engine/conversation_executor.go:1301",
     "examples/assertions-test/config.arena.yaml:31"
    ]
   },
@@ -857,7 +857,7 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/validate_json.go:146",
-    "packc/compiler/check.go:218"
+    "packc/compiler/check.go:229"
    ]
   },
   {
@@ -866,7 +866,7 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/validate_json.go:146",
-    "packc/compiler/check.go:218"
+    "packc/compiler/check.go:229"
    ]
   },
   {
@@ -883,7 +883,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:1143",
-    "arena/arenaconfig/validator.go:339"
+    "arena/arenaconfig/validator.go:379"
    ]
   },
   {
