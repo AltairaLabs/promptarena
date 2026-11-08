@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/voice/voice-console.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "66ec692303a313b1f7ece7ce55dd5f73859efe29",
  "claims": [
   {
    "id": 1,
@@ -194,7 +194,7 @@
    "claim": "The response_modalities: [AUDIO] setting enables stream input",
    "verdict": "false",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:603",
+    "arena/engine/duplex_executor_pipeline_integration.go:604",
     "arena/engine/duplex_interactive.go:65",
     "arena/tui/app/page.go:96"
    ]
@@ -298,7 +298,7 @@
    "evidence": [
     "arena/cmd/promptarena/chat.go:18",
     "arena/tui/app/chatpage_voice.go:194",
-    "arena/voice/echo_guard.go:153"
+    "arena/voice/echo_guard.go:165-190"
    ]
   },
   {
@@ -324,7 +324,7 @@
    "verdict": "false",
    "evidence": [
     "arena/voice/driver.go:71",
-    "arena/voice/echo_guard.go:153"
+    "arena/voice/echo_guard.go:165-190"
    ]
   },
   {
@@ -332,7 +332,7 @@
    "claim": "Echo guard is best-effort in v1: it suppresses capture during playback but does not perform full acoustic echo cancellation",
    "verdict": "true",
    "evidence": [
-    "arena/voice/echo_guard.go:153",
+    "arena/voice/echo_guard.go:165-190",
     "arena/voice/echo_guard.go:47"
    ]
   },

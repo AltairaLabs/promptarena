@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/explanation/duplex-architecture.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "66ec692303a313b1f7ece7ce55dd5f73859efe29",
  "claims": [
   {
    "id": 1,
@@ -13,7 +13,7 @@
    "claim": "DuplexProviderStage communicates to provider via WebSocket to Gemini",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:309"
+    "arena/engine/duplex_executor_pipeline_integration.go:313"
    ]
   },
   {
@@ -21,7 +21,7 @@
    "claim": "DuplexProviderStage creates WebSocket session and handles bidirectional I/O",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:309"
+    "arena/engine/duplex_executor_pipeline_integration.go:313"
    ]
   },
   {
@@ -194,7 +194,7 @@
    "claim": "Pipeline stage 'PromptAssemblyStage' with purpose: Loads prompt config, adds system instruction",
    "verdict": "false",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:283"
+    "arena/engine/duplex_executor_pipeline_integration.go:287"
    ]
   },
   {
@@ -202,7 +202,7 @@
    "claim": "Pipeline stage 'DuplexProviderStage' with purpose: Creates WebSocket session, handles bidirectional I/O",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:309"
+    "arena/engine/duplex_executor_pipeline_integration.go:313"
    ]
   },
   {
@@ -210,16 +210,16 @@
    "claim": "Pipeline stage 'MediaExternalizerStage' saves audio responses to files",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:489"
+    "arena/engine/duplex_executor_pipeline_integration.go:490"
    ]
   },
   {
    "id": 26,
-   "claim": "Pipeline stage 'ValidationStage' runs assertions and guardrails on responses",
-   "verdict": "dead",
+   "claim": "DuplexProviderStage runs the prompt's guardrails, as ProviderStage does on the text path (SetHookRegistry)",
+   "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:319",
-    "arena/stages/duplex_guardrail.go:32"
+    "arena/engine/duplex_executor_pipeline_integration.go:321-331",
+    "arena/engine/duplex_executor_pipeline_integration.go:343-363"
    ]
   },
   {
@@ -227,7 +227,7 @@
    "claim": "Pipeline stage 'ArenaStateStoreSaveStage' persists messages for reporting",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:504",
+    "arena/engine/duplex_executor_pipeline_integration.go:505",
     "arena/stages/statestore_save_integration.go:23"
    ]
   },
@@ -251,30 +251,26 @@
   },
   {
    "id": 31,
-   "claim": "DuplexGuardrailStage runs after DuplexProviderStage when the prompt declares guardrails, because DuplexProviderStage runs no provider hooks",
+   "claim": "DuplexProviderStage checks text bound for the session before sending it, each chunk of assistant text before forwarding it, and each completed assistant turn; a firing is stamped on the message's validations, and an enforcing guardrail rewrites the turn, marks it finish_reason: safety and drops its tool calls (PromptKit v2.18.0 pipeline/stage/stages_duplex_provider_hooks.go)",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:319",
-    "arena/engine/duplex_executor_pipeline_integration.go:334",
-    "arena/stages/duplex_guardrail.go:59"
+    "arena/engine/duplex_executor_pipeline_integration.go:321-331"
    ]
   },
   {
    "id": 32,
-   "claim": "Duplex guardrail enforcement is after the fact: it rewrites the recorded turn (state store, recording, reports, later assertions), keeps audio and tool calls, and does not run input guardrails",
+   "claim": "Enforcement cannot unsay what was played; an enforcing streaming check drops the rest of the turn's text and audio; spoken input is not checked before the provider hears it (PromptKit v2.18.0 pipeline/stage/stages_duplex_provider_hooks.go:14-37,426-462)",
    "verdict": "true",
    "evidence": [
-    "arena/stages/duplex_guardrail.go:14",
-    "arena/stages/duplex_guardrail.go:185"
+    "arena/engine/duplex_executor_pipeline_integration.go:321-331"
    ]
   },
   {
    "id": 33,
-   "claim": "Duplex output recording stages come after the guardrail stage, so a recorded turn holds the enforced content",
+   "claim": "RecordingStage comes after the provider stage, so a recorded turn holds the enforced content, and each assistant turn is recorded once",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:460",
-    "arena/stages/duplex_recording.go:26"
+    "arena/engine/duplex_executor_pipeline_integration.go:460-469"
    ]
   },
   {
@@ -282,7 +278,7 @@
    "claim": "Duplex runs execute pack evals at conversation end: turn triggers per assistant turn, then session and conversation triggers",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_results_integration.go:63",
+    "arena/engine/duplex_executor_results_integration.go:67",
     "arena/engine/eval_orchestrator.go:240"
    ]
   }

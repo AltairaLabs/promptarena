@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/explanation/interfaces.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "66ec692303a313b1f7ece7ce55dd5f73859efe29",
  "claims": [
   {
    "id": 1,
@@ -18,7 +18,7 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/run_interactive.go:252",
-    "arena/cmd/promptarena/serve_interactive.go:222",
+    "arena/cmd/promptarena/serve_interactive.go:221",
     "arena/tui/app/runpage.go:139"
    ]
   },
@@ -80,8 +80,8 @@
    "verdict": "false",
    "evidence": [
     "arena/cmd/promptarena/serve_interactive.go:133",
-    "arena/cmd/promptarena/serve_interactive.go:249",
-    "arena/cmd/promptarena/serve_interactive.go:254"
+    "arena/cmd/promptarena/serve_interactive.go:248",
+    "arena/cmd/promptarena/serve_interactive.go:253"
    ]
   },
   {
@@ -89,7 +89,7 @@
    "claim": "The web UI is served at http://127.0.0.1:8080 by default",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:249",
+    "arena/cmd/promptarena/serve_interactive.go:248",
     "arena/cmd/promptarena/serve_interactive.go:29",
     "arena/cmd/promptarena/serve_interactive.go:72"
    ]
@@ -154,7 +154,7 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/serve_interactive.go:166",
-    "arena/engine/engine.go:722"
+    "arena/engine/engine.go:723"
    ]
   },
   {
@@ -200,7 +200,7 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/run_interactive.go:252",
-    "arena/cmd/promptarena/serve_interactive.go:222",
+    "arena/cmd/promptarena/serve_interactive.go:221",
     "arena/tui/app/runpage.go:139"
    ]
   },
@@ -221,7 +221,7 @@
    "evidence": [
     "arena/arenaconfig/helpers.go:40",
     "arena/cmd/promptarena/hub_results.go:25",
-    "arena/cmd/promptarena/serve_interactive.go:222"
+    "arena/cmd/promptarena/serve_interactive.go:221"
    ]
   },
   {
@@ -321,7 +321,7 @@
    "claim": "`promptarena serve` binds to 127.0.0.1:8080",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:237",
+    "arena/cmd/promptarena/serve_interactive.go:236",
     "arena/cmd/promptarena/serve_interactive.go:36",
     "arena/cmd/promptarena/serve_interactive.go:72"
    ]
@@ -376,7 +376,7 @@
    "claim": "The web UI provides real-time audio monitoring for voice agents",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:199",
+    "arena/cmd/promptarena/serve_interactive.go:198",
     "arena/web/frontend/src/App.tsx:209"
    ]
   },
@@ -394,8 +394,8 @@
    "claim": "With --mock-provider, canned responses drive the conversation while tools still execute for real",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:184",
-    "arena/engine/engine.go:722"
+    "arena/cmd/promptarena/serve_interactive.go:183",
+    "arena/engine/engine.go:723"
    ]
   },
   {
@@ -563,7 +563,7 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/hub_results.go:20",
-    "arena/cmd/promptarena/main_integration.go:78",
+    "arena/cmd/promptarena/main_integration.go:78-80",
     "arena/tui/app/runpage.go:157"
    ]
   }

@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/voice/voice-tool-calls.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "66ec692303a313b1f7ece7ce55dd5f73859efe29",
  "claims": [
   {
    "id": 1,
@@ -42,7 +42,7 @@
    "claim": "Conversation-level assertions check which tools fired, args, order, results",
    "verdict": "true",
    "evidence": [
-    "arena/assertions/validate_params.go:73",
+    "arena/assertions/validate_params.go:149",
     "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:67"
    ]
   },
@@ -59,7 +59,7 @@
    "claim": "scenario duplex-tools has a busy-professional persona asking about weather, calendar, reminders, three tools",
    "verdict": "true",
    "evidence": [
-    "examples/duplex-streaming/mock-responses.yaml:78",
+    "examples/duplex-streaming/mock-responses.yaml:87",
     "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:56"
    ]
   },
@@ -147,18 +147,15 @@
    "claim": "tool_calls_with_args and tool_call_sequence can be layered in as conversation assertions",
    "verdict": "true",
    "evidence": [
-    "arena/assertions/validate_params.go:73",
-    "arena/assertions/validate_params.go:77"
+    "arena/assertions/validate_params.go:149"
    ]
   },
   {
    "id": 18,
-   "claim": "tool_calls_with_args params tool_name and expected_args (map)",
+   "claim": "tool_calls_with_args params tool_name and expected_args (map) (PromptKit v2.18.0 evals/handlers/tool_calls_with_args.go:27-28)",
    "verdict": "true",
    "evidence": [
-    "arena/assertions/validate_params.go:21",
-    "arena/assertions/validate_params.go:22",
-    "arena/assertions/validate_params.go:73"
+    "arena/assertions/validate_params.go:149"
    ]
   },
   {
@@ -166,17 +163,18 @@
    "claim": "expected_args time: \"9am\" for set_reminder",
    "verdict": "false",
    "evidence": [
-    "examples/duplex-streaming/mock-responses.yaml:108",
-    "examples/duplex-streaming/mock-responses.yaml:146"
+    "examples/duplex-streaming/mock-responses.yaml:117",
+    "examples/duplex-streaming/mock-responses.yaml:155"
    ]
   },
   {
    "id": 20,
-   "claim": "tool_call_sequence params sequence list of tool names",
+   "claim": "tool_call_sequence params sequence list of tool names (PromptKit v2.18.0 evals/handlers/tool_call_sequence.go:25)",
    "verdict": "true",
    "evidence": [
-    "arena/assertions/validate_params.go:32",
-    "arena/assertions/validate_params.go:77"
+    "arena/assertions/validate_params.go:149",
+    "arena/assertions/validate_params.go:21",
+    "arena/assertions/validate_params.go:30-33"
    ]
   },
   {
@@ -239,7 +237,7 @@
    "claim": "In mock mode mock-duplex replies from the duplex-tools block of mock-responses.yaml with scripted tool_calls, tools execute for real and the three tools_called conversation assertions pass",
    "verdict": "true",
    "evidence": [
-    "examples/duplex-streaming/mock-responses.yaml:78",
+    "examples/duplex-streaming/mock-responses.yaml:87",
     "examples/duplex-streaming/scenarios/duplex-tools.scenario.yaml:68"
    ]
   },
@@ -275,7 +273,7 @@
    "claim": "replace tools_called with tool_calls_with_args and specify expected_args",
    "verdict": "true",
    "evidence": [
-    "arena/assertions/validate_params.go:73"
+    "arena/assertions/validate_params.go:149"
    ]
   },
   {
@@ -283,7 +281,7 @@
    "claim": "tools_not_called assertion type exists",
    "verdict": "true",
    "evidence": [
-    "arena/assertions/validate_params.go:66"
+    "arena/assertions/validate_params.go:144-147"
    ]
   },
   {

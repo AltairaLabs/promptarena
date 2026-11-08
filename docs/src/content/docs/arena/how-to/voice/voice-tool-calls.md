@@ -2,7 +2,7 @@
 title: Test Voice Tool Calls
 description: Assert that a voice agent calls the right tools, with the right arguments, in the right order, during a duplex audio conversation.
 verified:
-  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
+  commit: 66ec692303a313b1f7ece7ce55dd5f73859efe29
   sources:
     - arena/assertions/validate_params.go
     - arena/cmd/promptarena/run.go
