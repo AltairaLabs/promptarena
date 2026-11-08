@@ -4,18 +4,12 @@ description: What packc compile, packc validate and promptarena validate each ch
 sidebar:
   order: 3
 verified:
-  commit: 45cbd09a1d70928da45e071755b0c2172abfc8ca
+  commit: 66ec692303a313b1f7ece7ce55dd5f73859efe29
   sources:
-    - arena/cmd/promptarena/export.go
     - arena/cmd/promptarena/validate_json.go
     - packc/compiler/check.go
     - packc/compiler/compiler.go
-    - packc/compiler/helpers_integration.go
-    - packc/compiler/pack_fields.go
-    - packc/compiler/pack_file.go
     - packc/compiler/skills_validator_integration.go
-    - packc/main_interactive.go
-    - schemas/v1alpha1/arena.json
     - schemas/v1alpha1/promptconfig.json
     - schemas/v1alpha1/tool.json
 ---
@@ -27,7 +21,7 @@ Three commands validate packs, at different points:
 
 - `packc compile` checks the source config as it builds the pack, then checks the pack before writing it.
 - `packc validate` checks a pack file that already exists, wherever it came from.
-- `promptarena validate` checks an arena config. For a config with `prompt_configs`, it runs the same function `packc compile` runs (`compiler.Check`) without writing a file. It also checks each assertion's type and params, and the params of prompt validators, in an `assertions` stage that `packc` has no part in.
+- `promptarena validate` checks an arena config. For a config with `prompt_configs`, it runs the same function `packc compile` runs (`compiler.Check`) without writing a file. It also checks each assertion's type and params in an `assertions` stage that `packc` has no part in. It does not check prompt validator params; PromptKit rejects a param a validator's handler does not read when it builds the guardrail at run time.
 
 All three run the same pack checks (`checkPack` in `packc/compiler`): the PromptKit runtime's pack checks plus this repository's skill checks. A finding is an error or a warning in all three alike, so a pack `packc compile` writes never fails `packc validate`. The differences are in what runs before the pack checks, noted in each section below.
 
@@ -126,22 +120,26 @@ The structural check covers what the schema alone does not:
 - the pack has an `id`, a semantic `version` and at least one prompt;
 - `template_engine` is present with `version` and `syntax`;
 - each prompt has a `system_template` and a semantic `version`;
-- a prompt whose template contains `{{` declares at least one variable.
+- a prompt whose template contains `{{` declares at least one variable;
+- each eval, at pack level and in each prompt, has a unique `id`, a `type` and a `trigger`, a `sample_percentage` between 0 and 100, and a `metric` and `when` the runtime can use.
 
-`packc` treats each of those findings as blocking:
+The structural check is PromptKit's `ValidateDetailed`, which sorts its findings into errors and warnings. `packc` treats each error as blocking:
 
 ```text
 ✗ Pack validation failed: app.pack.json
   - [pack] prompt 'support': missing system_template
 ```
 
-Two structural findings are warnings:
+Three structural findings are warnings:
 
 - a pack with no `compilation` block. The PromptPack schema makes it optional, so a pack written by another tool can leave it out;
-- a prompt whose `tools` names a tool the pack's `tools` object does not define. The specification requires prompt tools to be defined at pack level, but Arena also offers tools a pack does not carry (MCP, workflow, memory and skill tools), and a prompt may list those.
+- a prompt whose `tools` names a tool the pack's `tools` object does not define. The specification requires prompt tools to be defined at pack level, but a host may supply tools a pack does not carry (MCP, workflow, memory and skill tools), and a prompt may list those;
+- an eval `trigger` the PromptKit runtime does not know. The schema lists trigger values as examples, not a fixed set, but the runtime skips such an eval.
 
 ```text
 ⚠ [pack] prompt 'support': tool 'lookup_order' is not defined in the pack's tools
+⚠ [pack] missing compilation metadata
+⚠ [pack] pack evals[0] (id="e1"): invalid trigger "sometimes"
 ```
 
 ### PromptPack schema

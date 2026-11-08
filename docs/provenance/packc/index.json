@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/packc/index.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "66ec692303a313b1f7ece7ce55dd5f73859efe29",
  "claims": [
   {
    "id": 1,
@@ -16,7 +16,7 @@
    "claim": "validation uses the PromptPack schema embedded in the binary, so it works offline",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:219"
+    "packc/compiler/check.go:229-234"
    ]
   },
   {
@@ -56,8 +56,7 @@
    "claim": "compile writes name=id, description 'Pack containing N prompts', $schema latest URL, compilation block",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:141",
-    "packc/compiler/compiler.go:154"
+    "packc/compiler/compiler.go:138-150"
    ]
   },
   {
@@ -65,7 +64,7 @@
    "claim": "each prompt gets the default template/provider/validator pipeline",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:142"
+    "packc/compiler/compiler.go:138-146"
    ]
   },
   {
@@ -79,7 +78,7 @@
    "claim": "PromptPack schema fields",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:219"
+    "packc/compiler/check.go:229-234"
    ]
   },
   {

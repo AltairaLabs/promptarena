@@ -4,10 +4,9 @@ description: Checks, output and exit codes of packc validate, which validates a 
 sidebar:
   order: 3
 verified:
-  commit: 45cbd09a1d70928da45e071755b0c2172abfc8ca
+  commit: 66ec692303a313b1f7ece7ce55dd5f73859efe29
   sources:
     - packc/compiler/check.go
-    - packc/compiler/pack_fields.go
     - packc/compiler/pack_file.go
     - packc/compiler/skills_validator_integration.go
     - packc/main_interactive.go
@@ -49,6 +48,7 @@ Errors:
 | Area | Errors |
 |---|---|
 | Pack | `id` missing; `version` missing or not a semantic version; no prompts; `template_engine` missing, or its `version` or `syntax` unset |
+| Evals | an eval, at pack level or in a prompt, with no `id`, a duplicate `id`, no `type` or no `trigger`; a `sample_percentage` outside 0 to 100; a `metric` or `when` the runtime cannot use |
 | Each prompt | `system_template` missing; `system_template` contains `{{` but `variables` is empty; `version` missing or not a semantic version |
 | `workflow` | `version` not 1 or 2; `states` empty; `entry` not a state; a state's `prompt_task` not a prompt (except `orchestration: composition` states); an `on_event` or `on_max_visits` target not a state; `persistence` not `transient` or `persistent`; `orchestration` not `internal`, `external`, `hybrid` or `composition`; `control` not `user` or `agent`; `composition` set without `orchestration: composition`, or missing with it |
 | `compositions` | a step graph that is not valid; a step referencing a prompt, tool or eval the pack does not define; a workflow state naming a composition that does not exist |
@@ -60,7 +60,7 @@ Warnings print and the pack still passes:
 
 | Area | Warnings |
 |---|---|
-| Pack | no `compilation` block (the schema makes it optional); a prompt `tools` entry the pack's `tools` does not define |
+| Pack | no `compilation` block (the schema makes it optional); a prompt `tools` entry the pack's `tools` does not define; an eval `trigger` the PromptKit runtime does not know |
 | `workflow` | an event name that is not PascalCase; a cycle; a `control: agent` state that is terminal, or in a cycle with nothing that yields, ends or caps visits; a terminal state with `on_event`; an `on_max_visits` target that has its own `max_visits`; in version 2, a non-terminal state with no `on_event` and no `max_visits` |
 | `compositions` | a composition no workflow state uses |
 | `agents` | an `input_modes` or `output_modes` entry without a `/`; an empty tag |

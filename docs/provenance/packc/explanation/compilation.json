@@ -1,14 +1,13 @@
 {
  "page": "docs/src/content/docs/packc/explanation/compilation.md",
- "commit": "b2f589e04cd12bf82fc73ab2f9675765c4d9c7f9",
+ "commit": "66ec692303a313b1f7ece7ce55dd5f73859efe29",
  "claims": [
   {
    "id": 1,
    "claim": "promptarena validate and promptarena export use packc/compiler",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/export.go:46-51",
-    "arena/cmd/promptarena/validate_json.go:146"
+    "arena/cmd/promptarena/validate_json.go:128-151"
    ]
   },
   {
@@ -16,7 +15,7 @@
    "claim": "compiler.Check stages pack_id, pack_version, load, compile, skills, workflow, compositions, agents, governance, pack, pack_schema; early stages stop, later collect",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:157-199",
+    "packc/compiler/check.go:157-189",
     "packc/compiler/check.go:16-28",
     "packc/compiler/check.go:93-138"
    ]
@@ -26,8 +25,7 @@
    "claim": "compile prints warnings as '\u26a0 [stage] message' and fails with 'Compilation failed:'; exit 1 and no file on error",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:43-49",
-    "packc/main_interactive.go:168-183"
+    "packc/compiler/check.go:43-73"
    ]
   },
   {
@@ -35,8 +33,7 @@
    "claim": "arena config, prompt configs and tool files are schema-validated on load; arena config requires providers and defaults",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:108-112",
-    "schemas/v1alpha1/arena.json:839-842"
+    "packc/compiler/check.go:108-112"
    ]
   },
   {
@@ -44,7 +41,7 @@
    "claim": "each prompt gets the default template/provider/validator pipeline",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:141-146"
+    "packc/compiler/compiler.go:138-146"
    ]
   },
   {
@@ -52,9 +49,8 @@
    "claim": "arena tools/workflow/agents/compositions/skills/pack_evals/pack_metadata map to pack tools/workflow/agents/compositions/skills/evals/metadata",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go",
-    "packc/compiler/compiler.go:133-146",
-    "packc/compiler/compiler.go:203-205"
+    "packc/compiler/compiler.go:114-156",
+    "packc/compiler/compiler.go:225-257"
    ]
   },
   {
@@ -70,8 +66,7 @@
    "claim": "skill directory paths are made relative to the config's directory however -c is written; an @org/name reference stays a reference",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:125-128",
-    "packc/compiler/helpers_integration.go:171-200"
+    "packc/compiler/compiler.go:252-253"
    ]
   },
   {
@@ -79,8 +74,7 @@
    "claim": "packc compile sets name=id, version from --pack-version (default v1.0.0), description 'Pack containing N prompts', $schema latest URL, compilation block",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:154-156",
-    "packc/main_interactive.go:126-155"
+    "packc/compiler/compiler.go:138-150"
    ]
   },
   {
@@ -97,7 +91,8 @@
    "claim": "pack_metadata wins over spec.metadata with a warning; otherwise first spec.metadata by prompt_configs id is promoted with a warning naming the others",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:185-228"
+    "packc/compiler/compiler.go:154",
+    "packc/compiler/compiler.go:179-222"
    ]
   },
   {
@@ -111,10 +106,12 @@
   },
   {
    "id": 13,
-   "claim": "compiled fragments map holds {{name}} placeholders, not fragment content",
+   "claim": "PromptKit resolves fragments to content, but packc's memory registry has no fragment files: a required static fragment fails the compile stage with 'fragment not found', an optional one is dropped, a templated one is written as {{name}}",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:141-146"
+    "packc/compiler/compiler.go:120-146",
+    "packc/compiler/helpers_integration.go:27-46",
+    "packc/compiler/pack_file.go:121-126"
    ]
   },
   {
@@ -122,7 +119,7 @@
    "claim": "templates are not parsed; only check is that a template containing {{ declares at least one variable (pack stage error)",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go"
+    "packc/compiler/check.go:186-224"
    ]
   },
   {
@@ -138,8 +135,8 @@
    "claim": "two compiles of the same inputs differ only in compilation.created_at",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:127-147",
-    "packc/compiler/pack_fields.go:37-77"
+    "packc/compiler/compiler.go:114-156",
+    "packc/compiler/compiler.go:138-146"
    ]
   },
   {
@@ -162,11 +159,10 @@
   },
   {
    "id": 19,
-   "claim": "template_engine is the one the prompts declare; differing engines fail the compile stage; prompts declaring none are left out of the comparison; no declaration gives v1 {{variable}}",
+   "claim": "template_engine is the one the prompts declare, chosen by the PromptKit compiler; differing engines fail the compile stage; prompts declaring none or the default are left out; no declaration gives v1 {{variable}}",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:138-152",
-    "packc/compiler/pack_fields.go:37-77"
+    "packc/compiler/compiler.go:138-146"
    ]
   },
   {
@@ -175,8 +171,7 @@
    "verdict": "true",
    "evidence": [
     "packc/compiler/check.go:97-106",
-    "packc/compiler/helpers_integration.go:240-246",
-    "packc/compiler/pack_fields.go:17-28"
+    "packc/compiler/pack_fields.go:7-21"
    ]
   }
  ]

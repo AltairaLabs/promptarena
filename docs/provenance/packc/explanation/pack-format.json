@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/packc/explanation/pack-format.md",
- "commit": "45cbd09a1d70928da45e071755b0c2172abfc8ca",
+ "commit": "66ec692303a313b1f7ece7ce55dd5f73859efe29",
  "claims": [
   {
    "id": 1,
@@ -19,8 +19,7 @@
    "claim": "validate accepts a pack without compilation and prints a warning",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:186-198",
-    "packc/compiler/check.go:233-235"
+    "packc/compiler/check.go:186-224"
    ]
   },
   {
@@ -34,7 +33,7 @@
    "claim": "each prompt gets the default template/provider/validator pipeline",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:141-146"
+    "packc/compiler/compiler.go:138-146"
    ]
   },
   {
@@ -42,8 +41,8 @@
    "claim": "packc compile builds tools from kind: Tool files; a prompt's tools list names entries in it",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/helpers_integration.go:116-139",
-    "packc/compiler/pack_fields.go:79-105"
+    "packc/compiler/check.go:186-224",
+    "packc/compiler/compiler.go:130-146"
    ]
   },
   {
@@ -62,10 +61,12 @@
   },
   {
    "id": 9,
-   "claim": "compiled fragments map holds {{name}} placeholders, not fragment content",
+   "claim": "packc does not give PromptKit's compiler the fragment files: a required fragment fails the compile, an optional one is left out, only a templated fragment reaches the pack as {{name}}",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:141-146"
+    "packc/compiler/compiler.go:120-146",
+    "packc/compiler/helpers_integration.go:27-46",
+    "packc/compiler/pack_file.go:121-126"
    ]
   },
   {
@@ -73,8 +74,7 @@
    "claim": "packc compile sets name=id, version from --pack-version (default v1.0.0), description, $schema latest URL, compilation block with schema v1",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:154-156",
-    "packc/main_interactive.go:126-155"
+    "packc/compiler/compiler.go:138-150"
    ]
   },
   {
@@ -90,8 +90,7 @@
    "claim": "invalid --id rejected before compile with [pack_id] error",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:97-100",
-    "packc/compiler/helpers_integration.go:240-246"
+    "packc/compiler/check.go:97-100"
    ]
   },
   {

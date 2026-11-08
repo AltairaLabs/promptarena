@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/packc/how-to/organize-packs.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "66ec692303a313b1f7ece7ce55dd5f73859efe29",
  "claims": [
   {
    "id": 1,
@@ -16,8 +16,7 @@
    "claim": "pack id pattern ^[a-z][a-z0-9-]*$; invalid --id rejected before compile with [pack_id] error",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:100",
-    "packc/compiler/helpers_integration.go:230"
+    "packc/compiler/compiler.go:100-103"
    ]
   },
   {
@@ -25,8 +24,7 @@
    "claim": "packc compile sets name=id, version from --pack-version (default v1.0.0), description 'Pack containing N prompts', $schema latest URL, compilation block",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:114",
-    "packc/main_interactive.go:164"
+    "packc/compiler/compiler.go:114-150"
    ]
   },
   {
@@ -52,8 +50,8 @@
    "claim": "two compiles of the same inputs differ only in compilation.created_at; template_engine resolved deterministically, disagreement is a compile error",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:114",
-    "packc/compiler/pack_fields.go:59"
+    "packc/compiler/compiler.go:114-156",
+    "packc/compiler/compiler.go:138-146"
    ]
   }
  ]

@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/packc/reference/validate.md",
- "commit": "45cbd09a1d70928da45e071755b0c2172abfc8ca",
+ "commit": "66ec692303a313b1f7ece7ce55dd5f73859efe29",
  "claims": [
   {
    "id": 1,
@@ -15,7 +15,7 @@
    "claim": "PROMPTKIT_SCHEMA_SOURCE selects embedded/remote/file/URL schema",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:240"
+    "packc/compiler/check.go:229-234"
    ]
   },
   {
@@ -23,8 +23,7 @@
    "claim": "check order: read and parse JSON, schema, skills, workflow, compositions, agents, governance, pack",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:157-198",
-    "packc/compiler/pack_file.go:25-45"
+    "packc/compiler/check.go:157-189"
    ]
   },
   {
@@ -32,7 +31,7 @@
    "claim": "schema that cannot be loaded is a pack_schema error",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:240-245"
+    "packc/compiler/check.go:229-234"
    ]
   },
   {
@@ -45,11 +44,10 @@
   },
   {
    "id": 6,
-   "claim": "pack/prompt structural rules (id, semver, prompts, template_engine, compilation, system_template, variables)",
+   "claim": "pack/prompt structural rules (id, semver, prompts, template_engine, system_template, variables, eval definitions) are errors",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:186-196",
-    "packc/compiler/check.go:213-231"
+    "packc/compiler/check.go:186-224"
    ]
   },
   {
@@ -73,7 +71,7 @@
    "claim": "governance errors block, undeclared-prefix warnings do not",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:182-184"
+    "packc/compiler/check.go:179-184"
    ]
   },
   {
@@ -87,11 +85,10 @@
   },
   {
    "id": 11,
-   "claim": "validate warns when a prompt's tools are not in the pack's tools",
+   "claim": "validate warns when a prompt's tools are not in the pack's tools, or an eval trigger is unknown (PromptKit ValidateDetailed)",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:198",
-    "packc/compiler/pack_fields.go:84-105"
+    "packc/compiler/check.go:186-224"
    ]
   },
   {
@@ -116,7 +113,7 @@
    "claim": "a missing compilation block is a warning, not an error",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:186-196"
+    "packc/compiler/check.go:186-224"
    ]
   },
   {

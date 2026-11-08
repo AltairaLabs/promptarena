@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/packc/how-to/validate-packs.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "66ec692303a313b1f7ece7ce55dd5f73859efe29",
  "claims": [
   {
    "id": 1,
@@ -27,9 +27,7 @@
    "claim": "schema failures print as '[pack_schema] <path>: <msg>' under '\u2717 Pack validation failed: <file>'; schema-load failure is a pack_schema error",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:218",
-    "packc/compiler/check.go:222",
-    "packc/main_interactive.go:306"
+    "packc/compiler/check.go:226-257"
    ]
   },
   {
@@ -37,9 +35,7 @@
    "claim": "pack structure checks id, semver version, prompts, template_engine, system_template, prompt version, variables-declared are blocking; missing compilation and undeclared prompt tools are warnings",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:157",
-    "packc/compiler/pack_fields.go:23",
-    "packc/compiler/pack_fields.go:84"
+    "packc/compiler/check.go:186-224"
    ]
   },
   {
@@ -67,10 +63,7 @@
    "claim": "promptarena validate and promptarena export use packc/compiler; promptarena validate adds config consistency and assertion type/param checks",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/export.go:51",
-    "arena/cmd/promptarena/validate_json.go:128",
-    "arena/cmd/promptarena/validate_json.go:146",
-    "arena/cmd/promptarena/validate_json.go:156"
+    "arena/cmd/promptarena/validate_json.go:128-175"
    ]
   },
   {
