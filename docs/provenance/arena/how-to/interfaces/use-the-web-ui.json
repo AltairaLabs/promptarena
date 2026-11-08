@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/interfaces/use-the-web-ui.md",
- "commit": "45cbd09a1d70928da45e071755b0c2172abfc8ca",
+ "commit": "66ec692303a313b1f7ece7ce55dd5f73859efe29",
  "claims": [
   {
    "id": 1,
@@ -44,8 +44,8 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/serve_interactive.go:133",
-    "arena/cmd/promptarena/serve_interactive.go:254-256",
-    "arena/cmd/promptarena/serve_interactive.go:284-301"
+    "arena/cmd/promptarena/serve_interactive.go:253-255",
+    "arena/cmd/promptarena/serve_interactive.go:283-300"
    ]
   },
   {
@@ -85,7 +85,7 @@
    "claim": "On startup the server prints its URL and config path",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:250-252"
+    "arena/cmd/promptarena/serve_interactive.go:249-251"
    ]
   },
   {
@@ -93,7 +93,7 @@
    "claim": "The server runs until Ctrl+C is pressed",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:275"
+    "arena/cmd/promptarena/serve_interactive.go:274"
    ]
   },
   {
@@ -141,7 +141,7 @@
    "claim": "Startup prints the message 'Port 8080 is in use - serving on 8083 instead'",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:246"
+    "arena/cmd/promptarena/serve_interactive.go:245"
    ]
   },
   {
@@ -149,7 +149,7 @@
    "claim": "Startup prints the line 'Arena Web UI: http://localhost:8083' for the fallback port",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:249-250"
+    "arena/cmd/promptarena/serve_interactive.go:248-249"
    ]
   },
   {
@@ -174,7 +174,7 @@
    "claim": "On startup Arena hydrates *.json result files from the config's output directory",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:224-229",
+    "arena/cmd/promptarena/serve_interactive.go:223-228",
     "arena/web/server_loader_integration.go:25-50"
    ]
   },
@@ -504,8 +504,8 @@
    "claim": "--mock-provider replaces every configured provider with mocks",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:176-188",
-    "arena/engine/engine.go:742-797"
+    "arena/cmd/promptarena/serve_interactive.go:180-187",
+    "arena/engine/engine.go:742-793"
    ]
   },
   {
@@ -514,7 +514,7 @@
    "verdict": "false",
    "evidence": [
     "arena/engine/engine.go:426",
-    "arena/engine/engine.go:763-793",
+    "arena/engine/engine.go:759-789",
     "arena/selfplay/registry.go:318-336"
    ]
   },
@@ -524,7 +524,7 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/serve_interactive.go:142-143",
-    "arena/engine/engine.go:746-757"
+    "arena/engine/engine.go:746-753"
    ]
   },
   {
@@ -540,7 +540,7 @@
    "claim": "In mock mode runs execute end to end with tools still running for real",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:771"
+    "arena/engine/engine.go:767"
    ]
   },
   {
@@ -548,8 +548,8 @@
    "claim": "In mock mode no real model calls are made or billed; TTS and STT providers are not replaced",
    "verdict": "false",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:183-188",
-    "arena/engine/engine.go:763-793"
+    "arena/cmd/promptarena/serve_interactive.go:182-187",
+    "arena/engine/engine.go:759-789"
    ]
   },
   {
@@ -666,8 +666,8 @@
    "claim": "serve exits at startup if the --mock-config file has an unknown key.",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/mock_config_check.go:69",
-    "arena/engine/engine.go:749"
+    "arena/arenaconfig/mock_config_check.go:43-49",
+    "arena/engine/engine.go:746-751"
    ]
   }
  ]

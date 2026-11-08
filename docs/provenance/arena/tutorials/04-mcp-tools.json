@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/tutorials/04-mcp-tools.md",
- "commit": "45cbd09a1d70928da45e071755b0c2172abfc8ca",
+ "commit": "66ec692303a313b1f7ece7ce55dd5f73859efe29",
  "claims": [
   {
    "id": 1,
@@ -42,7 +42,6 @@
    "claim": "`npm install -g @modelcontextprotocol/server-filesystem` installs the filesystem MCP server",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/mcp_servers.go",
     "examples/mcp-filesystem-test/config.arena.yaml:16"
    ]
   },
@@ -144,7 +143,6 @@
    "claim": "Each mcp_servers entry accepts a command field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/mcp_servers.go",
     "arena/mcp/config.go:60"
    ]
   },
@@ -153,7 +151,6 @@
    "claim": "Each mcp_servers entry accepts an args list field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/mcp_servers.go",
     "arena/mcp/config.go:61"
    ]
   },
@@ -162,7 +159,6 @@
    "claim": "Each mcp_servers entry accepts an env map field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/mcp_servers.go",
     "arena/mcp/config.go:62"
    ]
   },
@@ -179,7 +175,6 @@
    "claim": "LOG_LEVEL is an environment variable the memory server reads, with values such as info and debug",
    "verdict": "unverified",
    "evidence": [
-    "arena/arenaconfig/mcp_servers.go",
     "arena/mcp/config.go:62"
    ]
   },
@@ -308,7 +303,7 @@
    "claim": "tools_called is a valid assertion type",
    "verdict": "true",
    "evidence": [
-    "arena/assertions/validate_params.go:65"
+    "arena/assertions/validate_params.go:144-163"
    ]
   },
   {
@@ -316,7 +311,7 @@
    "claim": "tools_called takes a params.tools list",
    "verdict": "true",
    "evidence": [
-    "arena/assertions/validate_params.go:65"
+    "arena/assertions/validate_params.go:144-163"
    ]
   },
   {
@@ -340,7 +335,7 @@
    "claim": "content_includes takes a params.patterns list",
    "verdict": "true",
    "evidence": [
-    "arena/assertions/validate_params.go:16"
+    "arena/assertions/validate_params.go:15"
    ]
   },
   {
@@ -461,7 +456,7 @@
    "claim": "tools_called with several tool names passes when each listed tool was called",
    "verdict": "true",
    "evidence": [
-    "arena/assertions/validate_params.go:65"
+    "arena/assertions/validate_params.go:144-163"
    ]
   },
   {
@@ -469,7 +464,7 @@
    "claim": "tools_called checks that a tool was called, not how many times (the tutorial's Should call store_memory multiple times message)",
    "verdict": "false",
    "evidence": [
-    "arena/assertions/validate_params.go:65"
+    "arena/assertions/validate_params.go:144-163"
    ]
   },
   {
@@ -477,7 +472,7 @@
    "claim": "tools_called does not check call order (the tutorial's Should call both tools in sequence message)",
    "verdict": "true",
    "evidence": [
-    "arena/assertions/validate_params.go:65"
+    "arena/assertions/validate_params.go:144-163"
    ]
   },
   {
@@ -509,7 +504,6 @@
    "claim": "read_file is a tool name (illustrative)",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/mcp_servers.go",
     "examples/mcp-filesystem-test/config.arena.yaml:16"
    ]
   },
