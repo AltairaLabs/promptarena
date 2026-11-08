@@ -17,8 +17,9 @@ spec:
   # regex pre-pass detects a high-confidence pattern in the agent's
   # would-be-output, the hook replaces the content with the safe
   # message before the text pipeline speaks it. On the duplex path
-  # Arena runs the same validator on each completed realtime turn and
-  # rewrites the recorded turn (the audio has already streamed). Both
+  # the duplex provider stage runs the same validator on each completed
+  # realtime turn and rewrites the recorded turn (the audio has already
+  # streamed). Both
   # scenarios assert the guardrail fired.
   # `provider` names a judge this arena config declares, which the host
   # binds; the LLM layer cannot run without one, and since v2.5.0 a

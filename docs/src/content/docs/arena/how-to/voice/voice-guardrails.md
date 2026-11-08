@@ -2,13 +2,12 @@
 title: Add Voice PII Guardrails
 description: Wire the pii_leakage guardrail into a pack so it replaces a PII-bearing reply before it is spoken, and assert that it fired with guardrail_triggered.
 verified:
-  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
+  commit: 66ec692303a313b1f7ece7ce55dd5f73859efe29
   sources:
     - arena/cmd/promptarena/main_integration.go
     - arena/cmd/promptarena/run.go
     - arena/cmd/promptarena/serve_interactive.go
     - arena/engine/duplex_executor_pipeline_integration.go
-    - arena/stages/duplex_guardrail.go
     - arena/turnexecutors/pipeline_stages_integration.go
     - examples/pii-guardrail-red-team/scenarios/legitimate-question.scenario.yaml
     - examples/voice-guardrails/config.arena.yaml
@@ -65,7 +64,13 @@ This demo has no control scenario. For a second scenario that checks the guardra
 
 ## Switching to live voice
 
-The duplex voice path runs the pack's output guardrails too, on each assistant turn when the realtime session completes it, and records the firing the same way, so `guardrail_triggered` works on a scenario with a `duplex:` block (`pii-redaction-duplex` in this example). The provider streams the reply's audio while it speaks, so the caller has heard it before the guardrail sees the finished transcript; enforcement rewrites the turn as recorded (state, session recording, reports, later assertions), not the audio already played. Input guardrails do not run on the duplex path.
+The duplex voice path runs the pack's guardrails too. The duplex provider stage runs them as the text path's provider stage does, and records each firing the same way, so `guardrail_triggered` works on a scenario with a `duplex:` block (`pii-redaction-duplex` in this example). It runs three checks:
+
+- **Input**: an input guardrail checks text bound for the session before it is sent, and an enforcing one keeps that text from the provider. Spoken input is not checked first, because its transcript only comes back from the provider afterwards.
+- **Streaming**: a guardrail with a streaming check (`content_excludes`, `max_length`) checks each chunk of assistant text, or the transcript of spoken audio, before it is forwarded. Once it enforces, the rest of the turn's text and audio is dropped.
+- **Turn completion**: every output guardrail checks the completed assistant turn. `pii_leakage` has no streaming check, so in this example it fires here.
+
+An enforced turn is marked `finish_reason: safety` and its tool calls are dropped. Enforcement cannot unsay what was played: the caller has already heard whatever the provider streamed before a check fired. A turn-completion firing rewrites the turn as recorded (state, session recording, reports, later assertions), not the audio already played.
 
 ## CI gate
 

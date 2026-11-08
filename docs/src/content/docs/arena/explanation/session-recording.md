@@ -2,7 +2,7 @@
 title: Session Recording Architecture
 description: How Arena captures runs to JSONL through RecordingStage, loads them as SessionRecordings, and replays them offline.
 verified:
-  commit: 5a8cffd8daf00b49cbbb3596ce63750db56c3704
+  commit: 66ec692303a313b1f7ece7ce55dd5f73859efe29
   sources:
     - arena/adapters/session_recording.go
     - arena/arenaconfig/types.go

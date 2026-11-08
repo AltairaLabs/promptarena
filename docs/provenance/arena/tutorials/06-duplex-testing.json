@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/tutorials/06-duplex-testing.md",
- "commit": "45cbd09a1d70928da45e071755b0c2172abfc8ca",
+ "commit": "66ec692303a313b1f7ece7ce55dd5f73859efe29",
  "claims": [
   {
    "id": 1,
@@ -581,7 +581,7 @@
    "claim": "VAD mode gives client-side control over turn boundaries",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:697"
+    "arena/engine/duplex_executor_pipeline_integration.go:694"
    ]
   },
   {

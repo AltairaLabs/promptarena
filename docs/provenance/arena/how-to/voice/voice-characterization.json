@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/voice/voice-characterization.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "66ec692303a313b1f7ece7ce55dd5f73859efe29",
  "claims": [
   {
    "id": 1,
@@ -221,7 +221,7 @@
    "claim": "conversation_assertions entry type: assertion with params.eval_type, eval_params, min_score",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/judge_param.go:45",
+    "arena/arenaconfig/judge_param.go:48",
     "examples/voice-refund-demo/scenarios/aggressive-refund.scenario.yaml:84"
    ]
   },
@@ -238,9 +238,9 @@
    "claim": "A judge key in eval_params selects a judge defined in spec.judges; without one the default judge scores; an unknown name fails at load",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/judge_param.go:21",
-    "arena/arenaconfig/judge_param.go:45",
-    "arena/arenaconfig/judge_param.go:58"
+    "arena/arenaconfig/judge_param.go:24",
+    "arena/arenaconfig/judge_param.go:44",
+    "arena/arenaconfig/judge_param.go:56-68"
    ]
   },
   {

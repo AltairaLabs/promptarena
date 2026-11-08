@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/voice/voice-guardrails.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "66ec692303a313b1f7ece7ce55dd5f73859efe29",
  "claims": [
   {
    "id": 1,
@@ -13,11 +13,10 @@
   },
   {
    "id": 2,
-   "claim": "The runtime catches the agent's would-be-spoken PII before it reaches the TTS layer",
+   "claim": "The runtime catches the agent's would-be-spoken PII before it reaches the TTS layer on the text path; on the duplex path the duplex provider stage runs the same validator",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:319",
-    "arena/stages/duplex_guardrail.go:14",
+    "arena/engine/duplex_executor_pipeline_integration.go:321-331",
     "arena/turnexecutors/pipeline_stages_integration.go:730"
    ]
   },
@@ -34,17 +33,17 @@
    "claim": "The runtime wraps the validator as a ProviderHook (runtime/hooks/guardrails/factory.go)",
    "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:358",
+    "arena/engine/duplex_executor_pipeline_integration.go:343-363",
     "arena/turnexecutors/pipeline_stages_integration.go:760"
    ]
   },
   {
    "id": 5,
-   "claim": "On every assistant message, the regex pre-pass scans the would-be-output",
+   "claim": "On every assistant message, the regex pre-pass scans the would-be-output (PromptKit v2.18.0 evals/handlers/pii_leakage.go:16)",
    "verdict": "true",
    "evidence": [
-    "arena/stages/duplex_guardrail.go:86",
-    "arena/turnexecutors/pipeline_stages_integration.go:760"
+    "arena/turnexecutors/pipeline_stages_integration.go:760",
+    "examples/voice-guardrails/prompts/support-agent.yaml:30"
    ]
   },
   {
@@ -171,11 +170,11 @@
   },
   {
    "id": 21,
-   "claim": "Adding a duplex provider and a duplex: block to the scenario, the guardrail fires identically: the audio path receives the safe message and the test observes the firing via the recorded validations",
-   "verdict": "false",
+   "claim": "The duplex provider stage runs the pack's guardrails and records each firing as the text path does, so guardrail_triggered works on a duplex scenario (reproduced: pii-redaction-duplex passes in the keyless run)",
+   "verdict": "true",
    "evidence": [
-    "arena/engine/duplex_executor_pipeline_integration.go:309",
-    "arena/turnexecutors/pipeline_stages_integration.go:933"
+    "arena/engine/duplex_executor_pipeline_integration.go:321-331",
+    "examples/voice-guardrails/scenarios/pii-redaction-duplex.scenario.yaml:40"
    ]
   },
   {
@@ -215,6 +214,39 @@
    "claim": "bias, toxicity and role_violation are LLM-judged primitives",
    "verdict": "unverified",
    "evidence": []
+  },
+  {
+   "id": "w2-duplex-complete",
+   "claim": "Every output guardrail checks the completed assistant turn; pii_leakage has no streaming check, so in this example it fires there",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_executor_pipeline_integration.go:321-331",
+    "examples/voice-guardrails/prompts/support-agent.yaml:30-33"
+   ]
+  },
+  {
+   "id": "w2-duplex-enforced",
+   "claim": "An enforced duplex turn is marked finish_reason: safety and its tool calls are dropped; enforcement cannot unsay what was played (PromptKit v2.18.0 pipeline/stage/stages_duplex_provider_hooks.go:30-37,578-588)",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_executor_pipeline_integration.go:321-331"
+   ]
+  },
+  {
+   "id": "w2-duplex-input",
+   "claim": "On the duplex path an input guardrail checks text bound for the session before it is sent, and an enforcing one keeps it from the provider; spoken input is not checked first (PromptKit v2.18.0 pipeline/stage/stages_duplex_provider_hooks.go:194-261)",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_executor_pipeline_integration.go:321-331"
+   ]
+  },
+  {
+   "id": "w2-duplex-stream",
+   "claim": "A guardrail with a streaming check (content_excludes, max_length implement EvalPartial) checks each chunk of assistant text or audio transcript before it is forwarded; once it enforces, the rest of the turn's text and audio is dropped (PromptKit v2.18.0 pipeline/stage/stages_duplex_provider_hooks.go:426-462; hooks/guardrails/adapter.go:418)",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/duplex_executor_pipeline_integration.go:321-331"
+   ]
   }
  ]
 }
