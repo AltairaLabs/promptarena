@@ -4,14 +4,12 @@ description: What a PromptPack .pack.json file contains, how its workflow block 
 sidebar:
   order: 1
 verified:
-  commit: 45cbd09a1d70928da45e071755b0c2172abfc8ca
+  commit: 66ec692303a313b1f7ece7ce55dd5f73859efe29
   sources:
     - packc/compiler/check.go
     - packc/compiler/compiler.go
     - packc/compiler/helpers_integration.go
-    - packc/compiler/pack_fields.go
     - packc/compiler/pack_file.go
-    - packc/main_interactive.go
 ---
 
 This page explains what a `.pack.json` file contains and why prompts ship as one compiled file. The [PromptPack specification](https://promptpack.org) is the authority on every field. `packc` embeds version 1.9.0 of its schema and validates against it.
@@ -137,7 +135,7 @@ The PromptKit runtime accepts workflow `version` 1 or 2. Version 2 also warns ab
 
 ## Fragments
 
-`fragments` is an object of named text blocks that prompts share. The specification defines each value as the fragment's content, resolved at compile time. `packc` records the names of the fragments that prompts reference, with each value set to the placeholder `{{<name>}}` rather than the fragment's text. See [Compilation](/packc/explanation/compilation/#media-and-fragments).
+`fragments` is an object of named text blocks that prompts share. The specification defines each value as the fragment's content, resolved at compile time. The PromptKit compiler that `packc` uses resolves fragments that way, but `packc` does not give it the fragment files. A required fragment therefore fails the compile, and an optional one is left out. Only a fragment chosen by a template variable reaches the pack, as the placeholder `{{<name>}}`. See [Compilation](/packc/explanation/compilation/#media-and-fragments).
 
 ## Versions
 

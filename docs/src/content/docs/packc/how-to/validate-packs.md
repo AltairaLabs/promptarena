@@ -4,12 +4,10 @@ description: Check a compiled pack against the PromptPack schema and packc's str
 sidebar:
   order: 3
 verified:
-  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
+  commit: 66ec692303a313b1f7ece7ce55dd5f73859efe29
   sources:
-    - arena/cmd/promptarena/export.go
     - arena/cmd/promptarena/validate_json.go
     - packc/compiler/check.go
-    - packc/compiler/pack_fields.go
     - packc/compiler/pack_file.go
     - packc/compiler/skills_validator_integration.go
     - packc/main_interactive.go
@@ -19,7 +17,7 @@ Check that a `.pack.json` file is valid before you ship it.
 ## Prerequisites
 
 - `packc` installed ([Install PackC](/packc/how-to/install/)).
-- A pack file. `packc compile` runs the same checks before it writes one, so `packc compile` and `packc compile-prompt` run the same checks before they write one, so `packc validate` matters most for packs built elsewhere or edited since.
+- A pack file. `packc compile` and `packc compile-prompt` run the same checks before they write one, so `packc validate` matters most for packs built elsewhere or edited since.
 
 ## Validate a pack
 

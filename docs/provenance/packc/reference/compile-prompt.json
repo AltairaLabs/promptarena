@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/packc/reference/compile-prompt.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "66ec692303a313b1f7ece7ce55dd5f73859efe29",
  "claims": [
   {
    "id": 1,
@@ -57,8 +57,8 @@
    "claim": "prints 'Compiling prompt <file> to pack...', warnings, then '\u2713 Pack compiled successfully'; the example prompt prints an undefined-tool warning",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/pack_fields.go:84-105",
-    "packc/main_interactive.go:216-231"
+    "packc/compiler/check.go:186-224",
+    "packc/compiler/pack_file.go:121-126"
    ]
   },
   {

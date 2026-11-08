@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/packc/tutorials/03-validation-workflow.md",
- "commit": "45cbd09a1d70928da45e071755b0c2172abfc8ca",
+ "commit": "66ec692303a313b1f7ece7ce55dd5f73859efe29",
  "claims": [
   {
    "id": 1,
@@ -42,8 +42,7 @@
    "claim": "compile fails with [pack] system_template references variables, but none are declared",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:186-196",
-    "packc/compiler/check.go:213-231"
+    "packc/compiler/check.go:186-224"
    ]
   },
   {
@@ -51,8 +50,8 @@
    "claim": "validate rejects a non-semver version via the schema and the pack check",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:243-260",
-    "packc/compiler/pack_file.go:25"
+    "packc/compiler/check.go:186-224",
+    "packc/compiler/check.go:226-257"
    ]
   },
   {
@@ -60,7 +59,7 @@
    "claim": "compile fails at [load] on a prompt config schema violation",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:110"
+    "packc/compiler/check.go:108-112"
    ]
   },
   {
@@ -68,9 +67,8 @@
    "claim": "compile runs every check validate runs",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:157-198",
-    "packc/compiler/check.go:93-137",
-    "packc/compiler/pack_file.go:25-45"
+    "packc/compiler/check.go:157-189",
+    "packc/compiler/check.go:93-137"
    ]
   },
   {

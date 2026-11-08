@@ -4,7 +4,7 @@ description: Flags, input, output and exit codes of packc compile, which compile
 sidebar:
   order: 1
 verified:
-  commit: b2f589e04cd12bf82fc73ab2f9675765c4d9c7f9
+  commit: 66ec692303a313b1f7ece7ce55dd5f73859efe29
   sources:
     - arena/arenaconfig/loader.go
     - arena/arenaconfig/skill_sources.go
@@ -12,8 +12,6 @@ verified:
     - packc/compiler/check.go
     - packc/compiler/compiler.go
     - packc/compiler/helpers_integration.go
-    - packc/compiler/pack_fields.go
-    - packc/compiler/pack_file.go
     - packc/compiler/skills_validator_integration.go
     - packc/main.go
     - packc/main_interactive.go
@@ -84,7 +82,7 @@ File paths resolve relative to the Arena config's directory. These `spec` fields
 | `skills` | `skills`. Directory paths are made relative to the config file's directory, whether `-c` is relative (including the default) or absolute. An `@org/name` path installed by `promptarena skill install` stays a reference in the pack and resolves to its install directory |
 | `pack_metadata` | `metadata` |
 
-The pack's `template_engine` is the `spec.template_engine` the prompts set. Prompts that set different ones fail the `compile` stage, since a pack has one engine; prompts that set none are not compared. With none set, the pack gets the default `v1` engine. Without `pack_metadata`, the pack's `metadata` is taken from the prompt whose `prompt_configs` ID sorts first among those that set `spec.metadata`, and the compile prints a warning naming it. See [Configuration Schema](/arena/reference/config-schema/) for every Arena field.
+The pack's `template_engine` is the `spec.template_engine` the prompts set. Prompts that set different ones fail the `compile` stage, since a pack has one engine; prompts that set none, or set the default, are not compared. With none set, the pack gets the default `v1` engine. Without `pack_metadata`, the pack's `metadata` is taken from the prompt whose `prompt_configs` ID sorts first among those that set `spec.metadata`, and the compile prints a warning naming it. See [Configuration Schema](/arena/reference/config-schema/) for every Arena field.
 
 ## Output
 
@@ -139,13 +137,13 @@ Before writing, `compile` runs the same checks as [`packc validate`](/packc/refe
 | `pack_id` | the pack ID |
 | `pack_version` | the `--pack-version` value |
 | `load` | the Arena config and every file it references, against their schemas |
-| `compile` | prompt parsing, missing media files, metadata promotion, prompts that declare different template engines |
+| `compile` | prompt parsing, missing media files, metadata promotion, prompts that declare different template engines, a `required: true` fragment that does not resolve |
 | `skills` | skill sources and paths |
 | `workflow` | the workflow state machine |
 | `compositions` | composition step graphs and their references |
 | `agents` | the `agents` block |
 | `governance` | governance references |
-| `pack` | pack structure: required fields, semantic versions, a `system_template` that uses `{{` with no declared variables; a prompt tool missing from the pack's `tools` is a warning |
+| `pack` | pack structure: required fields, semantic versions, a `system_template` that uses `{{` with no declared variables, eval definitions; a prompt tool missing from the pack's `tools` and an unknown eval trigger are warnings |
 | `pack_schema` | the compiled pack against the PromptPack schema |
 
 An error at any stage stops the compile and writes nothing. Errors print to stderr as `Compilation failed:` followed by `[<stage>] <message>`, or by `<n> problems:` and one `  - [<stage>] <message>` line per error when there are several. Warnings print to stdout as `⚠ [<stage>] <message>` and do not stop the compile.

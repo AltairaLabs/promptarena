@@ -4,9 +4,8 @@ description: How packc compile loads an arena config, builds a pack from it with
 sidebar:
   order: 2
 verified:
-  commit: b2f589e04cd12bf82fc73ab2f9675765c4d9c7f9
+  commit: 66ec692303a313b1f7ece7ce55dd5f73859efe29
   sources:
-    - arena/cmd/promptarena/export.go
     - arena/cmd/promptarena/validate_json.go
     - packc/compiler/check.go
     - packc/compiler/compiler.go
@@ -15,7 +14,6 @@ verified:
     - packc/compiler/pack_file.go
     - packc/main.go
     - packc/main_interactive.go
-    - schemas/v1alpha1/arena.json
 ---
 This page explains what happens between `packc compile` and the `.pack.json` file it writes: where each part of the pack comes from, what `packc` fills in, and what it checks.
 
@@ -79,7 +77,7 @@ The workflow, agents and compositions blocks are typed as the generated PromptPa
 - `version` is the `--pack-version` flag, a semantic version such as `1.2.0`, or `v1.0.0` without it. It tracks the pack as a whole, while each prompt keeps its own `spec.version`.
 - `description` is `Pack containing <n> prompts`.
 - `$schema` is `https://promptpack.org/schema/latest/promptpack.schema.json`.
-- `template_engine` is the one the prompts declare in `spec.template_engine`. A pack has one engine, so prompts that declare different ones fail the `compile` stage. Prompts that declare none are left out of the comparison. If no prompt declares one, the pack gets the default (`v1`, `{{variable}}`).
+- `template_engine` is the one the prompts declare in `spec.template_engine`. A pack has one engine, so prompts that declare different ones fail the `compile` stage. The PromptKit compiler makes that choice. Prompts that declare none, or declare the default, are left out of the comparison. If no prompt declares one, the pack gets the default (`v1`, `{{variable}}`).
 - `compilation` records `compiled_with` (`packc-<version>`), `created_at` (the time of the compile, RFC 3339, to the second) and `schema` (`v1`).
 
 ### Metadata from prompt configs
@@ -94,7 +92,16 @@ For each prompt with `media.enabled: true`, the compiler checks that every `file
 ⚠ [compile] media(customer-support): Media file not found: images/logo.png (example: logo-example, part 0)
 ```
 
-For each fragment a prompt config references, the pack's `fragments` map gets an entry named after the fragment whose value is the placeholder `{{<name>}}`. The fragment's content is not copied into the pack.
+The PromptKit compiler resolves each fragment a prompt config references to its content, and writes that content into the pack's `fragments` map under the fragment's name. `packc` builds its prompt registry without the fragment files, so today a static fragment never resolves:
+
+- A fragment with `required: true` fails the `compile` stage:
+
+  ```text
+  Compilation failed: [compile] compilation failed: prompt "support": required fragment "tone": fragment not found: tone
+  ```
+
+- An optional fragment is left out of the pack, without a warning.
+- A fragment whose `name` or `path` contains `{{` is chosen by a template variable, so it cannot be resolved at compile time. It is written as the placeholder `{{<name>}}`.
 
 ### Templates
 

@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/packc/tutorials/04-pack-management.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "66ec692303a313b1f7ece7ce55dd5f73859efe29",
  "claims": [
   {
    "id": 1,
@@ -42,9 +42,8 @@
    "claim": "pack_metadata.tags appears under Pack Metadata in inspect",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:180",
-    "packc/compiler/compiler.go:185-204",
-    "packc/main.go:296-306"
+    "packc/compiler/compiler.go:154",
+    "packc/compiler/compiler.go:179-200"
    ]
   },
   {
@@ -60,9 +59,8 @@
    "claim": "pack-level version is v1.0.0 unless --pack-version is passed",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:155",
-    "packc/compiler/compiler.go:45-51",
-    "packc/main_interactive.go:165"
+    "packc/compiler/compiler.go:148-150",
+    "packc/compiler/compiler.go:45-53"
    ]
   },
   {

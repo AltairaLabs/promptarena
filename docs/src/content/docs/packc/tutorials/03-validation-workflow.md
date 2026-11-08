@@ -4,12 +4,11 @@ description: See what packc compile and packc validate catch, then wire both int
 sidebar:
   order: 3
 verified:
-  commit: 45cbd09a1d70928da45e071755b0c2172abfc8ca
+  commit: 66ec692303a313b1f7ece7ce55dd5f73859efe29
   sources:
     - arena/arenaconfig/loader.go
     - arena/arenaconfig/types.go
     - packc/compiler/check.go
-    - packc/compiler/pack_file.go
     - packc/main.go
     - packc/main_interactive.go
     - schemas/v1alpha1/arena.json

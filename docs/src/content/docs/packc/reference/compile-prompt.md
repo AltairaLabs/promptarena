@@ -4,10 +4,10 @@ description: Flags, output and exit codes of packc compile-prompt, which compile
 sidebar:
   order: 2
 verified:
-  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
+  commit: 66ec692303a313b1f7ece7ce55dd5f73859efe29
   sources:
+    - packc/compiler/check.go
     - packc/compiler/helpers_integration.go
-    - packc/compiler/pack_fields.go
     - packc/compiler/pack_file.go
     - packc/main.go
     - packc/main_interactive.go
