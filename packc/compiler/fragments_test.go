@@ -79,7 +79,12 @@ func TestCompile_OptionalFragmentMissingWarns(t *testing.T) {
 
 	result, err := Compile(configFile, WithPackID("frag-pack"))
 	require.NoError(t, err)
-	assert.Empty(t, result.Pack.Fragments)
+	// PromptKit up to v2.18.0 leaves a missing optional fragment out of the
+	// pack; from v2.19.0 it writes it as "", the value its placeholder renders
+	// as. Both mean the fragment renders empty. Content would be wrong.
+	if len(result.Pack.Fragments) > 0 {
+		assert.Equal(t, map[string]string{"tone": ""}, result.Pack.Fragments)
+	}
 	require.Len(t, result.Warnings, 1, result.Warnings)
 	assert.Contains(t, result.Warnings[0], `optional fragment "tone" was not loaded`)
 	assert.Contains(t, result.Warnings[0], filepath.Join(dir, "fragments", "tone.yaml"))
