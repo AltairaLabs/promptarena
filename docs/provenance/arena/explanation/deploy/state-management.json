@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/explanation/deploy/state-management.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "66ec692303a313b1f7ece7ce55dd5f73859efe29",
  "claims": [
   {
    "id": 1,
@@ -23,8 +23,8 @@
    "claim": "directory created when state is first saved",
    "verdict": "true",
    "evidence": [
-    "deploy/lock.go:54",
-    "deploy/state.go:171"
+    "deploy/lock.go:62",
+    "deploy/state.go:186"
    ]
   },
   {
@@ -41,7 +41,7 @@
    "verdict": "true",
    "evidence": [
     "arena/deploy/flow/session.go:96",
-    "deploy/state.go:239-247"
+    "deploy/state.go:254-262"
    ]
   },
   {
@@ -49,7 +49,7 @@
    "claim": "pack_checksum: SHA-256 checksum of the deployed pack, ignoring its compile time (sha256:{hex})",
    "verdict": "true",
    "evidence": [
-    "deploy/state.go:222-235"
+    "deploy/state.go:237-250"
    ]
   },
   {
@@ -107,7 +107,7 @@
    "verdict": "true",
    "evidence": [
     "arena/deploy/flow/session.go:221-223",
-    "deploy/state.go:222-235"
+    "deploy/state.go:237-250"
    ]
   },
   {
@@ -116,7 +116,7 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/deploy_status_interactive.go:46-59",
-    "deploy/state.go:53-82"
+    "deploy/state.go:53-97"
    ]
   },
   {
@@ -201,7 +201,7 @@
    "claim": "The CLI reads the legacy .promptarena/deploy.state only for the environment it records, moves it on first use; other environments stop with an error",
    "verdict": "true",
    "evidence": [
-    "deploy/state.go:99-149"
+    "deploy/state.go:114-164"
    ]
   },
   {
@@ -209,7 +209,7 @@
    "claim": "Lock contention fails at once with: deploy lock is held by another process (pid <n>) for environment \"<env>\"; the CLI keeps the lock file",
    "verdict": "true",
    "evidence": [
-    "deploy/lock.go:83-93"
+    "deploy/lock.go:91-101"
    ]
   },
   {
