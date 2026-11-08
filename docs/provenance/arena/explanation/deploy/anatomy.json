@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/explanation/deploy/anatomy.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "66ec692303a313b1f7ece7ce55dd5f73859efe29",
  "claims": [
   {
    "id": 1,
@@ -34,8 +34,8 @@
    "claim": "pack carries prompts, system templates, tool schemas, validators, tool policies, evals, agents, id and version",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:143",
-    "packc/compiler/compiler.go:154"
+    "packc/compiler/compiler.go:139",
+    "packc/compiler/compiler.go:149"
    ]
   },
   {

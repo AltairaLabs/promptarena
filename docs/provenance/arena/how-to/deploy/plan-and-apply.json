@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/deploy/plan-and-apply.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "66ec692303a313b1f7ece7ce55dd5f73859efe29",
  "claims": [
   {
    "id": 1,
@@ -42,7 +42,7 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/deploy_plan_interactive.go:48-51",
-    "deploy/state.go:265-272"
+    "deploy/state.go:280-287"
    ]
   },
   {
@@ -92,7 +92,7 @@
    "verdict": "true",
    "evidence": [
     "arena/deploy/flow/session.go:179-195",
-    "deploy/state.go:81-87"
+    "deploy/state.go:96-102"
    ]
   },
   {
@@ -259,7 +259,7 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/deploy_apply_interactive.go:55",
-    "deploy/state.go:222-235"
+    "deploy/state.go:237-250"
    ]
   },
   {
@@ -267,7 +267,7 @@
    "claim": "deploy lock is held by another process: the message names its pid; the operating system releases the lock when that process exits.",
    "verdict": "true",
    "evidence": [
-    "deploy/lock.go:83-93"
+    "deploy/lock.go:91-101"
    ]
   },
   {
@@ -275,7 +275,7 @@
    "claim": "Legacy .promptarena/deploy.state is used only for the environment it records; run deploy status --env <environment> once to move it.",
    "verdict": "true",
    "evidence": [
-    "deploy/state.go:107-113"
+    "deploy/state.go:122-128"
    ]
   },
   {
