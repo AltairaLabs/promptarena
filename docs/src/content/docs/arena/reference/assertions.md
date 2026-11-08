@@ -1,7 +1,7 @@
 ---
 title: Assertions Reference
 verified:
-  commit: 45cbd09a1d70928da45e071755b0c2172abfc8ca
+  commit: 41e16490ec749312f63e711caf8cbd08bad51c64
   sources:
     - arena/agentkb/reference_evals.go
     - arena/arenaconfig/judge_param.go
@@ -245,7 +245,7 @@ A mock provider returns the tool calls its response file names whether or not th
 
 `llm_judge` is an eval primitive. `type: assertion` wraps it to apply the threshold. An inner `llm_judge` handler that receives `min_score` returns an error result when it runs, so the assertion fails at evaluation. In a scenario assertion written as `type: llm_judge`, `min_score` and `max_score` in `params` move to the wrapper.
 
-`judge: <name>` in `eval_params` grades with that entry of `spec.judges`. A name that is not in `spec.judges` fails at load. Without `judge`, the lowest-sorted judge name grades the check.
+`judge: <name>` in `eval_params` grades with that entry of `spec.judges`. A name that is not in `spec.judges` fails at load. Without `judge`, the lowest-sorted judge name grades the check. `judge` works the same in an objective's `success` and `rewind.when` checks and in a persona's `transitions[].when`.
 
 ### Refusal
 

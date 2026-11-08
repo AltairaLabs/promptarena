@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/reference/assertions.md",
- "commit": "45cbd09a1d70928da45e071755b0c2172abfc8ca",
+ "commit": "41e16490ec749312f63e711caf8cbd08bad51c64",
  "claims": [
   {
    "id": 1,
@@ -108,7 +108,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/validator_tools.go:101",
-    "arena/assertions/validate_params.go:67"
+    "arena/assertions/validate_params.go:149"
    ]
   },
   {
@@ -341,7 +341,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/validator_tools.go:101",
-    "arena/assertions/validate_params.go:67"
+    "arena/assertions/validate_params.go:149"
    ]
   },
   {
@@ -349,8 +349,8 @@
    "claim": "tools_offered accepts params 'tools' or 'tool_names'",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator_tools.go:101",
-    "arena/assertions/validate_params.go:67"
+    "arena/assertions/validate_params.go:149",
+    "arena/assertions/validate_params.go:162"
    ]
   },
   {
@@ -358,8 +358,8 @@
    "claim": "tools_offered param 'absent' is a bool meaning none of the tools may be offered",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator_tools.go:101",
-    "arena/assertions/validate_params.go:67"
+    "arena/assertions/validate_params.go:149",
+    "arena/assertions/validate_params.go:162"
    ]
   },
   {
@@ -367,8 +367,8 @@
    "claim": "tools_offered param 'exact' is a bool meaning the offered set must be exactly these tools",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator_tools.go:101",
-    "arena/assertions/validate_params.go:67"
+    "arena/assertions/validate_params.go:149",
+    "arena/assertions/validate_params.go:162"
    ]
   },
   {
@@ -383,7 +383,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/validator_tools.go:101",
-    "arena/assertions/validate_params.go:67"
+    "arena/assertions/validate_params.go:149"
    ]
   },
   {
@@ -1048,8 +1048,19 @@
    "claim": "judge: <name> in eval_params grades with that spec.judges entry; an unknown name fails at load",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/judge_param.go:53",
-    "arena/arenaconfig/judge_param.go:62"
+    "arena/arenaconfig/judge_param.go:56",
+    "arena/arenaconfig/judge_param.go:62",
+    "arena/arenaconfig/judge_param.go:65"
+   ]
+  },
+  {
+   "id": 20001,
+   "claim": "judge: <name> resolves the same way in an objective's success and rewind.when checks and in a persona's transitions[].when",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/judge_param.go:109",
+    "arena/arenaconfig/judge_param.go:94",
+    "arena/arenaconfig/judge_param.go:97"
    ]
   }
  ]

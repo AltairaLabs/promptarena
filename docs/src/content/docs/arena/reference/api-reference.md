@@ -2,10 +2,10 @@
 title: Go API Reference
 description: Exported types, functions and methods for using Arena as a Go library
 verified:
-  commit: 45cbd09a1d70928da45e071755b0c2172abfc8ca
+  commit: 41e16490ec749312f63e711caf8cbd08bad51c64
   sources:
+    - arena/arenaconfig/deprecated.go
     - arena/arenaconfig/loader.go
-    - arena/arenaconfig/mock_config_check.go
     - arena/arenaconfig/types.go
     - arena/cmd/promptarena/run_interactive.go
     - arena/deploy/flow/sessions.go
@@ -269,7 +269,7 @@ defer eng.Close()
 func (e *Engine) EnableMockProviderMode(mockConfigPath string) error
 ```
 
-Replaces all providers, including the providers behind self-play roles, with mock providers for testing. The file is decoded
+Replaces all providers, including the providers behind self-play roles, with mock providers for testing. TTS and STT providers are not swapped. The file is decoded
 strictly, so a misspelled key returns an error naming it and the valid keys.
 
 **Parameters:**
@@ -382,6 +382,11 @@ type Config struct {
 ```
 
 Main Arena configuration structure.
+
+`Workflow` and `Compositions` are deprecated untyped forms of `WorkflowSpec`
+and `CompositionSpecs`, kept for Go callers that build a `Config` by hand.
+Loading from YAML never sets them. `ResolveDeprecatedFields` copies each one
+over when its typed field is unset; `NewEngine` calls it, so callers need not.
 
 ---
 

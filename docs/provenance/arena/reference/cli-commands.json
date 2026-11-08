@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/reference/cli-commands.md",
- "commit": "45cbd09a1d70928da45e071755b0c2172abfc8ca",
+ "commit": "41e16490ec749312f63e711caf8cbd08bad51c64",
  "claims": [
   {
    "id": 1001,
@@ -56,7 +56,8 @@
     "arena/cmd/promptarena/templates.go:150",
     "arena/cmd/promptarena/templates.go:185",
     "arena/cmd/promptarena/templates.go:299",
-    "arena/cmd/promptarena/templates.go:39"
+    "arena/cmd/promptarena/templates.go:40",
+    "arena/cmd/promptarena/templates.go:42"
    ]
   },
   {
@@ -109,7 +110,8 @@
    "claim": "Command `serve` starts the live web UI with SSE streaming and a REST API",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:108"
+    "arena/cmd/promptarena/serve_interactive.go:109",
+    "arena/cmd/promptarena/serve_interactive.go:110"
    ]
   },
   {
@@ -788,7 +790,8 @@
    "claim": "`promptarena serve --open` starts the web UI and opens it in a browser",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:108"
+    "arena/cmd/promptarena/serve_interactive.go:133",
+    "arena/cmd/promptarena/serve_interactive.go:254"
    ]
   },
   {
@@ -796,7 +799,7 @@
    "claim": "serve has a flag `--open`",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go"
+    "arena/cmd/promptarena/serve_interactive.go:133"
    ]
   },
   {
@@ -2396,10 +2399,13 @@
   },
   {
    "id": 1285,
-   "claim": "`promptarena run --mock-provider` uses the mock provider instead of real APIs",
+   "claim": "run --mock-provider replaces the configured providers, including self-play roles, with mocks; TTS and STT providers are not swapped",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/run.go:194"
+    "arena/cmd/promptarena/run.go:194",
+    "arena/cmd/promptarena/run_interactive.go:290",
+    "arena/engine/engine.go:786",
+    "arena/selfplay/registry.go:47"
    ]
   },
   {
@@ -4069,9 +4075,9 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/export.go:51",
-    "packc/compiler/compiler.go:239",
-    "packc/compiler/compiler.go:255",
-    "packc/compiler/compiler.go:259"
+    "packc/compiler/compiler.go:233",
+    "packc/compiler/compiler.go:249",
+    "packc/compiler/compiler.go:253"
    ]
   },
   {
@@ -4191,8 +4197,8 @@
    "claim": "export validates against the embedded PromptPack schema",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:239",
-    "packc/compiler/compiler.go:75"
+    "packc/compiler/check.go:228",
+    "packc/compiler/check.go:229"
    ]
   },
   {
@@ -4200,7 +4206,7 @@
    "claim": "export schema validation uses PROMPTKIT_SCHEMA_SOURCE: local or unset uses the schema embedded in the PromptKit runtime, remote fetches the pack $schema URL, a path starting with / or ./ loads a schema file",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/check.go:239"
+    "packc/compiler/check.go:229"
    ]
   },
   {
@@ -4617,10 +4623,11 @@
   },
   {
    "id": 2236,
-   "claim": "command `promptarena config-inspect --format json`",
+   "claim": "command `promptarena config-inspect --format json` prints the inspection as indented JSON",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/config_inspect_interactive.go:114"
+    "arena/cmd/promptarena/config_inspect_interactive.go:115",
+    "arena/cmd/promptarena/config_inspect_renderer_interactive.go:12"
    ]
   },
   {
@@ -5212,7 +5219,8 @@
    "claim": "the serve web UI loads existing results from the output directory on startup",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:226"
+    "arena/cmd/promptarena/serve_interactive.go:224",
+    "arena/cmd/promptarena/serve_interactive.go:225"
    ]
   },
   {
@@ -5237,8 +5245,8 @@
    "claim": "interactive chat can run without API keys when --mock-provider is used",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:181",
-    "arena/cmd/promptarena/serve_interactive.go:184"
+    "arena/cmd/promptarena/serve_interactive.go:182",
+    "arena/cmd/promptarena/serve_interactive.go:183"
    ]
   },
   {
@@ -5246,8 +5254,7 @@
    "claim": "command `promptarena serve [config-path] [flags]`",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:109",
-    "arena/cmd/promptarena/serve_interactive.go:122"
+    "arena/cmd/promptarena/serve_interactive.go:109"
    ]
   },
   {
@@ -5255,7 +5262,7 @@
    "claim": "if serve's config-path is a directory, it looks for config.arena.yaml inside it",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:158"
+    "arena/cmd/promptarena/serve_interactive.go:159"
    ]
   },
   {
@@ -5302,11 +5309,14 @@
   },
   {
    "id": 2316,
-   "claim": "serve flag `--mock-provider` is a bool that replaces all configured providers with mocks",
+   "claim": "serve flag `--mock-provider` is a bool that replaces the assistant and self-play role providers with mocks; TTS and STT providers are not swapped, and a type: mock, role: tts provider gives a keyless voice run",
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/serve_interactive.go:138",
-    "arena/cmd/promptarena/serve_interactive.go:184"
+    "arena/cmd/promptarena/serve_interactive.go:183",
+    "arena/engine/engine.go:786",
+    "arena/engine/engine.go:788",
+    "arena/selfplay/registry.go:47"
    ]
   },
   {
@@ -5323,7 +5333,7 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/serve_interactive.go:142",
-    "arena/cmd/promptarena/serve_interactive.go:184"
+    "arena/cmd/promptarena/serve_interactive.go:183"
    ]
   },
   {
@@ -5332,7 +5342,7 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/serve_interactive.go:134",
-    "arena/cmd/promptarena/serve_interactive.go:191"
+    "arena/cmd/promptarena/serve_interactive.go:190"
    ]
   },
   {
@@ -5360,7 +5370,7 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/serve_interactive.go:136",
-    "arena/cmd/promptarena/serve_interactive.go:195"
+    "arena/cmd/promptarena/serve_interactive.go:194"
    ]
   },
   {
@@ -5386,7 +5396,7 @@
    "claim": "command `promptarena serve`",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:108"
+    "arena/cmd/promptarena/serve_interactive.go:109"
    ]
   },
   {
@@ -5394,7 +5404,7 @@
    "claim": "command `promptarena serve ./examples/guardrails-test`",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:158"
+    "arena/cmd/promptarena/serve_interactive.go:159"
    ]
   },
   {
@@ -5519,7 +5529,7 @@
    "claim": "`promptarena serve -p 8080` is a valid command",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go"
+    "arena/cmd/promptarena/serve_interactive.go:132"
    ]
   },
   {
@@ -5527,7 +5537,7 @@
    "claim": "serve accepts a -p flag for the port",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go"
+    "arena/cmd/promptarena/serve_interactive.go:132"
    ]
   },
   {
@@ -5610,10 +5620,13 @@
   },
   {
    "id": 3013,
-   "claim": "chat has a --mock-provider bool flag that replaces all providers with a generic mock (no API keys needed)",
+   "claim": "chat --mock-provider replaces the configured providers, including self-play roles, with mocks; TTS and STT providers are not swapped",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:13"
+    "arena/cmd/promptarena/chat.go:13",
+    "arena/cmd/promptarena/chat_interactive.go:40",
+    "arena/engine/engine.go:786",
+    "arena/selfplay/registry.go:47"
    ]
   },
   {
@@ -6625,7 +6638,7 @@
    "claim": "`promptarena serve --open` is a valid command",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:1"
+    "arena/cmd/promptarena/serve_interactive.go:133"
    ]
   },
   {
@@ -6633,7 +6646,7 @@
    "claim": "serve has an --open flag",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:1"
+    "arena/cmd/promptarena/serve_interactive.go:133"
    ]
   },
   {
@@ -7254,7 +7267,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/helpers.go:14",
-    "arena/engine/conversation_executor.go:372"
+    "arena/engine/conversation_executor.go:373"
    ]
   },
   {
@@ -7263,7 +7276,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/helpers.go:14",
-    "arena/engine/conversation_executor.go:372"
+    "arena/engine/conversation_executor.go:373"
    ]
   },
   {
@@ -7445,7 +7458,7 @@
    "claim": "`promptarena serve --open` is a valid command",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:1"
+    "arena/cmd/promptarena/serve_interactive.go:133"
    ]
   },
   {
@@ -8329,7 +8342,7 @@
    "claim": "Using the same --seed gives consistent (reproducible) results",
    "verdict": "unverified",
    "evidence": [
-    "arena/engine/conversation_executor.go:395"
+    "arena/engine/conversation_executor.go:396"
    ]
   },
   {
@@ -8511,6 +8524,39 @@
    "evidence": [
     "arena/cmd/promptarena/run.go:130",
     "arena/cmd/promptarena/run.go:146"
+   ]
+  },
+  {
+   "id": 20001,
+   "claim": "templates render takes variables from --values <file> and --set key=value, and --set wins",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/templates.go:281",
+    "arena/cmd/promptarena/templates.go:409",
+    "arena/cmd/promptarena/templates.go:412",
+    "arena/cmd/promptarena/templates.go:442"
+   ]
+  },
+  {
+   "id": 20002,
+   "claim": "templates render --prompt-missing asks for each {{ .name }} placeholder that is still unset",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/templates.go:282",
+    "arena/cmd/promptarena/templates.go:413",
+    "arena/cmd/promptarena/templates.go:453",
+    "arena/cmd/promptarena/templates_interactive.go:15",
+    "arena/cmd/promptarena/templates_interactive.go:24"
+   ]
+  },
+  {
+   "id": 20003,
+   "claim": "templates render without --out renders into a new temporary directory and prints the path",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/templates.go:257",
+    "arena/cmd/promptarena/templates.go:261",
+    "arena/cmd/promptarena/templates.go:295"
    ]
   },
   {

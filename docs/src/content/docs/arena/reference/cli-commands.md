@@ -2,7 +2,7 @@
 title: CLI Commands
 description: Every promptarena command with its flags, defaults and examples.
 verified:
-  commit: 45cbd09a1d70928da45e071755b0c2172abfc8ca
+  commit: 41e16490ec749312f63e711caf8cbd08bad51c64
   sources:
     - arena/adapters/adapter.go
     - arena/adapters/arena_output.go
@@ -34,6 +34,7 @@ verified:
     - arena/cmd/promptarena/completion_interactive.go
     - arena/cmd/promptarena/config_inspect_collector_interactive.go
     - arena/cmd/promptarena/config_inspect_interactive.go
+    - arena/cmd/promptarena/config_inspect_renderer_interactive.go
     - arena/cmd/promptarena/debug.go
     - arena/cmd/promptarena/deploy_adapter_interactive.go
     - arena/cmd/promptarena/deploy_apply_interactive.go
@@ -62,6 +63,7 @@ verified:
     - arena/cmd/promptarena/skill.go
     - arena/cmd/promptarena/skill_interactive.go
     - arena/cmd/promptarena/templates.go
+    - arena/cmd/promptarena/templates_interactive.go
     - arena/deploy/flow/config.go
     - arena/deploy/flow/connect.go
     - arena/deploy/flow/options.go
@@ -104,6 +106,7 @@ verified:
     - arena/redteam/objectives.go
     - arena/results/junit/junit_repository.go
     - arena/results/markdown/markdown_repository.go
+    - arena/selfplay/registry.go
     - arena/selfplay/stt_registry.go
     - arena/templates/builtin/code-assistant/template.yaml
     - arena/templates/builtin/content-generation/template.yaml
@@ -256,6 +259,8 @@ promptarena init my-test --quick --template customer-support --provider openai
 promptarena templates fetch --template community/basic-chatbot --version 1.0.0
 promptarena templates render --template community/basic-chatbot --version 1.0.0 --out ./out
 ```
+
+`templates render` takes variables from `--values <file>` and `--set key=value`; `--set` wins. With `--prompt-missing`, it asks for each `{{ .name }}` placeholder that is still unset. Without `--out`, it renders into a new temporary directory and prints the path.
 
 #### Interactive Mode
 
@@ -562,7 +567,7 @@ Exit status: with `--ci`, `run` exits non-zero when a run errors or an assertion
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--mock-provider` | bool | `false` | Replace all providers with MockProvider |
+| `--mock-provider` | bool | `false` | Replace the configured providers, including self-play roles, with mocks. TTS and STT providers are not swapped |
 | `--mock-config` | string | - | Path to mock provider configuration (YAML) |
 | `--override-provider` | []string | - | Substitute a configured provider with another: `from=to` (repeatable) |
 
@@ -1289,7 +1294,7 @@ If `config-path` is a directory, `serve` looks for `config.arena.yaml` inside it
 |------|------|---------|-------------|
 | `-p, --port` | int | `8080` | Port to serve on |
 | `-o, --open` | bool | `false` | Open browser automatically |
-| `--mock-provider` | bool | `false` | Replace all configured providers with mocks (no real API calls) |
+| `--mock-provider` | bool | `false` | Replace the assistant and self-play role providers with mocks. TTS and STT providers are not swapped; for a keyless voice run, declare a `type: mock`, `role: tts` provider |
 | `--mock-config` | string | - | Path to a mock responses YAML file (used with `--mock-provider`) |
 | `--audio-monitor` | string | `auto` | Audio monitoring mode: auto, on, off |
 | `--audio-rate` | int | `24000` | Audio canonical sample rate: 16000, 24000, or 48000 |
@@ -1360,7 +1365,7 @@ promptarena chat [flags]
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `--config` | string | `config.arena.yaml` | Path to the Arena config file |
-| `--mock-provider` | bool | `false` | Replace all providers with a generic mock (no API keys needed) |
+| `--mock-provider` | bool | `false` | Replace the configured providers, including self-play roles, with mocks. TTS and STT providers are not swapped |
 | `--mock-config` | string | - | Path to a mock-responses YAML file (used with `--mock-provider`) |
 | `--voice` | bool | `false` | Hands-free voice mode (requires PortAudio installed) |
 | `--voice-stt` | string | - | STT provider id for voice over text agents (VAD mode). An id that is not an STT provider in the config fails before the TUI starts, listing the ids available |

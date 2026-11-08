@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/reference/config-schema.md",
- "commit": "45cbd09a1d70928da45e071755b0c2172abfc8ca",
+ "commit": "41e16490ec749312f63e711caf8cbd08bad51c64",
  "claims": [
   {
    "id": 1001,
@@ -232,7 +232,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:64",
-    "arena/engine/conversation_executor.go:474"
+    "arena/engine/conversation_executor.go:475"
    ]
   },
   {
@@ -293,7 +293,7 @@
    "evidence": [
     "arena/arenaconfig/types.go:396",
     "arena/arenaconfig/types.go:409",
-    "arena/engine/conversation_executor.go:933"
+    "arena/engine/conversation_executor.go:934"
    ]
   },
   {
@@ -330,7 +330,7 @@
    "evidence": [
     "arena/arenaconfig/types.go:512",
     "arena/arenaconfig/types.go:96",
-    "arena/engine/conversation_executor.go:933"
+    "arena/engine/conversation_executor.go:934"
    ]
   },
   {
@@ -340,7 +340,7 @@
    "evidence": [
     "arena/arenaconfig/types.go:512",
     "arena/arenaconfig/types.go:96",
-    "arena/engine/conversation_executor.go:933"
+    "arena/engine/conversation_executor.go:934"
    ]
   },
   {
@@ -350,7 +350,7 @@
    "evidence": [
     "arena/arenaconfig/types.go:512",
     "arena/arenaconfig/types.go:96",
-    "arena/engine/conversation_executor.go:933"
+    "arena/engine/conversation_executor.go:934"
    ]
   },
   {
@@ -453,7 +453,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:463",
-    "arena/engine/conversation_executor.go:434"
+    "arena/engine/conversation_executor.go:435"
    ]
   },
   {
@@ -462,8 +462,8 @@
    "verdict": "false",
    "evidence": [
     "arena/arenaconfig/types.go:463",
-    "arena/engine/conversation_executor.go:424",
-    "arena/engine/conversation_executor.go:434"
+    "arena/engine/conversation_executor.go:425",
+    "arena/engine/conversation_executor.go:435"
    ]
   },
   {
@@ -472,7 +472,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:464",
-    "arena/engine/conversation_executor.go:453"
+    "arena/engine/conversation_executor.go:454"
    ]
   },
   {
@@ -480,8 +480,8 @@
    "claim": "defaults.max_tokens default varies by provider",
    "verdict": "true",
    "evidence": [
-    "arena/engine/conversation_executor.go:447",
-    "arena/engine/conversation_executor.go:453"
+    "arena/engine/conversation_executor.go:448",
+    "arena/engine/conversation_executor.go:454"
    ]
   },
   {
@@ -490,7 +490,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:465",
-    "arena/engine/conversation_executor.go:395"
+    "arena/engine/conversation_executor.go:396"
    ]
   },
   {
@@ -498,9 +498,9 @@
    "claim": "Omitting seed, or setting it to 0, sends no seed to the provider",
    "verdict": "true",
    "evidence": [
-    "arena/engine/conversation_executor.go:1329",
-    "arena/engine/conversation_executor.go:1338",
-    "arena/engine/conversation_executor.go:395"
+    "arena/engine/conversation_executor.go:1330",
+    "arena/engine/conversation_executor.go:1339",
+    "arena/engine/conversation_executor.go:396"
    ]
   },
   {
@@ -528,7 +528,7 @@
    "evidence": [
     "arena/arenaconfig/types.go:466",
     "arena/cmd/promptarena/run.go:168",
-    "arena/engine/engine.go:916"
+    "arena/engine/engine.go:912"
    ]
   },
   {
@@ -768,7 +768,7 @@
    "evidence": [
     "arena/arenaconfig/loader.go:618",
     "arena/arenaconfig/types.go:62",
-    "arena/engine/conversation_executor.go:474"
+    "arena/engine/conversation_executor.go:475"
    ]
   },
   {
@@ -786,7 +786,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:64",
-    "arena/engine/conversation_executor.go:474"
+    "arena/engine/conversation_executor.go:475"
    ]
   },
   {
@@ -794,8 +794,8 @@
    "claim": "Variable precedence, highest to lowest: runtime variables, arena configuration (prompt_configs[].vars), prompt defaults",
    "verdict": "true",
    "evidence": [
-    "arena/engine/conversation_executor.go:456",
-    "arena/engine/conversation_executor.go:461"
+    "arena/engine/conversation_executor.go:457",
+    "arena/engine/conversation_executor.go:462"
    ]
   },
   {
@@ -804,7 +804,7 @@
    "verdict": "false",
    "evidence": [
     "arena/cmd/promptarena/run.go:160",
-    "arena/engine/conversation_executor.go:461"
+    "arena/engine/conversation_executor.go:462"
    ]
   },
   {
@@ -813,7 +813,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:622",
-    "arena/engine/conversation_executor.go:474"
+    "arena/engine/conversation_executor.go:475"
    ]
   },
   {
@@ -821,7 +821,7 @@
    "claim": "Prompt defaults come from the PromptConfig variables array and apply to non-required variables",
    "verdict": "true",
    "evidence": [
-    "arena/engine/conversation_executor.go:461"
+    "arena/engine/conversation_executor.go:462"
    ]
   },
   {
@@ -870,7 +870,7 @@
    "claim": "Placeholders such as {{company_name}} in system_template are substituted from the resolved variables",
    "verdict": "true",
    "evidence": [
-    "arena/engine/conversation_executor.go:381"
+    "arena/engine/conversation_executor.go:382"
    ]
   },
   {
@@ -878,7 +878,7 @@
    "claim": "arena.yaml vars override prompt defaults, so the rendered template uses ACME Corp, 24/7 and help@acme.com",
    "verdict": "true",
    "evidence": [
-    "arena/engine/conversation_executor.go:461"
+    "arena/engine/conversation_executor.go:462"
    ]
   },
   {
@@ -937,8 +937,9 @@
    "claim": "Each mcp_servers entry has exactly one of command, url and source; a config with none or several fails to load",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go",
-    "arena/arenaconfig/mcp_servers.go"
+    "arena/arenaconfig/loader.go:222",
+    "arena/arenaconfig/mcp_servers.go:19",
+    "arena/arenaconfig/mcp_servers.go:20"
    ]
   },
   {
@@ -1831,8 +1832,8 @@
    "claim": "Session evals run even when the run is cut off by tool_policy.max_rounds, tool_policy.max_cost_usd or defaults.run_timeout",
    "verdict": "true",
    "evidence": [
-    "arena/engine/conversation_executor.go:1011",
-    "arena/engine/conversation_executor.go:167",
+    "arena/engine/conversation_executor.go:1012",
+    "arena/engine/conversation_executor.go:168",
     "arena/engine/stop_reason.go:9"
    ]
   },
@@ -1861,7 +1862,7 @@
    "claim": "After a run timeout, session evals run on a fresh context bounded by their own timeout_ms",
    "verdict": "true",
    "evidence": [
-    "arena/engine/conversation_executor.go:1011",
+    "arena/engine/conversation_executor.go:1012",
     "arena/engine/eval_run_metadata.go:113"
    ]
   },
@@ -1912,7 +1913,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:167",
-    "packc/compiler/compiler.go:203"
+    "packc/compiler/compiler.go:197"
    ]
   },
   {
@@ -1920,8 +1921,8 @@
    "claim": "packc compile copies the governance block into the pack's metadata.governance",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:185",
-    "packc/compiler/compiler.go:203"
+    "packc/compiler/compiler.go:179",
+    "packc/compiler/compiler.go:197"
    ]
   },
   {
@@ -2283,6 +2284,7 @@
    "claim": "An obligation or review term whose prefix is neither well-known nor declared in vocabularies is a warning",
    "verdict": "true",
    "evidence": [
+    "packc/compiler/check.go:182",
     "packc/compiler/check.go:184"
    ]
   },
@@ -2715,7 +2717,7 @@
    "claim": "Variables are substituted when the prompt is assembled",
    "verdict": "true",
    "evidence": [
-    "arena/engine/conversation_executor.go:461"
+    "arena/engine/conversation_executor.go:462"
    ]
   },
   {
@@ -2725,7 +2727,7 @@
    "evidence": [
     "arena/arenaconfig/loader.go:622",
     "arena/arenaconfig/types.go:61",
-    "arena/engine/conversation_executor.go:476"
+    "arena/engine/conversation_executor.go:477"
    ]
   },
   {
@@ -2895,7 +2897,7 @@
    "claim": "Required variables must be provided in arena.yaml prompt_configs[].vars, at runtime via SDK/API, or through scenario-specific configuration",
    "verdict": "unverified",
    "evidence": [
-    "arena/engine/conversation_executor.go:461"
+    "arena/engine/conversation_executor.go:462"
    ]
   },
   {
@@ -3015,8 +3017,8 @@
    "claim": "Scenario turns are a list where each turn is a scripted user message, an assistant message, or a self-play turn",
    "verdict": "false",
    "evidence": [
-    "arena/engine/conversation_executor.go:232",
-    "arena/engine/conversation_executor.go:236"
+    "arena/engine/conversation_executor.go:233",
+    "arena/engine/conversation_executor.go:237"
    ]
   },
   {
@@ -3024,7 +3026,7 @@
    "claim": "Scripted turn field `role` is a required string set to user or assistant",
    "verdict": "false",
    "evidence": [
-    "arena/engine/conversation_executor.go:236",
+    "arena/engine/conversation_executor.go:237",
     "schemas/v1alpha1/scenario.json"
    ]
   },
@@ -3033,7 +3035,7 @@
    "claim": "Scripted turn role value `user`",
    "verdict": "true",
    "evidence": [
-    "arena/engine/conversation_executor.go:232"
+    "arena/engine/conversation_executor.go:233"
    ]
   },
   {
@@ -3041,7 +3043,7 @@
    "claim": "Scripted turn role value `assistant`",
    "verdict": "false",
    "evidence": [
-    "arena/engine/conversation_executor.go:236"
+    "arena/engine/conversation_executor.go:237"
    ]
   },
   {
@@ -3076,8 +3078,8 @@
    "claim": "Self-play turn field `role` is a required string matching a configured role in self_play.roles",
    "verdict": "true",
    "evidence": [
-    "arena/engine/conversation_executor.go:1300",
-    "arena/engine/conversation_executor.go:236"
+    "arena/engine/conversation_executor.go:1301",
+    "arena/engine/conversation_executor.go:237"
    ]
   },
   {
@@ -3094,7 +3096,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:1153",
-    "arena/engine/conversation_executor.go:622"
+    "arena/engine/conversation_executor.go:623"
    ]
   },
   {
@@ -3102,7 +3104,7 @@
    "claim": "Self-play turn field `turns` defaults to 1",
    "verdict": "true",
    "evidence": [
-    "arena/engine/conversation_executor.go:622"
+    "arena/engine/conversation_executor.go:623"
    ]
   },
   {
@@ -3111,7 +3113,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:1155",
-    "arena/engine/conversation_executor.go:628"
+    "arena/engine/conversation_executor.go:629"
    ]
   },
   {
@@ -3119,8 +3121,8 @@
    "claim": "When max_turns > turns, natural termination is enabled and the self-play LLM can end the conversation after the minimum turns",
    "verdict": "true",
    "evidence": [
-    "arena/engine/conversation_executor.go:628",
-    "arena/engine/conversation_executor.go:655"
+    "arena/engine/conversation_executor.go:629",
+    "arena/engine/conversation_executor.go:656"
    ]
   },
   {
@@ -3128,7 +3130,7 @@
    "claim": "A user turn triggers LLM generation and its assertions check the response",
    "verdict": "true",
    "evidence": [
-    "arena/engine/conversation_executor.go:232",
+    "arena/engine/conversation_executor.go:233",
     "arena/turnexecutors/scripted_executor.go:44"
    ]
   },
@@ -3137,7 +3139,7 @@
    "claim": "An assistant turn provides context and does no LLM generation",
    "verdict": "false",
    "evidence": [
-    "arena/engine/conversation_executor.go:236"
+    "arena/engine/conversation_executor.go:237"
    ]
   },
   {
@@ -3145,7 +3147,7 @@
    "claim": "A self-play turn generates user messages via a persona LLM, each triggering an assistant response",
    "verdict": "true",
    "evidence": [
-    "arena/engine/conversation_executor.go:565",
+    "arena/engine/conversation_executor.go:566",
     "arena/turnexecutors/selfplay_executor.go:114"
    ]
   },
@@ -3533,7 +3535,7 @@
    "claim": "A budgeted group's trials run in order on one worker regardless of --concurrency",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:983",
+    "arena/engine/engine.go:979",
     "arena/engine/trial_budget.go:132"
    ]
   },
@@ -3948,8 +3950,8 @@
    "claim": "Scripted user turns and self-play turns honour chaos; duplex turns ignore it",
    "verdict": "true",
    "evidence": [
-    "arena/engine/conversation_executor.go:403",
-    "arena/engine/conversation_executor.go:641",
+    "arena/engine/conversation_executor.go:404",
+    "arena/engine/conversation_executor.go:642",
     "arena/engine/duplex_executor_turns_integration.go:301"
    ]
   },
@@ -5202,7 +5204,7 @@
    "verdict": "false",
    "evidence": [
     "arena/arenaconfig/loader.go:1072",
-    "arena/engine/conversation_executor.go:920-931"
+    "arena/engine/conversation_executor.go:921-932"
    ]
   },
   {
@@ -5828,7 +5830,8 @@
    "verdict": "true",
    "evidence": [
     "arena/selfplay/feedback.go:132",
-    "arena/selfplay/feedback.go:152"
+    "arena/selfplay/feedback.go:154",
+    "arena/selfplay/feedback.go:156"
    ]
   },
   {
@@ -6013,7 +6016,7 @@
    "claim": "a persona message is checked even when the agent then fails on it",
    "verdict": "true",
    "evidence": [
-    "arena/engine/conversation_executor.go:589",
+    "arena/engine/conversation_executor.go:590",
     "arena/engine/persona_fidelity.go:108"
    ]
   },
@@ -6258,8 +6261,8 @@
    "claim": "the fact check runs before an objective rewind, so a rewound exchange is still checked",
    "verdict": "true",
    "evidence": [
-    "arena/engine/conversation_executor.go:591",
-    "arena/engine/conversation_executor.go:593"
+    "arena/engine/conversation_executor.go:592",
+    "arena/engine/conversation_executor.go:594"
    ]
   },
   {
@@ -6400,7 +6403,7 @@
    "claim": "the persona is given its state as it stands before each exchange",
    "verdict": "true",
    "evidence": [
-    "arena/engine/conversation_executor.go:587",
+    "arena/engine/conversation_executor.go:588",
     "arena/engine/persona_state.go:127"
    ]
   },
@@ -6480,8 +6483,8 @@
    "claim": "an exchange removed by an objective rewind changes no persona state",
    "verdict": "true",
    "evidence": [
-    "arena/engine/conversation_executor.go:593",
-    "arena/engine/conversation_executor.go:599"
+    "arena/engine/conversation_executor.go:594",
+    "arena/engine/conversation_executor.go:600"
    ]
   },
   {
@@ -6489,8 +6492,8 @@
    "claim": "an exchange that ends with an error is not applied to state",
    "verdict": "true",
    "evidence": [
-    "arena/engine/conversation_executor.go:592",
-    "arena/engine/conversation_executor.go:603"
+    "arena/engine/conversation_executor.go:593",
+    "arena/engine/conversation_executor.go:604"
    ]
   },
   {
@@ -6525,8 +6528,8 @@
    "claim": "if the turn's objective is decided on the same exchange, the objective ends the turn and no stop is reported",
    "verdict": "true",
    "evidence": [
-    "arena/engine/conversation_executor.go:603",
-    "arena/engine/conversation_executor.go:607"
+    "arena/engine/conversation_executor.go:604",
+    "arena/engine/conversation_executor.go:608"
    ]
   },
   {
@@ -6534,7 +6537,7 @@
    "claim": "stop conditions are checked before a turn's first exchange",
    "verdict": "true",
    "evidence": [
-    "arena/engine/conversation_executor.go:579",
+    "arena/engine/conversation_executor.go:580",
     "arena/engine/persona_state.go:161"
    ]
   },
@@ -6585,7 +6588,7 @@
    "claim": "a persona stop leaves the objective not achieved, so the objectives report counts it as a failed attempt",
    "verdict": "true",
    "evidence": [
-    "arena/engine/conversation_executor.go:604",
+    "arena/engine/conversation_executor.go:605",
     "arena/engine/objective_outcome.go:156"
    ]
   },
@@ -6594,7 +6597,7 @@
    "claim": "transitions and state apply to text self-play turns only, and duplex turns do not update state",
    "verdict": "true",
    "evidence": [
-    "arena/engine/conversation_executor.go:577",
+    "arena/engine/conversation_executor.go:578",
     "arena/engine/duplex_executor_turns_integration.go:695"
    ]
   },
@@ -6640,7 +6643,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:1152",
-    "arena/engine/conversation_executor.go:623"
+    "arena/engine/conversation_executor.go:624"
    ]
   },
   {
@@ -6649,7 +6652,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:1155",
-    "arena/engine/conversation_executor.go:628"
+    "arena/engine/conversation_executor.go:629"
    ]
   },
   {
@@ -6657,7 +6660,7 @@
    "claim": "scenario turn field user_temp overrides the persona's defaults.temperature for those turns",
    "verdict": "true",
    "evidence": [
-    "arena/engine/conversation_executor.go:416",
+    "arena/engine/conversation_executor.go:417",
     "arena/selfplay/generator.go:426"
    ]
   },
@@ -6666,7 +6669,7 @@
    "claim": "scenario turn field assistant_temp sets the temperature of the agent under test",
    "verdict": "true",
    "evidence": [
-    "arena/engine/conversation_executor.go:431"
+    "arena/engine/conversation_executor.go:432"
    ]
   },
   {
@@ -6674,7 +6677,7 @@
    "claim": "scenario turn field seed overrides the persona's defaults.seed",
    "verdict": "true",
    "evidence": [
-    "arena/engine/conversation_executor.go:417",
+    "arena/engine/conversation_executor.go:418",
     "arena/selfplay/generator.go:438"
    ]
   },
@@ -6683,8 +6686,8 @@
    "claim": "user_temp, assistant_temp and seed treat 0 as unset",
    "verdict": "true",
    "evidence": [
-    "arena/engine/conversation_executor.go:1338",
-    "arena/engine/conversation_executor.go:440"
+    "arena/engine/conversation_executor.go:1339",
+    "arena/engine/conversation_executor.go:441"
    ]
   },
   {
@@ -6692,8 +6695,8 @@
    "claim": "the seed applies to the persona only, and the agent under test takes its seed from the arena defaults.seed",
    "verdict": "true",
    "evidence": [
-    "arena/engine/conversation_executor.go:395",
-    "arena/engine/conversation_executor.go:417"
+    "arena/engine/conversation_executor.go:396",
+    "arena/engine/conversation_executor.go:418"
    ]
   },
   {
@@ -6701,8 +6704,8 @@
    "claim": "assistant_temp gives way to a temperature passed on the command line or in the request and applies to text turns only",
    "verdict": "true",
    "evidence": [
-    "arena/engine/conversation_executor.go:426",
-    "arena/engine/conversation_executor.go:431"
+    "arena/engine/conversation_executor.go:427",
+    "arena/engine/conversation_executor.go:432"
    ]
   },
   {
@@ -6905,7 +6908,7 @@
    "claim": "each trial sends its own best_of_n variant and a new defaults.seed gives new variants",
    "verdict": "true",
    "evidence": [
-    "arena/engine/conversation_executor.go:424",
+    "arena/engine/conversation_executor.go:425",
     "arena/selfplay/converter.go:37"
    ]
   },
@@ -7484,7 +7487,7 @@
    "claim": "objective success assertions run over the whole conversation after every exchange",
    "verdict": "true",
    "evidence": [
-    "arena/engine/conversation_executor.go:593",
+    "arena/engine/conversation_executor.go:594",
     "arena/engine/objective.go:304"
    ]
   },
@@ -7635,7 +7638,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:1235",
-    "arena/engine/conversation_executor.go:543"
+    "arena/engine/conversation_executor.go:544"
    ]
   },
   {
@@ -7859,7 +7862,7 @@
    "claim": "a run that ends before an objective's turn still reports the objective as not evaluated, with an error saying the run ended early",
    "verdict": "true",
    "evidence": [
-    "arena/engine/conversation_executor.go:707",
+    "arena/engine/conversation_executor.go:708",
     "arena/engine/objective.go:61"
    ]
   },
@@ -8027,7 +8030,7 @@
    "claim": "rewound exchanges count towards the turn's turns and max_turns and towards exchanges in the result",
    "verdict": "true",
    "evidence": [
-    "arena/engine/conversation_executor.go:584",
+    "arena/engine/conversation_executor.go:585",
     "arena/engine/objective.go:279"
    ]
   },
@@ -8045,8 +8048,8 @@
    "claim": "a persona ending the conversation in a rewound exchange does not end the turn",
    "verdict": "true",
    "evidence": [
-    "arena/engine/conversation_executor.go:593",
-    "arena/engine/conversation_executor.go:599"
+    "arena/engine/conversation_executor.go:594",
+    "arena/engine/conversation_executor.go:600"
    ]
   },
   {
@@ -8429,7 +8432,7 @@
    "claim": "on a streaming scenario a search turn runs without streaming",
    "verdict": "true",
    "evidence": [
-    "arena/engine/conversation_executor.go:542",
+    "arena/engine/conversation_executor.go:543",
     "arena/engine/objective_search.go:199"
    ]
   },
@@ -8450,8 +8453,8 @@
     "arena/arenaconfig/helpers.go:38",
     "arena/arenaconfig/helpers.go:55",
     "arena/cmd/promptarena/run.go:363",
-    "arena/cmd/promptarena/serve_interactive.go:222",
-    "arena/engine/engine.go:1045",
+    "arena/cmd/promptarena/serve_interactive.go:221",
+    "arena/engine/engine.go:1041",
     "arena/engine/engine.go:706"
    ]
   },
@@ -8460,8 +8463,8 @@
    "claim": "judge: <name> selects a judge from spec.judges; an unknown name is a load error",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/judge_param.go:53",
-    "arena/arenaconfig/judge_param.go:59"
+    "arena/arenaconfig/judge_param.go:56",
+    "arena/arenaconfig/judge_param.go:62"
    ]
   },
   {
@@ -8524,6 +8527,55 @@
     "arena/arenaconfig/validator.go:337-347",
     "arena/engine/execution.go:279-302",
     "schemas/v1alpha1/scenario.json:607-613"
+   ]
+  },
+  {
+   "id": 20001,
+   "claim": "spec.runtime takes a PromptKit runtime config spec, the spec of a standalone RuntimeConfig resource whose schema is schemas/v1alpha1/runtime-config.json",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:116",
+    "schemas/v1alpha1/runtime-config.json"
+   ]
+  },
+  {
+   "id": 20002,
+   "claim": "Arena reads three runtime fields: evals, hooks and sandboxes",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:742",
+    "arena/engine/runtime_hooks.go:19",
+    "arena/engine/runtime_hooks.go:24",
+    "arena/engine/runtime_hooks.go:28"
+   ]
+  },
+  {
+   "id": 20003,
+   "claim": "Only session hooks run; a provider or tool runtime hook fails when Arena builds the engine",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:337",
+    "arena/engine/runtime_hooks.go:32",
+    "arena/engine/runtime_hooks.go:33"
+   ]
+  },
+  {
+   "id": 20004,
+   "claim": "a runtime hook with hook: eval is ignored by Arena",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/runtime_hooks.go:28",
+    "arena/engine/runtime_hooks.go:32"
+   ]
+  },
+  {
+   "id": 20005,
+   "claim": "the schema accepts the runtime spec's other fields, such as providers, state_store and logging, and Arena ignores them",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/types.go:116",
+    "arena/engine/builder_integration.go:739",
+    "arena/engine/runtime_hooks.go:19"
    ]
   },
   {
