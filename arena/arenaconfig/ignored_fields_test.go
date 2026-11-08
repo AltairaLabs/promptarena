@@ -68,3 +68,54 @@ spec:
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "state_store.type: file")
 }
+
+const runtimeIgnoredSuffix = " is ignored: Arena reads only runtime.evals, runtime.hooks and runtime.sandboxes"
+
+// Arena reads only runtime.evals, runtime.hooks and runtime.sandboxes; every
+// other set runtime field is warned about by name, and the read ones are not.
+func TestIgnoredRuntimeFieldWarnings(t *testing.T) {
+	assert.Empty(t, (&Config{}).ignoredRuntimeFieldWarnings())
+	assert.Empty(t, (&Config{Runtime: &config.RuntimeConfigSpec{
+		Evals:     map[string]*config.ExecBinding{"probe": {Command: "x"}},
+		Hooks:     map[string]*config.ExecHook{"h": {Hook: "session"}},
+		Sandboxes: map[string]*config.SandboxConfig{"s": {Mode: "direct"}},
+		// Present but empty counts as unset.
+		Providers: []config.Provider{},
+	}}).ignoredRuntimeFieldWarnings())
+
+	cfg := &Config{Runtime: &config.RuntimeConfigSpec{
+		Evals:        map[string]*config.ExecBinding{"probe": {Command: "x"}},
+		Providers:    []config.Provider{{ID: "p"}},
+		StateStore:   &config.StateStoreConfig{Type: "memory"},
+		ToolSelector: "narrow",
+	}}
+	assert.Equal(t, []string{
+		"runtime.providers" + runtimeIgnoredSuffix,
+		"runtime.state_store" + runtimeIgnoredSuffix,
+		"runtime.tool_selector" + runtimeIgnoredSuffix,
+	}, cfg.ignoredRuntimeFieldWarnings())
+}
+
+func TestValidator_WarnsOnIgnoredRuntimeFields(t *testing.T) {
+	cfg := &Config{Runtime: &config.RuntimeConfigSpec{Logging: &config.LoggingConfigSpec{}}}
+	v := NewConfigValidatorWithPath(cfg, "")
+	_ = v.Validate()
+	assert.Contains(t, v.GetWarnings(), "runtime.logging"+runtimeIgnoredSuffix)
+}
+
+func TestLoadConfig_WarnsOnIgnoredRuntimeFields(t *testing.T) {
+	path := writeLoaderSchemaFile(t, `apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Arena
+metadata:
+  name: a
+spec:
+  providers: []
+  defaults: {}
+  runtime:
+    state_store:
+      type: memory
+`)
+	cfg, err := LoadConfig(path)
+	require.NoError(t, err, "ignored runtime fields warn; they do not fail the load")
+	assert.Contains(t, cfg.ValidationWarnings, "runtime.state_store"+runtimeIgnoredSuffix)
+}

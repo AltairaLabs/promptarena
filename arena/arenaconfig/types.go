@@ -109,10 +109,11 @@ type Config struct {
 	// Defaults (which are "values when unspecified") — Globals is for
 	// "always-additive" entries.
 	Globals *Globals `yaml:"globals,omitempty" json:"globals,omitempty"`
-	// Runtime carries a runtime configuration spec passed straight through to the
-	// runtime layer (hooks, sandboxes, …). Arena wraps the runtime, so anything
-	// the runtime config supports is available here under `runtime:` without
-	// Arena needing a bespoke field for each.
+	// Runtime carries a PromptKit runtime config spec. Arena reads only three of
+	// its fields: evals (exec eval handlers), hooks (session hooks only; other
+	// hook types are rejected at engine build) and sandboxes. The schema accepts
+	// the rest so a runtime config can be shared with the SDK, but Arena ignores
+	// them, and loading or validating the config warns for each one set.
 	Runtime *config.RuntimeConfigSpec `yaml:"runtime,omitempty" json:"runtime,omitempty"`
 	// Workflow and Compositions follow the Agents precedent below: both were
 	// interface{} passthroughs that workflow.ParseConfig and

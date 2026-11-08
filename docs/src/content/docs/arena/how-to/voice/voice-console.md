@@ -121,7 +121,7 @@ Barge-in is off by default. On a realtime provider, the console flushes the agen
 | `--echo-guard` | `false` | Gate the mic while the agent speaks (laptop speakers) |
 | `--barge-in` | `false` | Allow interrupting the agent mid-reply |
 | `--config <path>` | `config.arena.yaml` | Path to the Arena config file |
-| `--mock-provider` | `false` | Replace all providers with a generic mock |
+| `--mock-provider` | `false` | Replace the LLM and self-play role providers with mocks. TTS and STT providers are not replaced; for keyless voices, declare a `type: mock`, `role: tts` provider |
 | `--mock-config <path>` | none | Mock response file, used with `--mock-provider` |
 | `-v`, `--verbose` | `false` | Debug logging (raw provider events, transcription) |
 

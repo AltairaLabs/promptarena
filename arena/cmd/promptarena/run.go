@@ -191,7 +191,7 @@ func init() {
 	runCmd.Flags().BoolP("verbose", "v", false, "Enable verbose debug logging for API calls")
 
 	// Mock provider settings
-	runCmd.Flags().Bool("mock-provider", false, "Replace all providers with MockProvider (for CI/testing)")
+	runCmd.Flags().Bool("mock-provider", false, mockProviderFlagHelp)
 	runCmd.Flags().String("mock-config", "", "Path to mock provider configuration file (YAML)")
 
 	// Provider substitution: swap one configured provider's spec for another (repeatable)

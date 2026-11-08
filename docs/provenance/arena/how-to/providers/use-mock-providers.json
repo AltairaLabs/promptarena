@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/providers/use-mock-providers.md",
- "commit": "66ec692303a313b1f7ece7ce55dd5f73859efe29",
+ "commit": "f64f15c6465c659e651a75c9cd5f9ee0bb963280",
  "claims": [
   {
    "id": 1,
@@ -37,11 +37,14 @@
   },
   {
    "id": 5,
-   "claim": "--mock-provider replaces every configured provider with a mock that keeps its id and model",
+   "claim": "--mock-provider replaces every LLM provider, including the self-play roles' providers, with a mock that keeps its id and model; TTS and STT providers are not replaced",
    "verdict": "true",
    "evidence": [
+    "arena/cmd/promptarena/chat.go:9-10",
     "arena/cmd/promptarena/run_interactive.go:290",
-    "arena/engine/engine.go:758-774"
+    "arena/engine/engine.go:758-774",
+    "arena/engine/engine.go:786",
+    "arena/selfplay/registry.go:47"
    ]
   },
   {
@@ -268,7 +271,7 @@
    "claim": "Overridden provider applies to candidate selection, self-play roles and judges",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:1074",
+    "arena/arenaconfig/loader.go:1079",
     "arena/cmd/promptarena/provider_override.go:16",
     "arena/cmd/promptarena/run_interactive.go:241",
     "arena/engine/builder_integration.go:308",
@@ -280,8 +283,8 @@
    "claim": "A judge that references a mock provider is used in the default run",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:1062",
-    "arena/arenaconfig/loader.go:1074",
+    "arena/arenaconfig/loader.go:1067",
+    "arena/arenaconfig/loader.go:1079",
     "arena/engine/conversation_executor.go:923"
    ]
   },
@@ -290,7 +293,7 @@
    "claim": "--override-provider mock-judge=claude makes the judge run against claude",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:1072",
+    "arena/arenaconfig/loader.go:1077",
     "arena/cmd/promptarena/provider_override.go:34"
    ]
   },
@@ -445,7 +448,7 @@
    "claim": "A misspelled or snake_case mock file key such as default_response is an error when Arena loads the file",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:294",
+    "arena/arenaconfig/loader.go:299",
     "arena/arenaconfig/mock_config_check.go:16-20",
     "arena/arenaconfig/mock_config_check.go:43-49"
    ]
@@ -455,7 +458,7 @@
    "claim": "promptarena validate checks the mock_config file of each type: mock provider; promptarena run also checks the --mock-config file",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:294",
+    "arena/arenaconfig/loader.go:299",
     "arena/engine/engine.go:746-751"
    ]
   },

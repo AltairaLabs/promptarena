@@ -30,7 +30,7 @@ Fields under `spec`:
 | `prompt_specs` | object |  | — |
 | `provider_specs` | object |  | Inline resource specs (alternative to file refs, merged into LoadedX during load) |
 | `providers` | array | ✓ | Providers lists the LLM provider configurations (file references); the loader routes each into the right role slot based on its role. |
-| `runtime` | object |  | Runtime carries a runtime configuration spec passed straight through to the runtime layer (hooks, sandboxes, …). Arena wraps the runtime, so anything the runtime config supports is available here under `runtime:` without Arena needing a bespoke field for each. |
+| `runtime` | object |  | Runtime carries a PromptKit runtime config spec. Arena reads only three of its fields: evals (exec eval handlers), hooks (session hooks only; other hook types are rejected at engine build) and sandboxes. The schema accepts the rest so a runtime config can be shared with the SDK, but Arena ignores them, and loading or validating the config warns for each one set. |
 | `scenario_specs` | object |  | — |
 | `scenarios` | array |  | Scenarios references the test scenario files to run. |
 | `self_play` | object |  | SelfPlay configures self-play: personas and roles that drive the user side of a conversation. |
