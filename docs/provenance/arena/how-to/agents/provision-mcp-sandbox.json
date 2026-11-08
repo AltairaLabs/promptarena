@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/agents/provision-mcp-sandbox.md",
- "commit": "72f35dcda537f9ebff0eaf33808ce728f0c8b3f8",
+ "commit": "d12d5b388a693c119b19bf05eabade5b717cb10d",
  "claims": [
   {
    "id": 1,
@@ -17,7 +17,7 @@
    "claim": "Source-backed MCP is the third MCP transport, alongside stdio (command) and static HTTP+SSE (url)",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:173"
+    "arena/arenaconfig/types.go:174"
    ]
   },
   {
@@ -31,7 +31,7 @@
    "claim": "Config path spec.mcp_servers is a list of entries under the arena spec",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:173"
+    "arena/arenaconfig/types.go:174"
    ]
   },
   {
@@ -189,7 +189,7 @@
    "claim": "Scenario spec has a variables block containing repo and branch keys in the example",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:745",
+    "arena/arenaconfig/types.go:746",
     "arena/engine/execution_mcpsource.go:17"
    ]
   },
@@ -266,7 +266,7 @@
    "claim": "Tools are referenced by name in the prompt config allowed_tools field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator.go:461"
+    "arena/arenaconfig/validator.go:462"
    ]
   },
   {
@@ -611,7 +611,7 @@
    "claim": "A spec.scenarios list entry takes a file key",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:419"
+    "arena/arenaconfig/types.go:420"
    ]
   },
   {
@@ -627,7 +627,7 @@
    "claim": "Scenario spec.id and metadata.name are fields; spec.task_type is codegen-agent in the example",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:693",
+    "arena/arenaconfig/types.go:694",
     "examples/codegen-sandbox/scenarios/simple-fix.scenario.yaml:9"
    ]
   },

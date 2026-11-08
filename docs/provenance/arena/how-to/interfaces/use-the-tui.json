@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/interfaces/use-the-tui.md",
- "commit": "66ec692303a313b1f7ece7ce55dd5f73859efe29",
+ "commit": "d12d5b388a693c119b19bf05eabade5b717cb10d",
  "claims": [
   {
    "id": 1,
@@ -316,7 +316,7 @@
    "claim": "The promptarena chat subcommand exists.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:5-9"
+    "arena/cmd/promptarena/chat.go:16-20"
    ]
   },
   {
@@ -324,7 +324,7 @@
    "claim": "promptarena chat with no flags uses config.arena.yaml.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:12"
+    "arena/cmd/promptarena/chat.go:23"
    ]
   },
   {
@@ -332,7 +332,7 @@
    "claim": "promptarena chat --config config.arena.yaml sets the config path explicitly.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:12"
+    "arena/cmd/promptarena/chat.go:23"
    ]
   },
   {
@@ -356,7 +356,7 @@
    "claim": "The -v and --verbose flags are available on chat.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:22"
+    "arena/cmd/promptarena/chat.go:33"
    ]
   },
   {
@@ -406,7 +406,7 @@
    "claim": "The --voice flag starts a hands-free voice conversation with chat.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:15",
+    "arena/cmd/promptarena/chat.go:26",
     "arena/cmd/promptarena/chat_interactive.go:63-65"
    ]
   },
@@ -415,7 +415,7 @@
    "claim": "Voice mode requires PortAudio installed on the host.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:15",
+    "arena/cmd/promptarena/chat.go:26",
     "arena/voice/portaudio/portaudio_io_interactive.go:98-103"
    ]
   },
@@ -433,8 +433,8 @@
    "claim": "promptarena chat --voice --config config.arena.yaml is a valid command.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:12",
-    "arena/cmd/promptarena/chat.go:15"
+    "arena/cmd/promptarena/chat.go:23",
+    "arena/cmd/promptarena/chat.go:26"
    ]
   },
   {
@@ -442,7 +442,7 @@
    "claim": "In voice mode the agent responds with synthesized audio.",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:17",
+    "arena/cmd/promptarena/chat.go:28",
     "arena/tui/app/chatpage_voice.go:1"
    ]
   },

@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/explanation/testing-philosophy.md",
- "commit": "66ec692303a313b1f7ece7ce55dd5f73859efe29",
+ "commit": "d12d5b388a693c119b19bf05eabade5b717cb10d",
  "claims": [
   {
    "id": 1,
@@ -16,7 +16,7 @@
    "claim": "A turn or test accepts an 'assertions:' list key",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1189"
+    "arena/arenaconfig/types.go:1194"
    ]
   },
   {
@@ -124,7 +124,7 @@
    "claim": "Comparative example block (lines 102-110) uses a scenario-level 'providers' list of provider ids",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:705",
+    "arena/arenaconfig/types.go:710",
     "arena/engine/execution.go:278"
    ]
   },
@@ -133,7 +133,7 @@
    "claim": "A scenario accepts a top-level 'providers' list field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:705",
+    "arena/arenaconfig/types.go:710",
     "schemas/v1alpha1/scenario.json"
    ]
   },
@@ -152,8 +152,8 @@
    "claim": "Contextual example block (lines 116-148) is valid scenario YAML with named turn groups containing context, nested turns and assertions",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:1142",
-    "arena/arenaconfig/types.go:701"
+    "arena/arenaconfig/types.go:1147",
+    "arena/arenaconfig/types.go:706"
    ]
   },
   {
@@ -161,7 +161,7 @@
    "claim": "A 'turns' list entry may be a named group with 'name', 'context' and nested 'turns'",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:1142"
+    "arena/arenaconfig/types.go:1147"
    ]
   },
   {
@@ -169,8 +169,8 @@
    "claim": "A turn group accepts a 'context' map with arbitrary keys (user_type, urgency)",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:1142",
-    "arena/arenaconfig/types.go:701"
+    "arena/arenaconfig/types.go:1147",
+    "arena/arenaconfig/types.go:706"
    ]
   },
   {
@@ -178,7 +178,7 @@
    "claim": "A turn entry accepts role 'user'",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1143"
+    "arena/arenaconfig/types.go:1148"
    ]
   },
   {
@@ -186,7 +186,7 @@
    "claim": "A turn entry accepts a 'content' string",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1144"
+    "arena/arenaconfig/types.go:1149"
    ]
   },
   {
@@ -194,7 +194,7 @@
    "claim": "A turn entry accepts its own 'assertions' list",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1189"
+    "arena/arenaconfig/types.go:1194"
    ]
   },
   {
@@ -274,7 +274,7 @@
    "claim": "PromptArena uses the PromptPack specification format for test scenarios",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/loader.go:547"
+    "arena/arenaconfig/loader.go:553"
    ]
   },
   {
@@ -282,8 +282,8 @@
    "claim": "Test scenarios are authored as YAML files",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:547",
-    "arena/arenaconfig/types.go:688"
+    "arena/arenaconfig/loader.go:553",
+    "arena/arenaconfig/types.go:693"
    ]
   },
   {
@@ -291,7 +291,7 @@
    "claim": "Provider abstraction example block (lines 275-284) is valid provider config YAML with type and model entries",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:388",
+    "arena/arenaconfig/types.go:393",
     "schemas/v1alpha1/arena.json:645"
    ]
   },
@@ -523,7 +523,7 @@
    "claim": "Scenario accepts a top-level 'conversation_assertions' list key",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:715"
+    "arena/arenaconfig/types.go:720"
    ]
   },
   {
@@ -628,7 +628,7 @@
    "claim": "Arena has no baseline or compare_to_baseline fields",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1223"
+    "arena/arenaconfig/types.go:1228"
    ]
   },
   {
@@ -636,7 +636,7 @@
    "claim": "A/B testing example block (lines 500-509) is conceptual and not real Arena config",
    "verdict": "dead",
    "evidence": [
-    "arena/arenaconfig/types.go:1142"
+    "arena/arenaconfig/types.go:1147"
    ]
   },
   {
@@ -644,7 +644,7 @@
    "claim": "Turn entries accept a 'prompt_version' field",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:1142"
+    "arena/arenaconfig/types.go:1147"
    ]
   },
   {
@@ -678,8 +678,8 @@
    "claim": "Human-in-the-loop example block (lines 533-548) is conceptual and not real Arena config",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/loader.go:547",
-    "arena/arenaconfig/types.go:688"
+    "arena/arenaconfig/loader.go:553",
+    "arena/arenaconfig/types.go:693"
    ]
   },
   {
@@ -687,7 +687,7 @@
    "claim": "Arena has no human_evaluation field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:688"
+    "arena/arenaconfig/types.go:693"
    ]
   },
   {
@@ -696,7 +696,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:138",
-    "arena/arenaconfig/types.go:670"
+    "arena/arenaconfig/types.go:675"
    ]
   },
   {
@@ -704,7 +704,7 @@
    "claim": "kind 'Scenario' is a valid document kind",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:547"
+    "arena/arenaconfig/loader.go:553"
    ]
   },
   {
@@ -712,7 +712,7 @@
    "claim": "Scenario metadata accepts a 'labels' map (example label review: human)",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:695"
+    "arena/arenaconfig/types.go:700"
    ]
   },
   {
@@ -720,8 +720,8 @@
    "claim": "Scenario spec accepts 'task_type' (value test) and 'description' fields",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:689",
-    "arena/arenaconfig/types.go:691"
+    "arena/arenaconfig/types.go:694",
+    "arena/arenaconfig/types.go:696"
    ]
   },
   {
@@ -729,8 +729,8 @@
    "claim": "Scenario spec accepts 'turns' entries with 'role' and 'content' fields",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1143",
-    "arena/arenaconfig/types.go:1144"
+    "arena/arenaconfig/types.go:1148",
+    "arena/arenaconfig/types.go:1149"
    ]
   },
   {
@@ -759,8 +759,8 @@
     "arena/arenaconfig/judge_param.go:56-69",
     "arena/arenaconfig/judge_param.go:90-111",
     "arena/arenaconfig/persona.go:85",
-    "arena/arenaconfig/types.go:1209",
-    "arena/arenaconfig/types.go:1218"
+    "arena/arenaconfig/types.go:1214",
+    "arena/arenaconfig/types.go:1223"
    ]
   }
  ]

@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/interfaces/use-the-web-ui.md",
- "commit": "66ec692303a313b1f7ece7ce55dd5f73859efe29",
+ "commit": "d12d5b388a693c119b19bf05eabade5b717cb10d",
  "claims": [
   {
    "id": 1,
@@ -35,7 +35,7 @@
    "claim": "serve accepts a directory containing config.arena.yaml or the config file itself as its argument",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:148-160"
+    "arena/cmd/promptarena/serve_interactive.go:146-158"
    ]
   },
   {
@@ -44,8 +44,8 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/serve_interactive.go:133",
-    "arena/cmd/promptarena/serve_interactive.go:253-255",
-    "arena/cmd/promptarena/serve_interactive.go:283-300"
+    "arena/cmd/promptarena/serve_interactive.go:251-253",
+    "arena/cmd/promptarena/serve_interactive.go:281-298"
    ]
   },
   {
@@ -53,7 +53,7 @@
    "claim": "If config-path is a directory, Arena looks for config.arena.yaml inside it",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:158-160"
+    "arena/cmd/promptarena/serve_interactive.go:156-158"
    ]
   },
   {
@@ -61,7 +61,7 @@
    "claim": "With no argument serve loads the config from the current directory",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:148"
+    "arena/cmd/promptarena/serve_interactive.go:146"
    ]
   },
   {
@@ -85,7 +85,7 @@
    "claim": "On startup the server prints its URL and config path",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:249-251"
+    "arena/cmd/promptarena/serve_interactive.go:247-249"
    ]
   },
   {
@@ -93,7 +93,7 @@
    "claim": "The server runs until Ctrl+C is pressed",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:274"
+    "arena/cmd/promptarena/serve_interactive.go:272"
    ]
   },
   {
@@ -141,7 +141,7 @@
    "claim": "Startup prints the message 'Port 8080 is in use - serving on 8083 instead'",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:245"
+    "arena/cmd/promptarena/serve_interactive.go:243"
    ]
   },
   {
@@ -149,7 +149,7 @@
    "claim": "Startup prints the line 'Arena Web UI: http://localhost:8083' for the fallback port",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:248-249"
+    "arena/cmd/promptarena/serve_interactive.go:246-247"
    ]
   },
   {
@@ -174,7 +174,7 @@
    "claim": "On startup Arena hydrates *.json result files from the config's output directory",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:223-228",
+    "arena/cmd/promptarena/serve_interactive.go:221-226",
     "arena/web/server_loader_integration.go:25-50"
    ]
   },
@@ -501,10 +501,11 @@
   },
   {
    "id": 59,
-   "claim": "--mock-provider replaces every configured provider with mocks",
+   "claim": "--mock-provider replaces the LLM provider and the self-play role providers with mocks",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:180-187",
+    "arena/cmd/promptarena/serve_interactive.go:138-139",
+    "arena/cmd/promptarena/serve_interactive.go:178-184",
     "arena/engine/engine.go:742-793"
    ]
   },
@@ -523,7 +524,7 @@
    "claim": "--mock-config serves canned scenario responses when used with --mock-provider",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:142-143",
+    "arena/cmd/promptarena/serve_interactive.go:140-141",
     "arena/engine/engine.go:746-753"
    ]
   },
@@ -532,7 +533,7 @@
    "claim": "promptarena serve --mock-provider --mock-config mock-responses.yaml --open is a valid invocation",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:133-143"
+    "arena/cmd/promptarena/serve_interactive.go:133-141"
    ]
   },
   {
@@ -545,10 +546,11 @@
   },
   {
    "id": 64,
-   "claim": "In mock mode no real model calls are made or billed; TTS and STT providers are not replaced",
-   "verdict": "false",
+   "claim": "In mock mode the assistant and self-play turns make no real model calls; TTS and STT providers are not replaced",
+   "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:182-187",
+    "arena/cmd/promptarena/chat.go:13-14",
+    "arena/cmd/promptarena/serve_interactive.go:178-184",
     "arena/engine/engine.go:759-789"
    ]
   },

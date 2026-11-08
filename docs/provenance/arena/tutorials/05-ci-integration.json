@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/tutorials/05-ci-integration.md",
- "commit": "66ec692303a313b1f7ece7ce55dd5f73859efe29",
+ "commit": "d12d5b388a693c119b19bf05eabade5b717cb10d",
  "claims": [
   {
    "id": 1,
@@ -74,7 +74,7 @@
    "claim": "--scenario <name> selects scenarios by the name 'smoke' so that scenarios/smoke/basic.yaml runs",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/loader.go:636",
+    "arena/arenaconfig/loader.go:643",
     "arena/cmd/promptarena/run.go:164",
     "arena/engine/execution.go:193",
     "arena/engine/execution.go:86"
@@ -114,7 +114,7 @@
    "claim": "A run writes its output to tests/out/ (default --out, relative to the working directory)",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/helpers.go:38",
+    "arena/arenaconfig/helpers.go:48",
     "arena/cmd/promptarena/run.go:169"
    ]
   },
@@ -247,7 +247,7 @@
    "claim": "metadata.name is a required field of a scenario",
    "verdict": "unverified",
    "evidence": [
-    "arena/arenaconfig/loader.go:567",
+    "arena/arenaconfig/loader.go:573",
     "arena/cmd/promptarena/run.go",
     "schemas/v1alpha1/scenario.json"
    ]
@@ -571,7 +571,7 @@
    "claim": "With working-directory tests, promptarena run writes results under tests/out/ (out/ is relative to the config directory)",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/helpers.go:35",
+    "arena/arenaconfig/helpers.go:45",
     "arena/cmd/promptarena/run.go:363"
    ]
   },

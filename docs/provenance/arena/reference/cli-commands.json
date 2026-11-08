@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/reference/cli-commands.md",
- "commit": "72f35dcda537f9ebff0eaf33808ce728f0c8b3f8",
+ "commit": "d12d5b388a693c119b19bf05eabade5b717cb10d",
  "claims": [
   {
    "id": 1001,
@@ -101,7 +101,7 @@
    "claim": "Command `chat` talks live to an agent defined in the Arena config through an interactive TUI",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:12",
+    "arena/cmd/promptarena/chat.go:23",
     "arena/cmd/promptarena/chat_interactive.go:15"
    ]
   },
@@ -791,7 +791,7 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/serve_interactive.go:133",
-    "arena/cmd/promptarena/serve_interactive.go:254"
+    "arena/cmd/promptarena/serve_interactive.go:252"
    ]
   },
   {
@@ -1980,9 +1980,10 @@
   },
   {
    "id": 1237,
-   "claim": "Flag `--mock-provider` (bool) replaces all providers with MockProvider",
+   "claim": "Flag `--mock-provider` (bool) replaces the LLM and self-play role providers with mocks; TTS and STT providers are not replaced",
    "verdict": "true",
    "evidence": [
+    "arena/cmd/promptarena/chat.go:9-10",
     "arena/cmd/promptarena/run.go:194"
    ]
   },
@@ -3113,7 +3114,7 @@
    "claim": "objective field `baseline: true` marks an objective for the direct persona",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1227",
+    "arena/arenaconfig/types.go:1228",
     "arena/engine/objective.go:173"
    ]
   },
@@ -3130,7 +3131,7 @@
    "claim": "config field `self_play.personas` is a list of persona entries",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:440"
+    "arena/arenaconfig/types.go:441"
    ]
   },
   {
@@ -3138,7 +3139,7 @@
    "claim": "config field `self_play.personas[].file` points to a persona YAML file",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:455"
+    "arena/arenaconfig/types.go:456"
    ]
   },
   {
@@ -3146,7 +3147,7 @@
    "claim": "config field `self_play.roles` is a list of roles",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:442",
+    "arena/arenaconfig/types.go:443",
     "arena/inspect/collector.go:377"
    ]
   },
@@ -3155,7 +3156,7 @@
    "claim": "config field `self_play.roles[].id` names the role",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:461"
+    "arena/arenaconfig/types.go:462"
    ]
   },
   {
@@ -3163,7 +3164,7 @@
    "claim": "config field `self_play.roles[].provider` names a configured provider",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:462"
+    "arena/arenaconfig/types.go:463"
    ]
   },
   {
@@ -3171,7 +3172,7 @@
    "claim": "scenario turn field `role` selects a self-play role",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1147"
+    "arena/arenaconfig/types.go:1148"
    ]
   },
   {
@@ -3179,7 +3180,7 @@
    "claim": "scenario turn field `persona` names a persona",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1155"
+    "arena/arenaconfig/types.go:1156"
    ]
   },
   {
@@ -3187,7 +3188,7 @@
    "claim": "scenario turn field `turns` sets the number of turns",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1157"
+    "arena/arenaconfig/types.go:1158"
    ]
   },
   {
@@ -3195,8 +3196,8 @@
    "claim": "scenario turn field `objective` is an object",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1182",
-    "arena/arenaconfig/types.go:1207"
+    "arena/arenaconfig/types.go:1183",
+    "arena/arenaconfig/types.go:1208"
    ]
   },
   {
@@ -3204,7 +3205,7 @@
    "claim": "objective field `description` sets the goal text",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1210"
+    "arena/arenaconfig/types.go:1211"
    ]
   },
   {
@@ -3212,8 +3213,8 @@
    "claim": "objective field `expect` accepts the value `not_achieved`",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1199",
-    "arena/arenaconfig/types.go:1381",
+    "arena/arenaconfig/types.go:1200",
+    "arena/arenaconfig/types.go:1382",
     "arena/engine/objective.go:191"
    ]
   },
@@ -3222,7 +3223,7 @@
    "claim": "objective field `success` is a list of assertions",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1213"
+    "arena/arenaconfig/types.go:1214"
    ]
   },
   {
@@ -3244,7 +3245,7 @@
    "claim": "objective field `stop_on_success` is a boolean",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1219",
+    "arena/arenaconfig/types.go:1220",
     "arena/engine/objective.go:312"
    ]
   },
@@ -3253,8 +3254,8 @@
    "claim": "objective field `rewind` is an object",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1222",
-    "arena/arenaconfig/types.go:1346"
+    "arena/arenaconfig/types.go:1223",
+    "arena/arenaconfig/types.go:1347"
    ]
   },
   {
@@ -3262,8 +3263,8 @@
    "claim": "rewind field `max` sets the maximum number of rewinds",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1350",
-    "arena/arenaconfig/types.go:1354"
+    "arena/arenaconfig/types.go:1351",
+    "arena/arenaconfig/types.go:1355"
    ]
   },
   {
@@ -3271,7 +3272,7 @@
    "claim": "rewind field `when` is a list of assertions that trigger a rewind",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1348"
+    "arena/arenaconfig/types.go:1349"
    ]
   },
   {
@@ -4803,7 +4804,7 @@
    "claim": "connectivity check \"Unique task types per prompt\" is performed by config-inspect",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator.go:530"
+    "arena/arenaconfig/validator.go:531"
    ]
   },
   {
@@ -4811,7 +4812,7 @@
    "claim": "connectivity check \"Scenario task types exist\" is performed by config-inspect",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator.go:565"
+    "arena/arenaconfig/validator.go:566"
    ]
   },
   {
@@ -5219,8 +5220,8 @@
    "claim": "the serve web UI loads existing results from the output directory on startup",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:224",
-    "arena/cmd/promptarena/serve_interactive.go:225"
+    "arena/cmd/promptarena/serve_interactive.go:222",
+    "arena/cmd/promptarena/serve_interactive.go:223"
    ]
   },
   {
@@ -5245,8 +5246,8 @@
    "claim": "interactive chat can run without API keys when --mock-provider is used",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:182",
-    "arena/cmd/promptarena/serve_interactive.go:183"
+    "arena/cmd/promptarena/serve_interactive.go:180",
+    "arena/cmd/promptarena/serve_interactive.go:181"
    ]
   },
   {
@@ -5262,7 +5263,7 @@
    "claim": "if serve's config-path is a directory, it looks for config.arena.yaml inside it",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:159"
+    "arena/cmd/promptarena/serve_interactive.go:157"
    ]
   },
   {
@@ -5270,7 +5271,7 @@
    "claim": "serve's config-path defaults to the current directory",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:148"
+    "arena/cmd/promptarena/serve_interactive.go:146"
    ]
   },
   {
@@ -5296,7 +5297,7 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/serve_interactive.go:133",
-    "arena/cmd/promptarena/serve_interactive.go:254"
+    "arena/cmd/promptarena/serve_interactive.go:252"
    ]
   },
   {
@@ -5312,8 +5313,8 @@
    "claim": "serve flag `--mock-provider` is a bool that replaces the assistant and self-play role providers with mocks; TTS and STT providers are not swapped, and a type: mock, role: tts provider gives a keyless voice run",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:138",
-    "arena/cmd/promptarena/serve_interactive.go:183",
+    "arena/cmd/promptarena/serve_interactive.go:138-139",
+    "arena/cmd/promptarena/serve_interactive.go:181",
     "arena/engine/engine.go:786",
     "arena/engine/engine.go:788",
     "arena/selfplay/registry.go:47"
@@ -5332,8 +5333,8 @@
    "claim": "serve flag `--mock-config` is a string giving a mock responses YAML file, used with --mock-provider",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:142",
-    "arena/cmd/promptarena/serve_interactive.go:183"
+    "arena/cmd/promptarena/serve_interactive.go:140",
+    "arena/cmd/promptarena/serve_interactive.go:181"
    ]
   },
   {
@@ -5342,7 +5343,7 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/serve_interactive.go:134",
-    "arena/cmd/promptarena/serve_interactive.go:190"
+    "arena/cmd/promptarena/serve_interactive.go:188"
    ]
   },
   {
@@ -5370,7 +5371,7 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/serve_interactive.go:136",
-    "arena/cmd/promptarena/serve_interactive.go:194"
+    "arena/cmd/promptarena/serve_interactive.go:192"
    ]
   },
   {
@@ -5404,7 +5405,7 @@
    "claim": "command `promptarena serve ./examples/guardrails-test`",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/serve_interactive.go:159"
+    "arena/cmd/promptarena/serve_interactive.go:157"
    ]
   },
   {
@@ -5581,7 +5582,7 @@
    "claim": "`promptarena chat` opens an interactive TUI chat session",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:12",
+    "arena/cmd/promptarena/chat.go:23",
     "arena/cmd/promptarena/chat_interactive.go:15"
    ]
   },
@@ -5598,7 +5599,7 @@
    "claim": "`promptarena chat [flags]` is the usage form",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:12",
+    "arena/cmd/promptarena/chat.go:23",
     "arena/cmd/promptarena/chat_interactive.go:15"
    ]
   },
@@ -5607,7 +5608,7 @@
    "claim": "chat has a --config string flag described as the path to the Arena config file",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:12"
+    "arena/cmd/promptarena/chat.go:23"
    ]
   },
   {
@@ -5615,7 +5616,7 @@
    "claim": "The default for --config is config.arena.yaml",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:12"
+    "arena/cmd/promptarena/chat.go:23"
    ]
   },
   {
@@ -5623,7 +5624,7 @@
    "claim": "chat --mock-provider replaces the configured providers, including self-play roles, with mocks; TTS and STT providers are not swapped",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:13",
+    "arena/cmd/promptarena/chat.go:24",
     "arena/cmd/promptarena/chat_interactive.go:40",
     "arena/engine/engine.go:786",
     "arena/selfplay/registry.go:47"
@@ -5634,7 +5635,7 @@
    "claim": "The default for --mock-provider is false",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:13"
+    "arena/cmd/promptarena/chat.go:24"
    ]
   },
   {
@@ -5642,7 +5643,7 @@
    "claim": "chat has a --mock-config string flag for a mock-responses YAML file, used with --mock-provider",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:14"
+    "arena/cmd/promptarena/chat.go:25"
    ]
   },
   {
@@ -5650,7 +5651,7 @@
    "claim": "--mock-config has no default value",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:14"
+    "arena/cmd/promptarena/chat.go:25"
    ]
   },
   {
@@ -5658,7 +5659,7 @@
    "claim": "chat has a --voice bool flag for hands-free voice mode that requires PortAudio",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:15"
+    "arena/cmd/promptarena/chat.go:26"
    ]
   },
   {
@@ -5666,7 +5667,7 @@
    "claim": "The default for --voice is false",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:15"
+    "arena/cmd/promptarena/chat.go:26"
    ]
   },
   {
@@ -5674,7 +5675,7 @@
    "claim": "chat has a --voice-stt string flag for the STT provider id used in VAD mode",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:16",
+    "arena/cmd/promptarena/chat.go:27",
     "arena/cmd/promptarena/chat_interactive.go:35"
    ]
   },
@@ -5683,7 +5684,7 @@
    "claim": "--voice-stt has no default value",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:16",
+    "arena/cmd/promptarena/chat.go:27",
     "arena/cmd/promptarena/chat_interactive.go:35"
    ]
   },
@@ -5692,7 +5693,7 @@
    "claim": "chat has a --voice-output-voice string flag for the TTS voice id the agent speaks in VAD mode",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:17"
+    "arena/cmd/promptarena/chat.go:28"
    ]
   },
   {
@@ -5700,7 +5701,7 @@
    "claim": "--voice-output-voice has no default value",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:17"
+    "arena/cmd/promptarena/chat.go:28"
    ]
   },
   {
@@ -5708,7 +5709,7 @@
    "claim": "chat has an --echo-guard bool flag that gates the mic while the agent speaks",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:18"
+    "arena/cmd/promptarena/chat.go:29"
    ]
   },
   {
@@ -5716,7 +5717,7 @@
    "claim": "The default for --echo-guard is false",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:18"
+    "arena/cmd/promptarena/chat.go:29"
    ]
   },
   {
@@ -5724,7 +5725,7 @@
    "claim": "chat has a --barge-in bool flag that allows interrupting the agent mid-reply",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:20"
+    "arena/cmd/promptarena/chat.go:31"
    ]
   },
   {
@@ -5732,7 +5733,7 @@
    "claim": "The default for --barge-in is false",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:20"
+    "arena/cmd/promptarena/chat.go:31"
    ]
   },
   {
@@ -5740,7 +5741,7 @@
    "claim": "chat has a -v, --verbose bool flag that enables verbose debug logging",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:22"
+    "arena/cmd/promptarena/chat.go:33"
    ]
   },
   {
@@ -5748,7 +5749,7 @@
    "claim": "The default for -v, --verbose is false",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:22"
+    "arena/cmd/promptarena/chat.go:33"
    ]
   },
   {
@@ -5789,7 +5790,7 @@
    "claim": "`promptarena chat` with no flags is a valid command that uses the current directory",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:12",
+    "arena/cmd/promptarena/chat.go:23",
     "arena/cmd/promptarena/chat_interactive.go:15"
    ]
   },
@@ -5798,7 +5799,7 @@
    "claim": "`promptarena chat --config ./examples/customer-support/config.arena.yaml` is a valid command",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:12",
+    "arena/cmd/promptarena/chat.go:23",
     "arena/cmd/promptarena/chat_interactive.go:15"
    ]
   },
@@ -5815,7 +5816,7 @@
    "claim": "`promptarena chat --mock-provider` runs without API keys",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/chat.go:12",
+    "arena/cmd/promptarena/chat.go:23",
     "arena/cmd/promptarena/chat_interactive.go:15"
    ]
   },
@@ -6719,7 +6720,7 @@
    "claim": "spec.prompt_configs is a list field whose entries take id and file",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:523",
+    "arena/arenaconfig/types.go:524",
     "arena/arenaconfig/types.go:88",
     "arena/arenaconfig/types.go:98"
    ]
@@ -6729,7 +6730,7 @@
    "claim": "spec.providers is a list field whose entries take file",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:523",
+    "arena/arenaconfig/types.go:524",
     "arena/arenaconfig/types.go:88",
     "arena/arenaconfig/types.go:98"
    ]
@@ -6739,7 +6740,7 @@
    "claim": "spec.scenarios is a list field whose entries take file",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:523",
+    "arena/arenaconfig/types.go:524",
     "arena/arenaconfig/types.go:88",
     "arena/arenaconfig/types.go:98"
    ]
@@ -6749,7 +6750,7 @@
    "claim": "spec.defaults is a config field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:523",
+    "arena/arenaconfig/types.go:524",
     "arena/arenaconfig/types.go:88",
     "arena/arenaconfig/types.go:98"
    ]
@@ -6759,7 +6760,7 @@
    "claim": "spec.defaults.output.dir is a config field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:523",
+    "arena/arenaconfig/types.go:524",
     "arena/arenaconfig/types.go:88",
     "arena/arenaconfig/types.go:98"
    ]
@@ -6769,7 +6770,7 @@
    "claim": "spec.defaults.output.formats accepts json and markdown",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:523",
+    "arena/arenaconfig/types.go:524",
     "arena/arenaconfig/types.go:88",
     "arena/arenaconfig/types.go:98"
    ]
@@ -6779,7 +6780,7 @@
    "claim": "PromptArena supports multimodal content (images, audio, video) in test scenarios",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1421",
+    "arena/arenaconfig/types.go:1422",
     "arena/turnexecutors/media_loader.go:160"
    ]
   },
@@ -6788,7 +6789,7 @@
    "claim": "Scenario turns accept a parts array for multimodal content",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1421",
+    "arena/arenaconfig/types.go:1422",
     "arena/turnexecutors/media_loader.go:160"
    ]
   },
@@ -6805,7 +6806,7 @@
    "claim": "Scenario turns have a role field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1421",
+    "arena/arenaconfig/types.go:1422",
     "arena/turnexecutors/media_loader.go:160"
    ]
   },
@@ -6814,7 +6815,7 @@
    "claim": "A text content part takes a text field; a media part takes media",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1423"
+    "arena/arenaconfig/types.go:1424"
    ]
   },
   {
@@ -6822,7 +6823,7 @@
    "claim": "A content part has type image",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1421",
+    "arena/arenaconfig/types.go:1422",
     "arena/turnexecutors/media_loader.go:160"
    ]
   },
@@ -6831,7 +6832,7 @@
    "claim": "media.file_path is a field of a media part",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1430"
+    "arena/arenaconfig/types.go:1431"
    ]
   },
   {
@@ -6839,7 +6840,7 @@
    "claim": "media.detail is a field of a media part",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1430"
+    "arena/arenaconfig/types.go:1431"
    ]
   },
   {
@@ -6879,7 +6880,7 @@
    "claim": "media.detail accepts high",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1436",
+    "arena/arenaconfig/types.go:1437",
     "arena/turnexecutors/media_loader.go:563"
    ]
   },
@@ -6888,7 +6889,7 @@
    "claim": "media.url is a field of a media part",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1430"
+    "arena/arenaconfig/types.go:1431"
    ]
   },
   {
@@ -6905,7 +6906,7 @@
    "claim": "media.detail accepts auto",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1436",
+    "arena/arenaconfig/types.go:1437",
     "arena/turnexecutors/media_loader.go:563"
    ]
   },
@@ -6914,7 +6915,7 @@
    "claim": "media.data is a field for inline base64 media",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1430"
+    "arena/arenaconfig/types.go:1431"
    ]
   },
   {
@@ -6922,7 +6923,7 @@
    "claim": "media.mime_type is a field of a media part",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1430"
+    "arena/arenaconfig/types.go:1431"
    ]
   },
   {
@@ -6930,7 +6931,7 @@
    "claim": "media.detail accepts low",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1436",
+    "arena/arenaconfig/types.go:1437",
     "arena/turnexecutors/media_loader.go:563"
    ]
   },
@@ -7406,7 +7407,7 @@
    "claim": "A content part has type audio",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1421",
+    "arena/arenaconfig/types.go:1422",
     "arena/turnexecutors/media_loader.go:160"
    ]
   },
@@ -7415,7 +7416,7 @@
    "claim": "An audio media part accepts media.file_path with an mp3 file",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1431"
+    "arena/arenaconfig/types.go:1432"
    ]
   },
   {
@@ -7431,7 +7432,7 @@
    "claim": "A single turn can mix multiple image parts and audio parts",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1421",
+    "arena/arenaconfig/types.go:1422",
     "arena/turnexecutors/media_loader.go:160"
    ]
   },

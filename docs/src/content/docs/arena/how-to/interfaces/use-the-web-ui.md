@@ -4,9 +4,10 @@ description: Run Arena's local web interface for live run monitoring, a results 
 sidebar:
   order: 20
 verified:
-  commit: 66ec692303a313b1f7ece7ce55dd5f73859efe29
+  commit: d12d5b388a693c119b19bf05eabade5b717cb10d
   sources:
     - arena/arenaconfig/mock_config_check.go
+    - arena/cmd/promptarena/chat.go
     - arena/cmd/promptarena/serve_interactive.go
     - arena/engine/engine.go
     - arena/selfplay/registry.go
@@ -166,10 +167,10 @@ See the [`serve` flags](/arena/reference/cli-commands/) for the accepted values 
 
 ## Free Demos with Mock Providers
 
-Add `--mock-provider` to replace every configured model provider (the assistant
-and the self-play user role) with mocks, so a demo makes no real model calls and
-costs nothing. TTS and STT providers are not replaced; bind voices to a `mock`
-TTS provider to keep audio free. Pair it with `--mock-config` to serve canned scenario
+Add `--mock-provider` to replace the LLM provider and the self-play role providers
+with mocks, so the assistant and self-play turns make no real model calls. TTS and
+STT providers are not replaced; bind voices to a `mock` TTS provider to keep audio
+free too. Pair it with `--mock-config` to serve canned scenario
 responses:
 
 ```bash

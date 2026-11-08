@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/interfaces/run-in-ci.md",
- "commit": "72f35dcda537f9ebff0eaf33808ce728f0c8b3f8",
+ "commit": "d12d5b388a693c119b19bf05eabade5b717cb10d",
  "claims": [
   {
    "id": 1,
@@ -323,7 +323,7 @@
    "claim": "The html_report config key is accepted and produces markdown output",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:492",
+    "arena/arenaconfig/types.go:493",
     "arena/cmd/promptarena/run.go:497"
    ]
   },
@@ -350,7 +350,7 @@
    "claim": "Scenario field trials runs the scenario several times",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:748",
+    "arena/arenaconfig/types.go:749",
     "arena/engine/trials.go:31"
    ]
   },
@@ -368,7 +368,7 @@
    "claim": "YAML field spec.trials",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:748",
+    "arena/arenaconfig/types.go:749",
     "schemas/v1alpha1/scenario.json:668"
    ]
   },
@@ -377,7 +377,7 @@
    "claim": "YAML field spec.turns",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:701",
+    "arena/arenaconfig/types.go:702",
     "schemas/v1alpha1/scenario.json:591"
    ]
   },
@@ -386,7 +386,7 @@
    "claim": "YAML field turns[].role accepts user",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1147"
+    "arena/arenaconfig/types.go:1148"
    ]
   },
   {
@@ -394,7 +394,7 @@
    "claim": "YAML field turns[].content",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1148"
+    "arena/arenaconfig/types.go:1149"
    ]
   },
   {
@@ -402,7 +402,7 @@
    "claim": "YAML field turns[].assertions",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1193"
+    "arena/arenaconfig/types.go:1194"
    ]
   },
   {
@@ -453,7 +453,7 @@
    "claim": "YAML field spec.conversation_assertions",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:719",
+    "arena/arenaconfig/types.go:720",
     "schemas/v1alpha1/scenario.json:632"
    ]
   },
@@ -954,6 +954,16 @@
    "claim": "Link to /arena/how-to/interfaces/use-the-web-ui/ (Related) exists",
    "verdict": "true",
    "evidence": []
+  },
+  {
+   "id": "470-mock",
+   "claim": "--mock-provider replaces the LLM and self-play role providers with canned-response mocks; TTS and STT providers are not replaced",
+   "verdict": "true",
+   "evidence": [
+    "arena/cmd/promptarena/chat.go:9-10",
+    "arena/cmd/promptarena/run.go:194",
+    "arena/engine/engine.go:759-789"
+   ]
   }
  ]
 }

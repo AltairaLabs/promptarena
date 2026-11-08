@@ -2,7 +2,7 @@
 title: CLI Commands
 description: Every promptarena command with its flags, defaults and examples.
 verified:
-  commit: 72f35dcda537f9ebff0eaf33808ce728f0c8b3f8
+  commit: d12d5b388a693c119b19bf05eabade5b717cb10d
   sources:
     - arena/adapters/adapter.go
     - arena/adapters/arena_output.go

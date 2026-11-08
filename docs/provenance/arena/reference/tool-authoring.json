@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/reference/tool-authoring.md",
- "commit": "45cbd09a1d70928da45e071755b0c2172abfc8ca",
+ "commit": "d12d5b388a693c119b19bf05eabade5b717cb10d",
  "claims": [
   {
    "id": 1,
@@ -16,7 +16,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/validator_tools.go:73-79",
-    "arena/engine/builder_integration.go:564",
+    "arena/engine/builder_integration.go:578",
     "schemas/v1alpha1/tool.json:319"
    ]
   },
@@ -33,7 +33,7 @@
    "claim": "mock (template) renders mock_template (mock_template_file in a kind: Tool file reads the same template from a file)",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:609",
+    "arena/engine/builder_integration.go:623",
     "schemas/v1alpha1/tool.json:358"
    ]
   },
@@ -42,7 +42,7 @@
    "claim": "live mode requires an http: block",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:114",
+    "arena/engine/builder_integration.go:115",
     "schemas/v1alpha1/tool.json:339"
    ]
   },
@@ -51,8 +51,8 @@
    "claim": "mcp mode needs no further fields; tool is exposed by an MCP server configured at the arena level and auto-discovered",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:434",
-    "arena/engine/builder_integration.go:470"
+    "arena/engine/builder_integration.go:435",
+    "arena/engine/builder_integration.go:471"
    ]
   },
   {
@@ -60,7 +60,7 @@
    "claim": "promptarena cannot execute mode: exec (subprocess); a run stops at startup on a tool with mode: exec",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:555",
+    "arena/engine/builder_integration.go:569",
     "schemas/v1alpha1/tool.json:319"
    ]
   },
@@ -175,8 +175,8 @@
    "claim": "In a kind: Tool file, mock_template_file reads the template from a file resolved against the arena config directory",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:571",
-    "arena/engine/builder_integration.go:609",
+    "arena/engine/builder_integration.go:585",
+    "arena/engine/builder_integration.go:623",
     "schemas/v1alpha1/tool.json:360"
    ]
   },
@@ -185,7 +185,7 @@
    "claim": "In a kind: Tool file, mock_template_file reads the same content as mock_template from a file resolved against the arena config directory",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:609",
+    "arena/engine/builder_integration.go:623",
     "schemas/v1alpha1/tool.json:358"
    ]
   },
@@ -212,7 +212,7 @@
    "claim": "Live mode calls a real HTTP endpoint; args are sent as JSON and the response is the parsed JSON body",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:114",
+    "arena/engine/builder_integration.go:115",
     "schemas/v1alpha1/tool.json:84"
    ]
   },
@@ -234,7 +234,7 @@
    "claim": "headers_from_env entries of the form Header-Name=ENV_VAR_NAME set the header to the raw value of the environment variable; put the full value such as Bearer ... in the variable",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:114",
+    "arena/engine/builder_integration.go:115",
     "schemas/v1alpha1/tool.json:84"
    ]
   },
@@ -267,8 +267,8 @@
    "claim": "For mcp mode, the Tool YAML only declares the contract and the MCP client provides the executor",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:434",
-    "arena/engine/builder_integration.go:470"
+    "arena/engine/builder_integration.go:435",
+    "arena/engine/builder_integration.go:471"
    ]
   },
   {
@@ -284,7 +284,7 @@
    "claim": "promptarena does not run mode: exec tools; exec is run by the PromptKit SDK only",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:555",
+    "arena/engine/builder_integration.go:569",
     "schemas/v1alpha1/tool.json:319"
    ]
   },
@@ -353,7 +353,7 @@
    "claim": "live mode calls a real HTTP endpoint configured by the http block",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:114",
+    "arena/engine/builder_integration.go:115",
     "schemas/v1alpha1/tool.json:339"
    ]
   },
@@ -362,7 +362,7 @@
    "claim": "Diagram: Tool from an MCP server -> mcp",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:434"
+    "arena/engine/builder_integration.go:435"
    ]
   },
   {
@@ -370,7 +370,7 @@
    "claim": "exec is not a promptarena mode: promptarena cannot run a local subprocess tool",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:555",
+    "arena/engine/builder_integration.go:569",
     "schemas/v1alpha1/tool.json:319"
    ]
   },
@@ -405,8 +405,8 @@
    "claim": "A tool that sets both mock_result and mock_template fails to load",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:381",
-    "arena/arenaconfig/loader.go:390"
+    "arena/arenaconfig/loader.go:387",
+    "arena/arenaconfig/loader.go:396"
    ]
   },
   {
@@ -414,8 +414,8 @@
    "claim": "In a kind: Tool file, mock_result_file and mock_template_file read the content from a file resolved against the arena config directory",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:571",
-    "arena/engine/builder_integration.go:609",
+    "arena/engine/builder_integration.go:585",
+    "arena/engine/builder_integration.go:623",
     "schemas/v1alpha1/tool.json:354",
     "schemas/v1alpha1/tool.json:358"
    ]
@@ -425,7 +425,7 @@
    "claim": "A turn's consent_overrides map a tool name to grant, deny or timeout; any other value fails to load",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:344",
+    "arena/arenaconfig/loader.go:350",
     "arena/consent/hook.go:24"
    ]
   },
@@ -436,7 +436,7 @@
    "evidence": [
     "arena/arenaconfig/validator.go:63",
     "arena/arenaconfig/validator_tools.go:73-94",
-    "arena/engine/builder_integration.go:564"
+    "arena/engine/builder_integration.go:578"
    ]
   }
  ]
