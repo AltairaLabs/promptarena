@@ -4,12 +4,16 @@ description: What a PromptPack .pack.json file contains, how its workflow block 
 sidebar:
   order: 1
 verified:
-  commit: 66ec692303a313b1f7ece7ce55dd5f73859efe29
+  commit: 72f35dcda537f9ebff0eaf33808ce728f0c8b3f8
   sources:
+    - arena/arenaconfig/loader.go
+    - arena/promptrepo/promptrepo.go
     - packc/compiler/check.go
     - packc/compiler/compiler.go
+    - packc/compiler/fragments_test.go
     - packc/compiler/helpers_integration.go
     - packc/compiler/pack_file.go
+    - packc/compiler/pack_file_test.go
 ---
 
 This page explains what a `.pack.json` file contains and why prompts ship as one compiled file. The [PromptPack specification](https://promptpack.org) is the authority on every field. `packc` embeds version 1.9.0 of its schema and validates against it.

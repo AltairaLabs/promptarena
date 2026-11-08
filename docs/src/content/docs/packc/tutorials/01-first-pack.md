@@ -4,7 +4,7 @@ description: Install packc, write one prompt and an Arena config, then compile, 
 sidebar:
   order: 1
 verified:
-  commit: 66ec692303a313b1f7ece7ce55dd5f73859efe29
+  commit: 72f35dcda537f9ebff0eaf33808ce728f0c8b3f8
   sources:
     - arena/arenaconfig/loader.go
     - arena/arenaconfig/types.go

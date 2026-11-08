@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/reference/cli-commands.md",
- "commit": "41e16490ec749312f63e711caf8cbd08bad51c64",
+ "commit": "72f35dcda537f9ebff0eaf33808ce728f0c8b3f8",
  "claims": [
   {
    "id": 1001,
@@ -2119,7 +2119,7 @@
    "claim": "Flag `-o, --out` (string) sets the output directory",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/helpers.go:55",
+    "arena/arenaconfig/helpers.go:65",
     "arena/cmd/promptarena/run.go:169",
     "arena/cmd/promptarena/run.go:363"
    ]
@@ -2129,7 +2129,7 @@
    "claim": "--out defaults to defaults.output.dir, else out",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/helpers.go:55",
+    "arena/arenaconfig/helpers.go:65",
     "arena/cmd/promptarena/run.go:169",
     "arena/cmd/promptarena/run.go:363"
    ]
@@ -2383,7 +2383,7 @@
    "claim": "`promptarena run --out test-results-2024-01-15` writes output to a custom directory",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/helpers.go:55",
+    "arena/arenaconfig/helpers.go:65",
     "arena/cmd/promptarena/run.go:169",
     "arena/cmd/promptarena/run.go:363"
    ]
@@ -3113,7 +3113,7 @@
    "claim": "objective field `baseline: true` marks an objective for the direct persona",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1223",
+    "arena/arenaconfig/types.go:1227",
     "arena/engine/objective.go:173"
    ]
   },
@@ -3130,7 +3130,7 @@
    "claim": "config field `self_play.personas` is a list of persona entries",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:436"
+    "arena/arenaconfig/types.go:440"
    ]
   },
   {
@@ -3138,7 +3138,7 @@
    "claim": "config field `self_play.personas[].file` points to a persona YAML file",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:451"
+    "arena/arenaconfig/types.go:455"
    ]
   },
   {
@@ -3146,7 +3146,7 @@
    "claim": "config field `self_play.roles` is a list of roles",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:438",
+    "arena/arenaconfig/types.go:442",
     "arena/inspect/collector.go:377"
    ]
   },
@@ -3155,7 +3155,7 @@
    "claim": "config field `self_play.roles[].id` names the role",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:457"
+    "arena/arenaconfig/types.go:461"
    ]
   },
   {
@@ -3163,7 +3163,7 @@
    "claim": "config field `self_play.roles[].provider` names a configured provider",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:458"
+    "arena/arenaconfig/types.go:462"
    ]
   },
   {
@@ -3171,7 +3171,7 @@
    "claim": "scenario turn field `role` selects a self-play role",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1143"
+    "arena/arenaconfig/types.go:1147"
    ]
   },
   {
@@ -3179,7 +3179,7 @@
    "claim": "scenario turn field `persona` names a persona",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1151"
+    "arena/arenaconfig/types.go:1155"
    ]
   },
   {
@@ -3187,7 +3187,7 @@
    "claim": "scenario turn field `turns` sets the number of turns",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1153"
+    "arena/arenaconfig/types.go:1157"
    ]
   },
   {
@@ -3195,8 +3195,8 @@
    "claim": "scenario turn field `objective` is an object",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1178",
-    "arena/arenaconfig/types.go:1203"
+    "arena/arenaconfig/types.go:1182",
+    "arena/arenaconfig/types.go:1207"
    ]
   },
   {
@@ -3204,7 +3204,7 @@
    "claim": "objective field `description` sets the goal text",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1206"
+    "arena/arenaconfig/types.go:1210"
    ]
   },
   {
@@ -3212,8 +3212,8 @@
    "claim": "objective field `expect` accepts the value `not_achieved`",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1195",
-    "arena/arenaconfig/types.go:1377",
+    "arena/arenaconfig/types.go:1199",
+    "arena/arenaconfig/types.go:1381",
     "arena/engine/objective.go:191"
    ]
   },
@@ -3222,7 +3222,7 @@
    "claim": "objective field `success` is a list of assertions",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1209"
+    "arena/arenaconfig/types.go:1213"
    ]
   },
   {
@@ -3244,7 +3244,7 @@
    "claim": "objective field `stop_on_success` is a boolean",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1215",
+    "arena/arenaconfig/types.go:1219",
     "arena/engine/objective.go:312"
    ]
   },
@@ -3253,8 +3253,8 @@
    "claim": "objective field `rewind` is an object",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1218",
-    "arena/arenaconfig/types.go:1342"
+    "arena/arenaconfig/types.go:1222",
+    "arena/arenaconfig/types.go:1346"
    ]
   },
   {
@@ -3262,8 +3262,8 @@
    "claim": "rewind field `max` sets the maximum number of rewinds",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1346",
-    "arena/arenaconfig/types.go:1350"
+    "arena/arenaconfig/types.go:1350",
+    "arena/arenaconfig/types.go:1354"
    ]
   },
   {
@@ -3271,7 +3271,7 @@
    "claim": "rewind field `when` is a list of assertions that trigger a rewind",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1344"
+    "arena/arenaconfig/types.go:1348"
    ]
   },
   {
@@ -4075,9 +4075,9 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/export.go:51",
-    "packc/compiler/compiler.go:233",
-    "packc/compiler/compiler.go:249",
-    "packc/compiler/compiler.go:253"
+    "packc/compiler/compiler.go:248",
+    "packc/compiler/compiler.go:264",
+    "packc/compiler/compiler.go:268"
    ]
   },
   {
@@ -4185,7 +4185,7 @@
   {
    "id": 2184,
    "claim": "export requires the config field `prompt_configs` with inline prompts; configs that reference pre-built pack files cannot be exported",
-   "verdict": "false",
+   "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:174",
     "arena/arenaconfig/types.go:88",
@@ -6719,7 +6719,7 @@
    "claim": "spec.prompt_configs is a list field whose entries take id and file",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:519",
+    "arena/arenaconfig/types.go:523",
     "arena/arenaconfig/types.go:88",
     "arena/arenaconfig/types.go:98"
    ]
@@ -6729,7 +6729,7 @@
    "claim": "spec.providers is a list field whose entries take file",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:519",
+    "arena/arenaconfig/types.go:523",
     "arena/arenaconfig/types.go:88",
     "arena/arenaconfig/types.go:98"
    ]
@@ -6739,7 +6739,7 @@
    "claim": "spec.scenarios is a list field whose entries take file",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:519",
+    "arena/arenaconfig/types.go:523",
     "arena/arenaconfig/types.go:88",
     "arena/arenaconfig/types.go:98"
    ]
@@ -6749,7 +6749,7 @@
    "claim": "spec.defaults is a config field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:519",
+    "arena/arenaconfig/types.go:523",
     "arena/arenaconfig/types.go:88",
     "arena/arenaconfig/types.go:98"
    ]
@@ -6759,7 +6759,7 @@
    "claim": "spec.defaults.output.dir is a config field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:519",
+    "arena/arenaconfig/types.go:523",
     "arena/arenaconfig/types.go:88",
     "arena/arenaconfig/types.go:98"
    ]
@@ -6769,7 +6769,7 @@
    "claim": "spec.defaults.output.formats accepts json and markdown",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:519",
+    "arena/arenaconfig/types.go:523",
     "arena/arenaconfig/types.go:88",
     "arena/arenaconfig/types.go:98"
    ]
@@ -6779,7 +6779,7 @@
    "claim": "PromptArena supports multimodal content (images, audio, video) in test scenarios",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1417",
+    "arena/arenaconfig/types.go:1421",
     "arena/turnexecutors/media_loader.go:160"
    ]
   },
@@ -6788,7 +6788,7 @@
    "claim": "Scenario turns accept a parts array for multimodal content",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1417",
+    "arena/arenaconfig/types.go:1421",
     "arena/turnexecutors/media_loader.go:160"
    ]
   },
@@ -6805,7 +6805,7 @@
    "claim": "Scenario turns have a role field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1417",
+    "arena/arenaconfig/types.go:1421",
     "arena/turnexecutors/media_loader.go:160"
    ]
   },
@@ -6814,7 +6814,7 @@
    "claim": "A text content part takes a text field; a media part takes media",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1419"
+    "arena/arenaconfig/types.go:1423"
    ]
   },
   {
@@ -6822,7 +6822,7 @@
    "claim": "A content part has type image",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1417",
+    "arena/arenaconfig/types.go:1421",
     "arena/turnexecutors/media_loader.go:160"
    ]
   },
@@ -6831,7 +6831,7 @@
    "claim": "media.file_path is a field of a media part",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1426"
+    "arena/arenaconfig/types.go:1430"
    ]
   },
   {
@@ -6839,7 +6839,7 @@
    "claim": "media.detail is a field of a media part",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1426"
+    "arena/arenaconfig/types.go:1430"
    ]
   },
   {
@@ -6879,7 +6879,7 @@
    "claim": "media.detail accepts high",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1432",
+    "arena/arenaconfig/types.go:1436",
     "arena/turnexecutors/media_loader.go:563"
    ]
   },
@@ -6888,7 +6888,7 @@
    "claim": "media.url is a field of a media part",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1426"
+    "arena/arenaconfig/types.go:1430"
    ]
   },
   {
@@ -6905,7 +6905,7 @@
    "claim": "media.detail accepts auto",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1432",
+    "arena/arenaconfig/types.go:1436",
     "arena/turnexecutors/media_loader.go:563"
    ]
   },
@@ -6914,7 +6914,7 @@
    "claim": "media.data is a field for inline base64 media",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1426"
+    "arena/arenaconfig/types.go:1430"
    ]
   },
   {
@@ -6922,7 +6922,7 @@
    "claim": "media.mime_type is a field of a media part",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1426"
+    "arena/arenaconfig/types.go:1430"
    ]
   },
   {
@@ -6930,7 +6930,7 @@
    "claim": "media.detail accepts low",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1432",
+    "arena/arenaconfig/types.go:1436",
     "arena/turnexecutors/media_loader.go:563"
    ]
   },
@@ -7406,7 +7406,7 @@
    "claim": "A content part has type audio",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1417",
+    "arena/arenaconfig/types.go:1421",
     "arena/turnexecutors/media_loader.go:160"
    ]
   },
@@ -7415,7 +7415,7 @@
    "claim": "An audio media part accepts media.file_path with an mp3 file",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1427"
+    "arena/arenaconfig/types.go:1431"
    ]
   },
   {
@@ -7431,7 +7431,7 @@
    "claim": "A single turn can mix multiple image parts and audio parts",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1417",
+    "arena/arenaconfig/types.go:1421",
     "arena/turnexecutors/media_loader.go:160"
    ]
   },

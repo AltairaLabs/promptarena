@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/packc/explanation/pack-format.md",
- "commit": "66ec692303a313b1f7ece7ce55dd5f73859efe29",
+ "commit": "72f35dcda537f9ebff0eaf33808ce728f0c8b3f8",
  "claims": [
   {
    "id": 1,
@@ -33,7 +33,7 @@
    "claim": "each prompt gets the default template/provider/validator pipeline",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:138-146"
+    "packc/compiler/compiler.go:144-152"
    ]
   },
   {
@@ -42,7 +42,7 @@
    "verdict": "true",
    "evidence": [
     "packc/compiler/check.go:186-224",
-    "packc/compiler/compiler.go:130-146"
+    "packc/compiler/compiler.go:136-152"
    ]
   },
   {
@@ -61,12 +61,19 @@
   },
   {
    "id": 9,
-   "claim": "packc does not give PromptKit's compiler the fragment files: a required fragment fails the compile, an optional one is left out, only a templated fragment reaches the pack as {{name}}",
+   "claim": "packc reads each fragment file a prompt config references, relative to that prompt config's directory, and stores the file's content in fragments; a fragment chosen by a template variable is written as {{name}}",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:120-146",
-    "packc/compiler/helpers_integration.go:27-46",
-    "packc/compiler/pack_file.go:121-126"
+    "arena/arenaconfig/loader.go:188",
+    "arena/arenaconfig/loader.go:621",
+    "arena/promptrepo/promptrepo.go:45-51",
+    "arena/promptrepo/promptrepo.go:56-62",
+    "arena/promptrepo/promptrepo.go:66-83",
+    "arena/promptrepo/promptrepo.go:95-136",
+    "packc/compiler/compiler.go:128-132",
+    "packc/compiler/fragments_test.go:49-121",
+    "packc/compiler/helpers_integration.go:29-48",
+    "packc/compiler/pack_file.go:129-138"
    ]
   },
   {
@@ -74,7 +81,7 @@
    "claim": "packc compile sets name=id, version from --pack-version (default v1.0.0), description, $schema latest URL, compilation block with schema v1",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:138-150"
+    "packc/compiler/compiler.go:144-156"
    ]
   },
   {
@@ -82,7 +89,8 @@
    "claim": "compile-prompt: version is spec.version unless --pack-version; $schema set; compilation.schema v1",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/pack_file.go:128-136"
+    "packc/compiler/pack_file.go:121-148",
+    "packc/compiler/pack_file_test.go:144-146"
    ]
   },
   {

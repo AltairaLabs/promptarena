@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/packc/reference/compile-prompt.md",
- "commit": "66ec692303a313b1f7ece7ce55dd5f73859efe29",
+ "commit": "72f35dcda537f9ebff0eaf33808ce728f0c8b3f8",
  "claims": [
   {
    "id": 1,
@@ -24,7 +24,7 @@
    "claim": "pack id is task_type with _ replaced by -; name metadata.name; version spec.version or --pack-version; description; template_engine; metadata",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/pack_file.go:113-137"
+    "packc/compiler/pack_file.go:121-148"
    ]
   },
   {
@@ -32,7 +32,7 @@
    "claim": "allowed_tools becomes the prompt's tools",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/pack_file.go:113-137"
+    "packc/compiler/pack_file.go:121-148"
    ]
   },
   {
@@ -49,7 +49,7 @@
    "claim": "compile-prompt sets $schema to the latest PromptPack schema URL",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/pack_file.go:130-132"
+    "packc/compiler/pack_file_test.go:144-146"
    ]
   },
   {
@@ -58,7 +58,8 @@
    "verdict": "true",
    "evidence": [
     "packc/compiler/check.go:186-224",
-    "packc/compiler/pack_file.go:121-126"
+    "packc/compiler/pack_file.go:121-148",
+    "packc/main_interactive.go:216-217"
    ]
   },
   {
@@ -66,8 +67,8 @@
    "claim": "compile-prompt checks the PromptConfig schema, then runs checkPack and the PromptPack schema",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/pack_file.go:52-90",
-    "packc/compiler/pack_file.go:95-108"
+    "packc/compiler/pack_file.go:103-116",
+    "packc/compiler/pack_file.go:60-98"
    ]
   },
   {
@@ -75,8 +76,8 @@
    "claim": "media warnings '[compile] media(<task>): ...' when spec.media.enabled, relative to prompt dir",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/helpers_integration.go:70-111",
-    "packc/compiler/pack_file.go:117-119"
+    "packc/compiler/helpers_integration.go:72-113",
+    "packc/compiler/pack_file.go:125-127"
    ]
   },
   {
@@ -84,8 +85,8 @@
    "claim": "error messages: required flags with usage, [load] read/schema/parse errors, [pack_version], pack check stages, write failure",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/pack_file.go:56-67",
-    "packc/compiler/pack_file.go:95-108",
+    "packc/compiler/pack_file.go:103-116",
+    "packc/compiler/pack_file.go:64-75",
     "packc/main_interactive.go:204-229"
    ]
   },

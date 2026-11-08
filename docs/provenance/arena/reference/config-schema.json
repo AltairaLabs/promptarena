@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/reference/config-schema.md",
- "commit": "41e16490ec749312f63e711caf8cbd08bad51c64",
+ "commit": "72f35dcda537f9ebff0eaf33808ce728f0c8b3f8",
  "claims": [
   {
    "id": 1001,
@@ -134,7 +134,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/persona.go:288",
-    "arena/arenaconfig/types.go:436"
+    "arena/arenaconfig/types.go:440"
    ]
   },
   {
@@ -142,7 +142,7 @@
    "claim": "Example: the complete Arena structure block (every field and identifier used in lines 39-164) is valid",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:540",
+    "arena/arenaconfig/types.go:544",
     "schemas/v1alpha1/arena.json:1"
    ]
   },
@@ -159,7 +159,7 @@
    "claim": "kind is Arena",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:204",
+    "arena/arenaconfig/loader.go:205",
     "arena/arenaconfig/types.go:68"
    ]
   },
@@ -249,7 +249,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:21",
-    "arena/arenaconfig/types.go:388",
+    "arena/arenaconfig/types.go:392",
     "arena/engine/execution.go:284"
    ]
   },
@@ -258,7 +258,7 @@
    "claim": "A provider with group judge is not used as the assistant",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:724",
+    "arena/arenaconfig/loader.go:726",
     "arena/engine/execution.go:279"
    ]
   },
@@ -267,7 +267,7 @@
    "claim": "providers[].group is a field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:390"
+    "arena/arenaconfig/types.go:394"
    ]
   },
   {
@@ -291,8 +291,8 @@
    "claim": "A judge inherits the model of the provider it maps to",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:396",
-    "arena/arenaconfig/types.go:409",
+    "arena/arenaconfig/types.go:400",
+    "arena/arenaconfig/types.go:413",
     "arena/engine/conversation_executor.go:934"
    ]
   },
@@ -301,7 +301,7 @@
    "claim": "spec.judges is a field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:396",
+    "arena/arenaconfig/types.go:400",
     "arena/arenaconfig/types.go:93"
    ]
   },
@@ -310,7 +310,7 @@
    "claim": "judges[].name is a field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:396",
+    "arena/arenaconfig/types.go:400",
     "arena/arenaconfig/types.go:93"
    ]
   },
@@ -319,7 +319,7 @@
    "claim": "judges[].provider is a field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:396",
+    "arena/arenaconfig/types.go:400",
     "arena/arenaconfig/types.go:93"
    ]
   },
@@ -328,7 +328,7 @@
    "claim": "spec.judge_defaults is a field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:512",
+    "arena/arenaconfig/types.go:516",
     "arena/arenaconfig/types.go:96",
     "arena/engine/conversation_executor.go:934"
    ]
@@ -338,7 +338,7 @@
    "claim": "judge_defaults.prompt is a field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:512",
+    "arena/arenaconfig/types.go:516",
     "arena/arenaconfig/types.go:96",
     "arena/engine/conversation_executor.go:934"
    ]
@@ -348,7 +348,7 @@
    "claim": "judge_defaults.prompt_registry is a field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:512",
+    "arena/arenaconfig/types.go:516",
     "arena/arenaconfig/types.go:96",
     "arena/engine/conversation_executor.go:934"
    ]
@@ -385,7 +385,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:177",
-    "arena/engine/builder_integration.go:876"
+    "arena/engine/builder_integration.go:890"
    ]
   },
   {
@@ -393,7 +393,7 @@
    "claim": "state_store.type enum values are memory, redis, file",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:877-905"
+    "arena/engine/builder_integration.go:891-919"
    ]
   },
   {
@@ -403,7 +403,7 @@
    "evidence": [
     "arena/arenaconfig/types.go:251",
     "arena/arenaconfig/types.go:255",
-    "arena/engine/builder_integration.go:877"
+    "arena/engine/builder_integration.go:891"
    ]
   },
   {
@@ -411,7 +411,7 @@
    "claim": "state_store.redis is required when type is redis",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:884"
+    "arena/engine/builder_integration.go:898"
    ]
   },
   {
@@ -419,7 +419,7 @@
    "claim": "state_store.redis.address is a field",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:890"
+    "arena/engine/builder_integration.go:904"
    ]
   },
   {
@@ -427,7 +427,7 @@
    "claim": "state_store.file is required when type is file",
    "verdict": "dead",
    "evidence": [
-    "arena/engine/builder_integration.go:876-910"
+    "arena/engine/builder_integration.go:890-924"
    ]
   },
   {
@@ -435,7 +435,7 @@
    "claim": "state_store.file.root is a field",
    "verdict": "dead",
    "evidence": [
-    "arena/engine/builder_integration.go:876-910"
+    "arena/engine/builder_integration.go:890-924"
    ]
   },
   {
@@ -452,7 +452,7 @@
    "claim": "defaults.temperature is a field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:463",
+    "arena/arenaconfig/types.go:467",
     "arena/engine/conversation_executor.go:435"
    ]
   },
@@ -461,7 +461,7 @@
    "claim": "defaults.temperature defaults to 0.7",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:463",
+    "arena/arenaconfig/types.go:467",
     "arena/engine/conversation_executor.go:425",
     "arena/engine/conversation_executor.go:435"
    ]
@@ -471,7 +471,7 @@
    "claim": "defaults.max_tokens is a field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:464",
+    "arena/arenaconfig/types.go:468",
     "arena/engine/conversation_executor.go:454"
    ]
   },
@@ -489,7 +489,7 @@
    "claim": "defaults.seed is an optional reproducibility seed",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:465",
+    "arena/arenaconfig/types.go:469",
     "arena/engine/conversation_executor.go:396"
    ]
   },
@@ -508,7 +508,7 @@
    "claim": "defaults.concurrency is a field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:466",
+    "arena/arenaconfig/types.go:470",
     "arena/cmd/promptarena/run.go:360"
    ]
   },
@@ -526,7 +526,7 @@
    "claim": "defaults.concurrency is the number of tests run in parallel",
    "verdict": "dead",
    "evidence": [
-    "arena/arenaconfig/types.go:466",
+    "arena/arenaconfig/types.go:470",
     "arena/cmd/promptarena/run.go:168",
     "arena/engine/engine.go:912"
    ]
@@ -536,7 +536,7 @@
    "claim": "defaults.run_timeout is a field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:468",
+    "arena/arenaconfig/types.go:472",
     "arena/engine/execution.go:1247"
    ]
   },
@@ -563,8 +563,8 @@
    "claim": "defaults.output is a field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:469",
-    "arena/arenaconfig/types.go:518"
+    "arena/arenaconfig/types.go:473",
+    "arena/arenaconfig/types.go:522"
    ]
   },
   {
@@ -572,7 +572,7 @@
    "claim": "defaults.output.dir is a field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:519"
+    "arena/arenaconfig/types.go:523"
    ]
   },
   {
@@ -580,8 +580,8 @@
    "claim": "defaults.output.dir defaults to out",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/helpers.go:32",
-    "arena/arenaconfig/helpers.go:47"
+    "arena/arenaconfig/helpers.go:42",
+    "arena/arenaconfig/helpers.go:57"
    ]
   },
   {
@@ -589,7 +589,7 @@
    "claim": "defaults.output.formats is a field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:520",
+    "arena/arenaconfig/types.go:524",
     "arena/cmd/promptarena/run.go:420"
    ]
   },
@@ -598,7 +598,7 @@
    "claim": "defaults.output.formats defaults to [json]",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:594",
+    "arena/arenaconfig/types.go:598",
     "arena/cmd/promptarena/run.go:424"
    ]
   },
@@ -618,7 +618,7 @@
    "claim": "The json format has no configurable options and writes each result to <run-id>.json",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:529",
+    "arena/arenaconfig/types.go:533",
     "arena/results/json/json_repository.go:74"
    ]
   },
@@ -627,7 +627,7 @@
    "claim": "defaults.output.markdown is a field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:523"
+    "arena/arenaconfig/types.go:527"
    ]
   },
   {
@@ -635,7 +635,7 @@
    "claim": "defaults.output.markdown.file is a field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:541",
+    "arena/arenaconfig/types.go:545",
     "arena/cmd/promptarena/run.go:535"
    ]
   },
@@ -652,7 +652,7 @@
    "claim": "defaults.output.markdown.include_details is a field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:542"
+    "arena/arenaconfig/types.go:546"
    ]
   },
   {
@@ -660,7 +660,7 @@
    "claim": "defaults.output.markdown.include_details defaults to true",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:626",
+    "arena/arenaconfig/types.go:630",
     "arena/results/markdown/markdown_repository.go:75"
    ]
   },
@@ -669,7 +669,7 @@
    "claim": "defaults.output.junit is a field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:524"
+    "arena/arenaconfig/types.go:528"
    ]
   },
   {
@@ -677,7 +677,7 @@
    "claim": "defaults.output.junit.file is a field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:550",
+    "arena/arenaconfig/types.go:554",
     "arena/cmd/promptarena/run.go:526"
    ]
   },
@@ -686,7 +686,7 @@
    "claim": "defaults.output.junit.file defaults to junit.xml, relative to output.dir",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:550",
+    "arena/arenaconfig/types.go:554",
     "arena/cmd/promptarena/run.go:526"
    ]
   },
@@ -695,7 +695,7 @@
    "claim": "defaults.output.recording is a field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:525",
+    "arena/arenaconfig/types.go:529",
     "arena/engine/engine.go:700"
    ]
   },
@@ -704,7 +704,7 @@
    "claim": "defaults.output.recording.enabled is a field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:562",
+    "arena/arenaconfig/types.go:566",
     "arena/engine/engine.go:701"
    ]
   },
@@ -713,7 +713,7 @@
    "claim": "defaults.output.recording.enabled defaults to false",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:562",
+    "arena/arenaconfig/types.go:566",
     "arena/engine/engine.go:701"
    ]
   },
@@ -722,7 +722,7 @@
    "claim": "defaults.output.recording.dir is a field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:563",
+    "arena/arenaconfig/types.go:567",
     "arena/engine/engine.go:707"
    ]
   },
@@ -766,7 +766,7 @@
    "claim": "prompt_configs[].id is a string and required; scenarios use it to reference the prompt",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/loader.go:618",
+    "arena/arenaconfig/loader.go:619",
     "arena/arenaconfig/types.go:62",
     "arena/engine/conversation_executor.go:475"
    ]
@@ -776,8 +776,8 @@
    "claim": "prompt_configs[].file is a required string; the path is relative to arena.yaml",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:591",
-    "arena/arenaconfig/loader.go:598"
+    "arena/arenaconfig/loader.go:592",
+    "arena/arenaconfig/loader.go:599"
    ]
   },
   {
@@ -812,7 +812,7 @@
    "claim": "Arena configuration variables are defined in prompt_configs[].vars",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:622",
+    "arena/arenaconfig/loader.go:624",
     "arena/engine/conversation_executor.go:475"
    ]
   },
@@ -886,7 +886,7 @@
    "claim": "providers[].file is a required string field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:389",
+    "arena/arenaconfig/types.go:393",
     "schemas/v1alpha1/arena.json:1"
    ]
   },
@@ -895,7 +895,7 @@
    "claim": "Example: providers list with file entries is valid",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:388"
+    "arena/arenaconfig/types.go:392"
    ]
   },
   {
@@ -903,7 +903,7 @@
    "claim": "scenarios[].file is a required string field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:416",
+    "arena/arenaconfig/types.go:420",
     "schemas/v1alpha1/arena.json:1"
    ]
   },
@@ -912,7 +912,7 @@
    "claim": "Example: scenarios list with file entries is valid",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:415"
+    "arena/arenaconfig/types.go:419"
    ]
   },
   {
@@ -920,7 +920,7 @@
    "claim": "tools[].file is a required string field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:426",
+    "arena/arenaconfig/types.go:430",
     "schemas/v1alpha1/arena.json:1"
    ]
   },
@@ -929,7 +929,7 @@
    "claim": "Example: tools list with file entries is valid",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:425"
+    "arena/arenaconfig/types.go:429"
    ]
   },
   {
@@ -937,7 +937,7 @@
    "claim": "Each mcp_servers entry has exactly one of command, url and source; a config with none or several fails to load",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:222",
+    "arena/arenaconfig/loader.go:223",
     "arena/arenaconfig/mcp_servers.go:19",
     "arena/arenaconfig/mcp_servers.go:20"
    ]
@@ -956,7 +956,7 @@
    "claim": "For stdio and url entries, name is the prefix of qualified tool names mcp__<name>__<tool>",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:469"
+    "arena/engine/builder_integration.go:470"
    ]
   },
   {
@@ -1306,7 +1306,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:116",
-    "arena/engine/builder_integration.go:742"
+    "arena/engine/builder_integration.go:756"
    ]
   },
   {
@@ -1314,8 +1314,8 @@
    "claim": "runtime.evals binds an eval type name to a program on the host, and pack_evals references that type",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:734",
-    "arena/engine/builder_integration.go:742"
+    "arena/engine/builder_integration.go:748",
+    "arena/engine/builder_integration.go:756"
    ]
   },
   {
@@ -1341,7 +1341,7 @@
    "claim": "A runtime eval program runs on the host, not inside the sandbox, so the agent cannot see it",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:734"
+    "arena/engine/builder_integration.go:748"
    ]
   },
   {
@@ -1349,7 +1349,7 @@
    "claim": "A runtime eval program inherits the host environment, including Docker access",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:734"
+    "arena/engine/builder_integration.go:748"
    ]
   },
   {
@@ -1358,7 +1358,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:106",
-    "arena/engine/builder_integration.go:742",
+    "arena/engine/builder_integration.go:756",
     "examples/sandbox-host-eval/config.arena.yaml:30"
    ]
   },
@@ -1367,7 +1367,7 @@
    "claim": "runtime.evals timeout_ms defaults to 30s (30000 ms) per invocation",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:751"
+    "arena/engine/builder_integration.go:765"
    ]
   },
   {
@@ -1375,7 +1375,7 @@
    "claim": "pack_evals params are passed to the program as-is",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:746"
+    "arena/engine/builder_integration.go:760"
    ]
   },
   {
@@ -1427,7 +1427,7 @@
    "claim": "runtime.evals.<name>.command is the program to run",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:748"
+    "arena/engine/builder_integration.go:762"
    ]
   },
   {
@@ -1435,8 +1435,8 @@
    "claim": "A relative command path containing / resolves against the config directory; a bare name is looked up on PATH",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:759",
-    "arena/engine/builder_integration.go:760"
+    "arena/engine/builder_integration.go:773",
+    "arena/engine/builder_integration.go:774"
    ]
   },
   {
@@ -1444,7 +1444,7 @@
    "claim": "runtime.evals.<name>.args is an extra-arguments field",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:749"
+    "arena/engine/builder_integration.go:763"
    ]
   },
   {
@@ -1452,7 +1452,7 @@
    "claim": "runtime.evals.<name>.env is a list of host environment variable names passed through to the program",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:750"
+    "arena/engine/builder_integration.go:764"
    ]
   },
   {
@@ -1460,7 +1460,7 @@
    "claim": "The program inherits the rest of the host environment in addition to the env list",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:750"
+    "arena/engine/builder_integration.go:764"
    ]
   },
   {
@@ -1468,7 +1468,7 @@
    "claim": "runtime.evals.<name>.timeout_ms is a per-invocation timeout field",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:751"
+    "arena/engine/builder_integration.go:765"
    ]
   },
   {
@@ -1476,7 +1476,7 @@
    "claim": "runtime.evals timeout_ms default is 30000",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:751"
+    "arena/engine/builder_integration.go:765"
    ]
   },
   {
@@ -1484,7 +1484,7 @@
    "claim": "On timeout or non-zero exit the eval scores 0 and stderr goes into the explanation",
    "verdict": "false",
    "evidence": [
-    "arena/engine/builder_integration.go:746"
+    "arena/engine/builder_integration.go:760"
    ]
   },
   {
@@ -1492,7 +1492,7 @@
    "claim": "The runtime eval input is one JSON document on stdin",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:746"
+    "arena/engine/builder_integration.go:760"
    ]
   },
   {
@@ -1719,7 +1719,7 @@
    "claim": "A runtime eval program writes one JSON document to stdout",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:746"
+    "arena/engine/builder_integration.go:760"
    ]
   },
   {
@@ -1727,7 +1727,7 @@
    "claim": "The runtime eval output has a score field",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:746"
+    "arena/engine/builder_integration.go:760"
    ]
   },
   {
@@ -1735,7 +1735,7 @@
    "claim": "The runtime eval output has a detail field",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:746"
+    "arena/engine/builder_integration.go:760"
    ]
   },
   {
@@ -1743,7 +1743,7 @@
    "claim": "The runtime eval output has a metrics field",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:746"
+    "arena/engine/builder_integration.go:760"
    ]
   },
   {
@@ -1751,7 +1751,7 @@
    "claim": "The runtime eval output has a data field",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:746"
+    "arena/engine/builder_integration.go:760"
    ]
   },
   {
@@ -1759,7 +1759,7 @@
    "claim": "The output score becomes the eval's score",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:746"
+    "arena/engine/builder_integration.go:760"
    ]
   },
   {
@@ -1767,7 +1767,7 @@
    "claim": "The output metrics become the eval's named sub-scores",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:746"
+    "arena/engine/builder_integration.go:760"
    ]
   },
   {
@@ -1775,7 +1775,7 @@
    "claim": "The output data becomes the eval's details in the run JSON",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:746"
+    "arena/engine/builder_integration.go:760"
    ]
   },
   {
@@ -1799,7 +1799,7 @@
    "claim": "An output of the form {error: ...} records the eval as errored rather than as a score of 0",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:746"
+    "arena/engine/builder_integration.go:760"
    ]
   },
   {
@@ -1807,7 +1807,7 @@
    "claim": "A crash, a timeout, or output that is not valid JSON counts as an error",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:746"
+    "arena/engine/builder_integration.go:760"
    ]
   },
   {
@@ -1815,7 +1815,7 @@
    "claim": "Runtime eval programs should write logs to stderr",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:746"
+    "arena/engine/builder_integration.go:760"
    ]
   },
   {
@@ -1842,9 +1842,9 @@
    "claim": "tool_policy.max_rounds is a field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:944",
-    "arena/arenaconfig/types.go:961",
-    "arena/arenaconfig/types.go:964"
+    "arena/arenaconfig/types.go:948",
+    "arena/arenaconfig/types.go:965",
+    "arena/arenaconfig/types.go:968"
    ]
   },
   {
@@ -1852,9 +1852,9 @@
    "claim": "tool_policy.max_cost_usd is a field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:944",
-    "arena/arenaconfig/types.go:961",
-    "arena/arenaconfig/types.go:964"
+    "arena/arenaconfig/types.go:948",
+    "arena/arenaconfig/types.go:965",
+    "arena/arenaconfig/types.go:968"
    ]
   },
   {
@@ -1881,7 +1881,7 @@
    "claim": "A session eval program can docker exec into the sandbox container",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:734"
+    "arena/engine/builder_integration.go:748"
    ]
   },
   {
@@ -1913,7 +1913,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:167",
-    "packc/compiler/compiler.go:197"
+    "packc/compiler/compiler.go:212"
    ]
   },
   {
@@ -1921,8 +1921,8 @@
    "claim": "packc compile copies the governance block into the pack's metadata.governance",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:179",
-    "packc/compiler/compiler.go:197"
+    "packc/compiler/compiler.go:194",
+    "packc/compiler/compiler.go:212"
    ]
   },
   {
@@ -2317,7 +2317,7 @@
    "claim": "defaults.output is the output configuration section for test results",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:469"
+    "arena/arenaconfig/types.go:473"
    ]
   },
   {
@@ -2325,7 +2325,7 @@
    "claim": "defaults.output.dir is a string output directory path",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:519",
+    "arena/arenaconfig/types.go:523",
     "arena/cmd/promptarena/run.go:330"
    ]
   },
@@ -2334,7 +2334,7 @@
    "claim": "defaults.output.formats is an array of output formats",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:520"
+    "arena/arenaconfig/types.go:524"
    ]
   },
   {
@@ -2385,7 +2385,7 @@
    "claim": "defaults.output.recording is an object field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:525"
+    "arena/arenaconfig/types.go:529"
    ]
   },
   {
@@ -2393,7 +2393,7 @@
    "claim": "defaults.output.recording.enabled is a bool field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:562"
+    "arena/arenaconfig/types.go:566"
    ]
   },
   {
@@ -2409,7 +2409,7 @@
    "claim": "defaults.output.recording.dir is a string field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:563"
+    "arena/arenaconfig/types.go:567"
    ]
   },
   {
@@ -2569,7 +2569,7 @@
    "claim": "Prompt spec accepts an optional `validators` array of runtime validators/guardrails",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1441",
+    "arena/arenaconfig/types.go:1445",
     "schemas/v1alpha1/promptconfig.json"
    ]
   },
@@ -2612,7 +2612,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/validator.go:436",
-    "arena/engine/builder_integration.go:469"
+    "arena/engine/builder_integration.go:470"
    ]
   },
   {
@@ -2620,7 +2620,7 @@
    "claim": "A prompt with no allowed_tools gets no tools",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:469"
+    "arena/engine/builder_integration.go:470"
    ]
   },
   {
@@ -2628,7 +2628,7 @@
    "claim": "allowed_tools is what grants a particular prompt access to a tool registered with the arena",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:469"
+    "arena/engine/builder_integration.go:470"
    ]
   },
   {
@@ -2636,7 +2636,7 @@
    "claim": "A system_template that mentions tools while allowed_tools is empty leaves the model with an instruction it cannot carry out",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:469"
+    "arena/engine/builder_integration.go:470"
    ]
   },
   {
@@ -2644,7 +2644,7 @@
    "claim": "If the provider declares a capabilities list, it must include `tools` for tool use to be permitted",
    "verdict": "false",
    "evidence": [
-    "arena/engine/builder_integration.go:414",
+    "arena/engine/builder_integration.go:415",
     "arena/engine/execution.go:306"
    ]
   },
@@ -2725,7 +2725,7 @@
    "claim": "Variables can be overridden in arena.yaml via prompt_configs[].vars",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:622",
+    "arena/arenaconfig/loader.go:624",
     "arena/arenaconfig/types.go:61",
     "arena/engine/conversation_executor.go:477"
    ]
@@ -2872,7 +2872,7 @@
    "claim": "prompt_configs[] entries accept a `vars` map",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:622",
+    "arena/arenaconfig/loader.go:624",
     "arena/arenaconfig/types.go:64"
    ]
   },
@@ -2984,7 +2984,7 @@
    "claim": "Scenario spec.description is an optional string",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:691",
+    "arena/arenaconfig/types.go:695",
     "schemas/v1alpha1/scenario.json"
    ]
   },
@@ -3051,7 +3051,7 @@
    "claim": "Scripted turn field `content` is a required string",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:1144",
+    "arena/arenaconfig/types.go:1148",
     "schemas/v1alpha1/scenario.json"
    ]
   },
@@ -3060,7 +3060,7 @@
    "claim": "Scripted turn field `assertions` is optional and applies to user turns only",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1189",
+    "arena/arenaconfig/types.go:1193",
     "arena/turnexecutors/pipeline_stages_integration.go:561"
    ]
   },
@@ -3069,7 +3069,7 @@
    "claim": "Scripted turn field `chaos` is an optional object for injecting tool failures",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1173",
+    "arena/arenaconfig/types.go:1177",
     "arena/turnexecutors/pipeline_stages_integration.go:654"
    ]
   },
@@ -3095,7 +3095,7 @@
    "claim": "Self-play turn field `turns` is an optional int giving number of exchanges",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1153",
+    "arena/arenaconfig/types.go:1157",
     "arena/engine/conversation_executor.go:623"
    ]
   },
@@ -3112,7 +3112,7 @@
    "claim": "Self-play turn field `max_turns` is an optional int upper bound on turns",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1155",
+    "arena/arenaconfig/types.go:1159",
     "arena/engine/conversation_executor.go:629"
    ]
   },
@@ -3179,7 +3179,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/ignored_fields.go:42",
-    "arena/arenaconfig/types.go:696"
+    "arena/arenaconfig/types.go:700"
    ]
   },
   {
@@ -3205,7 +3205,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/scenario_data.go:57",
-    "arena/arenaconfig/types.go:750"
+    "arena/arenaconfig/types.go:754"
    ]
   },
   {
@@ -3230,7 +3230,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:113",
-    "arena/arenaconfig/loader.go:558"
+    "arena/arenaconfig/loader.go:559"
    ]
   },
   {
@@ -3660,7 +3660,7 @@
    "claim": "A turn field `perturbations` maps placeholder names to lists of values and runs the scenario once per combination",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1170",
+    "arena/arenaconfig/types.go:1174",
     "arena/engine/perturbations.go:19"
    ]
   },
@@ -3669,7 +3669,7 @@
    "claim": "perturbations has type map of string to list of strings",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1170"
+    "arena/arenaconfig/types.go:1174"
    ]
   },
   {
@@ -3677,7 +3677,7 @@
    "claim": "perturbations defaults to none",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1170"
+    "arena/arenaconfig/types.go:1174"
    ]
   },
   {
@@ -3743,7 +3743,7 @@
    "claim": "A turn field `chaos` makes calls to named tools fail during that turn",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1173",
+    "arena/arenaconfig/types.go:1177",
     "arena/chaos/hook.go:35"
    ]
   },
@@ -3752,7 +3752,7 @@
    "claim": "chaos.tool_failures is a list of failure rules",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1401"
+    "arena/arenaconfig/types.go:1405"
    ]
   },
   {
@@ -3760,7 +3760,7 @@
    "claim": "chaos.tool_failures defaults to none",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1401"
+    "arena/arenaconfig/types.go:1405"
    ]
   },
   {
@@ -3776,7 +3776,7 @@
    "claim": "tool_failures[].tool is a required string naming the tool to fail",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1407",
+    "arena/arenaconfig/types.go:1411",
     "schemas/v1alpha1/scenario.json"
    ]
   },
@@ -3785,7 +3785,7 @@
    "claim": "tool_failures[].mode is a required string",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1409"
+    "arena/arenaconfig/types.go:1413"
    ]
   },
   {
@@ -3817,7 +3817,7 @@
    "claim": "tool_failures[].probability is a number",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1411"
+    "arena/arenaconfig/types.go:1415"
    ]
   },
   {
@@ -3841,7 +3841,7 @@
    "claim": "tool_failures[].message is an optional string text the model receives",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1413"
+    "arena/arenaconfig/types.go:1417"
    ]
   },
   {
@@ -4008,7 +4008,7 @@
    "claim": "Provider spec.base_url is an optional API endpoint override",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:406",
+    "arena/engine/builder_integration.go:407",
     "schemas/v1alpha1/provider.json"
    ]
   },
@@ -4017,7 +4017,7 @@
    "claim": "Provider spec.headers is a map of custom HTTP headers injected into every request",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:407",
+    "arena/engine/builder_integration.go:408",
     "schemas/v1alpha1/provider.json"
    ]
   },
@@ -4026,7 +4026,7 @@
    "claim": "Custom headers that collide with built-in headers such as Authorization or Content-Type are rejected at request time with an error",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:407"
+    "arena/engine/builder_integration.go:408"
    ]
   },
   {
@@ -4066,7 +4066,7 @@
    "claim": "Provider spec.platform is an optional object for cloud-hosted platform configuration",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:411",
+    "arena/engine/builder_integration.go:412",
     "schemas/v1alpha1/provider.json"
    ]
   },
@@ -4083,7 +4083,7 @@
    "claim": "platform.type value `bedrock`",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:411"
+    "arena/engine/builder_integration.go:412"
    ]
   },
   {
@@ -4091,7 +4091,7 @@
    "claim": "platform.type value `vertex`",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:411"
+    "arena/engine/builder_integration.go:412"
    ]
   },
   {
@@ -4099,7 +4099,7 @@
    "claim": "platform.type value `azure`",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:411"
+    "arena/engine/builder_integration.go:412"
    ]
   },
   {
@@ -4131,7 +4131,7 @@
    "claim": "Provider spec.defaults holds model parameters temperature, top_p and max_tokens",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:415",
+    "arena/engine/builder_integration.go:416",
     "schemas/v1alpha1/provider.json"
    ]
   },
@@ -4140,7 +4140,7 @@
    "claim": "defaults.temperature is the sampling temperature",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:416"
+    "arena/engine/builder_integration.go:417"
    ]
   },
   {
@@ -4148,7 +4148,7 @@
    "claim": "defaults.temperature range is 0.0 to 2.0",
    "verdict": "unverified",
    "evidence": [
-    "arena/engine/builder_integration.go:416"
+    "arena/engine/builder_integration.go:417"
    ]
   },
   {
@@ -4156,7 +4156,7 @@
    "claim": "defaults.top_p is the nucleus sampling value",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:417"
+    "arena/engine/builder_integration.go:418"
    ]
   },
   {
@@ -4164,7 +4164,7 @@
    "claim": "defaults.top_p range is 0.0 to 1.0",
    "verdict": "unverified",
    "evidence": [
-    "arena/engine/builder_integration.go:417"
+    "arena/engine/builder_integration.go:418"
    ]
   },
   {
@@ -4172,7 +4172,7 @@
    "claim": "defaults.max_tokens is the maximum response length",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:418"
+    "arena/engine/builder_integration.go:419"
    ]
   },
   {
@@ -4180,7 +4180,7 @@
    "claim": "Provider spec.include_raw_output is a boolean that includes raw API responses in output",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:408",
+    "arena/engine/builder_integration.go:409",
     "schemas/v1alpha1/provider.json"
    ]
   },
@@ -4205,7 +4205,7 @@
    "claim": "pricing.input_per_1k is the cost per 1K input tokens",
    "verdict": "false",
    "evidence": [
-    "arena/engine/builder_integration.go:420",
+    "arena/engine/builder_integration.go:421",
     "schemas/v1alpha1/provider.json"
    ]
   },
@@ -4214,7 +4214,7 @@
    "claim": "pricing.output_per_1k is the cost per 1K output tokens",
    "verdict": "false",
    "evidence": [
-    "arena/engine/builder_integration.go:421",
+    "arena/engine/builder_integration.go:422",
     "schemas/v1alpha1/provider.json"
    ]
   },
@@ -4231,7 +4231,7 @@
    "claim": "Pricing overrides take precedence over the provider's default pricing",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:419"
+    "arena/engine/builder_integration.go:420"
    ]
   },
   {
@@ -4239,7 +4239,7 @@
    "claim": "Provider spec.capabilities is an optional list of declared capabilities",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:414",
+    "arena/engine/builder_integration.go:415",
     "schemas/v1alpha1/provider.json"
    ]
   },
@@ -4248,7 +4248,7 @@
    "claim": "The capabilities list is exclusive: when omitted, everything is permitted",
    "verdict": "false",
    "evidence": [
-    "arena/engine/builder_integration.go:414",
+    "arena/engine/builder_integration.go:415",
     "arena/engine/execution.go:306"
    ]
   },
@@ -4257,7 +4257,7 @@
    "claim": "A provider whose capabilities list names only text and streaming is not offered tools, so tool calling stops for it",
    "verdict": "false",
    "evidence": [
-    "arena/engine/builder_integration.go:414",
+    "arena/engine/builder_integration.go:415",
     "arena/engine/execution.go:306"
    ]
   },
@@ -4266,7 +4266,7 @@
    "claim": "Provider spec.unsupported_params is an optional list of parameters the model refuses",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:413",
+    "arena/engine/builder_integration.go:414",
     "schemas/v1alpha1/provider.json"
    ]
   },
@@ -4275,7 +4275,7 @@
    "claim": "unsupported_params withholds those parameters from the request instead of sending them",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:413"
+    "arena/engine/builder_integration.go:414"
    ]
   },
   {
@@ -4283,7 +4283,7 @@
    "claim": "Provider spec.additional_config is a free-form map passed through to the SDK",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:409",
+    "arena/engine/builder_integration.go:410",
     "schemas/v1alpha1/provider.json"
    ]
   },
@@ -4292,7 +4292,7 @@
    "claim": "additional_config accepts the key reasoning_effort",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:409"
+    "arena/engine/builder_integration.go:410"
    ]
   },
   {
@@ -4300,7 +4300,7 @@
    "claim": "Declared capability value `text`",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:708"
+    "arena/arenaconfig/types.go:712"
    ]
   },
   {
@@ -4308,7 +4308,7 @@
    "claim": "Declared capability value `streaming`",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:708"
+    "arena/arenaconfig/types.go:712"
    ]
   },
   {
@@ -4316,7 +4316,7 @@
    "claim": "Declared capability value `tools`",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:708"
+    "arena/arenaconfig/types.go:712"
    ]
   },
   {
@@ -4324,7 +4324,7 @@
    "claim": "Declared capability value `vision`",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:708"
+    "arena/arenaconfig/types.go:712"
    ]
   },
   {
@@ -4332,7 +4332,7 @@
    "claim": "Declared capability value `audio`",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:708"
+    "arena/arenaconfig/types.go:712"
    ]
   },
   {
@@ -4340,7 +4340,7 @@
    "claim": "Declared capability value `video`",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:708"
+    "arena/arenaconfig/types.go:712"
    ]
   },
   {
@@ -4348,7 +4348,7 @@
    "claim": "Declared capability value `json`",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:708"
+    "arena/arenaconfig/types.go:712"
    ]
   },
   {
@@ -4356,7 +4356,7 @@
    "claim": "Declared capability value `documents`",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:708"
+    "arena/arenaconfig/types.go:712"
    ]
   },
   {
@@ -4364,7 +4364,7 @@
    "claim": "A scenario's required_capabilities gate uses the provider capabilities declaration",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:726",
+    "arena/arenaconfig/loader.go:728",
     "arena/engine/execution.go:306",
     "arena/engine/execution.go:323"
    ]
@@ -4374,7 +4374,7 @@
    "claim": "unsupported_params is used when a model returns 400 for a parameter the schema requires, such as top_p on gpt-5.2",
    "verdict": "false",
    "evidence": [
-    "arena/engine/builder_integration.go:413",
+    "arena/engine/builder_integration.go:414",
     "schemas/v1alpha1/provider.json"
    ]
   },
@@ -4383,7 +4383,7 @@
    "claim": "unsupported_params is honoured for temperature and top_p on both the Chat Completions and Responses paths",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:413"
+    "arena/engine/builder_integration.go:414"
    ]
   },
   {
@@ -4391,7 +4391,7 @@
    "claim": "seed is never sent on the Responses API path, and the runtime warns when a configured seed is dropped",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:413"
+    "arena/engine/builder_integration.go:414"
    ]
   },
   {
@@ -4399,7 +4399,7 @@
    "claim": "Chat Completions supports seed and still sends it",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:413"
+    "arena/engine/builder_integration.go:414"
    ]
   },
   {
@@ -4407,7 +4407,7 @@
    "claim": "additional_config accepts the key thinking_level for thinking controls",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:409"
+    "arena/engine/builder_integration.go:410"
    ]
   },
   {
@@ -4415,7 +4415,7 @@
    "claim": "additional_config accepts the key thinking_budget for thinking controls",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:409"
+    "arena/engine/builder_integration.go:410"
    ]
   },
   {
@@ -4423,7 +4423,7 @@
    "claim": "additional_config accepts the key reasoning_effort for reasoning controls",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:409"
+    "arena/engine/builder_integration.go:410"
    ]
   },
   {
@@ -4431,7 +4431,7 @@
    "claim": "additional_config accepts the key api_mode",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:409"
+    "arena/engine/builder_integration.go:410"
    ]
   },
   {
@@ -4439,7 +4439,7 @@
    "claim": "A wrong additional_config key usually yields an empty trace rather than an error",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:409"
+    "arena/engine/builder_integration.go:410"
    ]
   },
   {
@@ -4453,8 +4453,8 @@
    "claim": "providers[*].group is an optional logical group label",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:720",
-    "arena/arenaconfig/types.go:390"
+    "arena/arenaconfig/loader.go:722",
+    "arena/arenaconfig/types.go:394"
    ]
   },
   {
@@ -4463,7 +4463,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:21",
-    "arena/arenaconfig/loader.go:721"
+    "arena/arenaconfig/loader.go:723"
    ]
   },
   {
@@ -4471,7 +4471,7 @@
    "claim": "scenario.provider_group chooses the provider group used for assistant runs",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:706",
+    "arena/arenaconfig/types.go:710",
     "arena/engine/execution.go:284"
    ]
   },
@@ -4497,7 +4497,7 @@
    "claim": "The judges field maps judge names to providers",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:396",
+    "arena/arenaconfig/types.go:400",
     "arena/arenaconfig/types.go:93"
    ]
   },
@@ -4506,7 +4506,7 @@
    "claim": "The judge_defaults field sets default judge prompt and registry for LLM-as-judge assertions",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:512",
+    "arena/arenaconfig/types.go:516",
     "arena/arenaconfig/types.go:96"
    ]
   },
@@ -4897,7 +4897,7 @@
    "claim": "spec.name must match the pattern ^[a-zA-Z_][a-zA-Z0-9_]*$ (letters, digits and underscores only)",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:923",
+    "arena/arenaconfig/loader.go:925",
     "schemas/v1alpha1/tool.json:318"
    ]
   },
@@ -4926,7 +4926,7 @@
    "claim": "spec.mode is required on a Tool",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:923",
+    "arena/arenaconfig/loader.go:925",
     "schemas/v1alpha1/tool.json:318"
    ]
   },
@@ -4935,7 +4935,7 @@
    "claim": "Tool mode accepts the values mock, live, mcp, exec and client",
    "verdict": "false",
    "evidence": [
-    "arena/engine/builder_integration.go:564"
+    "arena/engine/builder_integration.go:578"
    ]
   },
   {
@@ -5037,7 +5037,7 @@
    "claim": "mock_template_file and mock_result_file resolve against the arena config directory and are accepted in a kind: Tool file only",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:564-580",
+    "arena/engine/builder_integration.go:578-594",
     "tools/schema-gen/generators/tool_spec.go:22-40"
    ]
   },
@@ -5058,7 +5058,7 @@
    "claim": "mode live makes actual HTTP API calls",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:114"
+    "arena/engine/builder_integration.go:115"
    ]
   },
   {
@@ -5066,7 +5066,7 @@
    "claim": "mode mcp tools are auto-discovered from MCP servers configured in arena.yaml",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:127"
+    "arena/engine/builder_integration.go:128"
    ]
   },
   {
@@ -5074,7 +5074,7 @@
    "claim": "Eval resources use apiVersion promptkit.altairalabs.ai/v1alpha1 with kind Eval",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:576",
+    "arena/arenaconfig/loader.go:577",
     "schemas/v1alpha1/eval.json"
    ]
   },
@@ -5083,7 +5083,7 @@
    "claim": "spec.id is required on an Eval",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:1480",
+    "arena/arenaconfig/types.go:1484",
     "schemas/v1alpha1/eval.json"
    ]
   },
@@ -5092,7 +5092,7 @@
    "claim": "spec.description is an optional field on an Eval",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:1482",
+    "arena/arenaconfig/types.go:1486",
     "schemas/v1alpha1/eval.json"
    ]
   },
@@ -5101,7 +5101,7 @@
    "claim": "spec.recording is required on an Eval",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1484",
+    "arena/arenaconfig/types.go:1488",
     "schemas/v1alpha1/eval.json"
    ]
   },
@@ -5110,7 +5110,7 @@
    "claim": "recording.path is relative to the eval file or absolute",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:583-586"
+    "arena/arenaconfig/loader.go:584-587"
    ]
   },
   {
@@ -5118,7 +5118,7 @@
    "claim": "recording.type is a field on the Eval recording config",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1515"
+    "arena/arenaconfig/types.go:1519"
    ]
   },
   {
@@ -5127,7 +5127,7 @@
    "verdict": "false",
    "evidence": [
     "arena/adapters/registry.go:22-25",
-    "arena/arenaconfig/types.go:1515"
+    "arena/arenaconfig/types.go:1519"
    ]
   },
   {
@@ -5145,7 +5145,7 @@
    "verdict": "false",
    "evidence": [
     "arena/arenaconfig/types.go",
-    "arena/arenaconfig/types.go:396"
+    "arena/arenaconfig/types.go:400"
    ]
   },
   {
@@ -5154,7 +5154,7 @@
    "verdict": "false",
    "evidence": [
     "arena/arenaconfig/types.go",
-    "arena/arenaconfig/types.go:396"
+    "arena/arenaconfig/types.go:400"
    ]
   },
   {
@@ -5163,7 +5163,7 @@
    "verdict": "false",
    "evidence": [
     "arena/arenaconfig/types.go",
-    "arena/arenaconfig/types.go:396"
+    "arena/arenaconfig/types.go:400"
    ]
   },
   {
@@ -5177,7 +5177,7 @@
    "claim": "spec.assertions is an optional field on an Eval",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:1471-1489"
+    "arena/arenaconfig/types.go:1475-1493"
    ]
   },
   {
@@ -5203,7 +5203,7 @@
    "claim": "llm_judge params.judge references a judge name defined under judge_targets",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/loader.go:1072",
+    "arena/arenaconfig/loader.go:1074",
     "arena/engine/conversation_executor.go:921-932"
    ]
   },
@@ -5236,7 +5236,7 @@
    "claim": "spec.tags is an optional field on an Eval for filtering",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1488"
+    "arena/arenaconfig/types.go:1492"
    ]
   },
   {
@@ -5325,7 +5325,7 @@
    "claim": "spec.defaults.output.recording.enabled is a field in the arena config",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:562"
+    "arena/arenaconfig/types.go:566"
    ]
   },
   {
@@ -5333,7 +5333,7 @@
    "claim": "spec.defaults.output.recording.dir is a field in the arena config",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:563"
+    "arena/arenaconfig/types.go:567"
    ]
   },
   {
@@ -5379,7 +5379,7 @@
    "claim": "Arena config resources use apiVersion promptkit.altairalabs.ai/v1alpha1 with kind Arena",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:205"
+    "arena/arenaconfig/loader.go:206"
    ]
   },
   {
@@ -5387,7 +5387,7 @@
    "claim": "spec.providers is a list whose entries take a file key",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:387-391"
+    "arena/arenaconfig/types.go:391-395"
    ]
   },
   {
@@ -5395,7 +5395,7 @@
    "claim": "spec.evals is a list whose entries take a file key",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:408-411"
+    "arena/arenaconfig/types.go:412-415"
    ]
   },
   {
@@ -5403,7 +5403,7 @@
    "claim": "Providers must be listed in arena spec.providers for judge_targets unless inline specs are used",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/loader.go:1072-1086"
+    "arena/arenaconfig/loader.go:1074-1088"
    ]
   },
   {
@@ -5411,7 +5411,7 @@
    "claim": "The recording YAML example (path and type session) is a valid eval recording block",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1510-1516"
+    "arena/arenaconfig/types.go:1514-1520"
    ]
   },
   {
@@ -5419,7 +5419,7 @@
    "claim": "The eval example with recording, judge_targets and assertions is a valid Eval spec",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/loader.go:574",
+    "arena/arenaconfig/loader.go:575",
     "schemas/v1alpha1/eval.json"
    ]
   },
@@ -5428,7 +5428,7 @@
    "claim": "The llm_judge example with params.judge default and params.criteria is valid",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/loader.go:1072"
+    "arena/arenaconfig/loader.go:1074"
    ]
   },
   {
@@ -5469,7 +5469,7 @@
    "claim": "Personas drive the user side of the conversation in self-play testing",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:1016-1022"
+    "arena/arenaconfig/loader.go:1018-1024"
    ]
   },
   {
@@ -6086,7 +6086,7 @@
    "claim": "fact_policy.judge needs facts and the check enabled and a judge in spec.judges, and config loading fails otherwise",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:504",
+    "arena/arenaconfig/loader.go:505",
     "arena/arenaconfig/persona.go:177"
    ]
   },
@@ -6095,7 +6095,7 @@
    "claim": "persona spec field judges lists the judges that can be used for persona fidelity",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/loader.go:504",
+    "arena/arenaconfig/loader.go:505",
     "arena/arenaconfig/types.go:92"
    ]
   },
@@ -6633,8 +6633,8 @@
    "claim": "example scenario turn uses fields turns, max_turns, user_temp, assistant_temp and seed",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1153",
-    "arena/arenaconfig/types.go:1158"
+    "arena/arenaconfig/types.go:1157",
+    "arena/arenaconfig/types.go:1162"
    ]
   },
   {
@@ -6642,7 +6642,7 @@
    "claim": "scenario turn field turns is the minimum number of exchanges",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1152",
+    "arena/arenaconfig/types.go:1156",
     "arena/engine/conversation_executor.go:624"
    ]
   },
@@ -6651,7 +6651,7 @@
    "claim": "scenario turn field max_turns is the upper bound and enables natural termination",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1155",
+    "arena/arenaconfig/types.go:1159",
     "arena/engine/conversation_executor.go:629"
    ]
   },
@@ -7088,7 +7088,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/transform.go:180",
-    "arena/arenaconfig/types.go:1186"
+    "arena/arenaconfig/types.go:1190"
    ]
   },
   {
@@ -7273,8 +7273,8 @@
    "claim": "scenario field voices lists arena voice ids",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:865",
-    "arena/arenaconfig/types.go:738"
+    "arena/arenaconfig/loader.go:867",
+    "arena/arenaconfig/types.go:742"
    ]
   },
   {
@@ -7291,7 +7291,7 @@
    "claim": "voices overrides the persona's voice and cannot be set together with voice",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:870",
+    "arena/arenaconfig/loader.go:872",
     "arena/engine/duplex_executor_turns_integration.go:356"
    ]
   },
@@ -7318,7 +7318,7 @@
    "claim": "example scenario uses spec fields voices, trials, duplex.timeout and a user turn with audio_transforms best_of_n true",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:738",
+    "arena/arenaconfig/types.go:742",
     "examples/duplex-streaming/scenarios/duplex-voice-best-of-n.scenario.yaml"
    ]
   },
@@ -7345,7 +7345,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/transform.go:61",
-    "arena/arenaconfig/types.go:722"
+    "arena/arenaconfig/types.go:726"
    ]
   },
   {
@@ -7453,7 +7453,7 @@
    "claim": "validation rejects tool_result_transforms on duplex scenarios and on client-mode tools",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:419",
+    "arena/arenaconfig/loader.go:420",
     "arena/arenaconfig/transform.go:72"
    ]
   },
@@ -7478,8 +7478,8 @@
    "claim": "persona turn field objective gives a self-play turn a goal",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1178",
-    "arena/arenaconfig/types.go:1371"
+    "arena/arenaconfig/types.go:1182",
+    "arena/arenaconfig/types.go:1375"
    ]
   },
   {
@@ -7505,7 +7505,7 @@
    "claim": "example objective uses turns, persona, max_turns, description, expect not_achieved, stop_on_success, and a success tool_calls_with_args assertion with tool_name issue_refund",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1203"
+    "arena/arenaconfig/types.go:1207"
    ]
   },
   {
@@ -7539,7 +7539,7 @@
    "claim": "objective field description says what the persona is trying to achieve and is reported with the result",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1206",
+    "arena/arenaconfig/types.go:1210",
     "arena/engine/objective.go:155"
    ]
   },
@@ -7548,8 +7548,8 @@
    "claim": "objective field success is required",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1209",
-    "arena/arenaconfig/types.go:1374"
+    "arena/arenaconfig/types.go:1213",
+    "arena/arenaconfig/types.go:1378"
    ]
   },
   {
@@ -7557,8 +7557,8 @@
    "claim": "objective field expect defaults to achieved",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1212",
-    "arena/arenaconfig/types.go:1360"
+    "arena/arenaconfig/types.go:1216",
+    "arena/arenaconfig/types.go:1364"
    ]
   },
   {
@@ -7566,8 +7566,8 @@
    "claim": "objective field expect accepts achieved or not_achieved",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1194",
-    "arena/arenaconfig/types.go:1377"
+    "arena/arenaconfig/types.go:1198",
+    "arena/arenaconfig/types.go:1381"
    ]
   },
   {
@@ -7583,8 +7583,8 @@
    "claim": "objective field stop_on_success defaults to true",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1215",
-    "arena/arenaconfig/types.go:1365"
+    "arena/arenaconfig/types.go:1219",
+    "arena/arenaconfig/types.go:1369"
    ]
   },
   {
@@ -7601,7 +7601,7 @@
    "claim": "objective field taxonomy maps the objective to risk framework entries",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1229",
+    "arena/arenaconfig/types.go:1233",
     "arena/engine/objective.go:176"
    ]
   },
@@ -7619,7 +7619,7 @@
    "claim": "objective field baseline defaults to false",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1223",
+    "arena/arenaconfig/types.go:1227",
     "arena/engine/objective.go:173"
    ]
   },
@@ -7637,7 +7637,7 @@
    "claim": "objective field search turns the turn into a tree search over conversations",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1235",
+    "arena/arenaconfig/types.go:1239",
     "arena/engine/conversation_executor.go:544"
    ]
   },
@@ -7778,7 +7778,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/governance_taxonomy.go:164",
-    "arena/arenaconfig/loader.go:259"
+    "arena/arenaconfig/loader.go:260"
    ]
   },
   {
@@ -7907,8 +7907,8 @@
    "claim": "duplex scenarios reject objectives at load time",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:829",
-    "arena/arenaconfig/types.go:839"
+    "arena/arenaconfig/types.go:833",
+    "arena/arenaconfig/types.go:843"
    ]
   },
   {
@@ -7961,7 +7961,7 @@
    "claim": "a rewind removes only messages, so tool side effects, workflow transitions and memory writes stay",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1335",
+    "arena/arenaconfig/types.go:1339",
     "arena/engine/objective.go:388"
    ]
   },
@@ -7979,7 +7979,7 @@
    "claim": "example rewind uses max 3 and a when assertion content_includes_any with patterns",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1342"
+    "arena/arenaconfig/types.go:1346"
    ]
   },
   {
@@ -7987,8 +7987,8 @@
    "claim": "rewind field when is required",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1344",
-    "arena/arenaconfig/types.go:1385"
+    "arena/arenaconfig/types.go:1348",
+    "arena/arenaconfig/types.go:1389"
    ]
   },
   {
@@ -8013,8 +8013,8 @@
    "claim": "rewind field max defaults to 3",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1333",
-    "arena/arenaconfig/types.go:1350"
+    "arena/arenaconfig/types.go:1337",
+    "arena/arenaconfig/types.go:1354"
    ]
   },
   {
@@ -8121,7 +8121,7 @@
    "claim": "example search uses expect not_achieved, a content_includes success, strategy tree, branching 3, width 4, depth 5, judge scorer and prune_off_topic true",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1262"
+    "arena/arenaconfig/types.go:1266"
    ]
   },
   {
@@ -8129,8 +8129,8 @@
    "claim": "search field strategy is required",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1264",
-    "arena/arenaconfig/types.go:1307"
+    "arena/arenaconfig/types.go:1268",
+    "arena/arenaconfig/types.go:1311"
    ]
   },
   {
@@ -8138,8 +8138,8 @@
    "claim": "search strategy accepts only tree",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1239",
-    "arena/arenaconfig/types.go:1307"
+    "arena/arenaconfig/types.go:1243",
+    "arena/arenaconfig/types.go:1311"
    ]
   },
   {
@@ -8147,8 +8147,8 @@
    "claim": "search field branching defaults to 3",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1243",
-    "arena/arenaconfig/types.go:1284"
+    "arena/arenaconfig/types.go:1247",
+    "arena/arenaconfig/types.go:1288"
    ]
   },
   {
@@ -8156,8 +8156,8 @@
    "claim": "search field width defaults to 4",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1244",
-    "arena/arenaconfig/types.go:1289"
+    "arena/arenaconfig/types.go:1248",
+    "arena/arenaconfig/types.go:1293"
    ]
   },
   {
@@ -8165,8 +8165,8 @@
    "claim": "search field depth defaults to 5",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1245",
-    "arena/arenaconfig/types.go:1294"
+    "arena/arenaconfig/types.go:1249",
+    "arena/arenaconfig/types.go:1298"
    ]
   },
   {
@@ -8174,7 +8174,7 @@
    "claim": "search depth replaces the turn's turns and max_turns, and config rejects those alongside search",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1324",
+    "arena/arenaconfig/types.go:1328",
     "arena/engine/objective_search.go:236"
    ]
   },
@@ -8183,8 +8183,8 @@
    "claim": "search field judge names a judge in spec.judges",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:486",
-    "arena/arenaconfig/types.go:1276"
+    "arena/arenaconfig/loader.go:487",
+    "arena/arenaconfig/types.go:1280"
    ]
   },
   {
@@ -8201,7 +8201,7 @@
    "claim": "search field prune_off_topic defaults to false",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1279"
+    "arena/arenaconfig/types.go:1283"
    ]
   },
   {
@@ -8209,7 +8209,7 @@
    "claim": "prune_off_topic needs a judge",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1313"
+    "arena/arenaconfig/types.go:1317"
    ]
   },
   {
@@ -8405,8 +8405,8 @@
    "claim": "the search defaults allow up to 60 messages per run",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1243",
-    "arena/arenaconfig/types.go:1246"
+    "arena/arenaconfig/types.go:1247",
+    "arena/arenaconfig/types.go:1250"
    ]
   },
   {
@@ -8414,8 +8414,8 @@
    "claim": "search cannot be combined with rewind or with stop_on_success false",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1316",
-    "arena/arenaconfig/types.go:1320"
+    "arena/arenaconfig/types.go:1320",
+    "arena/arenaconfig/types.go:1324"
    ]
   },
   {
@@ -8450,8 +8450,8 @@
    "claim": "defaults.output.dir is the output directory for results, media and recordings; run --out overrides it and serve reads results from it",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/helpers.go:38",
-    "arena/arenaconfig/helpers.go:55",
+    "arena/arenaconfig/helpers.go:48",
+    "arena/arenaconfig/helpers.go:65",
     "arena/cmd/promptarena/run.go:363",
     "arena/cmd/promptarena/serve_interactive.go:221",
     "arena/engine/engine.go:1041",
@@ -8480,7 +8480,7 @@
    "claim": "mode: exec is not available in PromptArena; a run stops at startup with the ErrInvalidToolMode message",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:113"
+    "arena/engine/builder_integration.go:114"
    ]
   },
   {
@@ -8505,8 +8505,8 @@
    "claim": "Arena checks each pack_evals entry at engine build (id present and unique, type and trigger required with a valid trigger, sample_percentage 0-100, valid metric name/type/labels); a bad entry stops the run with 'invalid pack_evals'",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:722",
-    "arena/engine/builder_integration.go:723"
+    "arena/engine/builder_integration.go:736",
+    "arena/engine/builder_integration.go:737"
    ]
   },
   {
@@ -8523,7 +8523,7 @@
    "claim": "Scenario spec.providers is an optional list of provider ids restricting the scenario to those arena providers; when empty the scenario uses its provider_group (default unless set), or every provider if the group has none; validate reports an unknown id as an error listing the known ids",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:705",
+    "arena/arenaconfig/types.go:709",
     "arena/arenaconfig/validator.go:337-347",
     "arena/engine/execution.go:279-302",
     "schemas/v1alpha1/scenario.json:607-613"
@@ -8543,7 +8543,7 @@
    "claim": "Arena reads three runtime fields: evals, hooks and sandboxes",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:742",
+    "arena/engine/builder_integration.go:756",
     "arena/engine/runtime_hooks.go:19",
     "arena/engine/runtime_hooks.go:24",
     "arena/engine/runtime_hooks.go:28"
@@ -8574,7 +8574,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:116",
-    "arena/engine/builder_integration.go:739",
+    "arena/engine/builder_integration.go:753",
     "arena/engine/runtime_hooks.go:19"
    ]
   },
@@ -8585,7 +8585,7 @@
    "evidence": [
     "arena/arenaconfig/validator.go:63",
     "arena/arenaconfig/validator_tools.go:73-98",
-    "arena/engine/builder_integration.go:564",
+    "arena/engine/builder_integration.go:578",
     "schemas/v1alpha1/tool.json:321"
    ]
   }

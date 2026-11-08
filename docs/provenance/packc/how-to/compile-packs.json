@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/packc/how-to/compile-packs.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "72f35dcda537f9ebff0eaf33808ce728f0c8b3f8",
  "claims": [
   {
    "id": 1,
@@ -59,7 +59,7 @@
    "claim": "default id from current directory name via SanitizePackID; non-letter start gets pack- prefix",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/helpers_integration.go:213",
+    "packc/compiler/helpers_integration.go:225",
     "packc/main.go:113"
    ]
   },
@@ -69,7 +69,7 @@
    "verdict": "true",
    "evidence": [
     "packc/compiler/compiler.go:100",
-    "packc/compiler/helpers_integration.go:230"
+    "packc/compiler/helpers_integration.go:242"
    ]
   },
   {
@@ -97,8 +97,8 @@
    "claim": "compile-prompt: id from task type (_ to -), name/description from prompt, version from spec.version or --pack-version, $schema set",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/pack_file.go:113",
-    "packc/compiler/pack_file.go:52"
+    "packc/compiler/pack_file.go:121",
+    "packc/compiler/pack_file.go:60"
    ]
   },
   {
@@ -132,9 +132,9 @@
    "claim": "missing media example files warn 'media(<task>): Media file not found: ...' relative to config dir (compile) or prompt dir (compile-prompt)",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/helpers_integration.go:105",
-    "packc/compiler/helpers_integration.go:62",
-    "packc/compiler/pack_file.go:118"
+    "packc/compiler/helpers_integration.go:107",
+    "packc/compiler/helpers_integration.go:64",
+    "packc/compiler/pack_file.go:126"
    ]
   },
   {

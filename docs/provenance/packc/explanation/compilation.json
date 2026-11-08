@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/packc/explanation/compilation.md",
- "commit": "66ec692303a313b1f7ece7ce55dd5f73859efe29",
+ "commit": "72f35dcda537f9ebff0eaf33808ce728f0c8b3f8",
  "claims": [
   {
    "id": 1,
@@ -41,7 +41,7 @@
    "claim": "each prompt gets the default template/provider/validator pipeline",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:138-146"
+    "packc/compiler/compiler.go:144-152"
    ]
   },
   {
@@ -49,8 +49,8 @@
    "claim": "arena tools/workflow/agents/compositions/skills/pack_evals/pack_metadata map to pack tools/workflow/agents/compositions/skills/evals/metadata",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:114-156",
-    "packc/compiler/compiler.go:225-257"
+    "packc/compiler/compiler.go:114-162",
+    "packc/compiler/compiler.go:240-272"
    ]
   },
   {
@@ -58,7 +58,7 @@
    "claim": "a tool file that fails to load fails the compile",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/helpers_integration.go:125-129"
+    "packc/compiler/helpers_integration.go:127-131"
    ]
   },
   {
@@ -66,7 +66,7 @@
    "claim": "skill directory paths are made relative to the config's directory however -c is written; an @org/name reference stays a reference",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:252-253"
+    "packc/compiler/compiler.go:267-268"
    ]
   },
   {
@@ -74,7 +74,7 @@
    "claim": "packc compile sets name=id, version from --pack-version (default v1.0.0), description 'Pack containing N prompts', $schema latest URL, compilation block",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:138-150"
+    "packc/compiler/compiler.go:144-156"
    ]
   },
   {
@@ -82,7 +82,7 @@
    "claim": "default id from current directory name via SanitizePackID; non-letter start gets pack- prefix",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/helpers_integration.go:223-236",
+    "packc/compiler/helpers_integration.go:225-238",
     "packc/main_interactive.go:113-119"
    ]
   },
@@ -91,8 +91,8 @@
    "claim": "pack_metadata wins over spec.metadata with a warning; otherwise first spec.metadata by prompt_configs id is promoted with a warning naming the others",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:154",
-    "packc/compiler/compiler.go:179-222"
+    "packc/compiler/compiler.go:160",
+    "packc/compiler/compiler.go:194-237"
    ]
   },
   {
@@ -100,18 +100,25 @@
    "claim": "missing media example files warn 'media(<task>): Media file not found: ...' relative to config dir (compile) or prompt dir (compile-prompt)",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/helpers_integration.go:50-111",
-    "packc/compiler/pack_file.go:117-119"
+    "packc/compiler/helpers_integration.go:52-113",
+    "packc/compiler/pack_file.go:125-127"
    ]
   },
   {
    "id": 13,
-   "claim": "PromptKit resolves fragments to content, but packc's memory registry has no fragment files: a required static fragment fails the compile stage with 'fragment not found', an optional one is dropped, a templated one is written as {{name}}",
+   "claim": "Each static fragment is read from its file and its content written to the pack's fragments under its name; a relative path resolves against the referencing prompt config's directory (the arena config's for an inline prompt_specs entry), then the working directory; a required fragment that cannot be read fails the compile stage with an error naming the file; an optional one is left out with a 'fragments:' warning; a reference with no path cannot be loaded; a {{ name or path is written as {{name}}",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:120-146",
-    "packc/compiler/helpers_integration.go:27-46",
-    "packc/compiler/pack_file.go:121-126"
+    "arena/arenaconfig/loader.go:188",
+    "arena/arenaconfig/loader.go:621",
+    "arena/promptrepo/promptrepo.go:45-51",
+    "arena/promptrepo/promptrepo.go:56-62",
+    "arena/promptrepo/promptrepo.go:66-83",
+    "arena/promptrepo/promptrepo.go:95-136",
+    "packc/compiler/compiler.go:128-132",
+    "packc/compiler/fragments_test.go:49-121",
+    "packc/compiler/helpers_integration.go:29-48",
+    "packc/compiler/pack_file.go:129-138"
    ]
   },
   {
@@ -127,7 +134,8 @@
    "claim": "compile-prompt: id from task type (_ to -), name/description from prompt, version from spec.version or --pack-version, metadata from spec.metadata, $schema set",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/pack_file.go:110-137"
+    "packc/compiler/pack_file.go:121-148",
+    "packc/compiler/pack_file_test.go:144-146"
    ]
   },
   {
@@ -135,8 +143,8 @@
    "claim": "two compiles of the same inputs differ only in compilation.created_at",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:114-156",
-    "packc/compiler/compiler.go:138-146"
+    "packc/compiler/compiler.go:114-162",
+    "packc/compiler/compiler.go:144-152"
    ]
   },
   {
@@ -152,8 +160,8 @@
    "claim": "compile-prompt checks the prompt config against its schema first, then runs the same structural and PromptPack schema checks; fails with no file written",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/pack_file.go:52-90",
-    "packc/compiler/pack_file.go:95-108",
+    "packc/compiler/pack_file.go:103-116",
+    "packc/compiler/pack_file.go:60-98",
     "packc/main_interactive.go:217-229"
    ]
   },
@@ -162,7 +170,7 @@
    "claim": "template_engine is the one the prompts declare, chosen by the PromptKit compiler; differing engines fail the compile stage; prompts declaring none or the default are left out; no declaration gives v1 {{variable}}",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:138-146"
+    "packc/compiler/compiler.go:144-152"
    ]
   },
   {
@@ -172,6 +180,23 @@
    "evidence": [
     "packc/compiler/check.go:97-106",
     "packc/compiler/pack_fields.go:7-21"
+   ]
+  },
+  {
+   "id": 21,
+   "claim": "promptarena run loads fragments the same way when it builds its prompt registry, so a missing required fragment stops the run before any scenario starts",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/builder_integration.go:485-555",
+    "arena/engine/prompt_fragments_test.go:67-89"
+   ]
+  },
+  {
+   "id": 22,
+   "claim": "compile-prompt resolves media references and fragment paths relative to the prompt file's directory",
+   "verdict": "true",
+   "evidence": [
+    "packc/compiler/pack_file.go:121-138"
    ]
   }
  ]

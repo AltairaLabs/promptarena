@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/packc/reference/compile.md",
- "commit": "66ec692303a313b1f7ece7ce55dd5f73859efe29",
+ "commit": "72f35dcda537f9ebff0eaf33808ce728f0c8b3f8",
  "claims": [
   {
    "id": 1,
@@ -24,7 +24,7 @@
    "claim": "compile takes --id, default current directory name sanitized",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/helpers_integration.go:223-236",
+    "packc/compiler/helpers_integration.go:225-238",
     "packc/main_interactive.go:113-119",
     "packc/main_interactive.go:130"
    ]
@@ -43,7 +43,7 @@
    "claim": "--id is written to the pack id and name",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:114-146"
+    "packc/compiler/compiler.go:114-152"
    ]
   },
   {
@@ -60,7 +60,7 @@
    "claim": "default ID sanitization: lowercase, spaces to hyphens, strip others, collapse hyphens, pack- prefix, pack when empty",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/helpers_integration.go:223-236"
+    "packc/compiler/helpers_integration.go:225-238"
    ]
   },
   {
@@ -86,7 +86,7 @@
    "claim": "file paths resolve relative to the Arena config directory",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:198"
+    "arena/arenaconfig/loader.go:199"
    ]
   },
   {
@@ -94,7 +94,7 @@
    "claim": "prompt_configs/prompt_specs become prompts keyed by task_type",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:114-146"
+    "packc/compiler/compiler.go:114-152"
    ]
   },
   {
@@ -102,7 +102,7 @@
    "claim": "tools become pack tools keyed by name",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/helpers_integration.go:113-140"
+    "packc/compiler/helpers_integration.go:115-142"
    ]
   },
   {
@@ -110,8 +110,8 @@
    "claim": "pack_evals, workflow, agents, compositions reach the pack",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:130-146",
-    "packc/compiler/compiler.go:225-257"
+    "packc/compiler/compiler.go:136-152",
+    "packc/compiler/compiler.go:240-272"
    ]
   },
   {
@@ -119,8 +119,8 @@
    "claim": "pack_metadata becomes metadata; otherwise promoted from first prompt by ID with a warning",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:154",
-    "packc/compiler/compiler.go:179-222"
+    "packc/compiler/compiler.go:160",
+    "packc/compiler/compiler.go:194-237"
    ]
   },
   {
@@ -128,7 +128,7 @@
    "claim": "template_engine is the engine the prompts declare (PromptKit chooses it); disagreement fails the compile stage; none or the default are not compared; none declared gives v1",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:138-146"
+    "packc/compiler/compiler.go:144-152"
    ]
   },
   {
@@ -136,7 +136,7 @@
    "claim": "pack version is --pack-version or v1.0.0, description 'Pack containing <n> prompts'",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:138-150"
+    "packc/compiler/compiler.go:144-156"
    ]
   },
   {
@@ -196,7 +196,7 @@
    "claim": "compiled pack template_engine includes features [basic_substitution] by default (page JSON sample)",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:138-146"
+    "packc/compiler/compiler.go:144-152"
    ]
   },
   {
@@ -214,7 +214,7 @@
    "claim": "skills directory paths are made relative to the config file's directory for a relative or absolute -c",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:252-253"
+    "packc/compiler/compiler.go:267-268"
    ]
   },
   {
@@ -222,7 +222,7 @@
    "claim": "old: '\u26a0 Media validation warnings for <task>' and template-variable warning",
    "verdict": "false",
    "evidence": [
-    "packc/compiler/helpers_integration.go:50-68"
+    "packc/compiler/helpers_integration.go:52-70"
    ]
   },
   {
@@ -238,6 +238,15 @@
    "claim": "old: performance numbers <100ms etc.",
    "verdict": "unverified",
    "evidence": []
+  },
+  {
+   "id": 29,
+   "claim": "the compile stage reports a required fragment file that cannot be read as an error and an optional one as a warning",
+   "verdict": "true",
+   "evidence": [
+    "arena/promptrepo/promptrepo.go:95-136",
+    "packc/compiler/compiler.go:128-132"
+   ]
   }
  ]
 }

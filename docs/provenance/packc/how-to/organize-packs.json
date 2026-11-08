@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/packc/how-to/organize-packs.md",
- "commit": "66ec692303a313b1f7ece7ce55dd5f73859efe29",
+ "commit": "72f35dcda537f9ebff0eaf33808ce728f0c8b3f8",
  "claims": [
   {
    "id": 1,
@@ -24,7 +24,7 @@
    "claim": "packc compile sets name=id, version from --pack-version (default v1.0.0), description 'Pack containing N prompts', $schema latest URL, compilation block",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:114-150"
+    "packc/compiler/compiler.go:114-156"
    ]
   },
   {
@@ -50,8 +50,8 @@
    "claim": "two compiles of the same inputs differ only in compilation.created_at; template_engine resolved deterministically, disagreement is a compile error",
    "verdict": "true",
    "evidence": [
-    "packc/compiler/compiler.go:114-156",
-    "packc/compiler/compiler.go:138-146"
+    "packc/compiler/compiler.go:114-162",
+    "packc/compiler/compiler.go:144-152"
    ]
   }
  ]
