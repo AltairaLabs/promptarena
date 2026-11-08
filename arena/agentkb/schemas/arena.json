@@ -701,7 +701,7 @@
         },
         "runtime": {
           "$ref": "#/$defs/RuntimeConfigSpec",
-          "description": "Runtime carries a runtime configuration spec passed straight through to the\nruntime layer (hooks, sandboxes, …). Arena wraps the runtime, so anything\nthe runtime config supports is available here under `runtime:` without\nArena needing a bespoke field for each."
+          "description": "Runtime carries a PromptKit runtime config spec. Arena reads only three of\nits fields: evals (exec eval handlers), hooks (session hooks only; other\nhook types are rejected at engine build) and sandboxes. The schema accepts\nthe rest so a runtime config can be shared with the SDK, but Arena ignores\nthem, and loading or validating the config warns for each one set."
         },
         "workflow": {
           "$ref": "#/$defs/WorkflowConfig",

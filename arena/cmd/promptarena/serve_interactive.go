@@ -136,9 +136,7 @@ func init() {
 	serveCmd.Flags().Int("audio-rate", arenaaudio.Rate24k,
 		"Audio canonical sample rate: 16000, 24000, or 48000")
 	serveCmd.Flags().Bool("mock-provider", false,
-		"Replace the assistant and self-play role providers with mocks. "+
-			"TTS and STT providers are not swapped; point voices at mock-tts for a keyless run. "+
-			"Pair with --mock-config to use canned scenario responses.")
+		mockProviderFlagHelp+". Pair with --mock-config to use canned scenario responses.")
 	serveCmd.Flags().String("mock-config", "",
 		"Path to a mock responses YAML file. Only meaningful with --mock-provider.")
 	rootCmd.AddCommand(serveCmd)
@@ -183,7 +181,7 @@ func runServe(cmd *cobra.Command, args []string) error {
 		if mockErr := eng.EnableMockProviderMode(mockConfig); mockErr != nil {
 			return fmt.Errorf("failed to enable mock provider mode: %w", mockErr)
 		}
-		log.Printf("Mock provider mode: ALL providers replaced with mocks (no API calls)")
+		log.Print(mockProviderModeLog)
 	}
 
 	// Wire audio monitor

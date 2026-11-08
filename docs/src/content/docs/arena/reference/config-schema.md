@@ -465,10 +465,11 @@ Tools discovered from a source-backed server are registered under their
 `RuntimeConfig` resource, whose schema is
 `schemas/v1alpha1/runtime-config.json`. Arena reads three of its fields:
 `evals` (below), `hooks` and `sandboxes`. Only session hooks run; a
-`provider` or `tool` hook fails when Arena builds the engine, and an `eval`
-hook is ignored. The schema
-accepts the spec's other fields, such as `providers`, `state_store` and
-`logging`, and Arena ignores them.
+`provider`, `tool` or `eval` hook fails when Arena builds the engine. For an
+eval program, bind it under `runtime.evals` instead. The schema accepts the
+spec's other fields, such as `providers`, `state_store` and `logging`, so a
+runtime config can be shared with the SDK, but Arena ignores them: loading the
+config and `promptarena validate` warn for each one that is set, naming it.
 
 #### `runtime.evals`
 

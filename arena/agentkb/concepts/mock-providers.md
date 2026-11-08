@@ -29,6 +29,7 @@ scenarios:
       2: "Based on what I found..."
 ```
 
-The `--mock-provider` CLI flag is different: it replaces ALL providers with a generic
-mock that ignores `mock-responses.yaml`. If your example ships a `providers/mock-provider.yaml`,
-run it WITHOUT `--mock-provider`.
+The `--mock-provider` CLI flag is different: it replaces the LLM and self-play role
+providers with mocks. TTS and STT providers are not replaced; for keyless voices, declare a
+`type: mock`, `role: tts` provider. A provider's declared `mock_config` is kept, unless
+`--mock-config <file>` is also passed, which gives every mocked provider that file's responses.

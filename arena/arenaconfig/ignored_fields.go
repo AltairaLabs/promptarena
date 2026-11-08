@@ -3,6 +3,8 @@ package arenaconfig
 import (
 	"fmt"
 	"os"
+	"reflect"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 
@@ -82,4 +84,39 @@ func warnProviderLabels(filename string) {
 		return
 	}
 	logger.Warn("provider metadata.labels "+ignoredFieldSuffix, "file", filename)
+}
+
+// runtimeFieldsArenaReads are the spec.runtime fields Arena consumes:
+// evals (exec eval handlers), hooks and sandboxes (runtime hooks).
+var runtimeFieldsArenaReads = map[string]bool{"evals": true, "hooks": true, "sandboxes": true}
+
+// ignoredRuntimeFieldWarnings warns once per set spec.runtime field Arena does
+// not read. They are warnings, not errors: a runtime config shared with the
+// SDK may legitimately carry providers, state_store and the rest.
+func (c *Config) ignoredRuntimeFieldWarnings() []string {
+	if c.Runtime == nil {
+		return nil
+	}
+	var out []string
+	v := reflect.ValueOf(*c.Runtime)
+	t := v.Type()
+	for i := 0; i < t.NumField(); i++ {
+		name, _, _ := strings.Cut(t.Field(i).Tag.Get("yaml"), ",")
+		if name == "" || name == "-" || runtimeFieldsArenaReads[name] || isEmptyValue(v.Field(i)) {
+			continue
+		}
+		out = append(out, fmt.Sprintf(
+			"runtime.%s is ignored: Arena reads only runtime.evals, runtime.hooks and runtime.sandboxes", name))
+	}
+	return out
+}
+
+// isEmptyValue reports whether a field is unset: zero, or an empty slice or map.
+func isEmptyValue(f reflect.Value) bool {
+	switch f.Kind() { //nolint:exhaustive // other kinds fall back to IsZero
+	case reflect.Slice, reflect.Map:
+		return f.Len() == 0
+	default:
+		return f.IsZero()
+	}
 }

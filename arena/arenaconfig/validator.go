@@ -64,6 +64,7 @@ func (v *ConfigValidator) Validate() error {
 	v.validateAllowedToolsResolve()
 	v.validateTaskTypeUsage()
 	v.validateWorkflow()
+	v.warns = append(v.warns, v.config.ignoredRuntimeFieldWarnings()...)
 
 	if len(v.errors) > 0 {
 		return fmt.Errorf("configuration validation failed with %d errors: %v", len(v.errors), v.errors)

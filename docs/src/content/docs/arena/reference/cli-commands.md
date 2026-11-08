@@ -567,7 +567,7 @@ Exit status: with `--ci`, `run` exits non-zero when a run errors or an assertion
 
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
-| `--mock-provider` | bool | `false` | Replace the configured providers, including self-play roles, with mocks. TTS and STT providers are not swapped |
+| `--mock-provider` | bool | `false` | Replace the LLM and self-play role providers with mocks. TTS and STT providers are not replaced; for keyless voices, declare a `type: mock`, `role: tts` provider |
 | `--mock-config` | string | - | Path to mock provider configuration (YAML) |
 | `--override-provider` | []string | - | Substitute a configured provider with another: `from=to` (repeatable) |
 
@@ -1294,7 +1294,7 @@ If `config-path` is a directory, `serve` looks for `config.arena.yaml` inside it
 |------|------|---------|-------------|
 | `-p, --port` | int | `8080` | Port to serve on |
 | `-o, --open` | bool | `false` | Open browser automatically |
-| `--mock-provider` | bool | `false` | Replace the assistant and self-play role providers with mocks. TTS and STT providers are not swapped; for a keyless voice run, declare a `type: mock`, `role: tts` provider |
+| `--mock-provider` | bool | `false` | Replace the LLM and self-play role providers with mocks. TTS and STT providers are not replaced; for keyless voices, declare a `type: mock`, `role: tts` provider |
 | `--mock-config` | string | - | Path to a mock responses YAML file (used with `--mock-provider`) |
 | `--audio-monitor` | string | `auto` | Audio monitoring mode: auto, on, off |
 | `--audio-rate` | int | `24000` | Audio canonical sample rate: 16000, 24000, or 48000 |
@@ -1365,7 +1365,7 @@ promptarena chat [flags]
 | Flag | Type | Default | Description |
 |------|------|---------|-------------|
 | `--config` | string | `config.arena.yaml` | Path to the Arena config file |
-| `--mock-provider` | bool | `false` | Replace the configured providers, including self-play roles, with mocks. TTS and STT providers are not swapped |
+| `--mock-provider` | bool | `false` | Replace the LLM and self-play role providers with mocks. TTS and STT providers are not replaced; for keyless voices, declare a `type: mock`, `role: tts` provider |
 | `--mock-config` | string | - | Path to a mock-responses YAML file (used with `--mock-provider`) |
 | `--voice` | bool | `false` | Hands-free voice mode (requires PortAudio installed) |
 | `--voice-stt` | string | - | STT provider id for voice over text agents (VAD mode). An id that is not an STT provider in the config fails before the TUI starts, listing the ids available |

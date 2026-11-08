@@ -276,6 +276,11 @@ func LoadConfig(filename string) (*Config, error) {
 	validator := NewConfigValidatorWithPath(cfg, filename)
 	_ = validator.Validate()
 	cfg.ValidationWarnings = validator.GetWarnings()
+	// The validator already counted these among its warnings; log them too,
+	// so a run (not only `promptarena validate`) says the fields do nothing.
+	for _, w := range cfg.ignoredRuntimeFieldWarnings() {
+		logger.Warn(w)
+	}
 	cfg.recordIgnoredFields()
 
 	return cfg, nil
