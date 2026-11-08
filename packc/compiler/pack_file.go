@@ -7,12 +7,20 @@ import (
 	"path/filepath"
 
 	"github.com/AltairaLabs/promptarena/v2/arena/configschema"
+	"github.com/AltairaLabs/promptarena/v2/arena/promptrepo"
 
 	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
-	"github.com/AltairaLabs/PromptKit/runtime/v2/packspec"
-	"github.com/AltairaLabs/PromptKit/runtime/v2/persistence/memory"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/prompt"
 )
+
+// absPath returns path made absolute when the working directory allows, so a
+// fragment error names a file a reader can find.
+func absPath(path string) string {
+	if abs, err := filepath.Abs(path); err == nil {
+		return abs
+	}
+	return path
+}
 
 // ValidatePackFile validates a compiled pack file, as `packc validate` does.
 //
@@ -107,9 +115,9 @@ func loadPromptFile(promptFile string) (*prompt.Config, error) {
 	return promptConfig, nil
 }
 
-// compileSinglePrompt builds the one-prompt pack. PromptKit's single-config
-// compile leaves $schema unset, which the registry path sets, so it is filled
-// in here; --pack-version, when given, replaces the prompt's spec.version.
+// compileSinglePrompt builds the one-prompt pack, resolving the prompt's
+// fragment paths against promptDir; --pack-version, when given, replaces the
+// prompt's spec.version.
 func compileSinglePrompt(
 	promptConfig *prompt.Config, promptDir string, options compileOptions,
 ) (*prompt.Pack, []string, error) {
@@ -118,17 +126,20 @@ func compileSinglePrompt(
 		warnings = append(warnings, fmt.Sprintf("media(%s): %s", promptConfig.Spec.TaskType, w))
 	}
 
-	memRepo := memory.NewPromptRepository()
-	if err := memRepo.SavePrompt(promptConfig); err != nil {
+	repo := promptrepo.New()
+	if err := repo.Add(promptConfig, absPath(promptDir)); err != nil {
 		return nil, nil, fmt.Errorf("registering prompt: %w", err)
 	}
-	pc := prompt.NewPackCompiler(prompt.NewRegistryWithRepository(memRepo))
-	pack, err := pc.Compile(promptConfig.Spec.TaskType, options.compilerVersion)
+	registry := prompt.NewRegistryWithRepository(repo)
+	fragmentWarnings, err := repo.LoadFragments(registry)
 	if err != nil {
 		return nil, nil, fmt.Errorf("compilation failed: %w", err)
 	}
-	if pack.Schema == nil {
-		pack.Schema = packspec.Ptr(prompt.PromptPackSchemaURL)
+	warnings = append(warnings, prefixed("fragments", fragmentWarnings)...)
+
+	pack, err := prompt.NewPackCompiler(registry).Compile(promptConfig.Spec.TaskType, options.compilerVersion)
+	if err != nil {
+		return nil, nil, fmt.Errorf("compilation failed: %w", err)
 	}
 	if options.packVersion != "" {
 		pack.Version = options.packVersion

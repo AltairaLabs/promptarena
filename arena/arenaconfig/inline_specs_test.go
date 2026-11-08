@@ -458,11 +458,13 @@ func TestMergePromptSpecs_Unit(t *testing.T) {
 		},
 	}
 
-	require.NoError(t, cfg.mergePromptSpecs())
+	require.NoError(t, cfg.mergePromptSpecs("/packs/support/arena.yaml"))
 	pc := cfg.LoadedPromptConfigs["chat"]
 	require.NotNil(t, pc)
 	assert.Equal(t, "chat", pc.TaskType)
 	assert.Equal(t, "<inline:chat>", pc.FilePath)
+	assert.Equal(t, filepath.FromSlash("/packs/support"), pc.Dir,
+		"an inline prompt resolves its fragment paths against the arena config's directory")
 }
 
 func TestMergeScenarioSpecs_Conflict(t *testing.T) {
@@ -493,7 +495,7 @@ func TestMergePromptSpecs_Conflict(t *testing.T) {
 		PromptSpecs:         map[string]*prompt.Spec{"chat": {TaskType: "chat"}},
 	}
 
-	err := cfg.mergePromptSpecs()
+	err := cfg.mergePromptSpecs("arena.yaml")
 	require.Error(t, err)
 	assert.Contains(t, err.Error(), "prompt_specs and prompt_configs file refs")
 }

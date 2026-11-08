@@ -31,6 +31,7 @@ import (
 	"github.com/AltairaLabs/promptarena/v2/arena/binding"
 	arenamcp "github.com/AltairaLabs/promptarena/v2/arena/mcp"
 	_ "github.com/AltairaLabs/promptarena/v2/arena/mcpsource/docker/register" // register docker MCPSource
+	"github.com/AltairaLabs/promptarena/v2/arena/promptrepo"
 	"github.com/AltairaLabs/promptarena/v2/arena/selfplay"
 	"github.com/AltairaLabs/promptarena/v2/arena/statestore"
 	"github.com/AltairaLabs/promptarena/v2/arena/turnexecutors"
@@ -486,8 +487,9 @@ func buildPromptRegistry(cfg *arenaconfig.Config) (*prompt.Registry, error) {
 		return nil, nil
 	}
 
-	// Create memory repository
-	memRepo := memory.NewPromptRepository()
+	// The prompt configs are held in memory; their fragments are read from
+	// files relative to each config's directory.
+	memRepo := promptrepo.New()
 
 	// Track task types for duplicate detection
 	taskTypeToID := make(map[string]string)
@@ -528,7 +530,7 @@ func buildPromptRegistry(cfg *arenaconfig.Config) (*prompt.Registry, error) {
 		}
 
 		// Save prompt to memory repository
-		if err := memRepo.SavePrompt(promptConfig); err != nil {
+		if err := memRepo.Add(promptConfig, promptData.Dir); err != nil {
 			return nil, fmt.Errorf("failed to register prompt %s (ID: %s): %w", promptData.FilePath, refID, err)
 		}
 
@@ -536,9 +538,21 @@ func buildPromptRegistry(cfg *arenaconfig.Config) (*prompt.Registry, error) {
 		taskTypeToID[promptConfig.Spec.TaskType] = refID
 	}
 
-	// Create registry with memory repository
-	logger.Info("Initialized prompt registry with memory repository", "configs", len(taskTypeToFile))
-	return prompt.NewRegistryWithRepository(memRepo), nil
+	registry := prompt.NewRegistryWithRepository(memRepo)
+
+	// Load the static fragments now, as packc compile does: a missing required
+	// fragment fails here rather than in every scenario that uses the prompt,
+	// and concurrent runs then only read the registry's fragment cache.
+	warnings, err := memRepo.LoadFragments(registry)
+	if err != nil {
+		return nil, fmt.Errorf("loading prompt fragments: %w", err)
+	}
+	for _, w := range warnings {
+		logger.Warn("Prompt fragment not loaded", "detail", w)
+	}
+
+	logger.Info("Initialized prompt registry", "configs", len(taskTypeToFile))
+	return registry, nil
 }
 
 // buildToolRegistry creates a tool registry from config.

@@ -135,7 +135,7 @@ The PromptKit runtime accepts workflow `version` 1 or 2. Version 2 also warns ab
 
 ## Fragments
 
-`fragments` is an object of named text blocks that prompts share. The specification defines each value as the fragment's content, resolved at compile time. The PromptKit compiler that `packc` uses resolves fragments that way, but `packc` does not give it the fragment files. A required fragment therefore fails the compile, and an optional one is left out. Only a fragment chosen by a template variable reaches the pack, as the placeholder `{{<name>}}`. See [Compilation](/packc/explanation/compilation/#media-and-fragments).
+`fragments` is an object of named text blocks that prompts share. The specification defines each value as the fragment's content, resolved at compile time, and `packc` writes it that way: it reads each fragment file a prompt config references, relative to that prompt config's directory, and stores the file's `content`. A fragment chosen by a template variable cannot be resolved at compile time, so it is written as the placeholder `{{<name>}}`. See [Compilation](/packc/explanation/compilation/#media-and-fragments) for what happens when a fragment file is missing.
 
 ## Versions
 

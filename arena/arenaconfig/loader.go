@@ -171,7 +171,7 @@ func (c *Config) mergeJudgeSpecs() error {
 }
 
 // mergePromptSpecs merges inline prompt specs into LoadedPromptConfigs.
-func (c *Config) mergePromptSpecs() error {
+func (c *Config) mergePromptSpecs(configPath string) error {
 	for taskType, spec := range c.PromptSpecs {
 		if _, exists := c.LoadedPromptConfigs[taskType]; exists {
 			return fmt.Errorf(
@@ -185,6 +185,7 @@ func (c *Config) mergePromptSpecs() error {
 		promptConfig.Metadata.Name = taskType
 		c.LoadedPromptConfigs[taskType] = &PromptConfigData{
 			FilePath: fmt.Sprintf("<inline:%s>", taskType),
+			Dir:      absDir(configPath),
 			Config:   promptConfig,
 			TaskType: spec.TaskType,
 		}
@@ -320,7 +321,7 @@ func (c *Config) loadPromptScenarioResources(filename string) error {
 	if err := c.loadPromptConfigs(filename); err != nil {
 		return err
 	}
-	if err := c.mergePromptSpecs(); err != nil {
+	if err := c.mergePromptSpecs(filename); err != nil {
 		return err
 	}
 	if err := c.loadScenarios(filename); err != nil {
@@ -617,6 +618,7 @@ func (c *Config) loadPromptConfigs(configPath string) error {
 		// Store parsed config with metadata and variable overrides from arena.yaml
 		c.LoadedPromptConfigs[ref.ID] = &PromptConfigData{
 			FilePath: ref.File,
+			Dir:      absDir(fullPath),
 			Config:   promptConfig,
 			TaskType: promptConfig.Spec.TaskType,
 			Vars:     ref.Vars, // Store variable overrides from arena.yaml

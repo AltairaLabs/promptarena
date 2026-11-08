@@ -27,6 +27,16 @@ func ResolveConfigDir(cfg *Config, configFilePath string) string {
 	return "."
 }
 
+// absDir returns the directory holding path, made absolute when the working
+// directory allows, so a fragment error names a file a reader can find.
+func absDir(path string) string {
+	dir := filepath.Dir(path)
+	if abs, err := filepath.Abs(dir); err == nil {
+		return abs
+	}
+	return dir
+}
+
 // DefaultOutputDir is where results, media and recordings go when neither the
 // --out flag nor defaults.output.dir names a directory.
 const DefaultOutputDir = "out"
