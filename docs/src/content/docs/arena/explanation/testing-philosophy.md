@@ -2,10 +2,11 @@
 title: LLM Testing Philosophy
 description: The reasoning behind PromptArena's behavior-based tests, and how it shapes scenarios, assertions and providers.
 verified:
-  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
+  commit: 66ec692303a313b1f7ece7ce55dd5f73859efe29
   sources:
     - arena/arenaconfig/judge_param.go
     - arena/arenaconfig/loader.go
+    - arena/arenaconfig/persona.go
     - arena/arenaconfig/types.go
     - arena/assertions/types.go
     - arena/cmd/promptarena/run.go
@@ -51,7 +52,7 @@ assertions:
     message: "Must be professional"
 ```
 
-The `message` field sits next to `params` and supplies the failure text. `content_includes` matches case-insensitively and passes only when every listed pattern appears. `llm_judge` picks its judge with `params.judge` (a name from the Arena config's `spec.judges`) or `params.provider` (a provider id). LLMs generate varied responses, so testing behavior leaves room for variation while still catching real regressions.
+The `message` field sits next to `params` and supplies the failure text. `content_includes` matches case-insensitively and passes only when every listed pattern appears. `llm_judge` picks its judge with `params.judge` (a name from the Arena config's `spec.judges`) or `params.provider` (a provider id), and `params.judge` works the same in an objective's `success` and `rewind.when` and a persona's `transitions[].when`. LLMs generate varied responses, so testing behavior leaves room for variation while still catching real regressions.
 
 ### Multi-dimensional quality
 

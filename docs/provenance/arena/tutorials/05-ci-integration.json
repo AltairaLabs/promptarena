@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/tutorials/05-ci-integration.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "66ec692303a313b1f7ece7ce55dd5f73859efe29",
  "claims": [
   {
    "id": 1,
@@ -86,7 +86,7 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/run.go:194",
-    "arena/engine/engine.go:801"
+    "arena/engine/engine.go:804"
    ]
   },
   {
@@ -632,7 +632,6 @@
    "claim": "With the broken assertion the summary reports Assertions Fail: 1 and the run ends with Error: execution failed: 1 runs had errors, 1 assertions failed",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/mock_config_check.go",
     "arena/cmd/promptarena/run.go",
     "arena/cmd/promptarena/run_interactive.go"
    ]

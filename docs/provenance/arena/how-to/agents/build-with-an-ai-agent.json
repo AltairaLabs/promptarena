@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/agents/build-with-an-ai-agent.md",
- "commit": "45cbd09a1d70928da45e071755b0c2172abfc8ca",
+ "commit": "66ec692303a313b1f7ece7ce55dd5f73859efe29",
  "claims": [
   {
    "id": 1,
@@ -285,7 +285,7 @@
    "claim": "validate checks that every assertion type exists",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/validate_json.go:167"
+    "arena/cmd/promptarena/validate_json.go:166"
    ]
   },
   {
@@ -329,7 +329,7 @@
    "claim": "Each validate problem names the stage that found it and the file to edit",
    "verdict": "true",
    "evidence": [
-    "arena/cmd/promptarena/validate_json.go:181",
+    "arena/cmd/promptarena/validate_json.go:180",
     "arena/cmd/promptarena/validate_json.go:34"
    ]
   },
@@ -363,7 +363,7 @@
    "claim": "Mock responses in mock-responses.yaml are keyed by each scenario's metadata.name",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:809"
+    "arena/engine/engine.go:805"
    ]
   },
   {
@@ -371,7 +371,7 @@
    "claim": "Tools, workflow state and memory run for real against mocked model output",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:771"
+    "arena/engine/engine.go:767"
    ]
   },
   {
@@ -401,7 +401,7 @@
    "evidence": [
     "arena/engine/engine.go:721",
     "arena/engine/engine.go:742",
-    "arena/engine/engine.go:808"
+    "arena/engine/engine.go:804"
    ]
   },
   {
@@ -529,8 +529,8 @@
    "claim": "validate checks that each assertion's params are keys its handler reads",
    "verdict": "true",
    "evidence": [
-    "arena/assertions/validate_params.go:153",
-    "arena/cmd/promptarena/validate_json.go:166"
+    "arena/assertions/validate_params.go:149-163",
+    "arena/cmd/promptarena/validate_json.go:165"
    ]
   },
   {

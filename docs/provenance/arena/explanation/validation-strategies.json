@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/explanation/validation-strategies.md",
- "commit": "45cbd09a1d70928da45e071755b0c2172abfc8ca",
+ "commit": "66ec692303a313b1f7ece7ce55dd5f73859efe29",
  "claims": [
   {
    "id": 1,
@@ -200,7 +200,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/validator.go:366",
-    "arena/engine/conversation_executor.go"
+    "arena/engine/conversation_executor.go:527"
    ]
   },
   {
@@ -279,7 +279,7 @@
    "claim": "An assertion placed on a role: user turn is evaluated against the assistant reply to that turn",
    "verdict": "true",
    "evidence": [
-    "arena/engine/conversation_executor.go:316-318"
+    "arena/engine/conversation_executor.go:317-319"
    ]
   },
   {
@@ -293,7 +293,7 @@
    "claim": "llm_judge accepts params.criteria, params.judge_provider and params.message",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/judge_param.go:54-63"
+    "arena/arenaconfig/judge_param.go:56-69"
    ]
   },
   {
@@ -301,7 +301,7 @@
    "claim": "judge_provider value 'openai/gpt-4o-mini' is a valid provider/model reference (provider openai, model gpt-4o-mini)",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/judge_param.go:58-63"
+    "arena/arenaconfig/judge_param.go:61-67"
    ]
   },
   {
@@ -403,8 +403,8 @@
    "claim": "An assistant-role turn can have assertions and no content field",
    "verdict": "false",
    "evidence": [
-    "arena/engine/conversation_executor.go:236",
-    "arena/engine/conversation_executor.go:536"
+    "arena/engine/conversation_executor.go:237",
+    "arena/engine/conversation_executor.go:537"
    ]
   },
   {
@@ -476,7 +476,7 @@
    "claim": "llm_judge is run against the judge_provider model during the scenario run",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/judge_param.go:53-64"
+    "arena/arenaconfig/judge_param.go:56-69"
    ]
   },
   {
@@ -547,8 +547,8 @@
    "claim": "promptarena validate warns about a message inside an assertion params block",
    "verdict": "true",
    "evidence": [
-    "arena/assertions/validate_params.go:153",
-    "arena/cmd/promptarena/validate_json.go:158"
+    "arena/assertions/validate_params.go:191-193",
+    "arena/cmd/promptarena/validate_json.go:165-174"
    ]
   }
  ]

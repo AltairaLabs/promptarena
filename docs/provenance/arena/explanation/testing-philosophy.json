@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/explanation/testing-philosophy.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "66ec692303a313b1f7ece7ce55dd5f73859efe29",
  "claims": [
   {
    "id": 1,
@@ -81,7 +81,7 @@
    "claim": "llm_judge takes a 'judge_provider' param",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/judge_param.go:57"
+    "arena/arenaconfig/judge_param.go:60"
    ]
   },
   {
@@ -89,7 +89,7 @@
    "claim": "judge_provider accepts the value form 'openai/gpt-4o-mini' (type/model)",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/judge_param.go:57"
+    "arena/arenaconfig/judge_param.go:60"
    ]
   },
   {
@@ -227,7 +227,7 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/run.go:194",
-    "arena/engine/engine.go:741"
+    "arena/engine/engine.go:742"
    ]
   },
   {
@@ -344,7 +344,7 @@
    "claim": "Declarative assertions example block (lines 296-307) is valid YAML using content_includes and llm_judge",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/judge_param.go:57",
+    "arena/arenaconfig/judge_param.go:60",
     "arena/arenaconfig/types.go:25",
     "arena/assertions/types.go:38"
    ]
@@ -394,8 +394,8 @@
    "claim": "promptarena run --mock-provider validates scenario structure without making API calls",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:741",
-    "arena/engine/engine.go:770"
+    "arena/engine/engine.go:742",
+    "arena/engine/engine.go:767"
    ]
   },
   {
@@ -415,8 +415,8 @@
    "claim": "Mock providers return predictable, deterministic responses",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:719",
-    "arena/engine/engine.go:770"
+    "arena/engine/engine.go:720",
+    "arena/engine/engine.go:767"
    ]
   },
   {
@@ -424,8 +424,8 @@
    "claim": "Mock providers make no API calls, so configuration can be tested without network spend",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:741",
-    "arena/engine/engine.go:770"
+    "arena/engine/engine.go:742",
+    "arena/engine/engine.go:767"
    ]
   },
   {
@@ -433,8 +433,8 @@
    "claim": "Mock providers allow development offline without internet access",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:741",
-    "arena/engine/engine.go:770"
+    "arena/engine/engine.go:742",
+    "arena/engine/engine.go:767"
    ]
   },
   {
@@ -451,7 +451,7 @@
    "claim": "Over-specification 'Better' example block (lines 354-365) is valid assertion YAML",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/judge_param.go:57",
+    "arena/arenaconfig/judge_param.go:60",
     "arena/arenaconfig/types.go:25",
     "arena/assertions/types.go:38"
    ]
@@ -470,7 +470,7 @@
    "claim": "Under-specification 'Better' example block (lines 381-400) is valid assertion YAML",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/judge_param.go:57",
+    "arena/arenaconfig/judge_param.go:60",
     "arena/arenaconfig/types.go:25",
     "arena/assertions/types.go:38"
    ]
@@ -495,7 +495,7 @@
    "claim": "Flaky tests 'Better' example block (lines 416-427) is valid assertion YAML",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/judge_param.go:57",
+    "arena/arenaconfig/judge_param.go:60",
     "arena/arenaconfig/types.go:25",
     "arena/assertions/types.go:38"
    ]
@@ -543,7 +543,7 @@
    "claim": "Implementation-testing 'Better' example block (lines 454-465) is valid assertion YAML",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/judge_param.go:57",
+    "arena/arenaconfig/judge_param.go:60",
     "arena/arenaconfig/types.go:25",
     "arena/assertions/types.go:38"
    ]
@@ -750,6 +750,18 @@
    "claim": "Link /arena/explanation/validation-strategies/ resolves to an existing page",
    "verdict": "true",
    "evidence": []
+  },
+  {
+   "id": 9101,
+   "claim": "params.judge resolves the same way in an objective's success and rewind.when and a persona's transitions[].when",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/judge_param.go:56-69",
+    "arena/arenaconfig/judge_param.go:90-111",
+    "arena/arenaconfig/persona.go:85",
+    "arena/arenaconfig/types.go:1209",
+    "arena/arenaconfig/types.go:1218"
+   ]
   }
  ]
 }

@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/interfaces/run-in-ci.md",
- "commit": "45cbd09a1d70928da45e071755b0c2172abfc8ca",
+ "commit": "66ec692303a313b1f7ece7ce55dd5f73859efe29",
  "claims": [
   {
    "id": 1,
@@ -8,7 +8,7 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/engine.go:742",
-    "arena/engine/engine.go:771"
+    "arena/engine/engine.go:767"
    ]
   },
   {
@@ -870,9 +870,9 @@
    "claim": "--mock-provider replaces every configured provider with a canned-response mock",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:762",
-    "arena/engine/engine.go:771",
-    "arena/engine/engine.go:790-793"
+    "arena/engine/engine.go:758",
+    "arena/engine/engine.go:767",
+    "arena/engine/engine.go:786-789"
    ]
   },
   {
@@ -880,9 +880,9 @@
    "claim": "--mock-config points to a YAML file of scripted responses",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/mock_config_check.go:69",
+    "arena/arenaconfig/mock_config_check.go:43-49",
     "arena/engine/engine.go:742",
-    "arena/engine/engine.go:749"
+    "arena/engine/engine.go:746-751"
    ]
   },
   {
@@ -890,7 +890,7 @@
    "claim": "Tools still execute for real under --mock-provider",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:771"
+    "arena/engine/engine.go:767"
    ]
   },
   {
@@ -926,9 +926,9 @@
    "claim": "--mock-config rejects unknown keys in the mock file, failing the run",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/mock_config_check.go:69",
-    "arena/arenaconfig/mock_config_check.go:75",
-    "arena/engine/engine.go:749"
+    "arena/arenaconfig/mock_config_check.go:21-39",
+    "arena/arenaconfig/mock_config_check.go:43-49",
+    "arena/engine/engine.go:746-751"
    ]
   },
   {

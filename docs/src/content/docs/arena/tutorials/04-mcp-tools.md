@@ -2,10 +2,9 @@
 title: 'Tutorial 4: Testing MCP Tools'
 description: Connect the npm memory MCP server to Arena, let OpenAI call its tools, and assert on the tool calls.
 verified:
-  commit: 45cbd09a1d70928da45e071755b0c2172abfc8ca
+  commit: 66ec692303a313b1f7ece7ce55dd5f73859efe29
   sources:
     - arena/arenaconfig/manifest_helpers.go
-    - arena/arenaconfig/mcp_servers.go
     - arena/arenaconfig/types.go
     - arena/arenaconfig/validator_tools.go
     - arena/assertions/types_test.go
