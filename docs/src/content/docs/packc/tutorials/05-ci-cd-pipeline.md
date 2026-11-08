@@ -4,7 +4,7 @@ description: Compile and validate a pack on every push with GitHub Actions, and 
 sidebar:
   order: 5
 verified:
-  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
+  commit: 72f35dcda537f9ebff0eaf33808ce728f0c8b3f8
   sources:
     - arena/arenaconfig/loader.go
     - arena/arenaconfig/types.go

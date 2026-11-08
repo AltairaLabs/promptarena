@@ -2,7 +2,7 @@
 title: 'Tutorial 7: Using Arena as a Go Library'
 description: Build a Go program that configures PromptArena in code, runs a scenario against the mock provider and reads the results.
 verified:
-  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
+  commit: 72f35dcda537f9ebff0eaf33808ce728f0c8b3f8
   sources:
     - arena/arenaconfig/types.go
     - arena/assertions/types.go

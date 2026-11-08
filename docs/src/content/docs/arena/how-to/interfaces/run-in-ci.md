@@ -4,7 +4,7 @@ description: Run Arena headless in CI/CD with the --ci flag, JSON, JUnit and Mar
 sidebar:
   order: 30
 verified:
-  commit: 66ec692303a313b1f7ece7ce55dd5f73859efe29
+  commit: 72f35dcda537f9ebff0eaf33808ce728f0c8b3f8
   sources:
     - .github/actions/promptarena-action/action.yml
     - .github/actions/promptarena-action/src/main.ts

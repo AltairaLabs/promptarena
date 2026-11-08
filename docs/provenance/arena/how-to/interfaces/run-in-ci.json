@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/interfaces/run-in-ci.md",
- "commit": "66ec692303a313b1f7ece7ce55dd5f73859efe29",
+ "commit": "72f35dcda537f9ebff0eaf33808ce728f0c8b3f8",
  "claims": [
   {
    "id": 1,
@@ -200,8 +200,8 @@
    "claim": "Output dir for json defaults to defaults.output.dir, else out/",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/helpers.go:38",
-    "arena/arenaconfig/helpers.go:55",
+    "arena/arenaconfig/helpers.go:48",
+    "arena/arenaconfig/helpers.go:65",
     "arena/cmd/promptarena/run.go:363"
    ]
   },
@@ -237,7 +237,7 @@
    "claim": "Output directory is --out, else defaults.output.dir, else out/",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/helpers.go:38",
+    "arena/arenaconfig/helpers.go:48",
     "arena/cmd/promptarena/run.go:169"
    ]
   },
@@ -323,7 +323,7 @@
    "claim": "The html_report config key is accepted and produces markdown output",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:488",
+    "arena/arenaconfig/types.go:492",
     "arena/cmd/promptarena/run.go:497"
    ]
   },
@@ -350,7 +350,7 @@
    "claim": "Scenario field trials runs the scenario several times",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:744",
+    "arena/arenaconfig/types.go:748",
     "arena/engine/trials.go:31"
    ]
   },
@@ -368,7 +368,7 @@
    "claim": "YAML field spec.trials",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:744",
+    "arena/arenaconfig/types.go:748",
     "schemas/v1alpha1/scenario.json:668"
    ]
   },
@@ -377,7 +377,7 @@
    "claim": "YAML field spec.turns",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:697",
+    "arena/arenaconfig/types.go:701",
     "schemas/v1alpha1/scenario.json:591"
    ]
   },
@@ -386,7 +386,7 @@
    "claim": "YAML field turns[].role accepts user",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1143"
+    "arena/arenaconfig/types.go:1147"
    ]
   },
   {
@@ -394,7 +394,7 @@
    "claim": "YAML field turns[].content",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1144"
+    "arena/arenaconfig/types.go:1148"
    ]
   },
   {
@@ -402,7 +402,7 @@
    "claim": "YAML field turns[].assertions",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1189"
+    "arena/arenaconfig/types.go:1193"
    ]
   },
   {
@@ -453,7 +453,7 @@
    "claim": "YAML field spec.conversation_assertions",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:715",
+    "arena/arenaconfig/types.go:719",
     "schemas/v1alpha1/scenario.json:632"
    ]
   },
@@ -784,8 +784,8 @@
    "claim": "Run writes reports to out/ which the upload step archives",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/helpers.go:32",
-    "arena/arenaconfig/helpers.go:47"
+    "arena/arenaconfig/helpers.go:42",
+    "arena/arenaconfig/helpers.go:57"
    ]
   },
   {

@@ -2,7 +2,7 @@
 title: Go API Reference
 description: Exported types, functions and methods for using Arena as a Go library
 verified:
-  commit: 41e16490ec749312f63e711caf8cbd08bad51c64
+  commit: 72f35dcda537f9ebff0eaf33808ce728f0c8b3f8
   sources:
     - arena/arenaconfig/deprecated.go
     - arena/arenaconfig/loader.go
