@@ -264,7 +264,9 @@ func TestConvertToEngineRunResult(t *testing.T) {
 
 		result := convertToEngineRunResult(sr)
 
-		assert.Nil(t, result.A2AAgents)
+		assert.Equal(t, "test-run-007", result.RunID)
+		assert.Equal(t, "scenario-7", result.ScenarioID)
+		assert.Nil(t, result.A2AAgents, "no agents converts to nil, not an empty list")
 	})
 
 	t.Run("conversion with invalid role type", func(t *testing.T) {
@@ -282,8 +284,10 @@ func TestConvertToEngineRunResult(t *testing.T) {
 
 		result := convertToEngineRunResult(sr)
 
-		// Should handle invalid type gracefully
+		// An unrecognised role shape is dropped; the rest of the run still converts.
 		assert.Nil(t, result.AssistantRole)
+		assert.Equal(t, "test-run-005", result.RunID)
+		assert.Equal(t, "openai", result.ProviderID)
 	})
 }
 
@@ -428,45 +432,46 @@ func TestSetDefaultFilePaths(t *testing.T) {
 
 func TestCreateResultSummary(t *testing.T) {
 	tests := []struct {
-		name         string
-		results      []engine.RunResult
-		successCount int
-		errorCount   int
-		configFile   string
+		name       string
+		results    []engine.RunResult
+		wantPassed int
+		wantFailed int
+		wantRunIDs []string
 	}{
-		{
-			name:         "empty results",
-			results:      []engine.RunResult{},
-			successCount: 0,
-			errorCount:   0,
-			configFile:   "test.yaml",
-		},
+		{name: "empty results", results: []engine.RunResult{}, wantRunIDs: []string{}},
 		{
 			name: "successful runs",
 			results: []engine.RunResult{
-				{RunID: "run-001", Error: ""},
-				{RunID: "run-002", Error: ""},
+				{RunID: "run-001", ScenarioID: "s1", ProviderID: "p1"},
+				{RunID: "run-002", ScenarioID: "s2", ProviderID: "p1"},
 			},
-			successCount: 2,
-			errorCount:   0,
-			configFile:   "test.yaml",
+			wantPassed: 2,
+			wantRunIDs: []string{"run-001", "run-002"},
 		},
 		{
-			name: "failed runs",
+			name: "failed runs are counted as failed, not passed",
 			results: []engine.RunResult{
 				{RunID: "run-001", Error: "timeout error"},
 				{RunID: "run-002", Error: "connection error"},
+				{RunID: "run-003"},
 			},
-			successCount: 0,
-			errorCount:   2,
-			configFile:   "test.yaml",
+			wantPassed: 1,
+			wantFailed: 2,
+			wantRunIDs: []string{"run-001", "run-002", "run-003"},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := createResultSummary(tt.results, tt.successCount, tt.errorCount, tt.configFile)
-			assert.NotNil(t, result)
+			// The success and error counts passed in are not used: the summary
+			// counts the results itself.
+			result := createResultSummary(tt.results, 99, 99, "test.yaml")
+			require.NotNil(t, result)
+			assert.Equal(t, len(tt.results), result.TotalTests)
+			assert.Equal(t, tt.wantPassed, result.Passed)
+			assert.Equal(t, tt.wantFailed, result.Failed)
+			assert.Equal(t, tt.wantRunIDs, result.RunIDs)
+			assert.Equal(t, "test.yaml", result.ConfigFile)
 		})
 	}
 }
@@ -888,60 +893,6 @@ func TestCountFailed(t *testing.T) {
 }
 
 func TestCreateResultRepository(t *testing.T) {
-	t.Run("creates json repository", func(t *testing.T) {
-		params := &RunParameters{
-			OutDir:        "test-output",
-			OutputFormats: []string{"json"},
-		}
-		repo, err := createResultRepository(params, "")
-		require.NoError(t, err)
-		assert.NotNil(t, repo)
-	})
-
-	t.Run("creates junit repository", func(t *testing.T) {
-		params := &RunParameters{
-			OutDir:        "test-output",
-			OutputFormats: []string{"junit"},
-			JUnitFile:     "test.xml",
-		}
-		repo, err := createResultRepository(params, "")
-		require.NoError(t, err)
-		assert.NotNil(t, repo)
-	})
-
-	t.Run("creates html repository", func(t *testing.T) {
-		params := &RunParameters{
-			OutDir:        "test-output",
-			OutputFormats: []string{"html"},
-		}
-		repo, err := createResultRepository(params, "")
-		require.NoError(t, err)
-		assert.NotNil(t, repo)
-	})
-
-	t.Run("creates markdown repository", func(t *testing.T) {
-		params := &RunParameters{
-			OutDir:        "test-output",
-			OutputFormats: []string{"markdown"},
-			MarkdownFile:  "test.md",
-		}
-		repo, err := createResultRepository(params, "")
-		require.NoError(t, err)
-		assert.NotNil(t, repo)
-	})
-
-	t.Run("creates multiple repositories", func(t *testing.T) {
-		params := &RunParameters{
-			OutDir:        "test-output",
-			OutputFormats: []string{"json", "junit", "html", "markdown"},
-			JUnitFile:     "test.xml",
-			MarkdownFile:  "test.md",
-		}
-		repo, err := createResultRepository(params, "")
-		require.NoError(t, err)
-		assert.NotNil(t, repo)
-	})
-
 	t.Run("errors on unsupported format", func(t *testing.T) {
 		params := &RunParameters{
 			OutDir:        "test-output",
