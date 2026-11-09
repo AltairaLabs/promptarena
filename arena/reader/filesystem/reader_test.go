@@ -259,12 +259,16 @@ func TestFilesystemResultReader_FilterResults(t *testing.T) {
 
 	reader := NewFilesystemResultReader(tmpDir)
 
+	all, err := reader.FilterResults(&readerpkg.ResultFilter{})
+	require.NoError(t, err)
+	assert.ElementsMatch(t, []string{"run-1", "run-2", "run-3"}, runIDs(all), "an empty filter keeps every run")
+
 	t.Run("filter by scenario", func(t *testing.T) {
 		filter := &readerpkg.ResultFilter{Scenarios: []string{"scenario-A"}}
 		filtered, err := reader.FilterResults(filter)
 
 		require.NoError(t, err)
-		assert.Len(t, filtered, 2)
+		assert.ElementsMatch(t, []string{"run-1", "run-3"}, runIDs(filtered))
 	})
 
 	t.Run("filter by status", func(t *testing.T) {
@@ -272,7 +276,11 @@ func TestFilesystemResultReader_FilterResults(t *testing.T) {
 		filtered, err := reader.FilterResults(filter)
 
 		require.NoError(t, err)
-		assert.Len(t, filtered, 2)
+		assert.ElementsMatch(t, []string{"run-1", "run-3"}, runIDs(filtered))
+
+		filtered, err = reader.FilterResults(&readerpkg.ResultFilter{Status: []string{"failed"}})
+		require.NoError(t, err)
+		assert.Equal(t, []string{"run-2"}, runIDs(filtered))
 	})
 
 	t.Run("filter by provider", func(t *testing.T) {
@@ -283,6 +291,15 @@ func TestFilesystemResultReader_FilterResults(t *testing.T) {
 		assert.Len(t, filtered, 1)
 		assert.Equal(t, "run-1", filtered[0].RunID)
 	})
+}
+
+// runIDs lists the run IDs of results, in order.
+func runIDs(results []readerpkg.ResultMetadata) []string {
+	ids := make([]string, 0, len(results))
+	for i := range results {
+		ids = append(ids, results[i].RunID)
+	}
+	return ids
 }
 
 func TestFilesystemResultReader_Caching(t *testing.T) {
