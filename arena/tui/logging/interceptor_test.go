@@ -1,6 +1,7 @@
 package logging
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"log/slog"
@@ -256,6 +257,40 @@ func TestInterceptor_FlushBuffer(t *testing.T) {
 
 	interceptor.FlushBuffer()
 	assert.Len(t, handler.records, 1)
+}
+
+// TestSubInterceptor_ScopedAttrsSurviveFileAndFlush pins that a logger built
+// with slog.With / WithGroup keeps its scoped attributes on every output, not
+// only on the live stderr path: the verbose log file and the stderr replay of
+// logs buffered while the TUI owned the screen must carry them too.
+func TestSubInterceptor_ScopedAttrsSurviveFileAndFlush(t *testing.T) {
+	t.Run("log file", func(t *testing.T) {
+		logPath := filepath.Join(t.TempDir(), "scoped.log")
+		ic, err := NewInterceptor(slog.NewTextHandler(io.Discard, nil), nil, logPath, false)
+		require.NoError(t, err)
+
+		slog.New(ic).With("run", "run-7").WithGroup("stage").Info("file-bound", "name", "provider")
+		require.NoError(t, ic.Close())
+
+		data, err := os.ReadFile(logPath)
+		require.NoError(t, err)
+		assert.Contains(t, string(data), "run=run-7")
+		assert.Contains(t, string(data), "stage.name=provider")
+	})
+
+	t.Run("flushed buffer", func(t *testing.T) {
+		var stderr bytes.Buffer
+		ic, err := NewInterceptor(slog.NewTextHandler(&stderr, nil), nil, "", true)
+		require.NoError(t, err)
+		t.Cleanup(func() { _ = ic.Close() })
+
+		slog.New(ic).With("run", "run-7").Info("buffered")
+		assert.Empty(t, stderr.String(), "suppressed logs must not reach stderr before the flush")
+
+		ic.FlushBuffer()
+		assert.Contains(t, stderr.String(), "msg=buffered")
+		assert.Contains(t, stderr.String(), "run=run-7")
+	})
 }
 
 // TestSubInterceptor exercises the WithAttrs / WithGroup paths on the
