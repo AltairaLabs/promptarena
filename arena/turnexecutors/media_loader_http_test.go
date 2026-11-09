@@ -522,6 +522,10 @@ func TestValidateURLNotPrivate_ByAddress(t *testing.T) {
 		{"[::ffff:127.0.0.1]", true},
 		{"[fc00::1]", true},
 		{"[fe80::1]", true},
+		// The unspecified address reaches the local host when dialled.
+		{"0.0.0.0", true},
+		{"0.1.2.3", true},
+		{"[::]", true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.host, func(t *testing.T) {
