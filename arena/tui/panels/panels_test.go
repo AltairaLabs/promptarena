@@ -6,9 +6,11 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/AltairaLabs/promptarena/v2/arena/assertions"
 	"github.com/AltairaLabs/promptarena/v2/arena/statestore"
+	"github.com/AltairaLabs/promptarena/v2/arena/tui/views"
 
 	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )
@@ -386,20 +388,31 @@ func TestResultPanel_TruncatesLongText(t *testing.T) {
 	assert.Contains(t, view, "this_is_a_very_long")
 }
 
+// TestResultPanel_TableAccessor pins that Table hands out the panel's own
+// table: the rows View renders are the rows a caller sees through it.
 func TestResultPanel_TableAccessor(t *testing.T) {
 	panel := NewResultPanel()
 	panel.Update(100, 30)
+	panel.Update(100, 30) // second call sizes the initialized table
 
-	table := panel.Table()
-	assert.NotNil(t, table)
-}
+	_ = panel.View(&ResultPanelData{
+		Result: &statestore.RunResult{
+			RunID: "run-1",
+			ConversationAssertions: statestore.AssertionsSummary{
+				Total: 2,
+				Results: []statestore.ConversationValidationResult{
+					{Type: "contains", Passed: true, Message: "found"},
+					{Type: "max_length", Passed: false, Message: "too long"},
+				},
+			},
+		},
+		Status: views.StatusCompleted,
+	}, false)
 
-func TestSummaryPanel_Basic(t *testing.T) {
-	panel := NewSummaryPanel()
-	panel.Update(100)
-
-	// Basic smoke test - full test would need viewmodel
-	assert.NotNil(t, panel)
+	rows := panel.Table().Rows()
+	require.Len(t, rows, 2)
+	assert.Equal(t, "contains", rows[0][1])
+	assert.Equal(t, "max_length", rows[1][1])
 }
 
 func TestLogsPanel_Empty(t *testing.T) {
