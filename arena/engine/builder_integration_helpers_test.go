@@ -8,8 +8,12 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/prompt"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/providers"
+	runtimestore "github.com/AltairaLabs/PromptKit/runtime/v2/statestore"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/tools"
 	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/v2/arena/statestore"
 )
 
 func TestBuildProviderFilterSet(t *testing.T) {
@@ -62,8 +66,25 @@ func TestConfigureOrchestratorMetadata(t *testing.T) {
 
 	t.Run("sets metadata and classify registry", func(t *testing.T) {
 		orch := &EvalOrchestrator{}
+		promptReg := &prompt.Registry{}
+		toolReg := tools.NewRegistry()
+		cfg := &arenaconfig.Config{LoadedInferenceProviders: map[string]*config.Provider{"hf": hfProvider("hf")}}
+		classifyReg := configureOrchestratorMetadata(orch, cfg, promptReg, toolReg)
+
+		// Handlers find the registries under these keys in every EvalContext.
+		assert.Same(t, promptReg, orch.metadata["prompt_registry"])
+		assert.Same(t, toolReg, orch.metadata["tool_registry"])
+		require.NotNil(t, classifyReg)
+		assert.Same(t, classifyReg, orch.classifyRegistry,
+			"the orchestrator must carry the classify registry it was built with")
+	})
+
+	t.Run("nil registries are left out of the metadata", func(t *testing.T) {
+		orch := &EvalOrchestrator{}
 		configureOrchestratorMetadata(orch, &arenaconfig.Config{}, nil, nil)
-		assert.NotNil(t, orch.metadata)
+		require.NotNil(t, orch.metadata)
+		assert.NotContains(t, orch.metadata, "prompt_registry")
+		assert.NotContains(t, orch.metadata, "tool_registry")
 	})
 }
 
@@ -154,7 +175,9 @@ func TestBuildProviderSpec_StreamRetryBudgetNilMeansUnbounded(t *testing.T) {
 		Enabled: true,
 		Budget:  &config.StreamRetryBudgetConfig{RatePerSec: 2, Burst: 5},
 	})
-	assert.NotNil(t, got)
+	require.NotNil(t, got)
+	assert.InDelta(t, 2.0, got.RatePerSec(), 1e-9)
+	assert.Equal(t, 5, got.Burst())
 }
 
 // TestBuildProviderSpec_HTTPTransportZeroValueMeansDefaults covers
@@ -229,19 +252,21 @@ func TestBuildProviderSpec_TuningAndDefaults(t *testing.T) {
 // records its telemetry somewhere nobody looks — so the type switch and its
 // rejections are worth pinning.
 func TestBuildStateStore_SelectsBackend(t *testing.T) {
-	t.Run("no config defaults to the in-memory arena store", func(t *testing.T) {
-		got, err := buildStateStore(&arenaconfig.Config{})
-		require.NoError(t, err)
-		assert.NotNil(t, got)
-	})
-
-	t.Run("an empty type defaults the same way", func(t *testing.T) {
-		got, err := buildStateStore(&arenaconfig.Config{
-			StateStore: &config.StateStoreConfig{},
+	for _, tt := range []struct {
+		name string
+		cfg  *config.StateStoreConfig
+	}{
+		{"no config defaults to the in-memory arena store", nil},
+		{"an empty type defaults the same way", &config.StateStoreConfig{}},
+		{"memory is the arena store too", &config.StateStoreConfig{Type: "memory"}},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := buildStateStore(&arenaconfig.Config{StateStore: tt.cfg})
+			require.NoError(t, err)
+			// Only the arena store captures the run telemetry results are built from.
+			assert.IsType(t, &statestore.ArenaStateStore{}, got)
 		})
-		require.NoError(t, err)
-		assert.NotNil(t, got)
-	})
+	}
 
 	t.Run("redis without a redis block is rejected, not silently defaulted", func(t *testing.T) {
 		_, err := buildStateStore(&arenaconfig.Config{
@@ -261,7 +286,7 @@ func TestBuildStateStore_SelectsBackend(t *testing.T) {
 			},
 		})
 		require.NoError(t, err)
-		assert.NotNil(t, got)
+		assert.IsType(t, &runtimestore.RedisStore{}, got)
 	})
 
 	t.Run("a malformed TTL fails the build rather than being ignored", func(t *testing.T) {

@@ -86,17 +86,24 @@ func TestScenarioVariables_CopiesVariables(t *testing.T) {
 // TestOpenScenarioSessionMCPSources_NoOpWhenUnconfigured verifies the
 // helper is a no-op when either the scope manager or MCP config is empty.
 func TestOpenScenarioSessionMCPSources_NoOpWhenUnconfigured(t *testing.T) {
+	type ctxKey struct{}
+	ctx := context.WithValue(context.Background(), ctxKey{}, "caller")
+
+	// The caller's context comes back as it is: a run with no source-backed
+	// servers must not get a forked MCP registry attached to it.
 	e := &Engine{}
-	_, cleanup, err := e.openScenarioSessionMCPSources(context.Background(), nil, "scn", "run1")
+	runCtx, cleanup, err := e.openScenarioSessionMCPSources(ctx, nil, "scn", "run1")
 	require.NoError(t, err)
 	require.NotNil(t, cleanup)
+	assert.Equal(t, ctx, runCtx)
 	cleanup() // must not panic
 
 	// With a scope manager but no config entries, still a no-op.
 	reg := mcp.NewRegistry()
-	e = &Engine{mcpSourceScope: newMCPSourceScope(reg)}
-	_, cleanup, err = e.openScenarioSessionMCPSources(context.Background(), nil, "scn", "run1")
+	e = &Engine{mcpSourceScope: newMCPSourceScope(reg), mcpRegistry: reg}
+	runCtx, cleanup, err = e.openScenarioSessionMCPSources(ctx, nil, "scn", "run1")
 	require.NoError(t, err)
+	assert.Equal(t, ctx, runCtx)
 	cleanup()
 }
 
