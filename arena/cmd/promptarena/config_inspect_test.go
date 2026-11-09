@@ -170,44 +170,79 @@ func TestOutputJSON_ValidData(t *testing.T) {
 	assert.True(t, result.ValidationPassed)
 }
 
-func TestOutputText_ValidData(t *testing.T) {
-	data := &InspectionData{
-		ConfigFile: "test.yaml",
-		PromptConfigs: []PromptInspectData{
-			{ID: "prompt1", File: "prompts/prompt1.yaml"},
-		},
-		Providers: []ProviderInspectData{
-			{ID: "openai", File: "providers/openai.yaml", Type: "openai"},
-		},
-		Scenarios: []ScenarioInspectData{
-			{ID: "scenario1", File: "scenarios/scenario1.yaml"},
-		},
-		AvailableTaskTypes: []string{"task1"},
-		ValidationPassed:   true,
+// TestOutputText_RendersInspection pins what the text renderer shows for an
+// inspected config: each loaded resource by ID, self-play roles with their
+// providers, and the validation verdict with every error it found.
+func TestOutputText_RendersInspection(t *testing.T) {
+	base := func() *InspectionData {
+		return &InspectionData{
+			ConfigFile:         "test.yaml",
+			PromptConfigs:      []PromptInspectData{{ID: "prompt1", File: "prompts/prompt1.yaml"}},
+			Providers:          []ProviderInspectData{{ID: "openai", File: "providers/openai.yaml", Type: "openai"}},
+			Scenarios:          []ScenarioInspectData{{ID: "scenario1", File: "scenarios/scenario1.yaml"}},
+			AvailableTaskTypes: []string{"task1"},
+			ValidationPassed:   true,
+		}
 	}
 
-	// Just verify it doesn't crash
-	err := outputText(data, nil)
-	assert.NoError(t, err)
-}
-
-func TestOutputText_WithValidationError(t *testing.T) {
-	data := &InspectionData{
-		ConfigFile: "test.yaml",
-		PromptConfigs: []PromptInspectData{
-			{ID: "prompt1", File: "prompts/prompt1.yaml"},
+	cases := []struct {
+		name    string
+		data    func() *InspectionData
+		want    []string
+		notWant []string
+	}{
+		{
+			name: "valid data lists every resource",
+			data: base,
+			want: []string{
+				"Configuration: test.yaml",
+				"prompt1", "File: prompts/prompt1.yaml",
+				"openai (openai)", "File: providers/openai.yaml",
+				"scenario1",
+			},
+			notWant: []string{"Configuration has errors"},
 		},
-		Providers:          []ProviderInspectData{},
-		Scenarios:          []ScenarioInspectData{},
-		AvailableTaskTypes: []string{},
-		ValidationPassed:   false,
-		ValidationError:    "Missing required field: provider",
-		ValidationWarnings: 2,
+		{
+			name: "validation errors are listed",
+			data: func() *InspectionData {
+				d := base()
+				d.ValidationPassed = false
+				d.ValidationErrors = []string{"Missing required field: provider", "unknown task type: task9"}
+				return d
+			},
+			want: []string{
+				"Configuration has errors",
+				"Missing required field: provider",
+				"unknown task type: task9",
+			},
+		},
+		{
+			name: "self-play roles show their providers",
+			data: func() *InspectionData {
+				d := base()
+				d.SelfPlayRoles = []SelfPlayRoleData{
+					{ID: "user-role", Provider: "openai"},
+					{ID: "assistant-role", Provider: "claude"},
+				}
+				return d
+			},
+			want: []string{"2 roles", "user-role → openai", "assistant-role → claude"},
+		},
 	}
 
-	// Just verify it doesn't crash
-	err := outputText(data, nil)
-	assert.NoError(t, err)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			out := withCapturedStdout(t, func() {
+				require.NoError(t, outputText(tc.data(), nil))
+			})
+			for _, w := range tc.want {
+				assert.Contains(t, out, w)
+			}
+			for _, w := range tc.notWant {
+				assert.NotContains(t, out, w)
+			}
+		})
+	}
 }
 
 func TestOutputJSON_WithCacheStats(t *testing.T) {
@@ -266,27 +301,6 @@ func TestOutputJSON_WithCacheStats(t *testing.T) {
 	assert.NotNil(t, result.CacheStats)
 	assert.Equal(t, 5, result.CacheStats.PromptCache.Size)
 	assert.Equal(t, 10, result.CacheStats.PromptCache.Hits)
-}
-
-func TestOutputText_WithSelfPlayRoles(t *testing.T) {
-	data := &InspectionData{
-		ConfigFile: "test.yaml",
-		PromptConfigs: []PromptInspectData{
-			{ID: "prompt1", File: "prompts/prompt1.yaml"},
-		},
-		Providers: []ProviderInspectData{
-			{ID: "openai", File: "providers/openai.yaml", Type: "openai"},
-		},
-		Scenarios: []ScenarioInspectData{
-			{ID: "scenario1", File: "scenarios/scenario1.yaml"},
-		},
-		SelfPlayRoles:      []SelfPlayRoleData{{ID: "user", Provider: "openai"}, {ID: "assistant", Provider: "openai"}},
-		AvailableTaskTypes: []string{"task1"},
-		ValidationPassed:   true,
-	}
-
-	err := outputText(data, nil)
-	assert.NoError(t, err)
 }
 
 // Helper function to load config (wrapping the actual implementation)

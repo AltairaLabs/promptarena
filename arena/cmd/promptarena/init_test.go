@@ -579,37 +579,25 @@ func TestGetProjectName_EmptyArgs(t *testing.T) {
 	assert.Equal(t, "my-arena-tests", result)
 }
 
-func TestCollectInteractiveVariables_StructureValidation(t *testing.T) {
-	// We can't test actual interactive prompts, but we can verify the function structure
-	template := &templates.Template{
-		Spec: templates.TemplateSpec{
-			Variables: []templates.Variable{
-				{Name: "provider", Default: "mock", Type: "select", Options: []string{"mock", "openai"}},
-			},
-		},
-	}
-
-	config := &templates.TemplateConfig{
-		ProjectName: "test",
-		Variables:   map[string]interface{}{"project_name": "test"},
-		Template:    template,
-	}
-
-	// Verify the function signature exists and structure is correct
-	assert.NotNil(t, config)
-	assert.NotNil(t, template.Spec.Variables)
-}
-
+// TestInitFlags pins the init flags and the defaults a bare `promptarena init`
+// runs with: the quick-start template, interactive prompts, and output into the
+// current directory.
 func TestInitFlags(t *testing.T) {
-	// Test that flags are properly defined
-	flags := initCmd.Flags()
-
-	assert.NotNil(t, flags.Lookup("template"))
-	assert.NotNil(t, flags.Lookup("quick"))
-	assert.NotNil(t, flags.Lookup("no-git"))
-	assert.NotNil(t, flags.Lookup("no-env"))
-	assert.NotNil(t, flags.Lookup("provider"))
-	assert.NotNil(t, flags.Lookup("output"))
+	for name, want := range map[string]string{
+		"template": "quick-start",
+		"quick":    "false",
+		"no-git":   "false",
+		"no-env":   "false",
+		"force":    "false",
+		"provider": "",
+		"output":   ".",
+		"no-agent": "false",
+	} {
+		f := initCmd.Flags().Lookup(name)
+		if assert.NotNil(t, f, "--%s must be defined", name) {
+			assert.Equal(t, want, f.DefValue, "--%s default", name)
+		}
+	}
 }
 
 func TestInitCommand_Usage(t *testing.T) {
