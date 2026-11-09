@@ -293,6 +293,40 @@ func TestAdapter_EmitterContract(t *testing.T) {
 	}
 }
 
+// TestAdapter_ConversationStartedFromEmitter drives conversation.started
+// through the real emitter, which publishes a pointer payload, and requires
+// the SSE event to carry the system prompt (issue #500).
+func TestAdapter_ConversationStartedFromEmitter(t *testing.T) {
+	adapter := NewEventAdapter()
+	ch := adapter.Register()
+
+	bus := events.NewEventBus()
+	defer bus.Close()
+	adapter.Subscribe(bus)
+
+	events.NewEmitter(bus, "exec-1", "sess-1", "conv-1").ConversationStarted("You are terse.")
+
+	select {
+	case msg := <-ch:
+		var got SSEEvent
+		if err := json.Unmarshal(msg, &got); err != nil {
+			t.Fatalf("unmarshal: %v", err)
+		}
+		if got.Type != "conversation.started" {
+			t.Fatalf("type = %q, want conversation.started", got.Type)
+		}
+		data, ok := got.Data.(map[string]interface{})
+		if !ok {
+			t.Fatalf("data is %T (%v), want a map with the system prompt", got.Data, got.Data)
+		}
+		if data[jsonKeySystemPrompt] != "You are terse." {
+			t.Errorf("systemPrompt = %v, want %q", data[jsonKeySystemPrompt], "You are terse.")
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("timed out waiting for conversation.started")
+	}
+}
+
 func TestAdapter_Subscribe(t *testing.T) {
 	adapter := NewEventAdapter()
 	ch := adapter.Register()
