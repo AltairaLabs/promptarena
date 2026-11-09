@@ -515,15 +515,19 @@ func TestChatPage_Update_chatEvalMsg_Scores(t *testing.T) {
 	}
 }
 
-// TestChatPage_Update_chatEvalMsg_NoScore verifies chatEvalMsg with nil score produces empty status.
+// TestChatPage_Update_chatEvalMsg_NoScore verifies chatEvalMsg with only
+// nil-score results clears the status line rather than leaving the previous
+// status or printing the unscored eval.
 func TestChatPage_Update_chatEvalMsg_NoScore(t *testing.T) {
 	p := NewChatPage(&AppContext{Version: "vTEST"})
 	p.SetSize(80, 24)
+	p.statusLine = "assistant is responding…"
 	results := []evals.EvalResult{{Type: "noscoreeval"}} // Score is nil
 	newPage, _ := p.Update(chatEvalMsg{results: results})
 	pp := newPage.(*ChatPage)
-	// chatFormatEvalScores returns "" when all scores are nil, so statusLine is "".
-	_ = pp
+	if pp.statusLine != "" {
+		t.Fatalf("expected empty status line for unscored evals, got %q", pp.statusLine)
+	}
 }
 
 // TestChatPage_Update_chatErrMsg verifies chatErrMsg updates status line and clears busy.
@@ -798,14 +802,6 @@ func TestGoldenChatPage_Setup(t *testing.T) {
 	p.state = chatStateSelectAgent
 	out := stripANSI(p.View())
 	teatest.RequireEqualOutput(t, []byte(out))
-}
-
-// TestChatPage_PanelRoundtrip verifies ConversationPanel can be created and
-// rendered without data without panicking.
-func TestChatPage_PanelRoundtrip(t *testing.T) {
-	p := NewChatPage(&AppContext{Version: "vTEST"})
-	p.SetSize(80, 24)
-	_ = p.View()
 }
 
 // TestChatPage_HandleStreamDone_RunEvalsTrue verifies that when runEvals is

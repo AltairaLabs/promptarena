@@ -6,14 +6,22 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	"github.com/AltairaLabs/promptarena/v2/arena/tui/theme"
 	"github.com/AltairaLabs/promptarena/v2/arena/tui/viewmodels"
 )
 
+// TestNewRunsTableView pins the runs table's styling: the header gets a
+// bottom rule in the node accent, and the selected row is highlighted without
+// the default bold.
 func TestNewRunsTableView(t *testing.T) {
-	view := NewRunsTableView()
+	style := NewRunsTableView().GetTableStyle()
 
-	assert.NotNil(t, view)
-	assert.NotNil(t, view.tableStyle)
+	assert.True(t, style.Header.GetBorderBottom(), "header should have a bottom rule")
+	assert.True(t, style.Header.GetBold())
+	assert.Equal(t, theme.Colors().AccentNode, style.Header.GetForeground())
+	assert.False(t, style.Selected.GetBold(), "selected row should not be bold")
+	assert.Equal(t, theme.Colors().BorderStrong, style.Selected.GetBackground())
+	assert.Equal(t, theme.Colors().TextHeading, style.Selected.GetForeground())
 }
 
 func TestSetDimensions(t *testing.T) {
@@ -48,14 +56,6 @@ func TestGetColumns(t *testing.T) {
 	assert.Equal(t, "Duration", columns[4].Title)
 	assert.Equal(t, "Cost", columns[5].Title)
 	assert.Equal(t, "Notes", columns[6].Title)
-}
-
-func TestGetTableStyle(t *testing.T) {
-	view := NewRunsTableView()
-
-	style := view.GetTableStyle()
-
-	assert.NotNil(t, style)
 }
 
 func TestRender_EmptyData(t *testing.T) {

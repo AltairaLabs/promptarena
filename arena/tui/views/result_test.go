@@ -11,11 +11,6 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )
 
-func TestNewResultView(t *testing.T) {
-	view := NewResultView()
-	assert.NotNil(t, view)
-}
-
 func TestResultView_Render_Completed(t *testing.T) {
 	res := &statestore.RunResult{
 		RunID:      "test-run-123",

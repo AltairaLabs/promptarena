@@ -8,6 +8,7 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/AltairaLabs/promptarena/v2/arena/statestore"
 	"github.com/AltairaLabs/promptarena/v2/arena/tui/theme"
@@ -118,9 +119,12 @@ func TestConversationPanel_ColumnsExpandOnResize(t *testing.T) {
 func TestConversationPanel_Update_NotReady(t *testing.T) {
 	panel := NewConversationPanel()
 
-	cmd := panel.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("j")})
-
-	assert.Nil(t, cmd)
+	// Before any data is set the panel ignores input, including the
+	// focus-switch key it would otherwise act on.
+	panel.Update(tea.KeyMsg{Type: tea.KeyRight})
+	assert.Equal(t, focusConversationTurns, panel.focus)
+	panel.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune("j")})
+	assert.Equal(t, 0, panel.SelectedTurnIdx())
 }
 
 func TestConversationPanel_Update_KeyNavigation(t *testing.T) {
@@ -184,14 +188,6 @@ func TestConversationPanel_HandleKeyMsg_LeftKey(t *testing.T) {
 
 	assert.Equal(t, focusConversationTurns, panel.focus)
 	_ = cmd // cmd may be nil, that's OK
-}
-
-func TestConversationPanel_HandleKeyMsg_NotKeyMsg(t *testing.T) {
-	panel := NewConversationPanel()
-
-	cmd := panel.handleKeyMsg(tea.WindowSizeMsg{Width: 100, Height: 50})
-
-	assert.Nil(t, cmd)
 }
 
 func TestConversationPanel_View_NilResult(t *testing.T) {
@@ -330,8 +326,9 @@ func TestConversationPanel_UpdateTable_NotReady(t *testing.T) {
 		},
 	}
 
-	// Should not panic
+	// Without a table there is nothing to fill: no rows appear.
 	panel.updateTable(result)
+	assert.Empty(t, panel.table.Rows())
 }
 
 func TestConversationPanel_UpdateTable_IndexOutOfBounds(t *testing.T) {
@@ -730,22 +727,21 @@ func TestConversationPanel_UpdateTablePanel(t *testing.T) {
 	result := &statestore.RunResult{
 		RunID: "run-123",
 		Messages: []types.Message{
-			{Role: "user", Content: "Msg 1"},
+			{Role: "user", Content: strings.Repeat("long question line\n\n", 80)},
 			{Role: "assistant", Content: "Msg 2"},
 		},
-		Cost:     types.CostInfo{},
 		Duration: time.Second,
 	}
-
 	panel.SetData("run-123", "scenario", "provider", result)
+	panel.detail.SetYOffset(3)
+	require.Equal(t, 3, panel.detail.YOffset, "the first turn must be long enough to scroll")
 
-	// Test cursor movement
-	oldIdx := panel.selectedTurnIdx
-	msg := tea.KeyMsg{Type: tea.KeyDown}
-	_ = panel.updateTablePanel(msg)
-
-	// Cursor should have moved (or stayed if at boundary)
-	_ = oldIdx
+	// Down moves the cursor and the selection to the next turn, and the
+	// detail pane starts that turn from the top.
+	_ = panel.updateTablePanel(tea.KeyMsg{Type: tea.KeyDown})
+	assert.Equal(t, 1, panel.selectedTurnIdx)
+	assert.Equal(t, 1, panel.table.Cursor())
+	assert.Equal(t, 0, panel.detail.YOffset)
 }
 
 func TestConversationPanel_AddScrollIndicators_NotScrollable(t *testing.T) {
@@ -865,59 +861,39 @@ func TestConversationPanel_BuildDetailView(t *testing.T) {
 	assert.NotEmpty(t, view)
 }
 
-func TestConversationPanel_UpdateFocusedPanel_TurnsFocus(t *testing.T) {
-	panel := NewConversationPanel()
-	panel.SetDimensions(100, 50)
-
-	result := &statestore.RunResult{
-		RunID: "run-123",
-		Messages: []types.Message{
-			{Role: "user", Content: "Hello"},
-		},
-		Cost:     types.CostInfo{},
-		Duration: time.Second,
+// TestConversationPanel_UpdateFocusedPanel_RoutesKeysByFocus pins that a
+// scroll key moves the turn selection while the turns list is focused, and
+// scrolls the detail pane (leaving the selection alone) while it is focused.
+func TestConversationPanel_UpdateFocusedPanel_RoutesKeysByFocus(t *testing.T) {
+	newPanel := func() *ConversationPanel {
+		panel := NewConversationPanel()
+		panel.SetDimensions(100, 30)
+		panel.SetData("run-123", "scenario", "provider", &statestore.RunResult{
+			RunID: "run-123",
+			Messages: []types.Message{
+				{Role: "user", Content: strings.Repeat("a long question line\n\n", 80)},
+				{Role: "assistant", Content: "Hi"},
+			},
+			Duration: time.Second,
+		})
+		return panel
 	}
 
-	panel.SetData("run-123", "scenario", "provider", result)
-	panel.focus = focusConversationTurns
+	t.Run("turns focus moves the selection", func(t *testing.T) {
+		panel := newPanel()
+		panel.focus = focusConversationTurns
+		_ = panel.updateFocusedPanel(tea.KeyMsg{Type: tea.KeyDown})
+		assert.Equal(t, 1, panel.selectedTurnIdx)
+		assert.Equal(t, 0, panel.detail.YOffset)
+	})
 
-	msg := tea.KeyMsg{Type: tea.KeyDown}
-	cmd := panel.updateFocusedPanel(msg)
-
-	// Should update table panel
-	_ = cmd
-}
-
-func TestConversationPanel_UpdateFocusedPanel_DetailFocus(t *testing.T) {
-	panel := NewConversationPanel()
-	panel.SetDimensions(100, 50)
-
-	result := &statestore.RunResult{
-		RunID: "run-123",
-		Messages: []types.Message{
-			{Role: "user", Content: "Hello"},
-		},
-		Cost:     types.CostInfo{},
-		Duration: time.Second,
-	}
-
-	panel.SetData("run-123", "scenario", "provider", result)
-	panel.focus = focusConversationDetail
-
-	msg := tea.KeyMsg{Type: tea.KeyDown}
-	cmd := panel.updateFocusedPanel(msg)
-
-	// Should update detail viewport
-	_ = cmd
-}
-
-func TestConversationPanel_UpdateFocusedPanel_NoFocus(t *testing.T) {
-	panel := NewConversationPanel()
-
-	msg := tea.KeyMsg{Type: tea.KeyDown}
-	cmd := panel.updateFocusedPanel(msg)
-
-	assert.Nil(t, cmd)
+	t.Run("detail focus scrolls the detail pane", func(t *testing.T) {
+		panel := newPanel()
+		panel.focus = focusConversationDetail
+		_ = panel.updateFocusedPanel(tea.KeyMsg{Type: tea.KeyDown})
+		assert.Equal(t, 0, panel.selectedTurnIdx)
+		assert.Equal(t, 1, panel.detail.YOffset)
+	})
 }
 
 func TestConversationPanel_HasSystemPrompt_NoResult(t *testing.T) {
@@ -972,8 +948,11 @@ func TestConversationPanel_PrependSystemPrompt_NoResult(t *testing.T) {
 	panel := NewConversationPanel()
 	panel.res = nil
 
-	// Should not panic
+	// With no conversation loaded there is nothing to prepend to; the panel
+	// must not invent one.
 	panel.PrependSystemPrompt(&types.Message{Role: "system", Content: "Test"})
+	assert.Equal(t, 0, panel.MessageCount())
+	assert.False(t, panel.HasSystemPrompt())
 }
 
 func TestConversationPanel_PrependSystemPrompt(t *testing.T) {
@@ -1030,8 +1009,10 @@ func TestConversationPanel_AppendMessage_NoResult(t *testing.T) {
 	panel := NewConversationPanel()
 	panel.res = nil
 
-	// Should not panic
+	// AppendMessage only extends a loaded conversation; it does not start one.
 	panel.AppendMessage(&types.Message{Role: "user", Content: "Test"})
+	assert.Equal(t, 0, panel.MessageCount())
+	assert.Equal(t, "No conversation available.", panel.View())
 }
 
 func TestConversationPanel_AppendMessage(t *testing.T) {
@@ -1081,14 +1062,6 @@ func TestConversationPanel_AppendMessage_AutoAdvance(t *testing.T) {
 	assert.Equal(t, 2, panel.selectedTurnIdx)
 }
 
-func TestConversationPanel_UpdateMessageMetadata_NoResult(t *testing.T) {
-	panel := NewConversationPanel()
-	panel.res = nil
-
-	// Should not panic
-	panel.UpdateMessageMetadata(0, 100, types.CostInfo{TotalCost: 0.001})
-}
-
 func TestConversationPanel_UpdateMessageMetadata_InvalidIndex(t *testing.T) {
 	panel := NewConversationPanel()
 	panel.res = &statestore.RunResult{
@@ -1097,11 +1070,17 @@ func TestConversationPanel_UpdateMessageMetadata_InvalidIndex(t *testing.T) {
 		},
 	}
 
-	// Should not panic with negative index
+	// Out-of-range indexes are ignored rather than clamped onto a real
+	// message: the only message keeps its (absent) metadata.
 	panel.UpdateMessageMetadata(-1, 100, types.CostInfo{TotalCost: 0.001})
-
-	// Should not panic with out of bounds index
 	panel.UpdateMessageMetadata(5, 100, types.CostInfo{TotalCost: 0.001})
+	assert.Zero(t, panel.res.Messages[0].LatencyMs)
+	assert.Nil(t, panel.res.Messages[0].CostInfo)
+
+	// With no conversation loaded the update is dropped too.
+	empty := NewConversationPanel()
+	empty.UpdateMessageMetadata(0, 100, types.CostInfo{TotalCost: 0.001})
+	assert.Equal(t, 0, empty.MessageCount())
 }
 
 func TestConversationPanel_UpdateMessageMetadata(t *testing.T) {

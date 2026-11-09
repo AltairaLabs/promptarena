@@ -194,13 +194,22 @@ func TestApp_CloseAll_CallsCloseOnCloseable(t *testing.T) {
 	}
 }
 
-// TestApp_CloseAll_IgnoresNonCloseable verifies closeAll does not panic on
-// pages that do not implement Closeable.
+// TestApp_CloseAll_IgnoresNonCloseable verifies closeAll walks the whole
+// stack: a page that is not Closeable is skipped, and Closeable pages below
+// and above it are still closed.
 func TestApp_CloseAll_IgnoresNonCloseable(t *testing.T) {
-	page := &plainTestPage{}
-	a := New(&AppContext{Version: "vTEST"}, page)
-	// Should not panic.
+	var closed []string
+	bottom := &closeableTestPage{onClose: func() { closed = append(closed, "bottom") }}
+	top := &closeableTestPage{onClose: func() { closed = append(closed, "top") }}
+
+	a := New(&AppContext{Version: "vTEST"}, bottom)
+	a.push(&plainTestPage{})
+	a.push(top)
 	a.closeAll()
+
+	if len(closed) != 2 || closed[0] != "bottom" || closed[1] != "top" {
+		t.Fatalf("expected both Closeable pages closed in stack order, got %v", closed)
+	}
 }
 
 // TestApp_QuitMsg_CallsCloseAll verifies that receiving QuitMsg triggers
@@ -247,21 +256,6 @@ func TestApp_EscAtRoot_CallsCloseAll(t *testing.T) {
 	if !closed {
 		t.Fatal("expected Close() to be called on Esc at root")
 	}
-}
-
-// TestStartVoice_NilSendDoesNotPanic verifies startVoice handles a nil send
-// func gracefully (the nil guard substitutes a no-op before any send call).
-// The audio constructor is overridden to fail so the driver is not launched and
-// no real device is opened.
-func TestStartVoice_NilSendDoesNotPanic(t *testing.T) {
-	restore := overrideAudioIO(func() (voice.AudioIO, error) {
-		return nil, fmt.Errorf("simulated: no audio device")
-	})
-	defer restore()
-
-	p := &ChatPage{voice: &VoiceOptions{}}
-	// Must not panic even with nil send.
-	_ = p.startVoice(nil)
 }
 
 // TestChatPage_Update_VoiceLevelMsg verifies voiceLevelMsg stores mic/agent levels.
@@ -839,22 +833,28 @@ func TestHandleChatKey_Voice_ScrollForwarded(t *testing.T) {
 	}
 }
 
-// TestRefreshVoicePanel_LoadError verifies refreshVoicePanel does not panic
-// when the state store returns an error (e.g. conversation ID not found). The
-// function must silently return without modifying the panel.
+// TestRefreshVoicePanel_LoadError verifies refreshVoicePanel leaves the page
+// untouched when the state store cannot load the conversation (e.g. the
+// conversation ID is not found yet): no transcript, and the status line keeps
+// what it said.
 func TestRefreshVoicePanel_LoadError(t *testing.T) {
 	p := NewChatPage(&AppContext{Version: "vTEST"})
-	// Set a real store but a non-existent conversation ID so Load returns ErrNotFound.
+	// A real store but a non-existent conversation ID, so Load returns ErrNotFound.
 	p.voiceStore = arenastore.NewArenaStateStore()
 	p.voiceConvID = "does-not-exist"
 	p.width = 120
 	p.height = 40
 	p.panel.SetDimensions(120, 30)
+	p.statusLine = voiceStatusListening
 
-	// Must not panic; the panel should remain empty (no data set).
 	p.refreshVoicePanel()
-	// Calling View() after a no-op refresh should not panic.
-	_ = p.View()
+
+	if n := p.panel.MessageCount(); n != 0 {
+		t.Fatalf("expected no transcript after a failed load, got %d messages", n)
+	}
+	if p.statusLine != voiceStatusListening {
+		t.Fatalf("expected status line unchanged, got %q", p.statusLine)
+	}
 }
 
 // closeableTestPage is a minimal Page + Closeable for testing App.closeAll.

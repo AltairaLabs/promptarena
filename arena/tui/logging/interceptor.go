@@ -44,8 +44,9 @@ type Interceptor struct {
 	originalHandler slog.Handler
 	send            func(tea.Msg)
 	logFile         *os.File
+	fileHandler     slog.Handler // formats records into logFile; nil without a file
 	suppressStderr  bool
-	logBuffer       []slog.Record
+	logBuffer       []bufferedRecord
 	mu              sync.Mutex
 
 	// Worker plumbing for the program.Send goroutine.
@@ -88,6 +89,7 @@ func NewInterceptor(
 			return nil, fmt.Errorf("failed to open log file: %w", err)
 		}
 		interceptor.logFile = f
+		interceptor.fileHandler = slog.NewTextHandler(f, &slog.HandlerOptions{Level: slog.LevelDebug})
 	}
 
 	go interceptor.runTUIWorker()
@@ -147,20 +149,33 @@ func (l *Interceptor) Enabled(ctx context.Context, level slog.Level) bool {
 	return l.originalHandler.Enabled(ctx, level)
 }
 
+// bufferedRecord is a log record held back while stderr is suppressed, with
+// the handler that must format it on flush. Keeping the handler (rather than
+// replaying through the unscoped original) preserves a sub-logger's
+// WithAttrs/WithGroup scoping in the flushed output.
+type bufferedRecord struct {
+	handler slog.Handler
+	record  slog.Record
+}
+
 // Handle processes a log record by sending it to the TUI and optionally writing to file.
 //
 //nolint:gocritic // hugeParam: slog.Record must be passed by value to satisfy slog.Handler interface
 func (l *Interceptor) Handle(ctx context.Context, record slog.Record) error {
+	return l.handle(ctx, record, l.originalHandler, l.fileHandler)
+}
+
+// handle is the shared Handle path for the Interceptor and its sub-handlers.
+// stderr and file are the (possibly attribute-scoped) handlers for this
+// logger; the TUI worker, buffer and drop counter are always the parent's.
+func (l *Interceptor) handle(ctx context.Context, record slog.Record, stderr, file slog.Handler) error {
 	// If stderr suppressed, buffer the log for later flushing
 	if l.suppressStderr {
 		l.mu.Lock()
-		l.logBuffer = append(l.logBuffer, record)
+		l.logBuffer = append(l.logBuffer, bufferedRecord{handler: stderr, record: record})
 		l.mu.Unlock()
-	} else {
-		// Send to original handler (stderr) immediately
-		if err := l.originalHandler.Handle(ctx, record); err != nil {
-			return err
-		}
+	} else if err := stderr.Handle(ctx, record); err != nil {
+		return err
 	}
 
 	// Send to TUI via the worker goroutine. NEVER block the engine on
@@ -182,13 +197,8 @@ func (l *Interceptor) Handle(ctx context.Context, record slog.Record) error {
 		l.closeMu.RUnlock()
 	}
 
-	// Write to file if configured (use original handler to get full formatting)
-	if l.logFile != nil {
-		// Create a text handler that writes to the log file with full formatting
-		fileHandler := slog.NewTextHandler(l.logFile, &slog.HandlerOptions{
-			Level: slog.LevelDebug,
-		})
-		if err := fileHandler.Handle(ctx, record); err != nil {
+	if file != nil {
+		if err := file.Handle(ctx, record); err != nil {
 			return fmt.Errorf("failed to write to log file: %w", err)
 		}
 	}
@@ -201,12 +211,12 @@ func (l *Interceptor) Handle(ctx context.Context, record slog.Record) error {
 // Subloggers share the parent's send/file/worker so attributed logs
 // route through the same backpressure path.
 func (l *Interceptor) WithAttrs(attrs []slog.Attr) slog.Handler {
-	return &subInterceptor{parent: l, handler: l.originalHandler.WithAttrs(attrs)}
+	return (&subInterceptor{parent: l, handler: l.originalHandler, file: l.fileHandler}).WithAttrs(attrs)
 }
 
 // WithGroup returns a new handler with an additional group.
 func (l *Interceptor) WithGroup(name string) slog.Handler {
-	return &subInterceptor{parent: l, handler: l.originalHandler.WithGroup(name)}
+	return (&subInterceptor{parent: l, handler: l.originalHandler, file: l.fileHandler}).WithGroup(name)
 }
 
 // subInterceptor is the WithAttrs/WithGroup view of an Interceptor.
@@ -216,6 +226,7 @@ func (l *Interceptor) WithGroup(name string) slog.Handler {
 type subInterceptor struct {
 	parent  *Interceptor
 	handler slog.Handler
+	file    slog.Handler // scoped view of the parent's file handler; nil without a file
 }
 
 // Enabled reports whether the underlying scoped slog.Handler accepts the level.
@@ -228,50 +239,27 @@ func (s *subInterceptor) Enabled(ctx context.Context, level slog.Level) bool {
 //
 //nolint:gocritic // hugeParam: slog.Record must be value
 func (s *subInterceptor) Handle(ctx context.Context, record slog.Record) error {
-	// Same flow as parent's Handle, but using this sub-handler's
-	// scoped attributes for stderr/file output.
-	if s.parent.suppressStderr {
-		s.parent.mu.Lock()
-		s.parent.logBuffer = append(s.parent.logBuffer, record)
-		s.parent.mu.Unlock()
-	} else if err := s.handler.Handle(ctx, record); err != nil {
-		return err
-	}
-	if s.parent.send != nil {
-		s.parent.closeMu.RLock()
-		if !s.parent.closed {
-			msg := Msg{
-				Timestamp: record.Time,
-				Level:     levelToString(record.Level),
-				Message:   record.Message,
-			}
-			select {
-			case s.parent.tuiSendCh <- msg:
-			default:
-				s.parent.drops.Add(1)
-			}
-		}
-		s.parent.closeMu.RUnlock()
-	}
-	if s.parent.logFile != nil {
-		fileHandler := slog.NewTextHandler(s.parent.logFile, &slog.HandlerOptions{Level: slog.LevelDebug})
-		if err := fileHandler.Handle(ctx, record); err != nil {
-			return fmt.Errorf("failed to write to log file: %w", err)
-		}
-	}
-	return nil
+	return s.parent.handle(ctx, record, s.handler, s.file)
 }
 
 // WithAttrs returns a sub-handler with additional scoped attributes,
 // sharing this sub-handler's parent worker / log file plumbing.
 func (s *subInterceptor) WithAttrs(attrs []slog.Attr) slog.Handler {
-	return &subInterceptor{parent: s.parent, handler: s.handler.WithAttrs(attrs)}
+	sub := &subInterceptor{parent: s.parent, handler: s.handler.WithAttrs(attrs)}
+	if s.file != nil {
+		sub.file = s.file.WithAttrs(attrs)
+	}
+	return sub
 }
 
 // WithGroup returns a sub-handler that nests subsequent attributes under
 // the given group name, sharing the parent's worker / log file plumbing.
 func (s *subInterceptor) WithGroup(name string) slog.Handler {
-	return &subInterceptor{parent: s.parent, handler: s.handler.WithGroup(name)}
+	sub := &subInterceptor{parent: s.parent, handler: s.handler.WithGroup(name)}
+	if s.file != nil {
+		sub.file = s.file.WithGroup(name)
+	}
+	return sub
 }
 
 // Msg is a bubbletea message sent when a log entry is intercepted.
@@ -290,7 +278,7 @@ func (l *Interceptor) FlushBuffer() {
 	for i := range l.logBuffer {
 		// Ignore errors during flush - best effort
 		// Use background context since original context may be canceled
-		_ = l.originalHandler.Handle(context.Background(), l.logBuffer[i])
+		_ = l.logBuffer[i].handler.Handle(context.Background(), l.logBuffer[i].record)
 	}
 
 	// Clear the buffer
