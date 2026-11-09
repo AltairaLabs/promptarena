@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -44,10 +45,24 @@ func TestViewPage_TitleIsView(t *testing.T) {
 	}
 }
 
-// TestViewPage_Init verifies Init() returns a non-nil cmd (filebrowser init).
+// TestViewPage_Init verifies Init lists the results directory: running its
+// cmd and feeding the result back shows the result files in the browser.
 func TestViewPage_Init(t *testing.T) {
-	p := NewViewPage(".")
-	_ = p.Init() // Must not panic; filepicker init may return nil on headless
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "run-abc.json"), []byte(`{}`), 0o644); err != nil {
+		t.Fatalf("setup: %v", err)
+	}
+	p := NewViewPage(dir)
+	p.SetSize(100, 30)
+	cmd := p.Init()
+	if cmd == nil {
+		t.Fatal("Init returned nil; expected the directory-read cmd")
+	}
+	_ = p.View()
+	p.Update(cmd())
+	if view := stripANSI(p.View()); !strings.Contains(view, "run-abc.json") {
+		t.Fatalf("expected run-abc.json listed after Init, got:\n%s", view)
+	}
 }
 
 // TestViewPage_NonFileMsgForwarded verifies that unrecognised messages are

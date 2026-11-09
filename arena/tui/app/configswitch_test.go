@@ -130,13 +130,41 @@ func TestConfigSwitch_Title(t *testing.T) {
 	}
 }
 
-// TestConfigSwitch_Init verifies that Init delegates to the file browser and
-// returns a non-nil cmd (the filepicker's init cmd).
+// TestConfigSwitch_Init verifies Init lists the start directory and that a
+// config picked in the listing is loaded: the browser's Init → read-dir →
+// Enter → FileSelectedMsg round trip feeding the page's own load path.
 func TestConfigSwitch_Init(t *testing.T) {
-	page := NewConfigSwitchPage(&AppContext{}, ".")
-	// FileBrowserPage.Init() returns a non-nil cmd (filepicker.Init).
-	// We just need to call it without panic; the exact cmd type is internal.
-	_ = page.Init()
+	dir := t.TempDir()
+	cfgPath := filepath.Join(dir, "config.arena.yaml")
+	if err := os.WriteFile(cfgPath, []byte(minimalArenaYAML), 0o644); err != nil {
+		t.Fatalf("setup: %v", err)
+	}
+
+	ctx := &AppContext{}
+	page := NewConfigSwitchPage(ctx, dir)
+	page.SetSize(80, 24)
+	cmd := page.Init()
+	if cmd == nil {
+		t.Fatal("Init returned nil; expected the directory-read cmd")
+	}
+	_ = page.View()
+	page.Update(cmd())
+	if view := stripANSI(page.View()); !strings.Contains(view, "config.arena.yaml") {
+		t.Fatalf("expected the start directory listed after Init, got:\n%s", view)
+	}
+
+	_, cmd = page.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	if cmd == nil {
+		t.Fatal("Enter on the config returned nil cmd; expected a FileSelectedMsg")
+	}
+	sel, ok := cmd().(pages.FileSelectedMsg)
+	if !ok || sel.Path != cfgPath {
+		t.Fatalf("expected FileSelectedMsg{Path:%q}, got %#v", cfgPath, sel)
+	}
+	page.Update(sel)
+	if ctx.ConfigPath != cfgPath {
+		t.Fatalf("ctx.ConfigPath=%q, want %q", ctx.ConfigPath, cfgPath)
+	}
 }
 
 // TestConfigSwitch_SetSizeAndView verifies SetSize + View do not panic and

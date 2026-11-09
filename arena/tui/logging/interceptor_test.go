@@ -42,59 +42,85 @@ func TestInterceptor_SendFunc_DeliversLog(t *testing.T) {
 }
 
 func TestNewInterceptor(t *testing.T) {
-	handler := slog.NewTextHandler(os.Stderr, nil)
-	send := func(tea.Msg) {}
-
 	t.Run("without log file", func(t *testing.T) {
-		interceptor, err := NewInterceptor(handler, send, "", false)
+		// Not suppressed: each record goes straight to the original handler
+		// (stderr) and to the TUI, and no file is opened.
+		var stderr bytes.Buffer
+		got := make(chan Msg, 1)
+		interceptor, err := NewInterceptor(slog.NewTextHandler(&stderr, nil), func(m tea.Msg) {
+			if lm, ok := m.(Msg); ok {
+				got <- lm
+			}
+		}, "", false)
 		require.NoError(t, err)
-		assert.NotNil(t, interceptor)
+		t.Cleanup(func() { _ = interceptor.Close() })
+
+		slog.New(interceptor).Warn("to-stderr")
+		assert.Contains(t, stderr.String(), "level=WARN msg=to-stderr")
+		select {
+		case m := <-got:
+			assert.Equal(t, "WARN", m.Level)
+			assert.Equal(t, "to-stderr", m.Message)
+		case <-time.After(time.Second):
+			t.Fatal("log never reached the TUI send func")
+		}
 		assert.Nil(t, interceptor.logFile)
-		assert.NotNil(t, interceptor.send)
 	})
 
 	t.Run("with log file", func(t *testing.T) {
-		tmpDir := t.TempDir()
-		logPath := filepath.Join(tmpDir, "test.log")
+		logPath := filepath.Join(t.TempDir(), "test.log")
 
-		interceptor, err := NewInterceptor(handler, send, logPath, false)
+		interceptor, err := NewInterceptor(slog.NewTextHandler(io.Discard, nil), nil, logPath, false)
 		require.NoError(t, err)
-		assert.NotNil(t, interceptor)
-		assert.NotNil(t, interceptor.logFile)
+		slog.New(interceptor).Info("to-file")
+		require.NoError(t, interceptor.Close())
 
-		// Cleanup
-		err = interceptor.Close()
-		assert.NoError(t, err)
+		// The file is created owner-only and receives the record.
+		info, err := os.Stat(logPath)
+		require.NoError(t, err)
+		assert.Equal(t, os.FileMode(logFilePermissions), info.Mode().Perm())
+		data, err := os.ReadFile(logPath)
+		require.NoError(t, err)
+		assert.Contains(t, string(data), "level=INFO msg=to-file")
 	})
 
 	t.Run("invalid log file path", func(t *testing.T) {
-		interceptor, err := NewInterceptor(handler, send, "/nonexistent/dir/test.log", false)
-		assert.Error(t, err)
+		interceptor, err := NewInterceptor(slog.NewTextHandler(io.Discard, nil), nil, "/nonexistent/dir/test.log", false)
+		assert.ErrorContains(t, err, "failed to open log file")
 		assert.Nil(t, interceptor)
 	})
 }
 
 func TestInterceptor_Close(t *testing.T) {
-	handler := slog.NewTextHandler(os.Stderr, nil)
-	send := func(tea.Msg) {}
-
 	t.Run("with no log file", func(t *testing.T) {
-		interceptor, err := NewInterceptor(handler, send, "", false)
+		var sent []Msg
+		var mu sync.Mutex
+		interceptor, err := NewInterceptor(slog.NewTextHandler(io.Discard, nil), func(m tea.Msg) {
+			mu.Lock()
+			defer mu.Unlock()
+			sent = append(sent, m.(Msg))
+		}, "", false)
 		require.NoError(t, err)
 
-		err = interceptor.Close()
-		assert.NoError(t, err)
+		require.NoError(t, interceptor.Close())
+		// Close is idempotent, and a log after Close is dropped rather than
+		// sent on the closed worker channel.
+		require.NoError(t, interceptor.Close())
+		require.NoError(t, slog.New(interceptor).Handler().Handle(context.Background(),
+			slog.NewRecord(time.Now(), slog.LevelInfo, "after-close", 0)))
+		mu.Lock()
+		defer mu.Unlock()
+		assert.Empty(t, sent)
 	})
 
 	t.Run("with log file", func(t *testing.T) {
-		tmpDir := t.TempDir()
-		logPath := filepath.Join(tmpDir, "test.log")
-
-		interceptor, err := NewInterceptor(handler, send, logPath, false)
+		logPath := filepath.Join(t.TempDir(), "test.log")
+		interceptor, err := NewInterceptor(slog.NewTextHandler(io.Discard, nil), nil, logPath, false)
 		require.NoError(t, err)
 
-		err = interceptor.Close()
-		assert.NoError(t, err)
+		require.NoError(t, interceptor.Close())
+		_, err = interceptor.logFile.WriteString("x")
+		assert.ErrorIs(t, err, os.ErrClosed, "Close must close the log file")
 	})
 }
 
@@ -298,27 +324,35 @@ func TestSubInterceptor_ScopedAttrsSurviveFileAndFlush(t *testing.T) {
 // WithAttrs / WithGroup methods. Subinterceptors share the parent's TUI
 // worker + log file but apply scoped slog attributes.
 func TestSubInterceptor(t *testing.T) {
-	handler := slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelDebug})
-	interceptor, err := NewInterceptor(handler, nil, "", false)
-	require.NoError(t, err)
-	defer interceptor.Close()
+	handler := slog.NewTextHandler(io.Discard, &slog.HandlerOptions{Level: slog.LevelDebug})
 
-	t.Run("WithAttrs returns subInterceptor", func(t *testing.T) {
-		sub := interceptor.WithAttrs([]slog.Attr{slog.String("k", "v")})
-		assert.NotNil(t, sub)
+	t.Run("WithAttrs keeps the original handler's level", func(t *testing.T) {
+		infoOnly, err := NewInterceptor(slog.NewTextHandler(io.Discard, &slog.HandlerOptions{Level: slog.LevelInfo}),
+			nil, "", false)
+		require.NoError(t, err)
+		defer infoOnly.Close()
+
+		sub := infoOnly.WithAttrs([]slog.Attr{slog.String("k", "v")})
 		assert.True(t, sub.Enabled(context.Background(), slog.LevelInfo))
+		assert.False(t, sub.Enabled(context.Background(), slog.LevelDebug))
 	})
 
-	t.Run("WithGroup returns subInterceptor", func(t *testing.T) {
-		sub := interceptor.WithGroup("ns")
-		assert.NotNil(t, sub)
-	})
+	t.Run("subInterceptor.Handle writes scoped attrs to stderr and the TUI", func(t *testing.T) {
+		var stderr bytes.Buffer
+		got := make(chan Msg, 1)
+		ic, err := NewInterceptor(slog.NewTextHandler(&stderr, nil), func(m tea.Msg) { got <- m.(Msg) }, "", false)
+		require.NoError(t, err)
+		defer ic.Close()
 
-	t.Run("subInterceptor.Handle writes through", func(t *testing.T) {
-		sub := interceptor.WithAttrs([]slog.Attr{slog.String("scope", "test")})
-		rec := slog.NewRecord(time.Now(), slog.LevelInfo, "scoped log", 0)
-		err := sub.Handle(context.Background(), rec)
-		assert.NoError(t, err)
+		sub := ic.WithAttrs([]slog.Attr{slog.String("scope", "test")})
+		require.NoError(t, sub.Handle(context.Background(), slog.NewRecord(time.Now(), slog.LevelInfo, "scoped log", 0)))
+		assert.Contains(t, stderr.String(), `msg="scoped log" scope=test`)
+		select {
+		case m := <-got:
+			assert.Equal(t, "scoped log", m.Message)
+		case <-time.After(time.Second):
+			t.Fatal("scoped log never reached the TUI send func")
+		}
 	})
 
 	t.Run("subInterceptor.Handle buffers when suppressStderr", func(t *testing.T) {
@@ -350,10 +384,19 @@ func TestSubInterceptor(t *testing.T) {
 	})
 
 	t.Run("subInterceptor.WithAttrs / WithGroup chain", func(t *testing.T) {
-		sub := interceptor.WithAttrs([]slog.Attr{slog.String("a", "1")})
+		var stderr bytes.Buffer
+		ic, err := NewInterceptor(slog.NewTextHandler(&stderr, nil), nil, "", false)
+		require.NoError(t, err)
+		defer ic.Close()
+
+		sub := ic.WithAttrs([]slog.Attr{slog.String("a", "1")})
 		nested := sub.WithAttrs([]slog.Attr{slog.String("b", "2")})
-		assert.NotNil(t, nested)
-		grouped := sub.WithGroup("inner")
-		assert.NotNil(t, grouped)
+		require.NoError(t, nested.Handle(context.Background(), slog.NewRecord(time.Now(), slog.LevelInfo, "nested", 0)))
+		assert.Contains(t, stderr.String(), "msg=nested a=1 b=2")
+
+		stderr.Reset()
+		grouped := ic.WithGroup("outer").WithGroup("inner").WithAttrs([]slog.Attr{slog.String("c", "3")})
+		require.NoError(t, grouped.Handle(context.Background(), slog.NewRecord(time.Now(), slog.LevelInfo, "grouped", 0)))
+		assert.Contains(t, stderr.String(), "outer.inner.c=3")
 	})
 }
