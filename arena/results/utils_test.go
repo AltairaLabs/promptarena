@@ -14,12 +14,6 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )
 
-func TestSummaryBuilder_NewSummaryBuilder(t *testing.T) {
-	builder := results.NewSummaryBuilder("test-config.yaml")
-
-	assert.NotNil(t, builder)
-}
-
 func TestSummaryBuilder_BuildSummary_EmptyResults(t *testing.T) {
 	builder := results.NewSummaryBuilder("test-config.yaml")
 

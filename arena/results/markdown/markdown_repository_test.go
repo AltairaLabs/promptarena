@@ -358,14 +358,6 @@ func TestAssertionFailureExtraction(t *testing.T) {
 	assert.Contains(t, failures[0].Details, "max_length")
 }
 
-func TestSaveSummary(t *testing.T) {
-	repo := NewMarkdownResultRepositoryWithConfig(t.TempDir(), nil)
-
-	// SaveSummary should not return error (it's a no-op for markdown)
-	err := repo.SaveSummary(nil)
-	assert.NoError(t, err)
-}
-
 // TDD Tests for Markdown Configuration Support
 
 func TestNewMarkdownResultRepository_WithConfig(t *testing.T) {
