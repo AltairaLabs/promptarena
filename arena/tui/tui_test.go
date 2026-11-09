@@ -3,6 +3,7 @@ package tui
 import (
 	"context"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -76,16 +77,17 @@ func TestModel_Update_ResizeMsg(t *testing.T) {
 }
 
 func TestModel_Update_KeyMsg(t *testing.T) {
-	m := NewModel("test.yaml", 5)
-
-	msg := tea.KeyMsg{
-		Type: tea.KeyCtrlC,
+	for _, key := range []tea.KeyMsg{
+		{Type: tea.KeyCtrlC},
+		{Type: tea.KeyRunes, Runes: []rune{'q'}},
+	} {
+		t.Run(key.String(), func(t *testing.T) {
+			m := NewModel("test.yaml", 5)
+			_, cmd := m.Update(key)
+			require.NotNil(t, cmd, "%s should return a quit command", key)
+			assert.IsType(t, tea.QuitMsg{}, cmd())
+		})
 	}
-
-	updatedModel, cmd := m.Update(msg)
-
-	require.NotNil(t, updatedModel)
-	require.NotNil(t, cmd, "Ctrl+C should return a quit command")
 }
 
 func TestModel_View(t *testing.T) {
@@ -814,16 +816,6 @@ func TestUpdate_LoggingMsg(t *testing.T) {
 	assert.Equal(t, now, lastLog.Timestamp)
 }
 
-func TestUpdate_MouseMsg(t *testing.T) {
-	m := NewModel("test.yaml", 1)
-
-	msg := tea.MouseMsg{}
-	updatedModel, cmd := m.Update(msg)
-
-	assert.NotNil(t, updatedModel)
-	assert.Nil(t, cmd)
-}
-
 func TestNewModel_InitializesPages(t *testing.T) {
 	m := NewModel("test.yaml", 5)
 
@@ -1010,36 +1002,63 @@ func TestHandleMainPageKey_ArrowKeysOnRunsTable(t *testing.T) {
 		{RunID: "run-1", Scenario: "scn1"},
 		{RunID: "run-2", Scenario: "scn2"},
 	}
+	_ = m.View() // populate the runs table from m.activeRuns
 
-	// Arrow keys should be handled by the table
-	downMsg := tea.KeyMsg{Type: tea.KeyDown}
-	updated, cmd := m.Update(downMsg)
-	// Should not panic and return a model
-	assert.NotNil(t, updated)
-	// May or may not return a command depending on table state
-	_ = cmd
+	// Down moves the runs-table cursor, so Enter drills into the second run.
+	m.Update(tea.KeyMsg{Type: tea.KeyDown})
+	m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	run, ok := m.TakeSelectedRun()
+	require.True(t, ok)
+	assert.Equal(t, "run-2", run.RunID)
+
+	// Up moves it back.
+	m.Update(tea.KeyMsg{Type: tea.KeyUp})
+	m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	run, ok = m.TakeSelectedRun()
+	require.True(t, ok)
+	assert.Equal(t, "run-1", run.RunID)
 }
 
-func TestHandleMainPageKey_LogsPaneScrolling(t *testing.T) {
-	m := NewModel("test.yaml", 1)
-	m.width = 100
-	m.height = 30
-	m.isTUIMode = true
-	m.activePane = paneLogs
-	m.logs = []LogEntry{
-		{Level: "INFO", Message: "log 1"},
-		{Level: "INFO", Message: "log 2"},
-		{Level: "INFO", Message: "log 3"},
+// TestHandleMainPageKey_ScrollKeysGoToFocusedPane pins that a scroll key
+// reaches only the focused pane's viewport.
+func TestHandleMainPageKey_ScrollKeysGoToFocusedPane(t *testing.T) {
+	longContent := strings.Repeat("line\n", 200)
+
+	for _, tc := range []struct {
+		name  string
+		focus func(m *Model)
+	}{
+		{"logs", (*Model).setFocusToLogsPane},
+		{"result", (*Model).setFocusToResultPane},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			m := NewModel("test.yaml", 1)
+			m.width = 120
+			m.height = 40
+			m.isTUIMode = true
+			for i := 0; i < 100; i++ {
+				m.logs = append(m.logs, LogEntry{Level: "INFO", Message: fmt.Sprintf("log %d", i)})
+			}
+			_ = m.View()
+			_ = m.View() // second frame: logs panel is initialized and holds the logs
+			m.mainPage.ResultPanel().Viewport().SetContent(longContent)
+			tc.focus(m)
+
+			logsVP := m.mainPage.LogsPanel().Viewport()
+			resultVP := m.mainPage.ResultPanel().Viewport()
+			focused, other := logsVP, resultVP
+			if tc.name == "result" {
+				focused, other = resultVP, logsVP
+			}
+
+			m.Update(tea.KeyMsg{Type: tea.KeyDown})
+			assert.Equal(t, 1, focused.YOffset, "focused pane should scroll down")
+			assert.Equal(t, 0, other.YOffset, "unfocused pane must not scroll")
+
+			m.Update(tea.KeyMsg{Type: tea.KeyUp})
+			assert.Equal(t, 0, focused.YOffset, "focused pane should scroll back up")
+		})
 	}
-
-	// Arrow keys on logs pane should scroll viewport
-	downMsg := tea.KeyMsg{Type: tea.KeyDown}
-	updated, _ := m.Update(downMsg)
-	assert.NotNil(t, updated)
-
-	upMsg := tea.KeyMsg{Type: tea.KeyUp}
-	updated2, _ := updated.Update(upMsg)
-	assert.NotNil(t, updated2)
 }
 
 func TestToggleSelection_OutOfBounds(t *testing.T) {
@@ -1050,10 +1069,12 @@ func TestToggleSelection_OutOfBounds(t *testing.T) {
 	m.activePane = paneRuns
 	// No runs
 
-	// Enter should not panic with empty runs
-	enterMsg := tea.KeyMsg{Type: tea.KeyEnter}
-	updated, _ := m.Update(enterMsg)
-	assert.NotNil(t, updated)
+	// Enter with no runs records no drill-down selection.
+	m.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	assert.Empty(t, m.selectedRunID)
+	run, ok := m.TakeSelectedRun()
+	assert.False(t, ok)
+	assert.Equal(t, RunInfo{}, run)
 }
 
 func TestBuildSummary_InternalThreadSafety(t *testing.T) {
@@ -1152,56 +1173,6 @@ func TestModel_Logs(t *testing.T) {
 	// Verify it's a copy (modifying returned slice doesn't affect model)
 	logs[0].Message = "modified"
 	assert.Equal(t, "msg1", m.logs[0].Message)
-}
-
-// Tests for handleResultPaneKey
-func TestHandleResultPaneKey(t *testing.T) {
-	m := NewModel("test.yaml", 1)
-	m.width = 120
-	m.height = 40
-	m.isTUIMode = true
-	m.activePane = paneResult
-	m.activeRuns = []RunInfo{{RunID: "run-1", Scenario: "scn", Provider: "prov", Status: StatusCompleted}}
-
-	m.stateStore = &mockRunResultStore{
-		result: &statestore.RunResult{
-			RunID:      "run-1",
-			ScenarioID: "scn",
-			ProviderID: "prov",
-			Messages:   []types.Message{{Role: "user", Content: "hello"}},
-		},
-	}
-
-	// Initialize the main page with data
-	m.mainPage.SetDimensions(m.width, m.height-10)
-	runs := m.convertToRunInfos()
-	logs := m.convertToLogEntries()
-	m.mainPage.SetData(runs, logs, "result", nil)
-
-	msg := tea.KeyMsg{Type: tea.KeyDown}
-	cmd := m.handleResultPaneKey(msg)
-	// May return nil if result panel is not initialized with data
-	_ = cmd
-}
-
-func TestHandleResultPaneKey_NilResultPanel(t *testing.T) {
-	m := NewModel("test.yaml", 1)
-	m.activePane = paneResult
-
-	msg := tea.KeyMsg{Type: tea.KeyDown}
-	cmd := m.handleResultPaneKey(msg)
-	assert.Nil(t, cmd)
-}
-
-// Tests for delegateKeyToActivePane - result pane path
-func TestDelegateKeyToActivePane_ResultPane(t *testing.T) {
-	m := NewModel("test.yaml", 1)
-	m.activePane = paneResult
-
-	msg := tea.KeyMsg{Type: tea.KeyDown}
-	cmd := m.delegateKeyToActivePane(msg)
-	// Result pane handler should be called
-	_ = cmd
 }
 
 // fakeAudioMonitor is a test double for the audioMonitor interface.
