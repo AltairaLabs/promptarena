@@ -63,6 +63,9 @@ func TestResources_Read_UnknownURI(t *testing.T) {
 	resp := readResource(t, s, "promptarena://nope/x")
 	require.NotNil(t, resp)
 	require.NotNil(t, resp.Error)
+	assert.Equal(t, invalidParams, resp.Error.Code)
+	assert.Equal(t, "unknown resource uri: promptarena://nope/x", resp.Error.Message)
+	assert.Nil(t, resp.Result)
 }
 
 func TestResources_Read_BadParams(t *testing.T) {
