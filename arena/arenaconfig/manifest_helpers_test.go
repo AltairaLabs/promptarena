@@ -128,63 +128,6 @@ func TestProviderConfigK8s_K8sManifestInterface(t *testing.T) {
 	}
 }
 
-func TestManifestHelpers_InterfaceCompliance(t *testing.T) {
-	// Test that all config types implement the expected interface methods
-	t.Run("ScenarioConfig methods exist", func(t *testing.T) {
-		var _ interface {
-			GetAPIVersion() string
-			GetKind() string
-			GetName() string
-			SetID(string)
-		} = &ScenarioConfig{}
-	})
-
-	t.Run("ProviderConfig methods exist", func(t *testing.T) {
-		var _ interface {
-			GetAPIVersion() string
-			GetKind() string
-			GetName() string
-			SetID(string)
-		} = &config.ProviderConfig{}
-	})
-
-	t.Run("ScenarioConfigK8s methods exist", func(t *testing.T) {
-		var _ interface {
-			GetAPIVersion() string
-			GetKind() string
-			GetName() string
-			SetID(string)
-		} = &ScenarioConfigK8s{}
-	})
-
-	t.Run("ProviderConfigK8s methods exist", func(t *testing.T) {
-		var _ interface {
-			GetAPIVersion() string
-			GetKind() string
-			GetName() string
-			SetID(string)
-		} = &config.ProviderConfigK8s{}
-	})
-
-	t.Run("EvalConfig methods exist", func(t *testing.T) {
-		var _ interface {
-			GetAPIVersion() string
-			GetKind() string
-			GetName() string
-			SetID(string)
-		} = &EvalConfig{}
-	})
-
-	t.Run("EvalConfigK8s methods exist", func(t *testing.T) {
-		var _ interface {
-			GetAPIVersion() string
-			GetKind() string
-			GetName() string
-			SetID(string)
-		} = &EvalConfigK8s{}
-	})
-}
-
 func TestEvalConfig_K8sManifestInterface(t *testing.T) {
 	cfg := &EvalConfig{
 		APIVersion: "promptkit.altairalabs.io/v1alpha1",

@@ -35,8 +35,11 @@ func TestLoadScenario_RejectsPassThresholdOutOfRange(t *testing.T) {
 }
 
 func TestLoadScenario_AcceptsPassThresholdInRange(t *testing.T) {
-	for _, v := range []string{"0", "0.6667", "1"} {
-		_, err := LoadScenario(writeLoaderSchemaFile(t, passThresholdScenario+v+"\n"))
+	for v, want := range map[string]float64{"0": 0, "0.6667": 0.6667, "1": 1} {
+		sc, err := LoadScenario(writeLoaderSchemaFile(t, passThresholdScenario+v+"\n"))
 		require.NoError(t, err, "pass_threshold %s", v)
+		got := sc.Turns[0].Assertions[0].PassThreshold
+		require.NotNil(t, got, "pass_threshold %s was dropped on load", v)
+		assert.InDelta(t, want, *got, 1e-9)
 	}
 }
