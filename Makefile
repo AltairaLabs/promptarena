@@ -27,7 +27,7 @@ LINT_BASE    ?= origin/main
 
 .DEFAULT_GOAL := help
 .PHONY: help deps build build-go build-web run test test-web test-race coverage \
-        test-examples lint lint-new vet fmt schemas schemas-check schemas-format \
+        test-examples lint lint-new check-weak-assertions vet fmt schemas schemas-check schemas-format \
         verify hooks dev-web clean release-snapshot
 
 # Route unknown targets to help rather than a bare "No rule to make target".
@@ -95,6 +95,9 @@ lint: ## Run golangci-lint over all code (includes inherited/grandfathered debt)
 
 lint-new: ## Lint only new code vs $(LINT_BASE) — matches the CI "new code" gate
 	@golangci-lint run --new-from-rev=$(LINT_BASE) --timeout=5m ./...
+
+check-weak-assertions: ## Fail on new tests whose assertions cannot fail (CI "Weak Assertion Guard")
+	@scripts/check-weak-assertions.sh
 
 vet: ## Run go vet
 	@$(GO) vet ./...
