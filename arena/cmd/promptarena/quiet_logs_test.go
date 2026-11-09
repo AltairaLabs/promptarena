@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"testing"
@@ -11,11 +12,26 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/v2/logger"
 )
 
-// TestQuietSetupLogs_NonTUINoop verifies the headless path leaves logging alone.
+// TestQuietSetupLogs_NonTUINoop verifies the headless path leaves logging alone:
+// logs keep going where they already went, and no promptarena.log is created
+// even for a verbose run with an output directory.
+//
+// Not parallel: it mutates the process-global runtime logger output.
 func TestQuietSetupLogs_NonTUINoop(t *testing.T) {
-	restore := quietSetupLogs(false, &RunParameters{})
-	require.NotNil(t, restore)
-	restore() // must not panic
+	var current bytes.Buffer
+	logger.SetOutput(&current)
+	t.Cleanup(func() { logger.SetOutput(nil) })
+	dir := t.TempDir()
+
+	restore := quietSetupLogs(false, &RunParameters{Verbose: true, OutDir: dir})
+	logger.Info("headless-setup-marker")
+	restore()
+	logger.Info("headless-after-restore-marker")
+
+	assert.Contains(t, current.String(), "headless-setup-marker", "setup logs must not be redirected")
+	assert.Contains(t, current.String(), "headless-after-restore-marker",
+		"restore must not move logging off its existing output")
+	assert.NoFileExists(t, filepath.Join(dir, "promptarena.log"))
 }
 
 // TestQuietSetupLogs_VerboseCapturesToFile verifies that on the verbose TUI path

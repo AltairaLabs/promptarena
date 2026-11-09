@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -278,78 +279,72 @@ spec:
 	}
 }
 
+// TestDisplayErrors pins the truncation `promptarena validate` applies: five
+// errors unless --verbose, then a count of the rest and how to see them.
 func TestDisplayErrors(t *testing.T) {
-	errors := []config.SchemaValidationError{
-		{Field: "(root).spec.invalid", Description: "Invalid field", Value: "test"},
-		{Field: "(root).metadata.name", Description: "Missing required field", Value: nil},
-		{Field: "spec.scenarios", Description: "Must be an array", Value: "string"},
+	errs := make([]config.SchemaValidationError, 7)
+	var all strings.Builder
+	for i := range errs {
+		errs[i] = config.SchemaValidationError{Field: fmt.Sprintf("(root).spec.f%d", i), Description: "bad"}
+		fmt.Fprintf(&all, "  - spec.f%d: bad\n", i)
 	}
+	firstFive := strings.Join(strings.SplitAfter(all.String(), "\n")[:5], "")
 
 	tests := []struct {
 		name    string
 		errors  []config.SchemaValidationError
 		verbose bool
+		want    string
 	}{
+		{name: "verbose shows every error", errors: errs, verbose: true, want: all.String()},
 		{
-			name:    "verbose mode",
-			errors:  errors,
-			verbose: true,
+			name: "non-verbose shows five and counts the rest", errors: errs,
+			want: firstFive + "\n  ... and 2 more error(s) (use --verbose to see all)\n",
 		},
 		{
-			name:    "non-verbose mode",
-			errors:  errors,
-			verbose: false,
+			name: "non-verbose with five or fewer has no trailer", errors: errs[:5],
+			want: firstFive,
 		},
-		{
-			name:    "empty errors",
-			errors:  []config.SchemaValidationError{},
-			verbose: false,
-		},
+		{name: "empty errors print nothing", errors: []config.SchemaValidationError{}},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Just ensure it doesn't panic
-			displayErrors(tt.errors, tt.verbose)
+			out := captureStdout(t, func() { displayErrors(tt.errors, tt.verbose) })
+			assert.Equal(t, tt.want, out)
 		})
 	}
 }
 
+// TestDisplayError pins the default line format: the "(root)." prefix is
+// trimmed, a value is shown when there is one, and a whole-document error is
+// attributed to "root".
 func TestDisplayError(t *testing.T) {
 	tests := []struct {
 		name string
 		err  config.SchemaValidationError
+		want string
 	}{
 		{
 			name: "error with value",
-			err: config.SchemaValidationError{
-				Field:       "(root).spec.invalid",
-				Description: "Invalid field",
-				Value:       "test",
-			},
+			err:  config.SchemaValidationError{Field: "(root).spec.invalid", Description: "Invalid field", Value: "test"},
+			want: "  - spec.invalid: Invalid field (value: test)\n",
 		},
 		{
 			name: "error without value",
-			err: config.SchemaValidationError{
-				Field:       "(root).metadata.name",
-				Description: "Missing required field",
-				Value:       nil,
-			},
+			err:  config.SchemaValidationError{Field: "(root).metadata.name", Description: "Missing required field"},
+			want: "  - metadata.name: Missing required field\n",
 		},
 		{
 			name: "error with root field",
-			err: config.SchemaValidationError{
-				Field:       "(root)",
-				Description: "Root level error",
-				Value:       nil,
-			},
+			err:  config.SchemaValidationError{Field: "(root)", Description: "Root level error"},
+			want: "  - root: Root level error\n",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Just ensure it doesn't panic
-			displayError(tt.err)
+			assert.Equal(t, tt.want, captureStdout(t, func() { displayError(tt.err) }))
 		})
 	}
 }
