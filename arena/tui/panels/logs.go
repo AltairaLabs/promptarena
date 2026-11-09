@@ -51,9 +51,10 @@ func (p *LogsPanel) Init(width, height int) {
 
 // Update updates the viewport with log data and dimensions
 func (p *LogsPanel) Update(logs []LogEntry, width, height int) {
+	// Initialize lazily, then fall through: returning here dropped the logs
+	// passed to the first Update and showed the placeholder instead.
 	if !p.ready {
 		p.Init(width, height)
-		return
 	}
 
 	// Calculate viewport dimensions based on allocated height

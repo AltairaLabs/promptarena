@@ -483,9 +483,19 @@ func TestLogsPanel_Viewport(t *testing.T) {
 		}
 	}
 
+	// The very first Update must show the logs it was given, not a
+	// placeholder: a host that buffered logs before it knew its size (the
+	// logs overlay) only calls Update again on the next log or resize.
 	panel.Update(logs, 100, 20)
 	viewport := panel.Viewport()
-	assert.NotNil(t, viewport)
+	assert.Equal(t, 50, viewport.TotalLineCount())
+	assert.NotContains(t, panel.View(false), "Waiting for logs")
+
+	// Viewport hands out the panel's own viewport, so scrolling through it
+	// moves what View renders.
+	viewport.GotoBottom()
+	assert.Equal(t, viewport.YOffset, panel.Viewport().YOffset)
+	assert.Positive(t, panel.Viewport().YOffset)
 }
 
 func TestBuildDetailsText(t *testing.T) {

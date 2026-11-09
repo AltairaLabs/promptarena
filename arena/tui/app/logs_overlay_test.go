@@ -62,6 +62,21 @@ func TestLogsOverlay_NoSizeNoRender(t *testing.T) {
 	require.NotPanics(t, func() { _ = o.View() })
 }
 
+// TestLogsOverlay_LogsBeforeSizeShowOnFirstFrame covers a host that routes
+// logs into the overlay before its first resize. Sizing must render those
+// buffered lines, not a "Waiting for logs..." placeholder that only clears on
+// the next log line.
+func TestLogsOverlay_LogsBeforeSizeShowOnFirstFrame(t *testing.T) {
+	o := NewLogsOverlay()
+	o.Append(logging.Msg{Level: "INFO", Message: "early-line"})
+	o.SetSize(80, 24)
+	o.Toggle()
+
+	v := stripANSI(o.View())
+	require.Contains(t, v, "early-line")
+	require.NotContains(t, v, "Waiting for logs")
+}
+
 // TestGoldenLogsOverlay snapshots the overlay with a fixed set of log lines.
 func TestGoldenLogsOverlay(t *testing.T) {
 	for _, sz := range goldenAppSizes {
