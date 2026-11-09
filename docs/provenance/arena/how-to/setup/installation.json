@@ -139,7 +139,7 @@
    "claim": "go install needs no C compiler or audio headers: oto and PortAudio load their system audio libraries at run time",
    "verdict": "true",
    "evidence": [
-    "arena/audio/local_sink_oto.go:13",
+    "arena/audio/otobackend/otobackend_interactive.go:26",
     "arena/voice/session_audioio_interactive.go:16"
    ]
   },
