@@ -69,13 +69,35 @@ func TestLLMReportsAnUnknownNameAsUnbound(t *testing.T) {
 	require.ErrorIs(t, err, evals.ErrUnboundKey)
 }
 
-func TestClassifierResolvesAnInferenceProvider(t *testing.T) {
-	pr, cr := registries(t)
-	b := New(pr, cr, nil)
+// Each task keeps its own map in classify.Registry, so a classify provider
+// must resolve whichever task it was registered under, and must resolve to
+// the backend registered under that name rather than another or the default.
+func TestClassifierResolvesAnInferenceProviderOfEachTask(t *testing.T) {
+	text := &stubTextClassifier{}
+	audio := &struct{ classify.AudioClassifier }{}
+	image := &struct{ classify.ImageClassifier }{}
+	video := &struct{ classify.VideoClassifier }{}
+	topic := &struct{ classify.TopicClassifier }{}
+	embed := &struct{ classify.Embedder }{}
 
-	backend, err := b.Classifier("hf")
-	require.NoError(t, err)
-	require.NotNil(t, backend)
+	cr := classify.NewRegistry()
+	cr.RegisterText("text", text)
+	cr.RegisterText("other-text", &stubTextClassifier{})
+	require.NoError(t, cr.SetDefaultText("other-text"))
+	cr.RegisterAudio("audio", audio)
+	cr.RegisterImage("image", image)
+	cr.RegisterVideo("video", video)
+	cr.RegisterTopic("topic", topic)
+	cr.RegisterEmbedder("embed", embed)
+	b := New(providers.NewRegistry(), cr, nil)
+
+	for key, want := range map[string]any{
+		"text": text, "audio": audio, "image": image, "video": video, "topic": topic, "embed": embed,
+	} {
+		got, err := b.Classifier(key)
+		require.NoError(t, err, key)
+		require.Same(t, want, got, key)
+	}
 }
 
 func TestClassifierReportsAnLLMAsTheWrongKind(t *testing.T) {

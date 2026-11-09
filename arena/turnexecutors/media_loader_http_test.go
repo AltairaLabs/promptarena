@@ -503,11 +503,43 @@ func TestValidateURLNotPrivate_RejectsLocalhost(t *testing.T) {
 	}
 }
 
-func TestValidateURLNotPrivate_AllowsPublic(t *testing.T) {
-	// This will attempt a DNS lookup of example.com - a real public domain
-	err := validateURLNotPrivate("https://example.com/image.jpg")
-	if err != nil {
-		t.Skipf("DNS lookup failed (expected in offline environments): %v", err)
+// IP-literal hosts resolve to themselves without a DNS lookup, so this pins
+// the SSRF range check itself and runs the same offline as on CI.
+func TestValidateURLNotPrivate_ByAddress(t *testing.T) {
+	tests := []struct {
+		host    string
+		blocked bool
+	}{
+		{"8.8.8.8", false},
+		{"[2001:4860:4860::8888]", false},
+		{"10.1.2.3", true},
+		{"172.16.5.4", true},
+		{"172.31.255.255", true},
+		{"172.32.0.1", false},
+		{"192.168.1.1", true},
+		{"169.254.169.254", true}, // cloud metadata endpoint
+		{"[::1]", true},
+		{"[::ffff:127.0.0.1]", true},
+		{"[fc00::1]", true},
+		{"[fe80::1]", true},
+		// The unspecified address reaches the local host when dialled.
+		{"0.0.0.0", true},
+		{"0.1.2.3", true},
+		{"[::]", true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.host, func(t *testing.T) {
+			err := validateURLNotPrivate("http://" + tt.host + "/image.jpg")
+			if !tt.blocked {
+				if err != nil {
+					t.Fatalf("public address %s rejected: %v", tt.host, err)
+				}
+				return
+			}
+			if err == nil || !strings.Contains(err.Error(), "private/reserved") {
+				t.Fatalf("address %s: got %v, want a private/reserved rejection", tt.host, err)
+			}
+		})
 	}
 }
 

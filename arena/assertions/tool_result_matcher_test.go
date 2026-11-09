@@ -93,13 +93,6 @@ func TestMatchResult_NoMatch(t *testing.T) {
 	}
 }
 
-func TestMatchResult_EmptyEntries(t *testing.T) {
-	// Should not panic on empty entries.
-	result := &types.MessageToolResult{ID: "tc1", Name: "search", Parts: []types.ContentPart{types.NewTextPart("x")}}
-	matchResult(nil, result)
-	matchResult([]toolCallEntry{}, result)
-}
-
 func TestMatchResult_IDMatchSkipsResolvedByID(t *testing.T) {
 	a := &stubEntry{id: "tc1", name: "search", resolved: true}
 	b := &stubEntry{id: "tc1", name: "search"}

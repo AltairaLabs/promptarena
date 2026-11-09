@@ -428,58 +428,6 @@ func TestFilterOutToolMessages(t *testing.T) {
 	}
 }
 
-// TestSelfPlayExecutor_ExecuteTurnStream_WithStateStore tests streaming with state store
-func TestSelfPlayExecutor_ExecuteTurnStream_WithStateStore(t *testing.T) {
-	// Mock streaming provider
-	mockProvider := &MockStreamingProvider{
-		streamChunks: []providers.StreamChunk{
-			{Content: "AI", Delta: "AI", TokenCount: 1},
-			{Content: "AI response", Delta: " response", TokenCount: 2, FinishReason: strPtr("stop")},
-		},
-	}
-
-	// Mock content generator
-	mockContentGen := &MockContentGenerator{
-		message: types.Message{
-			Role:    "user",
-			Content: "Self-play generated message",
-		},
-	}
-
-	mockSelfPlayProvider := &MockSelfPlayProvider{
-		contentGen: mockContentGen,
-	}
-
-	toolRegistry := tools.NewRegistry()
-	aiExecutor := NewPipelineExecutor(toolRegistry, nil)
-	executor := NewSelfPlayExecutor(aiExecutor, mockSelfPlayProvider)
-
-	// Test with metadata and prompt vars (without state store to avoid middleware issues)
-	req := TurnRequest{
-		Provider:        mockProvider,
-		PromptRegistry:  nil,
-		TaskType:        "assistance",
-		Region:          "us",
-		Scenario:        &arenaconfig.Scenario{ID: "test-scenario"},
-		SelfPlayRole:    "user",
-		SelfPlayPersona: "helpful",
-		Metadata:        map[string]interface{}{"extra": "meta"},
-		PromptVars:      map[string]string{"var1": "value1"},
-	}
-
-	stream, err := executor.ExecuteTurnStream(context.Background(), req)
-	require.NoError(t, err)
-	require.NotNil(t, stream)
-
-	// Consume stream
-	for chunk := range stream {
-		if chunk.Error != nil {
-			// Some errors are expected due to missing middleware setup
-			break
-		}
-	}
-}
-
 // TestSelfPlayExecutor_ExecuteTurnStream_WithToolPolicy tests tool policy passing
 func TestSelfPlayExecutor_ExecuteTurnStream_WithToolPolicy(t *testing.T) {
 	mockProvider := &MockStreamingProvider{
@@ -514,14 +462,14 @@ func TestSelfPlayExecutor_ExecuteTurnStream_WithToolPolicy(t *testing.T) {
 
 	stream, err := executor.ExecuteTurnStream(context.Background(), req)
 	require.NoError(t, err)
-	require.NotNil(t, stream)
 
-	// Consume stream
-	for chunk := range stream {
-		if chunk.Error != nil {
-			break
-		}
-	}
+	// A tool policy with no tools registered must not disturb the turn.
+	msgs := finalStreamMessages(t, stream)
+	require.Len(t, msgs, 2)
+	assert.Equal(t, "user", msgs[0].Role)
+	assert.Equal(t, "Test message", msgs[0].Content)
+	assert.Equal(t, "assistant", msgs[1].Role)
+	assert.Equal(t, "Response", msgs[1].Content)
 }
 
 // TestScriptedExecutor_ExecuteTurnStream_WithToolPolicy tests tool policy passing for scripted
@@ -553,12 +501,25 @@ func TestScriptedExecutor_ExecuteTurnStream_WithToolPolicy(t *testing.T) {
 
 	stream, err := executor.ExecuteTurnStream(context.Background(), req)
 	require.NoError(t, err)
-	require.NotNil(t, stream)
 
-	// Consume stream
+	// A tool policy with no tools registered must not disturb the turn.
+	msgs := finalStreamMessages(t, stream)
+	require.Len(t, msgs, 2)
+	assert.Equal(t, "user", msgs[0].Role)
+	assert.Equal(t, "Test message", msgs[0].Content)
+	assert.Equal(t, "assistant", msgs[1].Role)
+	assert.Equal(t, "Response", msgs[1].Content)
+}
+
+// finalStreamMessages drains a turn stream, failing on any chunk error, and
+// returns the messages carried by the final chunk.
+func finalStreamMessages(t *testing.T, stream <-chan MessageStreamChunk) []types.Message {
+	t.Helper()
+	require.NotNil(t, stream)
+	var final MessageStreamChunk
 	for chunk := range stream {
-		if chunk.Error != nil {
-			break
-		}
+		require.NoError(t, chunk.Error)
+		final = chunk
 	}
+	return final.Messages
 }

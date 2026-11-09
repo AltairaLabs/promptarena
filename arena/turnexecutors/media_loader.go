@@ -577,6 +577,8 @@ var privateIPNets = func() []*net.IPNet {
 		"192.168.0.0/16", // NOSONAR — RFC 1918 private range for SSRF protection
 		"127.0.0.0/8",    // NOSONAR — loopback range for SSRF protection
 		"169.254.0.0/16", // NOSONAR — link-local range for SSRF protection
+		"0.0.0.0/8",      // NOSONAR — "this network"; 0.0.0.0 dials the local host
+		"::/128",         // unspecified IPv6 address; dials the local host
 		"::1/128",
 		"fc00::/7",
 		"fe80::/10",
