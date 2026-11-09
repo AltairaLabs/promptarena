@@ -71,7 +71,8 @@ func TestStampCurrentWorkflowState_NilSafe(t *testing.T) {
 		e.stampCurrentWorkflowState(convID, nil)
 		got, err := store.Load(ctx, convID)
 		require.NoError(t, err)
-		assert.Nil(t, got.Messages[0].Meta["current_workflow_state"])
+		assert.NotContains(t, got.Messages[0].Meta, "current_workflow_state",
+			"nil meta must not stamp the key, not even with a nil value")
 	})
 
 	t.Run("no assistant message is no-op", func(t *testing.T) {

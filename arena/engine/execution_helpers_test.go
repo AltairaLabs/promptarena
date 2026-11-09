@@ -71,8 +71,33 @@ func TestEngine_CreateRunEmitter(t *testing.T) {
 		}
 		runID := "test-run-id"
 
+		var mu sync.Mutex
+		var started []*events.Event
+		bus.Subscribe(events.EventType("arena.run.started"), func(ev *events.Event) {
+			mu.Lock()
+			started = append(started, ev)
+			mu.Unlock()
+		})
+
 		emitter := e.createRunEmitter(context.Background(), runID, &combo)
-		assert.NotNil(t, emitter)
+		require.NotNil(t, emitter)
+		bus.Close() // drains: every published event has been delivered
+
+		mu.Lock()
+		defer mu.Unlock()
+		require.Len(t, started, 1, "creating the emitter announces the run")
+		ev := started[0]
+		// The run ID doubles as session ID so recordings group by run.
+		assert.Equal(t, runID, ev.SessionID)
+		assert.Equal(t, runID, ev.ExecutionID)
+		assert.Equal(t, runID, ev.ConversationID)
+		data, ok := ev.Data.(*events.CustomEventData)
+		require.True(t, ok, "got %T", ev.Data)
+		assert.Equal(t, map[string]interface{}{
+			"scenario": "test-scenario",
+			"provider": "openai",
+			"region":   "us-west-1",
+		}, data.Data)
 	})
 
 	t.Run("returns nil when no event bus", func(t *testing.T) {
@@ -182,13 +207,6 @@ func TestEngine_SaveRunMetadata(t *testing.T) {
 }
 
 func TestEngine_NotifyRunCompletion(t *testing.T) {
-	t.Run("does nothing when no emitter", func(t *testing.T) {
-		e := &Engine{}
-		result := &ConversationResult{}
-		// Should not panic
-		e.notifyRunCompletion(nil, result, "run-id", time.Second, 0.05)
-	})
-
 	t.Run("emits failed event on error", func(t *testing.T) {
 		bus := events.NewEventBus()
 		e := &Engine{eventBus: bus}

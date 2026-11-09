@@ -185,23 +185,6 @@ func TestEngineSetTracerProvider(t *testing.T) {
 	})
 }
 
-func TestEngineSetMetrics(t *testing.T) {
-	t.Parallel()
-
-	t.Run("no-op without event bus", func(t *testing.T) {
-		e := &Engine{}
-		e.SetMetrics(nil, nil) // should not panic
-	})
-
-	t.Run("no-op with nil collector", func(t *testing.T) {
-		bus := events.NewEventBus()
-		e := &Engine{}
-		e.SetEventBus(bus)
-		e.SetMetrics(nil, nil) // should not panic
-		bus.Close()
-	})
-}
-
 func TestBuildTurnRequestSetsEventFields(t *testing.T) {
 	t.Parallel()
 

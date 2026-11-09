@@ -145,12 +145,9 @@ func TestDuplexConversationExecutor_ShouldUseClientVAD(t *testing.T) {
 	}
 }
 
-func TestDuplexConversationExecutor_ImplementsInterface(t *testing.T) {
-	executor := NewDuplexConversationExecutor(nil, nil, nil, nil, nil)
-
-	// Verify executor implements ConversationExecutor interface
-	var _ ConversationExecutor = executor
-}
+// DuplexConversationExecutor must satisfy ConversationExecutor; checked at
+// compile time.
+var _ ConversationExecutor = (*DuplexConversationExecutor)(nil)
 
 // mockNonStreamingProvider is a mock provider that doesn't support streaming
 type mockNonStreamingProvider struct{}

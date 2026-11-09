@@ -110,8 +110,9 @@ func TestResolveActiveComposition(t *testing.T) {
 	})
 
 	t.Run("resolver value is returned", func(t *testing.T) {
-		req := ConversationRequest{ActiveCompositionResolver: func() *composition.Composition { return nil }}
-		assert.Nil(t, resolveActiveComposition(req))
+		want := &composition.Composition{}
+		req := ConversationRequest{ActiveCompositionResolver: func() *composition.Composition { return want }}
+		assert.Same(t, want, resolveActiveComposition(req))
 	})
 
 	t.Run("recorder reset is nil-safe with a real recorder", func(t *testing.T) {

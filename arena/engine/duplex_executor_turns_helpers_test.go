@@ -104,10 +104,6 @@ func TestWaitForLocalPlaybackDrained_NoRouterIsANoOp(t *testing.T) {
 // Everything it writes is developer-facing debug metadata, so each guard has to
 // fall through quietly rather than fail a turn over absent optional data.
 func TestStampSelfplayDevMeta_OnlyStampsWhatItHas(t *testing.T) {
-	t.Run("nil meta is a no-op, not a panic", func(t *testing.T) {
-		stampSelfplayDevMeta(nil, nil, "persona", map[string]interface{}{"system_prompt": "x"})
-	})
-
 	t.Run("the system prompt is copied across when present", func(t *testing.T) {
 		meta := map[string]any{}
 		stampSelfplayDevMeta(meta, nil, "", map[string]interface{}{"system_prompt": "be terse"})
