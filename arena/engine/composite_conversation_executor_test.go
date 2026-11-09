@@ -280,12 +280,9 @@ func TestCompositeConversationExecutor_StreamNilDefaultExecutor(t *testing.T) {
 	}
 }
 
-func TestCompositeConversationExecutor_ImplementsInterface(t *testing.T) {
-	composite := NewCompositeConversationExecutor(nil, nil, nil)
-
-	// Verify composite implements ConversationExecutor interface
-	var _ ConversationExecutor = composite
-}
+// CompositeConversationExecutor must satisfy ConversationExecutor; checked at
+// compile time.
+var _ ConversationExecutor = (*CompositeConversationExecutor)(nil)
 
 func TestCompositeConversationExecutor_RouteToEval(t *testing.T) {
 	// Create mock executors

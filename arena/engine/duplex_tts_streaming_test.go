@@ -53,11 +53,16 @@ func TestTurnAudioMirror_WriteAfterFinalizeIsNoop(t *testing.T) {
 	require.NoError(t, err)
 	defer m.cleanup()
 
-	_, err = m.finalize()
+	require.NoError(t, m.write([]byte("early")))
+	abs, err := m.finalize()
 	require.NoError(t, err)
 
-	// After finalize, m.file is nil — write should silently succeed (no-op).
+	// After finalize the file has been handed off; a late chunk must succeed
+	// silently and must not reach it.
 	assert.NoError(t, m.write([]byte("late")))
+	contents, err := os.ReadFile(abs)
+	require.NoError(t, err)
+	assert.Equal(t, "early", string(contents))
 }
 
 func TestOpenTextSynthesisStream_HappyPath(t *testing.T) {
@@ -80,9 +85,10 @@ func TestOpenTextSynthesisStream_HappyPath(t *testing.T) {
 
 	result, err := de.openTextSynthesisStream(context.Background(), "hello", p)
 	require.NoError(t, err)
-	require.NotNil(t, result)
 	require.NotNil(t, result.Reader)
-	result.Reader.Close()
+	defer result.Reader.Close()
+	assert.Equal(t, "hello", result.Text, "the scripted text is what gets synthesized")
+	assert.Nil(t, result.TextResult, "no LLM ran for a scripted turn")
 }
 
 func TestOpenTextSynthesisStream_WrongCapabilityErrors(t *testing.T) {

@@ -11,6 +11,7 @@ import (
 	arenaassertions "github.com/AltairaLabs/promptarena/v2/arena/assertions"
 	"github.com/AltairaLabs/promptarena/v2/arena/statestore"
 
+	"github.com/AltairaLabs/PromptKit/runtime/v2/evals"
 	runtimestore "github.com/AltairaLabs/PromptKit/runtime/v2/statestore"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )
@@ -68,69 +69,65 @@ func TestDuplexEvaluateConversationAssertions_NoAssertions(t *testing.T) {
 	assert.Nil(t, de.evaluateConversationAssertions(context.Background(), req, nil))
 }
 
-// TestEvaluateTurnAssertions_GuardsBeforeEvaluating covers evaluateTurnAssertions,
-// which was 0%. Every guard here returns silently, so getting one wrong does not
-// raise — it just leaves a turn's assertions unevaluated, and a turn with no
-// results reads downstream as a turn that passed.
+// TestEvaluateTurnAssertions_GuardsBeforeEvaluating covers the guards of
+// evaluateTurnAssertions. Every guard returns silently, so getting one wrong
+// does not raise — it records a summary for a reply that was never graded, or
+// grades the wrong one. Each case below must record nothing; the one case that
+// passes every guard must record the reply's result, which proves the recorder
+// is being watched.
 func TestEvaluateTurnAssertions_GuardsBeforeEvaluating(t *testing.T) {
 	ctx := context.Background()
+	includesHello := []arenaconfig.AssertionConfig{{
+		Type:   "content_includes",
+		Params: map[string]interface{}{"patterns": []interface{}{"hello"}},
+	}}
+	userOnly := []types.Message{{Role: "user", Content: "hi"}}
+	withReply := []types.Message{{Role: "user", Content: "hi"}, {Role: roleAssistant, Content: "hello there"}}
+	realOrchestrator := NewEvalOrchestrator(evals.NewEvalTypeRegistry(), nil, false, nil, "")
 
-	t.Run("a turn with no assertions does nothing", func(t *testing.T) {
-		de := &DuplexConversationExecutor{}
-		// No state store and no orchestrator: reaching past this guard would
-		// dereference one of them.
-		de.evaluateTurnAssertions(ctx, &ConversationRequest{}, &arenaconfig.TurnDefinition{}, 0)
-	})
+	tests := []struct {
+		name         string
+		assertions   []arenaconfig.AssertionConfig
+		history      []types.Message // nil: no state store at all
+		orchestrator *EvalOrchestrator
+		wantRecorded bool
+	}{
+		{name: "a turn with no assertions records nothing",
+			history: withReply, orchestrator: realOrchestrator},
+		{name: "no conversation history records nothing",
+			assertions: includesHello, orchestrator: realOrchestrator},
+		{name: "history with no assistant message records nothing",
+			assertions: includesHello, history: userOnly, orchestrator: realOrchestrator},
+		{name: "a nil orchestrator records nothing",
+			assertions: includesHello, history: withReply},
+		{name: "past every guard the reply's result is recorded",
+			assertions: includesHello, history: withReply, orchestrator: realOrchestrator, wantRecorded: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			recorder := &duplexTurnAssertionRecorder{}
+			req := &ConversationRequest{ConversationID: "conv-guards", duplexTurnAssertions: recorder}
+			if tt.history != nil {
+				store := statestore.NewArenaStateStore()
+				require.NoError(t, store.Save(ctx, &runtimestore.ConversationState{
+					ID: req.ConversationID, Messages: tt.history,
+				}))
+				req.StateStoreConfig = &StateStoreConfig{Store: store}
+			}
+			de := &DuplexConversationExecutor{evalOrchestrator: tt.orchestrator}
 
-	t.Run("no conversation history stops before the orchestrator", func(t *testing.T) {
-		de := &DuplexConversationExecutor{}
-		turn := &arenaconfig.TurnDefinition{
-			Assertions: []arenaconfig.AssertionConfig{{Type: "contains", Params: map[string]interface{}{"value": "hello"}}},
-		}
-		// StateStoreConfig is nil, so getConversationHistory returns nil.
-		de.evaluateTurnAssertions(ctx, &ConversationRequest{}, turn, 1)
-	})
+			de.evaluateTurnAssertions(ctx, req, &arenaconfig.TurnDefinition{Assertions: tt.assertions}, 0)
 
-	t.Run("history with no assistant message stops too", func(t *testing.T) {
-		store := statestore.NewArenaStateStore()
-		convID := "conv-user-only"
-		require.NoError(t, store.Save(ctx, &runtimestore.ConversationState{
-			ID:       convID,
-			Messages: []types.Message{{Role: "user", Content: "hi"}},
-		}))
-
-		de := &DuplexConversationExecutor{}
-		req := &ConversationRequest{
-			ConversationID:   convID,
-			StateStoreConfig: &StateStoreConfig{Store: store},
-		}
-		turn := &arenaconfig.TurnDefinition{
-			Assertions: []arenaconfig.AssertionConfig{{Type: "contains", Params: map[string]interface{}{"value": "hello"}}},
-		}
-		de.evaluateTurnAssertions(ctx, req, turn, 2)
-	})
-
-	t.Run("a nil orchestrator stops after finding the assistant message", func(t *testing.T) {
-		store := statestore.NewArenaStateStore()
-		convID := "conv-no-orchestrator"
-		require.NoError(t, store.Save(ctx, &runtimestore.ConversationState{
-			ID: convID,
-			Messages: []types.Message{
-				{Role: "user", Content: "hi"},
-				{Role: "assistant", Content: "hello there"},
-			},
-		}))
-
-		de := &DuplexConversationExecutor{evalOrchestrator: nil}
-		req := &ConversationRequest{
-			ConversationID:   convID,
-			StateStoreConfig: &StateStoreConfig{Store: store},
-		}
-		turn := &arenaconfig.TurnDefinition{
-			Assertions: []arenaconfig.AssertionConfig{{Type: "contains", Params: map[string]interface{}{"value": "hello"}}},
-		}
-		de.evaluateTurnAssertions(ctx, req, turn, 3)
-	})
+			if !tt.wantRecorded {
+				assert.Empty(t, recorder.byReply)
+				return
+			}
+			require.Contains(t, recorder.byReply, 0, "the first reply's summary must be recorded")
+			turn, ok := arenaassertions.TurnSummaryFromMeta(map[string]interface{}{"assertions": recorder.byReply[0]})
+			require.True(t, ok)
+			assert.Equal(t, arenaassertions.TurnSummary{Total: 1, Failed: 0, Passed: true}, turn)
+		})
+	}
 }
 
 // TestLastAssistantMessage_PicksTheMostRecent pins the helper the guard above

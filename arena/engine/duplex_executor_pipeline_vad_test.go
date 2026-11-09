@@ -108,15 +108,14 @@ func TestBuildInteractiveVADConfig_NoDuplexScenario(t *testing.T) {
 			Config:   &arenaconfig.Config{},
 		}
 		cfg := de.buildInteractiveVADConfig(req)
-		// AdaptiveVAD is set on the config — not nil.
-		assert.NotNil(t, cfg.VAD,
+		assert.IsType(t, &audio.AdaptiveVAD{}, cfg.VAD,
 			"expected AdaptiveVAD to be wired for a scenario without duplex config")
 	})
 
 	t.Run("nil Scenario", func(t *testing.T) {
 		req := &ConversationRequest{Scenario: nil, Config: &arenaconfig.Config{}}
 		cfg := de.buildInteractiveVADConfig(req)
-		assert.NotNil(t, cfg.VAD,
+		assert.IsType(t, &audio.AdaptiveVAD{}, cfg.VAD,
 			"expected AdaptiveVAD to be wired when Scenario is nil")
 	})
 }

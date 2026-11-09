@@ -12,6 +12,7 @@ import (
 	"github.com/AltairaLabs/promptarena/v2/arena/assertions"
 	"github.com/AltairaLabs/promptarena/v2/arena/statestore"
 
+	"github.com/AltairaLabs/PromptKit/runtime/v2/evals"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/events"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/providers"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
@@ -74,34 +75,45 @@ func TestEngine_ExecuteEvalRun_Success(t *testing.T) {
 	assert.Empty(t, result.Error)
 }
 
+// TestEvalConversationExecutor_ApplyAllTurnAssertions checks that an all_turns
+// assertion grades each assistant reply on its own content and records the
+// outcome on that reply, leaving user turns alone.
 func TestEvalConversationExecutor_ApplyAllTurnAssertions(t *testing.T) {
-	executor := &EvalConversationExecutor{}
-
-	turns := []arenaconfig.EvalTurnConfig{
-		{
-			AllTurns: &arenaconfig.EvalAllTurnsConfig{
-				Assertions: []assertions.AssertionConfig{
-					{Type: "test_assertion"},
-				},
-			},
-		},
+	executor := &EvalConversationExecutor{
+		evalOrchestrator: NewEvalOrchestrator(evals.NewEvalTypeRegistry(), nil, false, nil, ""),
 	}
+
+	turns := []arenaconfig.EvalTurnConfig{{
+		AllTurns: &arenaconfig.EvalAllTurnsConfig{
+			Assertions: []assertions.AssertionConfig{{
+				Type:   "content_includes",
+				Params: map[string]interface{}{"patterns": []interface{}{"Hello"}},
+			}},
+		},
+	}}
 
 	messages := []types.Message{
 		{Role: "user", Content: "Test"},
 		{Role: "assistant", Content: "Hello"},
 		{Role: "assistant", Content: "Goodbye"},
 	}
-
 	convCtx := &assertions.ConversationContext{
 		AllTurns: messages,
-		Metadata: assertions.ConversationMetadata{
-			Extras: make(map[string]interface{}),
-		},
+		Metadata: assertions.ConversationMetadata{Extras: make(map[string]interface{})},
 	}
 
-	// This tests that the function runs without error
 	executor.applyAllTurnAssertions(context.Background(), turns, messages, convCtx)
+
+	assert.NotContains(t, messages[0].Meta, "assertions", "user turns are not graded")
+	resultsFor := func(i int) []assertions.AssertionResult {
+		t.Helper()
+		got, ok := messages[i].Meta["assertions"].([]assertions.AssertionResult)
+		require.True(t, ok, "message %d must carry its assertion results, got %T", i, messages[i].Meta["assertions"])
+		require.Len(t, got, 1)
+		return got
+	}
+	assert.True(t, resultsFor(1)[0].Passed, "\"Hello\" contains Hello")
+	assert.False(t, resultsFor(2)[0].Passed, "\"Goodbye\" does not contain Hello")
 }
 
 func TestEvalConversationExecutor_ExtractTurnAssertions(t *testing.T) {

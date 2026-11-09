@@ -614,8 +614,9 @@ func TestEvalOrchestrator_NoClassifyRegistryLeavesContextUnchanged(t *testing.T)
 	orch := NewEvalOrchestrator(reg, defs, false, nil, "test")
 	// No SetClassifyRegistry call.
 
-	orch.RunTurnEvals(context.Background(),
+	results := orch.RunTurnEvals(context.Background(),
 		[]types.Message{{Role: "assistant", Content: "hi"}}, 0, "s1")
+	require.Len(t, results, 1, "the probe must have run for its view of the context to mean anything")
 	assert.Nil(t, probe.seen, "FromContext on an unconfigured orchestrator must return nil so handlers can produce a clean error")
 }
 

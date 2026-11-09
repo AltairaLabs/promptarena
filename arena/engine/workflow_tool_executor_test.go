@@ -621,6 +621,11 @@ func TestCommitPendingTransition_NilSkillFilterer(t *testing.T) {
 
 	err = exec.CommitPendingTransition("run1", nil)
 	require.NoError(t, err)
+
+	// Without a filterer the commit still moves the run and records the
+	// state's skill filter for whoever reads it next.
+	assert.Equal(t, "billing", exec.StateMachine("run1").CurrentState())
+	assert.Equal(t, "skills/billing/*", exec.SkillFilter("run1"))
 }
 
 // TestWorkflowArtifactExecutor_DispatchesToRun verifies the per-run artifact

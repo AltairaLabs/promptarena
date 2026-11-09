@@ -12,37 +12,6 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )
 
-func TestEngine_BuildSystemPrompt(t *testing.T) {
-	t.Skip("BuildSystemPrompt requires prompt registry initialization - tested in integration tests")
-}
-
-func TestEngine_BuildSystemPrompt_DifferentRegions(t *testing.T) {
-	t.Skip("BuildSystemPrompt requires prompt registry initialization - tested in integration tests")
-}
-
-func TestEngine_BuildSystemPrompt_DifferentTaskTypes(t *testing.T) {
-	t.Skip("BuildSystemPrompt requires prompt registry initialization - tested in integration tests")
-}
-
-func TestEngine_GetPromptRegistry(t *testing.T) {
-	cfg := &arenaconfig.Config{
-		Defaults: arenaconfig.Defaults{
-			Verbose: false,
-		},
-	}
-
-	tmpDir := t.TempDir()
-	eng := newTestEngine(t, tmpDir, cfg)
-
-	// Verify engine has a prompt registry (may be nil if no configs loaded)
-	// This just tests that the field exists and is accessible
-	_ = eng.promptRegistry
-}
-
-func TestEngine_GetSelfPlayCacheStats(t *testing.T) {
-	t.Skip("Self-play cache stats require prompt registry and self-play initialization - tested in integration tests")
-}
-
 func TestRunPlan_Structure(t *testing.T) {
 	plan := &RunPlan{
 		Combinations: []RunCombination{
