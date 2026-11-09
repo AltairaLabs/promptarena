@@ -40,6 +40,13 @@ func TestLoadConfig_MCPServers(t *testing.T) {
 			servers: "    - name: sb\n      source: docker\n",
 			wantErr: "scope is required when source is set",
 		},
+		{
+			// NewRegistryFromConfig registers an entry with no command or url as-is, so
+			// the loader is where an entry with no endpoint has to be refused.
+			name:    "no source, url or command",
+			servers: "    - name: empty\n",
+			wantErr: "exactly one of",
+		},
 		{name: "valid source", servers: "    - name: sb\n      source: docker\n      scope: session\n"},
 		{name: "valid stdio", servers: "    - name: fs\n      command: npx\n"},
 	}
