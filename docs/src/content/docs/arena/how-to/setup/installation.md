@@ -7,7 +7,7 @@ verified:
     - .github/workflows/release.yml
     - .goreleaser.yml
     - arena/arenaconfig/types.go
-    - arena/audio/local_sink_oto.go
+    - arena/audio/otobackend/otobackend_interactive.go
     - arena/cmd/promptarena/agent_brief.go
     - arena/cmd/promptarena/chat_interactive.go
     - arena/cmd/promptarena/completion_interactive.go

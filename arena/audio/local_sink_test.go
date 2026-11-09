@@ -10,7 +10,7 @@ import (
 func TestLocalSink_NoOpWhenContextFails(t *testing.T) {
 	sink, err := NewLocalSink(LocalSinkConfig{
 		Rate: Rate24k,
-		newContext: func(_, _ int) (otoContext, error) {
+		newContext: func(_, _ int) (PlaybackContext, error) {
 			return nil, errors.New("no audio device")
 		},
 	})
@@ -80,7 +80,7 @@ func TestLocalSink_StereoCompositionMismatchedLengths(t *testing.T) {
 func TestLocalSink_PushOnNoopDoesNotBlock(t *testing.T) {
 	sink, err := NewLocalSink(LocalSinkConfig{
 		Rate: Rate24k,
-		newContext: func(_, _ int) (otoContext, error) {
+		newContext: func(_, _ int) (PlaybackContext, error) {
 			return nil, errors.New("noop")
 		},
 	})
@@ -103,7 +103,7 @@ func TestLocalSink_PushOnNoopDoesNotBlock(t *testing.T) {
 	}
 }
 
-// fakeOtoContext is a test double for otoContext that captures what the sink
+// fakeOtoContext is a test double for PlaybackContext that captures what the sink
 // hands to its player. The reader is invoked synchronously by the test to
 // drain samples — there is no real audio thread.
 type fakeOtoContext struct {
@@ -111,7 +111,7 @@ type fakeOtoContext struct {
 	playerSpawn chan io.Reader
 }
 
-func (f *fakeOtoContext) NewPlayer(r io.Reader) otoPlayer {
+func (f *fakeOtoContext) NewPlayer(r io.Reader) PlaybackPlayer {
 	f.reader = r
 	if f.playerSpawn != nil {
 		f.playerSpawn <- r
@@ -129,7 +129,7 @@ func TestLocalSink_RealPathInterleavesStereoOnReaderPull(t *testing.T) {
 	fake := &fakeOtoContext{}
 	sink, err := NewLocalSink(LocalSinkConfig{
 		Rate: Rate24k,
-		newContext: func(_, _ int) (otoContext, error) {
+		newContext: func(_, _ int) (PlaybackContext, error) {
 			return fake, nil
 		},
 	})
@@ -168,7 +168,7 @@ func TestLocalSink_FlushDropsQueuedAudio(t *testing.T) {
 	fake := &fakeOtoContext{}
 	sink, err := NewLocalSink(LocalSinkConfig{
 		Rate:       Rate24k,
-		newContext: func(_, _ int) (otoContext, error) { return fake, nil },
+		newContext: func(_, _ int) (PlaybackContext, error) { return fake, nil },
 	})
 	if err != nil {
 		t.Fatalf("NewLocalSink: %v", err)
@@ -197,7 +197,7 @@ func TestLocalSink_ReaderReturnsSilenceWhenIdle(t *testing.T) {
 	fake := &fakeOtoContext{}
 	sink, err := NewLocalSink(LocalSinkConfig{
 		Rate: Rate24k,
-		newContext: func(_, _ int) (otoContext, error) {
+		newContext: func(_, _ int) (PlaybackContext, error) {
 			return fake, nil
 		},
 	})

@@ -26,7 +26,7 @@ func TestLocalSink_NoGapsDuringRealtimePush(t *testing.T) {
 	fake := &fakeOtoContext{}
 	sink, err := NewLocalSink(LocalSinkConfig{
 		Rate: rate,
-		newContext: func(_, _ int) (otoContext, error) {
+		newContext: func(_, _ int) (PlaybackContext, error) {
 			return fake, nil
 		},
 	})

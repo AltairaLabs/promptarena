@@ -52,16 +52,16 @@ const (
 	msPerSecond = 1000
 )
 
-// otoContext is the subset of *oto.Context the sink depends on. It exists so
-// tests can substitute a fake without needing a real audio device.
-type otoContext interface {
-	NewPlayer(reader io.Reader) otoPlayer
+// PlaybackContext is the subset of an audio device context (*oto.Context) the
+// sink depends on. Tests substitute a fake without needing a real device.
+type PlaybackContext interface {
+	NewPlayer(reader io.Reader) PlaybackPlayer
 }
 
-// otoPlayer is the subset of *oto.Player the sink depends on. Note that
+// PlaybackPlayer is the subset of *oto.Player the sink depends on. Note that
 // oto/v3 does not expose a working Close — Player resources are reclaimed
 // by GC finalizer — so the sink relies on stream EOF to halt playback.
-type otoPlayer interface {
+type PlaybackPlayer interface {
 	Play()
 }
 
@@ -85,9 +85,9 @@ type LocalSinkConfig struct {
 	// tests where there's no audio device — RMS publishing and capture
 	// still work, but nothing actually plays through speakers.
 	Headless bool
-	// newContext is for testing only; nil in production uses the real
-	// oto.NewContext constructor.
-	newContext func(rate, channels int) (otoContext, error)
+	// newContext is for testing only; nil uses the registered playback
+	// backend (see RegisterPlaybackBackend).
+	newContext func(rate, channels int) (PlaybackContext, error)
 }
 
 // LocalSink plays Frame stereo (user L / agent R) on the host audio device
@@ -114,7 +114,7 @@ type LocalSink struct {
 	noop bool
 
 	stream        *streamReader
-	player        otoPlayer
+	player        PlaybackPlayer
 	captureWriter *captureWriter
 
 	// Headless mode plumbing — only set when LocalSinkConfig.Headless was true.
@@ -141,7 +141,12 @@ func NewLocalSink(cfg LocalSinkConfig) (*LocalSink, error) {
 	if !cfg.Headless {
 		newCtx := cfg.newContext
 		if newCtx == nil {
-			newCtx = realOtoContext
+			newCtx = registeredPlaybackBackend()
+		}
+		if newCtx == nil {
+			logger.Warn("audio: LocalSink running as no-op (no playback backend in this binary)")
+			s.noop = true
+			return s, nil
 		}
 
 		ctx, err := newCtx(cfg.Rate, channelStereo)
