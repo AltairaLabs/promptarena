@@ -718,9 +718,26 @@ func (e *PipelineExecutor) buildProviderStage(
 	// state. Without it the machine still advances, but the destination does
 	// not speak until some later scripted turn arrives.
 	if req.WorkflowStateResolver != nil {
-		ps.SetWorkflowStateResolver(req.WorkflowStateResolver)
+		ps.SetWorkflowStateResolver(resolverForTurn(req.WorkflowStateResolver, turnState))
 	}
 	return ps
+}
+
+// TurnBindableResolver is a stage.WorkflowStateResolver that renders a state's
+// prompt with one turn's variables once bound to that turn's TurnState. The
+// resolver outlives the turn (it belongs to the run), while the variables
+// VariableProviderStage resolves belong to the turn.
+type TurnBindableResolver interface {
+	ForTurn(turnState *stage.TurnState) stage.WorkflowStateResolver
+}
+
+// resolverForTurn binds resolver to turnState when it can be bound, so a
+// handoff renders with the variables the turn's own prompt rendered with.
+func resolverForTurn(resolver stage.WorkflowStateResolver, turnState *stage.TurnState) stage.WorkflowStateResolver {
+	if b, ok := resolver.(TurnBindableResolver); ok {
+		return b.ForTurn(turnState)
+	}
+	return resolver
 }
 
 // loadGuardrailHooks resolves pack-declared validators for this turn and

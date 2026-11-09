@@ -456,7 +456,8 @@ func resolveTurnMaxTokens(req ConversationRequest) int {
 
 // buildTurnPromptVars builds the template vars for a turn: arena.yaml
 // prompt-config vars (matched by task_type) overlaid with the scenario's own
-// Variables block (scenario wins). Issue #1292: Scenario.Variables was
+// Variables block (scenario wins), with a workflow run's artifacts and brief
+// layered on as the handoff binds them. Issue #1292: Scenario.Variables was
 // previously ignored here. Values are copied into a fresh map so the shared
 // LoadedPromptConfigs vars are never mutated.
 func buildTurnPromptVars(req ConversationRequest) map[string]string {
@@ -468,6 +469,9 @@ func buildTurnPromptVars(req ConversationRequest) map[string]string {
 		for k, v := range scenarioVars {
 			promptVars[k] = v
 		}
+	}
+	if req.workflowPromptVars != nil {
+		promptVars = req.workflowPromptVars(promptVars)
 	}
 	return promptVars
 }

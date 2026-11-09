@@ -6,6 +6,8 @@ import (
 	"maps"
 	"sync"
 
+	"github.com/AltairaLabs/promptarena/v2/arena/turnexecutors"
+
 	"github.com/AltairaLabs/PromptKit/runtime/v2/logger"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/pipeline/stage"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/template"
@@ -112,7 +114,42 @@ func (r *workflowStateResolver) RecordToolCalls(n int) {
 // a re-executed pipeline — which re-runs prompt assembly and resets the prompt
 // to whatever the pipeline was built for — is corrected on the next call.
 // Callers rely on it being safe to call repeatedly.
-func (r *workflowStateResolver) ResolveCurrentState(_ context.Context) (stage.Handoff, error) {
+func (r *workflowStateResolver) ResolveCurrentState(ctx context.Context) (stage.Handoff, error) {
+	return r.resolve(ctx, nil)
+}
+
+// ForTurn returns this resolver bound to one turn, so the handoff renders
+// with the variables that turn renders its own prompt with: the scenario's,
+// the prompt config's and the variable providers', which VariableProviderStage
+// publishes on turnState. Implements turnexecutors.TurnBindableResolver.
+//
+// The bound resolver shares this one's state (the retained brief), and only
+// the rendering differs, so ToolCallRecorder and CurrentStateMeta are this
+// resolver's own.
+func (r *workflowStateResolver) ForTurn(turnState *stage.TurnState) stage.WorkflowStateResolver {
+	return &turnWorkflowStateResolver{workflowStateResolver: r, turnState: turnState}
+}
+
+// turnWorkflowStateResolver is a workflowStateResolver bound to one turn's
+// TurnState; see ForTurn.
+type turnWorkflowStateResolver struct {
+	*workflowStateResolver
+	turnState *stage.TurnState
+}
+
+// ResolveCurrentState implements stage.WorkflowStateResolver, rendering with
+// the turn's variables.
+func (t *turnWorkflowStateResolver) ResolveCurrentState(ctx context.Context) (stage.Handoff, error) {
+	var turnVars map[string]string
+	if t.turnState != nil {
+		turnVars = t.turnState.Variables
+	}
+	return t.resolve(ctx, turnVars)
+}
+
+// resolve is ResolveCurrentState, rendering the state's prompt with turnVars
+// beneath the values the handoff binds.
+func (r *workflowStateResolver) resolve(_ context.Context, turnVars map[string]string) (stage.Handoff, error) {
 	run := r.run()
 	if run == nil || run.transExec == nil {
 		return stage.Handoff{}, nil
@@ -198,7 +235,7 @@ func (r *workflowStateResolver) ResolveCurrentState(_ context.Context) (stage.Ha
 	summary := r.contextSummary
 	r.mu.Unlock()
 
-	systemPrompt, allowedTools, err := r.renderState(machine, name, current, summary)
+	systemPrompt, allowedTools, err := r.renderState(machine, name, current, summary, turnVars)
 	if err != nil {
 		return stage.Handoff{}, err
 	}
@@ -209,26 +246,29 @@ func (r *workflowStateResolver) ResolveCurrentState(_ context.Context) (stage.Ha
 	}, nil
 }
 
-// renderState renders the destination state's prompt with the carry-forward
-// context and the run's current artifact values bound.
+// renderState renders the destination state's prompt with the turn's
+// variables, the carry-forward context and the run's current artifact values,
+// as PromptKit's SDK resolver renders a handoff.
+//
+// A render that cannot complete fails the round with
+// stage.ErrTemplateUnresolved, as TemplateStage fails a turn: the raw template
+// would put literal {{...}} in front of the model.
 func (r *workflowStateResolver) renderState(
 	machine *workflow.StateMachine, stateName string, dest *workflow.State, contextSummary string,
+	turnVars map[string]string,
 ) (systemPrompt string, allowedTools []string, err error) {
-	vars := map[string]string{}
-	for name, value := range machine.Artifacts() {
-		vars["artifacts."+name] = value
-	}
-	if contextSummary != "" {
-		vars[workflowContextVar] = contextSummary
-	}
+	vars := r.workflowVars(machine, contextSummary, turnVars)
 
+	if reqErr := r.checkRequiredVars(dest.PromptTask, vars); reqErr != nil {
+		return "", nil, reqErr
+	}
 	tmpl, err := r.exec.promptRegistry.LoadTemplate(dest.PromptTask, vars, "")
 	if err != nil {
 		return "", nil, fmt.Errorf("load prompt %q for state %q: %w", dest.PromptTask, stateName, err)
 	}
 
 	// Same precedence as the template stage: template defaults, then
-	// fragments, then the values bound for this handoff.
+	// fragments, then the variables bound above.
 	merged := make(map[string]string, len(tmpl.DefaultVars)+len(tmpl.FragmentVars)+len(vars))
 	maps.Copy(merged, tmpl.DefaultVars)
 	maps.Copy(merged, tmpl.FragmentVars)
@@ -236,12 +276,87 @@ func (r *workflowStateResolver) renderState(
 
 	rendered, err := r.renderer.RenderDetailed(tmpl.RawTemplate, merged)
 	if err != nil {
-		// Degrade to the raw template rather than failing the turn, matching
-		// what the template stage does: a template that renders badly should
-		// still hand off.
-		return tmpl.RawTemplate, tmpl.AllowedTools, nil //nolint:nilerr // deliberate degrade
+		return "", nil, fmt.Errorf("%w: %s: %w", stage.ErrTemplateUnresolved, dest.PromptTask, err)
 	}
 	return rendered.Text, tmpl.AllowedTools, nil
+}
+
+// workflowVars returns vars with the workflow's own variables layered on.
+// Lowest to highest: every artifact a state declares, bound empty so one
+// nothing has set yet renders empty; vars; then the artifacts set so far and
+// the brief the outgoing state wrote, as PromptKit's SDK binds them.
+func (r *workflowStateResolver) workflowVars(
+	machine *workflow.StateMachine, contextSummary string, vars map[string]string,
+) map[string]string {
+	out := declaredArtifactVars(r.exec.wfSpec)
+	maps.Copy(out, vars)
+	if machine != nil {
+		for name, value := range machine.Artifacts() {
+			out["artifacts."+name] = value
+		}
+	}
+	if contextSummary != "" {
+		out[workflowContextVar] = contextSummary
+	}
+	return out
+}
+
+// turnPromptVars layers the workflow's variables over a scripted turn's prompt
+// variables, so the template stage renders the run's current state as the
+// handoff into it rendered it. Without them a state prompt reading an artifact
+// or the brief failed its first scripted turn.
+func (r *workflowStateResolver) turnPromptVars(vars map[string]string) map[string]string {
+	var machine *workflow.StateMachine
+	if run := r.run(); run != nil && run.transExec != nil {
+		machine = run.transExec.StateMachine()
+	}
+	r.mu.Lock()
+	summary := r.contextSummary
+	r.mu.Unlock()
+	return r.workflowVars(machine, summary, vars)
+}
+
+// checkRequiredVars fails with stage.ErrTemplateUnresolved when task declares
+// a required variable that vars leaves unset or empty, as the SDK resolver
+// does. A prompt config that cannot be loaded is left for LoadTemplate to
+// report.
+//
+// This duplicates what prompt.Registry.LoadTemplateDeferRequired does from
+// PromptKit v2.19.0, which also counts a required variable a fragment or a
+// default supplies; switch to it once the pin moves.
+func (r *workflowStateResolver) checkRequiredVars(task string, vars map[string]string) error {
+	cfg, err := r.exec.promptRegistry.LoadConfig(task)
+	if err != nil || cfg == nil {
+		return nil //nolint:nilerr // LoadTemplate reports the load failure
+	}
+	for _, v := range cfg.Spec.Variables {
+		if v.Required && vars[v.Name] == "" {
+			return fmt.Errorf("%w: %s: missing required variable %s",
+				stage.ErrTemplateUnresolved, task, v.Name)
+		}
+	}
+	return nil
+}
+
+// declaredArtifactVars returns "artifacts.<name>" bound to "" for every
+// artifact a state of spec declares. Bound beneath every other value, it makes
+// a prompt that reads an artifact nothing has set yet render it empty, as a
+// missing optional fragment renders empty. An artifact no state declares stays
+// unbound, so reading one still fails the render.
+func declaredArtifactVars(spec *workflow.Spec) map[string]string {
+	vars := map[string]string{}
+	if spec == nil {
+		return vars
+	}
+	for _, state := range spec.States {
+		if state == nil {
+			continue
+		}
+		for name := range state.Artifacts {
+			vars["artifacts."+name] = ""
+		}
+	}
+	return vars
 }
 
 // CurrentStateMeta implements stage.WorkflowStateResolver. The map is stamped
@@ -273,6 +388,9 @@ func (r *workflowStateResolver) CurrentStateMeta() map[string]any {
 // loop type-asserts for ToolCallRecorder separately, so losing it would be
 // silent — the budget would simply stop counting.
 var (
-	_ stage.WorkflowStateResolver = (*workflowStateResolver)(nil)
-	_ stage.ToolCallRecorder      = (*workflowStateResolver)(nil)
+	_ stage.WorkflowStateResolver        = (*workflowStateResolver)(nil)
+	_ stage.ToolCallRecorder             = (*workflowStateResolver)(nil)
+	_ turnexecutors.TurnBindableResolver = (*workflowStateResolver)(nil)
+	_ stage.WorkflowStateResolver        = (*turnWorkflowStateResolver)(nil)
+	_ stage.ToolCallRecorder             = (*turnWorkflowStateResolver)(nil)
 )
