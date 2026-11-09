@@ -10,8 +10,12 @@ published [PromptKit](https://github.com/AltairaLabs/PromptKit) `runtime` + `pkg
    extracted from PromptKit and carries pre-existing findings; CI lints **new** code only
    (`only-new-issues`). Hold your changes to standard; don't mass-fix or mass-suppress the
    baseline.
-3. Conventional commits (`feat:`, `fix:`, `chore:`, `ci:`, `docs:`, `refactor:`).
-4. Sign off every commit (DCO): `git commit -s`.
+3. Tests assert behaviour, not just that a call returned no error. A test whose only
+   assertions are `NoError`/`Nil`/`NotNil` fails the pre-commit hook and CI's Weak Assertion
+   Guard (`make check-weak-assertions`). Assert the values, state, output or error text the
+   test's name claims, so the test fails when the code is wrong.
+4. Conventional commits (`feat:`, `fix:`, `chore:`, `ci:`, `docs:`, `refactor:`).
+5. Sign off every commit (DCO): `git commit -s`.
 
 ## Dependencies
 - The committed `go.mod` pins **published** PromptKit `runtime`/`pkg`. To work against an
