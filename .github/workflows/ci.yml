@@ -241,6 +241,29 @@ jobs:
           version: latest
           args: --new-from-rev=${{ github.event.pull_request.base.sha }} --timeout=5m
 
+  weak-assertions:
+    name: Weak Assertion Guard
+    # Pull requests only: on a push to main the merge base is HEAD, so the diff
+    # is empty by construction.
+    needs: changes
+    if: needs.changes.outputs.code == 'true' && github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # The guard scans the merge base in a throwaway worktree, so it needs
+          # real history.
+          fetch-depth: 0
+      - uses: actions/setup-go@v7
+        with:
+          go-version: '1.26.0'
+      # Fails only on NEW tests whose assertions cannot fail; the pre-existing
+      # ones are a separate cleanup. The base SHA is passed explicitly: the
+      # pull_request checkout is a detached merge commit. See
+      # scripts/check-weak-assertions.sh and .claude/skills/audit-test-seams.
+      - name: Check for new tests that cannot fail
+        run: scripts/check-weak-assertions.sh "${{ github.event.pull_request.base.sha }}"
+
   sonarcloud:
     name: SonarCloud
     # Reuse the coverage report produced by build-test rather than re-running the
