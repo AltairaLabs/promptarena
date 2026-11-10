@@ -83,17 +83,19 @@ func (s *Source) Open(ctx context.Context, args map[string]any) (mcpsource.MCPCo
 
 	url := s.resolveURL(cid, strconv.Itoa(hostPort))
 
-	if err := s.copyIn(ctx, closer, mounts.atStart); err != nil {
-		_ = closer.Close()
-		return mcpsource.MCPConn{}, nil, err
-	}
-
 	if repo, _ := args["repo"].(string); repo != "" {
 		branch, _ := args["branch"].(string)
 		if err := s.cloneRepo(ctx, cid, repo, branch); err != nil {
 			_ = closer.Close()
 			return mcpsource.MCPConn{}, nil, err
 		}
+	}
+
+	// After the clone: git clone needs an empty /workspace, and a fixture
+	// copied under it belongs on top of the cloned repo.
+	if err := s.copyIn(ctx, closer, mounts.atStart); err != nil {
+		_ = closer.Close()
+		return mcpsource.MCPConn{}, nil, err
 	}
 
 	timeout := s.healthTimeoutOverride
