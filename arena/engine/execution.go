@@ -302,9 +302,14 @@ func (e *Engine) getInitialProviders(scenario *arenaconfig.Scenario, providerFil
 		providers = e.providerRegistry.List()
 	}
 
-	// Filter by required capabilities if specified
+	// Filter by required capabilities if specified. No capable provider means
+	// the scenario does not run: the filter fallback below must not hand it
+	// providers that cannot take its content.
 	if len(scenario.RequiredCapabilities) > 0 {
 		providers = e.filterByCapabilities(providers, scenario.RequiredCapabilities)
+		if len(providers) == 0 {
+			return nil
+		}
 	}
 
 	// Apply global provider filter if provided
