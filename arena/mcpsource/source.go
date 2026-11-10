@@ -49,3 +49,11 @@ type MCPConn struct {
 type MCPSource interface {
 	Open(ctx context.Context, args map[string]any) (MCPConn, io.Closer, error)
 }
+
+// EvalDeliverer is implemented by the io.Closer a source returns when it holds
+// files to deliver only for evaluation (source_args.mounts entries with
+// when: eval). Arena calls DeliverEval once per session, after the agent's
+// last turn and before session-end evaluation, so the agent never sees them.
+type EvalDeliverer interface {
+	DeliverEval(ctx context.Context) error
+}

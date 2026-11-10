@@ -41,6 +41,11 @@ type CLI interface {
 	Run(ctx context.Context, spec RunSpec) (containerID string, err error)
 	Stop(ctx context.Context, containerID string) error
 	Exec(ctx context.Context, containerID string, argv []string) (stdout string, err error)
+	// ExecRoot is Exec as root, for setting up copy targets the container's
+	// own (often unprivileged) user cannot create.
+	ExecRoot(ctx context.Context, containerID string, argv []string) (stdout string, err error)
+	// Copy runs `docker cp hostPath containerID:ctrPath`.
+	Copy(ctx context.Context, containerID, hostPath, ctrPath string) error
 }
 
 // NewCLI returns a CLI backed by the local docker binary.
