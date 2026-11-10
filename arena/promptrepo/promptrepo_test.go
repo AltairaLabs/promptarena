@@ -10,6 +10,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
+	"github.com/AltairaLabs/PromptKit/runtime/v2/persistence"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/persistence/repotest"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/prompt"
 )
 
@@ -57,6 +59,16 @@ func TestLoadFragment(t *testing.T) {
 	_, err = r.LoadFragment("tone", "", dir)
 	assert.ErrorContains(t, err, `fragment "tone" has no path`)
 
+	// No path, with a base: fragments/<name>.yaml under it.
+	byName, err := NewWithBase(dir).LoadFragment("tone", "", "")
+	require.NoError(t, err)
+	assert.Equal(t, "Be kind.", byName.Content)
+
+	// A path may not climb back out past where it started.
+	writeFile(t, filepath.Join(filepath.Dir(dir), filepath.Base(dir)+"-secret.yaml"), "content: secret\n")
+	_, err = r.LoadFragment("tone", "x/../../"+filepath.Base(dir)+"-secret.yaml", dir)
+	assert.ErrorIs(t, err, persistence.ErrFragmentPathOutsideBase)
+
 	_, err = r.LoadFragment("tone", "missing.yaml", dir)
 	assert.True(t, errors.Is(err, fs.ErrNotExist), "a missing file keeps fs.ErrNotExist: %v", err)
 }
@@ -82,4 +94,19 @@ func TestLoadFragments(t *testing.T) {
 	), dir))
 	_, err = r.LoadFragments(prompt.NewRegistryWithRepository(r))
 	assert.ErrorContains(t, err, `prompt "b": required fragment "gone"`)
+}
+
+// TestRepository_FragmentContract runs PromptKit's fragment repository
+// contract, the behaviour FragmentResolver relies on.
+func TestRepository_FragmentContract(t *testing.T) {
+	assertFragmentContract(t, func(_ *testing.T, root string) prompt.FragmentRepository {
+		return NewWithBase(root)
+	})
+}
+
+// assertFragmentContract fails t for every contract check the repository
+// newRepo builds does not pass; each check is a subtest.
+func assertFragmentContract(t *testing.T, newRepo func(t *testing.T, root string) prompt.FragmentRepository) {
+	t.Helper()
+	repotest.RunFragmentRepositoryContract(t, newRepo)
 }
