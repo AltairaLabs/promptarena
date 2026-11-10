@@ -7,6 +7,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/AltairaLabs/promptarena/v2/arena/mcpsource"
+
 	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/workflow"
 )
@@ -62,6 +64,7 @@ func (v *ConfigValidator) Validate() error {
 	v.validateToolUsage()
 	v.validateToolModes()
 	v.validateAllowedToolsResolve()
+	v.validateMCPMounts()
 	v.validateTaskTypeUsage()
 	v.validateWorkflow()
 	v.warns = append(v.warns, v.config.ignoredRuntimeFieldWarnings()...)
@@ -579,4 +582,49 @@ func (v *ConfigValidator) checkMissingTaskTypes(taskTypeToPrompts map[string][]s
 // GetChecks returns the structured validation checks
 func (v *ConfigValidator) GetChecks() []ValidationCheck {
 	return v.checks
+}
+
+// validateMCPMounts runs each source-backed server's source_args.mounts
+// through the resolver the engine uses at open, so a mount that would fail a
+// run, or a relative path that used to mount an empty Docker volume, fails
+// validate instead. A source with {{scenario.*}} in it is checked once per
+// loaded scenario, with that scenario's variables.
+func (v *ConfigValidator) validateMCPMounts() {
+	base := v.config.ConfigDir
+	if base == "" && v.configPath != "" {
+		base = filepath.Dir(v.configPath)
+	}
+	if abs, err := filepath.Abs(base); err == nil {
+		base = abs
+	}
+	for i := range v.config.MCPServers {
+		s := &v.config.MCPServers[i]
+		raw, ok := s.SourceArgs["mounts"]
+		if s.Source == "" || !ok {
+			continue
+		}
+		if !strings.Contains(fmt.Sprint(raw), "{{scenario.") {
+			if _, err := mcpsource.ResolveMounts(raw, base, s.Scope); err != nil {
+				v.errors = append(v.errors, fmt.Errorf("mcp server %q: %w", s.Name, err))
+			}
+			continue
+		}
+		for _, id := range sortedScenarioIDs(v.config.LoadedScenarios) {
+			expanded := mcpsource.ExpandArgs(map[string]any{"mounts": raw}, v.config.LoadedScenarios[id].Variables)
+			if _, err := mcpsource.ResolveMounts(expanded["mounts"], base, s.Scope); err != nil {
+				v.errors = append(v.errors, fmt.Errorf("scenario %s: mcp server %q: %w", id, s.Name, err))
+			}
+		}
+	}
+}
+
+func sortedScenarioIDs(scenarios map[string]*Scenario) []string {
+	ids := make([]string, 0, len(scenarios))
+	for id, sc := range scenarios {
+		if sc != nil {
+			ids = append(ids, id)
+		}
+	}
+	sort.Strings(ids)
+	return ids
 }
