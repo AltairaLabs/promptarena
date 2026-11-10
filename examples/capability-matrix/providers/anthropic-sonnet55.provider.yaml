@@ -1,11 +1,11 @@
 apiVersion: promptkit.altairalabs.ai/v1alpha1
 kind: Provider
 metadata:
-  name: anthropic-opus47
+  name: anthropic-sonnet55
 spec:
-  id: anthropic-opus47
+  id: anthropic-sonnet55
   type: claude
-  model: claude-opus-4-7
+  model: claude-sonnet-5-5
   capabilities:
     - text
     - streaming
@@ -23,6 +23,7 @@ spec:
     temperature: 0.1
     top_p: 1.0
     max_tokens: 100
+  # Pricing carried over from anthropic-opus5; not checked against the vendor price list.
   pricing:
     input_cost_per_1k: 0.005
     output_cost_per_1k: 0.025

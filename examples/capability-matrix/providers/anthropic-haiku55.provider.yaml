@@ -1,0 +1,32 @@
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Provider
+metadata:
+  name: anthropic-haiku55
+spec:
+  id: anthropic-haiku55
+  type: claude
+  model: claude-haiku-5-5
+  capabilities:
+    - text
+    - streaming
+    - vision
+    - tools
+    - json
+    - documents
+  # Claude Opus 4.7+ deprecated the temperature parameter (API returns 400 if
+  # sent). The Claude provider drops params listed here before the request.
+  unsupported_params:
+    - temperature
+  defaults:
+    # temperature is required by the schema; unsupported_params strips it from
+    # the request so Claude 4.7+ (which rejects it) never receives it.
+    temperature: 0.1
+    top_p: 1.0
+    max_tokens: 100
+  # Pricing carried over from anthropic-opus5; not checked against the vendor price list.
+  pricing:
+    input_cost_per_1k: 0.005
+    output_cost_per_1k: 0.025
+  stream_retry:
+    enabled: true
+    max_attempts: 3

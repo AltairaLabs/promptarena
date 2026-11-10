@@ -59,48 +59,40 @@ HEADER
 PROVIDER_CONFIG='{
   "OpenAI": {
     "providers": [
-      {"id": "openai-gpt56-luna", "name": "GPT-5.6 Luna", "note": "Current frontier"},
+      {"id": "openai-gpt61-terra", "name": "GPT-6.1 Terra", "note": "Current frontier"},
+      {"id": "openai-gpt6-sol", "name": "GPT-6 Sol"},
+      {"id": "openai-gpt56-luna", "name": "GPT-5.6 Luna"},
       {"id": "openai-gpt55", "name": "GPT-5.5"},
+      {"id": "openai-gpt55-pro", "name": "GPT-5.5 Pro"},
       {"id": "openai-gpt54", "name": "GPT-5.4"},
       {"id": "openai-gpt54-mini", "name": "GPT-5.4 Mini"},
+      {"id": "openai-gpt54-nano", "name": "GPT-5.4 Nano"},
       {"id": "openai-gpt52", "name": "GPT-5.2"},
       {"id": "openai-gpt52-pro", "name": "GPT-5.2 Pro"},
-      {"id": "openai-gpt51", "name": "GPT-5.1"},
-      {"id": "openai-gpt5", "name": "GPT-5"},
-      {"id": "openai-gpt5-mini", "name": "GPT-5 Mini"},
-      {"id": "openai-gpt5-nano", "name": "GPT-5 Nano"},
-      {"id": "openai-gpt5-pro", "name": "GPT-5 Pro"},
-      {"id": "openai-gpt41", "name": "GPT-4.1"},
-      {"id": "openai-gpt41-mini", "name": "GPT-4.1 Mini"},
-      {"id": "openai-gpt41-nano", "name": "GPT-4.1 Nano"},
-      {"id": "openai-o1-pro", "name": "o1-pro", "note": "Deprecated — retires 2026-10-23"},
-      {"id": "openai-o3", "name": "o3", "note": "Deprecated — retires 2026-10-23"},
-      {"id": "openai-o3-mini", "name": "o3-mini", "note": "Deprecated — retires 2026-10-23"},
-      {"id": "openai-o4-mini", "name": "o4-mini", "note": "Deprecated — retires 2026-10-23"}
+      {"id": "openai-o3", "name": "o3"}
     ]
   },
   "Anthropic": {
     "providers": [
-      {"id": "anthropic-opus5", "name": "Claude Opus 5", "note": "Latest"},
+      {"id": "anthropic-opus55", "name": "Claude Opus 5.5", "note": "Latest"},
+      {"id": "anthropic-sonnet55", "name": "Claude Sonnet 5.5"},
+      {"id": "anthropic-haiku55", "name": "Claude Haiku 5.5"},
+      {"id": "anthropic-fable52", "name": "Claude Fable 5.2"},
+      {"id": "anthropic-opus5", "name": "Claude Opus 5"},
       {"id": "anthropic-sonnet5", "name": "Claude Sonnet 5"},
       {"id": "anthropic-opus48", "name": "Claude Opus 4.8"},
-      {"id": "anthropic-opus47", "name": "Claude Opus 4.7"},
-      {"id": "anthropic-opus46", "name": "Claude Opus 4.6"},
-      {"id": "anthropic-sonnet46", "name": "Claude Sonnet 4.6"},
-      {"id": "anthropic-opus45", "name": "Claude Opus 4.5"},
-      {"id": "anthropic-sonnet45", "name": "Claude Sonnet 4.5"},
-      {"id": "anthropic-haiku45", "name": "Claude Haiku 4.5"}
+      {"id": "anthropic-sonnet46", "name": "Claude Sonnet 4.6"}
     ]
   },
   "Google": {
     "providers": [
-      {"id": "gemini-37-flash", "name": "Gemini 3.7 Flash", "note": "Latest"},
-      {"id": "gemini-31-pro", "name": "Gemini 3.1 Pro", "note": "Replaces gemini-3-pro-preview (retired)"},
-      {"id": "gemini-35-flash", "name": "Gemini 3.5 Flash", "note": "Replaces gemini-3-flash-preview"},
-      {"id": "gemini-31-flash-lite", "name": "Gemini 3.1 Flash Lite", "note": "Replaces gemini-2.0-flash-lite (retired)"},
-      {"id": "gemini-25-pro", "name": "Gemini 2.5 Pro", "note": "Deprecated — retires 2026-10-16"},
-      {"id": "gemini-25-flash", "name": "Gemini 2.5 Flash", "note": "Deprecated — retires 2026-10-16"},
-      {"id": "gemini-25-flash-lite", "name": "Gemini 2.5 Flash Lite", "note": "Deprecated — retires 2026-10-16"}
+      {"id": "gemini-4-argon", "name": "Gemini 4 Argon", "note": "Latest"},
+      {"id": "gemini-38-flash", "name": "Gemini 3.8 Flash"},
+      {"id": "gemini-37-flash", "name": "Gemini 3.7 Flash"},
+      {"id": "gemini-35-flash", "name": "Gemini 3.5 Flash"},
+      {"id": "gemini-35-flash-lite", "name": "Gemini 3.5 Flash Lite"},
+      {"id": "gemini-31-pro", "name": "Gemini 3.1 Pro"},
+      {"id": "gemini-31-flash-lite", "name": "Gemini 3.1 Flash Lite"}
     ]
   }
 }'
