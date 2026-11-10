@@ -116,7 +116,9 @@ describe("InstrumentBand", () => {
     const { unmount } = render(
       <InstrumentBand matrix={buildMatrix(declining, providers, scenarios)} results={declining} />,
     );
-    expect(screen.getByText(/^▼/)).toHaveStyle({ color: "var(--signal-red-300)" });
+    // The inline style the component sets: jsdom 31 resolves var() in computed
+    // style, and the test page defines none of the design tokens.
+    expect(screen.getByText(/^▼/).style.color).toBe("var(--signal-red-300)");
     unmount();
 
     // improving: sweep 0% → sweep 100%
@@ -125,7 +127,7 @@ describe("InstrumentBand", () => {
     // Healthy ramp, not gold. Gold means "the one thing that matters on this
     // view", not "good" — the band spends its single gold on the trail's key
     // star (see InstrumentBand's StarTrail keyIndex).
-    expect(screen.getByText(/^▲/)).toHaveStyle({ color: "var(--status-healthy-text)" });
+    expect(screen.getByText(/^▲/).style.color).toBe("var(--status-healthy-text)");
   });
 
   // Atlas 0.6.0 made gold opt-in so a view spends it once, deliberately. This
