@@ -19,7 +19,7 @@ verified:
     - schemas/v1alpha1/provider.json
     - schemas/v1alpha1/scenario.json
 ---
-In this tutorial we build and run a two-turn greeting test against OpenAI's `gpt-4o-mini`. We create every file by hand, so you see what each one does.
+In this tutorial we build and run a two-turn greeting test against OpenAI's `gpt-5.4-mini`. We create every file by hand, so you see what each one does.
 
 ## What we will build
 
@@ -86,12 +86,12 @@ Create `providers/openai.yaml`:
 apiVersion: promptkit.altairalabs.ai/v1alpha1
 kind: Provider
 metadata:
-  name: openai-gpt4o-mini
+  name: openai-gpt54-mini
 
 spec:
-  id: openai-gpt4o-mini
+  id: openai-gpt54-mini
   type: openai
-  model: gpt-4o-mini
+  model: gpt-5.4-mini
 
   defaults:
     temperature: 0.7
@@ -207,7 +207,7 @@ Total tokens    121
 Total duration  2.3s
 Avg duration    2.3s per run
 
-Providers       openai-gpt4o-mini (1)
+Providers       openai-gpt54-mini (1)
 Scenarios       1 scenarios
 Regions         default
 

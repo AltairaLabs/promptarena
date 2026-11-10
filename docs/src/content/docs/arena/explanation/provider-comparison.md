@@ -78,7 +78,7 @@ The `judge: quality` value names an entry in the Arena config's `spec.judges`, w
 
 ### OpenAI
 
-The `openai` type covers `gpt-4o` and `gpt-4o-mini`. It is a good default for general reasoning, tool calling and structured output, and its context window is 128K tokens. Replies tend to be concise and well structured, often with bullet points. That makes it a natural baseline, and also a reason not to write assertions that depend on its exact phrasing.
+The `openai` type covers the GPT-5.x and GPT-6.x models, such as `gpt-5.4` and `gpt-5.4-mini`, and the `o3` reasoning model. It is a good default for general reasoning, tool calling and structured output. Replies tend to be concise and well structured, often with bullet points. That makes it a natural baseline, and also a reason not to write assertions that depend on its exact phrasing.
 
 ### Claude
 
@@ -86,7 +86,7 @@ The `claude` type covers the Claude families. The context window is 200K tokens 
 
 ### Gemini
 
-The `gemini` type covers the Gemini 2.x models such as `gemini-2.5-flash`. Gemini is fast and inexpensive, and its multimodal support covers vision and audio. Replies tend to be direct, mixing bullets and paragraphs. Gemini tools go out in the Google AI Studio format.
+The `gemini` type covers the Gemini 3.x and 4 models, such as `gemini-3.8-flash`. Gemini is fast and inexpensive, and its multimodal support covers vision and audio. Replies tend to be direct, mixing bullets and paragraphs. Gemini tools go out in the Google AI Studio format.
 
 ### Ollama
 
@@ -114,8 +114,9 @@ The `openai`, `claude` and `gemini` types accept images. The tool-call assertion
 
 Arena reports cost from the runtime's pricing table, so you do not maintain prices in your config. Prices change often, and the table is the authority. The shape of the trade-off is stable:
 
-- Small models cost cents per million tokens. `gpt-4o-mini` is $0.15 input and $0.60 output per million tokens, and Gemini 2.0 Flash is $0.10 and $0.40.
-- Mid-tier models run from about $1 to $3 per million input tokens and $5 to $15 output. `gpt-4o` is $2.50 and $10.00. Claude Sonnet is $3.00 and $15.00 from 3.5 through 4.6, and Sonnet 5.5 is $2.00 and $10.00. Claude Haiku 4.5 is $1.00 and $5.00, and `claude-3-5-haiku-20241022` is $0.80 and $4.00.
+- Small models cost cents to a few dollars per million tokens. Claude Haiku 5.5 is $0.10 input and $0.50 output per million tokens for prompts up to 100K tokens, and Gemini 3.5 Flash Lite is $0.30 and $2.50.
+- Mid-tier models run from about $1 to $3 per million input tokens and $5 to $15 output. Claude Sonnet is $3.00 and $15.00 from 3.5 through 4.6, and Sonnet 5.5 is $2.00 and $10.00. Gemini 3.8 Flash is $0.75 and $3.75.
+- The runtime's OpenAI table stops at `gpt-5-mini` and `gpt-5-nano`. Later OpenAI models report a cost of $0 unless the provider config sets `pricing`.
 - Ollama is $0, because the runtime prices local models at zero.
 
 These prices point to a tiered strategy. Run local or mock providers while you write scenarios, run a small hosted model in routine CI, and reserve the premium models for pre-release validation. The `mock` provider and Ollama cost nothing, so they carry most of your iteration. Use `--provider` to select the tier:

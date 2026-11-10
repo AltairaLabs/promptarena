@@ -102,7 +102,7 @@ The RAG assistant and the LLM judge are both mock providers. The mock judge retu
    spec:
      id: openai-judge
      type: openai
-     model: gpt-4o-mini
+     model: gpt-5.4-mini
    ```
 
 2. In `config.arena.yaml`, replace the mock judge entry under `providers:` with the new file in the `judge` group:

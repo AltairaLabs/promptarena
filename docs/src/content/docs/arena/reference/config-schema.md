@@ -149,7 +149,7 @@ spec:
 
   # Provider configurations
   providers:
-    - file: providers/openai-gpt4o.yaml      # group defaults to "default"
+    - file: providers/openai-gpt54.yaml      # group defaults to "default"
     - file: providers/claude-sonnet.yaml     # group defaults to "default"
     - file: providers/gemini-flash.yaml      # group defaults to "default"
     - file: providers/mock-judge.yaml        # group: judge (not used as assistant)
@@ -312,7 +312,7 @@ Array of provider configuration references.
 **Example**:
 ```yaml
 providers:
-  - file: providers/openai-gpt4o.yaml
+  - file: providers/openai-gpt54.yaml
   - file: providers/claude-sonnet.yaml
 ```
 
@@ -1199,7 +1199,7 @@ Configures an LLM provider for testing.
 apiVersion: promptkit.altairalabs.ai/v1alpha1
 kind: Provider
 metadata:
-  name: openai-gpt4o-mini
+  name: openai-gpt54-mini
   labels:
     provider: openai
     tier: production
@@ -1207,7 +1207,7 @@ metadata:
 
 spec:
   type: openai                      # Required: Provider type
-  model: gpt-4o-mini                # Optional: Model name
+  model: gpt-5.4-mini                # Optional: Model name
 
   # Optional: API endpoint override
   base_url: https://api.openai.com/v1
@@ -1303,43 +1303,45 @@ Free-form provider-specific settings. This is where thinking and reasoning contr
 ```yaml
 spec:
   type: openai
-  model: gpt-4o-mini | gpt-4o | gpt-4 | gpt-3.5-turbo
+  model: gpt-5.4-mini | gpt-5.4 | gpt-5.5 | gpt-6.1-terra
   # Authentication: OPENAI_API_KEY environment variable
 ```
 
 **Supported Models**:
-- `gpt-4o`: Latest GPT-4 Omni model
-- `gpt-4o-mini`: Faster, cheaper GPT-4 variant
-- `gpt-4`: GPT-4 (various versions)
-- `gpt-3.5-turbo`: GPT-3.5
+- `gpt-6.1-terra`, `gpt-6-sol`: GPT-6.x
+- `gpt-5.5`, `gpt-5.5-pro`: GPT-5.5 (`-pro` is served by the Responses API only)
+- `gpt-5.4`, `gpt-5.4-mini`, `gpt-5.4-nano`: GPT-5.4
+- `o3`: reasoning model
 
 #### Anthropic
 
 ```yaml
 spec:
   type: claude
-  model: claude-3-5-sonnet-20241022 | claude-3-haiku-20240307
+  model: claude-sonnet-5-5 | claude-haiku-5-5
   # Authentication: ANTHROPIC_API_KEY environment variable
 ```
 
 **Supported Models**:
-- `claude-3-5-sonnet-20241022`: Claude 3.5 Sonnet
-- `claude-3-opus-20240229`: Claude 3 Opus
-- `claude-3-haiku-20240307`: Claude 3 Haiku
+- `claude-opus-5-5`: Claude Opus 5.5
+- `claude-sonnet-5-5`: Claude Sonnet 5.5
+- `claude-haiku-5-5`: Claude Haiku 5.5
+- `claude-fable-5-2`: Claude Fable 5.2
 
 #### Google Gemini
 
 ```yaml
 spec:
   type: gemini
-  model: gemini-2.0-flash-exp | gemini-1.5-pro
+  model: gemini-3.8-flash | gemini-3.1-pro-preview
   # Authentication: GOOGLE_API_KEY environment variable
 ```
 
 **Supported Models**:
-- `gemini-2.0-flash-exp`: Gemini 2.0 Flash (experimental)
-- `gemini-1.5-pro`: Gemini 1.5 Pro
-- `gemini-1.5-flash`: Gemini 1.5 Flash
+- `gemini-4-argon`: Gemini 4 Argon
+- `gemini-3.8-flash`: Gemini 3.8 Flash
+- `gemini-3.5-flash-lite`: Gemini 3.5 Flash Lite
+- `gemini-3.1-pro-preview`: Gemini 3.1 Pro (preview)
 
 #### Mock Provider
 
@@ -1367,14 +1369,14 @@ Credentials can be configured in multiple ways with the following resolution ord
 # Production OpenAI with custom env var
 spec:
   type: openai
-  model: gpt-4o
+  model: gpt-5.4
   credential:
     credential_env: OPENAI_PROD_KEY
 
 # Development OpenAI with different key
 spec:
   type: openai
-  model: gpt-4o-mini
+  model: gpt-5.4-mini
   credential:
     credential_env: OPENAI_DEV_KEY
 ```
@@ -1383,7 +1385,7 @@ spec:
 ```yaml
 spec:
   type: openai
-  model: gpt-4o
+  model: gpt-5.4
   credential:
     credential_file: /run/secrets/openai-api-key
 ```
@@ -1397,7 +1399,7 @@ Platforms allow running models on cloud hyperscalers with managed authentication
 ```yaml
 spec:
   type: claude                      # LLM API format
-  model: anthropic.claude-3-5-sonnet-20241022-v2:0
+  model: us.anthropic.claude-haiku-5-5-v1:0
   platform:
     type: bedrock
     region: us-west-2
@@ -1432,7 +1434,7 @@ Uses GCP Application Default Credentials:
 ```yaml
 spec:
   type: openai
-  model: gpt-4o
+  model: gpt-5.4
   platform:
     type: azure
     endpoint: https://my-resource.openai.azure.com
@@ -1702,13 +1704,13 @@ metadata:
 spec:
   # Providers (a judge names one of these provider IDs)
   providers:
-    - file: providers/openai-gpt4o.provider.yaml
+    - file: providers/openai-gpt54.provider.yaml
     - file: providers/claude-sonnet.provider.yaml
 
   # Judges for llm_judge assertions
   judges:
     - name: default
-      provider: openai-gpt4o
+      provider: openai-gpt54
 
   # Eval configurations
   evals:

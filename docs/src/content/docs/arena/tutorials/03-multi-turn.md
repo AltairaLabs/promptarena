@@ -17,7 +17,7 @@ In this tutorial we test conversations rather than single questions. We write a 
 
 ## What we will build
 
-A project with one prompt, one provider and three scenarios, all passing against OpenAI's `gpt-4o-mini`:
+A project with one prompt, one provider and three scenarios, all passing against OpenAI's `gpt-5.4-mini`:
 
 ```text
 my-arena-tests/
@@ -68,12 +68,12 @@ Create `providers/openai.yaml`:
 apiVersion: promptkit.altairalabs.ai/v1alpha1
 kind: Provider
 metadata:
-  name: openai-gpt4o-mini
+  name: openai-gpt54-mini
 
 spec:
-  id: openai-gpt4o-mini
+  id: openai-gpt54-mini
   type: openai
-  model: gpt-4o-mini
+  model: gpt-5.4-mini
 ```
 
 `promptarena` does not read `.env` files, so export your key in the shell you run it from:
@@ -331,7 +331,7 @@ spec:
       - file: personas/frustrated-customer.persona.yaml
     roles:
       - id: customer
-        provider: openai-gpt4o-mini
+        provider: openai-gpt54-mini
 
   defaults:
     temperature: 0.7

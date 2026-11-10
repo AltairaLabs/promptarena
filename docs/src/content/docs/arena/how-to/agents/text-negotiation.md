@@ -137,7 +137,7 @@ The default scenario uses scripted user turns. These steps hand the tenant side 
    spec:
      id: openai-gpt4o-mini-text
      type: openai
-     model: gpt-4o-mini
+     model: gpt-5.4-mini
    ```
 
 3. In `config.arena.yaml`, list the provider in the `selfplay` group, then add a `self_play` block that loads the persona and declares the `selfplay-user` role:
