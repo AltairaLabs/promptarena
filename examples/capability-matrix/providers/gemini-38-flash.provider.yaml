@@ -20,10 +20,10 @@ spec:
     temperature: 0.1
     max_tokens: 100
     top_p: 1.0
-  # Pricing carried over from gemini-37-flash; not checked against the vendor price list.
   pricing:
-    input_cost_per_1k: 0.00015
-    output_cost_per_1k: 0.0006
+    input_cost_per_1k: 0.00075
+    output_cost_per_1k: 0.00375
+  pricing_correct_at: '2026-11-10'
   stream_retry:
     enabled: true
     max_attempts: 3

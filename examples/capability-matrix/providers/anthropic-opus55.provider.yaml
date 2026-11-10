@@ -23,10 +23,10 @@ spec:
     temperature: 0.1
     top_p: 1.0
     max_tokens: 100
-  # Pricing carried over from anthropic-opus5; not checked against the vendor price list.
   pricing:
-    input_cost_per_1k: 0.005
-    output_cost_per_1k: 0.025
+    input_cost_per_1k: 0.004
+    output_cost_per_1k: 0.02
+  pricing_correct_at: '2026-11-10'
   stream_retry:
     enabled: true
     max_attempts: 3
