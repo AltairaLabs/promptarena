@@ -91,6 +91,12 @@ type ConversationRequest struct {
 	// non-workflow runs, which the runtime treats as "no workflow" and skips.
 	WorkflowStateResolver stage.WorkflowStateResolver
 
+	// workflowPromptVars layers a workflow run's variables over a turn's
+	// prompt variables: the artifacts and the brief the handoff renders the
+	// state with, so the turn's own render of that state matches it. Nil for
+	// non-workflow runs.
+	workflowPromptVars func(vars map[string]string) map[string]string
+
 	// State management
 	StateStoreConfig *StateStoreConfig // Optional state store configuration
 	ConversationID   string            // Conversation identifier for state persistence
