@@ -158,7 +158,7 @@ func TestExpandArgs_NonStringValuesPassThrough(t *testing.T) {
 		"b": true,
 		"c": []any{"{{scenario.x}}", "lit"},
 	}
-	out := expandArgs(in, map[string]string{"x": "sub"})
+	out := mcpsource.ExpandArgs(in, map[string]string{"x": "sub"})
 	assert.Equal(t, 42, out["a"])
 	assert.Equal(t, true, out["b"])
 	assert.Equal(t, []any{"sub", "lit"}, out["c"])

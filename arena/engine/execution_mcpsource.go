@@ -3,6 +3,7 @@ package engine
 import (
 	"context"
 	"fmt"
+	"path/filepath"
 
 	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
 	"github.com/AltairaLabs/promptarena/v2/arena/mcpsource"
@@ -52,6 +53,7 @@ func (e *Engine) openScenarioSessionMCPSources(
 	// from concurrent runs that may use the same logical names.
 	runMCPRegistry := e.mcpRegistry.Fork()
 	runScope := newMCPSourceScopeWithTools(runMCPRegistry, e.toolRegistry)
+	runScope.baseDir = e.configBaseDir()
 	runCtx = tools.WithMCPRegistry(ctx, runMCPRegistry)
 
 	scenarioVars := scenarioVariables(scenario)
@@ -85,6 +87,7 @@ func (e *Engine) openScenarioSessionMCPSources(
 	// live on the per-run runScope, not the engine's shared scope.
 	runCtx = withSandboxContainerIDs(runCtx, runScope.containerIDs())
 	runCtx = withSandboxPorts(runCtx, runScope.ports())
+	runCtx = withEvalDelivery(runCtx, runScope.deliverEvalFiles)
 
 	return runCtx, func() {
 		closeSession()
@@ -127,4 +130,39 @@ func withSandboxPorts(ctx context.Context, ports map[string]map[string]string) c
 func sandboxPortsFromContext(ctx context.Context) map[string]map[string]string {
 	ports, _ := ctx.Value(sandboxPortsKey{}).(map[string]map[string]string)
 	return ports
+}
+
+type evalDeliveryKey struct{}
+
+// withEvalDelivery returns a context carrying the run's eval-file delivery:
+// the step that copies when: eval mounts into its sandboxes.
+func withEvalDelivery(ctx context.Context, deliver func(context.Context) error) context.Context {
+	return context.WithValue(ctx, evalDeliveryKey{}, deliver)
+}
+
+// deliverEvalFiles copies the run's when: eval mounts into its sandboxes. It
+// runs after the last turn and before evaluation, so the files are there for
+// the evals and were never there for the agent. A no-op without a sandbox.
+func deliverEvalFiles(ctx context.Context) error {
+	deliver, _ := ctx.Value(evalDeliveryKey{}).(func(context.Context) error)
+	if deliver == nil {
+		return nil
+	}
+	if err := deliver(ctx); err != nil {
+		return fmt.Errorf("deliver eval files: %w", err)
+	}
+	return nil
+}
+
+// configBaseDir is the absolute config directory, which relative mount
+// sources resolve against. Empty when the engine has no config path.
+func (e *Engine) configBaseDir() string {
+	if e.config == nil || e.config.ConfigDir == "" {
+		return ""
+	}
+	abs, err := filepath.Abs(e.config.ConfigDir)
+	if err != nil {
+		return e.config.ConfigDir
+	}
+	return abs
 }

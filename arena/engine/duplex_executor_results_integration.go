@@ -55,6 +55,12 @@ func (de *DuplexConversationExecutor) buildResultFromStateStore(
 	mediaOutputs := CollectMediaOutputs(messages)
 	toolStats := de.calculateToolStats(messages)
 
+	// Copy any when: eval mounts in now that the agent is done, so the evals
+	// below find files the agent never saw.
+	if err := deliverEvalFiles(ctx); err != nil {
+		return &ConversationResult{Messages: messages, Failed: true, Error: err.Error()}
+	}
+
 	// Evaluate conversation-level assertions
 	convAssertionResults := de.evaluateConversationAssertions(ctx, req, messages)
 
