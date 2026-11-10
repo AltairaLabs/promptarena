@@ -4,7 +4,7 @@ description: How packc compile loads an arena config, builds a pack from it with
 sidebar:
   order: 2
 verified:
-  commit: 72f35dcda537f9ebff0eaf33808ce728f0c8b3f8
+  commit: 02ec7c860b978fcce24022d9ccb868d94208c751
   sources:
     - arena/arenaconfig/loader.go
     - arena/cmd/promptarena/validate_json.go
@@ -103,16 +103,17 @@ Each fragment a prompt config references in `spec.fragments` is read from its fi
 - A fragment with `required: true` that cannot be read or parsed fails the `compile` stage, and the error names the file:
 
   ```text
-  Compilation failed: [compile] compilation failed: prompt "support": required fragment "tone": reading fragment file: open /work/support/fragments/tone.yaml: no such file or directory
+  Compilation failed: [compile] compilation failed: prompt "support": required fragment "tone": reading fragment file /work/support/fragments/tone.yaml: openat fragments/tone.yaml: no such file or directory
   ```
 
-- An optional fragment that cannot be read is left out of the pack, with a warning:
+- An optional fragment that cannot be read is written to the pack as an empty string, so it renders as nothing, and the compile prints a warning:
 
   ```text
-  ⚠ [compile] fragments: prompt "support": optional fragment "tone" was not loaded and is left out: reading fragment file: open /work/support/fragments/tone.yaml: no such file or directory
+  ⚠ [compile] fragments: prompt "support": optional fragment "tone" was not loaded and renders empty: reading fragment file /work/support/fragments/tone.yaml: openat fragments/tone.yaml: no such file or directory
   ```
 
 - A fragment with no `path` names no file, so it cannot be loaded: a required one fails the compile and an optional one is a warning.
+- A relative `path` may climb out of the prompt config's directory only with its own leading `../` segments. One that climbs further, such as `sub/../../tone.yaml`, fails with an error saying it resolves outside the base directory. An absolute `path` is read as written.
 - A fragment whose `name` or `path` contains `{{` is chosen by a template variable, so it cannot be resolved at compile time. It is written as the placeholder `{{<name>}}`.
 
 `promptarena run` loads fragments the same way, when it builds its prompt registry, so a missing required fragment stops the run before any scenario starts.

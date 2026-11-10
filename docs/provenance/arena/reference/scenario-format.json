@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/reference/scenario-format.md",
- "commit": "41e16490ec749312f63e711caf8cbd08bad51c64",
+ "commit": "02ec7c860b978fcce24022d9ccb868d94208c751",
  "claims": [
   {
    "id": 1,
@@ -16,7 +16,7 @@
    "claim": "Kubernetes-style resource kind Arena is supported",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:547",
+    "arena/arenaconfig/loader.go:553",
     "schemas/v1alpha1/arena.json:1"
    ]
   },
@@ -25,7 +25,7 @@
    "claim": "Kubernetes-style resource kind PromptConfig is supported",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:547",
+    "arena/arenaconfig/loader.go:553",
     "schemas/v1alpha1/promptconfig.json:1"
    ]
   },
@@ -34,7 +34,7 @@
    "claim": "Kubernetes-style resource kind Scenario is supported",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:547",
+    "arena/arenaconfig/loader.go:553",
     "schemas/v1alpha1/scenario.json:1"
    ]
   },
@@ -43,7 +43,7 @@
    "claim": "Kubernetes-style resource kind Provider is supported",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:547",
+    "arena/arenaconfig/loader.go:553",
     "schemas/v1alpha1/provider.json:1"
    ]
   },
@@ -52,7 +52,7 @@
    "claim": "Kubernetes-style resource kind Tool is supported",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:547",
+    "arena/arenaconfig/loader.go:553",
     "schemas/v1alpha1/tool.json:1"
    ]
   },
@@ -61,7 +61,7 @@
    "claim": "Kubernetes-style resource kind Persona is supported",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:547",
+    "arena/arenaconfig/loader.go:553",
     "schemas/v1alpha1/persona.json:1"
    ]
   },
@@ -70,8 +70,8 @@
    "claim": "Provider OpenAI is a supported testing provider",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:323",
-    "arena/turnexecutors/pipeline_stages_integration.go:177"
+    "arena/engine/builder_integration.go:324",
+    "arena/turnexecutors/pipeline_stages_integration.go:192"
    ]
   },
   {
@@ -79,7 +79,7 @@
    "claim": "Provider Anthropic is a supported testing provider",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:170"
+    "arena/turnexecutors/pipeline_stages_integration.go:185"
    ]
   },
   {
@@ -87,8 +87,8 @@
    "claim": "Provider Google Gemini is a supported testing provider",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:323",
-    "arena/turnexecutors/pipeline_stages_integration.go:177"
+    "arena/engine/builder_integration.go:324",
+    "arena/turnexecutors/pipeline_stages_integration.go:192"
    ]
   },
   {
@@ -96,7 +96,7 @@
    "claim": "Provider Azure is a supported testing provider",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:170"
+    "arena/turnexecutors/pipeline_stages_integration.go:185"
    ]
   },
   {
@@ -104,7 +104,7 @@
    "claim": "Provider Bedrock is a supported testing provider",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:170"
+    "arena/turnexecutors/pipeline_stages_integration.go:185"
    ]
   },
   {
@@ -112,8 +112,8 @@
    "claim": "Provider Mock is a supported testing provider",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:323",
-    "arena/turnexecutors/pipeline_stages_integration.go:177"
+    "arena/engine/builder_integration.go:324",
+    "arena/turnexecutors/pipeline_stages_integration.go:192"
    ]
   },
   {
@@ -121,7 +121,7 @@
    "claim": "PromptArena supports MCP (Model Context Protocol) server integration",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:173"
+    "arena/arenaconfig/types.go:174"
    ]
   },
   {
@@ -234,7 +234,7 @@
    "claim": "Arena spec.mcp_servers is a list",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:173"
+    "arena/arenaconfig/types.go:174"
    ]
   },
   {
@@ -242,7 +242,7 @@
    "claim": "Each mcp_servers entry has a name field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:173"
+    "arena/arenaconfig/types.go:174"
    ]
   },
   {
@@ -250,7 +250,7 @@
    "claim": "Each mcp_servers entry has a command field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:173"
+    "arena/arenaconfig/types.go:174"
    ]
   },
   {
@@ -258,7 +258,7 @@
    "claim": "Each mcp_servers entry has an args field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:173"
+    "arena/arenaconfig/types.go:174"
    ]
   },
   {
@@ -266,7 +266,7 @@
    "claim": "Arena spec.defaults.output.dir is a valid field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:180",
+    "arena/arenaconfig/types.go:181",
     "arena/cmd/promptarena/run.go:363"
    ]
   },
@@ -291,7 +291,7 @@
    "claim": "Turn-level assertions key 'assertions' is valid on a turn",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1189"
+    "arena/arenaconfig/types.go:1194"
    ]
   },
   {
@@ -452,7 +452,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:715",
-    "arena/engine/conversation_executor.go:1016"
+    "arena/engine/conversation_executor.go:1022"
    ]
   },
   {
@@ -470,7 +470,7 @@
    "verdict": "true",
    "evidence": [
     "arena/assertions/validate_types.go:27",
-    "arena/engine/conversation_executor.go:1079"
+    "arena/engine/conversation_executor.go:1085"
    ]
   },
   {
@@ -479,7 +479,7 @@
    "verdict": "true",
    "evidence": [
     "arena/assertions/validate_types.go:27",
-    "arena/engine/conversation_executor.go:1079"
+    "arena/engine/conversation_executor.go:1085"
    ]
   },
   {
@@ -495,7 +495,7 @@
    "claim": "The workflow state machine is declared under spec.workflow in config.arena.yaml",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:127"
+    "arena/arenaconfig/types.go:128"
    ]
   },
   {
@@ -528,7 +528,7 @@
    "claim": "spec.task_type sets the workflow entry state",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:689",
+    "arena/arenaconfig/types.go:694",
     "arena/engine/execution_workflow_integration.go:233"
    ]
   },
@@ -537,7 +537,7 @@
    "claim": "Scenario spec.variables is a valid field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:741"
+    "arena/arenaconfig/types.go:746"
    ]
   },
   {
@@ -545,7 +545,7 @@
    "claim": "Scenario spec.turns is a valid field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:697"
+    "arena/arenaconfig/types.go:702"
    ]
   },
   {
@@ -553,7 +553,7 @@
    "claim": "A turn accepts an assertions list",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1189"
+    "arena/arenaconfig/types.go:1194"
    ]
   },
   {
@@ -666,8 +666,8 @@
    "claim": "Scenario content parts support type text",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1423",
-    "arena/arenaconfig/types.go:1425"
+    "arena/arenaconfig/types.go:1428",
+    "arena/arenaconfig/types.go:1430"
    ]
   },
   {
@@ -675,7 +675,7 @@
    "claim": "Scenario content parts support type image",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1423",
+    "arena/arenaconfig/types.go:1428",
     "arena/turnexecutors/media_loader.go:186"
    ]
   },
@@ -684,7 +684,7 @@
    "claim": "A text content part has type text and a text field; the page documents no patterns field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1423"
+    "arena/arenaconfig/types.go:1428"
    ]
   },
   {
@@ -692,7 +692,7 @@
    "claim": "An image content part has type image and a media object (file_path, url, data or storage_reference, plus mime_type); there is no image_url",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1428"
+    "arena/arenaconfig/types.go:1433"
    ]
   },
   {
@@ -700,7 +700,7 @@
    "claim": "image_url.detail accepts the value high",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1432"
+    "arena/arenaconfig/types.go:1437"
    ]
   },
   {
@@ -717,7 +717,7 @@
    "claim": "Content parts support type text, image, audio or video with a media object; the page documents no document part",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1423"
+    "arena/arenaconfig/types.go:1428"
    ]
   },
   {
@@ -742,7 +742,7 @@
    "claim": "Provider spec.type value mock selects the Mock provider",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:323"
+    "arena/engine/builder_integration.go:324"
    ]
   },
   {
@@ -758,8 +758,8 @@
    "claim": "Mock provider responses are configured in providers/mock-responses.yaml",
    "verdict": "false",
    "evidence": [
-    "arena/engine/builder_integration.go:270",
-    "arena/engine/builder_integration.go:326"
+    "arena/engine/builder_integration.go:271",
+    "arena/engine/builder_integration.go:327"
    ]
   },
   {
@@ -815,7 +815,7 @@
    "claim": "A self-play turn uses role gemini-user",
    "verdict": "true",
    "evidence": [
-    "arena/engine/conversation_executor.go:1301",
+    "arena/engine/conversation_executor.go:1307",
     "examples/assertions-test/config.arena.yaml:31"
    ]
   },
@@ -824,7 +824,7 @@
    "claim": "A self-play turn accepts a persona field referencing a Persona by name",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1151"
+    "arena/arenaconfig/types.go:1156"
    ]
   },
   {
@@ -832,7 +832,7 @@
    "claim": "A self-play turn accepts a turns field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1153"
+    "arena/arenaconfig/types.go:1158"
    ]
   },
   {
@@ -840,7 +840,7 @@
    "claim": "A self-play turn accepts a max_turns field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1155"
+    "arena/arenaconfig/types.go:1160"
    ]
   },
   {
@@ -882,8 +882,8 @@
    "claim": "A turn's role is user or a self-play role ID from spec.self_play.roles; promptarena validate rejects any other role, assistant included.",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1143",
-    "arena/arenaconfig/validator.go:379"
+    "arena/arenaconfig/types.go:1148",
+    "arena/arenaconfig/validator.go:383"
    ]
   },
   {
@@ -891,8 +891,8 @@
    "claim": "context_metadata takes domain and user_role; project_stage is accepted but ignored, with a load warning",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/ignored_fields.go:41",
-    "arena/arenaconfig/types.go:663"
+    "arena/arenaconfig/ignored_fields.go:43",
+    "arena/arenaconfig/types.go:668"
    ]
   }
  ]

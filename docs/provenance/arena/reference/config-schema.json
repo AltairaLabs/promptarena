@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/reference/config-schema.md",
- "commit": "d12d5b388a693c119b19bf05eabade5b717cb10d",
+ "commit": "02ec7c860b978fcce24022d9ccb868d94208c751",
  "claims": [
   {
    "id": 1001,
@@ -213,7 +213,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:62",
-    "arena/arenaconfig/validator.go:96",
+    "arena/arenaconfig/validator.go:99",
     "schemas/v1alpha1/arena.json:1"
    ]
   },
@@ -498,8 +498,8 @@
    "claim": "Omitting seed, or setting it to 0, sends no seed to the provider",
    "verdict": "true",
    "evidence": [
-    "arena/engine/conversation_executor.go:1330",
-    "arena/engine/conversation_executor.go:1339",
+    "arena/engine/conversation_executor.go:1336",
+    "arena/engine/conversation_executor.go:1345",
     "arena/engine/conversation_executor.go:396"
    ]
   },
@@ -528,7 +528,7 @@
    "evidence": [
     "arena/arenaconfig/types.go:471",
     "arena/cmd/promptarena/run.go:168",
-    "arena/engine/engine.go:912"
+    "arena/engine/engine.go:962"
    ]
   },
   {
@@ -537,7 +537,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:473",
-    "arena/engine/execution.go:1247"
+    "arena/engine/execution.go:1252"
    ]
   },
   {
@@ -545,7 +545,7 @@
    "claim": "defaults.run_timeout defaults to 5m",
    "verdict": "true",
    "evidence": [
-    "arena/engine/execution.go:1256",
+    "arena/engine/execution.go:1261",
     "arena/engine/execution.go:33"
    ]
   },
@@ -554,8 +554,8 @@
    "claim": "defaults.run_timeout applies per run",
    "verdict": "true",
    "evidence": [
-    "arena/engine/execution.go:1241",
-    "arena/engine/execution.go:517"
+    "arena/engine/execution.go:1246",
+    "arena/engine/execution.go:522"
    ]
   },
   {
@@ -696,7 +696,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:530",
-    "arena/engine/engine.go:700"
+    "arena/engine/engine.go:701"
    ]
   },
   {
@@ -705,7 +705,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:567",
-    "arena/engine/engine.go:701"
+    "arena/engine/engine.go:702"
    ]
   },
   {
@@ -714,7 +714,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:567",
-    "arena/engine/engine.go:701"
+    "arena/engine/engine.go:702"
    ]
   },
   {
@@ -723,7 +723,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:568",
-    "arena/engine/engine.go:707"
+    "arena/engine/engine.go:708"
    ]
   },
   {
@@ -732,7 +732,7 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/engine.go:62",
-    "arena/engine/engine.go:709"
+    "arena/engine/engine.go:710"
    ]
   },
   {
@@ -740,8 +740,8 @@
    "claim": "The recording dir is a subdirectory of output.dir",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:706",
-    "arena/engine/engine.go:711"
+    "arena/engine/engine.go:707",
+    "arena/engine/engine.go:712"
    ]
   },
   {
@@ -1028,7 +1028,7 @@
    "claim": "A url server connects to an already-running server over one of two MCP HTTP transports, chosen with transport",
    "verdict": "true",
    "evidence": [
-    "arena/engine/mcpsource_scope.go:143",
+    "arena/engine/mcpsource_scope.go:165",
     "arena/mcp/config.go:74"
    ]
   },
@@ -1153,9 +1153,9 @@
    "claim": "A registered MCPSource opens its endpoint at a scope boundary and closes it when the boundary ends",
    "verdict": "true",
    "evidence": [
-    "arena/engine/execution_mcpsource.go:65",
-    "arena/engine/mcpsource_scope.go:267",
-    "arena/engine/mcpsource_scope.go:70"
+    "arena/engine/execution_mcpsource.go:67",
+    "arena/engine/mcpsource_scope.go:312",
+    "arena/engine/mcpsource_scope.go:76"
    ]
   },
   {
@@ -1169,7 +1169,7 @@
    "claim": "mcp_servers[].source is a required string naming a registered MCPSource",
    "verdict": "true",
    "evidence": [
-    "arena/engine/mcpsource_scope.go:127",
+    "arena/engine/mcpsource_scope.go:149",
     "schemas/v1alpha1/arena.json:1"
    ]
   },
@@ -1178,7 +1178,7 @@
    "claim": "mcp_servers[].scope is required; enum values are run, scenario, session",
    "verdict": "true",
    "evidence": [
-    "arena/engine/mcpsource_scope.go:90",
+    "arena/engine/mcpsource_scope.go:96",
     "schemas/v1alpha1/arena.json:1"
    ]
   },
@@ -1187,8 +1187,8 @@
    "claim": "mcp_servers[].source_args is an optional object of source-specific arguments",
    "verdict": "true",
    "evidence": [
-    "arena/engine/mcpsource_scope.go:114",
-    "arena/engine/mcpsource_scope.go:135"
+    "arena/engine/mcpsource_scope.go",
+    "arena/engine/mcpsource_scope.go:157"
    ]
   },
   {
@@ -1205,7 +1205,7 @@
    "claim": "The docker source accepts the source_args key image",
    "verdict": "true",
    "evidence": [
-    "arena/mcpsource/docker/source.go:44"
+    "arena/mcpsource/docker/source.go:48"
    ]
   },
   {
@@ -1213,7 +1213,7 @@
    "claim": "The docker source accepts the source_args key repo",
    "verdict": "true",
    "evidence": [
-    "arena/mcpsource/docker/source.go:44"
+    "arena/mcpsource/docker/source.go:48"
    ]
   },
   {
@@ -1221,7 +1221,7 @@
    "claim": "The docker source accepts the source_args key branch",
    "verdict": "true",
    "evidence": [
-    "arena/mcpsource/docker/source.go:44"
+    "arena/mcpsource/docker/source.go:48"
    ]
   },
   {
@@ -1229,7 +1229,7 @@
    "claim": "The docker source accepts the source_args key env",
    "verdict": "true",
    "evidence": [
-    "arena/mcpsource/docker/source.go:44"
+    "arena/mcpsource/docker/source.go:48"
    ]
   },
   {
@@ -1237,7 +1237,7 @@
    "claim": "The docker source accepts the source_args key mounts",
    "verdict": "true",
    "evidence": [
-    "arena/mcpsource/docker/source.go:44"
+    "arena/mcpsource/docker/source.go:48"
    ]
   },
   {
@@ -1245,7 +1245,7 @@
    "claim": "The docker source accepts the source_args key ports",
    "verdict": "true",
    "evidence": [
-    "arena/mcpsource/docker/source.go:44"
+    "arena/mcpsource/docker/source.go:48"
    ]
   },
   {
@@ -1253,7 +1253,7 @@
    "claim": "The docker source accepts the source_args key network",
    "verdict": "true",
    "evidence": [
-    "arena/mcpsource/docker/source.go:44"
+    "arena/mcpsource/docker/source.go:48"
    ]
   },
   {
@@ -1261,7 +1261,7 @@
    "claim": "The docker source accepts the source_args key cpus",
    "verdict": "true",
    "evidence": [
-    "arena/mcpsource/docker/source.go:44"
+    "arena/mcpsource/docker/source.go:48"
    ]
   },
   {
@@ -1269,7 +1269,7 @@
    "claim": "The docker source accepts the source_args key memory",
    "verdict": "true",
    "evidence": [
-    "arena/mcpsource/docker/source.go:143"
+    "arena/mcpsource/docker/source.go:252"
    ]
   },
   {
@@ -1277,9 +1277,8 @@
    "claim": "source_args are templated against scenario variables ({{scenario.<key>}}) before Open() is called",
    "verdict": "true",
    "evidence": [
-    "arena/engine/mcpsource_scope.go:288",
-    "arena/engine/mcpsource_scope.go:318",
-    "arena/engine/mcpsource_scope.go:93"
+    "arena/engine/mcpsource_scope.go",
+    "arena/mcpsource/mounts.go:249"
    ]
   },
   {
@@ -1287,7 +1286,7 @@
    "claim": "Example: source-backed mcp_servers entry (source docker, scope session, source_args image, repo, branch) is valid",
    "verdict": "true",
    "evidence": [
-    "arena/engine/mcpsource_scope.go:127",
+    "arena/engine/mcpsource_scope.go:149",
     "schemas/v1alpha1/arena.json:1"
    ]
   },
@@ -1297,7 +1296,7 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/mcpsource_scope.go",
-    "arena/engine/mcpsource_scope.go:234"
+    "arena/engine/mcpsource_scope.go:279"
    ]
   },
   {
@@ -1332,8 +1331,8 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/conversation_executor.go",
-    "arena/engine/execution.go:628",
-    "arena/engine/execution.go:633"
+    "arena/engine/execution.go:633",
+    "arena/engine/execution.go:638"
    ]
   },
   {
@@ -1542,7 +1541,7 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/eval_orchestrator.go:218",
-    "arena/engine/execution.go:768"
+    "arena/engine/execution.go:773"
    ]
   },
   {
@@ -1684,7 +1683,7 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/eval_run_metadata.go:69",
-    "arena/engine/mcpsource_scope.go:186"
+    "arena/engine/mcpsource_scope.go:231"
    ]
   },
   {
@@ -1693,7 +1692,7 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/engine.go:250",
-    "arena/engine/execution.go:573"
+    "arena/engine/execution.go:578"
    ]
   },
   {
@@ -1710,7 +1709,7 @@
    "claim": "The workspace path inside the container depends on the image; it is /workspace for codegen-sandbox",
    "verdict": "true",
    "evidence": [
-    "arena/mcpsource/docker/source.go:232",
+    "arena/mcpsource/docker/source.go:341",
     "examples/sandbox-host-eval/config.arena.yaml:47"
    ]
   },
@@ -1824,7 +1823,7 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/conversation_executor.go",
-    "arena/engine/execution.go:633"
+    "arena/engine/execution.go:638"
    ]
   },
   {
@@ -1871,9 +1870,9 @@
    "claim": "The session_end hook runs after the session evals, and the container is removed last",
    "verdict": "true",
    "evidence": [
-    "arena/engine/execution.go:562",
-    "arena/engine/execution.go:617",
-    "arena/engine/execution.go:633"
+    "arena/engine/execution.go:567",
+    "arena/engine/execution.go:622",
+    "arena/engine/execution.go:638"
    ]
   },
   {
@@ -1898,7 +1897,7 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/mcpsource_scope.go",
-    "arena/engine/mcpsource_scope.go:70"
+    "arena/engine/mcpsource_scope.go:76"
    ]
   },
   {
@@ -2401,7 +2400,7 @@
    "claim": "defaults.output.recording.enabled defaults to false",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:701"
+    "arena/engine/engine.go:702"
    ]
   },
   {
@@ -2417,7 +2416,7 @@
    "claim": "defaults.output.recording.dir defaults to recordings",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:709"
+    "arena/engine/engine.go:710"
    ]
   },
   {
@@ -2425,8 +2424,8 @@
    "claim": "Session recording captures detailed event streams for each test run, including audio data for voice conversations",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:590",
-    "arena/engine/engine.go:699"
+    "arena/engine/engine.go:591",
+    "arena/engine/engine.go:700"
    ]
   },
   {
@@ -2602,7 +2601,7 @@
    "claim": "Prompt spec accepts an `allowed_tools` list of tool names",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator.go:437",
+    "arena/arenaconfig/validator.go:440",
     "schemas/v1alpha1/promptconfig.json"
    ]
   },
@@ -2611,7 +2610,7 @@
    "claim": "allowed_tools names tools registered under the arena config's spec.tools, or MCP tools as mcp__<server>__<tool>",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator.go:437",
+    "arena/arenaconfig/validator.go:440",
     "arena/engine/builder_integration.go:470"
    ]
   },
@@ -2645,7 +2644,7 @@
    "verdict": "false",
    "evidence": [
     "arena/engine/builder_integration.go:415",
-    "arena/engine/execution.go:306"
+    "arena/engine/execution.go:308"
    ]
   },
   {
@@ -2975,7 +2974,7 @@
    "claim": "Scenario spec.task_type is required and must match the prompt's task_type",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator.go:314",
+    "arena/arenaconfig/validator.go:317",
     "schemas/v1alpha1/scenario.json"
    ]
   },
@@ -3061,7 +3060,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:1194",
-    "arena/turnexecutors/pipeline_stages_integration.go:561"
+    "arena/turnexecutors/pipeline_stages_integration.go:576"
    ]
   },
   {
@@ -3070,7 +3069,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:1178",
-    "arena/turnexecutors/pipeline_stages_integration.go:654"
+    "arena/turnexecutors/pipeline_stages_integration.go:669"
    ]
   },
   {
@@ -3078,7 +3077,7 @@
    "claim": "Self-play turn field `role` is a required string matching a configured role in self_play.roles",
    "verdict": "true",
    "evidence": [
-    "arena/engine/conversation_executor.go:1301",
+    "arena/engine/conversation_executor.go:1307",
     "arena/engine/conversation_executor.go:237"
    ]
   },
@@ -3434,7 +3433,7 @@
    "claim": "Each data row run carries the label `data_row: <row-id>`",
    "verdict": "true",
    "evidence": [
-    "arena/engine/execution.go:978",
+    "arena/engine/execution.go:983",
     "arena/statestore/store.go:1157"
    ]
   },
@@ -3443,7 +3442,7 @@
    "claim": "The JSON result records Params.data_row and the row's values under Params.data",
    "verdict": "true",
    "evidence": [
-    "arena/engine/execution.go:991"
+    "arena/engine/execution.go:996"
    ]
   },
   {
@@ -3535,7 +3534,7 @@
    "claim": "A budgeted group's trials run in order on one worker regardless of --concurrency",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:979",
+    "arena/engine/engine.go:1029",
     "arena/engine/trial_budget.go:132"
    ]
   },
@@ -3960,7 +3959,7 @@
    "claim": "Only tool calls made while that turn runs are affected by its chaos",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:784"
+    "arena/turnexecutors/pipeline_stages_integration.go:799"
    ]
   },
   {
@@ -4249,7 +4248,7 @@
    "verdict": "false",
    "evidence": [
     "arena/engine/builder_integration.go:415",
-    "arena/engine/execution.go:306"
+    "arena/engine/execution.go:308"
    ]
   },
   {
@@ -4258,7 +4257,7 @@
    "verdict": "false",
    "evidence": [
     "arena/engine/builder_integration.go:415",
-    "arena/engine/execution.go:306"
+    "arena/engine/execution.go:308"
    ]
   },
   {
@@ -4365,8 +4364,8 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:733",
-    "arena/engine/execution.go:306",
-    "arena/engine/execution.go:323"
+    "arena/engine/execution.go:308",
+    "arena/engine/execution.go:328"
    ]
   },
   {
@@ -4683,7 +4682,7 @@
    "claim": "The mock provider returns predefined responses without making API calls",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:716"
+    "arena/engine/engine.go:717"
    ]
   },
   {
@@ -5316,8 +5315,8 @@
    "claim": "Session recordings are generated by Arena when recording.enabled is true in the output config",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:699",
-    "arena/engine/engine.go:701"
+    "arena/engine/engine.go:700",
+    "arena/engine/engine.go:702"
    ]
   },
   {
@@ -5341,7 +5340,7 @@
    "claim": "A session recording contains the full event stream with timing, audio data and metadata",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:620-623"
+    "arena/engine/engine.go:621-624"
    ]
   },
   {
@@ -5501,7 +5500,7 @@
    "claim": "Session recording files use the .recording.json extension",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:687"
+    "arena/engine/engine.go:688"
    ]
   },
   {
@@ -6686,7 +6685,7 @@
    "claim": "user_temp, assistant_temp and seed treat 0 as unset",
    "verdict": "true",
    "evidence": [
-    "arena/engine/conversation_executor.go:1339",
+    "arena/engine/conversation_executor.go:1345",
     "arena/engine/conversation_executor.go:441"
    ]
   },
@@ -7354,7 +7353,7 @@
    "verdict": "true",
    "evidence": [
     "arena/toolresult/hook.go:54",
-    "arena/turnexecutors/pipeline_stages_integration.go:675"
+    "arena/turnexecutors/pipeline_stages_integration.go:690"
    ]
   },
   {
@@ -7419,7 +7418,7 @@
    "verdict": "true",
    "evidence": [
     "arena/toolresult/hook.go:54",
-    "arena/turnexecutors/pipeline_stages_integration.go:675"
+    "arena/turnexecutors/pipeline_stages_integration.go:690"
    ]
   },
   {
@@ -8454,8 +8453,8 @@
     "arena/arenaconfig/helpers.go:65",
     "arena/cmd/promptarena/run.go:363",
     "arena/cmd/promptarena/serve_interactive.go:219",
-    "arena/engine/engine.go:1041",
-    "arena/engine/engine.go:706"
+    "arena/engine/engine.go:1091",
+    "arena/engine/engine.go:707"
    ]
   },
   {
@@ -8465,6 +8464,56 @@
    "evidence": [
     "arena/arenaconfig/judge_param.go:56",
     "arena/arenaconfig/judge_param.go:62"
+   ]
+  },
+  {
+   "id": 5001,
+   "claim": "source_args.mounts entries take source, target, readonly (default true), mode (bind default or copy) and when (start default or eval); a relative source resolves against the config directory and must exist inside it",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/mcpsource_scope.go:124-141",
+    "arena/mcpsource/mounts.go:60-190"
+   ]
+  },
+  {
+   "id": 5002,
+   "claim": "when: eval needs mode: copy and scope: session",
+   "verdict": "true",
+   "evidence": [
+    "arena/mcpsource/mounts.go:190-201"
+   ]
+  },
+  {
+   "id": 5003,
+   "claim": "A user mount using a /skills/<name> target that a skill mount also needs fails the open",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/mcpsource_scope.go:429"
+   ]
+  },
+  {
+   "id": 5004,
+   "claim": "promptarena validate checks every mount, once per scenario when source uses a scenario variable",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/validator.go:587-630"
+   ]
+  },
+  {
+   "id": 5005,
+   "claim": "when: eval mounts are copied in after the agent's last turn, just before session evals run",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/conversation_executor.go:1016",
+    "arena/engine/mcpsource_scope.go:190-210"
+   ]
+  },
+  {
+   "id": 5006,
+   "claim": "When no provider lists every required capability, the scenario does not run",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/execution.go:308-312"
    ]
   },
   {
@@ -8497,7 +8546,7 @@
    "claim": "promptarena validate warns when scenario context has a variables key",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator.go:327-334"
+    "arena/arenaconfig/validator.go:330-337"
    ]
   },
   {
@@ -8524,7 +8573,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:710",
-    "arena/arenaconfig/validator.go:338-348",
+    "arena/arenaconfig/validator.go:341-351",
     "arena/engine/execution.go:279-302",
     "schemas/v1alpha1/scenario.json:607-613"
    ]
@@ -8577,7 +8626,7 @@
     "arena/arenaconfig/ignored_fields.go:96-112",
     "arena/arenaconfig/loader.go:279-283",
     "arena/arenaconfig/types.go:112-117",
-    "arena/arenaconfig/validator.go:67"
+    "arena/arenaconfig/validator.go:70"
    ]
   },
   {
@@ -8598,7 +8647,7 @@
    "evidence": [
     "arena/arenaconfig/ignored_fields.go:96-112",
     "arena/arenaconfig/loader.go:279-283",
-    "arena/arenaconfig/validator.go:67"
+    "arena/arenaconfig/validator.go:70"
    ]
   },
   {
@@ -8606,7 +8655,7 @@
    "claim": "mode: local is not available in PromptArena: validate reports it as an error and run stops at startup on it",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator.go:63",
+    "arena/arenaconfig/validator.go:65",
     "arena/arenaconfig/validator_tools.go:73-98",
     "arena/engine/builder_integration.go:578",
     "schemas/v1alpha1/tool.json:321"

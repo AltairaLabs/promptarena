@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/tutorials/02-multi-provider.md",
- "commit": "d12d5b388a693c119b19bf05eabade5b717cb10d",
+ "commit": "02ec7c860b978fcce24022d9ccb868d94208c751",
  "claims": [
   {
    "id": 1,
@@ -139,10 +139,10 @@
   },
   {
    "id": 20,
-   "claim": "claude-3-5-sonnet-20241022 is an accepted anthropic model value",
-   "verdict": "false",
+   "claim": "claude-haiku-5-5 is an accepted anthropic (claude) model value",
+   "verdict": "true",
    "evidence": [
-    "examples/capability-matrix/providers/anthropic-haiku45.provider.yaml:7",
+    "examples/capability-matrix/providers/anthropic-haiku55.provider.yaml:7-8",
     "examples/capability-matrix/providers/anthropic-sonnet46.provider.yaml:7"
    ]
   },
@@ -154,10 +154,10 @@
   },
   {
    "id": 22,
-   "claim": "gemini-1.5-flash is an accepted gemini model value",
-   "verdict": "false",
+   "claim": "gemini-3.8-flash is an accepted gemini model value",
+   "verdict": "true",
    "evidence": [
-    "examples/capability-matrix/providers/gemini-25-flash.provider.yaml"
+    "examples/capability-matrix/providers/gemini-38-flash.provider.yaml:7-8"
    ]
   },
   {
@@ -572,10 +572,10 @@
   },
   {
    "id": 73,
-   "claim": "pricing table: gemini-1.5-flash input $0.075 and output $0.30 per 1M tokens",
-   "verdict": "false",
+   "claim": "the gemini example uses the model gemini-3.8-flash, as the capability-matrix gemini-38-flash provider does",
+   "verdict": "true",
    "evidence": [
-    "examples/capability-matrix/providers/gemini-25-flash.provider.yaml"
+    "examples/capability-matrix/providers/gemini-38-flash.provider.yaml:8"
    ]
   },
   {

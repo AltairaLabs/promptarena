@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/agents/test-mcp-tools.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "02ec7c860b978fcce24022d9ccb868d94208c751",
  "claims": [
   {
    "id": 1,
@@ -13,8 +13,8 @@
    "claim": "Arena connects real MCP servers and verifies tool calls in scenarios",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:441",
-    "arena/engine/builder_integration.go:470"
+    "arena/engine/builder_integration.go:442",
+    "arena/engine/builder_integration.go:471"
    ]
   },
   {
@@ -22,7 +22,7 @@
    "claim": "MCP servers are configured by stdio via the 'command' field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:173",
+    "arena/arenaconfig/types.go:174",
     "schemas/v1alpha1/arena.json:1813"
    ]
   },
@@ -40,9 +40,9 @@
    "claim": "Stdio and HTTP+SSE servers are long-lived processes shared across all scenarios",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:121",
-    "arena/engine/builder_integration.go:91",
-    "arena/engine/engine.go:828",
+    "arena/engine/builder_integration.go:122",
+    "arena/engine/builder_integration.go:92",
+    "arena/engine/engine.go:881",
     "arena/mcp/config.go:40"
    ]
   },
@@ -65,7 +65,7 @@
    "claim": "kind Arena",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:204",
+    "arena/arenaconfig/loader.go:205",
     "schemas/v1alpha1/arena.json:4"
    ]
   },
@@ -82,7 +82,7 @@
    "claim": "spec.mcp_servers is a list field on the Arena spec",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:173",
+    "arena/arenaconfig/types.go:174",
     "schemas/v1alpha1/arena.json:732"
    ]
   },
@@ -142,8 +142,8 @@
    "claim": "Arena starts the MCP server, discovers its tools and registers them for scenarios",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:448",
-    "arena/engine/builder_integration.go:470"
+    "arena/engine/builder_integration.go:449",
+    "arena/engine/builder_integration.go:471"
    ]
   },
   {
@@ -151,7 +151,7 @@
    "claim": "Field tool_filter limits which MCP tools are available",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:465",
+    "arena/engine/builder_integration.go:466",
     "schemas/v1alpha1/arena.json:1874"
    ]
   },
@@ -160,7 +160,7 @@
    "claim": "tool_filter.allowlist is a list of tool names",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:465",
+    "arena/engine/builder_integration.go:466",
     "schemas/v1alpha1/arena.json:1886"
    ]
   },
@@ -177,7 +177,7 @@
    "claim": "tool_filter.blocklist is a list of tool names",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:465",
+    "arena/engine/builder_integration.go:466",
     "arena/mcp/config.go:77",
     "schemas/v1alpha1/arena.json:1892"
    ]
@@ -243,7 +243,7 @@
    "claim": "MCP tools are named mcp__{serverName}__{toolName}",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:469"
+    "arena/engine/builder_integration.go:470"
    ]
   },
   {
@@ -251,7 +251,7 @@
    "claim": "A prompt reaches only the tools named in allowed_tools; no entry means no tools",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator.go:382",
+    "arena/arenaconfig/validator.go:426",
     "examples/mcp-everything-test/prompts/mcp-assistant.yaml:20"
    ]
   },
@@ -270,7 +270,7 @@
    "evidence": [
     "arena/arenaconfig/types.go:707",
     "arena/engine/builder_integration.go:414",
-    "arena/engine/execution.go:306"
+    "arena/engine/execution.go:309-312"
    ]
   },
   {
@@ -304,7 +304,7 @@
    "claim": "Tool name mcp__everything__echo is valid in allowed_tools",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator.go:382",
+    "arena/arenaconfig/validator.go:426",
     "examples/mcp-everything-test/prompts/mcp-assistant.yaml:21"
    ]
   },
@@ -313,7 +313,7 @@
    "claim": "Tool name mcp__everything__get-sum is valid in allowed_tools",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:469",
+    "arena/engine/builder_integration.go:470",
     "examples/mcp-everything-test/prompts/mcp-assistant.yaml:22"
    ]
   },
@@ -381,7 +381,7 @@
    "claim": "spec.tool_policy is a Scenario field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:944",
+    "arena/arenaconfig/types.go:949",
     "schemas/v1alpha1/scenario.json:604"
    ]
   },
@@ -390,7 +390,7 @@
    "claim": "tool_policy.tool_choice accepts value 'auto'",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:947",
+    "arena/arenaconfig/types.go:952",
     "schemas/v1alpha1/scenario.json:737"
    ]
   },
@@ -452,7 +452,7 @@
    "claim": "Second MCP server in the same config accepts the same tool_filter.allowlist form",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:465",
+    "arena/engine/builder_integration.go:466",
     "arena/mcp/config.go:77"
    ]
   },
@@ -609,8 +609,8 @@
    "claim": "An mcp_servers entry needs a name and exactly one of command, url or source, and a transport that matches (stdio needs command; sse and streamable_http need url), otherwise the config fails to load in validate and run",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:222",
-    "arena/arenaconfig/mcp_servers.go:15"
+    "arena/arenaconfig/loader.go:223",
+    "arena/arenaconfig/mcp_servers.go:14"
    ]
   }
  ]

@@ -1,14 +1,14 @@
 {
  "page": "docs/src/content/docs/arena/how-to/interfaces/run-in-ci.md",
- "commit": "d12d5b388a693c119b19bf05eabade5b717cb10d",
+ "commit": "02ec7c860b978fcce24022d9ccb868d94208c751",
  "claims": [
   {
    "id": 1,
    "claim": "Mock providers make CI runs deterministic and zero-cost",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:742",
-    "arena/engine/engine.go:767"
+    "arena/engine/engine.go:753",
+    "arena/engine/engine.go:782-787"
    ]
   },
   {
@@ -870,9 +870,7 @@
    "claim": "--mock-provider replaces every configured provider with a canned-response mock",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:758",
-    "arena/engine/engine.go:767",
-    "arena/engine/engine.go:786-789"
+    "arena/engine/engine.go:770-790"
    ]
   },
   {
@@ -881,8 +879,8 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/mock_config_check.go:43-49",
-    "arena/engine/engine.go:742",
-    "arena/engine/engine.go:746-751"
+    "arena/engine/engine.go:753",
+    "arena/engine/engine.go:758-766"
    ]
   },
   {
@@ -890,7 +888,7 @@
    "claim": "Tools still execute for real under --mock-provider",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:767"
+    "arena/engine/engine.go:782"
    ]
   },
   {
@@ -928,7 +926,7 @@
    "evidence": [
     "arena/arenaconfig/mock_config_check.go:21-39",
     "arena/arenaconfig/mock_config_check.go:43-49",
-    "arena/engine/engine.go:746-751"
+    "arena/engine/engine.go:759-763"
    ]
   },
   {
@@ -957,12 +955,13 @@
   },
   {
    "id": "470-mock",
-   "claim": "--mock-provider replaces the LLM and self-play role providers with canned-response mocks; TTS and STT providers are not replaced",
+   "claim": "--mock-provider replaces the LLM and self-play role providers with canned-response mocks; TTS and STT providers are not replaced; providers declaring no mock_config share the one file all declaring providers name",
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/chat.go:9-10",
     "arena/cmd/promptarena/run.go:194",
-    "arena/engine/engine.go:759-789"
+    "arena/engine/engine.go:768-805",
+    "arena/engine/engine.go:840-855"
    ]
   }
  ]

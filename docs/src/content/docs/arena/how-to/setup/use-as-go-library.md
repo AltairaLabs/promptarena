@@ -2,7 +2,7 @@
 title: Use Arena as a Go Library
 description: Build a config in Go, run scenarios with the Arena engine and read the results from the state store.
 verified:
-  commit: 72f35dcda537f9ebff0eaf33808ce728f0c8b3f8
+  commit: 02ec7c860b978fcce24022d9ccb868d94208c751
   sources:
     - arena/arenaconfig/types.go
     - arena/cmd/promptarena/run_interactive.go

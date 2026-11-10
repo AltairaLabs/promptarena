@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/reference/cli-commands.md",
- "commit": "d12d5b388a693c119b19bf05eabade5b717cb10d",
+ "commit": "02ec7c860b978fcce24022d9ccb868d94208c751",
  "claims": [
   {
    "id": 1001,
@@ -2103,7 +2103,7 @@
    "verdict": "true",
    "evidence": [
     "arena/audio/types.go:121",
-    "arena/engine/engine.go:643"
+    "arena/engine/engine.go:644"
    ]
   },
   {
@@ -2405,7 +2405,7 @@
    "evidence": [
     "arena/cmd/promptarena/run.go:194",
     "arena/cmd/promptarena/run_interactive.go:290",
-    "arena/engine/engine.go:786",
+    "arena/engine/engine.go:802",
     "arena/selfplay/registry.go:47"
    ]
   },
@@ -4804,7 +4804,7 @@
    "claim": "connectivity check \"Unique task types per prompt\" is performed by config-inspect",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator.go:531"
+    "arena/arenaconfig/validator.go:534"
    ]
   },
   {
@@ -4812,7 +4812,7 @@
    "claim": "connectivity check \"Scenario task types exist\" is performed by config-inspect",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator.go:566"
+    "arena/arenaconfig/validator.go:569"
    ]
   },
   {
@@ -5315,8 +5315,8 @@
    "evidence": [
     "arena/cmd/promptarena/serve_interactive.go:138-139",
     "arena/cmd/promptarena/serve_interactive.go:181",
-    "arena/engine/engine.go:786",
-    "arena/engine/engine.go:788",
+    "arena/engine/engine.go:802",
+    "arena/engine/engine.go:804",
     "arena/selfplay/registry.go:47"
    ]
   },
@@ -5389,7 +5389,7 @@
    "verdict": "true",
    "evidence": [
     "arena/audio/types.go:121",
-    "arena/engine/engine.go:638"
+    "arena/engine/engine.go:639"
    ]
   },
   {
@@ -5626,7 +5626,7 @@
    "evidence": [
     "arena/cmd/promptarena/chat.go:24",
     "arena/cmd/promptarena/chat_interactive.go:40",
-    "arena/engine/engine.go:786",
+    "arena/engine/engine.go:802",
     "arena/selfplay/registry.go:47"
    ]
   },

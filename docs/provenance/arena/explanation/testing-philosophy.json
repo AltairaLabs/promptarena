@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/explanation/testing-philosophy.md",
- "commit": "d12d5b388a693c119b19bf05eabade5b717cb10d",
+ "commit": "02ec7c860b978fcce24022d9ccb868d94208c751",
  "claims": [
   {
    "id": 1,
@@ -227,7 +227,7 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/run.go:194",
-    "arena/engine/engine.go:742"
+    "arena/engine/engine.go:753"
    ]
   },
   {
@@ -394,8 +394,8 @@
    "claim": "promptarena run --mock-provider validates scenario structure without making API calls",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:742",
-    "arena/engine/engine.go:767"
+    "arena/engine/engine.go:753",
+    "arena/engine/engine.go:765-767"
    ]
   },
   {
@@ -415,8 +415,8 @@
    "claim": "Mock providers return predictable, deterministic responses",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:720",
-    "arena/engine/engine.go:767"
+    "arena/engine/engine.go:721",
+    "arena/engine/engine.go:782"
    ]
   },
   {
@@ -424,8 +424,8 @@
    "claim": "Mock providers make no API calls, so configuration can be tested without network spend",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:742",
-    "arena/engine/engine.go:767"
+    "arena/engine/engine.go:753",
+    "arena/engine/engine.go:782"
    ]
   },
   {
@@ -433,8 +433,8 @@
    "claim": "Mock providers allow development offline without internet access",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:742",
-    "arena/engine/engine.go:767"
+    "arena/engine/engine.go:753",
+    "arena/engine/engine.go:782"
    ]
   },
   {

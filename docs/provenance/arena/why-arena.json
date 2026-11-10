@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/why-arena.md",
- "commit": "d12d5b388a693c119b19bf05eabade5b717cb10d",
+ "commit": "02ec7c860b978fcce24022d9ccb868d94208c751",
  "claims": [
   {
    "id": 1,
@@ -30,7 +30,7 @@
    "verdict": "false",
    "evidence": [
     "arena/engine/duplex_executor_pipeline_integration.go:255",
-    "arena/turnexecutors/pipeline_stages_integration.go:503"
+    "arena/turnexecutors/pipeline_stages_integration.go:518"
    ]
   },
   {
@@ -82,7 +82,7 @@
    "claim": "The same code enforces guardrails in production and fires the test signal",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:503"
+    "arena/turnexecutors/pipeline_stages_integration.go:518"
    ]
   },
   {
@@ -154,7 +154,7 @@
    "verdict": "false",
    "evidence": [
     "arena/engine/duplex_executor_pipeline_integration.go:255",
-    "arena/turnexecutors/pipeline_stages_integration.go:503"
+    "arena/turnexecutors/pipeline_stages_integration.go:518"
    ]
   },
   {
@@ -272,7 +272,7 @@
    "claim": "A Guardrail is an eval wired in the pack's validators: block",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:711",
+    "arena/turnexecutors/pipeline_stages_integration.go:726",
     "schemas/v1alpha1/promptconfig.json:714"
    ]
   },

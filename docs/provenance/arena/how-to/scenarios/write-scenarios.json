@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/scenarios/write-scenarios.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "02ec7c860b978fcce24022d9ccb868d94208c751",
  "claims": [
   {
    "id": 1,
@@ -24,7 +24,7 @@
    "claim": "spec.task_type links the scenario to the prompt config with that task_type",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:689"
+    "arena/arenaconfig/types.go:694"
    ]
   },
   {
@@ -40,7 +40,7 @@
    "claim": "metadata.labels on a scenario",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:695"
+    "arena/arenaconfig/types.go:700"
    ]
   },
   {
@@ -48,7 +48,7 @@
    "claim": "metadata.annotations is accepted (ObjectMeta) (validated)",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:680"
+    "arena/arenaconfig/types.go:685"
    ]
   },
   {
@@ -56,8 +56,8 @@
    "claim": "context_metadata takes arbitrary keys such as urgency and topic",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:660",
-    "arena/arenaconfig/types.go:696"
+    "arena/arenaconfig/types.go:665",
+    "arena/arenaconfig/types.go:701"
    ]
   },
   {
@@ -66,8 +66,9 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:709",
-    "arena/engine/execution.go:306",
-    "arena/engine/execution.go:335"
+    "arena/engine/execution.go:308",
+    "arena/engine/execution.go:312",
+    "arena/engine/execution.go:328"
    ]
   },
   {
@@ -75,7 +76,7 @@
    "claim": "spec.streaming enables streaming for all turns",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:711"
+    "arena/arenaconfig/types.go:716"
    ]
   },
   {
@@ -83,8 +84,8 @@
    "claim": "turn parts with type text / image and media.url, media.mime_type (validated)",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1417",
-    "arena/arenaconfig/types.go:1426"
+    "arena/arenaconfig/types.go:1422",
+    "arena/arenaconfig/types.go:1431"
    ]
   },
   {
@@ -92,7 +93,7 @@
    "claim": "Available capabilities include duplex",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:708"
+    "arena/arenaconfig/types.go:713"
    ]
   },
   {
@@ -100,8 +101,8 @@
    "claim": "tool_choice: none, auto (default), required, or a tool name",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:944",
-    "arena/turnexecutors/pipeline_stages_integration.go:280"
+    "arena/arenaconfig/types.go:949",
+    "arena/turnexecutors/pipeline_stages_integration.go:295"
    ]
   },
   {
@@ -109,7 +110,7 @@
    "claim": "tool_policy.max_tool_calls_per_turn",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:281"
+    "arena/turnexecutors/pipeline_stages_integration.go:296"
    ]
   },
   {
@@ -117,8 +118,8 @@
    "claim": "scenario tool_policy merges with the prompt tool_policy and only tightens; max_rounds/max_tool_calls_per_turn take the lower; blocklist union; tool_choice scenario wins; max_rounds default 50 (runtime pipeline/types.go:75)",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:252",
-    "arena/turnexecutors/pipeline_stages_integration.go:284"
+    "arena/turnexecutors/pipeline_stages_integration.go:267",
+    "arena/turnexecutors/pipeline_stages_integration.go:299"
    ]
   },
   {
@@ -134,7 +135,7 @@
    "claim": "Scenario spec supports fixtures and system_template with {{fixtures.x}} interpolation",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:687"
+    "arena/arenaconfig/types.go:692"
    ]
   },
   {
@@ -152,7 +153,7 @@
    "claim": "arena.yaml scenarios entries take path and providers",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:416",
+    "arena/arenaconfig/types.go:421",
     "arena/engine/execution.go:280"
    ]
   },
@@ -161,8 +162,8 @@
    "claim": "scenarios have a tags list",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:687",
-    "arena/arenaconfig/types.go:695"
+    "arena/arenaconfig/types.go:692",
+    "arena/arenaconfig/types.go:700"
    ]
   },
   {
@@ -187,7 +188,7 @@
    "claim": "A turn's role is user, or the ID of a self-play role from spec.self_play.roles; the assistant's reply is never scripted",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1143"
+    "arena/arenaconfig/types.go:1148"
    ]
   },
   {
@@ -195,8 +196,8 @@
    "claim": "validate reports unknown assertion types and assertion params the handler does not read",
    "verdict": "true",
    "evidence": [
-    "arena/assertions/validate_params.go:153",
-    "arena/cmd/promptarena/validate_json.go:166"
+    "arena/assertions/validate_params.go:64",
+    "arena/cmd/promptarena/validate_json.go:165"
    ]
   }
  ]

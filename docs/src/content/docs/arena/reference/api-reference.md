@@ -2,7 +2,7 @@
 title: Go API Reference
 description: Exported types, functions and methods for using Arena as a Go library
 verified:
-  commit: 72f35dcda537f9ebff0eaf33808ce728f0c8b3f8
+  commit: 02ec7c860b978fcce24022d9ccb868d94208c751
   sources:
     - arena/arenaconfig/deprecated.go
     - arena/arenaconfig/loader.go
@@ -273,7 +273,7 @@ Replaces all providers, including the providers behind self-play roles, with moc
 strictly, so a misspelled key returns an error naming it and the valid keys.
 
 **Parameters:**
-- `mockConfigPath` - Path to mock config YAML. An empty string keeps each provider's own `mock_config`, and a provider without one gets default responses
+- `mockConfigPath` - Path to mock config YAML. An empty string keeps each provider's own `mock_config`. A provider without one uses the shared file when every provider that declares a `mock_config` names the same one, and otherwise gets default responses
 
 **Returns:**
 - `error` - Error if mock configuration is invalid

@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/providers/configure-providers.md",
- "commit": "d12d5b388a693c119b19bf05eabade5b717cb10d",
+ "commit": "02ec7c860b978fcce24022d9ccb868d94208c751",
  "claims": [
   {
    "id": 1,
@@ -169,8 +169,8 @@
    "claim": "Scenarios accept a required_capabilities field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:714",
-    "arena/engine/execution.go:306"
+    "arena/arenaconfig/types.go:712",
+    "arena/engine/execution.go:308"
    ]
   },
   {
@@ -178,7 +178,7 @@
    "claim": "Capability enum values are text, streaming, vision, tools, json, audio, video, documents and duplex",
    "verdict": "false",
    "evidence": [
-    "arena/engine/execution.go:335",
+    "arena/engine/execution.go:340",
     "schemas/v1alpha1/provider.json:169"
    ]
   },
@@ -187,8 +187,9 @@
    "claim": "A scenario with required_capabilities runs only against providers that have ALL listed capabilities",
    "verdict": "true",
    "evidence": [
-    "arena/engine/execution.go:306",
-    "arena/engine/execution.go:335"
+    "arena/engine/execution.go:280",
+    "arena/engine/execution.go:308",
+    "arena/engine/execution.go:328"
    ]
   },
   {
@@ -1072,7 +1073,7 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/execution.go:280",
-    "arena/engine/execution.go:313"
+    "arena/engine/execution.go:318"
    ]
   },
   {
@@ -1224,6 +1225,14 @@
    "evidence": [
     "arena/arenaconfig/loader.go:529",
     "arena/arenaconfig/yamldocs.go:17"
+   ]
+  },
+  {
+   "id": 9601,
+   "claim": "",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/execution.go:308-312"
    ]
   },
   {

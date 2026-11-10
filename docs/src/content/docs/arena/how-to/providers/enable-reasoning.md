@@ -2,7 +2,7 @@
 title: Enable Model Reasoning
 description: Turn on extended thinking for Gemini, Claude and OpenAI, and capture the trace separately from the answer. Each provider uses a different control, and setting the wrong one usually yields an empty trace rather than an error.
 verified:
-  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
+  commit: 02ec7c860b978fcce24022d9ccb868d94208c751
   sources:
     - arena/arenaconfig/validator_tools.go
     - arena/engine/builder_integration.go

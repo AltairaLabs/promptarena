@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/reference/tool-authoring.md",
- "commit": "d12d5b388a693c119b19bf05eabade5b717cb10d",
+ "commit": "02ec7c860b978fcce24022d9ccb868d94208c751",
  "claims": [
   {
    "id": 1,
@@ -303,7 +303,7 @@
    "verdict": "true",
    "evidence": [
     "arena/consent/hook.go:119",
-    "arena/turnexecutors/pipeline_stages_integration.go:779",
+    "arena/turnexecutors/pipeline_stages_integration.go:794",
     "schemas/v1alpha1/tool.json:319"
    ]
   },
@@ -434,7 +434,7 @@
    "claim": "A mode: local tool stops a run at startup and is a promptarena validate error; packc compile accepts it",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator.go:63",
+    "arena/arenaconfig/validator.go:65",
     "arena/arenaconfig/validator_tools.go:73-94",
     "arena/engine/builder_integration.go:578"
    ]
