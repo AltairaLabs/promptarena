@@ -743,6 +743,7 @@ func (e *Engine) EnableMockProviderMode(mockConfigPath string) error {
 	// Built once rather than per provider: the flag names a single file, and
 	// parsing it N times would be wasted work.
 	var flagRepo mock.ResponseRepository
+	var flagBaseDir string
 	if mockConfigPath != "" {
 		// The runtime decodes the file strictly, so an unknown key fails here.
 		fileRepo, err := mock.NewFileMockRepository(mockConfigPath)
@@ -750,6 +751,7 @@ func (e *Engine) EnableMockProviderMode(mockConfigPath string) error {
 			return fmt.Errorf("failed to load mock configuration from %s: %w", mockConfigPath, err)
 		}
 		flagRepo = withDefaultMockAudio(fileRepo)
+		flagBaseDir = fileRepo.BaseDir()
 	}
 
 	// Create a new provider registry with mock providers
@@ -757,10 +759,10 @@ func (e *Engine) EnableMockProviderMode(mockConfigPath string) error {
 
 	// Replace each provider with a MockToolProvider using the same ID for tool call simulation
 	for providerID, provider := range e.providers {
-		repository := flagRepo
+		repository, baseDir := flagRepo, flagBaseDir
 		if repository == nil {
 			var err error
-			if repository, err = e.declaredMockRepository(provider); err != nil {
+			if repository, baseDir, err = e.declaredMockRepository(provider); err != nil {
 				return err
 			}
 		}
@@ -770,6 +772,7 @@ func (e *Engine) EnableMockProviderMode(mockConfigPath string) error {
 			provider.IncludeRawOutput,
 			repository,
 		)
+		applyDeclaredDuplexBehavior(mockProvider, provider.AdditionalConfig, repository, baseDir)
 		mockRegistry.Register(mockProvider)
 	}
 
@@ -794,20 +797,21 @@ func (e *Engine) EnableMockProviderMode(mockConfigPath string) error {
 
 // declaredMockRepository builds the response repository a single provider asked
 // for via additional_config.mock_config, falling back to the generic in-memory
-// one when it declares nothing.
+// one when it declares nothing. It also returns the directory relative audio
+// fixtures resolve against, empty for the generic repository.
 //
 // The path may still be relative. createProviderImpl rewrites it to an absolute
 // path against the config dir, but only for providers it actually constructs —
 // a provider skipped by a --provider filter never goes through it. Resolving
 // here rather than leaving it to the process working directory is what keeps
 // those two cases consistent.
-func (e *Engine) declaredMockRepository(provider *config.Provider) (mock.ResponseRepository, error) {
+func (e *Engine) declaredMockRepository(provider *config.Provider) (mock.ResponseRepository, string, error) {
 	mockCfg, _ := provider.AdditionalConfig["mock_config"].(string)
 	if mockCfg == "" {
 		// Default agent turns that declare no audio to the built-in "mock
 		// assistant turn" clip, so mock duplex runs are audible and
 		// self-labeling out of the box (the mock TTS handles the user side).
-		return withDefaultMockAudio(mock.NewInMemoryMockRepository(genericMockResponse)), nil
+		return withDefaultMockAudio(mock.NewInMemoryMockRepository(genericMockResponse)), "", nil
 	}
 
 	// createProviderImpl leaves an absolute path, so only a provider it never
@@ -819,10 +823,10 @@ func (e *Engine) declaredMockRepository(provider *config.Provider) (mock.Respons
 
 	fileRepo, err := mock.NewFileMockRepository(mockCfg)
 	if err != nil {
-		return nil, fmt.Errorf(
+		return nil, "", fmt.Errorf(
 			"provider %q: failed to load mock configuration from %s: %w", provider.ID, mockCfg, err)
 	}
-	return withDefaultMockAudio(fileRepo), nil
+	return withDefaultMockAudio(fileRepo), fileRepo.BaseDir(), nil
 }
 
 // closeMCPRegistry closes the MCP registry if initialized

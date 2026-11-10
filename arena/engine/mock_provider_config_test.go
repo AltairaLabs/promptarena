@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
 
@@ -197,5 +198,107 @@ func TestEnableMockProviderMode_NoConfigAnywhereUsesGeneric(t *testing.T) {
 	if got := predictOnce(t, eng, "declared-mock"); got != genericMockResponse {
 		t.Errorf("expected the generic response with no mock_config anywhere:\n got: %q\nwant: %q",
 			got, genericMockResponse)
+	}
+}
+
+// TestEnableMockProviderMode_DuplexSessionsReply pins #510.
+//
+// The --mock-provider replacement was built from a repository alone, so its
+// duplex sessions never replied and every voice turn waited out the 10-minute
+// turn deadline (examples/voice-refund-demo took hours). That hit both a
+// declared mock-duplex provider, whose auto_respond was dropped, and the
+// stand-ins for real realtime providers, which declare nothing.
+func TestEnableMockProviderMode_DuplexSessionsReply(t *testing.T) {
+	const declaredReply = "Thanks for calling. How can I help?"
+	tests := []struct {
+		name            string
+		additional      map[string]any
+		wantReply       string // "" means the session must stay silent
+		wantInterrupted bool
+	}{
+		{
+			name:       "declared auto_respond keeps its response_text",
+			additional: map[string]any{"auto_respond": true, "response_text": declaredReply},
+			wantReply:  declaredReply,
+		},
+		{
+			name:       "real provider stand-in replies by default",
+			additional: map[string]any{},
+			wantReply:  mock.DefaultMockStreamingResponse,
+		},
+		{
+			name:       "explicit auto_respond false stays silent",
+			additional: map[string]any{"auto_respond": false},
+		},
+		{
+			// YAML decodes numbers as float64 and may leave bools as strings.
+			name:       "close_after_turns with close_no_response ends the session silently",
+			additional: map[string]any{"close_after_turns": float64(1), "close_no_response": "true"},
+		},
+		{
+			name:            "interrupt_on_turn interrupts that turn",
+			additional:      map[string]any{"interrupt_on_turn": int64(1)},
+			wantInterrupted: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			eng := engineWithMockProvider(t, t.TempDir(), "")
+			for k, v := range tt.additional {
+				eng.providers["declared-mock"].AdditionalConfig[k] = v
+			}
+			if err := eng.EnableMockProviderMode(""); err != nil {
+				t.Fatalf("EnableMockProviderMode failed: %v", err)
+			}
+			got, replied, interrupted := firstDuplexReply(t, eng, "declared-mock")
+			switch {
+			case tt.wantInterrupted:
+				if !interrupted {
+					t.Errorf("interrupt_on_turn: 1 was not applied: reply %q arrived uninterrupted", got)
+				}
+			case tt.wantReply == "" && replied:
+				t.Errorf("auto_respond: false must keep the session silent, got %q", got)
+			case tt.wantReply != "" && !replied:
+				t.Fatal("duplex session never replied: auto_respond was not applied")
+			case tt.wantReply != "" && got != tt.wantReply:
+				t.Errorf("reply = %q, want %q", got, tt.wantReply)
+			}
+		})
+	}
+}
+
+// firstDuplexReply opens a duplex session on providerID, sends one text turn
+// and returns the accumulated reply, whether any arrived, and whether the turn
+// was interrupted.
+func firstDuplexReply(t *testing.T, eng *Engine, providerID string) (reply string, replied, interrupted bool) {
+	t.Helper()
+	prov, _ := eng.providerRegistry.Get(providerID)
+	streamer, ok := prov.(providers.StreamInputSupport)
+	if !ok {
+		t.Fatalf("mock replacement %T does not support duplex sessions", prov)
+	}
+	session, err := streamer.CreateStreamSession(context.Background(), &providers.StreamingInputConfig{})
+	if err != nil {
+		t.Fatalf("CreateStreamSession failed: %v", err)
+	}
+	defer session.Close()
+	if err := session.SendText(context.Background(), "hello"); err != nil {
+		t.Fatalf("SendText failed: %v", err)
+	}
+	timeout := time.After(500 * time.Millisecond)
+	for {
+		select {
+		case chunk, open := <-session.Response():
+			if !open {
+				return reply, reply != "", interrupted
+			}
+			reply += chunk.Delta
+			interrupted = interrupted || chunk.Interrupted
+			if chunk.FinishReason != nil || chunk.Interrupted {
+				return reply, true, interrupted
+			}
+		case <-timeout:
+			return reply, reply != "", interrupted
+		}
 	}
 }
