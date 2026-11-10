@@ -217,6 +217,19 @@ elif [ -f "$MERGED_COVERAGE" ]; then
 fi
 
 #
+# 4. Weak assertions in new tests (same check as CI's "Weak Assertion Guard").
+#    Against HEAD, so only tests this commit adds are reported.
+#
+if echo "$STAGED_GO_FILES" | grep -q '_test\.go$'; then
+    print_header "Weak Assertions"
+    if scripts/check-weak-assertions.sh HEAD; then
+        print_success "No new tests with unfalsifiable assertions"
+    else
+        CHECKS_FAILED=1
+    fi
+fi
+
+#
 # Summary
 #
 print_header "Summary"

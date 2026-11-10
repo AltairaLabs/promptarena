@@ -13,7 +13,7 @@ spec:
     - vision
   streaming: true
   providers:
-    - openai-gpt41-mini
+    - openai-gpt54
     - anthropic-sonnet46
     - gemini-35-flash
   tool_policy:

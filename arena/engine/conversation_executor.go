@@ -456,7 +456,8 @@ func resolveTurnMaxTokens(req ConversationRequest) int {
 
 // buildTurnPromptVars builds the template vars for a turn: arena.yaml
 // prompt-config vars (matched by task_type) overlaid with the scenario's own
-// Variables block (scenario wins). Issue #1292: Scenario.Variables was
+// Variables block (scenario wins), with a workflow run's artifacts and brief
+// layered on as the handoff binds them. Issue #1292: Scenario.Variables was
 // previously ignored here. Values are copied into a fresh map so the shared
 // LoadedPromptConfigs vars are never mutated.
 func buildTurnPromptVars(req ConversationRequest) map[string]string {
@@ -469,17 +470,29 @@ func buildTurnPromptVars(req ConversationRequest) map[string]string {
 			promptVars[k] = v
 		}
 	}
+	if req.workflowPromptVars != nil {
+		promptVars = req.workflowPromptVars(promptVars)
+	}
 	return promptVars
 }
 
 // promptConfigVarsForTask returns a fresh copy of the arena.yaml prompt-config
 // vars whose task_type matches the scenario, or nil when there is no match.
 func promptConfigVarsForTask(req ConversationRequest) map[string]string {
-	if req.Config == nil || req.Scenario == nil {
+	if req.Scenario == nil {
 		return nil
 	}
-	for _, promptConfigData := range req.Config.LoadedPromptConfigs {
-		if promptConfigData.TaskType != req.Scenario.TaskType {
+	return promptConfigVars(req.Config, req.Scenario.TaskType)
+}
+
+// promptConfigVars returns a fresh copy of the arena.yaml prompt-config vars
+// for taskType, or nil when cfg has no prompt config for it.
+func promptConfigVars(cfg *arenaconfig.Config, taskType string) map[string]string {
+	if cfg == nil {
+		return nil
+	}
+	for _, promptConfigData := range cfg.LoadedPromptConfigs {
+		if promptConfigData.TaskType != taskType {
 			continue
 		}
 		promptVars := make(map[string]string, len(promptConfigData.Vars))
@@ -1010,6 +1023,12 @@ func (ce *DefaultConversationExecutor) buildResultFromStateStore(
 	// context is already canceled, so evaluate on a detached one. Each eval
 	// stays bounded by its own timeout.
 	ctx = scoringContext(ctx)
+
+	// Copy any when: eval mounts in now that the agent is done, so the evals
+	// below find files the agent never saw.
+	if err := deliverEvalFiles(ctx); err != nil {
+		return ce.createErrorResult(err.Error())
+	}
 
 	// Evaluate conversation-level assertions, if any, then add each
 	// self-play objective's outcome alongside them.

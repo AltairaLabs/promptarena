@@ -134,7 +134,12 @@ func (e *EvalConversationExecutor) applyAllTurnAssertions(
 	turnAssertions := e.extractTurnAssertions(turns)
 	for i := range messages {
 		if messages[i].Role == roleAssistant {
-			e.applyTurnAssertions(ctx, turnAssertions, &messages[i], convCtx)
+			// Grade each reply on the conversation as it stood at that reply.
+			// applyTurnAssertions scores the last message of AllTurns, so the
+			// whole recording would grade every reply on the final one.
+			turnCtx := *convCtx
+			turnCtx.AllTurns = messages[:i+1]
+			e.applyTurnAssertions(ctx, turnAssertions, &messages[i], &turnCtx)
 		}
 	}
 }

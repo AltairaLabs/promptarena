@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/explanation/interfaces.md",
- "commit": "d12d5b388a693c119b19bf05eabade5b717cb10d",
+ "commit": "02ec7c860b978fcce24022d9ccb868d94208c751",
  "claims": [
   {
    "id": 1,
@@ -154,7 +154,7 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/serve_interactive.go:164",
-    "arena/engine/engine.go:723"
+    "arena/engine/engine.go:724"
    ]
   },
   {
@@ -395,7 +395,7 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/serve_interactive.go:181",
-    "arena/engine/engine.go:723"
+    "arena/engine/engine.go:724"
    ]
   },
   {

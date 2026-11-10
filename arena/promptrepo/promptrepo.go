@@ -9,13 +9,14 @@ package promptrepo
 
 import (
 	"fmt"
-	"os"
+	"io/fs"
 	"path/filepath"
 	"sort"
 	"strings"
 
 	"gopkg.in/yaml.v3"
 
+	"github.com/AltairaLabs/PromptKit/runtime/v2/persistence/common"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/persistence/memory"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/prompt"
 )
@@ -30,13 +31,22 @@ var (
 type Repository struct {
 	*memory.PromptRepository
 	dirs map[string]string // task type -> the prompt config's directory
+	base string            // where a fragment referenced by name alone is read from
 }
 
-// New returns an empty Repository.
+// New returns an empty Repository. A fragment reference with no path names no
+// file, so it cannot be loaded.
 func New() *Repository {
+	return NewWithBase("")
+}
+
+// NewWithBase returns an empty Repository whose fragments referenced by name
+// alone are read from fragments/<name>.yaml under base.
+func NewWithBase(base string) *Repository {
 	return &Repository{
 		PromptRepository: memory.NewPromptRepository(),
 		dirs:             make(map[string]string),
+		base:             base,
 	}
 }
 
@@ -61,18 +71,25 @@ func (r *Repository) PromptDir(taskType string) (string, error) {
 	return dir, nil
 }
 
-// LoadFragment reads a fragment file: relativePath joined to baseDir. A
-// reference with no path names no file, so it cannot be loaded.
+// LoadFragment reads a fragment file. The read goes through PromptKit's
+// common.ReadFragmentFile, so it follows the fragment repository contract
+// (runtime/persistence/repotest):
+//   - a relative path resolves against baseDir, and may climb only as far as
+//     its own leading "../" segments; one that climbs further, directly or
+//     through a symlink, is persistence.ErrFragmentPathOutsideBase;
+//   - an absolute path is read as it is;
+//   - no path reads fragments/<name>.yaml under the base given to NewWithBase.
+//     With no base (New), a reference with no path cannot be loaded;
+//   - a missing file satisfies fs.ErrNotExist, which is what the resolver's
+//     fall back to the working directory keys on.
 func (r *Repository) LoadFragment(name, relativePath, baseDir string) (*prompt.Fragment, error) {
-	if relativePath == "" {
-		return nil, fmt.Errorf("fragment %q has no path, so there is no file to load it from", name)
+	if relativePath == "" && r.base == "" {
+		return nil, fmt.Errorf("fragment %q has no path, so there is no file to load it from: %w",
+			name, fs.ErrNotExist)
 	}
-	path := filepath.Join(baseDir, relativePath)
-	data, err := os.ReadFile(path) //nolint:gosec // the path comes from the prompt config's fragment reference
+	data, path, err := common.ReadFragmentFile(r.base, name, relativePath, baseDir, ".yaml")
 	if err != nil {
-		// The *PathError names the file, and keeps fs.ErrNotExist for the
-		// resolver's fall back to the working directory.
-		return nil, fmt.Errorf("reading fragment file: %w", err)
+		return nil, fmt.Errorf("reading fragment file %s: %w", fragmentFileName(r.base, name, relativePath, baseDir), err)
 	}
 	var fragment prompt.Fragment
 	if err := yaml.Unmarshal(data, &fragment); err != nil {
@@ -80,6 +97,18 @@ func (r *Repository) LoadFragment(name, relativePath, baseDir string) (*prompt.F
 	}
 	fragment.SourceFile = path
 	return &fragment, nil
+}
+
+// fragmentFileName is the file a lookup names, for error messages: the read's
+// own error can name it relative to the directory it was opened in.
+func fragmentFileName(base, name, relativePath, baseDir string) string {
+	switch {
+	case filepath.IsAbs(relativePath):
+		return relativePath
+	case relativePath == "":
+		return filepath.Join(base, "fragments", name+".yaml")
+	}
+	return filepath.Join(baseDir, relativePath)
 }
 
 // LoadFragments loads every static fragment the repository's prompts
@@ -128,7 +157,7 @@ func loadPromptFragments(registry *prompt.Registry, taskType string, refs []prom
 			return nil, fmt.Errorf("prompt %q: required fragment %q: %w", taskType, ref.Name, err)
 		default:
 			warnings = append(warnings, fmt.Sprintf(
-				"prompt %q: optional fragment %q was not loaded and is left out: %v", taskType, ref.Name, err))
+				"prompt %q: optional fragment %q was not loaded and renders empty: %v", taskType, ref.Name, err))
 		}
 	}
 	return warnings, nil

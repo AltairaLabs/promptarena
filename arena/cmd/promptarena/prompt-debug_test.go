@@ -569,26 +569,29 @@ func TestDisplayScenarioInfo(t *testing.T) {
 		name     string
 		opts     *promptDebugOptions
 		scenario *arenaconfig.Scenario
-		verbose  bool
+		want     string
 	}{
 		{
-			name: "verbose disabled - no output",
-			opts: &promptDebugOptions{
-				Verbose:      false,
-				ScenarioFile: "test.yaml",
-			},
-			scenario: &arenaconfig.Scenario{
-				TaskType: "test-task",
-			},
+			name:     "verbose disabled - no output",
+			opts:     &promptDebugOptions{Verbose: false, ScenarioFile: "test.yaml", TaskType: "test-task"},
+			scenario: &arenaconfig.Scenario{TaskType: "test-task"},
+			want:     "",
 		},
 		{
-			name: "verbose enabled - shows output",
+			name: "verbose without context metadata omits domain and role",
 			opts: &promptDebugOptions{
-				Verbose:      true,
-				ScenarioFile: "test.yaml",
-				Domain:       "test-domain",
-				User:         "test-user",
-				Context:      "test-context",
+				Verbose: true, ScenarioFile: "test.yaml", TaskType: "test-task",
+				Domain: "test-domain", User: "test-user", Context: "test-context",
+			},
+			scenario: &arenaconfig.Scenario{TaskType: "test-task"},
+			want: "📄 Loaded scenario from: test.yaml\n   Task Type: test-task\n" +
+				"   Context: test-context\n\n",
+		},
+		{
+			name: "verbose with context metadata shows the resolved domain and role",
+			opts: &promptDebugOptions{
+				Verbose: true, ScenarioFile: "test.yaml", TaskType: "test-task",
+				Domain: "test-domain", User: "test-user", Context: "test-context",
 			},
 			scenario: &arenaconfig.Scenario{
 				TaskType: "test-task",
@@ -597,13 +600,15 @@ func TestDisplayScenarioInfo(t *testing.T) {
 					UserRole: "scenario-user",
 				},
 			},
+			want: "📄 Loaded scenario from: test.yaml\n   Task Type: test-task\n" +
+				"   Domain: test-domain\n   User Role: test-user\n   Context: test-context\n\n",
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Just test that the function doesn't panic
-			displayScenarioInfo(tt.opts, tt.scenario)
+			out := withCapturedStdout(t, func() { displayScenarioInfo(tt.opts, tt.scenario) })
+			assert.Equal(t, tt.want, out)
 		})
 	}
 }

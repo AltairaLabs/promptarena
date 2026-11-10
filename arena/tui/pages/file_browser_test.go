@@ -4,20 +4,49 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
-func TestFileBrowserPage_New(t *testing.T) {
-	tmpDir := t.TempDir()
-	page := NewFileBrowserPage(tmpDir)
+// writeFiles creates empty files with the given names in dir.
+func writeFiles(t *testing.T, dir string, names ...string) {
+	t.Helper()
+	for _, name := range names {
+		require.NoError(t, os.WriteFile(filepath.Join(dir, name), []byte(`{}`), 0o644))
+	}
+}
 
-	assert.NotNil(t, page)
-	assert.NotNil(t, page.filePicker)
-	assert.Nil(t, page.err)
+// loadedBrowser returns a browser for dir whose directory listing has been
+// read, by running Init's command and feeding its message back — the same
+// round trip the bubbletea loop performs. Like the loop, it renders once
+// first, which is what sizes the file picker.
+func loadedBrowser(t *testing.T, dir string) *FileBrowserPage {
+	t.Helper()
+	page := NewFileBrowserPage(dir)
+	page.SetDimensions(80, 24)
+	cmd := page.Init()
+	require.NotNil(t, cmd, "Init must return the directory-read command")
+	_ = page.View()
+	page.Update(cmd())
+	return page
+}
+
+// pressEnter sends Enter and returns the FileSelectedMsg it produced, if any.
+func pressEnter(t *testing.T, page *FileBrowserPage) (FileSelectedMsg, bool) {
+	t.Helper()
+	_, cmd := page.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	if cmd == nil {
+		return FileSelectedMsg{}, false
+	}
+	sel, ok := cmd().(FileSelectedMsg)
+	return sel, ok
+}
+
+func pressRune(page *FileBrowserPage, r rune) {
+	page.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{r}})
 }
 
 func TestFileBrowserPage_SetDimensions(t *testing.T) {
@@ -33,10 +62,12 @@ func TestFileBrowserPage_SetDimensions(t *testing.T) {
 
 func TestFileBrowserPage_Init(t *testing.T) {
 	tmpDir := t.TempDir()
-	page := NewFileBrowserPage(tmpDir)
+	writeFiles(t, tmpDir, "run-a.json", "run-b.json")
 
-	cmd := page.Init()
-	assert.NotNil(t, cmd)
+	page := loadedBrowser(t, tmpDir)
+	view := page.View()
+	assert.Contains(t, view, "run-a.json", "Init must list the results directory")
+	assert.Contains(t, view, "run-b.json", "Init must list the results directory")
 }
 
 func TestFileBrowserPage_View(t *testing.T) {
@@ -49,24 +80,18 @@ func TestFileBrowserPage_View(t *testing.T) {
 	assert.Contains(t, view, "Browse Results")
 }
 
-func TestFileBrowserPage_UpdateQuitKey(t *testing.T) {
-	tmpDir := t.TempDir()
-	page := NewFileBrowserPage(tmpDir)
-
-	// Test 'q' key
-	model, cmd := page.Update(tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'q'}})
-	assert.NotNil(t, model)
-	assert.NotNil(t, cmd)
-}
-
-func TestFileBrowserPage_UpdateCtrlC(t *testing.T) {
-	tmpDir := t.TempDir()
-	page := NewFileBrowserPage(tmpDir)
-
-	// Test ctrl+c
-	model, cmd := page.Update(tea.KeyMsg{Type: tea.KeyCtrlC})
-	assert.NotNil(t, model)
-	assert.NotNil(t, cmd)
+func TestFileBrowserPage_UpdateQuitKeys(t *testing.T) {
+	for _, key := range []tea.KeyMsg{
+		{Type: tea.KeyRunes, Runes: []rune{'q'}},
+		{Type: tea.KeyCtrlC},
+	} {
+		t.Run(key.String(), func(t *testing.T) {
+			page := NewFileBrowserPage(t.TempDir())
+			_, cmd := page.Update(key)
+			require.NotNil(t, cmd)
+			assert.IsType(t, tea.QuitMsg{}, cmd())
+		})
+	}
 }
 
 func TestFileBrowserPage_GetKeyBindings(t *testing.T) {
@@ -171,150 +196,111 @@ func TestFileBrowserPage_RenderWithSmallDimensions(t *testing.T) {
 	assert.NotEmpty(t, view)
 }
 
-func TestFileBrowserPage_HandleEnterKey_EmptyPath(t *testing.T) {
-	tmpDir := t.TempDir()
-	page := NewFileBrowserPage(tmpDir)
+func TestFileBrowserPage_EnterOnEmptyDirectorySelectsNothing(t *testing.T) {
+	page := loadedBrowser(t, t.TempDir())
 
-	// Set up state where path is empty
-	page.filePicker.Path = ""
-
-	// Call handleEnterKey
-	msg := tea.KeyMsg{Type: tea.KeyEnter}
-	cmd := page.handleEnterKey(msg)
-
-	// May return nil or a command depending on filepicker state
-	_ = cmd
+	_, cmd := page.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	assert.Nil(t, cmd)
+	assert.Empty(t, page.filePicker.Path)
 }
 
-func TestFileBrowserPage_HandleEnterKey_PathUnchanged(t *testing.T) {
+func TestFileBrowserPage_EnterOnFileEmitsSelection(t *testing.T) {
 	tmpDir := t.TempDir()
-	page := NewFileBrowserPage(tmpDir)
+	writeFiles(t, tmpDir, "index.json", "test-run.json")
+	page := loadedBrowser(t, tmpDir)
 
-	// Set a path that won't change
-	initialPath := tmpDir
-	page.filePicker.Path = initialPath
+	// The listing is sorted, so the cursor starts on index.json.
+	sel, ok := pressEnter(t, page)
+	require.True(t, ok, "Enter on a file must emit FileSelectedMsg")
+	assert.Equal(t, FileSelectedMsg{RunID: "index", Path: filepath.Join(tmpDir, "index.json")}, sel)
 
-	// Call handleEnterKey
-	msg := tea.KeyMsg{Type: tea.KeyEnter}
-	cmd := page.handleEnterKey(msg)
-
-	// May return nil or a command depending on filepicker state
-	_ = cmd
+	pressRune(page, 'j')
+	sel, ok = pressEnter(t, page)
+	require.True(t, ok)
+	assert.Equal(t, FileSelectedMsg{RunID: "test-run", Path: filepath.Join(tmpDir, "test-run.json")}, sel)
 }
 
-func TestFileBrowserPage_HandleEnterKey_InvalidPath(t *testing.T) {
+func TestFileBrowserPage_EnterSameFileAgainNeedsReset(t *testing.T) {
 	tmpDir := t.TempDir()
-	page := NewFileBrowserPage(tmpDir)
+	writeFiles(t, tmpDir, "result.json")
+	page := loadedBrowser(t, tmpDir)
 
-	// Simulate a path being set to a non-existent file
-	// We need to bypass filepicker's update to test the error path
-	page.filePicker.Path = "/nonexistent/path/file.json"
+	_, ok := pressEnter(t, page)
+	require.True(t, ok)
 
-	// Manually test the logic after filepicker sets path
-	info, err := os.Stat(page.filePicker.Path)
-	assert.Error(t, err)
-	assert.Nil(t, info)
+	// The picker still holds the previous selection, so Enter on the same
+	// file is not a new selection until Reset clears it.
+	_, ok = pressEnter(t, page)
+	assert.False(t, ok, "re-selecting the same file must not emit without Reset")
+
+	page.Reset()
+	sel, ok := pressEnter(t, page)
+	require.True(t, ok, "after Reset the same file can be selected again")
+	assert.Equal(t, "result", sel.RunID)
 }
 
-func TestFileBrowserPage_HandleEnterKey_Directory(t *testing.T) {
+func TestFileBrowserPage_EnterOnDirectoryNavigatesInto(t *testing.T) {
 	tmpDir := t.TempDir()
-	page := NewFileBrowserPage(tmpDir)
+	nested := filepath.Join(tmpDir, "nested")
+	require.NoError(t, os.Mkdir(nested, 0o755))
+	writeFiles(t, nested, "inner.json")
+	page := loadedBrowser(t, tmpDir)
 
-	// Create a subdirectory
-	subDir := filepath.Join(tmpDir, "subdir")
-	err := os.Mkdir(subDir, 0755)
-	assert.NoError(t, err)
+	_, cmd := page.Update(tea.KeyMsg{Type: tea.KeyEnter})
+	require.NotNil(t, cmd, "Enter on a directory must read it")
+	msg := cmd()
+	assert.NotEqual(t, "FileSelectedMsg", fmt.Sprintf("%T", msg), "a directory is not a file selection")
+	page.Update(msg)
 
-	// Set path to directory
-	page.filePicker.Path = subDir
-
-	// Check if it's a directory
-	info, err := os.Stat(page.filePicker.Path)
-	assert.NoError(t, err)
-	assert.True(t, info.IsDir())
+	assert.Equal(t, nested, page.filePicker.CurrentDirectory)
+	assert.Contains(t, page.View(), "inner.json")
 }
 
-func TestFileBrowserPage_HandleEnterKey_File(t *testing.T) {
+// A file removed after the listing was read cannot be opened: Enter must not
+// emit a selection for a path that no longer exists.
+func TestFileBrowserPage_EnterOnVanishedFileSelectsNothing(t *testing.T) {
 	tmpDir := t.TempDir()
-	page := NewFileBrowserPage(tmpDir)
+	writeFiles(t, tmpDir, "temp.json")
+	page := loadedBrowser(t, tmpDir)
+	require.NoError(t, os.Remove(filepath.Join(tmpDir, "temp.json")))
 
-	// Create a test file
-	testFile := filepath.Join(tmpDir, "test-run.json")
-	err := os.WriteFile(testFile, []byte(`{"test": "data"}`), 0644)
-	assert.NoError(t, err)
-
-	// Set path to file
-	page.filePicker.Path = testFile
-
-	// Check if it's a file
-	info, err := os.Stat(page.filePicker.Path)
-	assert.NoError(t, err)
-	assert.False(t, info.IsDir())
-
-	// Extract runID like handleEnterKey does
-	filename := filepath.Base(page.filePicker.Path)
-	runID := strings.TrimSuffix(filename, ".json")
-	assert.Equal(t, "test-run", runID)
+	_, ok := pressEnter(t, page)
+	assert.False(t, ok)
+	assert.Empty(t, page.filePicker.Path)
 }
 
-func TestFileBrowserPage_HandleEnterKey_IndexFile(t *testing.T) {
+func TestFileBrowserPage_UpdateNavigationKeys(t *testing.T) {
 	tmpDir := t.TempDir()
-	page := NewFileBrowserPage(tmpDir)
+	writeFiles(t, tmpDir, "a.json", "b.json", "c.json")
+	page := loadedBrowser(t, tmpDir)
 
-	// Create an index.json file
-	indexFile := filepath.Join(tmpDir, "index.json")
-	err := os.WriteFile(indexFile, []byte(`{"run_ids": ["run1", "run2"]}`), 0644)
-	assert.NoError(t, err)
-
-	// Set path to index file
-	page.filePicker.Path = indexFile
-
-	// Extract runID
-	filename := filepath.Base(page.filePicker.Path)
-	runID := strings.TrimSuffix(filename, ".json")
-	assert.Equal(t, "index", runID)
-}
-
-func TestFileBrowserPage_UpdateEnterKeyWithFile(t *testing.T) {
-	tmpDir := t.TempDir()
-	page := NewFileBrowserPage(tmpDir)
-
-	// Create a test file
-	testFile := filepath.Join(tmpDir, "result.json")
-	err := os.WriteFile(testFile, []byte(`{}`), 0644)
-	assert.NoError(t, err)
-
-	// Manually set the path (simulating filepicker selection)
-	page.filePicker.Path = testFile
-
-	// Send Enter key with path already set
-	msg := tea.KeyMsg{Type: tea.KeyEnter}
-	_, cmd := page.Update(msg)
-
-	// Command may be nil or not depending on filepicker behavior
-	_ = cmd
-}
-
-func TestFileBrowserPage_UpdateOtherKeys(t *testing.T) {
-	tmpDir := t.TempDir()
-	page := NewFileBrowserPage(tmpDir)
-
-	// Test various navigation keys that filepicker handles
-	keys := []tea.KeyMsg{
-		{Type: tea.KeyRunes, Runes: []rune{'j'}},
-		{Type: tea.KeyRunes, Runes: []rune{'k'}},
-		{Type: tea.KeyRunes, Runes: []rune{'h'}},
-		{Type: tea.KeyRunes, Runes: []rune{'l'}},
-		{Type: tea.KeyDown},
-		{Type: tea.KeyUp},
+	steps := []struct {
+		keys []rune
+		want string
+	}{
+		{[]rune{'j', 'j'}, "c"}, // down twice
+		{[]rune{'k'}, "b"},      // up
+		{[]rune{'g'}, "a"},      // top
+		{[]rune{'G'}, "c"},      // bottom
+	}
+	for _, step := range steps {
+		for _, r := range step.keys {
+			pressRune(page, r)
+		}
+		sel, ok := pressEnter(t, page)
+		require.True(t, ok, "after %q", string(step.keys))
+		assert.Equal(t, step.want, sel.RunID, "after %q", string(step.keys))
 	}
 
-	for _, key := range keys {
-		model, cmd := page.Update(key)
-		assert.NotNil(t, model)
-		// cmd might be nil for some keys
-		_ = cmd
-	}
+	// Arrow keys move the cursor the same way.
+	page.Update(tea.KeyMsg{Type: tea.KeyUp})
+	sel, ok := pressEnter(t, page)
+	require.True(t, ok)
+	assert.Equal(t, "b", sel.RunID)
+	page.Update(tea.KeyMsg{Type: tea.KeyDown})
+	sel, ok = pressEnter(t, page)
+	require.True(t, ok)
+	assert.Equal(t, "c", sel.RunID)
 }
 
 func TestFileBrowserPage_RenderWithVariousDimensions(t *testing.T) {
@@ -354,23 +340,6 @@ func TestFileBrowserPage_Constants(t *testing.T) {
 	assert.Equal(t, 2, fileBrowserPaddingHoriz)
 }
 
-func TestFileBrowserPage_FilePickerKeyMap(t *testing.T) {
-	tmpDir := t.TempDir()
-	page := NewFileBrowserPage(tmpDir)
-
-	// Verify custom key bindings are set
-	assert.NotNil(t, page.filePicker.KeyMap)
-	assert.NotNil(t, page.filePicker.KeyMap.GoToTop)
-	assert.NotNil(t, page.filePicker.KeyMap.GoToLast)
-	assert.NotNil(t, page.filePicker.KeyMap.Down)
-	assert.NotNil(t, page.filePicker.KeyMap.Up)
-	assert.NotNil(t, page.filePicker.KeyMap.PageDown)
-	assert.NotNil(t, page.filePicker.KeyMap.PageUp)
-	assert.NotNil(t, page.filePicker.KeyMap.Back)
-	assert.NotNil(t, page.filePicker.KeyMap.Open)
-	assert.NotNil(t, page.filePicker.KeyMap.Select)
-}
-
 func TestFileBrowserPage_AllowedTypes(t *testing.T) {
 	tmpDir := t.TempDir()
 	page := NewFileBrowserPage(tmpDir)
@@ -386,94 +355,4 @@ func TestFileBrowserPage_CurrentDirectory(t *testing.T) {
 
 	// Verify current directory is set correctly
 	assert.Equal(t, tmpDir, page.filePicker.CurrentDirectory)
-}
-
-func TestFileBrowserPage_HandleEnterKey_DirectoryNavigation(t *testing.T) {
-	tmpDir := t.TempDir()
-	page := NewFileBrowserPage(tmpDir)
-
-	// Create a subdirectory
-	subDir := filepath.Join(tmpDir, "subdir")
-	err := os.Mkdir(subDir, 0755)
-	assert.NoError(t, err)
-
-	// Simulate selecting a directory by updating the path before calling handleEnterKey
-	oldPath := page.filePicker.Path
-	page.filePicker.Path = subDir
-
-	// Call handleEnterKey with a different path (directory)
-	msg := tea.KeyMsg{Type: tea.KeyEnter}
-
-	// Store old path for comparison
-	savedPath := page.filePicker.Path
-
-	// The function should detect it's a directory and return the command
-	cmd := page.handleEnterKey(msg)
-
-	// Verify the path was a directory
-	info, err := os.Stat(savedPath)
-	assert.NoError(t, err)
-	assert.True(t, info.IsDir())
-
-	_ = cmd
-	_ = oldPath
-}
-
-func TestFileBrowserPage_HandleEnterKey_FileSelection(t *testing.T) {
-	tmpDir := t.TempDir()
-	page := NewFileBrowserPage(tmpDir)
-
-	// Create a test file
-	testFile := filepath.Join(tmpDir, "test-result.json")
-	err := os.WriteFile(testFile, []byte(`{"test": "data"}`), 0644)
-	assert.NoError(t, err)
-
-	// Simulate the filepicker setting the path to a file
-	oldPath := page.filePicker.Path
-	page.filePicker.Path = testFile
-
-	// Call handleEnterKey
-	msg := tea.KeyMsg{Type: tea.KeyEnter}
-	cmd := page.handleEnterKey(msg)
-
-	// Execute the command to get the message
-	if cmd != nil {
-		result := cmd()
-
-		// Should be a FileSelectedMsg
-		if fileMsg, ok := result.(FileSelectedMsg); ok {
-			assert.Equal(t, "test-result", fileMsg.RunID)
-			assert.Equal(t, testFile, fileMsg.Path)
-		}
-	}
-
-	_ = oldPath
-}
-
-func TestFileBrowserPage_HandleEnterKey_StatError(t *testing.T) {
-	tmpDir := t.TempDir()
-	page := NewFileBrowserPage(tmpDir)
-
-	// Set path to a file that will be deleted (to cause stat error)
-	testFile := filepath.Join(tmpDir, "temp.json")
-	err := os.WriteFile(testFile, []byte(`{}`), 0644)
-	assert.NoError(t, err)
-
-	// Set the path
-	page.filePicker.Path = testFile
-
-	// Delete the file to cause stat error
-	err = os.Remove(testFile)
-	assert.NoError(t, err)
-
-	// Now simulate the path being different (to trigger the stat check)
-	oldPath := ""
-	page.filePicker.Path = testFile
-
-	// Manually check what would happen
-	info, err := os.Stat(page.filePicker.Path)
-	assert.Error(t, err)
-	assert.Nil(t, info)
-
-	_ = oldPath
 }

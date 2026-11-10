@@ -17,7 +17,7 @@ Each tutorial builds something that runs, one step at a time. Start with Tutoria
 
 | Tutorial | What we build | Needs |
 |---|---|---|
-| [1: Your First Test](/arena/tutorials/01-first-test/) | A prompt, a provider and a two-turn scenario, run against `gpt-4o-mini` | OpenAI key |
+| [1: Your First Test](/arena/tutorials/01-first-test/) | A prompt, a provider and a two-turn scenario, run against `gpt-5.4-mini` | OpenAI key |
 | [2: Multi-Provider Testing](/arena/tutorials/02-multi-provider/) | One scenario run against OpenAI, Claude and Gemini | OpenAI, Anthropic and Gemini keys |
 | [3: Multi-Turn Conversations](/arena/tutorials/03-multi-turn/) | Scenarios that check context across turns, and a self-play run | OpenAI key |
 | [4: Testing MCP Tools](/arena/tutorials/04-mcp-tools/) | A scenario that calls an MCP memory server's tools | OpenAI key, Node.js |

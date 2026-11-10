@@ -455,11 +455,6 @@ func TestRunResult_Params(t *testing.T) {
 	}
 }
 
-func TestRunResult_GeneralProperties(t *testing.T) {
-	// Test needs to be rewritten for flat message model - deferred until message model is finalized
-	t.Skip("Test needs to be rewritten for flat message model")
-}
-
 func TestRunPlan_LargePlan(t *testing.T) {
 	// Create a large plan with many combinations
 	combinations := make([]RunCombination, 100)

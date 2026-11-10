@@ -2,7 +2,7 @@
 title: 'Tutorial 2: Multi-Provider Testing'
 description: Run one customer-support scenario against OpenAI, Claude and Gemini in a single command, then read each provider's replies from the run output.
 verified:
-  commit: d12d5b388a693c119b19bf05eabade5b717cb10d
+  commit: 02ec7c860b978fcce24022d9ccb868d94208c751
   sources:
     - arena/arenaconfig/ignored_fields.go
     - arena/arenaconfig/loader.go
@@ -11,9 +11,9 @@ verified:
     - arena/cmd/promptarena/run.go
     - arena/configschema/configschema.go
     - arena/inspect/collector.go
-    - examples/capability-matrix/providers/anthropic-haiku45.provider.yaml
+    - examples/capability-matrix/providers/anthropic-haiku55.provider.yaml
     - examples/capability-matrix/providers/anthropic-sonnet46.provider.yaml
-    - examples/capability-matrix/providers/gemini-25-flash.provider.yaml
+    - examples/capability-matrix/providers/gemini-38-flash.provider.yaml
     - schemas/v1alpha1/arena.json
     - schemas/v1alpha1/promptconfig.json
     - schemas/v1alpha1/provider.json
@@ -88,11 +88,11 @@ Create `providers/openai.yaml`:
 apiVersion: promptkit.altairalabs.ai/v1alpha1
 kind: Provider
 metadata:
-  name: openai-gpt4o-mini
+  name: openai-gpt54-mini
 
 spec:
   type: openai
-  model: gpt-4o-mini
+  model: gpt-5.4-mini
 
   defaults:
     temperature: 0.7
@@ -109,7 +109,7 @@ metadata:
 
 spec:
   type: claude
-  model: claude-haiku-4-5-20251001
+  model: claude-haiku-5-5
 
   defaults:
     temperature: 0.7
@@ -126,7 +126,7 @@ metadata:
 
 spec:
   type: gemini
-  model: gemini-2.5-flash
+  model: gemini-3.8-flash
 
   defaults:
     temperature: 0.7
@@ -221,7 +221,7 @@ Run Summary
 
 Total runs      3
 
-Providers       claude-haiku (1), gemini-flash (1), openai-gpt4o-mini (1)
+Providers       claude-haiku (1), gemini-flash (1), openai-gpt54-mini (1)
 Scenarios       1 scenarios
 Regions         default
 
@@ -254,14 +254,14 @@ for path in sorted(glob.glob('out/20*.json')):
 "
 ```
 
-The providers answer the same prompt in different lengths and styles: in one run Claude replied with a numbered list of steps, while `gpt-4o-mini` asked for more detail.
+The providers answer the same prompt in different lengths and styles: one may reply with a numbered list of steps while another asks for more detail.
 
 ## Step 8: Run a subset of providers
 
 Pass provider IDs to `--provider` to run only those:
 
 ```bash
-promptarena run --simple --provider openai-gpt4o-mini,claude-haiku
+promptarena run --simple --provider openai-gpt54-mini,claude-haiku
 ```
 
 The summary now shows two runs and lists only those providers:
@@ -271,7 +271,7 @@ Total runs      2
 Passed          2 (100.0%)
 Failed          0 (0.0%)
 
-Providers       openai-gpt4o-mini (1), claude-haiku (1)
+Providers       openai-gpt54-mini (1), claude-haiku (1)
 ```
 
 ## Next steps

@@ -1,6 +1,9 @@
 package engine
 
 import (
+	"context"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -13,81 +16,124 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/v2/tools"
 )
 
+// a2aRequestHeaders applies opt to a real a2a.Client, makes it discover an
+// httptest server, and returns the headers that server received. It is how
+// the resolvers below are checked: a ClientOption is an opaque func, so the
+// only honest view of what it does is the request it produces.
+func a2aRequestHeaders(t *testing.T, opt a2a.ClientOption) http.Header {
+	t.Helper()
+	got := make(chan http.Header, 2)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		select {
+		case got <- r.Header.Clone():
+		default:
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"name":"probe"}`))
+	}))
+	defer srv.Close()
+
+	var opts []a2a.ClientOption
+	if opt != nil {
+		opts = append(opts, opt)
+	}
+	_, _ = a2a.NewClient(srv.URL, opts...).Discover(context.Background())
+	select {
+	case h := <-got:
+		return h
+	default:
+		t.Fatal("the a2a client sent no request")
+		return nil
+	}
+}
+
 func TestResolveA2AAuth(t *testing.T) {
-	t.Run("nil auth returns nil", func(t *testing.T) {
-		assert.Nil(t, resolveA2AAuth(nil))
-	})
-
-	t.Run("empty token returns nil", func(t *testing.T) {
-		auth := &arenaconfig.A2AAuthConfig{Scheme: "Bearer"}
-		assert.Nil(t, resolveA2AAuth(auth))
-	})
-
-	t.Run("token from config", func(t *testing.T) {
-		auth := &arenaconfig.A2AAuthConfig{Scheme: "Bearer", Token: "my-token"}
-		opt := resolveA2AAuth(auth)
-		assert.NotNil(t, opt)
-	})
-
-	t.Run("token from env", func(t *testing.T) {
-		t.Setenv("TEST_A2A_TOKEN_RESOLVE", "env-token")
-		auth := &arenaconfig.A2AAuthConfig{Scheme: "ApiKey", TokenEnv: "TEST_A2A_TOKEN_RESOLVE"}
-		opt := resolveA2AAuth(auth)
-		assert.NotNil(t, opt)
-	})
-
-	t.Run("unset env returns nil", func(t *testing.T) {
-		auth := &arenaconfig.A2AAuthConfig{Scheme: "Bearer", TokenEnv: "UNSET_A2A_TOKEN_XXXXX"}
-		assert.Nil(t, resolveA2AAuth(auth))
-	})
-
-	t.Run("empty scheme defaults to Bearer", func(t *testing.T) {
-		auth := &arenaconfig.A2AAuthConfig{Token: "tok"}
-		opt := resolveA2AAuth(auth)
-		assert.NotNil(t, opt)
-	})
+	t.Setenv("TEST_A2A_TOKEN_RESOLVE", "env-token")
+	tests := []struct {
+		name string
+		auth *arenaconfig.A2AAuthConfig
+		// wantHeader is the Authorization header the agent receives; "" means
+		// the resolver must return no option at all.
+		wantHeader string
+	}{
+		{name: "nil auth sends none", auth: nil},
+		{name: "empty token sends none", auth: &arenaconfig.A2AAuthConfig{Scheme: "Bearer"}},
+		{name: "unset env sends none",
+			auth: &arenaconfig.A2AAuthConfig{Scheme: "Bearer", TokenEnv: "UNSET_A2A_TOKEN_XXXXX"}},
+		{name: "token from config",
+			auth:       &arenaconfig.A2AAuthConfig{Scheme: "Bearer", Token: "my-token"},
+			wantHeader: "Bearer my-token"},
+		{name: "token from env keeps its scheme",
+			auth:       &arenaconfig.A2AAuthConfig{Scheme: "ApiKey", TokenEnv: "TEST_A2A_TOKEN_RESOLVE"},
+			wantHeader: "ApiKey env-token"},
+		{name: "token_env wins over an inline token",
+			auth: &arenaconfig.A2AAuthConfig{
+				Scheme: "Bearer", Token: "inline", TokenEnv: "TEST_A2A_TOKEN_RESOLVE"},
+			wantHeader: "Bearer env-token"},
+		{name: "empty scheme defaults to Bearer",
+			auth:       &arenaconfig.A2AAuthConfig{Token: "tok"},
+			wantHeader: "Bearer tok"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			opt := resolveA2AAuth(tt.auth)
+			if tt.wantHeader == "" {
+				assert.Nil(t, opt)
+				return
+			}
+			assert.Equal(t, tt.wantHeader, a2aRequestHeaders(t, opt).Get("Authorization"))
+		})
+	}
 }
 
 func TestResolveA2AHeadersEngine(t *testing.T) {
-	t.Run("no headers returns nil", func(t *testing.T) {
-		opt, err := resolveA2AHeaders(nil, nil)
-		require.NoError(t, err)
-		assert.Nil(t, opt)
-	})
-
-	t.Run("static headers only", func(t *testing.T) {
-		opt, err := resolveA2AHeaders(map[string]string{"X-Tenant": "acme"}, nil)
-		require.NoError(t, err)
-		assert.NotNil(t, opt)
-	})
-
-	t.Run("env headers resolved", func(t *testing.T) {
-		t.Setenv("TEST_A2A_HDR_VAL", "secret")
-		opt, err := resolveA2AHeaders(nil, []string{"X-Key=TEST_A2A_HDR_VAL"})
-		require.NoError(t, err)
-		assert.NotNil(t, opt)
-	})
-
-	t.Run("unset env header skipped", func(t *testing.T) {
-		opt, err := resolveA2AHeaders(nil, []string{"X-Key=UNSET_HDR_XXXX"})
-		require.NoError(t, err)
-		assert.Nil(t, opt)
-	})
+	t.Setenv("TEST_A2A_HDR_VAL", "secret")
+	tests := []struct {
+		name    string
+		static  map[string]string
+		fromEnv []string
+		// want is the set of headers the agent receives; nil means the
+		// resolver must return no option at all.
+		want map[string]string
+	}{
+		{name: "no headers sends none"},
+		{name: "unset env header is skipped, leaving none",
+			fromEnv: []string{"X-Key=UNSET_HDR_XXXX"}},
+		{name: "static headers only",
+			static: map[string]string{"X-Tenant": "acme"},
+			want:   map[string]string{"X-Tenant": "acme"}},
+		{name: "env headers resolved",
+			fromEnv: []string{"X-Key=TEST_A2A_HDR_VAL"},
+			want:    map[string]string{"X-Key": "secret"}},
+		{name: "mixed static and env",
+			static:  map[string]string{"X-Static": "val"},
+			fromEnv: []string{"X-Dynamic=TEST_A2A_HDR_VAL", "X-Gone=UNSET_HDR_XXXX"},
+			want:    map[string]string{"X-Static": "val", "X-Dynamic": "secret"}},
+		{name: "an env header overrides a static one of the same name",
+			static:  map[string]string{"X-Key": "static"},
+			fromEnv: []string{"X-Key=TEST_A2A_HDR_VAL"},
+			want:    map[string]string{"X-Key": "secret"}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			opt, err := resolveA2AHeaders(tt.static, tt.fromEnv)
+			require.NoError(t, err)
+			if tt.want == nil {
+				assert.Nil(t, opt)
+				return
+			}
+			got := a2aRequestHeaders(t, opt)
+			for k, v := range tt.want {
+				assert.Equal(t, v, got.Get(k), "header %s", k)
+			}
+			assert.Empty(t, got.Get("X-Gone"), "an unset env var must not send an empty header")
+		})
+	}
 
 	t.Run("invalid format returns error", func(t *testing.T) {
 		_, err := resolveA2AHeaders(nil, []string{"no-equals"})
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "invalid headers_from_env format")
-	})
-
-	t.Run("mixed static and env", func(t *testing.T) {
-		t.Setenv("TEST_A2A_MIX_HDR", "from-env")
-		opt, err := resolveA2AHeaders(
-			map[string]string{"X-Static": "val"},
-			[]string{"X-Dynamic=TEST_A2A_MIX_HDR"},
-		)
-		require.NoError(t, err)
-		assert.NotNil(t, opt)
 	})
 }
 

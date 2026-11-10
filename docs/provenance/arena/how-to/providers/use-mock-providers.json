@@ -1,13 +1,13 @@
 {
  "page": "docs/src/content/docs/arena/how-to/providers/use-mock-providers.md",
- "commit": "f64f15c6465c659e651a75c9cd5f9ee0bb963280",
+ "commit": "02ec7c860b978fcce24022d9ccb868d94208c751",
  "claims": [
   {
    "id": 1,
    "claim": "Mock providers give deterministic, predictable responses",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:767",
+    "arena/engine/engine.go:782",
     "examples/guardrails-test/mock-responses.yaml:1"
    ]
   },
@@ -16,7 +16,7 @@
    "claim": "Mock providers work without an internet connection",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:756-774"
+    "arena/engine/engine.go:753-791"
    ]
   },
   {
@@ -42,8 +42,7 @@
    "evidence": [
     "arena/cmd/promptarena/chat.go:9-10",
     "arena/cmd/promptarena/run_interactive.go:290",
-    "arena/engine/engine.go:758-774",
-    "arena/engine/engine.go:786",
+    "arena/engine/engine.go:774-805",
     "arena/selfplay/registry.go:47"
    ]
   },
@@ -52,7 +51,7 @@
    "claim": "The mock provider simulates only the LLM decision; tools called by the mock still execute for real through the tool loop",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:454"
+    "arena/turnexecutors/pipeline_stages_integration.go:469"
    ]
   },
   {
@@ -134,8 +133,8 @@
    "claim": "spec.type mock selects the mock provider type",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:323",
-    "arena/engine/builder_integration.go:388"
+    "arena/engine/builder_integration.go:324",
+    "arena/engine/builder_integration.go:389"
    ]
   },
   {
@@ -162,7 +161,7 @@
    "evidence": [
     "arena/engine/builder_integration.go:270",
     "arena/engine/builder_integration.go:326",
-    "arena/engine/engine.go:798"
+    "arena/engine/engine.go:863"
    ]
   },
   {
@@ -170,7 +169,7 @@
    "claim": "tool_calls on a turn triggers real tool execution",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:454"
+    "arena/turnexecutors/pipeline_stages_integration.go:469"
    ]
   },
   {
@@ -271,10 +270,10 @@
    "claim": "Overridden provider applies to candidate selection, self-play roles and judges",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:1079",
+    "arena/arenaconfig/loader.go:1081",
     "arena/cmd/promptarena/provider_override.go:16",
     "arena/cmd/promptarena/run_interactive.go:241",
-    "arena/engine/builder_integration.go:308",
+    "arena/engine/builder_integration.go:309",
     "arena/engine/conversation_executor.go:923"
    ]
   },
@@ -283,8 +282,8 @@
    "claim": "A judge that references a mock provider is used in the default run",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:1067",
-    "arena/arenaconfig/loader.go:1079",
+    "arena/arenaconfig/loader.go:1069",
+    "arena/arenaconfig/loader.go:1081",
     "arena/engine/conversation_executor.go:923"
    ]
   },
@@ -293,7 +292,7 @@
    "claim": "--override-provider mock-judge=claude makes the judge run against claude",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:1077",
+    "arena/arenaconfig/loader.go:1079",
     "arena/cmd/promptarena/provider_override.go:34"
    ]
   },
@@ -448,7 +447,7 @@
    "claim": "A misspelled or snake_case mock file key such as default_response is an error when Arena loads the file",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/loader.go:299",
+    "arena/arenaconfig/loader.go:300",
     "arena/arenaconfig/mock_config_check.go:16-20",
     "arena/arenaconfig/mock_config_check.go:43-49"
    ]
@@ -459,7 +458,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:299",
-    "arena/engine/engine.go:746-751"
+    "arena/engine/engine.go:758-764"
    ]
   },
   {
@@ -476,8 +475,26 @@
    "claim": "--mock-provider also mocks the providers behind self-play roles",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:782-789",
+    "arena/engine/engine.go:800-805",
     "arena/selfplay/registry.go:324"
+   ]
+  },
+  {
+   "id": 9601,
+   "claim": "",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/engine.go:724-753",
+    "arena/engine/engine.go:816-836",
+    "arena/engine/engine.go:838-853"
+   ]
+  },
+  {
+   "id": 9602,
+   "claim": "",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/mock_default_audio.go:148-170"
    ]
   }
  ]

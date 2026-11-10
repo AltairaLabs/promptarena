@@ -1,55 +1,72 @@
 package pages
 
 import (
+	"strings"
 	"testing"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/AltairaLabs/promptarena/v2/arena/statestore"
 
 	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )
 
-func TestNewConversationPage(t *testing.T) {
-	page := NewConversationPage()
-
-	assert.NotNil(t, page)
-	assert.NotNil(t, page.panel)
+// twoTurnResult is a small two-message run used by the navigation tests.
+func twoTurnResult(runID string) *statestore.RunResult {
+	return &statestore.RunResult{
+		RunID: runID,
+		Messages: []types.Message{
+			{Role: "user", Content: "Message 1"},
+			{Role: "assistant", Content: "Message 2"},
+		},
+		Duration: time.Second,
+	}
 }
 
 func TestConversationPage_Reset(t *testing.T) {
 	page := NewConversationPage()
 	page.SetDimensions(100, 50)
+	page.SetData("run-123", "test-scenario", "test-provider", twoTurnResult("run-123"))
+	page.Update(tea.KeyMsg{Type: tea.KeyDown})
+	require.Equal(t, 1, page.Panel().SelectedTurnIdx())
 
-	res := &statestore.RunResult{
-		RunID: "run-123",
-		Messages: []types.Message{
-			{Role: "user", Content: "Hello"},
-			{Role: "assistant", Content: "Hi there"},
-		},
-		Cost:     types.CostInfo{TotalCost: 0.001},
-		Duration: time.Second,
-	}
-	page.SetData("run-123", "test-scenario", "test-provider", res)
-
-	// Reset clears the panel's internal state
+	// Reset returns the panel to its initial state: the selection is back on
+	// the first turn and, until data is set again, keys are ignored.
 	page.Reset()
+	assert.Equal(t, 0, page.Panel().SelectedTurnIdx())
+	assert.Nil(t, page.Update(tea.KeyMsg{Type: tea.KeyDown}))
+	assert.Equal(t, 0, page.Panel().SelectedTurnIdx())
 
-	// After reset, the panel should be in initial state
-	// The panel's internal tableReady and detailReady flags should be false
-	panel := page.Panel()
-	assert.NotNil(t, panel)
+	// Setting the same run again rebuilds the table rather than reusing the
+	// pre-Reset one.
+	page.SetData("run-123", "test-scenario", "test-provider", twoTurnResult("run-123"))
+	page.Update(tea.KeyMsg{Type: tea.KeyDown})
+	assert.Equal(t, 1, page.Panel().SelectedTurnIdx())
 }
 
 func TestConversationPage_SetDimensions(t *testing.T) {
+	widest := func(s string) int {
+		w := 0
+		for _, line := range strings.Split(s, "\n") {
+			w = max(w, lipgloss.Width(line))
+		}
+		return w
+	}
+
 	page := NewConversationPage()
+	page.SetDimensions(80, 30)
+	page.SetData("run-1", "scenario", "provider", twoTurnResult("run-1"))
+	narrow := widest(page.Render())
 
-	page.SetDimensions(120, 60)
-
-	// Verify dimensions are passed to panel (panel should be usable)
-	assert.NotNil(t, page.panel)
+	// SetDimensions reaches the panel: a wider page lays the turns list and
+	// detail pane out wider.
+	page.SetDimensions(200, 30)
+	wide := widest(page.Render())
+	assert.Greater(t, wide, narrow)
 }
 
 func TestConversationPage_SetData(t *testing.T) {
@@ -84,34 +101,21 @@ func TestConversationPage_SetData_NilResult(t *testing.T) {
 func TestConversationPage_Update(t *testing.T) {
 	page := NewConversationPage()
 	page.SetDimensions(100, 50)
+	page.SetData("run-update", "scenario", "provider", twoTurnResult("run-update"))
 
-	res := &statestore.RunResult{
-		RunID: "run-update",
-		Messages: []types.Message{
-			{Role: "user", Content: "Message 1"},
-			{Role: "assistant", Content: "Message 2"},
-		},
-		Cost:     types.CostInfo{},
-		Duration: time.Second,
-	}
-	page.SetData("run-update", "scenario", "provider", res)
+	// With the turns list focused, Down moves the selected turn.
+	page.Update(tea.KeyMsg{Type: tea.KeyDown})
+	assert.Equal(t, 1, page.Panel().SelectedTurnIdx())
 
-	// Update with a key message
-	cmd := page.Update(tea.KeyMsg{Type: tea.KeyDown})
-	// cmd may be nil or a command, depending on panel state
-	_ = cmd
+	// Right moves focus to the detail pane, so Up no longer moves the turn.
+	page.Update(tea.KeyMsg{Type: tea.KeyRight})
+	page.Update(tea.KeyMsg{Type: tea.KeyUp})
+	assert.Equal(t, 1, page.Panel().SelectedTurnIdx())
 
-	// Test with right arrow to switch focus
-	cmd = page.Update(tea.KeyMsg{Type: tea.KeyRight})
-	_ = cmd
-}
-
-func TestConversationPage_Update_NoData(t *testing.T) {
-	page := NewConversationPage()
-
-	// Update without setting data should not panic
-	cmd := page.Update(tea.KeyMsg{Type: tea.KeyDown})
-	assert.Nil(t, cmd)
+	// Left returns focus to the turns list.
+	page.Update(tea.KeyMsg{Type: tea.KeyLeft})
+	page.Update(tea.KeyMsg{Type: tea.KeyUp})
+	assert.Equal(t, 0, page.Panel().SelectedTurnIdx())
 }
 
 func TestConversationPage_Render_WithMessages(t *testing.T) {

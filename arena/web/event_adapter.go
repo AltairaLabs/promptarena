@@ -464,6 +464,13 @@ func (a *EventAdapter) mapEvent(event *events.Event) *SSEEvent {
 		sse.Data = map[string]interface{}{
 			jsonKeySystemPrompt: data.SystemPrompt,
 		}
+	case *events.ConversationStartedData:
+		// The emitter publishes this as a pointer (#500).
+		if data != nil {
+			sse.Data = map[string]interface{}{
+				jsonKeySystemPrompt: data.SystemPrompt,
+			}
+		}
 	case *events.StageEventData:
 		if data != nil {
 			sse.Data = stagePayload(data)

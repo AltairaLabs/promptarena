@@ -3,6 +3,7 @@ package turnexecutors
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/AltairaLabs/PromptKit/runtime/v2/prompt"
 
@@ -84,13 +85,27 @@ func (e *PipelineExecutor) SetProviderBinding(b evals.ProviderBinding) {
 	e.providerBinding = b
 }
 
+// streamIdleTimeouter is satisfied by every provider built on
+// providers.BaseProvider: it reports the provider's stream_idle_timeout.
+type streamIdleTimeouter interface {
+	StreamIdleTimeout() time.Duration
+}
+
 // pipelineConfig returns the pipeline configuration for a turn: the defaults,
-// plus the provider binding when one is wired. The binding is the only thing
-// Arena varies here, so an unbound run builds exactly the pipeline it did
-// before.
-func (e *PipelineExecutor) pipelineConfig() *stage.PipelineConfig {
+// plus the provider binding when one is wired, with the idle timeout raised to
+// the provider's stream_idle_timeout when that is longer.
+//
+// The pipeline must not give up on a stream the provider still allows. With
+// the 30s default, a reasoning model that thinks quietly for longer was
+// canceled with "pipeline idle timeout" although its provider declared a
+// longer stream_idle_timeout (gemini-3.1-pro and gemini-4-argon in the
+// capability matrix).
+func (e *PipelineExecutor) pipelineConfig(provider providers.Provider) *stage.PipelineConfig {
 	cfg := stage.DefaultPipelineConfig()
 	cfg.ProviderBinding = e.providerBinding
+	if p, ok := provider.(streamIdleTimeouter); ok && p.StreamIdleTimeout() > cfg.IdleTimeout {
+		cfg.IdleTimeout = p.StreamIdleTimeout()
+	}
 	return cfg
 }
 
@@ -372,7 +387,7 @@ func (e *PipelineExecutor) buildStagePipeline(
 	req *TurnRequest, baseVariables map[string]string,
 ) (*stage.StreamPipeline, error) {
 	logger.Debug("Building stage pipeline", "provider_type", fmt.Sprintf("%T", req.Provider))
-	builder := stage.NewPipelineBuilderWithConfig(e.pipelineConfig())
+	builder := stage.NewPipelineBuilderWithConfig(e.pipelineConfig(req.Provider))
 	turnState := stage.NewTurnState()
 
 	// Merge prompt vars into base variables
@@ -703,9 +718,26 @@ func (e *PipelineExecutor) buildProviderStage(
 	// state. Without it the machine still advances, but the destination does
 	// not speak until some later scripted turn arrives.
 	if req.WorkflowStateResolver != nil {
-		ps.SetWorkflowStateResolver(req.WorkflowStateResolver)
+		ps.SetWorkflowStateResolver(resolverForTurn(req.WorkflowStateResolver, turnState))
 	}
 	return ps
+}
+
+// TurnBindableResolver is a stage.WorkflowStateResolver that renders a state's
+// prompt with one turn's variables once bound to that turn's TurnState. The
+// resolver outlives the turn (it belongs to the run), while the variables
+// VariableProviderStage resolves belong to the turn.
+type TurnBindableResolver interface {
+	ForTurn(turnState *stage.TurnState) stage.WorkflowStateResolver
+}
+
+// resolverForTurn binds resolver to turnState when it can be bound, so a
+// handoff renders with the variables the turn's own prompt rendered with.
+func resolverForTurn(resolver stage.WorkflowStateResolver, turnState *stage.TurnState) stage.WorkflowStateResolver {
+	if b, ok := resolver.(TurnBindableResolver); ok {
+		return b.ForTurn(turnState)
+	}
+	return resolver
 }
 
 // loadGuardrailHooks resolves pack-declared validators for this turn and
@@ -837,7 +869,7 @@ func (e *PipelineExecutor) buildCommonStreamingStages(
 	cfg StreamingStagesConfig,
 ) (*stage.StreamPipeline, error) {
 	mergedVars := mergePromptVars(req)
-	builder := stage.NewPipelineBuilderWithConfig(e.pipelineConfig())
+	builder := stage.NewPipelineBuilderWithConfig(e.pipelineConfig(req.Provider))
 	turnState := stage.NewTurnState()
 	var stages []stage.Stage
 

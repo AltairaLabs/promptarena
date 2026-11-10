@@ -2,7 +2,9 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"io"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"time"
@@ -12,44 +14,11 @@ import (
 	"github.com/AltairaLabs/promptarena/v2/arena/tui/app"
 	"github.com/spf13/cobra"
 
+	"github.com/AltairaLabs/PromptKit/runtime/v2/logger"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
-
-func TestCreateResultRepository_JSON(t *testing.T) {
-	params := &RunParameters{
-		OutDir:        "/tmp/test",
-		OutputFormats: []string{"json"},
-	}
-
-	repo, err := createResultRepository(params, "")
-	require.NoError(t, err)
-	assert.NotNil(t, repo)
-}
-
-func TestCreateResultRepository_Multiple(t *testing.T) {
-	params := &RunParameters{
-		OutDir:        "/tmp/test",
-		OutputFormats: []string{"json", "junit", "markdown"},
-		JUnitFile:     "/tmp/test/junit.xml",
-		MarkdownFile:  "/tmp/test/results.md",
-	}
-
-	repo, err := createResultRepository(params, "")
-	require.NoError(t, err)
-	assert.NotNil(t, repo)
-}
-
-func TestCreateResultRepository_CSV(t *testing.T) {
-	params := &RunParameters{
-		OutDir:        t.TempDir(),
-		OutputFormats: []string{"csv"},
-	}
-
-	repo, err := createResultRepository(params, "")
-	require.NoError(t, err)
-	require.NotNil(t, repo)
-}
 
 func TestCreateResultRepository_UnsupportedFormat(t *testing.T) {
 	params := &RunParameters{
@@ -183,15 +152,6 @@ func TestAwaitForceExit_WatchdogFiresWithoutASecondSignal(t *testing.T) {
 	assert.Contains(t, got, terminalRestoreSeq)
 }
 
-// TestInstallCtrlCEscapeHatch_RegistersWithoutFiring pins the installer itself:
-// it must return immediately and must not force-exit the process just for being
-// installed.
-func TestInstallCtrlCEscapeHatch_RegistersWithoutFiring(t *testing.T) {
-	installCtrlCEscapeHatch()
-	// Reaching here without the process dying is the assertion; the goroutine
-	// it started is parked on a signal that this test never sends.
-}
-
 // TestBuildHubContext_DiscoversConfigOrFallsBack covers the config discovery a
 // bare `promptarena` does before opening the hub. The hub is where you go to
 // find out what is wrong with a kit, so a broken or absent config has to leave
@@ -252,22 +212,42 @@ spec:
 // when the flag was never given would make every run verbose.
 func TestPersistentPreRun_HonorsVerboseOnlyWhenSet(t *testing.T) {
 	require.NotNil(t, rootCmd.PersistentPreRun)
+	t.Cleanup(func() { logger.SetVerbose(false) })
 
-	t.Run("an untouched flag leaves the logger alone", func(t *testing.T) {
+	debugEnabled := func() bool {
+		return logger.GetLogger().Enabled(context.Background(), slog.LevelDebug)
+	}
+	probe := func(verboseArgs ...string) *cobra.Command {
 		cmd := &cobra.Command{Use: "probe"}
 		cmd.Flags().Bool("verbose", false, "")
-		rootCmd.PersistentPreRun(cmd, nil)
+		require.NoError(t, cmd.Flags().Parse(verboseArgs))
+		return cmd
+	}
+
+	t.Run("an untouched flag leaves the logger alone", func(t *testing.T) {
+		// Debug is already on (say from LOG_LEVEL); the flag's default false
+		// must not switch it off.
+		logger.SetVerbose(true)
+		rootCmd.PersistentPreRun(probe(), nil)
+		assert.True(t, debugEnabled(), "a --verbose that was never given must not reset the level")
 	})
 
 	t.Run("an explicit --verbose is applied", func(t *testing.T) {
-		cmd := &cobra.Command{Use: "probe"}
-		cmd.Flags().Bool("verbose", false, "")
-		require.NoError(t, cmd.Flags().Set("verbose", "true"))
-		rootCmd.PersistentPreRun(cmd, nil)
+		logger.SetVerbose(false)
+		rootCmd.PersistentPreRun(probe("--verbose"), nil)
+		assert.True(t, debugEnabled(), "--verbose must turn debug logging on")
 	})
 
-	t.Run("a command with no verbose flag at all is fine", func(t *testing.T) {
+	t.Run("an explicit --verbose=false is applied", func(t *testing.T) {
+		logger.SetVerbose(true)
+		rootCmd.PersistentPreRun(probe("--verbose=false"), nil)
+		assert.False(t, debugEnabled(), "--verbose=false must turn debug logging off")
+	})
+
+	t.Run("a command with no verbose flag at all leaves the logger alone", func(t *testing.T) {
+		logger.SetVerbose(true)
 		rootCmd.PersistentPreRun(&cobra.Command{Use: "probe"}, nil)
+		assert.True(t, debugEnabled())
 	})
 }
 
@@ -294,18 +274,6 @@ func TestRootCommandLaunchesTheHub(t *testing.T) {
 	require.NotNil(t, gotCtx, "the hub must be handed a context")
 	assert.Equal(t, GetVersion(), gotCtx.Version)
 	assert.NotEmpty(t, gotCtx.ResultsDir)
-}
-
-func TestCreateResultRepository_Objectives(t *testing.T) {
-	params := &RunParameters{
-		OutDir:            t.TempDir(),
-		OutputFormats:     []string{"objectives"},
-		ObjectivesGroupBy: []string{"scenario"},
-	}
-
-	repo, err := createResultRepository(params, "")
-	require.NoError(t, err)
-	require.NotNil(t, repo)
 }
 
 func TestExtractObjectivesGroupBy(t *testing.T) {

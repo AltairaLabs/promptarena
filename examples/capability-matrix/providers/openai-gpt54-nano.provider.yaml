@@ -1,15 +1,11 @@
 apiVersion: promptkit.altairalabs.ai/v1alpha1
 kind: Provider
 metadata:
-  name: openai-o3-mini
+  name: openai-gpt54-nano
 spec:
-  id: openai-o3-mini
+  id: openai-gpt54-nano
   type: openai
-  model: o3-mini
-  # o-series reject temperature/top_p (declared, not relying on the model-name fallback).
-  unsupported_params:
-    - temperature
-    - top_p
+  model: gpt-5.4-nano
   capabilities:
     - text
     - streaming
@@ -20,8 +16,9 @@ spec:
     max_tokens: 100
     top_p: 1.0
   pricing:
-    input_cost_per_1k: 0.00055
-    output_cost_per_1k: 0.0022
+    input_cost_per_1k: 0.0002
+    output_cost_per_1k: 0.00125
+  pricing_correct_at: '2026-11-10'
   stream_retry:
     enabled: true
     max_attempts: 3

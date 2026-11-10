@@ -440,6 +440,7 @@ func NewEngine(
 	// If slow sources become common, thread ctx through NewEngine.
 	if mcpRegistry != nil {
 		eng.mcpSourceScope = newMCPSourceScopeWithTools(mcpRegistry, toolRegistry)
+		eng.mcpSourceScope.baseDir = eng.configBaseDir()
 		if err := eng.mcpSourceScope.OpenAll(
 			context.Background(), mcpsource.ScopeRun, "run", nil,
 			eng.mcpSkillSources, eng.mcpConfig,
@@ -728,7 +729,10 @@ const genericMockResponse = "Mock response from provider"
 //  1. mockConfigPath — the --mock-config flag. An explicit operator override, so
 //     it wins for every provider.
 //  2. the provider's own additional_config.mock_config.
-//  3. the generic in-memory repository.
+//  3. the config's shared mock_config: when every mock provider that declares
+//     one names the same file, providers declaring none (the stand-ins for real
+//     providers) use it too.
+//  4. the generic in-memory repository.
 //
 // Step 2 is the fix for #80. This used to substitute the generic repository for
 // every provider whenever the flag was absent, discarding each provider's
@@ -738,11 +742,19 @@ const genericMockResponse = "Mock response from provider"
 // examples/guardrails-test the guardrail suite reported scenarios as passing
 // because the replacement reply had nothing for the guardrails to catch.
 //
+// Step 3 is the same problem one level out. A kit that compares a mock-duplex
+// provider with real ones (examples/voice-refund-demo) scripts its responses
+// once, on the mock. The stand-ins for the real providers got the generic
+// reply, made no tool calls, and failed every assertion under --mock-provider,
+// although `--mock-config <that file>` passed. Two different files are
+// ambiguous, so they keep the generic reply.
+//
 // Returns an error if a mock configuration file cannot be loaded or parsed.
 func (e *Engine) EnableMockProviderMode(mockConfigPath string) error {
 	// Built once rather than per provider: the flag names a single file, and
 	// parsing it N times would be wasted work.
 	var flagRepo mock.ResponseRepository
+	var flagBaseDir string
 	if mockConfigPath != "" {
 		// The runtime decodes the file strictly, so an unknown key fails here.
 		fileRepo, err := mock.NewFileMockRepository(mockConfigPath)
@@ -750,17 +762,20 @@ func (e *Engine) EnableMockProviderMode(mockConfigPath string) error {
 			return fmt.Errorf("failed to load mock configuration from %s: %w", mockConfigPath, err)
 		}
 		flagRepo = withDefaultMockAudio(fileRepo)
+		flagBaseDir = fileRepo.BaseDir()
 	}
+
+	sharedCfg := e.sharedMockConfig()
 
 	// Create a new provider registry with mock providers
 	mockRegistry := providers.NewRegistry()
 
 	// Replace each provider with a MockToolProvider using the same ID for tool call simulation
 	for providerID, provider := range e.providers {
-		repository := flagRepo
+		repository, baseDir := flagRepo, flagBaseDir
 		if repository == nil {
 			var err error
-			if repository, err = e.declaredMockRepository(provider); err != nil {
+			if repository, baseDir, err = e.declaredMockRepository(provider, sharedCfg); err != nil {
 				return err
 			}
 		}
@@ -770,6 +785,7 @@ func (e *Engine) EnableMockProviderMode(mockConfigPath string) error {
 			provider.IncludeRawOutput,
 			repository,
 		)
+		applyDeclaredDuplexBehavior(mockProvider, provider.AdditionalConfig, repository, baseDir)
 		mockRegistry.Register(mockProvider)
 	}
 
@@ -793,21 +809,61 @@ func (e *Engine) EnableMockProviderMode(mockConfigPath string) error {
 }
 
 // declaredMockRepository builds the response repository a single provider asked
-// for via additional_config.mock_config, falling back to the generic in-memory
-// one when it declares nothing.
+// for via additional_config.mock_config, falling back to sharedCfg and then to
+// the generic in-memory one when it declares nothing. It also returns the
+// directory relative audio fixtures resolve against, empty for the generic
+// repository.
+func (e *Engine) declaredMockRepository(
+	provider *config.Provider, sharedCfg string,
+) (mock.ResponseRepository, string, error) {
+	mockCfg := e.resolvedMockConfig(provider)
+	if mockCfg == "" {
+		mockCfg = sharedCfg
+	}
+	if mockCfg == "" {
+		// Default agent turns that declare no audio to the built-in "mock
+		// assistant turn" clip, so mock duplex runs are audible and
+		// self-labeling out of the box (the mock TTS handles the user side).
+		return withDefaultMockAudio(mock.NewInMemoryMockRepository(genericMockResponse)), "", nil
+	}
+
+	fileRepo, err := mock.NewFileMockRepository(mockCfg)
+	if err != nil {
+		return nil, "", fmt.Errorf(
+			"provider %q: failed to load mock configuration from %s: %w", provider.ID, mockCfg, err)
+	}
+	return withDefaultMockAudio(fileRepo), fileRepo.BaseDir(), nil
+}
+
+// sharedMockConfig returns the one mock_config file the config's providers
+// declare, or "" when they declare none or more than one.
+func (e *Engine) sharedMockConfig() string {
+	shared := ""
+	for _, provider := range e.providers {
+		cfg := e.resolvedMockConfig(provider)
+		if cfg == "" {
+			continue
+		}
+		if shared != "" && shared != cfg {
+			return ""
+		}
+		shared = cfg
+	}
+	return shared
+}
+
+// resolvedMockConfig returns the provider's additional_config.mock_config,
+// resolved against the config dir, or "" when it declares none.
 //
 // The path may still be relative. createProviderImpl rewrites it to an absolute
 // path against the config dir, but only for providers it actually constructs —
 // a provider skipped by a --provider filter never goes through it. Resolving
 // here rather than leaving it to the process working directory is what keeps
 // those two cases consistent.
-func (e *Engine) declaredMockRepository(provider *config.Provider) (mock.ResponseRepository, error) {
+func (e *Engine) resolvedMockConfig(provider *config.Provider) string {
 	mockCfg, _ := provider.AdditionalConfig["mock_config"].(string)
 	if mockCfg == "" {
-		// Default agent turns that declare no audio to the built-in "mock
-		// assistant turn" clip, so mock duplex runs are audible and
-		// self-labeling out of the box (the mock TTS handles the user side).
-		return withDefaultMockAudio(mock.NewInMemoryMockRepository(genericMockResponse)), nil
+		return ""
 	}
 
 	// createProviderImpl leaves an absolute path, so only a provider it never
@@ -816,13 +872,7 @@ func (e *Engine) declaredMockRepository(provider *config.Provider) (mock.Respons
 	if !filepath.IsAbs(mockCfg) && e.config != nil && e.config.ConfigDir != "" {
 		mockCfg = filepath.Join(e.config.ConfigDir, mockCfg)
 	}
-
-	fileRepo, err := mock.NewFileMockRepository(mockCfg)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"provider %q: failed to load mock configuration from %s: %w", provider.ID, mockCfg, err)
-	}
-	return withDefaultMockAudio(fileRepo), nil
+	return filepath.Clean(mockCfg)
 }
 
 // closeMCPRegistry closes the MCP registry if initialized

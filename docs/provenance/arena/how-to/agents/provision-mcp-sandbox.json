@@ -1,13 +1,14 @@
 {
  "page": "docs/src/content/docs/arena/how-to/agents/provision-mcp-sandbox.md",
- "commit": "d12d5b388a693c119b19bf05eabade5b717cb10d",
+ "commit": "02ec7c860b978fcce24022d9ccb868d94208c751",
  "claims": [
   {
    "id": 1,
    "claim": "Arena provisions source-backed MCP servers via MCPSources, named factories that open an MCP endpoint at a lifecycle boundary and tear it down when the boundary closes",
    "verdict": "true",
    "evidence": [
-    "arena/engine/mcpsource_scope.go:127",
+    "arena/engine/mcpsource_scope.go:150",
+    "arena/engine/mcpsource_scope.go:157",
     "arena/mcpsource/registry.go:17",
     "arena/mcpsource/source.go:49"
    ]
@@ -40,9 +41,9 @@
    "verdict": "false",
    "evidence": [
     "arena/engine/engine.go:229",
-    "arena/engine/execution_mcpsource.go:86",
-    "arena/engine/mcpsource_scope.go:139",
-    "arena/engine/mcpsource_scope.go:250"
+    "arena/engine/execution_mcpsource.go:88",
+    "arena/engine/mcpsource_scope.go:161",
+    "arena/engine/mcpsource_scope.go:295"
    ]
   },
   {
@@ -50,7 +51,7 @@
    "claim": "source names a registered MCPSource (example docker)",
    "verdict": "true",
    "evidence": [
-    "arena/engine/mcpsource_scope.go:128",
+    "arena/engine/mcpsource_scope.go:150",
     "arena/mcpsource/docker/register/register.go:14"
    ]
   },
@@ -59,7 +60,7 @@
    "claim": "scope field selects when the source opens and closes",
    "verdict": "true",
    "evidence": [
-    "arena/engine/mcpsource_scope.go:90"
+    "arena/engine/mcpsource_scope.go:96"
    ]
   },
   {
@@ -67,8 +68,8 @@
    "claim": "source_args is an opaque map handed to the source's Open(); schema is per source",
    "verdict": "true",
    "evidence": [
-    "arena/engine/mcpsource_scope.go:114",
-    "arena/engine/mcpsource_scope.go:135",
+    "arena/engine/mcpsource_scope.go:127",
+    "arena/engine/mcpsource_scope.go:157",
     "arena/mcpsource/source.go:44"
    ]
   },
@@ -93,7 +94,7 @@
    "claim": "source_args is a free-form map passed to the source's Open()",
    "verdict": "true",
    "evidence": [
-    "arena/mcpsource/docker/source.go:44",
+    "arena/mcpsource/docker/source.go:47",
     "arena/mcpsource/source.go:50"
    ]
   },
@@ -111,8 +112,9 @@
    "claim": "scope run opens once at arena startup and closes at arena shutdown",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:441",
-    "arena/engine/engine.go:466"
+    "arena/engine/engine.go:442",
+    "arena/engine/engine.go:444",
+    "arena/engine/engine.go:467"
    ]
   },
   {
@@ -121,9 +123,8 @@
    "verdict": "false",
    "evidence": [
     "arena/engine/execution.go:558",
-    "arena/engine/execution_mcpsource.go:41",
-    "arena/engine/execution_mcpsource.go:58",
-    "arena/engine/execution_mcpsource.go:65"
+    "arena/engine/execution_mcpsource.go:60",
+    "arena/engine/execution_mcpsource.go:67"
    ]
   },
   {
@@ -132,8 +133,8 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/execution.go:558",
-    "arena/engine/execution.go:562",
-    "arena/engine/execution_mcpsource.go:70"
+    "arena/engine/execution_mcpsource.go:72",
+    "arena/engine/execution_mcpsource.go:80"
    ]
   },
   {
@@ -141,9 +142,8 @@
    "claim": "Inner scopes close before outer scopes",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:466",
-    "arena/engine/execution_mcpsource.go:89",
-    "arena/engine/execution_mcpsource.go:90"
+    "arena/engine/engine.go:467",
+    "arena/engine/execution_mcpsource.go:92-95"
    ]
   },
   {
@@ -151,9 +151,9 @@
    "claim": "Closer errors are logged as warnings and never fail the parent scope",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:466",
-    "arena/engine/execution_mcpsource.go:65",
-    "arena/engine/execution_mcpsource.go:78"
+    "arena/engine/engine.go:467",
+    "arena/engine/execution_mcpsource.go:68",
+    "arena/engine/execution_mcpsource.go:81"
    ]
   },
   {
@@ -161,8 +161,9 @@
    "claim": "If Open() fails partway through a scope's entries, already-opened entries in that scope are torn down before the error propagates",
    "verdict": "true",
    "evidence": [
-    "arena/engine/mcpsource_scope.go:79",
-    "arena/engine/mcpsource_scope.go:95"
+    "arena/engine/mcpsource_scope.go:100",
+    "arena/engine/mcpsource_scope.go:105",
+    "arena/engine/mcpsource_scope.go:85-90"
    ]
   },
   {
@@ -170,9 +171,8 @@
    "claim": "source_args is templated against each scenario's variables block before the source sees it",
    "verdict": "true",
    "evidence": [
-    "arena/engine/execution_mcpsource.go:57",
-    "arena/engine/mcpsource_scope.go:115",
-    "arena/engine/mcpsource_scope.go:316"
+    "arena/engine/execution_mcpsource.go:59",
+    "arena/engine/mcpsource_scope.go:127"
    ]
   },
   {
@@ -180,8 +180,8 @@
    "claim": "Only {{scenario.<key>}} substitution is supported, with no fallbacks or expressions",
    "verdict": "true",
    "evidence": [
-    "arena/engine/mcpsource_scope.go:316",
-    "arena/engine/mcpsource_scope.go:318"
+    "arena/mcpsource/mounts.go:260-264",
+    "arena/mcpsource/mounts.go:264"
    ]
   },
   {
@@ -190,7 +190,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/types.go:746",
-    "arena/engine/execution_mcpsource.go:17"
+    "arena/engine/execution_mcpsource.go:18"
    ]
   },
   {
@@ -198,7 +198,7 @@
    "claim": "source_args.repo may be set to the template {{scenario.repo}}",
    "verdict": "true",
    "evidence": [
-    "arena/engine/mcpsource_scope.go:318"
+    "arena/mcpsource/mounts.go:264"
    ]
   },
   {
@@ -206,7 +206,7 @@
    "claim": "source_args.branch may be set to the template {{scenario.branch}}",
    "verdict": "true",
    "evidence": [
-    "arena/engine/mcpsource_scope.go:318"
+    "arena/mcpsource/mounts.go:264"
    ]
   },
   {
@@ -214,8 +214,8 @@
    "claim": "Each session opens a fresh container with the scenario's repo cloned into /workspace",
    "verdict": "true",
    "evidence": [
-    "arena/mcpsource/docker/source.go:227",
-    "arena/mcpsource/docker/source.go:80"
+    "arena/mcpsource/docker/source.go:336-345",
+    "arena/mcpsource/docker/source.go:91-97"
    ]
   },
   {
@@ -223,8 +223,8 @@
    "claim": "When Open() returns, Arena registers the resulting URL and headers in the runtime MCP registry under the entry's name",
    "verdict": "true",
    "evidence": [
-    "arena/engine/mcpsource_scope.go:139",
-    "arena/engine/mcpsource_scope.go:152"
+    "arena/engine/mcpsource_scope.go:161",
+    "arena/engine/mcpsource_scope.go:174"
    ]
   },
   {
@@ -232,8 +232,8 @@
    "claim": "Arena calls tools/list against the server after Open() returns",
    "verdict": "true",
    "evidence": [
-    "arena/engine/mcpsource_scope.go:156",
-    "arena/engine/mcpsource_scope.go:229"
+    "arena/engine/mcpsource_scope.go:178",
+    "arena/engine/mcpsource_scope.go:274"
    ]
   },
   {
@@ -241,8 +241,7 @@
    "claim": "Each discovered tool is registered as a ToolDescriptor in the tools registry",
    "verdict": "true",
    "evidence": [
-    "arena/engine/mcpsource_scope.go:245",
-    "arena/engine/mcpsource_scope.go:250"
+    "arena/engine/mcpsource_scope.go:290-297"
    ]
   },
   {
@@ -251,8 +250,8 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/mcp_tool_descriptor.go:17",
-    "arena/engine/mcpsource_scope.go:234",
-    "arena/engine/mcpsource_scope.go:250"
+    "arena/engine/mcpsource_scope.go:279-289",
+    "arena/engine/mcpsource_scope.go:295"
    ]
   },
   {
@@ -266,7 +265,7 @@
    "claim": "Tools are referenced by name in the prompt config allowed_tools field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/validator.go:462"
+    "arena/arenaconfig/validator.go:465"
    ]
   },
   {
@@ -274,7 +273,7 @@
    "claim": "A provider that declares a capabilities list must include tools in it for tool calls to work",
    "verdict": "false",
    "evidence": [
-    "arena/engine/execution.go:326"
+    "arena/engine/execution.go:331"
    ]
   },
   {
@@ -336,8 +335,8 @@
    "verdict": "true",
    "evidence": [
     "arena/mcpsource/docker/cli.go:60",
-    "arena/mcpsource/docker/source.go:17",
-    "arena/mcpsource/docker/source.go:44"
+    "arena/mcpsource/docker/source.go:21",
+    "arena/mcpsource/docker/source.go:48"
    ]
   },
   {
@@ -345,9 +344,8 @@
    "claim": "repo is optional; when set, the source runs docker exec <cid> git clone [--branch <branch>] <repo> /workspace after start",
    "verdict": "true",
    "evidence": [
-    "arena/mcpsource/docker/source.go:228",
-    "arena/mcpsource/docker/source.go:232",
-    "arena/mcpsource/docker/source.go:80"
+    "arena/mcpsource/docker/source.go:336-345",
+    "arena/mcpsource/docker/source.go:91-97"
    ]
   },
   {
@@ -355,8 +353,8 @@
    "claim": "branch is optional, defaults to the repo default branch, and is ignored when repo is empty",
    "verdict": "true",
    "evidence": [
-    "arena/mcpsource/docker/source.go:229",
-    "arena/mcpsource/docker/source.go:81"
+    "arena/mcpsource/docker/source.go:338",
+    "arena/mcpsource/docker/source.go:92"
    ]
   },
   {
@@ -364,17 +362,20 @@
    "claim": "env is a map passed via docker -e; numbers and booleans are formatted as text and list or map values fail the open",
    "verdict": "true",
    "evidence": [
-    "arena/mcpsource/docker/cli.go:74",
-    "arena/mcpsource/docker/source.go:248"
+    "arena/mcpsource/docker/cli.go:85-87",
+    "arena/mcpsource/docker/source.go:353-383",
+    "arena/mcpsource/docker/source.go:58"
    ]
   },
   {
    "id": 43,
-   "claim": "mounts is a list of objects with source, target and readonly, passed as bind mounts",
+   "claim": "mounts is a list of objects with source, target, readonly, mode and when; bind mounts are passed to docker run -v and copy mounts are put in with docker cp",
    "verdict": "true",
    "evidence": [
-    "arena/mcpsource/docker/cli.go:77",
-    "arena/mcpsource/docker/source.go:276"
+    "arena/mcpsource/docker/cli.go:88-93",
+    "arena/mcpsource/docker/source.go:385-412",
+    "arena/mcpsource/docker/source.go:62",
+    "arena/mcpsource/mounts.go:51-60"
    ]
   },
   {
@@ -383,8 +384,8 @@
    "verdict": "true",
    "evidence": [
     "arena/mcpsource/docker/cli.go:62",
-    "arena/mcpsource/docker/source.go:151",
-    "arena/mcpsource/docker/source.go:166"
+    "arena/mcpsource/docker/source.go:222-239",
+    "arena/mcpsource/docker/source.go:275"
    ]
   },
   {
@@ -393,8 +394,7 @@
    "verdict": "true",
    "evidence": [
     "arena/mcpsource/docker/cli.go:65",
-    "arena/mcpsource/docker/source.go:131",
-    "arena/mcpsource/docker/source.go:136"
+    "arena/mcpsource/docker/source.go:240-248"
    ]
   },
   {
@@ -403,7 +403,7 @@
    "verdict": "true",
    "evidence": [
     "arena/mcpsource/docker/cli.go:68",
-    "arena/mcpsource/docker/source.go:140"
+    "arena/mcpsource/docker/source.go:249"
    ]
   },
   {
@@ -412,7 +412,7 @@
    "verdict": "true",
    "evidence": [
     "arena/mcpsource/docker/cli.go:71",
-    "arena/mcpsource/docker/source.go:143"
+    "arena/mcpsource/docker/source.go:252"
    ]
   },
   {
@@ -421,8 +421,8 @@
    "verdict": "true",
    "evidence": [
     "arena/mcpsource/docker/cli.go:59",
-    "arena/mcpsource/docker/source.go:49",
-    "arena/mcpsource/docker/source.go:61"
+    "arena/mcpsource/docker/source.go:53",
+    "arena/mcpsource/docker/source.go:66-72"
    ]
   },
   {
@@ -430,8 +430,9 @@
    "claim": "The source polls http://localhost:<port>/sse until it returns 2xx with a 20 second budget",
    "verdict": "true",
    "evidence": [
-    "arena/mcpsource/docker/source.go:18",
-    "arena/mcpsource/docker/source.go:338"
+    "arena/mcpsource/docker/source.go:22",
+    "arena/mcpsource/docker/source.go:469-487",
+    "arena/mcpsource/docker/source.go:99-106"
    ]
   },
   {
@@ -439,8 +440,8 @@
    "claim": "The source returns the /sse URL (http://localhost:<port>/sse) as the server's endpoint",
    "verdict": "true",
    "evidence": [
-    "arena/mcpsource/docker/source.go:23",
-    "arena/mcpsource/docker/source.go:97"
+    "arena/mcpsource/docker/source.go:108",
+    "arena/mcpsource/docker/source.go:27"
    ]
   },
   {
@@ -450,7 +451,7 @@
    "evidence": [
     "arena/mcpsource/docker/cli.go:58",
     "arena/mcpsource/docker/cli_interactive.go:22",
-    "arena/mcpsource/docker/source.go:74"
+    "arena/mcpsource/docker/source.go:134-136"
    ]
   },
   {
@@ -459,8 +460,9 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/engine.go:234",
-    "arena/engine/execution_mcpsource.go:87",
-    "arena/mcpsource/docker/source.go:102"
+    "arena/engine/execution_mcpsource.go:89",
+    "arena/mcpsource/docker/source.go:108",
+    "arena/mcpsource/docker/source.go:211-219"
    ]
   },
   {
@@ -469,7 +471,7 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/engine.go:229",
-    "arena/engine/execution_mcpsource.go:86"
+    "arena/engine/execution_mcpsource.go:88"
    ]
   },
   {
@@ -486,7 +488,7 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/engine.go:229",
-    "arena/engine/mcpsource_scope.go:169"
+    "arena/engine/mcpsource_scope.go:214-229"
    ]
   },
   {
@@ -495,8 +497,8 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/engine.go:234",
-    "arena/engine/mcpsource_scope.go:190",
-    "arena/mcpsource/docker/source.go:102"
+    "arena/engine/mcpsource_scope.go:235-250",
+    "arena/mcpsource/docker/source.go:108"
    ]
   },
   {
@@ -504,8 +506,8 @@
    "claim": "A session_end hook event exists and can use the sandbox_ports mapping",
    "verdict": "true",
    "evidence": [
-    "arena/engine/execution.go:383",
-    "arena/engine/execution.go:400"
+    "arena/engine/execution.go:388",
+    "arena/engine/execution.go:405"
    ]
   },
   {
@@ -513,8 +515,7 @@
    "claim": "The built-in docker source runs git clone unauthenticated",
    "verdict": "true",
    "evidence": [
-    "arena/mcpsource/docker/source.go:227",
-    "arena/mcpsource/docker/source.go:80"
+    "arena/mcpsource/docker/source.go:336-345"
    ]
   },
   {
@@ -536,7 +537,7 @@
    "claim": "The example mounts skills/codegen read-only at /skills/codegen inside the container",
    "verdict": "true",
    "evidence": [
-    "arena/engine/mcpsource_scope.go:340",
+    "arena/engine/mcpsource_scope.go:348-382",
     "examples/codegen-sandbox/config.arena.yaml:38",
     "examples/codegen-sandbox/config.arena.yaml:40"
    ]
@@ -582,7 +583,7 @@
    "verdict": "false",
    "evidence": [
     "arena/cmd/promptarena/run.go:194",
-    "arena/engine/engine.go:742",
+    "arena/engine/engine.go:753-767",
     "arena/engine/execution.go:558"
    ]
   },
@@ -658,8 +659,8 @@
    "claim": "A session-scoped MCP source keeps the container alive across the agent's tool calls and the tool_exec gate call",
    "verdict": "true",
    "evidence": [
-    "arena/engine/execution.go:562",
-    "arena/engine/execution.go:633"
+    "arena/engine/execution.go:567",
+    "arena/engine/execution.go:638"
    ]
   },
   {
@@ -667,8 +668,8 @@
    "claim": "The gate runs run_tests one more time after the agent declares done",
    "verdict": "true",
    "evidence": [
-    "arena/engine/execution.go:628",
-    "arena/engine/execution.go:633"
+    "arena/engine/execution.go:633",
+    "arena/engine/execution.go:638"
    ]
   },
   {
@@ -676,8 +677,7 @@
    "claim": "Arena adds a read-only mount to source_args.mounts for each skill source with a path; a directory of skills mounts each skill inside it",
    "verdict": "true",
    "evidence": [
-    "arena/engine/mcpsource_scope.go:340",
-    "arena/engine/mcpsource_scope.go:361"
+    "arena/engine/mcpsource_scope.go:348-382"
    ]
   },
   {
@@ -685,8 +685,7 @@
    "claim": "A skill directory mounts at /skills/<name>, where name is the source's name or the directory base name",
    "verdict": "true",
    "evidence": [
-    "arena/engine/mcpsource_scope.go:361",
-    "arena/engine/mcpsource_scope.go:364"
+    "arena/engine/mcpsource_scope.go:369-375"
    ]
   },
   {
@@ -694,7 +693,7 @@
    "claim": "Skill mount entries are readonly true",
    "verdict": "true",
    "evidence": [
-    "arena/engine/mcpsource_scope.go:352"
+    "arena/engine/mcpsource_scope.go:357-361"
    ]
   },
   {
@@ -702,8 +701,8 @@
    "claim": "The docker source translates each mount entry into a -v <src>:<tgt>:ro flag on docker run",
    "verdict": "true",
    "evidence": [
-    "arena/mcpsource/docker/cli.go:77",
-    "arena/mcpsource/docker/cli.go:80"
+    "arena/mcpsource/docker/cli.go:88",
+    "arena/mcpsource/docker/cli.go:91"
    ]
   },
   {
@@ -711,8 +710,8 @@
    "claim": "Scripts shipped with a skill are runnable via Bash /skills/<name>/scripts/<script>",
    "verdict": "true",
    "evidence": [
-    "arena/engine/mcpsource_scope.go:351",
-    "arena/mcpsource/docker/cli.go:77"
+    "arena/engine/mcpsource_scope.go:357-361",
+    "arena/mcpsource/docker/cli.go:88-93"
    ]
   },
   {
@@ -720,10 +719,9 @@
    "claim": "Config load fails with unknown source \"X\" when the named source is not registered, and the error lists the registered names",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:443",
-    "arena/engine/execution_mcpsource.go:58",
-    "arena/engine/mcpsource_scope.go:128",
-    "arena/engine/mcpsource_scope.go:130"
+    "arena/engine/engine.go:442-448",
+    "arena/engine/execution_mcpsource.go:60-65",
+    "arena/engine/mcpsource_scope.go:150-156"
    ]
   },
   {
@@ -731,9 +729,8 @@
    "claim": "Error container not healthy: health timeout after 20s occurs when the image is not serving HTTP+SSE on 8080 or /sse returns non-2xx",
    "verdict": "true",
    "evidence": [
-    "arena/mcpsource/docker/source.go:355",
-    "arena/mcpsource/docker/source.go:92",
-    "arena/mcpsource/docker/source.go:94"
+    "arena/mcpsource/docker/source.go:103-106",
+    "arena/mcpsource/docker/source.go:486"
    ]
   },
   {
@@ -771,9 +768,8 @@
    "claim": "Mounts set on the entry are kept and come first; a skill mount whose target a user mount uses is dropped",
    "verdict": "true",
    "evidence": [
-    "arena/engine/mcpsource_scope.go:398",
-    "arena/engine/mcpsource_scope.go:410",
-    "arena/engine/mcpsource_scope.go:419"
+    "arena/engine/mcpsource_scope.go:142",
+    "arena/engine/mcpsource_scope.go:411-435"
    ]
   },
   {
@@ -781,8 +777,105 @@
    "claim": "Inline skills get no mount",
    "verdict": "true",
    "evidence": [
-    "arena/engine/mcpsource_scope.go:340",
-    "arena/engine/mcpsource_scope.go:361"
+    "arena/engine/mcpsource_scope.go:348-382"
+   ]
+  },
+  {
+   "id": 902,
+   "claim": "Each mounts entry takes source and target, plus optional readonly, mode and when; any other key is rejected",
+   "verdict": "true",
+   "evidence": [
+    "arena/mcpsource/mounts.go:204-217",
+    "arena/mcpsource/mounts.go:51"
+   ]
+  },
+  {
+   "id": 903,
+   "claim": "mount source is relative to the directory holding the arena config, must exist and must stay inside it after following symlinks",
+   "verdict": "true",
+   "evidence": [
+    "arena/mcpsource/mounts.go:204-217",
+    "arena/mcpsource/mounts.go:220-240"
+   ]
+  },
+  {
+   "id": 904,
+   "claim": "{{scenario.<variable>}} in a mount source is replaced from the scenario's variables",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/execution_mcpsource.go:56",
+    "arena/engine/mcpsource_scope.go:127-137",
+    "arena/mcpsource/mounts.go:260-264"
+   ]
+  },
+  {
+   "id": 905,
+   "claim": "mount target must be an absolute container path and each target may appear once",
+   "verdict": "true",
+   "evidence": [
+    "arena/mcpsource/mounts.go:146-151",
+    "arena/mcpsource/mounts.go:81"
+   ]
+  },
+  {
+   "id": 906,
+   "claim": "readonly defaults to true, mode to bind, when to start",
+   "verdict": "true",
+   "evidence": [
+    "arena/mcpsource/mounts.go:164"
+   ]
+  },
+  {
+   "id": 907,
+   "claim": "mode: copy puts files in with docker cp and gives them to the container's own user so the agent can edit them without changing host files",
+   "verdict": "true",
+   "evidence": [
+    "arena/mcpsource/docker/cli_interactive.go:39-41",
+    "arena/mcpsource/docker/source.go:147-194",
+    "arena/mcpsource/docker/source.go:196-207"
+   ]
+  },
+  {
+   "id": 908,
+   "claim": "when: eval requires mode: copy and scope: session",
+   "verdict": "true",
+   "evidence": [
+    "arena/mcpsource/mounts.go:190-202"
+   ]
+  },
+  {
+   "id": 909,
+   "claim": "when: eval files are copied in after the agent's last turn and before conversation-level assertions and pack evals run",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/conversation_executor.go:1016",
+    "arena/engine/duplex_executor_results_integration.go:60",
+    "arena/mcpsource/docker/source.go:138-145"
+   ]
+  },
+  {
+   "id": 910,
+   "claim": "promptarena validate checks every mount, once per scenario when source uses a scenario variable",
+   "verdict": "true",
+   "evidence": [
+    "arena/arenaconfig/validator.go:592-620"
+   ]
+  },
+  {
+   "id": 911,
+   "claim": "A skill mount whose target a user mount also uses fails the open with an error naming the target",
+   "verdict": "true",
+   "evidence": [
+    "arena/engine/mcpsource_scope.go:411-435"
+   ]
+  },
+  {
+   "id": 912,
+   "claim": "bind mounts go to docker run -v; copy mounts with when: start are copied in after the container starts",
+   "verdict": "true",
+   "evidence": [
+    "arena/mcpsource/docker/source.go:116-121",
+    "arena/mcpsource/docker/source.go:401-409"
    ]
   }
  ]

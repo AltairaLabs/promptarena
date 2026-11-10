@@ -1,6 +1,7 @@
 package templates
 
 import (
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -1786,64 +1787,84 @@ func TestGenerator_CreateProjectDirectory(t *testing.T) {
 	assert.DirExists(t, projectPath)
 }
 
-func TestGenerator_RunPreCreateHooks(t *testing.T) {
-	loader := NewLoader("")
-	tmpl := &Template{
-		Spec: TemplateSpec{
-			Hooks: &HookSet{
-				PreCreate: []Hook{
-					{Command: "echo pre-create", Message: "Running pre-create hook"},
-				},
-			},
-		},
-	}
-	generator := NewGenerator(tmpl, loader)
-
-	result := &GenerationResult{}
-	vars := map[string]interface{}{}
-
-	// Should not panic
-	generator.runPreCreateHooks(result, vars)
+// captureStdout returns what fn printed to os.Stdout.
+func captureStdout(t *testing.T, fn func()) string {
+	t.Helper()
+	r, w, err := os.Pipe()
+	require.NoError(t, err)
+	orig := os.Stdout
+	os.Stdout = w
+	defer func() { os.Stdout = orig }()
+	done := make(chan []byte)
+	go func() {
+		b, _ := io.ReadAll(r)
+		done <- b
+	}()
+	fn()
+	require.NoError(t, w.Close())
+	return string(<-done)
 }
 
-func TestGenerator_RunPostCreateHooks(t *testing.T) {
-	loader := NewLoader("")
-	tmpl := &Template{
-		Spec: TemplateSpec{
-			Hooks: &HookSet{
-				PostCreate: []Hook{
-					{Command: "echo post-create", Message: "Running post-create hook"},
-				},
-			},
+// Pre- and post-create hooks are printed, not run; a hook that fails to
+// render becomes a warning on the result rather than failing generation.
+func TestGenerator_RunCreateHooks(t *testing.T) {
+	phases := []struct {
+		name   string
+		hooks  func(Hook) *HookSet
+		run    func(*Generator, *GenerationResult, map[string]interface{})
+		prefix string
+	}{
+		{
+			name:   "pre-create",
+			hooks:  func(h Hook) *HookSet { return &HookSet{PreCreate: []Hook{h}} },
+			run:    (*Generator).runPreCreateHooks,
+			prefix: "pre-create hook warning: ",
+		},
+		{
+			name:   "post-create",
+			hooks:  func(h Hook) *HookSet { return &HookSet{PostCreate: []Hook{h}} },
+			run:    (*Generator).runPostCreateHooks,
+			prefix: "post-create hook warning: ",
 		},
 	}
-	generator := NewGenerator(tmpl, loader)
+	for _, ph := range phases {
+		t.Run(ph.name, func(t *testing.T) {
+			hook := Hook{Command: "echo {{.project}}", Message: "Running " + ph.name + " hook"}
+			g := NewGenerator(&Template{Spec: TemplateSpec{Hooks: ph.hooks(hook)}}, NewLoader(""))
+			result := &GenerationResult{}
+			out := captureStdout(t, func() { ph.run(g, result, map[string]interface{}{"project": "demo"}) })
+			assert.Equal(t, "Hook: Running "+ph.name+" hook\nWould execute: echo demo\n", out)
+			assert.Empty(t, result.Warnings)
 
-	result := &GenerationResult{}
-	vars := map[string]interface{}{}
-
-	// Should not panic
-	generator.runPostCreateHooks(result, vars)
+			bad := NewGenerator(&Template{Spec: TemplateSpec{Hooks: ph.hooks(Hook{Command: "echo {{"})}}, NewLoader(""))
+			result = &GenerationResult{}
+			captureStdout(t, func() { ph.run(bad, result, map[string]interface{}{}) })
+			require.Len(t, result.Warnings, 1)
+			assert.True(t, strings.HasPrefix(result.Warnings[0], ph.prefix+"failed to render hook command"),
+				"warning = %q", result.Warnings[0])
+		})
+	}
 }
 
 func TestGenerator_PrintVerboseHeader(t *testing.T) {
-	loader := NewLoader("")
 	tmpl := &Template{
-		Spec: TemplateSpec{
-			Files: []FileSpec{
-				{Path: "file1.txt"},
-				{Path: "file2.txt"},
-			},
-		},
+		Spec:    TemplateSpec{Files: []FileSpec{{Path: "file1.txt"}, {Path: "file2.txt"}}},
 		BaseDir: "/some/dir",
 	}
-	generator := NewGenerator(tmpl, loader)
+	g := NewGenerator(tmpl, NewLoader(""))
 
-	config := &TemplateConfig{Verbose: true}
-	generator.config = config
+	g.config = &TemplateConfig{Verbose: false}
+	assert.Empty(t, captureStdout(t, g.printVerboseHeader))
 
-	// Should not panic - just prints to stdout
-	generator.printVerboseHeader()
+	g.config = &TemplateConfig{Verbose: true}
+	assert.Equal(t, "\nGenerating 2 files from template...\nTemplate base directory: /some/dir\n\n",
+		captureStdout(t, g.printVerboseHeader))
+
+	tmpl.BaseDir, tmpl.BaseURL = "", "https://example.com/t"
+	assert.Contains(t, captureStdout(t, g.printVerboseHeader), "Template base URL: https://example.com/t\n")
+
+	tmpl.BaseURL = ""
+	assert.Contains(t, captureStdout(t, g.printVerboseHeader), "Template type: built-in\n")
 }
 
 func TestGenerator_GenerateFiles(t *testing.T) {
@@ -2133,27 +2154,24 @@ func TestGenerator_EvaluateConditionExtended(t *testing.T) {
 }
 
 func TestGenerator_RunHooks(t *testing.T) {
-	loader := NewLoader("")
-	tmpl := &Template{}
-	generator := NewGenerator(tmpl, loader)
+	generator := NewGenerator(&Template{}, NewLoader(""))
 
 	hooks := []Hook{
-		{
-			Command: "echo 'test command'",
-			Message: "Test hook message",
-		},
-		{
-			Command:   "echo 'conditional command'",
-			Message:   "Conditional hook",
-			Condition: "false", // Should be skipped
-		},
+		{Command: "echo '{{.greeting}}'", Message: "Test hook message"},
+		{Command: "echo 'conditional command'", Message: "Conditional hook", Condition: "false"},
 	}
 
-	vars := map[string]interface{}{}
+	var err error
+	out := captureStdout(t, func() {
+		err = generator.runHooks(hooks, map[string]interface{}{"greeting": "hello"})
+	})
+	require.NoError(t, err)
+	// Hooks are printed for the user to review, never executed; a hook whose
+	// condition is false is skipped entirely.
+	assert.Equal(t, "Hook: Test hook message\nWould execute: echo 'hello'\n", out)
 
-	// Should not panic - hooks are logged but not executed
-	err := generator.runHooks(hooks, vars)
-	assert.NoError(t, err)
+	err = generator.runHooks([]Hook{{Command: "x", Condition: "{{"}}, nil)
+	assert.ErrorContains(t, err, "failed to evaluate hook condition")
 }
 
 func TestFetchURL(t *testing.T) {

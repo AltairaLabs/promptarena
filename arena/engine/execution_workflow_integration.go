@@ -405,7 +405,13 @@ func (e *Engine) wireWorkflowHooks(req *ConversationRequest, runID string, rt *r
 	// destination state rather than waiting for the next scripted turn. Bound
 	// here rather than looked up per call because the interface's
 	// CurrentStateMeta takes no context, so the run cannot be recovered later.
-	req.WorkflowStateResolver = e.workflowTransExec.ResolverForRun(runID)
+	resolver := e.workflowTransExec.ResolverForRun(runID)
+	req.WorkflowStateResolver = resolver
+	if r, ok := resolver.(*workflowStateResolver); ok {
+		cfg := req.Config
+		r.taskPromptConfigVars = func(task string) map[string]string { return promptConfigVars(cfg, task) }
+		req.workflowPromptVars = r.turnPromptVars
+	}
 	req.ActiveCompositionResolver = e.buildCompositionResolver(runID)
 	req.CallPack = e.config.LoadedPack
 	// RFC 0010 Task 5: thread the per-run composition recorder so that

@@ -93,5 +93,10 @@ func TestBuildPromptRegistry_OptionalFragmentMissingStillBuilds(t *testing.T) {
 
 	registry, err := buildPromptRegistry(cfg)
 	require.NoError(t, err)
-	assert.NotNil(t, registry)
+
+	// A missing optional fragment renders empty (PromptKit#2523), so the
+	// prompt still loads and its placeholder is gone.
+	assembled := registry.Load("support")
+	require.NotNil(t, assembled, "the prompt did not load without its optional fragment")
+	assert.Equal(t, "You help customers. ", assembled.SystemPrompt)
 }

@@ -1,0 +1,36 @@
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Provider
+metadata:
+  name: openai-gpt6-sol
+spec:
+  id: openai-gpt6-sol
+  type: openai
+  # gpt-6 ships as luna, sol and astra; sol is carried to represent the generation, as with gpt-5.6-luna.
+  model: gpt-6-sol
+  capabilities:
+    - text
+    - streaming
+    - vision
+    - tools
+    - json
+  unsupported_params:
+    - temperature
+    - top_p
+  additional_config:
+    # gpt-5.6 rejects function tools on /v1/chat/completions whenever a
+    # reasoning effort is in play: "Function tools with reasoning_effort are not
+    # supported ... use /v1/responses or set reasoning_effort to 'none'". The
+    # Responses API is the forward path, and is what the -pro models already
+    # select automatically.
+    api_mode: responses
+  defaults:
+    temperature: 0.1
+    max_tokens: 100
+    top_p: 1.0
+  pricing:
+    input_cost_per_1k: 0.002
+    output_cost_per_1k: 0.01
+  pricing_correct_at: '2026-11-10'
+  stream_retry:
+    enabled: true
+    max_attempts: 3

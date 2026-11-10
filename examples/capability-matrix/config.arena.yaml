@@ -15,69 +15,66 @@ spec:
     # ==========================================================================
     # OpenAI Models
     # ==========================================================================
+    #
+    # One model per generation. 6.1, 6 and 5.6 each ship as same-day siblings
+    # (sol/terra, luna/sol/astra, luna/sol/terra) with no bare alias, so one is
+    # carried per generation rather than all of them at several times the spend.
 
-    # GPT-5.x family
+    # GPT-6.x
+    - file: providers/openai-gpt61-terra.provider.yaml
+      group: text,streaming,vision,tools,json
+    - file: providers/openai-gpt6-sol.provider.yaml
+      group: text,streaming,vision,tools,json
+
+    # GPT-5.x
     - file: providers/openai-gpt56-luna.provider.yaml
       group: text,streaming,vision,tools,json
     - file: providers/openai-gpt55.provider.yaml
+      group: text,streaming,vision,tools,json
+    - file: providers/openai-gpt55-pro.provider.yaml
       group: text,streaming,vision,tools,json
     - file: providers/openai-gpt54.provider.yaml
       group: text,streaming,vision,tools,json
     - file: providers/openai-gpt54-mini.provider.yaml
       group: text,streaming,tools,json
+    - file: providers/openai-gpt54-nano.provider.yaml
+      group: text,streaming,tools,json
     - file: providers/openai-gpt52.provider.yaml
       group: text,streaming,vision,tools,json
     - file: providers/openai-gpt52-pro.provider.yaml
       group: text,streaming,vision,tools,json
-    - file: providers/openai-gpt51.provider.yaml
-      group: text,streaming,vision,tools,json
-    - file: providers/openai-gpt5.provider.yaml
-      group: text,streaming,vision,tools,json
-    - file: providers/openai-gpt5-mini.provider.yaml
-      group: text,streaming,tools,json
-    - file: providers/openai-gpt5-nano.provider.yaml
-      group: text,streaming,tools,json
-    - file: providers/openai-gpt5-pro.provider.yaml
-      group: text,streaming,vision,tools,json
 
-    # GPT-4.1 family
-    - file: providers/openai-gpt41.provider.yaml
-      group: text,streaming,vision,tools,json
-    - file: providers/openai-gpt41-mini.provider.yaml
-      group: text,streaming,vision,tools,json
-    - file: providers/openai-gpt41-nano.provider.yaml
-      group: text,streaming,vision,tools,json
-
-    # Note: the GPT-4o family (gpt-4o 2024-05-10, gpt-4o-mini 2024-07-16) and o1
-    # (2024-12-16) were removed on 2026-08-30 — the three oldest models in the
-    # matrix — to make room for current ones without growing the weekly bill.
-    # GPT-4.1 above and the o3/o4 series below still cover those lineages.
-
-    # OpenAI audio models are intentionally not in the matrix. The retired
-    # gpt-4o-audio-preview line was replaced by the GA gpt-audio models, but
-    # those don't fit this scenario's audio-in/text-out + text-assertion shape:
-    # gpt-audio-mini requires an audio OUTPUT modality, and gpt-audio-1.5 is
-    # inconsistent (intermittent 400 "requires input/output audio modality").
-    # Audio capability is covered by the Gemini providers below, which pass the
-    # audio scenario cleanly. Revisit if an output-modality-aware audio scenario
-    # is added.
-
-    # o-series reasoning models (use max_completion_tokens, no temperature/top_p)
-    # o1-pro uses v1/responses API (automatically selected)
-    - file: providers/openai-o1-pro.provider.yaml
-      group: text,streaming,json
+    # o-series reasoning (max_completion_tokens, no temperature/top_p)
     - file: providers/openai-o3.provider.yaml
       group: text,streaming,tools,json
-    - file: providers/openai-o3-mini.provider.yaml
-      group: text,streaming,tools,json
-    - file: providers/openai-o4-mini.provider.yaml
-      group: text,streaming,tools,json
+
+    # Removed 2026-11-10. o1-pro, o3-mini, o4-mini and gpt-4.1-nano were
+    # retired by OpenAI and had 404'd every run since 2026-10-25. gpt-4.1,
+    # gpt-4.1-mini, gpt-5, gpt-5-mini, gpt-5-nano, gpt-5-pro and gpt-5.1 are
+    # superseded by the 5.4+ models above.
+    #
+    # OpenAI audio models are intentionally not in the matrix. The GA gpt-audio
+    # models don't fit this scenario's audio-in/text-out + text-assertion shape:
+    # gpt-audio-mini requires an audio OUTPUT modality, and gpt-audio-1.5 is
+    # inconsistent (intermittent 400 "requires input/output audio modality").
+    # Audio capability is covered by the Gemini providers below.
 
     # ==========================================================================
     # Anthropic Models
     # ==========================================================================
+    #
+    # Prefer bare aliases (claude-opus-5) over dated snapshots: a snapshot is
+    # retired out from under the matrix, an alias is not.
 
-    # Claude 5
+    # Claude 5.x
+    - file: providers/anthropic-opus55.provider.yaml
+      group: text,streaming,vision,tools,json
+    - file: providers/anthropic-sonnet55.provider.yaml
+      group: text,streaming,vision,tools,json
+    - file: providers/anthropic-haiku55.provider.yaml
+      group: text,streaming,vision,tools,json
+    - file: providers/anthropic-fable52.provider.yaml
+      group: text,streaming,vision,tools,json
     - file: providers/anthropic-opus5.provider.yaml
       group: text,streaming,vision,tools,json
     - file: providers/anthropic-sonnet5.provider.yaml
@@ -86,59 +83,33 @@ spec:
     # Claude 4.x latest
     - file: providers/anthropic-opus48.provider.yaml
       group: text,streaming,vision,tools,json
-    - file: providers/anthropic-opus47.provider.yaml
-      group: text,streaming,vision,tools,json
-
-    # Claude 4.6 family
-    - file: providers/anthropic-opus46.provider.yaml
-      group: text,streaming,vision,tools,json
     - file: providers/anthropic-sonnet46.provider.yaml
       group: text,streaming,vision,tools,json
 
-    # Claude 4.5 family
-    - file: providers/anthropic-opus45.provider.yaml
-      group: text,streaming,vision,tools,json
-    - file: providers/anthropic-sonnet45.provider.yaml
-      group: text,streaming,vision,tools,json
-    - file: providers/anthropic-haiku45.provider.yaml
-      group: text,streaming,vision,tools,json
-
-    # Note: claude-opus-4 and claude-sonnet-4 (the 20250514 base 4.0 models)
-    # retired 2026-06-15 and were removed. claude-opus-4-1-20250805 retired
-    # likewise and was removed on 2026-08-30 — it had been 404ing every run
-    # since 2026-08-09, tipping the matrix past MAX_ERRORS on its own while
-    # still billing for the attempts. Opus 5/4.5/4.6/4.7/4.8 and Sonnet 4.5/4.6
-    # cover the lineage.
-    #
-    # Prefer bare aliases (claude-opus-5) over dated snapshots for exactly this
-    # reason: a snapshot is retired out from under the matrix, an alias is not.
+    # Removed 2026-11-10: Opus 4.5/4.6/4.7, Sonnet 4.5 and Haiku 4.5,
+    # superseded by the 5.x models above.
 
     # ==========================================================================
     # Google Gemini Models (uses v1beta API endpoint)
     # ==========================================================================
 
-    # Gemini 3.x family
-    # gemini-3-pro-preview retired (replaced by 3.1 Pro); gemini-3-flash-preview
-    # superseded by 3.5 Flash.
+    # Gemini 4 / 3.x
+    - file: providers/gemini-4-argon.provider.yaml
+      group: text,streaming,vision,tools,json,audio,video
+    - file: providers/gemini-38-flash.provider.yaml
+      group: text,streaming,vision,tools,json,audio,video
     - file: providers/gemini-37-flash.provider.yaml
       group: text,streaming,vision,tools,json,audio,video
-    - file: providers/gemini-31-pro.provider.yaml
-      group: text,streaming,vision,tools,json,audio,video
     - file: providers/gemini-35-flash.provider.yaml
+      group: text,streaming,vision,tools,json,audio,video
+    - file: providers/gemini-35-flash-lite.provider.yaml
+      group: text,streaming,vision,tools,json,audio,video
+    - file: providers/gemini-31-pro.provider.yaml
       group: text,streaming,vision,tools,json,audio,video
     - file: providers/gemini-31-flash-lite.provider.yaml
       group: text,streaming,vision,tools,json,audio,video
 
-    # Gemini 2.5 family
-    - file: providers/gemini-25-pro.provider.yaml
-      group: text,streaming,vision,tools,json,audio,video
-    - file: providers/gemini-25-flash.provider.yaml
-      group: text,streaming,vision,tools,json,audio,video
-    - file: providers/gemini-25-flash-lite.provider.yaml
-      group: text,streaming,vision,tools,json,audio,video
-
-    # Gemini 2.0 family retired 2026-06-01 (replaced by 3.5 Flash /
-    # 3.1 Flash Lite).
+    # Gemini 2.5 removed 2026-11-10 (deprecated since 2026-10-16).
 
     # ==========================================================================
     # Ollama Local Models

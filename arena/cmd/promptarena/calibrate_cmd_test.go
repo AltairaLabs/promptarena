@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
@@ -41,11 +42,17 @@ func TestCalibrationGate(t *testing.T) {
 
 func TestWriteCalibration(t *testing.T) {
 	dir := filepath.Join(t.TempDir(), "out")
-	require.NoError(t, writeCalibration(dir, &calibrate.Report{Examples: 1}, "# md"))
-	for _, name := range []string{"calibration.json", "calibration.md"} {
-		_, err := os.Stat(filepath.Join(dir, name))
-		assert.NoError(t, err, name)
-	}
+	require.NoError(t, writeCalibration(dir, &calibrate.Report{Examples: 4, Evaluated: 3, Kappa: 0.25}, "# md"))
+
+	data, err := os.ReadFile(filepath.Join(dir, "calibration.json")) //nolint:gosec // test file under t.TempDir
+	require.NoError(t, err)
+	var got calibrate.Report
+	require.NoError(t, json.Unmarshal(data, &got))
+	assert.Equal(t, calibrate.Report{Examples: 4, Evaluated: 3, Kappa: 0.25}, got)
+
+	md, err := os.ReadFile(filepath.Join(dir, "calibration.md")) //nolint:gosec // test file under t.TempDir
+	require.NoError(t, err)
+	assert.Equal(t, "# md", string(md))
 }
 
 // runCalibrateWith runs the calibrate command against the adaptive-persona

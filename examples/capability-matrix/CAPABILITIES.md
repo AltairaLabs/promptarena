@@ -14,48 +14,50 @@ This document tracks expected capabilities for each provider/model based on offi
 | tools | Function/tool calling |
 | json | JSON mode / structured output |
 
+## What the tables show
+
+Each row is a provider in `config.arena.yaml`. ✅ means the model passed that
+scenario in the matrix, ❌ that it ran and failed, and ⏱ that the request
+hit the pipeline idle timeout, so the capability is unconfirmed. — means the scenario is not run against the model,
+because the provider does not declare the capability.
+
 ## OpenAI Models
 
 | Model ID | Text | Stream | Vision | Audio | Video | Tools | JSON | Notes |
 |----------|------|--------|--------|-------|-------|-------|------|-------|
-| gpt-4o | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Standard multimodal (no audio) |
-| gpt-4o-mini | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Smaller, faster version |
-| gpt-audio-1.5 | ✅ | ✅ | ❌ | ✅ | ❌ | ✅ | ✅ | GA audio (replaces gpt-4o-audio-preview, retired 2026-05-07). Not in the batch matrix — see audio note below. |
-| gpt-audio-mini | ✅ | ✅ | ❌ | ✅ | ❌ | ✅ | ✅ | GA audio mini. Speech-to-speech; requires an audio output modality. |
-| gpt-4.1 | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Updated GPT-4 |
-| gpt-4.1-mini | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | |
-| gpt-4.1-nano | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Smallest 4.1 variant |
-| gpt-5 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Full multimodal (Aug 2025) |
-| gpt-5-mini | ✅ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | Smaller GPT-5 |
-| gpt-5-nano | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Smallest GPT-5 |
-| gpt-5-pro | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Enhanced reasoning |
-| gpt-5.1 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Updated GPT-5 |
-| gpt-5.2 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Dec 2025 |
-| gpt-5.2-pro | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Pro variant |
-| gpt-5.4 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | |
-| gpt-5.4-mini | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ | ✅ | Cost-efficient |
-| gpt-5.5 | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Current frontier |
-| o1 | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Reasoning model — deprecated, retires 2026-10-23 |
-| o1-pro | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Deprecated, retires 2026-10-23 |
-| o3 | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Deprecated, retires 2026-10-23 |
-| o3-mini | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ | ✅ | No vision; deprecated, retires 2026-10-23 |
-| o4-mini | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Deprecated, retires 2026-10-23 |
+| gpt-6.1-terra | ✅ | ✅ | ✅ | — | — | ✅ | ✅ | Current frontier; sol is the same-generation sibling |
+| gpt-6-sol | ✅ | ✅ | ✅ | — | — | ✅ | ✅ | luna and astra are the same-generation siblings |
+| gpt-5.6-luna | ✅ | ✅ | ✅ | — | — | ✅ | ✅ | sol and terra are the same-generation siblings |
+| gpt-5.5 | ✅ | ✅ | ✅ | — | — | ✅ | ✅ |  |
+| gpt-5.5-pro | ✅ | ✅ | ✅ | — | — | ✅ | ✅ | Responses API only |
+| gpt-5.4 | ✅ | ✅ | ✅ | — | — | ✅ | ✅ |  |
+| gpt-5.4-mini | ✅ | ✅ | — | — | — | ✅ | ✅ | Vision not declared |
+| gpt-5.4-nano | ✅ | ✅ | — | — | — | ✅ | ✅ | Vision not declared |
+| gpt-5.2 | ✅ | ✅ | ✅ | — | — | ✅ | ✅ |  |
+| gpt-5.2-pro | ✅ | ✅ | ✅ | — | — | ✅ | ✅ | Responses API only |
+| o3 | ✅ | ✅ | — | — | — | ✅ | ✅ | Reasoning model; no temperature or top_p |
+
+Retired by OpenAI and removed: o1, o1-pro, o3-mini, o4-mini, gpt-4.1-nano,
+gpt-4o and gpt-4o-mini. Superseded and removed: gpt-4.1, gpt-4.1-mini, gpt-5,
+gpt-5-mini, gpt-5-nano, gpt-5-pro and gpt-5.1.
+
+OpenAI audio models (`gpt-audio-1.5`, `gpt-audio-mini`) are not in the matrix;
+see "Partially Implemented" below.
 
 ## Anthropic/Claude Models
 
 | Model ID | Text | Stream | Vision | Audio | Video | Tools | JSON | Notes |
 |----------|------|--------|--------|-------|-------|-------|------|-------|
-| claude-3.5-sonnet | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | |
-| claude-3.5-haiku | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fast, efficient |
-| claude-3.7-sonnet | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Extended thinking |
-| claude-sonnet-4.5 | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | |
-| claude-sonnet-4.6 | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | |
-| claude-opus-4.1 | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | |
-| claude-opus-4.5 | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | |
-| claude-opus-4.6 | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | |
-| claude-opus-4.7 | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | |
-| claude-opus-4.8 | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Latest Opus |
-| claude-haiku-4.5 | ✅ | ✅ | ✅ | ❌ | ❌ | ✅ | ✅ | Fast, cost-effective |
+| claude-opus-5-5 | ✅ | ✅ | ✅ | — | — | ✅ | ✅ | Latest Opus |
+| claude-sonnet-5-5 | ✅ | ✅ | ✅ | — | — | ✅ | ✅ | Latest Sonnet |
+| claude-haiku-5-5 | ✅ | ✅ | ✅ | — | — | ✅ | ✅ | Latest Haiku |
+| claude-fable-5-2 | ✅ | ✅ | ✅ | — | — | ✅ | ✅ | Latest Fable |
+| claude-opus-5 | ✅ | ✅ | ✅ | — | — | ✅ | ✅ |  |
+| claude-sonnet-5 | ✅ | ✅ | ✅ | — | — | ✅ | ✅ |  |
+| claude-opus-4-8 | ✅ | ✅ | ✅ | — | — | ✅ | ✅ |  |
+| claude-sonnet-4-6 | ✅ | ✅ | ✅ | — | — | ✅ | ✅ |  |
+
+Superseded and removed: Opus 4.5, 4.6 and 4.7, Sonnet 4.5 and Haiku 4.5.
 
 **Note:** Claude API does not support native audio input. Voice features in consumer apps use external STT/TTS.
 
@@ -63,12 +65,16 @@ This document tracks expected capabilities for each provider/model based on offi
 
 | Model ID | Text | Stream | Vision | Audio | Video | Tools | JSON | Notes |
 |----------|------|--------|--------|-------|-------|-------|------|-------|
-| gemini-2.5-flash | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Deprecated, retires 2026-10-16 |
-| gemini-2.5-flash-lite | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Deprecated, retires 2026-10-16 |
-| gemini-2.5-pro | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Deprecated, retires 2026-10-16 |
-| gemini-3.1-flash-lite | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Replaces gemini-2.0-flash-lite (retired 2026-06-01) |
-| gemini-3.5-flash | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Replaces gemini-3-flash-preview |
-| gemini-3.1-pro-preview | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | Replaces gemini-3-pro-preview (retired) |
+| gemini-4-argon | ✅ | ✅ | ✅ | ✅ | ✅ | ⏱ | ✅ | Latest. Tools hit the pipeline idle timeout on 2026-11-10 |
+| gemini-3.8-flash | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | |
+| gemini-3.7-flash | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| gemini-3.5-flash | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+| gemini-3.5-flash-lite | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | |
+| gemini-3.1-pro-preview | ⏱ | ✅ | ✅ | ✅ | ✅ | ✅ | ⏱ | Text and JSON hit the pipeline idle timeout on 2026-11-10 |
+| gemini-3.1-flash-lite | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
+
+Gemini 2.5 (pro, flash, flash-lite) was deprecated on 2026-10-16 and removed.
+Results are from the Gemini run on 2026-11-10.
 
 **Audio formats supported:** wav, mp3, aiff, aac, ogg, flac (up to 9.5 hours, 20MB inline)
 
@@ -95,7 +101,7 @@ This document tracks expected capabilities for each provider/model based on offi
 
 ### Known Limitations
 - Claude/Anthropic has no native audio input support in the API
-- OpenAI standard models (gpt-4o, o1, etc.) don't support audio input
+- OpenAI chat models in the matrix don't declare audio input
 - Audio input requires specific model variants or Gemini
 
 ## Sources
@@ -108,4 +114,4 @@ This document tracks expected capabilities for each provider/model based on offi
 
 ## Last Updated
 
-2026-06-05
+2026-11-10

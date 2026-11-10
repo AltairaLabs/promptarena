@@ -30,6 +30,9 @@ type openEntry struct {
 	serverName  string
 	closer      io.Closer
 	containerID string // backing container ID when the source runs one (else "")
+	// deliverer, when the source's closer implements it, copies the entry's
+	// when: eval mounts in before session-end evaluation.
+	deliverer mcpsource.EvalDeliverer
 	// ports maps extra published container ports to host URLs (else nil).
 	ports map[string]string
 }
@@ -42,6 +45,9 @@ type mcpSourceScope struct {
 	// for each server opened by this scope. Production wires this through
 	// newMCPSourceScopeWithTools; lifecycle-only unit tests pass nil.
 	toolRegistry *tools.Registry
+	// baseDir is the config directory that relative source_args.mounts
+	// sources resolve against. Empty means the working directory.
+	baseDir string
 
 	mu    sync.Mutex
 	opens map[string][]openEntry // keyed by "<scope>|<instanceID>"
@@ -90,7 +96,10 @@ func (m *mcpSourceScope) OpenAll(
 		if entry.Source == "" || string(scope) != entry.Scope {
 			continue
 		}
-		prepareEntryArgs(&entry, scenarioVars, mounts)
+		if err := prepareEntryArgs(&entry, scenarioVars, mounts, m.baseDir); err != nil {
+			rollback()
+			return err
+		}
 		oe, err := m.openOne(ctx, &entry)
 		if err != nil {
 			rollback()
@@ -109,15 +118,28 @@ func (m *mcpSourceScope) OpenAll(
 	return nil
 }
 
-// prepareEntryArgs expands scenario templates in entry.SourceArgs and
-// injects skill mounts. Mutates entry in place (caller passes a local copy).
-func prepareEntryArgs(entry *config.MCPServerConfig, scenarioVars map[string]string, mounts []map[string]any) {
-	args := expandArgs(entry.SourceArgs, scenarioVars)
+// prepareEntryArgs expands scenario templates in entry.SourceArgs, resolves
+// the user's mounts against baseDir, and injects skill mounts. Mutates entry
+// in place (caller passes a local copy).
+func prepareEntryArgs(
+	entry *config.MCPServerConfig, scenarioVars map[string]string, mounts []map[string]any, baseDir string,
+) error {
+	args := mcpsource.ExpandArgs(entry.SourceArgs, scenarioVars)
+	if raw, ok := args["mounts"]; ok {
+		if baseDir == "" {
+			baseDir = "."
+		}
+		resolved, err := mcpsource.ResolveMounts(raw, baseDir, entry.Scope)
+		if err != nil {
+			return fmt.Errorf("mcp server %q: %w", entry.Name, err)
+		}
+		args["mounts"] = mcpsource.MountArgs(resolved)
+	}
 	if args == nil && len(mounts) > 0 {
 		args = map[string]any{}
 	}
 	entry.SourceArgs = args
-	injectMountsIntoArgs(entry, mounts)
+	return injectMountsIntoArgs(entry, mounts)
 }
 
 // openOne looks up the named source, calls Open, registers the resulting
@@ -158,9 +180,32 @@ func (m *mcpSourceScope) openOne(ctx context.Context, entry *config.MCPServerCon
 		_ = closer.Close()
 		return openEntry{}, fmt.Errorf("mcp server %q: discover tools after Open failed: %w", entry.Name, err)
 	}
+	deliverer, _ := closer.(mcpsource.EvalDeliverer)
 	return openEntry{
 		serverName: entry.Name, closer: closer, containerID: conn.ContainerID, ports: conn.Ports,
+		deliverer: deliverer,
 	}, nil
+}
+
+// deliverEvalFiles copies every open entry's when: eval mounts into its
+// container. Called once a session's last turn is done, before evaluation.
+func (m *mcpSourceScope) deliverEvalFiles(ctx context.Context) error {
+	m.mu.Lock()
+	var deliverers []openEntry
+	for _, entries := range m.opens {
+		for _, e := range entries {
+			if e.deliverer != nil {
+				deliverers = append(deliverers, e)
+			}
+		}
+	}
+	m.mu.Unlock()
+	for _, e := range deliverers {
+		if err := e.deliverer.DeliverEval(ctx); err != nil {
+			return fmt.Errorf("mcp server %q: %w", e.serverName, err)
+		}
+	}
+	return nil
 }
 
 // containerIDs returns the backing container ID for every currently-open source
@@ -283,43 +328,6 @@ func (m *mcpSourceScope) CloseAll(scope mcpsource.Scope, instanceID string) []er
 	return errs
 }
 
-// --- Args templating (Task 5 responsibilities) ---
-
-func expandArgs(args map[string]any, vars map[string]string) map[string]any {
-	if args == nil {
-		return nil
-	}
-	out := make(map[string]any, len(args))
-	for k, v := range args {
-		out[k] = expandArgValue(v, vars)
-	}
-	return out
-}
-
-func expandArgValue(v any, vars map[string]string) any {
-	switch x := v.(type) {
-	case string:
-		return expandString(x, vars)
-	case map[string]any:
-		return expandArgs(x, vars)
-	case []any:
-		out := make([]any, len(x))
-		for i, elem := range x {
-			out[i] = expandArgValue(elem, vars)
-		}
-		return out
-	default:
-		return v
-	}
-}
-
-func expandString(s string, vars map[string]string) string {
-	for k, v := range vars {
-		s = strings.ReplaceAll(s, "{{scenario."+k+"}}", v)
-	}
-	return s
-}
-
 // --- Skill-mount injection (Task 9 responsibilities) ---
 
 // skillManifest is the file that marks a directory as a single skill.
@@ -397,12 +405,12 @@ func childSkillDirs(dir string) []string {
 
 // injectMountsIntoArgs appends skill mounts to entry.SourceArgs["mounts"],
 // after any mounts the user configured. A skill mount whose target a user
-// mount already claims is dropped: the user's mount wins. Empty mounts is a
-// no-op (the key is not added), so sources that don't understand mounts
-// don't see it.
-func injectMountsIntoArgs(entry *config.MCPServerConfig, mounts []map[string]any) {
+// mount already claims is an error: two things claiming one path is a config
+// mistake, and silently dropping either hides it. Empty mounts is a no-op (the
+// key is not added), so sources that don't understand mounts don't see it.
+func injectMountsIntoArgs(entry *config.MCPServerConfig, mounts []map[string]any) error {
 	if len(mounts) == 0 {
-		return
+		return nil
 	}
 	if entry.SourceArgs == nil {
 		entry.SourceArgs = map[string]any{}
@@ -418,11 +426,12 @@ func injectMountsIntoArgs(entry *config.MCPServerConfig, mounts []map[string]any
 	}
 	for _, m := range mounts {
 		if target, _ := m["target"].(string); claimed[target] {
-			continue
+			return fmt.Errorf("mcp server %q: mount target %q is also a skill mount; use another target", entry.Name, target)
 		}
 		combined = append(combined, m)
 	}
 	entry.SourceArgs["mounts"] = combined
+	return nil
 }
 
 // userMounts normalises a user-supplied mounts arg to []any: YAML yields

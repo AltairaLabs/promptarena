@@ -2,7 +2,7 @@
 title: LLM Testing Philosophy
 description: The reasoning behind PromptArena's behavior-based tests, and how it shapes scenarios, assertions and providers.
 verified:
-  commit: d12d5b388a693c119b19bf05eabade5b717cb10d
+  commit: 02ec7c860b978fcce24022d9ccb868d94208c751
   sources:
     - arena/arenaconfig/judge_param.go
     - arena/arenaconfig/loader.go
@@ -180,7 +180,7 @@ Declarations let non-programmers write tests, apply the same validation across s
 
 Mock providers make no network calls. That gives fast configuration checks, no spend while iterating, offline development and quick CI validation.
 
-`--mock-provider` replaces each reply with a generic mock response ("Mock response from provider") unless a mock config supplies responses, so content assertions see that text and a mock run verifies structure. [Use mock providers](/arena/how-to/providers/use-mock-providers/) covers the flags and mock config.
+`--mock-provider` replaces each reply with a generic mock response ("Mock response from provider") unless a mock config supplies responses (one a provider declares, or the one file every declaring provider shares), so content assertions see that text and a mock run verifies structure. [Use mock providers](/arena/how-to/providers/use-mock-providers/) covers the flags and mock config.
 
 ## Anti-patterns to avoid
 

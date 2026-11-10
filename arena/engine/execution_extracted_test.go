@@ -15,12 +15,6 @@ import (
 	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )
 
-func TestSeedMemoriesForRun_NilStoreIsNoOp(t *testing.T) {
-	e := &Engine{}
-	err := e.seedMemoriesForRun(&arenaconfig.Scenario{ID: "s"}, nil)
-	assert.NoError(t, err)
-}
-
 func TestCollectExecutionErrors(t *testing.T) {
 	t.Run("nil when all entries succeed", func(t *testing.T) {
 		assert.Nil(t, collectExecutionErrors([]error{nil, nil}))

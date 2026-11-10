@@ -4,7 +4,7 @@ description: Run Arena headless in CI/CD with the --ci flag, JSON, JUnit and Mar
 sidebar:
   order: 30
 verified:
-  commit: d12d5b388a693c119b19bf05eabade5b717cb10d
+  commit: 02ec7c860b978fcce24022d9ccb868d94208c751
   sources:
     - .github/actions/promptarena-action/action.yml
     - .github/actions/promptarena-action/src/main.ts
@@ -341,7 +341,7 @@ network, no per-run cost. `--mock-provider` replaces the LLM and self-play role
 providers with canned-response mocks (TTS and STT providers are not replaced); `--mock-config` points at a YAML file of scripted
 responses. Arena rejects unknown keys in that file, so a typo fails the run
 instead of silently falling back to the default response. Tools still execute for real, so tool-call and workflow assertions
-remain meaningful.
+remain meaningful. Without `--mock-config`, a provider that declares `additional_config.mock_config` keeps its own responses, and providers that declare none use the file when every declaring provider names the same one.
 
 ```bash
 # Deterministic gate, no API keys required

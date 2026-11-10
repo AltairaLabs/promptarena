@@ -5,11 +5,16 @@ import (
 	"errors"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	"github.com/AltairaLabs/promptarena/v2/arena/mcpsource"
 )
 
 type fakeCLI struct {
@@ -21,6 +26,10 @@ type fakeCLI struct {
 	execCalls [][]string
 	execOut   string
 	execErr   error
+	// calls records Exec, ExecRoot and Copy in order, e.g. "root:mkdir -p /x",
+	// "cp:/host/x/.->/x", "exec:id -u", so a test can assert the sequence.
+	calls   []string
+	copyErr error
 }
 
 func (f *fakeCLI) Run(_ context.Context, spec RunSpec) (string, error) {
@@ -33,7 +42,22 @@ func (f *fakeCLI) Stop(_ context.Context, id string) error {
 }
 func (f *fakeCLI) Exec(_ context.Context, _ string, argv []string) (string, error) {
 	f.execCalls = append(f.execCalls, argv)
+	f.calls = append(f.calls, "exec:"+strings.Join(argv, " "))
+	switch strings.Join(argv, " ") {
+	case "id -u":
+		return "100", nil
+	case "id -g":
+		return "101", nil
+	}
 	return f.execOut, f.execErr
+}
+func (f *fakeCLI) ExecRoot(_ context.Context, _ string, argv []string) (string, error) {
+	f.calls = append(f.calls, "root:"+strings.Join(argv, " "))
+	return "", nil
+}
+func (f *fakeCLI) Copy(_ context.Context, _ string, hostPath, ctrPath string) error {
+	f.calls = append(f.calls, "cp:"+hostPath+"->"+ctrPath)
+	return f.copyErr
 }
 
 func TestSource_Open_RequiresImage(t *testing.T) {
@@ -158,12 +182,13 @@ func TestSource_Open_PropagatesMountsAndEnv(t *testing.T) {
 
 	cli := &fakeCLI{runID: "cid3"}
 	s := &Source{cli: cli, urlForContainer: func(_, _ string) string { return srv.URL }}
+	skills := realTempDir(t)
 
 	_, closer, err := s.Open(context.Background(), map[string]any{
 		"image": "x",
 		"env":   map[string]any{"FOO": "bar"},
 		"mounts": []any{
-			map[string]any{"source": "/host/skills", "target": "/skills/codegen", "readonly": true},
+			map[string]any{"source": skills, "target": "/skills/codegen", "readonly": true},
 		},
 	})
 	require.NoError(t, err)
@@ -173,7 +198,7 @@ func TestSource_Open_PropagatesMountsAndEnv(t *testing.T) {
 	spec := cli.runCalls[0]
 	assert.Equal(t, "bar", spec.Env["FOO"])
 	require.Len(t, spec.Mounts, 1)
-	assert.Equal(t, "/host/skills", spec.Mounts[0].Source)
+	assert.Equal(t, skills, spec.Mounts[0].Source)
 	assert.Equal(t, "/skills/codegen", spec.Mounts[0].Target)
 	assert.True(t, spec.Mounts[0].ReadOnly)
 }
@@ -209,18 +234,97 @@ func TestSource_Open_BadEnvFailsBeforeStartingContainer(t *testing.T) {
 	assert.Empty(t, cli.runCalls)
 }
 
-func TestMountsFromArgs_TypedSlice(t *testing.T) {
-	// buildSkillMounts in engine returns []map[string]any directly (not []any).
-	mounts := mountsFromArgs([]map[string]any{
-		{"source": "/a", "target": "/b", "readonly": true},
-	})
-	require.Len(t, mounts, 1)
-	assert.Equal(t, "/a", mounts[0].Source)
-	assert.True(t, mounts[0].ReadOnly)
+// realTempDir is t.TempDir with symlinks resolved (macOS /var is a link),
+// matching the path the mount resolver reports.
+func realTempDir(t *testing.T) string {
+	t.Helper()
+	dir, err := filepath.EvalSymlinks(t.TempDir())
+	require.NoError(t, err)
+	return dir
 }
 
-func TestMountsFromArgs_Nil(t *testing.T) {
-	assert.Nil(t, mountsFromArgs(nil))
+func TestMountsFromArgs_SplitsByModeAndWhen(t *testing.T) {
+	dir := realTempDir(t)
+	mounts, err := mountsFromArgs([]map[string]any{
+		{"source": dir, "target": "/ro"},
+		{"source": dir, "target": "/rw", "readonly": false},
+		{"source": dir, "target": "/w", "mode": "copy"},
+		{"source": dir, "target": "/eval", "mode": "copy", "when": "eval"},
+	})
+	require.NoError(t, err)
+	assert.Equal(t, []Mount{{Source: dir, Target: "/ro", ReadOnly: true}, {Source: dir, Target: "/rw"}}, mounts.binds)
+	require.Len(t, mounts.atStart, 1)
+	assert.Equal(t, "/w", mounts.atStart[0].Target)
+	require.Len(t, mounts.atEval, 1)
+	assert.Equal(t, "/eval", mounts.atEval[0].Target)
+}
+
+// A relative source used to reach `docker run -v` as written, which Docker
+// reads as the name of a new, empty volume.
+func TestMountsFromArgs_RejectsRelativeSource(t *testing.T) {
+	_, err := mountsFromArgs([]any{map[string]any{"source": "fixtures", "target": "/f"}})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "must be an absolute path")
+
+	none, err := mountsFromArgs(nil)
+	require.NoError(t, err)
+	assert.Equal(t, sandboxMounts{}, none)
+}
+
+func TestSource_Open_CopiesStartMountsBeforeHealthAndHoldsEvalMounts(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer srv.Close()
+
+	dir := realTempDir(t)
+	file := filepath.Join(dir, "data.json")
+	require.NoError(t, os.WriteFile(file, []byte("{}"), 0o600))
+
+	cli := &fakeCLI{runID: "cid-copy"}
+	s := &Source{cli: cli, urlForContainer: func(_, _ string) string { return srv.URL }}
+	_, closer, err := s.Open(context.Background(), map[string]any{
+		"image": "x",
+		"mounts": []any{
+			map[string]any{"source": dir, "target": "/workspace", "mode": "copy"},
+			map[string]any{"source": file, "target": "/data/data.json", "mode": "copy"},
+			map[string]any{"source": dir, "target": "/eval/scripts", "mode": "copy", "when": "eval"},
+		},
+	})
+	require.NoError(t, err)
+	defer func() { _ = closer.Close() }()
+
+	assert.Empty(t, cli.runCalls[0].Mounts, "copies are not bind mounts")
+	assert.Equal(t, []string{
+		"exec:id -u", "exec:id -g",
+		"root:mkdir -p /workspace", "cp:" + dir + "/.->/workspace", "root:chown -R 100:101 /workspace",
+		"root:mkdir -p /data", "cp:" + file + "->/data/data.json", "root:chown -R 100:101 /data/data.json",
+	}, cli.calls, "start copies land as the container's user; eval copies wait")
+
+	deliverer, ok := closer.(mcpsource.EvalDeliverer)
+	require.True(t, ok, "a source holding eval copies exposes DeliverEval")
+	cli.calls = nil
+	require.NoError(t, deliverer.DeliverEval(context.Background()))
+	assert.Equal(t, []string{
+		"root:mkdir -p /eval/scripts", "cp:" + dir + "/.->/eval/scripts", "root:chown -R 100:101 /eval/scripts",
+	}, cli.calls)
+
+	cli.calls = nil
+	require.NoError(t, deliverer.DeliverEval(context.Background()))
+	assert.Empty(t, cli.calls, "eval files are delivered once")
+}
+
+func TestSource_Open_FailedCopyStopsTheContainer(t *testing.T) {
+	cli := &fakeCLI{runID: "cid-bad", copyErr: errors.New("no space")}
+	s := &Source{cli: cli, urlForContainer: func(_, _ string) string { return "http://x" }}
+	_, _, err := s.Open(context.Background(), map[string]any{
+		"image":  "x",
+		"mounts": []any{map[string]any{"source": t.TempDir(), "target": "/w", "mode": "copy"}},
+	})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "copy")
+	assert.Contains(t, err.Error(), "no space")
+	assert.Equal(t, []string{"cid-bad"}, cli.stopCalls)
 }
 
 // The kernel can hand a just-released ephemeral port straight back, so a
@@ -355,4 +459,55 @@ func TestStringArg_FormatsNumbers(t *testing.T) {
 	got, err = stringArg(map[string]any{}, "cpus")
 	require.NoError(t, err)
 	assert.Empty(t, got)
+}
+
+// plainCLI implements CLI but not CopyCLI, like a CLI written before copy
+// mounts existed.
+type plainCLI struct{ stopped []string }
+
+func (p *plainCLI) Run(context.Context, RunSpec) (string, error) { return "cid-plain", nil }
+func (p *plainCLI) Stop(_ context.Context, id string) error {
+	p.stopped = append(p.stopped, id)
+	return nil
+}
+func (p *plainCLI) Exec(context.Context, string, []string) (string, error) { return "", nil }
+
+func TestSource_Open_CopyMountNeedsCopyCLI(t *testing.T) {
+	cli := &plainCLI{}
+	s := &Source{cli: cli, urlForContainer: func(_, _ string) string { return "http://x" }}
+	_, _, err := s.Open(context.Background(), map[string]any{
+		"image":  "x",
+		"mounts": []any{map[string]any{"source": realTempDir(t), "target": "/w", "mode": "copy"}},
+	})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "need a CLI that implements CopyCLI")
+	assert.Equal(t, []string{"cid-plain"}, cli.stopped, "the started container is stopped")
+}
+
+// A start copy used to run before the repo clone, so a fixture copied under
+// /workspace made `git clone … /workspace` hit a non-empty directory. The
+// clone runs first; copies land on top of the cloned repo.
+func TestSource_Open_ClonesBeforeStartCopies(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer srv.Close()
+
+	dir := realTempDir(t)
+	cli := &fakeCLI{runID: "cid-clone"}
+	s := &Source{cli: cli, urlForContainer: func(_, _ string) string { return srv.URL }}
+	_, closer, err := s.Open(context.Background(), map[string]any{
+		"image":  "x",
+		"repo":   "https://example.com/r.git",
+		"mounts": []any{map[string]any{"source": dir, "target": "/workspace/fixtures", "mode": "copy"}},
+	})
+	require.NoError(t, err)
+	defer func() { _ = closer.Close() }()
+
+	assert.Equal(t, []string{
+		"exec:git clone https://example.com/r.git /workspace",
+		"exec:id -u", "exec:id -g",
+		"root:mkdir -p /workspace/fixtures", "cp:" + dir + "/.->/workspace/fixtures",
+		"root:chown -R 100:101 /workspace/fixtures",
+	}, cli.calls)
 }

@@ -4,7 +4,7 @@ description: Open an MCP server (for example a containerised codegen sandbox) on
 sidebar:
   order: 13
 verified:
-  commit: d12d5b388a693c119b19bf05eabade5b717cb10d
+  commit: 02ec7c860b978fcce24022d9ccb868d94208c751
   sources:
     - arena/arenaconfig/loader.go
     - arena/arenaconfig/mcp_servers.go
@@ -12,6 +12,8 @@ verified:
     - arena/arenaconfig/validator.go
     - arena/cmd/promptarena/run.go
     - arena/engine/builder_integration.go
+    - arena/engine/conversation_executor.go
+    - arena/engine/duplex_executor_results_integration.go
     - arena/engine/engine.go
     - arena/engine/execution.go
     - arena/engine/execution_mcpsource.go
@@ -21,6 +23,7 @@ verified:
     - arena/mcpsource/docker/cli_interactive.go
     - arena/mcpsource/docker/register/register.go
     - arena/mcpsource/docker/source.go
+    - arena/mcpsource/mounts.go
     - arena/mcpsource/registry.go
     - arena/mcpsource/source.go
     - arena/results/markdown/markdown_repository.go
@@ -118,7 +121,7 @@ PromptArena registers a `docker` source automatically. It drives the container w
 | `repo` | string |  | Cloned with `docker exec <cid> git clone [--branch <branch>] <repo> /workspace`. |
 | `branch` | string | repo default | Ignored when `repo` is empty. |
 | `env` | map |  | Passed via `-e`. Numbers and booleans are passed as text (`DEV_MODE: 1` becomes `DEV_MODE=1`); a list or map value fails the open. |
-| `mounts` | list of objects |  | Bind mounts with `source`, `target` and `readonly`. |
+| `mounts` | list of objects |  | Kit files and folders to put in the container. See [Put kit files in the sandbox](#put-kit-files-in-the-sandbox). |
 | `ports` | list of ints |  | Extra container ports, each published on a free host port. `8080` is rejected. |
 | `network` | string | Docker default | Passed to `--network`. `none` and `host` are rejected. |
 | `cpus` | string or number | unlimited | Passed to `--cpus`. |
@@ -147,6 +150,42 @@ Session hooks receive the mapping as `sandbox_ports` in the event metadata, next
 
 A `session_end` hook can point a scanner or load generator at that URL from the host. To restrict egress, put the container on a user-defined bridge network routed through a filtering proxy.
 
+### Put kit files in the sandbox
+
+`mounts` puts files and folders from your kit into the container: fixture projects a scenario starts from, reference data, or scripts an eval runs at the end of the session.
+
+```yaml
+source_args:
+  image: ghcr.io/altairalabs/codegen-sandbox:latest
+  mounts:
+    # Reference data the agent can read throughout the session.
+    - source: data/catalog.json
+      target: /data/catalog.json
+
+    # A fixture project to start from. The agent edits a copy; your files are untouched.
+    - source: fixtures/{{scenario.fixture}}
+      target: /workspace
+      mode: copy
+
+    # A metric script, copied in only after the agent's last turn.
+    - source: eval-scripts
+      target: /eval/scripts
+      mode: copy
+      when: eval
+```
+
+| Key | Default | Meaning |
+| --- | --- | --- |
+| `source` | required | A file or folder, relative to the directory holding the arena config. `{{scenario.<variable>}}` is replaced from the scenario's `spec.variables`. |
+| `target` | required | An absolute path in the container. Each target can appear once. |
+| `readonly` | `true` | For `mode: bind`. `false` lets the container write through to your files. |
+| `mode` | `bind` | `bind` mounts the files live. `copy` copies them in with `docker cp`, owned by the container's user, so the agent can edit them without changing your files. |
+| `when` | `start` | `start` puts the files in when the container starts. `eval` copies them in after the agent's last turn and before conversation-level assertions and pack evals run. It needs `mode: copy` and `scope: session`. |
+
+`source` must exist and stay inside the kit directory, including after following symlinks. `promptarena validate` checks every mount, once per scenario when `source` uses a scenario variable, so a missing fixture fails validation instead of a run. A mount whose target a skill mount also uses (see step 5) is an error.
+
+Files mounted with `when: start` are visible to anything in the container, including an agent with `Bash`. They are not in the agent's skill list or prompt. Only `when: eval` keeps files out of the container while the agent works, which makes it the right choice for scripts and expected outputs that belong to the evaluation.
+
 ## 5. Mount skills
 
 For every source-backed entry, Arena adds a read-only mount to `source_args.mounts` for each skill source with a `path`:
@@ -154,7 +193,7 @@ For every source-backed entry, Arena adds a read-only mount to `source_args.moun
 - A skill directory (one holding `SKILL.md`) mounts at `/skills/<name>`. `<name>` is the source's `name:`, or the directory's base name when there is none, so `path: skills/codegen` mounts at `/skills/codegen`.
 - A directory of skills mounts each skill inside it at `/skills/<skill-directory>`.
 
-Inline skills get no mount. Mounts you set on the entry yourself are kept, and come first. When one of them already uses a `/skills/<name>` target, the skill mount for that target is dropped.
+Inline skills get no mount. Mounts you set on the entry yourself are kept, and come first. When one of them already uses a `/skills/<name>` target, the open fails with an error naming that target.
 
 Each skill mount has `source` (absolute host path of the skill directory), `target` and `readonly: true`. The docker source passes it as `-v <src>:<tgt>:ro`, so skill scripts run in the sandbox as `Bash /skills/<name>/scripts/<script>`.
 

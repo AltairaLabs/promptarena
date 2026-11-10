@@ -132,6 +132,9 @@ func TestServer_Ping(t *testing.T) {
 	resp := s.handleMessage(context.Background(), req(7, "ping", nil))
 	require.NotNil(t, resp)
 	assert.Nil(t, resp.Error)
+	// MCP ping answers with an empty result echoing the request id.
+	assert.Equal(t, 7, resp.ID)
+	assert.JSONEq(t, `{}`, string(resp.Result))
 }
 
 func TestServer_UnknownNotificationIsSilent(t *testing.T) {

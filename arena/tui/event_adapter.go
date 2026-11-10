@@ -111,7 +111,7 @@ func (a *EventAdapter) mapEvent(event *events.Event) tea.Msg { //nolint:gocyclo 
 	case events.EventStateSaved:
 		return a.handleStateSaved(event)
 	case events.EventStreamInterrupted:
-		return a.logf("ERROR", event, "Stream interrupted: %s", readString(event.Data, "reason"))
+		return a.logf("ERROR", event, "Stream interrupted: %s", streamInterruptedReason(event))
 	case events.EventReasoningDelta:
 		if d, ok := event.Data.(*events.ReasoningDeltaData); ok && d != nil {
 			return ReasoningDeltaMsg{Text: d.Text}
@@ -199,9 +199,31 @@ func middlewareData(event *events.Event) *events.MiddlewareEventData {
 	}
 }
 
+// payload returns the event's data as *T. The PromptKit emitter publishes every
+// payload as a pointer, while recordings and older callers can carry the value
+// shape, so both are accepted. Asserting only the value shape silently dropped
+// every emitter-published event of that type.
+func payload[T any](event *events.Event) *T {
+	switch d := any(event.Data).(type) {
+	case *T:
+		return d
+	case T:
+		return &d
+	default:
+		return nil
+	}
+}
+
+func streamInterruptedReason(event *events.Event) string {
+	if data := payload[events.StreamInterruptedData](event); data != nil {
+		return data.Reason
+	}
+	return ""
+}
+
 func (a *EventAdapter) handleContextBuilt(event *events.Event) tea.Msg {
-	data, ok := event.Data.(events.ContextBuiltData)
-	if !ok {
+	data := payload[events.ContextBuiltData](event)
+	if data == nil {
 		return nil
 	}
 	return a.logf("INFO", event, "Context built (%d msgs, %d tokens)%s",
@@ -209,8 +231,8 @@ func (a *EventAdapter) handleContextBuilt(event *events.Event) tea.Msg {
 }
 
 func (a *EventAdapter) handleTokenBudgetExceeded(event *events.Event) tea.Msg {
-	data, ok := event.Data.(events.TokenBudgetExceededData)
-	if !ok {
+	data := payload[events.TokenBudgetExceededData](event)
+	if data == nil {
 		return nil
 	}
 	return a.logf("ERROR", event, "Token budget exceeded: need %d, budget %d, excess %d",
@@ -218,16 +240,16 @@ func (a *EventAdapter) handleTokenBudgetExceeded(event *events.Event) tea.Msg {
 }
 
 func (a *EventAdapter) handleStateLoaded(event *events.Event) tea.Msg {
-	data, ok := event.Data.(events.StateLoadedData)
-	if !ok {
+	data := payload[events.StateLoadedData](event)
+	if data == nil {
 		return nil
 	}
 	return a.logf("INFO", event, "State loaded: %s (%d messages)", data.ConversationID, data.MessageCount)
 }
 
 func (a *EventAdapter) handleStateSaved(event *events.Event) tea.Msg {
-	data, ok := event.Data.(events.StateSavedData)
-	if !ok {
+	data := payload[events.StateSavedData](event)
+	if data == nil {
 		return nil
 	}
 	return a.logf("INFO", event, "State saved: %s (%d messages)", data.ConversationID, data.MessageCount)
@@ -266,8 +288,8 @@ func (a *EventAdapter) handleMessageCreated(event *events.Event) tea.Msg {
 }
 
 func (a *EventAdapter) handleMessageUpdated(event *events.Event) tea.Msg {
-	data, ok := event.Data.(events.MessageUpdatedData)
-	if !ok {
+	data := payload[events.MessageUpdatedData](event)
+	if data == nil {
 		return nil
 	}
 	return MessageUpdatedMsg{
@@ -282,8 +304,8 @@ func (a *EventAdapter) handleMessageUpdated(event *events.Event) tea.Msg {
 }
 
 func (a *EventAdapter) handleConversationStarted(event *events.Event) tea.Msg {
-	data, ok := event.Data.(events.ConversationStartedData)
-	if !ok {
+	data := payload[events.ConversationStartedData](event)
+	if data == nil {
 		return nil
 	}
 	return ConversationStartedMsg{
@@ -404,20 +426,19 @@ func validationName(event *events.Event) string {
 }
 
 func eventError(event *events.Event) error {
-	switch data := event.Data.(type) {
-	case *events.ProviderCallFailedData:
-		return data.Error
-	case events.MiddlewareEventData:
-		return data.Error
-	case *events.MiddlewareEventData:
-		return data.Error
-	case events.ToolCallEventData:
-		return data.Error
-	case events.ValidationEventData:
-		return data.Error
-	default:
-		return nil
+	if d := payload[events.ProviderCallFailedData](event); d != nil {
+		return d.Error
 	}
+	if d := payload[events.MiddlewareEventData](event); d != nil {
+		return d.Error
+	}
+	if d := payload[events.ToolCallEventData](event); d != nil {
+		return d.Error
+	}
+	if d := payload[events.ValidationEventData](event); d != nil {
+		return d.Error
+	}
+	return nil
 }
 
 func ternary[T any](cond bool, a, b T) T {

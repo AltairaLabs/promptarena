@@ -61,7 +61,7 @@ jobs:
       # binary has been fetched for this version.
       - name: Cache D2
         id: d2-cache
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.local/d2
           key: d2-v0.7.1-linux-amd64

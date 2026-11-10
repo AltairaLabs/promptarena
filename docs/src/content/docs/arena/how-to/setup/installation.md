@@ -2,13 +2,14 @@
 title: Install PromptArena
 description: Install the promptarena CLI with npm, Homebrew, go install or a release archive, then create a first project with promptarena init.
 verified:
-  commit: 5a8cffd8daf00b49cbbb3596ce63750db56c3704
+  commit: 02ec7c860b978fcce24022d9ccb868d94208c751
   sources:
     - .github/workflows/release.yml
     - .goreleaser.yml
     - arena/arenaconfig/types.go
-    - arena/audio/local_sink_oto.go
+    - arena/audio/otobackend/otobackend_interactive.go
     - arena/cmd/promptarena/agent_brief.go
+    - arena/cmd/promptarena/audio_backend.go
     - arena/cmd/promptarena/chat_interactive.go
     - arena/cmd/promptarena/completion_interactive.go
     - arena/cmd/promptarena/init.go
@@ -75,7 +76,7 @@ brew install --cask promptarena
 
 ### Option 3: go install
 
-This compiles `promptarena` from source with your Go toolchain. It needs no C compiler or audio headers: speaker playback (oto) and the voice console (PortAudio) load their system audio libraries at run time, so a `go install` build, like the release binaries, plays audio.
+This compiles `promptarena` from source with your Go toolchain. It needs no C compiler or audio headers: speaker playback (oto) and the voice console (PortAudio) load their system audio libraries at run time, so a `go install` build, like the release binaries, plays audio. The `promptarena` command links the speaker backend itself; a Go program that imports `arena/engine` without it does not pull in oto.
 
 ```bash
 # Install with Go (note the arena/cmd/promptarena package path)

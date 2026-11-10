@@ -427,21 +427,56 @@ func TestStartRun_PersistsEachRunBeforeExecuteRunsReturns(t *testing.T) {
 }
 
 // TestPersistRunResults_NoOpBranches exercises the bail-out branches of
-// persistRunResults so a missing store or unset outputDir can't surprise
-// us by panicking — they should silently skip work.
+// persistRunResults: a missing store, unset outputDir or empty run list must
+// write nothing, even when the store holds a run that would otherwise land
+// on disk.
 func TestPersistRunResults_NoOpBranches(t *testing.T) {
 	ctx := context.Background()
-	t.Run("nil store skips", func(t *testing.T) {
-		srv := &Server{outputDir: t.TempDir()}
+	seeded := func(t *testing.T) *statestore.ArenaStateStore {
+		t.Helper()
+		store := statestore.NewArenaStateStore()
+		if err := store.SaveMetadata(ctx, "run-a", &statestore.RunMetadata{RunID: "run-a"}); err != nil {
+			t.Fatalf("SaveMetadata: %v", err)
+		}
+		return store
+	}
+	assertEmpty := func(t *testing.T, dir string) {
+		t.Helper()
+		entries, err := os.ReadDir(dir)
+		if err != nil {
+			t.Fatalf("ReadDir: %v", err)
+		}
+		if len(entries) != 0 {
+			t.Errorf("expected nothing written to %s, got %d entries", dir, len(entries))
+		}
+	}
+
+	t.Run("seeded run is persisted", func(t *testing.T) {
+		dir := t.TempDir()
+		srv := &Server{stateStore: seeded(t), outputDir: dir}
 		srv.persistRunResults(ctx, []string{"run-a"})
+		if _, err := os.Stat(filepath.Join(dir, "run-a.json")); err != nil {
+			t.Fatalf("expected run-a.json to be written: %v", err)
+		}
+	})
+	t.Run("nil store skips", func(t *testing.T) {
+		dir := t.TempDir()
+		srv := &Server{outputDir: dir}
+		srv.persistRunResults(ctx, []string{"run-a"})
+		assertEmpty(t, dir)
 	})
 	t.Run("empty outputDir skips", func(t *testing.T) {
-		srv := &Server{stateStore: statestore.NewArenaStateStore()}
+		cwd := t.TempDir()
+		t.Chdir(cwd)
+		srv := &Server{stateStore: seeded(t)}
 		srv.persistRunResults(ctx, []string{"run-a"})
+		assertEmpty(t, cwd)
 	})
 	t.Run("empty runIDs skips", func(t *testing.T) {
-		srv := &Server{stateStore: statestore.NewArenaStateStore(), outputDir: t.TempDir()}
+		dir := t.TempDir()
+		srv := &Server{stateStore: seeded(t), outputDir: dir}
 		srv.persistRunResults(ctx, nil)
+		assertEmpty(t, dir)
 	})
 	t.Run("empty runID entry is skipped", func(t *testing.T) {
 		dir := t.TempDir()

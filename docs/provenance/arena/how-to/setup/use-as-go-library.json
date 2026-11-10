@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/setup/use-as-go-library.md",
- "commit": "72f35dcda537f9ebff0eaf33808ce728f0c8b3f8",
+ "commit": "02ec7c860b978fcce24022d9ccb868d94208c751",
  "claims": [
   {
    "id": 1,
@@ -59,10 +59,10 @@
    "claim": "arenaconfig.Config is a struct with the Loaded* maps LoadedProviders, LoadedPromptConfigs and LoadedScenarios, and a Defaults field",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:180",
-    "arena/arenaconfig/types.go:220",
+    "arena/arenaconfig/types.go:181",
     "arena/arenaconfig/types.go:221",
-    "arena/arenaconfig/types.go:228"
+    "arena/arenaconfig/types.go:222",
+    "arena/arenaconfig/types.go:229"
    ]
   },
   {
@@ -70,7 +70,7 @@
    "claim": "config.Config.LoadedProviders is map[string]*config.Provider",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:221"
+    "arena/arenaconfig/types.go:222"
    ]
   },
   {
@@ -84,8 +84,8 @@
    "claim": "config.Config.LoadedPromptConfigs is map[string]*config.PromptConfigData",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:220",
-    "arena/arenaconfig/types.go:380"
+    "arena/arenaconfig/types.go:221",
+    "arena/arenaconfig/types.go:381"
    ]
   },
   {
@@ -93,7 +93,7 @@
    "claim": "config.PromptConfigData has fields Config and TaskType",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:380"
+    "arena/arenaconfig/types.go:381"
    ]
   },
   {
@@ -101,8 +101,8 @@
    "claim": "config.Config.LoadedScenarios is map[string]*config.Scenario",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:228",
-    "arena/arenaconfig/types.go:691"
+    "arena/arenaconfig/types.go:229",
+    "arena/arenaconfig/types.go:692"
    ]
   },
   {
@@ -110,7 +110,7 @@
    "claim": "config.Scenario has fields ID, TaskType, Turns and Description",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:691"
+    "arena/arenaconfig/types.go:692"
    ]
   },
   {
@@ -118,8 +118,8 @@
    "claim": "arenaconfig.Scenario.Turns is a slice of arenaconfig.TurnDefinition",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1146",
-    "arena/arenaconfig/types.go:701"
+    "arena/arenaconfig/types.go:1147",
+    "arena/arenaconfig/types.go:702"
    ]
   },
   {
@@ -127,8 +127,8 @@
    "claim": "arenaconfig.TurnDefinition has fields Role and Content",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1147",
-    "arena/arenaconfig/types.go:1148"
+    "arena/arenaconfig/types.go:1148",
+    "arena/arenaconfig/types.go:1149"
    ]
   },
   {
@@ -136,7 +136,7 @@
    "claim": "config.Config.Defaults is of type config.Defaults with fields Temperature and MaxTokens",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:466"
+    "arena/arenaconfig/types.go:467"
    ]
   },
   {
@@ -144,7 +144,7 @@
    "claim": "config.Defaults.Temperature accepts a float literal 0.7",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:467"
+    "arena/arenaconfig/types.go:468"
    ]
   },
   {
@@ -152,7 +152,7 @@
    "claim": "config.Defaults.MaxTokens accepts an integer literal 500",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:468"
+    "arena/arenaconfig/types.go:469"
    ]
   },
   {
@@ -178,7 +178,7 @@
    "claim": "The engine value returned by NewEngine has a Close method",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:459"
+    "arena/engine/engine.go:460"
    ]
   },
   {
@@ -194,7 +194,7 @@
    "claim": "eng.ExecuteRuns(ctx, plan, concurrency) returns (runIDs, error) where the third argument is the number of concurrent workers",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:912"
+    "arena/engine/engine.go:962"
    ]
   },
   {
@@ -210,7 +210,7 @@
    "claim": "eng.GetStateStore() returns an interface value that can be type-asserted to *statestore.ArenaStateStore",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:1013"
+    "arena/engine/engine.go:1063"
    ]
   },
   {
@@ -242,7 +242,7 @@
    "claim": "config.Scenario has field ID used as map key scenarios[tc.ID]",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:692"
+    "arena/arenaconfig/types.go:693"
    ]
   },
   {
@@ -250,10 +250,10 @@
    "claim": "arenaconfig.Scenario literal fields ID, TaskType, Description and Turns are valid",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:692",
     "arena/arenaconfig/types.go:693",
-    "arena/arenaconfig/types.go:695",
-    "arena/arenaconfig/types.go:701"
+    "arena/arenaconfig/types.go:694",
+    "arena/arenaconfig/types.go:696",
+    "arena/arenaconfig/types.go:702"
    ]
   },
   {
@@ -269,7 +269,7 @@
    "claim": "Assigning cfg.LoadedScenarios = scenarios is a valid map assignment of map[string]*config.Scenario",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:228",
+    "arena/arenaconfig/types.go:229",
     "arena/engine/engine.go:424"
    ]
   },
@@ -332,7 +332,7 @@
    "claim": "compareProviders(runIDs, eng.GetStateStore()) is a helper in the example (not library API)",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:1013"
+    "arena/engine/engine.go:1063"
    ]
   },
   {
@@ -375,16 +375,16 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/execution.go:266",
-    "arena/engine/execution.go:349"
+    "arena/engine/execution.go:354"
    ]
   },
   {
    "id": 48,
    "claim": "Provider filter value \"claude\" selects the provider defined in this example",
-   "verdict": "false",
+   "verdict": "true",
    "evidence": [
-    "arena/engine/execution.go:311",
-    "arena/engine/execution.go:349"
+    "arena/engine/execution.go:315",
+    "arena/engine/execution.go:354"
    ]
   },
   {
@@ -408,7 +408,7 @@
    "claim": "eng.EnableMockProviderMode(path string) returns error",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:742"
+    "arena/engine/engine.go:753"
    ]
   },
   {
@@ -433,7 +433,7 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/builder_integration.go:890",
-    "arena/engine/engine.go:1013"
+    "arena/engine/engine.go:1063"
    ]
   },
   {
@@ -457,7 +457,7 @@
    "claim": "collectResults(runIDs, eng.GetStateStore()) and hasFailures(results) are example helpers",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:1013"
+    "arena/engine/engine.go:1063"
    ]
   },
   {
@@ -465,7 +465,7 @@
    "claim": "Example exits non-zero via os.Exit(1) on failures; the CI example is a main function in package main",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:913"
+    "arena/engine/engine.go:963"
    ]
   },
   {
@@ -490,8 +490,8 @@
    "claim": "ExecuteRuns(ctx, plan, 1) returns runIDs with at least one element indexed at runIDs[0]",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:913",
-    "arena/engine/engine.go:927"
+    "arena/engine/engine.go:963",
+    "arena/engine/engine.go:977"
    ]
   },
   {
@@ -499,7 +499,7 @@
    "claim": "Example uses log.Printf and time.Sleep; no library API",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:913"
+    "arena/engine/engine.go:963"
    ]
   },
   {
@@ -507,9 +507,9 @@
    "claim": "defer eng.Close() ensures proper cleanup of engine resources",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:459",
-    "arena/engine/engine.go:829",
-    "arena/engine/engine.go:839"
+    "arena/engine/engine.go:460",
+    "arena/engine/engine.go:879",
+    "arena/engine/engine.go:889"
    ]
   },
   {
@@ -526,7 +526,7 @@
    "claim": "Concurrency of 2 is a suitable value for rate-limited APIs and 20 for mock testing (advice)",
    "verdict": "unverified",
    "evidence": [
-    "arena/engine/engine.go:912"
+    "arena/engine/engine.go:962"
    ]
   },
   {
@@ -534,9 +534,9 @@
    "claim": "Components from BuildEngineComponents belong to one engine: closing an engine closes the registries it was given, so build a separate set for each engine",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:471",
-    "arena/engine/engine.go:475",
-    "arena/engine/engine.go:479"
+    "arena/engine/engine.go:472",
+    "arena/engine/engine.go:476",
+    "arena/engine/engine.go:480"
    ]
   },
   {
@@ -551,7 +551,7 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/builder_integration.go:890",
-    "arena/engine/engine.go:1013"
+    "arena/engine/engine.go:1063"
    ]
   },
   {
@@ -559,7 +559,7 @@
    "claim": "Error message \"Expected ArenaStateStore\" is example text only",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:1013"
+    "arena/engine/engine.go:1063"
    ]
   },
   {
@@ -567,7 +567,7 @@
    "claim": "Batch processing example uses processBatch(runIDs[i:end], store) helper (not library API)",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:1013"
+    "arena/engine/engine.go:1063"
    ]
   },
   {

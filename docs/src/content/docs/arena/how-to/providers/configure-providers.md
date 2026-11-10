@@ -2,7 +2,7 @@
 title: Configure LLM Providers
 description: Add OpenAI, Anthropic, Gemini, Azure, Ollama, vLLM and gateway providers to an arena, set credentials, and select providers per run.
 verified:
-  commit: d12d5b388a693c119b19bf05eabade5b717cb10d
+  commit: 02ec7c860b978fcce24022d9ccb868d94208c751
   sources:
     - arena/arenaconfig/ignored_fields.go
     - arena/arenaconfig/loader.go
@@ -50,10 +50,10 @@ Create one file per provider under `providers/`. Only `spec.type` is required; a
 apiVersion: promptkit.altairalabs.ai/v1alpha1
 kind: Provider
 metadata:
-  name: openai-gpt4o-mini
+  name: openai-gpt54-mini
 spec:
   type: openai
-  model: gpt-4o-mini
+  model: gpt-5.4-mini
   capabilities: [text, streaming, vision, tools, json]
   defaults:
     temperature: 0.6
@@ -62,7 +62,7 @@ spec:
 
 A provider file holds one YAML document: a file with a second document after a `---` separator fails to load. Put each provider in its own file. The provider id is `spec.id`, or `metadata.name` when `spec.id` is absent.
 
-`capabilities` is a list of free strings. A scenario that sets `required_capabilities` runs only against providers that list all of them. See [capabilities](/arena/reference/config-schema/#capabilities) for the values and [Write Scenarios](/arena/how-to/scenarios/write-scenarios/) for the scenario side.
+`capabilities` is a list of free strings. A scenario that sets `required_capabilities` runs only against providers that list all of them, and is skipped when none does. The filter applies to the default and `provider_group` selection, not to a scenario that lists `spec.providers`. See [capabilities](/arena/reference/config-schema/#capabilities) for the values and [Write Scenarios](/arena/how-to/scenarios/write-scenarios/) for the scenario side.
 
 Declare fewer capabilities for limited models:
 
@@ -80,39 +80,39 @@ spec:
 ```yaml
 spec:
   type: openai
-  model: gpt-4o
+  model: gpt-5.4
   defaults:
     temperature: 0.7
     max_tokens: 4000
 ```
 
-Credentials come from `OPENAI_API_KEY`. Models: `gpt-4o`, `gpt-4o-mini`, `gpt-4-turbo`, `gpt-3.5-turbo`.
+Credentials come from `OPENAI_API_KEY`. Models include `gpt-6.1-terra`, `gpt-5.5`, `gpt-5.4`, `gpt-5.4-mini`, `gpt-5.4-nano` and the `o3` reasoning model.
 
 ### Anthropic Claude
 
 ```yaml
 spec:
   type: claude
-  model: claude-3-5-sonnet-20241022
+  model: claude-sonnet-5-5
   defaults:
     temperature: 0.6
     max_tokens: 4000
 ```
 
-Credentials come from `ANTHROPIC_API_KEY`. Models: `claude-3-5-sonnet-20241022`, `claude-3-5-haiku-20241022`, `claude-3-opus-20240229`.
+Credentials come from `ANTHROPIC_API_KEY`. Models include `claude-opus-5-5`, `claude-sonnet-5-5`, `claude-haiku-5-5` and `claude-fable-5-2`.
 
 ### Google Gemini
 
 ```yaml
 spec:
   type: gemini
-  model: gemini-1.5-flash
+  model: gemini-3.8-flash
   defaults:
     temperature: 0.7
     max_tokens: 2000
 ```
 
-Credentials come from `GOOGLE_API_KEY`. Models: `gemini-1.5-pro`, `gemini-1.5-flash`, `gemini-2.0-flash-exp`.
+Credentials come from `GEMINI_API_KEY`, or `GOOGLE_API_KEY` when that is unset. Models include `gemini-4-argon`, `gemini-3.8-flash`, `gemini-3.5-flash-lite` and `gemini-3.1-pro-preview`.
 
 ### Azure OpenAI
 
@@ -121,7 +121,7 @@ Use `type: openai` with an Azure platform. The provider derives the deployment U
 ```yaml
 spec:
   type: openai
-  model: gpt-4o
+  model: gpt-5.4
   platform:
     type: azure
     endpoint: https://your-resource.openai.azure.com
@@ -230,7 +230,7 @@ spec:
 # providers/litellm.yaml
 spec:
   type: openai
-  model: gpt-4o-mini      # whatever LiteLLM routes this name to
+  model: gpt-5.4-mini      # whatever LiteLLM routes this name to
   base_url: http://litellm.internal:4000
   headers:
     X-Internal-Auth: shared-gateway-token
@@ -288,7 +288,7 @@ All of these are optional.
 ```yaml
 spec:
   type: openai
-  model: gpt-4o
+  model: gpt-5.4
   request_timeout: "60s"        # non-streaming call timeout
   stream_idle_timeout: "30s"    # abort a silent stream
   stream_max_concurrent: 50     # 0 = unlimited
@@ -359,8 +359,8 @@ env:
 ## Select providers for a run
 
 ```bash
-promptarena run --provider openai-gpt4o-mini            # one provider
-promptarena run --provider openai-gpt4o-mini,claude-sonnet   # several
+promptarena run --provider openai-gpt54-mini            # one provider
+promptarena run --provider openai-gpt54-mini,claude-sonnet   # several
 promptarena run                                         # all configured providers
 ```
 

@@ -10,6 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
+	"github.com/AltairaLabs/promptarena/v2/arena/chaos"
+	"github.com/AltairaLabs/promptarena/v2/arena/consent"
 
 	"github.com/AltairaLabs/PromptKit/runtime/v2/events"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/hooks"
@@ -570,20 +572,14 @@ func TestCreateEmbeddingProvider(t *testing.T) {
 		t.Setenv("OPENAI_API_KEY", "")
 		t.Setenv("OPENAI_TOKEN", "")
 		_, err := createEmbeddingProvider("openai", "")
-		// Should fail because no API key
-		if err == nil {
-			t.Log("OpenAI provider created without API key - check environment")
-		}
+		assert.ErrorContains(t, err, "OPENAI_API_KEY")
 	})
 
 	t.Run("gemini provider without API key fails gracefully", func(t *testing.T) {
 		t.Setenv("GEMINI_API_KEY", "")
 		t.Setenv("GOOGLE_API_KEY", "")
 		_, err := createEmbeddingProvider("gemini", "")
-		// Should fail because no API key
-		if err == nil {
-			t.Log("Gemini provider created without API key - check environment")
-		}
+		assert.ErrorContains(t, err, "GEMINI_API_KEY")
 	})
 
 	t.Run("openai provider with API key succeeds", func(t *testing.T) {
@@ -762,18 +758,34 @@ func TestBuildHookRegistry_NilWhenNothingToHook(t *testing.T) {
 		assert.Nil(t, buildHookRegistry(&TurnRequest{}, nil))
 	})
 
-	t.Run("consent overrides alone produce a registry", func(t *testing.T) {
+	t.Run("consent overrides alone produce a registry that applies them", func(t *testing.T) {
 		req := &TurnRequest{ConsentOverrides: map[string]string{"tool_a": "deny"}}
-		assert.NotNil(t, buildHookRegistry(req, nil))
+		reg := buildHookRegistry(req, nil)
+		require.NotNil(t, reg)
+		ctx := consent.WithConsentOverrides(context.Background(), req.ConsentOverrides)
+		d := reg.RunBeforeToolExecution(ctx, hooks.ToolRequest{Name: "tool_a"})
+		assert.False(t, d.Allow, "the consent hook must deny the overridden tool")
+		assert.Equal(t, "denied", d.Metadata["consent_status"])
+		assert.False(t, reg.HasProviderHooks(), "consent is a tool hook, not a provider hook")
 	})
 
-	t.Run("a chaos config alone produces a registry", func(t *testing.T) {
-		req := &TurnRequest{ChaosConfig: &arenaconfig.ChaosConfig{}}
-		assert.NotNil(t, buildHookRegistry(req, nil))
+	t.Run("a chaos config alone produces a registry that injects failures", func(t *testing.T) {
+		cfg := &arenaconfig.ChaosConfig{ToolFailures: []arenaconfig.ChaosToolFailure{
+			{Tool: "tool_b", Mode: "error", Probability: 1, Message: "injected"},
+		}}
+		reg := buildHookRegistry(&TurnRequest{ChaosConfig: cfg}, nil)
+		require.NotNil(t, reg)
+		d := reg.RunBeforeToolExecution(chaos.WithConfig(context.Background(), cfg), hooks.ToolRequest{Name: "tool_b"})
+		assert.False(t, d.Allow)
+		assert.Equal(t, "injected", d.Reason)
 	})
 
-	t.Run("guardrail hooks alone produce a registry", func(t *testing.T) {
-		assert.NotNil(t, buildHookRegistry(&TurnRequest{}, []hooks.ProviderHook{noopProviderHook{}}))
+	t.Run("guardrail hooks alone produce a registry that runs them", func(t *testing.T) {
+		reg := buildHookRegistry(&TurnRequest{}, []hooks.ProviderHook{denyingProviderHook{}})
+		require.NotNil(t, reg)
+		assert.True(t, reg.HasProviderHooks())
+		d := reg.RunBeforeProviderCall(context.Background(), &hooks.ProviderRequest{})
+		assert.Equal(t, "guardrail fired", d.Reason)
 	})
 
 	t.Run("tool result transforms alone produce a rewriting registry", func(t *testing.T) {
@@ -788,20 +800,21 @@ func TestBuildHookRegistry_NilWhenNothingToHook(t *testing.T) {
 	})
 }
 
-// noopProviderHook is a minimal ProviderHook so buildHookRegistry can be given
-// a guardrail hook without pulling in the guardrail machinery.
-type noopProviderHook struct{}
+// denyingProviderHook is a minimal ProviderHook so buildHookRegistry can be
+// given a guardrail hook without pulling in the guardrail machinery. It denies
+// with a fixed reason so a test can see that the registry ran it.
+type denyingProviderHook struct{}
 
-func (noopProviderHook) Name() string { return "noop" }
+func (denyingProviderHook) Name() string { return "deny" }
 
-func (noopProviderHook) BeforeCall(context.Context, *hooks.ProviderRequest) hooks.Decision {
-	return hooks.Decision{}
+func (denyingProviderHook) BeforeCall(context.Context, *hooks.ProviderRequest) hooks.Decision {
+	return hooks.Deny("guardrail fired")
 }
 
-func (noopProviderHook) AfterCall(
+func (denyingProviderHook) AfterCall(
 	context.Context, *hooks.ProviderRequest, *hooks.ProviderResponse,
 ) hooks.Decision {
-	return hooks.Decision{}
+	return hooks.Allow
 }
 
 // TestEmitterFromRequest_NilBusMeansNoEmitter covers emitterFromRequest. A nil
@@ -811,12 +824,25 @@ func (noopProviderHook) AfterCall(
 func TestEmitterFromRequest_NilBusMeansNoEmitter(t *testing.T) {
 	assert.Nil(t, emitterFromRequest(&TurnRequest{}))
 
-	req := &TurnRequest{
-		EventBus:       events.NewEventBus(),
-		RunID:          "run-1",
-		ConversationID: "conv-1",
+	bus := events.NewEventBus()
+	got := make(chan *events.Event, 1)
+	unsubscribe := bus.SubscribeAll(func(e *events.Event) { got <- e })
+	defer unsubscribe()
+
+	em := emitterFromRequest(&TurnRequest{EventBus: bus, RunID: "run-1", ConversationID: "conv-1"})
+	require.NotNil(t, em)
+	em.EmitCustom("test.event", "test", "probe", nil, "")
+
+	select {
+	case e := <-got:
+		// The emitter stamps the run as both execution and session, and the
+		// conversation, on every event it publishes.
+		assert.Equal(t, "run-1", e.ExecutionID)
+		assert.Equal(t, "run-1", e.SessionID)
+		assert.Equal(t, "conv-1", e.ConversationID)
+	case <-time.After(2 * time.Second):
+		t.Fatal("emitter did not publish to the request's bus")
 	}
-	assert.NotNil(t, emitterFromRequest(req))
 }
 
 // TestSetPreloadedSkillInstructions_RoundTrips covers the 0% setter. The string

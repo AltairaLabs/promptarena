@@ -316,8 +316,11 @@ func TestAttachTrialResults(t *testing.T) {
 	t.Run("no-op for missing run", func(t *testing.T) {
 		store := statestore.NewArenaStateStore()
 		tr := &TrialResults{TrialCount: 3, PassRate: 1.0}
-		// Should not panic
 		attachTrialResults(store, "nonexistent", tr)
+
+		if _, err := store.GetResult(context.Background(), "nonexistent"); err == nil {
+			t.Fatal("trial results must not conjure a run that was never saved")
+		}
 	})
 }
 

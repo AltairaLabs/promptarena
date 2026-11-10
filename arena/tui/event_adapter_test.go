@@ -121,128 +121,95 @@ func TestEventAdapterLogsProviderEvents(t *testing.T) {
 	}
 }
 
+// TestEventAdapter_AllEventTypes pins the log line each provider and legacy
+// middleware event becomes, and that pipeline lifecycle events are not
+// logged. Tool, validation, context, state and stream events are pinned
+// through the real emitter in TestEventAdapter_EmitterEventsReachTheTUI.
 func TestEventAdapter_AllEventTypes(t *testing.T) {
 	t.Parallel()
 
 	adapter := NewEventAdapter(nil)
+	boom := fmt.Errorf("boom")
 
 	testCases := []struct {
 		name      string
 		eventType events.EventType
 		data      events.EventData
+		level     string // "" means the event maps to no TUI message
+		message   string
 	}{
 		{
-			name:      "pipeline started",
+			name:      "pipeline started is not logged",
 			eventType: events.EventPipelineStarted,
 			data:      &events.PipelineStartedData{MiddlewareCount: 5},
 		},
 		{
-			name:      "pipeline completed",
+			name:      "pipeline completed is not logged",
 			eventType: events.EventPipelineCompleted,
 			data:      &events.PipelineCompletedData{Duration: time.Second},
 		},
 		{
-			name:      "pipeline failed",
+			name:      "pipeline failed is not logged",
 			eventType: events.EventPipelineFailed,
-			data:      &events.PipelineFailedData{Error: nil},
+			data:      &events.PipelineFailedData{Error: boom},
 		},
 		{
 			name:      "middleware started",
 			eventType: events.EventMiddlewareStarted,
-			data:      &events.MiddlewareStartedData{Name: "test"},
+			data:      &events.MiddlewareStartedData{Name: "auth"},
+			level:     "INFO",
+			message:   "Middleware started: auth",
 		},
 		{
 			name:      "middleware completed",
 			eventType: events.EventMiddlewareCompleted,
-			data:      &events.MiddlewareCompletedData{Name: "test"},
+			data:      &events.MiddlewareCompletedData{Name: "auth", Duration: 250 * time.Millisecond},
+			level:     "INFO",
+			message:   "Middleware completed: auth (0.25s)",
 		},
 		{
 			name:      "middleware failed",
 			eventType: events.EventMiddlewareFailed,
-			data:      &events.MiddlewareFailedData{Name: "test"},
+			data:      &events.MiddlewareFailedData{Name: "auth", Error: boom},
+			level:     "ERROR",
+			message:   "Middleware failed: auth (boom)",
 		},
 		{
 			name:      "provider call started",
 			eventType: events.EventProviderCallStarted,
-			data:      &events.ProviderCallStartedData{Provider: "test"},
+			data:      &events.ProviderCallStartedData{Provider: "openai", Model: "gpt-4o"},
+			level:     "INFO",
+			message:   "Provider call started: openai gpt-4o",
 		},
 		{
 			name:      "provider call completed",
 			eventType: events.EventProviderCallCompleted,
-			data:      &events.ProviderCallCompletedData{Provider: "test"},
+			data: &events.ProviderCallCompletedData{
+				Provider: "openai", Model: "gpt-4o", Duration: 1500 * time.Millisecond, Cost: 0.0123,
+			},
+			level:   "INFO",
+			message: "Provider call completed: openai gpt-4o (1.50s, cost $0.0123)",
 		},
 		{
 			name:      "provider call failed",
 			eventType: events.EventProviderCallFailed,
-			data:      &events.ProviderCallFailedData{Provider: "test"},
-		},
-		{
-			name:      "tool call started",
-			eventType: events.EventToolCallStarted,
-			data:      &events.ToolCallStartedData{ToolName: "test"},
-		},
-		{
-			name:      "tool call completed",
-			eventType: events.EventToolCallCompleted,
-			data:      &events.ToolCallCompletedData{ToolName: "test"},
-		},
-		{
-			name:      "tool call failed",
-			eventType: events.EventToolCallFailed,
-			data:      &events.ToolCallFailedData{ToolName: "test"},
-		},
-		{
-			name:      "validation started",
-			eventType: events.EventValidationStarted,
-			data:      &events.ValidationStartedData{ValidatorName: "test"},
-		},
-		{
-			name:      "validation passed",
-			eventType: events.EventValidationPassed,
-			data:      &events.ValidationPassedData{ValidatorName: "test"},
-		},
-		{
-			name:      "validation failed",
-			eventType: events.EventValidationFailed,
-			data:      &events.ValidationFailedData{ValidatorName: "test"},
-		},
-		{
-			name:      "context built",
-			eventType: events.EventContextBuilt,
-			data:      &events.ContextBuiltData{MessageCount: 5},
-		},
-		{
-			name:      "token budget exceeded",
-			eventType: events.EventTokenBudgetExceeded,
-			data:      &events.TokenBudgetExceededData{Budget: 1000},
-		},
-		{
-			name:      "state loaded",
-			eventType: events.EventStateLoaded,
-			data:      &events.StateLoadedData{ConversationID: "conv-1"},
-		},
-		{
-			name:      "state saved",
-			eventType: events.EventStateSaved,
-			data:      &events.StateSavedData{ConversationID: "conv-1"},
-		},
-		{
-			name:      "stream interrupted",
-			eventType: events.EventStreamInterrupted,
-			data:      &events.StreamInterruptedData{Reason: "error"},
+			data:      &events.ProviderCallFailedData{Provider: "openai", Model: "gpt-4o", Error: boom},
+			level:     "ERROR",
+			message:   "Provider call failed: openai gpt-4o (boom)",
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			evt := &events.Event{
-				Type:      tc.eventType,
-				Timestamp: time.Now(),
-				Data:      tc.data,
+			msg := adapter.mapEvent(&events.Event{Type: tc.eventType, Timestamp: time.Now(), Data: tc.data})
+			if tc.level == "" {
+				assert.Nil(t, msg, "expected no TUI message, got %#v", msg)
+				return
 			}
-
-			// Should not panic
-			adapter.HandleEvent(evt)
+			lm, ok := msg.(logging.Msg)
+			require.True(t, ok, "expected logging.Msg, got %T", msg)
+			assert.Equal(t, tc.level, lm.Level)
+			assert.Equal(t, tc.message, lm.Message)
 		})
 	}
 }
@@ -386,7 +353,16 @@ func TestEventAdapter_ArenaCustomEvents(t *testing.T) {
 	})
 
 	t.Run("arena turn events", func(t *testing.T) {
-		started := &events.Event{
+		turnModel := NewModel("cfg", 1)
+		turnAdapter := NewEventAdapterWithModel(turnModel)
+		turnAdapter.HandleEvent(&events.Event{
+			Type:        events.EventType("arena.run.started"),
+			ExecutionID: "run-1",
+			Timestamp:   time.Now(),
+			Data:        events.CustomEventData{Data: map[string]interface{}{"scenario": "test-scenario"}},
+		})
+
+		turnAdapter.HandleEvent(&events.Event{
 			Type:        events.EventType("arena.turn.started"),
 			ExecutionID: "run-1",
 			Timestamp:   time.Now(),
@@ -397,33 +373,41 @@ func TestEventAdapter_ArenaCustomEvents(t *testing.T) {
 					"scenario":   "test-scenario",
 				},
 			},
-		}
-		adapter.HandleEvent(started)
+		})
+		require.Len(t, turnModel.activeRuns, 1)
+		assert.Equal(t, "user", turnModel.activeRuns[0].CurrentTurnRole)
+		assert.Equal(t, 1, turnModel.activeRuns[0].CurrentTurnIndex)
+		assert.Equal(t, "Turn 2 (user) started: run-1", turnModel.logs[len(turnModel.logs)-1].Message)
 
-		completed := &events.Event{
-			Type:        events.EventType("arena.turn.completed"),
+		turnAdapter.HandleEvent(&events.Event{
+			Type:        events.EventType("arena.turn.failed"),
 			ExecutionID: "run-1",
 			Timestamp:   time.Now(),
-			Data: events.CustomEventData{
+			Data: &events.CustomEventData{
 				Data: map[string]interface{}{
 					"turn_index": 1,
-					"role":       "user",
-					"scenario":   "test-scenario",
+					"role":       "assistant",
+					"error":      "provider timeout",
 				},
 			},
-		}
-		// Should not panic
-		adapter.HandleEvent(completed)
+		})
+		assert.Equal(t, "assistant", turnModel.activeRuns[0].CurrentTurnRole)
+		assert.Equal(t, "provider timeout", turnModel.activeRuns[0].Error)
+		last := turnModel.logs[len(turnModel.logs)-1]
+		assert.Equal(t, logLevelError, last.Level)
+		assert.Equal(t, "Turn 2 (assistant) failed: run-1 - provider timeout", last.Message)
 	})
 
 	t.Run("unknown event type ignored", func(t *testing.T) {
-		evt := &events.Event{
+		quietModel := NewModel("cfg", 1)
+		NewEventAdapterWithModel(quietModel).HandleEvent(&events.Event{
 			Type:      events.EventType("unknown.event"),
 			Timestamp: time.Now(),
-			Data:      events.CustomEventData{Data: map[string]interface{}{}},
-		}
-		// Should not panic and should return early
-		adapter.HandleEvent(evt)
+			Data:      events.CustomEventData{Data: map[string]interface{}{"error": "ignored"}},
+		})
+		assert.Empty(t, quietModel.logs)
+		assert.Empty(t, quietModel.activeRuns)
+		assert.Zero(t, quietModel.completedCount)
 	})
 }
 
@@ -445,11 +429,6 @@ func TestEventAdapter_SendMethods(t *testing.T) {
 		}
 	})
 
-	t.Run("send with neither", func(t *testing.T) {
-		adapter := &EventAdapter{}
-		// Should not panic
-		adapter.deliver(logging.Msg{Message: "test"})
-	})
 }
 
 func TestEventAdapter_EventErrorExtraction(t *testing.T) {
@@ -937,45 +916,6 @@ func TestEventAdapter_MapEvent_NewEventTypes(t *testing.T) {
 		require.NotNil(t, msg)
 		_, ok := msg.(ConversationStartedMsg)
 		assert.True(t, ok)
-	})
-}
-
-// Test HandleEvent integration with new event types
-func TestEventAdapter_HandleEvent_NewEventTypes(t *testing.T) {
-	t.Parallel()
-
-	// Conversation/message events are no longer consumed by the run Model
-	// (conversation drill-down moved to the hub stack), but the adapter must
-	// still forward them without panicking. The message-mapping itself is
-	// covered by TestEventAdapter_HandleMessageCreated /
-	// TestEventAdapter_HandleConversationStarted.
-	model := NewModel("cfg", 1)
-	adapter := NewEventAdapterWithModel(model)
-
-	t.Run("message created flows without panic", func(t *testing.T) {
-		evt := &events.Event{
-			Type:           events.EventMessageCreated,
-			ConversationID: "run-1",
-			Timestamp:      time.Now(),
-			Data: events.MessageCreatedData{
-				Role:    "user",
-				Content: "Hello",
-				Index:   0,
-			},
-		}
-		adapter.HandleEvent(evt)
-	})
-
-	t.Run("conversation started flows without panic", func(t *testing.T) {
-		evt := &events.Event{
-			Type:           events.EventConversationStarted,
-			ConversationID: "run-2",
-			Timestamp:      time.Now(),
-			Data: events.ConversationStartedData{
-				SystemPrompt: "You are a helpful assistant.",
-			},
-		}
-		adapter.HandleEvent(evt)
 	})
 }
 

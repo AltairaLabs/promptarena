@@ -95,12 +95,6 @@ func TestBuildAudioMonitor_NilWhenAutoModeNonTTY(t *testing.T) {
 	}
 }
 
-func TestIsStdoutTTY_ReportsBoolean(t *testing.T) {
-	// Sanity check that isStdoutTTY returns a boolean without panicking.
-	// In CI / go test, stdout is a pipe so this returns false.
-	_ = isStdoutTTY()
-}
-
 // TestRegisterAudioMonitorHook_FiresOnRouterCreation verifies that hooks
 // registered via RegisterAudioMonitorHook receive the run ID, router, and
 // rate when fireAudioMonitorHooks is invoked. The actual fire happens in
@@ -185,23 +179,6 @@ func TestRegisterRunCompletedHook_FiresInRegistrationOrder(t *testing.T) {
 	if len(calls) != 2 || calls[0] != "first:run-abc" || calls[1] != "second:run-abc" {
 		t.Fatalf("expected [first:run-abc second:run-abc], got %v", calls)
 	}
-}
-
-// TestRegisterRunCompletedHook_NoHooksNoOp verifies firing with zero hooks
-// is a safe no-op.
-func TestRegisterRunCompletedHook_NoHooksNoOp(t *testing.T) {
-	eng := &Engine{}
-	eng.fireRunCompletedHooks("r", nil) // should not panic
-}
-
-// TestRegisterAudioMonitorHook_NoHooksNoOp verifies firing with zero hooks
-// is a safe no-op.
-func TestRegisterAudioMonitorHook_NoHooksNoOp(t *testing.T) {
-	eng := &Engine{}
-	router := arenaaudio.NewAudioRouter(arenaaudio.Rate24k)
-	defer router.Close()
-	// Should not panic.
-	eng.fireAudioMonitorHooks("r", router, arenaaudio.Rate24k)
 }
 
 // TestBuildAudioMonitor_RouterFanout verifies frames published to the router

@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/agents/build-with-an-ai-agent.md",
- "commit": "d12d5b388a693c119b19bf05eabade5b717cb10d",
+ "commit": "02ec7c860b978fcce24022d9ccb868d94208c751",
  "claims": [
   {
    "id": 1,
@@ -363,7 +363,7 @@
    "claim": "Mock responses in mock-responses.yaml are keyed by each scenario's metadata.name",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:805"
+    "arena/engine/engine.go:830"
    ]
   },
   {
@@ -371,7 +371,7 @@
    "claim": "Tools, workflow state and memory run for real against mocked model output",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:767"
+    "arena/engine/engine.go:782"
    ]
   },
   {
@@ -399,9 +399,8 @@
    "claim": "--mock-provider replaces every provider with a generic mock that ignores canned responses",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:721",
-    "arena/engine/engine.go:742",
-    "arena/engine/engine.go:804"
+    "arena/engine/engine.go:753",
+    "arena/engine/engine.go:819-827"
    ]
   },
   {
@@ -545,12 +544,13 @@
   },
   {
    "id": "470-mock",
-   "claim": "--mock-provider replaces each LLM provider with a mock; a provider that declares mock_config keeps its canned responses, --mock-config overrides them, and one that declares neither gets a generic reply",
+   "claim": "--mock-provider replaces each LLM provider with a mock; a provider that declares mock_config keeps its canned responses, --mock-config overrides them, and one that declares neither gets a generic reply (unless every declaring provider names the same file, which it then shares)",
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/run.go:194",
-    "arena/engine/engine.go:759-776",
-    "arena/engine/engine.go:804-810"
+    "arena/engine/engine.go:768-781",
+    "arena/engine/engine.go:819-827",
+    "arena/engine/engine.go:840-855"
    ]
   }
  ]

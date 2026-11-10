@@ -133,3 +133,58 @@ func buildDecoratedMockRepo(mockCfg string) (mock.ResponseRepository, string, er
 	}
 	return withDefaultMockAudio(fileRepo), fileRepo.BaseDir(), nil
 }
+
+// applyDeclaredDuplexBehavior gives a --mock-provider replacement the duplex
+// behavior its provider declares. NewToolProviderWithRepository takes a
+// repository and nothing else, so without this the replacement's duplex
+// sessions never replied and every voice turn waited out the turn deadline
+// (#510). The keys and their meaning are the runtime factory's
+// (mock.NewToolProvider).
+//
+// auto_respond defaults to on: a replacement for a real realtime provider
+// (OpenAI Realtime, Gemini Live) declares none of these keys, and a stand-in
+// that never answers is never what --mock-provider means. Only an explicit
+// auto_respond: false turns it off.
+func applyDeclaredDuplexBehavior(
+	mp *mock.ToolProvider, additional map[string]any, repo mock.ResponseRepository, fixtureBaseDir string,
+) {
+	if _, declared := additional["auto_respond"]; !declared || configBool(additional, "auto_respond") {
+		text, _ := additional["response_text"].(string)
+		if text == "" {
+			text = mock.DefaultMockStreamingResponse
+		}
+		mp.WithAutoRespond(text)
+		scenarioID, _ := additional["duplex_scenario"].(string)
+		mp.WithMockResponses(repo, scenarioID, fixtureBaseDir)
+	}
+	if turn := configInt(additional, "interrupt_on_turn"); turn > 0 {
+		mp.WithInterruptOnTurn(turn)
+	}
+	if turns := configInt(additional, "close_after_turns"); turns > 0 {
+		mp.WithCloseAfterTurns(turns, configBool(additional, "close_no_response"))
+	}
+}
+
+// configBool reads a bool that YAML may have left as the string "true".
+func configBool(m map[string]any, key string) bool {
+	switch v := m[key].(type) {
+	case bool:
+		return v
+	case string:
+		return v == "true"
+	}
+	return false
+}
+
+// configInt reads an int that YAML may have decoded as float64.
+func configInt(m map[string]any, key string) int {
+	switch v := m[key].(type) {
+	case int:
+		return v
+	case int64:
+		return int(v)
+	case float64:
+		return int(v)
+	}
+	return 0
+}

@@ -9,7 +9,7 @@ metadata:
 spec:
   prompt_configs:
     - id: codegen-agent
-      file: packs/codegen-agent.yaml
+      file: prompts/codegen-agent.yaml
 
   providers:
     - file: providers/claude-sonnet.provider.yaml
@@ -29,15 +29,13 @@ spec:
         image: ghcr.io/altairalabs/codegen-sandbox:latest
         env:
           DEV_MODE: "1"
-
-  # Host-only metric skill — mounted into the sandbox at /skills/codegen-metrics
-  # so session-level evals can run scripts like diff_stats.sh, but never
-  # surfaced to the agent (preload: false). The explicit `name` is what
-  # drives the in-container mount target.
-  skills:
-    - name: codegen-metrics
-      path: skills/codegen-metrics
-      preload: false
+        # The metric script is copied in only after the agent's last turn,
+        # just before the diff_stats eval runs, so the agent never sees it.
+        mounts:
+          - source: eval-scripts
+            target: /eval/scripts
+            mode: copy
+            when: eval
 
   # Pack-level eval: a non-gating measurement that fires once per session.
   # Captures the agent's workspace LOC stats into EvalResult.Details for
@@ -51,7 +49,7 @@ spec:
       params:
         tool: Bash
         args:
-          command: "bash /skills/codegen-metrics/scripts/diff_stats.sh"
+          command: "bash /eval/scripts/diff_stats.sh"
           description: "Capture diff_stats soft-metric"
         timeout_seconds: 10
 

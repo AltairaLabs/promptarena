@@ -1,11 +1,13 @@
 package arenaconfig
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/logger"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -45,12 +47,24 @@ func TestIgnoredFieldWarnings(t *testing.T) {
 	assert.Len(t, cfg.ValidationWarnings, 5, "added to what validate reports")
 }
 
-func TestWarnProviderLabels_DoesNotFail(t *testing.T) {
+func TestWarnProviderLabels_WarnsOnlyWhenLabelsAreSet(t *testing.T) {
+	var out bytes.Buffer
+	logger.SetOutput(&out)
+	t.Cleanup(func() { logger.SetOutput(nil) })
+
 	dir := t.TempDir()
-	withLabels := filepath.Join(dir, "p.yaml")
+	withLabels := filepath.Join(dir, "labelled.yaml")
 	require.NoError(t, os.WriteFile(withLabels, []byte("metadata:\n  labels:\n    tier: fast\n"), 0o600))
-	warnProviderLabels(withLabels)
+	withoutLabels := filepath.Join(dir, "plain.yaml")
+	require.NoError(t, os.WriteFile(withoutLabels, []byte("metadata:\n  name: p\n"), 0o600))
+
+	warnProviderLabels(withoutLabels)
 	warnProviderLabels(filepath.Join(dir, "missing.yaml"))
+	assert.Empty(t, out.String(), "no labels, or no file, means no warning")
+
+	warnProviderLabels(withLabels)
+	assert.Contains(t, out.String(), "provider metadata.labels is ignored and will be removed")
+	assert.Contains(t, out.String(), "labelled.yaml")
 }
 
 func TestLoadConfig_RejectsFileStateStore(t *testing.T) {

@@ -148,14 +148,26 @@ func TestBuildEngineComponents_MinimalConfig(t *testing.T) {
 		},
 	}
 
-	providerReg, promptReg, mcpReg, convExec, adapterReg, a2aCleanup, _, _, err := BuildEngineComponents(cfg, nil)
+	providerReg, promptReg, mcpReg, convExec, adapterReg, a2aCleanup, toolReg, _, err := BuildEngineComponents(cfg, nil)
 	require.NoError(t, err)
-	require.NotNil(t, providerReg)
 	require.Nil(t, promptReg)
 	require.Nil(t, mcpReg)
-	require.NotNil(t, convExec)
-	require.NotNil(t, adapterReg)
 	require.Nil(t, a2aCleanup)
+	require.NotNil(t, adapterReg)
+
+	// The one configured provider is initialized and registered under its ID.
+	assert.Equal(t, []string{"mock-assistant"}, providerReg.List())
+	p, ok := providerReg.Get("mock-assistant")
+	require.True(t, ok)
+	assert.Equal(t, "mock-assistant", p.ID())
+
+	// The executor routes to a default (text) executor.
+	composite, ok := convExec.(*CompositeConversationExecutor)
+	require.True(t, ok, "got %T", convExec)
+	assert.NotNil(t, composite.GetDefaultExecutor())
+
+	// No tools, MCP servers or skills are configured, so none are offered.
+	assert.Empty(t, toolReg.List())
 }
 
 func TestDiscoverAndRegisterMCPTools_EmptyRegistry(t *testing.T) {
@@ -164,6 +176,7 @@ func TestDiscoverAndRegisterMCPTools_EmptyRegistry(t *testing.T) {
 
 	err := discoverAndRegisterMCPTools(mcpRegistry, toolRegistry)
 	require.NoError(t, err)
+	assert.Empty(t, toolRegistry.List(), "no servers means no tools")
 }
 
 func TestBuildMCPRegistry_WithServer(t *testing.T) {
@@ -179,7 +192,12 @@ func TestBuildMCPRegistry_WithServer(t *testing.T) {
 
 	registry, err := buildMCPRegistry(cfg)
 	require.NoError(t, err)
-	require.NotNil(t, registry)
+
+	got, ok := registry.GetServerConfig("demo-server")
+	require.True(t, ok, "the configured stdio server must be registered")
+	assert.Equal(t, "echo", got.Command)
+	assert.Equal(t, []string{"demo"}, got.Args)
+	assert.Empty(t, got.URL)
 }
 
 func TestBuildMCPRegistry_PropagatesSSEFields(t *testing.T) {
@@ -253,8 +271,11 @@ func TestBuildSelfPlayComponents_Success(t *testing.T) {
 
 	registry, executor, err := buildSelfPlayComponents(cfg, nil, providerRegistry)
 	require.NoError(t, err)
-	require.NotNil(t, registry)
 	require.NotNil(t, executor)
+	assert.Equal(t, []string{"user-role"}, registry.GetAvailableRoles())
+	assert.True(t, registry.IsValidRole("user-role"))
+	assert.Equal(t, []string{"mock-assistant"}, registry.GetAvailableProviders(),
+		"the role's provider is reused from the main registry")
 }
 
 func TestBuildSelfPlayComponents_UnknownProvider(t *testing.T) {
@@ -350,8 +371,19 @@ func TestBuildSelfPlayComponents_MultipleRoles(t *testing.T) {
 
 	registry, executor, err := buildSelfPlayComponents(cfg, nil, providerRegistry)
 	require.NoError(t, err)
-	require.NotNil(t, registry)
 	require.NotNil(t, executor)
+	assert.ElementsMatch(t, []string{"assistant-role", "user-role"}, registry.GetAvailableRoles())
+	assert.ElementsMatch(t, []string{"mock-assistant", "mock-user"}, registry.GetAvailableProviders())
+	assert.Equal(t, "A test persona", registry.GetPersona("test-persona").Description)
+
+	// Each role resolves to a generator for the configured persona.
+	for _, role := range []string{"assistant-role", "user-role"} {
+		gen, genErr := registry.GetContentGenerator(role, "test-persona")
+		require.NoError(t, genErr, role)
+		assert.NotNil(t, gen, role)
+	}
+	_, err = registry.GetContentGenerator("no-such-role", "test-persona")
+	assert.Error(t, err, "a role that was not configured must not resolve")
 }
 
 func TestNewConversationExecutor_WithSelfPlay(t *testing.T) {
@@ -440,6 +472,10 @@ func TestBuildEvalOrchestrator_AllKnownTypes(t *testing.T) {
 	hook, err := buildEvalOrchestrator(cfg, false, nil)
 	require.NoError(t, err)
 	require.NotNil(t, hook)
+	assert.True(t, hook.HasEvals())
+	require.Len(t, hook.defs, 1)
+	assert.Equal(t, "check", hook.defs[0].ID)
+	assert.Equal(t, "contains", hook.defs[0].Type)
 }
 
 func TestBuildEvalOrchestrator_EmptyEvalsReturnsNil(t *testing.T) {

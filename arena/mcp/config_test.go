@@ -11,192 +11,63 @@ import (
 	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
 )
 
-func TestNewRegistryFromConfig_EmptyConfig(t *testing.T) {
-	cfg := &arenaconfig.Config{
-		MCPServers: []config.MCPServerConfig{},
-	}
-
-	registry, err := NewRegistryFromConfig(cfg)
-	require.NoError(t, err)
-	require.NotNil(t, registry)
-
-	// Registry should be empty but functional
-	assert.NotNil(t, registry)
-}
-
-func TestNewRegistryFromConfig_NilConfig(t *testing.T) {
-	cfg := &arenaconfig.Config{}
-
-	registry, err := NewRegistryFromConfig(cfg)
-	require.NoError(t, err)
-	require.NotNil(t, registry)
-}
-
-func TestNewRegistryFromConfig_SingleServer(t *testing.T) {
-	cfg := &arenaconfig.Config{
-		MCPServers: []config.MCPServerConfig{
-			{
-				Name:    "test-server",
-				Command: "node",
-				Args:    []string{"server.js"},
-				Env:     map[string]string{"NODE_ENV": "test"},
+// TestNewRegistryFromConfig_RegistersEachServer checks which servers end up in
+// the registry. The fields each one carries are pinned by
+// TestNewRegistryFromConfig_CarriesEveryServerField.
+func TestNewRegistryFromConfig_RegistersEachServer(t *testing.T) {
+	tests := []struct {
+		name    string
+		servers []config.MCPServerConfig
+		want    []string
+	}{
+		{name: "nil servers", servers: nil, want: []string{}},
+		{name: "empty servers", servers: []config.MCPServerConfig{}, want: []string{}},
+		{
+			name:    "single server with nil env",
+			servers: []config.MCPServerConfig{{Name: "no-env", Command: "test-cmd", Env: nil}},
+			want:    []string{"no-env"},
+		},
+		{
+			name: "multiple servers",
+			servers: []config.MCPServerConfig{
+				{Name: "memory-server", Command: "npx", Args: []string{"-y", "@modelcontextprotocol/server-memory"}},
+				{Name: "filesystem-server", Command: "npx", Args: []string{"-y", "@modelcontextprotocol/server-filesystem"}},
+				{Name: "remote", URL: "https://mcp.example.com/mcp"},
 			},
+			want: []string{"memory-server", "filesystem-server", "remote"},
 		},
 	}
-
-	registry, err := NewRegistryFromConfig(cfg)
-	require.NoError(t, err)
-	require.NotNil(t, registry)
-
-	// Verify server was registered
-	// Note: We can't easily verify internal state without exposing it,
-	// but we can verify no error occurred during registration
-}
-
-func TestNewRegistryFromConfig_MultipleServers(t *testing.T) {
-	cfg := &arenaconfig.Config{
-		MCPServers: []config.MCPServerConfig{
-			{
-				Name:    "memory-server",
-				Command: "npx",
-				Args:    []string{"-y", "@modelcontextprotocol/server-memory"},
-			},
-			{
-				Name:    "filesystem-server",
-				Command: "npx",
-				Args:    []string{"-y", "@modelcontextprotocol/server-filesystem"},
-			},
-		},
-	}
-
-	registry, err := NewRegistryFromConfig(cfg)
-	require.NoError(t, err)
-	require.NotNil(t, registry)
-}
-
-func TestNewRegistryFromConfig_WithEnvVars(t *testing.T) {
-	cfg := &arenaconfig.Config{
-		MCPServers: []config.MCPServerConfig{
-			{
-				Name:    "env-server",
-				Command: "test-cmd",
-				Args:    []string{"--arg"},
-				Env: map[string]string{
-					"VAR1": "value1",
-					"VAR2": "value2",
-				},
-			},
-		},
-	}
-
-	registry, err := NewRegistryFromConfig(cfg)
-	require.NoError(t, err)
-	require.NotNil(t, registry)
-}
-
-func TestNewRegistryFromConfig_DuplicateServerNames(t *testing.T) {
-	cfg := &arenaconfig.Config{
-		MCPServers: []config.MCPServerConfig{
-			{
-				Name:    "duplicate",
-				Command: "cmd1",
-			},
-			{
-				Name:    "duplicate",
-				Command: "cmd2",
-			},
-		},
-	}
-
-	registry, err := NewRegistryFromConfig(cfg)
-
-	// Should return error for duplicate registration
-	// Note: Actual behavior depends on runtime/mcp.Registry implementation
-	// If it allows duplicates, test should verify last one wins
-	// If it rejects duplicates, test should expect error
-	if err != nil {
-		assert.Error(t, err)
-		assert.Contains(t, err.Error(), "duplicate")
-	} else {
-		// If no error, registry should be created
-		assert.NotNil(t, registry)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			registry, err := NewRegistryFromConfig(&arenaconfig.Config{MCPServers: tt.servers})
+			require.NoError(t, err)
+			assert.ElementsMatch(t, tt.want, registry.ListServers())
+		})
 	}
 }
 
-func TestNewRegistryFromConfig_EmptyServerName(t *testing.T) {
-	cfg := &arenaconfig.Config{
-		MCPServers: []config.MCPServerConfig{
-			{
-				Name:    "",
-				Command: "test-cmd",
-			},
+func TestNewRegistryFromConfig_RejectsUnregistrableServers(t *testing.T) {
+	tests := []struct {
+		name    string
+		servers []config.MCPServerConfig
+		want    string
+	}{
+		{
+			name:    "duplicate name",
+			servers: []config.MCPServerConfig{{Name: "duplicate", Command: "cmd1"}, {Name: "duplicate", Command: "cmd2"}},
+			want:    "failed to register MCP server duplicate: server duplicate already registered",
+		},
+		{
+			name:    "empty name",
+			servers: []config.MCPServerConfig{{Name: "", Command: "test-cmd"}},
+			want:    "server name cannot be empty",
 		},
 	}
-
-	_, err := NewRegistryFromConfig(cfg)
-
-	// Should handle empty name gracefully (either error or accept)
-	// Behavior depends on runtime/mcp.Registry validation
-	_ = err // Don't assert error - depends on implementation
-}
-
-func TestNewRegistryFromConfig_EmptyCommand(t *testing.T) {
-	cfg := &arenaconfig.Config{
-		MCPServers: []config.MCPServerConfig{
-			{
-				Name:    "test",
-				Command: "",
-			},
-		},
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			registry, err := NewRegistryFromConfig(&arenaconfig.Config{MCPServers: tt.servers})
+			assert.ErrorContains(t, err, tt.want)
+			assert.Nil(t, registry)
+		})
 	}
-
-	_, err := NewRegistryFromConfig(cfg)
-
-	// Should handle empty command gracefully
-	_ = err // Don't assert error - depends on implementation
-}
-
-func TestNewRegistryFromConfig_ComplexConfiguration(t *testing.T) {
-	cfg := &arenaconfig.Config{
-		MCPServers: []config.MCPServerConfig{
-			{
-				Name:    "complex-server",
-				Command: "/usr/local/bin/custom-server",
-				Args: []string{
-					"--config",
-					"/path/to/config.json",
-					"--port",
-					"8080",
-					"--verbose",
-				},
-				Env: map[string]string{
-					"LOG_LEVEL":  "debug",
-					"DATA_DIR":   "/var/data",
-					"API_KEY":    "test-key-123",
-					"MAX_MEMORY": "1024",
-				},
-			},
-		},
-	}
-
-	registry, err := NewRegistryFromConfig(cfg)
-	require.NoError(t, err)
-	require.NotNil(t, registry)
-}
-
-func TestNewRegistryFromConfig_NilEnvMap(t *testing.T) {
-	cfg := &arenaconfig.Config{
-		MCPServers: []config.MCPServerConfig{
-			{
-				Name:    "no-env",
-				Command: "test-cmd",
-				Args:    []string{"arg1"},
-				Env:     nil, // Explicitly nil
-			},
-		},
-	}
-
-	registry, err := NewRegistryFromConfig(cfg)
-	require.NoError(t, err)
-	require.NotNil(t, registry)
 }

@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/providers/enable-reasoning.md",
- "commit": "8f9eac27be158741f7a1cd3e34f53e72b896c6ab",
+ "commit": "02ec7c860b978fcce24022d9ccb868d94208c751",
  "claims": [
   {
    "id": 1,
@@ -19,7 +19,7 @@
    "claim": "Message.Reasoning is a sibling of content and is not mixed into the answer, the exports, or the context passed to later turns",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:980"
+    "arena/turnexecutors/pipeline_stages_integration.go:995"
    ]
   },
   {
@@ -39,7 +39,7 @@
    "claim": "Reasoning is configured per provider under spec.additional_config",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:409",
+    "arena/engine/builder_integration.go:410",
     "schemas/v1alpha1/provider.json:160"
    ]
   },
@@ -220,7 +220,7 @@
    "claim": "unsupported_params is a spec field that takes a list of parameter names",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:413",
+    "arena/engine/builder_integration.go:414",
     "schemas/v1alpha1/provider.json:175-180"
    ]
   },
@@ -306,8 +306,8 @@
    "claim": "Reasoning is shown in JSON results",
    "verdict": "true",
    "evidence": [
-    "arena/statestore/store.go:483-491",
-    "arena/turnexecutors/pipeline_stages_integration.go:980"
+    "arena/statestore/store.go:485-493",
+    "arena/turnexecutors/pipeline_stages_integration.go:995"
    ]
   },
   {
@@ -325,7 +325,7 @@
    "verdict": "true",
    "evidence": [
     "arena/tui/app/livefeed.go:63-73",
-    "arena/tui/event_adapter.go:115-117",
+    "arena/tui/event_adapter.go:116-119",
     "arena/tui/panels/conversation_render.go:61-62"
    ]
   },
@@ -340,8 +340,8 @@
    "claim": "The web UI shows a collapsible reasoning disclosure on messages for live runs and historical results, on either side of a tool call",
    "verdict": "true",
    "evidence": [
-    "arena/web/event_adapter.go:575-597",
-    "arena/web/event_adapter.go:651-658",
+    "arena/web/event_adapter.go:582-604",
+    "arena/web/event_adapter.go:658-665",
     "arena/web/frontend/src/lib/atlasAdapter.ts:239-259"
    ]
   },
@@ -351,7 +351,7 @@
    "verdict": "false",
    "evidence": [
     "arena/web/event_adapter.go:439-444",
-    "arena/web/event_adapter.go:624-640",
+    "arena/web/event_adapter.go:631-647",
     "arena/web/frontend/src/components/InteractiveChat.tsx:198-235",
     "arena/web/frontend/src/hooks/useArenaEvents.ts:178-193"
    ]
@@ -377,7 +377,7 @@
    "claim": "The arena save stage stores reasoning on the message",
    "verdict": "true",
    "evidence": [
-    "arena/turnexecutors/pipeline_stages_integration.go:980"
+    "arena/turnexecutors/pipeline_stages_integration.go:995"
    ]
   },
   {
@@ -385,7 +385,7 @@
    "claim": "Run results are rebuilt from the conversation store",
    "verdict": "true",
    "evidence": [
-    "arena/statestore/store.go:1103"
+    "arena/statestore/store.go:1105"
    ]
   },
   {
@@ -393,7 +393,7 @@
    "claim": "Saved reasoning includes opaque provider-native signatures and encrypted blocks kept for intra-turn round trip",
    "verdict": "true",
    "evidence": [
-    "arena/statestore/store.go:483-491"
+    "arena/statestore/store.go:485-493"
    ]
   },
   {
@@ -407,8 +407,8 @@
    "claim": "Opaque reasoning entries are stripped before reaching the browser",
    "verdict": "true",
    "evidence": [
-    "arena/web/event_adapter.go:575-597",
-    "arena/web/event_adapter.go:599-622"
+    "arena/web/event_adapter.go:582-604",
+    "arena/web/event_adapter.go:606-629"
    ]
   },
   {
@@ -458,8 +458,8 @@
    "claim": "A seed is sent only when defaults.seed is set to a non-zero value",
    "verdict": "true",
    "evidence": [
-    "arena/engine/conversation_executor.go:1338-1343",
-    "arena/engine/conversation_executor.go:395",
+    "arena/engine/conversation_executor.go:1345-1350",
+    "arena/engine/conversation_executor.go:396",
     "schemas/v1alpha1/arena.json:921-931",
     "schemas/v1alpha1/provider.json:206-222"
    ]
@@ -493,7 +493,7 @@
    "claim": "unsupported_params is the spec field that withholds a parameter a model refuses",
    "verdict": "true",
    "evidence": [
-    "arena/engine/builder_integration.go:413",
+    "arena/engine/builder_integration.go:414",
     "schemas/v1alpha1/provider.json:175"
    ]
   }

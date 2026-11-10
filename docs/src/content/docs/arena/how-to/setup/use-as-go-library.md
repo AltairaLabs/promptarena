@@ -2,7 +2,7 @@
 title: Use Arena as a Go Library
 description: Build a config in Go, run scenarios with the Arena engine and read the results from the state store.
 verified:
-  commit: 72f35dcda537f9ebff0eaf33808ce728f0c8b3f8
+  commit: 02ec7c860b978fcce24022d9ccb868d94208c751
   sources:
     - arena/arenaconfig/types.go
     - arena/cmd/promptarena/run_interactive.go
@@ -48,7 +48,7 @@ promptConfig := &prompt.Config{
 
 cfg := &arenaconfig.Config{
 	LoadedProviders: map[string]*config.Provider{
-		"openai": {ID: "openai", Type: "openai", Model: "gpt-4o-mini"},
+		"openai": {ID: "openai", Type: "openai", Model: "gpt-5.4-mini"},
 	},
 	LoadedPromptConfigs: map[string]*arenaconfig.PromptConfigData{
 		"assistant": {Config: promptConfig, TaskType: "assistant"},
@@ -154,9 +154,9 @@ Define every provider in `cfg.LoadedProviders` before step 3. Each scenario then
 
 ```go
 cfg.LoadedProviders = map[string]*config.Provider{
-	"openai-gpt4o":     {ID: "openai-gpt4o", Type: "openai", Model: "gpt-4o"},
+	"openai-gpt54":     {ID: "openai-gpt54", Type: "openai", Model: "gpt-5.4"},
 	"anthropic-claude": {ID: "anthropic-claude", Type: "claude", Model: "claude-sonnet-4-6"},
-	"google-gemini":    {ID: "google-gemini", Type: "gemini", Model: "gemini-2.5-flash"},
+	"google-gemini":    {ID: "google-gemini", Type: "gemini", Model: "gemini-3.8-flash"},
 }
 ```
 
@@ -169,7 +169,7 @@ Provider filters match provider IDs exactly, and scenario filters match scenario
 ```go
 plan, err := eng.GenerateRunPlan(
 	nil,                                          // all regions
-	[]string{"openai-gpt4o", "anthropic-claude"}, // only these provider IDs
+	[]string{"openai-gpt54", "anthropic-claude"}, // only these provider IDs
 	[]string{"critical-test-1"},                  // only this scenario
 	nil,                                          // all evals
 )

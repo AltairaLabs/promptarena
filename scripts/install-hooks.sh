@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Install git hooks for PromptKit development
+# Install git hooks for PromptArena development
 # Run this script once after cloning the repository
 #
 
@@ -13,7 +13,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m'
 
 echo -e "${BLUE}════════════════════════════════════════════${NC}"
-echo -e "${BLUE}  PromptKit - Git Hooks Installation${NC}"
+echo -e "${BLUE}  PromptArena - Git Hooks Installation${NC}"
 echo -e "${BLUE}════════════════════════════════════════════${NC}"
 echo ""
 
@@ -24,20 +24,29 @@ REPO_ROOT="$( cd "$SCRIPT_DIR/.." && pwd )"
 echo "Repository root: $REPO_ROOT"
 echo ""
 
-# Check if .git directory exists
-if [ ! -d "$REPO_ROOT/.git" ]; then
-    echo -e "${YELLOW}Warning: .git directory not found${NC}"
+# Hooks live in git's common dir, which a worktree shares with its main clone
+# (in a worktree, .git is a file, not a directory).
+if ! HOOKS_DIR="$(git -C "$REPO_ROOT" rev-parse --path-format=absolute --git-common-dir 2>/dev/null)/hooks"; then
+    echo -e "${YELLOW}Warning: not a git repository${NC}"
     echo "This script should be run from within a git repository"
     exit 1
 fi
+mkdir -p "$HOOKS_DIR"
 
 # Check if pre-commit hook already exists
 HOOK_SOURCE="$SCRIPT_DIR/pre-commit.sh"
-HOOK_DEST="$REPO_ROOT/.git/hooks/pre-commit"
+HOOK_DEST="$HOOKS_DIR/pre-commit"
 
-# Pre-commit hook is optional in this repo (CI covers build/lint/test); install if present.
+# The installed hooks run the checked-in scripts rather than copies of them, so
+# a change to scripts/pre-commit.sh or commit-msg.sh reaches every clone and
+# worktree on its next commit. A copy froze the hook at install time: the weak-assertion step added
+# to the script never ran in clones whose hooks predated it.
 if [ -f "$HOOK_SOURCE" ]; then
-    cp "$HOOK_SOURCE" "$HOOK_DEST"
+    cat > "$HOOK_DEST" <<'HOOK'
+#!/usr/bin/env bash
+# Installed by scripts/install-hooks.sh. Runs this checkout's own script.
+exec "$(git rev-parse --show-toplevel)/scripts/pre-commit.sh" "$@"
+HOOK
     chmod +x "$HOOK_DEST"
     echo -e "${GREEN}✓${NC} Pre-commit hook installed"
 else
@@ -46,7 +55,7 @@ fi
 
 # Install commit-msg hook (enforces DCO sign-off — see scripts/commit-msg.sh)
 MSG_HOOK_SOURCE="$SCRIPT_DIR/commit-msg.sh"
-MSG_HOOK_DEST="$REPO_ROOT/.git/hooks/commit-msg"
+MSG_HOOK_DEST="$HOOKS_DIR/commit-msg"
 
 if [ ! -f "$MSG_HOOK_SOURCE" ]; then
     echo -e "${YELLOW}Error: commit-msg hook source not found${NC}"
@@ -54,7 +63,11 @@ if [ ! -f "$MSG_HOOK_SOURCE" ]; then
     exit 1
 fi
 
-cp "$MSG_HOOK_SOURCE" "$MSG_HOOK_DEST"
+cat > "$MSG_HOOK_DEST" <<'HOOK'
+#!/usr/bin/env bash
+# Installed by scripts/install-hooks.sh. Runs this checkout's own script.
+exec "$(git rev-parse --show-toplevel)/scripts/commit-msg.sh" "$@"
+HOOK
 chmod +x "$MSG_HOOK_DEST"
 echo -e "${GREEN}✓${NC} Commit-msg hook installed (DCO sign-off check)"
 

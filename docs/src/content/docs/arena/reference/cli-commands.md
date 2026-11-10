@@ -2,7 +2,7 @@
 title: CLI Commands
 description: Every promptarena command with its flags, defaults and examples.
 verified:
-  commit: d12d5b388a693c119b19bf05eabade5b717cb10d
+  commit: 02ec7c860b978fcce24022d9ccb868d94208c751
   sources:
     - arena/adapters/adapter.go
     - arena/adapters/arena_output.go
@@ -338,7 +338,7 @@ Generate a consolidated mock file from the latest runs:
 promptarena mocks generate \
   --input out \
   --scenario hardware-faults \
-  --provider openai-gpt4o \
+  --provider openai-gpt54 \
   --output providers/mock-generated.yaml \
   --merge
 ```
@@ -1114,10 +1114,10 @@ The command displays styled boxes with:
 
 ╭──────────────────────────────────────────────────────────────────────────────╮
 │ [default]                                                                    │
-│   openai-gpt4o: gpt-4o (temp: 0.70, max: 1000)                               │
+│   openai-gpt54: gpt-5.4 (temp: 0.70, max: 1000)                               │
 │                                                                              │
 │ [judge]                                                                      │
-│   judge-provider: gpt-4o-mini (temp: 0.00, max: 500)                         │
+│   judge-provider: gpt-5.4-mini (temp: 0.00, max: 500)                         │
 │                                                                              │
 │ [selfplay]                                                                   │
 │   mock-selfplay: mock-model (temp: 0.80, max: 1000)                          │
@@ -1132,8 +1132,8 @@ Personas:
 ╰──────────────────────────────────────────────────────────────────────────────╯
 Roles:
 ╭──────────────────────────────────────────────────────────────────────────────╮
-│ attacker (red-team-attacker) → openai-gpt4o                                  │
-│ operator (plant-operator) → openai-gpt4o                                     │
+│ attacker (red-team-attacker) → openai-gpt54                                  │
+│ operator (plant-operator) → openai-gpt54                                     │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 
   Validation
