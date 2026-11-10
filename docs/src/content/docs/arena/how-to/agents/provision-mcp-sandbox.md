@@ -4,7 +4,7 @@ description: Open an MCP server (for example a containerised codegen sandbox) on
 sidebar:
   order: 13
 verified:
-  commit: d12d5b388a693c119b19bf05eabade5b717cb10d
+  commit: 02ec7c860b978fcce24022d9ccb868d94208c751
   sources:
     - arena/arenaconfig/loader.go
     - arena/arenaconfig/mcp_servers.go
@@ -12,6 +12,8 @@ verified:
     - arena/arenaconfig/validator.go
     - arena/cmd/promptarena/run.go
     - arena/engine/builder_integration.go
+    - arena/engine/conversation_executor.go
+    - arena/engine/duplex_executor_results_integration.go
     - arena/engine/engine.go
     - arena/engine/execution.go
     - arena/engine/execution_mcpsource.go
@@ -21,6 +23,7 @@ verified:
     - arena/mcpsource/docker/cli_interactive.go
     - arena/mcpsource/docker/register/register.go
     - arena/mcpsource/docker/source.go
+    - arena/mcpsource/mounts.go
     - arena/mcpsource/registry.go
     - arena/mcpsource/source.go
     - arena/results/markdown/markdown_repository.go
@@ -177,7 +180,7 @@ source_args:
 | `target` | required | An absolute path in the container. Each target can appear once. |
 | `readonly` | `true` | For `mode: bind`. `false` lets the container write through to your files. |
 | `mode` | `bind` | `bind` mounts the files live. `copy` copies them in with `docker cp`, owned by the container's user, so the agent can edit them without changing your files. |
-| `when` | `start` | `start` puts the files in when the container starts. `eval` copies them in after the agent's last turn and before the session's evals run. It needs `mode: copy` and `scope: session`. |
+| `when` | `start` | `start` puts the files in when the container starts. `eval` copies them in after the agent's last turn and before conversation-level assertions and pack evals run. It needs `mode: copy` and `scope: session`. |
 
 `source` must exist and stay inside the kit directory, including after following symlinks. `promptarena validate` checks every mount, once per scenario when `source` uses a scenario variable, so a missing fixture fails validation instead of a run. A mount whose target a skill mount also uses (see step 5) is an error.
 

@@ -2,7 +2,7 @@
 title: Test Scenario Format
 description: The structure of a Scenario file, its main spec and turn fields, and examples of multimodal, workflow and self-play turns.
 verified:
-  commit: 41e16490ec749312f63e711caf8cbd08bad51c64
+  commit: 02ec7c860b978fcce24022d9ccb868d94208c751
   sources:
     - arena/arenaconfig/ignored_fields.go
     - arena/arenaconfig/loader.go

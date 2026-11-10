@@ -4,7 +4,7 @@ description: The three ways to drive an Arena run (interactive terminal, local w
 sidebar:
   order: 5
 verified:
-  commit: d12d5b388a693c119b19bf05eabade5b717cb10d
+  commit: 02ec7c860b978fcce24022d9ccb868d94208c751
   sources:
     - .github/actions/promptarena-action/action.yml
     - .github/actions/promptarena-action/src/runner.ts

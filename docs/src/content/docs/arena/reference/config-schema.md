@@ -1,7 +1,7 @@
 ---
 title: Configuration Schema
 verified:
-  commit: d12d5b388a693c119b19bf05eabade5b717cb10d
+  commit: 02ec7c860b978fcce24022d9ccb868d94208c751
   sources:
     - arena/adapters/arena_output.go
     - arena/adapters/registry.go
@@ -56,6 +56,7 @@ verified:
     - arena/mcp/config.go
     - arena/mcpsource/docker/register/register.go
     - arena/mcpsource/docker/source.go
+    - arena/mcpsource/mounts.go
     - arena/results/csv/csv_repository.go
     - arena/results/json/json_repository.go
     - arena/results/junit/junit_repository.go
@@ -443,6 +444,16 @@ for the full guide.
   `repo`, `branch`, `env`, `mounts`, `ports`, `network`, `cpus`,
   `memory`. Templated against scenario
   variables (`{{scenario.<key>}}`) before `Open()`.
+- `source_args.mounts` (list, optional): Kit files and folders to put in
+  the container. Each entry has `source` and `target`, and optionally
+  `readonly` (default `true`), `mode` (`bind`, the default, or `copy`) and
+  `when` (`start`, the default, or `eval`). A relative `source` resolves
+  against the directory holding the arena config and must exist inside it.
+  `when: eval` needs `mode: copy` and `scope: session`. A mount that uses a
+  `/skills/<name>` target that a skill mount also needs fails the open.
+  `promptarena validate` checks every mount, once per scenario when `source`
+  uses a scenario variable. See
+  [Put kit files in the sandbox](/arena/how-to/agents/provision-mcp-sandbox/#put-kit-files-in-the-sandbox).
 
 ```yaml
 mcp_servers:
@@ -564,7 +575,8 @@ of 0. A crash, a timeout or output that isn't valid JSON counts as an
 error too. Write logs to stderr.
 
 **Lifecycle.** Session evals run once per session, after the agent's last
-turn, while the session's sandbox container is still running. They run
+turn, while the session's sandbox container is still running. Mounts with
+`when: eval` are copied in first, before the evals run. They run
 whether the run ended normally or was cut off by `tool_policy.max_rounds`,
 `tool_policy.max_cost_usd` or `defaults.run_timeout`; after a timeout they
 run on a fresh context, bounded by their own `timeout_ms`. The `session_end`
@@ -1266,7 +1278,7 @@ spec:
 
 #### `capabilities`
 
-A list of free strings. The list is matched against a scenario's `required_capabilities`: a scenario runs against a provider only when the provider lists every capability the scenario requires.
+A list of free strings. The list is matched against a scenario's `required_capabilities`: a scenario runs against a provider only when the provider lists every capability the scenario requires. When no provider lists them all, the scenario does not run.
 
 Four values also switch behaviour:
 

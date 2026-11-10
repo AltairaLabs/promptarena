@@ -4,7 +4,7 @@ description: Run Arena's local web interface for live run monitoring, a results 
 sidebar:
   order: 20
 verified:
-  commit: d12d5b388a693c119b19bf05eabade5b717cb10d
+  commit: 02ec7c860b978fcce24022d9ccb868d94208c751
   sources:
     - arena/arenaconfig/mock_config_check.go
     - arena/cmd/promptarena/chat.go

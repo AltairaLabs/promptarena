@@ -2,7 +2,7 @@
 title: Configure LLM Providers
 description: Add OpenAI, Anthropic, Gemini, Azure, Ollama, vLLM and gateway providers to an arena, set credentials, and select providers per run.
 verified:
-  commit: d12d5b388a693c119b19bf05eabade5b717cb10d
+  commit: 02ec7c860b978fcce24022d9ccb868d94208c751
   sources:
     - arena/arenaconfig/ignored_fields.go
     - arena/arenaconfig/loader.go
@@ -19,8 +19,8 @@ verified:
     - arena/engine/execution.go
     - arena/inspect/render_providers.go
     - arena/templates/builtin/quick-start/template.yaml
-    - examples/customer-support/providers/openai-gpt54-mini.provider.yaml
-    - examples/mcp-chatbot/providers/openai-gpt54-mini.provider.yaml
+    - examples/customer-support/providers/openai-gpt4o-mini.provider.yaml
+    - examples/mcp-chatbot/providers/openai-gpt4o-mini.provider.yaml
     - examples/ollama-local/docker-compose.yaml
     - examples/ollama-local/providers/ollama-llama.provider.yaml
     - schemas/v1alpha1/arena.json
@@ -62,7 +62,7 @@ spec:
 
 A provider file holds one YAML document: a file with a second document after a `---` separator fails to load. Put each provider in its own file. The provider id is `spec.id`, or `metadata.name` when `spec.id` is absent.
 
-`capabilities` is a list of free strings. A scenario that sets `required_capabilities` runs only against providers that list all of them. See [capabilities](/arena/reference/config-schema/#capabilities) for the values and [Write Scenarios](/arena/how-to/scenarios/write-scenarios/) for the scenario side.
+`capabilities` is a list of free strings. A scenario that sets `required_capabilities` runs only against providers that list all of them, and is skipped when none does. The filter applies to the default and `provider_group` selection, not to a scenario that lists `spec.providers`. See [capabilities](/arena/reference/config-schema/#capabilities) for the values and [Write Scenarios](/arena/how-to/scenarios/write-scenarios/) for the scenario side.
 
 Declare fewer capabilities for limited models:
 

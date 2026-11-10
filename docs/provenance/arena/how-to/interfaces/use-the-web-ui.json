@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/interfaces/use-the-web-ui.md",
- "commit": "d12d5b388a693c119b19bf05eabade5b717cb10d",
+ "commit": "02ec7c860b978fcce24022d9ccb868d94208c751",
  "claims": [
   {
    "id": 1,
@@ -506,7 +506,7 @@
    "evidence": [
     "arena/cmd/promptarena/serve_interactive.go:138-139",
     "arena/cmd/promptarena/serve_interactive.go:178-184",
-    "arena/engine/engine.go:742-793"
+    "arena/engine/engine.go:753-809"
    ]
   },
   {
@@ -515,7 +515,7 @@
    "verdict": "false",
    "evidence": [
     "arena/engine/engine.go:426",
-    "arena/engine/engine.go:759-789",
+    "arena/engine/engine.go:774-805",
     "arena/selfplay/registry.go:318-336"
    ]
   },
@@ -525,7 +525,7 @@
    "verdict": "true",
    "evidence": [
     "arena/cmd/promptarena/serve_interactive.go:140-141",
-    "arena/engine/engine.go:746-753"
+    "arena/engine/engine.go:758-766"
    ]
   },
   {
@@ -541,7 +541,7 @@
    "claim": "In mock mode runs execute end to end with tools still running for real",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:767"
+    "arena/engine/engine.go:782"
    ]
   },
   {
@@ -551,7 +551,7 @@
    "evidence": [
     "arena/cmd/promptarena/chat.go:13-14",
     "arena/cmd/promptarena/serve_interactive.go:178-184",
-    "arena/engine/engine.go:759-789"
+    "arena/engine/engine.go:774-805"
    ]
   },
   {
@@ -669,7 +669,7 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/mock_config_check.go:43-49",
-    "arena/engine/engine.go:746-751"
+    "arena/engine/engine.go:759-763"
    ]
   }
  ]

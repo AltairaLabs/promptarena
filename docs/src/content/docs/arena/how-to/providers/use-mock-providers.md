@@ -2,7 +2,7 @@
 title: Use Mock Providers
 description: "Run scenarios against canned responses with --mock-provider, --mock-config or a type: mock provider, with no API calls or cost."
 verified:
-  commit: f64f15c6465c659e651a75c9cd5f9ee0bb963280
+  commit: 02ec7c860b978fcce24022d9ccb868d94208c751
   sources:
     - arena/arenaconfig/loader.go
     - arena/arenaconfig/mock_config_check.go
@@ -13,6 +13,7 @@ verified:
     - arena/engine/builder_integration.go
     - arena/engine/conversation_executor.go
     - arena/engine/engine.go
+    - arena/engine/mock_default_audio.go
     - arena/selfplay/registry.go
     - arena/stages/mock_scenario_context.go
     - arena/turnexecutors/pipeline_stages_integration.go
@@ -39,7 +40,16 @@ Replace the configured LLM and self-play role providers with mocks (TTS and STT 
 promptarena run --mock-provider
 ```
 
-Each provider keeps its ID and model but runs as a mock. That includes the providers behind self-play roles, so a self-play turn makes no API call either. Responses resolve in this order: the `--mock-config` file if you pass one, then the provider's own `additional_config.mock_config`, then a generic reply ("Mock response from provider"). A provider that already declares `mock_config` keeps its declared responses.
+Each provider keeps its ID and model but runs as a mock. That includes the providers behind self-play roles, so a self-play turn makes no API call either. Responses resolve in this order:
+
+1. the `--mock-config` file, if you pass one;
+2. the provider's own `additional_config.mock_config`, so a provider that already declares one keeps its responses;
+3. the shared `mock_config`: when every provider that declares one names the same file, the providers that declare none use it too. This lets a kit script a mock provider once and have the stand-ins for its real providers answer from the same file;
+4. a generic reply ("Mock response from provider").
+
+If providers declare two different `mock_config` files, step 3 does not apply and providers without their own file get the generic reply.
+
+A replacement for a duplex (realtime voice) provider answers each turn automatically. `additional_config.auto_respond` defaults to on, and only an explicit `auto_respond: false` turns it off. The replacement also carries over the provider's `response_text`, `interrupt_on_turn` and `close_after_turns` settings when it declares them.
 
 ## Mock Configuration File
 

@@ -2,7 +2,7 @@
 title: Write Test Scenarios
 description: Create a scenario file, add turns and assertions, and choose which providers it runs against.
 verified:
-  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
+  commit: 02ec7c860b978fcce24022d9ccb868d94208c751
   sources:
     - arena/arenaconfig/types.go
     - arena/assertions/types.go
@@ -117,7 +117,7 @@ Write a scenario: the scripted conversation Arena sends to a provider, with the 
        message: "Should include dollar amount"
    ```
 
-6. If the scenario needs a feature only some providers have, list it in `required_capabilities`. The scenario then runs only against providers whose `capabilities` list contains every entry:
+6. If the scenario needs a feature only some providers have, list it in `required_capabilities`. The scenario then runs only against providers whose `capabilities` list contains every entry. If no provider qualifies, the scenario does not run, and the `--provider` filter does not bring one back:
 
    ```yaml
    spec:

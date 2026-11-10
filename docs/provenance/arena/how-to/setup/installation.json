@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/how-to/setup/installation.md",
- "commit": "5a8cffd8daf00b49cbbb3596ce63750db56c3704",
+ "commit": "02ec7c860b978fcce24022d9ccb868d94208c751",
  "claims": [
   {
    "id": 1,
@@ -139,7 +139,7 @@
    "claim": "go install needs no C compiler or audio headers: oto and PortAudio load their system audio libraries at run time",
    "verdict": "true",
    "evidence": [
-    "arena/audio/otobackend/otobackend_interactive.go:26",
+    "arena/audio/otobackend/otobackend_interactive.go:81",
     "arena/voice/session_audioio_interactive.go:16"
    ]
   },
@@ -457,6 +457,15 @@
    "evidence": [
     "arena/cmd/promptarena/init.go:72",
     "arena/templates/generator.go:230"
+   ]
+  },
+  {
+   "id": "audio-backend",
+   "claim": "The promptarena command links the oto speaker backend itself; arena/engine does not import it",
+   "verdict": "true",
+   "evidence": [
+    "arena/audio/otobackend/otobackend_interactive.go:5",
+    "arena/cmd/promptarena/audio_backend.go"
    ]
   },
   {

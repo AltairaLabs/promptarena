@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/packc/explanation/compilation.md",
- "commit": "72f35dcda537f9ebff0eaf33808ce728f0c8b3f8",
+ "commit": "02ec7c860b978fcce24022d9ccb868d94208c751",
  "claims": [
   {
    "id": 1,
@@ -106,15 +106,14 @@
   },
   {
    "id": 13,
-   "claim": "Each static fragment is read from its file and its content written to the pack's fragments under its name; a relative path resolves against the referencing prompt config's directory (the arena config's for an inline prompt_specs entry), then the working directory; a required fragment that cannot be read fails the compile stage with an error naming the file; an optional one is left out with a 'fragments:' warning; a reference with no path cannot be loaded; a {{ name or path is written as {{name}}",
+   "claim": "Each static fragment is read from its file and written to the pack's fragments under its name; a relative path resolves against the prompt config's directory then the working directory and may not climb past its own leading ../ segments; a required fragment that cannot be read fails the compile with an error naming the file; an optional one is written as an empty string with a 'fragments:' warning; a reference with no path cannot be loaded; a {{ name or path is written as {{name}}",
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/loader.go:188",
     "arena/arenaconfig/loader.go:621",
-    "arena/promptrepo/promptrepo.go:45-51",
-    "arena/promptrepo/promptrepo.go:56-62",
-    "arena/promptrepo/promptrepo.go:66-83",
-    "arena/promptrepo/promptrepo.go:95-136",
+    "arena/promptrepo/promptrepo.go:124-145",
+    "arena/promptrepo/promptrepo.go:39-51",
+    "arena/promptrepo/promptrepo.go:85-102",
     "packc/compiler/compiler.go:128-132",
     "packc/compiler/fragments_test.go:49-121",
     "packc/compiler/helpers_integration.go:29-48",

@@ -4,7 +4,7 @@ description: Connect stdio and HTTP MCP servers to an Arena config, filter their
 sidebar:
   order: 12
 verified:
-  commit: 8f9eac27be158741f7a1cd3e34f53e72b896c6ab
+  commit: 02ec7c860b978fcce24022d9ccb868d94208c751
   sources:
     - arena/arenaconfig/loader.go
     - arena/arenaconfig/mcp_servers.go

@@ -4,7 +4,7 @@ description: What a PromptPack .pack.json file contains, how its workflow block 
 sidebar:
   order: 1
 verified:
-  commit: 72f35dcda537f9ebff0eaf33808ce728f0c8b3f8
+  commit: 02ec7c860b978fcce24022d9ccb868d94208c751
   sources:
     - arena/arenaconfig/loader.go
     - arena/promptrepo/promptrepo.go

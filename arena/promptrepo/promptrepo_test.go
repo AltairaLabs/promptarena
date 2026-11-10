@@ -87,7 +87,7 @@ func TestLoadFragments(t *testing.T) {
 	warnings, err := r.LoadFragments(prompt.NewRegistryWithRepository(r))
 	require.NoError(t, err)
 	require.Len(t, warnings, 1)
-	assert.Contains(t, warnings[0], `optional fragment "extra" was not loaded`)
+	assert.Contains(t, warnings[0], `optional fragment "extra" was not loaded and renders empty`)
 
 	require.NoError(t, r.Add(promptWith("b",
 		prompt.FragmentRef{Name: "gone", Path: "gone.yaml", Required: true},

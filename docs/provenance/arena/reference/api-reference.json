@@ -1,6 +1,6 @@
 {
  "page": "docs/src/content/docs/arena/reference/api-reference.md",
- "commit": "72f35dcda537f9ebff0eaf33808ce728f0c8b3f8",
+ "commit": "02ec7c860b978fcce24022d9ccb868d94208c751",
  "claims": [
   {
    "id": 1,
@@ -72,7 +72,7 @@
     "arena/engine/builder_integration.go:146",
     "arena/engine/builder_integration.go:184",
     "arena/engine/engine.go:316",
-    "arena/engine/engine.go:460"
+    "arena/engine/engine.go:461"
    ]
   },
   {
@@ -125,7 +125,7 @@
    "claim": "calling SetEventBus forwards the bus to the evals and eval.completed reach subscribers",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:524"
+    "arena/engine/engine.go:525"
    ]
   },
   {
@@ -205,7 +205,7 @@
    "verdict": "true",
    "evidence": [
     "arena/engine/engine.go:286",
-    "arena/engine/engine.go:459"
+    "arena/engine/engine.go:460"
    ]
   },
   {
@@ -239,7 +239,7 @@
    "claim": "func (e *Engine) ExecuteRuns(ctx context.Context, plan *RunPlan, concurrency int) ([]string, error)",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:912"
+    "arena/engine/engine.go:962"
    ]
   },
   {
@@ -247,7 +247,7 @@
    "claim": "ExecuteRuns executes all runs in the plan concurrently with max concurrency",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:940"
+    "arena/engine/engine.go:990"
    ]
   },
   {
@@ -255,9 +255,9 @@
    "claim": "returned run IDs are in the same order as plan combinations",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:910",
-    "arena/engine/engine.go:930",
-    "arena/engine/engine.go:932"
+    "arena/engine/engine.go:960",
+    "arena/engine/engine.go:980",
+    "arena/engine/engine.go:982"
    ]
   },
   {
@@ -265,7 +265,7 @@
    "claim": "error returned when execution setup fails",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:957"
+    "arena/engine/engine.go:1007"
    ]
   },
   {
@@ -273,7 +273,7 @@
    "claim": "example ExecuteRuns(ctx, plan, 4) compiles",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:912"
+    "arena/engine/engine.go:962"
    ]
   },
   {
@@ -281,7 +281,7 @@
    "claim": "func (e *Engine) GetStateStore() statestore.Store",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:1013"
+    "arena/engine/engine.go:1063"
    ]
   },
   {
@@ -289,7 +289,7 @@
    "claim": "eng.GetStateStore().(*statestore.ArenaStateStore) type assertion compiles",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:1013",
+    "arena/engine/engine.go:1063",
     "arena/statestore/store.go:132"
    ]
   },
@@ -298,7 +298,7 @@
    "claim": "func (e *Engine) Close() error shuts down engine and cleans resources",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:459"
+    "arena/engine/engine.go:460"
    ]
   },
   {
@@ -306,7 +306,7 @@
    "claim": "func (e *Engine) EnableMockProviderMode(mockConfigPath string) error",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:742"
+    "arena/engine/engine.go:753"
    ]
   },
   {
@@ -314,9 +314,9 @@
    "claim": "EnableMockProviderMode replaces all providers, including the providers behind self-play roles, with mock providers; TTS and STT providers are not swapped",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:759",
-    "arena/engine/engine.go:786",
-    "arena/engine/engine.go:788",
+    "arena/engine/engine.go:774",
+    "arena/engine/engine.go:802",
+    "arena/engine/engine.go:804",
     "arena/selfplay/registry.go:324",
     "arena/selfplay/registry.go:47"
    ]
@@ -326,9 +326,10 @@
    "claim": "EnableMockProviderMode with an empty mockConfigPath keeps each provider's own mock_config, and a provider without one gets default responses",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:746",
-    "arena/engine/engine.go:763",
-    "arena/engine/engine.go:810"
+    "arena/engine/engine.go:768",
+    "arena/engine/engine.go:778",
+    "arena/engine/engine.go:821",
+    "arena/engine/engine.go:840"
    ]
   },
   {
@@ -336,8 +337,9 @@
    "claim": "returns error if mock configuration is invalid",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:748",
-    "arena/engine/engine.go:750"
+    "arena/engine/engine.go:761",
+    "arena/engine/engine.go:762",
+    "arena/engine/engine.go:830"
    ]
   },
   {
@@ -345,7 +347,7 @@
    "claim": "func (e *Engine) EnableSessionRecording(recordingDir string) error",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:590"
+    "arena/engine/engine.go:591"
    ]
   },
   {
@@ -353,8 +355,8 @@
    "claim": "enables session recording for all runs",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:590",
-    "arena/engine/engine.go:607"
+    "arena/engine/engine.go:591",
+    "arena/engine/engine.go:608"
    ]
   },
   {
@@ -362,8 +364,8 @@
    "claim": "returns error if directory cannot be created",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:591",
-    "arena/engine/engine.go:593"
+    "arena/engine/engine.go:592",
+    "arena/engine/engine.go:594"
    ]
   },
   {
@@ -426,7 +428,7 @@
    "claim": "arenaconfig.Config has LoadedProviders map[string]*Provider",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:221"
+    "arena/arenaconfig/types.go:222"
    ]
   },
   {
@@ -434,7 +436,7 @@
    "claim": "Config.LoadedScenarios map[string]*Scenario",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:228"
+    "arena/arenaconfig/types.go:229"
    ]
   },
   {
@@ -442,8 +444,8 @@
    "claim": "Config.LoadedPromptConfigs map[string]*PromptConfigData",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:220",
-    "arena/arenaconfig/types.go:380"
+    "arena/arenaconfig/types.go:221",
+    "arena/arenaconfig/types.go:381"
    ]
   },
   {
@@ -451,7 +453,7 @@
    "claim": "Config.Defaults Defaults",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:180"
+    "arena/arenaconfig/types.go:181"
    ]
   },
   {
@@ -459,7 +461,7 @@
    "claim": "type Provider struct in arenaconfig with ID, Type, Model",
    "verdict": "false",
    "evidence": [
-    "arena/arenaconfig/types.go:221"
+    "arena/arenaconfig/types.go:222"
    ]
   },
   {
@@ -473,10 +475,10 @@
    "claim": "type Scenario struct with ID, TaskType, Description string and Turns []TurnDefinition",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:692",
     "arena/arenaconfig/types.go:693",
-    "arena/arenaconfig/types.go:695",
-    "arena/arenaconfig/types.go:701"
+    "arena/arenaconfig/types.go:694",
+    "arena/arenaconfig/types.go:696",
+    "arena/arenaconfig/types.go:702"
    ]
   },
   {
@@ -484,11 +486,11 @@
    "claim": "type TurnDefinition struct with Role, Content, Persona string, Turns, MaxTurns int",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1147",
     "arena/arenaconfig/types.go:1148",
-    "arena/arenaconfig/types.go:1155",
-    "arena/arenaconfig/types.go:1157",
-    "arena/arenaconfig/types.go:1159"
+    "arena/arenaconfig/types.go:1149",
+    "arena/arenaconfig/types.go:1156",
+    "arena/arenaconfig/types.go:1158",
+    "arena/arenaconfig/types.go:1160"
    ]
   },
   {
@@ -496,7 +498,7 @@
    "claim": "TurnDefinition.Role is \"user\" or a self-play role ID from spec.self_play.roles (e.g. gemini-user); there is no assistant role because the assistant's reply is never scripted",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1147"
+    "arena/arenaconfig/types.go:1148"
    ]
   },
   {
@@ -504,8 +506,8 @@
    "claim": "Turns sets minimum exchanges for self-play and MaxTurns the upper bound",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1156",
-    "arena/arenaconfig/types.go:1159"
+    "arena/arenaconfig/types.go:1157",
+    "arena/arenaconfig/types.go:1160"
    ]
   },
   {
@@ -513,8 +515,8 @@
    "claim": "If MaxTurns is absent exactly Turns exchanges are executed",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:1156",
-    "arena/arenaconfig/types.go:1158"
+    "arena/arenaconfig/types.go:1157",
+    "arena/arenaconfig/types.go:1159"
    ]
   },
   {
@@ -522,10 +524,10 @@
    "claim": "type Defaults struct with Temperature float32, MaxTokens int, Output OutputConfig",
    "verdict": "true",
    "evidence": [
-    "arena/arenaconfig/types.go:466",
     "arena/arenaconfig/types.go:467",
     "arena/arenaconfig/types.go:468",
-    "arena/arenaconfig/types.go:473"
+    "arena/arenaconfig/types.go:469",
+    "arena/arenaconfig/types.go:474"
    ]
   },
   {
@@ -854,7 +856,7 @@
    "claim": "store := eng.GetStateStore().(*statestore.ArenaStateStore); store.GetRunResult(ctx, runID)",
    "verdict": "false",
    "evidence": [
-    "arena/engine/engine.go:1013",
+    "arena/engine/engine.go:1063",
     "arena/statestore/metadata.go:43"
    ]
   },
@@ -869,9 +871,9 @@
    "claim": "Engine.Close closes the provider, MCP and self-play registries the engine was built with, so components from BuildEngineComponents cannot be shared between two engines",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:471",
-    "arena/engine/engine.go:475",
-    "arena/engine/engine.go:479"
+    "arena/engine/engine.go:472",
+    "arena/engine/engine.go:476",
+    "arena/engine/engine.go:480"
    ]
   },
   {
@@ -879,8 +881,8 @@
    "claim": "EnableMockProviderMode decodes the mock config file strictly, so a misspelled key returns an error naming it and the valid keys",
    "verdict": "true",
    "evidence": [
-    "arena/engine/engine.go:747",
-    "arena/engine/engine.go:748"
+    "arena/engine/engine.go:759",
+    "arena/engine/engine.go:760"
    ]
   },
   {
@@ -889,8 +891,8 @@
    "verdict": "true",
    "evidence": [
     "arena/arenaconfig/deprecated.go:15",
-    "arena/arenaconfig/types.go:136",
-    "arena/arenaconfig/types.go:141"
+    "arena/arenaconfig/types.go:137",
+    "arena/arenaconfig/types.go:142"
    ]
   },
   {
