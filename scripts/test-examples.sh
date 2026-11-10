@@ -21,13 +21,8 @@ export PROMPTKIT_SCHEMA_SOURCE=local
 # longer declares passes the schema and fails every run (capability-matrix's
 # combination scenarios kept naming openai-gpt41-mini after it was removed).
 
-# Configs that only get the schema check. codegen-eval loads
-# packs/codegen-agent.yaml, which the root .gitignore's packs/ rule kept from
-# ever being committed.
-SCHEMA_ONLY=(
-  examples/codegen-eval/sonnet-baseline.arena.yaml
-  examples/codegen-eval/sonnet-disciplined.arena.yaml
-)
+# Configs that only get the schema check. Empty, and meant to stay that way.
+SCHEMA_ONLY=()
 
 echo "Validating example configs against the in-repo schemas…"
 failed=0
@@ -35,12 +30,12 @@ total=0
 while IFS= read -r cfg; do
   total=$((total + 1))
   flags=()
-  for s in "${SCHEMA_ONLY[@]}"; do
+  for s in ${SCHEMA_ONLY[@]+"${SCHEMA_ONLY[@]}"}; do
     [ "$cfg" = "$s" ] && flags=(--schema-only)
   done
-  if ! "$BIN" validate "$cfg" "${flags[@]}" </dev/null >/dev/null 2>&1; then
+  if ! "$BIN" validate "$cfg" ${flags[@]+"${flags[@]}"} </dev/null >/dev/null 2>&1; then
     echo "  ✗ $cfg failed validation"
-    "$BIN" validate "$cfg" "${flags[@]}" </dev/null 2>&1 | grep -iE 'error|❌|  - ' | head -5 || true
+    "$BIN" validate "$cfg" ${flags[@]+"${flags[@]}"} </dev/null 2>&1 | grep -iE 'error|❌|  - ' | head -5 || true
     failed=$((failed + 1))
   fi
 done < <(find examples -maxdepth 2 \( -name 'config.arena.yaml' -o -name '*.arena.yaml' -o -name 'arena.yaml' \) -not -path '*/out/*' | sort)

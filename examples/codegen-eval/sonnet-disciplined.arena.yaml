@@ -10,7 +10,7 @@ metadata:
 spec:
   prompt_configs:
     - id: codegen-agent
-      file: packs/codegen-agent.yaml
+      file: prompts/codegen-agent.yaml
 
   providers:
     - file: providers/claude-sonnet.provider.yaml
@@ -32,14 +32,12 @@ spec:
           DEV_MODE: "1"
 
   skills:
-    - name: codegen-disciplined
-      path: skills/codegen-disciplined
+    - path: skills/codegen-disciplined
       preload: true
-    # Host-only metric skill — mounted into the sandbox so the
-    # diff_stats.sh script is reachable from session-level evals,
-    # but not surfaced to the agent.
-    - name: codegen-metrics
-      path: skills/codegen-metrics
+    # Metric skill — mounted into the sandbox so diff_stats.sh is
+    # reachable from session-level evals. Not preloaded; as in the
+    # baseline, the agent can still activate it.
+    - path: skills/codegen-metrics
       preload: false
 
   # Same soft-metric eval as the baseline — see baseline config for
