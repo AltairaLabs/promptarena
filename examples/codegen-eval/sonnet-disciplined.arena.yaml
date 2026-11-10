@@ -30,15 +30,18 @@ spec:
         image: ghcr.io/altairalabs/codegen-sandbox:latest
         env:
           DEV_MODE: "1"
+        # The metric script is copied in only after the agent's last turn,
+        # just before the diff_stats eval runs, so the agent never sees it.
+        mounts:
+          - source: eval-scripts
+            target: /eval/scripts
+            mode: copy
+            when: eval
 
+  # The one difference from the baseline: the skill under test.
   skills:
     - path: skills/codegen-disciplined
       preload: true
-    # Metric skill — mounted into the sandbox so diff_stats.sh is
-    # reachable from session-level evals. Not preloaded; as in the
-    # baseline, the agent can still activate it.
-    - path: skills/codegen-metrics
-      preload: false
 
   # Same soft-metric eval as the baseline — see baseline config for
   # the rationale. Both bundles produce the metric so per-scenario
@@ -51,7 +54,7 @@ spec:
       params:
         tool: Bash
         args:
-          command: "bash /skills/codegen-metrics/scripts/diff_stats.sh"
+          command: "bash /eval/scripts/diff_stats.sh"
           description: "Capture diff_stats soft-metric"
         timeout_seconds: 10
 

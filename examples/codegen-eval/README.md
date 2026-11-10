@@ -29,9 +29,10 @@ examples/codegen-eval/
 │   └── codegen-agent.yaml           Shared prompt + tool palette
 ├── providers/
 │   └── claude-sonnet.provider.yaml  claude-sonnet-4-6
-└── skills/
-    ├── codegen-disciplined/         Read-before-Edit, verify-before-done
-    └── codegen-metrics/             Captures diff size per session (not preloaded)
+├── skills/
+│   └── codegen-disciplined/         Read-before-Edit, verify-before-done
+└── eval-scripts/
+    └── diff_stats.sh                Diff size per session, for the diff_stats eval
 ```
 
 Each scenario carries `difficulty` and `category` labels, which is what makes the
@@ -109,7 +110,10 @@ for b in sonnet-baseline sonnet-disciplined; do
 done
 ```
 
-Diff size per session, captured by the `codegen-metrics` skill:
+Diff size per session, captured by `eval-scripts/diff_stats.sh`. The script
+is copied into the sandbox after the agent's last turn (`mode: copy`,
+`when: eval` on the sandbox mount), so the agent never sees it, and the
+baseline bundle has no skills at all:
 
 ```bash
 jq -r '.eval_results[]
