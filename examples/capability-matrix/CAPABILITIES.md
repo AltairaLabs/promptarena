@@ -17,9 +17,9 @@ This document tracks expected capabilities for each provider/model based on offi
 ## What the tables show
 
 Each row is a provider in `config.arena.yaml`. ✅ means the model passed that
-scenario in the matrix, and ❌ that it ran and failed. — means the scenario is not run against the model,
-because the provider does not declare the capability. ? means the model has not
-completed a run yet.
+scenario in the matrix, ❌ that it ran and failed, and ⏱ that the request
+hit the pipeline idle timeout, so the capability is unconfirmed. — means the scenario is not run against the model,
+because the provider does not declare the capability.
 
 ## OpenAI Models
 
@@ -65,16 +65,16 @@ Superseded and removed: Opus 4.5, 4.6 and 4.7, Sonnet 4.5 and Haiku 4.5.
 
 | Model ID | Text | Stream | Vision | Audio | Video | Tools | JSON | Notes |
 |----------|------|--------|--------|-------|-------|-------|------|-------|
-| gemini-4-argon | ? | ? | ? | ? | ? | ? | ? | Added 2026-11-10; not yet run |
-| gemini-3.8-flash | ? | ? | ? | ? | ? | ? | ? | Added 2026-11-10; not yet run |
+| gemini-4-argon | ✅ | ✅ | ✅ | ✅ | ✅ | ⏱ | ✅ | Latest. Tools hit the pipeline idle timeout on 2026-11-10 |
+| gemini-3.8-flash | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | |
 | gemini-3.7-flash | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 | gemini-3.5-flash | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
-| gemini-3.5-flash-lite | ? | ? | ? | ? | ? | ? | ? | Added 2026-11-10; not yet run |
-| gemini-3.1-pro-preview | ✅ | ✅ | ❌ | ✅ | ✅ | ✅ | ✅ | Vision failed its content assertion on 2026-10-18 |
+| gemini-3.5-flash-lite | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | |
+| gemini-3.1-pro-preview | ⏱ | ✅ | ✅ | ✅ | ✅ | ✅ | ⏱ | Text and JSON hit the pipeline idle timeout on 2026-11-10 |
 | gemini-3.1-flash-lite | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |  |
 
 Gemini 2.5 (pro, flash, flash-lite) was deprecated on 2026-10-16 and removed.
-The ✅ rows are from the last complete Gemini run, on 2026-10-18.
+Results are from the Gemini run on 2026-11-10.
 
 **Audio formats supported:** wav, mp3, aiff, aac, ogg, flac (up to 9.5 hours, 20MB inline)
 
