@@ -9,7 +9,7 @@ metadata:
 spec:
   prompt_configs:
     - id: codegen-agent
-      file: packs/codegen-agent.yaml
+      file: prompts/codegen-agent.yaml
 
   providers:
     - file: providers/claude-sonnet.provider.yaml
@@ -30,13 +30,12 @@ spec:
         env:
           DEV_MODE: "1"
 
-  # Host-only metric skill — mounted into the sandbox at /skills/codegen-metrics
-  # so session-level evals can run scripts like diff_stats.sh, but never
-  # surfaced to the agent (preload: false). The explicit `name` is what
-  # drives the in-container mount target.
+  # Metric skill — mounted into the sandbox at /skills/codegen-metrics (the
+  # directory's base name) so session-level evals can run diff_stats.sh.
+  # preload: false keeps it out of the system prompt, but the agent can still
+  # see it and activate it, in both bundles alike.
   skills:
-    - name: codegen-metrics
-      path: skills/codegen-metrics
+    - path: skills/codegen-metrics
       preload: false
 
   # Pack-level eval: a non-gating measurement that fires once per session.

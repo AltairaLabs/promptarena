@@ -1,0 +1,31 @@
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: PromptConfig
+
+metadata:
+  name: codegen-agent
+
+spec:
+  task_type: codegen-agent
+  version: "v1.0.0"
+  description: "Coding agent with sandbox tools, shared by both bundles."
+  # Deliberately neutral. Working discipline (Read before Edit, plan,
+  # verify before done) is what the codegen-disciplined skill adds, so it
+  # must not appear here: the prompt is held constant across the two
+  # bundles, and anything in it would be in both arms of the comparison.
+  system_template: |
+    You are a coding agent. The user will describe a task; complete it
+    using the sandbox tools.
+
+    The container's working directory is /workspace and starts empty.
+    Create whatever files the task needs there.
+
+  allowed_tools:
+    - Read
+    - Edit
+    - Write
+    - Glob
+    - Grep
+    - Bash
+    - run_tests
+    - run_lint
+    - run_typecheck

@@ -25,13 +25,13 @@ examples/codegen-eval/
 │   ├── go-fizzbuzz-order            (medium, control-flow)
 │   ├── go-counter-race              (medium, concurrency)
 │   └── go-binary-search             (hard, boundary)
-├── packs/
+├── prompts/
 │   └── codegen-agent.yaml           Shared prompt + tool palette
 ├── providers/
 │   └── claude-sonnet.provider.yaml  claude-sonnet-4-6
 └── skills/
     ├── codegen-disciplined/         Read-before-Edit, verify-before-done
-    └── codegen-metrics/             Host-only; captures diff size per session
+    └── codegen-metrics/             Captures diff size per session (not preloaded)
 ```
 
 Each scenario carries `difficulty` and `category` labels, which is what makes the

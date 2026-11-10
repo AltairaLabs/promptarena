@@ -11,6 +11,12 @@ spec:
     - streaming
     - tools
     - json
+  additional_config:
+    # The sandbox's nine tools carry 27 optional parameters between them, and
+    # Anthropic's strict tool use compiles a grammar that allows at most 24.
+    # With strict on (the runtime's default) the first request fails with
+    # "Schemas contains too many optional parameters".
+    strict_tools: false
   defaults:
     temperature: 0.1
     top_p: 1.0
