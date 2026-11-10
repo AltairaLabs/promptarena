@@ -479,11 +479,20 @@ func buildTurnPromptVars(req ConversationRequest) map[string]string {
 // promptConfigVarsForTask returns a fresh copy of the arena.yaml prompt-config
 // vars whose task_type matches the scenario, or nil when there is no match.
 func promptConfigVarsForTask(req ConversationRequest) map[string]string {
-	if req.Config == nil || req.Scenario == nil {
+	if req.Scenario == nil {
 		return nil
 	}
-	for _, promptConfigData := range req.Config.LoadedPromptConfigs {
-		if promptConfigData.TaskType != req.Scenario.TaskType {
+	return promptConfigVars(req.Config, req.Scenario.TaskType)
+}
+
+// promptConfigVars returns a fresh copy of the arena.yaml prompt-config vars
+// for taskType, or nil when cfg has no prompt config for it.
+func promptConfigVars(cfg *arenaconfig.Config, taskType string) map[string]string {
+	if cfg == nil {
+		return nil
+	}
+	for _, promptConfigData := range cfg.LoadedPromptConfigs {
+		if promptConfigData.TaskType != taskType {
 			continue
 		}
 		promptVars := make(map[string]string, len(promptConfigData.Vars))

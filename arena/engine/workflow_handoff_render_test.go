@@ -274,3 +274,64 @@ func TestWorkflowHandoff_LaterTurnRendersTheStateLikeTheHandoff(t *testing.T) {
 	turnTwo, _, _ := strings.Cut(prompts[2], "\n\n")
 	assert.Equal(t, specialist, turnTwo)
 }
+
+// replaceInKitFile rewrites one kit file, failing if old is not in it.
+func replaceInKitFile(t *testing.T, dir, name, old, replacement string) {
+	t.Helper()
+	path := filepath.Join(dir, name)
+	b, err := os.ReadFile(path)
+	require.NoError(t, err)
+	updated := strings.Replace(string(b), old, replacement, 1)
+	require.NotEqual(t, string(b), updated, "fixture drifted: %q not in %s", old, name)
+	require.NoError(t, os.WriteFile(path, []byte(updated), 0o600))
+}
+
+// A scripted turn renders with its own task's arena.yaml prompt-config vars,
+// so the handoff into a state renders with the destination's, not the ones
+// the turn started with.
+func TestWorkflowHandoff_UsesTheDestinationsPromptConfigVars(t *testing.T) {
+	dir := writeHandoffKit(t, `  system_template: "Specialist for {{team}}."
+`)
+	replaceInKitFile(t, dir, "config.arena.yaml", `      file: prompts/intake.yaml
+`, `      file: prompts/intake.yaml
+      vars:
+        team: Front desk
+`)
+	replaceInKitFile(t, dir, "config.arena.yaml", `      file: prompts/specialist.yaml
+`, `      file: prompts/specialist.yaml
+      vars:
+        team: Billing
+`)
+
+	prompts, result := runHandoffKit(t, dir)
+	require.Empty(t, result.Error)
+	assert.Equal(t, []string{"You are intake for Acme.", "Specialist for Billing."}, prompts)
+}
+
+// An artifact set during the turn outranks a variable of the same name the
+// turn started with: the handoff renders the value the tool just set.
+func TestWorkflowHandoff_ArtifactSetThisTurnOutranksTurnVariables(t *testing.T) {
+	dir := writeHandoffKit(t, `  system_template: "Summary: [{{artifacts.summary}}]"
+`)
+	replaceInKitFile(t, dir, "config.arena.yaml", `        prompt_task: intake
+`, `        prompt_task: intake
+        artifacts:
+          summary:
+            type: text/plain
+`)
+	replaceInKitFile(t, dir, "scenarios/escalate.scenario.yaml", `    company: Acme
+`, `    company: Acme
+    artifacts.summary: from-scenario
+`)
+	replaceInKitFile(t, dir, "mock-responses.yaml", `        tool_calls:
+`, `        tool_calls:
+          - name: workflow__set_artifact
+            arguments:
+              name: summary
+              value: from-tool
+`)
+
+	prompts, result := runHandoffKit(t, dir)
+	require.Empty(t, result.Error)
+	assert.Equal(t, []string{"You are intake for Acme.", "Summary: [from-tool]"}, prompts)
+}

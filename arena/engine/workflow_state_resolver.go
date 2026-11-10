@@ -43,6 +43,11 @@ type workflowStateResolver struct {
 	// bookkeeping are not guaranteed to share one, and the executor's own map
 	// is mutex-guarded for the same reason.
 	mu sync.Mutex
+	// taskPromptConfigVars returns the arena.yaml prompt-config vars for a
+	// prompt task. A scripted turn renders with its task's vars, so a handoff
+	// swaps the origin task's for the destination's. Nil means none.
+	taskPromptConfigVars func(task string) map[string]string
+
 	// contextSummary is the brief the outgoing state wrote for the incoming
 	// one. Retained because ResolveCurrentState re-renders on every call,
 	// including ones long after the transition committed and cleared the
@@ -115,7 +120,7 @@ func (r *workflowStateResolver) RecordToolCalls(n int) {
 // to whatever the pipeline was built for — is corrected on the next call.
 // Callers rely on it being safe to call repeatedly.
 func (r *workflowStateResolver) ResolveCurrentState(ctx context.Context) (stage.Handoff, error) {
-	return r.resolve(ctx, nil)
+	return r.resolveWith(ctx, func(string) map[string]string { return nil })
 }
 
 // ForTurn returns this resolver bound to one turn, so the handoff renders
@@ -126,8 +131,17 @@ func (r *workflowStateResolver) ResolveCurrentState(ctx context.Context) (stage.
 // The bound resolver shares this one's state (the retained brief), and only
 // the rendering differs, so ToolCallRecorder and CurrentStateMeta are this
 // resolver's own.
+//
+// It is called while the turn's pipeline is built, before anything in the
+// turn can commit a transition, so the run's task is the one the turn's
+// variables were resolved for.
 func (r *workflowStateResolver) ForTurn(turnState *stage.TurnState) stage.WorkflowStateResolver {
-	return &turnWorkflowStateResolver{workflowStateResolver: r, turnState: turnState}
+	t := &turnWorkflowStateResolver{workflowStateResolver: r, turnState: turnState}
+	if run := r.run(); run != nil && run.scenario != nil {
+		t.turnTask = run.scenario.TaskType
+		t.scenarioVars = scenarioVariables(run.scenario)
+	}
+	return t
 }
 
 // turnWorkflowStateResolver is a workflowStateResolver bound to one turn's
@@ -135,6 +149,11 @@ func (r *workflowStateResolver) ForTurn(turnState *stage.TurnState) stage.Workfl
 type turnWorkflowStateResolver struct {
 	*workflowStateResolver
 	turnState *stage.TurnState
+	// turnTask is the prompt task the turn's variables were resolved for,
+	// and scenarioVars the scenario's own variables, which outrank any
+	// prompt config's.
+	turnTask     string
+	scenarioVars map[string]string
 }
 
 // ResolveCurrentState implements stage.WorkflowStateResolver, rendering with
@@ -144,12 +163,41 @@ func (t *turnWorkflowStateResolver) ResolveCurrentState(ctx context.Context) (st
 	if t.turnState != nil {
 		turnVars = t.turnState.Variables
 	}
-	return t.resolve(ctx, turnVars)
+	return t.resolveWith(ctx, func(task string) map[string]string {
+		return t.varsForTask(turnVars, task)
+	})
 }
 
-// resolve is ResolveCurrentState, rendering the state's prompt with turnVars
-// beneath the values the handoff binds.
-func (r *workflowStateResolver) resolve(_ context.Context, turnVars map[string]string) (stage.Handoff, error) {
+// varsForTask returns the turn's variables as a scripted turn on task would
+// have them: the turn's own task's prompt-config vars swapped for task's. The
+// scenario's variables outrank both, as they do on a scripted turn, so a key
+// the scenario sets is left alone.
+func (t *turnWorkflowStateResolver) varsForTask(turnVars map[string]string, task string) map[string]string {
+	if t.taskPromptConfigVars == nil || task == t.turnTask {
+		return turnVars
+	}
+	out := maps.Clone(turnVars)
+	if out == nil {
+		out = map[string]string{}
+	}
+	for k, v := range t.taskPromptConfigVars(t.turnTask) {
+		if _, set := t.scenarioVars[k]; !set && out[k] == v {
+			delete(out, k)
+		}
+	}
+	for k, v := range t.taskPromptConfigVars(task) {
+		if _, set := t.scenarioVars[k]; !set {
+			out[k] = v
+		}
+	}
+	return out
+}
+
+// resolveWith is ResolveCurrentState, rendering the state's prompt with
+// varsFor(its prompt task) beneath the values the handoff binds.
+func (r *workflowStateResolver) resolveWith(
+	_ context.Context, varsFor func(task string) map[string]string,
+) (stage.Handoff, error) {
 	run := r.run()
 	if run == nil || run.transExec == nil {
 		return stage.Handoff{}, nil
@@ -235,7 +283,7 @@ func (r *workflowStateResolver) resolve(_ context.Context, turnVars map[string]s
 	summary := r.contextSummary
 	r.mu.Unlock()
 
-	systemPrompt, allowedTools, err := r.renderState(machine, name, current, summary, turnVars)
+	systemPrompt, allowedTools, err := r.renderState(machine, name, current, summary, varsFor(current.PromptTask))
 	if err != nil {
 		return stage.Handoff{}, err
 	}
@@ -322,8 +370,8 @@ func (r *workflowStateResolver) turnPromptVars(vars map[string]string) map[strin
 // report.
 //
 // This duplicates what prompt.Registry.LoadTemplateDeferRequired does from
-// PromptKit v2.19.0, which also counts a required variable a fragment or a
-// default supplies; switch to it once the pin moves.
+// PromptKit v2.19.0, which also counts a required variable a fragment
+// supplies; switch to it once the pin moves.
 func (r *workflowStateResolver) checkRequiredVars(task string, vars map[string]string) error {
 	cfg, err := r.exec.promptRegistry.LoadConfig(task)
 	if err != nil || cfg == nil {

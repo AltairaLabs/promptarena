@@ -408,6 +408,8 @@ func (e *Engine) wireWorkflowHooks(req *ConversationRequest, runID string, rt *r
 	resolver := e.workflowTransExec.ResolverForRun(runID)
 	req.WorkflowStateResolver = resolver
 	if r, ok := resolver.(*workflowStateResolver); ok {
+		cfg := req.Config
+		r.taskPromptConfigVars = func(task string) map[string]string { return promptConfigVars(cfg, task) }
 		req.workflowPromptVars = r.turnPromptVars
 	}
 	req.ActiveCompositionResolver = e.buildCompositionResolver(runID)
