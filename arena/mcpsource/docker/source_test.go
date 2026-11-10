@@ -483,3 +483,31 @@ func TestSource_Open_CopyMountNeedsCopyCLI(t *testing.T) {
 	assert.Contains(t, err.Error(), "need a CLI that implements CopyCLI")
 	assert.Equal(t, []string{"cid-plain"}, cli.stopped, "the started container is stopped")
 }
+
+// A start copy used to run before the repo clone, so a fixture copied under
+// /workspace made `git clone … /workspace` hit a non-empty directory. The
+// clone runs first; copies land on top of the cloned repo.
+func TestSource_Open_ClonesBeforeStartCopies(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer srv.Close()
+
+	dir := realTempDir(t)
+	cli := &fakeCLI{runID: "cid-clone"}
+	s := &Source{cli: cli, urlForContainer: func(_, _ string) string { return srv.URL }}
+	_, closer, err := s.Open(context.Background(), map[string]any{
+		"image":  "x",
+		"repo":   "https://example.com/r.git",
+		"mounts": []any{map[string]any{"source": dir, "target": "/workspace/fixtures", "mode": "copy"}},
+	})
+	require.NoError(t, err)
+	defer func() { _ = closer.Close() }()
+
+	assert.Equal(t, []string{
+		"exec:git clone https://example.com/r.git /workspace",
+		"exec:id -u", "exec:id -g",
+		"root:mkdir -p /workspace/fixtures", "cp:" + dir + "/.->/workspace/fixtures",
+		"root:chown -R 100:101 /workspace/fixtures",
+	}, cli.calls)
+}
