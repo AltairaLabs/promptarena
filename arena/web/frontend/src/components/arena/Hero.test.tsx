@@ -30,6 +30,8 @@ describe("Hero", () => {
     render(<Hero scenarioCount={4} providerCount={3} />);
     const gold = screen.getByText("3 contenders.");
     expect(gold.tagName).toBe("SPAN");
-    expect(gold).toHaveStyle({ color: "var(--gold-500)" });
+    // The inline style the component sets: jsdom 31 resolves var() in computed
+    // style, and the test page defines none of the design tokens.
+    expect(gold.style.color).toBe("var(--gold-500)");
   });
 });
