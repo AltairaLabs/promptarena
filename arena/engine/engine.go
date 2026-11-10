@@ -440,6 +440,7 @@ func NewEngine(
 	// If slow sources become common, thread ctx through NewEngine.
 	if mcpRegistry != nil {
 		eng.mcpSourceScope = newMCPSourceScopeWithTools(mcpRegistry, toolRegistry)
+		eng.mcpSourceScope.baseDir = eng.configBaseDir()
 		if err := eng.mcpSourceScope.OpenAll(
 			context.Background(), mcpsource.ScopeRun, "run", nil,
 			eng.mcpSkillSources, eng.mcpConfig,

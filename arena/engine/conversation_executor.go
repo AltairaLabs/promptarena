@@ -1011,6 +1011,12 @@ func (ce *DefaultConversationExecutor) buildResultFromStateStore(
 	// stays bounded by its own timeout.
 	ctx = scoringContext(ctx)
 
+	// Copy any when: eval mounts in now that the agent is done, so the evals
+	// below find files the agent never saw.
+	if err := deliverEvalFiles(ctx); err != nil {
+		return ce.createErrorResult(err.Error())
+	}
+
 	// Evaluate conversation-level assertions, if any, then add each
 	// self-play objective's outcome alongside them.
 	convAssertionResults := ce.evaluateConversationAssertions(ctx, req, messages)

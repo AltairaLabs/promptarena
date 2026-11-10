@@ -30,6 +30,18 @@ func (r *realCLI) Exec(ctx context.Context, id string, argv []string) (string, e
 	return execDockerOutput(ctx, full)
 }
 
+// ExecRoot runs `docker exec -u 0 <id> <argv...>` and returns stdout.
+func (r *realCLI) ExecRoot(ctx context.Context, id string, argv []string) (string, error) {
+	full := append([]string{"exec", "-u", "0", id}, argv...)
+	return execDockerOutput(ctx, full)
+}
+
+// Copy runs `docker cp <hostPath> <id>:<ctrPath>`.
+func (r *realCLI) Copy(ctx context.Context, id, hostPath, ctrPath string) error {
+	_, err := execDockerOutput(ctx, []string{"cp", hostPath, id + ":" + ctrPath})
+	return err
+}
+
 // execDockerOutput runs the docker binary with the supplied argv and
 // returns its trimmed stdout.
 func execDockerOutput(ctx context.Context, argv []string) (string, error) {

@@ -7,7 +7,11 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"os"
+	"path"
+	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/AltairaLabs/promptarena/v2/arena/mcpsource"
@@ -55,12 +59,16 @@ func (s *Source) Open(ctx context.Context, args map[string]any) (mcpsource.MCPCo
 	if err != nil {
 		return mcpsource.MCPConn{}, nil, err
 	}
+	mounts, err := mountsFromArgs(args["mounts"])
+	if err != nil {
+		return mcpsource.MCPConn{}, nil, err
+	}
 	spec := RunSpec{
 		Image:    image,
 		PortHost: hostPort,
 		PortCtr:  defaultSandboxPort,
 		Env:      env,
-		Mounts:   mountsFromArgs(args["mounts"]),
+		Mounts:   mounts.binds,
 	}
 	if argErr := applyRuntimeArgs(&spec, args); argErr != nil {
 		return mcpsource.MCPConn{}, nil, argErr
@@ -71,11 +79,14 @@ func (s *Source) Open(ctx context.Context, args map[string]any) (mcpsource.MCPCo
 		return mcpsource.MCPConn{}, nil, fmt.Errorf("docker source: run: %w", err)
 	}
 
-	closer := closerFunc(func() error {
-		return s.cli.Stop(context.Background(), cid)
-	})
+	closer := &containerCloser{source: s, cid: cid, atEval: mounts.atEval}
 
 	url := s.resolveURL(cid, strconv.Itoa(hostPort))
+
+	if err := s.copyIn(ctx, closer, mounts.atStart); err != nil {
+		_ = closer.Close()
+		return mcpsource.MCPConn{}, nil, err
+	}
 
 	if repo, _ := args["repo"].(string); repo != "" {
 		branch, _ := args["branch"].(string)
@@ -94,7 +105,105 @@ func (s *Source) Open(ctx context.Context, args map[string]any) (mcpsource.MCPCo
 		return mcpsource.MCPConn{}, nil, fmt.Errorf("docker source: container not healthy: %w", err)
 	}
 
-	return mcpsource.MCPConn{URL: url + ssePath, ContainerID: cid, Ports: s.portURLs(cid, spec.ExtraPorts)}, closer, nil
+	conn := mcpsource.MCPConn{URL: url + ssePath, ContainerID: cid, Ports: s.portURLs(cid, spec.ExtraPorts)}
+	if len(mounts.atEval) == 0 {
+		// Only a closer with something to deliver advertises EvalDeliverer.
+		return conn, closerFunc(closer.Close), nil
+	}
+	return conn, closer, nil
+}
+
+// sandboxMounts is source_args.mounts split by how each entry is delivered.
+type sandboxMounts struct {
+	binds   []Mount           // docker run -v
+	atStart []mcpsource.Mount // copied in after docker run
+	atEval  []mcpsource.Mount // copied in by DeliverEval
+}
+
+// containerCloser stops the container, and holds the eval-time copies until
+// DeliverEval runs them.
+type containerCloser struct {
+	source    *Source
+	cid       string
+	owner     string // "uid:gid" of the container's user, looked up once
+	atEval    []mcpsource.Mount
+	delivered bool
+}
+
+// Close stops the container.
+func (c *containerCloser) Close() error {
+	return c.source.cli.Stop(context.Background(), c.cid)
+}
+
+// DeliverEval copies the when: eval mounts in. Later calls are no-ops.
+func (c *containerCloser) DeliverEval(ctx context.Context) error {
+	if c.delivered {
+		return nil
+	}
+	c.delivered = true
+	return c.source.copyIn(ctx, c, c.atEval)
+}
+
+// copyIn copies each mount into the container as root, then hands it to the
+// container's own user: the sandbox image runs unprivileged, so a copy left
+// owned by root would be read-only to the agent, and a target under / could
+// not be created at all.
+func (s *Source) copyIn(ctx context.Context, c *containerCloser, ms []mcpsource.Mount) error {
+	if len(ms) == 0 {
+		return nil
+	}
+	cp, ok := s.cli.(CopyCLI)
+	if !ok {
+		return fmt.Errorf("docker source: mode: copy mounts need a CLI that implements CopyCLI, got %T", s.cli)
+	}
+	if c.owner == "" {
+		owner, err := s.containerOwner(ctx, c.cid)
+		if err != nil {
+			return err
+		}
+		c.owner = owner
+	}
+	for _, m := range ms {
+		if err := copyOne(ctx, cp, c.cid, c.owner, m); err != nil {
+			return fmt.Errorf("docker source: copy %s to %s: %w", m.Source, m.Target, err)
+		}
+	}
+	return nil
+}
+
+func copyOne(ctx context.Context, cli CopyCLI, cid, owner string, m mcpsource.Mount) error {
+	info, err := os.Stat(m.Source)
+	if err != nil {
+		return err
+	}
+	src, dir := m.Source, m.Target
+	if info.IsDir() {
+		// "<dir>/." copies the directory's contents into the target.
+		src += string(filepath.Separator) + "."
+	} else {
+		dir = path.Dir(m.Target)
+	}
+	if _, mkErr := cli.ExecRoot(ctx, cid, []string{"mkdir", "-p", dir}); mkErr != nil {
+		return mkErr
+	}
+	if cpErr := cli.Copy(ctx, cid, src, m.Target); cpErr != nil {
+		return cpErr
+	}
+	_, err = cli.ExecRoot(ctx, cid, []string{"chown", "-R", owner, m.Target})
+	return err
+}
+
+// containerOwner returns "uid:gid" of the user the container runs as.
+func (s *Source) containerOwner(ctx context.Context, cid string) (string, error) {
+	uid, err := s.cli.Exec(ctx, cid, []string{"id", "-u"})
+	if err != nil {
+		return "", fmt.Errorf("docker source: container user: %w", err)
+	}
+	gid, err := s.cli.Exec(ctx, cid, []string{"id", "-g"})
+	if err != nil {
+		return "", fmt.Errorf("docker source: container group: %w", err)
+	}
+	return strings.TrimSpace(uid) + ":" + strings.TrimSpace(gid), nil
 }
 
 // portURLs maps each extra published container port to the host URL that
@@ -273,31 +382,53 @@ func envFromArgs(v any) (map[string]string, error) {
 	return out, nil
 }
 
-func mountsFromArgs(v any) []Mount {
-	list, ok := v.([]map[string]any)
-	if !ok {
-		// Accept the []any shape that YAML unmarshal produces for lists.
-		generic, gok := v.([]any)
-		if !gok {
-			return nil
+// mountsFromArgs parses args.mounts. Arena hands sources already resolved
+// against the kit, so a relative source here is an error rather than being
+// passed to `docker run -v`, which would read it as a volume name. Entries
+// otherwise get the resolver's checks and defaults (read-only, bind, start).
+func mountsFromArgs(v any) (sandboxMounts, error) {
+	var out sandboxMounts
+	if v == nil {
+		return out, nil
+	}
+	if err := requireAbsoluteSources(v); err != nil {
+		return out, err
+	}
+	ms, err := mcpsource.ResolveMounts(v, string(filepath.Separator), string(mcpsource.ScopeSession))
+	if err != nil {
+		return out, fmt.Errorf("docker source: args.%w", err)
+	}
+	for _, m := range ms {
+		switch {
+		case m.Mode == mcpsource.MountBind:
+			out.binds = append(out.binds, Mount{Source: m.Source, Target: m.Target, ReadOnly: m.ReadOnly})
+		case m.When == mcpsource.MountAtEval:
+			out.atEval = append(out.atEval, m)
+		default:
+			out.atStart = append(out.atStart, m)
 		}
-		list = make([]map[string]any, 0, len(generic))
-		for _, item := range generic {
-			if m, ok := item.(map[string]any); ok {
-				list = append(list, m)
+	}
+	return out, nil
+}
+
+func requireAbsoluteSources(v any) error {
+	var entries []map[string]any
+	switch x := v.(type) {
+	case []map[string]any:
+		entries = x
+	case []any:
+		for _, e := range x {
+			if m, ok := e.(map[string]any); ok {
+				entries = append(entries, m)
 			}
 		}
 	}
-	var out []Mount
-	for _, entry := range list {
-		src, _ := entry["source"].(string)
-		target, _ := entry["target"].(string)
-		ro, _ := entry["readonly"].(bool)
-		if src != "" && target != "" {
-			out = append(out, Mount{Source: src, Target: target, ReadOnly: ro})
+	for i, m := range entries {
+		if src, _ := m["source"].(string); src != "" && !filepath.IsAbs(src) {
+			return fmt.Errorf("docker source: args.mounts[%d]: source %q must be an absolute path", i, src)
 		}
 	}
-	return out
+	return nil
 }
 
 // maxPortPicks bounds how many times pickDistinctFreePort retries a collision.
