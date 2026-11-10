@@ -157,7 +157,7 @@ func loadPromptFragments(registry *prompt.Registry, taskType string, refs []prom
 			return nil, fmt.Errorf("prompt %q: required fragment %q: %w", taskType, ref.Name, err)
 		default:
 			warnings = append(warnings, fmt.Sprintf(
-				"prompt %q: optional fragment %q was not loaded and is left out: %v", taskType, ref.Name, err))
+				"prompt %q: optional fragment %q was not loaded and renders empty: %v", taskType, ref.Name, err))
 		}
 	}
 	return warnings, nil
