@@ -174,7 +174,7 @@ promptarena run --scenario <Tab>
 
 # Complete provider IDs from config.arena.yaml
 promptarena run --provider <Tab>
-# → openai-gpt-4o-mini  claude-3-5-haiku  gemini-2-0-flash
+# → openai-gpt-5.4-mini  claude-haiku-5-5  gemini-3-8-flash
 
 promptarena config-inspect --section <Tab>
 # → prompts  providers  scenarios  tools  selfplay  judges  defaults  validation

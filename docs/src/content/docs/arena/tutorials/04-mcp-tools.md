@@ -64,7 +64,7 @@ metadata:
 spec:
   id: openai
   type: openai
-  model: gpt-4o-mini
+  model: gpt-5.4-mini
   defaults:
     temperature: 0.2
     max_tokens: 500

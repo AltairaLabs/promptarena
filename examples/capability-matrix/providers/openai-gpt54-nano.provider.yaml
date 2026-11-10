@@ -15,10 +15,10 @@ spec:
     temperature: 0.1
     max_tokens: 100
     top_p: 1.0
-  # Pricing carried over from openai-gpt54-mini; not checked against the vendor price list.
   pricing:
-    input_cost_per_1k: 0.00025
-    output_cost_per_1k: 0.002
+    input_cost_per_1k: 0.0002
+    output_cost_per_1k: 0.00125
+  pricing_correct_at: '2026-11-10'
   stream_retry:
     enabled: true
     max_attempts: 3

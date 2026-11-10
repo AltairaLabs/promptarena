@@ -16,8 +16,9 @@ spec:
     max_tokens: 100
     top_p: 1.0
   pricing:
-    input_cost_per_1k: 0.00025
-    output_cost_per_1k: 0.002
+    input_cost_per_1k: 0.00075
+    output_cost_per_1k: 0.0045
+  pricing_correct_at: '2026-11-10'
   stream_retry:
     enabled: true
     max_attempts: 3

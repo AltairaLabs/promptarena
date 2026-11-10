@@ -150,7 +150,7 @@ metadata:
 spec:
   id: gemini-live
   type: gemini
-  model: gemini-2.0-flash-exp
+  model: gemini-2.5-flash-native-audio-latest
   additional_config:
     response_modalities:
       - AUDIO
@@ -167,7 +167,7 @@ metadata:
 spec:
   id: openai-gpt4o-mini-text
   type: openai
-  model: gpt-4o-mini
+  model: gpt-5.4-mini
 ```
 
 The real TTS vendor:

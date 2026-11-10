@@ -71,7 +71,7 @@ func main() {
 	// Pick the provider: mock by default, openai when ARENA_PROVIDER=openai.
 	provider := &config.Provider{ID: "mock-provider", Type: "mock", Model: "gpt-4"}
 	if os.Getenv("ARENA_PROVIDER") == "openai" {
-		provider = &config.Provider{ID: "openai-gpt4o-mini", Type: "openai", Model: "gpt-4o-mini"}
+		provider = &config.Provider{ID: "openai-gpt54-mini", Type: "openai", Model: "gpt-5.4-mini"}
 	}
 
 	// Create a prompt configuration
@@ -261,7 +261,7 @@ export OPENAI_API_KEY=sk-...
 ARENA_PROVIDER=openai go run .
 ```
 
-The program switches to `Type: "openai"` with `Model: "gpt-4o-mini"`, and the result has the same shape:
+The program switches to `Type: "openai"` with `Model: "gpt-5.4-mini"`, and the result has the same shape:
 
 ```text
 Test 1: basic-test

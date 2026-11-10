@@ -178,9 +178,9 @@ kind: Provider
 metadata:
   name: openai
 spec:
-  id: openai-gpt4o-mini
+  id: openai-gpt54-mini
   type: openai
-  model: gpt-4o-mini
+  model: gpt-5.4-mini
 ```
 
 `scenarios/basic-test.scenario.yaml` holds two turns. Each assertion carries its `message` beside `params`:

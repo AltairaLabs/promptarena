@@ -314,7 +314,7 @@ metadata:
 spec:
   id: gemini-live
   type: gemini
-  model: gemini-2.0-flash-exp
+  model: gemini-2.5-flash-native-audio-latest
 
   # Gemini-specific configuration
   additional_config:

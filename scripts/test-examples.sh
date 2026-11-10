@@ -14,16 +14,33 @@ PACKC="${PACKC_BIN:-$PWD/bin/packc}"
 # ship against) rather than the published remote schemas.
 export PROMPTKIT_SCHEMA_SOURCE=local
 
-# ── Schema validation: every example config ─────────────────────────────────
+# ── Validation: every example config ────────────────────────────────────────
+#
+# Full validation, not --schema-only: the business-logic pass is what checks
+# references between files. A scenario that pins a provider the config no
+# longer declares passes the schema and fails every run (capability-matrix's
+# combination scenarios kept naming openai-gpt41-mini after it was removed).
+
+# Configs that only get the schema check. codegen-eval loads
+# packs/codegen-agent.yaml, which the root .gitignore's packs/ rule kept from
+# ever being committed.
+SCHEMA_ONLY=(
+  examples/codegen-eval/sonnet-baseline.arena.yaml
+  examples/codegen-eval/sonnet-disciplined.arena.yaml
+)
 
 echo "Validating example configs against the in-repo schemas…"
 failed=0
 total=0
 while IFS= read -r cfg; do
   total=$((total + 1))
-  if ! "$BIN" validate "$cfg" --schema-only </dev/null >/dev/null 2>&1; then
-    echo "  ✗ $cfg failed schema validation"
-    "$BIN" validate "$cfg" --schema-only </dev/null 2>&1 | grep -iE 'error|❌' | head -5 || true
+  flags=()
+  for s in "${SCHEMA_ONLY[@]}"; do
+    [ "$cfg" = "$s" ] && flags=(--schema-only)
+  done
+  if ! "$BIN" validate "$cfg" "${flags[@]}" </dev/null >/dev/null 2>&1; then
+    echo "  ✗ $cfg failed validation"
+    "$BIN" validate "$cfg" "${flags[@]}" </dev/null 2>&1 | grep -iE 'error|❌|  - ' | head -5 || true
     failed=$((failed + 1))
   fi
 done < <(find examples -maxdepth 2 \( -name 'config.arena.yaml' -o -name '*.arena.yaml' -o -name 'arena.yaml' \) -not -path '*/out/*' | sort)
@@ -48,7 +65,7 @@ echo "  Validated $total config(s); $failed failed."
 #
 # Not run here, deliberately (each still gets the schema check above):
 #   - real providers or local model servers: azure-foundry-test, bedrock-test,
-#     capability-matrix, codegen-anthropic, codegen-eval, context-management,
+#     codegen-anthropic, codegen-eval, context-management,
 #     load-testing, memory-agent, ollama-local, reasoning-test, vertex-test,
 #     vllm-local, arena-media-test (its
 #     mock-media provider cannot produce the image/audio its scenarios assert)
@@ -73,6 +90,8 @@ run customer-support  --config config.arena.yaml --ci --mock-provider --mock-con
 run multimodal-basics --config config.arena.yaml --ci --mock-provider --mock-config mock-responses.yaml --formats json
 run variables-demo    --config config.arena.yaml --ci --mock-provider --mock-config mock-config.yaml --formats json
 run assertions-test   --config config.arena.yaml --ci --mock-provider --mock-config mock-responses.yaml --formats json
+# Every provider is real; the stand-ins share the matrix's mock-responses.yaml.
+run capability-matrix --config config.arena.yaml --ci --mock-provider --formats json
 # Real providers alongside a mock one: run the mock, minus the self-play
 # scenario (its simulated user is an OpenAI model).
 run customer-support-integrated --config config.arena.yaml --ci --provider mock-tool-simulation \
