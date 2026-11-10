@@ -302,3 +302,41 @@ func firstDuplexReply(t *testing.T, eng *Engine, providerID string) (reply strin
 		}
 	}
 }
+
+// TestEnableMockProviderMode_StandInsUseSharedMockConfig pins the fallback for
+// providers that declare no mock_config: they take the one file the config's
+// mock providers declare, so a kit comparing a scripted mock with real
+// providers passes under --mock-provider (examples/voice-refund-demo). Two
+// different files are ambiguous and keep the generic reply.
+func TestEnableMockProviderMode_StandInsUseSharedMockConfig(t *testing.T) {
+	tests := []struct {
+		name      string
+		otherFile bool
+		want      string
+	}{
+		{name: "one shared file", want: declaredMockResponse},
+		{name: "two different files", otherFile: true, want: genericMockResponse},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dir := t.TempDir()
+			eng := engineWithMockProvider(t, dir, writeMockConfig(t, dir, declaredMockResponse))
+			eng.providers["real-model"] = &config.Provider{
+				ID: "real-model", Type: "openai", Model: "gpt-x", AdditionalConfig: map[string]any{},
+			}
+			if tt.otherFile {
+				otherDir := t.TempDir()
+				eng.providers["other-mock"] = &config.Provider{
+					ID: "other-mock", Type: "mock", Model: "mock-model",
+					AdditionalConfig: map[string]any{"mock_config": writeMockConfig(t, otherDir, "other")},
+				}
+			}
+			if err := eng.EnableMockProviderMode(""); err != nil {
+				t.Fatalf("EnableMockProviderMode failed: %v", err)
+			}
+			if got := predictOnce(t, eng, "real-model"); got != tt.want {
+				t.Errorf("stand-in reply = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
