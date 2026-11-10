@@ -571,4 +571,18 @@ func TestEngine_GetInitialProvidersWithCapabilities(t *testing.T) {
 		assert.Contains(t, result, "openai-o1")
 		assert.Contains(t, result, "gemini-25-pro")
 	})
+
+	// A --provider filter registers only the named providers. When none of them
+	// has what the scenario requires, the scenario must not run at all; it used
+	// to fall back to the filter and run audio/video on providers that cannot
+	// take either, failing every one of them.
+	t.Run("provider filter with no capable provider runs nothing", func(t *testing.T) {
+		filtered := &Engine{
+			providers:        map[string]*config.Provider{"openai-o1": p2},
+			config:           e.config,
+			providerRegistry: e.providerRegistry,
+		}
+		scenario := &arenaconfig.Scenario{RequiredCapabilities: []string{"video"}}
+		assert.Empty(t, filtered.getInitialProviders(scenario, []string{"openai-o1"}))
+	})
 }

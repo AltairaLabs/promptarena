@@ -42,9 +42,9 @@ jobs:
   capability-matrix:
     name: Provider Capability Matrix
     runs-on: ubuntu-latest
-    # The full matrix is ~37 providers x 11 scenarios at concurrency 6, and the
-    # slow reasoning models (o1-pro, gpt-5-pro) dominate. 30m was the inherited
-    # value and left no headroom once the GPT-5.x family was added.
+    # The full matrix is ~26 providers x 11 scenarios at concurrency 6, and the
+    # slow -pro reasoning models dominate. 30m was the inherited value and left
+    # no headroom once the GPT-5.x family was added.
     timeout-minutes: 60
 
     env:

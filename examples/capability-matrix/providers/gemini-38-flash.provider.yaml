@@ -1,11 +1,11 @@
 apiVersion: promptkit.altairalabs.ai/v1alpha1
 kind: Provider
 metadata:
-  name: gemini-25-flash
+  name: gemini-38-flash
 spec:
-  id: gemini-25-flash
+  id: gemini-38-flash
   type: gemini
-  model: gemini-2.5-flash
+  model: gemini-3.8-flash
   capabilities:
     - text
     - streaming
@@ -20,6 +20,7 @@ spec:
     temperature: 0.1
     max_tokens: 100
     top_p: 1.0
+  # Pricing carried over from gemini-37-flash; not checked against the vendor price list.
   pricing:
     input_cost_per_1k: 0.00015
     output_cost_per_1k: 0.0006
