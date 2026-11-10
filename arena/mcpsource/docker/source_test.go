@@ -460,3 +460,26 @@ func TestStringArg_FormatsNumbers(t *testing.T) {
 	require.NoError(t, err)
 	assert.Empty(t, got)
 }
+
+// plainCLI implements CLI but not CopyCLI, like a CLI written before copy
+// mounts existed.
+type plainCLI struct{ stopped []string }
+
+func (p *plainCLI) Run(context.Context, RunSpec) (string, error) { return "cid-plain", nil }
+func (p *plainCLI) Stop(_ context.Context, id string) error {
+	p.stopped = append(p.stopped, id)
+	return nil
+}
+func (p *plainCLI) Exec(context.Context, string, []string) (string, error) { return "", nil }
+
+func TestSource_Open_CopyMountNeedsCopyCLI(t *testing.T) {
+	cli := &plainCLI{}
+	s := &Source{cli: cli, urlForContainer: func(_, _ string) string { return "http://x" }}
+	_, _, err := s.Open(context.Background(), map[string]any{
+		"image":  "x",
+		"mounts": []any{map[string]any{"source": realTempDir(t), "target": "/w", "mode": "copy"}},
+	})
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "need a CLI that implements CopyCLI")
+	assert.Equal(t, []string{"cid-plain"}, cli.stopped, "the started container is stopped")
+}

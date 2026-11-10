@@ -41,6 +41,12 @@ type CLI interface {
 	Run(ctx context.Context, spec RunSpec) (containerID string, err error)
 	Stop(ctx context.Context, containerID string) error
 	Exec(ctx context.Context, containerID string, argv []string) (stdout string, err error)
+}
+
+// CopyCLI is the extra docker-CLI surface that mode: copy mounts need. It is
+// separate from CLI so existing CLI implementations stay valid; the source
+// asks for it only when a mount has to be copied.
+type CopyCLI interface {
 	// ExecRoot is Exec as root, for setting up copy targets the container's
 	// own (often unprivileged) user cannot create.
 	ExecRoot(ctx context.Context, containerID string, argv []string) (stdout string, err error)

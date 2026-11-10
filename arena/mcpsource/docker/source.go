@@ -152,6 +152,10 @@ func (s *Source) copyIn(ctx context.Context, c *containerCloser, ms []mcpsource.
 	if len(ms) == 0 {
 		return nil
 	}
+	cp, ok := s.cli.(CopyCLI)
+	if !ok {
+		return fmt.Errorf("docker source: mode: copy mounts need a CLI that implements CopyCLI, got %T", s.cli)
+	}
 	if c.owner == "" {
 		owner, err := s.containerOwner(ctx, c.cid)
 		if err != nil {
@@ -160,14 +164,14 @@ func (s *Source) copyIn(ctx context.Context, c *containerCloser, ms []mcpsource.
 		c.owner = owner
 	}
 	for _, m := range ms {
-		if err := s.copyOne(ctx, c.cid, c.owner, m); err != nil {
+		if err := copyOne(ctx, cp, c.cid, c.owner, m); err != nil {
 			return fmt.Errorf("docker source: copy %s to %s: %w", m.Source, m.Target, err)
 		}
 	}
 	return nil
 }
 
-func (s *Source) copyOne(ctx context.Context, cid, owner string, m mcpsource.Mount) error {
+func copyOne(ctx context.Context, cli CopyCLI, cid, owner string, m mcpsource.Mount) error {
 	info, err := os.Stat(m.Source)
 	if err != nil {
 		return err
@@ -179,13 +183,13 @@ func (s *Source) copyOne(ctx context.Context, cid, owner string, m mcpsource.Mou
 	} else {
 		dir = path.Dir(m.Target)
 	}
-	if _, mkErr := s.cli.ExecRoot(ctx, cid, []string{"mkdir", "-p", dir}); mkErr != nil {
+	if _, mkErr := cli.ExecRoot(ctx, cid, []string{"mkdir", "-p", dir}); mkErr != nil {
 		return mkErr
 	}
-	if cpErr := s.cli.Copy(ctx, cid, src, m.Target); cpErr != nil {
+	if cpErr := cli.Copy(ctx, cid, src, m.Target); cpErr != nil {
 		return cpErr
 	}
-	_, err = s.cli.ExecRoot(ctx, cid, []string{"chown", "-R", owner, m.Target})
+	_, err = cli.ExecRoot(ctx, cid, []string{"chown", "-R", owner, m.Target})
 	return err
 }
 
