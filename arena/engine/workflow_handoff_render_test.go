@@ -237,9 +237,31 @@ func TestWorkflowHandoff_UnsetRequiredVariableFailsTheRun(t *testing.T) {
 
 	prompts, result := runHandoffKit(t, dir)
 	assert.Contains(t, result.Error, "system prompt has unresolved variables")
-	assert.Contains(t, result.Error, "missing required variable ticket_id")
+	assert.Contains(t, result.Error, "missing required variables: ticket_id")
 	assert.Equal(t, []string{"You are intake for Acme."}, prompts,
 		"the provider must never be sent the specialist's raw template")
+}
+
+// A required variable a fragment supplies is set: the check runs after the
+// template's fragments are merged, as the template stage's does. Checked
+// against the prompt config alone, it failed the run although the render had a
+// value.
+func TestWorkflowHandoff_RequiredVariableSuppliedByFragmentRenders(t *testing.T) {
+	dir := writeHandoffKit(t, `  variables:
+    - name: tone
+      required: true
+  fragments:
+    - name: tone
+      path: ../fragments/tone.yaml
+  system_template: "Specialist. {{tone}}"
+`)
+	require.NoError(t, os.MkdirAll(filepath.Join(dir, "fragments"), 0o750))
+	require.NoError(t, os.WriteFile(filepath.Join(dir, "fragments", "tone.yaml"),
+		[]byte("fragment_type: guidelines\nversion: v1.0.0\ncontent: Be brief.\n"), 0o600))
+
+	prompts, result := runHandoffKit(t, dir)
+	require.Empty(t, result.Error)
+	assert.Equal(t, []string{"You are intake for Acme.", "Specialist. Be brief."}, prompts)
 }
 
 // An artifact no state declares is a mistake in the pack, not an empty value:

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"maps"
+	"strings"
 	"sync"
 
 	"github.com/AltairaLabs/promptarena/v2/arena/turnexecutors"
@@ -307,10 +308,10 @@ func (r *workflowStateResolver) renderState(
 ) (systemPrompt string, allowedTools []string, err error) {
 	vars := r.workflowVars(machine, contextSummary, turnVars)
 
-	if reqErr := r.checkRequiredVars(dest.PromptTask, vars); reqErr != nil {
-		return "", nil, reqErr
-	}
-	tmpl, err := r.exec.promptRegistry.LoadTemplate(dest.PromptTask, vars, "")
+	// Required variables are checked after every source is merged, as the
+	// template stage checks them, so one a fragment or a default supplies
+	// counts.
+	tmpl, err := r.exec.promptRegistry.LoadTemplateDeferRequired(dest.PromptTask, vars, "")
 	if err != nil {
 		return "", nil, fmt.Errorf("load prompt %q for state %q: %w", dest.PromptTask, stateName, err)
 	}
@@ -321,6 +322,11 @@ func (r *workflowStateResolver) renderState(
 	maps.Copy(merged, tmpl.DefaultVars)
 	maps.Copy(merged, tmpl.FragmentVars)
 	maps.Copy(merged, vars)
+
+	if missing := missingRequiredVars(tmpl.RequiredVars, merged); len(missing) > 0 {
+		return "", nil, fmt.Errorf("%w: %s: missing required variables: %s",
+			stage.ErrTemplateUnresolved, dest.PromptTask, strings.Join(missing, ", "))
+	}
 
 	rendered, err := r.renderer.RenderDetailed(tmpl.RawTemplate, merged)
 	if err != nil {
@@ -364,26 +370,16 @@ func (r *workflowStateResolver) turnPromptVars(vars map[string]string) map[strin
 	return r.workflowVars(machine, summary, vars)
 }
 
-// checkRequiredVars fails with stage.ErrTemplateUnresolved when task declares
-// a required variable that vars leaves unset or empty, as the SDK resolver
-// does. A prompt config that cannot be loaded is left for LoadTemplate to
-// report.
-//
-// This duplicates what prompt.Registry.LoadTemplateDeferRequired does from
-// PromptKit v2.19.0, which also counts a required variable a fragment
-// supplies; switch to it once the pin moves.
-func (r *workflowStateResolver) checkRequiredVars(task string, vars map[string]string) error {
-	cfg, err := r.exec.promptRegistry.LoadConfig(task)
-	if err != nil || cfg == nil {
-		return nil //nolint:nilerr // LoadTemplate reports the load failure
-	}
-	for _, v := range cfg.Spec.Variables {
-		if v.Required && vars[v.Name] == "" {
-			return fmt.Errorf("%w: %s: missing required variable %s",
-				stage.ErrTemplateUnresolved, task, v.Name)
+// missingRequiredVars returns the required names with no non-empty value in
+// vars, in declaration order, as the template stage computes them.
+func missingRequiredVars(required []string, vars map[string]string) []string {
+	var missing []string
+	for _, name := range required {
+		if vars[name] == "" {
+			missing = append(missing, name)
 		}
 	}
-	return nil
+	return missing
 }
 
 // declaredArtifactVars returns "artifacts.<name>" bound to "" for every
