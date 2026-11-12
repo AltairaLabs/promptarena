@@ -51,6 +51,9 @@ func TestBuildProviderSpec_RequestTimeout(t *testing.T) {
 	}
 }
 
+// TestCreateProviderImpl_MockProvider pins that a mock_config that does not
+// resolve fails provider construction and names the path it looked for,
+// rather than running the provider on generic replies.
 func TestCreateProviderImpl_MockProvider(t *testing.T) {
 	providerCfg := &config.Provider{
 		ID:    "mock-assistant",
@@ -66,9 +69,18 @@ func TestCreateProviderImpl_MockProvider(t *testing.T) {
 		},
 	}
 
-	provider, err := createProviderImpl("", providerCfg)
+	configDir := t.TempDir()
+	_, err := createProviderImpl(configDir, providerCfg)
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), filepath.Join(configDir, "providers", "responses", "mock-assistant.yaml"))
+
+	// With the file in place under the config directory, the same provider builds.
+	mockFile := filepath.Join(configDir, "providers", "responses", "mock-assistant.yaml")
+	require.NoError(t, os.MkdirAll(filepath.Dir(mockFile), 0o755))
+	require.NoError(t, os.WriteFile(mockFile, []byte("defaultResponse: scripted\n"), 0o600))
+	providerCfg.AdditionalConfig["mock_config"] = "providers/responses/mock-assistant.yaml"
+	provider, err := createProviderImpl(configDir, providerCfg)
 	require.NoError(t, err)
-	require.NotNil(t, provider)
 	require.Equal(t, "mock-assistant", provider.ID())
 }
 

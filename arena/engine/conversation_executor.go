@@ -938,7 +938,7 @@ func attachJudgeMetadata(metadata map[string]interface{}, cfg *arenaconfig.Confi
 			if jt == nil || jt.Provider == nil {
 				continue
 			}
-			targets[name] = providerSpecFromConfig(jt.Provider)
+			targets[name] = providerSpecFromConfig(jt.Provider, cfg.ConfigDir)
 		}
 		if len(targets) > 0 {
 			metadata["judge_targets"] = targets
@@ -953,10 +953,13 @@ func attachJudgeMetadata(metadata map[string]interface{}, cfg *arenaconfig.Confi
 }
 
 // providerSpecFromConfig converts config.Provider to providers.ProviderSpec.
+// baseDir is the arena config directory; a relative mock_config resolves
+// against it rather than the working directory.
 // Tuning fields go through config.ApplyProviderTuning, as they do for the
 // providers under test, so a judge honors the same provider file settings.
-func providerSpecFromConfig(p *config.Provider) providers.ProviderSpec {
+func providerSpecFromConfig(p *config.Provider, baseDir string) providers.ProviderSpec {
 	spec := providers.ProviderSpec{
+		BaseDir:          baseDir,
 		ID:               p.ID,
 		Type:             p.Type,
 		Model:            p.Model,

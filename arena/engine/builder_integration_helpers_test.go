@@ -1,6 +1,8 @@
 package engine
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -321,7 +323,7 @@ func TestProviderSpecFromConfig_AppliesTuning(t *testing.T) {
 		HTTPTransport:       &config.HTTPTransportConfig{MaxConnsPerHost: 4},
 		Headers:             map[string]string{"X-Tenant": "acme"},
 	}
-	judge := providerSpecFromConfig(p)
+	judge := providerSpecFromConfig(p, "")
 	assert.Equal(t, 2*time.Minute, judge.RequestTimeout)
 	assert.Equal(t, 2, judge.StreamMaxConcurrent)
 	assert.True(t, judge.StreamRetry.Enabled)
@@ -332,4 +334,39 @@ func TestProviderSpecFromConfig_AppliesTuning(t *testing.T) {
 	assert.Equal(t, underTest.RequestTimeout, judge.RequestTimeout)
 	assert.Equal(t, underTest.StreamRetry, judge.StreamRetry)
 	assert.Equal(t, underTest.HTTPTransport, judge.HTTPTransport)
+}
+
+// TestAttachJudgeMetadata_JudgeMockConfigResolvesAgainstConfigDir pins that a
+// judge's relative mock_config resolves against the arena config directory,
+// not the working directory. The test runs from the package directory, where
+// the relative path does not exist, so the judge builds only if BaseDir is set.
+func TestAttachJudgeMetadata_JudgeMockConfigResolvesAgainstConfigDir(t *testing.T) {
+	configDir := t.TempDir()
+	require.NoError(t, os.WriteFile(filepath.Join(configDir, "judge-mock.yaml"),
+		[]byte("defaultResponse: scripted\n"), 0o600))
+	cfg := &arenaconfig.Config{
+		ConfigDir: configDir,
+		LoadedJudges: map[string]*arenaconfig.JudgeTarget{
+			"j": {Provider: &config.Provider{
+				ID: "judge-mock", Type: "mock", Model: "m",
+				AdditionalConfig: map[string]interface{}{"mock_config": "judge-mock.yaml"},
+			}},
+		},
+	}
+	metadata := map[string]interface{}{}
+	attachJudgeMetadata(metadata, cfg)
+
+	targets, ok := metadata["judge_targets"].(map[string]providers.ProviderSpec)
+	require.True(t, ok, "judge_targets missing")
+	spec := targets["j"]
+	assert.Equal(t, configDir, spec.BaseDir)
+
+	prov, err := providers.CreateProviderFromSpec(spec)
+	require.NoError(t, err)
+	assert.Equal(t, "judge-mock", prov.ID())
+
+	spec.BaseDir = ""
+	_, err = providers.CreateProviderFromSpec(spec)
+	require.Error(t, err, "without BaseDir the relative path resolves against the working directory")
+	assert.Contains(t, err.Error(), "judge-mock.yaml")
 }
