@@ -141,7 +141,7 @@ func TestRegisterExecEvals_RunsHostProgramWithArenaMetadata(t *testing.T) {
 	stdinCopy := filepath.Join(dir, "stdin.json")
 	script := filepath.Join(dir, "evals", "probe.sh")
 	require.NoError(t, os.MkdirAll(filepath.Dir(script), 0o750))
-	require.NoError(t, os.WriteFile(script, []byte("#!/bin/sh\ncat > "+stdinCopy+"\n"+
+	require.NoError(t, os.WriteFile(script, []byte("#!/bin/sh\ncat > '"+stdinCopy+"'\n"+
 		`echo '{"score": 0.5, "detail": "half", "data": {"functional_score": 0.5, "security_score": 1}}'`+"\n"), 0o700)) //nolint:gosec // test script must be executable
 
 	cfg := &arenaconfig.Config{ConfigDir: dir, Runtime: &pkgconfig.RuntimeConfigSpec{

@@ -48,7 +48,7 @@ func TestProviderSpecFromConfig_PromptCaching(t *testing.T) {
 				},
 			}
 
-			spec := providerSpecFromConfig(p)
+			spec := providerSpecFromConfig(p, "")
 
 			if spec.Defaults.DisablePromptCaching != tt.wantDisablePromptCaching {
 				t.Errorf("DisablePromptCaching = %v, want %v (prompt_caching input: %v)",

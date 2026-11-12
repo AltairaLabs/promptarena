@@ -80,7 +80,7 @@ func specSearchJudge(cfg *arenaconfig.Config, name string) (handlers.JudgeProvid
 	if jt == nil || jt.Provider == nil {
 		return nil, fmt.Errorf("no judge %q in spec.judges", name)
 	}
-	spec := providerSpecFromConfig(jt.Provider)
+	spec := providerSpecFromConfig(jt.Provider, cfg.ConfigDir)
 	return handlers.NewSpecJudgeProvider(&spec), nil
 }
 

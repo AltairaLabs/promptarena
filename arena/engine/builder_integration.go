@@ -377,6 +377,7 @@ func createProviderImpl(configDir string, provider *config.Provider) (providers.
 	}
 
 	spec := buildProviderSpec(provider, cred, platform, platformConfig)
+	spec.BaseDir = configDir
 	providerImpl, err := providers.CreateProviderFromSpec(spec)
 	if err != nil {
 		return nil, err
