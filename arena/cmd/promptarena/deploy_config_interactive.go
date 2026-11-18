@@ -152,6 +152,10 @@ func validateDeployConfig() error {
 	}
 	defer client.Close()
 
+	if overrideErr := flow.RequireRuntimeOverrideSupport(
+		ctx, client, deployCfg.Provider, configJSON); overrideErr != nil {
+		return overrideErr
+	}
 	resp, err := client.ValidateConfig(ctx, &deploy.ValidateRequest{Config: configJSON})
 	if err != nil {
 		return fmt.Errorf("validate_config failed: %w", err)

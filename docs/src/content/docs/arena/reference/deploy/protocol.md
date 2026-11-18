@@ -108,7 +108,7 @@ Returns adapter metadata.
 |-------|------|----------|-------------|
 | `name` | string | Yes | Provider name |
 | `version` | string | Yes | Adapter version |
-| `capabilities` | string[] | No | List of capabilities |
+| `capabilities` | string[] | No | List of capabilities. The CLI acts on `login`, `sessions` and `runtime_override`; it ignores any other value |
 | `config_schema` | string | No | JSON Schema for config validation |
 
 ---
@@ -116,6 +116,8 @@ Returns adapter metadata.
 ### validate_config
 
 Validates provider configuration. The CLI calls it before every plan (`deploy`, `deploy plan`, and `deploy apply` when it re-plans) and in `deploy config import` unless you pass `--skip-validate`. A `valid: false` result stops the command with the listed errors before `plan` is sent. An adapter that answers method-not-found (`-32601`) is planned without validation, so the method is optional for planning, but an adapter that implements it is always consulted. `deploy config import` treats method-not-found as an error.
+
+When the config has a non-empty `runtime_override` block, the CLI first calls `get_provider_info` and stops, without sending `validate_config` or `plan`, unless `capabilities` includes `runtime_override`.
 
 **Request:**
 

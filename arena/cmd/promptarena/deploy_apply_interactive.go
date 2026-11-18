@@ -52,7 +52,7 @@ func runDeployApply(cmd *cobra.Command, args []string) error {
 		usedSavedPlan = true
 	} else {
 		if savedPlan != nil {
-			fmt.Println("  Saved plan is stale (the pack changed since it was planned), re-planning...")
+			fmt.Println("  Saved plan is stale (the pack or deploy config changed since it was planned), re-planning...")
 		}
 		planReq, err = sess.PlanRequest(ctx)
 		if err != nil {

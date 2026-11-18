@@ -258,7 +258,7 @@ func TestSession_SavedPlanSurvivesRecompile(t *testing.T) {
 			&arenaconfig.DeployConfig{Provider: "acme"}, nil, store, []byte(pack), `{}`, nil)
 	}
 	first := mk("2026-01-01T00:00:00Z")
-	if err := first.SavePlan(&deploy.PlanResponse{}, &deploy.PlanRequest{}); err != nil {
+	if err := first.SavePlan(&deploy.PlanResponse{}, &deploy.PlanRequest{DeployConfig: `{}`}); err != nil {
 		t.Fatal(err)
 	}
 	saved, err := first.LoadPlan()

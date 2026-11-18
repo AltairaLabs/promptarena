@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -100,6 +101,9 @@ func (s *Session) PackVersion() string { return deploy.PackVersion(s.packData) }
 // reasons. An adapter that answers method-not-found is treated as having
 // nothing to report, so adapters that only validate inside plan keep working.
 func (s *Session) ValidateConfig(ctx context.Context) ([]string, error) {
+	if err := s.requireRuntimeOverrideSupport(ctx); err != nil {
+		return nil, err
+	}
 	resp, err := s.Client.ValidateConfig(ctx, &deploy.ValidateRequest{Config: s.configJSON})
 	if errors.Is(err, deploy.ErrMethodNotSupported) {
 		return nil, nil
@@ -115,6 +119,49 @@ func (s *Session) ValidateConfig(ctx context.Context) ([]string, error) {
 		return nil, fmt.Errorf("deploy config is invalid for %q: %s", s.ProviderName, reasons)
 	}
 	return resp.Warnings, nil
+}
+
+// requireRuntimeOverrideSupport is RequireRuntimeOverrideSupport for this
+// session's adapter and config.
+func (s *Session) requireRuntimeOverrideSupport(ctx context.Context) error {
+	return RequireRuntimeOverrideSupport(ctx, s.Client, s.ProviderName, s.configJSON)
+}
+
+// providerInfoClient is the slice of an adapter connection the
+// runtime_override check needs.
+type providerInfoClient interface {
+	GetProviderInfo(ctx context.Context) (*deploy.ProviderInfo, error)
+}
+
+// RequireRuntimeOverrideSupport refuses a config that carries runtime_override
+// when the adapter does not advertise deploy.RuntimeOverrideCapability. An
+// adapter that predates the block would ignore it and deploy its own runtime,
+// so this check cannot be left to the adapter. Every command that validates or
+// plans a config calls it before asking the adapter anything else.
+func RequireRuntimeOverrideSupport(
+	ctx context.Context, client providerInfoClient, provider, configJSON string,
+) error {
+	override, err := deploy.RuntimeOverrideFromConfig(configJSON)
+	if err != nil {
+		return fmt.Errorf("deploy config is invalid for %q: %w", provider, err)
+	}
+	if override == nil {
+		return nil
+	}
+	info, err := client.GetProviderInfo(ctx)
+	if err != nil {
+		return fmt.Errorf("get_provider_info failed: %w", err)
+	}
+	if info != nil && slices.Contains(info.Capabilities, deploy.RuntimeOverrideCapability) {
+		return nil
+	}
+	version := "unknown"
+	if info != nil && info.Version != "" {
+		version = info.Version
+	}
+	return fmt.Errorf("deploy config sets %s, but the %q adapter (version %s) does not support it: "+
+		"upgrade the adapter, or remove %s from the config",
+		deploy.RuntimeOverrideConfigKey, provider, version, deploy.RuntimeOverrideConfigKey)
 }
 
 // PlanRequest builds a PlanRequest after validating the deploy config with
@@ -217,7 +264,11 @@ func (s *Session) SavePlan(plan *deploy.PlanResponse, req *deploy.PlanRequest) e
 // LoadPlan loads a previously saved plan (nil if none).
 func (s *Session) LoadPlan() (*deploy.SavedPlan, error) { return s.Store.LoadPlan() }
 
-// PlanIsFresh reports whether a saved plan matches the current pack checksum and env.
+// PlanIsFresh reports whether a saved plan matches the current pack checksum,
+// env and deploy config. A config edited since the plan was saved makes it
+// stale: applying it would deploy the config the plan was made from, not the
+// one in the file.
 func (s *Session) PlanIsFresh(saved *deploy.SavedPlan) bool {
-	return saved != nil && saved.PackChecksum == s.PackChecksum() && saved.Environment == s.Env
+	return saved != nil && saved.PackChecksum == s.PackChecksum() && saved.Environment == s.Env &&
+		saved.Request != nil && saved.Request.DeployConfig == s.configJSON
 }

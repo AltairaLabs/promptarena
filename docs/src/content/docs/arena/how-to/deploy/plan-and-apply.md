@@ -103,7 +103,7 @@ What happens:
 7. It sends an apply request and prints each resource result the adapter returns.
 8. It saves state to `.promptarena/envs/<env>/deploy.state`.
 
-To apply a plan you have already reviewed, run `deploy apply` with the same `--env`. It reuses the environment's saved plan when the pack checksum matches the plan, and otherwise prints `Saved plan is stale (the pack changed since it was planned), re-planning...`. The checksum ignores the pack's compile time, so recompiling an unchanged arena config keeps the saved plan:
+To apply a plan you have already reviewed, run `deploy apply` with the same `--env`. It reuses the environment's saved plan when the pack checksum and the merged deploy config both match the plan, and otherwise prints `Saved plan is stale (the pack or deploy config changed since it was planned), re-planning...`. The checksum ignores the pack's compile time, so recompiling an unchanged arena config keeps the saved plan:
 
 ```bash
 promptarena deploy plan  --env production
