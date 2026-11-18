@@ -465,6 +465,67 @@ from `github.com/AltairaLabs/promptarena/v2/arena/generate`:
 | `EvalResultsFromRows(rows, turnIndex)` | Stored eval rows (keyed by message id) to evals with `Turn` resolved; an unknown id is conversation-level. A score without a verdict keeps `Passed` nil. |
 | `HasFailedVerdict(evals)` | `has_failures` for a summary: true only for a recorded negative verdict. |
 
+## Optional: Runtime Override
+
+A deploy config may carry a `runtime_override` block that runs another
+container in place of the adapter's runtime, or the same image under another
+entrypoint, with extra environment. The adapter does not need to know what that
+container is. It is the one key in an adapter's config that the SDK and the CLI
+interpret.
+
+```go
+type RuntimeOverride struct {
+    Image     string               `json:"image,omitempty"`
+    Command   []string             `json:"command,omitempty"`
+    Args      []string             `json:"args,omitempty"`
+    Env       map[string]string    `json:"env,omitempty"`
+    SecretEnv map[string]SecretRef `json:"secret_env,omitempty"`
+}
+
+type SecretRef struct {
+    Name    string `json:"name"`              // in the platform's own form
+    Version string `json:"version,omitempty"` // default: the platform's latest
+}
+```
+
+An adapter that supports it:
+
+1. Advertises `deploy.RuntimeOverrideCapability` (`"runtime_override"`) in
+   `ProviderInfo.Capabilities`. The CLI refuses to plan a config that sets
+   `runtime_override` against an adapter that does not, so an older adapter
+   can never ignore the block and deploy its own runtime instead.
+2. Reads the block with `deploy.RuntimeOverrideFromConfig(configJSON)`, which
+   returns nil when the block is absent or empty.
+3. Validates it with `adaptersdk.ValidateRuntimeOverride`, declaring what its
+   platform can do. A field the platform cannot apply is an error, never
+   silently dropped:
+
+   ```go
+   errs := adaptersdk.ValidateRuntimeOverride(override, adaptersdk.RuntimeOverrideSupport{
+       Command:             false, // the platform takes an image, not a command
+       Args:                false,
+       SecretEnv:           true,
+       ReservedEnvPrefixes: []string{"PROMPTPACK_"},
+   })
+   ```
+
+4. Deploys `Image` in place of its runtime image when it is set, and keeps its
+   own image when it is not. `Command` and `Args`, when set, replace the
+   image's entrypoint and arguments.
+5. Adds `Env` and `SecretEnv` to the container's environment. They add to the
+   adapter's own variables and never replace one.
+6. Still hands the pack to the container, under the same names whatever the
+   adapter:
+
+   | Variable | Constant | Holds |
+   |----------|----------|-------|
+   | `PROMPTPACK_PACK_JSON` | `deploy.EnvPackJSON` | The compiled pack, inline |
+   | `PROMPTPACK_PACK_URI` | `deploy.EnvPackURI` | Where the pack was staged, when it is too large to pass inline |
+   | `PROMPTPACK_AGENT` | `deploy.EnvAgent` | The pack prompt (agent) this container serves |
+
+`adaptersdk.RuntimeOverrideSchema()` returns the block's JSON Schema, to place
+under `properties.runtime_override` in the adapter's `ConfigSchema`.
+
 ## Types
 
 ### ProviderInfo

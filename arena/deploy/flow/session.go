@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -100,6 +101,9 @@ func (s *Session) PackVersion() string { return deploy.PackVersion(s.packData) }
 // reasons. An adapter that answers method-not-found is treated as having
 // nothing to report, so adapters that only validate inside plan keep working.
 func (s *Session) ValidateConfig(ctx context.Context) ([]string, error) {
+	if err := s.requireRuntimeOverrideSupport(ctx); err != nil {
+		return nil, err
+	}
 	resp, err := s.Client.ValidateConfig(ctx, &deploy.ValidateRequest{Config: s.configJSON})
 	if errors.Is(err, deploy.ErrMethodNotSupported) {
 		return nil, nil
@@ -115,6 +119,34 @@ func (s *Session) ValidateConfig(ctx context.Context) ([]string, error) {
 		return nil, fmt.Errorf("deploy config is invalid for %q: %s", s.ProviderName, reasons)
 	}
 	return resp.Warnings, nil
+}
+
+// requireRuntimeOverrideSupport refuses a config that carries runtime_override
+// when the adapter does not advertise deploy.RuntimeOverrideCapability. An
+// adapter that predates the block would ignore it and deploy its own runtime,
+// so this check cannot be left to the adapter.
+func (s *Session) requireRuntimeOverrideSupport(ctx context.Context) error {
+	override, err := deploy.RuntimeOverrideFromConfig(s.configJSON)
+	if err != nil {
+		return fmt.Errorf("deploy config is invalid for %q: %w", s.ProviderName, err)
+	}
+	if override == nil {
+		return nil
+	}
+	info, err := s.Client.GetProviderInfo(ctx)
+	if err != nil {
+		return fmt.Errorf("get_provider_info failed: %w", err)
+	}
+	if info != nil && slices.Contains(info.Capabilities, deploy.RuntimeOverrideCapability) {
+		return nil
+	}
+	version := "unknown"
+	if info != nil && info.Version != "" {
+		version = info.Version
+	}
+	return fmt.Errorf("deploy config sets %s, but the %q adapter (version %s) does not support it: "+
+		"upgrade the adapter, or remove %s from the config",
+		deploy.RuntimeOverrideConfigKey, s.ProviderName, version, deploy.RuntimeOverrideConfigKey)
 }
 
 // PlanRequest builds a PlanRequest after validating the deploy config with

@@ -54,7 +54,7 @@ The remaining examples on this page show only the `deploy` block, which sits und
 
 ## Provider Config
 
-The CLI does not interpret `config`; each adapter defines its own fields. The tables below list the main fields for two adapters. Each adapter's own documentation lists every field.
+The CLI does not interpret `config`, apart from [`runtime_override`](#run-another-container); each adapter defines its own fields. The tables below list the main fields for two adapters. Each adapter's own documentation lists every field.
 
 ### Omnia
 
@@ -110,6 +110,43 @@ deploy:
 | `region` | Yes | AWS region, for example `us-west-2` |
 | `runtime_role_arn` | Yes | IAM role ARN for the AgentCore runtime |
 | `runtime_binary_path` | Yes | Path to the pre-compiled Go runtime binary |
+
+## Run Another Container
+
+`runtime_override` deploys a container of your choosing where the adapter would
+deploy its own runtime: a runtime you built, or one that wraps the pack for
+another platform. The adapter still creates everything else and still hands the
+container the pack, in `PROMPTPACK_PACK_JSON` (or `PROMPTPACK_PACK_URI` when the
+pack is too large to pass inline) and the agent name in `PROMPTPACK_AGENT`.
+
+```yaml
+deploy:
+  provider: vertex
+  config:
+    project: my-project
+    location: us-central1
+    runtime_override:
+      image: us-central1-docker.pkg.dev/my-project/runtimes/my-runtime:1.0.0
+      env:
+        LOG_LEVEL: debug
+      secret_env:
+        API_KEY: { name: my-runtime-api-key, version: latest }
+```
+
+| Field | Description |
+|-------|-------------|
+| `image` | Image to run instead of the adapter's runtime. Left out, the adapter's own image runs |
+| `command` | Replaces the image's entrypoint |
+| `args` | Replaces the image's arguments |
+| `env` | Extra environment variables. They cannot replace a variable the adapter sets |
+| `secret_env` | Extra environment variables read from the platform's secret store at run time: `{name, version}` per variable, in the platform's own naming |
+
+Only an adapter that lists `runtime_override` in its capabilities accepts the
+block. Against any other adapter the CLI stops before planning with
+`deploy config sets runtime_override, but the "<provider>" adapter (version <v>) does not support it`.
+An adapter whose platform cannot apply a field, such as one that runs an image
+but cannot change its command, rejects the config rather than deploy without
+it. Each adapter's documentation says which fields it supports.
 
 ## Environment Overrides
 
