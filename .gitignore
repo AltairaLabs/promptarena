@@ -190,5 +190,5 @@ examples/*/out/
 # Stray `go build` output of arena/tui/theme/cmd/atlaspreview at the repo root
 /atlaspreview
 
-# Python bytecode (scripts/docs-*.py)
+# Python bytecode
 __pycache__/

@@ -55,6 +55,9 @@ sibling checkout.
 
 ## Checking commands
 
+- When checking flags, grep `examples/*/README.md` as well as the docs tree:
+  the published copies of those READMEs exist only after
+  `scripts/prepare-examples-docs.sh` runs.
 - Assertion and eval types have a registry behind them; regenerate the
   catalog with `promptarena gen-reference` and compare against it.
 - The CLI is `promptarena`. Quickstarts once told readers to run `arena`,
@@ -62,6 +65,12 @@ sibling checkout.
   be followed.
 - The PromptKit runtime and PromptArena both emit `workflow state transition`
   with identical fields, so raw log counts are twice the real number.
+
+## Link check
+
+`commands.check_links` binds port 4455 because a preview server already on
+the default port makes the checker bind elsewhere and fail to start.
+`npx astro preview stop` clears a stale preview daemon.
 
 ## Commits
 
