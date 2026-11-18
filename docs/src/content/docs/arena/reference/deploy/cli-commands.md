@@ -134,7 +134,7 @@ promptarena deploy plan --env production
 
 ### deploy apply
 
-Applies deployment changes under the environment's deploy lock. If the environment's saved plan from `deploy plan` matches the current pack checksum, `apply` uses it (`Using saved plan.`). Otherwise it validates the config and plans first. The checksum ignores the pack's compile time, so a plan stays fresh across recompiles of an unchanged config.
+Applies deployment changes under the environment's deploy lock. If the environment's saved plan from `deploy plan` matches the current pack checksum and merged deploy config, `apply` uses it (`Using saved plan.`). Otherwise it validates the config and plans first. The checksum ignores the pack's compile time, so a plan stays fresh across recompiles of an unchanged config.
 
 ```bash
 promptarena deploy apply [flags]

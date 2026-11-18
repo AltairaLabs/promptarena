@@ -1,7 +1,9 @@
 package deploy
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 )
 
@@ -92,8 +94,17 @@ func RuntimeOverrideFromConfig(configJSON string) (*RuntimeOverride, error) {
 	if !ok || string(block) == "null" {
 		return nil, nil
 	}
+	// Unknown keys are refused: a misspelled "image" would otherwise decode
+	// to an empty override, and the adapter would deploy its own runtime.
+	dec := json.NewDecoder(bytes.NewReader(block))
+	dec.DisallowUnknownFields()
 	var o RuntimeOverride
-	if err := json.Unmarshal(block, &o); err != nil {
+	if err := dec.Decode(&o); err != nil {
+		var typeErr *json.UnmarshalTypeError
+		if errors.As(err, &typeErr) && typeErr.Value == "number" {
+			return nil, fmt.Errorf("%s: %w (quote numeric values: env values are strings)",
+				RuntimeOverrideConfigKey, err)
+		}
 		return nil, fmt.Errorf("%s: %w", RuntimeOverrideConfigKey, err)
 	}
 	if o.IsZero() {

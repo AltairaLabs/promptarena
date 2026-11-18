@@ -2,6 +2,7 @@ package flow
 
 import (
 	"context"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -80,5 +81,48 @@ func TestSession_MalformedRuntimeOverrideIsAConfigError(t *testing.T) {
 	_, err := sess.ValidateConfig(context.Background())
 	if err == nil || !strings.Contains(err.Error(), "deploy config is invalid") {
 		t.Fatalf("err = %v, want a config error", err)
+	}
+}
+
+// deploy config import validates through the adapter directly rather than a
+// Session, so the exported check must refuse on its own.
+func TestRequireRuntimeOverrideSupport_Direct(t *testing.T) {
+	ctx := context.Background()
+	without := &fakeProvider{info: &deploy.ProviderInfo{Name: "acme"}}
+	err := RequireRuntimeOverrideSupport(ctx, without, "acme", overrideConfig)
+	if err == nil || !strings.Contains(err.Error(), "version unknown") {
+		t.Errorf("err = %v, want a refusal naming the unknown version", err)
+	}
+	with := &fakeProvider{info: &deploy.ProviderInfo{Capabilities: []string{deploy.RuntimeOverrideCapability}}}
+	if err := RequireRuntimeOverrideSupport(ctx, with, "acme", overrideConfig); err != nil {
+		t.Errorf("capable adapter refused: %v", err)
+	}
+}
+
+// The environment merge is one level deep, so an environment that sets its own
+// runtime_override replaces the base block whole. A production entry that only
+// adds env therefore drops the base image; this pins that documented behavior.
+func TestMergedConfig_EnvironmentReplacesRuntimeOverride(t *testing.T) {
+	dep := &arenaconfig.DeployConfig{
+		Provider: "acme",
+		Config: map[string]interface{}{
+			"runtime_override": map[string]interface{}{"image": "base:1"},
+		},
+		Environments: map[string]*arenaconfig.DeployEnvironment{
+			"production": {Config: map[string]interface{}{
+				"runtime_override": map[string]interface{}{"env": map[string]interface{}{"A": "1"}},
+			}},
+		},
+	}
+	cfg, err := MergedConfigJSON(dep, "production", filepath.Join(t.TempDir(), "arena.yaml"))
+	if err != nil {
+		t.Fatalf("MergedConfigJSON: %v", err)
+	}
+	o, err := deploy.RuntimeOverrideFromConfig(cfg)
+	if err != nil {
+		t.Fatalf("RuntimeOverrideFromConfig: %v", err)
+	}
+	if o.Image != "" || o.Env["A"] != "1" {
+		t.Errorf("override = %+v, want the environment's block alone", o)
 	}
 }

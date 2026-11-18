@@ -64,6 +64,8 @@ func TestRuntimeOverrideFromConfig_Malformed(t *testing.T) {
 		"not JSON":      {`{`, "invalid config JSON"},
 		"wrong type":    {`{"runtime_override":"image"}`, "runtime_override:"},
 		"env not a map": {`{"runtime_override":{"env":["A"]}}`, "runtime_override:"},
+		"unknown key":   {`{"runtime_override":{"imgae":"x"}}`, `unknown field "imgae"`},
+		"numeric env":   {`{"runtime_override":{"env":{"PORT":8080}}}`, "quote numeric values"},
 	} {
 		t.Run(name, func(t *testing.T) {
 			_, err := RuntimeOverrideFromConfig(tc.cfg)

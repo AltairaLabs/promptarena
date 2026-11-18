@@ -101,7 +101,7 @@ func TestSession_PlanFreshnessTracksThePackAndEnv(t *testing.T) {
 	}
 
 	plan := &deploy.PlanResponse{}
-	if err := sess.SavePlan(plan, &deploy.PlanRequest{}); err != nil {
+	if err := sess.SavePlan(plan, &deploy.PlanRequest{DeployConfig: "{}"}); err != nil {
 		t.Fatalf("SavePlan: %v", err)
 	}
 
@@ -128,6 +128,14 @@ func TestSession_PlanFreshnessTracksThePackAndEnv(t *testing.T) {
 	otherEnv.Environment = "production"
 	if sess.PlanIsFresh(&otherEnv) {
 		t.Error("a plan for another environment must not be fresh")
+	}
+
+	// So does a deploy config edited since the plan was saved: applying it
+	// would deploy the old config.
+	otherCfg := *saved
+	otherCfg.Request = &deploy.PlanRequest{DeployConfig: `{"runtime_override":{"image":"x"}}`}
+	if sess.PlanIsFresh(&otherCfg) {
+		t.Error("a plan made from another deploy config must not be fresh")
 	}
 
 	if sess.PlanIsFresh(nil) {

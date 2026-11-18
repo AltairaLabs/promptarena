@@ -148,6 +148,13 @@ An adapter whose platform cannot apply a field, such as one that runs an image
 but cannot change its command, rejects the config rather than deploy without
 it. Each adapter's documentation says which fields it supports.
 
+An environment that sets `runtime_override` replaces the base block whole (see
+[How Merging Works](#how-merging-works)). To change one field for an
+environment, repeat the whole block there, `image` included; otherwise that
+environment deploys the adapter's own runtime.
+
+Write `env` values as strings: `PORT: "8080"`, not `PORT: 8080`.
+
 ## Environment Overrides
 
 Add an `environments` entry for each environment whose config differs from the base:

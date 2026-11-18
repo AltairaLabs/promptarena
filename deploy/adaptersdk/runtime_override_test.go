@@ -108,3 +108,20 @@ func TestRuntimeOverrideSchema_MatchesTheType(t *testing.T) {
 		t.Errorf("schema does not marshal: %v", err)
 	}
 }
+
+// The pack handoff names are reserved even when the adapter declares nothing,
+// so no override can displace the pack the replacement runtime reads.
+func TestValidateRuntimeOverride_HandoffNamesAlwaysReserved(t *testing.T) {
+	o := &deploy.RuntimeOverride{Env: map[string]string{
+		deploy.EnvPackJSON: "{}", deploy.EnvPackURI: "x", deploy.EnvAgent: "a",
+	}}
+	got := ValidateRuntimeOverride(o, RuntimeOverrideSupport{})
+	if len(got) != 3 {
+		t.Fatalf("errs = %v, want one per handoff name", got)
+	}
+	for _, e := range got {
+		if !strings.Contains(e, "is reserved") {
+			t.Errorf("err %q does not say the name is reserved", e)
+		}
+	}
+}

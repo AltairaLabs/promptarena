@@ -22,8 +22,9 @@ type RuntimeOverrideSupport struct {
 	// from its secret store.
 	SecretEnv bool
 	// ReservedEnvPrefixes are name prefixes the adapter sets itself. An
-	// override may not set a variable under one, so it can never displace the
-	// pack handoff or anything else the adapter needs the container to see.
+	// override may not set a variable under one, so it can never displace
+	// anything the adapter needs the container to see. The handoff names
+	// (deploy.EnvPackJSON, EnvPackURI, EnvAgent) are always reserved.
 	ReservedEnvPrefixes []string
 	// ReservedEnvNames are exact names the adapter or the platform sets.
 	ReservedEnvNames []string
@@ -85,12 +86,18 @@ func checkEnvName(field, name string, s RuntimeOverrideSupport) []string {
 			return []string{fmt.Sprintf("%s %q is reserved: %s* names are set by the adapter", field, name, prefix)}
 		}
 	}
-	for _, reserved := range s.ReservedEnvNames {
+	for _, reserved := range append(handoffEnvNames(), s.ReservedEnvNames...) {
 		if name == reserved {
 			return []string{fmt.Sprintf("%s %q is reserved: the adapter or platform sets it", field, name)}
 		}
 	}
 	return nil
+}
+
+// handoffEnvNames are the variables every adapter sets for the pack handoff,
+// reserved whatever the adapter declares.
+func handoffEnvNames() []string {
+	return []string{deploy.EnvPackJSON, deploy.EnvPackURI, deploy.EnvAgent}
 }
 
 func sortedEnvNames(m map[string]string) []string {
