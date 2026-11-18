@@ -38,6 +38,9 @@ go.work.sum
 .VSCodeCounter/
 .claude/*
 !.claude/skills/
+# Shared: the plugin marketplace and the plugins the project uses (docs-review).
+# Per-machine settings belong in .claude/settings.local.json, which stays ignored.
+!.claude/settings.json
 .idea/
 .scannerwork/
 .sonarlint/
@@ -187,5 +190,5 @@ examples/*/out/
 # Stray `go build` output of arena/tui/theme/cmd/atlaspreview at the repo root
 /atlaspreview
 
-# Python bytecode (scripts/docs-*.py)
+# Python bytecode
 __pycache__/
