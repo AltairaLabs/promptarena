@@ -1,5 +1,5 @@
 # Public-surface files that deliberately have no docs page (one path per line).
-# scripts/docs-coverage.sh skips these.
+# docs-coverage (make docs-coverage) skips these. Named by docs-kit.toml.
 
 # Type aliases onto arena/inspect, kept for old code and tests; no user surface.
 arena/cmd/promptarena/config_inspect_types_interactive.go
