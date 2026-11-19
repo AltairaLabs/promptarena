@@ -242,11 +242,9 @@ func (r *CheckResult) checkSchema(data []byte, src sourceMap) {
 		if path == "(root)" {
 			path = ""
 		}
-		msg := e.Description
-		if e.Value != nil {
-			msg = fmt.Sprintf("%s (value: %v)", msg, e.Value)
-		}
-		r.add(true, Problem{Stage: StagePackSchema, Path: path, Source: src.forPath(path), Message: msg})
+		// The message is the reason only, never e.Value: a "required"
+		// violation's value is the whole parent object of the pack.
+		r.add(true, Problem{Stage: StagePackSchema, Path: path, Source: src.forPath(path), Message: e.Description})
 	}
 }
 

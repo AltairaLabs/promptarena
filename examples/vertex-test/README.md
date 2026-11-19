@@ -42,19 +42,21 @@ promptarena deploy plan
 promptarena deploy apply
 ```
 
-It needs a `deploy` section in `config.arena.yaml`:
+It needs a `deploy` section under `spec:` in `config.arena.yaml`. The
+adapter's settings go under `config:`:
 
 ```yaml
-deploy:
-  provider: vertex
-  vertex:
-    project: my-project
-    location: us-central1
-    image: us-central1-docker.pkg.dev/my-project/ghcr-remote/altairalabs/promptkit-vertex-runtime
-    providers:
-      - name: default
-        role: llm
-        arena_provider: gemini-vertex-25flash
+spec:
+  deploy:
+    provider: vertex
+    config:
+      project: my-project
+      location: us-central1
+      image: us-central1-docker.pkg.dev/my-project/ghcr-remote/altairalabs/promptkit-vertex-runtime
+      providers:
+        - name: default
+          role: llm
+          arena_provider: gemini-vertex-25flash
 ```
 
 ### Prerequisites

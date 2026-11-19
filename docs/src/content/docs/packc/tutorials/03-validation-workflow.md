@@ -112,8 +112,8 @@ Validation fails on the pack's `version` and the prompt's `version`. The schema 
 ```text
 Validating pack: packs/assistant.pack.json
 ✗ Pack validation failed: packs/assistant.pack.json
-  - [pack_schema] version: Does not match pattern '^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)...' (value: 1.0)
-  - [pack_schema] prompts.assistant.version: Does not match pattern '^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)...' (value: 1.0)
+  - [pack_schema] version: Does not match pattern '^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)...'
+  - [pack_schema] prompts.assistant.version: Does not match pattern '^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)...'
   - [pack] invalid pack version '1.0': invalid semantic version: invalid semantic version
   - [pack] prompt 'assistant': invalid version '1.0': invalid semantic version: invalid semantic version
 ```
@@ -185,7 +185,7 @@ The compile fails on the prompt config's schema, and the hook stops the commit:
 
 ```text
 Compilation failed: [load] loading arena config: schema validation failed for ../prompts/assistant.yaml: promptconfig configuration does not match schema:
-  - spec.version: Does not match pattern ... (value: 1.0)
+  - spec.version: Does not match pattern ...
 Pack build failed: commit blocked
 ```
 

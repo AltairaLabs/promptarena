@@ -44,6 +44,11 @@ var cache sync.Map // config.ConfigType -> *compiled
 // Validate checks YAML data against the embedded schema for configType and
 // returns every violation, with valid alternatives and nearest matches for
 // unknown keys and enum values.
+//
+// The returned errors never carry a value from the config: Value is always
+// nil. Configs hold deploy env values and tokens, and the value gojsonschema
+// reports for a "required" violation is the whole parent object, so printing
+// it would leak every secret beside the missing field.
 func Validate(yamlData []byte, configType config.ConfigType) (*config.SchemaValidationResult, error) {
 	if Disabled.Load() {
 		return &config.SchemaValidationResult{Valid: true, Errors: []config.SchemaValidationError{}}, nil
@@ -64,7 +69,8 @@ func Validate(yamlData []byte, configType config.ConfigType) (*config.SchemaVali
 }
 
 // Check validates YAML data against the schema for configType and returns one
-// error listing every violation, or nil when the data is valid.
+// error listing every violation, or nil when the data is valid. Each violation
+// is its field path and reason only, never a value from the config.
 func Check(configType config.ConfigType, yamlData []byte) error {
 	result, err := Validate(yamlData, configType)
 	if err != nil {
@@ -75,7 +81,7 @@ func Check(configType config.ConfigType, yamlData []byte) error {
 	}
 	msgs := make([]string, 0, len(result.Errors))
 	for _, e := range result.Errors {
-		msgs = append(msgs, "  - "+e.Error())
+		msgs = append(msgs, fmt.Sprintf("  - %s: %s", e.Field, e.Description))
 	}
 	return fmt.Errorf("%s configuration does not match schema:\n%s", configType, strings.Join(msgs, "\n"))
 }
@@ -138,7 +144,9 @@ func yamlToJSON(yamlData []byte) ([]byte, error) {
 }
 
 // convert turns a gojsonschema result into a config.SchemaValidationResult,
-// adding the valid keys or enum values to errors about either.
+// adding the valid keys or enum values to errors about either. The offending
+// value is used only to compute suggestions and is then dropped, so no caller
+// can print it.
 func convert(result *gojsonschema.Result, raw map[string]any) *config.SchemaValidationResult {
 	shared := promptschema.ConvertResult(result)
 	out := &config.SchemaValidationResult{
@@ -160,6 +168,7 @@ func convert(result *gojsonschema.Result, raw map[string]any) *config.SchemaVali
 		case keywordEnum:
 			enrichEnum(&converted, raw)
 		}
+		converted.Value = nil
 		out.Errors = append(out.Errors, converted)
 	}
 	return out

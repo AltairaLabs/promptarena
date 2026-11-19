@@ -148,7 +148,7 @@ Last, the pack JSON is validated against the PromptPack schema (version 1.9.0, e
 
 ```text
 ✗ Pack validation failed: app.pack.json
-  - [pack_schema] prompts.greeting.version: Does not match pattern '^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)...' (value: )
+  - [pack_schema] prompts.greeting.version: Does not match pattern '^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)...'
 ```
 
 `packc validate` first parses the file, so a JSON syntax error is reported as `[load] invalid JSON: …` and nothing else runs. It then runs this check before the pack checks. `packc compile` runs it last, on the JSON it is about to write.

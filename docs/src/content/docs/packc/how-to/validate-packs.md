@@ -147,7 +147,7 @@ Check the path, or compile the pack first.
 
 ```text
 ✗ Pack validation failed: packs/app.pack.json
-  - [pack_schema] prompts.greeting.version: Does not match pattern '^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)...' (value: 1.0)
+  - [pack_schema] prompts.greeting.version: Does not match pattern '^v?(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)...'
   - [pack] prompt 'greeting': invalid version '1.0': invalid semantic version: invalid semantic version
 ```
 
