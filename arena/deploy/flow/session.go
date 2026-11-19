@@ -223,22 +223,40 @@ func (s *Session) Plan(ctx context.Context) (*deploy.PlanResponse, *deploy.PlanR
 }
 
 // Apply runs the plan, saves state, and clears the saved plan. Caller holds the lock.
+//
+// A failed apply that returns adapter state has changed something before it
+// failed, so that state is saved too, marked ApplyIncomplete, and the saved
+// plan is cleared: its PriorState predates the resources the failed apply
+// created, and replaying it would create them again.
 func (s *Session) Apply(ctx context.Context, req *deploy.PlanRequest, cb deploy.ApplyCallback) error {
-	adapterState, err := s.Client.Apply(ctx, req, cb)
-	if err != nil {
-		return fmt.Errorf("apply failed: %w", err)
+	adapterState, applyErr := s.Client.Apply(ctx, req, cb)
+	if applyErr != nil && adapterState == "" {
+		return fmt.Errorf("apply failed: %w", applyErr)
 	}
+	if err := s.saveAppliedState(ctx, adapterState, applyErr != nil); err != nil {
+		if applyErr != nil {
+			return fmt.Errorf("apply failed: %w; saving the partial state also failed: %w", applyErr, err)
+		}
+		return err
+	}
+	_ = s.Store.DeletePlan()
+	if applyErr != nil {
+		return fmt.Errorf("apply failed (the resources it created are recorded in the deploy state; "+
+			"plan or apply again to reconcile them): %w", applyErr)
+	}
+	return nil
+}
+
+// saveAppliedState records adapterState as the environment's deploy state.
+func (s *Session) saveAppliedState(ctx context.Context, adapterState string, incomplete bool) error {
 	version := ""
 	if info, _ := s.Client.GetProviderInfo(ctx); info != nil {
 		version = info.Version
 	}
 	st := deploy.NewState(s.ProviderName, s.Env, s.PackVersion(), s.PackChecksum(), version)
 	st.State = adapterState
-	if err := s.Store.Save(st); err != nil {
-		return err
-	}
-	_ = s.Store.DeletePlan()
-	return nil
+	st.ApplyIncomplete = incomplete
+	return s.Store.Save(st)
 }
 
 // Status queries current deployment health.

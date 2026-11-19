@@ -70,6 +70,9 @@ type rpcResponse struct {
 type rpcError struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
+	// Data is the optional JSON-RPC 2.0 error payload. For apply it carries the
+	// partial result (adapter state and events) of an apply that failed partway.
+	Data json.RawMessage `json:"data,omitempty"`
 }
 
 func (e *rpcError) Error() string {
@@ -418,21 +421,56 @@ type destroyResult struct {
 // the final response rather than streaming them; this method replays those
 // events to the callback (if non-nil) in order before returning. The returned
 // string is the opaque adapter state.
+//
+// When the apply fails partway, an adapter built on a current adaptersdk
+// reports the state and events it had produced in the error's data. Apply
+// replays those events and returns that state together with the error, so the
+// caller can persist the resources that were created before the failure. An
+// older adapter reports no data, and the state is "".
 func (c *AdapterClient) Apply(ctx context.Context, req *PlanRequest, callback ApplyCallback) (string, error) {
 	var result applyResult
 	if err := c.callCtx(ctx, methodApply, req, &result); err != nil {
-		return "", err
-	}
-	// The adapter collects streamed events and returns them in the response;
-	// replay them to the caller's callback in order.
-	if callback != nil {
-		for _, event := range result.Events {
-			if err := callback(event); err != nil {
-				return result.AdapterState, err
-			}
+		partial, ok := partialApplyResult(err)
+		if !ok {
+			return "", err
 		}
+		// The apply error is the one to report; a callback failure while
+		// replaying what happened before it adds nothing the caller can act on.
+		_ = replayApplyEvents(partial.Events, callback)
+		return partial.AdapterState, err
+	}
+	if err := replayApplyEvents(result.Events, callback); err != nil {
+		return result.AdapterState, err
 	}
 	return result.AdapterState, nil
+}
+
+// partialApplyResult extracts the partial apply result an adapter attached to
+// a failed apply's JSON-RPC error. It reports false when there is none.
+func partialApplyResult(err error) (*applyResult, bool) {
+	var rpcErr *rpcError
+	if !errors.As(err, &rpcErr) || len(rpcErr.Data) == 0 {
+		return nil, false
+	}
+	var partial applyResult
+	if json.Unmarshal(rpcErr.Data, &partial) != nil {
+		return nil, false
+	}
+	return &partial, true
+}
+
+// replayApplyEvents hands the adapter's collected events to callback in order,
+// stopping at the first callback error.
+func replayApplyEvents(events []*ApplyEvent, callback ApplyCallback) error {
+	if callback == nil {
+		return nil
+	}
+	for _, event := range events {
+		if err := callback(event); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // Destroy tears down the deployment.

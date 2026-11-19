@@ -172,6 +172,14 @@ type ImportResponse struct {
 }
 
 // Provider defines the interface that deploy adapters must implement.
+//
+// Apply returns the adapter state to persist. When it fails after creating or
+// changing resources, it should return the state describing them together with
+// the error: the CLI saves a non-empty state from a failed apply, so the next
+// plan updates or destroys those resources instead of creating them again.
+// That state replaces the stored one, so it must also carry forward the prior
+// state's resources the failed apply did not reach. Return "" with the error
+// only when nothing was changed.
 type Provider interface {
 	GetProviderInfo(ctx context.Context) (*ProviderInfo, error)
 	ValidateConfig(ctx context.Context, req *ValidateRequest) (*ValidateResponse, error)

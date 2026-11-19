@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"strings"
 	"testing"
 
@@ -18,6 +19,11 @@ type fakeProvider struct {
 	status    *deploy.StatusResponse
 	applyErr  error
 	importErr error
+
+	// partialState and partialEvents are what Apply reports before failing
+	// with applyErr, as an adapter does when it fails partway.
+	partialState  string
+	partialEvents []*deploy.ApplyEvent
 }
 
 func (f *fakeProvider) GetProviderInfo(_ context.Context) (*deploy.ProviderInfo, error) {
@@ -43,7 +49,10 @@ func (f *fakeProvider) Apply(
 	_ context.Context, _ *deploy.PlanRequest, cb deploy.ApplyCallback,
 ) (string, error) {
 	if f.applyErr != nil {
-		return "", f.applyErr
+		for _, e := range f.partialEvents {
+			_ = cb(e)
+		}
+		return f.partialState, f.applyErr
 	}
 	_ = cb(&deploy.ApplyEvent{Type: "progress", Message: "deploying"})
 	return "state-123", nil
@@ -317,6 +326,97 @@ func TestServeIO_ApplyError(t *testing.T) {
 	}
 	if resp.Error.Code != CodeInternalError {
 		t.Errorf("expected code %d, got %d", CodeInternalError, resp.Error.Code)
+	}
+	// An apply that failed before changing anything reports no partial result.
+	if strings.Contains(out.String(), `"data"`) {
+		t.Errorf("a failure with no state or events must carry no error data, got %s", out.String())
+	}
+}
+
+// TestServeIO_ApplyPartialFailureKeepsStateAndEvents pins the fix for a failed
+// apply losing what it had created: the state and events the adapter reported
+// before the error travel in the JSON-RPC error's data, where the client can
+// persist them. Dropping them made the next apply create the same resources
+// again and fail with "already exists".
+func TestServeIO_ApplyPartialFailureKeepsStateAndEvents(t *testing.T) {
+	provider := newFakeProvider()
+	provider.applyErr = fmt.Errorf("create endpoint: quota exceeded")
+	provider.partialState = `{"agent":"created"}`
+	provider.partialEvents = []*deploy.ApplyEvent{{
+		Type: "resource",
+		Resource: &deploy.ResourceResult{
+			Type: "agent", Name: "a1", Action: deploy.ActionCreate, Status: "created",
+		},
+	}}
+	input := makeRequest("apply", deploy.PlanRequest{PackJSON: "{}", DeployConfig: "{}"}, 5) + "\n"
+	var out bytes.Buffer
+
+	if err := ServeIO(provider, strings.NewReader(input), &out); err != nil {
+		t.Fatalf("ServeIO error: %v", err)
+	}
+
+	var resp struct {
+		Error *struct {
+			Code    int    `json:"code"`
+			Message string `json:"message"`
+			Data    *struct {
+				AdapterState string               `json:"adapter_state"`
+				Events       []*deploy.ApplyEvent `json:"events"`
+			} `json:"data"`
+		} `json:"error"`
+	}
+	if err := json.Unmarshal(out.Bytes(), &resp); err != nil {
+		t.Fatalf("unmarshal response: %v", err)
+	}
+	if resp.Error == nil || resp.Error.Code != CodeInternalError {
+		t.Fatalf("expected an internal error response, got %s", out.String())
+	}
+	if !strings.Contains(resp.Error.Message, "quota exceeded") {
+		t.Errorf("the adapter's error must still be reported, got %q", resp.Error.Message)
+	}
+	if resp.Error.Data == nil {
+		t.Fatalf("expected the partial result in error.data, got %s", out.String())
+	}
+	if resp.Error.Data.AdapterState != `{"agent":"created"}` {
+		t.Errorf("adapter_state = %q, want the state returned with the error", resp.Error.Data.AdapterState)
+	}
+	if len(resp.Error.Data.Events) != 1 || resp.Error.Data.Events[0].Resource.Name != "a1" {
+		t.Errorf("events = %+v, want the resource event reported before the failure", resp.Error.Data.Events)
+	}
+}
+
+// TestApplyPartialFailure_RoundTripsThroughAdapterClient runs the SDK server
+// against the real deploy.AdapterClient, so the two halves of the protocol
+// are held to the same shape: a failed apply hands the client the adapter's
+// partial state and replays its events, together with the error.
+func TestApplyPartialFailure_RoundTripsThroughAdapterClient(t *testing.T) {
+	provider := newFakeProvider()
+	provider.applyErr = fmt.Errorf("create endpoint: quota exceeded")
+	provider.partialState = "partial-state"
+	provider.partialEvents = []*deploy.ApplyEvent{{Type: "progress", Message: "agent created"}}
+
+	serverIn, clientOut := io.Pipe()
+	clientIn, serverOut := io.Pipe()
+	go func() {
+		_ = ServeIO(provider, serverIn, serverOut)
+		_ = serverOut.Close()
+	}()
+	client := deploy.NewAdapterClientIO(clientIn, clientOut)
+	t.Cleanup(func() { _ = client.Close() })
+
+	var seen []string
+	state, err := client.Apply(context.Background(), &deploy.PlanRequest{}, func(e *deploy.ApplyEvent) error {
+		seen = append(seen, e.Message)
+		return nil
+	})
+	if err == nil || !strings.Contains(err.Error(), "quota exceeded") {
+		t.Fatalf("expected the apply error, got %v", err)
+	}
+	if state != "partial-state" {
+		t.Errorf("state = %q, want the partial state returned with the error", state)
+	}
+	if len(seen) != 1 || seen[0] != "agent created" {
+		t.Errorf("events replayed = %v, want the event reported before the failure", seen)
 	}
 }
 

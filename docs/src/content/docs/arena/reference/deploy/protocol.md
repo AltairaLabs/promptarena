@@ -323,6 +323,34 @@ Executes the deployment plan, creating/updating/deleting resources.
 | `status` | string | `"created"`, `"updated"`, `"deleted"`, or `"failed"` |
 | `detail` | string | Additional info |
 
+**Partial failure:**
+
+An apply that fails after creating or changing resources answers with an error whose `data` carries the same fields as a successful result: the adapter state describing what now exists, and the events reported before the failure.
+
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 4,
+  "error": {
+    "code": -32603,
+    "message": "create endpoint: quota exceeded",
+    "data": {
+      "adapter_state": "eyJhZ2VudCI6ImNyZWF0ZWQifQ==",
+      "events": [
+        {
+          "type": "resource",
+          "resource": { "type": "agent", "name": "greeting", "action": "CREATE", "status": "created" }
+        }
+      ]
+    }
+  }
+}
+```
+
+The CLI saves that `adapter_state` as the environment's deploy state, marked `apply_incomplete`, and reports the error. The next plan receives it as `prior_state`, so the resources already created are updated or destroyed rather than created again.
+
+An adapter built on `adaptersdk` gets this by returning the state together with the error from `Apply`; the SDK omits `data` when the state is empty and no events were reported. Return an empty state only when nothing was changed. A state returned with an error replaces the stored one, so it must still describe every resource the prior state did that the failed apply did not reach. Clients that predate `data` ignore it, and an adapter that sends none is treated as having created nothing.
+
 ---
 
 ### destroy
