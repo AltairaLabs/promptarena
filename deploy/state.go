@@ -48,6 +48,10 @@ type State struct {
 	AdapterVersion string `json:"adapter_version"`
 	LastRefreshed  string `json:"last_refreshed,omitempty"`
 	State          string `json:"state,omitempty"` // Opaque base64 adapter state
+	// ApplyIncomplete records that State came from an apply that failed
+	// partway: it describes what that apply created or changed before failing,
+	// and the pack it records has not been fully deployed.
+	ApplyIncomplete bool `json:"apply_incomplete,omitempty"`
 }
 
 // StateStore manages deploy state persistence for one environment.

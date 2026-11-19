@@ -81,5 +81,8 @@ func runDeployStatus(cmd *cobra.Command, args []string) error {
 		fmt.Printf("  Pack version:  %s\n", priorState.PackVersion)
 	}
 	fmt.Printf("  Pack checksum: %s\n", priorState.PackChecksum)
+	if priorState.ApplyIncomplete {
+		fmt.Println("  Last apply:    incomplete — it failed partway; run 'promptarena deploy apply' to finish it")
+	}
 	return nil
 }

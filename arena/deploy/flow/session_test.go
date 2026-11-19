@@ -388,6 +388,142 @@ func TestSession_ApplyFailureLeavesNoState(t *testing.T) {
 	}
 }
 
+// TestSession_PartialApplyFailurePersistsWhatWasCreated pins the fix for an
+// apply that failed partway: the state the adapter returned with the error
+// describes resources that now exist, so it is saved (marked incomplete) and
+// the next plan diffs against it instead of creating them again. The saved
+// plan is cleared because its PriorState predates those resources.
+func TestSession_PartialApplyFailurePersistsWhatWasCreated(t *testing.T) {
+	fake := &fakeProvider{
+		appliedState: "agent-created",
+		applyErr:     errors.New("create endpoint: quota exceeded"),
+		info:         partialStateInfo(),
+		plan:         &deploy.PlanResponse{},
+		status:       &deploy.StatusResponse{},
+	}
+	sess, store := newTestSession(t, fake)
+	if err := sess.SavePlan(&deploy.PlanResponse{}, &deploy.PlanRequest{}); err != nil {
+		t.Fatal(err)
+	}
+
+	err := sess.Apply(context.Background(), &deploy.PlanRequest{}, nil)
+	if err == nil {
+		t.Fatal("expected the apply failure to surface")
+	}
+	if !strings.Contains(err.Error(), "apply failed") || !strings.Contains(err.Error(), "quota exceeded") {
+		t.Errorf("error should say what failed, got %q", err)
+	}
+
+	saved, loadErr := store.Load()
+	if loadErr != nil {
+		t.Fatal(loadErr)
+	}
+	if saved == nil || saved.State != "agent-created" {
+		t.Fatalf("the partial state must be persisted, got %+v", saved)
+	}
+	if !saved.ApplyIncomplete {
+		t.Error("state from a failed apply must be marked incomplete")
+	}
+	if saved.AdapterVersion != "2.3.4" {
+		t.Errorf("AdapterVersion = %q", saved.AdapterVersion)
+	}
+	if plan, _ := sess.LoadPlan(); plan != nil {
+		t.Error("a saved plan made before the failed apply must not survive for replay")
+	}
+
+	// The next plan must be computed against what the failed apply created.
+	if _, _, err := sess.Plan(context.Background()); err != nil {
+		t.Fatalf("Plan: %v", err)
+	}
+	if fake.sawPlanReq.PriorState != "agent-created" {
+		t.Errorf("next plan's PriorState = %q, want the partial state", fake.sawPlanReq.PriorState)
+	}
+
+	// A later successful apply clears the incomplete mark.
+	fake.applyErr = nil
+	fake.appliedState = "fully-applied"
+	if err := sess.Apply(context.Background(), &deploy.PlanRequest{}, nil); err != nil {
+		t.Fatalf("Apply: %v", err)
+	}
+	saved, _ = store.Load()
+	if saved.ApplyIncomplete || saved.State != "fully-applied" {
+		t.Errorf("after a successful apply got %+v", saved)
+	}
+}
+
+// partialStateInfo is an adapter that vouches for the state its failed applies return.
+func partialStateInfo() *deploy.ProviderInfo {
+	return &deploy.ProviderInfo{
+		Version: "2.3.4", Capabilities: []string{deploy.PartialApplyStateCapability},
+	}
+}
+
+// TestSession_FailedApplyKeepsExistingStateAndPlan pins the cases where a
+// failed apply's state must NOT replace what is stored: the adapter returned
+// none, returned the prior state unchanged, or does not advertise
+// PartialApplyStateCapability (its state may omit resources the apply never
+// reached). The stored state and the saved plan stay exactly as they were.
+func TestSession_FailedApplyKeepsExistingStateAndPlan(t *testing.T) {
+	cases := map[string]*fakeProvider{
+		"no state returned": {info: partialStateInfo()},
+		"prior state returned unchanged": {
+			info: partialStateInfo(), appliedState: "existing-state",
+		},
+		"adapter without the capability": {
+			info: &deploy.ProviderInfo{Version: "1.0"}, appliedState: "only-what-it-touched",
+		},
+	}
+	for name, fake := range cases {
+		t.Run(name, func(t *testing.T) {
+			fake.applyErr = errors.New("quota exceeded")
+			sess, store := newTestSession(t, fake)
+			st := deploy.NewState("acme", "staging", "", "old-checksum", "1.0")
+			st.State = "existing-state"
+			if err := store.Save(st); err != nil {
+				t.Fatal(err)
+			}
+			if err := sess.SavePlan(&deploy.PlanResponse{}, &deploy.PlanRequest{PriorState: "existing-state"}); err != nil {
+				t.Fatal(err)
+			}
+
+			err := sess.Apply(context.Background(), &deploy.PlanRequest{PriorState: "existing-state"}, nil)
+			if err == nil || !strings.Contains(err.Error(), "quota exceeded") {
+				t.Fatalf("expected the apply failure, got %v", err)
+			}
+			saved, _ := store.Load()
+			if saved == nil || saved.State != "existing-state" || saved.ApplyIncomplete ||
+				saved.PackChecksum != "old-checksum" {
+				t.Errorf("stored state must be untouched, got %+v", saved)
+			}
+			if plan, _ := sess.LoadPlan(); plan == nil {
+				t.Error("the saved plan must be kept when nothing was recorded")
+			}
+		})
+	}
+}
+
+// TestSession_PartialApplySaveFailureReportsBoth covers the case where the
+// partial state cannot be written: both failures are reported, so the user
+// knows the created resources are not recorded.
+func TestSession_PartialApplySaveFailureReportsBoth(t *testing.T) {
+	fake := &fakeProvider{
+		appliedState: "agent-created", applyErr: errors.New("quota exceeded"), info: partialStateInfo(),
+	}
+	dir := t.TempDir()
+	// An invalid environment name makes every store write fail.
+	store := deploy.NewEnvStateStore(dir, "../escape")
+	sess := NewSession(Options{ProjectDir: dir, Env: "staging"}, &arenaconfig.Config{},
+		&arenaconfig.DeployConfig{Provider: "acme"}, fake, store, []byte(`{}`), `{}`, nil)
+
+	err := sess.Apply(context.Background(), &deploy.PlanRequest{}, nil)
+	if err == nil {
+		t.Fatal("expected an error")
+	}
+	if !strings.Contains(err.Error(), "quota exceeded") || !strings.Contains(err.Error(), "saving the partial state") {
+		t.Errorf("error should report the apply and the save failure, got %q", err)
+	}
+}
+
 // TestSession_PlanRefreshesStaleStateBeforeDiffing covers PlanRequest's refresh
 // branch. The stored state is a snapshot from the last apply; anything changed
 // out-of-band since then is invisible to it. Planning against the stored copy

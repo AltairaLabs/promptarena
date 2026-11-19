@@ -64,6 +64,10 @@ type response struct {
 type rpcError struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
+	// Data is the optional JSON-RPC 2.0 error payload. A failed apply carries
+	// an applyResult here: the adapter state and events reported before the
+	// failure, so the client can persist what was already created.
+	Data any `json:"data,omitempty"`
 }
 
 // applyResult wraps the adapter state returned by Apply.
@@ -262,7 +266,15 @@ func handleApply(
 	}
 	state, err := provider.Apply(ctx, &params, callback)
 	if err != nil {
-		return errResponse(req.ID, CodeInternalError, err.Error())
+		resp := errResponse(req.ID, CodeInternalError, err.Error())
+		// An apply that fails partway may already have created resources. The
+		// state the adapter returned alongside the error describes them, and is
+		// the only record the client can persist; dropping it makes the next
+		// apply create them again. Older clients ignore error.data.
+		if state != "" || len(events) > 0 {
+			resp.Error.Data = &applyResult{AdapterState: state, Events: events}
+		}
+		return resp
 	}
 	return okResponse(req.ID, &applyResult{AdapterState: state, Events: events})
 }

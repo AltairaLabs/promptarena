@@ -330,6 +330,59 @@ func TestClientApply(t *testing.T) {
 	}
 }
 
+// TestClientApply_PartialFailureReturnsState covers an adapter that failed
+// partway and attached its partial result to the error: Apply returns that
+// state with the error and replays the events reported before the failure.
+func TestClientApply_PartialFailureReturnsState(t *testing.T) {
+	handler := func(_ string, _ json.RawMessage) (any, *rpcError) {
+		return nil, &rpcError{
+			Code:    -32603,
+			Message: "create endpoint: quota exceeded",
+			Data:    json.RawMessage(`{"adapter_state":"partial","events":[{"type":"progress","message":"agent created"}]}`),
+		}
+	}
+	client := startTestClient(t, handler)
+
+	var seen []string
+	state, err := client.Apply(context.Background(), &PlanRequest{}, func(e *ApplyEvent) error {
+		seen = append(seen, e.Message)
+		return errors.New("a callback failure must not mask the apply error")
+	})
+	if err == nil || !strings.Contains(err.Error(), "quota exceeded") {
+		t.Fatalf("expected the apply error, got %v", err)
+	}
+	if state != "partial" {
+		t.Errorf("state = %q, want the partial state", state)
+	}
+	if len(seen) != 1 || seen[0] != "agent created" {
+		t.Errorf("events replayed = %v", seen)
+	}
+}
+
+// TestClientApply_FailureWithoutDataReturnsNoState is the backward-compatible
+// half: an adapter built on an older SDK attaches nothing, and Apply reports
+// no state, exactly as before.
+func TestClientApply_FailureWithoutDataReturnsNoState(t *testing.T) {
+	for name, data := range map[string]json.RawMessage{
+		"no data":        nil,
+		"malformed data": json.RawMessage(`"not an apply result"`),
+	} {
+		t.Run(name, func(t *testing.T) {
+			handler := func(_ string, _ json.RawMessage) (any, *rpcError) {
+				return nil, &rpcError{Code: -32603, Message: "boom", Data: data}
+			}
+			client := startTestClient(t, handler)
+			state, err := client.Apply(context.Background(), &PlanRequest{}, nil)
+			if err == nil {
+				t.Fatal("expected an error")
+			}
+			if state != "" {
+				t.Errorf("state = %q, want none", state)
+			}
+		})
+	}
+}
+
 func TestClientDestroy(t *testing.T) {
 	client := startTestClient(t, defaultHandler)
 	ctx := context.Background()

@@ -171,7 +171,25 @@ type ImportResponse struct {
 	State    string         `json:"state"`
 }
 
+// PartialApplyStateCapability is the ProviderInfo capability an adapter
+// advertises to have the state it returns from a failed Apply persisted.
+//
+// It is opt-in because that state replaces the stored one: it must describe
+// everything that exists after the failure, including the prior state's
+// resources the failed apply never reached. An adapter whose failed Apply
+// returns only what that apply touched would make the CLI forget the rest, so
+// the CLI discards a failed apply's state from adapters that do not advertise
+// this, as it always did.
+const PartialApplyStateCapability = "partial_apply_state"
+
 // Provider defines the interface that deploy adapters must implement.
+//
+// Apply returns the adapter state to persist. When it fails after creating or
+// changing resources, an adapter that advertises PartialApplyStateCapability
+// returns the full state describing them together with the error, and the CLI
+// saves it, so the next plan updates or destroys those resources instead of
+// creating them again. Return "" (or the prior state unchanged) with the error
+// when nothing was changed.
 type Provider interface {
 	GetProviderInfo(ctx context.Context) (*ProviderInfo, error)
 	ValidateConfig(ctx context.Context, req *ValidateRequest) (*ValidateResponse, error)
