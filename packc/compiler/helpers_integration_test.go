@@ -283,6 +283,29 @@ func TestCheckSchema(t *testing.T) {
 		assert.Contains(t, byPath["prompts.greeting"].Message, "not_a_spec_field")
 	})
 
+	// A "required" violation's value is the whole parent object, so printing
+	// it would print every value beside the missing field.
+	t.Run("a violation's message carries no pack values", func(t *testing.T) {
+		const secret = "sk-DUMMY-SECRET-123"
+		var pack map[string]any
+		require.NoError(t, json.Unmarshal(res.JSON, &pack))
+		delete(pack, "id")
+		greeting := pack["prompts"].(map[string]any)["greeting"].(map[string]any)
+		greeting["system_template"] = secret
+		data, err := json.Marshal(pack)
+		require.NoError(t, err)
+
+		r := check(data)
+		require.NotEmpty(t, r.Errors)
+		var all []string
+		for _, p := range r.Errors {
+			assert.NotContains(t, p.Message, secret)
+			assert.NotContains(t, p.Message, "value:")
+			all = append(all, p.Message)
+		}
+		assert.Contains(t, all, "id is required")
+	})
+
 	t.Run("unreadable schema source errors", func(t *testing.T) {
 		t.Setenv("PROMPTKIT_SCHEMA_SOURCE", "/nonexistent/schema/file.json")
 		r := check(res.JSON)

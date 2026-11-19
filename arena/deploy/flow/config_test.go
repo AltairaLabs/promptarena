@@ -130,6 +130,46 @@ func TestResolvePack_CompilesFromConfig_Error(t *testing.T) {
 	}
 }
 
+// TestDeployConfigErrors_PrintNoConfigValues is the deploy path's end of the
+// schema-error leak: a deploy block missing spec.defaults used to fail with
+// "spec: defaults is required (value: map[...])", printing every deploy env
+// value. Both ways deploy loads the config must name the field and the reason
+// and print no value from the config.
+func TestDeployConfigErrors_PrintNoConfigValues(t *testing.T) {
+	const secret = "sk-DUMMY-SECRET-123"
+	const envSecret = "env-DUMMY-TOKEN-456"
+	configPath := writeArenaConfig(t, t.TempDir(), `  providers: []
+  deploy:
+    provider: dummy-adapter-name
+    config:
+      project: my-project
+      env:
+        OPENAI_API_KEY: `+secret+`
+    environments:
+      production:
+        config:
+          api_token: `+envSecret+`
+`)
+	opts := Options{ConfigPath: configPath}
+
+	_, _, loadErr := LoadConfig(opts)
+	_, packErr := ResolvePack(opts)
+	for name, err := range map[string]error{"LoadConfig": loadErr, "ResolvePack": packErr} {
+		if err == nil {
+			t.Fatalf("%s: expected a schema error for a config missing spec.defaults", name)
+		}
+		msg := err.Error()
+		if !strings.Contains(msg, "spec: defaults is required") {
+			t.Errorf("%s: error = %q, want it to name the field and the reason", name, msg)
+		}
+		for _, value := range []string{secret, envSecret, "my-project", "dummy-adapter-name", "value:", "map["} {
+			if strings.Contains(msg, value) {
+				t.Errorf("%s: error contains config value %q:\n%s", name, value, msg)
+			}
+		}
+	}
+}
+
 func TestLoadConfig_MissingFile(t *testing.T) {
 	_, _, err := LoadConfig(Options{ConfigPath: filepath.Join(t.TempDir(), "nope.yaml")})
 	if err == nil {

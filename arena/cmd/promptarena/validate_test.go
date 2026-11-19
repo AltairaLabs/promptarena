@@ -72,7 +72,7 @@ func TestDisplayError_AdditionalPropertyDegraded(t *testing.T) {
 	}
 	out := captureStdout(t, func() { displayError(e) })
 	assert.Contains(t, out, "Additional property judge is not allowed")
-	assert.Contains(t, out, "(value: tone-judge)")
+	assert.NotContains(t, out, "tone-judge", "a config value must never be printed")
 }
 
 func TestDisplayError_EnumWithSuggestion(t *testing.T) {
@@ -317,8 +317,8 @@ func TestDisplayErrors(t *testing.T) {
 }
 
 // TestDisplayError pins the default line format: the "(root)." prefix is
-// trimmed, a value is shown when there is one, and a whole-document error is
-// attributed to "root".
+// trimmed, a value is never shown (config values can be secrets), and a
+// whole-document error is attributed to "root".
 func TestDisplayError(t *testing.T) {
 	tests := []struct {
 		name string
@@ -326,9 +326,9 @@ func TestDisplayError(t *testing.T) {
 		want string
 	}{
 		{
-			name: "error with value",
-			err:  config.SchemaValidationError{Field: "(root).spec.invalid", Description: "Invalid field", Value: "test"},
-			want: "  - spec.invalid: Invalid field (value: test)\n",
+			name: "error with value prints no value",
+			err:  config.SchemaValidationError{Field: "(root).spec.invalid", Description: "Invalid field", Value: "sk-DUMMY-SECRET"},
+			want: "  - spec.invalid: Invalid field\n",
 		},
 		{
 			name: "error without value",

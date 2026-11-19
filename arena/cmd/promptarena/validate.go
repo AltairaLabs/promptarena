@@ -242,12 +242,11 @@ func displayError(err config.SchemaValidationError) {
 	}
 }
 
+// displayDefault prints a finding as its field and reason. It never prints
+// err.Value: a config holds secrets, and the value of a "required" violation is
+// the whole parent object.
 func displayDefault(field string, err *config.SchemaValidationError) {
-	if err.Value != nil {
-		fmt.Printf("  - %s: %s (value: %v)\n", field, err.Description, err.Value)
-	} else {
-		fmt.Printf("  - %s: %s\n", field, err.Description)
-	}
+	fmt.Printf("  - %s: %s\n", field, err.Description)
 }
 
 // extractAdditionalPropertyName pulls X out of "Additional property X is not allowed".

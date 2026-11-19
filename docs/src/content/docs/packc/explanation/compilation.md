@@ -52,8 +52,8 @@ The stages before the checks stop the run when they fail, because nothing after 
 
 ```text
 Compilation failed: [load] loading arena config: schema validation failed: arena configuration does not match schema:
-  - spec: providers is required (value: ...)
-  - spec: defaults is required (value: ...)
+  - spec: providers is required
+  - spec: defaults is required
 ```
 
 An arena config must declare `providers` and `defaults` even though the pack does not use them. A config written for `promptarena run` already has both.

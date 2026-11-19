@@ -104,3 +104,56 @@ func TestTruncate(t *testing.T) {
 	assert.Equal(t, []string{"a", "b"}, truncate([]string{"b", "a"}, 3))
 	assert.Equal(t, []string{"a", "b", "+2 more"}, truncate([]string{"d", "c", "b", "a"}, 2))
 }
+
+// dummySecret stands in for a deploy env value or token. It is not a real key.
+const dummySecret = "sk-DUMMY-SECRET-123"
+
+// An arena config missing spec.defaults, whose deploy block carries an env
+// value. gojsonschema reports the whole spec object as the value of each
+// "required" violation, so a formatter that prints it prints the secret.
+const arenaMissingDefaults = `apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Arena
+metadata:
+  name: leak
+spec:
+  prompt_configs:
+    - id: p
+      file: prompts/p.yaml
+  providers:
+    - file: providers/p.yaml
+  deploy:
+    provider: vertex
+    config:
+      project: my-project
+      env:
+        OPENAI_API_KEY: ` + dummySecret + `
+`
+
+func TestCheck_RequiredErrorNamesFieldAndReasonButNoValues(t *testing.T) {
+	err := Check(config.ConfigTypeArena, []byte(arenaMissingDefaults))
+	require.Error(t, err)
+	msg := err.Error()
+	assert.Contains(t, msg, "  - spec: defaults is required")
+	for _, value := range []string{dummySecret, "my-project", "vertex", "prompts/p.yaml", "value:", "map["} {
+		assert.NotContains(t, msg, value)
+	}
+}
+
+func TestValidate_ErrorsNeverCarryValues(t *testing.T) {
+	docs := map[config.ConfigType]string{
+		config.ConfigTypeArena:    arenaMissingDefaults,
+		config.ConfigTypeProvider: testProvider + "  role: " + dummySecret + "\n  modle: " + dummySecret + "\n",
+	}
+	for configType, doc := range docs {
+		result, err := Validate([]byte(doc), configType)
+		require.NoError(t, err)
+		require.False(t, result.Valid, configType)
+		for _, e := range result.Errors {
+			assert.Nil(t, e.Value, "%s: %s", configType, e.Field)
+			assert.NotContains(t, e.Error(), dummySecret)
+		}
+		err = Check(configType, []byte(doc))
+		require.Error(t, err)
+		assert.NotContains(t, err.Error(), dummySecret)
+	}
+}

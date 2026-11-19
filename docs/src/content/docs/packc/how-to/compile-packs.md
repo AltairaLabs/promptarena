@@ -181,15 +181,15 @@ It exits 0 and ends with `✓ Pack structure is valid`. See [Validate packs](/pa
 
 ```text
 Compilation failed: [load] loading arena config: schema validation failed: arena configuration does not match schema:
-  - spec: providers is required (value: ...)
-  - spec: defaults is required (value: ...)
+  - spec: providers is required
+  - spec: defaults is required
 ```
 
 Add the missing fields. The same check runs on each prompt and tool file, and its message names the file:
 
 ```text
 Compilation failed: [load] loading arena config: schema validation failed for prompts/support.yaml: promptconfig configuration does not match schema:
-  - spec: description is required (value: ...)
+  - spec: description is required
 ```
 
 ### The config or a prompt file is missing
