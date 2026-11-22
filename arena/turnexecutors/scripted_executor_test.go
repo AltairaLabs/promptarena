@@ -35,10 +35,10 @@ func (m *MockProvider) Validate() error                     { return nil }
 func (m *MockProvider) Init(_ context.Context) error        { return nil }
 func (m *MockProvider) HealthCheck(_ context.Context) error { return nil }
 
-func (m *MockProvider) Model() string {
-	args := m.Called()
-	return args.String(0)
-}
+// Model returns a fixed name rather than going through m.Called(): the runtime's
+// provider stage calls Model() on every provider call to stamp CostInfo.Model,
+// so a strict expectation would make every test register one it doesn't care about.
+func (m *MockProvider) Model() string { return "mock-model" }
 
 func (m *MockProvider) Predict(ctx context.Context, req providers.PredictionRequest) (providers.PredictionResponse, error) {
 	args := m.Called(ctx, req)
