@@ -85,6 +85,12 @@ func buildInferenceProvider(configDir, id string, p *config.Provider) (inference
 		return nil, errors.New("no api key configured (set credential.api_key or credential.credential_env, " +
 			"or export the provider's default key variable such as OPENAI_API_KEY or HF_TOKEN)")
 	}
+	// headers, request_timeout, http_transport and rate_limit apply to an
+	// inference provider as to any capability provider.
+	tuning, err := config.CapabilityHTTPTuning(p)
+	if err != nil {
+		return nil, err
+	}
 	built, err := inference.CreateFromSpec(inference.ProviderSpec{
 		ID:               id,
 		Type:             p.Type,
@@ -92,6 +98,7 @@ func buildInferenceProvider(configDir, id string, p *config.Provider) (inference
 		BaseURL:          p.BaseURL,
 		Credential:       cred,
 		AdditionalConfig: p.AdditionalConfig,
+		Tuning:           tuning,
 	})
 	if err != nil {
 		return nil, err

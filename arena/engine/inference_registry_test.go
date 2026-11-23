@@ -155,6 +155,26 @@ func TestBuildInferenceRegistry_VendorEnvKeyNotSentToAnotherHost(t *testing.T) {
 	assert.NotContains(t, gotAuth, "sk-must-not-leak")
 }
 
+// request_timeout and the other HTTP tuning fields reach an inference provider,
+// and a completion-only field on one is an error rather than silently ignored.
+func TestBuildInferenceRegistry_AppliesCapabilityTuning(t *testing.T) {
+	bad := &config.Provider{ID: "nim", Type: "nvidia-topic-control", Role: config.RoleInference,
+		BaseURL: "http://nim:8000/v1", StreamIdleTimeout: "90s"}
+	reg, err := buildInferenceRegistry(inferenceCfg(bad))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "stream_idle_timeout")
+	assert.Nil(t, reg)
+
+	// additional_config.timeout_seconds plus request_timeout is a conflict the
+	// backend rejects; it can only see request_timeout if the tuning reached it.
+	both := &config.Provider{ID: "nim", Type: "nvidia-topic-control", Role: config.RoleInference,
+		BaseURL: "http://nim:8000/v1", RequestTimeout: "5s",
+		AdditionalConfig: map[string]any{"timeout_seconds": 10}}
+	_, err = buildInferenceRegistry(inferenceCfg(both))
+	require.Error(t, err)
+	assert.Contains(t, err.Error(), "either additional_config.timeout_seconds or request_timeout")
+}
+
 func TestEnvKeyAllowedFor(t *testing.T) {
 	cases := []struct {
 		typ, baseURL string
