@@ -283,6 +283,7 @@ Fields under `spec`:
 | `skills` | object |  | Runtime skill configuration |
 | `state_store` | object |  | Conversation state persistence configuration |
 | `stt_providers` | array |  | Speech-to-text provider configurations |
+| `tool_loading` | object |  | How the tools array sent to the provider follows a change to what the model may call |
 | `tool_selector` | string |  | Name of a selector declared under spec.selectors used to narrow the LLM-visible tool set per turn |
 | `tools` | object |  | Tool implementation bindings keyed by tool name |
 | `tts_providers` | array |  | Text-to-speech provider configurations |
