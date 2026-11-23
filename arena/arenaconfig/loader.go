@@ -710,7 +710,7 @@ func (c *Config) loadProviders(configPath string) error {
 			c.LoadedInferenceProviders[provider.ID] = provider
 			logger.Warn(msgProviderExcludedFromMatrix,
 				"provider", provider.ID, "role", role,
-				"reason", "inference providers use runtime/classify task interfaces, not Predict()")
+				"reason", "inference providers answer classifier-backed checks (inference.Provider), not Predict()")
 		default:
 			return fmt.Errorf("providers[%s]: unhandled role %q", ref.File, role)
 		}

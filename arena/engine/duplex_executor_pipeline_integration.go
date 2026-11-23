@@ -385,6 +385,11 @@ func (de *DuplexConversationExecutor) buildDuplexPipelineConfig(req *Conversatio
 	if de.evalOrchestrator != nil && de.evalOrchestrator.providerBinding != nil {
 		pipelineConfig.ProviderBinding = de.evalOrchestrator.providerBinding
 	}
+	// Likewise the inference registry, for a classifier-backed guardrail that
+	// names no provider and so resolves the default.
+	if de.evalOrchestrator != nil && de.evalOrchestrator.inferenceRegistry != nil {
+		pipelineConfig.InferenceRegistry = de.evalOrchestrator.inferenceRegistry
+	}
 	return pipelineConfig
 }
 

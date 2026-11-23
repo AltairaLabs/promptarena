@@ -11,10 +11,10 @@ import (
 	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/a2a"
 	a2amock "github.com/AltairaLabs/PromptKit/runtime/v2/a2a/mock"
-	"github.com/AltairaLabs/PromptKit/runtime/v2/classify"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/credentials"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/evals"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/evals/handlers" // also registers default eval handlers via init()
+	"github.com/AltairaLabs/PromptKit/runtime/v2/inference"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/logger"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/mcp"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/mediagen"
@@ -159,14 +159,14 @@ func BuildEngineComponents(cfg *arenaconfig.Config, providerFilter []string) (
 		return nil, nil, nil, nil, nil, nil, nil, nil, fmt.Errorf("failed to register skill tools: %w", skillErr)
 	}
 
-	// Inject judge metadata + classify registry so eval handlers can resolve
+	// Inject judge metadata + inference registry so eval handlers can resolve
 	// judge providers, tools, and classifiers from config.
-	classifyRegistry := configureOrchestratorMetadata(evalOrchestrator, cfg, promptRegistry, toolRegistry)
+	inferenceRegistry := configureOrchestratorMetadata(evalOrchestrator, cfg, promptRegistry, toolRegistry)
 
 	// Resolve the logical provider names a pack's checks declare against what
 	// this config actually wired. Shared by the eval path and the pipeline,
 	// so a name means the same thing to an assertion and to a guardrail.
-	providerBinding := buildProviderBinding(cfg, providerRegistry, classifyRegistry)
+	providerBinding := buildProviderBinding(cfg, providerRegistry, inferenceRegistry)
 	evalOrchestrator.SetProviderBinding(providerBinding)
 
 	// Build conversation executor (engine-specific, stays here)
@@ -186,25 +186,25 @@ func BuildEngineComponents(cfg *arenaconfig.Config, providerFilter []string) (
 
 // configureOrchestratorMetadata injects judge metadata so eval handlers
 // (llm_judge, llm_judge_session) can resolve judge providers from config
-// targets, exposes the prompt and tool registries under known keys, and wires a
-// classify.Registry so classify-backed handlers (audio_emotion, text_toxicity,
-// ...) can pull a classifier via classify.FromContext. Nil orchestrator is a
-// no-op. Classify build errors are non-fatal — an unparseable HF entry would
-// otherwise block every run, even ones that don't touch classify — so we log
-// and continue with an empty registry.
+// targets, exposes the prompt and tool registries under known keys, and wires
+// the inference.Registry classifier-backed checks (topic_policy, audio_emotion,
+// the text classifiers, ...) resolve. Nil orchestrator is a no-op. Build errors
+// are non-fatal — an unusable inference entry would otherwise block every run,
+// even ones that never call a classifier — so they are logged and the providers
+// that did build stay available.
 func configureOrchestratorMetadata(
 	evalOrchestrator *EvalOrchestrator,
 	cfg *arenaconfig.Config,
 	promptRegistry *prompt.Registry,
 	toolRegistry *tools.Registry,
-) *classify.Registry {
-	classifyReg, classifyErr := buildClassifyRegistry(cfg)
-	if classifyErr != nil {
-		logger.Warn("classify registry build failed; classify-backed handlers unavailable",
-			"error", classifyErr)
+) *inference.Registry {
+	inferenceReg, inferenceErr := buildInferenceRegistry(cfg)
+	if inferenceErr != nil {
+		logger.Warn("some inference providers could not be built; checks that name them will report them unbound",
+			"error", inferenceErr)
 	}
 	if evalOrchestrator == nil {
-		return classifyReg
+		return inferenceReg
 	}
 	metadata := make(map[string]any)
 	attachJudgeMetadata(metadata, cfg)
@@ -215,18 +215,18 @@ func configureOrchestratorMetadata(
 		metadata["tool_registry"] = toolRegistry
 	}
 	evalOrchestrator.SetMetadata(metadata)
-	evalOrchestrator.SetClassifyRegistry(classifyReg)
-	return classifyReg
+	evalOrchestrator.SetInferenceRegistry(inferenceReg)
+	return inferenceReg
 }
 
 // buildProviderBinding assembles the answer to "what is behind this logical
-// provider name" for the whole run: the initialized providers, the classify
-// backends, and the `judges:` block as a set of aliases onto provider ids so a
+// provider name" for the whole run: the initialized providers, the inference
+// providers, and the `judges:` block as a set of aliases onto provider ids so a
 // check may name either the judge or the provider under it.
 func buildProviderBinding(
 	cfg *arenaconfig.Config,
 	providerRegistry *providers.Registry,
-	classifyRegistry *classify.Registry,
+	inferenceRegistry *inference.Registry,
 ) evals.ProviderBinding {
 	var aliases map[string]string
 	if cfg != nil && len(cfg.LoadedJudges) > 0 {
@@ -238,7 +238,7 @@ func buildProviderBinding(
 			aliases[name] = jt.Provider.ID
 		}
 	}
-	return binding.New(providerRegistry, classifyRegistry, aliases)
+	return binding.New(providerRegistry, inferenceRegistry, aliases)
 }
 
 // registerMediaGenTools wires the built-in image__generate / video__generate
@@ -666,6 +666,9 @@ func newConversationExecutor(
 	pipelineExecutor := turnexecutors.NewPipelineExecutor(toolRegistry, mediaStorage)
 	pipelineExecutor.SetPreloadedSkillInstructions(preloadedSkillInstructions)
 	pipelineExecutor.SetProviderBinding(providerBinding)
+	if evalOrchestrator != nil {
+		pipelineExecutor.SetInferenceRegistry(evalOrchestrator.inferenceRegistry)
+	}
 	scriptedExecutor := turnexecutors.NewScriptedExecutor(pipelineExecutor)
 
 	// Build self-play components if enabled
