@@ -80,6 +80,8 @@ jobs:
       # Cheap, so it runs before the snapshot build. gorelease compares the
       # exported API against the previous release and fails when the claimed
       # version cannot carry the changes, e.g. a removed symbol in a minor.
+      - name: Test the API-compat allowlist
+        run: ./scripts/test-api-compat-allowlist.sh
       - name: Check the API changes fit the version
         run: ./scripts/check-api-compatibility.sh "$VERSION"
 
