@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
+	_ "github.com/AltairaLabs/promptarena/v2/arena/inferencemock" // registers the keyless "mock" inference type
 
 	"github.com/AltairaLabs/PromptKit/pkg/v2/config"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/credentials"

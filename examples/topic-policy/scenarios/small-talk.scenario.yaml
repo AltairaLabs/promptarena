@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=https://promptkit.altairalabs.ai/schemas/v1alpha1/scenario.json
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Scenario
+metadata:
+  name: small-talk
+spec:
+  id: small-talk
+  task_type: support
+  description: A greeting is allowed small talk.
+  turns:
+    - role: user
+      content: "Hi! Thanks for getting back to me so quickly."
+      assertions:
+        - type: guardrail_triggered
+          params:
+            validator: topic_policy
+            direction: input
+            should_trigger: false
+          message: "An in-scope message must reach the agent"
+        - type: contains_any
+          params:
+            patterns: ["help"]
+          message: "The agent should have answered"

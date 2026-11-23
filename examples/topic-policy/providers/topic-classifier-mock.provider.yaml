@@ -1,0 +1,22 @@
+# yaml-language-server: $schema=https://promptkit.altairalabs.ai/schemas/v1alpha1/provider.json
+#
+# A keyless stand-in for the topic classifier, so the kit runs in CI. It
+# answers from keyword rules over the newest message, which is enough to
+# exercise the policy's allow and deny paths. A real classifier reads the
+# policy and the recent turns; see the README for the provider file to use
+# instead.
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Provider
+metadata:
+  name: topic-classifier
+spec:
+  id: topic-classifier
+  type: mock
+  role: inference
+  additional_config:
+    rules:
+      - match: "(?i)parcel|package|deliver|tracking|order|return|refund|account|invoice|bill"
+        label: on-topic
+      - match: "(?i)^(hi|hello|hey|thanks|thank you)\\b"
+        label: on-topic
+    default_label: off-topic
