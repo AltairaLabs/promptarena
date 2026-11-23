@@ -1,0 +1,12 @@
+# Canned replies for the agent. Keys are each scenario's metadata.name. A turn
+# the topic policy refuses never reaches the agent, so it has no entry here.
+scenarios:
+  on-topic:
+    turns:
+      1: "Thanks! Parcel NP-48213 left our depot this morning and is out for delivery today."
+  small-talk:
+    turns:
+      1: "Hi there! Happy to help. What can I do for you today?"
+  drift:
+    turns:
+      1: "No problem. I've started a return for order 5521; you'll get a prepaid label by email."

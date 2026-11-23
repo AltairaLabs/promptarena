@@ -1,0 +1,30 @@
+# yaml-language-server: $schema=https://promptkit.altairalabs.ai/schemas/v1alpha1/arena.json
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Arena
+metadata:
+  name: topic-policy
+spec:
+  prompt_configs:
+    - id: support
+      file: prompts/support.prompt.yaml
+
+  providers:
+    # The agent being governed.
+    - file: providers/agent-mock.provider.yaml
+    # The topic classifier the policy asks. It is a separate model from the
+    # agent: an off-topic message is refused before the agent sees it.
+    - file: providers/topic-classifier-mock.provider.yaml
+
+  scenarios:
+    - file: scenarios/on-topic.scenario.yaml
+    - file: scenarios/small-talk.scenario.yaml
+    - file: scenarios/politics.scenario.yaml
+    - file: scenarios/medical-advice.scenario.yaml
+    - file: scenarios/drift.scenario.yaml
+
+  defaults:
+    temperature: 0.3
+    max_tokens: 400
+    output:
+      dir: out
+      formats: ["json", "markdown"]

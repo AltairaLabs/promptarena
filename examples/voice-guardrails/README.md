@@ -42,7 +42,9 @@ The `guardrail_triggered` assertion (`runtime/evals/handlers/guardrail_triggered
 
 ## Duplex voice
 
-On the duplex path the pack's output guardrails run on each assistant turn when the realtime session completes it, with the same validators and the same `validations[]` entry as the text path, so `guardrail_triggered` works the same way. The difference is timing. A realtime provider streams the reply's audio while it speaks, so the caller has already heard it by the time the guardrail sees the finished transcript. Enforcement rewrites the turn as recorded: the transcript in state, the session recording, the reports and every later assertion. Input guardrails do not run on the duplex path, because the caller's audio has already reached the provider.
+On the duplex path the pack's output guardrails run on each assistant turn when the realtime session completes it, with the same validators and the same `validations[]` entry as the text path, so `guardrail_triggered` works the same way. The difference is timing. A realtime provider streams the reply's audio while it speaks, so the caller has already heard it by the time the guardrail sees the finished transcript. Enforcement rewrites the turn as recorded: the transcript in state, the session recording, the reports and every later assertion.
+
+Input guardrails judge the caller's turn from the realtime provider's transcription of the caller's audio, so they need a provider that transcribes its input, such as OpenAI Realtime or Gemini Live. A blocked turn stays in the transcript. OpenAI Realtime also removes it, and the reply to it, from the model's context; other providers keep it there. The mock realtime provider in this kit does not transcribe, so its duplex scenario exercises output guardrails only.
 
 To run `pii-redaction-duplex` against a live realtime agent, add a provider such as OpenAI Realtime or Gemini Live, name it in the scenario's `providers:`, and point the `caller` voice at a real TTS provider.
 

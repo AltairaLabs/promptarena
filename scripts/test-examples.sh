@@ -102,6 +102,7 @@ run voice-refund-demo --config config.arena.yaml --ci --provider mock-duplex --f
 # Mock-only packs.
 run llm-judge         --config config.arena.yaml --ci --formats json
 run guardrails-test   --config config.arena.yaml --ci --formats json
+run topic-policy      --config config.arena.yaml --ci --formats json
 run eval-test         --config config.arena.yaml --ci --formats json
 run document-analysis --config config.arena.yaml --ci --formats json
 run mortgage-underwriting --config config.arena.yaml --ci --formats json
