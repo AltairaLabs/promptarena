@@ -66,19 +66,20 @@ func TestConfigureOrchestratorMetadata(t *testing.T) {
 		})
 	})
 
-	t.Run("sets metadata and classify registry", func(t *testing.T) {
+	t.Run("sets metadata and inference registry", func(t *testing.T) {
 		orch := &EvalOrchestrator{}
 		promptReg := &prompt.Registry{}
 		toolReg := tools.NewRegistry()
 		cfg := &arenaconfig.Config{LoadedInferenceProviders: map[string]*config.Provider{"hf": hfProvider("hf")}}
-		classifyReg := configureOrchestratorMetadata(orch, cfg, promptReg, toolReg)
+		inferenceReg := configureOrchestratorMetadata(orch, cfg, promptReg, toolReg)
 
 		// Handlers find the registries under these keys in every EvalContext.
 		assert.Same(t, promptReg, orch.metadata["prompt_registry"])
 		assert.Same(t, toolReg, orch.metadata["tool_registry"])
-		require.NotNil(t, classifyReg)
-		assert.Same(t, classifyReg, orch.classifyRegistry,
-			"the orchestrator must carry the classify registry it was built with")
+		require.NotNil(t, inferenceReg)
+		assert.Equal(t, []string{"hf"}, inferenceReg.IDs())
+		assert.Same(t, inferenceReg, orch.inferenceRegistry,
+			"the orchestrator must carry the inference registry it was built with")
 	})
 
 	t.Run("nil registries are left out of the metadata", func(t *testing.T) {

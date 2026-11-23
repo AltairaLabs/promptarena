@@ -5,9 +5,9 @@ import (
 
 	"github.com/AltairaLabs/promptarena/v2/arena/assertions"
 
-	"github.com/AltairaLabs/PromptKit/runtime/v2/classify"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/evals"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/events"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/inference"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/types"
 )
 
@@ -36,14 +36,13 @@ type EvalOrchestrator struct {
 	// compositionMetaProvider, when set (per-run), injects composition step
 	// observability into every EvalContext for composition_* assertions.
 	compositionMetaProvider CompositionMetadataProvider
-	// classifyRegistry, when non-nil, is attached to the context passed to
-	// every eval/assertion handler invocation via classify.WithRegistry.
-	// Handlers that need a classifier (audio_emotion, text_toxicity, ...)
-	// pull it back out with classify.FromContext. Nil registry is fine —
-	// classify.WithRegistry/FromContext are nil-safe and handlers that
-	// require one surface an explanatory error.
-	classifyRegistry *classify.Registry
-	// providerBinding, when non-nil, is attached alongside the classify
+	// inferenceRegistry, when non-nil, is attached to the context passed to
+	// every eval/assertion handler invocation via inference.WithRegistry.
+	// A classifier-backed check (topic_policy, audio_emotion, the text
+	// classifiers, ...) that names no provider resolves the registry's default
+	// from it. Nil is fine: such a check then reports itself skipped.
+	inferenceRegistry *inference.Registry
+	// providerBinding, when non-nil, is attached alongside the inference
 	// registry so a check that names a LOGICAL provider from its pack's
 	// requires block resolves the same way here as it does inside the
 	// pipeline. Nil is fine — the runtime reports "no binding configured",
@@ -129,16 +128,13 @@ func (h *EvalOrchestrator) SetMetadata(metadata map[string]any) {
 	h.metadata = metadata
 }
 
-// SetClassifyRegistry sets the classify.Registry that will be attached to the
-// context passed to every eval/assertion handler. Handlers that need a
-// classifier (audio_emotion, text_toxicity, ...) read it via
-// classify.FromContext. Safe to call with nil — the context attach is a no-op
-// and FromContext returns nil for handlers to surface their own error.
-func (h *EvalOrchestrator) SetClassifyRegistry(r *classify.Registry) {
+// SetInferenceRegistry sets the inference.Registry attached to the context
+// passed to every eval/assertion handler. Safe to call with nil.
+func (h *EvalOrchestrator) SetInferenceRegistry(r *inference.Registry) {
 	if h == nil {
 		return
 	}
-	h.classifyRegistry = r
+	h.inferenceRegistry = r
 }
 
 // SetProviderBinding sets the binding that resolves the logical provider names
@@ -150,17 +146,17 @@ func (h *EvalOrchestrator) SetProviderBinding(b evals.ProviderBinding) {
 	h.providerBinding = b
 }
 
-// withClassify returns ctx wrapped with the orchestrator's classify.Registry
+// withClassify returns ctx wrapped with the orchestrator's inference.Registry
 // and provider binding, or the original ctx when neither is configured. Called
-// from every Run* entry point so a handler's classify.FromContext and
+// from every Run* entry point so a handler's inference.FromContext and
 // evals.BindingFromContext lookups succeed without each caller plumbing them
 // through manually.
 func (h *EvalOrchestrator) withClassify(ctx context.Context) context.Context {
 	if h == nil {
 		return ctx
 	}
-	if h.classifyRegistry != nil {
-		ctx = classify.WithRegistry(ctx, h.classifyRegistry)
+	if h.inferenceRegistry != nil {
+		ctx = inference.WithRegistry(ctx, h.inferenceRegistry)
 	}
 	return evals.WithProviderBinding(ctx, h.providerBinding)
 }

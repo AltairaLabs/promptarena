@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/AltairaLabs/PromptKit/runtime/v2/inference"
+
 	"github.com/AltairaLabs/PromptKit/runtime/v2/prompt"
 
 	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
@@ -48,6 +50,11 @@ type PipelineExecutor struct {
 	// provider never asks, and one that does gets told no binding is wired
 	// rather than silently scoring nothing.
 	providerBinding evals.ProviderBinding
+	// inferenceRegistry holds the role: inference providers. Attached to every
+	// pipeline's execution context so a classifier-backed guardrail (a
+	// topic_policy with no provider param, say) resolves the default
+	// classifier. Nil is fine.
+	inferenceRegistry *inference.Registry
 }
 
 // NewPipelineExecutor creates a new pipeline executor with the specified tool registry and media storage.
@@ -85,6 +92,12 @@ func (e *PipelineExecutor) SetProviderBinding(b evals.ProviderBinding) {
 	e.providerBinding = b
 }
 
+// SetInferenceRegistry sets the inference providers attached to every
+// pipeline's context. Engine-wide, like the binding.
+func (e *PipelineExecutor) SetInferenceRegistry(r *inference.Registry) {
+	e.inferenceRegistry = r
+}
+
 // streamIdleTimeouter is satisfied by every provider built on
 // providers.BaseProvider: it reports the provider's stream_idle_timeout.
 type streamIdleTimeouter interface {
@@ -103,6 +116,7 @@ type streamIdleTimeouter interface {
 func (e *PipelineExecutor) pipelineConfig(provider providers.Provider) *stage.PipelineConfig {
 	cfg := stage.DefaultPipelineConfig()
 	cfg.ProviderBinding = e.providerBinding
+	cfg.InferenceRegistry = e.inferenceRegistry
 	if p, ok := provider.(streamIdleTimeouter); ok && p.StreamIdleTimeout() > cfg.IdleTimeout {
 		cfg.IdleTimeout = p.StreamIdleTimeout()
 	}

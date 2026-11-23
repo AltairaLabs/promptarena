@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AltairaLabs/PromptKit/runtime/v2/inference"
+
 	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
 	"github.com/AltairaLabs/promptarena/v2/arena/statestore"
 
@@ -188,6 +190,23 @@ func TestBuildDuplexPipelineConfig_AttachesProviderBinding(t *testing.T) {
 	if NewDuplexConversationExecutor(nil, nil, nil, nil, nil).
 		buildDuplexPipelineConfig(&ConversationRequest{}).ProviderBinding != nil {
 		t.Fatal("no orchestrator: no binding")
+	}
+}
+
+// A spoken turn's classifier-backed guardrail that names no provider resolves
+// the default classifier from the pipeline's inference registry, as on the
+// text path.
+func TestBuildDuplexPipelineConfig_AttachesInferenceRegistry(t *testing.T) {
+	reg := inference.NewRegistry()
+	orch := &EvalOrchestrator{}
+	orch.SetInferenceRegistry(reg)
+	de := NewDuplexConversationExecutor(nil, nil, nil, nil, orch)
+	if got := de.buildDuplexPipelineConfig(&ConversationRequest{}).InferenceRegistry; got != reg {
+		t.Fatalf("InferenceRegistry = %p, want the orchestrator's %p", got, reg)
+	}
+	if NewDuplexConversationExecutor(nil, nil, nil, nil, &EvalOrchestrator{}).
+		buildDuplexPipelineConfig(&ConversationRequest{}).InferenceRegistry != nil {
+		t.Fatal("no registry configured: none attached")
 	}
 }
 

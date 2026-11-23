@@ -1,27 +1,31 @@
 package binding
 
 import (
-	"errors"
+	"context"
 	"testing"
 
-	"github.com/AltairaLabs/PromptKit/runtime/v2/classify"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/evals"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/inference"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/providers"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/providers/mock"
 	"github.com/stretchr/testify/require"
 )
 
-// stubTextClassifier stands in for a real inference backend. Only its
-// presence in the registry matters here.
-type stubTextClassifier struct{ classify.TextClassifier }
+// stubInference stands in for a real inference backend. Only its identity in
+// the registry matters here.
+type stubInference struct{ name string }
 
-func registries(t *testing.T) (*providers.Registry, *classify.Registry) {
+func (s *stubInference) Infer(context.Context, inference.Request) (inference.Response, error) {
+	return inference.Response{Raw: s.name}, nil
+}
+
+func registries(t *testing.T) (*providers.Registry, *inference.Registry) {
 	t.Helper()
 	pr := providers.NewRegistry()
 	pr.Register(mock.NewProvider("agent", "mock-model", false))
-	cr := classify.NewRegistry()
-	cr.RegisterText("hf", &stubTextClassifier{})
-	return pr, cr
+	ir := inference.NewRegistry()
+	require.NoError(t, ir.Register("topic", &stubInference{name: "topic"}))
+	return pr, ir
 }
 
 func TestNewReturnsNilWhenNothingIsWired(t *testing.T) {
@@ -31,8 +35,8 @@ func TestNewReturnsNilWhenNothingIsWired(t *testing.T) {
 }
 
 func TestLLMResolvesAProviderID(t *testing.T) {
-	pr, cr := registries(t)
-	b := New(pr, cr, nil)
+	pr, ir := registries(t)
+	b := New(pr, ir, nil)
 
 	p, err := b.LLM("agent")
 	require.NoError(t, err)
@@ -40,8 +44,8 @@ func TestLLMResolvesAProviderID(t *testing.T) {
 }
 
 func TestLLMResolvesAJudgeAlias(t *testing.T) {
-	pr, cr := registries(t)
-	b := New(pr, cr, map[string]string{"grader": "agent"})
+	pr, ir := registries(t)
+	b := New(pr, ir, map[string]string{"grader": "agent"})
 
 	p, err := b.LLM("grader")
 	require.NoError(t, err)
@@ -49,74 +53,62 @@ func TestLLMResolvesAJudgeAlias(t *testing.T) {
 		"a judges: entry is the logical name a pack may point at")
 }
 
-// A classify provider bound to the name a judge-backed check uses is a wiring
-// mistake, and reporting it as "not found" would send the author hunting for a
-// missing provider instead of looking at the one they supplied.
-func TestLLMReportsAClassifierAsTheWrongKind(t *testing.T) {
-	pr, cr := registries(t)
-	b := New(pr, cr, nil)
+// An inference provider bound to the name a judge-backed check uses is a
+// wiring mistake, and reporting it as "not found" would send the author
+// hunting for a missing provider instead of looking at the one they supplied.
+func TestLLMReportsAnInferenceProviderAsTheWrongKind(t *testing.T) {
+	pr, ir := registries(t)
+	b := New(pr, ir, nil)
 
-	_, err := b.LLM("hf")
+	_, err := b.LLM("topic")
 	require.ErrorIs(t, err, evals.ErrWrongKind)
 	require.NotErrorIs(t, err, evals.ErrUnboundKey)
 }
 
 func TestLLMReportsAnUnknownNameAsUnbound(t *testing.T) {
-	pr, cr := registries(t)
-	b := New(pr, cr, nil)
+	pr, ir := registries(t)
+	b := New(pr, ir, nil)
 
 	_, err := b.LLM("nobody")
 	require.ErrorIs(t, err, evals.ErrUnboundKey)
 }
 
-// Each task keeps its own map in classify.Registry, so a classify provider
-// must resolve whichever task it was registered under, and must resolve to
-// the backend registered under that name rather than another or the default.
-func TestClassifierResolvesAnInferenceProviderOfEachTask(t *testing.T) {
-	text := &stubTextClassifier{}
-	audio := &struct{ classify.AudioClassifier }{}
-	image := &struct{ classify.ImageClassifier }{}
-	video := &struct{ classify.VideoClassifier }{}
-	topic := &struct{ classify.TopicClassifier }{}
-	embed := &struct{ classify.Embedder }{}
+// Classifier-backed checks (topic_policy, audio_emotion, image_moderation, the
+// text classifiers) assert inference.Provider on what the binding returns. A
+// binding that handed back anything else made every one of them report "not
+// an inference provider" and fall to its on_error policy — for topic_policy,
+// denying every turn.
+func TestClassifierReturnsTheNamedInferenceProvider(t *testing.T) {
+	wanted := &stubInference{name: "wanted"}
+	ir := inference.NewRegistry()
+	require.NoError(t, ir.Register("first", &stubInference{name: "first"}))
+	require.NoError(t, ir.Register("wanted", wanted))
+	b := New(providers.NewRegistry(), ir, nil)
 
-	cr := classify.NewRegistry()
-	cr.RegisterText("text", text)
-	cr.RegisterText("other-text", &stubTextClassifier{})
-	require.NoError(t, cr.SetDefaultText("other-text"))
-	cr.RegisterAudio("audio", audio)
-	cr.RegisterImage("image", image)
-	cr.RegisterVideo("video", video)
-	cr.RegisterTopic("topic", topic)
-	cr.RegisterEmbedder("embed", embed)
-	b := New(providers.NewRegistry(), cr, nil)
-
-	for key, want := range map[string]any{
-		"text": text, "audio": audio, "image": image, "video": video, "topic": topic, "embed": embed,
-	} {
-		got, err := b.Classifier(key)
-		require.NoError(t, err, key)
-		require.Same(t, want, got, key)
-	}
+	got, err := b.Classifier("wanted")
+	require.NoError(t, err)
+	p, ok := got.(inference.Provider)
+	require.True(t, ok, "classifier-backed checks assert inference.Provider; got %T", got)
+	require.Same(t, wanted, p, "the named provider, not the registry default")
 }
 
 func TestClassifierReportsAnLLMAsTheWrongKind(t *testing.T) {
-	pr, cr := registries(t)
-	b := New(pr, cr, nil)
+	pr, ir := registries(t)
+	b := New(pr, ir, nil)
 
 	_, err := b.Classifier("agent")
 	require.ErrorIs(t, err, evals.ErrWrongKind)
 }
 
-// An empty key means "the default" to classify.Registry. Letting it through
-// would make a check that named no provider silently resolve to whatever
-// happens to be the default classifier, which is the convention-based
-// resolution the requires block exists to stop.
+// An empty key means "the default" to inference.Registry. Letting it through
+// the binding would make a check that named no provider resolve through the
+// binding to whatever happens to be the default, which is the convention-based
+// resolution the requires block exists to stop. The default is reached through
+// the registry on the context instead.
 func TestAnEmptyKeyNeverResolves(t *testing.T) {
-	pr, cr := registries(t)
-	require.NoError(t, cr.SetDefaultText("hf"))
-	b := New(pr, cr, nil)
+	pr, ir := registries(t)
+	b := New(pr, ir, nil)
 
 	_, err := b.Classifier("")
-	require.True(t, errors.Is(err, evals.ErrUnboundKey), "got %v", err)
+	require.ErrorIs(t, err, evals.ErrUnboundKey)
 }

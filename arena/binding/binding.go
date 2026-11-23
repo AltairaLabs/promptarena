@@ -7,24 +7,24 @@
 // logical key instead of a model. Arena is one such host; the SDK is another.
 //
 // Arena resolves a name against two things it already builds: the provider
-// registry (every `providers:` entry the run initialised) and the classify
-// registry (the `role: inference` subset). A `judges:` entry is an alias, so a
-// check can name the judge the config declares rather than the provider id
-// behind it.
+// registry (every `providers:` entry the run initialised) and the inference
+// registry (the `role: inference` subset, which classifier-backed checks such
+// as topic_policy call). A `judges:` entry is an alias, so a check can name the
+// judge the config declares rather than the provider id behind it.
 package binding
 
 import (
 	"fmt"
 
-	"github.com/AltairaLabs/PromptKit/runtime/v2/classify"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/evals"
+	"github.com/AltairaLabs/PromptKit/runtime/v2/inference"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/providers"
 )
 
 // Binding resolves logical provider names for an Arena run.
 type Binding struct {
 	providers *providers.Registry
-	classify  *classify.Registry
+	inference *inference.Registry
 	// judgeAliases maps a `judges:` name to the provider id it points at, so a
 	// check naming the judge resolves to the same provider the eval path uses.
 	judgeAliases map[string]string
@@ -37,15 +37,15 @@ var _ evals.ProviderBinding = (*Binding)(nil)
 // configured", which is a different fix from "you named something unbound".
 func New(
 	providerRegistry *providers.Registry,
-	classifyRegistry *classify.Registry,
+	inferenceRegistry *inference.Registry,
 	judgeAliases map[string]string,
 ) evals.ProviderBinding {
-	if providerRegistry == nil && classifyRegistry == nil {
+	if providerRegistry == nil && inferenceRegistry == nil {
 		return nil
 	}
 	return &Binding{
 		providers:    providerRegistry,
-		classify:     classifyRegistry,
+		inference:    inferenceRegistry,
 		judgeAliases: judgeAliases,
 	}
 }
@@ -66,28 +66,28 @@ func (b *Binding) LLM(key string) (providers.Provider, error) {
 			return p, nil
 		}
 	}
-	if b.hasClassifier(key) {
+	if _, ok := b.lookupInference(key); ok {
 		return nil, fmt.Errorf(
-			"%w: it is bound to a classify provider, and this check needs one that runs completions",
+			"%w: it is bound to an inference provider, and this check needs one that runs completions",
 			evals.ErrWrongKind)
 	}
 	return nil, evals.ErrUnboundKey
 }
 
-// Classifier returns the classify backend bound to key. classify.Backend is an
-// open type, so the caller still asserts the task interface it needs; this only
-// answers whether Arena bound a classifier at all.
-func (b *Binding) Classifier(key string) (classify.Backend, error) {
+// Classifier returns the inference provider bound to key — what a
+// classifier-backed check needs. The return type is any to keep the runtime's
+// v2 signature; the caller asserts inference.Provider.
+func (b *Binding) Classifier(key string) (any, error) {
 	if b == nil {
 		return nil, evals.ErrNoBinding
 	}
-	if backend, ok := b.lookupClassifier(key); ok {
-		return backend, nil
+	if p, ok := b.lookupInference(key); ok {
+		return p, nil
 	}
 	if b.providers != nil {
 		if _, isLLM := b.providers.Get(b.resolveAlias(key)); isLLM {
 			return nil, fmt.Errorf(
-				"%w: it is bound to an LLM provider, and this check needs a classify provider "+
+				"%w: it is bound to an LLM provider, and this check needs an inference provider "+
 					"(a providers: entry with role: inference)",
 				evals.ErrWrongKind)
 		}
@@ -104,35 +104,14 @@ func (b *Binding) resolveAlias(key string) string {
 	return key
 }
 
-func (b *Binding) hasClassifier(key string) bool {
-	_, ok := b.lookupClassifier(key)
-	return ok
-}
-
-// lookupClassifier probes each task the classify registry keys separately. The
-// registry has no generic "what did you bind under this id" accessor — it holds
-// one map per task — so the first task holding the id answers.
-func (b *Binding) lookupClassifier(key string) (classify.Backend, bool) {
-	if b.classify == nil || key == "" {
+// lookupInference finds key in the inference registry by exact id. An empty
+// key never resolves: to the registry it means "the default", and a check that
+// named no provider reaches the default through the registry on its context,
+// not through the binding, which only answers names a pack declared.
+func (b *Binding) lookupInference(key string) (inference.Provider, bool) {
+	if b.inference == nil || key == "" {
 		return nil, false
 	}
-	if c, err := b.classify.TextClassifier(key); err == nil {
-		return c, true
-	}
-	if c, err := b.classify.AudioClassifier(key); err == nil {
-		return c, true
-	}
-	if c, err := b.classify.ImageClassifier(key); err == nil {
-		return c, true
-	}
-	if c, err := b.classify.VideoClassifier(key); err == nil {
-		return c, true
-	}
-	if c, err := b.classify.TopicClassifier(key); err == nil {
-		return c, true
-	}
-	if e, err := b.classify.Embedder(key); err == nil {
-		return e, true
-	}
-	return nil, false
+	p, err := b.inference.Get(key)
+	return p, err == nil
 }
