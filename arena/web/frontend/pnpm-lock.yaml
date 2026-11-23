@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@altairalabs/atlas':
-        specifier: ^0.31.0
-        version: 0.31.0(@dagrejs/dagre@3.1.3)(@types/react@19.2.14)(@xyflow/react@12.12.1(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(supports-color@7.2.0)(three@0.186.1)
+        specifier: ^0.32.0
+        version: 0.32.0(@dagrejs/dagre@3.1.3)(@types/react@19.2.14)(@xyflow/react@12.12.1(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(supports-color@7.2.0)(three@0.186.1)
       '@altairalabs/atlas-tokens':
         specifier: ^0.7.0
         version: 0.7.0
@@ -27,8 +27,8 @@ importers:
         specifier: ^2.1.1
         version: 2.1.1
       lucide-react:
-        specifier: ^1.72.0
-        version: 1.72.0(@types/react@19.2.14)(react@19.3.1)
+        specifier: ^1.77.0
+        version: 1.77.0(@types/react@19.2.14)(react@19.3.1)
       radix-ui:
         specifier: ^1.8.1
         version: 1.8.1(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
@@ -99,8 +99,8 @@ packages:
   '@altairalabs/atlas-tokens@0.7.0':
     resolution: {integrity: sha512-VL1+nwZbOiI3OeX2QXEF7nkk4gBqSmUK42y3pt4/f+PynM3TlexIWJLr2C8dXENXDd8DLStLYelQ+AED70zn3Q==, tarball: https://npm.pkg.github.com/download/@altairalabs/atlas-tokens/0.7.0/d7f1088fdf4a2857d3208df8943b9f9f8ce684a5}
 
-  '@altairalabs/atlas@0.31.0':
-    resolution: {integrity: sha512-ZFa7Lw4dXl4XDyIp7AONbKKFXZLHcaI6XzXrsEZgDEMjNXOYnaonvCl7FKwjR502J9ueMB+aWn6XPgRRB0oOng==, tarball: https://npm.pkg.github.com/download/@altairalabs/atlas/0.31.0/8ca234554d3d544364b479251944c4c3f832b109}
+  '@altairalabs/atlas@0.32.0':
+    resolution: {integrity: sha512-IHyNLmEZ20rXfTN851gbvzoSQbgYM+QAdvl+Yjp/hVQyd87L1Xri7cRU2nLqUC0+nw0a08t2+73rR89g3n9G6A==, tarball: https://npm.pkg.github.com/download/@altairalabs/atlas/0.32.0/e6f626cd416f89d8adb03a2aa0139bf22010bf8b}
     peerDependencies:
       '@dagrejs/dagre': ^3.0.0
       '@xyflow/react': ^12.0.0
@@ -2147,8 +2147,8 @@ packages:
     resolution: {integrity: sha512-U4N8FgzmWxc8k1VH8Kr6lQg18U7Fjvby6wXHVRX/ZZ7IwWbRMgrRbP0Wrb5q5NVinryp4SQampHKdvtecItxUg==}
     engines: {node: 20 || >=22}
 
-  lucide-react@1.72.0:
-    resolution: {integrity: sha512-fbF5i1GU8GODETa3Q7rXqrJrcx3iPYrQtxthom103zGx+Z0BGwKYAW9s+9435ohYJ7hQm0av0PoZcqI1CRwNrg==}
+  lucide-react@1.77.0:
+    resolution: {integrity: sha512-VS6sOi8ZUH1qm6swBL/tpI4xAhB6pFTdHvw3pfCJD+DaTJwpyynVzfOS6mdyMZ+OCdY/GMSQbqinOMOPbNSrQA==}
     peerDependencies:
       '@types/react': '*'
       react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
@@ -2854,11 +2854,11 @@ snapshots:
 
   '@altairalabs/atlas-tokens@0.7.0': {}
 
-  '@altairalabs/atlas@0.31.0(@dagrejs/dagre@3.1.3)(@types/react@19.2.14)(@xyflow/react@12.12.1(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(supports-color@7.2.0)(three@0.186.1)':
+  '@altairalabs/atlas@0.32.0(@dagrejs/dagre@3.1.3)(@types/react@19.2.14)(@xyflow/react@12.12.1(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.3.1(react@19.3.1))(react@19.3.1))(react-dom@19.3.1(react@19.3.1))(react@19.3.1)(supports-color@7.2.0)(three@0.186.1)':
     dependencies:
       '@dagrejs/dagre': 3.1.3
       '@xyflow/react': 12.12.1(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
-      lucide-react: 1.72.0(@types/react@19.2.14)(react@19.3.1)
+      lucide-react: 1.77.0(@types/react@19.2.14)(react@19.3.1)
       react: 19.3.1
       react-dom: 19.3.1(react@19.3.1)
       react-image-crop: 11.1.2(react@19.3.1)
@@ -4696,7 +4696,7 @@ snapshots:
 
   lru-cache@11.5.3: {}
 
-  lucide-react@1.72.0(@types/react@19.2.14)(react@19.3.1):
+  lucide-react@1.77.0(@types/react@19.2.14)(react@19.3.1):
     dependencies:
       react: 19.3.1
     optionalDependencies:
