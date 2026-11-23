@@ -315,7 +315,10 @@
         "type": {
           "type": "string",
           "enum": [
-            "huggingface"
+            "huggingface",
+            "nvidia-topic-control",
+            "openai",
+            "systemone"
           ],
           "title": "Type",
           "description": "Inference provider type"
@@ -969,6 +972,11 @@
           "type": "string",
           "title": "ToolSelector",
           "description": "Name of a selector declared under spec.selectors used to narrow the LLM-visible tool set per turn"
+        },
+        "tool_loading": {
+          "$ref": "#/$defs/ToolLoadingConfig",
+          "title": "Tool Loading",
+          "description": "How the tools array sent to the provider follows a change to what the model may call"
         }
       },
       "additionalProperties": false,
@@ -1217,6 +1225,21 @@
       "required": [
         "required"
       ]
+    },
+    "ToolLoadingConfig": {
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": [
+            "rebuild",
+            "stable"
+          ],
+          "title": "Mode",
+          "description": "rebuild (default) rebuilds the tools array on each change; stable keeps it and narrows per call"
+        }
+      },
+      "additionalProperties": false,
+      "type": "object"
     },
     "ToolSpec": {
       "properties": {
