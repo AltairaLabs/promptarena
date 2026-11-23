@@ -1020,6 +1020,8 @@ For the complete deploy command reference, see [Deploy: CLI Commands](/arena/ref
 
 Inspect and validate arena configuration, showing all loaded resources and validating cross-references. This command provides a rich, styled display of your configuration with validation results.
 
+In a terminal, the text format opens an interactive, scrollable view. Without a terminal (in CI, behind a pipe, or redirected to a file) it prints the same report as plain text and exits with status 1 when validation fails, so `config-inspect --short` works as a pipeline check. `--format json` never opens the interactive view and always exits 0 once the config loads; read `validation_passed` from its output.
+
 ### Usage
 
 ```bash

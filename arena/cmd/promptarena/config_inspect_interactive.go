@@ -1,11 +1,14 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
+	"golang.org/x/term"
 
 	"github.com/AltairaLabs/promptarena/v2/arena/arenaconfig"
 	"github.com/AltairaLabs/promptarena/v2/arena/inspect"
@@ -20,7 +23,11 @@ tools, personas, and validates cross-references.
 
 Use --verbose to see detailed contents of each configuration file.
 Use --section to focus on specific parts.
-Use --short/-s for quick validation-only output.`,
+Use --short/-s for quick validation-only output.
+
+In a terminal, text output opens an interactive, scrollable view. Without one
+(CI, a pipe or a redirect) it prints the same report and exits non-zero when
+validation fails, so "config-inspect -s" can gate a pipeline.`,
 	RunE:          runConfigInspect,
 	SilenceUsage:  true, // Don't show usage on error - keeps output clean
 	SilenceErrors: false,
@@ -134,7 +141,38 @@ func runConfigInspect(cmd *cobra.Command, args []string) error {
 		Section: inspectSection,
 		Stats:   inspectStats,
 	}
+
+	// Without a terminal (CI, a pipe, a redirect, an agent's subprocess) the
+	// TUI cannot start: it fails opening /dev/tty. Print the same rendering
+	// instead and exit by the validation result, so `config-inspect -s` can
+	// gate a pipeline.
+	if !inspectIsInteractive() {
+		return printInspectText(cmd.OutOrStdout(), inspection, renderOpts)
+	}
 	return app.Run(appCtx, app.NewInspectPageWithOptions(appCtx, renderOpts))
+}
+
+// errConfigInspectInvalid makes a non-interactive inspection of an invalid
+// config exit non-zero. The errors themselves are already in the rendering.
+var errConfigInspectInvalid = errors.New("configuration has validation errors")
+
+// inspectIsInteractive reports whether config-inspect can take over the
+// terminal for the TUI: both ends must be one. A variable so tests can force
+// either path.
+var inspectIsInteractive = func() bool {
+	return term.IsTerminal(int(os.Stdin.Fd())) && term.IsTerminal(int(os.Stdout.Fd()))
+}
+
+// printInspectText writes the static inspection rendering to w and returns
+// errConfigInspectInvalid when validation failed.
+func printInspectText(w io.Writer, data *inspect.InspectionData, opts inspect.RenderOptions) error {
+	if _, err := fmt.Fprint(w, inspect.RenderText(data, opts)); err != nil {
+		return err
+	}
+	if !data.ValidationPassed {
+		return errConfigInspectInvalid
+	}
+	return nil
 }
 
 func emitConfigInspectValidationDiagnostics(configFile string) error {
