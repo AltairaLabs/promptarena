@@ -44,7 +44,25 @@ echo
 
 # Key on the verdict, not the exit code: gorelease exits non-zero for
 # diagnostics too, and a diagnostic is not a breaking change.
-if echo "$out" | grep -q "is not a valid semantic version"; then
+PATCH="${VERSION##*.}"
+
+if echo "$out" | grep -q "is not a valid semantic version" &&
+   verdict=$(echo "$out" | "$(dirname "$0")/api-compat-allowlist.sh"); then
+  # gorelease also calls some changes incompatible that cannot stop a consumer
+  # compiling — chiefly PromptKit moving a stage type behind a same-named
+  # alias, which re-reports every promptarena field and signature that holds
+  # it. api-compat-allowlist.sh accepts exactly those. Its rejection list is
+  # printed in the branch below.
+  echo "$verdict" | sed 's/^/   /'
+  if [ "$PATCH" != "0" ]; then
+    # gorelease rejected the version, so it cannot tell us whether a patch
+    # would have carried the rest. Any API change needs at least a minor.
+    echo "::error::${VERSION} is a patch, but the API changed since ${BASE}. Release a minor."
+    exit 1
+  fi
+  echo "✓ ${VERSION} carries the API changes since ${BASE} (only allowlisted incompatibilities)"
+elif echo "$out" | grep -q "is not a valid semantic version"; then
+  echo "$out" | "$(dirname "$0")/api-compat-allowlist.sh" | sed 's/^/   /' || true
   echo "::error::API changes since ${BASE} are incompatible with ${VERSION}."
   echo "::error::gorelease lists the changes and a suggested version above."
   echo "::error::Additions need at least a minor. If it suggests a major, something"
