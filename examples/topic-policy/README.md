@@ -84,6 +84,23 @@ A refused turn also asserts that the reply is the policy's `message`; an allowed
 
 `providers/topic-classifier-mock.provider.yaml` answers from keyword rules over the newest message. That is enough to exercise both paths in CI, but it ignores the policy text and `recent_turns`. To judge messages properly, replace it with a real classifier under the same id, so the policy's `provider: topic-classifier` still resolves.
 
+TypeSafe's Jev, a typed-decision model, through the Vercel AI Gateway (`AI_GATEWAY_API_KEY`):
+
+```yaml
+apiVersion: promptkit.altairalabs.ai/v1alpha1
+kind: Provider
+metadata:
+  name: topic-classifier
+spec:
+  id: topic-classifier
+  type: systemone
+  role: inference
+  model: typesafe-ai/jev
+  base_url: https://ai-gateway.vercel.sh/typesafe/v1
+  credential:
+    credential_env: AI_GATEWAY_API_KEY
+```
+
 NVIDIA's NemoGuard topic-control model, served from a NIM you run:
 
 ```yaml
