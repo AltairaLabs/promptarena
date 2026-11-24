@@ -78,7 +78,7 @@ Each turn asserts the outcome with `guardrail_triggered`. `direction: input` che
     should_trigger: true
 ```
 
-A refused turn also asserts that the reply is the policy's `message`. An allowed turn asserts that the agent's reply came through.
+A refused turn also asserts that the reply is the policy's `message`; an allowed turn asserts that it is not. Neither depends on the agent's wording, so the scenarios hold with a real model as the agent.
 
 ## Use a real classifier
 

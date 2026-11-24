@@ -17,10 +17,10 @@ spec:
             direction: input
             should_trigger: false
           message: "An in-scope message must reach the agent"
-        - type: contains_any
+        - type: content_excludes
           params:
-            patterns: ["5521"]
-          message: "The agent should have answered"
+            patterns: ["I can only help with parcels, orders, returns and your account."]
+          message: "The agent should have answered, not the policy"
     - role: user
       content: "Unrelated, but who do you think will win the election?"
       assertions:
