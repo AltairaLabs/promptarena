@@ -3,6 +3,7 @@ package engine
 import (
 	"context"
 
+	"github.com/AltairaLabs/promptarena/v2/arena/agentkb"
 	"github.com/AltairaLabs/promptarena/v2/arena/assertions"
 
 	"github.com/AltairaLabs/PromptKit/runtime/v2/evals"
@@ -321,14 +322,91 @@ func (h *EvalOrchestrator) RunAssertionsAsEvals(
 	evalCtx := withArenaEvalMetadata(ctx, h.buildEvalContext(messages, turnIndex, sessionID))
 	classifyCtx := h.withClassify(ctx)
 
-	switch trigger { //nolint:exhaustive // Only conversation and turn triggers are meaningful here
-	case evals.TriggerOnConversationComplete:
+	if trigger == evals.TriggerOnConversationComplete {
 		return h.runner.RunConversationEvals(classifyCtx, defs, evalCtx)
-	case evals.TriggerEveryTurn:
-		return h.runner.RunTurnEvals(classifyCtx, defs, evalCtx)
-	default:
-		return h.runner.RunTurnEvals(classifyCtx, defs, evalCtx)
 	}
+	return h.runTurnAssertions(classifyCtx, assertionConfigs, defs, evalCtx, messages)
+}
+
+// runTurnAssertions runs a turn's assertions. A turn-level assertion judges
+// this turn, so it sees only the tool calls made since the turn's user
+// message, its `when` gate included: the history holds every earlier turn's
+// calls too. A session-level one placed on a turn (tools_called_session, say)
+// still sees the whole session, as does a type evalmeta does not describe.
+// Results come back in the assertions' order.
+func (h *EvalOrchestrator) runTurnAssertions(
+	ctx context.Context,
+	cfgs []assertions.AssertionConfig,
+	defs []evals.EvalDef,
+	evalCtx *evals.EvalContext,
+	messages []types.Message,
+) []evals.EvalResult {
+	turnCtx := withCurrentTurnToolCalls(evalCtx, messages)
+	var turnDefs, sessionDefs []evals.EvalDef
+	for i := range defs {
+		if agentkb.EvalLevel(assertedEvalType(&cfgs[i])) == agentkb.EvalLevelTurn {
+			turnDefs = append(turnDefs, defs[i])
+		} else {
+			sessionDefs = append(sessionDefs, defs[i])
+		}
+	}
+	if len(sessionDefs) == 0 {
+		return h.runner.RunTurnEvals(ctx, defs, turnCtx)
+	}
+	if len(turnDefs) == 0 {
+		return h.runner.RunTurnEvals(ctx, defs, evalCtx)
+	}
+	byID := make(map[string]evals.EvalResult, len(defs))
+	ran := append(h.runner.RunTurnEvals(ctx, turnDefs, turnCtx), h.runner.RunTurnEvals(ctx, sessionDefs, evalCtx)...)
+	for i := range ran {
+		byID[ran[i].EvalID] = ran[i]
+	}
+	results := make([]evals.EvalResult, 0, len(defs))
+	for i := range defs {
+		if r, ok := byID[defs[i].ID]; ok {
+			results = append(results, r)
+		}
+	}
+	return results
+}
+
+// assertedEvalType is the eval an assertion runs: its type, or for an
+// explicit `type: assertion` wrapper, the inner eval_type.
+func assertedEvalType(cfg *assertions.AssertionConfig) string {
+	if cfg.Type == evals.WrapperTypeAssertion {
+		if inner, ok := cfg.Params["eval_type"].(string); ok {
+			return inner
+		}
+	}
+	return cfg.Type
+}
+
+// withCurrentTurnToolCalls returns a copy of evalCtx whose ToolCalls are only
+// those made at or after the last user message of messages: the current
+// turn's. evalCtx is returned as-is when it holds none from earlier turns.
+func withCurrentTurnToolCalls(evalCtx *evals.EvalContext, messages []types.Message) *evals.EvalContext {
+	start := 0
+	for i := len(messages) - 1; i >= 0; i-- {
+		if messages[i].Role == roleUser {
+			start = i
+			break
+		}
+	}
+	if start == 0 || len(evalCtx.ToolCalls) == 0 {
+		return evalCtx
+	}
+	var current []evals.ToolCallRecord
+	for i := range evalCtx.ToolCalls {
+		if evalCtx.ToolCalls[i].TurnIndex >= start {
+			current = append(current, evalCtx.ToolCalls[i])
+		}
+	}
+	if len(current) == len(evalCtx.ToolCalls) {
+		return evalCtx
+	}
+	scoped := *evalCtx
+	scoped.ToolCalls = current
+	return &scoped
 }
 
 // RunAssertionsAsConversationResults converts assertion configs to EvalDefs,

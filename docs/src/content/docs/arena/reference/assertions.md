@@ -109,7 +109,9 @@ Assertions accept both canonical and alias names. `content_includes` is an alias
 
 An assertion is scoped to a single turn or to the entire conversation session.
 
-Turn-level assertions are declared on individual turns and check only that turn's response:
+Turn-level assertions are declared on individual turns and check only that turn's response. A turn-level tool assertion (`tools_called`, `tools_not_called`, `tool_call_count` and the like) counts only the calls made in that turn, from its user message on, and so does a `when` condition on a turn assertion. A later turn can forbid a tool an earlier turn called. A session-level type such as `tools_called_session` placed on a turn still sees every call so far.
+
+`regex` and the other content checks read the turn's final assistant message. When the turn includes tool calls, text the model wrote before a call is not checked.
 
 ```yaml
 turns:
@@ -197,6 +199,19 @@ conversation_assertions:
 
 `max_calls` with a value above 0 (for example "at most 3 lookups per turn") is accepted only on `tools_called`. `tools_not_called` expresses the forbidden case on its own.
 
+### Which calls a tool assertion counts
+
+A tool call can be refused before it runs: by a hook, by the scenario's `chaos.tool_failures`, or by failing argument validation. The tool assertions differ on whether a refused or failed call counts:
+
+| Assertion | Counts |
+|---|---|
+| `tools_called` | Calls that completed without error. `ignore_validation: true` also counts argument-validation failures. |
+| `tool_call_count` | Every call, refused or failed ones included |
+| `tools_not_called` | Every call, refused or failed ones included |
+| `tools_called_session`, `tools_not_called_session` | Every call, refused or failed ones included |
+
+To assert that the agent tried a tool, even when the call was refused, use `tool_call_count` with `min: 1`.
+
 ### Tools offered
 
 `tools_called` sees what the model called. `tools_offered` sees what the turn offered it: the tools array the provider received. Use it to check a skill grant or a prompt's `allowed_tools`.
@@ -245,7 +260,9 @@ A mock provider returns the tool calls its response file names whether or not th
 
 `llm_judge` is an eval primitive. `type: assertion` wraps it to apply the threshold. An inner `llm_judge` handler that receives `min_score` returns an error result when it runs, so the assertion fails at evaluation. In a scenario assertion written as `type: llm_judge`, `min_score` and `max_score` in `params` move to the wrapper.
 
-`judge: <name>` in `eval_params` grades with that entry of `spec.judges`. A name that is not in `spec.judges` fails at load. Without `judge`, the lowest-sorted judge name grades the check. `judge` works the same in an objective's `success` and `rewind.when` checks and in a persona's `transitions[].when`.
+`judge: <name>` in `eval_params` grades with that entry of `spec.judges`. A name that is not in `spec.judges` fails at load. Without `judge`, the lowest-sorted judge name grades the check. `judge` works the same in an objective's `success` and `rewind.when` checks and in a persona's `transitions[].when`. A judge named this way stays loaded when `--provider` narrows the run to other providers.
+
+Write `criteria` as the condition that passes, not as a prohibition. Small judge models often read "does not recommend investments" as a requirement to recommend them. "The reply names no fund, share or savings product" states the pass condition and is read correctly.
 
 ### Refusal
 

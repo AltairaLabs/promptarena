@@ -5,6 +5,8 @@ import (
 	"maps"
 	"slices"
 
+	"gopkg.in/yaml.v3"
+
 	"github.com/AltairaLabs/PromptKit/runtime/v2/skills"
 	"github.com/AltairaLabs/PromptKit/runtime/v2/tools"
 )
@@ -66,6 +68,11 @@ func (v *ConfigValidator) validateToolUsage() {
 // "local" (an in-process Go handler) that only the PromptKit SDK registers.
 const sdkOnlyToolMode = "local"
 
+// execToolMode is the subprocess tool mode. The PromptKit SDK registers its
+// executor; promptarena does not, so the runtime's registry rejects such a
+// tool at load with a generic "mode must be ..." error.
+const execToolMode = "exec"
+
 // CheckToolModeRunnable reports a tool promptarena loads but cannot execute. A
 // mode: local tool passes the runtime's mode check, so without this it loaded
 // cleanly and failed only when the model called it. packc does not apply it:
@@ -74,13 +81,37 @@ func CheckToolModeRunnable(t *tools.ToolDescriptor) error {
 	if t == nil || t.Mode != sdkOnlyToolMode {
 		return nil
 	}
-	return fmt.Errorf("tool %s: mode %q is run by the PromptKit SDK only; promptarena has no %s executor, "+
-		"so the tool would fail when called (use mock, live, mcp or client)", t.Name, t.Mode, t.Mode)
+	return sdkOnlyModeError(t.Name, t.Mode)
+}
+
+// CheckToolFileModeRunnable reports a mode: exec tool file, before the
+// runtime's registry rejects it with an error that does not say why. It
+// returns nil for any other file, including one that does not parse.
+func CheckToolFileModeRunnable(data []byte) error {
+	var doc struct {
+		Spec struct {
+			Name string `yaml:"name"`
+			Mode string `yaml:"mode"`
+		} `yaml:"spec"`
+	}
+	if yaml.Unmarshal(data, &doc) != nil || doc.Spec.Mode != execToolMode {
+		return nil
+	}
+	return sdkOnlyModeError(doc.Spec.Name, doc.Spec.Mode)
+}
+
+func sdkOnlyModeError(name, mode string) error {
+	return fmt.Errorf("tool %s: mode %q is run by the PromptKit SDK only; promptarena has no %s executor "+
+		"(use mock, live, mcp or client)", name, mode, mode)
 }
 
 // validateToolModes reports every defined tool promptarena cannot execute.
 func (v *ConfigValidator) validateToolModes() {
 	for _, t := range v.config.LoadedTools {
+		if err := CheckToolFileModeRunnable(t.Data); err != nil {
+			v.errors = append(v.errors, fmt.Errorf("%s: %w", t.FilePath, err))
+			continue
+		}
 		reg := tools.NewRegistry()
 		if reg.LoadToolFromBytes(t.FilePath, t.Data) != nil {
 			continue // a tool that does not parse is reported by the load stage

@@ -31,7 +31,7 @@ handlers:
     score: boolean gate
   regex:
     level: turn
-    description: Output matches the given regular expression.
+    description: "The turn's final assistant message matches the given regular expression. Earlier messages of the turn, such as the text before a tool call, are not checked."
     score: boolean gate
   min_length:
     level: turn
@@ -71,11 +71,11 @@ handlers:
   # --- tool calls ---
   tools_called:
     level: turn
-    description: The named tool(s) were called this turn.
+    description: "The named tool(s) were called this turn and completed. A call that errored, or that a hook or chaos refused, is not counted (ignore_validation counts argument-validation failures); use tool_call_count to count attempts."
     score: boolean gate
   tools_not_called:
     level: turn
-    description: The named tool(s) were not called this turn.
+    description: "The named tool(s) were not called this turn. Every attempt counts, including one that errored or was refused."
     score: boolean gate
   tools_offered:
     level: turn
@@ -83,7 +83,7 @@ handlers:
     score: boolean gate
   tools_called_session:
     level: session
-    description: The named tool(s) were called somewhere in the session.
+    description: "The named tool(s) were called somewhere in the session. Every attempt counts, including one that errored or was refused."
     score: boolean gate
   tools_not_called_session:
     level: session
@@ -103,7 +103,7 @@ handlers:
     score: boolean gate
   tool_call_count:
     level: turn
-    description: The number of tool invocations matches an exact value or range.
+    description: "The number of tool calls this turn matches an exact value or range. Every attempt counts, including one that errored or was refused."
     score: boolean gate
   tool_call_sequence:
     level: session
@@ -297,7 +297,7 @@ handlers:
   # --- LLM judge ---
   llm_judge:
     level: turn
-    description: An LLM judges the turn output against a rubric. Requires a judge provider.
+    description: "An LLM judges the turn output against a rubric. Requires a judge provider. Write the criteria as the condition that passes (\"the reply names no fund or share\"), not as a prohibition (\"does not recommend investments\"): small judges often misread a negated rubric."
     score: 0..1 raw signal
   llm_judge_session:
     level: session
