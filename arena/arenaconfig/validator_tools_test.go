@@ -312,6 +312,27 @@ func TestValidateToolModes_RejectsLocalMode(t *testing.T) {
 	assert.Contains(t, errs[0], `lookup.tool.yaml: tool lookup: mode "local" is run by the PromptKit SDK only`)
 }
 
+// mode: exec fails the runtime's mode check with an error that does not say
+// promptarena cannot run it; validate says so.
+func TestValidateToolModes_RejectsExecMode(t *testing.T) {
+	exec := toolData("runner")
+	exec.Data = []byte(strings.Replace(string(exec.Data), "mode: mock", "mode: exec", 1))
+	cfg := &Config{LoadedTools: []config.ToolData{toolData("refund"), exec}}
+	v := NewConfigValidatorWithPath(cfg, "")
+	v.validateToolModes()
+
+	errs := v.GetErrors()
+	require.Len(t, errs, 1)
+	assert.Contains(t, errs[0], `runner.tool.yaml: tool runner: mode "exec" is run by the PromptKit SDK only`)
+}
+
+func TestCheckToolFileModeRunnable(t *testing.T) {
+	assert.NoError(t, CheckToolFileModeRunnable(toolData("refund").Data))
+	assert.NoError(t, CheckToolFileModeRunnable([]byte("a: [")), "a file that does not parse is not reported here")
+	assert.ErrorContains(t, CheckToolFileModeRunnable([]byte("spec:\n  name: r\n  mode: exec\n")),
+		`tool r: mode "exec" is run by the PromptKit SDK only; promptarena has no exec executor`)
+}
+
 func TestCheckToolModeRunnable(t *testing.T) {
 	assert.NoError(t, CheckToolModeRunnable(nil))
 	for _, mode := range []string{"", "mock", "live", "mcp", "client", "workflow-transition"} {

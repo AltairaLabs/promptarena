@@ -35,6 +35,26 @@ func TestBuildProviderFilterSet(t *testing.T) {
 		assert.Empty(t, got, "empty filter means load all; selfplay must not narrow it")
 	})
 
+	t.Run("active filter includes judge providers", func(t *testing.T) {
+		cfg := &arenaconfig.Config{
+			LoadedJudges: map[string]*arenaconfig.JudgeTarget{
+				"strict": {Provider: &config.Provider{ID: "judge-model"}},
+				"broken": nil,
+				"empty":  {},
+			},
+		}
+		got := buildProviderFilterSet(cfg, []string{"agent"})
+		assert.Equal(t, map[string]bool{"agent": true, "judge-model": true}, got,
+			"a judge named by a check must stay bound when --provider narrows the matrix")
+	})
+
+	t.Run("empty filter ignores judges", func(t *testing.T) {
+		cfg := &arenaconfig.Config{
+			LoadedJudges: map[string]*arenaconfig.JudgeTarget{"j": {Provider: &config.Provider{ID: "judge-model"}}},
+		}
+		assert.Empty(t, buildProviderFilterSet(cfg, nil))
+	})
+
 	t.Run("active filter includes selfplay role providers", func(t *testing.T) {
 		cfg := &arenaconfig.Config{
 			SelfPlay: &arenaconfig.SelfPlayConfig{

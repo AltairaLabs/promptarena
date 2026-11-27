@@ -303,7 +303,18 @@ func buildProviderFilterSet(cfg *arenaconfig.Config, providerFilter []string) ma
 	}
 	// Only extend the set when a filter is active; an empty set means "load all"
 	// and must stay empty so selfplay providers aren't the only ones loaded.
-	if len(filterSet) == 0 || cfg.SelfPlay == nil {
+	if len(filterSet) == 0 {
+		return filterSet
+	}
+	// A judge's provider is auxiliary too: a check that names the judge
+	// resolves it through the provider binding, which holds only what is
+	// loaded here.
+	for _, jt := range cfg.LoadedJudges {
+		if jt != nil && jt.Provider != nil && jt.Provider.ID != "" {
+			filterSet[jt.Provider.ID] = true
+		}
+	}
+	if cfg.SelfPlay == nil {
 		return filterSet
 	}
 	for _, role := range cfg.SelfPlay.Roles {
@@ -566,6 +577,9 @@ func buildToolRegistry(cfg *arenaconfig.Config) (*tools.Registry, error) {
 	// Parse and register each tool from the loaded data
 	for _, toolData := range cfg.LoadedTools {
 		// Create a temporary registry to parse the tool
+		if err := arenaconfig.CheckToolFileModeRunnable(toolData.Data); err != nil {
+			return nil, fmt.Errorf("%s: %w", toolData.FilePath, err)
+		}
 		tempRegistry := tools.NewRegistry()
 		if err := tempRegistry.LoadToolFromBytes(toolData.FilePath, toolData.Data); err != nil {
 			return nil, fmt.Errorf("failed to parse tool %s: %w", toolData.FilePath, err)

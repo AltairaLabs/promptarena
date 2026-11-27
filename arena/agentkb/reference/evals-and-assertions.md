@@ -58,7 +58,7 @@ Two envelopes carry that entry, and they are **not** the same schema:
 | `json_schema` | turn | boolean gate | Output validates against the given JSON Schema. |
 | `json_valid` | turn | boolean gate | Output is syntactically valid JSON. |
 | `latency_budget` | turn | boolean gate | Response latency stays within the given budget. |
-| `llm_judge` | turn | 0..1 raw signal | An LLM judges the turn output against a rubric. Requires a judge provider. |
+| `llm_judge` | turn | 0..1 raw signal | An LLM judges the turn output against a rubric. Requires a judge provider. Write the criteria as the condition that passes ("the reply names no fund or share"), not as a prohibition ("does not recommend investments"): small judges often misread a negated rubric. |
 | `llm_judge_session` | session | 0..1 raw signal | An LLM judges the whole session against a rubric. Requires a judge provider. |
 | `llm_judge_tool_calls` | session | 0..1 raw signal | An LLM judges the session's tool calls against a rubric. Requires a judge provider. |
 | `max_length` | turn | boolean gate | Output is at most the given length (characters/tokens). |
@@ -68,7 +68,7 @@ Two envelopes carry that entry, and they are **not** the same schema:
 | `outcome_equivalent` | session | 0..1 raw signal | Whether two outputs are semantically equivalent. |
 | `pii_leakage` | turn | 0..1 raw signal | PII-leakage signal; regex fallback when no judge is configured. |
 | `refusal` | turn | 0/1 | Whether the reply refuses or declines the request, by refusal phrases in its opening or (method judge) the configured judge. 1 = refused; assert max_score 0 to test for over-refusal. |
-| `regex` | turn | boolean gate | Output matches the given regular expression. |
+| `regex` | turn | boolean gate | The turn's final assistant message matches the given regular expression. Earlier messages of the turn, such as the text before a tool call, are not checked. |
 | `rest_eval` | turn | 0..1 raw signal | Calls an external REST endpoint to score the turn. |
 | `rest_eval_session` | session | 0..1 raw signal | Calls an external REST endpoint to score the session. |
 | `role_violation` | turn | 0..1 raw signal | Degree to which the output violates the expected role/persona. LLM judge required. |
@@ -85,7 +85,7 @@ Two envelopes carry that entry, and they are **not** the same schema:
 | `tool_args_excluded_session` | session | boolean gate | No tool was called with the excluded arguments across the session. |
 | `tool_args_session` | session | boolean gate | A tool was called with matching arguments somewhere in the session. |
 | `tool_call_chain` | session | boolean gate | Tool results chain into subsequent calls as specified. |
-| `tool_call_count` | turn | boolean gate | The number of tool invocations matches an exact value or range. |
+| `tool_call_count` | turn | boolean gate | The number of tool calls this turn matches an exact value or range. Every attempt counts, including one that errored or was refused. |
 | `tool_call_sequence` | session | boolean gate | Tools were called in the specified order. |
 | `tool_calls_with_args` | turn | boolean gate | Tools were called with the given argument sets. |
 | `tool_efficiency` | session | 0..1 raw signal | Tool-use efficiency metric for the session. |
@@ -95,9 +95,9 @@ Two envelopes carry that entry, and they are **not** the same schema:
 | `tool_result_includes` | turn | boolean gate | A tool result contains the given text. |
 | `tool_result_matches` | turn | boolean gate | A tool result matches the given regular expression. |
 | `tool_result_media_type` | turn | boolean gate | A tool result's media type matches the expected type. |
-| `tools_called` | turn | boolean gate | The named tool(s) were called this turn. |
-| `tools_called_session` | session | boolean gate | The named tool(s) were called somewhere in the session. |
-| `tools_not_called` | turn | boolean gate | The named tool(s) were not called this turn. |
+| `tools_called` | turn | boolean gate | The named tool(s) were called this turn and completed. A call that errored, or that a hook or chaos refused, is not counted (ignore_validation counts argument-validation failures); use tool_call_count to count attempts. |
+| `tools_called_session` | session | boolean gate | The named tool(s) were called somewhere in the session. Every attempt counts, including one that errored or was refused. |
+| `tools_not_called` | turn | boolean gate | The named tool(s) were not called this turn. Every attempt counts, including one that errored or was refused. |
 | `tools_not_called_session` | session | boolean gate | The named tool(s) were never called in the session. |
 | `tools_offered` | turn | boolean gate | The named tool(s) were offered to the model this turn, whether or not it called them; `absent: true` asserts they were not. |
 | `topic_policy` | turn | 1.0 allow / 0.0 deny | Confines the conversation to a declared subject scope, judged by a topic classifier rather than the model being governed. Declared as a pack validator, not a scenario assertion; gates the user's message before the agent is called, and is default-deny — a missing classifier blocks every turn. Needs a provider with role: inference. |

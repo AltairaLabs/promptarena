@@ -78,8 +78,20 @@ func (s *HistoryInjectionStage) Process(ctx context.Context, input <-chan stage.
 	return nil
 }
 
+// blockedReplyBeforeMetaKey mirrors PromptKit's internal
+// history.BlockedReplyBeforeMetaKey: on a user message, it marks the reply
+// before it as part of a blocked input turn.
+const blockedReplyBeforeMetaKey = "_blocked_input_reply_before"
+
 // swapMessageRole returns a shallow copy of the message with user↔assistant swapped.
 // System messages are left unchanged.
+//
+// The blocked-input marks are dropped from the copy. They tell the provider
+// stage to keep a guardrail-blocked turn out of the agent's model context, but
+// the self-play user is the person who was shown that turn: its canned reply
+// is the last thing they read. Swapped and still marked, the reply would be a
+// marked "user" message, which the provider stage leaves out, and the persona
+// would answer its own message.
 func swapMessageRole(msg *types.Message) types.Message {
 	swapped := *msg
 	switch strings.ToLower(msg.Role) {
@@ -88,5 +100,23 @@ func swapMessageRole(msg *types.Message) types.Message {
 	case "assistant":
 		swapped.Role = roleUser
 	}
+	swapped.Meta = withoutBlockedInputMarks(msg.Meta)
 	return swapped
+}
+
+// withoutBlockedInputMarks returns meta without the blocked-input marks, as a
+// copy when it has to remove one, so the caller's history is not written.
+func withoutBlockedInputMarks(meta map[string]interface{}) map[string]interface{} {
+	_, blocked := meta[types.MetaBlockedInput]
+	_, before := meta[blockedReplyBeforeMetaKey]
+	if !blocked && !before {
+		return meta
+	}
+	out := make(map[string]interface{}, len(meta))
+	for k, v := range meta {
+		if k != types.MetaBlockedInput && k != blockedReplyBeforeMetaKey {
+			out[k] = v
+		}
+	}
+	return out
 }
